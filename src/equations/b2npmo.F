@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
+     &  switch, geo, mpg,
      &  itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
       use b2mod_types
       use b2mod_math
@@ -29,13 +30,13 @@
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
      &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
 #ifdef WG_DEBUG
-     &          my_out_sf,                                              !srv 27.06.21
+     &          my_out_sf,                                             !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, itcnt                          !srv 13.01.17
+      integer nCv, nFc, nVx, ns, ismain, ismain0, itcnt                !srv 13.01.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -499,7 +500,7 @@ c     ..compare 9-pt stencil matrices
      .         (nint(zn(is)).ne.1.or.is.ne.ismain0))) then
               cst=sqrt(pz(iCv)/rz(iCv))                                 !iyv 03.02.14
             else
-              cst=sqrt(pl%tn(iCv)/(mp*am(is))
+              cst=sqrt(pl%tn(iCv)/(mp*am(is)))
             endif
             if( abs(pl%ua(iCv,is)).gt.
      .         switch%ion_vlct_restrict_M*cst ) then

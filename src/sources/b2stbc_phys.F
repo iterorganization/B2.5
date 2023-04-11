@@ -955,7 +955,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      >       call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 10')
              call xertst (conpar(is,ib,2).ge.0.0_R8,                    !lkw 30.06.2022
-     .        'For BCCON = 10 the CONPAR(:,:,2) should not be negative')
+     .        'For BCCON = 10, CONPAR(,,2) should not be negative')
           endif
 cwdk      Note: now total face area taken. Need to check backwards
 cwdk      compatibility for E/W boundaries
