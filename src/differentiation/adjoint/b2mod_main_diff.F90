@@ -658,6 +658,9 @@ CONTAINS
     TYPE(B2STATEEXT_DIFF), INTENT(INOUT) :: state_extb
     REAL(kind=r8) :: j(nncf)
     integer :: ii
+    integer, save :: ncall = 0
+    character *64 filename, ss
+    character(len=7), save :: my_out_folder
     REAL(kind=r8) :: jb(nncf)
 !
     jb = 0.0_R8
@@ -666,26 +669,39 @@ CONTAINS
     CALL B2MNDR_1_B(nout, ns, switch, switchb, geo, geob, mpg, mpgb, &
 &             state, stateb, state_ext, state_extb, j, jb)
 
-    if (.not. flag_optim) then
-      ! csc writing in output the saved transport coefficients
-      open(99, file = './dna0b.dat', status = 'new')  
-      do ii=1,mpg%nCv  
-        write(99,*) stateb%co%dna0save(ii,1)   
-      end do  
-      close(99)
-  
-      open(99, file = './hce0b.dat', status = 'new')  
-      do ii=1,mpg%nCv  
-        write(99,*) stateb%co%hce0save(ii)   
-      end do  
-      close(99)
-
-      open(99, file = './hci0b.dat', status = 'new')  
-      do ii=1,mpg%nCv  
-        write(99,*) stateb%co%hci0save(ii)   
-      end do  
-      close(99)
+    if (ncall.eq.0) then
+!  ..try to create a file in optional output folder
+      open(70,file='output/__1__adj.dat',err=10)
+!  ..folder exists: future output will be done in folder
+      my_out_folder='output/'
+      write(70,*) 'Test file to check on output folder'
+      close(70)
+      go to 20
+!  ..folder does not exist: future output will be done in current folder
+ 10   my_out_folder=''
+ 20   continue
     endif
+    ! csc writing in output the saved transport coefficients
+    write(ss,"(I0)") ncall
+    filename = trim(my_out_folder)//'dna0b_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii=1,mpg%nCv  
+      write(99,*) stateb%co%dna0save(ii,1)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'hce0b_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii=1,mpg%nCv  
+      write(99,*) stateb%co%hce0save(ii)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'hci0b_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii=1,mpg%nCv  
+      write(99,*) stateb%co%hci0save(ii)   
+    end do  
+    close(99)
+    ncall = ncall + 1
 !
     RETURN
   END SUBROUTINE B2MN_STEP_B
