@@ -1,5 +1,7 @@
       subroutine cpmpxy (imap, xinp, yinp, xotp, yotp)
       use b2mod_types
+      use b2mod_gnmap2
+      use b2mod_gnmap3
       implicit none
       integer imap
       real (kind=R4) xinp, yinp, xotp, yotp
@@ -8,9 +10,7 @@
 *     CONPACK sub-package of NCARG graphics. It defines a mapping from
 *     rectangular array index coordinates in (1:*,1:*) to the plotting
 *     window.
-*     ------------------------------------------------------------------
-      external gnmap2, gnmap3
-*     ------------------------------------------------------------------
+*
 *     This routine interfaces to gnmap2 or gnmap3 depending on the
 *     value of (imap). Also, the location (xinp,yinp) is shifted to
 *     (xinp-1,yinp-1) to account for a different array indexing style.

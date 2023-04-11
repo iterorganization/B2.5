@@ -14,7 +14,7 @@ NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
-INCMODS   += `pkg-config netcdf-fortran --flags`
+INCMODS   += `pkg-config netcdf-fortran --cflags`
 endif
 else
 ifndef SOLPS_CPP
