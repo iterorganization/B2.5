@@ -238,9 +238,7 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
-!        call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
-!        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
         if( sum(sna_corr) .gt. 0.0_R8 ) then
            allocate(t1(1:nspecies))
@@ -743,14 +741,14 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
               end if
             end do
 
-!  Subsract contribution from Eirene core boundary fluxes
-            if (is_neutral(is-1)) then ! to account this contribution only once
+!  Subtract contribution from Eirene core boundary fluxes
+            if (is_neutral(is-1).and.lnext(is-1,is)) then ! to account this contribution only once
               do k = 1, ncns
                 ix = nnlimi + lcns(k)
                 do ia = 1, nnatmi
                   if (latmscl(ia).eq.b2espcr(is)) then
-                 sna_core(latmscl(ia)) = sna_core(latmscl(ia)) +
-     &           wldna(ix,ia,0) - wldra(ix,ia,0) - wldpa(ix,ia,0)
+                    sna_core(latmscl(ia)) = sna_core(latmscl(ia)) +
+     &               wldna(ix,ia,0) - wldra(ix,ia,0) - wldpa(ix,ia,0)
                     do im = 1, nnmoli
                       if (mlcmp(ia,im).gt.0) then
                       sna_core(latmscl(ia))= sna_core(latmscl(ia)) +

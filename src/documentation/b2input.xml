@@ -3403,7 +3403,7 @@
 			  <default>0.0</default>
 			  <type>real</type>
 			  <description>
-			        Now it is an obsolette switch. After the speed-up scheme of artificial sources became species-resolved, it is turned on/off through the similar parameters in numerics namelist. Please refer to the corresponding part of the documentation.
+			        Now obsolete. This speed-up scheme using artificial sources is now species-resolved, and its parameters are to be provided through the numerics namelist. Please refer to the corresponding part of the documentation.
 				Multiplier to the neutral source differential between puffing and pumping strata for code speed-up.
 				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details.
 			  </description>
@@ -3805,7 +3805,7 @@
 				<default>0.05</default>
 				<type>real</type>
 				<description>
-					Now it is an obsolette switch. Since the speed-up scheme became species resolved, this parameter should be set in numerics namelist.
+					Now obsolete. The speed-up scheme is now species-resolved, and its parameters are to be provided through the numerics namelist.
 					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.
 				</description>
 			</switch>
@@ -7148,26 +7148,26 @@
 			<switch>
 				<name>SNA_CORR</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real*8 array of size (1:NSPECIES)</type>
 				<description>
-				Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus external source) and pumping which is further added to the ionization source for code speed-up. Now it has dimension SNA_CORR(1:NSPECIES) to allow different multipliers for different isonuclear sequences - such settings might be relevant for e.g. a mixture of main ion and trace impurity.
-				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper this scheme was suggested as NOT species resolved.
+				Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
 				</description>
 			</switch>
 			<switch>
 				<name>TAUMAX</name>
 				<default>0.05</default>
-				<type>real*8</type>
+				<type>real*8 array of size (1:NSPECIES)</type>
 				<description>
-				Maximum allowed fraction of ionization source from neutral state (coming from Eirene) to be added or substracted to the real Eirene source in the method of effective sources for code speed-up - now each isonuclear sequence may have its own TAUMAX, which has dimensions TAUMAX(1:NSPECIES)
+				Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
 				</description>
 			</switch>
 			<switch>
 				<name>DO_SNA_CORR_CORE</name>
-				<default>.TRUE.</default>
-				<type>logical</type>
+				<default>.true.</default>
+				<type>logical array of size (1:NSPECIES)</type>
 				<description>
-				Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up - also species resolved. If .TRUE., then the flux through the core boundary of certain species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .FALSE., then the particle disbalance is computed as puffing plus sputtering plus external source minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such setting might be helpful if core flux is much bigger than puffing and core is isolated from SOL by strong transport barrier) 
+				Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
 				</description>
 			</switch>
 			<switch>
