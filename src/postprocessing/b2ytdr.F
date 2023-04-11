@@ -10947,7 +10947,7 @@ cxpb as they no longer necessarily point to the same species
      .          'TIME_DEP_PUFF_PARAM(1:10,',ib,')=',
      .           time_dep_puff_param1(1:10,ib)
           enddo
-        endif 
+        endif
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'(1x,i4,'',''))'
         if (maxval(ngpdata1).gt.0) then
           write(99, hlp_frm)
