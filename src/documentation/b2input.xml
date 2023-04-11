@@ -5635,9 +5635,9 @@
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
 							POTPAR(,,1) specifies the desired potential in V.
 							POTPAR(,,2) is the strength of the feedback
-						23 : potential feedback on the total current for the South core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled by ions temperature.
-							POTPAR(,,1) specifies the desired integral current through flux surfaces(A).
-                            				POTPAR(,,2) is the strength of the feedback
+						23 : potential feedback on the total current for the South core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature.
+							POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes).
+							POTPAR(,,2) is the strength of the feedback
 				</description>
 			</switch>
 

@@ -4740,10 +4740,9 @@ cxpb code segment analog to b2tfhe
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             cs   = sqrt(pz(iCv1)/rz(iCv1))
-            t0 = 0.0_R8
+            t0 = dv%ne(iCv1)
             t1 = 0.0_R8
             do is = 0, ns-1
-              t0 = t0 + rt%rza(iCv1,is)*pl%na(iCv1,is)    !conpar(is,ib,1)*
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            rt%rza(iCv1,is)*pl%na(iCv1,is)
@@ -4755,7 +4754,7 @@ cxpb code segment analog to b2tfhe
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
      &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -                !srv 19.04.13
      &           enepar(ib,2)*t1                                        !wdk to check: correct for gammae?
-              srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) -
      &           qe*(pl%po(iCv1)-potpar(ib,2))*(t0 + t1)                !srv 07.11.12
             else                                                        !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
@@ -4790,29 +4789,28 @@ cwdk    Todo: corrections for BCCON.ne.14
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             s1   = abs(geo%fcPbs(iFc))
             vte  = sqrt(pl%te(iCv1)/me)
-            t0 = 0.0_R8
+            t0 = dv%ne(iCv1)
             t1 = 0.0_R8
             do is = 0, ns-1
-              t0 = t0 + rt%rza(iCv1,is)*pl%na(iCv1,is)    !conpar(is,ib,1)*
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            rt%rza(iCv1,is)*pl%na(iCv1,is)
             enddo
-            t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*expu2(min(0.0_R8,             !lkw 31.03.2023
+            t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*expu2(min(0.0_R8,   !lkw 31.03.2023
      &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
             t1 = t1*geo%fcS(iFc)
             if(switch%pot_eq.eq.1) then
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -
      &          (1.0e0_R8+GAMMAE)*t0 - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
-     &          (1.0e0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))*t0 -     !lkw 31.03.2023
-     &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1                     !wdk to check: correct 2nd term for gammae?
+     &          (1.0e0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))*t0 -    !lkw 31.03.2023
+     &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
             else
               cs = sqrt(pz(iCv1)/rz(iCv1))
               srw%she0(iCv1,1) = srw%she0(iCv1,1) - s1*dv%ne(iCv1)*cs*  !srv 11.03.09 {
      &          ((1.0e0_R8+GAMMAE) + (1.0e0_R8-GAMMAE)*switch%delpo) -
      &          (enepar(ib,2) + switch%delpo)*t1                        !wdk to check: correct for gammae?
-            endif   
+            endif
             if(switch%mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -8674,7 +8672,7 @@ cwdk    For testing purposes, use with care!
       case (15)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'zero net anomalous current on ',
+     .     'BCPOT = 15 : zero net anomalous current on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute average potential on boundary
@@ -8816,7 +8814,7 @@ c end of implementation
       case (17)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'imposed current on ',
+     .     'BCPOT = 17 : imposed current on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute average potential on boundary
@@ -8978,14 +8976,14 @@ c end of implementation
 *                from first flux tube in the domain
       case(22)
         if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'BCPOT = 22 : specified potential ',POTPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
      .      'BCPOT=22 intended for core boundaries only!')
           enddo
-          write(*,'(a,1p,g14.7,a,a,a)')
-     .     'specified potential ',POTPAR(IB,1),' on ',
-     1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute average potential on core boundary
         t0 = 0.0e0_R8
@@ -9019,20 +9017,20 @@ c end of implementation
 
 * -- BCPOT=23 -- Feedback on the total current for the South core boundary, by imposing a flux surface
 *                averaged potential, with poloidal perturbation taken from flux
-*                tube just inside domain. The feedback is scaled by ions temperature.
-*		POTPAR(,,1) specifies the desired integral current through flux surfaces(A).
-*           	POTPAR(,,2) is the strength of the feedback
+*                tube just inside domain. The feedback is scaled with the ion temperature.
+*               POTPAR(,,1) specifies the desired integral current through flux surfaces(A).
+*               POTPAR(,,2) is the strength of the feedback
 
         case(23)
         if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'BCPOT = 23 : specified potential ',POTPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
      .      'BCPOT=23 intended for core boundaries only!')
           enddo
-          write(*,'(a,1p,g14.7,a,a,a)')
-     .     'specified potential ',POTPAR(IB,1),' on ',
-     1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute average potential on core boundary
         t0 = 0.0e0_R8
@@ -9066,7 +9064,7 @@ c end of implementation
         enddo
         t1 = t1/t0
         t2 = t2/t0
-        t4 = t4/t0 
+        t4 = t4/t0
         if (potpar(ib,2).gt.0.0_R8) then
           t3 = potpar(ib,2)
         else
@@ -9091,7 +9089,7 @@ c end of implementation
       end select
 
 #ifdef WG_TODO
-      if(istyle_cur_contr_on_S_and_N.eq.0) then                       !srv 01.02.09
+      if(istyle_cur_contr_on_S_and_N.eq.0) then                          !srv 01.02.09
 !xpb
 !xpb  Adding fchy_dia contributions on south and north boundaries
 !xpb  following "sv 01.07.99" coding (see B2.5-style implementation)
@@ -9111,7 +9109,7 @@ c end of implementation
      .             bc_list_x(ix,ib)+1 .or. nncut.eq.0) then
                   fchy_dia = -praverage(1)*
      .             facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
-     &             *switch%b2stbc_fchy_dia                               !sv 01.07.99
+     &             *switch%b2stbc_fchy_dia                               !srv 01.07.99
      &             *(OnedBsqc(rightix(topix(bc_list_x(ix,ib),
      .                                      bc_list_y(ix,ib)),
      1                                topiy(bc_list_x(ix,ib),
@@ -9121,7 +9119,7 @@ c end of implementation
      1                                topiy(bc_list_x(ix,ib),
      .                                      bc_list_y(ix,ib))))
      &              -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))) !sv
+     .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))) !srv
                 else
                   if(ncall_b2stbc_phys.eq.0  )write(*,*)
      >             'b2stbc: special treatment for cell ix,iy = ',
