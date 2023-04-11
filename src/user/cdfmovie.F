@@ -5,7 +5,6 @@
       use b2us_plasma
 #ifndef NO_CDF
       use b2mod_movies
-#endif
       use b2mod_constants
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -13,6 +12,7 @@
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
+#endif
 #endif
       use b2mod_switches
       use b2mod_subsys
