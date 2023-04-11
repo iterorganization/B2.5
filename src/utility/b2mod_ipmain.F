@@ -185,6 +185,16 @@
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Deprecated, '//
      &     're-run b2ag using "b2agdr_redef_gmtry"'
+        case ('b2stbr_sna_corr')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete. Please control the'
+     &  //  ' speed-up scheme of artificial sources through'
+     &  //  ' numerics namelist for each species separately.'
+        case ('b2stbr_taumax')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete. Please control the'
+     &  //   ' speed-up scheme of artificial sources through'
+     &  //   ' numerics namelist for each species separately.'
         case default
           prohib = .false.
         end select
