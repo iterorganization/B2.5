@@ -794,12 +794,14 @@ cmb   Loop implicitly expects that the species are arranged per isonuclear seque
       nnsum = 0.0_R8
       nnwwnsum = 0.0_R8
       do is = nsmin, nsmax
-         if (zn(is0).ne.zn(is).or.amtol.lt.abs(am(is0)-am(is))) then
+         if (nint(zn(is0)).ne.nint(zn(is)).or.
+     &       amtol.lt.abs(am(is0)-am(is))) then
             is0 = is
          endif
 cdpc
          if(is_neutral(is)) is1=is
-         if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
+         if(nint(zn(is1)).ne.nint(zn(is)).or.
+     &      amtol.lt.abs(am(is1)-am(is))) then
             write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
          endif
          if(is0.ne.is1) then
@@ -830,8 +832,9 @@ cdpc
             Pflx = Pflx + pl%na(iCv,is)*vbar*switch%b2stbr_alpha *
      1           switch%neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          endif
-         if (switch%recycle_afn.eq.0.or.zn(is0).ne.1.or.is0.ne.ismain0)
-     &    then !! default neutral recycling/reflection model (always for non-hydrogenic species)
+         if (switch%recycle_afn.eq.0.or.
+     &       nint(zn(is0)).ne.1.or.is0.ne.ismain0) then
+!! default neutral recycling/reflection model (always for non-hydrogenic species)
            srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
      &      b2recyc(is,istra)*t0
 #ifdef WG_TODO
@@ -1095,7 +1098,7 @@ c temporary switch to evaluate the effect.
              endif
 
            endif
-           if (zamax(is).eq.zn(is)) then   !! see eq. 62-63 of the main reference.
+           if (nint(zamax(is)).eq.nint(zn(is))) then   !! see eq. 62-63 of the main reference.
                if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
                smon = -isign*
      &            cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/
@@ -1639,13 +1642,14 @@ cxpb  as deposition
          is0 = ns-1
          is1 = ns-1
          do is = nsmax, nsmin, -1
-            if (zn(is0).ne.zn(is).or.
+            if (nint(zn(is0)).ne.nint(zn(is)).or.
      &           amtol.lt.abs(am(is0)-am(is))) then
                is0 = is
             endif
 cxpb
-            if(zamax(is).eq.zn(is)) is1=is
-            if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
+            if(nint(zamax(is)).eq.nint(zn(is))) is1=is
+            if(nint(zn(is1)).ne.nint(zn(is)).or.
+     &         amtol.lt.abs(am(is1)-am(is))) then
               write(*,'(a,3i3)')
      .         'b2stbr problem: is, is0, is1 ',is,is0,is1
             endif

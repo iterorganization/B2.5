@@ -279,7 +279,7 @@
         k=-1
         max_df0_tmp=0.0_R8
         min_df0_tmp=1.0e30_R8
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
           k=0
           do while (iscx(k).ne.is .and. k.lt.nscx)
             k = k+1
@@ -3723,7 +3723,7 @@ c*******************************************************************************
 *   ..subprogram start-up calls
       call subini ('set_transport_afn')
       do is = 0, ns-1
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then ! only for hydrogenic species
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then ! only for hydrogenic species
 
           k=0
           do while (iscx(k).ne.is .and. k.lt.nscx)

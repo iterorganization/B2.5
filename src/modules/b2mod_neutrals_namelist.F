@@ -504,7 +504,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       do while (is0.lt.nsd)
         is = is0
         ispecies = ispecies + 1
-        do while (zn(is).eq.zn(is0).and.
+        do while (nint(zn(is)).eq.nint(zn(is0)).and.
      &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.nsd)
           is = is + 1
           if (is.eq.nsd) exit
