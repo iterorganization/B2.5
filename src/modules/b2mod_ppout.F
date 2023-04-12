@@ -251,8 +251,8 @@ c   ..dominant ion in plasma and its neutral
       ism0 = -1         ! index of main ion neutral
 
       do is = 0, nspp - 1
-         if( zn(is).eq.1.0_R8 ) then
-             if( zamax(is).eq.1.0_R8 ) then
+         if( nint(zn(is)).eq.1 ) then
+             if( nint(zamax(is)).eq.1 ) then
                  ism  = is
              else if( is_neutral(is) ) then
                  ism0 = is
@@ -279,7 +279,8 @@ c   ..collect non-dominant species
              izch(nzs)   = int(zn(is))
              zmass(nzs)  = am(is)
          endif
-         if( .not.is_neutral(is) .and. zn(is).ne.zn(ism) ) then
+         if( .not.is_neutral(is) .and.
+     &        nint(zn(is)).ne.nint(zn(ism)) ) then
              do ix = -1 , nxpp
                 do iy = -1 , nypp
                    sqezrad(ix,iy,nzs) = sqezrad(ix,iy,nzs)
@@ -1509,7 +1510,8 @@ c   ..neutral impurities
       if( nz.gt.0 ) then
           i = 0
           do is = 0 , nspp-1
-             if( is_neutral(is) .and. zn(is).ne.zn(ism) ) then
+             if( is_neutral(is) .and.
+     &           nint(zn(is)).ne.nint(zn(ism)) ) then
                  i = i + 1
                  cbuf2 = is_codes(is)
                  call chcase(1,cbuf2)
@@ -1538,7 +1540,8 @@ c   ..impurity charged states
       if( nz.gt.0 ) then
           i = 0
           do is = 0 , nspp-1
-             if( .not.is_neutral(is) .and. zn(is).ne.zn(ism) ) then
+             if( .not.is_neutral(is) .and.
+     &            nint(zn(is)).ne.nint(zn(ism)) ) then
                  i = i + 1
                  write(cbuf6,1010) 'IMP ' , i
 
