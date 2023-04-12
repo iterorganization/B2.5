@@ -278,7 +278,8 @@ c 2002-09-11: logic revised
       integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, ij, k, kk, ix, iy, is, ib, ireg, ireg1, len, nsns
       integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
-      integer natm1, nmol1, nion1, nspecies1, iss, ispecies, jspecies
+      integer natm1, nmol1, nion1, nspecies1
+      integer iss, jss, ispecies, jspecies
       integer itrack1, itrack2, itrack3
       integer non_commensurate
       integer istyle_cur_contr_on_S_and_N
@@ -324,7 +325,7 @@ c 2002-09-11: logic revised
       integer IRPTA3, IRPTE3
       integer NPHOTI, NPLSI, NNREAC, IPLTA, ILINE
       integer NATMI1, NREAC1, NREAC2, NRR1, NSTRA1, NPLSI1, NBGK1, NSKIP
-      integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
+      integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M
       integer size_mp, size_mt, nc, maxne, quote_count, iquote, iyear
       integer ICRM, JPLSS, ISTRA, ISKIP
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
