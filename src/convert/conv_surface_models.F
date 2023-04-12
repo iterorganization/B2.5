@@ -317,7 +317,7 @@
       end subroutine conv_surface_models
 
       subroutine find_nondef_surfaces (nout, mpg, gm,
-     .           elem, bndmdl, elem_cv,nelem)
+     .           elem, bndmdl, elem_cv,nelem, iVx_node, nnode)
 
       use b2mod_types
       use b2mod_boundary_namelist
@@ -328,10 +328,11 @@
 
       implicit none
 
-      integer, intent(in) :: nout, nelem
+      integer, intent(in) :: nout, nelem, nnode
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
-      integer, intent(in) :: elem(3,nelem), elem_cv(nelem)
+      integer, intent(in) :: elem(3,nelem), elem_cv(nelem),
+     .                       iVx_node(nnode)
       integer, intent(inout) :: bndmdl(3,nelem)
       integer, allocatable :: indelm(:), tris(:), jsts(:)
       integer :: istra, imodel, i, j, ifc, ifcmin, ifcmax, ic, nt, it,
@@ -378,8 +379,10 @@
               do is = 1, 3
                 is1 = is + 1
                 if (is1 > 3) is1 = 1
-                itmin = min(elem(is,jt), elem(is1,jt))
-                itmax = max(elem(is,jt), elem(is1,jt))
+                itmin = min(iVx_node(elem(is,jt)),
+     .                      iVx_node(elem(is1,jt)))
+                itmax = max(iVx_node(elem(is,jt)),
+     .                      iVx_node(elem(is1,jt)))
                 if ((ifcmin == itmin) .and. (ifcmax == itmax)) then
                   bndmdl(is,jt) = -imodel
                   exit itloop
@@ -414,8 +417,10 @@
               do is = 1, 3
                 is1 = is + 1
                 if (is1 > 3) is1 = 1
-                itmin = min(elem(is,jt), elem(is1,jt))
-                itmax = max(elem(is,jt), elem(is1,jt))
+                itmin = min(iVx_node(elem(is,jt)),
+     .                      iVx_node(elem(is1,jt)))
+                itmax = max(iVx_node(elem(is,jt)),
+     .                      iVx_node(elem(is1,jt)))
                 if ((ifcmin == itmin) .and. (ifcmax == itmax)) then
                   if (bndmdl(is,jt) == 0) then
                     if (ib /= ibold) then
