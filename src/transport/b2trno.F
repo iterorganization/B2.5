@@ -228,7 +228,7 @@
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
       if (switch%transport_afn.eq.1) then 
        do is = 0, ns-1
-         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+         if (is_neutral(is).and.nint(zn(is)).eq.1) then
            wrkc =  co%dpa0(:,is)*(geo%cvbb(:,2)/geo%cvbb(:,3))**2
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &                 wrkc, co%cdpa(1:nFc,0,is))   

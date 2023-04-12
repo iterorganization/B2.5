@@ -296,7 +296,8 @@ c
       isp=0
       ispecies(0)=isp
       do is=1,ns-1
-        if(zn(is) .ne. zn(is-1) .or. am(is) .ne. am(is-1)) then
+        if(nint(zn(is)).ne.nint(zn(is-1)) .or.
+     &     nint(am(is)).ne.nint(am(is-1))) then
           isp=isp+1
         endif
         ispecies(is)=isp

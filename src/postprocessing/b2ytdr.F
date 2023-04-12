@@ -267,7 +267,8 @@ c 2002-09-11: logic revised
       integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
-      integer natm1, nmol1, nion1, nspecies1, iss
+      integer natm1, nmol1, nion1, nspecies1
+      integer iss, jss, ispecies, jspecies
       integer itrack1, itrack2, itrack3
       integer non_commensurate
       integer istyle_cur_contr_on_S_and_N
@@ -281,7 +282,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: b2eatcr1(:), b2espcr1(:)
       integer, allocatable :: latmscl1(:), lmolscl1(:), lionscl1(:)
       integer, allocatable :: eb2atcr1(:), eb2spcr1(:), eb2ibcr(:)
-      integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:), isp1(:)
+      integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:)
       integer, allocatable :: lstrascl1(:,:), lsns1(:), ksns1(:)
       integer, allocatable :: ngpdata1(:)
       integer, allocatable :: na_feedback_actuator1(:),
@@ -289,9 +290,7 @@ c 2002-09-11: logic revised
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
      4  na_feedback_ib1(:)
-#ifdef WG_TODO
       integer, allocatable :: l_h_mol1(:,:)
-#endif
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
@@ -315,7 +314,7 @@ c 2002-09-11: logic revised
       integer IRPTA3, IRPTE3
       integer NPHOTI, NPLSI, NNREAC, IPLTA, ILINE
       integer NATMI1, NREAC1, NREAC2, NRR1, NSTRA1, NPLSI1, NBGK1, NSKIP
-      integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
+      integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M
       integer size_mp, size_mt, nc
       integer ICRM, JPLSS, ISTRA, ISKIP
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
@@ -340,9 +339,7 @@ c 2002-09-11: logic revised
       integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
-#ifdef WG_TODO
       integer iplsbeginrange, iplsendrange
-#endif
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
       integer, allocatable :: IREAC1(:), IREAC2(:)
@@ -1083,6 +1080,7 @@ c 2002-09-11: logic revised
       bundle_frac=0.0_R8
       bundle_contr=0.0_R8
       ispecies1=-1
+      b2espcr1=-1
       nsmin=0
       nsmax=ns
 *   ..read new atomic rate data
@@ -1116,6 +1114,9 @@ c 2002-09-11: logic revised
           bundle_frac(is,is) = 1.0_R8
         enddo
         nspecies1 = nspecies
+        do is = 1, nspecies
+          ispecies1(is) = is
+        end do
         same_atoms = .true.
       else
         call de_bundle (ns, zn, am, zamin, zamax,
@@ -1145,6 +1146,28 @@ c 2002-09-11: logic revised
           end if
           ib = ib + 1
         end do
+        iss = 0
+        ispecies = 0
+        jspecies = 0
+        do while (iss.lt.ns)
+          is = iss
+          ispecies = ispecies + 1
+          do while (nint(zn(is)).eq.nint(zn(iss)).and.
+     &     abs(am(is)-am(iss)).lt.1.0e-3_R8.and.is.lt.ns)
+            is = is + 1
+          enddo
+          js = is1(iss)
+          if (js.ge.0.and.js.lt.ns1) then
+            jss = 0
+            jspecies = 1
+            do while (jss.lt.js)
+              if (.not.lnext1(jss,jss+1)) jspecies = jspecies + 1
+              jss = jss + 1
+            end do
+            ispecies1(jspecies) = ispecies
+          end if
+          iss = is
+        end do
       endif
       ifl = 0
       do is = 0, ns1-1
@@ -1157,9 +1180,7 @@ c 2002-09-11: logic revised
       nmol1 = 1
       nion1 = 1
       allocate(eb2spcr1(nspecies1))
-      allocate(isp1(nspecies1))
       eb2spcr1=-1
-      b2espcr1=-1
       b2eatcr1=-1
       hydrogen = .false.
       do ib = 0, ns1-1
@@ -3768,7 +3789,8 @@ cxpb  Start reading input.dat file
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           filename=fort_lc//'13'
           inquire(file=filename,exist=ex)
-          if (ex) idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
+          if (ex .or. nfl.lt.nplsi)
+     >     idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
           filename=fort_lc//'15'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
@@ -5626,17 +5648,6 @@ cxpb Now we have read the species data and can identify the bundles
           enddo
         end do
 ! fill up the mapping between sequence numbers
-        if (same_atoms) then
-          do is = 1, nspecies
-            ispecies1(is) = is
-          end do
-        else
-          do is = 1, nspecies
-            if (is1(eb2spcr(is)).ne.-1) then
-              ispecies1(is) = b2espcr1(is1(eb2spcr(is)))
-            endif
-          end do
-        end if
         do is = 1, natmi
           if (latmscl(is).ne.0) then
             if (iatm1(is).gt.0 .and. iatm1(is).le.natmi1)
@@ -7900,8 +7911,8 @@ cxpb  to see if some strata need to be removed
         READ (IUNIN,6666) (INDSRC(ISTRA),ISTRA=1,NSTRAI)
         READ (IUNIN,6664) ALLOC, MPTS
         DO 712 ISTRA=1,NSTRAI
-#ifdef WG_TODO
           IF (INDSRC(ISTRA).EQ.6) THEN
+#ifdef WG_TODO
             savestratum(ISTRA) = .false.
             DO J = 1, NTGPRT(ISTRA)
               idum(0) = iplsbeginrange(NSPZI(ISTRA,J),NSPZE(ISTRA,J),
@@ -7911,9 +7922,11 @@ cxpb  to see if some strata need to be removed
               savestratum(ISTRA) = savestratum(ISTRA) .or.
      .         (idum(0).gt.0 .AND. idum(1).gt.0)
             END DO
+#else
+            savestratum(ISTRA) = .true.
+#endif
             GOTO 712
           ENDIF
-#endif
           IF (IREAD.EQ.0) THEN
             READ (IUNIN,'(A72)') TXTSOU(ISTRA)
           ELSEIF (IREAD.EQ.1) THEN
@@ -9792,17 +9805,6 @@ cxpb  Convert fort.46 file if needed
           end if
         end do
 ! fill up the mapping between sequence numbers
-        if (same_atoms) then
-          do is = 1, nspecies
-            ispecies1(is) = is
-          end do
-        else
-          do is = 1, nspecies
-            if (is1(eb2spcr(is)).ne.-1) then
-              ispecies1(is) = b2espcr1(is1(eb2spcr(is)))
-            endif
-          end do
-        end if
         do is = 1, natmi
           if (latmscl(is).ne.0) then
             if (iatm1(is).gt.0 .and. iatm1(is).le.natm1)
@@ -9848,17 +9850,6 @@ cxpb  Convert fort.46 file if needed
         end if
       end do
 ! fill up the mapping between sequence numbers
-      if (same_atoms) then
-        do is = 1, nspecies
-          ispecies1(is) = is
-        end do
-      else
-        do is = 1, nspecies
-          if (is1(eb2spcr(is)).ne.-1) then
-            ispecies1(is) = b2espcr1(is1(eb2spcr(is)))
-          endif
-        end do
-      end if
       do is = 1, natmi
         if (latmscl(is).ne.0) then
           if (iatm1(is).gt.0 .and. iatm1(is).le.natm1)
@@ -10099,13 +10090,6 @@ cxpb as they no longer necessarily point to the same species
         end do
         call convert_bundle_i
      .   (ns1,ns,nsm,is_neutral1,bundle_frac,track_index)
-        do is = 1, nspecies1
-          if (eb2spcr1(is).ne.-1) then
-            isp1(is) = b2espcr1(eb2spcr1(is))
-          else
-            isp1(is) = 0
-          end if
-        end do
         mlcmp1 = 0.0_R8
         do jmol = 1, nmoli
           if (imol1(jmol).ne.0) then
@@ -11583,8 +11567,9 @@ cxpb as they no longer necessarily point to the same species
       logical function lnext1(is,js)
       implicit none
       integer, intent(in) :: is, js
-      lnext1 = zamax1(is).lt.zamin1(js).and.zn1(is).eq.zn1(js)
-     &  .and.abs(am1(is)-am1(js)).lt.amtol
+      lnext1 = nint(zamax1(is)).lt.nint(zamin1(js)).and.
+     &         nint(zn1(is)).eq.nint(zn1(js)).and.
+     &         abs(am1(is)-am1(js)).lt.amtol
       return
       end function lnext1
 
