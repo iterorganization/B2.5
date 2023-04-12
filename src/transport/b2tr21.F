@@ -109,7 +109,7 @@ c     local variables:
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
-          if(zn(i).ne.zn(i-1)) then
+          if(nint(zn(i)).ne.nint(zn(i-1))) then
             mm(nspec)=am(i-1)*mp
             nspec=nspec+1
             nz(nspec)=0
@@ -405,7 +405,7 @@ c       ( ix )
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
-          if(zn(i).ne.zn(i-1)) then
+          if(nint(zn(i)).ne.nint(zn(i-1))) then
             mm(nspec)=am(i-1)*mp
             nspec=nspec+1
             nz(nspec)=0

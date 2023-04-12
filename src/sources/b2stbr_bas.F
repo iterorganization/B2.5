@@ -474,12 +474,14 @@ c lcore           is this a core element
       is0 = 0
       is1 = 0
       do is = 0, ns-1
-         if (zn(is0).ne.zn(is).or.amtol.lt.abs(am(is0)-am(is))) then
+         if (nint(zn(is0)).ne.nint(zn(is)).or.
+     &       amtol.lt.abs(am(is0)-am(is))) then
             is0 = is
          endif
 cdpc
          if(is_neutral(is)) is1=is
-         if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
+         if(nint(zn(is1)).ne.nint(zn(is)).or.
+     &      amtol.lt.abs(am(is1)-am(is))) then
             write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
          endif
          if(is0.ne.is1) then
@@ -783,13 +785,14 @@ c back scattering
          is0 = ns-1
          is1 = ns-1
          do is = ns-1, 0, -1
-            if (zn(is0).ne.zn(is).or.
+            if (nint(zn(is0)).ne.nint(zn(is)).or.
      &           amtol.lt.abs(am(is0)-am(is))) then
                is0 = is
             endif
 cxpb
-            if(zamax(is).eq.zn(is)) is1=is
-            if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
+            if(nint(zamax(is)).eq.nint(zn(is))) is1=is
+            if(nint(zn(is1)).ne.nint(zn(is)).or.
+     &         amtol.lt.abs(am(is1)-am(is))) then
                write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
             endif
             if(is0.ne.is1) then

@@ -278,7 +278,7 @@ c 2002-09-11: logic revised
       integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, ij, k, kk, ix, iy, is, ib, ireg, ireg1, len, nsns
       integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
-      integer natm1, nmol1, nion1, nspecies1, iss
+      integer natm1, nmol1, nion1, nspecies1, iss, ispecies, jspecies
       integer itrack1, itrack2, itrack3
       integer non_commensurate
       integer istyle_cur_contr_on_S_and_N
@@ -292,7 +292,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: b2eatcr1(:), b2espcr1(:)
       integer, allocatable :: latmscl1(:), lmolscl1(:), lionscl1(:)
       integer, allocatable :: eb2atcr1(:), eb2spcr1(:), eb2ibcr(:)
-      integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:), isp1(:)
+      integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:)
       integer, allocatable :: lstrascl1(:,:), lsns1(:), ksns1(:)
       integer, allocatable :: ngpdata1(:)
       integer, allocatable :: na_feedback_actuator1(:),
@@ -1125,6 +1125,7 @@ c 2002-09-11: logic revised
       bundle_frac=0.0_R8
       bundle_contr=0.0_R8
       ispecies1=-1
+      b2espcr1=-1
       nsmin=0
       nsmax=ns
 *   ..read new atomic rate data
@@ -1159,6 +1160,9 @@ c 2002-09-11: logic revised
           bundle_frac(is,is) = 1.0_R8
         enddo
         nspecies1 = nspecies
+        do is = 1, nspecies
+          ispecies1(is) = is
+        end do
         same_atoms = .true.
       else
         call de_bundle (ns, zn, am, zamin, zamax,
@@ -1188,6 +1192,28 @@ c 2002-09-11: logic revised
           end if
           ib = ib + 1
         end do
+        iss = 0
+        ispecies = 0
+        jspecies = 0
+        do while (iss.lt.ns)
+          is = iss
+          ispecies = ispecies + 1
+          do while (nint(zn(is)).eq.nint(zn(iss)).and.
+     &     abs(am(is)-am(iss)).lt.1.0e-3_R8.and.is.lt.ns)
+            is = is + 1
+          enddo
+          js = is1(iss)
+          if (js.ge.0.and.js.lt.ns1) then
+            jss = 0
+            jspecies = 1
+            do while (jss.lt.js)
+              if (.not.lnext1(jss,jss+1)) jspecies = jspecies + 1
+              jss = jss + 1
+            end do
+            ispecies1(jspecies) = ispecies
+          end if
+          iss = is
+        end do
       endif
       ifl = 0
       do is = 0, ns1-1
@@ -1200,9 +1226,7 @@ c 2002-09-11: logic revised
       nmol1 = 1
       nion1 = 1
       allocate(eb2spcr1(nspecies1))
-      allocate(isp1(nspecies1))
       eb2spcr1=-1
-      b2espcr1=-1
       b2eatcr1=-1
       hydrogen = .false.
       do ib = 0, ns1-1
@@ -3808,6 +3832,58 @@ cxpb This will need to be checked !!!
           if(time_factor_required.ne.0.1_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .     'TIME_FACTOR_REQUIRED=',time_factor_required,','
+          write(hlp_frm,'(a,i2,a)')
+     .     '(1x,a,',nspecies1,'(1x,f10.7,'',''))'
+          if (maxval(sna_corr).gt.0.0_R8.or.b2stbr_sna_corr.ne.0.0_R8)
+     >     then
+            allocate(sna_corr1(1:nspecies1))
+            if (maxval(sna_corr).eq.0.0_R8.and.
+     >          b2stbr_sna_corr.ne.0.0_R8) then
+              sna_corr1(1:nspecies1) = b2stbr_sna_corr
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  sna_corr1(ispecies1(is)) = sna_corr(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
+            deallocate(sna_corr1)
+          end if
+          if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
+     &      .or. b2stbr_taumax.ne.0.05_R8) then
+            allocate(taumax1(1:nspecies1))
+            if (maxval(taumax).eq.0.05_R8 .and.
+     &          minval(taumax).eq.0.05_R8 .and.
+     &           b2stbr_taumax.ne.0.05_R8) then
+              taumax1(1:nspecies1) = b2stbr_taumax
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  taumax1(ispecies1(is)) = taumax(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'TAUMAX=',(taumax1(is),is=1,nspecies1)
+            deallocate(taumax1)
+          end if
+          if (.not.(any(do_sna_corr_core(1:nspecies)))) then
+            allocate(do_sna_corr_core1(1:nspecies1))
+            do is = 1, nspecies
+              if (ispecies1(is).ne.-1) then
+                do_sna_corr_core1(ispecies1(is)) = do_sna_corr_core(is)
+              end if
+            end do
+            if (.not.(any(do_sna_corr_core1(1:nspecies1)))) then
+              write(hlp_frm,'(a,i2,a)')
+     .         '(1x,a,',nspecies1,'l1,'','')'
+              write(99, hlp_frm) 'DO_SNA_CORR_CORE=',
+     .         (do_sna_corr_core1(is),is=1,nspecies1)
+            end if
+            deallocate(do_sna_corr_core1)
+          end if
           if (.not.write_nml_num) write(99, '(a,l1,a)')
      >     'WRITE_NML_NUM=',write_nml_num,','
           write(99,'(a1)') '/'
@@ -6013,17 +6089,6 @@ cxpb Now we have read the species data and can identify the bundles
           enddo
         end do
 ! fill up the mapping between sequence numbers
-        if (same_atoms) then
-          do is = 1, nspecies
-            ispecies1(is) = is
-          end do
-        else
-          do is = 1, nspecies
-            if (is1(eb2spcr(is)).ne.-1) then
-              ispecies1(is) = b2espcr1(is1(eb2spcr(is)))
-            endif
-          end do
-        end if
         do is = 1, natmi
           if (latmscl(is).ne.0) then
             if (iatm1(is).gt.0 .and. iatm1(is).le.natmi1)
@@ -10498,17 +10563,6 @@ cxpb  Convert fort.46 file if needed
           end if
         end do
 ! fill up the mapping between sequence numbers
-        if (same_atoms) then
-          do is = 1, nspecies
-            ispecies1(is) = is
-          end do
-        else
-          do is = 1, nspecies
-            if (is1(eb2spcr(is)).ne.-1) then
-              ispecies1(is) = b2espcr1(is1(eb2spcr(is)))
-            endif
-          end do
-        end if
         do is = 1, natmi
           if (latmscl(is).ne.0) then
             if (iatm1(is).gt.0 .and. iatm1(is).le.natm1)
@@ -10554,17 +10608,6 @@ cxpb  Convert fort.46 file if needed
         end if
       end do
 ! fill up the mapping between sequence numbers
-      if (same_atoms) then
-        do is = 1, nspecies
-          ispecies1(is) = is
-        end do
-      else
-        do is = 1, nspecies
-          if (is1(eb2spcr(is)).ne.-1) then
-            ispecies1(is) = b2espcr1(is1(eb2spcr(is)))
-          endif
-        end do
-      end if
       do is = 1, natmi
         if (latmscl(is).ne.0) then
           if (iatm1(is).gt.0 .and. iatm1(is).le.natm1)
@@ -10807,13 +10850,6 @@ cxpb as they no longer necessarily point to the same species
         end do
         call convert_bundle_i
      .   (ns1,ns,nsm,is_neutral1,bundle_frac,track_index)
-        do is = 1, nspecies1
-          if (eb2spcr1(is).ne.-1) then
-            isp1(is) = b2espcr1(eb2spcr1(is))
-          else
-            isp1(is) = 0
-          end if
-        end do
         mlcmp1 = 0.0_R8
         do jmol = 1, nmoli
           if (imol1(jmol).ne.0) then
@@ -11065,57 +11101,6 @@ cxpb as they no longer necessarily point to the same species
 #endif
         if (maxpoin.ne.2000) write(99,'(1x,a,i6,a)')
      >   'MAXPOIN=', maxpoin,','
-        write(hlp_frm,'(a,i2,a)')
-     .           '(1x,a,',nspecies1,'(1x,f10.7,'',''))'
-        if (maxval(sna_corr).gt.0.0_R8.or.b2stbr_sna_corr.ne.0.0_R8)
-     >   then
-          allocate(sna_corr1(1:nspecies1))
-          if (maxval(sna_corr).eq.0.0_R8.and.b2stbr_sna_corr.ne.0.0_R8)
-     >     then
-            sna_corr1(1:nspecies1) = b2stbr_sna_corr
-          else
-            do is = 1, nspecies
-              if (ispecies1(is).ne.-1) then
-                sna_corr1(ispecies1(is)) = sna_corr(is)
-              end if
-            end do
-          end if
-          write(99, hlp_frm)
-     .             'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
-          deallocate(sna_corr1)
-        end if
-        if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
-     &      .or. b2stbr_taumax.ne.0.05_R8) then
-          allocate(taumax1(1:nspecies1))
-          if (maxval(taumax).eq.0.05_R8 .and. minval(taumax).eq.0.05_R8
-     &      .and. b2stbr_taumax.ne.0.05_R8) then
-            taumax1(1:nspecies1) = b2stbr_taumax
-          else
-            do is = 1, nspecies
-              if (ispecies1(is).ne.-1) then
-                taumax1(ispecies1(is)) = taumax(is)
-              end if
-            end do
-          end if
-          write(99, hlp_frm)
-     .             'TAUMAX=',(taumax1(is),is=1,nspecies1)
-          deallocate(taumax1)
-        end if
-        if (.not.(any(do_sna_corr_core(1:nspecies)))) then
-          allocate(do_sna_corr_core1(1:nspecies1))
-          do is = 1, nspecies
-            if (ispecies1(is).ne.-1) then
-              do_sna_corr_core1(ispecies1(is)) = do_sna_corr_core(is)
-            end if
-          end do
-          if (.not.(any(do_sna_corr_core1(1:nspecies1)))) then
-            write(hlp_frm,'(a,i2,a)')
-     .           '(1x,a,',nspecies1,'l1,'','')'
-            write(99, hlp_frm)
-     .       'DO_SNA_CORR_CORE=',(do_sna_corr_core1(is),is=1,nspecies1)
-          end if
-          deallocate(do_sna_corr_core1)
-        end if
         if (neutrals_time_mod.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
         if (neutrals_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
@@ -12457,8 +12442,9 @@ cxpb as they no longer necessarily point to the same species
       logical function lnext1(is,js)
       implicit none
       integer, intent(in) :: is, js
-      lnext1 = zamax1(is).lt.zamin1(js).and.zn1(is).eq.zn1(js)
-     &  .and.abs(am1(is)-am1(js)).lt.amtol
+      lnext1 = nint(zamax1(is)).lt.nint(zamin1(js)).and.
+     &         nint(zn1(is)).eq.nint(zn1(js)).and.
+     &         abs(am1(is)-am1(js)).lt.amtol
       return
       end function lnext1
 

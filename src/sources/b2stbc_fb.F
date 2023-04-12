@@ -1693,7 +1693,7 @@ cxpb current feedback not yet tested!
         do iy=-1,ny
           do ix=-1,nx
             do is = 0, ns-1
-              if (zn(is).eq.zn(isfeedback).and.
+              if (nint(zn(is)).eq.nint(zn(isfeedback)).and.
      &            abs(am(is)-am(isfeedback)).lt.amtol)
      >       ntot = ntot + na(ix,iy,is)*vol(ix,iy)
             enddo
@@ -1840,7 +1840,7 @@ c make sure that we save the feedback value before the code stops
           do iy = -1, ny
             do ix = -1, nx
               do is = 0, ns-1
-                if (zn(is).eq.zn(isfeedback).and.
+                if (nint(zn(is)).eq.nint(zn(isfeedback)).and.
      &              abs(am(is)-am(isfeedback)).lt.amtol)
      >            ntot = ntot + na(ix,iy,is)*vol(ix,iy)
               enddo
