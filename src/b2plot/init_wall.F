@@ -1197,7 +1197,7 @@ cxpb  Must check if Z of deposited material already exists in bulk
         found = .false.
         j = 1
         do while (.not.found .and. j.le.nz)
-          found = zn(target_intcode(itrack)).eq.
+          found = nint(zn(target_intcode(itrack))).eq.
      .            matsurf_nzconstituents(ibnd,j)
           if (.not.found) j = j + 1
         enddo

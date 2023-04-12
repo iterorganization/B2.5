@@ -521,8 +521,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
        found = .false.
        is = ismain
        do while (is.ge.0 .and. .not.found)
-         if (is_neutral(is) .and. zn(is).eq.zn(ismain) .and.
-     &       am(is).eq.am(ismain)) then
+         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
+     &                      .and. nint(am(is)).eq.nint(am(ismain))) then
            ismain0 = is
            found = .true.
          end if
@@ -541,7 +541,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       isp=0
       ispecies(0)=isp
       do is=1,ns-1
-        if(zn(is) .ne. zn(is-1) .or. am(is) .ne. am(is-1)) then
+        if(nint(zn(is)) .ne. nint(zn(is-1)) .or.
+     &     nint(am(is)) .ne. nint(am(is-1))) then
           isp=isp+1
         endif
         ispecies(is)=isp
