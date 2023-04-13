@@ -27,10 +27,13 @@
      & na_feedback_ix1(0:DEF_NATM-1), na_feedback_ix2(0:DEF_NATM-1), 
      & na_feedback_iy1(0:DEF_NATM-1), na_feedback_iy2(0:DEF_NATM-1), 
      & na_feedback_ib(0:DEF_NATM-1)
+      real (kind=R8) :: int_flux(DEF_NATM),
+     &  max_na_feedback_current(DEF_NATM)=0.0_R8
+      integer :: int_ntim(DEF_NATM)
       real (kind=R8), save ::
      * saved_cbshe_core, saved_cbshi_core, saved_cbsna_core,
      * saved_cbsch_core, saved_cbsna_pfr1, saved_cbsna_pfr2,
-     * saved_cbsna_sol,
+     * saved_cbsna_sol, 
      & vacuum_communication_alpha(0:nsdmax-1,nvac),
      & vacuum_communication_beta(0:nsdmax-1,nvac),
      & na_feedback_target(0:DEF_NATM-1), na_feedback_time(0:DEF_NATM-1),

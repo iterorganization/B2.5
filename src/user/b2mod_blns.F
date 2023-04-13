@@ -3,6 +3,7 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_feedback
       implicit none
 
 c
@@ -585,6 +586,7 @@ c**       lcns() - index of these 'non-default' surfaces
 c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
 
             do j = 1,nnatmi
+              print *, "latmscl(",j,")=",latmscl(j)," ,is=",is," ls=",ls
               if (latmscl(j) .eq. ls) then
                 flxnc(ls) = flxnc(ls)
      &               - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
@@ -711,8 +713,29 @@ c*** Puffing/seeding rate and recycling source
             if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
 
              do j = 1,nnatmi
-               if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
+c             Fixed by Kudrevatyh P.S and Shirobokov A.A.          ! 17.09.22
+!               if(debug_flags(90).gt.0) then
+!                 print *,"Lezgini tracing "
+!                 print *,"Lezgini target ",na_feedback_target(ls-1)
+!                 print *,"Lezgini actuator ",na_feedback_actuator(ls-1)
+!                 print *,"Lezgini nspecies ",nspecies
+!                 print *,"Lezgini EB2SPCR ",EB2SPCR(ls)
+!               endif
+
+               if (latmscl(j) .eq. ls .and. 
+     &                  na_feedback_target(ls-1) .gt. 0.0_R8 .and. 
+     &                  na_feedback_actuator(ls-1) .eq. 1) then
+                 flxnp(ls) =  flxnp(ls) + 
+     &               conpar(EB2SPCR(ls), na_feedback_ib(ls-1), 1) * 
+     &               gpfc(j,ic) * recyctmp
+!                 if (debug_flags(90).gt.0) 
+!     &              print *,"Lezgini flux ",ls," ",flxnp(ls)
+
+               else
+                 if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
      &                 userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
+               endif
+c End fix
              end do
 
             elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2.5 outer boundaries except targets
@@ -884,7 +907,7 @@ c
       if (.not. allocated(hlpit_lp))
      &   allocate(hlpit_lp(nspecies), hlpit_pl(nspecies))
 
-      if (.not. allocated(flxic))
+      if (.not. allocated(flxnc))
      &      allocate(
      &   flxic(nspecies), flxnc(nspecies), flxit(nspecies),
      &   flxnt(nspecies), flxiw(nspecies), flxnw(nspecies),

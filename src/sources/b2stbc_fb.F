@@ -212,13 +212,21 @@
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
       use b2mod_boundary_namelist
+      use b2mod_user_namelist
+      use b2mod_geo
+     ,   , only : hy,hz
 #ifdef B25_EIRENE
       use eirmod_wneutrals
+      use b2mod_eirene
+     ,   , only : eirpump
+      use eirmod_braeir
 #endif
       use b2mod_subsys
       use b2mod_plasma
      , ,only: na0, ne0, fna0, kinrgy0, ni0,
      ,        nap, nep, fnap, kinrgyp
+      use b2mod_driver
+     , ,only : pbs
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
@@ -260,12 +268,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ispecies, is0,
+      integer ncall, n2, ix, iy, is, ispecies, is0, idir, ixf, iyf,
+     & ic,mdf_fnb, style_b2mndt,js, m, iyp, nxtl, nxtr,n,
 #ifdef B25_EIRENE
      &        i, j, k, l,
 #endif
      &        ib, iss, ixl1, ixr1, ixl2, ixr2, istrai, icount
-      integer, save :: is_start, is_end
+      integer, save :: is_start, is_end,fb_istyle_fchi = 0
       integer, save :: ncall_old, ncall_gap, n_flux_zero
       integer, save :: fhiycore_kinetic_energy, ncallfeedback
       integer, save :: coreregno, coreregn2, solregno,
@@ -274,7 +283,7 @@
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
-     &  dt_prev, sum_e, sum_s,
+     &  dt_prev, sum_e, sum_s,fb_max_div=0.0_R8,
      &  total_flux, flux_old, target_flux,
      &  fnaycore, fnaycore_alpha, fnaycurr,
      1  fheycore, fheycore_alpha, fheycurr,
@@ -287,11 +296,13 @@
      4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
      4  volrec_curr,
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
-     6  cbsnafac, cbsnainc,
-     7  private_flux_puff, private_flux_area,
-     8  neutral_sources_rescale,
+     6  cbsnafac, cbsnainc, bsign, flxic(nspecies),flxnc(nspecies),
+     7  flxnp(nspecies),private_flux_puff, private_flux_area,
+     8  neutral_sources_rescale,sna_pump(nspecies),ia,im,ip,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
+        real (kind=R8) :: fchi,cs,pz(-1:nx,-1:ny),t0,s1,te_max,
+     &    rz(-1:nx,-1:ny)
       real (kind=R8), allocatable :: charge_frac(:)
       integer, save :: jsep, jxa, jxi, iyped
       integer, save :: b2sral_style = 2
@@ -308,12 +319,15 @@
      3  nesepm_integral_error,
      4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
      5  ndes, ndes_sol, den, rcbsna,
-     6  cbsnafac,
+     6  cbsnafac, 
      7  private_flux_puff, private_flux_area, flux_old,
      8  neutral_sources_rescale,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
       save zeroslope
+      real (kind=R8) :: hlp_p,hlp_s,hlp_si,hlp_hep,hlp_so,hlp_pi,
+     &  hlp_po,hlp,hlp_hepr,hlp_ppfi,hlp_ppfo,hlp_ppfr
+      integer :: ninp(0:1),itim, idum(0:9)
 *   ..procedures
       intrinsic abs, mod, nint
       external xertst, ipgetr, ipgeti
@@ -346,6 +360,7 @@
      i  coreregn2/4/, solregno/3/,
      i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/,
      l  zeroslope/.false./
+      data ninp/50,51/
 #ifdef COMPLICATED
 #ifndef B25_EIRENE
       integer i
@@ -368,6 +383,8 @@
        dt_prev = dteff
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
        call ipgeti ('b2sral_style', b2sral_style)
+       call ipgeti ('b2stbc_fb_fchi_style', fb_istyle_fchi)
+       call ipgetr ('b2stbc_fb_max_div', fb_max_div)
        call get_boundary_namelist
        consistent = .true.
        do ispecies = 0, nspecies-1
@@ -531,6 +548,8 @@
        endif
        call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
        call ipgetr ('b2stbc_ndes', ndes)
+       call ipgeti('b2tfnb_mdf', mdf_fnb)
+       call ipgeti('b2mndt_style', style_b2mndt)
        call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
        call ipgetr ('b2stbc_cbsnafac', cbsnafac)
        call xertst (0.0_R8.lt.cbsnafac,
@@ -720,7 +739,7 @@
 
           if(na_feedback_choice(ispecies) .gt. 0 .and.
      &       na_feedback_option(ispecies) .gt. 0 .and.
-     &       na_feedback_actuator(ispecies) .gt.0) then
+     &       na_feedback_actuator(ispecies) .gt. 0) then
 
             if (main_call) then
               na_feedback_prev(ispecies) = na_feedback_save(ispecies)
@@ -965,6 +984,7 @@
 
             case (6) ! neutral particle flux through the core boundary
 
+!<<<<<<< HEAD
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
@@ -972,6 +992,18 @@
      &             ispecies+1
               endif
               na_feedback_current = na_feedback_const(ispecies)
+!=======
+!              if(ncall.eq.0) then
+!                 write(*,'(a,a,i3)')
+!     &             'b2stbc_fb_pre_choice: using ',
+!     &                    'neutral density '//
+!     &                    'for sequence ',
+!     &                    ispecies+1
+!              endif
+!              
+!              na_feedback_current = na_feedback_const(ispecies)
+!>>>>>>> 9e9da198... Changes to be committed:
+
 #ifdef B25_EIRENE
               do k=1,ncns !{
                 l=nlim+lcns(k)
@@ -1086,9 +1118,240 @@
      &            ispecies+1
               endif
 
+!<<<<<<< HEAD
+!              na_feedback_current = 0.5_R8 *
+!     *         (ne(jxi,jsep)+
+!     *          ne(topix(jxi,jsep),topiy(jxi,jsep)))
+!              is_start=-1
+!              is_end=-1
+!              do is = 0, ns-1
+!                if(b2espcr(is).eq.ispecies+1) then
+!                  if(is_start.eq.-1) is_start=is
+!                  is_end=is
+!                endif
+!              enddo
+!
+!            case default
+!              write(*,*) 'na feedback_choice not coded ',
+!     &                    na_feedback_choice(ispecies)
+!
+!            end select
+!
+!=======
               na_feedback_current = 0.5_R8 *
-     *         (ne(jxi,jsep)+
-     *          ne(topix(jxi,jsep),topiy(jxi,jsep)))
+     *                 (ne(jxi,jsep)+
+     *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
+              is_start=-1
+              is_end=-1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                   if(is_start.eq.-1) is_start=is
+                   is_end=is
+                endif
+              enddo
+              
+            case (10)  ! neutral pressure at PFR southern boundary (by A. Kukushkin)
+            
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_choice: using ',
+     &                    'neutral pressure for sequence ',
+     &                    ispecies+1
+              endif
+              
+              call get_nxt(nx, nxtl, nxtr)
+              
+              if (lpfrb_i.eq.0) then
+                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+              endif
+              
+              hlp_p=0.0_R8
+              hlp_s=0.0_R8
+              hlp_hep=0.0_R8
+
+!              print '(1x,a,6i4)',
+!     ,          '%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
+!     ,                j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
+     
+              hlp_pi=0.0_R8
+              hlp_si=0.0_R8
+              hlp_po=0.0_R8
+              hlp_so=0.0_R8
+              
+              if(lpfrs_pmp.ne.0) then !{
+
+c*** Western divertor
+
+                m=lpfrb_i
+                if(m.le.0) then !{
+                  if(lpfrs_pmp.eq.1) then !{
+                    m=leftcut(1)-1+m
+                  elseif(lpfrs_pmp.eq.2) then !}{
+                    m=nx-1+m
+                  elseif(lpfrs_pmp.eq.3 .or. lpfrs_pmp.eq.4) then !}{
+                    m=nxtl-1+m
+                  end if !}
+                end if !}
+                n=lpfrt_i
+                if(n.le.0) then !{
+                  if(lpfrs_pmp.eq.1) then !{
+                    n=leftcut(1)-1+n
+                  elseif(lpfrs_pmp.eq.2) then !}{
+                    n=nx-1+n
+                  elseif(lpfrs_pmp.eq.3) then !}{
+                    n=leftcut(2)-n
+                  elseif(lpfrs_pmp.eq.4) then !}{
+                    n=nxtl-1+n
+                  end if !}
+                end if !}
+                iy=0
+                iyp=1
+                if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.2) then
+                  iy=ny
+                  iyp=ny
+                end if
+                do j=m,n !{
+                  hlp_si=hlp_si+gs(j,iy,1)
+                  hlp=0.0_R8
+                  do k=1,nnatmi !{
+                    hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
+                    if(k.eq.j_he_at) hlp_hep=hlp_hep+
+     +                dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)*gs(j,iy,1)
+                  end do !}
+                  do k=1,nnmoli !{
+                    hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
+                  end do !}
+                  hlp_pi=hlp_pi+hlp*gs(j,iy,1)
+                end do !}
+
+c          print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
+c     ,                                     m,n,hlp_si,hlp_hep      !###
+
+c*** Eastern divertor
+
+                  m=lpfrt_o
+                  if(m.le.0) then !{
+                    if(lpfrs_pmp.eq.1) then !{
+                      m=rightcut(1)-m
+                    elseif(lpfrs_pmp.eq.2) then !}{
+                      m=nx-1+m
+                    elseif(lpfrs_pmp.eq.3) then !}{
+                      m=rightcut(2)-1+m
+                    elseif(lpfrs_pmp.eq.4) then !}{
+                      m=nxtr-1-m
+                    end if !}
+                  end if !}
+                  n=lpfrb_o
+                  if(n.le.0) then !{
+                    if(lpfrs_pmp.eq.1 .or. lpfrs_pmp.eq.2) then !{
+                      n=nx-1+n
+                    else if(lpfrs_pmp.eq.3) then !}{
+                      n=nxtr+1-n
+                    else if(lpfrs_pmp.eq.4) then !}{
+                      n=nxtl-1+n
+                    end if !}
+                  end if !}
+                  iy=0
+                  iyp=1
+                  if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then !{
+                    iy=ny
+                    iyp=ny
+                  endif !}
+                  do j=m,n !{
+                    hlp_so=hlp_so+gs(j,iy,1)
+                    hlp=0.0_R8
+                    do k=1,nnatmi !{
+                      hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
+                      if(k.eq.j_he_at) hlp_hep=hlp_hep+
+     +                dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)*gs(j,iy,1)
+                    end do !}
+                    do k=1,nnmoli !{
+                      hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
+                    end do !}
+                    hlp_po=hlp_po+hlp*gs(j,iy,1)
+                  end do !}
+
+                    hlp_s=hlp_si+hlp_so
+                    hlp_p=hlp_pi+hlp_po
+                  end if !}
+c<<<
+c        print '(a,1p,2i4,3e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
+c     ,                                   m,n,hlp_so,hlp_hep,hlp_p
+c>>>
+                if(hlp_s.gt.0.0_R8) then !{
+                  hlp_ppfr=hlp_p/hlp_s
+                  hlp_hepr=hlp_hep/hlp_s
+                end if !}
+                if(hlp_si.gt.0.0_R8) hlp_ppfi=hlp_pi/hlp_si
+                if(hlp_so.gt.0.0_R8) hlp_ppfo=hlp_po/hlp_so
+                
+                print *, "neutral pressure",hlp_ppfr
+                if (isnan(hlp_ppfr)) then
+                  na_feedback_current = na_feedback_target(ispecies)
+                else
+                  na_feedback_current = hlp_ppfr
+                endif
+                ! na_feedback_current = na_feedback_target(ispecies)
+
+    !               na_feedback_current = 0.5_R8 *
+    !  *                 (ne(jxi,jsep)+
+    !  *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
+                  is_start=-1
+                  is_end=-1
+                  do is = 0, ns-1
+                     if(b2espcr(is).eq.ispecies+1) then
+                        if(is_start.eq.-1) is_start=is
+                        is_end=is
+                     endif
+                  enddo
+                  
+            case (11) ! ion saturation current at outer bottom target: to be done
+            
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &                'b2stbc_fb_pre_choice: using ',
+     &                'ion satuarion current for sequence ',
+     &                ispecies+1
+                if (fb_istyle_fchi.eq.0) then
+                  write(*,'(a)')
+     &                'increasing particle content to increase jsat...'
+                elseif (fb_istyle_fchi.eq.1) then
+                  write(*,'(a)')
+     &                'decreasing particle content to increase jsat...'
+                endif
+              endif
+                  
+
+              call b2xprz (nx, ny, ns, mp, am, na, rz)
+              fchi = 0.0_R8
+              te_max = 0.0_R8
+              
+              do IB = 1, NBC
+                IF(BCCHAR(IB).EQ.'E') THEN
+                  DO IY = 1, BC_LIST_SIZE(IB)
+                    s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
+                    CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                    t0 = 0.0e0_R8
+                    do is = 0, ns-1
+                      t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+     &                  fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+     &                  /(hy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     &                  hz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                    enddo
+
+                    if (abs(qe*t0).gt.fchi) then
+                      fchi = abs(qe*t0)
+                      te_max = te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+                    endif
+                  enddo
+               
+                  print *,"te=",te_max/qe,"fchi=",fchi
+          
+                ENDIF
+              end do
+           
+              na_feedback_current = fchi
               is_start=-1
               is_end=-1
               do is = 0, ns-1
@@ -1097,13 +1360,14 @@
                   is_end=is
                 endif
               enddo
-
+          
             case default
+            
               write(*,*) 'na feedback_choice not coded ',
-     &                    na_feedback_choice(ispecies)
+     &                 na_feedback_choice(ispecies)
 
             end select
-
+!>>>>>>> 9e9da198... Changes to be committed:
 ! phase 2:
 
             select case(na_feedback_option(ispecies))
@@ -1254,11 +1518,52 @@
                   na_feedback_rescale =
      &               na_feedback_alpha(ispecies) * na_feedback_current
 
+#ifdef B25_EIRENE                
+            case (7) ! adjusting puffing as a function of pumping
+c           Pure rescale, any variant may be used!
+               na_feedback_rescale =
+     &          (na_feedback_target(ispecies) /
+     &         na_feedback_current)
+     
+            case (8) ! rescale slowed by tanh_log
+
+                if(ncall.eq.0) then
+                  write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_option: using ',
+     &                    'tanh_log_rescale for sequence ',
+     &                    ispecies+1
+                endif
+
+          ! 2**(tanh(log(x)/b)*log(a)/log(2))
+                na_feedback_rescale =
+     &            (na_feedback_target(ispecies) /
+     &            na_feedback_current)
+                if ((na_feedback_rescale.le.0.99).or.
+     &            (na_feedback_rescale.ge.1.01)) then
+                  na_feedback_rescale = 2.0_R8 **
+     &            (tanh(log(na_feedback_rescale)/
+     &            na_feedback_beta(ispecies))*
+     &            log(na_feedback_alpha(ispecies))/log(2.0_R8))
+                endif
+#endif             
+
             case default
+            
               write(*,*) 'na feedback_option not coded ',
      &                     na_feedback_option(ispecies)
 
+!<<<<<<< HEAD
+!            end select
+!=======
             end select
+               
+! Needed for na_feedback_choice() = 11: to be further improved
+            if (fb_istyle_fchi.eq.1 .and. 
+     &             na_feedback_choice(ispecies) .eq. 11) then
+              na_feedback_rescale = 1/na_feedback_rescale
+            endif
+            
+!>>>>>>> 9e9da198... Changes to be committed:
 
             write(*,'(a,1x,1p,i3,6g15.6)')
      &       'na_feedback_rescale ', ispecies+1,
@@ -1283,47 +1588,249 @@
      &           ispecies+1
               endif
 
+!<<<<<<< HEAD
+!              if((feedback_namelist_used .and. ncall .eq. 0) .and.
+!     &           saved_na_feedback_actuator(ispecies) .eq. 0.0_R8) then
+!                write(message,'(a,i3,a,i2,a)')
+!     .            'Initial gas puff strength.le.0, set by CONPAR(',
+!     .            is_start,',',na_feedback_ib(ispecies),',1) !'
+!                call xertst(
+!     .            conpar(is_start, na_feedback_ib(ispecies), 1)
+!     .            .gt.0.0_R8, trim(message) )
+!                saved_na_feedback_actuator(ispecies) =
+!     &          conpar(is_start, na_feedback_ib(ispecies), 1)
+!              endif
+!
+!              if (na_feedback_option(ispecies).lt.4) then
+!                saved_na_feedback_actuator(ispecies) =
+!     &            saved_na_feedback_actuator(ispecies) *
+!     &            na_feedback_rescale
+!              else
+!                saved_na_feedback_actuator(ispecies) =
+!     &            na_feedback_rescale
+!              end if
+!              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+!     &          saved_na_feedback_actuator(ispecies) =
+!     &            max(na_feedback_puff_min(ispecies),
+!     &            saved_na_feedback_actuator(ispecies))
+!              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+!     &          saved_na_feedback_actuator(ispecies) =
+!     &            min(na_feedback_puff_max(ispecies),
+!     &            saved_na_feedback_actuator(ispecies))
+!
+!              if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
+!     &           na_feedback_current .gt.
+!     &           na_feedback_target(ispecies) *
+!     &           na_feedback_overshoot(ispecies)) then
+!                conpar(is_start, na_feedback_ib(ispecies), 1) =
+!     &            0.0_R8
+!              else
+!                conpar(is_start, na_feedback_ib(ispecies), 1) =
+!     &            saved_na_feedback_actuator(ispecies)
+!              endif
+!
+!            case (2) ! rescale na
+!=======
               if((feedback_namelist_used .and. ncall .eq. 0) .and.
-     &           saved_na_feedback_actuator(ispecies) .eq. 0.0_R8) then
-                write(message,'(a,i3,a,i2,a)')
-     .            'Initial gas puff strength.le.0, set by CONPAR(',
-     .            is_start,',',na_feedback_ib(ispecies),',1) !'
-                call xertst(
-     .            conpar(is_start, na_feedback_ib(ispecies), 1)
-     .            .gt.0.0_R8, trim(message) )
-                saved_na_feedback_actuator(ispecies) =
-     &          conpar(is_start, na_feedback_ib(ispecies), 1)
-              endif
+     &            saved_na_feedback_actuator(ispecies) .eq. 0.0_R8) then
+                 write(message,'(a,i3,a,i2,a)')
+     .               'Initial gas puff strength.le.0, set by CONPAR(',
+     .                is_start,',',na_feedback_ib(ispecies),',1) !'
+                 call xertst(
+     .                conpar(is_start, na_feedback_ib(ispecies), 1)
+     .                .gt.0.0_R8, trim(message) )
+                 saved_na_feedback_actuator(ispecies) =
+     &                 conpar(is_start, na_feedback_ib(ispecies), 1)
+              end if
 
               if (na_feedback_option(ispecies).lt.4) then
-                saved_na_feedback_actuator(ispecies) =
-     &            saved_na_feedback_actuator(ispecies) *
-     &            na_feedback_rescale
+!###!                if ( (abs(na_feedback_rescale-1.0_R8) .gt. 0.01_R8)
+!###!     &                        .or. (int_ntim(ispecies).eq.0) ) then
+!###!                  int_flux(ispecies) = int_flux(ispecies) +
+!###!     &                   saved_na_feedback_actuator(ispecies)
+!###!                  int_ntim(ispecies) = int_ntim(ispecies) + 1
+                  saved_na_feedback_actuator(ispecies) =
+     &                  saved_na_feedback_actuator(ispecies) *
+     &                  na_feedback_rescale
+!###!                else
+!###!                  print *,"feedback_set_avg_flux"
+!###!                  saved_na_feedback_actuator(ispecies) = 
+!###!     &                int_flux(ispecies)/Real(int_ntim(ispecies))
+!###!                      ! if (int_ntim(ispecies).gt.1) then
+!###!    !                     int_flux(ispecies) = int_flux(ispecies)
+!###!    !  &                    /Real(int_ntim(ispecies))
+!###!    !                     saved_na_feedback_actuator(ispecies) = 
+!###!    !  &                  int_flux(ispecies)
+!###!    !                     int_ntim(ispecies) = 1
+!###!    !                   else
+!###!    !                     saved_na_feedback_actuator(ispecies) = 
+!###!    !  &                  int_flux(ispecies)
+!###!    !                   end if
+!###!                end if
+                 
+!###!                print *, "int_flux(",ispecies,")=",
+!###!     &                int_flux(ispecies)," ntims=",int_ntim(ispecies)
+!###!                print *, "avg_flux=",int_flux(ispecies)/
+!###!     &                  Real(int_ntim(ispecies))
+!###!                print *, "current_val=",na_feedback_const(ispecies)
               else
                 saved_na_feedback_actuator(ispecies) =
-     &            na_feedback_rescale
+     &                 na_feedback_rescale
               end if
+
+#ifdef B25_EIRENE
+              if (na_feedback_option(ispecies).eq.7.or.
+     &               na_feedback_option(ispecies).eq.8) then
+                sna_pump = 0.0_R8
+                do ia = 1, nnatmi
+                  k = latmscl(ia)
+                  if (k.eq.0) cycle
+                  sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + 
+     &                           eirpump(ia)
+                  do im = 1, nnmoli
+                    if (mlcmp(ia,im).gt.0) then
+                        sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
+     &                           mlcmp(ia,im) * eirpump(nnatmi+im)
+                    endif
+                  enddo
+                end do
+                
+                do ip = 1, nnplsi
+                  is = latmscl(lkindp(ip))
+                  if (is.eq.0) cycle
+                  sna_pump(is) = sna_pump(is) +
+     &                eirpump(nnatmi+nnmoli+nnioni+ip)
+                enddo
+                    
+                print *,"Lezgini sna_pump " ,ispecies,' ',
+     &              sna_pump(ispecies+1)
+c Flux from core impact
+
+                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
+     &                          NFLUIDS(ispecies+1)
+!         Loop over B2 boundaries
+                  do ic = 1,nbc
+
+                    if (BCCHAR(IC).eq.'S') then
+                      idir  = 1
+                      bsign = 1.0_R8
+                    else if (BCCHAR(IC).eq.'N') then
+                      idir  = 1
+                      bsign =-1.0_R8
+                    else if (BCCHAR(IC).eq.'W') then
+                      idir  = 0
+                      bsign = 1.0_R8
+                    else if (BCCHAR(IC).eq.'E') then
+                      idir  = 0
+                      bsign =-1.0_R8
+                    else
+                      cycle
+                    end if
+
+!           Loop over poloidal coordinate along this boundary
+                    do ix = 1, BC_LIST_SIZE(ic)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!             Check whether it is a southern boundary
+                      if (BCCHAR(ic).EQ.'S') then
+                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                      else if (BCCHAR(ic).EQ.'N') then
+                        ixf = BC_LIST_X(ix,ic)
+                        iyf = BC_LIST_Y(ix,ic)
+                      else if (BCCHAR(ic).EQ.'W') then
+                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                      else if (BCCHAR(ic).eq.'E') then
+                        ixf = BC_LIST_X(ix,ic)
+                        iyf = BC_LIST_Y(ix,ic)
+                      end if
+
+!             Check whether this is part of the core boundary
+                      if (core_boundary(ic)) then
+! Count fluid neutrals if not coupled to Eirene
+                        if (is_neutral(is).and.use_eirene.eq.0) then
+                          flxnc(ispecies+1) = flxnc(ispecies+1) +
+     .                         bsign * fna(ixf,iyf,idir,is)
+                        else if (.not.is_neutral(is)) then ! not neutral
+                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
+                            flxic(ispecies+1) = flxic(ispecies+1) +
+     .                         bsign * fna(ixf,iyf,idir,is)
+!                          print *, "Lezgini ion core flux", flxic(ispecies+1)
+                          else
+                            flxic(ispecies+1) = flxic(ispecies+1) +
+     .                         bsign * fna_mdf(ixf,iyf,idir,is)
+                          end if
+                        end if  
+                      end if
+                        
+                   end do   ! ix
+                   
+                 end do  !ic
+                 
+               end do  !is
+               
+               do is = 1,ncns
+c**       Here "is" is not a species index, but the index of Eirene surface,
+!!!    because
+c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
+c**       lcns() - index of these 'non-default' surfaces
+
+                 js = lcns(is) + nnlimi
+c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
+                 do j = 1,nnatmi
+                   print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
+     &            " ,ls=",(ispecies+1)
+                   if (latmscl(j) .eq. ispecies+1) then
+                     flxnc(ispecies+1) = flxnc(ispecies+1) -
+     &                   wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
+                     do ic=1,nnmoli
+                       if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
+     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
+     &               - wldrm(js,ic,0) - wldpm(js,ic,0))
+                     end do
+                   end if
+                 end do
+               end do
+c -------------------------------------------------------------------------------------
+               print *, "Lezgini ion core flux", flxic(ispecies+1)
+               print *, "Lezgini neut core flux", flxnc(ispecies+1)
+               
+               saved_na_feedback_actuator(ispecies) =
+     &                 sna_pump(ispecies+1) * na_feedback_rescale 
+     &                - flxic(ispecies+1)
+              endif  ! na_feedback_option(ispecies) = 7,8
+#endif
+                  
               if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
-     &          saved_na_feedback_actuator(ispecies) =
-     &            max(na_feedback_puff_min(ispecies),
-     &            saved_na_feedback_actuator(ispecies))
+     &             saved_na_feedback_actuator(ispecies) =
+     &                 max(na_feedback_puff_min(ispecies),
+     &                 saved_na_feedback_actuator(ispecies))
               if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
-     &          saved_na_feedback_actuator(ispecies) =
-     &            min(na_feedback_puff_max(ispecies),
-     &            saved_na_feedback_actuator(ispecies))
+     &            saved_na_feedback_actuator(ispecies) =
+     &                 min(na_feedback_puff_max(ispecies),
+     &                 saved_na_feedback_actuator(ispecies))
 
               if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
-     &           na_feedback_current .gt.
-     &           na_feedback_target(ispecies) *
-     &           na_feedback_overshoot(ispecies)) then
+     &                     na_feedback_current .gt.
+     &                 na_feedback_target(ispecies) *
+     &                 na_feedback_overshoot(ispecies)) then
                 conpar(is_start, na_feedback_ib(ispecies), 1) =
-     &            0.0_R8
+     &                    0.0_R8
               else
                 conpar(is_start, na_feedback_ib(ispecies), 1) =
-     &            saved_na_feedback_actuator(ispecies)
+     &                 saved_na_feedback_actuator(ispecies)
               endif
-
+             
+              print *,"Lezgini b2stbc_fb"
+              print *,"Lezgini conpar ",conpar
+     &            (is_start, na_feedback_ib(ispecies), 1)
+              print *,"Lezgini is_start ", is_start
+              print *,"Lezgini na_feedback_ib ", 
+     &            na_feedback_ib(ispecies)
+            
             case (2) ! rescale na
+!>>>>>>> 9e9da198... Changes to be committed:
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -1412,36 +1919,250 @@
                  total_flux = saved_na_feedback_actuator(ispecies)
               endif
 
+!<<<<<<< HEAD
+!              do is = is_start, is_end
+!                iss = is-is_start+1
+!                conpar(is, na_feedback_ib(ispecies), 1) =
+!     &            total_flux * charge_frac(iss)
+!              end do
+!
+!            case default
+!              write(*,*) 'na feedback_choice not coded ',
+!     &                    na_feedback_choice(ispecies)
+!=======
               do is = is_start, is_end
                 iss = is-is_start+1
                 conpar(is, na_feedback_ib(ispecies), 1) =
-     &            total_flux * charge_frac(iss)
+     &                total_flux * charge_frac(iss)
               end do
+                
+            case (4)  ! absorbtion coefficient. Issue: algorithm for finding pumping surfaces should be improved
+            
+              if(ncall.eq.0) then
+                  write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_actuator: using ',
+     &                    'sps_absr changing',
+     &                    ispecies+1
+              endif
+              
+              if (saved_na_feedback_actuator(ispecies).eq.0) then
+                    saved_na_feedback_actuator(ispecies) = sps_absr(1)  
+              endif
+    !               if ((abs(na_feedback_current/
+    !  &                na_feedback_target(ispecies)-1).gt.0.05)
+    !  &                .or.(int_ntim(ispecies).eq.0)) then
+    !                   int_flux(ispecies) = int_flux(ispecies) 
+    !  &                + saved_na_feedback_actuator(ispecies)
+    !                   int_ntim(ispecies) = int_ntim(ispecies) + 1
+    !                   saved_na_feedback_actuator(ispecies) =
+    !  &                saved_na_feedback_actuator(ispecies) /
+    !  &                na_feedback_rescale
+    !                 else
+    !                   print *,"feedback_set_avg_sps_absr"
+    !                   saved_na_feedback_actuator(ispecies) = 
+    !  &                int_flux(ispecies)/Real(int_ntim(ispecies))
+    !                 end if
+    
+#ifdef B25_EIRENE
+              if (na_feedback_option(ispecies).eq.7.or.
+     &               na_feedback_option(ispecies).eq.8) then
+     
+                sna_pump = 0.0_R8
+                
+                do ia = 1, nnatmi
+                  k = latmscl(ia)
+                  if (k.eq.0) cycle
+                    sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +  
+     &                     eirpump(ia)
+                  do im = 1, nnmoli
+                    if (mlcmp(ia,im).gt.0) then
+                      sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
+     &                  mlcmp(ia,im) * eirpump(nnatmi+im)
+                    endif
+                  enddo
+                end do
+                
+                do ip = 1, nnplsi
+                  is = latmscl(lkindp(ip))
+                  if (is.eq.0) cycle
+                  sna_pump(is) = sna_pump(is) +
+     &                eirpump(nnatmi+nnmoli+nnioni+ip)
+                enddo
+                
+                print *,"Lezgini sna_pump " ,ispecies,' ',
+     &              sna_pump(ispecies+1)
+c Flux from core impact
 
+                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
+     &                    NFLUIDS(ispecies+1)
+
+!         Loop over B2 boundaries
+                  do ic = 1,nbc
+
+                    if (BCCHAR(IC).eq.'S') then
+                      idir  = 1
+                      bsign = 1.0_R8
+                    else if (BCCHAR(IC).eq.'N') then
+                      idir  = 1
+                      bsign =-1.0_R8
+                    else if (BCCHAR(IC).eq.'W') then
+                      idir  = 0
+                      bsign = 1.0_R8
+                    else if (BCCHAR(IC).eq.'E') then
+                      idir  = 0
+                      bsign =-1.0_R8
+                    else
+                      cycle
+                    end if
+
+!           Loop over poloidal coordinate along this boundary
+                    do ix = 1, BC_LIST_SIZE(ic)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!             Check whether it is a southern boundary
+                      if (BCCHAR(ic).EQ.'S') then
+                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                      else if (BCCHAR(ic).EQ.'N') then
+                        ixf = BC_LIST_X(ix,ic)
+                        iyf = BC_LIST_Y(ix,ic)
+                      else if (BCCHAR(ic).EQ.'W') then
+                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                      else if (BCCHAR(ic).eq.'E') then
+                        ixf = BC_LIST_X(ix,ic)
+                        iyf = BC_LIST_Y(ix,ic)
+                      end if
+
+!             Check whether this is part of the core boundary
+                      if (core_boundary(ic)) then
+!                      Count fluid neutrals if not coupled to Eirene
+                        if (is_neutral(is).and.use_eirene.eq.0) then
+                          flxnc(ispecies+1) = flxnc(ispecies+1) +
+     .                      bsign * fna(ixf,iyf,idir,is)
+                        else if (.not.is_neutral(is)) then ! not neutral
+                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
+                            flxic(ispecies+1) = flxic(ispecies+1) +
+     .                          bsign * fna(ixf,iyf,idir,is)
+!                            print *, "Lezgini ion core flux", flxic(ispecies+1)
+                          else
+                            flxic(ispecies+1) = flxic(ispecies+1) +
+     .                        bsign * fna_mdf(ixf,iyf,idir,is)
+                          end if
+                        end if  
+                      end if  
+              
+                    end do   ! ix
+                   
+                  end do  ! ic
+                
+                end do  ! is
+             
+                do is = 1,ncns
+c**       Here "is" is not a species index, but the index of Eirene surface,
+!!!    because
+c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
+c**       lcns() - index of these 'non-default' surfaces
+
+                  js = lcns(is) + nnlimi
+                  
+c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
+                  do j = 1,nnatmi
+                    print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
+     &                             " ,ls=",(ispecies+1)
+                    if (latmscl(j) .eq. ispecies+1) then
+                      flxnc(ispecies+1) = flxnc(ispecies+1)
+     &                  - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
+                      do ic=1,nnmoli
+                        if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
+     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
+     &                       - wldrm(js,ic,0) - wldpm(js,ic,0))
+                      end do
+                    end if
+                  end do
+                end do
+c -------------------------------------------------------------------------------------
+                print *, "Lezgini ion core flux", flxic(ispecies+1)
+                print *, "Lezgini neut core flux", flxnc(ispecies+1)
+              
+              endif ! na_feedback_option(ispecies) = 7,8
+#endif
+
+              flxnp = 0.0_R8
+            
+              do ic = 1,nstrat
+                if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
+                  do j = 1,nnatmi
+                    if (latmscl(j) .eq. ispecies+1) then
+                      flxnp(ispecies+1) = flxnp(ispecies+1) +
+     &                 userfluxparm(ic,1) * gpfc(j,ic)
+                    endif
+                  end do
+                endif       
+              end do
+            
+!              print *, "Lezgini puff flux", flxnp(ispecies+1)
+            ! call cfruin (ninp(1), 1, idum, 'itim')
+            ! itim = idum(0)
+            
+              int_ntim(ispecies) = int_ntim(ispecies) + 1
+            
+!              print *,"itim",int_ntim(ispecies),eirene_mod
+            
+              if (mod(int_ntim(ispecies),eirene_mod).eq.0) then
+                saved_na_feedback_actuator(ispecies) =
+     &             saved_na_feedback_actuator(ispecies) /
+     &             na_feedback_rescale*(flxnp(ispecies+1) + 
+     &             flxic(ispecies+1))/sna_pump(ispecies+1)
+              endif
+            
+              if (na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+     &          saved_na_feedback_actuator(ispecies) =
+     &                 max(na_feedback_puff_min(ispecies),
+     &                 saved_na_feedback_actuator(ispecies))
+              if (na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+     &          saved_na_feedback_actuator(ispecies) =
+     &                 min(na_feedback_puff_max(ispecies),
+     &                 saved_na_feedback_actuator(ispecies))
+              call eirene_sps_absr_update(1,
+     &              saved_na_feedback_actuator(ispecies))
+               
             case default
+                  
               write(*,*) 'na feedback_choice not coded ',
-     &                    na_feedback_choice(ispecies)
+     &                 na_feedback_choice(ispecies)
+     
+!>>>>>>> 9e9da198... Changes to be committed:
 
             end select
 
+!<<<<<<< HEAD
+!            if (na_feedback_actuator(ispecies).eq.1 .or.
+!     &          na_feedback_actuator(ispecies).eq.3)
+!     >        write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ',
+!     &         ispecies+1, saved_na_feedback_actuator(ispecies)
+!=======
             if (na_feedback_actuator(ispecies).eq.1 .or.
-     &          na_feedback_actuator(ispecies).eq.3)
+     &          na_feedback_actuator(ispecies).eq.3 .or.
+     &              na_feedback_actuator(ispecies).eq.4)
      >        write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ',
-     &         ispecies+1, saved_na_feedback_actuator(ispecies)
+     &              ispecies+1, saved_na_feedback_actuator(ispecies)
+!>>>>>>> 9e9da198... Changes to be committed:
 
-            if(na_feedback_choice(ispecies).eq.6)
-     >        deallocate(charge_frac)
+            if (na_feedback_choice(ispecies).eq.6)
+     >          deallocate(charge_frac)
 
-          endif
+          endif  ! na_feedback_choice > 0 .and. na_feedback_option > 0 .and. na_feedback_actuator > 0
 
-        enddo
+        enddo ! ispecies
 
         feedback_namelist_used = feedback_namelist_used .or.
      &   na_feedback_actuator(ispecies).eq.1 .or.
      &   na_feedback_actuator(ispecies).eq.3
+        
         dt_prev = dteff
 
-      endif
+      endif ! maxval(na_feedback_target) > 0.0 .and. maxval(na_feedback_choice) > 0
 
 * DPC special treatment of core boundary condition
       if(fnaycore.ne.-1.0e30_R8) then
@@ -2233,11 +2954,12 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
      *    ' target = ',nepedm_sol,
      *    ' ; rescaling cbsna to ',cbsna(0,isfeedback,solregno)
       endif
-
+      
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
       return
+
 
 *-----------------------------------------------------------------------
 *.end b2stbc_fb_pre

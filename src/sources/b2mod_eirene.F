@@ -785,15 +785,18 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
           else if (ncall.ge.ncallfeedback.and.
      &             feedback_stratum.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
-              if (feedback_strata(is).gt.0) then !{
+c Fixed by Kudrevatyh P.S. and Shirobokov A.A 17.09.2022
+              if (feedback_strata(is).eq.istrai) then !{
                 if (na_feedback_target(is).gt.0.0_R8.and.
-     &              na_feedback_actuator(is).eq.1.and.
-     &              species_start(feedback_strata(is)).le.
-     &              eb2spcr(is+1)+nfluids(is+1).and.
-     &            species_end(feedback_strata(is)).ge.eb2spcr(is+1))
-     >           then !{
-                  tflux(istrai)=tflux(istrai)+
+     &              na_feedback_actuator(is).eq.1) then
+                  tflux(istrai)= tflux(istrai) + 
      .             conpar(eb2spcr(is+1),na_feedback_ib(is),1)
+            print *,"Lezgini Eirene "
+            print *,"Lezgini stratum ",istrai
+            print *,"Lezgini is ",is
+            print *,"Lezgini feedback_strata ",feedback_strata(is)
+            print *,"Lezgini tflux ",tflux(istrai)
+c  End fix
                 end if !}
               end if !}
             end do !}
