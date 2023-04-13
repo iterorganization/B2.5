@@ -1,5 +1,6 @@
       module b2mod_numerics_namelist
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_indirect
       implicit none
 
@@ -187,10 +188,11 @@
       return
       end subroutine dealloc_b2mod_numerics
 
-      subroutine read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+      subroutine read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,new)
       implicit none
 
       integer nx,ny,ns,nsmin,nsmax
+      logical :: new
       logical :: file_ok
       integer ix, iy, ireg, is
       integer, save :: style_b2mndt = 1
@@ -208,7 +210,7 @@
         dteff = dtim
       end if
       call find_file(filename,file_ok)
-      if(file_ok) then
+      if(file_ok.and..not.new) then
         open(99,file=filename)
         write(*,*) 'Reading namelist numerics from ',trim(filename)
 #ifdef USE_MPI
@@ -229,7 +231,9 @@
           call xertst(style_b2mndt.le.1.or..not.solvemt(ireg),
      &     'Time-dependent mode requires SOLVEMT = .false.!')
         end do
-      else
+      else if (file_ok.and.new) then
+        call xerrab ('Found unexpected '//trim(filename))
+      else if (.not.new) then
         call xerrab ('No '//trim(filename))
       endif
 
@@ -246,6 +250,12 @@
       do is = 0, ns-1
         call xertst (0.0_R8.lt.corr_core_dn(is),
      &   'faulty parameter corr_core_dn')
+      end do
+      do is = 1, nspecies
+        call xertst (0.0_R8.le.sna_corr(is),
+     &   'faulty parameter sna_corr')
+        call xertst (0.0_R8.lt.taumax(is),
+     &   'faulty parameter taumax')
       end do
       call xertst (0.0_R8.le.time_factor_required,
      & 'faulty parameter time_factor_required')
