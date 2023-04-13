@@ -268,7 +268,8 @@
         end if
         do while(catch_up)
           write(*,*) 'b2sral: catching up ...'
-          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,
+     &                                     .false.)
           call write_b2mod_numerics_namelist
           if(numerics_time_mod.gt.0.0_R8) then
             catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
@@ -299,7 +300,8 @@
         if(catch_up) then
           if(numerics_time_mod.gt.0.0_R8)
      >     elm_count=int(tim/numerics_time_mod)
-          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,
+     &                                     .false.)
           call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb

@@ -2066,7 +2066,7 @@ cxpb initialize the numerics data
         call ipgeti ('b2news_nsmax', nsmax)
         nsmin = max(0,min(nsmin,ns))
         nsmax = max(0,min(nsmax,ns))
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,.false.)
         call write_b2mod_numerics_namelist
       endif
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)

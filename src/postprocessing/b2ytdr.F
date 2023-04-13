@@ -525,6 +525,7 @@ c 2002-09-11: logic revised
 #endif
       character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary, flip
+      logical new_namelist
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
       integer :: time_dep_puff_case1(nstraid)
@@ -1954,6 +1955,7 @@ c 2002-09-11: logic revised
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
         case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
+          todo = .false.
           wait = .true.
         case default RSWITCHES
           todo = .false.
@@ -3631,9 +3633,16 @@ cxpb This will need to be checked !!!
       new_filename = 'b2.numerics.parameters.2'
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
+      new_namelist = (b2stbr_sna_corr.ne.0.0_R8 .or.
+     &                b2stbr_taumax.ne.0.05_R8) .and.
+     &                numerics_namelist.eq.0
+      todo = todo.or.b2stbr_sna_corr.ne.0.0_R8 .or.
+     &               b2stbr_taumax.ne.0.05_R8
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-        if (same_bundling) then
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,
+     .                                    new_namelist)
+        if (same_bundling.and.b2stbr_sna_corr.eq.0.0_R8
+     &                   .and.b2stbr_taumax.eq.0.05_R8) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
             write(*,*) 'No changes needed in b2.numerics.parameters'
@@ -11404,13 +11413,17 @@ cxpb as they no longer necessarily point to the same species
         call alloc_b2mod_wall(ns,natm,nmol,nion)
         call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts,flip)
 *  ..convert some wall arrays
-        if(wall_namelist_used) then
+        if(wall_namelist_used.and.
+     &    (.not.same_bundling.or..not.same_grid)) then
           call b2yt_wall(ns,ns1,
      .     natm,natm1,nmol,nmol1,nion,nion1,
      .     is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      .     itrack1,itrack2,itrack3)
 *  ..write new wall namelist
           call b2yt_wall_final(nout(5),nx1,ny1,ns1)
+        else if (wall_namelist_used) then
+          write(nout(5),'(a)') 'b2.wall_save.parameters'
+          write(*,*) 'No changes needed in b2.wall_save.parameters'
         else
 *  ..in the absence of a namelist, put in defaults
           call get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
