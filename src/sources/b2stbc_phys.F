@@ -32,7 +32,7 @@
       use b2mod_b2cmpb
       use b2mod_profile
       use b2mod_external
-      use b2mod_boundary_sources                                        !srv 26.02.18
+      use b2mod_boundary_sources                                      !srv 26.02.18
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use eirmod_braeir
@@ -40,7 +40,7 @@
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
-      use b2mod_astra_to_b2                                          !srv 28.07.11
+      use b2mod_astra_to_b2                                           !srv 28.07.11
       use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
@@ -66,22 +66,22 @@
      &  fne_52(-1:nx,-1:ny,0:1,0:1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fhe_mdf(-1:nx,-1:ny,0:1,0:1),
      &  fhi_mdf(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
-     &  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),  !srv 11.10.02 21.10.02 {
+     &  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),   !srv 11.10.02 21.10.02 {
      &  fchvisper(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchdia(-1:nx,-1:ny,0:1,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1,0:1), fchanml(-1:nx,-1:ny,0:1,0:1), !srv 21.10.02 }
+     &  fchinert(-1:nx,-1:ny,0:1,0:1), fchanml(-1:nx,-1:ny,0:1,0:1),  !srv 21.10.02 }
      &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),                        !srv 25.02.00
-     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1),!srv 28.10.02
-     &  fhePSch(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),  !srv 13.10.06
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1)                          !srv 13.10.06
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),                         !srv 25.02.00
+     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1), !srv 28.10.02
+     &  fhePSch(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),   !srv 13.10.06
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1)                           !srv 13.10.06
       real (kind=R8) ::
      1  chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
      2  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),
-     3  calf(-1:nx,-1:ny,0:1,0:1), cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1)  !srv 25.09.09
+     3  calf(-1:nx,-1:ny,0:1,0:1), cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1)   !srv 25.09.09
       real (kind=R8) ::
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage(2)
-      logical main_call                                              !xpb
+      logical main_call                                               !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -89,7 +89,7 @@
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       integer b2stbc_fchy_dia_coreonly, secmodel, area_fix,
      &  sheath_drift_fix
-      logical wrong_flow                                             !xpb
+      logical wrong_flow                                              !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -6260,17 +6260,7 @@ cxpb code segment analog to b2tfhe
 !            CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              if(bccon14(ib)) then                                      !srv 20.09.17 {
-*    .. apply bcene=15 according to the form of bccon=14
-                t0 = 0.0_R8
-                do is = 0, ns-1
-                  t0 = t0 + rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     *            CONPAR(IS,IB,1)*
-     *            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-                enddo
-              else
-               t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              endif                                                     !srv 20.09.17
+              t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               t0 = max(0.0e0_R8,                                        !srv 05.05.09
      &          (abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &           rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))*t0*cs + !srv 25.12.06 11.01.13 20.09.17
@@ -6282,7 +6272,8 @@ cxpb code segment analog to b2tfhe
      &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &           qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0            !srv 07.11.12
+     &           qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)) -
+     &           potpar(IB,2))*t0                                       !srv 07.11.12
               else                                                      !srv 27.02.13
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
@@ -6302,17 +6293,7 @@ cxpb code segment analog to b2tfhe
 !              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              if(bccon14(ib)) then                                      !srv 20.09.17 {
-*    .. apply bcene=15 according to the form of bccon=14
-                t0 = 0.0_R8
-                do is = 0, ns-1
-                  t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     &            CONPAR(IS,IB,1)*
-     &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-                enddo
-              else
-                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              endif                                                     !srv 20.09.17 }
+              t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               t0 = max(0.0e0_R8,                                        !srv 05.05.09
      &          (abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*t0*cs -  !srv 25.12.06 11.01.13 20.09.17
      &            fch_p(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0)/qe))     !srv 25.12.06 11.03.09 }
@@ -6322,7 +6303,8 @@ cxpb code segment analog to b2tfhe
      &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &           qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0            !srv 07.11.12
+     &           qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)) -
+     &                                      potpar(IB,2))*t0            !srv 07.11.12
               else
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
@@ -6353,21 +6335,11 @@ cxpb code segment analog to b2tfhe
               s1=abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
-              if(bccon14(ib)) then                                      !srv 20.09.17 {
-*    .. apply bcene=15 according to the form of bccon=14
-                t0 = 0.0_R8
-                do is = 0, ns-1
-                  t0 = t0 + rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     *            CONPAR(IS,IB,1)*
-     *            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-                enddo
-              else
-                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              endif                                                     !srv 20.09.17
+              t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
      &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
@@ -6375,7 +6347,8 @@ cxpb code segment analog to b2tfhe
                  she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &            (1.0e0_R8-GAMMAE)*
-     &            qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
+     &            qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &                          - potpar(IB,2))*t0
               else                                                      !srv 27.02.13
                 cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -6398,21 +6371,11 @@ cxpb code segment analog to b2tfhe
 !              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               s1=abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))          !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
-              if(bccon14(ib)) then                                      !srv 20.09.17 {
-*    .. apply bcene=15 according to the form of bccon=14
-                t0 = 0.0_R8
-                do is = 0, ns-1
-                  t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     &            CONPAR(IS,IB,1)*
-     &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-                enddo
-              else
-                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              endif                                                     !srv 20.09.17 }
+              t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
      &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
@@ -6420,7 +6383,8 @@ cxpb code segment analog to b2tfhe
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &           (1.0e0_R8-GAMMAE)*qe*
-     &           po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
+     &           (po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &                                     - potpar(IB,2))*t0
               else                                                      !srv 27.02.13
                 cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -10346,9 +10310,9 @@ c              fchi=0.0_R8
 !     .       bcint(te,nx,ny,iy,ib))
             fche = sqrt(1/(2*pi))*qe*
      &       ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*vte*s1*
-     &       expu2(-qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
-     &                  potpar(ib,2))/
-     &       te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &       expu2(max(-50.0_R8,
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
             if (secmodel.eq.1) then
               if (ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .          (rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),ismain)*
@@ -10437,9 +10401,9 @@ c              fchi=0.0_R8
             fchi = qe*t0
             fche = sqrt(1/(2*pi))*qe*
      &       ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*vte*s1*
-     &       expu2(-qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
-     &                  potpar(ib,2))/
-     &       te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &       expu2(max(-50.0_R8,
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
             if (secmodel.eq.1) then
               if (ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &          (rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),ismain)*
