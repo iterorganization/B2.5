@@ -6241,7 +6241,7 @@ contains
         ! The weighting automatically includes the areas of the cell faces
         implicit none
         real(kind=IDS_real) :: separatrix_average
-        real(kind=IDS_real), intent(in) :: field(nx,ny), weight(nx,ny)
+        real(kind=IDS_real), intent(in) :: field(-1:nx,-1:ny), weight(-1:nx,-1:ny)
         real(kind=IDS_real) :: sum, area_sum
 
         separatrix_average = IDS_REAL_INVALID
