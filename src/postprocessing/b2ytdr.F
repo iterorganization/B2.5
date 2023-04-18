@@ -554,7 +554,7 @@ c 2002-09-11: logic revised
      .        no_sputtering, cpath_written, new_path, bundled,
      .        adas_correct
 #endif
-      logical todo, wait
+      logical todo, wait, exists
       logical same_bundling, same_atoms, same_grid, non_default
       logical averaging, hydrogen
       logical ismain_done, ismain0_done, ycur_done
@@ -3074,7 +3074,8 @@ cxpb We must ensure we have not already listed this additional species
         deallocate(eta_hce_mult1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.transport_models_save.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in '//
+     .   'b2.transport_models_save.parameters'
       endif
 
 *  ..write new b2.sources.profile
@@ -4006,7 +4007,8 @@ cxpb This will need to be checked !!!
         close(99)
       else if (same_bundling.and.todo) then
         write(nout(5),'(a)') 'b2.atomic_physics_rescale.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in '//
+     .   'b2.atomic_physics_rescale.parameters'
       endif
 
 #ifdef B25_EIRENE
@@ -11608,7 +11610,7 @@ cxpb as they no longer necessarily point to the same species
         end if
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_save.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.feedback_save.parameters'
       end if
 
 *   ..write new b2.feedback_control.parameters if needed
@@ -11829,7 +11831,7 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_time1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.feedback_control.parameters'
       end if
 
 *   ..write new b2.user.parameters, if needed
@@ -12096,7 +12098,7 @@ cxpb as they no longer necessarily point to the same species
         call dealloc_b2mod_user
       else if (todo) then
         write(nout(5),'(a)') 'b2.user.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.user.parameters'
       end if
 
 *   ..write new b2yq.dat, if needed
@@ -12121,8 +12123,7 @@ cxpb as they no longer necessarily point to the same species
   983     continue
           close(99)
         else if (same_bundling) then
-          write(nout(5),'(a)') 'b2yq.dat'
-          write(*,*) 'No changes needed in ',trim(filename)
+          write(*,*) 'No changes needed in b2yq.dat'
         end if
         close(98)
       end if
@@ -12250,7 +12251,6 @@ cxpb as they no longer necessarily point to the same species
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))
       else
-        write(nout(5),'(a)') 'b2ah.dat'
         write(*,*) 'No changes needed in b2ah.dat'
       endif
 
@@ -12298,14 +12298,16 @@ cxpb as they no longer necessarily point to the same species
         write(nout(4),'(1p,1e9.2)') ttini
         close(nout(4))
       else
-        write(nout(5),'(a)') 'b2ai.dat'
         write(*,*) 'No changes needed in b2ai.dat'
       endif
       deallocate(nbini)
       deallocate(idum)
 
 *   ..we now write a new SOLPS_FLUIDS file if needed
-      if (.not.same_bundling) then
+      filename='SOLPS_FLUIDS'
+      call find_file(filename,exists)
+      if (.not.exists) inquire(file='../../SOLPS_FLUIDS', exist=exists)
+      if (.not.same_bundling.or..not.exists) then
         write(*,*) 'Writing SOLPS_FLUIDS.2'
         allocate(species_name(0:ns1-1))
         do is = 0, ns1-1
@@ -12318,7 +12320,6 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         deallocate(species_name)
       else
-        write(nout(5),'(a)') 'SOLPS_FLUIDS'
         write(*,*) 'No changes needed in SOLPS_FLUIDS'
       endif
 
