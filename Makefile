@@ -898,6 +898,26 @@ endif
 endif
 endif
 
+ifdef USE_EIRENE
+ifdef USE_OPENMP
+ifeq ($(COMPILER),ifort64)
+${OBJDIR}/b2ytdr.o : b2ytdr.F
+	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} -qoverride-limits ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2ytdr.f
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2ytdr.f
+endif
+	${FC} ${FCOPTS} -qoverride-limits ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2ytdr.o ${OBJDIR}/b2ytdr.f
+endif
+	@if [ -f b2ytdr.o ] ; then /bin/mv b2ytdr.o ${OBJDIR}/ ; fi
+endif
+endif
+endif
+
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
