@@ -28,7 +28,7 @@
       real(R8), allocatable :: xc_old(:), yc_old(:)
       real(R8), allocatable :: xc_new(:), yc_new(:)
       integer, allocatable :: im_old_new(:), elem_new(:,:),
-     .                        im_new_old(:), iVx_node(:)
+     .                        im_new_old(:), node_vert(:)
       integer, allocatable :: neigh(:,:,:), elem_cv(:), trifc(:,:),
      .                        ixtri(:), iytri(:), bndmdl(:,:),
      .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
@@ -86,10 +86,10 @@
       allocate (yc_new(nco_old+mpg%nVx))
       allocate (im_old_new(nco_old+mpg%nVx))
       allocate (im_new_old(nco_old+mpg%nVx))
-      allocate (iVx_node(nco_old+mpg%nVx))
+      allocate (node_vert(nco_old+mpg%nVx))
       im_old_new = 0
       im_new_old = 0
-      iVx_node = 0
+      node_vert = 0
 
       if (overwrite_ntrfrm.eq.1) then
         ntrfrm = 1
@@ -136,12 +136,13 @@
             NNODES=NNODES+1
             xc_new(NNODES)=xc
             yc_new(NNODES)=yc
-            iVx_node(NNODES)=ivx
+            node_vert(NNODES)=ivx ! store plasma vertex number corresponding to the node
           endif
         endif
       end do
       !! Store number of nodes corresponding to plasma grid vertices
       NPNODES = NNODES
+      write (*,*) 'Found ', NPNODES, ' unique plasma vertices/nodes.'
 
 !  now check coordinates from old fort.33 file for new index
       do ico = 1, nco_old
@@ -154,7 +155,7 @@
             !! if we have a narrow grid, this should not happen because every node of the Eirene triangle grid should be in the plasma grid.
             !! therefore this has to do with round-off error of faulty input files. Therefore these cells are printed.
             write(*,*) '------------'
-            write(*,*) 'faulty node ', ico
+            write(*,*) 'Narrow grid - faulty node ', ico
             write(*,*) 'x = ', xc_old(ico)
             write(*,*) 'y = ', yc_old(ico)
             write(*,*) '------------'
@@ -164,10 +165,19 @@
      .        call xerrab ('insufficient array space for new nodes')
             xc_new(NNODES) = xc_old(ico)
             yc_new(NNODES) = yc_old(ico)
+            !write (*,*) 'Inserting node ', nnodes, ' for old node ', ico
             im_old_new(ico) = nnodes
             im_new_old(nnodes) = ico
           endif
         else
+          if (im_new_old(ic) .ne.0) then
+            write (*,*) 'Problem converting nodes:'
+            write (*,*) 'Trying to link old node ', ico, ' to new '//
+     .                  'node ', ic, 'but new node already linked '//
+     .                  'to old node ', im_new_old(ic)
+!            call xerrab ('node already used')
+          endif
+          !write (*,*) 'Linking node ', ic, ' to old node ', ico
           im_old_new(ico) = ic
           im_new_old(ic) = ico
         END IF
@@ -186,8 +196,8 @@
           write (*,*) 'X, Y = ', xc_old(i), yc_old(i)
         elseif (iused > 1) then
           ico = ico + 1
-          write (*,*) 'Node ', i, ' from original fort.33 used ' //
-     .                'multiple times' 
+          write (*,*) 'Node ', i, ' from original fort.33 linked to ' //
+     .                'multiple new nodes after conversion'
           write (*,*) 'X, Y = ', xc_old(i), yc_old(i)
         endif
       enddo
@@ -216,23 +226,23 @@
         !! node in fort.33
         do i = 1, NPNODES
           if (im_new_old(i) == 0) then
-            ivx = iVx_node(i)
+            ivx = node_vert(i)
             ico = ico + 1
             write (*,*) 
      .       ' Vertex ivx, vxX, vxY = ', ivx, gm%vxX(ivx), gm%vxY(ivx),
-     .       ' not found in fort.33'
+     .       ' not found in original fort.33 file'
           end if
         end do
       end if
       if (ico > 0) then
-        write (*,*) 'Problem converting coordinates in fort.33'
+        write (*,*) 'Problem(s) converting coordinates in fort.33'
         write (*,*) 'Check whether triangle grid and plasma grid match,'
         write (*,*) 'with sufficient numerical precision.'
-        call xerrab ('conv_triangles -- problem with node conversion')
+!        call xerrab ('conv_triangles -- problem with node conversion')
       endif
 
       call write_npco (nnodes, xc_new, yc_new, 1._R8)
-      write (*,*) ' triangles.npco_char written '
+      write (*,*) ' triangle.coordinates written '
 
 !  conversion of coordinates finished
 
@@ -251,6 +261,7 @@
       close(34)
 
       call write_elemente (nelem, elem_new)
+      write (*,*) ' triangle.elements written '
 
 !  conversion of elements finished
 
@@ -347,10 +358,9 @@
               if (icv > 0) then
                 is1 = is + 1
                 if (is1 > 3) is1 = 1
-                call find_face_number (icv,
-     .            iVx_node(elem_new(is, iel)),
-     .            iVx_node(elem_new(is1,iel)),
-     .            nnodes, xc_new, yc_new, ifc, mpg, gm)
+                call find_face_number (icv,elem_new(is, iel),
+     .            elem_new(is1,iel), nnodes, npnodes, node_vert,
+     .            xc_new, yc_new, ifc, mpg, gm)
                 isig = 1
                 if (ifc > 0) then
                   if (icv == mpg%fcCv(ifc,2)) isig = -1
@@ -367,9 +377,9 @@
             if (trifc(is,iel) == 0) then
               is1 = is + 1
               if (is1 > 3) is1 = 1
-              call find_face_number (icv,
-     .          iVx_node(elem_new(is, iel)),iVx_node(elem_new(is1,iel)),
-     .          nnodes, xc_new, yc_new, ifc, mpg, gm)
+              call find_face_number (icv, elem_new(is, iel),
+     .          elem_new(is1,iel), nnodes, npnodes, node_vert,
+     .          xc_new, yc_new, ifc, mpg, gm)
               isig = 1
               if (ifc > 0) then
                 if (icv == mpg%fcCv(ifc,2)) isig = -1
@@ -432,10 +442,10 @@
                 is1 = is + 1
                 if (is1 > 3) is1 = 1
                 if (trifc(is,iel) == 0) then
-                  ismin = min(iVx_node(elem_new(is,iel)),
-     .                        iVx_node(elem_new(is1,iel)))
-                  ismax = max(iVx_node(elem_new(is,iel)),
-     .                        iVx_node(elem_new(is1,iel)))
+                  ismin = min(node_vert(elem_new(is,iel)),
+     .                        node_vert(elem_new(is1,iel)))
+                  ismax = max(node_vert(elem_new(is,iel)),
+     .                        node_vert(elem_new(is1,iel)))
                   do iv = 1, 4
                     icmin = min(cfce(iv,1),cfce(iv,2))
                     icmax = max(cfce(iv,1),cfce(iv,2))
@@ -471,13 +481,14 @@
      .     bndmdl, trifc, elem_cv, nelem)
       else
         call find_nondef_surfaces (nout, mpg, gm,
-     .     elem_new, bndmdl, elem_cv, nelem, iVx_node, nnodes)
+     .     elem_new, bndmdl, elem_cv, nelem, node_vert, nnodes)
       end if
 
 !  no check for closedness of mesh done here as there might be
 !  additional Eirene surfaces in the mesh boundaries
 
       call write_neighbors (nelem, neigh, bndmdl, elem_cv, trifc)
+      write (*,*) ' triangle.neighbors written '
 
       call EIRENE_DestroyTree(baum)
       deallocate (xc_old)
@@ -486,7 +497,7 @@
       deallocate (yc_new)
       deallocate (im_old_new)
       deallocate (im_new_old)
-      deallocate (iVx_node)
+      deallocate (node_vert)
       deallocate (elem_new)
       deallocate (neigh)
       deallocate (ixtri)
@@ -502,16 +513,17 @@
       return
       end subroutine conv_triangles
 
-      subroutine find_face_number (icv, iv1, iv2,
-     .                             nnodes, xc_new, yc_new,
-     .                             ifc, mpg, gm)
+      subroutine find_face_number (icv, in1, in2,
+     .                             nnodes, npnodes, node_vert,
+     .                             xc_new, yc_new, ifc, mpg, gm)
 
       use b2mod_types
       use b2us_map
       use b2us_geo
 
       implicit none
-      integer, intent(in) :: icv, iv1, iv2, nnodes
+      integer, intent(in) :: icv, in1, in2, nnodes, npnodes,
+     .                       node_vert(nnodes)
       real(R8), intent(in) :: xc_new(nnodes), yc_new(nnodes)
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
@@ -521,6 +533,7 @@
       integer :: nv, nf, j, jfc, jv1, jv2
       real(R8) :: px1, py1, px2, py2, vpx, vpy,
      .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq
+      logical :: found
 
       nv = mpg%cvVxP(icv,2)
       allocate (jvx(nv))
@@ -528,27 +541,32 @@
 
       nf = mpg%cvFcP(icv,2)
       ifc = 0
+      found=.false.
 
-      if ((iv1 <= mpg%nVx) .and. (iv2 <= mpg%nVx)) then
-!  both iv1 and iv2 are nodes in the unstructured mesh
+      if ((in1 <= npnodes) .and. (in2 <= npnodes)) then
+!  both in1 and in2 are nodes in the unstructured plasma mesh
 !  check faces of cell icv
         do j = 1, nf
           jfc = mpg%cvFc(mpg%cvFcP(icv,1)+j-1)
           jv1 = mpg%fcVx(jfc,1)
           jv2 = mpg%fcVx(jfc,2)
-          if ((min(iv1,iv2) == min(jv1,jv2)) .and.
-     .        (max(iv1,iv2) == max(jv1,jv2))) then
+          if ((min(node_vert(in1),node_vert(in2)) == min(jv1,jv2)) .and.
+     .        (max(node_vert(in1),node_vert(in2)) == max(jv1,jv2))) then
 !  face identified
             ifc = jfc
+            found=.true.
             return
           end if
         end do
+        if (.not.found) then
+!          write (*,*) 'No face found for nodes ', in1, in2
+        endif
       else
 !  at least one vertex was introduced in triangle creation
-        px1 = xc_new(iv1)
-        py1 = yc_new(iv1)
-        px2 = xc_new(iv2)
-        py2 = yc_new(iv2)
+        px1 = xc_new(in1)
+        py1 = yc_new(in1)
+        px2 = xc_new(in2)
+        py2 = yc_new(in2)
         vpx = px2 - px1
         vpy = py2 - py1
         do j = 1, nf
@@ -565,7 +583,7 @@
           det = abs(vfx*vpy - vfy*vpx)
           if (det > 1.D-4) cycle
 !  check that the "new" point lies on interval (x1,y1) -- (x2,y2)
-          if ((iv1 /= jv1) .and. (iv1 /= jv2)) then
+          if ((node_vert(in1) /= jv1) .and. (node_vert(in1) /= jv2))then
             d = vfy*px1 - vfx*py1 + (fx2*fy1-fx1*fy2)
           else
             d = vfy*px2 - vfx*py2 + (fx2*fy1-fx1*fy2)
@@ -577,7 +595,7 @@
             return
           end if
         end do
-        write (*,*) ' no face found for points ', iv1, iv2
+!        write (*,*) ' No face found for nodes ', in1, in2
 !        call xerrab ('find_face_number -- no face found ')
       end if
 
