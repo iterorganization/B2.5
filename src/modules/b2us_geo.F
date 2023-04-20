@@ -975,6 +975,50 @@
       else
        write(*,*) 
      &   'WARNING: connection length not yet available for US grids'
+       ! reconstruct cvHx into wrk1
+       do ifc = 1, mpg%nFc
+         if (gm%fcQalf(ifc,0) .ne. 0) then ! non-aligned face
+           icv1 = mpg%fcCv(ifc,1)
+           icv2 = mpg%fcCv(ifc,2)
+           wrk1(icv1) = wrk1(icv1) + gm%fcHc(ifc,1)
+           wrk1(icv2) = wrk1(icv2) + gm%fcHc(ifc,2)           
+         else ! 'N/S guard cells': take length of face
+           icv = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))
+           if (icv.gt.mpg%nCi) wrk1(icv) = gm%fcHt(ifc)          
+         endif
+       enddo
+       ! construct wrk arrays
+       wrk0 = 0.0_R8
+       tt0 = 0.0_R8
+       tt1 = 0.0_R8
+       tt2 = 0.0_R8
+       tt3 = 0.0_R8
+       do iFt = 1, mpg%nFt 
+         do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+           icv = mpg%ftCv(j)
+           wrk0(icv) = wrk1(icv)*gm%cvBb(icv,3)/gm%cvBb(icv,0)
+           tt0(iFt) = tt0(iFt) + wrk1(icv)
+           tt1(iFt) = tt1(iFt) + wrk1(icv)*gm%cvVol(icv)/gm%cvSz(icv)
+           tt2(iFt) = tt2(iFt) + gm%cvBb(iCv,3)*gm%cvBb(iCv,3)*
+     .         gm%cvVol(iCv)
+           tt3(iFt) = tt3(iFt) + gm%cvVol(iCv)
+         enddo
+       enddo
+       ! full connection length of considered flux tubes
+       gm%ftConn = 0.0_R8
+       gm%ftEps = 0.0_R8
+       gm%ftBbav2 = 0.0_R8
+       do iFt = 1, mpg%nFt 
+         Ll = 0.0_R8
+         do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          Ll = Ll + wrk0(mpg%ftCv(j))
+         enddo
+         gm%ftConn(iFt) = Ll
+         if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
+           gm%ftEps(iFt) = tt0(iFt)**2/tt1(iFt)
+           gm%ftBbav2(iFt) = tt2(iFt)/tt3(iFt)
+         endif
+       enddo
       endif  
 
       if (iout.ne.0) then
