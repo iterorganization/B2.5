@@ -8,6 +8,14 @@
       type(b2state_diffv), intent(in) :: stated0
       real(kind=r8), intent (inout) :: res
       real(kind=r8) :: t0
+*-----------------------------------------------------------------------
+*     calc_res_fp_diff calculates a maximum residual for the vector   
+*     tangent fixed point form of the B2.5 time iteration scheme. This   
+*     is evaluated as the maximum among value of
+*     t0 = sqrt(sum((qd(idir)-qd0(idir))**2))/sqrt(sum(qd(idir)**2)), 
+*     where qd is a plasma adjoint state variable at time t and qd0 
+*     the same variable at t-dt, and idir isteh AD vector mode direction.
+*-----------------------------------------------------------------------
       integer :: icv, is, nd
 
       res = 0.0_R8

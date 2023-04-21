@@ -9,7 +9,6 @@
 *     ------------------------------------------------------------------
 *     B2XPFN computes the total particle flux of main hydrogenic atoms, fnn
 *     ------------------------------------------------------------------
-      integer is
       external sfill, b2saxpy
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpfn')

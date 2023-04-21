@@ -554,11 +554,12 @@ contains
         character(len=132) :: ion_label !< Ion species label (e.g. D+1)
         logical, allocatable :: in_species(:)
 #endif
+        real (kind=R8) :: intvertex_s
         external b2xpne, b2xpni, b2xppb, b2xppe, b2xppz, b2xzef
         external b2sral, b2tral, b2trql, b2tanml
         external b2xpnn, b2tiner, b2tvspa
         external ipgetr, ipgeti, species, streql, xerrab, xertst
-        external find_file
+        external find_file, intvertex_s
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -4320,29 +4321,29 @@ contains
 #if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%n_i_total, u )
 #endif
-        u = separatrix_average( mpg, geo, zeff, tmpFace )
         call write_sourced_value( summary%local%separatrix%zeff, &
           & 0.5_R8 * (zeff(iCv1) + zeff(iCv2)) )
+        u = separatrix_average( mpg, geo, zeff, tmpFace )
 #if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%zeff, u )
 #endif
 
 ! Data at limiter tangency point
         if (geometryType.eq.GEOMETRY_LIMITER) then
-          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te, tmpVx )
-          call write_sourced_value( summary%local%limiter%t_e, tmpVx(mpg%tgVx(1))/ev )
-          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti, tmpVx )
-          call write_sourced_value( summary%local%limiter%t_i_average, tmpVx(mpg%tgVx(1))/ev )
-          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne, tmpVx )
-          call write_sourced_value( summary%local%limiter%n_e, tmpVx(mpg%tgVx(1)) )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
+          call write_sourced_value( summary%local%limiter%t_e, u )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
+          call write_sourced_value( summary%local%limiter%t_i_average, u )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne )
+          call write_sourced_value( summary%local%limiter%n_e, u )
           do is = 1, nspecies
             is1 = eb2spcr(is)
             if (nint(zamax(is1)).eq.0) is1 = is1 + 1
             is2 = is1 + nfluids(is) - 1
             nisep = 0.0_R8
             do i = is1, is2
-              call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,i), tmpVx )
-              nisep = nisep + tmpVx(mpg%tgVx(1))
+              u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,i) )
+              nisep = nisep + u
             end do
             select case (is_codes(eb2spcr(is)))
             case ('H')
@@ -4383,10 +4384,10 @@ contains
               call write_sourced_value( summary%local%limiter%n_i%tungsten, nisep )
             end select
           end do
-          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1), tmpVx )
-          call write_sourced_value( summary%local%limiter%n_i_total, tmpVx(mpg%tgVx(1)) )
-          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff, tmpVx )
-          call write_sourced_value( summary%local%limiter%zeff, tmpVx(mpg%tgVx(1)) )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1) )
+          call write_sourced_value( summary%local%limiter%n_i_total, u )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff )
+          call write_sourced_value( summary%local%limiter%zeff, u )
           call write_sourced_value( summary%local%limiter%flux_expansion, flux_expansion(mpg%strDiv(1)) )
         end if
 
@@ -4400,26 +4401,22 @@ contains
           do i = 1, maxval(mpg%strDiv)
 #if IMAS_MINOR_VERSION > 34
             call write_sourced_string( summary%local%divertor_target(i)%name, plate_name(i) )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te, tmpVx )
-            call write_sourced_value( summary%local%divertor_target(i)%t_e, &
-              &  tmpVx(mpg%ivdiv(i))/ev )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti, tmpVx )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
+            call write_sourced_value( summary%local%divertor_target(i)%t_e, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
             call write_sourced_value( summary%local%divertor_target(i)%t_i_average, &
-              &  tmpVx(mpg%ivdiv(i))/ev )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne, tmpVx )
-            call write_sourced_value( summary%local%divertor_target(i)%n_e, &
-              &  tmpVx(mpg%ivdiv(i)) )
+              &  u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne )
+            call write_sourced_value( summary%local%divertor_target(i)%n_e, u )
 #else
             call write_sourced_string( summary%local%divertor_plate(i)%name, plate_name(i) )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te, tmpVx )
-            call write_sourced_value( summary%local%divertor_plate(i)%t_e, &
-              &  tmpVx(mpg%ivdiv(i))/ev )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti, tmpVx )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
+            call write_sourced_value( summary%local%divertor_plate(i)%t_e, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
             call write_sourced_value( summary%local%divertor_plate(i)%t_i_average, &
-              &  tmpVx(mpg%ivdiv(i))/ev )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne, tmpVx )
-            call write_sourced_value( summary%local%divertor_plate(i)%n_e, &
-              &  tmpVx(mpg%ivdiv(i)) )
+              &   )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne )
+            call write_sourced_value( summary%local%divertor_plate(i)%n_e, u )
 #endif
             do is = 1, nspecies
               is1 = eb2spcr(is)
@@ -4427,8 +4424,8 @@ contains
               is2 = is1 + nfluids(is) - 1
               nisep = 0.0_R8
               do j = is1, is2
-                call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,j), tmpVx )
-                nisep = nisep + tmpVx(mpg%ivdiv(i))
+                u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,j) )
+                nisep = nisep + u
               end do
               select case (is_codes(eb2spcr(is)))
               case ('H')
@@ -4534,21 +4531,17 @@ contains
               end select
             end do
 #if IMAS_MINOR_VERSION > 34
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1), tmpVx )
-            call write_sourced_value( summary%local%divertor_target(i)%n_i_total, &
-              &  tmpVx(mpg%ivdiv(i)) )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff, tmpVx )
-            call write_sourced_value( summary%local%divertor_target(i)%zeff, &
-              &  tmpVx(mpg%ivdiv(i)) )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1) )
+            call write_sourced_value( summary%local%divertor_target(i)%n_i_total, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff )
+            call write_sourced_value( summary%local%divertor_target(i)%zeff, u )
             call write_sourced_value( summary%local%divertor_target(i)%flux_expansion, &
               & flux_expansion(i) )
 #else
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1), tmpVx )
-            call write_sourced_value( summary%local%divertor_plate(i)%n_i_total, &
-              &  tmpVx(mpg%ivdiv(i)) )
-            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff, tmpVx )
-            call write_sourced_value( summary%local%divertor_plate(i)%zeff, &
-              &  tmpVx(mpg%ivdiv(i)) )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1) )
+            call write_sourced_value( summary%local%divertor_plate(i)%n_i_total, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff )
+            call write_sourced_value( summary%local%divertor_plate(i)%zeff, u )
             call write_sourced_value( summary%local%divertor_plate(i)%flux_expansion, &
               & flux_expansion(i) )
 #endif

@@ -3,8 +3,8 @@
 
       subroutine b2agmt (nx, ny, isymm, crx, cry,
      & fpsi, bb, vol, hx, hy, hz, hc, ht, qz, qc, qs, qac, qas, ebc,
-     & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy,
-     & rightix, rightiy, topix, topiy, cflag)
+     & gs, cell_width, cell_height,
+     & leftix, leftiy, bottomix, bottomiy, cflag)
       use b2mod_types
       use b2mod_math
       use b2mod_constants
@@ -19,9 +19,7 @@
       integer nx, ny, isymm
       integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
      &  bottomix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny),
-     &  rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny),
-     &  topix(-1:nx,-1:ny), topiy(-1:nx,-1:ny),
-     $  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS)
+     &  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3,0:2), bb(-1:nx,-1:ny,0:3)

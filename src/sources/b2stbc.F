@@ -31,6 +31,8 @@
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2stbc_phys, nsdmax
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #endif
       use b2mod_subsys
       implicit none
@@ -375,7 +377,7 @@
 
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
 !WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
-!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
+!WG_RM     &    switch, geo, pl, dv, srw, main_call)
 
 * ..compute conditions on the cuts
 *     (no flow)

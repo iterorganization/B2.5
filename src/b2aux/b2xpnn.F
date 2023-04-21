@@ -10,8 +10,6 @@
 *     ------------------------------------------------------------------
 *     B2XPNN computes the total density of main hydrogenic neutrals, nn
 *     ------------------------------------------------------------------
-      integer is
-*     ------------------------------------------------------------------
 *$$$  call subini ('b2xpnn')
       nn = 0.0_R8
       if (is_neutral(ismain0).and.nint(zn(ismain0)).eq.1)

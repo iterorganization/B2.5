@@ -20,7 +20,7 @@
 *     B2TLHE computes the electron heat transport flux limit velocity.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iCv, iFc
+      integer iFc
       real (kind=R8) ::
      *   t0, t1
 *   ..procedures

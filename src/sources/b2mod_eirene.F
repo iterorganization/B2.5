@@ -58,7 +58,7 @@
       use b2us_plasma
       implicit none
 
-      integer, save :: ank_mods = 0, use_recyceir = 1
+      integer, save :: use_recyceir = 1
       integer, save :: nhist = 1, nrelax = 0
       real (kind=R8), save, allocatable ::
      .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:), see_av(:,:)
@@ -397,7 +397,6 @@ c not sure this is the right place
         endif
         call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
 #endif
-        call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
@@ -445,7 +444,7 @@ csw 26feb2013
         call ipgeti('eirene_lvib',itmp)
         lvib=itmp.ne.0
         write(*,*) 'lvib = ',lvib
-        call xertst(ank_mods.eq.0.or.switch%ionising_core.le.0,
+        call xertst(switch%ank_mods.eq.0.or.switch%ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr', no_sseicorr)
@@ -928,7 +927,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
 csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after Eirene call
-      if(ank_mods.ne.0 .or. switch%ionising_core.eq.1) then
+      if(switch%ank_mods.ne.0 .or. switch%ionising_core.eq.1) then
 c*** "time layer"
         l_ddt=0
         if(crcstra(nstrai).eq.'T') then
@@ -1011,8 +1010,8 @@ cxpb  Compute recombination sources rescaling factor if necessary
       end do !}
 cxpb
 
-      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
-     > then
+      if(main_call.and.mod(ncall,eirene_mod).eq.0 .and.
+     > switch%ank_mods.ne.0) then
         if(ncall.eq.0) then !{
           hlp_tt=.false.
           hlp_bad_isp=.false.
@@ -1253,7 +1252,7 @@ c        (otherwise rescaling procedure does not correctly work with internal it
 c        this is phase 1 of rescaling process
 c
       if(main_call.and.mod(ncall,eirene_mod).eq.0
-     .            .and.ank_mods.ne.0) then
+     .            .and.switch%ank_mods.ne.0) then
         write(hlp_frm1,'(a,i2,a)') '(a,1p,i3,',nnatmi,'e13.5)'
         do istrai=1,nstrat !{
           if(crcstra(istrai).eq.'A') then
@@ -2237,8 +2236,8 @@ c  otherwise rescaling procedure does not work with internal iterations nstg2>1
 c  (sclrtio/sclalph will be reinitialised which should not happen at istg2 > 1)
 c  this is part of phase 2 of rescaling process
 c
-      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
-     .   then
+      if(main_call.and.mod(ncall,eirene_mod).eq.0 .and.
+     .   switch%ank_mods.ne.0) then
 
 c*** Calculate the basic quantities - i.e. the neutral source strengths
 c*** and total plasma sources for each stratum for subsequent rescaling

@@ -318,6 +318,7 @@ c Eirene coupling
       integer :: save_f30
       integer :: save_f31
       integer :: ionising_core
+      integer :: ank_mods
 
       real (kind=R8) :: eir_te_min
       real (kind=R8) :: eir_te_max
@@ -805,6 +806,7 @@ c eirene coupling
       s % save_f30 = 0
       s % save_f31 = 0
       s % ionising_core = 0
+      s % ank_mods = 0
 
       s % eir_te_min = 0.0e0_R8
       s % eir_te_max = 1.0e30_R8
@@ -1309,26 +1311,27 @@ c Eirene coupling
       call ipgeti ('eirene_sheath_pot',s % eirene_sheath_pot)
       call ipgeti ('b2mndr_av_read', s % ird_aver)                !pb 29.09.16
       call ipgeti ('b2mndt_av', s % iav_run)
-      call ipgeti('eirene_extrap', s % eirene_extrap)
-      call ipgeti('eirene_uub_style', s % eirene_uub_style)
-      call ipgeti('eirene_background', s % eirene_background)
-      call ipgeti('eirene_print_minmax', s % eirene_print_minmax)
+      call ipgeti ('eirene_extrap', s % eirene_extrap)
+      call ipgeti ('eirene_uub_style', s % eirene_uub_style)
+      call ipgeti ('eirene_background', s % eirene_background)
+      call ipgeti ('eirene_print_minmax', s % eirene_print_minmax)
       call ipgeti ('eirene_savef30', s % save_f30)
       call ipgeti ('eirene_savef31', s % save_f31)                !srv 14.07.10
       call ipgeti ('eirene_ionising_core', s % ionising_core)
       if (s%ionising_core.eq.0)     ! for backward compatibility
      > call ipgeti ('eirene_ionizing_core', s % ionising_core)
+      call ipgeti ('eirene_ank_mods', s % ank_mods)
 
-      call ipgetr('eirene_te_min',s % eir_te_min)
-      call ipgetr('eirene_te_max',s % eir_te_max)
-      call ipgetr('eirene_ti_min',s % eir_ti_min)
-      call ipgetr('eirene_ti_max',s % eir_ti_max)
-      call ipgetr('eirene_na_min',s % eir_na_min)
-      call ipgetr('eirene_na_max',s % eir_na_max)
-      call ipgetr('eirene_ne_min',s % eir_ne_min)
-      call ipgetr('eirene_ne_max',s % eir_ne_max)
-      call ipgetr('eirene_ua_min',s % eir_ua_min)
-      call ipgetr('eirene_ua_max',s % eir_ua_max)
+      call ipgetr ('eirene_te_min', s % eir_te_min)
+      call ipgetr ('eirene_te_max', s % eir_te_max)
+      call ipgetr ('eirene_ti_min', s % eir_ti_min)
+      call ipgetr ('eirene_ti_max', s % eir_ti_max)
+      call ipgetr ('eirene_na_min', s % eir_na_min)
+      call ipgetr ('eirene_na_max', s % eir_na_max)
+      call ipgetr ('eirene_ne_min', s % eir_ne_min)
+      call ipgetr ('eirene_ne_max', s % eir_ne_max)
+      call ipgetr ('eirene_ua_min', s % eir_ua_min)
+      call ipgetr ('eirene_ua_max', s % eir_ua_max)
       call ipgetr ('b2mndr_rescale_neutrals_sources',
      &                s % neutral_sources_rescale)
 

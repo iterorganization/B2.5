@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2agfs (nrid,nx,ny,nx1,ny1,istyle,
-     1 cflag,lblgm,periodic_bc,nncut,nncutmax)
+     1 cflag,lblgm,periodic_bc,nncut)
 
       use b2mod_geo
      . ,only: geom_match_dist
@@ -21,7 +21,7 @@
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
-      integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
+      integer nrid, nx, ny, nx1, ny1, istyle
 *   ..output arguments
       integer :: periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
       character*(*) lblgm

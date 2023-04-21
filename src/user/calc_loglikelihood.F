@@ -1,6 +1,6 @@
       subroutine calc_loglikelihood(nn, ff, yy, ss, lll, isigma)
       use b2mod_types
-      use b2mod_user_namelist
+      use b2mod_par_opt
      & , only : sigma, scale_sigma
       use b2mod_constants
       use b2mod_subsys
