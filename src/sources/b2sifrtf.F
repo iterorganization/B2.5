@@ -214,12 +214,13 @@
            endif
           enddo
         enddo
-#ifndef NO_OPENMP_B2SIFRTF
+#ifndef NO_OPENMP_B2SIFRTF_LOOP1
 !$OMP PARALLEL DO IF (do_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua)
+!$OMP& SHARED(ismain, cimp1)
 !$OMP& FIRSTPRIVATE(styl0, phm0)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
@@ -234,7 +235,6 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction_1)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -250,7 +250,6 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction_1)
             endif
            enddo
           enddo
@@ -258,12 +257,13 @@
         enddo
       else
 *     ..standard friction force calculation
-#ifndef NO_OPENMP_B2SIFRTF
+#ifndef NO_OPENMP_B2SIFRTF_LOOP1
 !$OMP PARALLEL DO IF (do_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua)
+!$OMP& SHARED(ismain, cimp1)
 !$OMP& FIRSTPRIVATE(styl0, phm0)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
@@ -279,7 +279,6 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction_2)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -295,7 +294,6 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction_2)
             endif
            enddo
           enddo
@@ -375,7 +373,7 @@
            ka(ix,iy) = fka(ix,iy,isb)
          enddo
         enddo
-#ifndef NO_OPENMP_B2SIFRTF
+#ifndef NO_OPENMP_B2SIFRTF_LOOP2
 !$OMP PARALLEL DO IF (do_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
@@ -383,6 +381,7 @@
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface, ka)
+!$OMP& SHARED(ismain, cimp1, cimp2)
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
@@ -434,13 +433,14 @@ c   .... apply flux limit
            ka(ix,iy) = fka(ix,iy,isb)
          enddo
         enddo
-#ifndef NO_OPENMP_B2SIFRTF
+#ifndef NO_OPENMP_B2SIFRTF_LOOP2
 !$OMP PARALLEL DO IF (do_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
+!$OMP& SHARED(ismain, cimp1, cimp2)
 !$OMP& SHARED(on_closed_surface, ka)
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
@@ -469,7 +469,7 @@ c        .. but we did not do it in order to have the same formulae as manual
      &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
 c   .... apply flux limit
              if(cflim(4).ne.0.0_R8.and.
-     & .not.on_closed_surface(ix,iy)) then
+     &         .not.on_closed_surface(ix,iy)) then
                jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
      &          (na(ix,iy,isb)+na(ix,iy,is))
                t0 = abs(calfab*delti)/(cflim(4)*jabmax)
