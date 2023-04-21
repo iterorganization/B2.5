@@ -402,19 +402,11 @@ c*** Set default values according to current species list
       call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
-      do ic=2,nomp
-        if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
-     & call xerrab('OMP LIST NOT SORTED')
-      end do
       nimp = 0
       imp = 0
       call cv_intersections (m%nCv, geo, m, rzimp, imp, nimp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
-      do ic=2,nimp
-        if (geo%cVx(imp(ic)).lt.geo%cVx(imp(ic-1)))
-     & call xerrab('IMP LIST NOT SORTED')
-      end do
       if (any(cfomp)) call xertst(nomp.gt.0,
      & 'Asking for OMP cost function but no OMP cells, check rzomp')
 *   ..Redefine cost functions on midplane list
