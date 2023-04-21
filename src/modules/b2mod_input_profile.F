@@ -519,7 +519,7 @@ cdjm Jan2017 Keep linearised sources for balance
       character*26 hlp_frm
       logical catch_up, lpflux, ldiv
       intrinsic sqrt
-      external calc_dist
+      external calc_dist, E01BEF, E01BFF
 
       if(ncall.eq.0) then
         call xertst(CVREGMAX.ge.mpg%nnreg(0),

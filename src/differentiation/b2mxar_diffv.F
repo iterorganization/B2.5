@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar_diffv (nCv, ns, nregionv, BoRiS, switch, geo, 
+      subroutine b2mxar_diffv (nCv, ns, nregionv, BoRiS, switch, geo,
      &  mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
@@ -11,6 +11,7 @@
       use b2us_geo_diffv
       use b2us_map_diffv
       use b2us_plasma_diffv
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, nregionv
@@ -42,7 +43,7 @@
       save ncall
 *   ..procedures
       intrinsic sqrt, abs
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 
@@ -67,7 +68,7 @@
           navi = navi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is))
           movi = movi+abs(geo%cvVol(iCv)*
      &     pl%na(1,iCv,is)*sqrt(abs(pl%ti(1,iCv)*am(is)*mp)))
-!WG_TODO         if (resignore(ix,iy,1).ne.0) 
+!WG_TODO         if (resignore(ix,iy,1).ne.0)
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
 !WG_TODO         if (resignore(ix,iy,2).ne.0)
 !WG_TODO     >    movi = movi+geo%cvVol(iCv)*
@@ -80,15 +81,15 @@
         t0 = t0+abs(dv%resco(1,iCv,is))
         t1 = t1+abs(dv%resmo(1,iCv,is))
        enddo
-       diag%aresco(1,is) = abs(t0/navi)
-       diag%aresmo(1,is) = abs(t1/movi)
+       if (navi .gt. 0.0_R8) diag%aresco(1,is) = abs(t0/navi)
+       if (movi .gt. 0.0_R8) diag%aresmo(1,is) = abs(t1/movi)
       enddo
 *   ..compute aresmt
       t0 = 0.0_R8
       do iCv = 1, mpg%nCi
        t0 = t0+abs(dv%resmt(1,iCv))
       enddo
-      diag%aresmt(1) = abs(t0/mtvi)
+      if (mtvi .gt. 0.0_R8) diag%aresmt(1) = abs(t0/mtvi)
 *   ..compute nevi, prvi
       nevi = 0.0_R8
       prvi = 0.0_R8
@@ -126,11 +127,11 @@
        t3 = t3+abs(dv%reshn(1,iCv))
        t4 = t4+abs(dv%reskt(1,iCv))
       enddo
-      diag%areshe = abs(t0/((1.5_R8+BoRiS)*prvi))
-      diag%areshi = abs(t1/((1.5_R8+BoRiS)*prvi))
-      diag%arespo = abs(t2/(qe*nevi))
-      diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvn))
-      diag%areskt = abs(t4/(prvi))
+      if (prvi .gt. 0.0_R8) diag%areshe = abs(t0/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%areshi = abs(t1/((1.5_R8+BoRiS)*prvi))
+      if (nevi .gt. 0.0_R8) diag%arespo = abs(t2/(qe*nevi))
+      if (prvn .gt. 0.0_R8) diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvn))
+      if (prvi .gt. 0.0_R8) diag%areskt = abs(t4/(prvi))
 
 * ..compute regional scaled sums
       diag%rescoreg = 0.0_R8
@@ -153,8 +154,10 @@
         diag%resmoreg(1,mpg%cvReg(iCv),is)=
      .     diag%resmoreg(1,mpg%cvReg(iCv),is)+abs(dv%resmo(1,iCv,is))
        enddo
-       diag%rescoreg(1,:,is) = abs(diag%rescoreg(1,:,is)/navi)
-       diag%resmoreg(1,:,is) = abs(diag%resmoreg(1,:,is)/movi)
+       if (navi .gt. 0.0_R8)
+     .   diag%rescoreg(1,:,is) = abs(diag%rescoreg(1,:,is)/navi)
+       if (movi .gt. 0.0_R8)
+     .   diag%resmoreg(1,:,is) = abs(diag%resmoreg(1,:,is)/movi)
       enddo
 *   ..compute prvi
       prvi = 0.0_R8
@@ -162,7 +165,7 @@
 !WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
         prvi = prvi+abs(geo%cvVol(iCv)*dv%ne(1,iCv)*pl%te(1,iCv))
         do is = 0, ns-1
-         if (.not.is_neutral(is)) 
+         if (.not.is_neutral(is))
      >    prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
         enddo
       enddo
@@ -171,13 +174,15 @@
       diag%reshireg = 0.0_R8
       do iCv = 1, mpg%nCi
 !WG_TODO: resignore!
-        diag%reshereg(1,mpg%cvReg(iCv)) = 
+        diag%reshereg(1,mpg%cvReg(iCv)) =
      .    diag%reshereg(1,mpg%cvReg(iCv))+abs(dv%reshe(1,iCv))
-        diag%reshireg(1,mpg%cvReg(iCv)) = 
+        diag%reshireg(1,mpg%cvReg(iCv)) =
      .    diag%reshireg(1,mpg%cvReg(iCv))+abs(dv%reshi(1,iCv))
       enddo
-      diag%reshereg(1,:) = abs(diag%reshereg(1,:)/((1.5_R8+BoRiS)*prvi))
-      diag%reshireg(1,:) = abs(diag%reshireg(1,:)/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%reshereg(1,:) = 
+     .  abs(diag%reshereg(1,:)/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%reshireg(1,:) = 
+     .  abs(diag%reshireg(1,:)/((1.5_R8+BoRiS)*prvi))
 
 * ..return
       ncall = ncall+1

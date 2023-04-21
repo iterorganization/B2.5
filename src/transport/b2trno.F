@@ -26,7 +26,7 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nrr, nss, nkind_data,
      &          nkind_coeff, poloidal_scaling, transport_ip_filename,
-     &          nscale
+     &          nscale, transport_ip_time_switch, transport_ip_time_mod
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG
@@ -34,6 +34,8 @@
 #endif
      &          ncall_b2tqna,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #endif
       use b2mod_subsys
       implicit none
