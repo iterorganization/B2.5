@@ -37,6 +37,8 @@
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #ifndef B25_EIRENE
       use b2mod_eirdiag
      & , only : dab2, lkindi, lkindm, lkindp

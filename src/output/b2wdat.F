@@ -515,7 +515,7 @@
       endif                                                             !srv   end for iout=3   
 
       if(use_mms.eq.1 .and. iout.eq.10) then                                 !srv 26.02.18 {
-!WG_TODO        call calc_err(nx, ny, ns)
+        call calc_err(nCv, ns, state%pl)
       endif                                                             !srv 26.02.18 }
 
 #ifdef WG_DEBUG

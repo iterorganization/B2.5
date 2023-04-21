@@ -12,13 +12,13 @@ MYPATH=`dirname "$0"` # path to this script, used when we calling other scripts 
 
 files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 
-#for f in $files; do 
-#   filenames="$1/$f $2/$f"; 
+#for f in $files; do
+#   filenames="$1/$f $2/$f";
 #   check_b2_output $filenames
 #done  > compare_results.log
 
 missing=0
-for f in $files; do 
+for f in $files; do
    if [ ! -f $1/$f ]; then
      echo "Error, file not found $1/$f";
      missing=$((missing+1))
@@ -37,9 +37,9 @@ fi
 
 # For most of the variables we compare the maximum error to the average array value
 # (and this average is the average of abs(var)).
-# To allow for statistical variance, we have a large tolerance for most of the variables (0.125).
+# To avoid statistical variance, this test must be done using correlated sampling and use the APCAS Eirene MPI parallelization strategy.
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 0.15 --maxerr 'te ti na ni ne po' -i 'time|data|na|ni0|nep|ne0|ua|ua0|kinrgy|fne*|fmo|fhi_eir|fch_p|del*|res*|rrahi|rsamo|rsahi|b2stbr_*|b2stbc_*|b2sihs_visa|b2sihs_divua|b2sihs_divue|b2sihs_fraa|b2npmo_*|rcx*|rsana|smfr|smq|sch|she|shi|csig*|calf|alf0|hce0|hci0|chci|sig0|dpa*|cdpa|cvsa*|fllim*|floe_noc|floi_noc|ne2' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-8 te 1e-11 ti 1e-11 po 1e-11' -i 'time' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successful
