@@ -170,6 +170,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: idum(:)
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
+      integer nCv, nFc
       integer boundary_namelist, neutrals_namelist, use_eirene
       integer numerics_namelist
       integer sources_inputfile, b2stbc_feedback
@@ -459,7 +460,6 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable :: zemin1(:), zemax1(:)
 #else
       integer jatm, jmol
-      integer :: nCv, nFc
 #endif
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
