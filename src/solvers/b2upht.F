@@ -143,10 +143,12 @@
 *   ..smooth the correction for inner flux surfaces                 !lk 26.10.2017{
         if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
           iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
           tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)*ni(iCv,1)
           tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*ni(iCv,1)*dti1(iCv)
           tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*ne(iCv)
           tt3(iFt) = tt3(iFt) + geo%cvVol(iCv)*ne(iCv)*dte1(iCv)
+          endif
         endif
       enddo
 
@@ -154,10 +156,12 @@
         ireg = mpg%cvReg(iCv)
         if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
           iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
           dti1(iCv) = tt1(iFt)/tt0(iFt) +
      *         corr_core_dt*(dti1(iCv)-tt1(iFt)/tt0(iFt))           ! IYS 19.12.2017
           dte1(iCv) = tt3(iFt)/tt2(iFt) +
      *         corr_core_dt*(dte1(iCv)-tt3(iFt)/tt2(iFt))           ! IYS 19.12.2017
+          endif
         endif
         dte(iCv) = dte1(iCv)
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
