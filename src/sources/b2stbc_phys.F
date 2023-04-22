@@ -4742,19 +4742,19 @@ cxpb code segment analog to b2tfhe
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            pl%na(iCv1,is)
             enddo
-            t0 = max(0.0e0_R8, (abs(geo%fcPbs(iFc))*t0*cs -           !srv 05.05.09
-     &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))  !srv 25.12.06 11.01.13 20.09.17
+            t0 = max(0.0e0_R8, (abs(geo%fcPbs(iFc))*t0*cs -             !srv 05.05.09
+     &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))    !srv 25.12.06 11.01.13 20.09.17
             t1 = t1*geo%fcS(iFc)
-            if(switch%pot_eq.eq.1) then                               !srv 27.02.13 {
-              srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
-     &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -              !srv 19.04.13
-     &           enepar(ib,2)*t1                                      !wdk to check: correct for gammae?
-              srw%she0(iCv1,0) = srw%she0(iCv1,0) -
+            if(switch%pot_eq.eq.1) then                                 !srv 27.02.13 {
+              srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
+     &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -                !srv 19.04.13
+     &           enepar(ib,2)*t1                                        !wdk to check: correct for gammae?
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
      &           qe*pl%po(iCv1)*(t0 + t1)                               !srv 07.11.12
             else                                                        !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
      &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+switch%delpo)*t0 - !srv 19.04.13
-     &          (enepar(ib,2) + switch%delpo)*t1                       !wdk to check: correct for gammae?
+     &          (enepar(ib,2) + switch%delpo)*t1                        !wdk to check: correct for gammae?
             endif                                                       !srv 27.02.13 }
             if(switch%mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -4773,107 +4773,58 @@ cxpb code segment analog to b2tfhe
           enddo
 cwdk    Todo: corrections for BCCON.ne.14
         elseif(bcene_15_style.eq.1) then
-!srv added accumulation in order to account twice b.c. for corner cells
-        call xerrab ('BCENE_15_STYLE 1 not adapted for WG')
-#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a)')
      &       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
      1       ' on ',BCCHAR(IB),boundary_location(ib)
           endif
-          IF(BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
-!              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
-              s1=abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) !srv 18.04.13 {
-              vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
-              if(bccon14_w(ib)) then                                    !srv 20.09.17 {
-*    .. apply bcene=15 according to the form of bccon=14
-                t0 = 0.0_R8
-                do is = 0, ns-1
-                  t0 = t0 + rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     *            CONPAR(IS,IB,1)*
-     *            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-                enddo
-              else
-                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              endif                                                     !srv 20.09.17
-              t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
-     &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-              if(switch%pot_eq.eq.1) then                               !srv 27.02.13 {
-                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
-     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &            (1.0e0_R8+GAMMAE)*t0
-                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
-     &            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &            (1.0e0_R8-GAMMAE)*
-     &            qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
-              else                                                      !srv 27.02.13
-                cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
-     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*delpo)*
-     &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
-              endif                                                     !srv 27.02.13 }
-              if(switch%mdf_fhe.ne.0) then                                     !srv 01.06.06 {
-                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
-     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &           fhePSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0)
-            endif                                                       !srv 01.06.06 }
-            END DO
-          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
-!              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
-              s1=abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))          !srv 18.04.13 {
-              vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
-              if(bccon14_e(ib)) then                                    !srv 20.09.17 {
-*    .. apply bcene=15 according to the form of bccon=14
-                t0 = 0.0_R8
-                do is = 0, ns-1
-                  t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     &            CONPAR(IS,IB,1)*
-     &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-                enddo
-              else
-                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              endif                                                     !srv 20.09.17 }
-              t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
-     &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-              if(switch%pot_eq.eq.1) then                                !srv 27.02.13 {
-                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
-     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               (1.0e0_R8+GAMMAE)*t0
-                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
-     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &           (1.0e0_R8-GAMMAE)*qe*
-     &           po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
-              else                                                      !srv 27.02.13
-                cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
-     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*delpo)*
-     &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
-              endif                                                     !srv 27.02.13 }
-              if(switch%mdf_fhe.ne.0) then                                     !srv 01.06.06 {
-                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
-     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
-     &           fhePSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0)         !srv 20.09.17 }
-            endif                                                       !srv 01.06.06 }
-            end do
-          ELSE
-            CALL XERRAB
-     .       ('B2STBC -- BCENE=15, not available for S and N')
-          END IF
-#endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            s1   = abs(geo%fcPbs(iFc))
+            vte  = sqrt(pl%te(iCv1)/me)
+            t0 = 0.0_R8
+            t1 = 0.0_R8
+            do is = 0, ns-1
+              t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*
+     *          pl%na(iCv1,is)
+              if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
+     &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &            pl%na(iCv1,is)
+            enddo
+            t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*expu2(max(-50.0_R8, !srv 20.09.17
+     &         -qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)))
+            t1 = t1*geo%fcS(iFc)
+            if(switch%pot_eq.eq.1) then
+              srw%she0(iCv1,1) = srw%she0(iCv1,1) -
+     &          (1.0e0_R8+GAMMAE)*t0 - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
+     &          (1.0e0_R8-GAMMAE)*qe*pl%po(iCv1)*t0 - 
+     &                            qe*pl%po(iCv1)*t1                     !wdk to check: correct 2nd term for gammae?
+            else
+              cs = sqrt(pz(iCv1)/rz(iCv1))
+              srw%she0(iCv1,1) = srw%she0(iCv1,1) - s1*dv%ne(iCv1)*cs*  !srv 11.03.09 {
+     &          ((1.0e0_R8+GAMMAE) + (1.0e0_R8-GAMMAE)*switch%delpo) -
+     &          (enepar(ib,2) + switch%delpo)*t1                        !wdk to check: correct for gammae?
+            endif   
+            if(switch%mdf_fhe.ne.0) then
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &         (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
+              t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*2.5_R8*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vedia(iFc,0) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vedia(iFc,1))*
+     &           0.5_R8*(dv%ne(iCv1)+dv%ne(iCv2))*
+     &           0.5_R8*(pl%te(iCv1)+pl%te(iCv2))
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &          max(0.0_R8,t0)
+              srw%she0(iCv1,1) = srw%she0(iCv1,1) +
+     &          min(0.0_R8,t0)/pl%te(iCv1)
+            endif
+          enddo
         else
-          CALL XERRAB
+          call xerrab
      .     ('B2STBC -- BCENE=15, incorrect bcene_15_style value')
         endif                                                           !srv 01.02.09 }
 
