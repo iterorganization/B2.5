@@ -192,6 +192,8 @@ c    first lines in the .fnn file. They are allocated to dummy variables.
               call cfrure (96, nT+1, T_dummy, 'T')
               call cfrure (96, nshpottau+1, shpottau_dummy, 'shpottau')
 
+              deallocate(M_dummy,T_dummy,shpottau_dummy)
+
             endif
 
 c         Read preintegrated recycling coefficient contributions
