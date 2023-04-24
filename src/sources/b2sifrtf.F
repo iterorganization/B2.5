@@ -220,6 +220,7 @@
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua)
+!$OMP& SHARED(ismain, cimp1)
 !$OMP& FIRSTPRIVATE(styl0, phm0)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
@@ -264,6 +265,7 @@
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua)
+!$OMP& SHARED(ismain, cimp1)
 !$OMP& FIRSTPRIVATE(styl0, phm0)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
@@ -383,6 +385,7 @@
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface, ka)
+!$OMP& SHARED(ismain, cimp1, cimp2)
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
@@ -441,6 +444,7 @@ c   .... apply flux limit
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
+!$OMP& SHARED(ismain, cimp1, cimp2)
 !$OMP& SHARED(on_closed_surface, ka)
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
@@ -469,7 +473,7 @@ c        .. but we did not do it in order to have the same formulae as manual
      &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
 c   .... apply flux limit
              if(cflim(4).ne.0.0_R8.and.
-     & .not.on_closed_surface(ix,iy)) then
+     &         .not.on_closed_surface(ix,iy)) then
                jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
      &          (na(ix,iy,isb)+na(ix,iy,is))
                t0 = abs(calfab*delti)/(cflim(4)*jabmax)

@@ -482,13 +482,14 @@ c 2002-09-11: logic revised
      7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
-      character cnamip*80, cvalip*80, cswitch*80
+      character cnamip*80, cnbmip*80, cvalip*80, cswitch*80
       character*256 sources_filename, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
-      character*500 line, ligne
+      character*500 line, ligne, cur_contr_comment
+      character*500, allocatable :: add_comment(:)
 #if DEF_NATM > 1
       character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff1
 #else
@@ -579,11 +580,11 @@ c 2002-09-11: logic revised
 #endif
       integer conformal_convert
       real (kind=R8) :: rratio
-      logical open_file, streql
+      logical open_file, streql, isadigit, is_valid
       logical is_comment, end_comment, only_comments
-      external xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits, only_comments,
-     &  open_file, get_jsep, conformal_convert, end_comment,
+      external xertst, xerrab, cfruch, cfrure, cfwuin, cfwuch, cfwure,
+     &  ipgeti, lnblnk, len_of_digits, only_comments, is_valid,
+     &  open_file, get_jsep, conformal_convert, end_comment, isadigit,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
@@ -1754,6 +1755,7 @@ c 2002-09-11: logic revised
       do while (ligne(1:7).ne.'*endphy')
         read (ninp(2),*,end=6,err=91) ligne
       enddo
+      cur_contr_comment = ' '
     5 continue
       read (ninp(2),'(a)',end=6,err=91) line
       if (.not.is_comment(line)) then
@@ -1769,7 +1771,11 @@ c 2002-09-11: logic revised
         i = index(line,'''')
         if (i.gt.0) then
           if (only_comments(line(1:i-1))) then
-            read (line(i:132),*) cnamip, cvalip
+            read (line(i:500),*) cnamip, cvalip
+            if (isadigit(cnamip(1:1)).or..not.is_valid(cvalip)) then
+              cnamip = ' '
+              cvalip = ' '
+            end if
           else
             cnamip = ' '
             cvalip = ' '
@@ -1875,6 +1881,34 @@ c 2002-09-11: logic revised
           todo = .false.
           wait = .true.  ! we wait till we have read b2.boundary.parameters
                          ! to choose the new value to be written
+          if (end_comment(line,i)) cur_contr_comment = trim(line(i:))
+          j = 0
+          cnbmip = ' '
+          do while (streql(cnbmip,' ').and..not.streql(line,' '))
+            read (ninp(2),'(a)',end=7,err=91) line
+            ligne = line
+            call strip_spaces(ligne)
+            if (.not.is_comment(ligne)) then
+              if (ligne(1:1).eq.'''') read (line,*) cnbmip
+            else
+              i = index(line,'''')
+              if (i.gt.0) then
+                if (only_comments(line(1:i-1)))
+     >           read(line(i:500),*) cnbmip
+              end if
+            end if
+            if (.not.streql(line,' ').and.streql(cnbmip,' ')) j = j + 1
+          end do
+    7     backspace(ninp(2))
+          if (j.gt.0) then
+            allocate(add_comment(j))
+            do i = 1, j
+              backspace(ninp(2))
+            end do
+            do i = 1, j
+              read (ninp(2),'(a)') add_comment(i)
+            end do
+          end if
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -2560,9 +2594,25 @@ c 2002-09-11: logic revised
        boundary_namelist_set = .false.
       enddo
       call get_boundary_namelist
-      if (istyle_cur_contr_on_S_and_N.ne.2) write(nout(2),'(a,i1,a1)')
-     >   '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
-     &             istyle_cur_contr_on_S_and_N,         ''''
+      if (istyle_cur_contr_on_S_and_N.ne.2) then
+        write(nout(2),1028)
+        if (streql(cur_contr_comment,' ')) then
+          write(nout(2),'(a,i1,a1)')
+     >     '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
+     &               istyle_cur_contr_on_S_and_N,         ''''
+        else
+          write(nout(2),'(a,i1,a)')
+     >     '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
+     &               istyle_cur_contr_on_S_and_N,
+     &     ''''//tab//trim(cur_contr_comment)
+        end if
+        if (allocated(add_comment)) then
+          do i = 1, size(add_comment)
+            write(nout(2),'(a)') trim(add_comment(i))
+          end do
+          deallocate(add_comment)
+        end if
+      end if
 
 *  ..write new b2.transport.parameters
       first_pass = .true.
