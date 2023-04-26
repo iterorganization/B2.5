@@ -170,7 +170,8 @@
         if (solveet(ireg)) then
          aa5(ix,iy,0) =
      &     -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)-
-     &      shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
+     &      shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)
+         if (style_b2mndt.lt.2) aa5(ix,iy,0) = aa5(ix,iy,0)+
      &    abs(resht(ix,iy))/(rxg*min(te(ix,iy),ti(ix,iy)))
         else
          aa5(ix,iy,0) = 1.0_R8
@@ -323,7 +324,8 @@ cxpb
         if (solveee(ireg)) then
          aa5(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
      &    cor_diag*dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*   !srv 07.07.21
-     &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))+
+     &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
+         if (style_b2mndt.lt.2) aa5(ix,iy,0) = aa5(ix,iy,0)+
      &    abs(reshe(ix,iy))/(rxg*te(ix,iy))
         else
          aa5(ix,iy,0) = 1.0_R8
@@ -474,12 +476,14 @@ cxpb
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solveei(ireg)) then
-         aa5(ix,iy,0) = (-shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
-     &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))+
-     &    abs(reshi(ix,iy))/(rxg*ti(ix,iy)))*scalr(ti(ix,iy))
+         aa5(ix,iy,0) = -shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
+     &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
+         if (style_b2mndt.lt.2) aa5(ix,iy,0) = aa5(ix,iy,0)+
+     &    abs(reshi(ix,iy))/(rxg*ti(ix,iy))
         else
-         aa5(ix,iy,0) = scalr(ti(ix,iy))
+         aa5(ix,iy,0) = 1.0_R8
         endif
+        aa5(ix,iy,0) = aa5(ix,iy,0)*scalr(ti(ix,iy))
        enddo
       enddo
       do iy = -1, ny

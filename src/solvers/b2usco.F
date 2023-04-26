@@ -41,6 +41,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+      integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0                                       !srv 17.06.02
       character chns*3                                                !srv 17.06.02
       real (kind=R8) ::
@@ -64,6 +65,7 @@
       if (ncall.eq.0) then                                            !srv 06.07.08 {
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
        call ipgeti ('b2usco_iout', iout)                              !srv 17.06.02
        if (in_parallel() .and. iout.ne.0) then
          !$OMP MASTER
@@ -125,11 +127,13 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-         aa5(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+
-     &    abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))
+         aa5(ix,iy,0) = -snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)
+         if (style_b2mndt.lt.2) aa5(ix,iy,0) = aa5(ix,iy,0)+
+     &    abs(rescb(ix,iy))/(rxg*pb(ix,iy))
         else
-         aa5(ix,iy,0) = rscal(pb(ix,iy))
+         aa5(ix,iy,0) = 1.0_R8
         endif
+        aa5(ix,iy,0) = aa5(ix,iy,0)*rscal(pb(ix,iy))
        enddo
       enddo
       do iy = -1, ny

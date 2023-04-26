@@ -265,14 +265,17 @@ cwdk add linearization for 9-point terms
           aa9(ix,iy,0) =
      &    -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)-
      &     shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)
+          if (style_b2mndt.lt.2) aa9(ix,iy,0) = aa9(ix,iy,0)
      &    +abs(resht(ix,iy))/(rxg*min(te(ix,iy),ti(ix,iy)))           !srv 02.01.07
         else if (solveee(ireg) .and. .not.solveei(ireg)) then
           aa9(ix,iy,0) =
      &    -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)
+          if (style_b2mndt.lt.2) aa9(ix,iy,0) = aa9(ix,iy,0)
      &    +abs(resht(ix,iy))/(rxg*te(ix,iy))                          !srv 02.01.07
         else if (.not.solveee(ireg) .and. solveei(ireg)) then
           aa9(ix,iy,0) =
      &    -shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)
+          if (style_b2mndt.lt.2) aa9(ix,iy,0) = aa9(ix,iy,0)
      &    +abs(resht(ix,iy))/(rxg*ti(ix,iy))                          !srv 02.01.07
         endif
        enddo
@@ -585,6 +588,7 @@ cwdk add linearization for 9-point terms
      >   aa9(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
      &    cor_diag*dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*  !srv 02.01.07 07.07.21
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
+         if (style_b2mndt.lt.2) aa9(ix,iy,0) = aa9(ix,iy,0)
      &    +abs(reshe(ix,iy))/(rxg*te(ix,iy))                          !srv 02.01.07
        enddo
       enddo
@@ -881,10 +885,11 @@ cwdk add linearization for 9-point terms
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solveei(ireg))
-     >   aa9(ix,iy,0) = (-shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
+     >   aa9(ix,iy,0) = -shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
-     &   +abs(reshi(ix,iy))/(rxg*ti(ix,iy)))*scalr(ti(ix,iy))         !srv 02.01.07
-!     &                                      )*scalr(ti(ix,iy))       !srv 02.01.07
+         if (style_b2mndt.lt.2) aa9(ix,iy,0) = aa9(ix,iy,0)
+     &    +abs(reshi(ix,iy))/(rxg*ti(ix,iy))
+         aa9(ix,iy,0) = aa9(ix,iy,0)*scalr(ti(ix,iy))                 !srv 02.01.07
        enddo
       enddo
       do iy = -1, ny
