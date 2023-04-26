@@ -55,6 +55,7 @@ c        end do
 c      end do
 cc%%%
       do il=1,nwldprt
+        if (il.eq.1.and..not.shadow) cycle
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
           write (*,*) 'Starting segment outside the limits',is,il
