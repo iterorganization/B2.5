@@ -174,7 +174,7 @@
             am_temp=am(is)
           endif
 *   ..correspondence matrix
-          nucl2s(inucl-1,nint(zamax(is)))=is
+          nucl2s(inucl-1,nint(zamin(is)):nint(zamax(is)))=is
           s2nucl(is)=inucl
           znnucl_int(inucl-1)=nint(znnucl(inucl-1))
         enddo
