@@ -122,18 +122,6 @@ c      print *,'lelmind:'                                !###
 c      print '(10(i6,2h :,i4))',(lelmind(i),i,i=1,lppp)  !###
 
 c
-c*** Check the presence of the shadowing structure
-c
-      n=nwldlis(1)
-      if(n .le. 0) then
-        write(*,*) 'b2pwlprp: no shadowing structure in the data!'
-        call walloff
-        l2pwinp=.false.
-        shadow=.false.
-        call subend ()
-        return
-      end if
-c
 c*** Convert the input wall coordinates into double precision
 c*** and scale them to metres.
 c*** We have now two sets of the wall segments, one saved by Eirene
@@ -245,11 +233,22 @@ c*** Prepare the list of grid indices for the target flux faces
       print '(a,4i6)','%% lpfrpos : ',(lpfrpos(i),i=1,ntrgts)         !###
 #endif
 
+c
+c*** Check the presence of the shadowing structure
+c
+      n=nwldlis(1)
+      if(n .le. 0) then
+        write(*,*) 'b2pwlprp: no shadowing structure in the data!'
+        call walloff
+        l2pwinp=.false.
+        shadow=.false.
+      end if
+
 c*** Sort the segments in the lists of the "wall zones"
 c*** The shadowing structure must be closed, therefore it starts from
 c*** an arbitrary point.
 
-      lwldstrt(1)=iabs(lwldlis(1,1))
+      if (shadow) lwldstrt(1)=iabs(lwldlis(1,1))
       call b2pwsort
 
 c*** The sorting routine, b2pwsort, also checks the wall segments. If a
