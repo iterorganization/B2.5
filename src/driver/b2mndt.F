@@ -105,7 +105,7 @@
      &  lnlam(-1:nx,-1:ny),                                             !srv 11.10.02
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),        !iyv 06.02.14
      &  fna_53(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  fne_53(-1:nx,-1:ny,0:1)
+     &  fne_53(-1:nx,-1:ny,0:1,0:1)
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
