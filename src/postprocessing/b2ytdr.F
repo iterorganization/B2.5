@@ -50,6 +50,8 @@ c 2002-09-11: logic revised
      ,        natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
+      use b2mod_par_opt
+     , , x0_opt => x0
       use b2mod_work
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -83,6 +85,7 @@ c 2002-09-11: logic revised
 #endif
       use b2mod_ipmain
       use b2mod_subsys
+      use b2us_map
       implicit none
 #     include "DIMENSIONS.F"
 
@@ -159,6 +162,8 @@ c 2002-09-11: logic revised
 
 *   ..common blocks
 *   ..local variables
+      type(mapping) :: mpg !needed for reading user&optimization namelists..
+! ..probably will be needed in any case for any WG-conversion
       integer, allocatable :: idum(:)
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
@@ -184,6 +189,7 @@ c 2002-09-11: logic revised
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
+      integer ncon, nele_jac
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8
       character*4 solps_version
@@ -220,21 +226,21 @@ c 2002-09-11: logic revised
      . ua_mean(:,:,:), po_mean(:,:),
      . e_na(:,:,:), e_te(:,:), e_ti(:,:),
      . e_ua(:,:,:), e_po(:,:),
-     . sna_mean(:,:,:,:), sne_mean(:,:,:),
-     . smo_mean(:,:,:,:), she_mean(:,:,:),
-     . shi_mean(:,:,:), sch_mean(:,:,:),
-     . e_sna(:,:,:,:), e_sne(:,:,:), e_smo(:,:,:,:),
-     . e_she(:,:,:), e_shi(:,:,:), e_sch(:,:,:)
+     . sna_mean(:,:,:), sne_mean(:,:),
+     . smo_mean(:,:,:), she_mean(:,:),
+     . shi_mean(:,:), sch_mean(:,:),
+     . e_sna(:,:,:), e_sne(:,:), e_smo(:,:,:),
+     . e_she(:,:), e_shi(:,:), e_sch(:,:)
       real (kind=R8), allocatable ::
      . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
      . ua1_mean(:,:,:), po1_mean(:,:),
      . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
      . e_ua1(:,:,:), e_po1(:,:),
-     . sna1_mean(:,:,:,:), sne1_mean(:,:,:),
-     . smo1_mean(:,:,:,:), she1_mean(:,:,:),
-     . shi1_mean(:,:,:), sch1_mean(:,:,:),
-     . e_sna1(:,:,:,:), e_sne1(:,:,:), e_smo1(:,:,:,:),
-     . e_she1(:,:,:), e_shi1(:,:,:), e_sch1(:,:,:)
+     . sna1_mean(:,:,:), sne1_mean(:,:),
+     . smo1_mean(:,:,:), she1_mean(:,:),
+     . shi1_mean(:,:), sch1_mean(:,:),
+     . e_sna1(:,:,:), e_sne1(:,:), e_smo1(:,:,:),
+     . e_she1(:,:), e_shi1(:,:), e_sch1(:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:,:), fna1(:,:,:,:,:), ua1(:,:,:), na1(:,:,:),
@@ -290,9 +296,7 @@ c 2002-09-11: logic revised
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
      4  na_feedback_ib1(:)
-#ifdef WG_TODO
       integer, allocatable :: l_h_mol1(:,:)
-#endif
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
@@ -503,10 +507,13 @@ c 2002-09-11: logic revised
       character*10, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary
       logical chemsp1(nstraid), savestratum(0:nstraid)
-      logical time_dep_puff1(nstraid)
+      logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
+      integer :: time_dep_puff_case1(nstraid)
+      real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
+      logical LMULPL
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
       logical, allocatable :: NLAVRP(:), NLAVRT(:), NLSYMP(:), NLSYMT(:)
       logical, allocatable :: NLRAY(:)
@@ -523,11 +530,12 @@ c 2002-09-11: logic revised
       logical, allocatable :: done(:)
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac,
-     .        cpath_written, new_path
+     .        no_sputtering, cpath_written, new_path,
+     .        adas_correct
 #endif
-      logical todo, wait
+      logical todo, wait, exists
       logical same_bundling, same_atoms, same_grid, non_default
-      logical averaging
+      logical averaging, hydrogen
       logical ismain_done, ismain0_done, ycur_done
       logical first_pass, do_scale
       logical wall_namelist_used
@@ -535,7 +543,7 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, convert_position, len_of_digits, trace_convert
+      integer lnblnk, len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally, b2idez, convert_eirene
       logical isaletter, silent_open
@@ -547,14 +555,13 @@ c 2002-09-11: logic revised
       intrinsic iabs, min0
 #endif
       integer conformal_convert
-      real (kind=R8) :: cr, cz, cr1, cz1, rratio
+      real (kind=R8) :: rratio
       logical open_file, streql
       logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin,
      &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits, only_comments,
      &  open_file, get_jsep, conformal_convert, end_comment,
-     &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment,
-     &  convert_position
+     &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
       external E01BEF, E01BFF
@@ -591,14 +598,6 @@ c 2002-09-11: logic revised
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
-      cr1(ix,iy)=0.25_R8*
-     1 (crx1(ix,iy,0)+crx1(ix,iy,1)+crx1(ix,iy,2)+crx1(ix,iy,3))
-      cz1(ix,iy)=0.25_R8*
-     1 (cry1(ix,iy,0)+cry1(ix,iy,1)+cry1(ix,iy,2)+cry1(ix,iy,3))
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -919,9 +918,7 @@ c 2002-09-11: logic revised
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
 #ifdef WG_TODO
-        call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &   wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+        call b2rugm (70, nx, ny, isymm)
 #endif
         call get_jsep(nx,ny,jxi,jxa,jsep)
         if (non_commensurate.eq.1) then
@@ -948,9 +945,7 @@ c 2002-09-11: logic revised
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
 #ifdef WG_TODO
-        call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &   wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+        call b2rugm (ninp(3), nx, ny, isymm)
 #endif
         call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
@@ -987,9 +982,7 @@ c 2002-09-11: logic revised
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
 #ifdef WG_TODO
-        call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
-     &   cell_width, cell_height)
+        call b2wugm (nout(6), nx, ny)
 #endif
         close(nout(6))
       endif
@@ -1043,18 +1036,18 @@ c 2002-09-11: logic revised
       allocate(e_te(-1:nx,-1:ny))
       allocate(e_ti(-1:nx,-1:ny))
       allocate(e_po(-1:nx,-1:ny))
-      allocate(sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
-      allocate(sne_mean(-1:nx,-1:ny,0:1))
-      allocate(smo_mean(-1:nx,-1:ny,0:3,0:ns-1))
-      allocate(she_mean(-1:nx,-1:ny,0:3))
-      allocate(shi_mean(-1:nx,-1:ny,0:3))
-      allocate(sch_mean(-1:nx,-1:ny,0:3))
-      allocate(e_sna(-1:nx,-1:ny,0:1,0:ns-1))
-      allocate(e_sne(-1:nx,-1:ny,0:1))
-      allocate(e_smo(-1:nx,-1:ny,0:3,0:ns-1))
-      allocate(e_she(-1:nx,-1:ny,0:3))
-      allocate(e_shi(-1:nx,-1:ny,0:3))
-      allocate(e_sch(-1:nx,-1:ny,0:3))
+      allocate(sna_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(sne_mean(-1:nx,-1:ny))
+      allocate(smo_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(she_mean(-1:nx,-1:ny))
+      allocate(shi_mean(-1:nx,-1:ny))
+      allocate(sch_mean(-1:nx,-1:ny))
+      allocate(e_sna(-1:nx,-1:ny,0:ns-1))
+      allocate(e_sne(-1:nx,-1:ny))
+      allocate(e_smo(-1:nx,-1:ny,0:ns-1))
+      allocate(e_she(-1:nx,-1:ny))
+      allocate(e_shi(-1:nx,-1:ny))
+      allocate(e_sch(-1:nx,-1:ny))
       allocate(na1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(ua1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(te1_mean(-1:nx1,-1:ny1))
@@ -1065,18 +1058,18 @@ c 2002-09-11: logic revised
       allocate(e_te1(-1:nx1,-1:ny1))
       allocate(e_ti1(-1:nx1,-1:ny1))
       allocate(e_po1(-1:nx1,-1:ny1))
-      allocate(sna1_mean(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(sne1_mean(-1:nx1,-1:ny1,0:1))
-      allocate(smo1_mean(-1:nx1,-1:ny1,0:3,0:ns1-1))
-      allocate(she1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(shi1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(sch1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(e_sna1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(e_sne1(-1:nx1,-1:ny1,0:1))
-      allocate(e_smo1(-1:nx1,-1:ny1,0:3,0:ns1-1))
-      allocate(e_she1(-1:nx1,-1:ny1,0:3))
-      allocate(e_shi1(-1:nx1,-1:ny1,0:3))
-      allocate(e_sch1(-1:nx1,-1:ny1,0:3))
+      allocate(sna1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(sne1_mean(-1:nx1,-1:ny1))
+      allocate(smo1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(she1_mean(-1:nx1,-1:ny1))
+      allocate(shi1_mean(-1:nx1,-1:ny1))
+      allocate(sch1_mean(-1:nx1,-1:ny1))
+      allocate(e_sna1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_sne1(-1:nx1,-1:ny1))
+      allocate(e_smo1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_she1(-1:nx1,-1:ny1))
+      allocate(e_shi1(-1:nx1,-1:ny1))
+      allocate(e_sch1(-1:nx1,-1:ny1))
       allocate(sputter_yield_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(sputter_yield2_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(bundle_frac(0:ns1-1,0:ns-1))
@@ -1174,13 +1167,17 @@ c 2002-09-11: logic revised
       eb2spcr1=-1
       b2espcr1=-1
       b2eatcr1=-1
+      hydrogen = .false.
+      do ib = 0, ns1-1
+        hydrogen = hydrogen .or. nint(zn1(ib)).eq.1
+      end do
 *   ..compute new state
       call b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
      &    non_commensurate,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc(-1,-1,0), hx1, hy1, qc1(-1,-1,0),
+     &    hx, hy, qc(-1,-1,0), hxx, hyy, qc1(-1,-1,0),
      &    bundle_frac, bottomiy1,
      &    ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
@@ -1239,8 +1236,8 @@ c 2002-09-11: logic revised
             na1(:,:,is)=na1(:,:,is)*neutral_rescale
             na1_mean(:,:,is)=na1_mean(:,:,is)*neutral_rescale
             e_na1(:,:,is)=e_na1(:,:,is)*neutral_rescale**2
-            sna1_mean(:,:,:,is)=sna1_mean(:,:,:,is)*neutral_rescale
-            e_sna1(:,:,:,is)=e_sna1(:,:,:,is)*neutral_rescale**2
+            sna1_mean(:,:,is)=sna1_mean(:,:,is)*neutral_rescale
+            e_sna1(:,:,is)=e_sna1(:,:,is)*neutral_rescale**2
             fna1(:,:,:,:,is)=fna1(:,:,:,:,is)*neutral_rescale
             fna_mdf1(:,:,:,:,is)=fna_mdf1(:,:,:,:,is)*neutral_rescale
             fna_fcor1(:,:,:,:,is)=fna_fcor1(:,:,:,:,is)*neutral_rescale
@@ -1254,10 +1251,8 @@ c 2002-09-11: logic revised
             fna_521(:,:,:,:,is)=fna_521(:,:,:,:,is)*neutral_rescale
           endif
         enddo
-#ifdef WG_TODO
-        call b2xpfi (nx, ny, ns, fna_321, fni_321)
-        call b2xpfi (nx, ny, ns, fna_521, fni_521)
-#endif
+        call b2xpfi_st (nx, ny, ns, fna_321, fni_321)
+        call b2xpfi_st (nx, ny, ns, fna_521, fni_521)
       endif
 
 *   ..write header for transformed state
@@ -1390,7 +1385,9 @@ c 2002-09-11: logic revised
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
       call ipgetr ('b2tfnb_ycur', ycur)
+      if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
+      if (.not.hydrogen) fch_ion_neutral = 0.0_R8
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1767,7 +1764,7 @@ c 2002-09-11: logic revised
           todo = .false.
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
-     &       'b2npp7_style' ,
+     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
      &       'b2stel_fix_recomb_energy','b2mndr_redef_pbs')
           todo = .false.
           wait = .true.
@@ -2841,7 +2838,8 @@ cxpb We must ensure we have not already listed this additional species
         deallocate(eta_hce_mult1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.transport_models_save.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in '//
+     .   'b2.transport_models_save.parameters'
       endif
 
 *  ..write new b2.sources.profile
@@ -3272,7 +3270,7 @@ cxpb This will need to be checked !!!
                           pxa(-1) = 0.0_R8
                           l_conn(-1) = 0.0_R8
                           do i = 0, nx1-1
-                            l_conn(i) = hx1(i,iyref1)/
+                            l_conn(i) = hxx(i,iyref1)/
      1                       (sqrt(bb1(i,iyref1,0)**2+
      2                             bb1(i,iyref1,1)**2)/bb1(i,iyref1,3))
                             pxa(i) =
@@ -3627,7 +3625,8 @@ cxpb This will need to be checked !!!
         close(99)
       else if (same_bundling.and.todo) then
         write(nout(5),'(a)') 'b2.atomic_physics_rescale.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in '//
+     .   'b2.atomic_physics_rescale.parameters'
       endif
 
 #ifdef B25_EIRENE
@@ -3722,8 +3721,28 @@ cxpb start by identifying the correspondence with the new run species
           end if
         end do
         nmol1 = iss
+        no_sputtering = .true.
+        do jatm = 1, natmi
+          if (iatm1(jatm).eq.0) cycle
+          select case (is_codes(eb2atcr(jatm)))
+          case ('H','D','T','He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
+            continue
+          case default
+            no_sputtering = .false.
+          end select
+        end do
+        adas_correct = .true.
+        do jatm = 1, natmi
+          if (iatm1(jatm).eq.0) cycle
+          select case (is_codes(eb2atcr(jatm)))
+          case ('H','D','T','He','C','Ne','Ar','N','Be')
+            continue
+          case default
+            adas_correct = b2fstate_version.gt.'03.000.007'
+          end select
+        end do
         if (streql(eirene_format,'iter') .and.
-     .      same_bundling .and. same_grid) then
+     .      same_bundling .and. same_grid .and. adas_correct) then
           write(nout(5),'(a)') 'input.dat'
           write(*,*) 'No changes needed in input.dat'
           goto 8688  ! no need to convert input.dat file
@@ -3757,7 +3776,7 @@ cxpb  Start reading input.dat file
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           filename=fort_lc//'13'
           inquire(file=filename,exist=ex)
-          if (ex) idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+          if (ex) idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
           filename=fort_lc//'15'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
@@ -4168,6 +4187,7 @@ C  OLD INPUT VERSION BEGIN
           ELSE
             READ (ZEILE,6666) idum(0:4) ! ILREF(NLJ),ILSPT(NLJ),ISRS(1,NLJ),
                                         ! ISRC(1,NLJ),LCHSPNWL(1,NLJ)
+            IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
             IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >        idum(2) = iatm1(idum(2))
             IF (idum(3).gt.0 .and. idum(3).le.NATMI) THEN
@@ -4343,6 +4363,7 @@ C READ LOCAL SURFACE INTERACTION MODEL FOR SURFACE NO. I
           ELSE
             READ (ZEILE,6666) idum(0:4) ! ILREF(I),ILSPT(I),ISRS(1,I),ISRC(1,I),
                                         ! LCHSPNWL(1,I)
+            IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
             IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >       idum(2) = iatm1(idum(2))
             IF (idum(3).gt.0 .and. idum(3).le.NATMI) THEN
@@ -4824,6 +4845,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEA(JATM,K),IESTMA(JATM,K),
      .                          IBGKA(JATM,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKA(JATM,K) /= 0)
             READ (IUNIN,6664) EELECA(JATM,K),EBULKA(JATM,K),
      .                        ESCD1A(JATM,K),ESCD2A(JATM,K),
      .                        FREACA(JATM,K),FLDLMA(JATM,K)
@@ -4977,6 +4999,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEM(JMOL,K),IESTMM(JMOL,K),
      .                          IBGKM(JMOL,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKM(JMOL,K) /= 0)
             READ (IUNIN,6664) EELECM(JMOL,K),EBULKM(JMOL,K),
      .                        ESCD1M(JMOL,K),ESCD2M(JMOL,K),
      .                        FREACM(JMOL,K)
@@ -5122,6 +5145,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEI(JION,K),IESTMI(JION,K),
      .                          IBGKI(JION,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKI(JION,K) /= 0)
             READ (IUNIN,6664) EELECI(JION,K),EBULKI(JION,K),
      .                        ESCD1I(JION,K),ESCD2I(JION,K),
      .                        FREACI(JION,K)
@@ -5245,6 +5269,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
      .                          IBGKPH(JPHOT,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKPH(JPHOT,K) /= 0)
             READ (IUNIN,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
      .                        ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
      .                        FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
@@ -7720,6 +7745,7 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
           READ (IUNIN,6666) idum(0:4) ! REFCUR%JLREF,REFCUR%JLSPT,
                                       ! REFCUR%JSRS,REFCUR%JSRC,
                                       ! REFCUR%JLCHSPNWL
+          IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
           IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >      idum(2) = iatm1(idum(2))
           IF (idum(3).gt.0 .and. idum(3).le.NATMI) THEN
@@ -8802,7 +8828,11 @@ cxpb Read first, transform and rewrite
           WRITE(IUNOT,'(A80)') ZEILE
         END IF
  1110   READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
+        call fix_logical_input(zeile,35)
+        READ (ZEILE,6665) ldum(1:35)
+! Merge usage of TRCDBGG and TRCGRD
+        ldum(6) = ldum(6).or.ldum(33)
+        WRITE(IUNOT,6665) ldum(1:35)
         IF (ZEILE(1:1) .EQ. '*') GOTO 1110
         allocate(TRCSR1(0:NSTRA1+1))
         DO I = 0, NSTRA, 60
@@ -9705,10 +9735,10 @@ cxpb  Convert fort.44 file if needed
           call b2yt_ngread(solps_version, eirene_format,
      &     nx1, ny1, natmi1, iatm1, nmol1, imol1, nion1, iion1,
      &     ns1-nspecies1, ipls1, npls,
-     &     savestratum, non_commensurate,
+     &     no_sputtering, savestratum, non_commensurate,
      &     epls_map, jsep1, region1,
      &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     &     hx, hy, qc(-1,-1,0), hx1, hy1, qc1(-1,-1,0))
+     &     hx, hy, qc(-1,-1,0), hxx, hyy, qc1(-1,-1,0))
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then
@@ -9727,7 +9757,7 @@ cxpb  Convert fort.46 file if needed
           write(*,*) 'No changes needed in '//fort_lc//'46'
         endif
         if (.not.(streql(solps_version,'iter').and.
-     &            same_bundling.and.same_grid)) then
+     &            same_bundling.and.same_grid.and.adas_correct)) then
           deallocate(e_bundle_start)
           deallocate(e_bundle_end)
           deallocate(e_bundle_contr)
@@ -10055,6 +10085,9 @@ cxpb  Convert fort.46 file if needed
           volrecstart1(ib1)=volrecstart(ib)
           userfluxparm1(ib1,1:2)=userfluxparm(ib,1:2)
           time_dep_puff1(ib1) = time_dep_puff(ib)
+          time_dep_puff_param1(:,ib1) = time_dep_puff_param(:,ib)
+          time_dep_puff_func1(ib1) = time_dep_puff_func(ib)
+          time_dep_puff_case1(ib1) = time_dep_puff_case(ib)
           ngpdata1(ib1) = ngpdata(ib)
           gpdata1(:,:,ib1) = gpdata(:,:,ib)
          endif
@@ -10199,6 +10232,22 @@ cxpb as they no longer necessarily point to the same species
         enddo
         if (todo) write(99,hlp_frm)
      .   'TIME_DEP_PUFF=',time_dep_puff1(1:nstrat1),','
+        todo = .false.
+        do ib = 1, nstrat1
+          todo = todo .or. time_dep_puff_func1(ib)
+        enddo
+        if (todo) then
+          write(99,hlp_frm)
+     .          'TIME_DEP_PUFF_FUNC=',time_dep_puff_func1(1:nstrat1),','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'i4,a)'
+          write(99,hlp_frm)
+     .          'TIME_DEP_PUFF_CASE=',time_dep_puff_case1(1:nstrat1),','
+          do ib = 1, nstrat1
+            write(99,'(1x,a,i3,a,g10.3)')
+     .          'TIME_DEP_PUFF_PARAM(1:10,',ib,')=',
+     .           time_dep_puff_param1(1:10,ib)
+          enddo
+        endif
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'(1x,i4,'',''))'
         if (maxval(ngpdata1).gt.0) then
           write(99, hlp_frm)
@@ -10607,7 +10656,7 @@ cxpb as they no longer necessarily point to the same species
         call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
 *  ..convert some wall arrays
         if(wall_namelist_used) then
-          call b2yt_wall(nx1,ny1,ns,ns1,
+          call b2yt_wall(ns,ns1,
      .     natm,natm1,nmol,nmol1,nion,nion1,
      .     is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      .     itrack1,itrack2,itrack3)
@@ -10792,7 +10841,7 @@ cxpb as they no longer necessarily point to the same species
         end if
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_save.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.feedback_save.parameters'
       end if
 
 *   ..write new b2.feedback_control.parameters if needed
@@ -11004,10 +11053,117 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_time1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
+        write(*,*) 'No changes needed in b2.feedback_control.parameters'
+      end if
+
+*   ..write new b2.optimization.parameters, if needed
+      filename='b2.optimization.parameters'
+      call find_file(filename,todo)
+      new_filename='b2.optimization.parameters.2'
+      call find_file(new_filename,found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if (todo.and..not.found.and..not.same_bundling) then
+        write(*,*) 'Writing b2.user.parameters.2'
+        open(99,file=new_filename)
+        write(nout(5),'(a)') trim(new_filename)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        write(99,'(a5)') '&OPTIMIZATION'
+        if (ncf.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'CFSTART=',(cfstart(i),i=1,ncf)
+          write(99,hlp_frm) 'CFEND=',(cfend(i),i=1,ncf)
+          write(99,hlp_frm) 'CFTYPE=',(cftype(i),i=1,ncf)
+          write(99,hlp_frm) 'CFDEF=',(cfdef(i),i=1,ncf)
+          do i = 1, ncf
+            if (cfdef(i).eq.4) then
+              write(99,'(1x,a,i2,a,2(1x,i5,'',''))')
+     &         'CF_REGP(',i,',1:2)=',(cf_regp(i,j),j=1,2)
+              write(hlp_frm,'(a,i4,a)')
+     &         '(1x,a,',sum(cf_regp(:,2)),'(1x,i5,'',''))'
+              write(99,hlp_frm)
+     &         'CF_REG=',(cf_reg(j),j=1,sum(cf_regp(:,2)))
+            end if
+          end do
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'CFWEIGHT=',(cfweight(i),i=1,ncf)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'l1,a)'
+          write(99,hlp_frm) 'MAPTOOMP=',(maptoomp(i),i=1,ncf)
+          write(99,hlp_frm) 'READ_SIGMA=',(read_sigma(i),i=1,ncf)
+        end if
+        if (nsigma.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NSIGMA=',nsigma,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsigma,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'SIGMA=',(sigma(i),i=1,nsigma)
+          write(99,hlp_frm) 'SCALE_SIGMA=',(scale_sigma(i),i=1,nsigma)
+        end if
+        if (nnvar.gt.0) then
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'PRIOR_TYPE=',(prior_type(i),i=1,nnvar)
+          do i = 1, nnvar
+            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
+     &       'PRIOR_PAR(',i,',1:2)=',(prior_par(i,j),j=1,2)
+            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
+     &       'PRIOR_RANGE(',i,',1:2)=',(prior_range(i,j),j=1,2)
+          end do
+        end if
+        if (nnvar.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NNVAR=',nnvar,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'PARTYPE=',(partype(i),i=1,nnvar)
+          write(99,hlp_frm)
+     >     'SPATIAL_POINTS=',(spatial_points(i),i=1,nnvar)
+          write(99,hlp_frm) 'PARIS=',(is1(paris(i)),i=1,nnvar)
+          do i = 1, nnvar
+            if (partype(i).eq.16) then
+              if (.not.savestratum(parib(i))) parib(i)=0
+            end if
+          end do
+          write(99,hlp_frm) 'PARIB=',(parib(i),i=1,nnvar)
+          write(hlp_frm,'(a,i2,a)')
+     >     '(1x,a,',npar_opt,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'PAR_RESCALE=',(par_rescale(i),i=1,npar_opt)
+          write(99,hlp_frm) 'X0=',(x0_opt(i),i=1,npar_opt)
+          write(99,hlp_frm) 'XL=',(xl(i),i=1,npar_opt)
+          write(99,hlp_frm) 'XU=',(xu(i),i=1,npar_opt)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'l1,a)'
+          write(99,hlp_frm) 'SPATIAL_DEP=',(spatial_dep(i),i=1,nsigma)
+        end if
+        if (nsigma.gt.0) then
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsigma,'l1,a)'
+          write(99,hlp_frm) 'SIGMA_OPT=',(sigma_opt(i),i=1,nsigma)
+        end if
+        write(99,'(1x,a,i6,a)') 'MAXITER=',maxiter,','
+        if (cpu_opt.gt.0.0_R8)
+     >   write(99,'(1x,a,g11.4,a)') 'CPU_OPT=',cpu_opt,','
+        write(99,'(1x,a,g11.4,a)') 'TOL_OPT=',tol_opt,','
+        if (.not.streql(hessian_approximation,'limited-memory'))
+     >   write(99,'(1x,a,a,a)')
+     >   'HESSIAN_APPROXIMATION=''',trim(hessian_approximation),''','
+        if (.not.streql(limited_memory_update_type,'bfgs'))
+     >   write(99,'(1x,a,a,a)') 'LIMITED_MEMORY_UPDATE_TYPE=''',
+     >                      trim(limited_memory_update_type),''','
+        if (nncon.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NNCON=',nncon,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nncon,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'GL=',(gl(i),i=1,nncon)
+          write(99,hlp_frm) 'GU=',(gu(i),i=1,nncon)
+        end if
+        if (nnjac.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NNJAC=',nnjac,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,i6,'',''))'
+          write(99,hlp_frm) 'JCOL=',(jcol(i),i=1,nnjac)
+          write(99,hlp_frm) 'JROW=',(jrow(i),i=1,nnjac)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'JJ=',(jj(i),i=1,nnjac)
+        end if
+        write(99,'(a1)') '/'
+        close(99)
+      else if (todo) then
+        write(nout(5),'(a)') 'b2.optimization.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
-#ifdef WG_TODO
 *   ..write new b2.user.parameters, if needed
       filename='b2.user.parameters'
       call find_file(filename,todo)
@@ -11016,9 +11172,12 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or..not.same_grid)) then
+#ifdef WG_TODO
         if(.not.allocated(iz))
-     >   call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
-        call alloc_b2mod_user(nx,ns,nlimi,nmoli,ntns)
+     >   call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstrat,natm,switch)
+        if(.not.user_initialised)
+     >   call alloc_b2mod_user(geo,mpg,ns,nlimi,nmoli,ntns)
+#endif
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -11034,6 +11193,7 @@ cxpb as they no longer necessarily point to the same species
             write(99,hlp_frm) 'LHETRGTS=',(lhetrgts(j),j=1,ntns)
           end if
         end if
+#ifdef WG_TODO
         write(99,'(1x,a,i2,a)') 'LPFRS_PMP=',LPFRS_PMP,','
         if (lpfrb_i.ne.0) then
           if (lpfrb_i.gt.0) then
@@ -11127,6 +11287,7 @@ cxpb as they no longer necessarily point to the same species
             write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(ix-nxtr1-1),','
           end if
         end if
+#endif
         if (fusion_power.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'FUSION_POWER=',fusion_power,','
         if (Spmp_He_to_D.ne.1.0_R8)
@@ -11160,6 +11321,18 @@ cxpb as they no longer necessarily point to the same species
      ,                         (l_h_mol1(j,i),',',j=1,nmol1)
           end do
           deallocate(l_h_mol1)
+        end if
+        if (maxval(rzomp).gt.0.0_R8) then
+          do i = 1, 2
+            write(99,'(1x,a,i1,a,2(1x,g11.4,'',''))')
+     &       'RZOMP(1,',i,')=',(rzomp(j,i),j=1,2)
+          end do
+        end if
+        if (maxval(rzimp).gt.0.0_R8) then
+          do i = 1, 2
+            write(99,'(1x,a,i1,a,2(1x,g11.4,'',''))')
+     &       'RZIMP(1,',i,')=',(rzimp(j,i),j=1,2)
+          end do
         end if
         if (npfrgrp.gt.0) then
           write(99,'(1x,a,i3,a)') 'NPFRGRP=',NPFRGRP,','
@@ -11205,9 +11378,8 @@ cxpb as they no longer necessarily point to the same species
         call dealloc_b2mod_user
       else if (todo) then
         write(nout(5),'(a)') 'b2.user.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.user.parameters'
       end if
-#endif
 
 *   ..write new b2yq.dat, if needed
       filename='b2yq.dat'
@@ -11231,8 +11403,7 @@ cxpb as they no longer necessarily point to the same species
   983     continue
           close(99)
         else if (same_bundling) then
-          write(nout(5),'(a)') 'b2yq.dat'
-          write(*,*) 'No changes needed in ',trim(filename)
+          write(*,*) 'No changes needed in b2yq.dat'
         end if
         close(98)
       end if
@@ -11329,7 +11500,6 @@ cxpb as they no longer necessarily point to the same species
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))
       else
-        write(nout(5),'(a)') 'b2ah.dat'
         write(*,*) 'No changes needed in b2ah.dat'
       endif
 
@@ -11377,14 +11547,16 @@ cxpb as they no longer necessarily point to the same species
         write(nout(4),'(1p,1e9.2)') ttini
         close(nout(4))
       else
-        write(nout(5),'(a)') 'b2ai.dat'
         write(*,*) 'No changes needed in b2ai.dat'
       endif
       deallocate(nbini)
       deallocate(idum)
 
 *   ..we now write a new SOLPS_FLUIDS file if needed
-      if (.not.same_bundling) then
+      filename='SOLPS_FLUIDS'
+      call find_file(filename,exists)
+      if (.not.exists) inquire(file='../../SOLPS_FLUIDS', exist=exists)
+      if (.not.same_bundling.or..not.exists) then
         write(*,*) 'Writing SOLPS_FLUIDS.2'
         allocate(species_name(0:ns1-1))
         do is = 0, ns1-1
@@ -11397,7 +11569,6 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         deallocate(species_name)
       else
-        write(nout(5),'(a)') 'SOLPS_FLUIDS'
         write(*,*) 'No changes needed in SOLPS_FLUIDS'
       endif
 
@@ -11415,6 +11586,7 @@ cxpb as they no longer necessarily point to the same species
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
+      call dealloc_b2mod_par_opt
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_wall2_init
       call dealloc_transport_namelist

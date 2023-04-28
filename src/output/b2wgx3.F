@@ -6,6 +6,7 @@
       use b2mod_types
       use b2mod_b2cmwg
       use b2mod_subsys
+      use b2mod_gnmap3
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc, ncnta, ncntb
@@ -118,7 +119,7 @@
       integer iplot, ix, iy, ix0, iy0, ix1, iy1, ixb, iyb
       character headr2*120
 *   ..procedures
-      external xertst, pagini, pagend, cpseti, gndfm3
+      external xertst, pagini, pagend, cpseti
       external b2xxmm, b2wgxb, b2wgyp
 
 *-----------------------------------------------------------------------

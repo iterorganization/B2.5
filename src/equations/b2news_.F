@@ -42,11 +42,13 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
      &          nkind_data, poloidal_scaling, transport_ip_filename,
-     &          nscale
+     &          nscale, transport_ip_time_switch, transport_ip_time_mod
       use b2us_feedback
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_ad
       use b2mod_subsys
       implicit none
@@ -779,7 +781,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
 csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
       if(no_neutr_scl .eq. 0) then
         write(*,*) 'Calling b2stbr_neutr_scl'
-        call b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, st%pl, st%dv)      !srv 25.10.08
+        call b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, st%pl, st%dv,      !srv 25.10.08
+     &    switch%use_eirene, switch%ank_mods)
         write(*,*) 'Called b2stbr_neutr_scl'
       endif
 

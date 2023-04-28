@@ -3,6 +3,7 @@
 
       subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
       use b2mod_types
+      use b2mod_math
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmfs
@@ -98,17 +99,14 @@
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
      &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80!, lblpsd*120
       real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4), t0, t1
+     *   zpdum(0:nsdecl-1,4)
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
+      logical is_comment
       external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
-! csc UNCOMMENT WITH AD
-!      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -196,21 +194,6 @@
        call xertst (ltst(zpdum(is,3),zn(is)), 'faulty data for zn')
        call xertst (ltst(zpdum(is,4),am(is)), 'faulty data for am')
       enddo
-! csc UNCOMMENT WITH AD
-!*   ..read header for initial differentiated state
-!*     (zamin, zamax, zn, am from ninp(6) will be checked against the data
-!*     already read in)
-!      call cfruch (ninp(6), 120, lblpsd, 'label')
-!      call b2ruzd_nodiff (ninp(6), b2fstati_version, ns0, &
-!     &  zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-!      do is = 0, ns0-1
-!       call xertst (ltst(zpdum(is,1),zamin(is)), &
-!     &  'faulty data for zamin')
-!       call xertst (ltst(zpdum(is,2),zamax(is)), &
-!     &  'faulty data for zamax')
-!       call xertst (ltst(zpdum(is,3),zn(is)), 'faulty data for zn')
-!       call xertst (ltst(zpdum(is,4),am(is)), 'faulty data for am')
-!      enddo
 *   ..read atomic rate data
       call cfverr (ninp(4), b2frates_version)
       call cfruch (ninp(4), 120, lblrc, 'label')
@@ -249,9 +232,6 @@
      &  lblsr(1:60), lblsr(61:120)
       write (nout(0),'(2x,a/4x,a/4x,a)') 'lblmn:',
      &  lblmn(1:60), lblmn(61:120)
-! csc UNCOMMENT WITH AD
-!      write (nout(0),'(2x,a/4x,a/4x,a)') 'lblpsd:', &
-!     &  lblpsd(1:60), lblpsd(61:120)
       label = lblmn
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
@@ -317,13 +297,6 @@ c check the values of the switches
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-
-
-! csc UNCOMMENT WITH AD
-!  call cfverw (nout(9), newversion)
-!  call cfwuin (nout(9), 3, idum, 'nCv,nFc,ns')
-!  call cfwuch (nout(9), 120, lblmn, 'label')
-!  call b2wuzd (nout(9), newversion, ns, zamin, zamax, zn, am)
 *   ..write header to nout(4)
       idum(0) = ns
       call cfwuin (nout(4), 1, idum, 'ns')

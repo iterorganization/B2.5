@@ -21,10 +21,8 @@
       real (kind=R8) ::
      *   t0,t1
 *   ..procedures
-      real (kind=R8) :: pit
       intrinsic max, sqrt
       external xertst, b2xvfx
-      pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
@@ -62,4 +60,16 @@ c           ensures consistency with b2trcl_conductive_limit .ne. 0
       call subend ()
       return
 *     ------------------------------------------------------------------
+      contains
+
+      function pit(iCv)
+      implicit none
+      real (kind=R8) :: pit
+      integer, intent(in) :: iCv
+
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+
+      return
+      end function pit
+
       end subroutine b2tlhi

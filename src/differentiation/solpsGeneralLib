@@ -33,6 +33,60 @@ function isBoundaryCell:
   shape: (param 1, result)
   type: (integer(), boolean())
 
+function get_B25_hash:
+  external:
+  shape: (result)
+  type: (character())
+
+function open_file:
+  external:
+  shape: (param 1, param 2, param 3, result)
+  type: (integer(), character(), character(), boolean())
+
+function silent_open:
+  external:
+  shape: (param 1, param 2, param 3, param 4, result)
+  type: (integer(), character(), character(), character(), boolean())
+
+function is_comment:
+  external:
+  shape: (param 1, result)
+  type: (character(), boolean())
+
+function end_comment:
+  external:
+  shape: (param 1, param 2, result)
+  type: (character(), integer(), boolean())
+
+function only_comments:
+  external:
+  shape: (param 1, result)
+  type: (character(), boolean())
+
+function streql:
+  external:
+  shape: (param 1, param 2, result)
+  type: (character(), character(), boolean())
+
+function open_file:
+  external:
+  shape: (param 1, param 2, param 3, result)
+  type: (integer(), character(), character(), boolean())
+
+function silent_open:
+  external:
+  shape: (param 1, param 2, param 3, param 4, result)
+  type: (integer(), character(), character(), character(), boolean())
+
+function anint:
+  external:
+  shape: (param 1, result)
+  type: (float(), integer())
+
+subroutine find_file:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
 
 subroutine tallies:
  external:
@@ -337,11 +391,6 @@ subroutine lower_case:
  external:
  shape:(param 1)
  deps: (id)
-
-subroutine eirene_mc:
- external:
- shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7)
- deps: (id, id, id, id, id, id, id)
 
 subroutine font:
  external:
@@ -829,8 +878,8 @@ subroutine righta:
 
 subroutine lbfill:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5)
- deps: (id, id, id, id, id)
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
 
 subroutine lbfilx:
  external:
@@ -861,12 +910,6 @@ subroutine gndfm3:
  external:
  shape:(param 1, param 2, param 3, param 4, param 5, param 6)
  deps: (id, id, id, id, id, id)
-
-subroutine combfile:
- external:
- shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10,
-        param 11, param 12, param 13, param 14, param 15, param 16, param 17, param 18, param 19, param 20)
- deps: (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id)
 
 subroutine b2agsp:
  external:
@@ -992,3 +1035,18 @@ subroutine nf_put_var_double:
  external:
  shape:(param 1, param 2, param 3)
  deps: (id, id, id)
+
+subroutine b2mwti:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10, param 11, param 12, param 13, param 14, param 15, param 16, param 17, param 18)
+ deps: (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id)
+
+subroutine dealloc_b2mod_mwti:
+ external:
+ shape:()
+ deps: ()
+
+subroutine output_ds:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7)
+ deps: (id, id, id, id, id, id, id)

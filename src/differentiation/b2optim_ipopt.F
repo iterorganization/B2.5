@@ -71,6 +71,7 @@
 #endif
 
 #ifdef ADJ
+      call print_adj_parameters()
       par_opt_physb = 0.0_R8
 #endif
 
@@ -172,7 +173,7 @@
       if (IERR.ne.0 ) goto 9990
 
 !     Set a maximum cpu time for ipopt based on b2mndr_elapsed
-      call xertst (cpu_opt.ge.0.0_R8, 
+      call xertst (cpu_opt.ge.0.0_R8,
      & 'faulty internal parameter cpu_opt')
       if (cpu_opt.gt.0.0_R8) then
         IERR = IPADDNUMOPTION(IPROBLEM, 'max_cpu_time', cpu_opt)
@@ -180,9 +181,9 @@
       endif
 
 !     Set infinity bounds
-      IERR = IPADDNUMOPTION(IPROBLEM, 'nlp_upper_bound_inf', 
+      IERR = IPADDNUMOPTION(IPROBLEM, 'nlp_upper_bound_inf',
      & inf_opt*0.1)
-      IERR = IPADDNUMOPTION(IPROBLEM, 'nlp_lower_bound_inf', 
+      IERR = IPADDNUMOPTION(IPROBLEM, 'nlp_lower_bound_inf',
      & -inf_opt*0.1)
       if (IERR.ne.0 ) goto 9990
 
@@ -284,7 +285,7 @@
         isigma = npar - nsigma_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
             write(str,"(I1)") isigma
             if (ipar.ge.10) write(str,"(I2)") isigma
             write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
@@ -322,7 +323,7 @@
         isigma = npar - nsigma_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
             write(str,"(I1)") isigma
             if (ipar.ge.10) write(str,"(I2)") isigma
             write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
@@ -330,6 +331,9 @@
             isigma = isigma + 1
           endif
         enddo
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
+! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+! the forward problem over unnecessary directions
         call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,
      &   statediff, state_ext, state_extdiff, j, jdiff)
       endif
@@ -346,6 +350,7 @@
         write (*,*) 'IPOPT GRAD:', grad(ipar)
       end do
 #endif
+      write (*,*) 'IPOPT GRADIENT NORM:', norm2(grad(1:npar))
 
       IER = 0
       return
@@ -422,7 +427,7 @@ C     1  2  3  4
 C   1 *
 C   2    *
 C   3       *
-C   4          * 
+C   4          *
       if( TASK.eq.0 ) then
          do i = 1, NNZH
             IRNH(i) = i
@@ -437,8 +442,8 @@ C   4          *
       return
       end subroutine EV_HESS
 
-      subroutine ITER_CB(ALG_MODE, ITER_COUNT, OBJVAL, INF_PR, INF_DU, 
-     &    MU, DNORM, REGU_SIZE, ALPHA_DU, ALPHA_PR, LS_TRIAL, IDAT, 
+      subroutine ITER_CB(ALG_MODE, ITER_COUNT, OBJVAL, INF_PR, INF_DU,
+     &    MU, DNORM, REGU_SIZE, ALPHA_DU, ALPHA_PR, LS_TRIAL, IDAT,
      &    DAT, ISTOP)
       use b2us_data_diff
       use b2us_io_diff
@@ -463,14 +468,14 @@ C   4          *
 ! Experimental: write intermediate state file?
       if (ITER_COUNT .gt. 0) then
         write(*,*) 'IPOPT: Saving intermediate optimization state'
-        write (opt_state_name,'(a14,i4.4)') 'b2fstate.',ITER_COUNT
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',ITER_COUNT
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
         idum(0) = mpg%nCv
         idum(1) = mpg%nFc
         idum(2) = state%ns
         call cfverw (99, newversion)
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
-        write (label,'(a46,i4)') 
+        write (label,'(a46,i4)')
      &    'b2optim_ipopt intermediate optimization state ',ITER_COUNT
         call cfwuch (99, 120, label, 'label')
         call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn,

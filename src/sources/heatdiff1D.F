@@ -47,8 +47,6 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
       real (kind=R8) :: x(ndepth)
       real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
-      real (kind=R8) :: Cp, Kappa, mass_density
-      external Cp, Kappa, mass_density
 
 #ifdef NO_NAG
       integer ier, iflg, iopt, neq, nmax, nstep
@@ -309,7 +307,7 @@ c  The second term on RHS is grad(K*UX) = dK/dx * UX = dK/dU*(UX)^2
       implicit none
       integer ibnd, i
       real (kind=R8) :: x, t, u, du, ux, uxx
-      real (kind=R8) :: Kappa,dKappabydT,Cp,mass_density, Ts
+      real (kind=R8) :: Kappa, dKappabydT, Cp, mass_density, Ts
 
       Ts = u
       du = (1.0_R8/mass_density(ibnd,i)/Cp(ibnd,i,Ts))*
@@ -744,45 +742,6 @@ c  at temperature T.
       return
       end function Cp
 
-c....................................................................
-c                      function mass_density
-c  function mass_density(ibnd,i) gives the mass density of the target
-c  element ibnd at depth i.
-
-      function mass_density(ibnd,i)
-      use b2mod_types
-      use b2mod_wall
-      implicit none
-      integer ibnd, i
-      real (kind=R8) :: mass_density
-
-      if (i.gt.ndepth_nml) then
-        mass_density = matbulk_target_density(ibnd)
-      else if (target_depth(ibnd,i).ge.coating_thickness(ibnd).and.
-     .         target_depth(ibnd,i).ge.layer_depth(ibnd)) then
-        mass_density = matbulk_target_density(ibnd)
-      else if (target_depth(ibnd,i).ge.layer_depth(ibnd)) then
-        mass_density = coating_target_density(ibnd)
-      else
-        mass_density = layer_mass_density(ibnd)*
-     .   (layer_depth(ibnd)-target_depth(ibnd,i))/
-     .   (target_depth(ibnd,i+1)-target_depth(ibnd,i))
-        if (layer_depth(ibnd).ge.coating_thickness(ibnd)) then
-          mass_density = mass_density+
-     .      matbulk_target_density(ibnd)*
-     .     (target_depth(ibnd,i+1)-layer_depth(ibnd))/
-     .     (target_depth(ibnd,i+1)-target_depth(ibnd,i))
-        else
-          mass_density = mass_density+
-     .      coating_target_density(ibnd)*
-     .     (target_depth(ibnd,i+1)-layer_depth(ibnd))/
-     .     (target_depth(ibnd,i+1)-target_depth(ibnd,i))
-        end if
-      end if
-
-      return
-      end function mass_density
-
 c Getting the heat loss due to evaporation and radiation from surface.
 c....................................................................
       function qrad(ibnd,Ts,top_layer)
@@ -853,13 +812,13 @@ c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
-        !$OMP CRITICAL (heatdiff1D)
+        !$OMP CRITICAL (qevap_heatdiff1D)
         call ipgetr('b2stbr_therm_evap', therm_evap)
         call xertst(0.0_R8.le.therm_evap.and.
      &              1.0_R8.ge.therm_evap,
      .    'faulty parameter therm_evap')
         lfirst = .false.
-        !$OMP END CRITICAL (heatdiff1D)
+        !$OMP END CRITICAL (qevap_heatdiff1D)
       endif
 
       do is = 0, ns-1
@@ -971,31 +930,3 @@ c$$$        gamma(1)= -100.0_R8*(U(1)-Tcbc) ! we assume the contact heat conduct
 
       return
       end subroutine bndary
-
-      function cond_coef(inertial,T)
-      use b2mod_types
-      implicit none
-      real(kind=R8) :: cond_coef
-      logical inertial
-      real(kind=R8) :: T, Tc
-
-      Tc = T - 273.15_R8
-
-      if (inertial) then
-! we assume a residual contact heat conductivity of 100 W.m-2.K-1
-        cond_coef = 100.0_R8
-      else
-! The following are fits to the result obtained by Nukiyama for the heat conduction
-! transfer coefficient between the CuCrZr pipe and the water coolant,
-! applicable to the ITER divertor targets
-! Full reference can be found at: https://user.iter.org/?uid=35L29Y
-!      cond_coef = 1.64908e-8_R8*Tc**6 - 1.24649e-5_R8*Tc**5
-!     @       + 3.4938e-3_R8*Tc**4 - 0.44568_R8*Tc**3 + 25.5532_R8*Tc**2
-!     @       - 502.333_R8*Tc + 77703.2_R8
-!      cond_coef = 1.357954e-3_R8*Tc**3 + 6.616505e-1_R8*Tc**2 - 24.41418_R8*Tc
-!     @       + 7.725710e4_R8
-        cond_coef = 8.0e4_R8
-      end if
-
-      return
-      end function cond_coef

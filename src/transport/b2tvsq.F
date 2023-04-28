@@ -36,7 +36,6 @@
      *    tauia1(nCv), alpha1(nCv), nu1(nCv), tauia(nCv,0:ns-1),        !srv 28.03.99 11.07.99
      *    gti(nCv,0:1), gOnedBsq(nFc,0:1)
 *   ..procedures
-      intrinsic abs
       external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------

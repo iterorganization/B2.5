@@ -1,6 +1,7 @@
       subroutine write_b2fstate_diff (nput, nCv, nFc, ns, st)
       use b2mod_time
       use b2us_plasma_diff
+      use b2mod_subsys
       implicit none
       integer, intent(in) :: nput, nCv, nFc, ns
       type(B2STATE_DIFF), intent(inout) :: st

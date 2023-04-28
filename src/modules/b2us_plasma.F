@@ -263,9 +263,9 @@ cwdk move to dv
 ! To be considered: move to a separate module b2us_plasma_ext?
       type B2StateExt
 
-        character*13, dimension(:), allocatable :: text(:)
+        character*13, allocatable :: text(:)
         integer :: ns
-        logical, dimension(:), allocatable :: is_neutral(:)
+        logical, allocatable :: is_neutral(:)
         logical :: initialised_externals = .false.
         logical :: allocated_externals = .false.
 
