@@ -4,6 +4,7 @@
       subroutine b2wgyp (n0, n1, n0d, fun, scal, fa0, fa1, ncnta,
      &  fb0, fb1, ncntb)
       use b2mod_types
+      use b2mod_lbfill
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -91,7 +92,7 @@
       external xertst, cprect, cpseti,
      &  cpsetr_d, cpsetc, cpclam, cplbam, cplbdr, cpdrpl, cpcldm, 
      &  cpcldr,
-     &  arinam, arpram, arscam, gncolr, lbfilq, entsr, nerro, errof
+     &  arinam, arpram, arscam, gncolr, entsr, nerro, errof
 
 *-----------------------------------------------------------------------
 *.computation

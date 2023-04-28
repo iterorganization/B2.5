@@ -36,6 +36,8 @@
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #ifndef B25_EIRENE
       use b2mod_eirdiag
      & , only : dab2, lkindi, lkindm, lkindp
@@ -80,7 +82,6 @@
 
 *   ..local variables
       integer iCv, k, is, sources_inputfile
-      integer numerics_namelist
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
@@ -93,7 +94,7 @@
      &  shi0_cx(:,:)
       logical catch_up
       character*32 hlp_frm
-      save sources_inputfile, numerics_namelist
+      save sources_inputfile
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -101,7 +102,7 @@
       external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
-      data sources_inputfile/0/, numerics_namelist/0/
+      data sources_inputfile/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -265,9 +266,9 @@
        if(ncall_b2sral.eq.0) then
          write(*,*) ' style=',switch%b2sral_style,' b2stbc_spb called'
        endif
-       call b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, qz,  !srv 09.01.01
-     &  pbs, pbshz, bb, na, ua, uadia, vaecrb, vadia, te, ti, po, ne,   !srv 14.10.99 12.05.00 09.01.01 28.10.02
-     1  ni, floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,       !srv 13.10.06
+       call b2stbc_spb (nx, ny, ns, facdrift,                           !srv 09.01.01
+     &  na, ua, uadia, vaecrb, vadia, te, ti, po, ne, ni,               !srv 14.10.99 12.05.00 09.01.01 28.10.02
+     1  floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,           !srv 13.10.06
      &  fhePSch, fhiPSch, fne, fni, fch,                                !srv 25.02.00 21.10.02
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  sna, smo, she, shi, sch, wrong_flow)                            !srv 09.07.99 01.07.05

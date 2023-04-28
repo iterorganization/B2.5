@@ -32,12 +32,8 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      integer ix, iy
-      real (kind=R8) :: pit
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, xertst
-
-      pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
       call subini ('chord_tria_value')
       x=xp

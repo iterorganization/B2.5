@@ -13,8 +13,8 @@
      *  ffbz1(:,:,:),
      *  fpsi1(:,:,:,:),
      *  gs1(:,:,:),
-     *  hx1(:,:),
-     *  hy1(:,:),
+     *  hxx(:,:),
+     *  hyy(:,:),
      *  hz1(:,:),
      *  hc1(:,:,:),
      *  ht1(:,:,:),
@@ -65,8 +65,8 @@
       allocate(ffbz1(-1:nxd,-1:nyd,0:3))
       allocate(fpsi1(-1:nxd,-1:nyd,0:3,0:2))
       allocate(gs1(-1:nxd,-1:nyd,0:2))
-      allocate(hx1(-1:nxd,-1:nyd))
-      allocate(hy1(-1:nxd,-1:nyd))
+      allocate(hxx(-1:nxd,-1:nyd))
+      allocate(hyy(-1:nxd,-1:nyd))
       allocate(hz1(-1:nxd,-1:nyd))
       allocate(hc1(-1:nxd,-1:nyd,0:3))
       allocate(ht1(-1:nxd,-1:nyd,0:1))
@@ -113,8 +113,8 @@
          deallocate(fpsi1)
          deallocate(wbbc1)
          deallocate(gs1)
-         deallocate(hx1)
-         deallocate(hy1)
+         deallocate(hxx)
+         deallocate(hyy)
          deallocate(hz1)
          deallocate(hc1)
          deallocate(ht1)
@@ -743,6 +743,34 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
       return
 
       end function interpolateToVertices1
+
+      function cr1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cr1
+      cr1 = 0.25_R8*(crx1(ix,iy,0)+crx1(ix,iy,1)+
+     .               crx1(ix,iy,2)+crx1(ix,iy,3))
+      return
+      end function cr1
+
+      function cz1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cz1
+      cz1 = 0.25_R8*(cry1(ix,iy,0)+cry1(ix,iy,1)+
+     .               cry1(ix,iy,2)+cry1(ix,iy,3))
+      return
+      end function cz1
+
+      function dist1(ix,iy,i,j)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist1
+      dist1 = norm (
+     &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
+      return
+      end function dist1
 
       function distc1(ix1,iy1,ip1,ix2,iy2,ip2)
       use b2mod_math

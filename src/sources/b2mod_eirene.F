@@ -58,7 +58,7 @@
       use b2us_plasma
       implicit none
 
-      integer, save :: ank_mods = 0, use_recyceir = 1
+      integer, save :: use_recyceir = 1
       integer, save :: nhist = 1, nrelax = 0
       real (kind=R8), save, allocatable ::
      .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:), see_av(:,:)
@@ -111,13 +111,13 @@
 
       contains
 
-      subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim,
+      subroutine eirene_mc(nCv, nFc, ns, dtim,
      1 sna0, smo0, she0, shi0,
      & main_call, switch, geo, mpg, st,
      & kin_frac_hyb, fnn_inc)
       use b2mod_subsys
       implicit none
-      integer nCv,nFc,ns,nxtl,nxtr,ismain
+      integer nCv, nFc, ns
       real (kind=R8) ::
      * dtim,
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
@@ -314,7 +314,7 @@ c not sure this is the right place
         allocate(NPTS_input(NSTRAI))
         allocate(tflux0(NSTRAI))
         if (balance_netcdf.ne.0) then !djm Jan2017
-         call alloc_b2mod_eirene_sources(nCv,nFc,ns,nstrat)
+         call alloc_b2mod_eirene_sources(nCv,ns,nstrat)
         endif
 
         write(*,*) 'Calling test_couple'
@@ -399,7 +399,6 @@ c not sure this is the right place
         endif
         call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
 #endif
-        call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
@@ -431,7 +430,7 @@ csw 26feb2013
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(nhist.gt.1) call alloc_hist_arrays(nhist)
         if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays
-        call xertst(ank_mods.eq.0.or.switch%ionising_core.le.0,
+        call xertst(switch%ank_mods.eq.0.or.switch%ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr', no_sseicorr)
@@ -701,11 +700,64 @@ c first save the original NPTS provided by the Eirene input files.
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
 #endif
           if (time_dep_puff(istrai)) then !{
-            if (tim.lt.gpdata(1,1,istrai)) then
+            if (time_dep_puff_func(istrai)) then
+             call xertst(time_dep_puff_case(istrai).ge.0
+     1               .and.time_dep_puff_case(istrai).le.5,
+     1         'bad value for time_dep_puff_case')
+             if (time_dep_puff_case(istrai) .eq. 0) then ! sinusoidal
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               +time_dep_puff_param(2,istrai)*(sin(2.d0*pi
+     &               *time_dep_puff_param(3,istrai)*tim
+     &               +time_dep_puff_param(4,istrai)))
+             elseif (time_dep_puff_case(istrai) .eq. 1) then  ! stair+ramp
+               if ((tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &            *2.*time_dep_puff_param(3,istrai)).ge.0. .and.
+     &             (tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &            *2.*time_dep_puff_param(3,istrai)).lt.
+     &             time_dep_puff_param(3,istrai)) then ! mod of tim/step size
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+               else
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *time_dep_pufF_param(2,istrai)
+     &                 +(tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *2.*time_dep_puff_param(3,istrai)
+     &                 -time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+     &                 /time_dep_puff_param(3,istrai)
+               endif
+             elseif (time_dep_puff_case(istrai) .eq. 2) then  ! stair+ramp
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               +tim*time_dep_puff_param(2,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 3) then  ! linear + sinusoidal
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               + time_dep_puff_param(2,istrai)*(sin(2.d0*3.14159
+     &               *time_dep_puff_param(3,istrai)*tim
+     &               +time_dep_puff_param(4,istrai)))
+     &               +tim*time_dep_puff_param(5,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 4) then  ! step function
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 5) then  ! triangle wave
+                 tflux(istrai) = (time_dep_puff_param(1,istrai)
+     &                 -time_dep_puff_param(2,istrai))
+     &                 +(4.d0*time_dep_puff_param(2,istrai)
+     &                 /time_dep_puff_param(3,istrai))
+     &                 * ((time_dep_puff_param(3,istrai)/2.d0)
+     &                 - abs(mod((tim+time_dep_puff_param(3,istrai)/4.d0
+     &                 +time_dep_puff_param(4,istrai))
+     &                  ,(2.d0*(time_dep_puff_param(3,istrai)/2.d0)))
+     &                 - time_dep_puff_param(3,istrai)/2.d0));
+             endif
+            else !if time_dep_puff_func
+             if (tim.lt.gpdata(1,1,istrai)) then
               tflux(istrai)=userfluxparm(istrai,1)
-            else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
+             else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
               tflux(istrai)=gpdata(ngpdata(istrai),2,istrai)
-            else
+             else
               ib=1
               it=ngpdata(istrai)
               do while (it-ib.gt.1)
@@ -728,7 +780,8 @@ c first save the original NPTS provided by the Eirene input files.
               else
                 tflux(istrai)=gpdata(ih,2,istrai)
               endif
-            end if
+             endif
+           endif
 #ifdef WG_RM
           else if (ncall.ge.ncallfeedback.and.
      &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
@@ -862,7 +915,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
 csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after Eirene call
-      if(ank_mods.ne.0 .or. switch%ionising_core.eq.1) then
+      if(switch%ank_mods.ne.0 .or. switch%ionising_core.eq.1) then
 c*** "time layer"
         l_ddt=0
         if(crcstra(nstrai).eq.'T') then
@@ -887,8 +940,7 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'in b2mod_eirene: main_call = ', main_call
       end if
       if (ncall.eq.0) then
-        if (main_call)
-     .   call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+        if (main_call) call b2trci(switch)
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
@@ -946,8 +998,8 @@ cxpb  Compute recombination sources rescaling factor if necessary
       end do !}
 cxpb
 
-      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
-     > then
+      if(main_call.and.mod(ncall,eirene_mod).eq.0 .and.
+     > switch%ank_mods.ne.0) then
         if(ncall.eq.0) then !{
           hlp_tt=.false.
           hlp_bad_isp=.false.
@@ -1188,7 +1240,7 @@ c        (otherwise rescaling procedure does not correctly work with internal it
 c        this is phase 1 of rescaling process
 c
       if(main_call.and.mod(ncall,eirene_mod).eq.0
-     .            .and.ank_mods.ne.0) then
+     .            .and.switch%ank_mods.ne.0) then
         write(hlp_frm1,'(a,i2,a)') '(a,1p,i3,',nnatmi,'e13.5)'
         do istrai=1,nstrat !{
           if(crcstra(istrai).eq.'A') then
@@ -2172,8 +2224,8 @@ c  otherwise rescaling procedure does not work with internal iterations nstg2>1
 c  (sclrtio/sclalph will be reinitialised which should not happen at istg2 > 1)
 c  this is part of phase 2 of rescaling process
 c
-      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
-     .   then
+      if(main_call.and.mod(ncall,eirene_mod).eq.0 .and.
+     .   switch%ank_mods.ne.0) then
 
 c*** Calculate the basic quantities - i.e. the neutral source strengths
 c*** and total plasma sources for each stratum for subsequent rescaling

@@ -87,51 +87,22 @@ endif
 ifdef DIFF_D
 EXT_DIFF = .diff_d
 DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D1
-EXT_DIFF = .diff_d1
-DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D2
-EXT_DIFF = .diff_d2
-DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D3
-EXT_DIFF = .diff_d3
-DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D4
-EXT_DIFF = .diff_d4
-DIFF = yes
-TGT = yes
+DIFFDIR = builds/differentiated_files${EXT_DIFF}
 endif
 ifdef DIFF_B
 EXT_DIFF = .diff_b
 DIFF = yes
+DIFFDIR = builds/differentiated_files${EXT_DIFF}
 endif
-ifdef DIFF_B1
-EXT_DIFF = .diff_b1
+ifdef TGT
+EXT_DIFF = .tgt
 DIFF = yes
-ADJ = yes
+DIFFDIR = src/differentiation/tangent
 endif
-ifdef DIFF_B2
-EXT_DIFF = .diff_b2
+ifdef ADJ
+EXT_DIFF = .adj
 DIFF = yes
-ADJ = yes
-endif
-ifdef DIFF_B3
-EXT_DIFF = .diff_b3
-DIFF = yes
-ADJ = yes
-endif
-ifdef DIFF_B4
-EXT_DIFF = .diff_b4
-DIFF = yes
-ADJ = yes
+DIFFDIR = src/differentiation/adjoint
 endif
 # Directory where objectcode/binaries will be created
 OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DIFF}${EXT_DEBUG}
@@ -232,15 +203,23 @@ SOLPSINCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
 TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml ${DOCDIR}/*.py
 ifdef DIFF
-SOLPSINCLUDE += -I${SRCB2}/builds/differentiated_files${EXT_DIFF}
-SOLPSINCLUDE += -I${SRCDIR}/differentiated_files${EXT_DIFF}
-TAGSLIST += ${SRCB2}/builds/differentiated_files${EXT_DIFF}/*.F*
-TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
+SOLPSINCLUDE += -I${SRCB2}/${DIFFDIR}
+##SOLPSINCLUDE += -I${SRCDIR}/differentiated_files${EXT_DIFF}
+TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
+#TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
+IDSDIFFMODS = ${patsubst %,${SRCDIR}/ids/%,b2mod_cellhelper.F90 b2mod_connectivity.F90 b2mod_constants.F90 b2mod_grid_mapping.F90 b2mod_interp.F90 carre_constants.F90 helper.F90 logging.F90 tradui_constants.F90}
 endif
+ifneq ($(shell `pkg-config --exists petsc`; echo $$?),0)
 ifdef TAO
-include ${PETSC_DIR}/lib/petsc/conf/variables
-SOLPSINCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
-MODINCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
+SOLPSINCLUDE += -I${PETSC_DIR}/include
+MODINCLUDE += -I${PETSC_DIR}/include
+ifdef PETSC_ARCH
+ifeq ($(shell [ -d ${PETSC_DIR}/${PETSC_ARCH}/include ] && echo yes || echo no ),yes)
+SOLPSINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
+MODINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
+endif
+endif
+endif
 endif
 
 ifdef USE_MPI
@@ -266,6 +245,12 @@ endif
 ifdef FIXED_POINT
 DEFINES += -DFIXED_POINT
 endif
+ifdef DIFF_D
+DEFINES += -DTGT
+endif
+ifdef DIFF_B
+DEFINES += -DADJ
+endif
 ifdef TGT
 DEFINES += -DTGT
 endif
@@ -280,12 +265,12 @@ endif
 # uncomment to activate
 #
 # It is not necessary to define all these flags to completely disable the
-# OpenMP parallelization, in order to that, just compile without OpenMP
+# OpenMP parallelization, in order to do that, just compile without OpenMP
 # compiler options (ifort -qopenmp or similar)
 
 ifdef USE_OPENMP
 #DEFINES += -DNO_OPENMP_B2XPFE
-DEFINES += -DNO_OPENMP_B2SIFRTF
+#DEFINES += -DNO_OPENMP_B2SIFRTF
 #DEFINES += -DNO_OPENMP_B2SIHS
 #DEFINES += -DNO_OPENMP_B2SPCX
 #DEFINES += -DNO_OPENMP_B2SPEL
@@ -298,14 +283,14 @@ DEFINES += -DNO_OPENMP_B2SIFRTF
 #DEFINES += -DNO_OPENMP_MYBLAS
 #DEFINES += -DNO_OPENMP_SFILL
 #DEFINES += -DNO_OPENMP_B2NEWS_LOOP1
-DEFINES += -DNO_OPENMP_B2NEWS_LOOP2
+#DEFINES += -DNO_OPENMP_B2NEWS_LOOP2
 #DEFINES += -DNO_OPENMP_B2NEWS_LOOP3
 #DEFINES += -DNO_OPENMP_B2NEWS_LOOP4
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
-DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+#DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
-DEFINES += -DNO_OPENMP_B2NPMO
+#DEFINES += -DNO_OPENMP_B2NPMO
 endif
 
 VHEAD =
@@ -330,10 +315,10 @@ FFPATH += :${SRCDIR}/modules
 FFPATH += :${SRCDIR}/user
 DIFFPATH =
 ifdef DIFF
-DIFFPATH += ${SRCB2}/builds/differentiated_files${EXT_DIFF}
-VPATH=:${SRCB2}/builds/differentiated_files${EXT_DIFF}
-FPATH := ${SRCB2}/builds/differentiated_files${EXT_DIFF}
-FFPATH = :${SRCB2}/builds/differentiated_files${EXT_DIFF}
+DIFFPATH += ${SRCB2}/${DIFFDIR}
+VPATH =: ${SRCB2}/${DIFFDIR}
+FPATH := ${SRCB2}/${DIFFDIR}
+FFPATH = :${SRCB2}/${DIFFDIR}
 endif
 
 MODLIST =
@@ -349,10 +334,10 @@ MODLISTF += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2us_*.F
 MODLISTF90 += ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 else
 MODLIST += ${DIFFPATH}/b2mod_*.F ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90
-MODLIST += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${SRCDIR}/ids/*.F90}
+MODLIST += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${IDSDIFFMODS}}
 MODLISTF += ${DIFFPATH}/b2mod_*.F
-MODLISTF90 += ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90 
-MODLISTF90 += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${SRCDIR}/ids/*.F90}
+MODLISTF90 += ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90
+MODLISTF90 += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${IDSDIFFMODS}}
 endif
 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
@@ -398,20 +383,14 @@ OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
-ADEXTRA = ${CONTEXTAD}
+ADEXTRA = 
+ifdef DIFF_D
+ADEXTRA += ${CONTEXTAD}
+endif
 ifdef DIFF_B
 ADEXTRA += ${STACKAD}
 endif
-ifdef DIFF_B1
-ADEXTRA += ${STACKAD}
-endif
-ifdef DIFF_B2
-ADEXTRA += ${STACKAD}
-endif
-ifdef DIFF_B3
-ADEXTRA += ${STACKAD}
-endif
-ifdef DIFF_B4
+ifdef ADJ
 ADEXTRA += ${STACKAD}
 endif
 ifdef AD_DEBUG
@@ -441,21 +420,15 @@ CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text DIFF_B1 DIFF_B2 DIFF_B3 DIFF_B4 DIFF_D1 DIFF_D2 DIFF_D3 DIFF_D4
+.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT ADJOINT DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D1: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D2: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D3: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D4: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B1: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B2: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B3: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B4: VERSION ${MNBEXE} ${OPTEXE}
+TANGENT: VERSION ${MNDEXE} ${OPTEXE}
+ADJOINT: VERSION ${MNBEXE} ${OPTEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
@@ -505,9 +478,11 @@ else
 # MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_infcop.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_solps.o
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
 endif
+ifndef DIFF
 ifdef LD_CATALYST
 VPATH += :${SRCDIR}/catalyst
 FFPATH += :${SRCDIR}/catalyst
+endif
 endif
 
 IDSMODS = ${PROG_ID:%.exe=${OBJDIR}/%.${MOD}}
@@ -1100,14 +1075,14 @@ else
 endif
 
 ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${MNBEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ifdef OPT
 ${OPTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
 endif
 
 ${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
@@ -1118,7 +1093,6 @@ ${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h
 
 ${DBGAD}: ${DIFFPATH}/adDebug.c ${DIFFPATH}/adDebug.h
 	cc -c $< -o $@
-
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
@@ -1259,7 +1233,7 @@ endif
 
 else
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EX90DIFFLIST:.o=.F90} ${EXDIFFLIST:.o=.F}
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${SOLPSINCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
 	sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies

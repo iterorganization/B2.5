@@ -141,7 +141,7 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+       call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *    ..make plot
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   fun, iloc, scal, fa0, fa1, ncnta, fb0, fb1, ncntb)

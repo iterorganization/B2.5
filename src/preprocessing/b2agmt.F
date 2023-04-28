@@ -12,7 +12,7 @@
       use b2mod_connectivity
       use b2mod_cellhelper
       use b2mod_indirect
-     , ,only : TriangleArea, TriangleCentroid, quadCentroid, quadArea
+     , ,only : quadCentroid, quadArea
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -127,43 +127,25 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j
+      integer ix, iy, i
       integer i1, i2, ii
       integer volhmk, cgeo, cgeon
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1, psic
+     *   width, centroid(0:1), t0, t1, psic
       logical classical
       real (kind=R8) ::
      *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
-     *   isx(0:1), isy(0:1)
+     *   isx(0:1), isy(0:1),
+     *   Xvertices(0:3), Yvertices(0:3)
       integer, save :: style = 0
 *   ..procedures
       intrinsic min, max
-      real (kind=R8) ::
-     *   trim1, dist, sinang, cosang
       external xertst, ipgetr, ipgeti
       external b2xvsg1
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
       save volhmk, width
 
-*-----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
-*     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     sinang(p0x,p0y,p1x,p1y) is sin(t), and cosang(p0x,p0y,p1x,p1y)
-*     is cos(t), where t is the complementary angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -203,12 +185,14 @@
         ! ecc(:,:,0:3,0:1): unit vectors of the centroid-face connections
         ! ebc(:,:,0:2): unit vector magnetic field field in cell center
 
-        cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(ix,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
         select case (cgeo)
         case(CGEO_BROKEN)
           write(*,*) 'Problem in b2agmt: broken cell', ix,iy
-          write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+          write(*,'(a,4f12.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
           call xerrab('Broken cell geometry')
         case(CGEO_QUAD)
           ! For quadrangular cells: assume cell center = geometric mean
@@ -426,9 +410,12 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (leftix(ix,iy).eq.-2 .or. 
      &      leftix(ix,iy).eq.NO_CONNECTIVITY) cycle
-        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
-        cgeon = cellGeoType( crx(leftix(ix,iy),leftiy(ix,iy),:),
-     &                       cry(leftix(ix,iy),leftiy(ix,iy),:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(iy,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
+        Xvertices(:) = crx(leftix(ix,iy),leftiy(ix,iy),:)
+        Yvertices(:) = cry(leftix(ix,iy),leftiy(ix,iy),:)
+        cgeon = cellGeoType(Xvertices, Yvertices)
 
         ! unit vectors at left faces (not re-normalized)
         if (classical.and.(style.eq.0)) then 
@@ -621,9 +608,12 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (bottomiy(ix,iy).eq.-2 .or. 
      &      bottomiy(ix,iy).eq.NO_CONNECTIVITY) cycle
-        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
-        cgeon = cellGeoType( crx(bottomix(ix,iy),bottomiy(ix,iy),:),
-     &                       cry(bottomix(ix,iy),bottomiy(ix,iy),:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(iy,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
+        Xvertices(:) = crx(bottomix(ix,iy),bottomiy(ix,iy),:)
+        Yvertices(:) = cry(bottomix(ix,iy),bottomiy(ix,iy),:)
+        cgeon = cellGeoType(Xvertices, Yvertices)
 
         ! unit vectors at bottom faces (not re-normalized)
         if (classical.and.(style.eq.0)) then
@@ -935,5 +925,16 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
 *-----------------------------------------------------------------------
 *.end b2agmt
+
+      contains
+
+      function dist(ix,iy,i,j)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
 
       end subroutine b2agmt

@@ -38,7 +38,7 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
      &          nkind_data, poloidal_scaling, transport_ip_filename,
-     &          nscale
+     &          nscale, transport_ip_time_switch, transport_ip_time_mod
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
@@ -47,6 +47,8 @@
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_ad
       use b2mod_subsys
       implicit none
@@ -108,14 +110,14 @@
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
       save ramp_slow                                                     !xpb
-      logical domoqt, domoit, wrong_flow                                 !xpb
+      logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
       integer istg(0:2), is, k
       real (kind=R8) :: nasum, na0sum
       real (kind=R8) ::
-     &  pz(nCv), rz(nCv), wrk0(nCv), wrkf(nFc)                           !iyv 06.02.14
+     &  rz(nCv), wrk0(nCv), wrkf(nFc)                                    !iyv 06.02.14
 #ifdef WG_TODO
-      logical ramp_call
+      logical domoit, ramp_call
 #endif
       logical solving(4)
 !WG_TODO: add some sources locally here, until a module/data-type for WG
@@ -131,8 +133,8 @@
 !WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax, b2sasum, samax
-      external xertst, ipgeti, ipgetr, smin, smax, b2sasum, samax
+     *  b2sasum, samax
+      external xertst, ipgeti, ipgetr, b2sasum, samax
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
@@ -430,10 +432,12 @@ ctmp.dpc
      &       (1.le.switch%b2mndt_moqtlv.or.istg(0).eq.0).and.
      &       (2.le.switch%b2mndt_moqtlv.or.istg(1).eq.0).and.
      &       (3.le.switch%b2mndt_moqtlv.or.istg(2).eq.0)
+#ifdef WG_TODO
             domoit = 0.le.switch%b2mndt_moitlv.and.
      &       (1.le.switch%b2mndt_moitlv.or.istg(0).eq.0).and.
      &       (2.le.switch%b2mndt_moitlv.or.istg(1).eq.0).and.
      &       (3.le.switch%b2mndt_moitlv.or.istg(2).eq.0)
+#endif
 *      ..maybe write quick trace
             if (domoqt) then
               if (mod(ncall_b2mndt,ntim_step_out) .eq. 0) then             !srv 31.01.07

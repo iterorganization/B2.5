@@ -37,11 +37,11 @@
       type (B2Coeff), intent (inout) :: co
       type (B2Derivatives), intent (inout) :: dv
 *   ..local variables
-      real (kind=R8) :: harm !djm Jan2017
 #ifdef WG_TODO
+      real (kind=R8) :: harm !djm Jan2017
       real (kind=R8) :: upfac, hybfac
-#endif
       external harm
+#endif
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -227,7 +227,6 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       !    this on mdf /= 0?
       dv%floe        = dv%floe + floe0
       dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
-
 
 #ifdef WG_TODO
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017

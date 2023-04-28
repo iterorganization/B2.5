@@ -5,7 +5,7 @@
       use b2mod_layer
      . , only : nwall
       
-      integer, save :: nwall1, nbnd1
+      integer, save :: nwall1, ndepth1, nbnd1
       real (kind=R8), save, allocatable :: contr_area(:,:)
       real (kind=R8), save, allocatable :: acc_area(:), acc_area1(:)
 cxpb  Namelist data

@@ -38,12 +38,7 @@
       implicit none
       integer nx, ny, ramp_slow
       integer ix, iy, jxi, jxa, jsep
-      real (kind=R8) cr, cz, dssep
-
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+      real (kind=R8) :: dssep
 
       if(ncall.eq.0) then
        call get_jsep(nx,ny,jxi,jxa,jsep)

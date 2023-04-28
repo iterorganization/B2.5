@@ -52,7 +52,7 @@
 
       call ipgeti ('artificial_slab', artificial_slab)
       call ipgeti ('overwrite_ntrfrm', overwrite_ntrfrm)
-      call ipgeti ('is_narrow_grid',is_narrow_grid)
+      call ipgeti ('is_narrow_grid', is_narrow_grid)
 
 !  if input.dat exists check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
@@ -131,10 +131,10 @@
      .                      0._R8, 1._R8, ic, inserted)
         IF (INSERTED) THEN
           if (is_narrow_grid.eq.1) then
-            !! if we have a narrow grid, this should not happen because every node of the eirene triangle grid should be in th plasma grid.
-            !! therefore this has to do with round-off error of faulty input files. Therefore these cells are printend.
+            !! if we have a narrow grid, this should not happen because every node of the Eirene triangle grid should be in the plasma grid.
+            !! therefore this has to do with round-off error of faulty input files. Therefore these cells are printed.
             write(*,*) '------------'
-            write(*,*) 'faulty node', ico
+            write(*,*) 'faulty node ', ico
             write(*,*) 'x = ', xc_old(ico)
             write(*,*) 'y = ', yc_old(ico)
             write(*,*) '------------'
@@ -301,7 +301,7 @@
             end if
           end do
         else
-!  tringle is in plasma region
+!  triangle is in plasma region
           icv = elem_cv(iel)
           do is = 1, 3
             if (trifc(is,iel) == 0) then
