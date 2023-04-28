@@ -1084,7 +1084,7 @@ cdjm Jan2017 Flux arrays:
       return
       end subroutine dealloc_b2mod_balance
 
-      subroutine alloc_b2mod_eirene_sources(nCv,nFc,nsd,nstrad)
+      subroutine alloc_b2mod_eirene_sources(nCv,nsd,nstrad)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_wneutrals
@@ -1099,7 +1099,7 @@ cdjm Jan2017 Flux arrays:
       use b2mod_eirdiag
 #endif
       implicit none
-      integer nCv,nFc,nsd,nstrad
+      integer nCv,nsd,nstrad
 *   ..procedures
       intrinsic size
 
@@ -1376,8 +1376,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       end subroutine update_balance_sources_particles
 
       subroutine update_balance_sources_momentum(nCv,isb,ub,rob) !djm Jan2017
-      use b2mod_constants
-     & , only : mp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv,isb

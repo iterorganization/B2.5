@@ -6,6 +6,13 @@
       type(b2state), intent(in) :: state
       type(b2state), intent(in) :: state0
       real(kind=r8), intent (inout) :: res
+*-----------------------------------------------------------------------
+*     calc_res_fp calculates a maximum residual for the fixed point 
+*     form of the B2.5 time iteration scheme (while-loop instad of
+*     for-loop). This is evaluated as the maximum among value of
+*     t0 = sqrt(sum((q-q0)**2))/sqrt(sum(q**2)), where q is a plasma
+*     state variable at time t and q0 the same variable at t-dt.
+*-----------------------------------------------------------------------
       real(kind=r8) :: t0
       integer :: is
 

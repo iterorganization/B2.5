@@ -122,7 +122,7 @@
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
-      intrinsic abs, cos, sin, min, max, sign, acos
+      intrinsic abs, cos, sin, sign, acos
 
 *-----------------------------------------------------------------------
 *.computation
@@ -721,7 +721,8 @@ c
      1                  (crxs(ix,iy,i),crys(ix,iy,i),
      $                   psi(ix,iy,i,0),psi(ix,iy,i,1),
      $                   psi(ix,iy,i,2),ffbz(ix,iy,i-1),i=1,4),
-     3                  bp(ix,iy),bt(ix,iy),cflag(ix,iy,:)
+     3                  bp(ix,iy),bt(ix,iy),
+     4                  (cflag(ix,iy,i),i=1,GRID_N_CELLFLAGS)
                 enddo
              enddo
 
@@ -744,8 +745,10 @@ c
                    case(GRID_INTERNAL, GRID_BOUNDARY)
                       if (abs(bp(ix,iy) - bb_tmp(ix,iy,0)) > 1e-7 .or.
      $                    abs(bt(ix,iy) - bb_tmp(ix,iy,2)) > 1e-7) then
-                         write (*,*) "b2agfs: not matching carre bb at",
-     $                        ix, iy
+                         write (*,'(a,2i5,4e15.8)')
+     $                    "b2agfs: not matching carre bb at",
+     $                        ix, iy, bp(ix,iy), bt(ix,iy),
+     $                                bb_tmp(ix,iy,0), bb_tmp(ix,iy,2)
                       endif
                    end select
                 enddo

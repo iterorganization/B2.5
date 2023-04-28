@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
+      subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv, !srv 13.10.06 26.09.12
      &   solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
-     &   rescb, corpb, aa, name)                              !srv 18.05.02
+     &   rescb, corpb, aa, name)                                         !srv 18.05.02
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -29,7 +29,7 @@
      *  corpb(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa(mpg%nCmxNv)
+     *  aa(mpg%nCmxNv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -65,18 +65,13 @@
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
 c      integer, save :: iadd_9 = 1                                     !srv 13.10.06
       real (kind=R8) ::
-     *   t1, t2, t3, t11, t22, tr
+     *   t1, t2, t3, t11, t22
       character chns*3
       logical lnonzero
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *   rscal
       external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx                                 !srv 02.01.07
-!      rscal(tr) = tr
-      rscal(tr) = 1.0e0_R8                                            !srv 13.10.06
-*   ..initialisation
 
 *-----------------------------------------------------------------------
 *.computation
@@ -258,5 +253,16 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
 
 *-----------------------------------------------------------------------
 *.end b2usco
+
+      contains
+
+      function rscal(t0)
+      implicit none
+      real(kind=R8) :: rscal, t0
+! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
+      rscal = t0                                                  !srv 13.10.06
+!      rscal = 1.0e0_R8                                           !srv 13.10.06
+      return
+      end function rscal
 
       end subroutine b2usco

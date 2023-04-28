@@ -318,6 +318,7 @@ c Eirene coupling
       integer :: save_f30
       integer :: save_f31
       integer :: ionising_core
+      integer :: ank_mods
 
       real (kind=R8) :: eir_te_min
       real (kind=R8) :: eir_te_max
@@ -805,6 +806,7 @@ c eirene coupling
       s % save_f30 = 0
       s % save_f31 = 0
       s % ionising_core = 0
+      s % ank_mods = 0
 
       s % eir_te_min = 0.0e0_R8
       s % eir_te_max = 1.0e30_R8
@@ -1317,6 +1319,7 @@ c Eirene coupling
       call ipgeti ('eirene_ionising_core', s % ionising_core)
       if (s%ionising_core.eq.0)     ! for backward compatibility
      > call ipgeti ('eirene_ionizing_core', s % ionising_core)
+      call ipgeti('eirene_ank_mods', s % ank_mods)
 
       call ipgetr('eirene_te_min',s % eir_te_min)
       call ipgetr('eirene_te_max',s % eir_te_max)
@@ -1997,6 +2000,12 @@ c check the inter-consistency of different switches (e.g. certain combinations o
      *             s%dia_cur .gt. 0.0e0_R8 .or.
      *             s%fhe_vis_par .gt. 0.0_R8,
      *             'No radial current terms!')
+      endif
+
+c AFN neutral model
+      if(s%AFN_out.ne.0.and.s%recycle_afn.eq.0) then
+        call xerrab('b2stbr_recycle_afn should be 1 when writing '//
+     &   'AFN output')
       endif
 
 c spatially hybrid neutrals

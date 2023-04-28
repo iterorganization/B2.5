@@ -36,15 +36,12 @@
      .           ifcmin, ifcmax, it, 
      .           unused, nopen, ifc1, ifc2, ifc3,
      .           ileft, last(1), isig(3)
-      real (kind=R8) :: areat, x1, y1, x2, y2, x3, y3
       integer, allocatable :: ifcused(:), elem(:,:), elem_cv(:),
      .                        neighbor(:,:,:), bndmdl(:,:),
      .                        trifc(:,:)
       logical, allocatable :: fcused(:)
       logical :: ffound
       intrinsic pack
-
-      AREAT(X1,Y1,X2,Y2,X3,Y3) = 0.5*(X1*(Y2-Y3)+X2*(Y3-Y1)+X3*(Y1-Y2))
 
       nullify(qhead)
       nullify(qlast)
@@ -308,6 +305,12 @@
         ctri(iv)%p => ct
         ctri(iv)%co = ctri(iv)%co + 1
       end subroutine add_tri
+
+      function areat(x1, y1, x2, y2, x3, y3)
+      real (kind=R8) :: areat
+      real (kind=R8), intent(in) :: x1, y1, x2, y2, x3, y3
+        areat = 0.5_R8*(x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2))
+      end function areat
 
       subroutine set_element(i1, i2, i3, ic, ifc1, ifc2, ifc3)
       integer, intent(in) :: i1, i2, i3, ic, ifc1, ifc2, ifc3

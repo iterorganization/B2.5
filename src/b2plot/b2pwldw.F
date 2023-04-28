@@ -83,8 +83,10 @@ c=======================================================================
       implicit none
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
+#ifdef WG_TODO
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
+#endif
       character*8 TEXTA(DEF_NATM)
 #else
       real (kind=R8) :: pump, pumptot
@@ -96,18 +98,17 @@ c=======================================================================
 
 c*** Local variables
 c***  ils     : the segment index in the whole list
-c***  itrg    : target number itrg prepared
+c***  jtrg    : target number jtrg prepared
 c***  izns    : plot zone izns started
 c***  iznt    : plot zone of the last done target
 c***  zz      : reference distance
 c***  i_ersmtr: index of eroded material for the wall segments
 
       integer i,j,k,l,m,n,i1,i2,ib,is,iss,iy,im,js,kk,ils,itg,
-     ,  itrg,izns,iznt,
+     ,  jtrg,izns,iznt,
      ,  i_ersmtr(nsgmx),l_ersmtr(0:nsgmx),
      ,  iatm,imol,ia,ims,ind,IAS,shift,
-     ,  l_srfmtr(0:nsgmx),
-     ,  sptlistrg(0:nsgmx),sptliswll(DEF_NATM+DEF_NMOL)
+     ,  sptlistrg(0:nsgmx)
       integer :: nyd
       parameter (nyd=DEF_NYD)
 
@@ -140,6 +141,19 @@ c***  paitrg  : pressure of neutral atoms
 c***  erntrg  : erosion [mm/y]
 c***  spttrg  : sputtering [g/y]
 
+c*** Arrays to store the peak values
+c***  wpk_tt  : peak power - total
+c***  wpk_rd  : peak power - radiation
+c***  wpk_pl  : peak power - plasma
+c***  wpk_nu  : peak power - neutrals
+c***  wlc_tt  : location of total peak
+c***  wlc_rd  : location of radiation peak
+c***  wlc_pl  : location of plasma peak
+c***  wlc_nu  : location of neutral peak
+c***  wrd_pk  : radiation at total peak
+c***  wpl_pk  : plasma at total peak
+c***  wnu_pk  : neutrals at total peak
+
       real (kind=R8) :: h,p,u,wo,wwo,eni_hlp(ntrgsx),mion,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NYD-1,ntrgsx),xmp_hlp(0:NYD-1,ntrgsx),xtrg(0:NYD-1,ntrgsx),
@@ -164,7 +178,7 @@ c***  spttrg  : sputtering [g/y]
      ,  erntrg(0:NYD-1,ntrgsx), spttrg(0:NYD-1,ntrgsx),
      ,  sjs(0:NYD-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx), sptmass, sptflx(DEF_NLIM+DEF_NSTS)
-c     real (kind=R8) :: zz
+c      real (kind=R8) :: zz
 
 c*** Recap of fluxes from Eirene
 c***    wldnek  :   net kinetic energy deposited by neutrals. Evaluated as
@@ -203,6 +217,7 @@ c***  m_hdln    : max. length of the header line
 c***  n_hdpr_c  : number of common quantities
 c***  n_hdpr_t  : number of target quantities
 c***  n_hdpr_a  : number of quantities by atoms
+c***  n_hdpr_ml : number of quantities by molecules
 c***  n_hdpr_s  : number of quantities by species
 c***  n_hdpr_sp : number of quantities for sputtering
 c***  n_hdpr_er : number of quantities for erosion
@@ -231,6 +246,7 @@ c***  sfpr_m    : list of active materials
      *          n_hdpr_er*n_srfs_m*(m_hdpr+4))
       integer n_line_x, n_sfpr_sp, n_sfpr_er
       integer do_spt_wll(DEF_NLIM+DEF_NSTS)
+      integer i_sfpr_sp(DEF_NATM+DEF_NMOL)
       real (kind=R8), allocatable :: w_line(:)
       real (kind=R8) :: nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.2425_R8)
@@ -250,7 +266,7 @@ c***  sfpr_m    : list of active materials
       data hdpr_ml /'flxm','Eavm','nm','pm'/
       data hdpr_sp /'sptne','sptng'/
       data hdpr_er /'ersne','ersng'/
-      data itrg, izns, iznt, n_sfpr_s /4*0/
+      data jtrg, izns, iznt, n_sfpr_s /4*0/
       data first /.true./
       data sfpr_s, sfpr_a, sfpr_m /
      /     DEF_NATM*' ', DEF_NATM*' ', nsptmx*' ' /
@@ -262,7 +278,7 @@ c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible wall materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible wall materials
 c***  wllersf   : ratio of erosion to sputtering for different meterials
-      integer eb2atm(DEF_NATM)
+      integer map_mtr(n_srfs_m)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
@@ -297,7 +313,6 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         filename=fort_lc//'44'
         call find_file(filename,ft44)
         do_trg=.true.
-        write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
 
         n_sfpr_s=1
         if(nspecies.gt.1) n_sfpr_s=nspecies
@@ -406,27 +421,30 @@ c carlis list of indices of wall materials referred to list of ACTIVE materials
 c        print *,'Input materials: ',sfpr_m                        !###
 c        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
         l_ersmtr(0)=0
-        l_srfmtr(0)=0
+        map_mtr(:)=0
         m=0
-        do k=1,n_sfpr_er !{
+        do k=1,lppp+ny*ntrgts !{
           l=0
-          do i=1,n_srfs_m !{
-c carlis l is index of wall material in ACTIVE list referred to list of POSSIBLE materials 
-            if(streql(srfs_m(i),sfpr_m(k))) l=i
-          end do !}
-          if(l.eq.0) then !{
-            write(*,*) 'b2pwldw: unknown wall material ',sfpr_m(k)
-            l_ersmtr(k)=0
-            
-          else !}{
-            m=m+1
+          if(i_ersmtr(k).ne.0) then !{
+            do i=1,n_srfs_m !{
+c carlis l is index of wall material in ACTIVE list referred to list of POSSIBLE materials
+              if(streql(srfs_m(i),sfpr_m(i_ersmtr(k)))) then !{
+                l=i
 c carlis in list of ACTIVE materials we put the 'real' material e.g. CFC becomes C
 c        the list is not ordered as the list of possible materials
-            sfpr_m(m)=srfs_x(l)
+                if(map_mtr(i_ersmtr(k)).eq.0) then !{
+                  m=m+1
+                  sfpr_m(m)=srfs_x(l)
 c carlis     [s/y*m2*mm]   =[s/y]*[m2/cm2*mm/cm*]*[g/mol]/[1/mol]/[g/cm3]
-            wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
-c carlis list of indices that tells for each ACTIVE material the counterpat in POSSIBLE list
-            l_srfmtr(k)=l 
+                  wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
+                  map_mtr(i_ersmtr(k))=m
+                else !}{
+                  m=map_mtr(i_ersmtr(k))
+                end if !}
+              end if !}
+            end do !}
+            if(l.eq.0) write(*,*)
+     .       'b2pwldw: unknown wall material ',sfpr_m(i_ersmtr(k))
 c carlis list of indices that tells the new ordering of wall materials in active list wrt the ordering of i_ersmtr
             l_ersmtr(k)=m
           end if !}
@@ -447,8 +465,8 @@ c carlis substitute indices of wall materials with the new ordering of ACTIVE li
 c        print *,'i_sptmtr'                                    !###
 c        print '(1x,50i2)',(i_sptmtr(i),i=1,lppp+ny*ntrgts)    !###
 
-        sptliswll(:)=0
         do_spt_wll(:)=0
+        i_sfpr_sp(:)=0
         sptflx(:)=0.0_R8
         i=0
 #ifdef B25_EIRENE
@@ -460,29 +478,29 @@ c carlis evaluate number of sputtered atoms and molecules
             if (wldspta(j,ia,0).gt.0.0_R8) then
               sptflx(j)=wldspta(j,ia,0)
               do_spt_wll(j)=ia
-              sptliswll(ia)=1
               match_found=.true.
             end if
           end do
           if (match_found) then
             i=i+1
+            i_sfpr_sp(i)=ia
             sfpr_sp(i)=trim(TEXTA(ia))
           end if
         end do
-        do im=1,nmoli
+        do imol=1,nmoli
           match_found=.false.
           j=1
           do j=1,nlimps
-            if (wldsptm(j,im,0).gt.0.0_R8) then
-              sptflx(j)=wldsptm(j,im,0)
-              do_spt_wll(j)=im+natm
-              sptliswll(im+natm)=1
+            if (wldsptm(j,imol,0).gt.0.0_R8) then
+              sptflx(j)=wldsptm(j,imol,0)
+              do_spt_wll(j)=imol+natm
               match_found=.true.
             end if
           end do
           if (match_found) then
             i=i+1
-            sfpr_sp(i)=trim(adjustl(textmn(im-1)))
+            i_sfpr_sp(i)=imol+natm
+            sfpr_sp(i)=trim(adjustl(textmn(imol-1)))
           end if
         end do
 #endif
@@ -560,19 +578,6 @@ c carlis calculation of total pumped fluxes
 
         first=.false.
       end if !} end first call
-c     carlis eb2atm contains the indexes of the B2 atoms mapped to eirene
-c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
-c            eb2atm will be [1 4 2 3]
-      do ia=1,natmi !initialize
-        eb2atm(ia)=ia
-      end do
-      do is=1,nspecies !species over B2
-        do ia=1,natmi !species over Eirene
-          if (streql(TEXTA(ia),species_list(is))) then
-           eb2atm(is)=ia
-          end if
-        end do
-      end do
       ils=iabs(lwldlis(iln,izn))
 c      print *,'lwldlis,ils,lppp=',lwldlis(iln,izn),ils,lppp       !###
 
@@ -587,11 +592,11 @@ c*** Wall segment. Reset the target pointer
         else !}{
           itg=(ils-lppp-1)/ny+1
         end if !}
-c        print *,'itg,iznt,itrg=',itg,iznt,itrg  !###
+c        print *,'itg,iznt,jtrg=',itg,iznt,jtrg  !###
 c*** Check whether this target has been prepared
-        if(itg.ne.itrg) then !{
+        if(itg.ne.jtrg) then !{
 
-          if(itrg.eq.0 .and. do_trg) then !{
+          if(jtrg.eq.0 .and. do_trg) then !{
 
 c*** This is the first request for a target segment.
 c*** Prepare the necessary data for all the targets - just to make
@@ -680,13 +685,15 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
      .                      fhi_ext(k+1-l,iy,0,0)
                 do is=0,ns-1 !{
                   if (.not.is_neutral(is).or.ft44) then
-                    wo=wo+fna(k+1-l,iy,0,0,is)*rpt(kk,iy,is)*ev
+                    wo=wo+fhp(k+1-l,iy,0,0,is)
                   else
-                    wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,0,is)
-     *               *(1.0_R8-BoRiS)*kinrgy(kk,iy,is)
+                    wnutrg(iy,j)=wnutrg(iy,j)+
+     *               (1.0_R8-BoRiS)*(fhm(k+1-l,iy,0,0,is)+
+     *                               fna(k+1-l,iy,0,0,is)*ti(kk,iy))
                   end if
-                  whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,0,is)
-     *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
+                  whtpl(iy,j)=whtpl(iy,j)+
+     *             (1.0_R8-BoRiS)*(fhm(k+1-l,iy,0,0,is)+
+     *                             fna(k+1-l,iy,0,0,is)*ti(kk,iy))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.
                 end do !}
                 do is=0,ns_ext-1 !{
@@ -695,11 +702,11 @@ c carlis 31jan2017  added ti as suggested by sw in b2blne.
                   else
                     wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,0,is)
      .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .                 ua_ext(kk,iy,is)**2)
+     .                 ua_ext(kk,iy,is)**2+ta_ext(kk,iy,is))
                   end if
                   whtpl(iy,j)=whtpl(iy,j)+fa_ext(k+1-l,iy,0,0,is)
      .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
-     .             am_ext(is)*mp*ua_ext(kk,iy,is)**2)
+     .               am_ext(is)*mp*ua_ext(kk,iy,is)**2)
 c carlis 31jan2017  added ta as suggested by sw in b2blne.
                 end do !}
                 whtpl(iy,j)=whtpl(iy,j)+fne(k+1-l,iy,0,0)
@@ -870,8 +877,8 @@ c*** Atomic fluxes and energies
                 ISS=ltns(j)
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
-                do iy=0,ny-1 !{
-                  if (ft44) then
+                if (ft44) then
+                  do iy=0,ny-1 !{
 #ifdef WG_TODO
                     naitrg(iy,j,iatm)=dab2(kk+1,iy+1,iatm,1)
                     paitrg(iy,j,iatm)=dab2(kk+1,iy+1,iatm,1)*
@@ -882,48 +889,50 @@ c carlis using values directly from Eirene
      .                       sarea_res(iy+IAS) !units in 1/m2/s*m2
                     eaitrg(iy,j,iatm)=ewlda_res(iatm,iy+IAS)*
      .                       sarea_res(iy+IAS) !units in W/m2*m2
-                  else
+c!###{
+c                    print '(1x,i4,1p,4e10.2)',iy,
+c     ,               faitrg(iy,j,iatm),eaitrg(iy,j,iatm),
+c     ,               dab2(kk+1,iy+1,iatm,1),tab2(kk+1,iy+1,iatm,1)/ev
+c!###}
+                  end do !} loop over B2 cells
+                  wo=0.0_R8
+                  wwo=0.0_R8
+                  do iy=0,ny-1 !{
+                    wo=wo+faitrg(iy,j,iatm) ! units 1/s
+                    wwo=wwo+eaitrg(iy,j,iatm) ! units W
+                  end do !}
+                  js=ltns(j)+nlim
+c                    print *,'j,iatm,ltns,js=',j,iatm,ltns(j),js              !###
+c                    print *,'wldna,ewlda=',wldna(js,iatm,0),ewlda(js,iatm,0) !###
+c                    print *,'wo,wwo=',wo,wwo                                 !###
+                  if(wo.gt.0.0_R8) then !{
+                    wi(j)=wldna(js,iatm,0)/wo !units [1/s]/[1/s]
+                  else !}{
+                    wi(j)=0.0_R8
+                  end if !}
+                  if(wwo.gt.0.0_R8) then !{
+                    wwi(j)=ewlda(js,iatm,0)*wldna(js,iatm,0)/wwo ! units [J]*[1/s]/[W]
+                  else !}{
+                    wwi(j)=0.0_R8
+                  end if !}
+                  do iy=0,ny-1 !{
+                    faitrg(iy,j,iatm)=faitrg(iy,j,iatm)*wi(j)
+                    if(faitrg(iy,j,iatm).gt.0.0_R8) then !{
+c carlis           [J]=[J/s]/[1/s]
+                      eaitrg(iy,j,iatm)=eaitrg(iy,j,iatm)*wwi(j)/
+     /                 faitrg(iy,j,iatm)
+                    else !}{
+                      eaitrg(iy,j,iatm)=0.0_R8
+                    end if !}
+                  end do !} loop over B2 cells
+                else
+                  do iy=0,ny-1 !{
                     naitrg(iy,j,iatm)=na(kk,iy,eb2atcr(iatm))
                     paitrg(iy,j,iatm)=na(kk,iy,eb2atcr(iatm))*ti(kk,iy)
                     faitrg(iy,j,iatm)=u*fna(ib,iy,0,0,eb2atcr(iatm))
-                    eaitrg(iy,j,iatm)=2.0_R8*ti(kk,iy)
-                  end if
-c!###{
-c                  print '(1x,i2,1p,4e10.2)',iy,
-c     ,              faitrg(iy,j,iatm),eaitrg(iy,j,iatm)/ev,
-c     ,              dab2(kk+1,iy+1,iatm,1),tab2(kk+1,iy+1,iatm,1)/ev
-c!###}
-                end do !} loop over b2 cells
-                wo=0.0_R8
-                wwo=0.0_R8
-                do iy=0,ny-1 !{
-                  wo=wo+faitrg(iy,j,iatm) ! units 1/s
-                  wwo=wwo+eaitrg(iy,j,iatm) ! units W
-                end do !}
-                js=ltns(j)+nlim
-c                print *,'j,iatm,ltns,js=',j,iatm,ltns(j),js              !###
-c                print *,'wldna,ewlda=',wldna(js,iatm,0),ewlda(js,iatm,0) !###
-c                print *,'wo,wwo=',wo,wwo                                 !###
-                if(wo.gt.0.0_R8) then !{
-                  wi(j)=wldna(js,iatm,0)/wo !units [1/s]/[1/s]
-                else !}{
-                  wi(j)=0.0_R8
-                end if !}
-                if(wwo.gt.0.0_R8) then !{
-                  wwi(j)=ewlda(js,iatm,0)*wldna(js,iatm,0)/wwo ! units [J]*[1/s]/[W]
-                else !}{
-                  wwi(j)=0.0_R8
-                end if !}
-                do iy=0,ny-1 !{
-                  faitrg(iy,j,iatm)=faitrg(iy,j,iatm)*wi(j)
-                  if(faitrg(iy,j,iatm).gt.0.0_R8) then !{
-c carlis            [J]=[J/s]/[1/s]
-                    eaitrg(iy,j,iatm)=eaitrg(iy,j,iatm)*wwi(j)/
-     /                                faitrg(iy,j,iatm)
-                  else !}{
-                    eaitrg(iy,j,iatm)=0.0_R8
-                  end if !}
-                end do !} loop over b2 cells
+                    eaitrg(iy,j,iatm)=2.0_R8*ti(kk,iy)/ev
+                  end do !} loop over B2 cells
+                end if
                 l=1-l
                 u=-u
               end do !} loop over targets
@@ -945,8 +954,8 @@ c*** Molecules fluxes and energies
                 ISS=ltns(j)
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
-                do iy=0,ny-1 !{
-                  if (ft44) then
+                if (ft44) then
+                  do iy=0,ny-1 !{
                     fmitrg(iy,j,imol)=wldnm_res(imol,iy+IAS)*
      .                     sarea_res(iy+IAS)
 #ifdef WG_TODO
@@ -956,39 +965,41 @@ c*** Molecules fluxes and energies
 #endif
                     emitrg(iy,j,imol)=ewldm_res(imol,iy+IAS)*
      .                     sarea_res(iy+IAS) !units in W/m2*m2
-                  else
+                  end do !} loop over B2 cells
+                  wo=0.0_R8
+                  wwo=0.0_R8
+                  do iy=0,ny-1 !{
+                    wo=wo+fmitrg(iy,j,imol) ! units 1/s
+                    wwo=wwo+emitrg(iy,j,imol) ! units W
+                  end do !}
+                  js=ltns(j)+nlim
+                  if(wo.gt.0.0_R8) then !{
+                    wi(j)=wldnm(js,imol,0)/wo ! units [1/s]/[1/s]
+                  else !}{
+                    wi(j)=0.0_R8
+                  end if !}
+                  if(wwo.gt.0.0_R8) then !{
+                    wwi(j)=ewldm(js,imol,0)*wldnm(js,imol,0)/wwo ! units [J]*[1/s]/[W]
+                  else !}{
+                    wwi(j)=0.0_R8
+                  end if !}
+                  do iy=0,ny-1 !{
+                    fmitrg(iy,j,imol)=fmitrg(iy,j,imol)*wi(j)
+                    if(fmitrg(iy,j,imol).gt.0.0_R8) then !{
+                      emitrg(iy,j,imol)=emitrg(iy,j,imol)*wwi(j)/
+     /                                                fmitrg(iy,j,imol)
+                    else !}{
+                      emitrg(iy,j,imol)=0.0_R8
+                    end if !}
+                  end do !}
+                else
+                  do iy=0,ny-1 !{
                     fmitrg(iy,j,imol)=0.0
                     pmitrg(iy,j,imol)=0.0
                     nmitrg(iy,j,imol)=0.0
                     emitrg(iy,j,imol)=0.0
-                  endif
-                end do !} loop over B2 cells
-                wo=0.0_R8
-                wwo=0.0_R8
-                do iy=0,ny-1 !{
-                  wo=wo+fmitrg(iy,j,imol) ! units 1/s
-                  wwo=wwo+emitrg(iy,j,imol) ! units W
-                end do !}
-                js=ltns(j)+nlim
-                if(wo.gt.0.0_R8) then !{
-                  wi(j)=wldnm(js,imol,0)/wo !units [1/s]/[1/s]
-                else !}{
-                  wi(j)=0.0_R8
-                end if !}
-                if(wwo.gt.0.0_R8) then !{
-                  wwi(j)=ewldm(js,imol,0)*wldnm(js,imol,0)/wwo ! units [J]*[1/s]/[W]
-                else !}{
-                  wwi(j)=0.0_R8
-                end if !}
-                do iy=0,ny-1 !{
-                  fmitrg(iy,j,imol)=fmitrg(iy,j,imol)*wi(j)
-                  if(fmitrg(iy,j,imol).gt.0.0_R8) then !{
-                    emitrg(iy,j,imol)=emitrg(iy,j,imol)*wwi(j)/
-     /                                                fmitrg(iy,j,imol)
-                  else !}{
-                    emitrg(iy,j,imol)=0.0_R8
-                  end if !}
-                end do !}
+                  end do !} loop over B2 cells
+                endif
                 l=1-l
                 u=-u
               end do !} loop over targets
@@ -1014,19 +1025,17 @@ c carlis wldspta and wldsptm give sputtered flux for each emitted atom and molec
                       sjs_t(j)=sjs_t(j)+sjs(iy,j)
                     end if
                   end do
-                  do im=1,nmoli
-                    if (wldsptm_res(im,iy+IAS).gt.0.0_R8) then
-                      sptlistrg(j)=im+natm
-                      sjs(iy,j)=wldsptm_res(im,iy+IAS)*
+                  do imol=1,nmoli
+                    if (wldsptm_res(imol,iy+IAS).gt.0.0_R8) then
+                      sptlistrg(j)=imol+natm
+                      sjs(iy,j)=wldsptm_res(imol,iy+IAS)*
      .                    sarea_res(iy+IAS)
-                      sjs_t(j)=sjs_t(j)+
-     .                                 sjs(iy,j)
+                      sjs_t(j)=sjs_t(j)+sjs(iy,j)
                     end if
                   end do
                 end do
 
-                if((ntns.eq.2 .or. ntns.eq.4) .and.
-     .            (sptlistrg(j).ne.0)) then
+                if(sptlistrg(j).ne.0) then
                   js=ltns(j)+nlim
                   if (sptlistrg(j).le.natm) then
                     sjs_w(j)=wldspta(js,sptlistrg(j),0)
@@ -1081,29 +1090,29 @@ c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
                   do_spt=.false.
                   print *,
      ,             'b2pwldw, zero sputtering flux for target j=',j
-                  sjs_w(j)=0.0
+                  sjs_w(j)=0.0_R8
                 end if
                 shift=shift+ny
               end do !} loop on targets for sputtering
             end if !if sputtering happening
-          end if !} itrg.eq.0 .and. do_trg
-          itrg=itg
+          end if !} jtrg.eq.0 .and. do_trg
+          jtrg=itg
           iznt=izn
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy=0
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
-        else if (iznt.ne.izn) then !}{ itg.ne.itrg
+        else if (iznt.ne.izn) then !}{ itg.ne.jtrg
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy=0
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
           iznt=izn
@@ -1263,7 +1272,7 @@ c*** Print the line
         end do !}
         if (do_spt_wll(m).gt.0) then
           do is=1,n_sfpr_sp
-            if(do_spt_wll(m).eq.is) then !{
+            if(do_spt_wll(m).eq.i_sfpr_sp(is)) then !{
 c carlis For output sputtering I assume that the sputtered flux is acting on the sputtered atom
 c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
               if (do_spt_wll(m).le.natm) then
@@ -1279,7 +1288,7 @@ c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
               end if
               w_line(k+1)=0.0_R8 !net sputtering
               w_line(k+2)=sptflx(m)*nsecyr/avogr*sptmass !gross sputtering
-              l=l_ersmtr(ils)
+              l=i_sfpr_sp(l_ersmtr(ils))
               if(l.gt.0) then !{
                 wo=0.0_R8
                 do i=1,natmi !{
@@ -1311,7 +1320,7 @@ c carlis For output erosion I assume that the sputtered flux is acting on the ta
 c carlis        [mm/y] = [1/s]*[s*mm*m2/y]/[m2]
               w_line(k+1)=0.0_R8 !net erosion
               w_line(k+2)=sptflx(m)*wllersf(is)/segm_area(ils) !gross erosion
-              l=l_ersmtr(ils)
+              l=i_sfpr_sp(l_ersmtr(ils))
               if(l.gt.0) then !{
                 wo=0.0_R8
                 do i=1,natmi !{
@@ -1354,41 +1363,41 @@ c carlis sputtering not happening on this wall but possibly on other walls of th
           end do
         end if
       else if(do_trg) then !}{
-c        print *,'itrg,iy=',itrg,iy
-        w_line(10)=wptpl(iy,itrg) !recombination due to plasma
-        w_line(9)=whtpl(iy,itrg) !heat due to plasma                           !###
-        w_line(8)=wptnu(iy,itrg)+wptpl(iy,itrg)
-        w_line(7)=whtnu(iy,itrg)+whtpl(iy,itrg)
-        w_line(6)=wnutrg(iy,itrg)
-        w_line(5)=wpltrg(iy,itrg)
-        w_line(4)=wpttrg(iy,itrg)
-        w_line(3)=wrdtrg(iy,itrg,0)
-        w_line(2)=wtttrg(iy,itrg)
+c        print *,'jtrg,iy=',jtrg,iy
+        w_line(10)=wptpl(iy,jtrg) !recombination due to plasma
+        w_line(9)=whtpl(iy,jtrg) !heat due to plasma                           !###
+        w_line(8)=wptnu(iy,jtrg)+wptpl(iy,jtrg)
+        w_line(7)=whtnu(iy,jtrg)+whtpl(iy,jtrg)
+        w_line(6)=wnutrg(iy,jtrg)
+        w_line(5)=wpltrg(iy,jtrg)
+        w_line(4)=wpttrg(iy,jtrg)
+        w_line(3)=wrdtrg(iy,jtrg,0)
+        w_line(2)=wtttrg(iy,jtrg)
         w_line(1)=wldrfdst(iln,izn)
         do is=1,n_sfpr_s !{
-          w_line(k+1)=fiitrg(iy,itrg,is)
-          w_line(k+2)=eiitrg(iy,itrg,is)/eV
+          w_line(k+1)=fiitrg(iy,jtrg,is)
+          w_line(k+2)=eiitrg(iy,jtrg,is)/eV
           k=k+n_hdpr_s
         end do !}
         do is=1,nclm_na !{
-          w_line(k+1)=faitrg(iy,itrg,is)
-          w_line(k+2)=eaitrg(iy,itrg,is)
-          w_line(k+3)=naitrg(iy,itrg,is)
-          w_line(k+4)=paitrg(iy,itrg,is)
+          w_line(k+1)=faitrg(iy,jtrg,is)
+          w_line(k+2)=eaitrg(iy,jtrg,is)
+          w_line(k+3)=naitrg(iy,jtrg,is)
+          w_line(k+4)=paitrg(iy,jtrg,is)
           k=k+n_hdpr_a
         end do !}
         do is=1,nclm_nm !{
-          w_line(k+1)=fmitrg(iy,itrg,is) !molecule flux
-          w_line(k+2)=emitrg(iy,itrg,is) !molecule energy
-          w_line(k+3)=nmitrg(iy,itrg,is) !molecule density
-          w_line(k+4)=pmitrg(iy,itrg,is) !molecule pressure
+          w_line(k+1)=fmitrg(iy,jtrg,is) !molecule flux
+          w_line(k+2)=emitrg(iy,jtrg,is) !molecule energy
+          w_line(k+3)=nmitrg(iy,jtrg,is) !molecule density
+          w_line(k+4)=pmitrg(iy,jtrg,is) !molecule pressure
           k=k+n_hdpr_ml
         end do !}
         if (do_spt) then
           do is=1,n_sfpr_sp
-            if(sptlistrg(ils).eq.is) then !{
+            if(sptlistrg(jtrg).eq.i_sfpr_sp(is)) then !{
               w_line(k+1)=0.0_R8 !net sputtering
-              w_line(k+2)=spttrg(iy,itrg) !gross sputtering
+              w_line(k+2)=spttrg(iy,jtrg) !gross sputtering
             else
               w_line(k+1)=0.0_R8
               w_line(k+2)=0.0_R8
@@ -1398,7 +1407,7 @@ c        print *,'itrg,iy=',itrg,iy
           do is=1,n_sfpr_er
             if(i_ersmtr(ils).eq.is) then !{
               w_line(k+1)=0.0_R8 !net erosion
-              w_line(k+2)=erntrg(iy,itrg) !gross erosion
+              w_line(k+2)=erntrg(iy,jtrg) !gross erosion
             else
               w_line(k+1)=0.0_R8
               w_line(k+2)=0.0_R8
@@ -1419,11 +1428,11 @@ c carlis sputtering not happening on this target but possibly on other walls of 
           end do
         end if
         if(trgl) then !{
-          w_line(1)=xtrg(iy,itrg)
-          w_line(k+1)=netrg(iy,itrg)
-          w_line(k+2)=tetrg(iy,itrg)
-          w_line(k+3)=titrg(iy,itrg)
-          w_line(k+4)=xmp_hlp(iy,itrg)
+          w_line(1)=xtrg(iy,jtrg)
+          w_line(k+1)=netrg(iy,jtrg)
+          w_line(k+2)=tetrg(iy,jtrg)
+          w_line(k+3)=titrg(iy,jtrg)
+          w_line(k+4)=xmp_hlp(iy,jtrg)
           k=k+n_hdpr_t
         end if !}
         iy=iy+im
@@ -1431,7 +1440,7 @@ c carlis sputtering not happening on this target but possibly on other walls of 
         k=n_hdpr_c+n_sfpr_s+n_sfpr_sp
         if(trgl) then !{
           k=k+n_hdpr_t
-          w_line(1)=xtrg(iy,itrg)
+          w_line(1)=xtrg(iy,jtrg)
         else !}{
           w_line(1)=wldrfdst(iln,izn)
         end if !}

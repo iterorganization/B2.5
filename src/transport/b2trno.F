@@ -22,7 +22,7 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nrr, nss, nkind_data,
      &          nkind_coeff, poloidal_scaling, transport_ip_filename,
-     &          nscale
+     &          nscale, transport_ip_time_switch, transport_ip_time_mod
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG
@@ -30,6 +30,8 @@
 #endif
      &          ncall_b2trno, ncall_b2tqna,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -288,8 +290,7 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
       if(switch%fch_stochastic.ne.0.0e0_R8)then                            !lk 31.01.08 { !srv 17.12.13
       call xerrab('b2trno -- option to be adapted for WG')
 #ifdef WG_TODO
-        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
-     &      fchstoch)
+        call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)
         do iy = -1, ny                                                    !srv 20.09.17
           do ix = -1, nx
            if(bottomiy(ix,iy).ne.-2) then

@@ -32,6 +32,8 @@
 #endif
      &          ncall_b2stbc,
      &          ncall_b2stbc_phys, nsdmax
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -78,16 +80,16 @@
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol
       integer element_done(-1:nx)
+      real (kind=R8) ::
+     *   b2ssum
 #endif
 *   ..procedures
       intrinsic nint
-      real (kind=R8) ::
-     *   b2ssum
-      external xertst, sfill, b2ssum, b2saxpy, ipgetr, ipgeti
+      external xertst, sfill, b2saxpy, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys
 #ifdef WG_TODO
-     & , b2stbc_bas                                              !srv 27.06.21
+     & , b2stbc_bas, b2ssum                                            !srv 27.06.21
 #endif
 *   ..initialisation
 *-----------------------------------------------------------------------
@@ -348,8 +350,7 @@
         if(lbndusr) then
           if(ncall_b2stbc.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
-     1     facdrift, vol, hx, hy, qz, qc, gs,
-     1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1     facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &     sna0, smo0, she0, shi0, sch0, sne0,
      &     wrong_flow, main_call, diagno,
@@ -363,8 +364,7 @@
       else      !boundary_namelist.ge.1
 #ifdef WG_TODO
         call b2stbc_bas(nx, ny, ns, ismain,
-     1   facdrift, vol, hx, hy, qz, qc, gs,
-     1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1   facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &   sna0, smo0, she0, shi0, sch0, sne0,
      &   wrong_flow, main_call, diagno,
@@ -658,13 +658,8 @@ cdjm Jan2017 Keep linearised sources for balance
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..local variables
-      integer ix, iy
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
       external xertst, xerrab
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 
 *-----------------------------------------------------------------------
 *.computation

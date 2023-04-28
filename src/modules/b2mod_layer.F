@@ -78,6 +78,9 @@
      *  species_vapor_temp(ntrack),
      *  species_heat_sublim(ntrack)
 
+      logical, save :: layer_model
+      data layer_model /.false./
+
       contains
 
       subroutine alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)

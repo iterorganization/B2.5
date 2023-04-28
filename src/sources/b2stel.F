@@ -70,11 +70,9 @@
      &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3),
      &  shn0_ion(nCv,0:3),        shn0_rec(nCv,0:3)
 *   ..procedures
-      real (kind=R8) ::
-     *   samax, roxa
+      real (kind=R8) :: samax
       external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
-      roxa(iCv,is) = am(is)*mp*pl%na(iCv,is)
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -541,5 +539,17 @@ cdjm Jan2017 Keep linearised sources for balance
 
 *-----------------------------------------------------------------------
 *.end b2stel
+
+      contains
+
+      function roxa(iCv,is)
+      implicit none
+      real (kind=R8) :: roxa
+      integer, intent(in) :: iCv, is
+
+      roxa = am(is)*mp*pl%na(iCv,is)
+
+      return
+      end function roxa
 
       end subroutine b2stel

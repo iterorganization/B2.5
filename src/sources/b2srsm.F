@@ -51,10 +51,11 @@
 *.declarations
 
 *   ..local variables
-      integer is, diagno
+      integer is
       integer k
       character chns*3, chk*1                                        !srv 11.09.09 }
 #ifdef WG_TODO
+      integer diagno
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
 #endif
@@ -63,10 +64,11 @@
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)
 *   ..procedures
       external xertst, ipgeti, b2xvsg
-      intrinsic abs, min, mod
+#ifdef WG_TODO
 *   ..initialisation
       save diagno
       data diagno/0/
+#endif
 *-----------------------------------------------------------------------
 *.computation
 

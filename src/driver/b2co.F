@@ -32,9 +32,9 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
+#ifdef WG_TODO
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
-#ifdef WG_TODO
       use eirmod_comprt
      , , only: iunout
 #endif
@@ -72,8 +72,12 @@
 *   ..local variables
 #ifndef NO_GETENV
       integer lenval, ierror
+#ifdef WG_TODO
+      logical streql
+      external streql
 #ifndef USE_PXFGETENV
       intrinsic get_environment_variable
+#endif
 #endif
 #endif
       integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
@@ -105,8 +109,8 @@
       character cnamip*80, cvalip*80, line*500
       logical file_open
 *   ..procedures
-      logical is_comment, streql
-      external is_comment, streql
+      logical is_comment
+      external is_comment
       external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
@@ -367,8 +371,8 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
-        call b2trcc(nout(1),nxtl,nxtr,geo,mpg,switch)
+        call b2trci(switch)
+        call b2trcc(nout(1),nx,nxtl,nxtr)
         call b2filei(0,ns,nnreg(0))
         call b2filec(0,ns,nnreg(0))
       end if

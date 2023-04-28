@@ -16,9 +16,7 @@
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer iFc
-      real (kind=R8) ::
-     *  smin, smax
-      external b2xxgs, smin, smax
+      external b2xxgs
 *     ------------------------------------------------------------------
       call subini ('b2txsx')
 *   ..test nCv, nFc

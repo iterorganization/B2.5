@@ -250,9 +250,6 @@ csw
       call cfverr (ninp(1), b2fgmtry_version)                            !xpb
       call cfverr (ninp(2), b2fparam_version)                            !xpb
       call cfverr (ninp(3), b2fstati_version)                            !xpb
-! csc UNCOMMENT WITH AD
-!    CALL CFOPEN(ninp(6), 'b2fdiffi', 'old', 'un*formatted')
-!    CALL CFVERR(ninp(6), b2fdiffi_version)
       if (b2fgmtry_version .lt. '03.002.000'  .or.
      &    b2fstati_version .lt. '03.002.000') then
         call xerrab('Using old input format. Run b2us first.')
@@ -289,14 +286,6 @@ csw
      &  'faulty input nCv, nFc from plasma state file')
       call xertst (1.le.ns0.and.ns0.le.ns,
      &  'faulty input ns from plasma state file')
-! csc UNCOMMENT WITH AD
-!!   ..obtain plasma differentiated state from file
-!    CALL CFRUIN(ninp(6), 3, idum, 'nCv,nFc,ns')
-!    CALL XERTST(idum(0) .EQ. mpg%ncv .AND. idum(1) .EQ. mpg%nfc, &
-!&         'faulty input nCv, nFc from plasma differentiated state file')
-!    CALL XERTST(1 .LE. idum(2) .AND. idum(2) .LE. ns, &
-!&         'faulty input ns from plasma differentiated state file')
-!    CALL CFOPEN(nout(9), 'b2fdiffe', 'new', 'un*formatted')
 *   ..obtain external state
       call alloc_mapping (mpg)
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
@@ -321,14 +310,12 @@ csw
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-      use b2mod_user_namelist
-     , , only : sigma, nsigma
       use b2mod_input_profile
      , , only : tdata
       use b2mod_ad
      , , only: nncf
       use b2mod_par_opt
-     & , only : par_opt_phys, npar_opt
+     & , only : par_opt_phys, npar_opt, sigma, nsigma
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
