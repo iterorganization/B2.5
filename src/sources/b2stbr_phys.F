@@ -33,6 +33,8 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2stbr_phys, my_out_folder
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #ifdef WG_DEBUG
      &        , my_out_sf                                               !srv 27.06.21
 #endif

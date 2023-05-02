@@ -37,7 +37,7 @@
 
 ! Now loop only on sigma vector
       isigma = max(0,npar_opt-nn)
-      do ii = 1, nsigma
+      do ii = 1, nsigma_opt
         select case (prior_type(ii+isigma))
         case (0) !Uniform distribution
           prior = prior*1.0_R8
