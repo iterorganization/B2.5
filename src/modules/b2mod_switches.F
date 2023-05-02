@@ -959,7 +959,7 @@ c b2ag
 
 c b2siav
       s % b2siav_qstyle = 0
-      s % addvis = 0.0_R8
+      s % addvis = 1.0_R8
       s % addvis1 = 1.0_R8
       s % cqip1 = 0.5_R8
       s % cvsa_mltpl = 1.0_R8
