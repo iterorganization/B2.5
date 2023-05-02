@@ -59,7 +59,13 @@ else
 GGD_VERSION ?= '0.0.0'
 endif
 
+ifdef TAO
+include ${PETSC_DIR}/lib/petsc/conf/variables
+LIBOPT = ${PETSC_LIB}
+# CPP has been overwritten by the PETSc variables file and must be reinstated
+CPP    = /lib/cpp -traditional
+endif
+
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-
