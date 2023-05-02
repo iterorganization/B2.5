@@ -1066,7 +1066,7 @@
 		<category name="Physics">
 			<switch>
 				<name>b2siav_addvis</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier to heat flux contribution to divergence of viscosity tensor in the momentum equation.
