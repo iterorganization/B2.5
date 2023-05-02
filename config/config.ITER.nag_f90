@@ -12,8 +12,15 @@ ifndef SOLPS_CPP
   DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
+    IMAS_PKG_LIST = fundamental-constants
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
     INCMODS += `pkg-config fundamental-constants --cflags`
+  endif
+  ifdef TAO
+    ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
+      SOLPSINCLUDE += `pkg-config petsc --cflags`
+      IMAS_PKG_LIST += petsc
+    endif
   endif
 endif
 
@@ -50,6 +57,11 @@ endif
 
 ifdef LD_CATALYST
 CXXFLAGS = -std=c++11
+endif
+
+ifdef IMAS_PKG_LIST
+  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
+  IMASLIBS = ${LD_UAL}
 endif
 
 LD = nagfor

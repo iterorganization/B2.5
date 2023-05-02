@@ -58,12 +58,14 @@
      & , only : nbcd, potpar
       use b2mod_ad
      & , only : ntstep_b2wall, old_deposition, old_erosion,
-     &          my_out_folder,
+     &          my_out_folder, filename_b2w,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2stbr,
      &          ncall_b2stbr_phys
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       implicit none
 *   ..input arguments
       integer nCv, nFc, nVx, ns, nxtl, nxtr
@@ -155,7 +157,6 @@
       integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
       character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
       logical ex
-      character*256, save :: filename
       intrinsic cpu_time
 #endif
 *   ..procedures
@@ -825,14 +826,14 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       if(switch%b2stbr_b2wall_netcdf.ne.0 .and. ntargsp.gt.0) then
 #ifndef NO_CDF
         if(ncall_b2stbr.eq.0) then
-          filename='b2wall.nc'
-          call find_file(filename,ex)
+          filename_b2w='b2wall.nc'
+          call find_file(filename_b2w,ex)
           if (.not.ex.or.switch%b2mndr_stim.ge.0.0_R8) then
             ntstep_b2wall = 0
-            write(6,'(a)') trim(filename)//' will be created'
-            call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
+            write(6,'(a)') trim(filename_b2w)//' will be created'
+            call define_cdf_b2mod_wall(filename_b2w,ncid,nbnd,ntargsp)
           else if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
-            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
+            status=nf_open(filename_b2w,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             status=nf_inq(ncid,ndims,nvars,natts,unlimid)
             call check_cdf_status(status)
@@ -841,16 +842,16 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             ntstep_b2wall=dimsize(1)
             status=nf_close(ncid)
             call check_cdf_status(status)
-            write(6,'(a)') trim(filename)//' will be appended'
+            write(6,'(a)') trim(filename_b2w)//' will be appended'
           else
             ntstep_b2wall=0
-            write(6,'(a)') trim(filename)//' will be replaced'
-            call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
+            write(6,'(a)') trim(filename_b2w)//' will be replaced'
+            call define_cdf_b2mod_wall(filename_b2w,ncid,nbnd,ntargsp)
           end if
-          write(6,'(a,i8)') trim(filename)//' : ntstep_b2wall = ',
+          write(6,'(a,i8)') trim(filename_b2w)//' : ntstep_b2wall = ',
      .                                          ntstep_b2wall
           if (ntstep_b2wall.eq.0) then
-            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
+            status=nf_open(filename_b2w,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             write(*,*) 'Writing track_species'
             call write_cdf_char_variable(ncid,-1,
@@ -860,13 +861,13 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      *       'plate_area',plate_area(1:nbnd))
             status=nf_close(ncid)
             call check_cdf_status(status)
-            write(6,'(a)') 'Closed '//trim(filename)
+            write(6,'(a)') 'Closed '//trim(filename_b2w)
           end if
         endif
         if(main_call.and.
      *     mod(ncall_b2stbr,switch%b2stbr_b2wall_netcdf).eq.0) then
           ntstep_b2wall=ntstep_b2wall+1
-          status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
+          status=nf_open(filename_b2w,or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(status)
           call write_cdf_variable(ncid,ntstep_b2wall,
      *     'plate_time',plate_time(1:nbnd))
@@ -1026,7 +1027,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 
 *.end b2stbr
 
-      subroutine b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, pl, dv)
+      subroutine b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, pl, dv,
+     & use_eirene, ank_mods)
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -1035,22 +1037,21 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      , , only : neutr_scl
 #endif
       use b2mod_subsys
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     , , only : ncall_b2stbr_neutr_scl
       implicit none
-      integer, intent(in) :: nCv, nFc, ns
+      integer, intent(in) :: nCv, nFc, ns, use_eirene, ank_mods
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
-      integer ncall, use_eirene, ank_mods
-      save ncall, use_eirene, ank_mods
-      data ncall/0/, use_eirene/0/, ank_mods/0/
 
       call subini ('b2stbr_neutr_scl')
-      if (ncall.eq.0) then
+      if (ncall_b2stbr_neutr_scl.eq.0) then
         call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
         call xertst(1.le.ns, 'faulty argument ns')
-        call ipgeti('b2mndr_eirene', use_eirene)
-        call ipgeti('eirene_ank_mods', ank_mods)
       endif
       if(use_eirene.ne.0.and.ank_mods.ne.0) then
 #ifdef B25_EIRENE
@@ -1061,7 +1062,7 @@ c        write(*,*) 'Called neutr_scl'
         call xerrab ('b2stbr not compiled with the B25_EIRENE option')
 #endif
       endif
-      ncall = ncall+1
+      ncall_b2stbr_neutr_scl = ncall_b2stbr_neutr_scl+1
       call subend ()
       return
 

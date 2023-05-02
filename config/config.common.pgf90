@@ -25,7 +25,9 @@ LDOPTS  += -g -C
 else
 #FCOPTS += -O2
 #FCOPTS += -fast
+ifndef ADJ
 FCOPTS  += -fast -Mvect=nofuse
+endif
 endif
 ifdef USE_OPENMP
 FCOPTS += -mp=nonuma
@@ -43,6 +45,12 @@ ifndef SOLPS_CPP
     DEFINES += -DCONSTANTS_PROVIDED
     IMAS_PKG_LIST = fundamental-constants
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
+  endif
+  ifdef TAO
+    ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
+      SOLPSINCLUDE += `pkg-config petsc --cflags`
+      IMAS_PKG_LIST += petsc
+    endif
   endif
   ifdef IMAS_VERSION
     UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )

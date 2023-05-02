@@ -5,6 +5,7 @@
      .  resfund, corfun, corfund, name)
       use b2mod_types
       use b2us_map_diff
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, itcnt

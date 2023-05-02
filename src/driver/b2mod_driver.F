@@ -69,8 +69,6 @@
       use b2us_plasma
       use b2us_io
       use b2mod_par_opt
-     & , only : npar_opt, flag_optim, read_b2mod_par_opt,
-     & par_opt_phys, x0
       use b2mod_b2plot
      , , only : nlimi
 
@@ -1536,9 +1534,6 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 !     &   .not.smax(nCv,state%pl%zt,1).gt.0.0_R8)
 !     .  state%pl%zt = state%pl%ti*1e5_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
-! csc UNCOMMENT WITH AD
-!    call read_b2fstate_diff (ninp(6), mpg%nCv, mpg%nFc, ns, stated)
-!    call createB2Diagnostic ( nCv, ns, mpg%nnreg, stated % diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
 
@@ -1843,9 +1838,6 @@ c   --> better way doing this is necessary)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
-      if (any(cftype.eq.6)) call xertst(
-     & flag_optim.or.(switch%b2optim_namelist .eq. 1),
-     & 'cftype=6 requires b2.optimization.namelist')
       if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
@@ -1858,7 +1850,7 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg%nBc)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
         allocate(par_opt_phys(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
       endif
@@ -1917,8 +1909,6 @@ c new CDF movie option (1st frame at t=0)
 
       subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state,
      &  state_ext, J)
-      use b2mod_user_namelist
-     & , only : ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_batch_average
@@ -1930,6 +1920,8 @@ c new CDF movie option (1st frame at t=0)
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l, uold, mold,
      &          told, fna_mol
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_ad
       implicit none
 #ifdef JET
@@ -1949,7 +1941,7 @@ c new CDF movie option (1st frame at t=0)
       type(B2StateExt), intent (inout) :: state_ext
       type(switches), intent (inout)      :: switch
 #ifdef FIXED_POINT
-      type(B2State)   :: state0
+      type(B2State) :: state0
 #endif
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
@@ -2129,12 +2121,6 @@ csw 09oct2012 set default potential already at this point (BCs)
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
-! csc UNCOMMENT WITH AD
-!      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
-!      DO ICF=1, NCF
-!        write (ss,'(I1)') icf
-!        write(*,*) 'Cost function gradient '//ss//': ',Jd(icf)
-!      END DO
 *    ..produce data for movie
 #ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
@@ -2645,8 +2631,6 @@ c new CDF movie option
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 
-! csc UNCOMMENT WITH AD
-!    call write_b2fstate_diff (nout(9), nCv, nFc, ns, stated)
 *   ..mms error analysis
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
         call calc_err(nCv, ns, state % pl, state % dv)
@@ -2786,6 +2770,7 @@ c new CDF movie option
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
       call dealloc_b2mod_user
+      call dealloc_b2mod_par_opt
       call dealloc_feedback
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
