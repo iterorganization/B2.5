@@ -75,6 +75,7 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iadd_11 = 1, iout = 0
+      integer, save :: style_b2mndt = 1                               !srv 07.07.21
       real (kind=R8) ::
      *   t0, t1
       character chns*3
@@ -98,6 +99,7 @@
       if (ncall.eq.0) then
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
+       call ipgeti ('b2mndt_style', style_b2mndt)
        call ipgeti ('b2usc11_add_11', iadd_11)
        call ipgeti ('b2usc11_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
@@ -161,11 +163,13 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-          aa11(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+           !srv 13.10.06 {
-     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))        !srv 13.10.06 }
+          aa11(ix,iy,0) = -snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)             !srv 13.10.06 {
+          if (style_b2mndt.lt.2) aa11(ix,iy,0) = aa11(ix,iy,0)+
+     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy))                           !srv 13.10.06 }
         else
-          aa11(ix,iy,0) = rscal(pb(ix,iy))
+          aa11(ix,iy,0) = 1.0_R8
         endif
+        aa11(ix,iy,0) = aa11(ix,iy,0)*rscal(pb(ix,iy))
        enddo
       enddo
 

@@ -482,13 +482,14 @@ c 2002-09-11: logic revised
      7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
-      character cnamip*80, cvalip*80, cswitch*80
+      character cnamip*80, cnbmip*80, cvalip*80, cswitch*80
       character*256 sources_filename, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
-      character*500 line, ligne
+      character*500 line, ligne, cur_contr_comment
+      character*500, allocatable :: add_comment(:)
 #if DEF_NATM > 1
       character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff1
 #else
@@ -525,6 +526,7 @@ c 2002-09-11: logic revised
 #endif
       character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary, flip
+      logical new_namelist
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
       integer :: time_dep_puff_case1(nstraid)
@@ -553,7 +555,7 @@ c 2002-09-11: logic revised
      .        no_sputtering, cpath_written, new_path, bundled,
      .        adas_correct
 #endif
-      logical todo, wait
+      logical todo, wait, exists
       logical same_bundling, same_atoms, same_grid, non_default
       logical averaging, hydrogen
       logical ismain_done, ismain0_done, ycur_done
@@ -578,11 +580,11 @@ c 2002-09-11: logic revised
 #endif
       integer conformal_convert
       real (kind=R8) :: rratio
-      logical open_file, streql
+      logical open_file, streql, isadigit, is_valid
       logical is_comment, end_comment, only_comments
-      external xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits, only_comments,
-     &  open_file, get_jsep, conformal_convert, end_comment,
+      external xertst, xerrab, cfruch, cfrure, cfwuin, cfwuch, cfwure,
+     &  ipgeti, lnblnk, len_of_digits, only_comments, is_valid,
+     &  open_file, get_jsep, conformal_convert, end_comment, isadigit,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
@@ -1753,6 +1755,7 @@ c 2002-09-11: logic revised
       do while (ligne(1:7).ne.'*endphy')
         read (ninp(2),*,end=6,err=91) ligne
       enddo
+      cur_contr_comment = ' '
     5 continue
       read (ninp(2),'(a)',end=6,err=91) line
       if (.not.is_comment(line)) then
@@ -1768,7 +1771,11 @@ c 2002-09-11: logic revised
         i = index(line,'''')
         if (i.gt.0) then
           if (only_comments(line(1:i-1))) then
-            read (line(i:132),*) cnamip, cvalip
+            read (line(i:500),*) cnamip, cvalip
+            if (isadigit(cnamip(1:1)).or..not.is_valid(cvalip)) then
+              cnamip = ' '
+              cvalip = ' '
+            end if
           else
             cnamip = ' '
             cvalip = ' '
@@ -1874,6 +1881,34 @@ c 2002-09-11: logic revised
           todo = .false.
           wait = .true.  ! we wait till we have read b2.boundary.parameters
                          ! to choose the new value to be written
+          if (end_comment(line,i)) cur_contr_comment = trim(line(i:))
+          j = 0
+          cnbmip = ' '
+          do while (streql(cnbmip,' ').and..not.streql(line,' '))
+            read (ninp(2),'(a)',end=7,err=91) line
+            ligne = line
+            call strip_spaces(ligne)
+            if (.not.is_comment(ligne)) then
+              if (ligne(1:1).eq.'''') read (line,*) cnbmip
+            else
+              i = index(line,'''')
+              if (i.gt.0) then
+                if (only_comments(line(1:i-1)))
+     >           read(line(i:500),*) cnbmip
+              end if
+            end if
+            if (.not.streql(line,' ').and.streql(cnbmip,' ')) j = j + 1
+          end do
+    7     backspace(ninp(2))
+          if (j.gt.0) then
+            allocate(add_comment(j))
+            do i = 1, j
+              backspace(ninp(2))
+            end do
+            do i = 1, j
+              read (ninp(2),'(a)') add_comment(i)
+            end do
+          end if
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -1943,6 +1978,7 @@ c 2002-09-11: logic revised
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
         case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
+          todo = .false.
           wait = .true.
         case default RSWITCHES
           todo = .false.
@@ -2558,9 +2594,25 @@ c 2002-09-11: logic revised
        boundary_namelist_set = .false.
       enddo
       call get_boundary_namelist
-      if (istyle_cur_contr_on_S_and_N.ne.2) write(nout(2),'(a,i1,a1)')
-     >   '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
-     &             istyle_cur_contr_on_S_and_N,         ''''
+      if (istyle_cur_contr_on_S_and_N.ne.2) then
+        write(nout(2),1028)
+        if (streql(cur_contr_comment,' ')) then
+          write(nout(2),'(a,i1,a1)')
+     >     '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
+     &               istyle_cur_contr_on_S_and_N,         ''''
+        else
+          write(nout(2),'(a,i1,a)')
+     >     '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
+     &               istyle_cur_contr_on_S_and_N,
+     &     ''''//tab//trim(cur_contr_comment)
+        end if
+        if (allocated(add_comment)) then
+          do i = 1, size(add_comment)
+            write(nout(2),'(a)') trim(add_comment(i))
+          end do
+          deallocate(add_comment)
+        end if
+      end if
 
 *  ..write new b2.transport.parameters
       first_pass = .true.
@@ -3061,7 +3113,8 @@ cxpb We must ensure we have not already listed this additional species
         deallocate(eta_hce_mult1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.transport_models_save.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in '//
+     .   'b2.transport_models_save.parameters'
       endif
 
 *  ..write new b2.sources.profile
@@ -3620,9 +3673,16 @@ cxpb This will need to be checked !!!
       new_filename = 'b2.numerics.parameters.2'
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
+      new_namelist = (b2stbr_sna_corr.ne.0.0_R8 .or.
+     &                b2stbr_taumax.ne.0.05_R8) .and.
+     &                numerics_namelist.eq.0
+      todo = todo.or.b2stbr_sna_corr.ne.0.0_R8 .or.
+     &               b2stbr_taumax.ne.0.05_R8
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-        if (same_bundling) then
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,
+     .                                    new_namelist)
+        if (same_bundling.and.b2stbr_sna_corr.eq.0.0_R8
+     &                   .and.b2stbr_taumax.eq.0.05_R8) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
             write(*,*) 'No changes needed in b2.numerics.parameters'
@@ -3986,7 +4046,8 @@ cxpb This will need to be checked !!!
         close(99)
       else if (same_bundling.and.todo) then
         write(nout(5),'(a)') 'b2.atomic_physics_rescale.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in '//
+     .   'b2.atomic_physics_rescale.parameters'
       endif
 
 #ifdef B25_EIRENE
@@ -11393,13 +11454,17 @@ cxpb as they no longer necessarily point to the same species
         call alloc_b2mod_wall(ns,natm,nmol,nion)
         call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts,flip)
 *  ..convert some wall arrays
-        if(wall_namelist_used) then
+        if(wall_namelist_used.and.
+     &    (.not.same_bundling.or..not.same_grid)) then
           call b2yt_wall(ns,ns1,
      .     natm,natm1,nmol,nmol1,nion,nion1,
      .     is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      .     itrack1,itrack2,itrack3)
 *  ..write new wall namelist
           call b2yt_wall_final(nout(5),nx1,ny1,ns1)
+        else if (wall_namelist_used) then
+          write(nout(5),'(a)') 'b2.wall_save.parameters'
+          write(*,*) 'No changes needed in b2.wall_save.parameters'
         else
 *  ..in the absence of a namelist, put in defaults
           call get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
@@ -11584,7 +11649,7 @@ cxpb as they no longer necessarily point to the same species
         end if
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_save.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.feedback_save.parameters'
       end if
 
 *   ..write new b2.feedback_control.parameters if needed
@@ -11805,7 +11870,7 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_time1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.feedback_control.parameters'
       end if
 
 *   ..write new b2.user.parameters, if needed
@@ -12072,7 +12137,7 @@ cxpb as they no longer necessarily point to the same species
         call dealloc_b2mod_user
       else if (todo) then
         write(nout(5),'(a)') 'b2.user.parameters'
-        write(*,*) 'No changes needed in ',trim(filename)
+        write(*,*) 'No changes needed in b2.user.parameters'
       end if
 
 *   ..write new b2yq.dat, if needed
@@ -12097,8 +12162,7 @@ cxpb as they no longer necessarily point to the same species
   983     continue
           close(99)
         else if (same_bundling) then
-          write(nout(5),'(a)') 'b2yq.dat'
-          write(*,*) 'No changes needed in ',trim(filename)
+          write(*,*) 'No changes needed in b2yq.dat'
         end if
         close(98)
       end if
@@ -12226,7 +12290,6 @@ cxpb as they no longer necessarily point to the same species
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))
       else
-        write(nout(5),'(a)') 'b2ah.dat'
         write(*,*) 'No changes needed in b2ah.dat'
       endif
 
@@ -12274,14 +12337,16 @@ cxpb as they no longer necessarily point to the same species
         write(nout(4),'(1p,1e9.2)') ttini
         close(nout(4))
       else
-        write(nout(5),'(a)') 'b2ai.dat'
         write(*,*) 'No changes needed in b2ai.dat'
       endif
       deallocate(nbini)
       deallocate(idum)
 
 *   ..we now write a new SOLPS_FLUIDS file if needed
-      if (.not.same_bundling) then
+      filename='SOLPS_FLUIDS'
+      call find_file(filename,exists)
+      if (.not.exists) inquire(file='../../SOLPS_FLUIDS', exist=exists)
+      if (.not.same_bundling.or..not.exists) then
         write(*,*) 'Writing SOLPS_FLUIDS.2'
         allocate(species_name(0:ns1-1))
         do is = 0, ns1-1
@@ -12294,7 +12359,6 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         deallocate(species_name)
       else
-        write(nout(5),'(a)') 'SOLPS_FLUIDS'
         write(*,*) 'No changes needed in SOLPS_FLUIDS'
       endif
 

@@ -51,6 +51,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+      integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
      *  cfc0, t0, t1, csb, csb1
@@ -75,6 +76,7 @@
        call xertst (0.0_R8.le.cfc0, 'faulty internal parameter cfc0')
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
        call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
        if (in_parallel() .and. iout.ne.0) then
          !$OMP MASTER
@@ -117,7 +119,9 @@
      &    smb(ix,iy,3)*rob(ix,iy)+
      &    cfc0*abs(vol(ix,iy)*hz(ix,iy)/hx(ix,iy)*bb(ix,iy,0)/       !srv 09.01.01
      &    bb(ix,iy,3)*csb)*rob(ix,iy)
-         aa5(ix,iy,0) = aad0(ix,iy)+abs(resmb(ix,iy))/(rxg*csb1)
+         aa5(ix,iy,0) = aad0(ix,iy)
+         if (style_b2mndt.lt.2) aa5(ix,iy,0) = aa5(ix,iy,0)+
+     &    abs(resmb(ix,iy))/(rxg*csb1)
         else
          aa5(ix,iy,0) = 1.0_R8
          aad0(ix,iy) = 0.0_R8

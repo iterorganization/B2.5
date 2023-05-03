@@ -228,7 +228,7 @@ cxpb initialize the numerics data
         call ipgeti ('b2news_nsmax', nsmax)
         nsmin = max(0,min(nsmin,ns))
         nsmax = max(0,min(nsmax,ns))
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,.false.)
       endif
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)

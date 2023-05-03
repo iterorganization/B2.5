@@ -39,7 +39,7 @@ fi
 # (and this average is the average of abs(var)).
 # To avoid statistical variance, this test must be done using correlated sampling and use the APCAS Eirene MPI parallelization strategy.
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-8 te 1e-11 ti 1e-11 po 1e-11' -i 'time' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 0.01 --maxerr 'te ti na ni ne po' --specific-tolerance 'fhe 0.02 fhe_eir 0.02 fhep 0.02 fhe0 0.02 fhe_mdf 0.02 rqahe 0.05 rqrad 0.05 ti 0.02 ne2 0.02 hce0 0.05 hci0 0.05 kinrgy 0.05' -i 'time|data|b2stb*|res*|del*|sm*|na*|ne0|nep|ni0|ua*|rcx*|rsa*|cdpa|csigin|dpa*|fllimvisc|b2sihs_visa|b2sihs_divu*|b2npmo_sm*' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successful

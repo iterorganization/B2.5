@@ -77,8 +77,8 @@
 
       if (initialised_externals) return
 cxpb  Allocate dummy arrays needed by b2xpfe
-      allocate(za_ext(-1:nxd,-1:nyd,0))
-      allocate(fa_ext(-1:nxd,-1:nyd,0:1,0))
+      allocate(za_ext(-1:nxd,-1:nyd,0:0))
+      allocate(fa_ext(-1:nxd,-1:nyd,0:1,0:0))
       za_ext = 0.0_R8
       fa_ext = 0.0_R8
       initialised_externals = .true.
