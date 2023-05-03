@@ -742,24 +742,24 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
             end do
 
 !  Subtract contribution from Eirene core boundary fluxes
-            if (is_neutral(is-1).and.lnext(is-1,is)) then ! to account this contribution only once
-              do k = 1, ncns
-                ix = nnlimi + lcns(k)
-                do ia = 1, nnatmi
-                  if (latmscl(ia).eq.b2espcr(is)) then
-                    sna_core(latmscl(ia)) = sna_core(latmscl(ia)) +
-     &               wldna(ix,ia,0) - wldra(ix,ia,0) - wldpa(ix,ia,0)
-                    do im = 1, nnmoli
-                      if (mlcmp(ia,im).gt.0) then
-                      sna_core(latmscl(ia))= sna_core(latmscl(ia)) +
-     &                 mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
-     &                              - wldpm(ix,im,0))
-                      end if
-                    end do
-                  end if
-                end do
-              end do
-            end if
+!            if (is_neutral(is-1).and.lnext(is-1,is)) then ! to account this contribution only once
+!              do k = 1, ncns
+!                ix = nnlimi + lcns(k)
+!                do ia = 1, nnatmi
+!                  if (latmscl(ia).eq.b2espcr(is)) then
+!                    sna_core(latmscl(ia)) = sna_core(latmscl(ia)) +
+!     &               wldna(ix,ia,0) - wldra(ix,ia,0) - wldpa(ix,ia,0)
+!                    do im = 1, nnmoli
+!                      if (mlcmp(ia,im).gt.0) then
+!                      sna_core(latmscl(ia))= sna_core(latmscl(ia)) +
+!     &                 mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
+!     &                              - wldpm(ix,im,0))
+!                      end if
+!                    end do
+!                  end if
+!                end do
+!              end do
+!            end if
 
           end do
 
