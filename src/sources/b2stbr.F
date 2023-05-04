@@ -839,20 +839,24 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &              max( min( taumax(k),t1(k) ), -taumax(k) )
             if ( iout .ne. 0 )
      &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
-            sna_eir(k) = sna_eir(k)*t(k)
+!            sna_eir(k) = sna_eir(k)*t(k)
           enddo
 
+          sna_eir = 0.0_R8
           do is = 0, ns-1
             k = b2espcr(is)
             if( is_neutral(is) ) cycle
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
             do ix = -1, nx
              do iy = -1, ny
-              if (.not. do_sna_corr_core(k) .and. 
-     &                on_closed_surface(ix,iy)) cycle
-              sna0_eir(ix,iy,0,is) = sna0_eir(ix,iy,0,is)*t(k)
-              sna0_eir(ix,iy,1,is) = sna0_eir(ix,iy,1,is)*t(k)
-              ! end if
+              if (do_sna_corr_core(k) .or. 
+     &                (.not. on_closed_surface(ix,iy))) then
+                sna0_eir(ix,iy,0,is) = sna0_eir(ix,iy,0,is)*t(k)
+                sna0_eir(ix,iy,1,is) = sna0_eir(ix,iy,1,is)*t(k)
+              end if
+              sna_eir(k) = sna_eir(k) +
+     &           sna0_eir(ix,iy,0,is) +
+     &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
              end do
             end do
 
