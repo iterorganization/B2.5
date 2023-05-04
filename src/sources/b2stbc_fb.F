@@ -220,6 +220,7 @@
       use b2mod_eirene
      ,   , only : eirpump
       use eirmod_braeir
+      use eirmod_extrab25, only : eirene_sps_absr_update
 #endif
       use b2mod_subsys
       use b2mod_plasma
@@ -2124,12 +2125,18 @@ c ------------------------------------------------------------------------------
      &          saved_na_feedback_actuator(ispecies) =
      &                 min(na_feedback_puff_max(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
-              call eirene_sps_absr_update(1,
+              do j=1,n_spcsrf
+                if (INDEX(sps_id(j),'pump').ne.0) then  
+! FIXME: another condition to find pumping surface might be required
+                  print *,'pump is' ,j, ' special surf'
+                  call eirene_sps_absr_update(j,
      &              saved_na_feedback_actuator(ispecies))
+                endif
+              enddo
                
             case default
                   
-              write(*,*) 'na feedback_choice not coded ',
+               write(*,*) 'na feedback_choice not coded ',
      &                 na_feedback_choice(ispecies)
      
 !>>>>>>> 9e9da198... Changes to be committed:
