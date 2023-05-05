@@ -38,7 +38,7 @@
      .           ileft, last(1), isig(3)
       integer, allocatable :: ifcused(:), elem(:,:), elem_cv(:),
      .                        neighbor(:,:,:), bndmdl(:,:),
-     .                        trifc(:,:)
+     .                        trifc(:,:), node_vert(:)
       logical, allocatable :: fcused(:)
       logical :: ffound
       intrinsic pack
@@ -269,8 +269,11 @@
         call conv_surface_models (nout, mpg, gm, 
      .     bndmdl, trifc, elem_cv, nelem)
       else
-        call find_nondef_surfaces (nout, mpg, gm, 
-     .     elem, bndmdl, elem_cv, nelem)
+        allocate (node_vert(mpg%nVx))
+        node_vert = [(i, i = 1, mpg%nVx)]
+        call find_nondef_surfaces (nout, mpg, gm, elem, bndmdl,
+     .     elem_cv,  nelem, node_vert, mpg%nVx)
+        deallocate (node_vert)
       end if
 
 !  check for holes in the triangle mesh
