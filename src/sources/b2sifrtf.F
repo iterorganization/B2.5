@@ -255,6 +255,9 @@
           enddo
          endif
         enddo
+#ifndef NO_OPENMP_B2SIFRTF_LOOP1
+!$OMP END PARALLEL DO
+#endif
       else
 *     ..standard friction force calculation
 #ifndef NO_OPENMP_B2SIFRTF_LOOP1
@@ -299,6 +302,9 @@
           enddo
          endif
         enddo
+#ifndef NO_OPENMP_B2SIFRTF_LOOP1
+!$OMP END PARALLEL DO
+#endif
       endif
       call nancheck(nx, ny, smbfrial(:,:,0), 'smbfrial(,,0)')
 #ifdef WITH_FTIMINGS
@@ -426,6 +432,9 @@ c   .... apply flux limit
           enddo
          endif
         enddo
+#ifndef NO_OPENMP_B2SIFRTF_LOOP2
+!$OMP END PARALLEL DO
+#endif
       else
 *     ..standard thermal force calculation
         do iy = 0, ny-1
@@ -487,6 +496,9 @@ c   .... apply flux limit
           enddo
          endif
         enddo
+#ifndef NO_OPENMP_B2SIFRTF_LOOP2
+!$OMP END PARALLEL DO
+#endif
       endif
       call nancheck(nx, ny, smbtfial(:,:,0), 'smbtfial(,,0)')
 #ifdef WITH_FTIMINGS

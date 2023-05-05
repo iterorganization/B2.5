@@ -137,7 +137,7 @@
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
-       call ipgeti ('b2tfhe_no_current',no_current)
+       call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)

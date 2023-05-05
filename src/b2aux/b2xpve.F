@@ -42,8 +42,8 @@
       do iy=-1,ny
         do ix=-1,nx
           if(leftix(ix,iy).ne.-2 ) then
-            wrksig(ix,iy) =
-     &           ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
+            wrksig(ix,iy) = (
+     &          -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
      &           (ne(ix,iy)*te(ix,iy)
      &           -ne(leftix(ix,iy),leftiy(ix,iy))*
      &            te(leftix(ix,iy),leftiy(ix,iy)))*
@@ -53,6 +53,9 @@
             wrkalf(ix,iy) =
      &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
      &        /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+          else
+            wrksig(ix,iy) = 0.0_R8
+            wrkalf(ix,iy) = 0.0_R8
           endif
         enddo
       enddo

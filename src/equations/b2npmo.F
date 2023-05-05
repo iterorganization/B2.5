@@ -822,7 +822,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
          call b2usm9 (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hy, hz, qz, qs, bb, rob, rob, pb, pb, ua(-1,-1,is),  !srv 09.01.01
      &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
-     &    pcca(-1,-1,0,0,is), aa9, wrk1, 'b2usmo_'//chns)
+     &    pcca(-1,-1,0,0,is), aa9, wrk1, 'b2usm9_'//chns)
          last_solve_9(0:nnreg(0)) = solvemo(is,0:nnreg(0))
         else
 c    ..compare 5-pt stencil matrices
@@ -894,7 +894,7 @@ c     ..compare 9-pt stencil matrices
 *     ..compute correction
          call b2usm9 (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,
      &    vol, hx, hy, hz, qz, qs, bb, ro, rz, pr, pz, wrk0, smt, flct,
-     &    cvct, resmt, ctcft, corut, pccm, aa9, wrk1, 'b2usmo_total')
+     &    cvct, resmt, ctcft, corut, pccm, aa9, wrk1, 'b2usm9_total')
          last_solve_9(0:nnreg(0)) = solvemt(0:nnreg(0))
         else
          new_matrix = .false.
