@@ -36,6 +36,7 @@
         integer, allocatable :: fsFcP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
         integer, allocatable :: fsFc(:)                !         listing for every flux surface the corresponding cell face numbers
         integer, allocatable :: fcFs(:)                ! for every cell face the corresponding flux surface number, if any
+
         integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces
         integer, allocatable :: cvReg(:)               ! Region numbers of the cells
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
@@ -139,8 +140,8 @@
       allocate (m%intcellP(m%nCmxFc))
       allocate (m%intcellR(m%nCmxFc))
 
-      allocate (m%cvNvP(m%nCv,2))
-      allocate (m%cvNv(m%nCmxNv))
+!      allocate (m%cvNvP(m%nCv,2))
+!      allocate (m%cvNv(m%nCmxNv))
 
       allocate (m%fsVxP(m%nFs,2))
       allocate (m%vxFs(m%nVx))
@@ -223,8 +224,8 @@
       m%intcellP = 0._R8
       m%intcellR = 0_R8
 
-      m%cvNvP = 0
-      m%cvNv = 0
+!      m%cvNvP = 0
+!      m%cvNv = 0
 
       m%fsVxP = 0
       m%vxFs = 0
@@ -297,8 +298,8 @@
       deallocate (m%intcellP)
       deallocate (m%intcellR)
 
-      deallocate (m%cvNvP)
-      deallocate (m%cvNv)
+      if (allocated(m%cvNvP)) deallocate (m%cvNvP)
+      if (allocated(m%cvNv))  deallocate (m%cvNv)
 
       deallocate (m%fsVxP)
       if (allocated(m%fsVx)) deallocate (m%fsVx)
@@ -592,7 +593,7 @@
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, freg, inew
       integer :: totalcount, regcount, Fscount, iactive, icount, fccount
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:), ireg(:),
-     *                        indFc(:),
+     *                        indFc(:), cvNvLoc(:),
      *                        old_face_list(:), new_face_list(:)
       logical :: duplicate, match_found
 cwdk  This initialization routine precomputes a number of arrays
@@ -604,7 +605,10 @@ cwdk  can be derived directly from data in that file
       m%nnreg(1) = maxval(m%fcReg)
 
 *   ..set up connectivity information for the matrix stencil
-      allocate (indCv(4*4+4+1)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
+      allocate (m%cvNvP(m%nCv,2))
+      allocate (cvNvLoc(10*m%nCv)) ! initial overestimate of size cvNv array
+      allocate (indCv(100))        ! (over)estimate of max number number of neighbors an individual cell could have
+
       iNv = 1
       do iCv = 1, m%nCv
         m%cvNvP(iCv,1) = iNv
@@ -620,28 +624,36 @@ cwdk  can be derived directly from data in that file
           iNvmx = iNvmx + m%vxCvP(iVx1,2)
         enddo
         ! remove duplicates
-        m%cvNv(m%cvNvP(iCv,1)) = indCv(1)
+        cvNvLoc(m%cvNvP(iCv,1)) = indCv(1)
         i = 1
         outer: do iNv1 = 2, iNvmx
           do iNv2 = 1, i
-            if (m%cvNv(m%cvNvP(iCv,1)+iNv2-1).eq.indCv(iNv1)) then
+            if (cvNvLoc(m%cvNvP(iCv,1)+iNv2-1).eq.indCv(iNv1)) then
               ! duplicate element
               cycle outer
             endif
           enddo
           ! new element found
           i = i + 1
-          m%cvNv(m%cvNvP(iCv,1)+i-1) = indCv(iNv1)
+          cvNvLoc(m%cvNvP(iCv,1)+i-1) = indCv(iNv1)
         end do outer
         ! TODO: sort by cell number, keeping first cell fixed (main diagonal)
         m%cvNvP(iCv,2) = i
         iNv = iNv + i
       enddo
 
+      ! allocate and fill m%cvNv
+      m%nCmxNv = iNv - 1
+      allocate (m%cvNv(m%nCmxNv))
+      m%cvNv = cvNvLoc(1:m%nCmxNv)
+
 !csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
       m%mxStencil = maxval(m%cvNvP(1:m%nCv,2))
 
-      deallocate(indCv)
+
+      ! clean up
+      deallocate (cvNvLoc)
+      deallocate (indCv)
 
       allocate (indFsVx(m%nVx))
       m%fcFs = 0

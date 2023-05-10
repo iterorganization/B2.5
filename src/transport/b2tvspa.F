@@ -14,7 +14,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer nCv, nFc, nVx, ns, iFc                                     !lkw 20.06.2022
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -85,6 +85,13 @@
       else
         fchvispar = 0.0e0_R8
       endif                                                              !srv
+      do iFc = 1, nFc                                                    !lkw 20.06.2022{
+        if ( .not. mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))  .and.
+     &       .not. mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))  then
+          fchvispar(iFc,0) = 0.0e0_R8
+          fchvispar(iFc,1) = 0.0e0_R8
+        endif
+      enddo                                                              !lkw 20.06.2022}
 * ..return
       call subend ()
       return
