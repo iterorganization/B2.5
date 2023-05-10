@@ -778,7 +778,7 @@ c Advanced fluid neutral models
       s % b2npmo_diagno = 0
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
-      s % vlct_diagno = 1
+      s % vlct_diagno = 0
       s % b2tqna_diagno = 0
 
       s % set_na_numerical = 0
@@ -825,7 +825,7 @@ c k-enstrophy model
       s % solve_keps = 0
       s % keps_local = 1
       s % keps_iout = 0
-      s % keps_cd = 1.0_R8
+      s % keps_cd = 0.3_R8
       s % keps_heat = 2.0_R8
       s % keps_heat_i = 2.0_R8
       s % keps_sig = 1.0e-4_R8
@@ -839,7 +839,7 @@ c k-enstrophy model
       s % keps_dzt = 0.01_R8
       s % keps_inc = 1.0_R8
       s % keps_fac = 1.0_R8
-      s % keps_shear = 1.0e1_R8
+      s % keps_shear = 0.0e1_R8
       s % b2sikt_iout = 0
       s % b2sikt_style = 0
       s % b2sikt_model = 1
@@ -849,10 +849,10 @@ c k-enstrophy model
       s % b2sikt_min_source = 0
       s % b2sikt_kt_source_stab = 1
       s % b2sikt_fac_aniso = 1.0_R8
-      s % b2sikt_fac_sheath = 1.0_R8
+      s % b2sikt_fac_sheath = 0.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
-      s % b2sikt_fac_diss = 0.0_R8
-      s % b2sikt_fac_diss_core = 0.0_R8
+      s % b2sikt_fac_diss = 10.0_R8
+      s % b2sikt_fac_diss_core = 10.0_R8
       s % b2sikt_fac_vis_RS = 0.0_R8
       s % b2tfhi_fflokt = 0.0_R8
       s % b2tfhi_fconkt = 0.0_R8
@@ -961,7 +961,7 @@ c b2ag
 
 c b2siav
       s % b2siav_qstyle = 0
-      s % addvis = 0.0_R8
+      s % addvis = 1.0_R8
       s % addvis1 = 1.0_R8
       s % cqip1 = 0.5_R8
       s % cvsa_mltpl = 1.0_R8

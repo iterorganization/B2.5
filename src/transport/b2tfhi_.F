@@ -64,8 +64,8 @@
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), flokt0(nFc,0:1), flozt0(nFc,0:1),
-     *   flo0_ExB(nFc,0:1)
-cpax
+     *   flo0_ExB(nFc,0:1), fhi_32(nFc,0:1), fhi_52(nFc,0:1)
+cpax      
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
      *   tif(nFc), tnf(nFc), wrkf(nFc,0:1),
@@ -272,7 +272,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
-     &  co%chci,fhi0_mdf,dumm0,dumm1)
+     &  co%chci,fhi0_mdf,fhi_32,fhi_52)
 
 *   ..compute ion fluxes
       dv%fhi(:,0) = fhi0_mdf(:,0) +  (floi0(:,0) - floi0_mdf(:,0))*tif
@@ -848,6 +848,10 @@ csw 27nov2012 added check upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
+       call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
+       call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
+       call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
+       call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
        call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfhi__fchvispar_th')
        call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfhi__fchvispar_r')
        call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfhi__fchvisq_th')
@@ -870,6 +874,18 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhn(1,0),'b2tfhi__fhn_th')
        call my_out_us(70,nFc,1,dv%fhn(1,1),'b2tfhi__fhn_r')
       endif                                                             !srv 18.06.08 }
+      
+      if(switch%iout_b2wdat.eq.4) then   
+       call my_out_us(70,nFc,1,dv%fhi_mdf(1,0),'b2tfhi__fhi_mdf_th')
+       call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
+       call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
+       call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
+       call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
+       call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
+       call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
+       call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+      endif           
+
 * ..return
       ncall_b2tfhi = ncall_b2tfhi+1
       call subend ()

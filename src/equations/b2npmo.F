@@ -33,14 +33,14 @@
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
      &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
 #ifdef WG_DEBUG
-     &          my_out_sf,                                              !srv 27.06.21
+     &          my_out_sf,                                             !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
 #endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0, itcnt                 !srv 13.01.17
+      integer nCv, nFc, nVx, ns, ismain, ismain0, itcnt                !srv 13.01.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -499,26 +499,30 @@ c     ..compare 9-pt stencil matrices
       vcount = 0
       if( switch%ion_vlct_restrict .ne. 0 ) then                        !iyv 19.07.12 { !srv 17.01.14
         do is = 0, ns-1
-          if (.not.is_neutral(is)) then
-            do iCv = 1, nCv
+          do iCv = 1, nCv
+            if (.not.is_neutral(is).or.switch%tn_style.le.1.or.
+     .         (switch%tn_style.eq.2.and.
+     .         (nint(zn(is)).ne.1.or.is.ne.ismain0))) then
               cst=sqrt(pz(iCv)/rz(iCv))                                 !iyv 03.02.14
-              if( abs(pl%ua(iCv,is)).gt.
-     .            switch%ion_vlct_restrict_M*cst ) then
-                vcount(is) = vcount(is) + 1
-                if (switch%vlct_diagno.ge.2) then
-                  write(6,'(a,a,i3,a,i4,a,i4,a)')
+            else
+              cst=sqrt(pl%tn(iCv)/(mp*am(is)))
+            endif
+            if( abs(pl%ua(iCv,is)).gt.
+     .         switch%ion_vlct_restrict_M*cst ) then
+              vcount(is) = vcount(is) + 1
+              if (switch%vlct_diagno.ge.2) then
+                write(6,'(a,a,i3,a,i4,a,i4,a)')
      .             'Parallel velocity restriction applied ',
      .             'to species ',is,' in cell (',iCv,'):'
-                  write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5)')
+                write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5)')
      .             'Mach ',switch%ion_vlct_restrict_M,': ',
      .                     switch%ion_vlct_restrict_M*cst,
      .              ' Ua:',pl%ua(iCv,is)
-                end if
-                pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_M*cst,
+              end if
+              pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_M*cst,
      .                              pl%ua(iCv,is))                      !iyv 03.02.14
-              endif
-            enddo
-          endif
+            endif
+          enddo
         enddo
         if (switch%vlct_diagno.ge.1) then
           do is = 0, ns-1

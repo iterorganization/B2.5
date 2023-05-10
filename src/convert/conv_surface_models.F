@@ -20,7 +20,8 @@
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
       integer, allocatable :: ipos_b2(:), indelm(:), tris(:)
       integer, allocatable :: idim_eir(:), ipos_eir(:),
-     .                        istart_eir(:), iend_eir(:), idtrg(:)
+     .                        istart_eir(:), iend_eir(:), idtrg(:),
+     .                        istart_dum(:), iend_dum(:)
       logical :: found,lhelp(60)
       integer :: artificial_slab=0, spatial_hybrid = 0
 #ifndef F2003
@@ -93,6 +94,8 @@
       allocate (ipos_eir(nstsi))
       allocate (istart_eir(nstsi))
       allocate (iend_eir(nstsi))
+      allocate (istart_dum(nstsi))
+      allocate (iend_dum(nstsi))
       ists = 0
       do
         do
@@ -102,7 +105,17 @@
         end do
         ists = ists + 1
         read (line,'(12i6)') i,idim_eir(ists),ipos_eir(ists),
-     .                         istart_eir(ists), iend_eir(ists)
+     .                         istart_eir(ists), iend_eir(ists),
+     .                         istart_dum(ists), iend_dum(ists)
+        !! Accommodate different input formats
+        if (idim_eir(ists).eq.1 .and.
+     .      istart_eir(ists).eq.iend_eir(ists) .and.
+     .      istart_eir(ists).eq.ipos_eir(ists) .and.
+     .      istart_dum(ists).ne.0 .and. iend_dum(ists).ne.0) then
+           ! range specified in 'IRPTA2' and 'IRPTE2'
+           istart_eir(ists) = istart_dum(ists)
+           iend_eir(ists) = iend_dum(ists)
+        endif
         do
           read (ineir,'(a500)') line
           write (iouteir,'(a)') trim(line)
@@ -310,12 +323,14 @@
       deallocate (ipos_eir)
       deallocate (istart_eir)
       deallocate (iend_eir)
+      deallocate (istart_dum)
+      deallocate (iend_dum)
       deallocate (indelm)
 
       end subroutine conv_surface_models
 
       subroutine find_nondef_surfaces (nout, mpg,
-     .           elem, bndmdl, elem_cv,nelem)
+     .           elem, bndmdl, elem_cv,nelem, node_vert, nnode)
 
       use b2mod_types
       use b2mod_boundary_namelist
@@ -325,9 +340,10 @@
 
       implicit none
 
-      integer, intent(in) :: nout, nelem
+      integer, intent(in) :: nout, nelem, nnode
       type(mapping), intent(in) :: mpg
-      integer, intent(in) :: elem(3,nelem), elem_cv(nelem)
+      integer, intent(in) :: elem(3,nelem), elem_cv(nelem),
+     .                       node_vert(nnode)
       integer, intent(inout) :: bndmdl(3,nelem)
       integer, allocatable :: indelm(:), tris(:), jsts(:)
       integer :: istra, imodel, i, j, ifc, ifcmin, ifcmax, ic, nt, it,
@@ -374,8 +390,10 @@
               do is = 1, 3
                 is1 = is + 1
                 if (is1 > 3) is1 = 1
-                itmin = min(elem(is,jt), elem(is1,jt))
-                itmax = max(elem(is,jt), elem(is1,jt))
+                itmin = min(node_vert(elem(is,jt)),
+     .                      node_vert(elem(is1,jt)))
+                itmax = max(node_vert(elem(is,jt)),
+     .                      node_vert(elem(is1,jt)))
                 if ((ifcmin == itmin) .and. (ifcmax == itmax)) then
                   bndmdl(is,jt) = -imodel
                   exit itloop
@@ -410,8 +428,10 @@
               do is = 1, 3
                 is1 = is + 1
                 if (is1 > 3) is1 = 1
-                itmin = min(elem(is,jt), elem(is1,jt))
-                itmax = max(elem(is,jt), elem(is1,jt))
+                itmin = min(node_vert(elem(is,jt)),
+     .                      node_vert(elem(is1,jt)))
+                itmax = max(node_vert(elem(is,jt)),
+     .                      node_vert(elem(is1,jt)))
                 if ((ifcmin == itmin) .and. (ifcmax == itmax)) then
                   if (bndmdl(is,jt) == 0) then
                     if (ib /= ibold) then
