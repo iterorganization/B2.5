@@ -68,7 +68,7 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
-     , ,only: iunout
+     , ,only: iunout, iunin
       use eirmod_comusr
      , ,only: eirene_alloc_comusr
       use eirmod_refusr
@@ -76,6 +76,7 @@
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
+      use eirmod_mcarlo
       use eirmod_wneutrals
       use b2mod_eirene
       use b2mod_b2plot
@@ -2917,6 +2918,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
       character*256 filename
       logical found, ids_done
+#ifdef B25_EIRENE
+      logical op
+#endif
 #ifdef IMAS
       logical streql
       external streql
@@ -3375,6 +3379,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_INFCOP
+      CALL EIRENE_MCARLO2
+      inquire(unit=IUNMEM,opened=op)
+      if(op) CLOSE(IUNMEM)
+      inquire(unit=IUNIN,opened=op)
+      if(op) CLOSE(IUNIN)
 #else
       if (ids_save.ne.0 .or. delta_ids_time.ne.0.0_R8)
      & call dealloc_b2mod_b2plot

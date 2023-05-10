@@ -256,6 +256,9 @@ c*** Finalization call
       if(filedata(ntrc_sep)) call b2wrsepf
       if(filedata(ntrc_usr)) call b2usrtrf
       if(filedata(ntrc_uss)) call b2usstrf      ! IYS 22.03.2022
+      if(filedata(ntrc_tst)) close(ntrc(ntrc_tst))
+      if(filedata(ntrc_res)) close(ntrc(ntrc_res))
+      if(filedata(ntrc_src)) close(ntrc(ntrc_src))
       tracing_initialised = .false.
       return
       end subroutine b2trcf
