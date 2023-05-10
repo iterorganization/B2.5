@@ -1067,7 +1067,7 @@
 		<category name="Physics">
 			<switch>
 				<name>b2siav_addvis</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier to heat flux contribution to divergence of viscosity tensor in the momentum equation.
@@ -2405,6 +2405,93 @@
 					4 --- all contributions
 					mind that B2.5 already calculates the classical transport !
 					avoid double transport, 0+4 for cross-checks only !
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_solve_keps</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Main switch controlling the use of the k(-eps)-model. In this model, anomalous transport coefficients are determined self-consistently through the solution of an additional transport equation for the turbulent kinetic energy k (variable "kt" in the code) and possibly the turbulent enstrophy zeta (variable "zt" in the code). Note that both the k and k-eps models are currently under active development/testing, and should be used with care. In particular, the k-eps model (option '2') is not suitable for routine testing yet.
+					If '0': k(-eps)-model not used.
+					If '1': one additional transport equation solved for k.
+					If '2': two additional transport equations solved for k and zeta. Warning: under development - expert use only!
+					Note: solutions to these equations are only used to compute the transport coefficients if the switch b2tqna_transport_keps is set.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_transport_keps</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Compute transport coefficients based on k(-eps)-model. 
+					If '0': transport coefficients not computed based on k(-eps)-model.
+					If '1': transport coefficients computed using k-model (i.e. based on kt).
+					If '2': transport coefficients computed using k-eps model (i.e. based on kt and zt). Warning: under development - expert use only!
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_cd</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Multiplier for the diffusion coefficient in the k(-eps) model. Recommended range: 0.1 ... 1.0
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_heat</name>
+				<default>2.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the electron heat conductivity (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_heat_i</name>
+				<default>2.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the ion heat conductivity (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_visc</name>
+				<default>0.2</default>
+				<type>real</type>
+				<description>
+					Multiplier for the ion viscosity (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_dkt</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Multiplier for the diffusivity in kt-equation (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfhi_fsigkt</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Multiplier for the parallel transport term of kt.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_diss_sol</name>
+				<default>10.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the dissipation term of kt in the SOL region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_diss_core</name>
+				<default>10.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the dissipation term of kt in the core region.
 				</description>
 			</switch>
 		</category>
@@ -5529,7 +5616,7 @@
 						 7 : prescribe the given profile of density from the bv_na.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total particle flux with constant flux density, CONPAR(,,1) specifies the particle flux in s<sup>-1</sup>
 						 9 : prescribe the decay length for the density, CONPAR(,,1) specifies the gradient length in metres (should use type 15 instead when drifts are turned on)
-						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>
+						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>, CONPAR(,,2)>0 is the stabilizing factor which may be needed if drifts are activated.
 						11 : should not be used for feedbacks anymore, not converted to WG code.
 						12 : should not be used for feedbacks anymore, not converted to WG code.
 						13 : particle density to achieve specified total flux,
@@ -5672,6 +5759,9 @@
 							Still experimental, will not work for drift cases.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
 							POTPAR(,,1) specifies the desired potential in V.
+							POTPAR(,,2) is the strength of the feedback
+						23 : potential feedback on the total current for the South core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature.
+							POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes).
 							POTPAR(,,2) is the strength of the feedback
 				</description>
 			</switch>

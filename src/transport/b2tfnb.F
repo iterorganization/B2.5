@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, switch, geo, mpg,
-     &  pl, dv, co, rt, balance)
+      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, ismain0,
+     &  switch, geo, mpg, pl, dv, co, rt, balance)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_constants
@@ -26,7 +26,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb, ismain
+      integer nCv, nFc, nVx, isb, ismain, ismain0
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -69,7 +69,7 @@
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,    !srv 05.03.16
      &   rdiv                                                           !srv 05.03.16
       real (kind=R8) ::
-     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc),! wrk4(nFc),
+     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
      *   wrk(nCv), wrkVx(nVx),
      *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
@@ -82,7 +82,7 @@
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
      *   nbf(nFc),
      *   dOnedBsq(nFc,0:1),
-     *   fna_mdf0(nFc,0:1),
+     *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                                   !lk
       integer :: xcount
@@ -299,8 +299,8 @@ cwdk                   (original code: simple averaging)
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
      .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
      .        (vbar*t1)
-            dv%fnaPSch(:,0,isb) = dv%fnaPSch(:,0,isb)/t2
-            dv%fnaPSch(:,1,isb) = dv%fnaPSch(:,1,isb)/t2
+            dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
+            dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
             t3 = sqrt((dv%vadia(iFc,0,isb)*geo%fcBb(iFc,3)/
      .        geo%fcBb(iFc,2))**2 + dv%vadia(iFc,1,isb)**2)
             dv%vadia(iFc,0,isb) = dv%vadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
@@ -319,6 +319,21 @@ cwdk                   (original code: simple averaging)
             ub2dia(iFc,1) = ub2dia(iFc,1)/(1.0_R8 + t3/vbar)
           enddo
         endif                                                             !lk 02.06.11 }
+        if (isb.eq.ismain) then                                           !lkw 25.10.2022 {
+          do iFc = 1, nFc
+            iCv1 = mpg%fcCv(iFc,1)
+            iCv2 = mpg%fcCv(iFc,2)
+            t0 = max(pl%ti(iCv1), pl%ti(iCv2))
+            t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
+            vbar =   sqrt(8.0_R8*t0/(pi*am(isb)*mp))
+            t2 = 1.0_R8 + sqrt((switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
+     .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
+     .        (vbar*t1)
+            dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
+            dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
+           enddo
+         endif                                                            !lkw 25.10.2022}
       endif
 
 *   ..compute differences of pa at cell faces and poloidal gradients
@@ -388,6 +403,51 @@ cwdk                   (original code: simple averaging)
       call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &     flo_mdf, co%cdna(:,:,isb), fna_mdf0(:,:),
      &     dv%fna_32(:,:,isb), dv%fna_52(:,:,isb))
+*   ..limit flow by sound speed                                          ! lkw 26.10.2022{
+       do iFc = 1, nFc
+         if (.not.is_neutral(isb).or.switch%tn_style.eq.0.or.
+     &      (switch%tn_style.eq.2.and.
+     &      (nint(zn(isb)).ne.1.or.isb.ne.ismain0))) then
+           t0 = max(pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
+         else if (switch%tn_style.eq.1) then
+           t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
+         else if (switch%tn_style.eq.2.and.nint(zn(isb)).eq.1.and.
+     &            isb.eq.ismain0) then
+           t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
+         end if
+         t3 = fna_mdf0(iFc,0) + fna_mdf0(iFc,1)
+         t1 = pl%na(mpg%fcCv(iFc,1),isb)
+         if (t3.lt.0.0_R8) t1 = pl%na(mpg%fcCv(iFc,2),isb)
+         t3 = abs(t3)
+         vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp)) *
+     &        geo%fcS(iFc)
+         wrk4(iFc) = 1.0_R8/(1.0_R8 +
+     &        (t3/(0.5_R8*vbar*t1))**gamma)**(1.0_R8/gamma)
+         fna_mdf0(iFc,0)   = fna_mdf0(iFc,0)*wrk4(iFc)
+         fna_mdf0(iFc,1)   = fna_mdf0(iFc,1)*wrk4(iFc)
+       enddo                                                             ! lkw 26.10.2022}
+     
+!   ..keep the convective flow "correction" factor for further output
+      do iFc = 1, nFc
+        if (flo_mdf(iFc,0) == 0.0_R8 .and. 
+     &        dv%fna_32(iFc,0,isb) == 0.0_R8) then
+          flo_factor(iFc,0) = 1.0_R8
+        else
+         call xertst (flo_mdf(iFc,0) /= 0.0_R8, 'faulty transformation'
+     & // ' of poloidal convective particle flow, is = '//chns)
+         flo_factor(iFc,0) = dv%fna_32(iFc,0,isb) / 
+     &              (flo_mdf(iFc,0) * nbf(iFc)) 
+        endif  
+                    if (flo_mdf(iFc,1) == 0.0_R8 .and. 
+     &        dv%fna_32(iFc,1,isb) == 0.0_R8) then
+          flo_factor(iFc,1) = 1.0_R8
+        else
+         call xertst (flo_mdf(iFc,1) /= 0.0_R8, 'faulty transformation'
+     & // ' of radial convective particle flow, is = '//chns)
+         flo_factor(iFc,1) = dv%fna_32(iFc,1,isb) / 
+     &              (flo_mdf(iFc,1) * nbf(iFc)) 
+        endif  
+      enddo
 
 *   ..compute Rhie-Chow term
       do iFc = 1, nFc
@@ -581,9 +641,10 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb)
        wrk1 = geo%fcPbs*wrk0*nbf
        wrk2 = term
-       wrk3 = dv%vaecrb(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
+       wrk3 = dv%vaecrb(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0) 
+     &   * (1.0_R8 + (flo_factor(:,0) - 1.0_R8) * drift_hyb) ! to account possible correction due to hybridization
 !       wrk4 = -con_2dia*dnb(:,0)
-       wrk5 = -co%cdpa(:,0,isb)*dpb(:,0)
+!       wrk5 = -co%cdpa(:,0,isb)*dpb(:,0)
        wrk6 = term*geo%fcHz
 !       wrk7 = -con_mdf*dnb(:,0)
        wrk8 = co%cvla(:,0,isb)*nbf
@@ -591,10 +652,13 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbna_th'//chns)
         call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
      &                                'b2tfnb_fnbPSch_th'//chns)
-        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
+!        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
-       else
-        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_th'//chns)
+!       else
+!        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_th'//chns)
+!*****
+!        Note that dv%fna_52 already contains conductive terms caused by both pressure and density gradient. It is printed below
+!*****
        endif
        call my_out_us(70,nFc,1,wrk1,'b2tfnb_bxuana_th'//chns)
        call my_out_us(70,nFc,1,wrk2,'b2tfnb_dpccorna_th'//chns)
@@ -630,9 +694,10 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 
       if(switch%b2npco_iout.ne.0
      & .or. switch%b2tfnb_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then               !srv 11.09.09 {
-       wrk3 = dv%vaecrb(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
+       wrk3 = dv%vaecrb(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1) 
+     &   * (1.0_R8 + (flo_factor(:,1) - 1.0_R8) * drift_hyb) ! to account possible correction due to hybridization
 !       wrk4 = -con_2dia*dnb(:,1)
-       wrk5 = -co%cdpa(:,1,isb)*dpb(:,1)
+!       wrk5 = -co%cdpa(:,1,isb)*dpb(:,1)
 !       wrk7 = -con_mdf*dnb(:,1)
        wrk8 = co%cvla(:,1,isb)*nbf
        write(chns,'(i3.3)') isb
@@ -642,8 +707,11 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbna_r'//chns)
 !        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
-       else
-        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_r'//chns)
+!       else
+!        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_r'//chns)
+!*****
+!        Note that dv%fna_52 already contains conductive terms caused by both pressure and density gradient. It is printed below
+!*****
        endif
        call my_out_us(70,nFc,1,wrk8,'b2tfnb_cvlbna_r'//chns)               !iys 17.04.2012
 !       call my_out_us(70,nFc,1,con_2dia,'b2tfnb_dPat_2diay'//chns)
@@ -737,6 +805,16 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call my_out_us(70,nFc,1,dv%wadia(1,1,isb),
      &            'b2tfnb_wbdia_r'//chns)
        call my_out_us(70,nCv,0,dv%kinrgy,'b2tfnb_kbnrgy'//chns)
+! convective fluxes (drifts + currents + turbulent convection) with account of hybridization and flux limit
+       call my_out_us(70,nFc,1,dv%fna_32(1,0,isb),
+     &            'b2tfnb_fnb_32_th'//chns)
+       call my_out_us(70,nFc,1,dv%fna_32(1,1,isb),
+     &            'b2tfnb_fnb_32_r'//chns)
+! conductive fluxes (-D_n \nabla n - D_p \nabla p) with account of flux limit
+       call my_out_us(70,nFc,1,dv%fna_52(1,0,isb),
+     &            'b2tfnb_fnb_52_th'//chns)
+       call my_out_us(70,nFc,1,dv%fna_52(1,1,isb),
+     &            'b2tfnb_fnb_52_r'//chns)
       endif
 
       if(switch%b2tfnb_iout.ne.0) then                                                !srv 18.06.08 {

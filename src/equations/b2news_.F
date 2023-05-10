@@ -321,8 +321,8 @@ csw 01oct2012 initialize potential if necessary
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))                      !srv 01.10.99
 *    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &      mpg, st%pl, st%dv, st%co, st%rt, .true.)
+          call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
         enddo                                                            !srv 01.10.99
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
@@ -390,21 +390,15 @@ c   extra call at this place within internal iteration)
      &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)    !srv 23.07.21
       endif
 *   ..compute ue, electron parallel velocity
-      if (switch%b2sigp_style.eq.2 .or. switch%b2news_iout.ne.0)
-     > call b2xpve (nCv, nFc, ns, switch, geo, mpg, qe,
-     &   st%rt%rza, st%rt%rz2, st%co%alfx_c, st%co%sigx_c,
-     &   st%dv%fch_pi_c, st%pl%po, st%dv%ne,
-     &   st%pl%te, st%pl%na, st%pl%ua, st_ext, st%dv%ue)
-      if (switch%b2sigp_style.ne.2 .or. switch%b2news_iout.ne.0) then
-        wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
-        call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk0)
-        do is=0,ns-1
-          wrk0 = wrk0 + st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
-        enddo
-        wrk0 = wrk0 + st_ext%ue*st_ext%ne
-        wrk0 = wrk0/st%dv%ne                                             !srv 05.03.11
-      endif
-      if(switch%b2news_iout.ne.0) then                                   !srv 05.07.17
+! lkw20.03.2023{
+      wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
+      call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk0)
+      do is=0,ns-1
+        wrk0 = wrk0 + st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
+      enddo
+      wrk0 = wrk0 + st_ext%ue*st_ext%ne
+      wrk0 = wrk0/st%dv%ne                                                  !srv 05.03.11
+      if(switch%b2news_iout.ne.0) then                                                 !srv 05.07.17
        call b2xzef(nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff, st_ext)
        call b2xpic(nCv, ns, qe, st%rt%rza, geo%cvBb, st%pl%na,
      &   st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
@@ -415,8 +409,8 @@ c   extra call at this place within internal iteration)
        call my_out_us(70,nCv,0,st%dv%ue,'b2news__ve')
        call my_out_us(70,nCv,0,wrk0,'b2news__ue')
       endif                                                              !srv 05.07.17
-      if (switch%b2sigp_style.ne.2) st%dv%ue=wrk0
-
+      st%dv%ue=wrk0
+!lkw20.03.2023}
 csw 11oct2012 added check on Coriolis force (taken from b2news)
       ier0=0
 c Necessary for smooth restart with Rhie-Chow:
@@ -433,8 +427,8 @@ c b2npmo with rxf = 0 and recompute fluxes.
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &      mpg, st%pl, st%dv, st%co, st%rt, .true.)
+          call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
         enddo
       endif
       call b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
@@ -473,8 +467,8 @@ c b2npmo with rxf = 0 and recompute fluxes.
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &    mpg, st%pl, st%dv, st%co, st%rt, .true.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
 *    ..perform iteration
 csw 16oct2012 init ier0
         ier0=0
@@ -503,8 +497,8 @@ csw 16oct2012 init ier0
 !    &     st%pl%ti, st%pl%tn, is, pb)                                   !srv 01.10.99
 !        endif                                                           !srv 15.02.10
 *    ..re-compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &    mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
@@ -635,8 +629,8 @@ csw 16oct2012 init ier0
 #ifdef DBG
         write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
 #endif
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch,
-     &   geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
 
 *   ..compute fne_he, fni_he
@@ -697,22 +691,17 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nCv, nFc, nVx, ns, ismain0, switch, geo, mpg,
      &  st%pl, st%dv, st%co, st%rt)
-      if(switch%b2sigp_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
-       wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
-       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,st%dv%ue)
-       do is=0,ns-1
-         st%dv%ue = st%dv%ue +
-     .              st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
-       enddo
-       st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
-       st%dv%ue = st%dv%ue/st%dv%ne                                      !srv 05.03.11
-      else
-       call b2xpve (nCv, nFc, ns, switch, geo, mpg, qe,
-     &   st%rt%rza, st%rt%rz2, st%co%alfx_c, st%co%sigx_c,
-     &   st%dv%fch_pi_c, st%pl%po, st%dv%ne,
-     &   st%pl%te, st%pl%na, st%pl%ua, st_ext, st%dv%ue)
-      endif
+!lkw20.03.2023{
+      wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
+      call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,st%dv%ue)
+      do is=0,ns-1
+        st%dv%ue = st%dv%ue + 
+     &           st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
+      enddo
+      st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
+      st%dv%ue = st%dv%ue/st%dv%ne                                       !srv 05.03.11
+!lkw20.03.2023}
 
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
@@ -737,8 +726,8 @@ c   recompute particle fluxes
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &  mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
 *    ..perform iteration
         new_matrix = .false.
         solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
@@ -773,8 +762,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,     !srv 01.10.99
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &    mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
