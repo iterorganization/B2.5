@@ -1990,14 +1990,16 @@ cwdk also need to correct for degenerate faces?
         end do
       end do
 
-      do i = 1, maxval(m%strDiv)
-        do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
-          iFc = m%divFc(j)
-          do k = 1, size(m%bcFc)
-            if (m%bcFc(k).eq.iFc) m%divFcOr(j) = m%bcFcOr(k)
+      if (allocated(m%strDiv)) then
+        do i = 1, maxval(m%strDiv)
+          do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
+            iFc = m%divFc(j)
+            do k = 1, size(m%bcFc)
+              if (m%bcFc(k).eq.iFc) m%divFcOr(j) = m%bcFcOr(k)
+            end do
           end do
         end do
-      end do
+      end if
 
 #ifdef F2003
       open (newunit=iout,file='bc.testout')
