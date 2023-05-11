@@ -3045,7 +3045,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
          if (balance_average .ne. 0) then
-            write(0,*) "JDL here, applying -1"
            call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
         endif
         call write_balance(nx,ny,ns)
