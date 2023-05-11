@@ -210,6 +210,7 @@ endif
 # OpenMP parallelization, in order to do that, just compile without OpenMP
 # compiler options (ifort -qopenmp or similar)
 
+LOWOPTS = $(shell echo ${FCOPTS} | sed -e 's:O2:O0:')
 ifdef USE_OPENMP
 #DEFINES += -DNO_OPENMP_B2XPFE
 #DEFINES += -DNO_OPENMP_B2SIFRTF_LOOP1
@@ -899,22 +900,21 @@ endif
 endif
 endif
 
-ifdef USE_EIRENE
-ifdef USE_OPENMP
 ifeq ($(COMPILER),ifort64)
+ifdef USE_OPENMP
+ifdef USE_EIRENE
 ${OBJDIR}/b2ytdr.o : b2ytdr.F
-	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
+	@- /bin/rm -f $*.f $*.o $*.${MOD}
 ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} -qoverride-limits ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2ytdr.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2ytdr.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > $*.f
 endif
-	${FC} ${FCOPTS} -qoverride-limits ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2ytdr.o ${OBJDIR}/b2ytdr.f
+	${FC} ${FCOPTS} -qoverride-limits ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
 endif
-	@if [ -f b2ytdr.o ] ; then /bin/mv b2ytdr.o ${OBJDIR}/ ; fi
 endif
 endif
 endif

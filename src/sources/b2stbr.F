@@ -849,7 +849,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
             do ix = -1, nx
              do iy = -1, ny
-              if (do_sna_corr_core(k) .or. 
+              if (do_sna_corr_core(k) .or.
      &                (.not. on_closed_surface(ix,iy))) then
                 sna0_eir(ix,iy,0,is) = sna0_eir(ix,iy,0,is)*t(k)
                 sna0_eir(ix,iy,1,is) = sna0_eir(ix,iy,1,is)*t(k)
