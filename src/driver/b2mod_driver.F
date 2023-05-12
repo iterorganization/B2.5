@@ -2717,6 +2717,9 @@ c new CDF movie option
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
+         if (balance_average .ne. 0) then
+           call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
+        endif
         call write_balance(nx,ny,ns)
 #else
         write(*,*)
