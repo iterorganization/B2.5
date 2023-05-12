@@ -214,7 +214,7 @@
       use b2mod_boundary_namelist
       use b2mod_user_namelist
       use b2mod_geo
-     ,   , only : hy,hz
+     ,   , only : hy,hz,hx
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use b2mod_eirene
@@ -223,11 +223,14 @@
       use eirmod_extrab25, only : eirene_sps_absr_update
 #endif
       use b2mod_subsys
+      use b2mod_external
       use b2mod_plasma
      , ,only: na0, ne0, fna0, kinrgy0, ni0,
-     ,        nap, nep, fnap, kinrgyp
+     ,        nap, nep, fnap, kinrgyp, fht
       use b2mod_driver
-     , ,only : pbs
+     , ,only : pbs, ua
+      use b2mod_sources
+     , ,only : rqrad
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
@@ -272,7 +275,7 @@
       integer ncall, n2, ix, iy, is, ispecies, is0, idir, ixf, iyf,
      & ic,mdf_fnb, style_b2mndt,js, m, iyp, nxtl, nxtr,n,
 #ifdef B25_EIRENE
-     &        i, j, k, l,
+     &        i, j, k, l, ind, ias,
 #endif
      &        ib, iss, ixl1, ixr1, ixl2, ixr2, istrai, icount
       integer, save :: is_start, is_end,fb_istyle_fchi = 0
@@ -303,7 +306,7 @@
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
         real (kind=R8) :: fchi,cs,pz(-1:nx,-1:ny),t0,s1,te_max,
-     &    rz(-1:nx,-1:ny)
+     &    rz(-1:nx,-1:ny),hlp_ppwo, s
       real (kind=R8), allocatable :: charge_frac(:)
       integer, save :: jsep, jxa, jxi, iyped
       integer, save :: b2sral_style = 2
@@ -1336,11 +1339,26 @@ c>>>
                     t0 = 0.0e0_R8
                     do is = 0, ns-1
                       t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+!=======
+!                  call b2xprz (nx, ny, ns, mp, am, na, rz)
+!                  fchi = 0.0_R8
+!                  te_max = 0.0_R8
+!          do IB = 1, NBC
+!        IF(BCCHAR(IB).EQ.'E') THEN
+!          DO IY = 1, BC_LIST_SIZE(IB)
+!            s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
+!            CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+!     &              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!            t0 = 0.0e0_R8
+!            do is = 0, ns-1
+!              t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+!>>>>>>> ea269646... Changes to be committed:
      &                  fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
      &                  /(hy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &                  hz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                     enddo
 
+!<<<<<<< HEAD
                     if (abs(qe*t0).gt.fchi) then
                       fchi = abs(qe*t0)
                       te_max = te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
@@ -1353,18 +1371,155 @@ c>>>
               end do
            
               na_feedback_current = fchi
+!=======
+!            if (abs(qe*t0).gt.fchi) then
+!              fchi = abs(qe*t0)
+!              te_max = te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+!            endif
+!          enddo
+!          print *,"te=",te_max/qe,"fchi=",fchi
+!          ENDIF
+!          end do
+!          na_feedback_current = fchi
+
               is_start=-1
               is_end=-1
+              
               do is = 0, ns-1
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
               enddo
+
+            case (12)   ! comment is needed here
+              
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_choice: using ',
+     &                    'power flux density for sequence ',
+     &                    ispecies+1
+                na_feedback_target(ispecies) = ! FIXME: condition is required here
+     &          na_feedback_target(ispecies) ** (-1)
+              endif
+              
+              hlp_ppwo=0.0_R8
+              
+              do iy=0,ny-1 !{
+                hlp=abs(fht(nx,iy,0))
+                s=gs(nx,iy,0)
+                do is=0,ns_ext-1 !{
+                  hlp=hlp+abs(fa_ext(nx,iy,0,is)*(
+     .               (pt_ext(nx,iy,is)*hx(nx-1,iy)+
+     .               pt_ext(nx-1,iy,is)*hx(nx,iy))/
+     .               (hx(nx-1,iy)+hx(nx,iy))*ev+
+     .               (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
+     .               (ua(nx,iy,is)**2*hx(nx-1,iy)+
+     .               ua(nx-1,iy,is)**2*hx(nx,iy))/
+     .               (hx(nx-1,iy)+hx(nx,iy))))
+                end do !}
           
-            case default
+               hlp = hlp / s
+#ifdef B25_EIRENE
+                if (use_eirene.ne.0) then !{
+                  do js=1,nsts !{
+                    if (eirdiag_nds_typ(js).ne.2) cycle
+                    if (eirdiag_nds_srf(js).ne.nx) cycle
+                    if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+                    if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+                    ind=eirdiag_nds_ind(js)
+                    ias=ind+1-(eirdiag_nds_start(js)-1)
+                    hlp=hlp+ewldt_res(iy+ias)
+                  end do !}
+                end if !}
+#endif
+                hlp_ppwo=max(hlp_ppwo,hlp)
+              end do !}
             
+              na_feedback_current = 1 / hlp_ppwo
+        
+              is_start=-1
+              is_end=-1
+            
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
+
+            case (13)  !
+            
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_choice: using ',
+     &                    'radiation fraction in area for sequence ',
+     &                    ispecies+1
+              endif
+
+              na_feedback_current = 0.0_R8
+              t0 = 0.0_R8
+!>>>>>>> ea269646... Changes to be committed:
+              is_start=-1
+              is_end=-1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+!<<<<<<< HEAD
+!                  is_end=is
+!                endif
+!              enddo
+!          
+!            case default
+!            
+!                  write(*,*) 'na feedback_choice not coded ',
+!=======
+                  do iy = na_feedback_iy1(ispecies),
+     &                    na_feedback_iy2(ispecies)
+                    do ix = na_feedback_ix1(ispecies),
+     &                      na_feedback_ix2(ispecies)
+                      na_feedback_current =
+     &                    na_feedback_current +
+     &                    rqrad(ix,iy,is)
+                    enddo
+                  enddo
+               
+                  is_end=is
+                endif
+              enddo
+              
+              if (bcene(1).eq.16) then
+                t0 = t0 + enepar(1,1) 
+              endif
+              if (bcene(2).eq.16) then
+                t0 = t0 + enepar(2,1) 
+              endif
+              if (bceni(1).eq.27) then
+                t0 = t0 + enipar(1,1) 
+              endif
+              if (bceni(2).eq.27) then
+                t0 = t0 + enipar(2,1) 
+              endif
+              
+              if (t0.eq.0.0_R8) then
+                do ix = leftcut(1),rightcut(1) - 1
+                  t0 = t0 + fhe(ix,-1,1)+fhi(ix,-1,1)
+                enddo
+              endif
+              
+              print *,"income power=",t0, "radiated power",
+     &          na_feedback_current
+     
+              if (na_feedback_current.eq.0.0_R8) then
+                na_feedback_current = na_feedback_target(ispecies)
+              else
+                na_feedback_current = na_feedback_current/t0
+              endif
+              
+            case default
+                  
               write(*,*) 'na feedback_choice not coded ',
+!>>>>>>> ea269646... Changes to be committed:
      &                 na_feedback_choice(ispecies)
 
             end select
