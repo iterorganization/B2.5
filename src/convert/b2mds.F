@@ -1296,10 +1296,6 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
      1   ny+2,natmi,tmp,'TEXTAN','')
       endif
-#endif
-#endif
-#ifdef B25_EIRENE
-#ifdef WG_TODO
       if(nmoli.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
      1   tmp(ix,iy,is)=dmb2(ix+1,iy+1,is+1,1)
@@ -1338,10 +1334,6 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
-#endif
-#endif
-#ifdef B25_EIRENE
-#ifdef WG_TODO
       if(nioni.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
      1   tmp(ix,iy,is)=dib2(ix+1,iy+1,is+1,1)

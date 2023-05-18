@@ -25,17 +25,11 @@
 *     Run as: b2plasmastate_inspect.exe plasmastate.xxxx
 *-----------------------------------------------------------------------
       
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#else
-#ifdef NAGFOR
+#if ( defined(USE_PXFGETENV) || defined(NAGFOR) )
       integer lenval, ierror
 #endif
-#endif
-#ifndef NAGF95
-#ifndef NAGFOR
+#if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
-#endif
 #endif
       integer :: ninp(0:5), nx, ny, ns, ns0, idum(0:9)
       character :: arg*256
