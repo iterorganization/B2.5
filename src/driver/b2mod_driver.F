@@ -1962,6 +1962,10 @@ c new CDF movie option (1st frame at t=0)
 #endif
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
+#if ( defined(CRAY) && defined(_OPENMP) )
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
 
       call subini ('b2mndr_1')
 *   ..no error so far

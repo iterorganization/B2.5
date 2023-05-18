@@ -1127,29 +1127,19 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
      &                   rtzz,rtz2,rtpt,rtpi,
      &                   fix_recomb,zmax_recomb,
      &                   ncnct,izpmin,izpmax)
-#ifdef IMAS
       use b2mod_types
-#ifdef AMNS
+#if ( defined(IMAS) && defined(AMNS) )
       use amns_types       ! IGNORE
       use amns_module      ! IGNORE
       use b2mod_constants
      &     , only : qe
-#endif
-#else
-#ifdef ITM
-#ifdef GOT_AMNSPROTO
+#elif ( defined(ITM) && defined(GOT_AMNSPROTO) )
       use amns_types       ! IGNORE
 !!      use amns_constants   ! IGNORE
       use amns_module      ! IGNORE
       use euitm_routines   ! IGNORE
       use b2mod_constants
      &     , only : qe
-#else
-      use b2mod_types
-#endif
-#else
-      use b2mod_types
-#endif
 #endif
       use b2mod_subsys
       implicit none
@@ -1194,8 +1184,7 @@ c     LOCAL VARIABLES:
 c     read in data
       integer ic, itnt, itnn
 
-#ifdef IMAS
-#ifdef AMNS
+#if ( defined(IMAS) && defined(AMNS) )
       type (amns_handle_type), save :: amns
       type (amns_handle_rx_type) ::
      &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
@@ -1205,10 +1194,7 @@ c     read in data
       type (amns_reactants_type) :: species(0:nc)
       type (amns_query_type) :: query
       type (amns_answer_type) :: answer
-#endif
-#else
-#ifdef ITM
-#ifdef GOT_AMNSPROTO
+#elif ( defined(ITM) && defined(GOT_AMNSPROTO) )
       type (amns_handle_type), save :: amns
       type (amns_handle_rx_type) ::
      &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
@@ -1218,8 +1204,6 @@ c     read in data
       type (amns_reactants_type) :: species(0:nc)
       type (amns_query_type) :: query
       type (amns_answer_type) :: answer
-#endif
-#endif
 #endif
       character (len=80) :: format
 
@@ -1316,8 +1300,7 @@ cxpb Zero masses are required for older AMNS versions
 #else
       call xerrab ('No IMAS AMNS data available')
 #endif
-#else
-#ifdef ITM
+#elif defined(ITM)
 #ifdef GOT_AMNSPROTO
       write(*,*) 'ITM AMNSPROTO data used (via UAL)'
       write(nput,*) 'ITM AMNSPROTO data used (via UAL)'
@@ -1404,7 +1387,6 @@ cxpb Zero masses are required for older AMNS versions
       call xerrab ('No ITM-AMNS data available')
 #endif
 #endif
-#endif
       do itnn=0, rtnn
          do itnt=0, rtnt
             loc_te(itnt, itnn) = rtt(itnt)
@@ -1432,8 +1414,7 @@ cxpb Zero masses are required for older AMNS versions
      .            ' UP TO ZN = ',zmax_recomb
       endif
 
-#ifdef IMAS
-#ifdef AMNS
+#if ( defined(IMAS) && defined(AMNS) )
 c     filling rtsa(ionisation)
       write(*,*) 'rtsa'
       do ic=0,nc-1
@@ -1501,10 +1482,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
          rtqa(:,:,ic)=rtqa(:,:,ic)+rtsa(:,:,ic)*rtpi(:,:,ic+1)
       enddo
       call IMAS_AMNS_FINISH(amns)
-#endif
-#else
-#ifdef ITM
-#ifdef GOT_AMNSPROTO
+#elif ( defined(ITM) && defined(GOT_AMNSPROTO) )
 c     filling rtsa(ionisation)
       write(*,*) 'rtsa'
       write(nput,*) 'rtsa'
@@ -1579,8 +1557,6 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
          rtqa(:,:,ic)=rtqa(:,:,ic)+rtsa(:,:,ic)*rtpi(:,:,ic+1)
       enddo
       call ITM_AMNS_FINISH(amns)
-#endif
-#endif
 #endif
 
       call subend ()
