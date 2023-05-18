@@ -104,8 +104,7 @@ module b2mod_ual_io_grid
 #   endif
 #  endif
 # endif
-#else
-# ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
     use euITM_schemas ! IGNORE
     use itm_constants , pi => itm_pi ! IGNORE
@@ -117,7 +116,6 @@ module b2mod_ual_io_grid
     use itm_grid_subgrid & ! IGNORE
      & , only : gridFindSubGridByName, gridSubGridSize, gridSubGridSize, &
      &          subGridGetObject
-# endif
 #endif
     use helper
     use logging &
@@ -246,9 +244,7 @@ module b2mod_ual_io_grid
     !> Diamagnetic vector component ID
     character(len=132), parameter :: VEC_ALIGN_DIAMAGNETIC_ID = "Diamagnetic"
 #endif
-#if GGD_MAJOR_VERSION < 2
-#if GGD_MINOR_VERSION < 11
-#if GGD_MICRO_VERSION < 3
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 11 && GGD_MICRO_VERSION < 3 )
     !> Major radius aligned vector component
     integer, parameter :: VEC_ALIGN_R_MAJOR = 1006
     !> Major radius aligned vector component ID
@@ -257,8 +253,6 @@ module b2mod_ual_io_grid
     integer, parameter :: VEC_ALIGN_Z = 1007
     !> Vertical vector component ID
     character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
-#endif
-#endif
 #endif
 
     !! Subgrid/Grid subset name constants
@@ -489,8 +483,7 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_Y_ALIGNED_EDGES = GRID_SUBSET_Y_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_EDGES = GRID_SUBSET_FACES
 # endif
-#endif
-#ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
     !! For ITM duplicates were made (old and new variable) in case of ITM code
     !! requiring old variables
     integer, parameter :: B2_GENERIC_SUBGRID_COUNT = 6  !< Total number of
@@ -3239,8 +3232,8 @@ contains
 #endif
 
 #endif
-#else
-#ifdef ITM_ENVIRONMENT_LOADED
+
+#elif defined(ITM_ENVIRONMENT_LOADED)
 
   !> Routine that fills in a grid description which is part of a CPO
   !> using the given grid data and prepared mappings
@@ -3728,7 +3721,6 @@ contains
         &   "find_Midplane_Cells: did not find outer midplane position")
   end subroutine
 
-#endif
 #endif
 
     !> Collect the grid indices of all vertices on the radial grid line outward

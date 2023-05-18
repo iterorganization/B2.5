@@ -2143,11 +2143,9 @@ contains
   use b2mod_types
   use b2mod_geo
   use b2mod_indirect
-#ifdef IMAS
-#if IMAS_MINOR_VERSION > 8
+#if ( defined(IMAS) && IMAS_MINOR_VERSION > 8 )
   use ids_schemas  & ! IGNORE
      & , only : IDS_REAL_INVALID
-#endif
 #endif
   implicit none
   integer, intent(in) :: iclass, imode
@@ -2165,12 +2163,8 @@ contains
   integer ix1, ixl, ixr, iyl, iop
   real(kind=R8) :: t1, t2
 
-#ifdef IMAS
-#if IMAS_MINOR_VERSION > 8
+#if ( defined(IMAS) && IMAS_MINOR_VERSION > 8 )
   get_connection_length = IDS_REAL_INVALID
-#else
-  get_connection_length = 0.0_R8
-#endif
 #else
   get_connection_length = 0.0_R8
 #endif

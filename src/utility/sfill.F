@@ -17,21 +17,13 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-#ifndef NO_OPENMP_SFILL
+#if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
       logical do_parallel
-#else
-#ifdef WITH_FTIMINGS
-      logical do_parallel
-#endif
 #endif
       external xerrab
 *     ------------------------------------------------------------------
-#ifndef NO_OPENMP_SFILL
+#if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
       do_parallel = (.not. in_parallel()) .and. (n > 16384)
-#else
-#ifdef WITH_FTIMINGS
-      do_parallel = (.not. in_parallel()) .and. (n > 16384)
-#endif
 #endif
 #ifdef WITH_FTIMINGS
       call timer%start("sfill")

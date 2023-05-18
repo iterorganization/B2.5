@@ -173,11 +173,9 @@
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
-#ifdef _OPENMP
-#ifdef CRAY
+#if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
-#endif
 #endif
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,

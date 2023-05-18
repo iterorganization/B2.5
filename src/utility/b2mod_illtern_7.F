@@ -36,10 +36,8 @@ c
 
 *  -- PROCEDURES --
       EXTERNAL XERRAB
-#ifdef _OPENMP
-#ifdef CRAY
+#if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
-#endif
 #endif
 
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02

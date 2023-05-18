@@ -126,8 +126,7 @@ c                                       !number of particles per cell
       real (kind=R8) ::
      *   currtime
 
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
 #     include <netcdf.inc>
       character rw*5
       integer ncid,imap(maxvdims),iret
@@ -136,21 +135,17 @@ c                                       !number of particles per cell
      *   lwarr(-1:nx,-1:ny,0:ns-1),
      1   starttime, tstepn(1), dumarr(1)
 #endif
-#endif
 
       oocol=-1
       iscol=-1
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       if(moviename .eq. ' ') then
-#endif
 #endif
 c     Getting the values for globaltime and deltat
         globaltime=values(16)
         deltat=globaltime/nplot
         currtime=0.0_R8
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       else
         rw='read'
         iret = nf_open(moviename,NCNOWRIT,ncid)
@@ -170,7 +165,6 @@ c     Getting the values for globaltime and deltat
         call rwcdf(rw,ncid,'time',imap,dumarr,iret)
         globaltime=globaltime-starttime
       endif
-#endif
 #endif
 
 c     writing callup information
@@ -241,8 +235,7 @@ c     generate beginning positions
 
       np=abs(iarg(5))
       call cpu_time(cpu_start)
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       if(moviename .ne. ' ') then
         write(*,*) 'moviename = ',moviename
         if (b2plot_debug.ge.1) write(*,*) 'Changing weighting'
@@ -255,7 +248,6 @@ c     generate beginning positions
           enddo
         enddo
       endif
-#endif
 #endif
       call allocate_particles(warr,ipx,ipy,ips,p_r,p_z,0,np)
       call cpu_time(cpu_end)
@@ -301,18 +293,14 @@ c     initialise graphics
       if(iarg(specnum) .eq. 1 .and. iarg(6) .eq. 0) then  ! 1 species and trajectories
         call data_copy(iarg(7))
         call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
         if(moviename .eq. ' ') then
 #endif
-#endif
           call lblbartraj(globaltime*1e-3_R8,globaltime,tlinlog)
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if( !defined(NO_CDF) && defined(CDF_MOVIE) )
         else
           call lblbartraj(starttime,globaltime+starttime,1)
         endif
-#endif
 #endif
       else
         call data_copy(0)
@@ -350,15 +338,12 @@ c                         particles than at beginning, it is destroyed.
           call lined_d(p_r(ip),p_z(ip),p_r(ip),p_z(ip))
         enddo
         do counter=2,nplot
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
           if(moviename .eq. ' ') then
-#endif
 #endif
             globaltime=globaltime-deltat
             currtime=currtime+deltat
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
           else
             itstep=counter-1
             imap(1)=1
@@ -390,7 +375,6 @@ c                         particles than at beginning, it is destroyed.
               end do
             end do
           endif
-#endif
 #endif
           if (b2plot_debug.ge.2) 
      .     write(*,*)'plotnumber: ',counter,'(of ',nplot,')'
@@ -424,8 +408,7 @@ c                         particles than at beginning, it is destroyed.
      2      cpu_end-cpu_start,
      3     ' cpu-seconds'
           if(destmode .eq. 2) then
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
             if(moviename .ne. ' ') then
               do is=0,ns-1
                 do iy=-1,ny
@@ -436,7 +419,6 @@ c                         particles than at beginning, it is destroyed.
                 enddo
               enddo
             endif
-#endif
 #endif
             call cpu_time(cpu_start)
             call allocate_particles(warr,ipx,ipy,ips,p_r,p_z,np,np)
@@ -464,15 +446,12 @@ c     TRAJECTORIES:
         randzaehler=0
         do while ((randzaehler .lt. np) .and. 
      +   (globaltime .gt. 0.0_R8))
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
           if(moviename .eq. ' ') then
-#endif
 #endif
             globaltime=globaltime-deltat
             currtime=currtime+deltat
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
           else
             itstep=itstep+1
             imap(1)=1
@@ -504,7 +483,6 @@ c     TRAJECTORIES:
               end do
             end do
           endif
-#endif
 #endif
           if(iarg(specnum) .eq. 1) then
             call lblbartrajcol(currtime,icol)
@@ -545,10 +523,8 @@ c     close Plot-Screen
       call lastd
       call gsplci(1)
 
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       iret = nf_close(ncid)
-#endif
 #endif
       return
       end subroutine caltraj
