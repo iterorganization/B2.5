@@ -75,10 +75,8 @@
 #ifdef WINDOWS
       integer(2) :: iresult
       logical(4) :: lresult
-#else
-#ifdef NAGFOR
+#elif defined(NAGFOR)
       integer status, ierror
-#endif
 #endif
       logical(4) :: b2fstate_exist
       integer npoint
@@ -91,11 +89,9 @@
       character*12 hlp_frm
 *   ..procedures
       external subini, subend
-#ifdef _OPENMP
-#ifdef CRAY
+#if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
-#endif
 #endif
 *-----------------------------------------------------------------------
 *.computation
