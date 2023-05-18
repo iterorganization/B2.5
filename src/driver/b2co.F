@@ -76,10 +76,8 @@
 #endif
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
       integer iflag
-#ifndef NAGF95
-#ifndef NAGFOR
+#if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
-#endif
 #endif
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1

@@ -27,32 +27,18 @@
       use timings
 #endif
       use b2mod_xerset
-#ifdef B25_EIRENE
-#ifdef USE_MPI
+#if ( defined(B25_EIRENE) && defined(USE_MPI) )
       use eirmod_parmmod
      , , only : ifoff
       use eirmod_cpes
      , , only : my_pe
 #endif
-#endif
-#if MPI_MOD > 0
-#ifdef USE_MPI
+#if ( MPI_MOD > 0 && ( defined(USE_MPI) || defined(USE_IMPGYRO) ) )
       use mpi  ! IGNORE
-#else
-#ifdef USE_IMPGYRO
-      use mpi  ! IGNORE
-#endif
-#endif
 #endif
       implicit none
-#if MPI_MOD < 1
-#ifdef USE_MPI
+#if ( MPI_MOD < 1 && ( defined(USE_MPI) || defined(USE_IMPGYRO) ) )
       include 'mpif.h'
-#else
-#ifdef USE_IMPGYRO
-      include 'mpif.h'
-#endif
-#endif
 #endif
 
 *-----------------------------------------------------------------------
@@ -167,10 +153,8 @@
       real (kind=R8) :: dumarr(100)
       logical ltrigger
 #endif
-#else
-#ifdef USE_IMPGYRO
+#elif defined(USE_IMPGYRO)
       integer rank_mpi,size_mpi,ierr_mpi
-#endif
 #endif
       character*32 B25_git_version
       logical file_open
@@ -219,14 +203,12 @@ csw
         call mpi_finalize(ierr_mpi)
         stop 'b2mn_mpi_child'
       endif
-#else
-#ifdef USE_IMPGYRO
+#elif ( defined(USE_IMPGYRO) )
       write(*,*) 'b2ig: running B2.5-EIRENE'
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
       write(*,*) 'b2ig: b2mn size_mpi =', size_mpi
-#endif
 #endif
 
 #ifdef WITH_FTIMINGS
@@ -377,11 +359,9 @@ csw
 #endif
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
       call mpi_finalize(ierr_mpi)
-#else
-#ifdef USE_IMPGYRO
+#elif ( defined(USE_IMPGYRO) )
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
       call mpi_finalize(ierr_mpi)
-#endif
 #endif
       return
       end subroutine b2mn_fin

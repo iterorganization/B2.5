@@ -2924,7 +2924,7 @@ C
       ENDIF
 C
 C-----------------------------------------------------------------------
-C ESTABLISH IF EQUAL SIGN EXISTS AFTER THE KEY (SEPERATED BY BLANKS).
+C ESTABLISH IF EQUAL SIGN EXISTS AFTER THE KEY (SEPARATED BY BLANKS).
 C-----------------------------------------------------------------------
 C
       IPOS2 = INDEX( CTEXT(IPOS1:LENTXT) , '=' )

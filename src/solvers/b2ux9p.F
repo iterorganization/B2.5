@@ -85,11 +85,9 @@
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
-#ifdef _OPENMP
-#ifdef CRAY
+#if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
-#endif
 #endif
 *   ..initialization
       save ncall, style, acpar, cpu
