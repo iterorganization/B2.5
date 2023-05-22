@@ -352,11 +352,11 @@ c the logic statements below could be simplfied but for now we go for readabilit
           co%chci = co%chci + co%chcb(:,:,is)
          endif
         else                                                       !! separate ion-neutral energy equation
-          if (.not.is_neutral(is).or.zn(is).ne.1) then
+          if (.not.is_neutral(is).or.zn(is).ne.1.0_R8) then
             co%chci = co%chci + co%chcb(:,:,is)
           endif
         endif
-        if (is_neutral(is).and.zn(is).eq.1) then                   !! hcn for hydrogenic atoms
+        if (is_neutral(is).and.zn(is).eq.1.0_R8) then              !! hcn for hydrogenic atoms
          co%chcn = co%chcn + co%chcb(:,:,is)
         endif
       enddo 
