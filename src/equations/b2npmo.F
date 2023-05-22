@@ -494,7 +494,7 @@ c     ..compare 9-pt stencil matrices
       vcount = 0
       if( switch%ion_vlct_restrict .ne. 0 ) then                        !iyv 19.07.12 { !srv 17.01.14
         do is = 0, ns-1
-          if (.not.is_neutral(is)) then
+          !if (.not.is_neutral(is)) then
             do iCv = 1, nCv
               cst=sqrt(pz(iCv)/rz(iCv))                                 !iyv 03.02.14
               if( abs(pl%ua(iCv,is)).gt.3.0_R8*cst ) then
@@ -509,7 +509,7 @@ c     ..compare 9-pt stencil matrices
                 pl%ua(iCv,is)= sign(3.0_R8*cst,pl%ua(iCv,is))           !iyv 03.02.14
               endif
             enddo
-          endif
+          !endif
         enddo
         if (switch%vlct_diagno.ge.1) then
           do is = 0, ns-1
