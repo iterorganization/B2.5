@@ -418,12 +418,12 @@ cxpb Corrected for dimensionality
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1) then
+         if (.not.is_neutral(is).or.zn(is).ne.1.0_R8) then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
 *     ..compute hcn0
-        if (is_neutral(is).and.zn(is).eq.1) then
+        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
@@ -472,12 +472,12 @@ cxpb Corrected for dimensionality
               hci0 = hci0 + hcib(:,is)
             endif
           else
-            if (.not.is_neutral(is).or.zn(is).ne.1) then
+            if (.not.is_neutral(is).or.zn(is).ne.1.0_R8) then
               hci0 = hci0 + hcib(:,is)
             endif
           endif
 *       ..re-compute hcn0
-          if (is_neutral(is).and.zn(is).eq.1) then
+          if (is_neutral(is).and.zn(is).eq.1.0_R8) then
             hcn0 = hcn0 + hcib(:,is)
           endif
         enddo
@@ -3762,12 +3762,12 @@ c*******************************************************************************
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1)then
+         if (.not.is_neutral(is).or.zn(is).ne.1.0_R8)then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
 *     ..compute hcn0
-        if (is_neutral(is).and.zn(is).eq.1) then
+        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
@@ -3903,7 +3903,7 @@ cwdk same dna_ExB for all ion species
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1)then
+         if (.not.is_neutral(is).or.zn(is).ne.1.0_R8)then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
