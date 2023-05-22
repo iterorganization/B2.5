@@ -16,7 +16,7 @@
 *$$$  call subini ('b2xpfn')
       call sfill (nFc*2, 0.0_R8, fnn, 1)
       do is = 0, ns-1
-        if (is_neutral(is).and.zn(is).eq.1)
+        if (is_neutral(is).and.zn(is).eq.1.0_R8)
      .    call b2saxpy (nFc*2, 1.0_R8, fna(1,0,is), 1, fnn, 1)
       enddo
 *$$$  call subend ()
