@@ -194,7 +194,7 @@
       call b2xvsg (n3, rtrd, 1, 'rtrd', '.ge.')
       call b2xvsg (n3, rtbr, 1, 'rtbr', '.ge.')
 *   ..Format for reaction card reading
-6666  FORMAT (A8,A4,A9,A3)
+6666  FORMAT (A6,1X,A4,A9,A3)
 
 *   .. Get Amjuel/hydhel process options
       found = .false.
