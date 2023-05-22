@@ -2451,7 +2451,7 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_fcor(ix,iy,0,0:1)=0.0_R8
             fnb_he(ix,iy,0,0:1)=0.0_R8
             fnb_53(ix,iy,0,0:1)=0.0_R8
-            fnd_mdf(ix,iy,0:0:1)=0.0_R8
+            fnb_mdf(ix,iy,0,0:1)=0.0_R8
             flob(ix,iy,0,0:1)=0.0_R8
             conb(ix,iy,0,0:1,:)=0.0_R8
             fllim0fnb(ix,iy,0,0:1)=1.0_R8
@@ -2464,7 +2464,7 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_fcor(ix,iy,1,0:1)=0.0_R8
             fnb_he(ix,iy,1,0:1)=0.0_R8
             fnb_53(ix,iy,1,0:1)=0.0_R8
-            fnd_mdf(ix,iy,1:0:1)=0.0_R8
+            fnb_mdf(ix,iy,1,0:1)=0.0_R8
             flob(ix,iy,1,0:1)=0.0_R8
             conb(ix,iy,1,0:1,:)=0.0_R8
             fllim0fnb(ix,iy,1,0:1) = 1.0_R8
