@@ -251,8 +251,8 @@ c   ..dominant ion in plasma and its neutral
       ism0 = -1         ! index of main ion neutral
 
       do is = 0, nspp - 1
-         if( zn(is).eq.1.0_R8 ) then
-             if( zamax(is).eq.1.0_R8 ) then
+         if( nint(zn(is)).eq.1 ) then
+             if( nint(zamax(is)).eq.1 ) then
                  ism  = is
              else if( is_neutral(is) ) then
                  ism0 = is
