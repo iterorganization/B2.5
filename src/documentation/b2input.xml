@@ -2499,6 +2499,60 @@
 					Multiplier for the dissipation term of kt in the core region.
 				</description>
 			</switch>
+			<switch>
+				<name>b2stbr_recycle_afn</name>
+				<default>0</default>
+				<type>integer</type>
+                                <description>
+					When set to 1, the AFN recycling boundary conditions are used for hydrogenic neutrals.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_transport_afn</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. 
+				</description>
+			</switch>
+			<switch>
+				<name>b2mn_tn_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					0: solving the total energy equation for all ion + (fluid) neutral species together; 1: solving the total energy equation without the contributions from hydrogenic neutrals. It is still assumed that the hydrogenic neutrals have the same temperature as the ions, i.e. tn=ti. (not recommended to turn on); 2: separate energy equation for the hydrogenic neutrals (tn.ne.ti). 
+				</description>
+			</switch>
+			<switch>
+				<name>l_macro_afn</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Macroscopic length scale used to calculate the local Knudsen number. 
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_kn_b1</name>
+				<default>0.01</default>
+				<type>real</type>
+				<description>
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_kn_b2</name>
+				<default>0.1</default>
+				<type>real</type>
+                                <description>
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_remove_fc_el</name>
+				<default>0</default>
+				<type>integer</type>
+                                <description>
+					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values. 
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
@@ -4583,6 +4637,39 @@
 					'V' - volume recombination source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored).
 					'C' - constant or feedback gas puff source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Gas puffs for B2.5 fluid neutrals are handled via b2.boundary.parameters. Unless specified otherwise by use of 'eirene_nesepm_istra', it is the first 'C' stratum that is used for feedback puff schemes. See b2cdci for details.
 					'T' - time-dependent source for Eirene (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Long-lived Eirene neutrals are stored in this stratum. See EIRENE_STEP_DT below.
+				</description>
+			</switch>
+			<switch>
+				<name>SURF_MAT</name>
+				<default>'C'</default>
+				<type>character*1 array of length (NSTRAT)</type>
+				<description>
+                                        Contains the surface material for surface strata, used for AFN neutrals. Possible options: 
+                                        'Be' (beryllium), 'C' (carbon), 'Fe' (iron), 'Mo' (molybdenum) and 'W' (tungsten).       
+				</description>
+			</switch>
+			<switch>
+				<name>ACCEL_ION</name>
+				<default>0</default>
+				<type>integer array of length (NSTRAT)</type>
+				<description> 
+                                        If 1, adding sheath acceleration for the ions hitting the boundary. Used for AFN boundary conditions.  
+				</description>
+			</switch>
+			<switch>
+				<name>MAXW</name>
+				<default>1</default>
+				<type>integer array of length (NSTRAT)</type>
+				<description> 
+                                        Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.    
+				</description>
+			</switch>
+			<switch>
+				<name>E_FC</name>
+				<default>3.0</default>
+				<type>real*8</type>
+				<description> 
+                                        Franck-Condon energy assigned to the thermally released fraction of recycled hydrogen neutrals, used in the AFN boundary condition. It is assumed that thermally released molecules are dissociated immediately at the surface and get an energy E_FC (eV) and are emitted isotropically. 3.0 eV is the value typically used in the EIRENE input file.   
 				</description>
 			</switch>
 			<switch>
