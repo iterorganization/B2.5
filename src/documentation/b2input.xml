@@ -2068,7 +2068,7 @@
 				</description>
 				<switch>
 					<name>b2tlc0_alpha</name>
-					<default>0.0</default>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (else)</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2089,7 +2089,7 @@
 				</description>
 				<switch>
 					<name>b2tlh0_alpha</name>
-					<default>0.0</default>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (else)</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2100,6 +2100,26 @@
 				<switch>
 					<name>b2tlh0_flux_limit_min_ti</name>
 					<default>0.0</default>
+					<type>real</type>
+				</switch>
+			</switchgroup>
+			<switchgroup>
+				<name>b2tlv0_*</name>
+				<description>
+					Parameters for the flux limit to the viscosity of the neutrals. Alpha is a multiplier to the classical flux limit value.
+					The larger &alpha; is, the weaker the flux limit is.
+					&gamma; is the exponent used in the flux-limiting formula.
+					The smaller &gamma; is, the sbtronger the flux limit is.
+					If alpha.eq.0, no flux limit is applied.
+				</description>
+				<switch>
+					<name>b2tlv0_alpha</name>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (else)</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tlv0_gamma</name>
+					<default>2.0</default>
 					<type>real</type>
 				</switch>
 			</switchgroup>
@@ -2499,12 +2519,20 @@
 					Multiplier for the dissipation term of kt in the core region.
 				</description>
 			</switch>
+                        <switch>
+				<name>b2mn_afn</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Main switch to turn on the AFN model for hydrogenic neutrals. If this switch is turned on, some default values are changed (see description of the corresponding switches).  
+				</description>
+			</switch>
 			<switch>
 				<name>b2stbr_recycle_afn</name>
 				<default>0</default>
 				<type>integer</type>
                                 <description>
-					When set to 1, the AFN recycling boundary conditions are used for hydrogenic neutrals.
+					When set to 1, the AFN recycling boundary conditions are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no spefication of b2stbr_recycle_afn, the switch is automatically set to 1.
 				</description>
 			</switch>
 			<switch>
@@ -2512,7 +2540,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. 
+					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no spefication of b2stbr_transport_afn, the switch is automatically set to 1. 
 				</description>
 			</switch>
 			<switch>
@@ -3819,6 +3847,15 @@
 					If '1', flux limit to neutrals contribution to dpa0 - the diffusion coefficient is applied in b2tlc0.F. It is recommended '1'.
 					b2tlc0.F has the flux limit parameters &alpha; and &gamma; which are given by 'b2tlc0_alpha' and 'b2tlc0_gamma'. 'b2tfnb_alpha' and 'b2tlc0_alpha' cannot be different from zero simultaneously.
 					'b2tfnb_alpha' gives another form of flux limit which is applied to the whole particle flux.
+				</description>
+			</switch>
+			<switch>
+				<name>b2trno_flux_limit_to_vsa</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1', flux limit to neutrals contribution to vsa0 - the viscoity is applied in b2tlv0.F. It is recommended '1'.
+					b2tlv0.F has the flux limit parameters &alpha; and &gamma; which are given by 'b2tlv0_alpha' and 'b2tlv0_gamma'. 
 				</description>
 			</switch>
 			<switchgroup>
