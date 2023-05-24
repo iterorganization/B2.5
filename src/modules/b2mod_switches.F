@@ -15,7 +15,8 @@ c consistency checks for combinations of different switches (check_consistency_s
       public :: alloc_switches, dealloc_switches,
      .          read_switches, set_defaults_switches,
      .          check_switches, check_values_switches,
-     .          check_consistency_switches
+     .          check_consistency_switches,
+     .          read_switch_afn
 
       type, public :: switches
 
@@ -54,6 +55,7 @@ c consistency checks for combinations of different switches (check_consistency_s
 
 c Advanced fluid neutral models
       integer :: tn_style
+      integer :: afn
       integer :: recycle_afn
       integer :: use_uy_uz_0
       integer :: use_uy_uz_1
@@ -553,7 +555,13 @@ c Med
 
 c Advanced fluid neutral models
       s % tn_style = 0
-      s % recycle_afn = 0
+      if (s%afn.ne.0) then
+        s % recycle_afn = 1
+        s % transport_afn = 1
+      else
+        s % recycle_afn = 0
+        s % transport_afn = 0
+      endif
       s % use_uy_uz_0 = 0
       s % use_uy_uz_1 = 0
       s % remove_FC_el = 0
@@ -561,7 +569,6 @@ c Advanced fluid neutral models
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
-      s % transport_afn = 0
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
@@ -603,11 +610,17 @@ c Advanced fluid neutral models
       s % radeldr = 1.0_R8
       s % poldidr = 1.0_R8
       s % raddidr = 1.0_R8
-      s % b2tlv0_alpha = 0.0_R8
+      if (s%afn.ne.0) then
+        s % b2tlv0_alpha = 1.0_R8
+        s % b2tlh0_alpha = 1.0_R8
+        s % b2tlc0_alpha = 1.0_R8
+      else 
+        s % b2tlv0_alpha = 0.0_R8
+        s % b2tlh0_alpha = 0.0_R8
+        s % b2tlc0_alpha = 0.0_R8
+      endif
       s % b2tlv0_gamma = 2.0_R8
-      s % b2tlh0_alpha = 0.0_R8
       s % b2tlh0_gamma = 2.0_R8
-      s % b2tlc0_alpha = 0.0_R8
       s % b2tlc0_gamma = 2.0_R8
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
@@ -1529,6 +1542,21 @@ c Med
 
       return
       end subroutine read_switches
+
+***********************************************************************
+
+      subroutine read_switch_afn (s)
+
+      implicit none
+      type (switches), intent (inout) :: s
+
+cnh   Default value
+      s % afn = 0
+
+      call ipgeti ('b2mn_afn', s % afn) !nh  24.05.23 main switch for AFN model
+
+      return
+      end subroutine read_switch_afn
 
 ***********************************************************************
 
