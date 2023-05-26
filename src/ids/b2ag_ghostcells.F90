@@ -66,7 +66,9 @@ contains
     nFmxCv = nFmxCv0 + nCg    ! every boundary faces is now also used in a ghost cell
     nVmxCv = nVmxCv0 + 2*nCg  ! every vertex at the boundary get two more cells
     nVmxFc = nVmxFc0          ! no new faces created for ghost cells 
-    nCmxNv = 9 * nCv          ! over-estimate for 9-point stencil
+
+    ! Compute nCmxNv
+    nCmxNv = 15 * nCv          ! over-estimate for 9-point stencil
 
 
     return
