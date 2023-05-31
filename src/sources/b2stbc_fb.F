@@ -217,8 +217,6 @@
      ,   , only : hy,hz,hx
 #ifdef B25_EIRENE
       use eirmod_wneutrals
-      use b2mod_eirene
-     ,   , only : eirpump
       use eirmod_braeir
       use eirmod_extrab25, only : eirene_sps_absr_update
 #endif
@@ -276,7 +274,7 @@
       integer ncall, n2, ix, iy, is, ispecies, is0, idir, ixf, iyf,
      & ic,mdf_fnb, style_b2mndt,js, m, iyp, nxtl, nxtr,n,
 #ifdef B25_EIRENE
-     &        i, j, k, l, ind, ias,
+     &        i, j, k, l,
 #endif
      &        ib, iss, ixl1, ixr1, ixl2, ixr2, istrai, icount
       integer, save :: is_start, is_end,fb_istyle_fchi = 0
@@ -301,13 +299,17 @@
      4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
      4  volrec_curr,
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
-     6  cbsnafac, cbsnainc, bsign, flxic(nspecies),flxnc(nspecies),
-     7  flxnp(nspecies),private_flux_puff, private_flux_area,
+     6  cbsnafac, cbsnainc, bsign, 
+#ifdef B25_EIRENE
+     &  flxic(nspecies), flxnp(nspecies),
+     &  hlp_p,hlp_s,hlp_si,hlp_hep,hlp_so,hlp_pi,
+     &  hlp_po,hlp,hlp_hepr,hlp_ppfi,hlp_ppfo,hlp_ppfr,
+#endif
+     7  private_flux_puff, private_flux_area,
      8  neutral_sources_rescale,sna_pump(nspecies),ia,im,ip,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
-        real (kind=R8) :: fchi,pz(-1:nx,-1:ny),t0,te_max, !s1
-     &    rz(-1:nx,-1:ny),hlp_ppwo, s
+      real (kind=R8) :: fchi,pz(-1:nx,-1:ny),t0,te_max, rz(-1:nx,-1:ny)
       real (kind=R8), allocatable :: charge_frac(:)
       integer, save :: jsep, jxa, jxi, iyped
       integer, save :: b2sral_style = 2
@@ -330,9 +332,6 @@
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
       save zeroslope
-      real (kind=R8) :: hlp_p,hlp_s,hlp_si,hlp_hep,hlp_so,hlp_pi,
-     &  hlp_po,hlp,hlp_hepr,hlp_ppfi,hlp_ppfo,hlp_ppfr
-      integer :: ninp(0:1),itim, idum(0:9)
 *   ..procedures
       intrinsic abs, mod, nint
       external xertst, ipgetr, ipgeti
@@ -365,7 +364,6 @@
      i  coreregn2/4/, solregno/3/,
      i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/,
      l  zeroslope/.false./
-      data ninp/50,51/
 #ifdef COMPLICATED
 #ifndef B25_EIRENE
       integer i
@@ -1146,6 +1144,7 @@
               na_feedback_current = 0.5_R8 *
      *                 (ne(jxi,jsep)+
      *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
+!<<<<<<< HEAD
               is_start=-1
               is_end=-1
               do is = 0, ns-1
@@ -1155,10 +1154,25 @@
                 endif
               enddo
               
+#ifdef B25_EIRENE       
             case (10)  ! neutral pressure at PFR southern boundary (by A. Kukushkin)
             
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
+!=======
+!                  is_start=-1
+!                  is_end=-1
+!                  do is = 0, ns-1
+!                     if(b2espcr(is).eq.ispecies+1) then
+!                        if(is_start.eq.-1) is_start=is
+!                        is_end=is
+!                     endif
+!                  enddo
+!#ifdef B25_EIRENE
+!            case (10)
+!                   if(ncall.eq.0) then
+!                     write(*,'(a,a,i3)')
+!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'neutral pressure for sequence ',
      &                    ispecies+1
@@ -1309,6 +1323,8 @@ c>>>
                         is_end=is
                      endif
                   enddo
+#endif
+!<<<<<<< HEAD
                   
             case (11) ! ion saturation current at outer bottom target: to be done
             
@@ -1319,6 +1335,17 @@ c>>>
      &                ispecies+1
                 if (fb_istyle_fchi.eq.0) then
                   write(*,'(a)')
+!=======
+!#endif
+!            case (11)
+!                if(ncall.eq.0) then
+!                     write(*,'(a,a,i3)')
+!     &                    'b2stbc_fb_pre_choice: using ',
+!     &                    'ion satuarion current for sequence ',
+!     &                    ispecies+1
+!                    if (fb_istyle_fchi.eq.0) then
+!                      write(*,'(a)')
+!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
      &                'increasing particle content to increase jsat...'
                 elseif (fb_istyle_fchi.eq.1) then
                   write(*,'(a)')
@@ -1327,6 +1354,7 @@ c>>>
               endif
                   
 
+!<<<<<<< HEAD
 !<<<<<<< HEAD
               call b2xprz (nx, ny, ns, mp, am, na, rz)
               fchi = 0.0_R8
@@ -1374,6 +1402,39 @@ c>>>
      &                  gs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
                     enddo
 !>>>>>>> 5a92b1be... Changes to be committed:
+!=======
+!                  call b2xprz (nx, ny, ns, mp, am, na, rz)
+!                  fchi = 0.0_R8
+!                  te_max = 0.0_R8
+!                do IB = 1, NBC
+!              IF(BCCHAR(IB).EQ.'E') THEN
+!                DO IY = 1, BC_LIST_SIZE(IB)
+!                  ! s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
+!                  t0 = 0.0e0_R8
+!                  do is = 0, ns-1
+!              t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+!     &                  fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+!     &        /gs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
+!              enddo
+!
+!              if (abs(qe*t0).gt.fchi) then
+!                fchi = abs(qe*t0)
+!                te_max = te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+!              endif
+!              enddo
+!              print *,"te=",te_max/qe,"fchi=",fchi
+!              ENDIF
+!              end do
+!              na_feedback_current = fchi
+!              is_start=-1
+!              is_end=-1
+!              do is = 0, ns-1
+!                  if(b2espcr(is).eq.ispecies+1) then
+!                    if(is_start.eq.-1) is_start=is
+!                    is_end=is
+!                  endif
+!              enddo
+!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
 
 !<<<<<<< HEAD
                     if (abs(qe*t0).gt.fchi) then
@@ -1940,125 +2001,135 @@ c           Pure rescale, any variant may be used!
 #ifdef B25_EIRENE
               if (na_feedback_option(ispecies).eq.7.or.
      &               na_feedback_option(ispecies).eq.8) then
-                sna_pump = 0.0_R8
-                do ia = 1, nnatmi
-                  k = latmscl(ia)
-                  if (k.eq.0) cycle
-                  sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + 
-     &                           eirpump(ia)
-                  do im = 1, nnmoli
-                    if (mlcmp(ia,im).gt.0) then
-                        sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
-     &                           mlcmp(ia,im) * eirpump(nnatmi+im)
-                    endif
-                  enddo
-                end do
-                
-                do ip = 1, nnplsi
-                  is = latmscl(lkindp(ip))
-                  if (is.eq.0) cycle
-                  sna_pump(is) = sna_pump(is) +
-     &                eirpump(nnatmi+nnmoli+nnioni+ip)
-                enddo
-                    
-                print *,"Lezgini sna_pump " ,ispecies,' ',
-     &              sna_pump(ispecies+1)
-c Flux from core impact
-
-                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
-     &                          NFLUIDS(ispecies+1)
+!<<<<<<< HEAD
+!                sna_pump = 0.0_R8
+!                do ia = 1, nnatmi
+!                  k = latmscl(ia)
+!                  if (k.eq.0) cycle
+!                  sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + 
+!     &                           eirpump(ia)
+!                  do im = 1, nnmoli
+!                    if (mlcmp(ia,im).gt.0) then
+!                        sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
+!     &                           mlcmp(ia,im) * eirpump(nnatmi+im)
+!                    endif
+!                  enddo
+!                end do
+!                
+!                do ip = 1, nnplsi
+!                  is = latmscl(lkindp(ip))
+!                  if (is.eq.0) cycle
+!                  sna_pump(is) = sna_pump(is) +
+!     &                eirpump(nnatmi+nnmoli+nnioni+ip)
+!                enddo
+!                    
+!                print *,"Lezgini sna_pump " ,ispecies,' ',
+!     &              sna_pump(ispecies+1)
+!c Flux from core impact
+!
+!                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
+!     &                          NFLUIDS(ispecies+1)
 !         Loop over B2 boundaries
-                  do ic = 1,nbc
-
-                    if (BCCHAR(IC).eq.'S') then
-                      idir  = 1
-                      bsign = 1.0_R8
-                    else if (BCCHAR(IC).eq.'N') then
-                      idir  = 1
-                      bsign =-1.0_R8
-                    else if (BCCHAR(IC).eq.'W') then
-                      idir  = 0
-                      bsign = 1.0_R8
-                    else if (BCCHAR(IC).eq.'E') then
-                      idir  = 0
-                      bsign =-1.0_R8
-                    else
-                      cycle
-                    end if
-
-!           Loop over poloidal coordinate along this boundary
-                    do ix = 1, BC_LIST_SIZE(ic)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!             Check whether it is a southern boundary
-                      if (BCCHAR(ic).EQ.'S') then
-                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                      else if (BCCHAR(ic).EQ.'N') then
-                        ixf = BC_LIST_X(ix,ic)
-                        iyf = BC_LIST_Y(ix,ic)
-                      else if (BCCHAR(ic).EQ.'W') then
-                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                      else if (BCCHAR(ic).eq.'E') then
-                        ixf = BC_LIST_X(ix,ic)
-                        iyf = BC_LIST_Y(ix,ic)
-                      end if
-
-!             Check whether this is part of the core boundary
-                      if (core_boundary(ic)) then
+!                  do ic = 1,nbc
+!
+!                    if (BCCHAR(IC).eq.'S') then
+!                      idir  = 1
+!                      bsign = 1.0_R8
+!                    else if (BCCHAR(IC).eq.'N') then
+!                      idir  = 1
+!                      bsign =-1.0_R8
+!                    else if (BCCHAR(IC).eq.'W') then
+!                      idir  = 0
+!                      bsign = 1.0_R8
+!                    else if (BCCHAR(IC).eq.'E') then
+!                      idir  = 0
+!                      bsign =-1.0_R8
+!                    else
+!                      cycle
+!                    end if
+!
+!!           Loop over poloidal coordinate along this boundary
+!                    do ix = 1, BC_LIST_SIZE(ic)
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!             Check whether it is a southern boundary
+!                      if (BCCHAR(ic).EQ.'S') then
+!                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                      else if (BCCHAR(ic).EQ.'N') then
+!                        ixf = BC_LIST_X(ix,ic)
+!                        iyf = BC_LIST_Y(ix,ic)
+!                      else if (BCCHAR(ic).EQ.'W') then
+!                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                      else if (BCCHAR(ic).eq.'E') then
+!                        ixf = BC_LIST_X(ix,ic)
+!                        iyf = BC_LIST_Y(ix,ic)
+!                      end if
+!
+!!             Check whether this is part of the core boundary
+!                      if (core_boundary(ic)) then
 ! Count fluid neutrals if not coupled to Eirene
-                        if (is_neutral(is).and.use_eirene.eq.0) then
-                          flxnc(ispecies+1) = flxnc(ispecies+1) +
-     .                         bsign * fna(ixf,iyf,idir,is)
-                        else if (.not.is_neutral(is)) then ! not neutral
-                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
-                            flxic(ispecies+1) = flxic(ispecies+1) +
-     .                         bsign * fna(ixf,iyf,idir,is)
-!                          print *, "Lezgini ion core flux", flxic(ispecies+1)
-                          else
-                            flxic(ispecies+1) = flxic(ispecies+1) +
-     .                         bsign * fna_mdf(ixf,iyf,idir,is)
-                          end if
-                        end if  
-                      end if
-                        
-                   end do   ! ix
-                   
-                 end do  !ic
-                 
-               end do  !is
-               
-               do is = 1,ncns
-c**       Here "is" is not a species index, but the index of Eirene surface,
-!!!    because
-c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
-c**       lcns() - index of these 'non-default' surfaces
-
-                 js = lcns(is) + nnlimi
-c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
-                 do j = 1,nnatmi
-                   print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
-     &            " ,ls=",(ispecies+1)
-                   if (latmscl(j) .eq. ispecies+1) then
-                     flxnc(ispecies+1) = flxnc(ispecies+1) -
-     &                   wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-                     do ic=1,nnmoli
-                       if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
-     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
-     &               - wldrm(js,ic,0) - wldpm(js,ic,0))
-                     end do
-                   end if
-                 end do
-               end do
-c -------------------------------------------------------------------------------------
-               print *, "Lezgini ion core flux", flxic(ispecies+1)
-               print *, "Lezgini neut core flux", flxnc(ispecies+1)
-               
-               saved_na_feedback_actuator(ispecies) =
+!                        if (is_neutral(is).and.use_eirene.eq.0) then
+!                          flxnc(ispecies+1) = flxnc(ispecies+1) +
+!     .                         bsign * fna(ixf,iyf,idir,is)
+!                        else if (.not.is_neutral(is)) then ! not neutral
+!                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
+!                            flxic(ispecies+1) = flxic(ispecies+1) +
+!     .                         bsign * fna(ixf,iyf,idir,is)
+!!                          print *, "Lezgini ion core flux", flxic(ispecies+1)
+!                          else
+!                            flxic(ispecies+1) = flxic(ispecies+1) +
+!     .                         bsign * fna_mdf(ixf,iyf,idir,is)
+!                          end if
+!                        end if  
+!                      end if
+!                        
+!                   end do   ! ix
+!                   
+!                 end do  !ic
+!                 
+!               end do  !is
+!               
+!               do is = 1,ncns
+!c**       Here "is" is not a species index, but the index of Eirene surface,
+!!!!    because
+!c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
+!c**       lcns() - index of these 'non-default' surfaces
+!
+!                 js = lcns(is) + nnlimi
+!c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
+!                 do j = 1,nnatmi
+!                   print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
+!     &            " ,ls=",(ispecies+1)
+!                   if (latmscl(j) .eq. ispecies+1) then
+!                     flxnc(ispecies+1) = flxnc(ispecies+1) -
+!     &                   wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
+!                     do ic=1,nnmoli
+!                       if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
+!     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
+!     &               - wldrm(js,ic,0) - wldpm(js,ic,0))
+!                     end do
+!                   end if
+!                 end do
+!               end do
+!c -------------------------------------------------------------------------------------
+!               print *, "Lezgini ion core flux", flxic(ispecies+1)
+!               print *, "Lezgini neut core flux", flxnc(ispecies+1)
+!               
+!               saved_na_feedback_actuator(ispecies) =
+!     &                 sna_pump(ispecies+1) * na_feedback_rescale 
+!     &                - flxic(ispecies+1)
+!              endif  ! na_feedback_option(ispecies) = 7,8
+!=======
+                call calc_pump_and_flux (nx,ny,ns,mdf_fnb,
+     &                     style_b2mndt, use_eirene, nspecies,  
+     &                     ispecies, sna_pump, flxnp, flxic)
+                saved_na_feedback_actuator(ispecies) =
      &                 sna_pump(ispecies+1) * na_feedback_rescale 
      &                - flxic(ispecies+1)
-              endif  ! na_feedback_option(ispecies) = 7,8
+              endif   ! na_feedback_option(ispecies) = 7,8
+!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
 #endif
                   
               if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
@@ -2193,12 +2264,21 @@ c ------------------------------------------------------------------------------
                 iss = is-is_start+1
                 conpar(is, na_feedback_ib(ispecies), 1) =
      &                total_flux * charge_frac(iss)
+!<<<<<<< HEAD
               end do
                 
+#ifdef B25_EIRENE
             case (4)  ! absorbtion coefficient. Issue: algorithm for finding pumping surfaces should be improved
             
               if(ncall.eq.0) then
                   write(*,'(a,a,i3)')
+!=======
+!                  end do
+!#ifdef B25_EIRENE
+!                case (4)
+!                  if(ncall.eq.0) then
+!                     write(*,'(a,a,i3)')
+!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'sps_absr changing',
      &                    ispecies+1
@@ -2206,195 +2286,246 @@ c ------------------------------------------------------------------------------
               
               if (saved_na_feedback_actuator(ispecies).eq.0) then
                     saved_na_feedback_actuator(ispecies) = sps_absr(1)  
+!<<<<<<< HEAD
+!              endif
+!    !               if ((abs(na_feedback_current/
+!    !  &                na_feedback_target(ispecies)-1).gt.0.05)
+!    !  &                .or.(int_ntim(ispecies).eq.0)) then
+!    !                   int_flux(ispecies) = int_flux(ispecies) 
+!    !  &                + saved_na_feedback_actuator(ispecies)
+!    !                   int_ntim(ispecies) = int_ntim(ispecies) + 1
+!    !                   saved_na_feedback_actuator(ispecies) =
+!    !  &                saved_na_feedback_actuator(ispecies) /
+!    !  &                na_feedback_rescale
+!    !                 else
+!    !                   print *,"feedback_set_avg_sps_absr"
+!    !                   saved_na_feedback_actuator(ispecies) = 
+!    !  &                int_flux(ispecies)/Real(int_ntim(ispecies))
+!    !                 end if
+!    
+!#ifdef B25_EIRENE
+!              if (na_feedback_option(ispecies).eq.7.or.
+!     &               na_feedback_option(ispecies).eq.8) then
+!     
+!                sna_pump = 0.0_R8
+!                
+!                do ia = 1, nnatmi
+!                  k = latmscl(ia)
+!                  if (k.eq.0) cycle
+!                    sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +  
+!     &                     eirpump(ia)
+!                  do im = 1, nnmoli
+!                    if (mlcmp(ia,im).gt.0) then
+!                      sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
+!     &                  mlcmp(ia,im) * eirpump(nnatmi+im)
+!                    endif
+!                  enddo
+!                end do
+!                
+!                do ip = 1, nnplsi
+!                  is = latmscl(lkindp(ip))
+!                  if (is.eq.0) cycle
+!                  sna_pump(is) = sna_pump(is) +
+!     &                eirpump(nnatmi+nnmoli+nnioni+ip)
+!                enddo
+!                
+!                print *,"Lezgini sna_pump " ,ispecies,' ',
+!     &              sna_pump(ispecies+1)
+!c Flux from core impact
+!
+!                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
+!     &                    NFLUIDS(ispecies+1)
+!
+!!         Loop over B2 boundaries
+!                  do ic = 1,nbc
+!
+!                    if (BCCHAR(IC).eq.'S') then
+!                      idir  = 1
+!                      bsign = 1.0_R8
+!                    else if (BCCHAR(IC).eq.'N') then
+!                      idir  = 1
+!                      bsign =-1.0_R8
+!                    else if (BCCHAR(IC).eq.'W') then
+!                      idir  = 0
+!                      bsign = 1.0_R8
+!                    else if (BCCHAR(IC).eq.'E') then
+!                      idir  = 0
+!                      bsign =-1.0_R8
+!                    else
+!                      cycle
+!                    end if
+!
+!!           Loop over poloidal coordinate along this boundary
+!                    do ix = 1, BC_LIST_SIZE(ic)
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!             Check whether it is a southern boundary
+!                      if (BCCHAR(ic).EQ.'S') then
+!                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                      else if (BCCHAR(ic).EQ.'N') then
+!                        ixf = BC_LIST_X(ix,ic)
+!                        iyf = BC_LIST_Y(ix,ic)
+!                      else if (BCCHAR(ic).EQ.'W') then
+!                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+!                      else if (BCCHAR(ic).eq.'E') then
+!                        ixf = BC_LIST_X(ix,ic)
+!                        iyf = BC_LIST_Y(ix,ic)
+!                      end if
+!
+!!             Check whether this is part of the core boundary
+!                      if (core_boundary(ic)) then
+!!                      Count fluid neutrals if not coupled to Eirene
+!                        if (is_neutral(is).and.use_eirene.eq.0) then
+!                          flxnc(ispecies+1) = flxnc(ispecies+1) +
+!     .                      bsign * fna(ixf,iyf,idir,is)
+!                        else if (.not.is_neutral(is)) then ! not neutral
+!                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
+!                            flxic(ispecies+1) = flxic(ispecies+1) +
+!     .                          bsign * fna(ixf,iyf,idir,is)
+!!                            print *, "Lezgini ion core flux", flxic(ispecies+1)
+!                          else
+!                            flxic(ispecies+1) = flxic(ispecies+1) +
+!     .                        bsign * fna_mdf(ixf,iyf,idir,is)
+!                          end if
+!                        end if  
+!                      end if  
+!              
+!                    end do   ! ix
+!                   
+!                  end do  ! ic
+!                
+!                end do  ! is
+!             
+!                do is = 1,ncns
+!c**       Here "is" is not a species index, but the index of Eirene surface,
+!!!!    because
+!c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
+!c**       lcns() - index of these 'non-default' surfaces
+!
+!                  js = lcns(is) + nnlimi
+!                  
+!c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
+!                  do j = 1,nnatmi
+!                    print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
+!     &                             " ,ls=",(ispecies+1)
+!                    if (latmscl(j) .eq. ispecies+1) then
+!                      flxnc(ispecies+1) = flxnc(ispecies+1)
+!     &                  - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
+!                      do ic=1,nnmoli
+!                        if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
+!     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
+!     &                       - wldrm(js,ic,0) - wldpm(js,ic,0))
+!                      end do
+!                    end if
+!                  end do
+!                end do
+!c -------------------------------------------------------------------------------------
+!                print *, "Lezgini ion core flux", flxic(ispecies+1)
+!                print *, "Lezgini neut core flux", flxnc(ispecies+1)
+!              
+!              endif ! na_feedback_option(ispecies) = 7,8
+!#endif
+!
+!              flxnp = 0.0_R8
+!            
+!              do ic = 1,nstrat
+!                if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
+!                  do j = 1,nnatmi
+!                    if (latmscl(j) .eq. ispecies+1) then
+!                      flxnp(ispecies+1) = flxnp(ispecies+1) +
+!     &                 userfluxparm(ic,1) * gpfc(j,ic)
+!                    endif
+!                  end do
+!                endif       
+!              end do
+!            
+!!              print *, "Lezgini puff flux", flxnp(ispecies+1)
+!            ! call cfruin (ninp(1), 1, idum, 'itim')
+!            ! itim = idum(0)
+!            
+!              int_ntim(ispecies) = int_ntim(ispecies) + 1
+!            
+!!              print *,"itim",int_ntim(ispecies),eirene_mod
+!            
+!              if (mod(int_ntim(ispecies),eirene_mod).eq.0) then
+!                saved_na_feedback_actuator(ispecies) =
+!     &             saved_na_feedback_actuator(ispecies) /
+!     &             na_feedback_rescale*(flxnp(ispecies+1) + 
+!     &             flxic(ispecies+1))/sna_pump(ispecies+1)
+!              endif
+!            
+!              if (na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+!     &          saved_na_feedback_actuator(ispecies) =
+!     &                 max(na_feedback_puff_min(ispecies),
+!     &                 saved_na_feedback_actuator(ispecies))
+!              if (na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+!     &          saved_na_feedback_actuator(ispecies) =
+!     &                 min(na_feedback_puff_max(ispecies),
+!     &                 saved_na_feedback_actuator(ispecies))
+!              do j=1,n_spcsrf
+!                if (INDEX(sps_id(j),'pump').ne.0) then  
+!! FIXME: another condition to find pumping surface might be required
+!                  print *,'pump is' ,j, ' special surf'
+!                  call eirene_sps_absr_update(j,
+!     &              saved_na_feedback_actuator(ispecies))
+!                endif
+!              enddo
+!               
+!            case default
+!                  
+!               write(*,*) 'na feedback_choice not coded ',
+!=======
               endif
-    !               if ((abs(na_feedback_current/
-    !  &                na_feedback_target(ispecies)-1).gt.0.05)
-    !  &                .or.(int_ntim(ispecies).eq.0)) then
-    !                   int_flux(ispecies) = int_flux(ispecies) 
-    !  &                + saved_na_feedback_actuator(ispecies)
-    !                   int_ntim(ispecies) = int_ntim(ispecies) + 1
-    !                   saved_na_feedback_actuator(ispecies) =
-    !  &                saved_na_feedback_actuator(ispecies) /
-    !  &                na_feedback_rescale
-    !                 else
-    !                   print *,"feedback_set_avg_sps_absr"
-    !                   saved_na_feedback_actuator(ispecies) = 
-    !  &                int_flux(ispecies)/Real(int_ntim(ispecies))
-    !                 end if
-    
-#ifdef B25_EIRENE
-              if (na_feedback_option(ispecies).eq.7.or.
-     &               na_feedback_option(ispecies).eq.8) then
-     
-                sna_pump = 0.0_R8
                 
-                do ia = 1, nnatmi
-                  k = latmscl(ia)
-                  if (k.eq.0) cycle
-                    sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +  
-     &                     eirpump(ia)
-                  do im = 1, nnmoli
-                    if (mlcmp(ia,im).gt.0) then
-                      sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
-     &                  mlcmp(ia,im) * eirpump(nnatmi+im)
-                    endif
-                  enddo
-                end do
-                
-                do ip = 1, nnplsi
-                  is = latmscl(lkindp(ip))
-                  if (is.eq.0) cycle
-                  sna_pump(is) = sna_pump(is) +
-     &                eirpump(nnatmi+nnmoli+nnioni+ip)
-                enddo
-                
-                print *,"Lezgini sna_pump " ,ispecies,' ',
-     &              sna_pump(ispecies+1)
-c Flux from core impact
-
-                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
-     &                    NFLUIDS(ispecies+1)
-
-!         Loop over B2 boundaries
-                  do ic = 1,nbc
-
-                    if (BCCHAR(IC).eq.'S') then
-                      idir  = 1
-                      bsign = 1.0_R8
-                    else if (BCCHAR(IC).eq.'N') then
-                      idir  = 1
-                      bsign =-1.0_R8
-                    else if (BCCHAR(IC).eq.'W') then
-                      idir  = 0
-                      bsign = 1.0_R8
-                    else if (BCCHAR(IC).eq.'E') then
-                      idir  = 0
-                      bsign =-1.0_R8
-                    else
-                      cycle
-                    end if
-
-!           Loop over poloidal coordinate along this boundary
-                    do ix = 1, BC_LIST_SIZE(ic)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!             Check whether it is a southern boundary
-                      if (BCCHAR(ic).EQ.'S') then
-                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                      else if (BCCHAR(ic).EQ.'N') then
-                        ixf = BC_LIST_X(ix,ic)
-                        iyf = BC_LIST_Y(ix,ic)
-                      else if (BCCHAR(ic).EQ.'W') then
-                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                      else if (BCCHAR(ic).eq.'E') then
-                        ixf = BC_LIST_X(ix,ic)
-                        iyf = BC_LIST_Y(ix,ic)
-                      end if
-
-!             Check whether this is part of the core boundary
-                      if (core_boundary(ic)) then
-!                      Count fluid neutrals if not coupled to Eirene
-                        if (is_neutral(is).and.use_eirene.eq.0) then
-                          flxnc(ispecies+1) = flxnc(ispecies+1) +
-     .                      bsign * fna(ixf,iyf,idir,is)
-                        else if (.not.is_neutral(is)) then ! not neutral
-                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
-                            flxic(ispecies+1) = flxic(ispecies+1) +
-     .                          bsign * fna(ixf,iyf,idir,is)
-!                            print *, "Lezgini ion core flux", flxic(ispecies+1)
-                          else
-                            flxic(ispecies+1) = flxic(ispecies+1) +
-     .                        bsign * fna_mdf(ixf,iyf,idir,is)
-                          end if
-                        end if  
-                      end if  
-              
-                    end do   ! ix
-                   
-                  end do  ! ic
-                
-                end do  ! is
-             
-                do is = 1,ncns
-c**       Here "is" is not a species index, but the index of Eirene surface,
-!!!    because
-c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
-c**       lcns() - index of these 'non-default' surfaces
-
-                  js = lcns(is) + nnlimi
-                  
-c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
-                  do j = 1,nnatmi
-                    print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
-     &                             " ,ls=",(ispecies+1)
-                    if (latmscl(j) .eq. ispecies+1) then
-                      flxnc(ispecies+1) = flxnc(ispecies+1)
-     &                  - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-                      do ic=1,nnmoli
-                        if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
-     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
-     &                       - wldrm(js,ic,0) - wldpm(js,ic,0))
-                      end do
-                    end if
-                  end do
-                end do
-c -------------------------------------------------------------------------------------
-                print *, "Lezgini ion core flux", flxic(ispecies+1)
-                print *, "Lezgini neut core flux", flxnc(ispecies+1)
-              
-              endif ! na_feedback_option(ispecies) = 7,8
-#endif
-
+              call calc_pump_and_flux(nx,ny,ns,mdf_fnb,
+     &                style_b2mndt, use_eirene, nspecies,  
+     &                 ispecies, sna_pump, flxnp, flxic)
               flxnp = 0.0_R8
-            
+              
               do ic = 1,nstrat
                 if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
                   do j = 1,nnatmi
                     if (latmscl(j) .eq. ispecies+1) then
                       flxnp(ispecies+1) = flxnp(ispecies+1) +
-     &                 userfluxparm(ic,1) * gpfc(j,ic)
+     &                    userfluxparm(ic,1) * gpfc(j,ic)
                     endif
                   end do
-                endif       
+                endif
               end do
-            
-!              print *, "Lezgini puff flux", flxnp(ispecies+1)
-            ! call cfruin (ninp(1), 1, idum, 'itim')
-            ! itim = idum(0)
-            
+              
+              print *, "Lezgini puff flux", flxnp(ispecies+1)
+                
               int_ntim(ispecies) = int_ntim(ispecies) + 1
-            
-!              print *,"itim",int_ntim(ispecies),eirene_mod
-            
+              print *,"itim",int_ntim(ispecies),eirene_mod
               if (mod(int_ntim(ispecies),eirene_mod).eq.0) then
                 saved_na_feedback_actuator(ispecies) =
-     &             saved_na_feedback_actuator(ispecies) /
-     &             na_feedback_rescale*(flxnp(ispecies+1) + 
-     &             flxic(ispecies+1))/sna_pump(ispecies+1)
+     &              saved_na_feedback_actuator(ispecies) /
+     &          na_feedback_rescale*(flxnp(ispecies+1)
+     &              +flxic(ispecies+1))/sna_pump(ispecies+1)
               endif
-            
-              if (na_feedback_puff_min(ispecies) .ge. 0.0_R8)
-     &          saved_na_feedback_actuator(ispecies) =
+              
+              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+     &                 saved_na_feedback_actuator(ispecies) =
      &                 max(na_feedback_puff_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
-              if (na_feedback_puff_max(ispecies) .gt. 0.0_R8)
-     &          saved_na_feedback_actuator(ispecies) =
+              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+     &                 saved_na_feedback_actuator(ispecies) =
      &                 min(na_feedback_puff_max(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
               do j=1,n_spcsrf
-                if (INDEX(sps_id(j),'pump').ne.0) then  
-! FIXME: another condition to find pumping surface might be required
+                if (INDEX(sps_id(j),'pump').ne.0) then
                   print *,'pump is' ,j, ' special surf'
                   call eirene_sps_absr_update(j,
      &              saved_na_feedback_actuator(ispecies))
                 endif
               enddo
-               
+#endif
             case default
-                  
-               write(*,*) 'na feedback_choice not coded ',
+    
+              write(*,*) 'na feedback_choice not coded ',
+!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
      &                 na_feedback_choice(ispecies)
      
 !>>>>>>> 9e9da198... Changes to be committed:
@@ -3230,3 +3361,144 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 *.end b2stbc_fb_pre
 
       end subroutine b2stbc_fb_pre
+
+#ifdef B25_EIRENE
+      subroutine calc_pump_and_flux(nx,ny,ns,mdf_fnb,style_b2mndt,
+     &      use_eirene, nspecies, ispecies, 
+     &     sna_pump, flxnp, flxic)
+      use b2mod_types
+      use eirmod_wneutrals
+      use b2mod_eirene
+     ,   , only : eirpump
+      use eirmod_braeir
+      use b2mod_boundary_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_diag
+      use b2mod_b2cmpa , only : is_neutral
+      use b2mod_plasma, only : fna_mdf, fna
+       
+      implicit none
+! #include <DIMENSIONS.F>
+       
+      integer :: nspecies
+      real (kind=R8) :: flxic(nspecies),flxnc(nspecies),
+     &  flxnp(nspecies),private_flux_puff, private_flux_area,
+     &  neutral_sources_rescale,sna_pump(nspecies),bsign
+      integer ::  j, k, ias, is, ispecies,ic, idir,ia,im,ip,
+     &    ix,ixf,iyf, use_eirene,mdf_fnb,style_b2mndt, js
+      integer nx, ny, ns
+        
+      sna_pump = 0.0_R8
+      do ia = 1, nnatmi
+        k = latmscl(ia)
+        if (k.eq.0) cycle
+        sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) 
+     &          + eirpump(ia)
+        do im = 1, nnmoli
+          if (mlcmp(ia,im).gt.0) then
+            sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
+     &              mlcmp(ia,im) * eirpump(nnatmi+im)
+          endif
+        enddo
+      end do
+     
+      do ip = 1, nnplsi
+        is = latmscl(lkindp(ip))
+        if (is.eq.0) cycle
+        sna_pump(is) = sna_pump(is) +
+     &            eirpump(nnatmi+nnmoli+nnioni+ip)
+      enddo
+     
+      print *,"Lezgini sna_pump " ,ispecies,' ',
+     &        sna_pump(ispecies+1)
+c Flux from core impact
+
+      do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
+     &       NFLUIDS(ispecies+1)
+!         Loop over B2 boundaries
+        do ic = 1,nbc
+
+          if (BCCHAR(IC).eq.'S') then
+            idir  = 1
+            bsign = 1.0_R8
+          else if (BCCHAR(IC).eq.'N') then
+            idir  = 1
+            bsign =-1.0_R8
+          else if (BCCHAR(IC).eq.'W') then
+            idir  = 0
+            bsign = 1.0_R8
+          else if (BCCHAR(IC).eq.'E') then
+            idir  = 0
+            bsign =-1.0_R8
+          else
+            cycle
+          end if
+
+!           Loop over poloidal coordinate along this boundary
+          do ix = 1, BC_LIST_SIZE(ic)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!             Check whether it is a southern boundary
+            if (BCCHAR(ic).EQ.'S') then
+              ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+              iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+            else if (BCCHAR(ic).EQ.'N') then
+              ixf = BC_LIST_X(ix,ic)
+              iyf = BC_LIST_Y(ix,ic)
+            else if (BCCHAR(ic).EQ.'W') then
+              ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+              iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+            else if (BCCHAR(ic).eq.'E') then
+              ixf = BC_LIST_X(ix,ic)
+              iyf = BC_LIST_Y(ix,ic)
+            end if
+
+!             Check whether this is part of the core boundary
+            if (core_boundary(ic)) then
+! Count fluid neutrals if not coupled to Eirene
+              if (is_neutral(is).and.use_eirene.eq.0) then
+                flxnc(ispecies+1) = flxnc(ispecies+1) +
+     .             bsign*fna(ixf,iyf,idir,is)
+              else if (.not.is_neutral(is)) then ! not neutral
+                if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
+                  flxic(ispecies+1) = flxic(ispecies+1) +
+     .               bsign*fna(ixf,iyf,idir,is)
+                  print *, "Lezgini ion core flux", flxic(ispecies+1)
+                else
+                  flxic(ispecies+1) = flxic(ispecies+1) +
+     .               bsign*fna_mdf(ixf,iyf,idir,is)
+                end if
+              end if
+            end if  
+          end do
+        end do  
+      end do
+      
+      do is = 1,ncns
+c**       Here "is" is not a species index, but the index of Eirene surface,
+!!!    because
+c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
+c**       lcns() - index of these 'non-default' surfaces
+
+        js = lcns(is) + nnlimi
+c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
+        do j = 1,nnatmi
+          print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
+     &            " ,ls=",(ispecies+1)
+          if (latmscl(j) .eq. ispecies+1) then
+            flxnc(ispecies+1) = flxnc(ispecies+1)
+     &                  - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
+            do ic=1,nnmoli
+              if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
+     &                flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
+     &               - wldrm(js,ic,0) - wldpm(js,ic,0))
+            end do
+          end if
+        end do
+      end do
+c -------------------------------------------------------------------------------------
+      print *, "Lezgini ion core flux", flxic(ispecies+1)
+      print *, "Lezgini neut core flux", flxnc(ispecies+1)
+      
+      end subroutine calc_pump_and_flux
+#endif
