@@ -2059,11 +2059,9 @@ c new CDF movie option (1st frame at t=0)
       logical streql
       external streql
 #endif
-#ifdef CRAY
-#ifdef _OPENMP
+#if ( defined(CRAY) && defined(_OPENMP) )
       real(kind=R8) :: omp_get_wtime
       external omp_get_wtime
-#endif
 #endif
 
       call subini ('b2mndr_1')
@@ -3084,6 +3082,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
+         if (balance_average .ne. 0) then
+           call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
+        endif
         call write_balance(nx,ny,ns)
 #else
         write(*,*)

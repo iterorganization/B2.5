@@ -2,38 +2,20 @@
 
       use b2mod_external
 
-#if MPI_MOD > 0
-#ifdef USE_MPI
+#if MPI_MOD > 0 && ( defined(USE_MPI) || defined(USE_IMPGYRO) )
       use mpi  ! IGNORE
-#else
-#ifdef USE_IMPGYRO
-      use mpi  ! IGNORE
-#endif
-#endif
 #endif
       implicit none
-#if MPI_MOD < 1
-#ifdef USE_MPI
+#if MPI_MOD < 1 && ( defined(USE_MPI) || defined(USE_IMPGYRO) )
       include 'mpif.h'
-#else
-#ifdef USE_IMPGYRO
-      include 'mpif.h'
-#endif
-#endif
 #endif
       private
 
-#ifdef USE_MPI
+#if ( defined(USE_MPI) || defined(USE_IMPGYRO) )
       integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
-      logical :: last
-#else
-#ifdef USE_IMPGYRO
-      integer :: mpi_err,mpi_stat(mpi_status_size)
-      integer :: mpi_rank,mpi_size,mpi_local
-      logical :: last
 #endif
-#endif
+      logical :: last
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
      &                      !    by ionisation/recombination
@@ -349,28 +331,12 @@ cxpb
       integer :: ix ,iy ,is
 
       write (*,*) 'b2ig: Entering impgyro_main'
-
+#if ( defined(USE_MPI) || defined(USE_IMPGYRO) )
 #ifdef USE_MPI
       write (*,*) 'b2ig: impgyro_main...flag=MPI'
-      call mpi_bcast (last, 1, mpi_logical , 0,
-     &  mpi_comm_world, mpi_err)
-      call mpi_bcast (na, size(na), mpi_real8, 0,
-     &  mpi_comm_world, mpi_err)
-      call mpi_bcast (ne, size(ne), mpi_real8, 0,
-     &  mpi_comm_world, mpi_err)
-      call mpi_bcast (ua, size(ua), mpi_real8, 0,
-     &  mpi_comm_world, mpi_err)
-      call mpi_bcast (te, size (te), mpi_real8, 0,
-     &  mpi_comm_world, mpi_err)
-      call mpi_bcast (ti, size (ti), mpi_real8, 0,
-     &  mpi_comm_world, mpi_err)
-      call mpi_bcast (po, size (po), mpi_real8, 0,
-     &  mpi_comm_world, mpi_err)
-      call mpi_bcast (fna, size (fna), mpi_real8, 0,
-     &  mpi_comm_world, mpi_err)
-#else
-#ifdef USE_IMPGYRO
+#elif defined(USE_IMPGYRO)
       write (*,*) 'b2ig: impgyro_main...flag=IG'
+#endif
       call mpi_bcast (last, 1, mpi_logical , 0,
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (na, size(na), mpi_real8, 0,
@@ -387,7 +353,6 @@ cxpb
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (fna, size (fna), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-#endif
 #endif
 
       write (*,*) 'b2ig: running impgyro ...'
@@ -436,7 +401,7 @@ cxpb
       b2zfw = 0
       b2ztw = 0
       write (*,*) 'b2ig: IMPGYRO run failed!' 
-      write (*,*) 'b2ig: Every external specie information set to zero.'
+      write (*,*) 'b2ig: All external species information set to zero.'
       write (*,*) 'b2ig: You may have forgotten set_ig option!'
 #endif
 #endif
@@ -495,16 +460,11 @@ cxpb
 
       write (*,*) 'b2ig: Entering impgyro_last'
 
-#ifdef USE_MPI
       last = .true.
+
+#if ( defined(USE_MPI) || defined(USE_IMPGYRO) )
       call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
-#else
-#ifdef USE_IMPGYRO
-      last = .true.
-      call mpi_bcast ( last , 1 , mpi_logical , 0 ,
-     &     mpi_comm_world , mpi_err )
-#endif
 #endif
 
       call my_open_file ( fd , 'restart_ext' )
