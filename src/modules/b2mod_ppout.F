@@ -56,10 +56,8 @@ c   ..functions
 
       real (kind=R8) ::
      *  vdot, vlen, thetasepx
-#else
-#ifdef IMAS
+#elif defined(IMAS)
       character*132, save :: labgeo
-#endif
 #endif
 
       contains
