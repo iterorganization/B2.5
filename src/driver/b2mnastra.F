@@ -22,16 +22,12 @@
       use b2mod_b2_to_astra
       use b2mod_driver
       use b2mod_xerset
-#ifdef USE_MPI
-#if MPI_MOD > 0
+#if ( defined(USE_MPI) && MPI_MOD > 0 )
       use mpi      ! IGNORE
 #endif
-#endif
       implicit none
-#ifdef USE_MPI
-#if MPI_MOD < 1
+#if ( defined(USE_MPI) && MPI_MOD < 1 )
       include 'mpif.h'
-#endif
 #endif
 
 *-----------------------------------------------------------------------
@@ -151,11 +147,9 @@
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen, cfruin
-#ifdef _OPENMP
-#ifdef CRAY
+#if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
-#endif
 #endif
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
