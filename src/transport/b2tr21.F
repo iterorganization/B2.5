@@ -98,7 +98,9 @@ c     local variables:
       endif
 
 *   ..compute the Coulomb logarithm
+#ifdef WG_TODO
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)              !srv 20.09.11
+#endif
 
       failcount0=failcount
       mm(1) = me
@@ -396,7 +398,9 @@ c       ( ix )
       endif
 
 *   ..compute the Coulomb logarithm
+#ifdef WG_TODO
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)              !srv 20.09.11
+#endif
 
       failcount0=failcount
       nspec=1
