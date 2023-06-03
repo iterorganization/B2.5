@@ -1017,408 +1017,398 @@ c conn
         iy = topcut(1)+1
         ix = leftcut(1)-1
         lefttargetindex(1)=GRID_UNDEFINED
-        do while (ix.gt.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-            if (geoType /= CGEO_TRIA_NOLEFT .and.
-     &       cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
-            else if (geoType /= CGEO_TRIA_NOTOP .and.
-     &       cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
-            else if (geoType /= CGEO_TRIA_NOBOT .and.
-     &       cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
-            else
+        if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) then
+          do while (ix.gt.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
+            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              if (geoType /= CGEO_TRIA_NOLEFT .and.
+     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
+                lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
+              else if (geoType /= CGEO_TRIA_NOTOP .and.
+     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+                lefttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
+              else if (geoType /= CGEO_TRIA_NOBOT .and.
+     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED)
+     &         then
+                lefttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+              else
 #ifdef BUILDING_CARRE
-              stop
+                stop
      &  'Invalid cflags settings (L), should not have gotten here!'
 #else
-              call xerrab
+                call xerrab
      & ('Invalid cflags settings (L), should not have gotten here!')
 #endif
+              endif
+            else
+              ix = ix-1
             endif
-          else
-            ix = ix-1
-          endif
-        end do
+          end do
 #ifdef BUILDING_CARRE
-        if (.not. lefttargetindex(1).ne.GRID_UNDEFINED)
-     &   stop 'Left target not found!'
+          if (.not. lefttargetindex(1).ne.GRID_UNDEFINED)
+     &     stop 'Left target not found!'
 #else
-        call xertst(lefttargetindex(1).ne.GRID_UNDEFINED,
-     &        'Left target not found!')
+          call xertst(lefttargetindex(1).ne.GRID_UNDEFINED,
+     &          'Left target not found!')
 #endif
+        endif
 ! We identify the structure index of the right target
         iy = topcut(1)+1
         ix = rightcut(1)
         righttargetindex(1)=GRID_UNDEFINED
-        do while (ix.lt.nx .and. righttargetindex(1).eq.GRID_UNDEFINED)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-            if (geoType /= CGEO_TRIA_NORIGHT .and.
-     &       cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
-              righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
-            else if (geoType /= CGEO_TRIA_NOTOP .and.
-     &       cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-              righttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
-            else if (geoType /= CGEO_TRIA_NOBOT .and.
-     &       cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-              righttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
-            else
-#ifdef BUILDING_CARRE
-              stop
-     &  'Invalid cflags settings (R), should not have gotten here!'
-#else
-              call xerrab
-     & ('Invalid cflags settings (R), should not have gotten here!')
-#endif
-            endif
-          else
-            ix = ix+1
-          endif
-        end do
-#ifdef BUILDING_CARRE
-        if (.not. righttargetindex(1).ne.GRID_UNDEFINED)
-     >   stop 'Right target not found!'
-#else
-        call xertst(righttargetindex(1).ne.GRID_UNDEFINED,
-     .        'Right target not found!')
-#endif
-
-! X-flux component
-      do iy=-1,iyt
-! We find the cells contacting the left target: x-region 1
-        ix = -1
-        do while (ix.lt.nx .and.
-     &   cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-            if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1)
-     &       .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=1
-            if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(1)
-     &       .and. geoType /= CGEO_TRIA_NOTOP)
-     &       region(topix(ix,iy),topiy(ix,iy),2)=-1
-            if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) == lefttargetindex(1)
-     &       .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-1
-          endif
-          ix = ix + 1
-        enddo
-! We find the cells contacting the right target: x-region 4 (1 X-point) or 8 (2 X-points)
-        ix = nx
-        do while (ix.gt.-1
-     &   .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-            if (cflag(ix, iy, CELLFLAG_RIGHTFACE) == righttargetindex(1)
-     &       .and. geoType /= CGEO_TRIA_NORIGHT)
-     &       region(rightix(ix,iy),rightiy(ix,iy),1)=4*nncut
-            if (cflag(ix, iy, CELLFLAG_TOPFACE) == righttargetindex(1)
-     &       .and. geoType /= CGEO_TRIA_NOTOP)
-     &       region(topix(ix,iy),topiy(ix,iy),2)=-4*nncut
-            if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) ==
-     &                                              righttargetindex(1)
-     &       .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-4*nncut
-          endif
-          ix = ix - 1
-        enddo
-      enddo
-      if (nncut.eq.2) then  ! Additional data for DN cases
-! We identify the location of the break between the two grid halves
-        ixbreak = -2
-        ix = leftcut(2)
-        do while (ix.lt.rightcut(2) .and. ixbreak.eq.-2)
-          iy = ny
-          do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
-            iy = iy - 1
-            if (iy.eq.-2) exit
-          end do
-          if (iy.ne.-2) then
-            ix = ix + 1
-          else
-            ixbreak = ix
-          end if
-        end do
-#ifdef BUILDING_CARRE
-        if (ixbreak.eq.-2) stop 'Did not find the break location!'
-#else
-        call xertst(ixbreak.ne.-2, 'Did not find the break location!')
-#endif
-! We identify the structure index of the second left target
-        iy = topcut(2)+1
-        ix = rightcut(2)-1
-        do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)) .and.
-     &             ix.lt.rightcut(1))
-          ix = ix + 1
-        end do
-#ifdef BUILDING_CARRE
-        if (ix.eq.rightcut(1))
-     &   stop 'Second separatrix does not have a left strike point!'
-#else
-        call xertst(ix.lt.rightcut(1),
-     &        'Second separatrix does not have a left strike point!')
-#endif
-        lefttargetindex(2)=GRID_UNDEFINED
-        do while (ix.gt.ixbreak
-     &   .and. lefttargetindex(2).eq.GRID_UNDEFINED)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-            if (geoType /= CGEO_TRIA_NOLEFT .and.
-     &       cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(2) = cflag(ix,iy,CELLFLAG_LEFTFACE)
-            else if (geoType /= CGEO_TRIA_NOTOP .and.
-     &       cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
-            else if (geoType /= CGEO_TRIA_NOBOT .and.
-     &       cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
-            else
-#ifdef BUILDING_CARRE
-              stop
-     >  'Invalid cflags settings (L2), should not have gotten here!'
-#else
-              call xerrab
-     . ('Invalid cflags settings (L2), should not have gotten here!')
-#endif
-            endif
-          else
-            ix = ix-1
-          endif
-        end do
-#ifdef BUILDING_CARRE
-        if (.not. lefttargetindex(2).ne.GRID_UNDEFINED)
-     &   stop 'Second left target not found!'
-#else
-        call xertst(lefttargetindex(2).ne.GRID_UNDEFINED,
-     &        'Second left target not found!')
-#endif
-! We identify the structure index of the second right target
-        iy = topcut(2)+1
-        ix = leftcut(2)
-        do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)) .and.
-     &   ix.gt.leftcut(1) )
-          ix = ix - 1
-        end do
-#ifdef BUILDING_CARRE
-        if (ix.eq.leftcut(1))
-     &   stop 'Second separatrix does not have a right strike point!'
-#else
-        call xertst(ix.gt.leftcut(1),
-     &        'Second separatrix does not have a right strike point!')
-#endif
-        righttargetindex(2)=GRID_UNDEFINED
-        do while (ix.lt.ixbreak
-     &   .and. righttargetindex(2).eq.GRID_UNDEFINED)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-            if (geoType /= CGEO_TRIA_NORIGHT .and.
-     &       cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
-              righttargetindex(2) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
-            else if (geoType /= CGEO_TRIA_NOTOP .and.
-     &       cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-              righttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
-            else if (geoType /= CGEO_TRIA_NOBOT .and.
-     &       cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-              righttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
-            else
-#ifdef BUILDING_CARRE
-              stop
-     >  'Invalid cflags settings (R2), should not have gotten here!'
-#else
-              call xerrab
-     . ('Invalid cflags settings (R2), should not have gotten here!')
-#endif
-            endif
-          else
-            ix = ix+1
-          endif
-        end do
-#ifdef BUILDING_CARRE
-        if (.not. righttargetindex(2).ne.GRID_UNDEFINED)
-     &   stop 'Second right target not found!'
-#else
-        call xertst(righttargetindex(2).ne.GRID_UNDEFINED,
-     &        'Second right target not found!')
-#endif
-        do iy=-1,iyt
-! We find the cells contacting the second left target: x-region 5
-          ix = nx
-          do while (ix.gt.ixbreak)
+        if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) then
+          do while (ix.lt.nx .and.
+     &              righttargetindex(1).eq.GRID_UNDEFINED)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
               geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(2)
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=5
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(2)
-     &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=-5
-              if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) ==
-     &                                               lefttargetindex(2)
-     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-5
+              if (geoType /= CGEO_TRIA_NORIGHT .and.
+     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
+                righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
+              else if (geoType /= CGEO_TRIA_NOTOP .and.
+     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+                righttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
+              else if (geoType /= CGEO_TRIA_NOBOT .and.
+     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED)
+     &         then
+                righttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+              else
+#ifdef BUILDING_CARRE
+                stop
+     &  'Invalid cflags settings (R), should not have gotten here!'
+#else
+                call xerrab
+     & ('Invalid cflags settings (R), should not have gotten here!')
+#endif
+              endif
+            else
+              ix = ix+1
             endif
-            ix = ix - 1
-          enddo
-! We find the cells contacting the second right target: x-region 4
+          end do
+#ifdef BUILDING_CARRE
+          if (.not. righttargetindex(1).ne.GRID_UNDEFINED)
+     >     stop 'Right target not found!'
+#else
+          call xertst(righttargetindex(1).ne.GRID_UNDEFINED,
+     .          'Right target not found!')
+#endif
+        endif
+! X-flux component
+        do iy=-1,iyt
+! We find the cells contacting the left target: x-region 1
           ix = -1
-          do while (ix.lt.ixbreak)
+          do while (ix.lt.nx .and.
+     &              cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
+            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1)
+     &         .and. lefttargetindex(1) /= GRID_UNDEFINED
+     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=1
+              if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(1)
+     &         .and. lefttargetindex(1) /= GRID_UNDEFINED
+     &         .and. geoType /= CGEO_TRIA_NOTOP)
+     &         region(topix(ix,iy),topiy(ix,iy),2)=-1
+              if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) ==
+     &                                               lefttargetindex(1)
+     &         .and. lefttargetindex(1) /= GRID_UNDEFINED
+     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-1
+            endif
+            ix = ix + 1
+          enddo
+! We find the cells contacting the right target: x-region 4 (1 X-point) or 8 (2 X-points)
+          ix = nx
+          do while (ix.gt.-1
+     &     .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
               geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
               if (cflag(ix, iy, CELLFLAG_RIGHTFACE) ==
-     &                                               righttargetindex(2)
+     &                                              righttargetindex(1)
+     &         .and. righttargetindex(1) /= GRID_UNDEFINED
      &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=4
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) == righttargetindex(2)
+     &         region(rightix(ix,iy),rightiy(ix,iy),1)=4*nncut
+              if (cflag(ix, iy, CELLFLAG_TOPFACE) == righttargetindex(1)
+     &         .and. righttargetindex(1) /= GRID_UNDEFINED
      &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=-4
+     &         region(topix(ix,iy),topiy(ix,iy),2)=-4*nncut
               if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) ==
-     &                                               righttargetindex(2)
-     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-4
+     &                                              righttargetindex(1)
+     &         .and. righttargetindex(1) /= GRID_UNDEFINED
+     &         .and. geoType /= CGEO_TRIA_NOBOT)
+     &         region(ix,iy,2)=-4*nncut
             endif
-            ix = ix + 1
+            ix = ix - 1
           enddo
         enddo
-      end if  ! DN
-      do iy=topcut(1),iyt
+        if (nncut.eq.2) then  ! Additional data for DN cases
+! We identify the location of the break between the two grid halves
+          ixbreak = -2
+          ix = leftcut(2)
+          do while (ix.lt.rightcut(2) .and. ixbreak.eq.-2)
+            iy = ny
+            do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
+              iy = iy - 1
+              if (iy.eq.-2) exit
+            end do
+            if (iy.ne.-2) then
+              ix = ix + 1
+            else
+              ixbreak = ix
+            end if
+          end do
+#ifdef BUILDING_CARRE
+          if (ixbreak.eq.-2) stop 'Did not find the break location!'
+#else
+          call xertst(ixbreak.ne.-2, 'Did not find the break location!')
+#endif
+! We identify the structure index of the second left target
+          iy = topcut(2)+1
+          ix = rightcut(2)-1
+          do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)) .and.
+     &              ix.le.nx)
+            ix = ix + 1
+          end do
+          lefttargetindex(2)=GRID_UNDEFINED
+          if (ix.le.nx) then
+            do while (ix.gt.ixbreak
+     &       .and. lefttargetindex(2).eq.GRID_UNDEFINED)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (geoType /= CGEO_TRIA_NOLEFT .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED)
+     &           then
+                  lefttargetindex(2) = cflag(ix,iy,CELLFLAG_LEFTFACE)
+                else if (geoType /= CGEO_TRIA_NOTOP .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+                  lefttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
+                else if (geoType /= CGEO_TRIA_NOBOT .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED)
+     &           then
+                  lefttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+                else
+#ifdef BUILDING_CARRE
+                  stop
+     >  'Invalid cflags settings (L2), should not have gotten here!'
+#else
+                  call xerrab
+     . ('Invalid cflags settings (L2), should not have gotten here!')
+#endif
+                endif
+              else
+                ix = ix-1
+              endif
+            end do
+#ifdef BUILDING_CARRE
+            if (.not. lefttargetindex(2).ne.GRID_UNDEFINED)
+     &       stop 'Second left target not found!'
+#else
+            call xertst(lefttargetindex(2).ne.GRID_UNDEFINED,
+     &            'Second left target not found!')
+#endif
+          endif
+! We identify the structure index of the second right target
+          iy = topcut(2)+1
+          ix = leftcut(2)
+          do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)) .and.
+     &     ix.gt.0 )
+            ix = ix - 1
+          end do
+          righttargetindex(2)=GRID_UNDEFINED
+          if (ix.ge.0) then
+            do while (ix.lt.ixbreak
+     &       .and. righttargetindex(2).eq.GRID_UNDEFINED)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (geoType /= CGEO_TRIA_NORIGHT .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED)
+     &           then
+                  righttargetindex(2) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
+                else if (geoType /= CGEO_TRIA_NOTOP .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+                  righttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
+                else if (geoType /= CGEO_TRIA_NOBOT .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED)
+     &           then
+                  righttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+                else
+#ifdef BUILDING_CARRE
+                  stop
+     >  'Invalid cflags settings (R2), should not have gotten here!'
+#else
+                  call xerrab
+     . ('Invalid cflags settings (R2), should not have gotten here!')
+#endif
+                endif
+              else
+                ix = ix+1
+              endif
+            end do
+#ifdef BUILDING_CARRE
+            if (.not. righttargetindex(2).ne.GRID_UNDEFINED)
+     &       stop 'Second right target not found!'
+#else
+            call xertst(righttargetindex(2).ne.GRID_UNDEFINED,
+     &            'Second right target not found!')
+#endif
+          endif
+          do iy=-1,iyt
+! We find the cells contacting the second left target: x-region 5
+            ix = nx
+            do while (ix.gt.ixbreak)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) ==
+     &                                               lefttargetindex(2)
+     &           .and. lefttargetindex(2) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=5
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) ==
+     &                                              lefttargetindex(2)
+     &           .and. lefttargetindex(2) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOTOP)
+     &           region(topix(ix,iy),topiy(ix,iy),2)=-5
+                if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) ==
+     &                                               lefttargetindex(2)
+     &           .and. lefttargetindex(2) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-5
+              endif
+              ix = ix - 1
+            enddo
+! We find the cells contacting the second right target: x-region 4
+            ix = -1
+            do while (ix.lt.ixbreak)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) ==
+     &                                               righttargetindex(2)
+     &           .and. righttargetindex(2) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=4
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) ==
+     &                                               righttargetindex(2)
+     &           .and. righttargetindex(2) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOTOP)
+     &           region(topix(ix,iy),topiy(ix,iy),2)=-4
+                if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) ==
+     &                                               righttargetindex(2)
+     &           .and. righttargetindex(2) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-4
+              endif
+              ix = ix + 1
+            enddo
+          enddo
+        end if  ! DN
+        do iy=topcut(1),iyt
 ! We find the location of the Western divertor throat: x-region 2
-        geoType = cellGeoType(crx(leftcut(1),iy,:),
-     &                        cry(leftcut(1),iy,:))
-        if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE))
-     &   .and. geoType /= CGEO_TRIA_NOLEFT) region(leftcut(1),iy,1) = 2
+          geoType = cellGeoType(crx(leftcut(1),iy,:),
+     &                          cry(leftcut(1),iy,:))
+          if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE))
+     &     .and. geoType /= CGEO_TRIA_NOLEFT)
+     &     region(leftcut(1),iy,1) = 2
 ! We find the location of the Eastern divertor throat: x-region 3 (1 X-point) or 7 (2 X-points)
-        geoType = cellGeoType(crx(rightcut(1),iy,:),
-     &                        cry(rightcut(1),iy,:))
-        if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE))
-     &   .and. geoType /= CGEO_TRIA_NOLEFT)
-     &   region(rightcut(1),iy,1) = 3 + 4*(nncut-1)
-      end do
-      if (nncut.eq.2) then
-        do iy=topcut(2),iyt
-! We find the location of the inner upper divertor throat: x-region 3
-          geoType = cellGeoType(crx(leftcut(2),iy,:),
-     &                          cry(leftcut(2),iy,:))
-          if (isRealCell(cflag(leftcut(2),iy,CELLFLAG_TYPE))
+          geoType = cellGeoType(crx(rightcut(1),iy,:),
+     &                          cry(rightcut(1),iy,:))
+          if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE))
      &     .and. geoType /= CGEO_TRIA_NOLEFT)
-     &     region(leftcut(2),iy,1) = 3
-! We find the location of the outer upper divertor throat: x-region 6
-          geoType = cellGeoType(crx(rightcut(2),iy,:),
-     &                          cry(rightcut(2),iy,:))
-          if (isRealCell(cflag(rightcut(2),iy,CELLFLAG_TYPE))
-     &     .and. geoType /= CGEO_TRIA_NOLEFT)
-     &     region(rightcut(2),iy,1) = 6
+     &     region(rightcut(1),iy,1) = 3 + 4*(nncut-1)
         end do
-      end if
+        if (nncut.eq.2) then
+          do iy=topcut(2),iyt
+! We find the location of the inner upper divertor throat: x-region 3
+            geoType = cellGeoType(crx(leftcut(2),iy,:),
+     &                            cry(leftcut(2),iy,:))
+            if (isRealCell(cflag(leftcut(2),iy,CELLFLAG_TYPE))
+     &       .and. geoType /= CGEO_TRIA_NOLEFT)
+     &       region(leftcut(2),iy,1) = 3
+! We find the location of the outer upper divertor throat: x-region 6
+            geoType = cellGeoType(crx(rightcut(2),iy,:),
+     &                            cry(rightcut(2),iy,:))
+            if (isRealCell(cflag(rightcut(2),iy,CELLFLAG_TYPE))
+     &       .and. geoType /= CGEO_TRIA_NOLEFT)
+     &       region(rightcut(2),iy,1) = 6
+          end do
+        end if
 ! We find the core and PFR bottom periodicity lines: x-regions 5 and 6 (1 X-point)
 !                                                  : x-regions 9 and 12 (2 X-points)
 ! x-region 13 is the connection between the two halves of the SOL section between the two separatrices
-      do iy=bottomcut(1),topcut(1)-1
-        if(nncut.eq.1) then
-          if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)))
-     &     region(leftcut(1),iy,1)=5
-          geoType = cellGeoType(crx(rightcut(1),iy,:),
-     &                          cry(rightcut(1),iy,:))
-          if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) .and.
-     &     cflag(rightcut(1), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED
-     &     .and. geoType /= CGEO_TRIA_NOLEFT)
-     &     region(rightcut(1),iy,1) = 6
-        elseif(nncut.eq.2) then
-          if(iy.ge.bottomcut(2).and.iy.lt.topcut(2)) then
+        do iy=bottomcut(1),topcut(1)-1
+          if(nncut.eq.1) then
             if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)))
-     >       region(leftcut(1),iy,1)=9
-          else
-            if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)))
-     >       region(leftcut(1),iy,1)=13
+     &       region(leftcut(1),iy,1)=5
+            geoType = cellGeoType(crx(rightcut(1),iy,:),
+     &                            cry(rightcut(1),iy,:))
+            if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) .and.
+     &       cflag(rightcut(1), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED
+     &       .and. geoType /= CGEO_TRIA_NOLEFT)
+     &       region(rightcut(1),iy,1) = 6
+          elseif(nncut.eq.2) then
+            if(iy.ge.bottomcut(2).and.iy.lt.topcut(2)) then
+              if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)))
+     >         region(leftcut(1),iy,1)=9
+            else
+              if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)))
+     >         region(leftcut(1),iy,1)=13
+            endif
+            geoType = cellGeoType(crx(rightcut(1),iy,:),
+     &                            cry(rightcut(1),iy,:))
+            if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) .and.
+     &       cflag(rightcut(1), iy, CELLFLAG_LEFTFACE) ==
+     &                                                 GRID_UNDEFINED)
+     &       region(rightcut(1),iy,1)=12
           endif
-          geoType = cellGeoType(crx(rightcut(1),iy,:),
-     &                          cry(rightcut(1),iy,:))
-          if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) .and.
-     &     cflag(rightcut(1), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED)
-     &     region(rightcut(1),iy,1)=12
-        endif
-      enddo
+        enddo
 ! We find the core and PFR top periodicity lines: x-regions 10 and 11 (2 X-points)
 ! x-region 13 is the connection between the two halves of the SOL section between the two separatrices
-      if(nncut.eq.2) then
-        do iy=bottomcut(2),topcut(2)-1
-          geoType = cellGeoType(crx(leftcut(2),iy,:),
-     &                          cry(leftcut(2),iy,:))
-          if (isRealCell(cflag(leftcut(2),iy,CELLFLAG_TYPE)) .and.
-     &     cflag(leftcut(2), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED
-     &     .and. geoType /= CGEO_TRIA_NOLEFT) region(leftcut(2),iy,1)=10
-          if(iy.ge.bottomcut(1).and.iy.lt.topcut(1)) then
-            if (isRealCell(cflag(rightcut(2),iy,CELLFLAG_TYPE)))
-     >       region(rightcut(2),iy,1)=11
-          else
-            if (isRealCell(cflag(rightcut(2),iy,CELLFLAG_TYPE)))
-     >       region(rightcut(2),iy,1)=13
-          endif
-        enddo
-      endif
+        if(nncut.eq.2) then
+          do iy=bottomcut(2),topcut(2)-1
+            geoType = cellGeoType(crx(leftcut(2),iy,:),
+     &                            cry(leftcut(2),iy,:))
+            if (isRealCell(cflag(leftcut(2),iy,CELLFLAG_TYPE)) .and.
+     &       cflag(leftcut(2), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED
+     &       .and. geoType /= CGEO_TRIA_NOLEFT)
+     &       region(leftcut(2),iy,1)=10
+            if(iy.ge.bottomcut(1).and.iy.lt.topcut(1)) then
+              if (isRealCell(cflag(rightcut(2),iy,CELLFLAG_TYPE)))
+     >         region(rightcut(2),iy,1)=11
+            else
+              if (isRealCell(cflag(rightcut(2),iy,CELLFLAG_TYPE)))
+     >         region(rightcut(2),iy,1)=13
+            endif
+          enddo
+        endif
 ! We find the stellarator island periodicity line: x-region 7
-      if(nncut.eq.1.and.periodic_bc.eq.1) then
-        do iy=iyt+1,ny
-          if (isRealCell(cflag(inselix1,iy,CELLFLAG_TYPE)))
-     >     region(inselix1,iy,1)=7
-        enddo
-      endif
-      if(nncut.eq.1.and.nnreg(0).eq.4) then    ! SN case
-        nnreg(1)=6
-      elseif(nncut.eq.1.and.nnreg(0).eq.5) then    ! Stellarator island case
-        nnreg(1)=7
-      elseif(nncut.eq.2.and.topcut(1).eq.topcut(2)) then   ! DNC case
-        nnreg(1)=12
-      elseif(nncut.eq.2.and.topcut(1).ne.topcut(2)) then   ! DND case
-        nnreg(1)=13
-      endif
+        if(nncut.eq.1.and.periodic_bc.eq.1) then
+          do iy=iyt+1,ny
+            if (isRealCell(cflag(inselix1,iy,CELLFLAG_TYPE)))
+     >       region(inselix1,iy,1)=7
+          enddo
+        endif
+        if(nncut.eq.1.and.nnreg(0).eq.4) then    ! SN case
+          nnreg(1)=6
+        elseif(nncut.eq.1.and.nnreg(0).eq.5) then    ! Stellarator island case
+          nnreg(1)=7
+        elseif(nncut.eq.2.and.topcut(1).eq.topcut(2)) then   ! DNC case
+          nnreg(1)=12
+        elseif(nncut.eq.2.and.topcut(1).ne.topcut(2)) then   ! DND case
+          nnreg(1)=13
+        endif
 ! Y-flux component
-      if(periodic_bc.eq.1) then
-        iyt=topcut(1)
-      else
-        iyt=ny
-      endif
+        if(periodic_bc.eq.1) then
+          iyt=topcut(1)
+        else
+          iyt=ny
+        endif
 ! We find the contact to the left (bottom) PFR wall: y-region 1
-      do ix = -1, leftcut(1)-1
-        iy = -1
-        do while (iy.lt.topcut(1)
-     &   .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-            if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= lefttargetindex(1)
-     &       .and.
-     &       cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1)
-     &       .and.
-     &       cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
-     &       .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=1
-            if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /= lefttargetindex(1)
-     &       .and.
-     &       cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(1)
-     &       .and.
-     &       cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &       .and. geoType /= CGEO_TRIA_NORIGHT)
-     &       region(rightix(ix,iy),rightiy(ix,iy),1)=-1
-            if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(1)
-     &       .and.
-     &       cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
-     &       .and.
-     &       cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &       .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-1
-          end if
-          iy = iy + 1
-        end do
-      end do
-      if (periodic_bc.ne.1) then
-! We find the contact to the left (bottom) divertor wall: y-region 5
         do ix = -1, leftcut(1)-1
-          iy = ny
-          do while (iy.ge.topcut(1)
+          iy = -1
+          do while (iy.lt.topcut(1)
      &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
               geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1)
+              if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                               lefttargetindex(1)
      &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
+     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1)
      &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=5
+     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
+     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=1
               if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
      &                                              lefttargetindex(1)
      &         .and.
@@ -1426,55 +1416,20 @@ c conn
      &         .and.
      &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
      &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-5
+     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-1
               if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(1)
      &         .and.
      &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
      &         .and.
      &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-5
+     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-1
             end if
-            iy = iy - 1
+            iy = iy + 1
           end do
         end do
-      elseif (periodic_bc.eq.1) then
-! Stellarator island: We find the entrance to the left PFR: y-region 5
-        do ix=-1,leftcut(1)-1
-          if (isRealCell(cflag(ix,iyt,CELLFLAG_TYPE)))
-     >     region(ix,iyt,2)=5
-        enddo
-      endif
-      if(nncut.lt.2) then  ! SN case
-        do ix=leftcut(1),rightcut(1)-1
-! SN: We find the core boundary: y-region 2
-          iy = -1
-          do while (iy.le.topcut(1) .and.
-     &     .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
-            iy = iy+1
-          end do
-          if (iy.le.topcut(1)) then
-            region(ix,iy,2)=2
-          endif
-! SN: We find the separatrix: y-region 4
-          region(ix,topcut(1),2)=4
-        enddo
-        if(periodic_bc.eq.1) then
-          do ix=inselix1,inselix2
-! We find the island inner boundary: y-region 6
-            iy = ny
-            do while (iy.ge.inseliy .and.
-     &       .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
-              iy = iy-1
-            end do
-            if (iy.ge.inseliy) then
-              region(topix(ix,iy),topiy(ix,iy),2)=6
-            endif
-! We find the island separatrix: y-region 8
-            region(ix,inseliy,2)=8
-          enddo
-        else
-! SN: We find the contact to the main chamber wall: y-region 6
-          do ix = leftcut(1), rightcut(1)-1
+        if (periodic_bc.ne.1) then
+! We find the contact to the left (bottom) divertor wall: y-region 5
+          do ix = -1, leftcut(1)-1
             iy = ny
             do while (iy.ge.topcut(1)
      &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
@@ -1487,12 +1442,210 @@ c conn
      &           .and.
      &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
      &           .and. geoType /= CGEO_TRIA_NOTOP)
-     &           region(topix(ix,iy),topiy(ix,iy),2)=6
+     &           region(topix(ix,iy),topiy(ix,iy),2)=5
                 if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
-     &                                                lefttargetindex(1)
+     &                                              lefttargetindex(1)
      &           .and.
      &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-5
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                               lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-5
+              end if
+              iy = iy - 1
+            end do
+          end do
+        elseif (periodic_bc.eq.1) then
+! Stellarator island: We find the entrance to the left PFR: y-region 5
+          do ix=-1,leftcut(1)-1
+            if (isRealCell(cflag(ix,iyt,CELLFLAG_TYPE)))
+     >       region(ix,iyt,2)=5
+          enddo
+        endif
+        if(nncut.lt.2) then  ! SN case
+          do ix=leftcut(1),rightcut(1)-1
+! SN: We find the core boundary: y-region 2
+            iy = -1
+            do while (iy.le.topcut(1) .and.
+     &       .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
+              iy = iy+1
+            end do
+            if (iy.le.topcut(1)) then
+              region(ix,iy,2)=2
+            endif
+! SN: We find the separatrix: y-region 4
+            region(ix,topcut(1),2)=4
+          enddo
+          if(periodic_bc.eq.1) then
+            do ix=inselix1,inselix2
+! We find the island inner boundary: y-region 6
+              iy = ny
+              do while (iy.ge.inseliy .and.
+     &         .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
+                iy = iy-1
+              end do
+              if (iy.ge.inseliy) then
+                region(topix(ix,iy),topiy(ix,iy),2)=6
+              endif
+! We find the island separatrix: y-region 8
+              region(ix,inseliy,2)=8
+            enddo
+          else
+! SN: We find the contact to the main chamber wall: y-region 6
+            do ix = leftcut(1), rightcut(1)-1
+              iy = ny
+              do while (iy.ge.topcut(1)
+     &         .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+                if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                  geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                  if (cflag(ix, iy, CELLFLAG_TOPFACE) /=
+     &                                              lefttargetindex(1)
+     &             .and.
+     &             cflag(ix, iy, CELLFLAG_TOPFACE) /=
+     &                                             righttargetindex(1)
+     &             .and.
+     &             cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     &             .and. geoType /= CGEO_TRIA_NOTOP)
+     &             region(topix(ix,iy),topiy(ix,iy),2)=6
+                  if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                                lefttargetindex(1)
+     &             .and.
+     &             cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
      &                                               righttargetindex(1)
+     &             .and.
+     &             cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &             .and. geoType /= CGEO_TRIA_NORIGHT)
+     &             region(rightix(ix,iy),rightiy(ix,iy),1)=-6
+                  if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                               lefttargetindex(1)
+     &             .and.
+     &             cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                              righttargetindex(1)
+     &             .and.
+     &             cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &             .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-6
+                end if
+                iy = iy - 1
+              end do
+            end do
+          endif
+! SN: We find the contact to the right PFR wall: y-region 3
+          do ix = rightcut(1), nx
+            iy = -1
+            do while (iy.le.topcut(1)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                               lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                              righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=3
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-3
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                             lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-3
+              end if
+              iy = iy + 1
+            end do
+! SN: We find the contact to the right divertor wall: y-region 7
+            iy = ny
+            do while (iy.gt.topcut(1)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) /=
+     &                                              lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOTOP)
+     &           region(topix(ix,iy),topiy(ix,iy),2)=7
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-7
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                               lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-7
+              end if
+              iy = iy - 1
+            end do
+          end do
+        elseif(nncut.eq.2) then  !DN case
+          do ix=leftcut(1),leftcut(2)-1
+! DN: We find the inner core boundary: y-region 2
+            iy = -1
+            do while (iy.le.topcut(1) .and. iy.le.topcut(2) .and.
+     &       .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
+              iy = iy+1
+            end do
+            if (iy.le.topcut(1) .and. iy.le.topcut(2)) then
+              region(ix,iy,2)=2
+            endif
+! DN: We find the inner separatrix: y-region 4
+            region(ix,min(topcut(1),topcut(2)),2)=4
+! DN: We find the contact to the inner main chamber wall: y-region 6
+            iy = ny
+            do while (iy.ge.topcut(1) .and. iy.ge.topcut(2) .and.
+     &                cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) /=
+     &                                              lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOTOP)
+     &           region(topix(ix,iy),topiy(ix,iy),2)=6
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(2)
      &           .and.
      &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
      &           .and. geoType /= CGEO_TRIA_NORIGHT)
@@ -1502,373 +1655,278 @@ c conn
      &           .and.
      &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
      &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
+     &           .and.
      &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
      &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-6
               end if
               iy = iy - 1
             end do
           end do
-        endif
-! SN: We find the contact to the right PFR wall: y-region 3
-        do ix = rightcut(1), nx
-          iy = -1
-          do while (iy.le.topcut(1)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
-     &                                               lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=3
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
-     &                                              lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-3
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
-     &                                             lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-3
-            end if
-            iy = iy + 1
-          end do
-! SN: We find the contact to the right divertor wall: y-region 7
-          iy = ny
-          do while (iy.gt.topcut(1)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=7
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
-     &                                              lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-7
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-7
-            end if
-            iy = iy - 1
-          end do
-        end do
-      elseif(nncut.eq.2) then  !DN case
-        do ix=leftcut(1),leftcut(2)-1
-! DN: We find the inner core boundary: y-region 2
-          iy = -1
-          do while (iy.le.topcut(1) .and. iy.le.topcut(2) .and.
-     &     .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
-            iy = iy+1
-          end do
-          if (iy.le.topcut(1) .and. iy.le.topcut(2)) then
-            region(ix,iy,2)=2
-          endif
-! DN: We find the inner separatrix: y-region 4
-          region(ix,min(topcut(1),topcut(2)),2)=4
-! DN: We find the contact to the inner main chamber wall: y-region 6
-          iy = ny
-          do while (iy.ge.topcut(1) .and. iy.ge.topcut(2) .and.
-     &              cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=6
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
-     &                                              lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-6
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-6
-            end if
-            iy = iy - 1
-          end do
-        end do
 ! DN: We find the contact to the top left PFR wall: y-region 3
-        do ix = leftcut(2), rightcut(2)-1
-          iy = -1
-          do while (iy.lt.topcut(2)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+          do ix = leftcut(2), rightcut(2)-1
+            iy = -1
+            do while (iy.lt.topcut(2)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
      &                                               lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=3
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                              righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=3
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
      &                                              lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-3
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-3
-            end if
-            iy = iy + 1
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-3
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                               lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-3
+              end if
+              iy = iy + 1
+            end do
+            if (iy.eq.topcut(2)) exit
           end do
-          if (iy.eq.topcut(2)) exit
-        end do
 ! DN: We find the contact to the top left divertor wall: y-region 7
-        do ix = leftcut(2), rightcut(2)-1
-          iy = ny
-          do while (iy.ge.topcut(2)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=7
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+          do ix = leftcut(2), rightcut(2)-1
+            iy = ny
+            do while (iy.ge.topcut(2)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) /=
      &                                              lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-7
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-7
-            end if
-            iy = iy - 1
-          end do
-        end do
-! DN: We find the contact to the right top PFR wall: y-region 8
-        do ix = rightcut(2)-1, leftcut(2), -1
-          iy = -1
-          do while (iy.lt.topcut(2)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOTOP)
+     &           region(topix(ix,iy),topiy(ix,iy),2)=7
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-7
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
      &                                               lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=8
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
-     &                                              lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-8
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-8
-            end if
-            iy = iy + 1
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-7
+              end if
+              iy = iy - 1
+            end do
           end do
+! DN: We find the contact to the right top PFR wall: y-region 8
+          do ix = rightcut(2)-1, leftcut(2), -1
+            iy = -1
+            do while (iy.lt.topcut(2)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                               lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                              righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=8
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-8
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                               lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-8
+              end if
+              iy = iy + 1
+            end do
 ! We find the contact to the right top divertor wall: y-region 12
-          iy = ny
-          do while (iy.ge.topcut(2)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=12
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+            iy = ny
+            do while (iy.ge.topcut(2)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) /=
      &                                              lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-12
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-12
-            end if
-            iy = iy - 1
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOTOP)
+     &           region(topix(ix,iy),topiy(ix,iy),2)=12
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-12
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                               lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-12
+              end if
+              iy = iy - 1
+            end do
           end do
-        end do
-        do ix = rightcut(2),rightcut(1)-1
+          do ix = rightcut(2),rightcut(1)-1
 ! DN: We find the outer core boundary: y-region 9
-          iy = -1
-          do while (iy.le.topcut(1) .and. iy.le.topcut(2) .and.
-     &     .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
-            iy = iy+1
-          end do
-          if (iy.le.topcut(1) .and. iy.le.topcut(2)) then
-            region(ix,iy,2)=9
-          endif
+            iy = -1
+            do while (iy.le.topcut(1) .and. iy.le.topcut(2) .and.
+     &       .not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)))
+              iy = iy+1
+            end do
+            if (iy.le.topcut(1) .and. iy.le.topcut(2)) then
+              region(ix,iy,2)=9
+            endif
 ! DN: We find the outer separatrix: y-region 11
-          region(ix,min(topcut(1),topcut(2)),2)=11
+            region(ix,min(topcut(1),topcut(2)),2)=11
 ! DN: We find the contact to the inner main chamber wall: y-region 13
-          iy = ny
-          do while (iy.ge.topcut(1) .and. iy.ge.topcut(2) .and.
-     &              cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=13
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+            iy = ny
+            do while (iy.ge.topcut(1) .and. iy.ge.topcut(2) .and.
+     &                cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) /=
      &                                              lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-13
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-13
-            end if
-            iy = iy - 1
-          end do
-        end do
-! DN: We find the contact to the bottom right PFR wall: y-region 10
-        do ix = rightcut(1), nx
-          iy = -1
-          do while (iy.le.topcut(1)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOTOP)
+     &           region(topix(ix,iy),topiy(ix,iy),2)=13
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-13
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
      &                                               lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=10
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
-     &                                              lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-10
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
-     &                                             lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-10
-            end if
-            iy = iy + 1
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(2)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-13
+              end if
+              iy = iy - 1
+            end do
           end do
+! DN: We find the contact to the bottom right PFR wall: y-region 10
+          do ix = rightcut(1), nx
+            iy = -1
+            do while (iy.le.topcut(1)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                               lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /=
+     &                                              righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=10
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                              lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-10
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                             lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-10
+              end if
+              iy = iy + 1
+            end do
 ! DN: We find the contact to the right divertor wall: y-region 14
-          iy = ny
-          do while (iy.gt.topcut(1)
-     &     .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
-            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-              if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1)
+            iy = ny
+            do while (iy.gt.topcut(1)
+     &       .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
+              if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                if (cflag(ix, iy, CELLFLAG_TOPFACE) /=
+     &                                               lefttargetindex(1)
      &             .and.
      &            cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1)
      &             .and.
      &            cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED
      &             .and. geoType /= CGEO_TRIA_NOTOP)
-     &         region(topix(ix,iy),topiy(ix,iy),2)=14
-              if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &           region(topix(ix,iy),topiy(ix,iy),2)=14
+                if (cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
      &                                              lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NORIGHT)
-     &         region(rightix(ix,iy),rightiy(ix,iy),1)=-14
-              if (cflag(ix, iy, CELLFLAG_LEFTFACE) /= lefttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
-     &         .and.
-     &         cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
-     &         .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-14
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /=
+     &                                             righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NORIGHT)
+     &           region(rightix(ix,iy),rightiy(ix,iy),1)=-14
+                if (cflag(ix, iy, CELLFLAG_LEFTFACE) /=
+     &                                               lefttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= righttargetindex(1)
+     &           .and.
+     &           cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     &           .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=-14
               end if
               iy = iy - 1
             end do

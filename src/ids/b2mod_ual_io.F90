@@ -179,6 +179,10 @@ module b2mod_ual_io
     use ids_utilities &   ! IGNORE
      & , only : ids_identifier_static
 #endif
+#if IMAS_MINOR_VERSION > 36
+    use ids_schemas &      ! IGNORE
+     & , only : ids_summary_rz1d_dynamic
+#endif
 #if ( defined(AMNS) && IMAS_MINOR_VERSION > 29 )
     use amns_types  ! IGNORE
     use amns_module ! IGNORE
@@ -1332,6 +1336,26 @@ contains
           end if
 #endif
         end select
+
+#if IMAS_MINOR_VERSION > 36
+        select case (GeometryType)
+        case ( GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
+            &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+          call write_sourced_rz( summary%boundary%x_point_main, &
+            &   crx(leftcut(1),topcut(1),0), cry(leftcut(1),topcut(1),0) )
+        case ( GEOMETRY_DDN_TOP )
+          call write_sourced_rz( summary%boundary%x_point_main, &
+            &   crx(leftcut(2),topcut(2),0), cry(leftcut(2),topcut(2),0) )
+        end select
+        select case (GeometryType)
+        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+          u = norm( (crx(nmdpl,topcut(2),0) + crx(nmdpl,topcut(2),1))/2.0_R8 - &
+            &       (crx(nmdpl,topcut(1),0) + crx(nmdpl,topcut(1),1))/2.0_R8, &
+            &       (cry(nmdpl,topcut(2),0) + cry(nmdpl,topcut(2),1))/2.0_R8 - &
+            &       (cry(nmdpl,topcut(1),0) + cry(nmdpl,topcut(1),1))/2.0_R8 )
+          call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, u )
+        end select
+#endif
 
         totFace(-1:nx,-1:ny,0)=abs(fht(-1:nx,-1:ny,0,0))
         totFace(-1:nx,-1:ny,1)=abs(fht(-1:nx,-1:ny,1,1))
@@ -9251,6 +9275,21 @@ contains
 
     return
     end subroutine write_sourced_value_root
+
+    subroutine write_sourced_rz( val, rvalue, zvalue )
+    implicit none
+    type(ids_summary_rz1d_dynamic) :: val
+        !< Type of IDS data structure, designed for sourced float data handling
+    real(IDS_real), intent(in) :: rvalue, zvalue
+
+    allocate( val%r( num_slices ), val%z( num_slices ) )
+    val%r( slice_index ) = rvalue
+    val%z( slice_index ) = zvalue
+    allocate( val%source(1) )
+    val%source = source
+
+    return
+    end subroutine write_sourced_rz
 
     subroutine write_errored_value( val, value, error )
     implicit none
