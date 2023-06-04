@@ -530,17 +530,17 @@ contains
 
 #ifdef IMAS
 
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
+# if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !> Routine that fills in a grid description which is part of a IMAS IDS
     !! using the given grid data and prepared mappings
     subroutine b2_IMAS_Fill_Grid_Desc( mpg, geo, grid_ggd )
-#if IMAS_MINOR_VERSION < 15
+#  if IMAS_MINOR_VERSION < 15
         type(ids_generic_grid_dynamic), intent(out) :: grid_ggd !< Type of IDS
             !< data structure, designed for handling grid geometry data
-#else
+#  else
         type(ids_generic_grid_aos3_root), intent(out) :: grid_ggd !< Type of IDS
             !< data structure, designed for handling grid geometry data
-#endif
+#  endif
         !! Input arguments
         type(mapping), intent(in) :: mpg
         type(geometry), intent(in) :: geo
@@ -589,13 +589,13 @@ contains
 
         allocate( grid_ggd%space( SPACE_COUNT ) )
 
-#if IMAS_MINOR_VERSION > 19
+#  if IMAS_MINOR_VERSION > 19
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name(1) )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name = "Standard grid"
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%index = 1
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description = labgeo
-#endif
+#  endif
 
         !! Coordinate types
         !! dimension of space = NDIM = size( coordtype )
@@ -620,7 +620,7 @@ contains
         !! 0D vertices/nodes
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%object( mpg%nVx ) )
-#if IMAS_MINOR_VERSION > 33
+#  if IMAS_MINOR_VERSION > 33
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%name(1) )
@@ -638,12 +638,12 @@ contains
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%index = 11
-#endif
+#  endif
         !! 1D faces/edges
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   object( mpg%nFc ) )
-#if IMAS_MINOR_VERSION > 33
+#  if IMAS_MINOR_VERSION > 33
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%name(1) )
@@ -660,11 +660,11 @@ contains
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%index = 21
-#endif
+#  endif
         !! 2D cells
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%object( mpg%nCv ) )
-#if IMAS_MINOR_VERSION > 33
+#  if IMAS_MINOR_VERSION > 33
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%name(1) )
@@ -683,7 +683,7 @@ contains
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%index = 32
-#endif
+#  endif
 
         !! Fill in vertex/node information
         do iVx = 1, mpg%nVx
@@ -905,11 +905,11 @@ contains
 
         !! If requested, add a second space for the toroidal angle
         if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
-#if IMAS_MINOR_VERSION > 19
+#  if IMAS_MINOR_VERSION > 19
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%index = 1
-#endif
+#  endif
           grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%index = 0
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description(1) )
@@ -920,18 +920,18 @@ contains
                 &   ( ( width/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )     &
                 &   /),                                                       &
                 &   .false. ) !! periodic = .false.
-#if IMAS_MINOR_VERSION > 19
+#  if IMAS_MINOR_VERSION > 19
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name = "Z-direction"
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                 &   "Cylindrical symmetry"
-#endif
+#  endif
             grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name = "Cylindrical"
             grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description = &
                 &   "Length along cylindrical direction"
           else
-#if IMAS_MINOR_VERSION > 19
+#  if IMAS_MINOR_VERSION > 19
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name = "Toroidal direction"
-#endif
+#  endif
             grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name = "Toroidal angle"
             if ( TOROIDAL_PERIODIC ) then
               call gridSetupStruct1dSpace(                                      &
@@ -940,10 +940,10 @@ contains
                   &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 ) &
                   &   /),                                                       &
                   &   .true. ) !! periodic = .true.
-#if IMAS_MINOR_VERSION > 19
+#  if IMAS_MINOR_VERSION > 19
               grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                   &   "Toroidally symmetric and periodic"
-#endif
+#  endif
               grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description = &
                   &   "Toroidal angle"
             else
@@ -953,15 +953,15 @@ contains
                   &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )   &
                   &   /),                                                       &
                   &   .false. ) !! periodic = .false.
-#if IMAS_MINOR_VERSION > 19
+#  if IMAS_MINOR_VERSION > 19
               grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                   &   "Toroidally symmetric"
-#endif
+#  endif
               grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description = &
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if IMAS_MINOR_VERSION > 33 && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) )
+#  if IMAS_MINOR_VERSION > 33 && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
@@ -984,7 +984,7 @@ contains
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
              &     geometry_content%description = &
              &  "Automatically generated 1D space (unused)"
-#endif
+#  endif
         end if
 
         return
@@ -1095,10 +1095,10 @@ contains
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
         integer, save :: geoId
-#if GGD_MINOR_VERSION > 8
+#  if GGD_MINOR_VERSION > 8
         integer :: iRegion
         integer :: iPrivateB2
-#endif
+#  endif
         integer :: GSubsetCount
         integer :: iType
         integer :: RegionsInSubset(14)
@@ -1123,9 +1123,9 @@ contains
 
         !! Procedures
         external xertst
-#if GGD_MINOR_VERSION > 8
+#  if GGD_MINOR_VERSION > 8
         external xerrab
-#endif
+#  endif
 
         if (ncall.eq.0) then
           geoId = geometryId( mpg, geo )
@@ -1133,11 +1133,11 @@ contains
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
-#if GGD_MINOR_VERSION > 8
+#  if GGD_MINOR_VERSION > 8
         nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
-#else
+#  else
         nGSubset = B2_GENERIC_GSUBSET_COUNT
-#endif
+#  endif
         !! Add pre-defined grid subsets (regions + points)
         select case ( geoId )
         case ( GEOMETRY_LINEAR )
@@ -1260,7 +1260,7 @@ contains
         !! Start counting from end of generic grid subset
         GSubsetCount = B2_GENERIC_GSUBSET_COUNT
 
-#if GGD_MINOR_VERSION > 8
+#  if GGD_MINOR_VERSION > 8
         iPrivateB2 = 0
         !! Cell + edge grid subset
         !! These are the "private" B2 regions, so will be given negative
@@ -1323,7 +1323,7 @@ contains
         end do
 
         deallocate(indexList2d)
-#endif
+#  endif
 
 !! Do the grid subsets that map directly to B2 regions
         do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE
@@ -1932,13 +1932,13 @@ contains
 
             SubsetName = gridSubsetName( iSubset )
             RegionDescription = gridSubsetDescription( iSubset )
-#if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#  if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
             if ( iSubset == GRID_SUBSET_FULL_WALL ) then
               SubsetName = 'FULL_WALL'
               RegionDescription = &
                &  'All edges defining walls, baffles, and targets'
             end if
-#endif
+#  endif
             call logmsg( LOGDEBUG,                                     &
                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
                &   int2str(GSubsetCount)//": "//                       &
@@ -2508,7 +2508,7 @@ contains
 
     end subroutine find_Midplane_Cells
 
-#if IMAS_MINOR_VERSION > 14
+#  if IMAS_MINOR_VERSION > 14
     subroutine GGD_copy_AoS3Root_to_Dynamic( AoS3_grid, dynamic_grid )
     implicit none
     type(ids_generic_grid_aos3_root), intent(in) :: AoS3_grid
@@ -2600,7 +2600,7 @@ contains
            &      object(i3)%measure = &
            &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%measure
-#if IMAS_MINOR_VERSION > 35
+#   if IMAS_MINOR_VERSION > 35
           if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%geometry_2d ) ) then
             i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
@@ -2614,9 +2614,9 @@ contains
            &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%geometry_2d( : , : )
           end if
-#endif
+#   endif
         end do
-#if IMAS_MINOR_VERSION > 33
+#   if IMAS_MINOR_VERSION > 33
         allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
            &      geometry_content%name(1) )
         dynamic_grid%space(i1)%objects_per_dimension(i2)% &
@@ -2633,7 +2633,7 @@ contains
            &      geometry_content%description = &
          & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      geometry_content%description
-#endif
+#   endif
       end do
     end do
 
@@ -2724,9 +2724,9 @@ contains
 
     return
     end subroutine GGD_copy_AoS3Root_to_Dynamic
-#endif
+#  endif
 
-#endif
+# endif
 
 #elif defined(ITM_ENVIRONMENT_LOADED)
 
@@ -3403,7 +3403,6 @@ contains
 
     end subroutine collectRadialVertexIndexListSubroutine
 
-#endif
 #endif
 
     !> Build an index list of all objects of a given region type
