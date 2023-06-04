@@ -178,6 +178,11 @@ module b2mod_ual_io
     use ids_utilities &   ! IGNORE
      & , only : ids_identifier_static
 #endif
+#if IMAS_MINOR_VERSION > 36
+    use b2mod_math
+    use ids_schemas &     ! IGNORE
+     & , only : ids_summary_rz1d_dynamic
+#endif
 #if ( defined(AMNS) && IMAS_MINOR_VERSION > 29 )
     use amns_types  ! IGNORE
     use amns_module ! IGNORE
@@ -514,6 +519,11 @@ contains
             &             power_recombination_plasma(:),               &
             &             power_currents(:),                           &
             &             current_incident(:)
+#if IMAS_MINOR_VERSION > 36
+        integer :: iFs, iactive, inactive
+        real(IDS_real) :: xi, yi, xo, yo
+        logical :: found
+#endif
 #ifdef B25_EIRENE
 #ifdef WG_TODO
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
@@ -1051,6 +1061,75 @@ contains
           end if
 #endif
         end select
+
+#if IMAS_MINOR_VERSION > 36
+        iactive = 0
+        do i = 1, mpg%nXpt
+          if (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep) then
+            if (iactive.eq.0) then
+              iactive = i
+            else if (geo%vxY(mpg%Xpt(iactive)).lt.geo%vxY(mpg%Xpt(i))) then
+              iactive = i
+            end if
+          end if
+        end do
+        if (iactive.gt.0) &
+            &  call write_sourced_rz( summary%boundary%x_point_main, &
+            &   geo%vxX(mpg%Xpt(iactive)), geo%vxY(mpg%Xpt(iactive)) )
+        select case (GeometryType)
+        case ( GEOMETRY_CDN )
+          call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, 0.0_IDS_real )
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+               GEOMETRY_LFS_SNOWFLAKE_MINUS )
+          if (nomp.gt.0) then
+            inactive = 0
+            do i = 1, mpg%nXpt
+              if (i.eq.iactive) cycle
+              if (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep) cycle
+              iFs = mpg%vxFs(mpg%Xpt(i))
+              if (iFs.gt.0) then
+                if (inactive.eq.0) then
+                  inactive = i
+                else if (iFs.lt.mpg%vxFs(mpg%Xpt(inactive))) then
+                  inactive = i
+                end if
+              end if
+            end do
+            if (inactive.gt.0) then
+              do i = mpg%cvFcP(omp(icsepomp),1), &
+                   & mpg%cvFcP(omp(icsepomp),1) + mpg%cvFcP(omp(icsepomp),2) - 1
+                iFs = mpg%fcFs(mpg%cvFc(i))
+                if (iFs.eq.mpg%iFssep) then
+                  xi = (geo%vxX(mpg%fcVx(mpg%cvFc(i),1)) + &
+                     &  geo%vxX(mpg%fcVx(mpg%cvFc(i),2)))/2.0_R8
+                  yi = (geo%vxY(mpg%fcVx(mpg%cvFc(i),1)) + &
+                     &  geo%vxY(mpg%fcVx(mpg%cvFc(i),2)))/2.0_R8
+                end if
+              end do
+              found = .false.
+              do i = icsepomp, nomp
+                if (found) cycle
+                do j = mpg%cvFcP(omp(i),1), &
+                     & mpg%cvFcP(omp(i),1) + mpg%cvFcP(omp(i),2) - 1
+                  iFs = mpg%fcFs(mpg%cvFc(j))
+                  if (iFs.eq.mpg%vxFs(mpg%Xpt(inactive))) then
+                    found = .true.
+                    xo = (geo%vxX(mpg%fcVx(mpg%cvFc(j),1)) + &
+                       &  geo%vxX(mpg%fcVx(mpg%cvFc(j),2)))/2.0_R8
+                    yo = (geo%vxY(mpg%fcVx(mpg%cvFc(j),1)) + &
+                       &  geo%vxY(mpg%fcVx(mpg%cvFc(j),2)))/2.0_R8
+                  end if
+                end do
+              end do
+              if (found) then
+                u = norm ( xo-xi, yo-yi )
+                call write_sourced_value( &
+                  &  summary%boundary%distance_inner_outer_separatrices, u )
+              end if
+            end if
+          end if
+        end select
+#endif
 
 #if IMAS_MINOR_VERSION > 30
         if ( mpg%nStr.gt.0 ) then
@@ -6552,6 +6631,21 @@ contains
 
     return
     end subroutine write_sourced_value_root
+
+    subroutine write_sourced_rz( val, rvalue, zvalue )
+    implicit none
+    type(ids_summary_rz1d_dynamic) :: val
+        !< Type of IDS data structure, designed for sourced float data handling
+    real(IDS_real), intent(in) :: rvalue, zvalue
+
+    allocate( val%r( num_slices ), val%z( num_slices ) )
+    val%r( slice_index ) = rvalue
+    val%z( slice_index ) = zvalue
+    allocate( val%source(1) )
+    val%source = source
+
+    return
+    end subroutine write_sourced_rz
 
     subroutine write_errored_value( val, value, error )
     implicit none
