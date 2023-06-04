@@ -58,9 +58,9 @@
         ic = list(ii)
         do kk=ii-1,1,-1
           if (mode.eq.1) then
-            if (geo%cVx(list(kk)).le.geo%cVx(ic)) exit
+            if (geo%cvX(list(kk)).le.geo%cvX(ic)) exit
           else
-            if (geo%cVy(list(kk)).le.geo%cVy(ic)) exit
+            if (geo%cvY(list(kk)).le.geo%cvY(ic)) exit
           endif
             list(kk+1)=list(kk)
         enddo
