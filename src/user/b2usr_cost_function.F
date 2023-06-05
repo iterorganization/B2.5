@@ -103,12 +103,12 @@
       do ii=1,nn
         ff(ii) = parm_dna(1)*(xx(ii)**1.5)
       end do
-      call calc_prior(prior, inrange)
+      call calc_log_prior(prior, inrange)
       n1 = ncfdata(iicf)
       call calc_loglikelihood(n1, ff, cfdata(iicf,2,1:n1),
      & lll_cum, isigma, imean)
       if (inrange) then
-        J(1) = -(log(prior) + lll_cum)*cfweight(1)
+        J(1) = -(prior + lll_cum)*cfweight(1)
       else
         J(1) = inf_opt
       endif
@@ -175,8 +175,8 @@
               J(icf) = max(J(icf),qq)*cfweight(icf)
             enddo
           case (6) !loglikelihood + log prior for Bayesian MAP estimate
-            call calc_prior(prior, inrange)
-            write(*,*) 'MAP prior value:', prior
+            call calc_log_prior(prior, inrange)
+            write(*,*) 'MAP log prior value:', prior
             lll_cum = 0.0_R8
             isigma = 1
             imean = 1
@@ -227,7 +227,7 @@
               imean = imean + 1
             end do
             if (inrange) then
-              J(icf) = -(log(prior) + lll_cum)*cfweight(icf)
+              J(icf) = -(prior + lll_cum)*cfweight(icf)
             else
               J(icf) = inf_opt
             endif
