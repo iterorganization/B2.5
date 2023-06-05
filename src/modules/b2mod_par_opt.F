@@ -551,17 +551,23 @@
 !      prior_type refers to the prior type for the design variables:
 !      0 - Uniform distribution.
 !      1 - Uninformative, proper, Gaussian prior.
-!      2 - Jeffrey's 1/sigma (only for sigma!!)
+!      2 - Gamma distribution.
+!      3 - Jeffrey's 1/sigma (only for sigma!!)
        call xertst(any(prior_type(1:nnvar) .ge. 0).and.
-     &  any(prior_type(1:nnvar) .le. 2),
-     &  'b2mod_par_opt: prior_type<0 or prior_type>2')
+     &  any(prior_type(1:nnvar) .le. 3),
+     &  'b2mod_par_opt: prior_type<0 or prior_type>3')
 !      prior_par refers to the prior parameters:
 !      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
-!      For prior_type = 2, not used?
+!      For prior_type = 2, prior_par(ii,1) = alpha, prior_par(ii,2) = beta
+!      For prior_type = 3, not used?
        do ii = 1, nnvar
         if (prior_type(ii) .eq. 1) 
      &   call xertst(prior_par(ii,2) .gt. 0.0_R8,
      &    'b2mod_par_opt: sigma prior <=0')
+        if (prior_type(ii) .eq. 2) 
+     &   call xertst((prior_par(ii,1) .gt. 0.0_R8) .and. 
+     &               (prior_par(ii,2) .gt. 0.0_R8),
+     &    'b2mod_par_opt: alpha or beta prior <=0')
         call xertst(prior_range(ii,1).lt.prior_range(ii,2),
      &   'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
        end do
