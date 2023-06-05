@@ -3,36 +3,35 @@
 !
 !  Differentiation of b2mn as a context to call adjoint code (with options context noISIZE r8):
 !   Plus diff mem management of: b2voloncf:in-out b2data:in-out
-!                b2dataoncf:in-out par_opt_phys:in-out mpg.bcfcor:in-out
-!                mpg.rcfcor:in-out mpg.cffcor:in-out mpg.intcellp:in-out
-!                mpg.intcellr:in-out geo.cvbb:in-out geo.cvx:in-out
-!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
-!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
-!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
-!                geo.fcbb:in-out geo.fcs:in-out geo.fchc:in-out
-!                geo.fcht:in-out geo.fchz:in-out geo.fcvol:in-out
-!                geo.fcqgam:in-out geo.fcqalf:in-out geo.fcqbet:in-out
-!                geo.fcpbs:in-out geo.fcpbshz:in-out geo.fcbzb:in-out
-!                geo.fceb:in-out geo.vxbb:in-out geo.vxx:in-out
-!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
-!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
-!                geo.vxbzb:in-out geo.cvconn:in-out geo.ftconn:in-out
-!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
-!                state_ext.zn:in-out state_ext.am:in-out state_ext.ne:in-out
-!                state_ext.ne2:in-out state_ext.ue:in-out state_ext.za:in-out
-!                state_ext.za2:in-out state_ext.pt:in-out state_ext.na:in-out
-!                state_ext.ni:in-out state_ext.ua:in-out state_ext.ta:in-out
-!                state_ext.fhi:in-out state_ext.fa:in-out state_ext.sne:in-out
-!                state_ext.she:in-out state_ext.shi:in-out state_ext.sch:in-out
-!                state_ext.sna:in-out state_ext.smo:in-out state.pl.na:in-out
-!                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
-!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
-!                state.pl.zt:in-out state.co.csig:in-out state.co.calf:in-out
-!                state.co.csig_an:in-out state.co.calf_an:in-out
-!                state.co.csig_cl:in-out state.co.calf_cl:in-out
-!                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
-!                state.co.chce_exb:in-out state.co.chvi:in-out
-!                state.co.chci:in-out state.co.chci_exb:in-out
+!                b2dataoncf:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
+!                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
+!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
+!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
+!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
+!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
+!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
+!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
+!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
+!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
+!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
+!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
+!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
+!                geo.ftbbav2:in-out geo.fspsi:in-out state_ext.zn:in-out
+!                state_ext.am:in-out state_ext.ne:in-out state_ext.ne2:in-out
+!                state_ext.ue:in-out state_ext.za:in-out state_ext.za2:in-out
+!                state_ext.pt:in-out state_ext.na:in-out state_ext.ni:in-out
+!                state_ext.ua:in-out state_ext.ta:in-out state_ext.fhi:in-out
+!                state_ext.fa:in-out state_ext.sne:in-out state_ext.she:in-out
+!                state_ext.shi:in-out state_ext.sch:in-out state_ext.sna:in-out
+!                state_ext.smo:in-out state.pl.na:in-out state.pl.ua:in-out
+!                state.pl.po:in-out state.pl.te:in-out state.pl.ti:in-out
+!                state.pl.tn:in-out state.pl.kt:in-out state.pl.zt:in-out
+!                state.co.csig:in-out state.co.calf:in-out state.co.csig_an:in-out
+!                state.co.calf_an:in-out state.co.csig_cl:in-out
+!                state.co.calf_cl:in-out state.co.csigin:in-out
+!                state.co.chve:in-out state.co.chce:in-out state.co.chce_exb:in-out
+!                state.co.chvi:in-out state.co.chci:in-out state.co.chci_exb:in-out
 !                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
 !                state.co.chvemx:in-out state.co.chvimx:in-out
 !                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
@@ -148,7 +147,7 @@
 !                state.update.pa:in-out state.update.po:in-out
 !                state.update.te:in-out state.update.ti:in-out
 !                state.update.kt:in-out state.update.zt:in-out
-!                (global)na_mean:in-out
+!                par_opt_phys:in-out (global)na_mean:in-out
 !
 !
 !

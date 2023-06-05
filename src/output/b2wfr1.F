@@ -37,7 +37,7 @@
      &  ' /3/ Jon C. Weisheit, ''Recombination in Dense Plasmas'', J.',
      &  ' Phys. B (Atom. Molec. Phys.) 8 (1975) 2556.'/,
      &  ' /4/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B. ',
-     &  'Heifetz and J. C. Weisheit, ''Survey of Atomic Processes in'/,
+     &  'Heifetz and J. C. Weisheit, ''Survey of Atomic Processes in',
      &  ' Edge Plasmas'', J. Nuclear Mater. 121 (1984) 10-16.')
 *     ------------------------------------------------------------------
       end subroutine b2wfr1
