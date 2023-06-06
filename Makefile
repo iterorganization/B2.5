@@ -117,8 +117,15 @@ ifdef SOLPSTOP
   NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
   NCXDIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
 endif
-ifdef USE_MPI
-  include ${OBJDIR}/mpiversion.mk # defines MPI_VERSION, which is the MPI version number
+
+# Defines MPI_VERSION, which is the MPI version number
+ifdef USE_IMPGYRO
+  USE_MPI ?= -DUSE_MPI
+  include ${OBJDIR}/mpiversion.mk
+else
+ ifdef USE_MPI
+  include ${OBJDIR}/mpiversion.mk
+ endif
 endif
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
