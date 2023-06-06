@@ -7,6 +7,7 @@
       real(kind=R8), intent (inout) :: prior
       logical, intent (inout) :: inrange
       integer :: ii, isigma, imean
+      real(kind=R8) :: aa, bb
       intrinsic sqrt, exp, log_gamma
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
       call subini('calc_log_prior')
@@ -23,10 +24,12 @@
      &            0.5_R8*((par_opt_phys(ii)-prior_par(ii,1))/
      &            prior_par(ii,2))**2
         case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-          prior = prior + (prior_par(ii,1)-1)*log(par_opt_phys(ii)) -
-     &            prior_par(ii,2)*par_opt_phys(ii) + 
-     &            prior_par(ii,1)*log(prior_par(ii,2)) -
-     &            log_gamma(prior_par(ii,1))
+          ! first define shape alpha (aa) and rate beta (bb) using mean=aa/bb and variance=aa/bb**2
+          ! --> aa = (mu/sigma)**2; bb = mu/sigma**2
+          aa = (prior_par(ii,1)/prior_par(ii,2))**2
+          bb = prior_par(ii,1)/prior_par(ii,2)**2
+          prior = prior + (aa-1)*log(par_opt_phys(ii)) -
+     &            bb*par_opt_phys(ii) + aa*log(bb) - log_gamma(aa)
         case default
           write(*,*) prior_type(ii)
           call xerrab ('prior_type out of bounds')
@@ -50,10 +53,10 @@
      &            0.5_R8*((sigma(ii)-prior_par(ii+isigma,1))/
      &            prior_par(ii+isigma,2))**2
         case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-          prior = prior + (prior_par(ii+isigma,1)-1)*log(sigma(ii)) -
-     &            prior_par(ii+isigma,2)*sigma(ii) + 
-     &            prior_par(ii+isigma,1)*log(prior_par(ii+isigma,2)) -
-     &            log_gamma(prior_par(ii,1))
+          aa = (prior_par(ii+isigma,1)/prior_par(ii+isigma,2))**2
+          bb = prior_par(ii+isigma,1)/prior_par(ii+isigma,2)**2
+          prior = prior + (aa-1)*log(sigma(ii)) -
+     &            bb*sigma(ii) + aa*log(bb) - log_gamma(aa)
         case (3) !Jeffrey's 1/sigma
           prior = prior - log(sigma(ii))
         case default
@@ -79,10 +82,10 @@
      &            0.5_R8*((mean(ii)-prior_par(ii+imean,1))/
      &            prior_par(ii+imean,2))**2
         case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-          prior = prior + (prior_par(ii+imean,1)-1)*log(mean(ii)) -
-     &            prior_par(ii+imean,2)*mean(ii) + 
-     &            prior_par(ii+imean,1)*log(prior_par(ii+imean,2)) -
-     &            log_gamma(prior_par(ii+imean,1))
+          aa = (prior_par(ii+imean,1)/prior_par(ii+imean,2))**2
+          bb = prior_par(ii+imean,1)/prior_par(ii+imean,2)**2
+          prior = prior + (aa-1)*log(mean(ii)) -
+     &            bb*mean(ii) + aa*log(bb) - log_gamma(aa)
         case default
           write(*,*) prior_type(ii+imean)
           call xerrab ('prior_type out of bounds for mean')
