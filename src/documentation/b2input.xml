@@ -7164,7 +7164,7 @@
 					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are:
 					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
 					1 - Uninformative Gaussian prior.
-					2 - Gamma distribution.
+					2 - Gamma distribution, defined through mean and standard deviation.
 				</description>
 			</switch>
 			<switch>
@@ -7174,8 +7174,7 @@
 				<description>
 					Indicates parameters for the prior distributions.
 					For PRIOR_TYPE=0, not used.
-					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution.
-					For PRIOR_TYPE=2, PRIOR_TYPE(ii,1) indicates the shape parameter alpha and PRIOR_TYPE(ii,2) indicates the rate parameter beta of the Gamma distribution.
+					For PRIOR_TYPE=1 and 2, PRIOR_TYPE(ii,1) indicates the mean and PRIOR_TYPE(ii,2) indicates the standard deviation of the distribution.
 				</description>
 			</switch>
 			<switch>
