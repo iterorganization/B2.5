@@ -193,6 +193,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC ABS
     INTEGER :: abs0
+    REAL(kind=r8) :: max1
     REAL(kind=r8) :: result1
     INTEGER :: nd
     INTEGER :: nbdirs
@@ -685,18 +686,36 @@ CONTAINS
 !      prior_type refers to the prior type for the design variables:
 !      0 - Uniform distribution.
 !      1 - Uninformative, proper, Gaussian prior.
-!      2 - Jeffrey's 1/sigma (only for sigma!!)
+!      2 - Gamma distribution. (defined through mean and std)
+!      3 - Jeffrey's 1/sigma (only for sigma!!)
       CALL XERTST(ANY(prior_type(1:nnvar) .GE. 0) .AND. ANY(prior_type(1&
-&           :nnvar) .LE. 2), &
-&           'b2mod_par_opt: prior_type<0 or prior_type>2')
+&           :nnvar) .LE. 3), &
+&           'b2mod_par_opt: prior_type<0 or prior_type>3')
 !      prior_par refers to the prior parameters:
-!      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
-!      For prior_type = 2, not used?
+!      For prior_type = 1,2, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!      For prior_type = 3, not used?
       DO ii=1,nnvar
         IF (prior_type(ii) .EQ. 1) CALL XERTST(prior_par(ii, 2) .GT. &
 &                                        0.0_R8, &
 &                                       'b2mod_par_opt: sigma prior <=0'&
 &                                       )
+        IF (prior_type(ii) .EQ. 2) THEN
+          CALL XERTST(prior_par(ii, 1) .GT. 0.0_R8 .AND. prior_par(ii, 2&
+&               ) .GT. 0.0_R8, &
+&          'b2mod_par_opt: mean and variance for gamma prior must be >0'&
+&              )
+          IF (prior_range(ii, 1) .LT. xl(ii)) THEN
+            max1 = xl(ii)
+          ELSE
+            max1 = prior_range(ii, 1)
+          END IF
+          IF (max1 .LE. 0.0_R8) THEN
+            WRITE(*, *) 'ii, prior_range(ii,1)', ii, prior_range(ii, 1)
+            WRITE(*, *) 'ii, xl(ii)', ii, xl(ii)
+            CALL XERRAB('b2mod_par_opt: gamma distribution is '//&
+&                 'intended for parameters on domain (0 +inf)')
+          END IF
+        END IF
         CALL XERTST(prior_range(ii, 1) .LT. prior_range(ii, 2), &
 &             'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
       END DO
@@ -752,12 +771,18 @@ CONTAINS
       idd = idd + 1
     END DO
     npar_opt = npar_opt - (nsigma-nsigma_opt) - (nmean-nmean_opt)
-    IF (flag_optim .OR. cftype(1) .EQ. 6) CALL XERTST(ANY(x0(1:npar_opt)&
-&                                               .LT. inf_opt*10.0_R8), &
-&               'b2mod_par_opt: initial guess x0 MUST be specified for '&
-&                                               //&
-&             'all variables if optimizing or using a MAP cost function'&
-&                                              )
+    IF (flag_optim .OR. cftype(1) .EQ. 6) THEN
+      CALL XERTST(ANY(x0(1:npar_opt) .LT. inf_opt*10.0_R8), &
+&           'b2mod_par_opt: initial guess x0 MUST be specified for '//&
+&           'all variables if optimizing or using a MAP cost function')
+      DO ipp=1,npar_opt
+        IF (x0(ipp) .LT. xl(ipp) .OR. x0(ipp) .GT. xu(ipp)) THEN
+          WRITE(*, *) 'ipp, xl(ipp), x0(ipp), xu(ipp)', ipp, xl(ipp), x0&
+&         (ipp), xu(ipp)
+          CALL XERRAB('b2mod_par_opt: x0 must be >= xl and <=xu')
+        END IF
+      END DO
+    END IF
 ! position of first sigma in x0
     isigma = npar_opt - nsigma_opt - nmean_opt + 1
     DO ii=1,nsigma
@@ -818,6 +843,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC ABS
     INTEGER :: abs0
+    REAL(kind=r8) :: max1
     REAL(kind=r8) :: result1
 !
     filename = 'b2.optimization.parameters'
@@ -1295,18 +1321,36 @@ CONTAINS
 !      prior_type refers to the prior type for the design variables:
 !      0 - Uniform distribution.
 !      1 - Uninformative, proper, Gaussian prior.
-!      2 - Jeffrey's 1/sigma (only for sigma!!)
+!      2 - Gamma distribution. (defined through mean and std)
+!      3 - Jeffrey's 1/sigma (only for sigma!!)
       CALL XERTST(ANY(prior_type(1:nnvar) .GE. 0) .AND. ANY(prior_type(1&
-&           :nnvar) .LE. 2), &
-&           'b2mod_par_opt: prior_type<0 or prior_type>2')
+&           :nnvar) .LE. 3), &
+&           'b2mod_par_opt: prior_type<0 or prior_type>3')
 !      prior_par refers to the prior parameters:
-!      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
-!      For prior_type = 2, not used?
+!      For prior_type = 1,2, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!      For prior_type = 3, not used?
       DO ii=1,nnvar
         IF (prior_type(ii) .EQ. 1) CALL XERTST(prior_par(ii, 2) .GT. &
 &                                        0.0_R8, &
 &                                       'b2mod_par_opt: sigma prior <=0'&
 &                                       )
+        IF (prior_type(ii) .EQ. 2) THEN
+          CALL XERTST(prior_par(ii, 1) .GT. 0.0_R8 .AND. prior_par(ii, 2&
+&               ) .GT. 0.0_R8, &
+&          'b2mod_par_opt: mean and variance for gamma prior must be >0'&
+&              )
+          IF (prior_range(ii, 1) .LT. xl(ii)) THEN
+            max1 = xl(ii)
+          ELSE
+            max1 = prior_range(ii, 1)
+          END IF
+          IF (max1 .LE. 0.0_R8) THEN
+            WRITE(*, *) 'ii, prior_range(ii,1)', ii, prior_range(ii, 1)
+            WRITE(*, *) 'ii, xl(ii)', ii, xl(ii)
+            CALL XERRAB('b2mod_par_opt: gamma distribution is '//&
+&                 'intended for parameters on domain (0 +inf)')
+          END IF
+        END IF
         CALL XERTST(prior_range(ii, 1) .LT. prior_range(ii, 2), &
 &             'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
       END DO
@@ -1362,12 +1406,18 @@ CONTAINS
       idd = idd + 1
     END DO
     npar_opt = npar_opt - (nsigma-nsigma_opt) - (nmean-nmean_opt)
-    IF (flag_optim .OR. cftype(1) .EQ. 6) CALL XERTST(ANY(x0(1:npar_opt)&
-&                                               .LT. inf_opt*10.0_R8), &
-&               'b2mod_par_opt: initial guess x0 MUST be specified for '&
-&                                               //&
-&             'all variables if optimizing or using a MAP cost function'&
-&                                              )
+    IF (flag_optim .OR. cftype(1) .EQ. 6) THEN
+      CALL XERTST(ANY(x0(1:npar_opt) .LT. inf_opt*10.0_R8), &
+&           'b2mod_par_opt: initial guess x0 MUST be specified for '//&
+&           'all variables if optimizing or using a MAP cost function')
+      DO ipp=1,npar_opt
+        IF (x0(ipp) .LT. xl(ipp) .OR. x0(ipp) .GT. xu(ipp)) THEN
+          WRITE(*, *) 'ipp, xl(ipp), x0(ipp), xu(ipp)', ipp, xl(ipp), x0&
+&         (ipp), xu(ipp)
+          CALL XERRAB('b2mod_par_opt: x0 must be >= xl and <=xu')
+        END IF
+      END DO
+    END IF
 ! position of first sigma in x0
     isigma = npar_opt - nsigma_opt - nmean_opt + 1
     DO ii=1,nsigma

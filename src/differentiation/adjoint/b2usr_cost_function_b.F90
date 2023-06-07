@@ -67,7 +67,6 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  INTRINSIC LOG
   REAL(kind=r8) :: max1
   REAL(kind=r8) :: max1b
   INTEGER :: arg1
@@ -271,9 +270,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHCONTROL4B(7)
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
-        CALL PUSHREAL8(prior, r8/8)
-        CALL CALC_PRIOR_NODIFF(prior, inrange)
-        WRITE(*, *) 'MAP prior value:', prior
+        CALL CALC_LOG_PRIOR_NODIFF(prior, inrange)
+        WRITE(*, *) 'MAP log prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
         imean = 1
@@ -352,7 +350,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           imean = imean + 1
         END DO
         IF (inrange) THEN
-          j(icf) = -((LOG(prior)+lll_cum)*cfweight(icf))
+          j(icf) = -((prior+lll_cum)*cfweight(icf))
           CALL PUSHCONTROL4B(6)
         ELSE
           j(icf) = inf_opt
@@ -618,7 +616,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         END IF
       ELSE IF (branch .LT. 9) THEN
         IF (branch .EQ. 6) THEN
-          priorb = -(cfweight(icf)*jb(icf)/prior)
+          priorb = -(cfweight(icf)*jb(icf))
           lll_cumb = -(cfweight(icf)*jb(icf))
           jb(icf) = 0.D0
         ELSE
@@ -848,8 +846,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         END IF
         CALL POPINTEGER4(ic1)
       END DO
-      CALL POPREAL8(prior, r8/8)
-      CALL CALC_PRIOR_B(prior, priorb, inrange)
+      CALL CALC_LOG_PRIOR_B(prior, priorb, inrange)
  100  CALL POPINTEGER4(n1)
       CALL POPINTEGER4(ic1)
     END DO
@@ -929,7 +926,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  INTRINSIC LOG
   REAL(kind=r8) :: max1
   INTEGER :: arg1
 !
@@ -1066,8 +1062,8 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         END DO
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
-        CALL CALC_PRIOR_NODIFF(prior, inrange)
-        WRITE(*, *) 'MAP prior value:', prior
+        CALL CALC_LOG_PRIOR_NODIFF(prior, inrange)
+        WRITE(*, *) 'MAP log prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
         imean = 1
@@ -1125,7 +1121,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           imean = imean + 1
         END DO
         IF (inrange) THEN
-          j(icf) = -((LOG(prior)+lll_cum)*cfweight(icf))
+          j(icf) = -((prior+lll_cum)*cfweight(icf))
         ELSE
           j(icf) = inf_opt
         END IF
