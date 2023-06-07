@@ -222,7 +222,7 @@
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
       use b2mod_par_opt_diff &
-     , only : par_rescale, sigma
+     , only : par_rescale, sigma, mean
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean
