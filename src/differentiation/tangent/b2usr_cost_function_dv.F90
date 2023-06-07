@@ -72,7 +72,6 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  INTRINSIC LOG
   REAL(kind=r8) :: max1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
   INTEGER :: arg1
@@ -323,8 +322,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         END DO
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
-        CALL CALC_PRIOR_DV(prior, priord, inrange, nbdirs)
-        WRITE(*, *) 'MAP prior value:', prior
+        CALL CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
+        WRITE(*, *) 'MAP log prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
         imean = 1
@@ -431,10 +430,9 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         END DO
         IF (inrange) THEN
           DO nd=1,nbdirs
-            jd(nd, icf) = -(cfweight(icf)*(priord(nd)/prior+lll_cumd(nd)&
-&             ))
+            jd(nd, icf) = -(cfweight(icf)*(priord(nd)+lll_cumd(nd)))
           END DO
-          j(icf) = -((LOG(prior)+lll_cum)*cfweight(icf))
+          j(icf) = -((prior+lll_cum)*cfweight(icf))
         ELSE
           DO nd=1,nbdirs
             jd(nd, icf) = 0.D0
@@ -647,7 +645,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  INTRINSIC LOG
   REAL(kind=r8) :: max1
   INTEGER :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg10
@@ -785,8 +782,8 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         END DO
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
-        CALL CALC_PRIOR_NODIFF(prior, inrange)
-        WRITE(*, *) 'MAP prior value:', prior
+        CALL CALC_LOG_PRIOR_NODIFF(prior, inrange)
+        WRITE(*, *) 'MAP log prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
         imean = 1
@@ -845,7 +842,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           imean = imean + 1
         END DO
         IF (inrange) THEN
-          j(icf) = -((LOG(prior)+lll_cum)*cfweight(icf))
+          j(icf) = -((prior+lll_cum)*cfweight(icf))
         ELSE
           j(icf) = inf_opt
         END IF
