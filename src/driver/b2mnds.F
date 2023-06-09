@@ -161,12 +161,9 @@
       call b2rflb (ninp(0), lblmn(61:120))
 *   ..read header for geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
-#ifdef JET
+#if ( defined(JET) || defined(IMAS) )
       labgeo=lblgm
-#else
-#ifdef IMAS
       labgeo=lblgm
-#endif
 #endif
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
