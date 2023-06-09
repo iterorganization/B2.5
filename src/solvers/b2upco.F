@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv, 
+      subroutine b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
      &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb)
       use b2mod_types
       use b2mod_b2cmpa
@@ -47,7 +47,7 @@
       real (kind=R8) :: t0,
      *  pb_(nCv), nb_(nCv),                                         !lk 30.06.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt)                    !lk 30.06.17
-      logical too_low_density                                       ! IYS 27.11.2017
+      logical too_low_density(mpg%nFt)                              ! IYS 27.11.2017
 *   ..procedures
       external xertst, ipgetr, b2xxgs
 *   ..initialisation
@@ -79,7 +79,7 @@
         pb_(iCv) = t0*pb(iCv)                        !lk 30.06.2017
       enddo
       if(corr_core_dn(isb).ne.1.0_R8 .and.
-     &               (.not. is_neutral(isb))) then  
+     &               (.not. is_neutral(isb))) then
 *   ..smooth the correction for inner flux surfaces  !lk 30.06.2017{
         tt0 = 0.0e0_R8
         tt1 = 0.0e0_R8
@@ -87,41 +87,51 @@
         do iCv = 1, mpg%nCi
           if (mpg%cvOnClosedSurface(iCv)) then       ! IYS 27.03.2019
             iFt = mpg%cvFt(iCv)
+            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
             tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)
             tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*(nb_(iCv)-nb(iCv))
             tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*(pb_(iCv)-pb(iCv))
+            endif
           endif
         enddo
-        do iFt = 1, mpg%nFt
-          too_low_density = .FALSE.     ! IYS 27.11.2017
 ! Check whether the density and/or pressure falls below the threshold 'b2mndr_na_min'
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
-          do i = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
-            iCv = mpg%ftCv(i)
-            if (mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then ! IYS 27.03.2019
+        too_low_density = .false.
+        do iCv = 1, nCv
+          if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
+            iFt = mpg%cvFt(iCv)
+            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
               t0 = pb(iCv)+tt2(iFt)/tt0(iFt) +
      *         corr_core_dn(isb)*(pb_(iCv)-pb(iCv)-tt2(iFt)/tt0(iFt)) ! IYS 19.12.2017
               if (t0 .lt. pb(iCv)*switch%b2mndr_na_min / nb(iCv)) then
-                too_low_density = .TRUE.
-                exit
+                too_low_density(iFt) = .true.
+                cycle
               else
                 pb(iCv) = t0
               endif
               t0 = nb(iCv)+tt1(iFt)/tt0(iFt) +
      *         corr_core_dn(isb)*(nb_(iCv)-nb(iCv)-tt1(iFt)/tt0(iFt))   ! IYS 19.12.2017
               if (t0 .lt. switch%b2mndr_na_min) then
-                too_low_density = .TRUE.
-                exit
+                too_low_density(iFt) = .true.
+                cycle
               else
                 nb(iCv) = t0
               endif
-            else                                      !srv 25.07.17 {
+            else
+              ! in core, but not part of a flux tube in the mesh => normal correction
               nb(iCv) = nb_(iCv)
-              pb(iCv) = pb_(iCv)                      !srv 25.07.17 }
+              pb(iCv) = pb_(iCv)
             endif
-          enddo
-          if (too_low_density) then  ! cancel smoothing of the correction on the surface if the corrected density is too low
+          else
+            ! not in core => normal correction
+            nb(iCv) = nb_(iCv)
+            pb(iCv) = pb_(iCv)
+          endif
+        enddo
+! cancel smoothing of the correction on the surfaces where the corrected density is too low
+        do iFt = 1, mpg%nFt
+          if (too_low_density(iFt)) then
             do i = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
               iCv = mpg%ftCv(i)
               nb(iCv) = nb_(iCv)

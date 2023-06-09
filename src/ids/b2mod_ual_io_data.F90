@@ -222,8 +222,7 @@ contains
     end function b2_IMAS_Transform_Data_B2_To_IDS_General
 
 #endif
-#else
-#ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
 
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
     use euITM_schemas ! IGNORE
@@ -346,7 +345,6 @@ contains
 
   end function b2ITMTransformDataB2ToCPOGeneral
 
-#endif
 #endif
 
 end module b2mod_ual_io_data

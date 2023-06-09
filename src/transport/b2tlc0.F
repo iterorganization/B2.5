@@ -33,7 +33,7 @@
 *   ..local variables
       integer iFc, is
       real (kind=R8) ::
-     *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
+     *  alpha, gamma, t0, t1, t2, t3, dpb, vbar, maxfluxlimit(0:1),
      *  pb(nCv), dpbf(nFc,0:1), pbv(nVx)
       character charns*3
 *   ..procedures
@@ -99,8 +99,11 @@ cwdk    or radial contributions, since neutral transport is isotropic
 *    ..compute differences of partial pressure
           call diff (nCv, nFc, nVx, 0, geo, mpg, pb, pbv, dpbf)
           do iFc = 1, nFc
-           t0 = (tn(mpg%fcCv(iFc,1)) + tn(mpg%fcCv(iFc,2)))/2.0_R8
-           t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
+            t0 = (tn(mpg%fcCv(iFc,1)) + tn(mpg%fcCv(iFc,2)))/2.0_R8
+            t3 = dpbf(iFc,0)*geo%fcQalf(iFc,0)+                         ! lkw 30.09.2022{
+     &           dpbf(iFc,1)*geo%fcQalf(iFc,1)
+            t1 = na(mpg%fcCv(iFc,1),is)
+            if (t3 .gt. 0) t1 = na(mpg%fcCv(iFc,2),is)                  ! lkw 30.09.2022}
 *    ..limit total gradient
             dpb = cdpa0(iFc,is)*sqrt(dpbf(iFc,0)**2 + dpbf(iFc,1)**2)
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))

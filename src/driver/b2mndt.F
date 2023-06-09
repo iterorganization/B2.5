@@ -485,8 +485,8 @@ ctmp.dpc
               call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is),
      &         st%pl%te, st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))         !srv 01.10.99
 *    ..compute particle flux
-              call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &         mpg, st%pl, st%dv, st%co, st%rt, .true.)
+              call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &         switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
             enddo                                                        !srv 01.10.99
 *      ..compute electron drift velocities
             call b2tfed (nCv, nFc, nVx, switch, geo, mpg,

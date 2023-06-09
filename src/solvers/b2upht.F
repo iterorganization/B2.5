@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2upht (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,       !srv 22.05.18
+     &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,      !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, cortt, corte,
      &  corti, cortn, corkt, corzt, pccm0, na, ua, te, ti, tn, kt, zt,
      &  po, ne, ni)
@@ -31,7 +31,7 @@
      &  corti(nCv), cortn(nCv), corkt(nCv), corzt(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
      &  solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(0)),
-     &  solvnreg(0:mpg%nnreg(0)), solvtreg(0:mpg%nnreg(0)),                             !srv 22.05.18
+     &  solvnreg(0:mpg%nnreg(0)), solvtreg(0:mpg%nnreg(0)),              !srv 22.05.18
      &  solvpreg(0:mpg%nnreg(0)), solvmreg(0:ns-1,0:mpg%nnreg(0)),
      &  solvkreg(0:mpg%nnreg(0)), solvzreg(0:mpg%nnreg(0))
 *   ..input/output arguments
@@ -143,10 +143,12 @@
 *   ..smooth the correction for inner flux surfaces                 !lk 26.10.2017{
         if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
           iFt = mpg%cvFt(iCv)
-          tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)*ni(iCv,1)
-          tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*ni(iCv,1)*dti1(iCv)
-          tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*ne(iCv)
-          tt3(iFt) = tt3(iFt) + geo%cvVol(iCv)*ne(iCv)*dte1(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+            tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)*ni(iCv,1)
+            tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*ni(iCv,1)*dti1(iCv)
+            tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*ne(iCv)
+            tt3(iFt) = tt3(iFt) + geo%cvVol(iCv)*ne(iCv)*dte1(iCv)
+          endif
         endif
       enddo
 
@@ -154,21 +156,23 @@
         ireg = mpg%cvReg(iCv)
         if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
           iFt = mpg%cvFt(iCv)
-          dti1(iCv) = tt1(iFt)/tt0(iFt) +
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+            dti1(iCv) = tt1(iFt)/tt0(iFt) +
      *         corr_core_dt*(dti1(iCv)-tt1(iFt)/tt0(iFt))           ! IYS 19.12.2017
-          dte1(iCv) = tt3(iFt)/tt2(iFt) +
+            dte1(iCv) = tt3(iFt)/tt2(iFt) +
      *         corr_core_dt*(dte1(iCv)-tt3(iFt)/tt2(iFt))           ! IYS 19.12.2017
+          endif
         endif
         dte(iCv) = dte1(iCv)
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
-        if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))  !xpb
+        if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv)) !xpb
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi.and.add_te_corr_to_po(ireg)) then
           po(iCv) = po(iCv)+dte(iCv)/qe
         else if (switch%pot_eq.eq.2) then
           po(iCv) = 3.1_R8*te(iCv)/qe
         end if
-        if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))  !xpb
+        if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv)) !xpb
         if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
         if (switch%solve_keps.gt.0.and.solvkreg(ireg))
      &    kt(iCv) = max(1.0e-5_R8*ev,kt(iCv)+dkt(iCv))

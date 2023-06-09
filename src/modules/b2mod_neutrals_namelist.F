@@ -78,11 +78,9 @@ cank }
      *   phys_sput(:,:), chem_sput(:,:),
      1   gpfc(:,:), gpdata(:,:,:), time_dep_puff_param(:,:),
      2   RC_FACE_ORI(:,:)
-#ifndef NO_B2_CHEM_SPUT
-#ifndef SOLPS4_3
+#if ( !defined(NO_B2_CHEM_SPUT) && !defined(SOLPS4_3) )
       real (kind=R8), allocatable, save ::
      *   chemical_sputter_yield(:)
-#endif
 #endif
       integer, allocatable, save ::
      *   RCPOS(:),
@@ -142,11 +140,9 @@ cank }
      *   textan(0:DEF_NATM-1),
      *   textmn(0:DEF_NMOL-1),
      *   textin(0:DEF_NION-1)
-#ifndef NO_B2_CHEM_SPUT
-#ifndef SOLPS4_3
+#if ( !defined(NO_B2_CHEM_SPUT) && !defined(SOLPS4_3) )
       real (kind=R8), save ::
      ,  chemical_sputter_yield(0:DEF_NLIM+DEF_NSTS)
-#endif
 #endif
       integer, save :: RCPOS(NSTRAID)
       integer, save :: RCSTART(NSTRAID)
