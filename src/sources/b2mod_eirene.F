@@ -906,7 +906,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         endif
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
-          call post_couple(nx,ny,ns,nstrat)
+          call post_couple(nx,ny,ns,nstrai)
           write(*,*) 'Called post_couple'
           write(*,*) 'Checking strata correspondence'
           call strata_check
