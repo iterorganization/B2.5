@@ -122,7 +122,7 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, ixtl, ixtr, iatm, jsep
+    integer iy, ix, ic, ixtl, ixtr, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
@@ -135,7 +135,7 @@ contains
     integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
-    integer imap(maxvdims), iret
+    integer imap(maxvdims), iret, iatm
     integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8) :: &

@@ -180,7 +180,7 @@ module b2mod_ual_io
      & , only : ids_identifier_static
 #endif
 #if IMAS_MINOR_VERSION > 36
-    use ids_schemas &      ! IGNORE
+    use ids_schemas &     ! IGNORE
      & , only : ids_summary_rz1d_dynamic
 #endif
 #if ( defined(AMNS) && IMAS_MINOR_VERSION > 29 )
@@ -1348,7 +1348,10 @@ contains
             &   crx(leftcut(2),topcut(2),0), cry(leftcut(2),topcut(2),0) )
         end select
         select case (GeometryType)
-        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+        case ( GEOMETRY_CDN )
+          call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, 0.0_IDS_real )
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+             & GEOMETRY_LFS_SNOWFLAKE_MINUS )
           u = norm( (crx(nmdpl,topcut(2),0) + crx(nmdpl,topcut(2),1))/2.0_R8 - &
             &       (crx(nmdpl,topcut(1),0) + crx(nmdpl,topcut(1),1))/2.0_R8, &
             &       (cry(nmdpl,topcut(2),0) + cry(nmdpl,topcut(2),1))/2.0_R8 - &

@@ -32,7 +32,7 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
-      integer il,is,i,ii,ia,ib,idir,j,js,k,ic,ias,ix,iy,iss
+      integer il,is,i,ii,ia,ib,idir,j,js,k,ic,ias,iss
       character*74 hlp_frm
       real (kind=R8) ::
      *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,wwy(4),
