@@ -26,8 +26,8 @@ endif
 
 
 ifeq (${FC},mpif90)
-INCMOD  = -I${OBJDIR}
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+INCMODS  = -I${OBJDIR} -I${EIRDIR}
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
 DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
@@ -42,7 +42,7 @@ FCOPTS  += -fopenmp
 LDOPTS  += -fopenmp
 endif
 else
-INCMOD   = -I
+INCMODS  = -I${EIRDIR} -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 # OpenMP compiler options for intel: -openmp is enough
