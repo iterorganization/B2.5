@@ -92,7 +92,7 @@ c local
       subroutine run_av_init (iav_cont, nx, ny, ns, lpr, ler)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_infcop    ! IGNORE
+      use eirmod_infcop
 #else
       use b2_4to5          ! IGNORE
 #endif
@@ -355,7 +355,7 @@ c local variables
       subroutine run_av_save (savefile, nx, ny, ns, lpr, ler)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_infcop    ! IGNORE
+      use eirmod_infcop
 #else
       use b2_4to5          ! IGNORE
 #endif
