@@ -196,72 +196,23 @@
 *   ..Format for reaction card reading
 6666  FORMAT (A6,1X,A4,A9,A3)
 
-*   .. Get Amjuel/hydhel process options
-      found = .false.
-      do while (.not.found)
-        READ (nrid,'(A72)',end=99) row
-        if (INDEX(row,'Amjuel/Hydhel Hydrogen reaction cards')>0) then
-          found = .true.
-        end if
-      end do
-
-*   ..read heading for Hydrogen ionization
-      read (nrid,'(A32)') id
-      call xertst (streql(id,'*Ionization'),
-     &  'faulty input id instead of *Ionization, id='//id)
-
-*   ..read Ionization reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for ionization
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+*   .. Set up default reactions
+cnh ionization
+      call get_amjhyd_rates('AMJUEL  ','H.4 ','2.1.5    ','EI ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtsa(:,:,0) = rates
-
-*   ..read Ionization electron heat loss reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for ionization electron heat loss
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+      call get_amjhyd_rates('AMJUEL  ','H.10','2.1.5    ','EI ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtqa(:,:,0) = rates
-
-*   ..read heading for Hydrogen charge-exchange
-      read (nrid,'(A32)') id
-      call xertst (streql(id,'*Charge-exchange'),
-     &  'faulty input id instead of *Charge-exchange, id='//id)
-
-*   ..read Charge-exchange reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for charge-exchange
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+cnh charge exchange
+      call get_amjhyd_rates('HYDHEL  ','H.1 ','3.1.8    ','CX ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtcx(:,:,nz) = rates
-
-*   ..read heading for Hydrogen recombination
-      read (nrid,'(A32)') id
-      call xertst (streql(id,'*Recombination'),
-     &  'faulty input id instead of *Recombination, id='//id)
-
-*   ..read Recombination reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for recombination
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+cnh recombination
+      call get_amjhyd_rates('AMJUEL  ','H.4 ','2.1.8    ','RC ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtra(:,:,nz) = rates
-
-*   ..read Recombination electron heat loss reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for recombination electron heat loss
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+      call get_amjhyd_rates('AMJUEL  ','H.10','2.1.8    ','RC ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
 cmb   In fact, potential energy contribution should still be added like in commented code.
 c     This will, however lead to negative values in rtra which will give NaNs in the
@@ -282,13 +233,9 @@ c     Add Bremsstrahlung
           rtqa(i,j,nz) = rtqa(i,j,nz) + bremsf * sqrt(rtt(i))
         enddo
       enddo
-*    ..TODOs: Provide warning when outside validity range?
 
 * ..return
       call subend ()
-      return
-
-   99 call xerrab('No Amjuel/Hydhel reaction header found in b2ar.dat!')
       return
 
 *----------------------------------------------------------------------
