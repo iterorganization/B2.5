@@ -1,5 +1,5 @@
       subroutine conv_surface_models (nout, mpg, gm,
-     .           bndmdl, trifc, elem_cv, nelem)
+     .           bndmdl, trifc, elem_cv, nelem, node_vert, nnode)
 
       use b2mod_types
       use b2mod_boundary_namelist
@@ -10,10 +10,11 @@
 
       implicit none
 
-      integer, intent(in) :: nout, nelem
+      integer, intent(in) :: nout, nelem, nnode
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
-      integer, intent(in) :: trifc(3,nelem), elem_cv(nelem)
+      integer, intent(in) :: trifc(3,nelem), elem_cv(nelem),
+     .           node_vert(nnode)
       integer, intent(inout) :: bndmdl(3,nelem)
       character(500) :: line
       integer :: ineir, iouteir, nstsi, ists, i, ier, icut, nd, nsf,
@@ -296,7 +297,8 @@
           !! SN of DN case: 4 or 8 corners
           do i = 1, nasmod
             read (ineir,'(2i6)') ihelp(1), ihelp(2)
-            write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(i)
+            write (iouteir,'(3i6)') ihelp(1), ihelp(2),
+     .         node_vert(mpg%icornVx(i))
           end do
         else
          call xerrab('conv_surface_models -- nasmod')
