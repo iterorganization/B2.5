@@ -249,7 +249,7 @@
       end if
       if (ico > 0) then
         write (*,*) 'Problem(s) converting coordinates in fort.33'
-        write (*,*) 'Check whether triangle grid and plasma grid match, '
+        write (*,*) 'Check whether triangle grid and plasma grid match,'
         write (*,*) 'with sufficient numerical precision.'
 !        call xerrab ('conv_triangles -- problem with node conversion')
       endif
