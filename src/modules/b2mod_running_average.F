@@ -90,12 +90,8 @@ c local
       end subroutine running_average
 
       subroutine run_av_init (iav_cont, nx, ny, ns, lpr, ler)
-#ifdef B25_EIRENE
-#ifndef SOLPS4_3
-      use eirmod_infcop
-#else
+#if ( defined(B25_EIRENE) && defined(SOLPS4_3) )
       use b2_4to5          ! IGNORE
-#endif
 #endif
       use b2mod_rates
       implicit none
@@ -353,12 +349,8 @@ c local variables
       end subroutine run_av_fin
 
       subroutine run_av_save (savefile, nx, ny, ns, lpr, ler)
-#ifdef B25_EIRENE
-#ifndef SOLPS4_3
-      use eirmod_infcop
-#else
+#if ( defined(B25_EIRENE) && defined(SOLPS4_3) )
       use b2_4to5          ! IGNORE
-#endif
 #endif
       implicit none
       integer, intent(in) :: nx, ny, ns
