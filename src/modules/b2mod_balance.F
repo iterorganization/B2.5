@@ -1915,9 +1915,16 @@ cdjm Update ion heat sources
         endif
       endif
 
+*     Average now accumulates total to be rescaled before write
+*     using ntim < 0
       if (balance_average.ne.0) then
-        avmlt = 1.0_R8
-        curmlt = rratio(1,ntim)
+        if (ntim < 0) then
+           avmlt = rratio(1,itim)
+           curmlt = 0._R8
+        else
+           avmlt = 1.0_R8
+           curmlt = 1.0_R8
+        endif
       else
         avmlt = 0.0_R8
         curmlt = 1.0_R8

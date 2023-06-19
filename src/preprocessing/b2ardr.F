@@ -8,18 +8,12 @@
       use b2mod_b2cmpa
       use b2mod_ipmain
       use b2mod_subsys
-#ifdef IMAS
-#ifdef AMNS
+#if ( defined(IMAS) && defined(AMNS) )
       use amns_types       ! IGNORE
       use amns_module      ! IGNORE
-#endif
-#else
-#ifdef ITM
-#ifdef GOT_AMNSPROTO
+#elif ( defined(ITM) && defined(GOT_AMNSPROTO) )
       use amns_types       ! IGNORE
       use amns_module      ! IGNORE
-#endif
-#endif
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -145,20 +139,10 @@
      &  rtz2(:,:,:), rtpt(:,:,:),
      &  rtzz(:,:,:), rtpi(:,:,:),
      &  rtqr(:,:,:), wrk(:,:,:)
-#ifdef IMAS
-#ifdef AMNS
+#if ( defined(IMAS) && defined(AMNS) )
       type (amns_handle_type), save :: amns
 #else
       character*5, save :: git_version_amns = '0.0.0'
-#endif
-#else
-#ifdef ITM
-#ifndef GOT_AMNSPROTO
-      character*5, save :: git_version_amns = '0.0.0'
-#endif
-#else
-      character*5, save :: git_version_amns = '0.0.0'
-#endif
 #endif
       save fix_cx, no_weisheit, amjhydhel, rtnt_in, rtnn_in
       parameter (lnzero=-1.0e30_R8)
@@ -424,12 +408,10 @@
 #else
        call xerrab ('No IMAS AMNS data available')
 #endif
-#else
-#ifdef ITM
+#elif defined(ITM)
       else if (streql(flag,'amns')) then
        lblrc(61:120) = 'AMNS rate coefficients, courtesy of'//
      &   ' EFDA-TF-ITM'
-#endif
 #endif
       else
        call xerrab ('faulty data flag; flag='//flag)
