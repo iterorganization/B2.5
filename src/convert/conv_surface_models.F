@@ -289,16 +289,18 @@
       if (nasmod /= 0) then
         if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
           !! limiter or linear case: only NW and NE corners
+          j = findloc(node_vert,mpg%icornVx(2),1)
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(2)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+          j = findloc(node_vert,mpg%icornVx(4),1)
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(4)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
         elseif (count(mpg%icornVx > 0) == nasmod) then
           !! SN of DN case: 4 or 8 corners
           do i = 1, nasmod
+            j = findloc(node_vert,mpg%icornVx(i),1)
             read (ineir,'(2i6)') ihelp(1), ihelp(2)
-            write (iouteir,'(3i6)') ihelp(1), ihelp(2),
-     .         node_vert(mpg%icornVx(i))
+            write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
           end do
         else
          call xerrab('conv_surface_models -- nasmod')
