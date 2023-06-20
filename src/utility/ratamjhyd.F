@@ -18,6 +18,7 @@
      &  rtqa(0:nt,0:nn,0:nz), rtcx(0:nt,0:nn,0:nz),
      &  rtrd(0:nt,0:nn,0:nz), rtbr(0:nt,0:nn,0:nz),
      &  rtqr(0:nt,0:nn,0:nz)
+      integer :: iend
 *-----------------------------------------------------------------------
 *.documentation
 *     TODO: provide warning when outside valid range of EIRENE data
@@ -158,7 +159,7 @@
       character(420) :: row
       character :: FILNAM*8,H123*4,REAC*9,CRC*3
       real (kind = R8) :: tmin, tmax, nmin, nmax, bremsf, depot
-      integer :: nreac, ireac
+      integer :: nreac, ireac, itok, ier
       parameter (bremsf=1.69e-38_R8/ev, depot=-13.5984340_R8)
 
 *   ..procedures
@@ -250,7 +251,13 @@ c     Add Bremsstrahlung
       endif     
       do ireac = 1, nreac
         READ (nrid,'(A72)') row
-        read (row,6666) FILNAM,H123,REAC,CRC
+        call read_token(row,' ',filnam,itok, ier,.false.)
+        iend = itok
+        call read_token(row(iend:),' ',h123,itok, ier,.false.)
+        iend = iend + itok
+        call read_token(row(iend:),' ',reac,itok, ier,.false.)
+        iend = iend + itok
+        call read_token(row(iend:),' ',crc,itok, ier,.false.)
         call get_amjhyd_rates(filnam,h123,reac,crc,am,
      1    nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
         select case (H123)
