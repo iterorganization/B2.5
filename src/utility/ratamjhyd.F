@@ -158,12 +158,14 @@
       character(420) :: row
       character :: FILNAM*8,H123*4,REAC*9,CRC*3
       real (kind = R8) :: tmin, tmax, nmin, nmax, bremsf, depot
+      integer :: nreac, ireac
       parameter (bremsf=1.69e-38_R8/ev, depot=-13.5984340_R8)
 
 *   ..procedures
       logical streql
 *   ..initialisation
       data tmin/0.0_R8/, tmax/1E+30_R8/, nmin/0.0_R8/, nmax/1E+30_R8/
+      data nreac/0/
       external xertst, b2xvsg, streql, xerrab
 
 *-----------------------------------------------------------------------
@@ -176,6 +178,8 @@
       call ipgetr('b2ardr_t_max',tmax)
       call ipgetr('b2ardr_nn_min',nmin)
       call ipgetr('b2ardr_nn_max',nmax)
+*   ..Number of explicitly specified AMJUEL/HYDHEL reactions
+      call ipgeti('b2ardr_nreac',nreac)
 *   ..set n3
       n3 = (nz+1)*(nt+1)*(nn+1)
 *   ..test nz, nt, nn
@@ -234,8 +238,67 @@ c     Add Bremsstrahlung
         enddo
       enddo
 
+*   .. Possibility to overwrite default reactions in b2ar.dat
+      if (nreac.gt.0) then
+        found = .false.
+        do while (.not.found)
+          READ (nrid,'(A5)',end=99) row
+          if (INDEX(row,'*reac')>0) then
+            found = .true.
+          endif
+        end do 
+      endif     
+      do ireac = 1, nreac
+        READ (nrid,'(A72)') row
+        read (row,6666) FILNAM,H123,REAC,CRC
+        call get_amjhyd_rates(filnam,h123,reac,crc,am,
+     1    nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
+        select case (H123)
+          case ('H.1')
+            if (streql(crc,'CX')) then
+              rtcx(:,:,nz) = rates
+            else 
+              call xerrab('Not possible yet to specify a non-CX ',
+     1          'reaction of H.1')
+            endif
+          case ('H.4')
+            if (streql(crc,'EI')) then
+              rtsa(:,:,0) = rates
+            elseif (streql(crc,'RC')) then
+              rtra(:,:,nz) = rates
+            elseif (streql(crc,'CX')) then
+              rtcx(:,:,nz) = rates
+            else
+              call xerrab('Wrong value for CRC')
+            endif
+          case ('H.10')
+            if (streql(crc,'EI')) then
+              rtqa(:,:,0) = rates
+            elseif (streql(crc,'RC')) then
+	      if (fix_recomb.ne.0.and.nz.le.zmax_recomb) then
+	        rtqr(:,:,nz) = rates
+	      else
+	        rtqr(:,:,nz) = rates +
+     1            depot*(am*(mp+me)/(me+am*mp))*rtra(:,:,nz)
+		call xertst(any(rtqr(:,:,nz)<0.0_R8),
+     1            'Negative rates present, try turning on ',
+     2            'b2ardr_fix_recomb')
+	      end if
+            else
+              call xerrab('Not allowed combination of H.10 and CRC')
+            endif
+          case default
+            write(*,*) 'Do not yet know about ',h123
+            call xerrab('H-number on reaction card not yet implemented')
+        end select
+      enddo
+      
+
 * ..return
       call subend ()
+      return
+
+   99 call xerrab('No Amjuel/Hydhel reaction header found in b2ar.dat!')
       return
 
 *----------------------------------------------------------------------

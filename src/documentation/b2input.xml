@@ -4455,6 +4455,14 @@
 				  <type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2ardr_nreac</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of AMJUEL/HYDHEL reactions you explicitly specify in b2ar.dat, when b2ardr_amjhydhel = 1. A set of default reactions is taken but can be overwritten by the reactions you specify here.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2ardr_rtn.</name>
 				<description>
