@@ -2536,6 +2536,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbr_afn_bcs_use_coarse</name>
+				<default>1</default>
+				<type>integer</type>
+                                <description>
+					When set to 1, the coarse representation of the integrated TRIM reflection coefficients is used for the AFN boundary conditions, which is expected to be sufficient. In case you want to use the original fine representation, use b2stbr_afn_bcs_use_coarse = 0. However, the fine representation is only present for D on Be, C and W. 
+				</description>
+			</switch>
+			<switch>
 				<name>b2tqna_transport_afn</name>
 				<default>0</default>
 				<type>integer</type>
