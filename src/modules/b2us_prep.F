@@ -4397,7 +4397,7 @@
         integer :: nx, ny
         real (kind=R8) :: ro(2), zo(2), rzomp(2,2)
         real (kind=R8) :: ri(2), zi(2), rzimp(2,2)
-        integer :: ix, iy, iout, n_omp, n_imp
+        integer :: ix, iy, iymin, iymax, iout, n_omp, n_imp
 #ifndef F2003
         integer newunit
         external newunit
@@ -4421,6 +4421,7 @@
           n_omp = leftcut(1)
           iy = topcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
             if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
@@ -4429,22 +4430,33 @@
           n_omp = (nx+2)/2
           iy = ny/2
           do ix = -1, nx
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
             if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
         endif
         write(*,*) ' Found OMP location at ix = ' , n_omp
-        do while (isRealCell(cflags(n_omp,iy+1,CELLFLAG_TYPE)))
-          iy = iy + 1
+        iymax = iy
+        do while (isRealCell(cflags(n_omp,iymax+1,CELLFLAG_TYPE)))
+          iymax = iymax + 1
         end do
-        ro(1)=0.25_R8*(crx(n_omp,-1,0)+crx(n_omp,-1,1)+ ! R-coordinate of center of [n_omp,-1] cell
-     &                 crx(n_omp,-1,2)+crx(n_omp,-1,3))
-        zo(1)=0.25_R8*(cry(n_omp,-1,0)+cry(n_omp,-1,1)+ ! Z-coordinate of center of [n_omp,-1] cell
-     &                 cry(n_omp,-1,2)+cry(n_omp,-1,3))
-        ro(2)=0.25_R8*(crx(n_omp,iy,0)+crx(n_omp,iy,1)+ ! R-coordinate of center of [n_omp,ny] cell
-     &                 crx(n_omp,iy,2)+crx(n_omp,iy,3))
-        zo(2)=0.25_R8*(cry(n_omp,iy,0)+cry(n_omp,iy,1)+ ! Z-coordinate of center of [n_omp,ny] cell
-     &                 cry(n_omp,iy,2)+cry(n_omp,iy,3))
+        iymin = iy
+        do while (isRealCell(cflags(n_omp,iymin-1,CELLFLAG_TYPE)))
+          iymin = iymin - 1
+        end do
+        write(*,*) 'Inner and outermost flux tube at OMP at '//
+     &             'iymin, iymax  = ',iymin, iymax
+
+        
+
+        ro(1)=0.25_R8*(crx(n_omp,iymin,0)+crx(n_omp,iymin,1)+ ! R-coordinate of center of [n_omp,-1] cell
+     &                 crx(n_omp,iymin,2)+crx(n_omp,iymin,3))
+        zo(1)=0.25_R8*(cry(n_omp,iymin,0)+cry(n_omp,iymin,1)+ ! Z-coordinate of center of [n_omp,-1] cell
+     &                 cry(n_omp,iymin,2)+cry(n_omp,iymin,3))
+        ro(2)=0.25_R8*(crx(n_omp,iymax,0)+crx(n_omp,iymax,1)+ ! R-coordinate of center of [n_omp,ny] cell
+     &                 crx(n_omp,iymax,2)+crx(n_omp,iymax,3))
+        zo(2)=0.25_R8*(cry(n_omp,iymax,0)+cry(n_omp,iymax,1)+ ! Z-coordinate of center of [n_omp,ny] cell
+     &                 cry(n_omp,iymax,2)+cry(n_omp,iymax,3))
         if(ro(2).gt.ro(1)) then
           rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
           rzomp(2,1)=zo(1)+                                               ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
@@ -4464,6 +4476,7 @@
           n_imp = leftcut(2)
           iy = min(topcut(1),topcut(2))
           do ix = leftcut(1)+1, leftcut(2)-1
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
@@ -4471,6 +4484,7 @@
           n_imp = leftcut(1)
           iy = topcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
@@ -4479,23 +4493,31 @@
           n_imp = (nx+2)/4
           iy = ny/2
           do ix = -1, nx
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
         endif
         write(*,*) ' Found IMP location at ix = ' , n_imp
-        do while (isRealCell(cflags(n_imp,iy+1,CELLFLAG_TYPE)))
-          iy = iy + 1
+        iymax = iy
+        do while (isRealCell(cflags(n_imp,iymax+1,CELLFLAG_TYPE)))
+          iymax = iymax + 1
         end do
-
-        ri(1)=0.25_R8*(crx(n_imp,iy,0)+crx(n_imp,iy,1)+ ! R-coordinate of center of [n_imp,ny] cell
-     &                 crx(n_imp,iy,2)+crx(n_imp,iy,3))
-        zi(1)=0.25_R8*(cry(n_imp,iy,0)+cry(n_imp,iy,1)+ ! Z-coordinate of center of [n_imp,ny] cell
-     &                 cry(n_imp,iy,2)+cry(n_imp,iy,3))
-        ri(2)=0.25_R8*(crx(n_imp,-1,0)+crx(n_imp,-1,1)+ ! R-coordinate of center of [n_imp,-1] cell
-     &                 crx(n_imp,-1,2)+crx(n_imp,-1,3))
-        zi(2)=0.25_R8*(cry(n_imp,-1,0)+cry(n_imp,-1,1)+ ! Z-coordinate of center of [n_imp,-1] cell
-     &                 cry(n_imp,-1,2)+cry(n_imp,-1,3))
+        iymin = iy
+        do while (isRealCell(cflags(n_imp,iymin-1,CELLFLAG_TYPE)))
+          iymin = iymin - 1
+        end do
+        write(*,*) 'Inner and outermost flux tube at OMP at '//
+     &             'iymin, iymax  = ', iymin, iymax
+       
+        ri(1)=0.25_R8*(crx(n_imp,iymax,0)+crx(n_imp,iymax,1)+ ! R-coordinate of center of [n_imp,ny] cell
+     &                 crx(n_imp,iymax,2)+crx(n_imp,iymax,3))
+        zi(1)=0.25_R8*(cry(n_imp,iymax,0)+cry(n_imp,iymax,1)+ ! Z-coordinate of center of [n_imp,ny] cell
+     &                 cry(n_imp,iymax,2)+cry(n_imp,iymax,3))
+        ri(2)=0.25_R8*(crx(n_imp,iymin,0)+crx(n_imp,iymin,1)+ ! R-coordinate of center of [n_imp,-1] cell
+     &                 crx(n_imp,iymin,2)+crx(n_imp,iymin,3))
+        zi(2)=0.25_R8*(cry(n_imp,iymin,0)+cry(n_imp,iymin,1)+ ! Z-coordinate of center of [n_imp,-1] cell
+     &                 cry(n_imp,iymin,2)+cry(n_imp,iymin,3))
 
         if(ri(2).gt.ri(1)) then
           rzimp(1,1)=ri(1)*0.9_R8                                         ! take a coordinate to the left of ri(1)
