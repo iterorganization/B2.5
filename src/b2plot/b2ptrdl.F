@@ -12,8 +12,8 @@ c======================================================================
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_b2plot_wall_loading
+      use b2mod_dimensions
       implicit none
-#     include <DIMENSIONS.F>
       real (kind=R8) ::
      *   rdl(0:ny-1,ntrgsx,0:DEF_NATM)
       integer i,j,k,l,m,n

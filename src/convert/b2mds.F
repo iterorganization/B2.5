@@ -61,9 +61,9 @@
       use b2mod_b2cmfs
       use b2mod_external
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 
-#     include <DIMENSIONS.F>
 #ifdef MDSPLUS
 #     include "mdslib.inc"
 #endif
@@ -380,15 +380,16 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-      call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
+      call xertst (nbc.le.nbcd, 'increase DEF_NBC in b2mod_dimensions')
+      call xertst (nniso.le.nnisod, 
+     . 'increase DEF_NISO in b2mod_dimensions')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call alloc_b2mod_neutrals
      > (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst (nstrat.le.nstraid,
-     . 'Increase DEF_NSTRA in DIMENSIONS.F')
+     . 'Increase DEF_NSTRA in b2mod_dimensions')
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)

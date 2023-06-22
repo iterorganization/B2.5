@@ -22,6 +22,9 @@ csw 09jan2014 extra module to define some arrays
 #else
       use b2mod_eirdiag
 #endif
+#ifndef B25_EIRENE
+      use b2mod_dimensions
+#endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"

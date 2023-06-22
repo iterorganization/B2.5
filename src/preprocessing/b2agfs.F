@@ -18,8 +18,8 @@
       use b2ag_ghostcells
       use carre_constants
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
 *   ..output arguments

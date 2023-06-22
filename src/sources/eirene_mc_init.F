@@ -7,6 +7,7 @@
 #else
       use b2mod_eirbra
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       implicit none
       integer, intent(in) :: nCv, nFc

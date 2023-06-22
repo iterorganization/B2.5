@@ -1,5 +1,8 @@
       module b2mod_layer
       use b2mod_types
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
       integer nwall, ntrack, nalloys
@@ -10,7 +13,6 @@
       integer, allocatable :: layer_nzconstituents(:,:)
       real (kind=R8), allocatable :: layer_nrelconstituents(:,:)
 #else
-#     include "DIMENSIONS.F"
       parameter(
      . nwall = 2*(DEF_NXD+2)+(DEF_NCUT+2)*(DEF_NYD+2)+DEF_NLIM+DEF_NSTS)
       integer layer_nconstituents(nwall)

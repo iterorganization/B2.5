@@ -4456,7 +4456,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $SOLPSTOP/include(.local)/DIMENSIONS.F file.
+					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $SOLPSTOP/modules(.local)/b2mod_dimensions.F file.
 					Need not include the time-dependent stratum. If a time-dependent stratum is used, is incremented internally as needed. The incremented value is referred to as NSTRAT below.
 				</description>
 			</switch>
@@ -7231,6 +7231,7 @@
 					(Experimental! Do not use!) Specifies if sigma can be read from the experimental data files cfi.dat.
 				</description>
 			</switch>
+			<switch>
 				<name>NMEAN</name>
 				<default>0</default>
 				<type>integer</type>

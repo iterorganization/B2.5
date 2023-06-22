@@ -1,8 +1,8 @@
       subroutine b2pinp(iret)
       use b2mod_types
+      use b2mod_dimensions
       implicit none
       integer iret
-#include <DIMENSIONS.F>
 c
 c  version : 11.11.97 21:29
 c

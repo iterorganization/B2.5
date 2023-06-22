@@ -221,8 +221,8 @@
       use eirmod_extrab25
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, diagno
       real (kind=R8) :: BoRiS

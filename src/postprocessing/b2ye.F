@@ -12,10 +12,9 @@
 #ifndef NO_CDF
       use b2mod_cdf
 #endif
-
+      use b2mod_dimensions
       implicit none
 
-#include "DIMENSIONS.F"
 #ifndef NO_CDF
 #     include <netcdf.inc>
 

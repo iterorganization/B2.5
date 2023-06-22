@@ -22,7 +22,7 @@ The user needs to supply a "b2.optimization.parameters" file to specify wrt whic
 
 The code will automatically print in run.log the value of the cost function(s) and their derivatives.
 
-b2mod_diffsizes.F acts similarly to DIMENSIONS.F and stores the maximum number of directions (nbdirsmax) allowed, i.e. the maximum number of indpendent variables with respect to which one can calculate the derivative of the cost function. Increase nbdirsmax and recompile if needed.
+b2mod_diffsizes.F acts similarly to b2mod_dimensions and stores the maximum number of directions (nbdirsmax) allowed, i.e. the maximum number of indpendent variables with respect to which one can calculate the derivative of the cost function. Increase nbdirsmax and recompile if needed.
 
 Current parameters for which derivative calculation is possible (default parameters):
  - Transport coefficients: parm_dna parm_hce parm_hci parm_vsa parm_sig parm_alf 

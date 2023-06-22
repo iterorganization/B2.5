@@ -3,8 +3,8 @@
       use b2mod_diag
       use b2us_geo
       use b2us_map
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)
       integer nhetrgtx

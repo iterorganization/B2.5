@@ -33,8 +33,8 @@
      &  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
      *  NAS, TES, TIS, NIVS, FFAC, DFS, POS
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) :: praverage(2)
