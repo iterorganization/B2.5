@@ -3,8 +3,8 @@
       use b2mod_types
       use b2mod_layer
      . , only : ntrack
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 
       real (kind=R8), allocatable, save ::
      *  work(:,:,:,:),
@@ -193,13 +193,13 @@ cank
       allocate(texttargsp(ntrack))
 #else
       call xertst(natmd .le.DEF_NATM,
-     . 'increase size of DEF_NATM in DIMENSIONS.F')
+     . 'increase size of DEF_NATM in b2mod_dimensions')
       call xertst(nmold .le.DEF_NMOL,
-     . 'increase size of DEF_NMOL in DIMENSIONS.F')
+     . 'increase size of DEF_NMOL in b2mod_dimensions')
       call xertst(niond .le.DEF_NION,
-     . 'increase size of DEF_NION in DIMENSIONS.F')
+     . 'increase size of DEF_NION in b2mod_dimensions')
       call xertst(nsd   .le.DEF_NPLS,
-     . 'increase size of DEF_NPLS in DIMENSIONS.F')
+     . 'increase size of DEF_NPLS in b2mod_dimensions')
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif

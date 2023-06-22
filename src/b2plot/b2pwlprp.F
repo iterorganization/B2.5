@@ -32,8 +32,8 @@ c======================================================================
       use eirmod_extrab25
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
       real (kind=R8) ::
      *   d,x
       integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,

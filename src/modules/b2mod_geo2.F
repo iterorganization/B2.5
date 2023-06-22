@@ -161,8 +161,8 @@
      &     periodic_bc, nncut, inseltop, inselbot, istyle )
 
       use b2mod_types
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 
     !!   ..input arguments (unchanged on exit)
       integer, intent(in) :: nx, ny, istyle, periodic_bc

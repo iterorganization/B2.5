@@ -14,8 +14,8 @@ c======================================================================
       use b2mod_sources
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 #     include "rdload.inc"
 #ifdef WG_TODO
       integer iatm

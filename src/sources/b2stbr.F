@@ -43,7 +43,7 @@
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
 #endif
 #ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
 #endif
       use b2mod_switches
       use b2us_geo
@@ -297,7 +297,7 @@
           call read_neutrals_namelist(nx, ny, ns, .true.)
           new_sputter_namelist=.true.
           call xertst (nstrat.le.nstraid,
-     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+     &     'Increase DEF_NSTRA in b2mod_dimensions')
           call write_b2mod_neutrals_namelist
         endif
 #endif
@@ -1089,7 +1089,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2us_map
       use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -1190,7 +1190,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 
       call read_neutrals_namelist(ns, mpg, switch, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
-     &   'Increase DEF_NSTRA in DIMENSIONS.F')
+     &   'Increase DEF_NSTRA in b2mod_dimensions')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
       if(neutrals_time_mod.gt.0.0_R8) then
@@ -1211,7 +1211,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
         call read_neutrals_namelist(ns, mpg, switch, .true.)
         new_sputter_namelist=.true.
         call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
+     &       'Increase DEF_NSTRA in b2mod_dimensions')
         call write_b2mod_neutrals_namelist
         if(neutrals_time_mod.gt.0.0_R8) then
           catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch

@@ -5,8 +5,8 @@
       use b2mod_ad
      & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
       use b2us_map
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 ! VARIABLES RELATED TO COST FUNCTION DEFINITION
 ! - mxnCf: maximum number of cost functions allowed
 ! - ncf: actual number of cost functions

@@ -30,6 +30,7 @@
       use b2mod_ad
      & , only : ncall_b2stel
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -56,7 +57,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-#     include <DIMENSIONS.F>
 *   ..local variables
       integer iCv, is!, k
 !WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)

@@ -6,6 +6,7 @@
       use b2mod_time
 #ifndef NO_CDF
       use b2mod_movies
+      use b2mod_dimensions
 #endif
       use b2mod_constants
 #ifdef B25_EIRENE
@@ -135,7 +136,6 @@
       ncall = ncall+1
       call subend ()
 #else
-#     include <DIMENSIONS.F>
 *  ..procedures
       external xertst
 

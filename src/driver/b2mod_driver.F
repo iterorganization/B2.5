@@ -136,9 +136,9 @@
      ,        num_time_slices, num_batch_slices
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 *   ..common blocks
-#     include "DIMENSIONS.F"
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
@@ -1855,7 +1855,7 @@ c   --> better way doing this is necessary)
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
       endif
       call xertst (natmi.le.DEF_NATM,
-     .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,switch)
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg)

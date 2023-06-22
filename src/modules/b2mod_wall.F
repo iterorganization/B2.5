@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_layer
       use b2mod_subsys
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
       integer ndepth, nwall_segments, nsegments, nline
@@ -50,7 +53,6 @@ cxpb Data file material properties
 
       integer, allocatable, save :: track_index(:)
 #else
-#     include "DIMENSIONS.F"
       integer, save ::
      *  imapx(nwall), imapy(nwall)
       integer, save :: plate_model, plate_option

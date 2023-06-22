@@ -19,6 +19,7 @@
 #else
       use b2mod_eirbra
 #endif
+      use b2mod_dimensions
 c
 c  version : 12.01.2002 01:19
 c
@@ -81,7 +82,6 @@ c***  Neutral flux total     |  for each species
 c***  Net particle flux     /
 c=======================================================================
       implicit none
-#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #ifdef WG_TODO
       real (kind=R8) :: EionH2

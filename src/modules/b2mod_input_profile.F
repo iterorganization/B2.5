@@ -13,6 +13,9 @@ c      use b2mod_types
       use b2us_map
       use b2us_plasma
       use b2mod_subsys
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -27,7 +30,6 @@ c      use b2mod_types
       real(kind=R8), allocatable, save :: tdata(:,:,:,:)
       integer, allocatable, save :: addspec(:,:,:)
 #else
-#     include "DIMENSIONS.F"
       parameter(nrr = DEF_NYD+2, nxx = DEF_NXD+2, nss = DEF_NSD)
       integer, save :: nsdata(nkind_data,nkind_source,0:nss)
       integer, save :: nxdata(nkind_data,nkind_source,0:nss)
@@ -238,7 +240,7 @@ c      use b2mod_types
           enddo
           if (ndat.eq.0) goto 1
           call xertst(ndat.le.nrr,
-     .     'Increase NYD in DIMENSIONS.F to match size of profile')
+     .     'Increase NYD in b2mod_dimensions to match size of profile')
 !       allocate (f(1:ndat))
 !       allocate (r(1:ndat))
           do i=1,ndat
@@ -276,7 +278,7 @@ c      use b2mod_types
           xf(nx)=0.0_R8
           if (nxdat.gt.0) then
             call xertst(nxdat.le.nxx+2,
-     .       'Increase NXD in DIMENSIONS.F to match size of profile')
+     .       'Increase NXD in b2mod_dimensions to match size of profile')
             do i=1,nxdat
               x(i)=xdata(1,i,kind_source,spec)
               fx(i)=xdata(2,i,kind_source,spec)
@@ -618,7 +620,7 @@ cdjm Jan2017 Keep linearised sources for balance
             ndat=ndata(kind_data,kind_coeff,spec)
             if (ndat.eq.0) goto 1
             call xertst(ndat.le.nrr,
-     .       'Increase NYD in DIMENSIONS.F to match size of profile')
+     .      'Increase NYD in b2mod_dimensions to match size of profile')
             nspec=1
             nsp(1)=spec
             do is=1,ns

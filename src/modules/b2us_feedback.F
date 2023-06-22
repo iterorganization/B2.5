@@ -21,9 +21,9 @@
       use eirmod_extrab25
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
 #endif
+      use b2mod_dimensions
       implicit none
       integer, parameter :: nvac=4, nvacreg=4, nMxFbReg = 1000
-#     include "DIMENSIONS.F"
 
 *   ..variables
       real (kind=R8), save ::
@@ -168,7 +168,7 @@ c     .            .gt.0.0_R8
         filename = 'b2.feedback_save.parameters.'//edition
       endif
 cxpb We do the write explicitly to avoid array overflows when the problem
-cxpb size is changed in DIMENSIONS.F
+cxpb size is changed in b2mod_dimensions
       if(feedback_namelist_used) then
         open(nwrite,file=trim(filename))
         write(nwrite,'(a9)') '&FEEDBACK'
