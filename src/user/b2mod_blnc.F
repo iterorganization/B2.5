@@ -105,7 +105,7 @@ c*** Column headers:
       use b2us_geo
       use b2us_plasma
       use b2mod_switches
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
 c
 c  version : 19.07.2001 18:46
 c

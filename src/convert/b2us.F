@@ -54,8 +54,8 @@
 #endif
       use b2mod_ipmain
       use b2mod_xerset
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation

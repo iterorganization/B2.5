@@ -14,7 +14,7 @@
       use b2us_map
       use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
 #endif
       implicit none
       type (mapping), intent(in) :: mpg

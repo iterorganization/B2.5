@@ -1,6 +1,7 @@
       module b2mod_optim
       use b2mod_types
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
+      implicit none
 
        integer :: nfunc, istyle
        integer, parameter :: nx = DEF_NXD, ny = DEF_NYD, ns = DEF_NSD
