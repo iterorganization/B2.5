@@ -34,6 +34,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
      &  M_dummy(:), T_dummy(:), shpottau_dummy(:),        !nh 21.02.2020
      &  fna_mol(:,:)                                    !nh 30.03.2021
+      real (kind=R8), allocatable, save :: recycle_zn(:)
 
       real (kind=R8),save::int0l,int0r,
      &    int1l,int1r,int2l,int2r,
@@ -78,6 +79,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       call subini ('read_recycle_fnn')
       ns1 = nsd
       allocate(recycle_index(0:nsd-1))
+      allocate(recycle_zn(0:nsd-1)) !! nuclear charge of recycling series
       allocate(target_index(0:nbnd_local-1))
 cmb   Check how many different recycled species there are
       recycle_index=-1
@@ -93,6 +95,7 @@ cmb   Check how many different recycled species there are
         isp=isp+1
         recycle_index(is)=isp
         recycle_code(isp)=is_codes(is)
+        recycle_zn(isp) = zn(is) 
     5   continue
         write(*,'(1x,i3,1x,i3,1x,a)') is,recycle_index(is),
      1   recycle_code(recycle_index(is))
@@ -233,13 +236,18 @@ c         Read preintegrated recycling coefficient contributions
           call cfrure (96,ndata,rp32(:,:,:,is,it),'rp32')
           close(96)
           else
-c         Give error message and quit program if files are not found
+c         Give error message or information if files are not found
             write(*,*) 'No TRIM recycling data  for ',
      1       recycle_code(is),' onto ',target_code(it)
-            if (use_coarse.ne.1) then
-              write(*,*) 'Consider using b2stbr_afn_bcs_use_coarse'
+            if (recycle_zn(is).eq.0.0_R8) then !! exected to use AFN BCs, so give error 
+              if (use_coarse.ne.1) then !! first suggest to go look for coarse files
+                write(*,*) 'Consider using b2stbr_afn_bcs_use_coarse'
+              endif
+              call xerrab ('Error using advanced fluid neutral BCs')
+            else !! currently, default neutral boundary conditions will automatically be used for non-hydrogenic species, so we should not give an error here
+              write(*,*) 'Default recycling model used for ',
+     1       recycle_code(is),' onto ',target_code(it) 
             endif
-            call xerrab ('Error using advanced fluid neutral BCs')
           endif
         enddo
       enddo
