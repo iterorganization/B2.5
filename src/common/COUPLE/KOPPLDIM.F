@@ -1,6 +1,5 @@
 c  version : 28.12.96 21:39
 c
-#include <DIMENSIONS.F>
 
 C     COUPLING-DEFINITION COMMON (KOPPLDIM)
 C

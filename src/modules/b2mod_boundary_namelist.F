@@ -14,12 +14,6 @@ c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2
 c*  ncbs          : number of these boundary segments
 cank }
-#ifndef DEF_NBC
-#define DEF_NBC 20
-#endif
-#ifndef DEF_NISO
-#define DEF_NISO 10
-#endif
       integer NBCD, NNISOD
       parameter (NBCD=DEF_NBC,NNISOD=DEF_NISO)
 #ifdef ALLOCATE_AND_NAMELIST
