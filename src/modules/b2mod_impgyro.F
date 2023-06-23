@@ -2,11 +2,11 @@
 
       use b2mod_external
 
-#if MPI_MOD > 0 && ( defined(USE_MPI) || defined(USE_IMPGYRO) )
+#if ( MPI_MOD > 0 && ( defined(USE_MPI) || defined(USE_IMPGYRO) ) )
       use mpi  ! IGNORE
 #endif
       implicit none
-#if MPI_MOD < 1 && ( defined(USE_MPI) || defined(USE_IMPGYRO) )
+#if ( MPI_MOD < 1 && ( defined(USE_MPI) || defined(USE_IMPGYRO) ) )
       include 'mpif.h'
 #endif
       private

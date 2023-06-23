@@ -299,14 +299,14 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           ! compute conn on the face
           connf = 0.0_R8
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))) then
+           iFt = mpg%cvFt(mpg%fcCv(iFc,1))
            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-             iFt = mpg%cvFt(mpg%fcCv(iFc,1))
              connf = connf + geo%ftConn(iFt)
            endif
           endif
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+           iFt = mpg%cvFt(mpg%fcCv(iFc,2))
            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-             iFt = mpg%cvFt(mpg%fcCv(iFc,2))
              connf = connf + geo%ftConn(iFt)
            endif
           endif
