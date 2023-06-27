@@ -1329,11 +1329,11 @@ c!###}
      *                   sni(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
                       smo(ix,iy,fluids_list(is),istrai)=
      *                   smo(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
-                      smo(ix,iy,fluids_list(is)+nfld,istrai)=
-     *                   smo(ix,iy,fluids_list(is)+nfld,istrai)*
+                      smo(ix,iy,fluids_list(is)+nfl,istrai)=
+     *                   smo(ix,iy,fluids_list(is)+nfl,istrai)*
      *                   hlp_scl(ls)
-                      smo(ix,iy,fluids_list(is)+2*nfld,istrai)=
-     *                   smo(ix,iy,fluids_list(is)+2*nfld,istrai)*
+                      smo(ix,iy,fluids_list(is)+2*nfl,istrai)=
+     *                   smo(ix,iy,fluids_list(is)+2*nfl,istrai)*
      *                   hlp_scl(ls)
                       if (balance_netcdf.ne.0) then !djm Jan2017
                         sni_papl(ix,iy,fluids_list(is),istrai)=
@@ -1543,11 +1543,11 @@ c>>>
      *                 sni(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
                       smo(ix,iy,fluids_list(is),istrai)=
      *                 smo(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
-                      smo(ix,iy,fluids_list(is)+nfld,istrai)=
-     *                   smo(ix,iy,fluids_list(is)+nfld,istrai)*
+                      smo(ix,iy,fluids_list(is)+nfl,istrai)=
+     *                   smo(ix,iy,fluids_list(is)+nfl,istrai)*
      *                   hlp_scl(ls)
-                      smo(ix,iy,fluids_list(is)+2*nfld,istrai)=
-     *                   smo(ix,iy,fluids_list(is)+2*nfld,istrai)*
+                      smo(ix,iy,fluids_list(is)+2*nfl,istrai)=
+     *                   smo(ix,iy,fluids_list(is)+2*nfl,istrai)*
      *                   hlp_scl(ls)
                       if (balance_netcdf.ne.0) then !djm Jan2017
                         sni_papl(ix,iy,fluids_list(is),istrai)=
@@ -1805,11 +1805,11 @@ c*** Here only the second pass of correction
      *                 sni(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
                       smo(ix,iy,fluids_list(is),istrai)=
      *                 smo(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
-                      smo(ix,iy,fluids_list(is)+nfld,istrai)=
-     *                   smo(ix,iy,fluids_list(is)+nfld,istrai)*
+                      smo(ix,iy,fluids_list(is)+nfl,istrai)=
+     *                   smo(ix,iy,fluids_list(is)+nfl,istrai)*
      *                   hlp_scl(ls)
-                      smo(ix,iy,fluids_list(is)+2*nfld,istrai)=
-     *                   smo(ix,iy,fluids_list(is)+2*nfld,istrai)*
+                      smo(ix,iy,fluids_list(is)+2*nfl,istrai)=
+     *                   smo(ix,iy,fluids_list(is)+2*nfl,istrai)*
      *                   hlp_scl(ls)
                       if (balance_netcdf.ne.0) then !djm Jan2017
                         sni_papl(ix,iy,fluids_list(is),istrai)=
