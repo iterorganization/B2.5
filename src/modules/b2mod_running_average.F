@@ -19,6 +19,8 @@
       real (kind=R8), allocatable, save ::
      .                             sna_mean(:,:,:),
      .                             smo_mean(:,:,:),
+     .                             smr_mean(:,:,:),
+     .                             smd_mean(:,:,:),
      .                             she_mean(:,:),
      .                             shi_mean(:,:),
      .                             sne_mean(:,:),
@@ -26,6 +28,8 @@
       real (kind=R8), allocatable, save ::
      .                             e_sna(:,:,:),
      .                             e_smo(:,:,:),
+     .                             e_smr(:,:,:),
+     .                             e_smd(:,:,:),
      .                             e_she(:,:),
      .                             e_shi(:,:),
      .                             e_sne(:,:),
@@ -69,6 +73,8 @@ c local
       call batch_average (n2,    shi0_eir_tot, shi_mean, itp, naver)
       call batch_average (n2,    sch0_eir_tot, sch_mean, itp, naver)
       call batch_average (n2*ns, smo0_eir_tot, smo_mean, itp, naver)
+      call batch_average (n2*ns, smr0_eir_tot, smr_mean, itp, naver)
+      call batch_average (n2*ns, smd0_eir_tot, smd_mean, itp, naver)
 
 *  calculate squared averaged plasma profiles
       call batch_average_sq (n2*ns, na, e_na, itp, naver)
@@ -83,6 +89,8 @@ c local
       call batch_average_sq (n2,    shi0_eir_tot, e_shi, itp, naver)
       call batch_average_sq (n2,    sch0_eir_tot, e_sch, itp, naver)
       call batch_average_sq (n2*ns, smo0_eir_tot, e_smo, itp, naver)
+      call batch_average_sq (n2*ns, smr0_eir_tot, e_smr, itp, naver)
+      call batch_average_sq (n2*ns, smd0_eir_tot, e_smd, itp, naver)
 
       call subend ()
 
@@ -131,12 +139,16 @@ c local variables
          allocate (sna_mean(-1:nx,-1:ny,0:ns-1))
          allocate (sne_mean(-1:nx,-1:ny))
          allocate (smo_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (smr_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (smd_mean(-1:nx,-1:ny,0:ns-1))
          allocate (she_mean(-1:nx,-1:ny))
          allocate (shi_mean(-1:nx,-1:ny))
          allocate (sch_mean(-1:nx,-1:ny))
          allocate (e_sna(-1:nx,-1:ny,0:ns-1))
          allocate (e_sne(-1:nx,-1:ny))
          allocate (e_smo(-1:nx,-1:ny,0:ns-1))
+         allocate (e_smr(-1:nx,-1:ny,0:ns-1))
+         allocate (e_smd(-1:nx,-1:ny,0:ns-1))
          allocate (e_she(-1:nx,-1:ny))
          allocate (e_shi(-1:nx,-1:ny))
          allocate (e_sch(-1:nx,-1:ny))
@@ -165,12 +177,16 @@ c local variables
       shi_mean = 0.0_R8
       sch_mean = 0.0_R8
       smo_mean = 0.0_R8
+      smr_mean = 0.0_R8
+      smd_mean = 0.0_R8
       e_sna = 0.0_R8
       e_sne = 0.0_R8
       e_she = 0.0_R8
       e_shi = 0.0_R8
       e_sch = 0.0_R8
       e_smo = 0.0_R8
+      e_smr = 0.0_R8
+      e_smd = 0.0_R8
 
       if (iav_cont > 0) then
 
@@ -215,6 +231,11 @@ c local variables
                 call cfrure (iun, n2,    shi_mean, 'shi_mean')
                 call cfrure (iun, n2,    sch_mean, 'sch_mean')
                 call cfrure (iun, n2*ns, smo_mean, 'smo_mean')
+                if (b2faveri_version.ge.'03.000.009'.and.
+     &              b2faveri_version.ne.'03.001.000') then
+                  call cfrure (iun, n2*ns, smr_mean, 'smr_mean')
+                  call cfrure (iun, n2*ns, smd_mean, 'smd_mean')
+                end if
               else
                 zero = 0.0_R8
                 call b2xpne ( nx, ny, ns, rza, na_mean, zero, ne_mean)
@@ -267,6 +288,11 @@ c local variables
                 call cfrure (iun, n2,    e_shi, 'e_shi')
                 call cfrure (iun, n2,    e_sch, 'e_sch')
                 call cfrure (iun, n2*ns, e_smo, 'e_smo')
+                if (b2faveri_version.ge.'03.000.009'.and.
+     &              b2faveri_version.ne.'03.001.000') then
+                  call cfrure (iun, n2*ns, e_smr, 'e_smr')
+                  call cfrure (iun, n2*ns, e_smd, 'e_smd')
+                end if
               else
                call cfrure (iun, n2*2*ns, swrk2s, 'e_sna')
                 e_sna(:,:,:) = swrk2s(:,:,0,:) +
@@ -335,12 +361,16 @@ c local variables
       deallocate (sna_mean)
       deallocate (sne_mean)
       deallocate (smo_mean)
+      deallocate (smr_mean)
+      deallocate (smd_mean)
       deallocate (she_mean)
       deallocate (shi_mean)
       deallocate (sch_mean)
       deallocate (e_sna)
       deallocate (e_sne)
       deallocate (e_smo)
+      deallocate (e_smr)
+      deallocate (e_smd)
       deallocate (e_she)
       deallocate (e_shi)
       deallocate (e_sch)
@@ -416,6 +446,8 @@ c local variables
          call cfwure (iun, n2,    shi_mean, 'shi_mean')
          call cfwure (iun, n2,    sch_mean, 'sch_mean')
          call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
+         call cfwure (iun, n2*ns, smr_mean, 'smr_mean')
+         call cfwure (iun, n2*ns, smd_mean, 'smd_mean')
 
       end if
 
@@ -435,6 +467,8 @@ c local variables
          call cfwure (iun, n2,    e_shi, 'e_shi')
          call cfwure (iun, n2,    e_sch, 'e_sch')
          call cfwure (iun, n2*ns, e_smo, 'e_smo')
+         call cfwure (iun, n2*ns, e_smr, 'e_smr')
+         call cfwure (iun, n2*ns, e_smd, 'e_smd')
 
       end if
 !
@@ -467,12 +501,13 @@ c local variables
       return
       end subroutine run_av_get_plasma
 
-      subroutine run_av_get_sources (sna0, smo0, she0, shi0,
+      subroutine run_av_get_sources (sna0, smo0, smr0, smd0, she0, shi0,
      &                               sch0, sne0, nx, ny, ns)
       implicit none
       integer, intent(in) :: nx, ny, ns
       real (kind=R8), intent(inout) ::
      *  sna0(-1:nx,-1:ny,0:ns-1), smo0(-1:nx,-1:ny,0:ns-1),
+     &  smr0(-1:nx,-1:ny,0:ns-1), smd0(-1:nx,-1:ny,0:ns-1),
      &  she0(-1:nx,-1:ny), shi0(-1:nx,-1:ny),
      &  sch0(-1:nx,-1:ny), sne0(-1:nx,-1:ny)
 
@@ -481,6 +516,8 @@ c local variables
       sna0 = sna_mean
       sne0 = sne_mean
       smo0 = smo_mean
+      smr0 = smr_mean
+      smd0 = smd_mean
       she0 = she_mean
       shi0 = shi_mean
       sch0 = sch_mean

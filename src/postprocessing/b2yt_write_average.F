@@ -3,9 +3,10 @@
      &    naver, ntotdt, lblmn, zamin1, zamax1, zn1, am1,
      &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
-     &    sna1_mean, sne1_mean, smo1_mean,
+     &    sna1_mean, sne1_mean, smo1_mean, smr1_mean, smd1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1, e_smr1, e_smd1,
+     &    e_she1, e_shi1, e_sch1)
 
       use b2mod_types
       use b2mod_version
@@ -26,12 +27,16 @@
      .  sna1_mean(-1:nx1,-1:ny1,0:ns1-1),
      .  sne1_mean(-1:nx1,-1:ny1),
      .  smo1_mean(-1:nx1,-1:ny1,0:ns1-1),
+     .  smr1_mean(-1:nx1,-1:ny1,0:ns1-1),
+     .  smd1_mean(-1:nx1,-1:ny1,0:ns1-1),
      .  she1_mean(-1:nx1,-1:ny1),
      .  shi1_mean(-1:nx1,-1:ny1),
      .  sch1_mean(-1:nx1,-1:ny1),
      .  e_sna1(-1:nx1,-1:ny1,0:ns1-1),
      .  e_sne1(-1:nx1,-1:ny1),
      .  e_smo1(-1:nx1,-1:ny1,0:ns1-1),
+     .  e_smr1(-1:nx1,-1:ny1,0:ns1-1),
+     .  e_smd1(-1:nx1,-1:ny1,0:ns1-1),
      .  e_she1(-1:nx1,-1:ny1),
      .  e_shi1(-1:nx1,-1:ny1),
      .  e_sch1(-1:nx1,-1:ny1)
@@ -72,6 +77,8 @@
       call cfwure (iun, n2,     shi1_mean, 'shi_mean')
       call cfwure (iun, n2,     sch1_mean, 'sch_mean')
       call cfwure (iun, n2*ns1, smo1_mean, 'smo_mean')
+      call cfwure (iun, n2*ns1, smr1_mean, 'smr_mean')
+      call cfwure (iun, n2*ns1, smd1_mean, 'smd_mean')
 
 *  write 2d squared averaged plasma profiles
       call cfwure (iun, n2*ns1, e_na1, 'e_na')
@@ -86,6 +93,8 @@
       call cfwure (iun, n2,     e_shi1, 'e_shi')
       call cfwure (iun, n2,     e_sch1, 'e_sch')
       call cfwure (iun, n2*ns1, e_smo1, 'e_smo')
+      call cfwure (iun, n2*ns1, e_smr1, 'e_smr')
+      call cfwure (iun, n2*ns1, e_smd1, 'e_smd')
 
       close (iun)
       write (*,*) ' file b2faveri.2 written '

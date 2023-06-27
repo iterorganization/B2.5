@@ -222,9 +222,10 @@ c 2002-09-11: logic revised
      . e_na(:,:,:), e_te(:,:), e_ti(:,:),
      . e_ua(:,:,:), e_po(:,:),
      . sna_mean(:,:,:), sne_mean(:,:),
-     . smo_mean(:,:,:), she_mean(:,:),
-     . shi_mean(:,:), sch_mean(:,:),
-     . e_sna(:,:,:), e_sne(:,:), e_smo(:,:,:),
+     . smo_mean(:,:,:), smr_mean(:,:,:), smd_mean(:,:,:),
+     . she_mean(:,:), shi_mean(:,:), sch_mean(:,:),
+     . e_sna(:,:,:), e_sne(:,:),
+     . e_smo(:,:,:), e_smr(:,:,:), e_smd(:,:,:),
      . e_she(:,:), e_shi(:,:), e_sch(:,:)
       real (kind=R8), allocatable ::
      . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
@@ -232,9 +233,10 @@ c 2002-09-11: logic revised
      . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
      . e_ua1(:,:,:), e_po1(:,:),
      . sna1_mean(:,:,:), sne1_mean(:,:),
-     . smo1_mean(:,:,:), she1_mean(:,:),
-     . shi1_mean(:,:), sch1_mean(:,:),
-     . e_sna1(:,:,:), e_sne1(:,:), e_smo1(:,:,:),
+     . smo1_mean(:,:,:), smr1_mean(:,:,:), smd1_mean(:,:,:),
+     . she1_mean(:,:), shi1_mean(:,:), sch1_mean(:,:),
+     . e_sna1(:,:,:), e_sne1(:,:),
+     . e_smo1(:,:,:), e_smr1(:,:,:), e_smd1(:,:,:),
      . e_she1(:,:), e_shi1(:,:), e_sch1(:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
@@ -1076,12 +1078,16 @@ c 2002-09-11: logic revised
       allocate(sna_mean(-1:nx,-1:ny,0:ns-1))
       allocate(sne_mean(-1:nx,-1:ny))
       allocate(smo_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(smr_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(smd_mean(-1:nx,-1:ny,0:ns-1))
       allocate(she_mean(-1:nx,-1:ny))
       allocate(shi_mean(-1:nx,-1:ny))
       allocate(sch_mean(-1:nx,-1:ny))
       allocate(e_sna(-1:nx,-1:ny,0:ns-1))
       allocate(e_sne(-1:nx,-1:ny))
       allocate(e_smo(-1:nx,-1:ny,0:ns-1))
+      allocate(e_smr(-1:nx,-1:ny,0:ns-1))
+      allocate(e_smd(-1:nx,-1:ny,0:ns-1))
       allocate(e_she(-1:nx,-1:ny))
       allocate(e_shi(-1:nx,-1:ny))
       allocate(e_sch(-1:nx,-1:ny))
@@ -1098,12 +1104,16 @@ c 2002-09-11: logic revised
       allocate(sna1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(sne1_mean(-1:nx1,-1:ny1))
       allocate(smo1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(smr1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(smd1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(she1_mean(-1:nx1,-1:ny1))
       allocate(shi1_mean(-1:nx1,-1:ny1))
       allocate(sch1_mean(-1:nx1,-1:ny1))
       allocate(e_sna1(-1:nx1,-1:ny1,0:ns1-1))
       allocate(e_sne1(-1:nx1,-1:ny1))
       allocate(e_smo1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_smr1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_smd1(-1:nx1,-1:ny1,0:ns1-1))
       allocate(e_she1(-1:nx1,-1:ny1))
       allocate(e_shi1(-1:nx1,-1:ny1))
       allocate(e_sch1(-1:nx1,-1:ny1))
@@ -1273,14 +1283,15 @@ c 2002-09-11: logic revised
      &    bundle_frac, naver, ntotdt,
      &    na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &    e_na, e_te, e_ti, e_ua, e_po,
-     &    sna_mean, sne_mean, smo_mean,
+     &    sna_mean, sne_mean, smo_mean, smr_mean, smd_mean,
      &    she_mean, shi_mean, sch_mean,
-     &    e_sna, e_sne, e_smo, e_she, e_shi, e_sch,
+     &    e_sna, e_sne, e_smo, e_smr, e_smd, e_she, e_shi, e_sch,
      &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
-     &    sna1_mean, sne1_mean, smo1_mean,
+     &    sna1_mean, sne1_mean, smo1_mean, smr1_mean, smd1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1, e_smr1, e_smd1,
+     &    e_she1, e_shi1, e_sch1)
       end if
 *   ..rescale transformed state (if necessary)
       neutral_rescale=1.0_R8
@@ -1348,9 +1359,10 @@ c 2002-09-11: logic revised
      &    naver, ntotdt, lblmn, zamin1, zamax1, zn1, am1,
      &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
-     &    sna1_mean, sne1_mean, smo1_mean,
+     &    sna1_mean, sne1_mean, smo1_mean, smr1_mean, smd1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1, e_smr1, e_smd1,
+     &    e_she1, e_shi1, e_sch1)
       end if
 
 * ..check for need to transform other input files:
@@ -12420,12 +12432,16 @@ cxpb as they no longer necessarily point to the same species
       deallocate(sna_mean)
       deallocate(sne_mean)
       deallocate(smo_mean)
+      deallocate(smr_mean)
+      deallocate(smd_mean)
       deallocate(she_mean)
       deallocate(shi_mean)
       deallocate(sch_mean)
       deallocate(e_sna)
       deallocate(e_sne)
       deallocate(e_smo)
+      deallocate(e_smr)
+      deallocate(e_smd)
       deallocate(e_she)
       deallocate(e_shi)
       deallocate(e_sch)
@@ -12442,12 +12458,16 @@ cxpb as they no longer necessarily point to the same species
       deallocate(sna1_mean)
       deallocate(sne1_mean)
       deallocate(smo1_mean)
+      deallocate(smr1_mean)
+      deallocate(smd1_mean)
       deallocate(she1_mean)
       deallocate(shi1_mean)
       deallocate(sch1_mean)
       deallocate(e_sna1)
       deallocate(e_sne1)
       deallocate(e_smo1)
+      deallocate(e_smr1)
+      deallocate(e_smd1)
       deallocate(e_she1)
       deallocate(e_shi1)
       deallocate(e_sch1)

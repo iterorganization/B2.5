@@ -20,6 +20,8 @@
      .                             sna_mean(:,:,:),
      .                             sne_mean(:,:),
      .                             smo_mean(:,:,:),
+     .                             smr_mean(:,:,:),
+     .                             smd_mean(:,:,:),
      .                             she_mean(:,:),
      .                             shi_mean(:,:),
      .                             sch_mean(:,:)
@@ -27,6 +29,8 @@
      .                             e_sna(:,:,:),
      .                             e_sne(:,:),
      .                             e_smo(:,:,:),
+     .                             e_smr(:,:,:),
+     .                             e_smd(:,:,:),
      .                             e_she(:,:),
      .                             e_shi(:,:),
      .                             e_sch(:,:)
@@ -60,6 +64,10 @@
       call batch_average (n2,    shi, shi_mean, itp, ntim_batch)
       call batch_average (n2,    sch, sch_mean, itp, ntim_batch)
       call batch_average (n2*ns, smo, smo_mean, itp, ntim_batch)
+      call batch_average (n2*ns, smr0_eir_tot, smr_mean, itp,
+     .                                               ntim_batch)
+      call batch_average (n2*ns, smd0_eir_tot, smd_mean, itp,
+     .                                               ntim_batch)
 
 *  calculate squared averaged plasma profiles
       call batch_average_sq (n2*ns, na, e_na, itp, ntim_batch)
@@ -74,6 +82,10 @@
       call batch_average_sq (n2,    shi, e_shi, itp, ntim_batch)
       call batch_average_sq (n2,    sch, e_sch, itp, ntim_batch)
       call batch_average_sq (n2*ns, smo, e_smo, itp, ntim_batch)
+      call batch_average_sq (n2*ns, smr0_eir_tot, e_smr, itp,
+     .                                               ntim_batch)
+      call batch_average_sq (n2*ns, smd0_eir_tot, e_smd, itp,
+     .                                               ntim_batch)
 
       naver = naver + 1
 
@@ -100,12 +112,16 @@
          allocate (sna_mean(-1:nx,-1:ny,0:ns-1))
          allocate (sne_mean(-1:nx,-1:ny))
          allocate (smo_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (smr_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (smd_mean(-1:nx,-1:ny,0:ns-1))
          allocate (she_mean(-1:nx,-1:ny))
          allocate (shi_mean(-1:nx,-1:ny))
          allocate (sch_mean(-1:nx,-1:ny))
          allocate (e_sna(-1:nx,-1:ny,0:ns-1))
          allocate (e_sne(-1:nx,-1:ny))
          allocate (e_smo(-1:nx,-1:ny,0:ns-1))
+         allocate (e_smr(-1:nx,-1:ny,0:ns-1))
+         allocate (e_smd(-1:nx,-1:ny,0:ns-1))
          allocate (e_she(-1:nx,-1:ny))
          allocate (e_shi(-1:nx,-1:ny))
          allocate (e_sch(-1:nx,-1:ny))
@@ -129,12 +145,16 @@
       shi_mean = 0.0_R8
       sch_mean = 0.0_R8
       smo_mean = 0.0_R8
+      smr_mean = 0.0_R8
+      smd_mean = 0.0_R8
       e_sna = 0.0_R8
       e_sne = 0.0_R8
       e_she = 0.0_R8
       e_shi = 0.0_R8
       e_sch = 0.0_R8
       e_smo = 0.0_R8
+      e_smr = 0.0_R8
+      e_smd = 0.0_R8
 
       naver = 0
 
@@ -154,6 +174,8 @@
       deallocate (sna_mean)
       deallocate (sne_mean)
       deallocate (smo_mean)
+      deallocate (smr_mean)
+      deallocate (smd_mean)
       deallocate (she_mean)
       deallocate (shi_mean)
       deallocate (sch_mean)
@@ -165,6 +187,8 @@
       deallocate (e_sna)
       deallocate (e_sne)
       deallocate (e_smo)
+      deallocate (e_smr)
+      deallocate (e_smd)
       deallocate (e_she)
       deallocate (e_shi)
       deallocate (e_sch)
@@ -224,6 +248,8 @@
       call cfwure (iun, n2,    shi_mean, 'shi_mean')
       call cfwure (iun, n2,    sch_mean, 'sch_mean')
       call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
+      call cfwure (iun, n2*ns, smr_mean, 'smr_mean')
+      call cfwure (iun, n2*ns, smd_mean, 'smd_mean')
 
       call cfwure (iun, n2*ns, e_na, 'e_na')
       call cfwure (iun, n2,    e_te, 'e_te')
@@ -237,6 +263,8 @@
       call cfwure (iun, n2,    e_shi, 'e_shi')
       call cfwure (iun, n2,    e_sch, 'e_sch')
       call cfwure (iun, n2*ns, e_smo, 'e_smo')
+      call cfwure (iun, n2*ns, e_smr, 'e_smr')
+      call cfwure (iun, n2*ns, e_smd, 'e_smd')
 
       naver = 0
 
