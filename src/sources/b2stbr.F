@@ -37,8 +37,9 @@
       use b2mod_eirene
      ,  , only : eirene_mc
       use b2mod_sources
-     , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
-     ,          sne0_eir_tot, sch0_eir_tot, ext_sna
+     , , only : sna0_eir_tot, smo0_eir_tot, smr0_eir_tot, smd0_eir_tot,
+     ,          she0_eir_tot, shi0_eir_tot, sne0_eir_tot, sch0_eir_tot,
+     ,          ext_sna
       use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
@@ -122,6 +123,8 @@
       real (kind=R8) ::
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
+     &  smr0_eir(-1:nx,-1:ny,0:3,0:ns-1),
+     &  smd0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable, save :: t1(:)                        !iyv 07.03.18 }
       real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8
@@ -451,6 +454,8 @@
 
       call sfill (n2*2*ns, 0.0_R8, sna0_eir, 1)                    !srv 29.04.10 {
       call sfill (n2*4*ns, 0.0_R8, smo0_eir, 1)
+      call sfill (n2*4*ns, 0.0_R8, smr0_eir, 1)
+      call sfill (n2*4*ns, 0.0_R8, smd0_eir, 1)
       call sfill (n2*4, 0.0_R8, she0_eir, 1)
       call sfill (n2*4, 0.0_R8, shi0_eir, 1)
 
@@ -515,7 +520,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
        if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           smotmp=smo0
           shetmp=she0
@@ -544,7 +549,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
        else
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           smotmp=smo0
           shetmp=she0
@@ -575,7 +580,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 
       if(first_flight.ne.0) then
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           shetmp=she0
           shitmp=shi0
@@ -717,8 +722,8 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
         call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,             !srv 29.04.10 {
-     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
-     &                 main_call)
+     &                 sna0_eir, smo0_eir, smr0_eir, smd0_eir,
+     &                 she0_eir, shi0_eir, main_call)
 
 *   ..main part of implementation of method of effective sources (ES)
         if (sum(sna_corr) .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
@@ -881,8 +886,9 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 
 *       compute total Eirene sources for averaging
 cwdk only total Eirene source are averaged!
-cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
-cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, smr0_eir_tot,
+cwdk       smd0_eir_tot, she0_eir_tot and shi0_eir_tot now available,
+cwdk       might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
         do is = 0, ns-1
           sna0_eir_tot(:,:,is) = sna0_eir(:,:,0,is) +
@@ -891,6 +897,14 @@ cwdk       down in this routine
      &      smo0_eir(:,:,1,is)*ua(:,:,is) +
      &      smo0_eir(:,:,2,is)*am(is)*mp*na(:,:,is) +
      &      smo0_eir(:,:,3,is)*am(is)*mp*na(:,:,is)*ua(:,:,is)
+          smr0_eir_tot(:,:,is) = smr0_eir(:,:,0,is) +
+     &      smr0_eir(:,:,1,is)*ua(:,:,is) +
+     &      smr0_eir(:,:,2,is)*am(is)*mp*na(:,:,is) +
+     &      smr0_eir(:,:,3,is)*am(is)*mp*na(:,:,is)*ua(:,:,is)
+          smd0_eir_tot(:,:,is) = smd0_eir(:,:,0,is) +
+     &      smd0_eir(:,:,1,is)*ua(:,:,is) +
+     &      smd0_eir(:,:,2,is)*am(is)*mp*na(:,:,is) +
+     &      smd0_eir(:,:,3,is)*am(is)*mp*na(:,:,is)*ua(:,:,is)
         enddo
         she0_eir_tot = she0_eir(:,:,0) + she0_eir(:,:,1)*te +
      &    she0_eir(:,:,2)*ne + she0_eir(:,:,3)*ne*te
@@ -904,11 +918,14 @@ cwdk if ird_aver > 0, all sources computed by Eirene are overwritten (!!!),
 cwdk i.e. fully replaced by the averaged values from b2faveri
           sna0_eir = 0.0_R8
           smo0_eir = 0.0_R8
+          smr0_eir = 0.0_R8
+          smd0_eir = 0.0_R8
           she0_eir = 0.0_R8
           shi0_eir = 0.0_R8
 
 cwdk get the averaged sources
           call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
+     &                            smr0_eir_tot, smd0_eir_tot,
      &                            she0_eir_tot, shi0_eir_tot,
      &                            sch0_eir_tot, sne0_eir_tot,
      &                            nx, ny, ns)
@@ -918,6 +935,8 @@ cwdk these are now put back into the constant part of the sources (0-component)
           do is = 0,ns-1
             sna0_eir(:,:,0,is) = sna0_eir_tot(:,:,is)
             smo0_eir(:,:,0,is) = smo0_eir_tot(:,:,is)
+            smr0_eir(:,:,0,is) = smr0_eir_tot(:,:,is)
+            smd0_eir(:,:,0,is) = smd0_eir_tot(:,:,is)
           enddo
           she0_eir(:,:,0) = she0_eir_tot
           shi0_eir(:,:,0) = shi0_eir_tot
@@ -1201,6 +1220,16 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      &         smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &         smo0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
           call my_out(70,nx,ny,wrk0,'b2stbr_smo_eir'//chns)
+          wrk0=smr0_eir(:,:,0,is)+
+     &         smr0_eir(:,:,1,is)*ua(:,:,is)+
+     &         smr0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &         smr0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          call my_out(70,nx,ny,wrk0,'b2stbr_smr_eir'//chns)
+          wrk0=smd0_eir(:,:,0,is)+
+     &         smd0_eir(:,:,1,is)*ua(:,:,is)+
+     &         smd0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &         smd0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          call my_out(70,nx,ny,wrk0,'b2stbr_smd_eir'//chns)
          endif
         else
 !        do k=0,3

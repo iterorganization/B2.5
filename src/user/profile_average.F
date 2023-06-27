@@ -11,26 +11,30 @@
 
       integer, intent(in) :: itim, ntim_batch, nx, ny, ns
       logical, intent(in) :: laststep
- 
+
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:,:), te_mean(:,:),
      .                             ti_mean(:,:), ua_mean(:,:,:),
      .                             po_mean(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             e_na(:,:,:), e_te(:,:),
      .                             e_ti(:,:), e_ua(:,:,:),
      .                             e_po(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             sna_mean(:,:,:),
      .                             sne_mean(:,:),
      .                             smo_mean(:,:,:),
+     .                             smr_mean(:,:,:),
+     .                             smd_mean(:,:,:),
      .                             she_mean(:,:),
      .                             shi_mean(:,:),
      .                             sch_mean(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             e_sna(:,:,:),
      .                             e_sne(:,:),
      .                             e_smo(:,:,:),
+     .                             e_smr(:,:,:),
+     .                             e_smd(:,:,:),
      .                             e_she(:,:),
      .                             e_shi(:,:),
      .                             e_sch(:,:)
@@ -55,8 +59,8 @@
          naver = 0
          ntotdt = 0
          allocate (na_mean(-1:nx,-1:ny,0:ns-1))
-         allocate (ua_mean(-1:nx,-1:ny,0:ns-1))      
-         allocate (te_mean(-1:nx,-1:ny))        
+         allocate (ua_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (te_mean(-1:nx,-1:ny))
          allocate (ti_mean(-1:nx,-1:ny))
          allocate (po_mean(-1:nx,-1:ny))
          allocate (e_na(-1:nx,-1:ny,0:ns-1))
@@ -68,12 +72,16 @@
          allocate (sna_mean(-1:nx,-1:ny,0:ns-1))
          allocate (sne_mean(-1:nx,-1:ny))
          allocate (smo_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (smr_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (smd_mean(-1:nx,-1:ny,0:ns-1))
          allocate (she_mean(-1:nx,-1:ny))
          allocate (shi_mean(-1:nx,-1:ny))
          allocate (sch_mean(-1:nx,-1:ny))
          allocate (e_sna(-1:nx,-1:ny,0:ns-1))
          allocate (e_sne(-1:nx,-1:ny))
          allocate (e_smo(-1:nx,-1:ny,0:ns-1))
+         allocate (e_smr(-1:nx,-1:ny,0:ns-1))
+         allocate (e_smd(-1:nx,-1:ny,0:ns-1))
          allocate (e_she(-1:nx,-1:ny))
          allocate (e_shi(-1:nx,-1:ny))
          allocate (e_sch(-1:nx,-1:ny))
@@ -95,13 +103,17 @@
          shi_mean = 0.0_R8
          sch_mean = 0.0_R8
          smo_mean = 0.0_R8
+         smr_mean = 0.0_R8
+         smd_mean = 0.0_R8
          e_sna = 0.0_R8
          e_sne = 0.0_R8
          e_she = 0.0_R8
          e_shi = 0.0_R8
          e_sch = 0.0_R8
          e_smo = 0.0_R8
-         
+         e_smr = 0.0_R8
+         e_smd = 0.0_R8
+
          iun = 3
          open (unit=iun,file='aver.dat',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=io)
@@ -110,7 +122,7 @@
             call cfverr (iun, b2faveri_version)
             call cfruin (iun, 3, idum, 'nx,ny,ns')
             call cfruch (iun, 120, lbli, 'label')
-            call b2ruzd (iun, b2faveri_version, ns, 
+            call b2ruzd (iun, b2faveri_version, ns,
      &         zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
 
             if (iaver_restart > 0) then
@@ -137,6 +149,11 @@
                  call cfrure (iun, n2,    shi_mean, 'shi_mean')
                  call cfrure (iun, n2,    sch_mean, 'sch_mean')
                  call cfrure (iun, n2*ns, smo_mean, 'smo_mean')
+                 if (b2faveri_version.ge.'03.000.009'.and.
+     .               b2faveri_version.ne.'03.001.000') then
+                   call cfrure (iun, n2*ns, smr_mean, 'smr_mean')
+                   call cfrure (iun, n2*ns, smd_mean, 'smd_mean')
+                 end if
                else
                  zero = 0.0_R8
                  call b2xpne ( nx, ny, ns, rza, na_mean, zero, ne_mean)
@@ -196,6 +213,10 @@
         call batch_average (n2,    shi, shi_mean, itp, ntim_batch)
         call batch_average (n2,    sch, sch_mean, itp, ntim_batch)
         call batch_average (n2*ns, smo, smo_mean, itp, ntim_batch)
+        call batch_average (n2*ns, smr0_eir_tot, smr_mean, itp,
+     .                                                 ntim_batch)
+        call batch_average (n2*ns, smd0_eir_tot, smd_mean, itp,
+     .                                                 ntim_batch)
 
         call batch_average_sq (n2*ns, na, e_na, itp, ntim_batch)
         call batch_average_sq (n2,    te, e_te, itp, ntim_batch)
@@ -209,7 +230,11 @@
         call batch_average_sq (n2,    shi, e_shi, itp, ntim_batch)
         call batch_average_sq (n2,    sch, e_sch, itp, ntim_batch)
         call batch_average_sq (n2*ns, smo, e_smo, itp, ntim_batch)
-        
+        call batch_average_sq (n2*ns, smr0_eir_tot, e_smr, itp,
+     .                                                 ntim_batch)
+        call batch_average_sq (n2*ns, smd0_eir_tot, e_smd, itp,
+     .                                                 ntim_batch)
+
 !        gnew = 1.0_R8 / naver
 !        gold = (naver - 1) * gnew
 
@@ -253,6 +278,12 @@
 !        smo_mean(-1:nx,-1:ny,0:ns-1) =
 !     .        gold*smo_mean(-1:nx,-1:ny,0:ns-1) +
 !     .        gnew*smo(-1:nx,-1:ny,0:ns-1)
+!        smr_mean(-1:nx,-1:ny,0:ns-1) =
+!     .        gold*smr_mean(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*smr0_eir_tot(-1:nx,-1:ny,0:ns-1)
+!        smd_mean(-1:nx,-1:ny,0:ns-1) =
+!     .        gold*smd_mean(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*smd0_eir_tot(-1:nx,-1:ny,0:ns-1)
 
 !        e_sna(-1:nx,-1:ny,0:ns-1)  =
 !     .        gold*e_sna(-1:nx,-1:ny,0:ns-1) +
@@ -272,6 +303,12 @@
 !        e_smo(-1:nx,-1:ny,0:ns-1)  =
 !     .        gold*e_smo(-1:nx,-1:ny,0:ns-1) +
 !     .        gnew*smo(-1:nx,-1:ny,0:ns-1)**2
+!        e_smr(-1:nx,-1:ny,0:ns-1)  =
+!     .        gold*e_smr(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*smr0_eir_tot(-1:nx,-1:ny,0:ns-1)**2
+!        e_smd(-1:nx,-1:ny,0:ns-1)  =
+!     .        gold*e_smd(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*smd0_eir_tot(-1:nx,-1:ny,0:ns-1)**2
 
 !pb      if (laststep) then
       else
@@ -282,7 +319,7 @@
 
 *   ..get label
         call b2xxid ('b2mn', lble(1:60))
-        lble(61:120) = 
+        lble(61:120) =
      *  '                                                            '
 
 *   ..write header
@@ -312,28 +349,34 @@
         call cfwure (iun, n2,    shi_mean, 'shi_mean')
         call cfwure (iun, n2,    sch_mean, 'sch_mean')
         call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
-!        write (iun,'(6es24.16)') 
+        call cfwure (iun, n2*ns, smr_mean, 'smr_mean')
+        call cfwure (iun, n2*ns, smd_mean, 'smd_mean')
+!        write (iun,'(6es24.16)')
 !     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_te(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_ti(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_po(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_sna(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_sne(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_she(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_shi(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_sch(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .       (((e_smo(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+!        write (iun,'(6es24.16)')
+!     .       (((e_smr(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+!        write (iun,'(6es24.16)')
+!     .       (((e_smd(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 
         close(iun)
 
@@ -350,12 +393,16 @@
         deallocate(sna_mean)
         deallocate(sne_mean)
         deallocate(smo_mean)
+        deallocate(smr_mean)
+        deallocate(smd_mean)
         deallocate(she_mean)
         deallocate(shi_mean)
         deallocate(sch_mean)
         deallocate(e_sna)
         deallocate(e_sne)
         deallocate(e_smo)
+        deallocate(e_smr)
+        deallocate(e_smd)
         deallocate(e_she)
         deallocate(e_shi)
         deallocate(e_sch)

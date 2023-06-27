@@ -14,7 +14,7 @@ c
      ,  sni_papl(:,:,:,:), sni_pmpl(:,:,:,:),
      ,  sni_pipl(:,:,:,:), sni_pppl(:,:,:,:),
      ,  smo_mapl(:,:,:,:), smo_mmpl(:,:,:,:),
-     ,  smo_mipl(:,:,:,:), smo_cppv(:,:,:,:),
+     ,  smo_mipl(:,:,:,:), smo_mppl(:,:,:,:),
      ,  sne_pael(:,:,:), sne_pmel(:,:,:),
      ,  see_eael(:,:,:), see_emel(:,:,:),
      ,  see_eiel(:,:,:), see_epel(:,:,:),
@@ -69,7 +69,7 @@ C> Default output file prefix
       allocate(smo_mapl(0:nxd+1,0:nyd+1,nsd,nstrad))
       allocate(smo_mmpl(0:nxd+1,0:nyd+1,nsd,nstrad))
       allocate(smo_mipl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(smo_cppv(0:nxd+1,0:nyd+1,nsd,nstrad))
+      allocate(smo_mppl(0:nxd+1,0:nyd+1,nsd,nstrad))
       allocate(sne_pael(0:nxd+1,0:nyd+1,nstrad))
       allocate(sne_pmel(0:nxd+1,0:nyd+1,nstrad))
       allocate(see_eael(0:nxd+1,0:nyd+1,nstrad))
@@ -128,7 +128,7 @@ C> Default output file prefix
       deallocate(smo_mapl)
       deallocate(smo_mmpl)
       deallocate(smo_mipl)
-      deallocate(smo_cppv)
+      deallocate(smo_mppl)
       deallocate(sne_pael)
       deallocate(sne_pmel)
       deallocate(see_eael)

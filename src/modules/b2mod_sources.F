@@ -67,6 +67,8 @@
      *  ext_sch(:,:),
      &  sna0_eir_tot(:,:,:),
      &  smo0_eir_tot(:,:,:),
+     &  smr0_eir_tot(:,:,:),
+     &  smd0_eir_tot(:,:,:),
      &  she0_eir_tot(:,:),
      &  shi0_eir_tot(:,:),
      &  sne0_eir_tot(:,:),
@@ -147,6 +149,8 @@
       allocate(ext_sch(-1:nxd,-1:nyd))
       allocate(sna0_eir_tot(-1:nxd,-1:nyd,0:nsd-1))
       allocate(smo0_eir_tot(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(smr0_eir_tot(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(smd0_eir_tot(-1:nxd,-1:nyd,0:nsd-1))
       allocate(she0_eir_tot(-1:nxd,-1:nyd))
       allocate(shi0_eir_tot(-1:nxd,-1:nyd))
       allocate(sne0_eir_tot(-1:nxd,-1:nyd))
@@ -216,6 +220,8 @@
       ext_sch=0.0_R8
       sna0_eir_tot=0.0_R8
       smo0_eir_tot=0.0_R8
+      smr0_eir_tot=0.0_R8
+      smd0_eir_tot=0.0_R8
       she0_eir_tot=0.0_R8
       shi0_eir_tot=0.0_R8
       sne0_eir_tot=0.0_R8
@@ -290,6 +296,8 @@
       deallocate(ext_sch)
       deallocate(sna0_eir_tot)
       deallocate(smo0_eir_tot)
+      deallocate(smr0_eir_tot)
+      deallocate(smd0_eir_tot)
       deallocate(she0_eir_tot)
       deallocate(shi0_eir_tot)
       deallocate(sne0_eir_tot)
