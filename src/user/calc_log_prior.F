@@ -36,7 +36,7 @@
         end select
         if (par_opt_phys(ii).lt.prior_range(ii,1) .or.
      &      par_opt_phys(ii).gt.prior_range(ii,2)) then
-          prior = log(0.0_R8)
+          prior = 1.0E+60_R8
           inrange = .false.
         endif
       end do
@@ -65,7 +65,7 @@
         end select
         if (sigma(ii).lt.prior_range(ii+isigma,1) .or.
      &      sigma(ii).gt.prior_range(ii+isigma,2)) then
-          prior = log(0.0_R8)
+          prior = 1.0E+60_R8
           inrange = .false.
         endif
       end do
@@ -92,7 +92,7 @@
         end select
         if (mean(ii).lt.prior_range(ii+imean,1) .or.
      &      mean(ii).gt.prior_range(ii+imean,2)) then
-          prior = log(0.0_R8)
+          prior = 1.0E+60_R8
           inrange = .false.
         endif
       end do
