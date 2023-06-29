@@ -320,7 +320,6 @@ CONTAINS
 !
     WRITE(*, *) 'b2ig: Entering impgyro_main'
 !
-!
     WRITE(*, *) 'b2ig: running impgyro ...'
 !
     ep_ir = 0
@@ -331,7 +330,7 @@ CONTAINS
     b2zfw = 0
     b2ztw = 0
     WRITE(*, *) 'b2ig: IMPGYRO run failed!'
-    WRITE(*, *) 'b2ig: Every external specie information set to zero.'
+    WRITE(*, *) 'b2ig: All external species information set to zero.'
     WRITE(*, *) 'b2ig: You may have forgotten set_ig option!'
 !
     sna_ext = 0

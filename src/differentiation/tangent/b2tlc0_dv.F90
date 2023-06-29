@@ -60,8 +60,8 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !     ------------------------------------------------------------------
 !   ..local variables
   INTEGER :: ifc, is
-  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1&
-& ), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
+  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, t3, dpb, vbar, maxfluxlimit&
+& (0:1), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
   REAL(kind=r8) :: t0d(nbdirsmax), t1d(nbdirsmax), t2d(nbdirsmax), dpbd(&
 & nbdirsmax), vbard(nbdirsmax), pbd(nbdirsmax, ncv), dpbfd(nbdirsmax, &
 & nfc, 0:1), pbvd(nbdirsmax, nvx)
@@ -298,14 +298,27 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
           CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pb, pbd, &
 &                pbv, pbvd, dpbf, dpbfd, nbdirs)
           DO ifc=1,nfc
+            DO nd=1,nbdirs
+              t0d(nd) = (tnd(nd, mpg%fccv(ifc, 1))+tnd(nd, mpg%fccv(ifc&
+&               , 2)))/2.0_R8
+              t1d(nd) = nad(nd, mpg%fccv(ifc, 1), is)
+            END DO
+            t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
+! lkw 30.09.2022{
+            t3 = dpbf(ifc, 0)*geo%fcqalf(ifc, 0) + dpbf(ifc, 1)*geo%&
+&             fcqalf(ifc, 1)
+            t1 = na(mpg%fccv(ifc, 1), is)
+! lkw 30.09.2022}
+            IF (t3 .GT. 0) THEN
+              DO nd=1,nbdirs
+                t1d(nd) = nad(nd, mpg%fccv(ifc, 2), is)
+              END DO
+              t1 = na(mpg%fccv(ifc, 2), is)
+            END IF
             arg11 = dpbf(ifc, 0)**2 + dpbf(ifc, 1)**2
             temp = SQRT(arg11)
             result1 = temp
             DO nd=1,nbdirs
-              t0d(nd) = (tnd(nd, mpg%fccv(ifc, 1))+tnd(nd, mpg%fccv(ifc&
-&               , 2)))/2.0_R8
-              t1d(nd) = (nad(nd, mpg%fccv(ifc, 1), is)+nad(nd, mpg%fccv(&
-&               ifc, 2), is))/2.0_R8
 !    ..limit total gradient
               arg11d(nd) = 2*dpbf(ifc, 0)*dpbfd(nd, ifc, 0) + 2*dpbf(ifc&
 &               , 1)*dpbfd(nd, ifc, 1)
@@ -317,9 +330,6 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
               dpbd(nd) = result1*cdpa0d(nd, ifc, is) + cdpa0(ifc, is)*&
 &               result1d(nd)
             END DO
-            t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-            t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
-&             2.0_R8
             dpb = cdpa0(ifc, is)*result1
             temp = am(is)*pi*mp
             DO nd=1,nbdirs
@@ -458,8 +468,8 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
 !     ------------------------------------------------------------------
 !   ..local variables
   INTEGER :: ifc, is
-  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1&
-& ), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
+  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, t3, dpb, vbar, maxfluxlimit&
+& (0:1), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
   CHARACTER :: charns*3
 !   ..procedures
   INTRINSIC MAX, ABS, SQRT
@@ -574,8 +584,12 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
           CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pb, pbv, dpbf)
           DO ifc=1,nfc
             t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-            t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
-&             2.0_R8
+! lkw 30.09.2022{
+            t3 = dpbf(ifc, 0)*geo%fcqalf(ifc, 0) + dpbf(ifc, 1)*geo%&
+&             fcqalf(ifc, 1)
+            t1 = na(mpg%fccv(ifc, 1), is)
+! lkw 30.09.2022}
+            IF (t3 .GT. 0) t1 = na(mpg%fccv(ifc, 2), is)
 !    ..limit total gradient
             arg11 = dpbf(ifc, 0)**2 + dpbf(ifc, 1)**2
             result1 = SQRT(arg11)

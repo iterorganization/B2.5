@@ -44,7 +44,8 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !.end b2tvspa
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+!lkw 20.06.2022
+  INTEGER :: ncv, nfc, nvx, ns, ifc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -167,6 +168,19 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
       fchvispard(nd, :, :) = 0.D0
     END DO
   END IF
+!lkw 20.06.2022{
+  DO ifc=1,nfc
+    IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&       cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+      DO nd=1,nbdirs
+        fchvispard(nd, ifc, 0) = 0.D0
+        fchvispard(nd, ifc, 1) = 0.D0
+      END DO
+      fchvispar(ifc, 0) = 0.0e0_R8
+      fchvispar(ifc, 1) = 0.0e0_R8
+    END IF
+  END DO
+!lkw 20.06.2022}
 ! ..return
   CALL SUBEND()
   RETURN
@@ -209,7 +223,8 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 !.end b2tvspa
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+!lkw 20.06.2022
+  INTEGER :: ncv, nfc, nvx, ns, ifc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -297,6 +312,15 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
   ELSE
     fchvispar = 0.0e0_R8
   END IF
+!lkw 20.06.2022{
+  DO ifc=1,nfc
+    IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&       cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+      fchvispar(ifc, 0) = 0.0e0_R8
+      fchvispar(ifc, 1) = 0.0e0_R8
+    END IF
+  END DO
+!lkw 20.06.2022}
 ! ..return
   CALL SUBEND()
   RETURN

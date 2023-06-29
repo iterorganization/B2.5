@@ -25,49 +25,19 @@ SUBROUTINE B2USR_LOADS_NODIFF(nx, ny, ns, nxtl, nxtr, boris, wtarg_max)
   USE B2MOD_CONSTANTS
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !
   INTEGER :: nx, ny, ns, nxtl, nxtr
   REAL(kind=r8) :: boris
 !
-  INTEGER, PARAMETER :: ntrgm=4
+  INTEGER, PARAMETER :: ntrgm=def_ncut
 !
   REAL(kind=r8), INTENT(OUT) :: wtarg_max(ntrgm)
 !
 !AREAS OF SURFACE ELEMENTS
-  REAL(kind=r8), SAVE :: strg(0:100-1, ntrgm)
+  REAL(kind=r8), SAVE :: strg(0:def_nyd-1, ntrgm)
 !POLOIDAL INDEX FOR EACH TARGET
   INTEGER, SAVE :: ltrgpos(ntrgm)
 !NUMBER OF TARGETS

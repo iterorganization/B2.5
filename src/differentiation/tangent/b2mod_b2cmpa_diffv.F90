@@ -14,45 +14,15 @@
 !
 MODULE B2MOD_B2CMPA_DIFFV
   USE B2MOD_TYPES
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !     (/b2cmpa/ contains basic physics parameters)
 ! DPC: constant declaration now in b2mod_constants
   INTEGER :: nsdecl
-  PARAMETER (nsdecl=42)
+  PARAMETER (nsdecl=def_nsd)
   INTEGER :: nspecies
   INTEGER :: partition_number(0:nsdecl-1)
   REAL(kind=r8), SAVE :: zn(0:nsdecl-1), am(0:nsdecl-1), zamax(0:nsdecl-&

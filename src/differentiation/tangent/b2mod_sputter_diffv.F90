@@ -18,6 +18,7 @@ MODULE B2MOD_SPUTTER_DIFFV
   USE B2MOD_WALL_DIFFV
   USE B2MOD_LAYER_DIFFV
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -41,39 +42,8 @@ MODULE B2MOD_SPUTTER_DIFFV
   LOGICAL, SAVE :: sputter_namelist_used
   LOGICAL, SAVE :: sputter_initialised
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
   INTEGER :: nxmax, nymax
-  PARAMETER (nxmax=200, nymax=100)
+  PARAMETER (nxmax=def_nxd, nymax=def_nyd)
   REAL(kind=r8), SAVE :: sputter_yield(-1:nxmax, -1:nymax, 0:nsdmax-1, 2&
 & ), sputter_yield2(-1:nxmax, -1:nymax, 0:nsdmax-1, 2)
   INTEGER, SAVE :: jagged_rates=0

@@ -223,6 +223,9 @@ CONTAINS
               arg1 = nshpottau + 1
               CALL CFRURE(96, arg1, shpottau_dummy, 'shpottau')
 !
+              DEALLOCATE(m_dummy)
+              DEALLOCATE(t_dummy)
+              DEALLOCATE(shpottau_dummy)
             END IF
 !
 !         Read preintegrated recycling coefficient contributions
