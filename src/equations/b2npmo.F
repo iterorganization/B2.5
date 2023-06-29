@@ -37,7 +37,7 @@
      4         eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3,
      5         eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3,
      6         eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3,
-     7         eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3,
+     7         eirene_mc_mppl_smo_bal, eirene_mc_mppl_smo0to3,
      8         b2stbm_smo_bal, b2stbm_smo0to3,
      9         ext_smo_bal, ext_smo0to3,
      *         tot_smo_bal, tot_smo0to3,
@@ -493,7 +493,7 @@
 !$OMP& SHARED(eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3)
 !$OMP& SHARED(eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3)
 !$OMP& SHARED(eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3)
-!$OMP& SHARED(eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3)
+!$OMP& SHARED(eirene_mc_mppl_smo_bal, eirene_mc_mppl_smo0to3)
 !$OMP& SHARED(b2stbm_smo_bal, b2stbm_smo0to3)
 !$OMP& SHARED(ext_smo_bal, ext_smo0to3)
 !$OMP& SHARED(tot_smo_bal, tot_smo0to3)
