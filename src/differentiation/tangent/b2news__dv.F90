@@ -59,8 +59,8 @@
 !                *(st.psnc.fna) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                cfsig cfdna cfhce cfhci tdata parm_hce parm_hci
+!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
 !                int4l int1l int2l int3l int0l fb_target fb_prev
 !                fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
@@ -635,9 +635,6 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
       std%co%cssb(nd, :) = 0.D0
     END DO
     st%co%cssb = 0.0_R8
-    DO nd=1,nbdirsmax
-      wrk0d(nd, :) = 0.D0
-    END DO
   END IF
 !        do is=0,ns-1                                                    !srv 01.10.99
   DO is=switch%nsmin,switch%nsmax-1
@@ -648,9 +645,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &            dv%pa(:, :, is), nbdirs)
 !srv 01.10.99
 !    ..compute particle flux
-    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, geod&
-&            , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, &
-&            st%rt, std%rt, .true., nbdirs)
+    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, switchd, &
+&            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
+&            std%co, st%rt, std%rt, .true., nbdirs)
   END DO
 !srv 01.10.99
 !      ..compute electron drift velocities
@@ -694,38 +691,30 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !srv 23.07.21
   END IF
 !   ..compute ue, electron parallel velocity
-  IF (switch%b2sigp_style .EQ. 2 .OR. switch%b2news_iout .NE. 0) CALL &
-&   B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, st%rt%rza&
-&       , std%rt%rza, st%rt%rz2, std%rt%rz2, st%co%alfx_c, std%co%alfx_c&
-&       , st%co%sigx_c, std%co%sigx_c, st%dv%fch_pi_c, std%dv%fch_pi_c, &
-&       st%pl%po, std%pl%po, st%dv%ne, std%dv%ne, st%pl%te, std%pl%te, &
-&       st%pl%na, std%pl%na, st%pl%ua, std%pl%ua, st_ext, st_extd, st%dv&
-&       %ue, std%dv%ue, nbdirs)
-  IF (switch%b2sigp_style .NE. 2 .OR. switch%b2news_iout .NE. 0) THEN
+! lkw20.03.2023{
+  DO nd=1,nbdirs
+    wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+b2news_cutlo)&
+&     ))
+  END DO
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, wrk0, wrk0d&
+&           , nbdirs)
+  DO is=0,ns-1
+    temp0 = st%rt%rza(:, is)*st%pl%ua(:, is)
     DO nd=1,nbdirs
-      wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+&
-&       b2news_cutlo)))
+      wrk0d(nd, :) = wrk0d(nd, :) + st%pl%na(:, is)*(st%pl%ua(:, is)*std&
+&       %rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :, is)) + &
+&       temp0*std%pl%na(nd, :, is)
     END DO
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, wrk0, &
-&             wrk0d, nbdirs)
-    DO is=0,ns-1
-      temp0 = st%rt%rza(:, is)*st%pl%ua(:, is)
-      DO nd=1,nbdirs
-        wrk0d(nd, :) = wrk0d(nd, :) + st%pl%na(:, is)*(st%pl%ua(:, is)*&
-&         std%rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :, is)) +&
-&         temp0*std%pl%na(nd, :, is)
-      END DO
-      wrk0 = wrk0 + temp0*st%pl%na(:, is)
-    END DO
-    wrk0 = wrk0 + st_ext%ue*st_ext%ne
+    wrk0 = wrk0 + temp0*st%pl%na(:, is)
+  END DO
+  wrk0 = wrk0 + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    DO nd=1,nbdirs
-      wrk0d(nd, :) = (wrk0d(nd, :)-wrk0*std%dv%ne(nd, :)/st%dv%ne)/st%dv&
-&       %ne
-    END DO
-    wrk0 = wrk0/st%dv%ne
-  END IF
+  DO nd=1,nbdirs
+    wrk0d(nd, :) = (wrk0d(nd, :)-wrk0*std%dv%ne(nd, :)/st%dv%ne)/st%dv%&
+&     ne
+  END DO
+  wrk0 = wrk0/st%dv%ne
 !srv 05.07.17
   IF (switch%b2news_iout .NE. 0) THEN
 !srv 05.07.17
@@ -743,13 +732,11 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     CALL MY_OUT_US(70, ncv, 0, st%dv%ue, 'b2news__ve')
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2news__ue')
   END IF
-  IF (switch%b2sigp_style .NE. 2) THEN
-    DO nd=1,nbdirs
-      std%dv%ue(nd, :) = wrk0d(nd, :)
-    END DO
-    st%dv%ue = wrk0
-  END IF
-!
+  DO nd=1,nbdirs
+    std%dv%ue(nd, :) = wrk0d(nd, :)
+  END DO
+  st%dv%ue = wrk0
+!lkw20.03.2023}
 !sw 11oct2012 added check on Coriolis force (taken from b2news)
   ier0 = 0
 ! Necessary for smooth restart with Rhie-Chow:
@@ -757,10 +744,10 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 ! Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to
 ! b2npmo with rxf = 0 and recompute fluxes.
   IF (ncall_b2news_ .EQ. 0) THEN
-    CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
-&            mpgd, ncall_b2news_, b2news_solving(1), 0.0_R8, st%pl, std%&
-&            pl, st%dv, std%dv, st%rt, std%rt, st%co, std%co, st%sr, std&
-&            %sr, st_ext, st_extd, ier0, nbdirs)
+    CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, geod&
+&            , mpg, mpgd, ncall_b2news_, b2news_solving(1), 0.0_R8, st%&
+&            pl, std%pl, st%dv, std%dv, st%rt, std%rt, st%co, std%co, st&
+&            %sr, std%sr, st_ext, st_extd, ier0, nbdirs)
     DO is=switch%nsmin,switch%nsmax-1
 !    ..compute partial pressure
       CALL B2XPPB_DV(ncv, st%rt%rza(:, is), std%rt%rza(:, :, is), st%pl%&
@@ -768,15 +755,15 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &              pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is&
 &              ), std%dv%pa(:, :, is), nbdirs)
 !    ..compute particle flux
-      CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, &
-&              geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std&
-&              %co, st%rt, std%rt, .true., nbdirs)
+      CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, switchd&
+&              , geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%&
+&              co, std%co, st%rt, std%rt, .true., nbdirs)
     END DO
   END IF
-  CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, mpgd&
-&          , ncall_b2news_, b2news_solving(1), rxf1, st%pl, std%pl, st%&
-&          dv, std%dv, st%rt, std%rt, st%co, std%co, st%sr, std%sr, &
-&          st_ext, st_extd, ier0, nbdirs)
+  CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, geod, &
+&          mpg, mpgd, ncall_b2news_, b2news_solving(1), rxf1, st%pl, std&
+&          %pl, st%dv, std%dv, st%rt, std%rt, st%co, std%co, st%sr, std%&
+&          sr, st_ext, st_extd, ier0, nbdirs)
   CALL XERTST(ier0 .EQ. 0, 'error return from b2npmo')
 !   ..set nep
 !     (= ne before continuity update)
@@ -848,9 +835,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &            , std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is), std%&
 &            dv%pa(:, :, is), nbdirs)
 !    ..compute particle flux
-    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, geod&
-&            , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, &
-&            st%rt, std%rt, .true., nbdirs)
+    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, switchd, &
+&            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
+&            std%co, st%rt, std%rt, .true., nbdirs)
 !    ..perform iteration
 !sw 16oct2012 init ier0
     ier0 = 0
@@ -887,9 +874,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !    &     st%pl%ti, st%pl%tn, is, pb)                                   !srv 01.10.99
 !        endif                                                           !srv 15.02.10
 !    ..re-compute particle flux
-    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, geod&
-&            , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, &
-&            st%rt, std%rt, .false., nbdirs)
+    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, switchd, &
+&            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
+&            std%co, st%rt, std%rt, .false., nbdirs)
   END DO
 !      ..compute electron drift velocities
   CALL B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, st%dv%&
@@ -1073,9 +1060,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &            , std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is), std%&
 &            dv%pa(:, :, is), nbdirs)
 !   ..re-compute particle flux
-    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, geod&
-&            , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, &
-&            st%rt, std%rt, .false., nbdirs)
+    CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, switchd, &
+&            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
+&            std%co, st%rt, std%rt, .false., nbdirs)
   END DO
 !
 !   ..compute fne_he, fni_he
@@ -1162,39 +1149,32 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
   CALL B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
 &          , std%pl, st%dv, std%dv, st%co, std%co, st%rt, std%rt, nbdirs&
 &         )
-  IF (switch%b2sigp_style .NE. 2) THEN
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
+!lkw20.03.2023{
+  DO nd=1,nbdirs
+    wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+b2news_cutlo)&
+&     ))
+  END DO
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, st%dv%ue, &
+&           std%dv%ue, nbdirs)
+  DO is=0,ns-1
+    temp1 = st%rt%rza(:, is)*st%pl%ua(:, is)
     DO nd=1,nbdirs
-      wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+&
-&       b2news_cutlo)))
+      std%dv%ue(nd, :) = std%dv%ue(nd, :) + st%pl%na(:, is)*(st%pl%ua(:&
+&       , is)*std%rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :, is&
+&       )) + temp1*std%pl%na(nd, :, is)
     END DO
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, st%dv%ue, &
-&             std%dv%ue, nbdirs)
-    DO is=0,ns-1
-      temp1 = st%rt%rza(:, is)*st%pl%ua(:, is)
-      DO nd=1,nbdirs
-        std%dv%ue(nd, :) = std%dv%ue(nd, :) + st%pl%na(:, is)*(st%pl%ua(&
-&         :, is)*std%rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :&
-&         , is)) + temp1*std%pl%na(nd, :, is)
-      END DO
-      st%dv%ue = st%dv%ue + temp1*st%pl%na(:, is)
-    END DO
-    st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
+    st%dv%ue = st%dv%ue + temp1*st%pl%na(:, is)
+  END DO
+  st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    DO nd=1,nbdirs
-      std%dv%ue(nd, :) = (std%dv%ue(nd, :)-st%dv%ue*std%dv%ne(nd, :)/st%&
-&       dv%ne)/st%dv%ne
-    END DO
-    st%dv%ue = st%dv%ue/st%dv%ne
-  ELSE
-    CALL B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, st%rt&
-&            %rza, std%rt%rza, st%rt%rz2, std%rt%rz2, st%co%alfx_c, std%&
-&            co%alfx_c, st%co%sigx_c, std%co%sigx_c, st%dv%fch_pi_c, std&
-&            %dv%fch_pi_c, st%pl%po, std%pl%po, st%dv%ne, std%dv%ne, st%&
-&            pl%te, std%pl%te, st%pl%na, std%pl%na, st%pl%ua, std%pl%ua&
-&            , st_ext, st_extd, st%dv%ue, std%dv%ue, nbdirs)
-  END IF
+  DO nd=1,nbdirs
+    std%dv%ue(nd, :) = (std%dv%ue(nd, :)-st%dv%ue*std%dv%ne(nd, :)/st%dv&
+&     %ne)/st%dv%ne
+  END DO
+  st%dv%ue = st%dv%ue/st%dv%ne
+!lkw20.03.2023}
 !
 !   ..iterate on heat balance
 !srv 22.05.18
@@ -1242,9 +1222,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &              pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is&
 &              ), std%dv%pa(:, :, is), nbdirs)
 !    ..compute particle flux
-      CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, &
-&              geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std&
-&              %co, st%rt, std%rt, .false., nbdirs)
+      CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, switchd&
+&              , geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%&
+&              co, std%co, st%rt, std%rt, .false., nbdirs)
 !    ..perform iteration
       new_matrix = .false.
       solvedum(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
@@ -1293,9 +1273,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &              pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is&
 &              ), std%dv%pa(:, :, is), nbdirs)
 !    ..compute particle flux
-      CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, &
-&              geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std&
-&              %co, st%rt, std%rt, .false., nbdirs)
+      CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, switchd&
+&              , geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%&
+&              co, std%co, st%rt, std%rt, .false., nbdirs)
     END DO
 !srv 01.10.99
 !      ..compute electron drift velocities
@@ -1688,8 +1668,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &                , st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !srv 01.10.99
 !    ..compute particle flux
-    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .true.)
+    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, switch, geo, &
+&                mpg, st%pl, st%dv, st%co, st%rt, .true.)
   END DO
 !srv 01.10.99
 !      ..compute electron drift velocities
@@ -1727,20 +1707,15 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !srv 23.07.21
   END IF
 !   ..compute ue, electron parallel velocity
-  IF (switch%b2sigp_style .EQ. 2 .OR. switch%b2news_iout .NE. 0) CALL &
-&   B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, st%rt%rza, st%rt%&
-&           rz2, st%co%alfx_c, st%co%sigx_c, st%dv%fch_pi_c, st%pl%po, &
-&           st%dv%ne, st%pl%te, st%pl%na, st%pl%ua, st_ext, st%dv%ue)
-  IF (switch%b2sigp_style .NE. 2 .OR. switch%b2news_iout .NE. 0) THEN
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, wrk0)
-    DO is=0,ns-1
-      wrk0 = wrk0 + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:, is)
-    END DO
-    wrk0 = wrk0 + st_ext%ue*st_ext%ne
+! lkw20.03.2023{
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, wrk0)
+  DO is=0,ns-1
+    wrk0 = wrk0 + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:, is)
+  END DO
+  wrk0 = wrk0 + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    wrk0 = wrk0/st%dv%ne
-  END IF
+  wrk0 = wrk0/st%dv%ne
 !srv 05.07.17
   IF (switch%b2news_iout .NE. 0) THEN
 !srv 05.07.17
@@ -1757,8 +1732,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     CALL MY_OUT_US(70, ncv, 0, st%dv%ue, 'b2news__ve')
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2news__ue')
   END IF
-  IF (switch%b2sigp_style .NE. 2) st%dv%ue = wrk0
-!
+  st%dv%ue = wrk0
+!lkw20.03.2023}
 !sw 11oct2012 added check on Coriolis force (taken from b2news)
   ier0 = 0
 ! Necessary for smooth restart with Rhie-Chow:
@@ -1766,21 +1741,21 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 ! Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to
 ! b2npmo with rxf = 0 and recompute fluxes.
   IF (ncall_b2news_ .EQ. 0) THEN
-    CALL B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-&                ncall_b2news_, b2news_solving(1), 0.0_R8, st%pl, st%dv&
-&                , st%rt, st%co, st%sr, st_ext, ier0)
+    CALL B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
+&                mpg, ncall_b2news_, b2news_solving(1), 0.0_R8, st%pl, &
+&                st%dv, st%rt, st%co, st%sr, st_ext, ier0)
     DO is=switch%nsmin,switch%nsmax-1
 !    ..compute partial pressure
       CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%&
 &                  te, st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-      CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st&
-&                  %pl, st%dv, st%co, st%rt, .true.)
+      CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, switch, geo&
+&                  , mpg, st%pl, st%dv, st%co, st%rt, .true.)
     END DO
   END IF
-  CALL B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-&              ncall_b2news_, b2news_solving(1), rxf1, st%pl, st%dv, st%&
-&              rt, st%co, st%sr, st_ext, ier0)
+  CALL B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
+&              mpg, ncall_b2news_, b2news_solving(1), rxf1, st%pl, st%dv&
+&              , st%rt, st%co, st%sr, st_ext, ier0)
   CALL XERTST(ier0 .EQ. 0, 'error return from b2npmo')
 !   ..set nep
 !     (= ne before continuity update)
@@ -1825,8 +1800,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te&
 &                , st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .true.)
+    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, switch, geo, &
+&                mpg, st%pl, st%dv, st%co, st%rt, .true.)
 !    ..perform iteration
 !sw 16oct2012 init ier0
     ier0 = 0
@@ -1859,8 +1834,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !    &     st%pl%ti, st%pl%tn, is, pb)                                   !srv 01.10.99
 !        endif                                                           !srv 15.02.10
 !    ..re-compute particle flux
-    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .false.)
+    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, switch, geo, &
+&                mpg, st%pl, st%dv, st%co, st%rt, .false.)
   END DO
 !      ..compute electron drift velocities
   CALL B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, st%dv%facdrift, st&
@@ -2004,8 +1979,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te&
 &                , st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !   ..re-compute particle flux
-    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .false.)
+    CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, switch, geo, &
+&                mpg, st%pl, st%dv, st%co, st%rt, .false.)
   END DO
 !
 !   ..compute fne_he, fni_he
@@ -2074,23 +2049,18 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !   ..add contribution from cdpa to floe, cone, floi, coni
   CALL B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, st%pl, st%dv, &
 &              st%co, st%rt)
-  IF (switch%b2sigp_style .NE. 2) THEN
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, st%dv%ue)
-    DO is=0,ns-1
-      st%dv%ue = st%dv%ue + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:&
-&       , is)
-    END DO
-    st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
+!lkw20.03.2023{
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, st%dv%ue)
+  DO is=0,ns-1
+    st%dv%ue = st%dv%ue + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:, &
+&     is)
+  END DO
+  st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    st%dv%ue = st%dv%ue/st%dv%ne
-  ELSE
-    CALL B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, st%rt%rza, st&
-&                %rt%rz2, st%co%alfx_c, st%co%sigx_c, st%dv%fch_pi_c, st&
-&                %pl%po, st%dv%ne, st%pl%te, st%pl%na, st%pl%ua, st_ext&
-&                , st%dv%ue)
-  END IF
+  st%dv%ue = st%dv%ue/st%dv%ne
+!lkw20.03.2023}
 !
 !   ..iterate on heat balance
 !srv 22.05.18
@@ -2122,8 +2092,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
       CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%&
 &                  te, st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-      CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st&
-&                  %pl, st%dv, st%co, st%rt, .false.)
+      CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, switch, geo&
+&                  , mpg, st%pl, st%dv, st%co, st%rt, .false.)
 !    ..perform iteration
       new_matrix = .false.
       solvedum(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
@@ -2166,8 +2136,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
       CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%&
 &                  te, st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-      CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st&
-&                  %pl, st%dv, st%co, st%rt, .false.)
+      CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, switch, geo&
+&                  , mpg, st%pl, st%dv, st%co, st%rt, .false.)
     END DO
 !srv 01.10.99
 !      ..compute electron drift velocities

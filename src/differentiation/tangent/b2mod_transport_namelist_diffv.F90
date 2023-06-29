@@ -16,6 +16,7 @@ MODULE B2MOD_TRANSPORT_NAMELIST_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_INDIRECT
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -26,37 +27,6 @@ MODULE B2MOD_TRANSPORT_NAMELIST_DIFFV
   REAL(kind=r8), SAVE :: parm_hce, parm_sig, parm_alf
   REAL(kind=r8), DIMENSION(nbdirsmax), SAVE :: parm_hced, parm_sigd, &
 & parm_alfd
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
   REAL(kind=r8), SAVE :: parm_dna(0:nsdmax-1)
   REAL(kind=r8), SAVE :: parm_dnad(nbdirsmax, 0:nsdmax-1)
   REAL(kind=r8), SAVE :: parm_dpa(0:nsdmax-1)

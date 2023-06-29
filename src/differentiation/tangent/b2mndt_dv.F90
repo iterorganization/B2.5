@@ -807,9 +807,9 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
 &                  dv%pa(:, is), std%dv%pa(:, :, is), nbdirs)
 !srv 01.10.99
 !    ..compute particle flux
-          CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo&
-&                  , geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%&
-&                  co, std%co, st%rt, std%rt, .true., nbdirs)
+          CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, ismain0, switch, &
+&                  switchd, geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, &
+&                  std%dv, st%co, std%co, st%rt, std%rt, .true., nbdirs)
         END DO
 !srv 01.10.99
 !      ..compute electron drift velocities
@@ -1379,8 +1379,9 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
 &                        is))
 !srv 01.10.99
 !    ..compute particle flux
-            CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, &
-&                        mpg, st%pl, st%dv, st%co, st%rt, .true.)
+            CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, ismain0, &
+&                        switch, geo, mpg, st%pl, st%dv, st%co, st%rt, &
+&                        .true.)
           END DO
 !srv 01.10.99
 !      ..compute electron drift velocities

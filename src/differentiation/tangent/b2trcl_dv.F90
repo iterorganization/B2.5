@@ -63,6 +63,8 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   USE B2US_PLASMA_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+  USE B2MOD_MATH_DIFFV, ONLY : b2mod_math_initialised, cutlo, cutlod, &
+& cutll, small_r4_constant
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2trcl, ncall_b2tlnl, &
 & ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca, b2trcl_cutlo, &
 & ncall_b2ttia
@@ -71,6 +73,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
 !  Hint: nCv should be the size of dimension 1 of array temp
+!  Hint: nCv should be the size of dimension 1 of array lnlam
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -161,7 +164,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: cflmv, jemax
   REAL(kind=r8), DIMENSION(nbdirsmax) :: jemaxd
 !srv 03.06.03
-  REAL(kind=r8) :: t0, dte(nfc), dti(nfc), flomx
+  REAL(kind=r8) :: t0, dte(nfc), dti(nfc), flomx, connf, epsf
   REAL(kind=r8) :: t0d(nbdirsmax), dted(nbdirsmax, nfc), dtid(nbdirsmax&
 & , nfc), flomxd(nbdirsmax)
 !lk 19.09.07
@@ -177,13 +180,15 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: hce(ncv, 0:1), sig(ncv, 0:1), alf(ncv, 0:1), vsa(ncv&
 & , 0:1, 0:ns-1), hci(ncv, 0:1), sigin(ncv, 0:1, 0:ns-1, 0:nscx-1), wrk(&
 & nfc), wrk1(nfc, 2), wrkv(nvx), wrkc(ncv), tef(nfc), tif(nfc), ne2f(nfc&
-& ), k1f(nfc), k2f(nfc), gtec(ncv)
+& ), k1f, k2f, gtec(ncv), nu1f, nu2f, tauf(nfc), tauiaf(nfc)
   REAL(kind=r8) :: hced(nbdirsmax, ncv, 0:1), sigd(nbdirsmax, ncv, 0:1)&
 & , alfd(nbdirsmax, ncv, 0:1), vsad(nbdirsmax, ncv, 0:1, 0:ns-1), hcid(&
 & nbdirsmax, ncv, 0:1), sigind(nbdirsmax, ncv, 0:1, 0:ns-1, 0:nscx-1), &
 & wrkd(nbdirsmax, nfc), wrkvd(nbdirsmax, nvx), wrkcd(nbdirsmax, ncv), &
 & tefd(nbdirsmax, nfc), tifd(nbdirsmax, nfc), ne2fd(nbdirsmax, nfc), &
-& k1fd(nbdirsmax, nfc), k2fd(nbdirsmax, nfc), gtecd(nbdirsmax, ncv)
+& k1fd(nbdirsmax), k2fd(nbdirsmax), gtecd(nbdirsmax, ncv), nu1fd(&
+& nbdirsmax), nu2fd(nbdirsmax), taufd(nbdirsmax, nfc), tauiafd(nbdirsmax&
+& , nfc)
   EXTERNAL XERTST, XERRAB, SFILL_NODIFF, smin, smax
   EXTERNAL SFILL_DV
 !   ..procedures
@@ -231,22 +236,27 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(r8), DIMENSION(nbdirsmax) :: arg11d
   REAL(kind=r8) :: result10
   REAL(kind=r8) :: result3
-  REAL(r8) :: result11
-  REAL(r8), DIMENSION(nbdirsmax) :: result11d
-  REAL(kind=r8) :: arg12
+  REAL(r8), DIMENSION(nCv) :: arg12
+  REAL(r8), DIMENSION(nbdirsmax, nCv) :: arg12d
+  REAL(r8), DIMENSION(nCv) :: result11
+  REAL(r8), DIMENSION(nbdirsmax, nCv) :: result11d
+  REAL(r8) :: result12
+  REAL(r8), DIMENSION(nbdirsmax) :: result12d
+  REAL(kind=r8) :: arg13
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg13d
   REAL(kind=r8) :: arg2
-  CHARACTER(len=22) :: arg13
-  REAL(r8), DIMENSION(nCv) :: arg14
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: arg14d
-  REAL(kind=r8), DIMENSION(nCv) :: result12
-  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: result12d
-  CHARACTER(len=30) :: arg15
-  CHARACTER(len=10) :: arg16
-  CHARACTER(len=9) :: arg17
-  CHARACTER(len=12) :: arg18
-  CHARACTER(len=11) :: arg19
-  CHARACTER(len=13) :: arg110
-  CHARACTER(len=7) :: arg111
+  CHARACTER(len=22) :: arg14
+  REAL(r8), DIMENSION(nCv) :: arg15
+  REAL(r8), DIMENSION(nbdirsmax, nCv) :: arg15d
+  REAL(kind=r8), DIMENSION(nCv) :: result13
+  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: result13d
+  CHARACTER(len=30) :: arg16
+  CHARACTER(len=10) :: arg17
+  CHARACTER(len=9) :: arg18
+  CHARACTER(len=12) :: arg19
+  CHARACTER(len=11) :: arg110
+  CHARACTER(len=13) :: arg111
+  CHARACTER(len=7) :: arg112
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nd
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd0
@@ -257,13 +267,16 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: temp0
   REAL(r8) :: temp1
   REAL(r8) :: temp2
-  REAL(kind=r8) :: temp3
-  REAL(kind=r8) :: temp4
-  REAL(kind=r8) :: temp5
+  REAL(r8), DIMENSION(nCv) :: temp3
+  REAL(kind=r8), DIMENSION(nCv) :: temp4
+  REAL(r8), DIMENSION(nCv) :: temp5
   REAL(kind=r8) :: temp6
   REAL(kind=r8) :: temp7
   REAL(kind=r8) :: temp8
-  REAL(kind=r8), DIMENSION(nCv) :: temp9
+  REAL(kind=r8) :: temp9
+  REAL(kind=r8) :: temp10
+  REAL(kind=r8) :: temp11
+  REAL(kind=r8), DIMENSION(nCv) :: temp12
   INTEGER :: nbdirs
 !   ..initialisation
 !
@@ -537,68 +550,86 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, dv%ne2, dvd%ne2, ne2f, &
 &             ne2fd, nbdirs)
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftfcp(ift, 2)
-          ifc = mpg%ftfc(mpg%ftfcp(ift, 1)+i-1)
-          temp = ev*ev*geo%ftconn(ift)
-          temp0 = tef(ifc)*tef(ifc)/(temp*ne2f(ifc))
-          temp1 = 1.0/(7.5e16_R8*temp0+1.0_R8)
-          DO nd=1,nbdirs
-            cod%f_luc_ke(nd, ifc) = -(temp1*7.5e16_R8*(2*tef(ifc)*tefd(&
-&             nd, ifc)-temp0*temp*ne2fd(nd, ifc))/((7.5e16_R8*temp0+&
-&             1.0_R8)*temp*ne2f(ifc)))
-            cod%f_luc_sg(nd, ifc) = cod%f_luc_ke(nd, ifc)
-            cod%f_luc_al(nd, ifc) = cod%f_luc_ke(nd, ifc)
-          END DO
-          co%f_luc_ke(ifc) = temp1
-          temp0 = ev*ev*geo%ftconn(ift)
-          temp = tif(ifc)*tif(ifc)/(temp0*ne2f(ifc))
-          temp1 = 1.0/(7.5e16_R8*temp+1.0_R8)
-          DO nd=1,nbdirs
-            cod%f_luc_ki(nd, ifc) = -(temp1*7.5e16_R8*(2*tif(ifc)*tifd(&
-&             nd, ifc)-temp*temp0*ne2fd(nd, ifc))/((7.5e16_R8*temp+&
-&             1.0_R8)*temp0*ne2f(ifc)))
-            cod%f_luc_et(nd, ifc) = cod%f_luc_ki(nd, ifc)
-          END DO
-          co%f_luc_ki(ifc) = temp1
-          co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_al(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_et(ifc) = co%f_luc_ki(ifc)
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is)) THEN
-              DO nd=1,nbdirs
-                cvsad(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsad(nd, ifc, &
-&                 0, is) + cvsa(ifc, 0, is)*cod%f_luc_et(nd, ifc)
-                cvsahzd(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsahzd(nd, &
-&                 ifc, 0, is) + cvsahz(ifc, 0, is)*cod%f_luc_et(nd, ifc)
-                vsaf_cld(nd, ifc, 0, is) = co%f_luc_et(ifc)*vsaf_cld(nd&
-&                 , ifc, 0, is) + vsaf_cl(ifc, 0, is)*cod%f_luc_et(nd, &
-&                 ifc)
-              END DO
-              cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
-              cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
-              vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
-            END IF
-          END DO
-          DO nd=1,nbdirs
-            chced(nd, ifc, 0) = co%f_luc_ke(ifc)*chced(nd, ifc, 0) + &
-&             chce(ifc, 0)*cod%f_luc_ke(nd, ifc)
-            csigd(nd, ifc, 0) = co%f_luc_sg(ifc)*csigd(nd, ifc, 0) + &
-&             csig(ifc, 0)*cod%f_luc_sg(nd, ifc)
-            calfd(nd, ifc, 0) = co%f_luc_al(ifc)*calfd(nd, ifc, 0) + &
-&             calf(ifc, 0)*cod%f_luc_al(nd, ifc)
-            chcid(nd, ifc, 0) = co%f_luc_ki(ifc)*chcid(nd, ifc, 0) + &
-&             chci(ifc, 0)*cod%f_luc_ki(nd, ifc)
-          END DO
-          chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
-          csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
-          calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
-          chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+!lkw 12.10.22 {
+    DO ifc=1,nfc
+      IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .OR. mpg%&
+&         cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+! compute conn on the face
+        connf = 0.0_R8
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1))) THEN
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            ift = mpg%cvft(mpg%fccv(ifc, 1))
+            connf = connf + geo%ftconn(ift)
+          END IF
+        END IF
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            ift = mpg%cvft(mpg%fccv(ifc, 2))
+            connf = connf + geo%ftconn(ift)
+          END IF
+        END IF
+! compute flux limits
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2))) connf = 0.5*connf
+        temp = ev*ev*connf
+        temp0 = tef(ifc)*tef(ifc)/(temp*ne2f(ifc))
+        temp1 = 1.0/(7.5e16_R8*temp0+1.0_R8)
+        DO nd=1,nbdirs
+          cod%f_luc_ke(nd, ifc) = -(temp1*7.5e16_R8*(2*tef(ifc)*tefd(nd&
+&           , ifc)-temp0*temp*ne2fd(nd, ifc))/((7.5e16_R8*temp0+1.0_R8)*&
+&           temp*ne2f(ifc)))
+          cod%f_luc_sg(nd, ifc) = cod%f_luc_ke(nd, ifc)
+          cod%f_luc_al(nd, ifc) = cod%f_luc_ke(nd, ifc)
         END DO
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
+        co%f_luc_ke(ifc) = temp1
+        temp0 = ev*ev*connf
+        temp = tif(ifc)*tif(ifc)/(temp0*ne2f(ifc))
+        temp1 = 1.0/(7.5e16_R8*temp+1.0_R8)
+        DO nd=1,nbdirs
+          cod%f_luc_ki(nd, ifc) = -(temp1*7.5e16_R8*(2*tif(ifc)*tifd(nd&
+&           , ifc)-temp*temp0*ne2fd(nd, ifc))/((7.5e16_R8*temp+1.0_R8)*&
+&           temp0*ne2f(ifc)))
+          cod%f_luc_et(nd, ifc) = cod%f_luc_ki(nd, ifc)
+        END DO
+        co%f_luc_ki(ifc) = temp1
+        co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_al(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_et(ifc) = co%f_luc_ki(ifc)
+        DO is=0,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              cvsad(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsad(nd, ifc, 0&
+&               , is) + cvsa(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+              cvsahzd(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsahzd(nd, ifc&
+&               , 0, is) + cvsahz(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+              vsaf_cld(nd, ifc, 0, is) = co%f_luc_et(ifc)*vsaf_cld(nd, &
+&               ifc, 0, is) + vsaf_cl(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+            END DO
+            cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
+            cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
+            vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          chced(nd, ifc, 0) = co%f_luc_ke(ifc)*chced(nd, ifc, 0) + chce(&
+&           ifc, 0)*cod%f_luc_ke(nd, ifc)
+          csigd(nd, ifc, 0) = co%f_luc_sg(ifc)*csigd(nd, ifc, 0) + csig(&
+&           ifc, 0)*cod%f_luc_sg(nd, ifc)
+          calfd(nd, ifc, 0) = co%f_luc_al(ifc)*calfd(nd, ifc, 0) + calf(&
+&           ifc, 0)*cod%f_luc_al(nd, ifc)
+          chcid(nd, ifc, 0) = co%f_luc_ki(ifc)*chcid(nd, ifc, 0) + chci(&
+&           ifc, 0)*cod%f_luc_ki(nd, ifc)
+        END DO
+        chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
+        csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
+        calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
+        chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+      END IF
+    END DO
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           temp0 = ev*ev*geo%ftconn(ift)
           temp = temp0*dv%ne2(icv)
           temp1 = pl%te(icv)*pl%te(icv)/temp
@@ -628,7 +659,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &             )*t0d(nd)
           END DO
           co%hcix_c(icv) = co%hcix_c(icv)*t0
-        END DO
+        END IF
       END IF
     END DO
   ELSE IF (switch%lluciani .EQ. 2) THEN
@@ -650,68 +681,69 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, dv%ne2, dvd%ne2, ne2f, &
 &             ne2fd, nbdirs)
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftfcp(ift, 2)
-          ifc = mpg%ftfc(mpg%ftfcp(ift, 1)+i-1)
-          temp0 = ev*ev*ne2f(ifc)
-          temp = tef(ifc)*tef(ifc)/temp0
-          temp2 = 1.0/(0.3e16_R8*temp+1.0_R8)
-          DO nd=1,nbdirs
-            cod%f_luc_ke(nd, ifc) = -(temp2*0.3e16_R8*(2*tef(ifc)*tefd(&
-&             nd, ifc)-temp*ev**2*ne2fd(nd, ifc))/((0.3e16_R8*temp+&
-&             1.0_R8)*temp0))
-            cod%f_luc_sg(nd, ifc) = cod%f_luc_ke(nd, ifc)
-            cod%f_luc_al(nd, ifc) = cod%f_luc_ke(nd, ifc)
-          END DO
-          co%f_luc_ke(ifc) = temp2
-          temp0 = ev*ev*ne2f(ifc)
-          temp = tif(ifc)*tif(ifc)/temp0
-          temp2 = 1.0/(0.3e16_R8*temp+1.0_R8)
-          DO nd=1,nbdirs
-            cod%f_luc_ki(nd, ifc) = -(temp2*0.3e16_R8*(2*tif(ifc)*tifd(&
-&             nd, ifc)-temp*ev**2*ne2fd(nd, ifc))/((0.3e16_R8*temp+&
-&             1.0_R8)*temp0))
-            cod%f_luc_et(nd, ifc) = cod%f_luc_ki(nd, ifc)
-          END DO
-          co%f_luc_ki(ifc) = temp2
-          co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_al(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_et(ifc) = co%f_luc_ki(ifc)
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is)) THEN
-              DO nd=1,nbdirs
-                cvsad(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsad(nd, ifc, &
-&                 0, is) + cvsa(ifc, 0, is)*cod%f_luc_et(nd, ifc)
-                cvsahzd(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsahzd(nd, &
-&                 ifc, 0, is) + cvsahz(ifc, 0, is)*cod%f_luc_et(nd, ifc)
-                vsaf_cld(nd, ifc, 0, is) = co%f_luc_et(ifc)*vsaf_cld(nd&
-&                 , ifc, 0, is) + vsaf_cl(ifc, 0, is)*cod%f_luc_et(nd, &
-&                 ifc)
-              END DO
-              cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
-              cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
-              vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
-            END IF
-          END DO
-          DO nd=1,nbdirs
-            chced(nd, ifc, 0) = co%f_luc_ke(ifc)*chced(nd, ifc, 0) + &
-&             chce(ifc, 0)*cod%f_luc_ke(nd, ifc)
-            csigd(nd, ifc, 0) = co%f_luc_sg(ifc)*csigd(nd, ifc, 0) + &
-&             csig(ifc, 0)*cod%f_luc_sg(nd, ifc)
-            calfd(nd, ifc, 0) = co%f_luc_al(ifc)*calfd(nd, ifc, 0) + &
-&             calf(ifc, 0)*cod%f_luc_al(nd, ifc)
-            chcid(nd, ifc, 0) = co%f_luc_ki(ifc)*chcid(nd, ifc, 0) + &
-&             chci(ifc, 0)*cod%f_luc_ki(nd, ifc)
-          END DO
-          chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
-          csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
-          calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
-          chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+!lkw 12.10.22 {
+    DO ifc=1,nfc
+      IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .OR. mpg%&
+&         cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+        temp0 = ev*ev*ne2f(ifc)
+        temp = tef(ifc)*tef(ifc)/temp0
+        temp2 = 1.0/(0.3e16_R8*temp+1.0_R8)
+        DO nd=1,nbdirs
+          cod%f_luc_ke(nd, ifc) = -(temp2*0.3e16_R8*(2*tef(ifc)*tefd(nd&
+&           , ifc)-temp*ev**2*ne2fd(nd, ifc))/((0.3e16_R8*temp+1.0_R8)*&
+&           temp0))
+          cod%f_luc_sg(nd, ifc) = cod%f_luc_ke(nd, ifc)
+          cod%f_luc_al(nd, ifc) = cod%f_luc_ke(nd, ifc)
         END DO
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
+        co%f_luc_ke(ifc) = temp2
+        temp0 = ev*ev*ne2f(ifc)
+        temp = tif(ifc)*tif(ifc)/temp0
+        temp2 = 1.0/(0.3e16_R8*temp+1.0_R8)
+        DO nd=1,nbdirs
+          cod%f_luc_ki(nd, ifc) = -(temp2*0.3e16_R8*(2*tif(ifc)*tifd(nd&
+&           , ifc)-temp*ev**2*ne2fd(nd, ifc))/((0.3e16_R8*temp+1.0_R8)*&
+&           temp0))
+          cod%f_luc_et(nd, ifc) = cod%f_luc_ki(nd, ifc)
+        END DO
+        co%f_luc_ki(ifc) = temp2
+        co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_al(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_et(ifc) = co%f_luc_ki(ifc)
+        DO is=0,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              cvsad(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsad(nd, ifc, 0&
+&               , is) + cvsa(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+              cvsahzd(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsahzd(nd, ifc&
+&               , 0, is) + cvsahz(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+              vsaf_cld(nd, ifc, 0, is) = co%f_luc_et(ifc)*vsaf_cld(nd, &
+&               ifc, 0, is) + vsaf_cl(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+            END DO
+            cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
+            cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
+            vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          chced(nd, ifc, 0) = co%f_luc_ke(ifc)*chced(nd, ifc, 0) + chce(&
+&           ifc, 0)*cod%f_luc_ke(nd, ifc)
+          csigd(nd, ifc, 0) = co%f_luc_sg(ifc)*csigd(nd, ifc, 0) + csig(&
+&           ifc, 0)*cod%f_luc_sg(nd, ifc)
+          calfd(nd, ifc, 0) = co%f_luc_al(ifc)*calfd(nd, ifc, 0) + calf(&
+&           ifc, 0)*cod%f_luc_al(nd, ifc)
+          chcid(nd, ifc, 0) = co%f_luc_ki(ifc)*chcid(nd, ifc, 0) + chci(&
+&           ifc, 0)*cod%f_luc_ki(nd, ifc)
+        END DO
+        chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
+        csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
+        calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
+        chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+      END IF
+    END DO
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           temp0 = ev*ev*dv%ne2(icv)
           temp2 = pl%te(icv)*pl%te(icv)/temp0
           temp1 = 1.0/(0.3e16_R8*temp2+1.0_R8)
@@ -739,7 +771,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &             )*t0d(nd)
           END DO
           co%hcix_c(icv) = co%hcix_c(icv)*t0
-        END DO
+        END IF
       END IF
     END DO
   ELSE IF (switch%lluciani .EQ. 3) THEN
@@ -762,9 +794,23 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     result2 = SQRT(ev)
     result3 = SQRT(me)
     t2 = 3.0_R8/(4.0_R8*result10)*t1*t1*ev*result2*result3
-    DO nd=1,nbdirsmax
-      taud(nd, :) = 0.D0
+    arg12(:) = pl%te/ev
+    temp3 = SQRT(arg12(:))
+    result11 = temp3
+    temp4 = ev*dv%lnlam*dv%ne2
+    temp5 = pl%te*result11/temp4
+    DO nd=1,nbdirs
+      arg12d(nd, :) = pld%te(nd, :)/ev
+      WHERE (arg12(:) .EQ. 0.D0) 
+        result11d(nd, :) = 0.D0
+      ELSEWHERE
+        result11d(nd, :) = arg12d(nd, :)/(2.0*temp3)
+      END WHERE
+      taud(nd, :) = t2*(result11*pld%te(nd, :)+pl%te*result11d(nd, :)-&
+&       temp5*(dv%ne2*ev*dvd%lnlam(nd, :)+ev*dv%lnlam*dvd%ne2(nd, :)))/&
+&       temp4
     END DO
+    tau = t2*temp5
     DO nd=1,nbdirsmax
       k1d(nd, :) = 0.D0
     END DO
@@ -777,48 +823,27 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     DO nd=1,nbdirsmax
       nu2d(nd, :) = 0.D0
     END DO
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
-          arg11 = pl%te(icv)/ev
-          temp2 = SQRT(arg11)
-          DO nd=1,nbdirs
-            arg11d(nd) = pld%te(nd, icv)/ev
-            IF (arg11 .EQ. 0.D0) THEN
-              result11d(nd) = 0.D0
-            ELSE
-              result11d(nd) = arg11d(nd)/(2.0*temp2)
-            END IF
-            arg11d(nd) = pld%te(nd, icv)/me
-          END DO
-          result11 = temp2
-          temp0 = ev*dv%lnlam(icv)
-          temp = temp0*dv%ne2(icv)
-          temp2 = pl%te(icv)*result11/temp
-          DO nd=1,nbdirs
-            taud(nd, icv) = t2*(result11*pld%te(nd, icv)+pl%te(icv)*&
-&             result11d(nd)-temp2*(dv%ne2(icv)*ev*dvd%lnlam(nd, icv)+&
-&             temp0*dvd%ne2(nd, icv)))/temp
-          END DO
-          tau(icv) = t2*temp2
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           arg11 = pl%te(icv)/me
           temp2 = SQRT(arg11)
           DO nd=1,nbdirs
+            arg11d(nd) = pld%te(nd, icv)/me
             IF (arg11 .EQ. 0.D0) THEN
-              result11d(nd) = 0.D0
+              result12d(nd) = 0.D0
             ELSE
-              result11d(nd) = arg11d(nd)/(2.0*temp2)
+              result12d(nd) = arg11d(nd)/(2.0*temp2)
             END IF
             arg11d(nd) = pld%ti(nd, icv)/(mp*am(ismain))
           END DO
-          result11 = temp2
+          result12 = temp2
           temp2 = 2.0e0_R8*pi*geo%fteps(ift)**1.5e0_R8
-          temp0 = geo%ftconn(ift)/(temp2*tau(icv)*result11)
+          temp0 = geo%ftconn(ift)/(temp2*tau(icv)*result12)
           DO nd=1,nbdirs
-            nu1d(nd, icv) = -(temp0*(result11*taud(nd, icv)+tau(icv)*&
-&             result11d(nd))/(tau(icv)*result11))
+            nu1d(nd, icv) = -(temp0*(result12*taud(nd, icv)+tau(icv)*&
+&             result12d(nd))/(tau(icv)*result12))
           END DO
           nu1(icv) = temp0
           temp0 = SQRT(nu1(icv))
@@ -830,69 +855,73 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END IF
           END DO
           result1 = temp0
-          arg12 = geo%fteps(ift)**3
-          result2 = SQRT(arg12)
+          arg13 = geo%fteps(ift)**3
+          result2 = SQRT(arg13)
           temp2 = 1.0/(2.01e0_R8*result1+1.53e0_R8*nu1(icv)+1.0e0_R8)
           temp0 = 0.52e0_R8*(geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift&
 &           ))
           temp = 0.89e0_R8*result2*nu1(icv) + 1.0e0_R8
-          temp3 = nu1(icv)/temp
+          temp6 = nu1(icv)/temp
           DO nd=1,nbdirs
-            k1d(nd, icv) = temp0*(1.0-temp3*result2*0.89e0_R8)*nu1d(nd, &
+            k1d(nd, icv) = temp0*(1.0-temp6*result2*0.89e0_R8)*nu1d(nd, &
 &             icv)/temp - temp2*(2.01e0_R8*result1d(nd)+1.53e0_R8*nu1d(&
 &             nd, icv))/(2.01e0_R8*result1+1.53e0_R8*nu1(icv)+1.0e0_R8)
           END DO
-          k1(icv) = temp2 + temp0*temp3
+          k1(icv) = temp2 + temp0*temp6
           arg11 = pl%ti(icv)/(mp*am(ismain))
           temp2 = SQRT(arg11)
           DO nd=1,nbdirs
             IF (arg11 .EQ. 0.D0) THEN
-              result11d(nd) = 0.D0
+              result12d(nd) = 0.D0
             ELSE
-              result11d(nd) = arg11d(nd)/(2.0*temp2)
+              result12d(nd) = arg11d(nd)/(2.0*temp2)
             END IF
           END DO
-          result11 = temp2
+          result12 = temp2
           temp2 = 2.0e0_R8*pi*geo%fteps(ift)**1.5e0_R8
-          temp3 = geo%ftconn(ift)/(temp2*tauia(icv, ismain)*result11)
+          temp6 = geo%ftconn(ift)/(temp2*tauia(icv, ismain)*result12)
           DO nd=1,nbdirs
-            nu2d(nd, icv) = -(temp3*(result11*tauiad(nd, icv, ismain)+&
-&             tauia(icv, ismain)*result11d(nd))/(tauia(icv, ismain)*&
-&             result11))
+            nu2d(nd, icv) = -(temp6*(result12*tauiad(nd, icv, ismain)+&
+&             tauia(icv, ismain)*result12d(nd))/(tauia(icv, ismain)*&
+&             result12))
           END DO
-          nu2(icv) = temp3
-          arg12 = geo%fteps(ift)
-          result1 = SQRT(arg12)
-          temp3 = SQRT(nu2(icv))
+          nu2(icv) = temp6
+          arg13 = geo%fteps(ift)
+          result1 = SQRT(arg13)
+          temp6 = SQRT(nu2(icv))
           DO nd=1,nbdirs
             IF (nu2(icv) .EQ. 0.D0) THEN
               result2d(nd) = 0.D0
             ELSE
-              result2d(nd) = nu2d(nd, icv)/(2.0*temp3)
+              result2d(nd) = nu2d(nd, icv)/(2.0*temp6)
             END IF
           END DO
-          result2 = temp3
+          result2 = temp6
           arg2 = geo%fteps(ift)**3
           result3 = SQRT(arg2)
-          temp3 = (1.88e0_R8*result1-1.54e0_R8*geo%fteps(ift)+0.66e0_R8)&
+          temp6 = (1.88e0_R8*result1-1.54e0_R8*geo%fteps(ift)+0.66e0_R8)&
 &           /(1.03e0_R8*result2+0.31e0_R8*nu2(icv)+1.0e0_R8)
           temp0 = 1.17e0_R8*(geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift&
 &           ))
           temp = 0.74e0_R8*result3*nu2(icv) + 1.0e0_R8
-          temp4 = nu2(icv)/temp
+          temp7 = nu2(icv)/temp
           DO nd=1,nbdirs
-            k2d(nd, icv) = temp0*(1.0-temp4*result3*0.74e0_R8)*nu2d(nd, &
-&             icv)/temp - temp3*(1.03e0_R8*result2d(nd)+0.31e0_R8*nu2d(&
+            k2d(nd, icv) = temp0*(1.0-temp7*result3*0.74e0_R8)*nu2d(nd, &
+&             icv)/temp - temp6*(1.03e0_R8*result2d(nd)+0.31e0_R8*nu2d(&
 &             nd, icv))/(1.03e0_R8*result2+0.31e0_R8*nu2(icv)+1.0e0_R8)
           END DO
-          k2(icv) = temp3 + temp0*temp4
-        END DO
+          k2(icv) = temp6 + temp0*temp7
+        END IF
       END IF
     END DO
 !lk 19.09.07 }
-!    ..interpolate k1, k2, te, ti and ne2 to cell faces
+!    ..interpolate te, ti and ne2 to cell faces
     wrk1 = 1.0_R8
-    CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, pl%te, tef)
+    DO nd=1,nbdirsmax
+      tefd(nd, :) = 0.D0
+    END DO
+    CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, pl%te, pld%te, tef, tefd, &
+&             nbdirs)
     DO nd=1,nbdirsmax
       tifd(nd, :) = 0.D0
     END DO
@@ -904,93 +933,198 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, dv%ne2, dvd%ne2, ne2f, &
 &             ne2fd, nbdirs)
     DO nd=1,nbdirsmax
-      k1fd(nd, :) = 0.D0
+      taufd(nd, :) = 0.D0
     END DO
-    CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, k1, k1d, k1f, k1fd, nbdirs&
-&            )
+    CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, tau, taud, tauf, taufd, &
+&             nbdirs)
     DO nd=1,nbdirsmax
-      k2fd(nd, :) = 0.D0
+      tauiafd(nd, :) = 0.D0
     END DO
-    CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, k2, k2d, k2f, k2fd, nbdirs&
-&            )
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftfcp(ift, 2)
-          ifc = mpg%ftfc(mpg%ftfcp(ift, 1)+i-1)
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
-          temp4 = 0.58e0_R8*result1/k1f(ifc)
-          DO nd=1,nbdirs
-            cod%f_luc_ke(nd, ifc) = -(temp4*k1fd(nd, ifc)/k1f(ifc))
-            cod%f_luc_sg(nd, ifc) = cod%f_luc_ke(nd, ifc)
-            cod%f_luc_al(nd, ifc) = cod%f_luc_ke(nd, ifc)
-          END DO
-          co%f_luc_ke(ifc) = temp4
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
-          temp4 = 1.60e0_R8*result1/k2f(ifc)
-          DO nd=1,nbdirs
-            cod%f_luc_ki(nd, ifc) = -(temp4*k2fd(nd, ifc)/k2f(ifc))
-          END DO
-          co%f_luc_ki(ifc) = temp4
-          temp4 = geo%ftconn(ift)*(ev*ev)
-          temp3 = temp4*ne2f(ifc)
-          temp0 = tif(ifc)*tif(ifc)/temp3
-          temp = 15.12e16_R8*geo%fteps(ift)**1.5e0_R8
-          temp5 = temp*temp0 + 1.0e0_R8
-          temp6 = geo%ftconn(ift)*(ev*ev)
-          temp7 = tif(ifc)*tif(ifc)/(temp6*ne2f(ifc))
-          temp8 = switch%cvsa_mltpl/((15.12e16_R8*temp7+1.0e0_R8)*temp5)
-          DO nd=1,nbdirs
-            cod%f_luc_et(nd, ifc) = -(temp8*(temp5*15.12e16_R8*(2*tif(&
-&             ifc)*tifd(nd, ifc)-temp7*temp6*ne2fd(nd, ifc))/(temp6*ne2f&
-&             (ifc))+(15.12e16_R8*temp7+1.0e0_R8)*temp*(2*tif(ifc)*tifd(&
-&             nd, ifc)-temp0*temp4*ne2fd(nd, ifc))/temp3)/((15.12e16_R8*&
-&             temp7+1.0e0_R8)*temp5))
-          END DO
-          co%f_luc_et(ifc) = temp8
-          co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_al(ifc) = co%f_luc_ke(ifc)
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is)) THEN
-              DO nd=1,nbdirs
-                cvsad(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsad(nd, ifc, &
-&                 0, is) + cvsa(ifc, 0, is)*cod%f_luc_et(nd, ifc)
-                cvsahzd(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsahzd(nd, &
-&                 ifc, 0, is) + cvsahz(ifc, 0, is)*cod%f_luc_et(nd, ifc)
-                vsaf_cld(nd, ifc, 0, is) = co%f_luc_et(ifc)*vsaf_cld(nd&
-&                 , ifc, 0, is) + vsaf_cl(ifc, 0, is)*cod%f_luc_et(nd, &
-&                 ifc)
-              END DO
-              cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
-              cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
-              vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
-            END IF
-          END DO
-          DO nd=1,nbdirs
-            chced(nd, ifc, 0) = co%f_luc_ke(ifc)*chced(nd, ifc, 0) + &
-&             chce(ifc, 0)*cod%f_luc_ke(nd, ifc)
-            csigd(nd, ifc, 0) = co%f_luc_sg(ifc)*csigd(nd, ifc, 0) + &
-&             csig(ifc, 0)*cod%f_luc_sg(nd, ifc)
-            calfd(nd, ifc, 0) = co%f_luc_al(ifc)*calfd(nd, ifc, 0) + &
-&             calf(ifc, 0)*cod%f_luc_al(nd, ifc)
-            chcid(nd, ifc, 0) = co%f_luc_ki(ifc)*chcid(nd, ifc, 0) + &
-&             chci(ifc, 0)*cod%f_luc_ki(nd, ifc)
-          END DO
-          chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
-          csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
-          calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
-          chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+    CALL INTFACE_DV(ncv, nfc, mpg%fccv, wrk1, tauia(:, ismain), tauiad(:&
+&             , :, ismain), tauiaf, tauiafd, nbdirs)
+!    ..compute flux limits at faces
+!lkw 12.10.22 {
+    DO ifc=1,nfc
+!lkw 12.10.22 {
+      IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .OR. mpg%&
+&         cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+! compute conn and eps on the face
+        connf = 0.0_R8
+        epsf = 0.0_R8
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1))) THEN
+          ift = mpg%cvft(mpg%fccv(ifc, 1))
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            connf = connf + geo%ftconn(ift)
+            epsf = epsf + geo%fteps(ift)
+          END IF
+        END IF
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          ift = mpg%cvft(mpg%fccv(ifc, 2))
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            connf = connf + geo%ftconn(ift)
+            epsf = epsf + geo%fteps(ift)
+          END IF
+        END IF
+! parameters at faces
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          connf = 0.5*connf
+          epsf = 0.5*epsf
+        END IF
+        arg13 = tef(ifc)/me
+        temp7 = SQRT(arg13)
+        DO nd=1,nbdirs
+          arg13d(nd) = tefd(nd, ifc)/me
+          IF (arg13 .EQ. 0.D0) THEN
+            result1d(nd) = 0.D0
+          ELSE
+            result1d(nd) = arg13d(nd)/(2.0*temp7)
+          END IF
+          arg13d(nd) = tifd(nd, ifc)/(mp*am(ismain))
         END DO
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
-          temp8 = 0.58e0_R8*result1/k1(icv)
-          t0 = temp8
+        result1 = temp7
+        temp2 = 2.0e0_R8*pi*epsf**1.5e0_R8
+        temp7 = connf/(temp2*tauf(ifc)*result1)
+        DO nd=1,nbdirs
+          nu1fd(nd) = -(temp7*(result1*taufd(nd, ifc)+tauf(ifc)*result1d&
+&           (nd))/(tauf(ifc)*result1))
+        END DO
+        nu1f = temp7
+        temp7 = SQRT(nu1f)
+        DO nd=1,nbdirs
+          IF (nu1f .EQ. 0.D0) THEN
+            result1d(nd) = 0.D0
+          ELSE
+            result1d(nd) = nu1fd(nd)/(2.0*temp7)
+          END IF
+        END DO
+        result1 = temp7
+        arg13 = epsf**3
+        result2 = SQRT(arg13)
+        temp2 = 1.0/(2.01e0_R8*result1+1.53e0_R8*nu1f+1.0e0_R8)
+        temp7 = 0.52e0_R8*(epsf*epsf*epsf)
+        temp6 = 0.89e0_R8*result2*nu1f + 1.0e0_R8
+        DO nd=1,nbdirs
+          k1fd(nd) = temp7*(1.0-nu1f*result2*0.89e0_R8/temp6)*nu1fd(nd)/&
+&           temp6 - temp2*(2.01e0_R8*result1d(nd)+1.53e0_R8*nu1fd(nd))/(&
+&           2.01e0_R8*result1+1.53e0_R8*nu1f+1.0e0_R8)
+        END DO
+        k1f = temp2 + temp7*(nu1f/temp6)
+        arg13 = tif(ifc)/(mp*am(ismain))
+        temp7 = SQRT(arg13)
+        DO nd=1,nbdirs
+          IF (arg13 .EQ. 0.D0) THEN
+            result1d(nd) = 0.D0
+          ELSE
+            result1d(nd) = arg13d(nd)/(2.0*temp7)
+          END IF
+        END DO
+        result1 = temp7
+        temp2 = 2.0e0_R8*pi*epsf**1.5e0_R8
+        temp7 = connf/(temp2*tauiaf(ifc)*result1)
+        DO nd=1,nbdirs
+          nu2fd(nd) = -(temp7*(result1*tauiafd(nd, ifc)+tauiaf(ifc)*&
+&           result1d(nd))/(tauiaf(ifc)*result1))
+        END DO
+        nu2f = temp7
+! compute flux limits
+        result1 = SQRT(epsf)
+        temp7 = SQRT(nu2f)
+        DO nd=1,nbdirs
+          IF (nu2f .EQ. 0.D0) THEN
+            result2d(nd) = 0.D0
+          ELSE
+            result2d(nd) = nu2fd(nd)/(2.0*temp7)
+          END IF
+        END DO
+        result2 = temp7
+        arg13 = epsf**3
+        result3 = SQRT(arg13)
+        temp7 = (1.88e0_R8*result1-1.54e0_R8*epsf+0.66e0_R8)/(1.03e0_R8*&
+&         result2+0.31e0_R8*nu2f+1.0e0_R8)
+        temp6 = 1.17e0_R8*(epsf*epsf*epsf)
+        temp0 = 0.74e0_R8*result3*nu2f + 1.0e0_R8
+        DO nd=1,nbdirs
+          k2fd(nd) = temp6*(1.0-nu2f*result3*0.74e0_R8/temp0)*nu2fd(nd)/&
+&           temp0 - temp7*(1.03e0_R8*result2d(nd)+0.31e0_R8*nu2fd(nd))/(&
+&           1.03e0_R8*result2+0.31e0_R8*nu2f+1.0e0_R8)
+        END DO
+        k2f = temp7 + temp6*(nu2f/temp0)
+        arg13 = epsf**3
+        result1 = SQRT(arg13)
+        temp7 = 0.58e0_R8*result1/k1f
+        DO nd=1,nbdirs
+          cod%f_luc_ke(nd, ifc) = -(temp7*k1fd(nd)/k1f)
+          cod%f_luc_sg(nd, ifc) = cod%f_luc_ke(nd, ifc)
+          cod%f_luc_al(nd, ifc) = cod%f_luc_ke(nd, ifc)
+        END DO
+        co%f_luc_ke(ifc) = temp7
+        arg13 = epsf**3
+        result1 = SQRT(arg13)
+        temp7 = 1.60e0_R8*result1/k2f
+        DO nd=1,nbdirs
+          cod%f_luc_ki(nd, ifc) = -(temp7*k2fd(nd)/k2f)
+        END DO
+        co%f_luc_ki(ifc) = temp7
+        temp7 = connf*(ev*ev)
+        temp6 = temp7*ne2f(ifc)
+        temp0 = tif(ifc)*tif(ifc)/temp6
+        temp = 15.12e16_R8*epsf**1.5e0_R8
+        temp8 = temp*temp0 + 1.0e0_R8
+        temp9 = connf*(ev*ev)
+        temp10 = tif(ifc)*tif(ifc)/(temp9*ne2f(ifc))
+        temp11 = switch%cvsa_mltpl/((15.12e16_R8*temp10+1.0e0_R8)*temp8)
+        DO nd=1,nbdirs
+          cod%f_luc_et(nd, ifc) = -(temp11*(temp8*15.12e16_R8*(2*tif(ifc&
+&           )*tifd(nd, ifc)-temp10*temp9*ne2fd(nd, ifc))/(temp9*ne2f(ifc&
+&           ))+(15.12e16_R8*temp10+1.0e0_R8)*temp*(2*tif(ifc)*tifd(nd, &
+&           ifc)-temp0*temp7*ne2fd(nd, ifc))/temp6)/((15.12e16_R8*temp10&
+&           +1.0e0_R8)*temp8))
+        END DO
+        co%f_luc_et(ifc) = temp11
+        co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_al(ifc) = co%f_luc_ke(ifc)
+        DO is=0,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              cvsad(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsad(nd, ifc, 0&
+&               , is) + cvsa(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+              cvsahzd(nd, ifc, 0, is) = co%f_luc_et(ifc)*cvsahzd(nd, ifc&
+&               , 0, is) + cvsahz(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+              vsaf_cld(nd, ifc, 0, is) = co%f_luc_et(ifc)*vsaf_cld(nd, &
+&               ifc, 0, is) + vsaf_cl(ifc, 0, is)*cod%f_luc_et(nd, ifc)
+            END DO
+            cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
+            cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
+            vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          chced(nd, ifc, 0) = co%f_luc_ke(ifc)*chced(nd, ifc, 0) + chce(&
+&           ifc, 0)*cod%f_luc_ke(nd, ifc)
+          csigd(nd, ifc, 0) = co%f_luc_sg(ifc)*csigd(nd, ifc, 0) + csig(&
+&           ifc, 0)*cod%f_luc_sg(nd, ifc)
+          calfd(nd, ifc, 0) = co%f_luc_al(ifc)*calfd(nd, ifc, 0) + calf(&
+&           ifc, 0)*cod%f_luc_al(nd, ifc)
+          chcid(nd, ifc, 0) = co%f_luc_ki(ifc)*chcid(nd, ifc, 0) + chci(&
+&           ifc, 0)*cod%f_luc_ki(nd, ifc)
+        END DO
+        chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
+        csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
+        calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
+        chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+      END IF
+    END DO
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          arg13 = geo%fteps(ift)**3
+          result1 = SQRT(arg13)
+          temp11 = 0.58e0_R8*result1/k1(icv)
+          t0 = temp11
           DO nd=1,nbdirs
-            t0d(nd) = -(temp8*k1d(nd, icv)/k1(icv))
+            t0d(nd) = -(temp11*k1d(nd, icv)/k1(icv))
             cod%sigx_c(nd, icv) = t0*cod%sigx_c(nd, icv) + co%sigx_c(icv&
 &             )*t0d(nd)
             cod%alfx_c(nd, icv) = t0*cod%alfx_c(nd, icv) + co%alfx_c(icv&
@@ -998,17 +1132,17 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           END DO
           co%sigx_c(icv) = co%sigx_c(icv)*t0
           co%alfx_c(icv) = co%alfx_c(icv)*t0
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
-          temp8 = 1.60e0_R8*result1/k2(icv)
-          t0 = temp8
+          arg13 = geo%fteps(ift)**3
+          result1 = SQRT(arg13)
+          temp11 = 1.60e0_R8*result1/k2(icv)
+          t0 = temp11
           DO nd=1,nbdirs
-            t0d(nd) = -(temp8*k2d(nd, icv)/k2(icv))
+            t0d(nd) = -(temp11*k2d(nd, icv)/k2(icv))
             cod%hcix_c(nd, icv) = t0*cod%hcix_c(nd, icv) + co%hcix_c(icv&
 &             )*t0d(nd)
           END DO
           co%hcix_c(icv) = co%hcix_c(icv)*t0
-        END DO
+        END IF
       END IF
     END DO
   END IF
@@ -1022,8 +1156,8 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (.NOT.is_neutral(is)) THEN
-        arg13(:) = 'b2trcl_luciani_cvsahzx'//chns
-        CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg13(:))
+        arg14(:) = 'b2trcl_luciani_cvsahzx'//chns
+        CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg14(:))
       END IF
     END DO
   END IF
@@ -1116,12 +1250,12 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END DO
             max1 = pl%te(mpg%fccv(ifc, 1))
           END IF
-          temp8 = abs0/(b2trcl_cutlo+flomx*max1)
-          t0 = temp8
+          temp11 = abs0/(b2trcl_cutlo+flomx*max1)
+          t0 = temp11
           co%fllim_ke(ifc) = 1.0_R8/(1.0e0_R8+t0)
           DO nd=1,nbdirs
-            t0d(nd) = (abs0d(nd)-temp8*(max1*flomxd(nd)+flomx*max1d(nd))&
-&             )/(b2trcl_cutlo+flomx*max1)
+            t0d(nd) = (abs0d(nd)-temp11*(max1*flomxd(nd)+flomx*max1d(nd)&
+&             ))/(b2trcl_cutlo+flomx*max1)
             cod%fllim_ke(nd, ifc) = -(t0d(nd)/(t0+1.0e0_R8)**2)
             chced(nd, ifc, 0) = co%fllim_ke(ifc)*chced(nd, ifc, 0) + &
 &             chce(ifc, 0)*cod%fllim_ke(nd, ifc)
@@ -1171,12 +1305,12 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END DO
             max2 = pl%ti(mpg%fccv(ifc, 1))
           END IF
-          temp8 = abs1/(b2trcl_cutlo+flomx*max2)
-          t0 = temp8
+          temp11 = abs1/(b2trcl_cutlo+flomx*max2)
+          t0 = temp11
           co%fllim_ki(ifc) = 1.0_R8/(1.0e0_R8+t0)
           DO nd=1,nbdirs
-            t0d(nd) = (abs1d(nd)-temp8*(max2*flomxd(nd)+flomx*max2d(nd))&
-&             )/(b2trcl_cutlo+flomx*max2)
+            t0d(nd) = (abs1d(nd)-temp11*(max2*flomxd(nd)+flomx*max2d(nd)&
+&             ))/(b2trcl_cutlo+flomx*max2)
             cod%fllim_ki(nd, ifc) = -(t0d(nd)/(t0+1.0e0_R8)**2)
             chcid(nd, ifc, 0) = co%fllim_ki(ifc)*chcid(nd, ifc, 0) + &
 &             chci(ifc, 0)*cod%fllim_ki(nd, ifc)
@@ -1244,12 +1378,12 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END DO
             max3 = pl%te(mpg%fccv(ifc, 1))
           END IF
-          temp8 = abs2/(b2trcl_cutlo+flomx*max3)
-          t0 = temp8
+          temp11 = abs2/(b2trcl_cutlo+flomx*max3)
+          t0 = temp11
           co%fllim_al(ifc) = 1.0_R8/(1.0e0_R8+t0)
           DO nd=1,nbdirs
-            t0d(nd) = (abs2d(nd)-temp8*(max3*flomxd(nd)+flomx*max3d(nd))&
-&             )/(b2trcl_cutlo+flomx*max3)
+            t0d(nd) = (abs2d(nd)-temp11*(max3*flomxd(nd)+flomx*max3d(nd)&
+&             ))/(b2trcl_cutlo+flomx*max3)
             cod%fllim_al(nd, ifc) = -(t0d(nd)/(t0+1.0e0_R8)**2)
 !srv 13.01.17
             calfd(nd, ifc, 0) = co%fllim_al(ifc)*calfd(nd, ifc, 0) + &
@@ -1289,19 +1423,19 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           arg11d(nd) = (pld%te(nd, mpg%fccv(ifc, 1))+pld%te(nd, mpg%fccv&
 &           (ifc, 2)))/(2.0_R8*me)
           IF (arg11 .EQ. 0.D0) THEN
-            result11d(nd) = 0.D0
+            result12d(nd) = 0.D0
           ELSE
-            result11d(nd) = arg11d(nd)/(2.0*temp2)
+            result12d(nd) = arg11d(nd)/(2.0*temp2)
           END IF
         END DO
-        result11 = temp2
+        result12 = temp2
         temp2 = dv%ne(mpg%fccv(ifc, 1)) + dv%ne(mpg%fccv(ifc, 2))
         DO nd=1,nbdirs
-          jemaxd(nd) = qe*abs3*(temp2*result11d(nd)/2.0_R8+result11*(dvd&
+          jemaxd(nd) = qe*abs3*(temp2*result12d(nd)/2.0_R8+result12*(dvd&
 &           %ne(nd, mpg%fccv(ifc, 1))+dvd%ne(nd, mpg%fccv(ifc, 2)))/&
 &           2.0_R8)
         END DO
-        jemax = qe*abs3*(result11/2.0_R8*temp2)
+        jemax = qe*abs3*(result12/2.0_R8*temp2)
         IF (calf(ifc, 0)*dte(ifc) .GE. 0.) THEN
           DO nd=1,nbdirs
             abs4d(nd) = dte(ifc)*calfd(nd, ifc, 0) + calf(ifc, 0)*dted(&
@@ -1315,11 +1449,11 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           END DO
           abs4 = -(calf(ifc, 0)*dte(ifc))
         END IF
-        temp8 = b2trcl_cutlo + cflim(3)*jemax
-        t0 = abs4/temp8
+        temp11 = b2trcl_cutlo + cflim(3)*jemax
+        t0 = abs4/temp11
         co%fllim_al(ifc) = 1.0_R8/(1.0e0_R8+t0)
         DO nd=1,nbdirs
-          t0d(nd) = (abs4d(nd)-abs4*cflim(3)*jemaxd(nd)/temp8)/temp8
+          t0d(nd) = (abs4d(nd)-abs4*cflim(3)*jemaxd(nd)/temp11)/temp11
           cod%fllim_al(nd, ifc) = -(t0d(nd)/(t0+1.0e0_R8)**2)
 !srv 13.01.17
           calfd(nd, ifc, 0) = co%fllim_al(ifc)*calfd(nd, ifc, 0) + calf(&
@@ -1340,18 +1474,18 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
         END IF
         arg11 = pl%te(icv)/me
         temp2 = SQRT(arg11)
-        result11 = temp2
+        result12 = temp2
         DO nd=1,nbdirs
           arg11d(nd) = pld%te(nd, icv)/me
           IF (arg11 .EQ. 0.D0) THEN
-            result11d(nd) = 0.D0
+            result12d(nd) = 0.D0
           ELSE
-            result11d(nd) = arg11d(nd)/(2.0*temp2)
+            result12d(nd) = arg11d(nd)/(2.0*temp2)
           END IF
-          jemaxd(nd) = qe*abs5*(dv%ne(icv)*result11d(nd)+result11*dvd%ne&
+          jemaxd(nd) = qe*abs5*(dv%ne(icv)*result12d(nd)+result12*dvd%ne&
 &           (nd, icv))
         END DO
-        jemax = result11*qe*dv%ne(icv)*abs5
+        jemax = result12*qe*dv%ne(icv)*abs5
         IF (co%alfx_c(icv) .GE. 0.) THEN
           DO nd=1,nbdirs
             abs6d(nd) = cod%alfx_c(nd, icv)
@@ -1374,13 +1508,13 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           END DO
           abs8 = -gtec(icv)
         END IF
-        temp8 = b2trcl_cutlo + cflim(3)*jemax
-        temp2 = abs6*abs8/temp8
+        temp11 = b2trcl_cutlo + cflim(3)*jemax
+        temp2 = abs6*abs8/temp11
         t0 = temp2
         co%fllim_al_c(icv) = 1.0_R8/(1.0e0_R8+t0)
         DO nd=1,nbdirs
           t0d(nd) = (abs8*abs6d(nd)+abs6*abs8d(nd)-temp2*cflim(3)*jemaxd&
-&           (nd))/temp8
+&           (nd))/temp11
           cod%fllim_al_c(nd, icv) = -(t0d(nd)/(t0+1.0e0_R8)**2)
 !iyv 19.11.13 !srv 08.10.14
           cod%alfx_c(nd, icv) = co%fllim_al_c(icv)*cod%alfx_c(nd, icv) +&
@@ -1414,23 +1548,23 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   END DO
   WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs7 = -(rt%&
 &     rza(:, ismain)*qe*geo%cvbb(:, 3))
-  arg14(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
-  temp9 = SQRT(arg14(:))
-  result12 = temp9
-  wrkc = result12/abs7
+  arg15(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
+  temp12 = SQRT(arg15(:))
+  result13 = temp12
+  wrkc = result13/abs7
   DO nd=1,nbdirsmax
     cdktd(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirs
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
-    arg14d(nd, :) = mp*2.0_R8*am(ismain)*pld%ti(nd, :)
-    WHERE (arg14(:) .EQ. 0.D0) 
-      result12d(nd, :) = 0.D0
+    arg15d(nd, :) = mp*2.0_R8*am(ismain)*pld%ti(nd, :)
+    WHERE (arg15(:) .EQ. 0.D0) 
+      result13d(nd, :) = 0.D0
     ELSEWHERE
-      result12d(nd, :) = arg14d(nd, :)/(2.0*temp9)
+      result13d(nd, :) = arg15d(nd, :)/(2.0*temp12)
     END WHERE
-    wrkcd(nd, :) = (result12d(nd, :)-result12*abs7d(nd, :)/abs7)/abs7
+    wrkcd(nd, :) = (result13d(nd, :)-result13*abs7d(nd, :)/abs7)/abs7
     wrkcd(nd, :) = geo%cvbb(:, 3)**2*(wrkc**2*(switch%b2tfhi_fsigkt*cod%&
 &     sigx_c(nd, :)+co%sigx_c*switchd%b2tfhi_fsigkt(nd))+co%sigx_c*&
 &     switch%b2tfhi_fsigkt*2*wrkc*wrkcd(nd, :))/(am(ismain)*mp)
@@ -1455,8 +1589,8 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   IF (switch%b2npmo_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
-      arg15(:) = 'b2trcl_luciani_fllim_cvsahz_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg15(:))
+      arg16(:) = 'b2trcl_luciani_fllim_cvsahz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg16(:))
     END DO
   END IF
 !        call my_out_us(70,nFc,1,cvsahz(1,1,is),
@@ -1481,34 +1615,34 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 17.06.08 {
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
-      arg16(:) = 'cl_cvsa_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 0, is), arg16(:))
-      arg17(:) = 'cl_cvsa_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 1, is), arg17(:))
-      arg18(:) = 'cl_cvsahz_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg18(:))
-      arg19(:) = 'cl_cvsahz_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 1, is), arg19(:))
-      arg110(:) = 'cl_cvsa_cl_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 0, is), arg110(:))
-      arg18(:) = 'cl_cvsa_cl_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 1, is), arg18(:))
-      arg110(:) = 'cl_cvsahz_clx'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 0, is), arg110(:))
-      arg110(:) = 'cl_cvsahz_cly'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 1, is), arg110(:))
-      arg111(:) = 'cl_cthe'//chns
-      CALL MY_OUT_US(70, ncv, 0, cthe(1, is), arg111(:))
-      arg111(:) = 'cl_cthi'//chns
-      CALL MY_OUT_US(70, ncv, 0, cthi(1, is), arg111(:))
+      arg17(:) = 'cl_cvsa_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 0, is), arg17(:))
+      arg18(:) = 'cl_cvsa_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 1, is), arg18(:))
+      arg19(:) = 'cl_cvsahz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg19(:))
+      arg110(:) = 'cl_cvsahz_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 1, is), arg110(:))
+      arg111(:) = 'cl_cvsa_cl_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 0, is), arg111(:))
+      arg19(:) = 'cl_cvsa_cl_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 1, is), arg19(:))
+      arg111(:) = 'cl_cvsahz_clx'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 0, is), arg111(:))
+      arg111(:) = 'cl_cvsahz_cly'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 1, is), arg111(:))
+      arg112(:) = 'cl_cthe'//chns
+      CALL MY_OUT_US(70, ncv, 0, cthe(1, is), arg112(:))
+      arg112(:) = 'cl_cthi'//chns
+      CALL MY_OUT_US(70, ncv, 0, cthi(1, is), arg112(:))
       DO is0=0,ns-1
         WRITE(chns0, '(i3.3)') is0
-        arg18(:) = 'cl_csigin_th'//chns//'_'//chns0
-        CALL MY_OUT_US(70, nfc, 1, csigin(1, 0, is, is0), arg18(:&
+        arg19(:) = 'cl_csigin_th'//chns//'_'//chns0
+        CALL MY_OUT_US(70, nfc, 1, csigin(1, 0, is, is0), arg19(:&
 &                       ))
-        arg19(:) = 'cl_csigin_r'//chns//'_'//chns0
-        CALL MY_OUT_US(70, nfc, 1, csigin(1, 1, is, is0), arg19(:&
-&                       ))
+        arg110(:) = 'cl_csigin_r'//chns//'_'//chns0
+        CALL MY_OUT_US(70, nfc, 1, csigin(1, 1, is, is0), arg110(&
+&                       :))
       END DO
     END DO
     CALL MY_OUT_US(70, nfc, 1, chce(1, 0), 'cl_chce_th')
@@ -1568,6 +1702,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   USE B2US_PLASMA_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+  USE B2MOD_MATH_DIFFV, ONLY : b2mod_math_initialised, cutlo, cutll, &
+& small_r4_constant
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2trcl, ncall_b2tlnl, &
 & ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca, b2trcl_cutlo, &
 & ncall_b2ttia
@@ -1647,7 +1783,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 13.01.17
   REAL(kind=r8) :: cflmv, jemax
 !srv 03.06.03
-  REAL(kind=r8) :: t0, dte(nfc), dti(nfc), flomx
+  REAL(kind=r8) :: t0, dte(nfc), dti(nfc), flomx, connf, epsf
 !lk 19.09.07
   REAL(kind=r8) :: tauia(ncv, 0:ns-1), nu2(ncv), k2(ncv)
 !lk 12.05.11
@@ -1657,7 +1793,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: hce(ncv, 0:1), sig(ncv, 0:1), alf(ncv, 0:1), vsa(ncv&
 & , 0:1, 0:ns-1), hci(ncv, 0:1), sigin(ncv, 0:1, 0:ns-1, 0:nscx-1), wrk(&
 & nfc), wrk1(nfc, 2), wrkv(nvx), wrkc(ncv), tef(nfc), tif(nfc), ne2f(nfc&
-& ), k1f(nfc), k2f(nfc), gtec(ncv)
+& ), k1f, k2f, gtec(ncv), nu1f, nu2f, tauf(nfc), tauiaf(nfc)
   EXTERNAL XERTST, XERRAB, SFILL_NODIFF, smin, smax
 !   ..procedures
 !srv 22.04.16
@@ -1689,19 +1825,21 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(r8) :: arg11
   REAL(kind=r8) :: result10
   REAL(kind=r8) :: result3
-  REAL(r8) :: result11
-  REAL(kind=r8) :: arg12
+  REAL(r8), DIMENSION(nCv) :: arg12
+  REAL(r8), DIMENSION(nCv) :: result11
+  REAL(r8) :: result12
+  REAL(kind=r8) :: arg13
   REAL(kind=r8) :: arg2
-  CHARACTER(len=22) :: arg13
-  REAL(r8), DIMENSION(nCv) :: arg14
-  REAL(kind=r8), DIMENSION(nCv) :: result12
-  CHARACTER(len=30) :: arg15
-  CHARACTER(len=10) :: arg16
-  CHARACTER(len=9) :: arg17
-  CHARACTER(len=12) :: arg18
-  CHARACTER(len=11) :: arg19
-  CHARACTER(len=13) :: arg110
-  CHARACTER(len=7) :: arg111
+  CHARACTER(len=22) :: arg14
+  REAL(r8), DIMENSION(nCv) :: arg15
+  REAL(kind=r8), DIMENSION(nCv) :: result13
+  CHARACTER(len=30) :: arg16
+  CHARACTER(len=10) :: arg17
+  CHARACTER(len=9) :: arg18
+  CHARACTER(len=12) :: arg19
+  CHARACTER(len=11) :: arg110
+  CHARACTER(len=13) :: arg111
+  CHARACTER(len=7) :: arg112
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -1893,32 +2031,51 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, pl%te, tef)
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, pl%ti, tif)
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, dv%ne2, ne2f)
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftfcp(ift, 2)
-          ifc = mpg%ftfc(mpg%ftfcp(ift, 1)+i-1)
-          co%f_luc_ke(ifc) = 1.0_R8/(1.0_R8+7.5e16_R8*(tef(ifc)/ev)**2/(&
-&           geo%ftconn(ift)*ne2f(ifc)))
-          co%f_luc_ki(ifc) = 1.0_R8/(1.0_R8+7.5e16_R8*(tif(ifc)/ev)**2/(&
-&           geo%ftconn(ift)*ne2f(ifc)))
-          co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_al(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_et(ifc) = co%f_luc_ki(ifc)
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is)) THEN
-              cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
-              cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
-              vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
-            END IF
-          END DO
-          chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
-          csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
-          calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
-          chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+!lkw 12.10.22 {
+    DO ifc=1,nfc
+      IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .OR. mpg%&
+&         cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+! compute conn on the face
+        connf = 0.0_R8
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1))) THEN
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            ift = mpg%cvft(mpg%fccv(ifc, 1))
+            connf = connf + geo%ftconn(ift)
+          END IF
+        END IF
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            ift = mpg%cvft(mpg%fccv(ifc, 2))
+            connf = connf + geo%ftconn(ift)
+          END IF
+        END IF
+! compute flux limits
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2))) connf = 0.5*connf
+        co%f_luc_ke(ifc) = 1.0_R8/(1.0_R8+7.5e16_R8*(tef(ifc)/ev)**2/(&
+&         connf*ne2f(ifc)))
+        co%f_luc_ki(ifc) = 1.0_R8/(1.0_R8+7.5e16_R8*(tif(ifc)/ev)**2/(&
+&         connf*ne2f(ifc)))
+        co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_al(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_et(ifc) = co%f_luc_ki(ifc)
+        DO is=0,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
+            cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
+            vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
+          END IF
         END DO
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
+        chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
+        csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
+        calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
+        chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+      END IF
+    END DO
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           t0 = 1.0_R8/(1.0_R8+7.5e16_R8*(pl%te(icv)/ev)**2/(geo%ftconn(&
 &           ift)*dv%ne2(icv)))
           co%sigx_c(icv) = co%sigx_c(icv)*t0
@@ -1926,7 +2083,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           t0 = 1.0_R8/(1.0_R8+7.5e16_R8*(pl%ti(icv)/ev)**2/(geo%ftconn(&
 &           ift)*dv%ne2(icv)))
           co%hcix_c(icv) = co%hcix_c(icv)*t0
-        END DO
+        END IF
       END IF
     END DO
   ELSE IF (switch%lluciani .EQ. 2) THEN
@@ -1936,38 +2093,40 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, pl%te, tef)
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, pl%ti, tif)
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, dv%ne2, ne2f)
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftfcp(ift, 2)
-          ifc = mpg%ftfc(mpg%ftfcp(ift, 1)+i-1)
-          co%f_luc_ke(ifc) = 1.0_R8/(1.0_R8+0.3e16_R8*(tef(ifc)/ev)**2/&
-&           ne2f(ifc))
-          co%f_luc_ki(ifc) = 1.0_R8/(1.0_R8+0.3e16_R8*(tif(ifc)/ev)**2/&
-&           ne2f(ifc))
-          co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_al(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_et(ifc) = co%f_luc_ki(ifc)
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is)) THEN
-              cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
-              cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
-              vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
-            END IF
-          END DO
-          chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
-          csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
-          calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
-          chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+!lkw 12.10.22 {
+    DO ifc=1,nfc
+      IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .OR. mpg%&
+&         cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+        co%f_luc_ke(ifc) = 1.0_R8/(1.0_R8+0.3e16_R8*(tef(ifc)/ev)**2/&
+&         ne2f(ifc))
+        co%f_luc_ki(ifc) = 1.0_R8/(1.0_R8+0.3e16_R8*(tif(ifc)/ev)**2/&
+&         ne2f(ifc))
+        co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_al(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_et(ifc) = co%f_luc_ki(ifc)
+        DO is=0,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
+            cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
+            vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
+          END IF
         END DO
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
+        chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
+        csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
+        calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
+        chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+      END IF
+    END DO
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           t0 = 1.0_R8/(1.0_R8+0.3e16_R8*(pl%te(icv)/ev)**2/dv%ne2(icv))
           co%sigx_c(icv) = co%sigx_c(icv)*t0
           co%alfx_c(icv) = co%alfx_c(icv)*t0
           t0 = 1.0_R8/(1.0_R8+0.3e16_R8*(pl%ti(icv)/ev)**2/dv%ne2(icv))
           co%hcix_c(icv) = co%hcix_c(icv)*t0
-        END DO
+        END IF
       END IF
     END DO
   ELSE IF (switch%lluciani .EQ. 3) THEN
@@ -1986,30 +2145,29 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     result2 = SQRT(ev)
     result3 = SQRT(me)
     t2 = 3.0_R8/(4.0_R8*result10)*t1*t1*ev*result2*result3
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
-          arg11 = pl%te(icv)/ev
-          result11 = SQRT(arg11)
-          tau(icv) = t2/dv%lnlam(icv)*pl%te(icv)/ev*result11/dv%ne2(icv)
+    arg12(:) = pl%te/ev
+    result11 = SQRT(arg12(:))
+    tau = t2/dv%lnlam*pl%te/ev*result11/dv%ne2
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           arg11 = pl%te(icv)/me
-          result11 = SQRT(arg11)
-          nu1(icv) = geo%ftconn(ift)/(tau(icv)*result11*2.0e0_R8*pi*geo%&
+          result12 = SQRT(arg11)
+          nu1(icv) = geo%ftconn(ift)/(tau(icv)*result12*2.0e0_R8*pi*geo%&
 &           fteps(ift)**1.5e0_R8)
           result1 = SQRT(nu1(icv))
-          arg12 = geo%fteps(ift)**3
-          result2 = SQRT(arg12)
+          arg13 = geo%fteps(ift)**3
+          result2 = SQRT(arg13)
           k1(icv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*result1+1.53e0_R8*nu1(&
 &           icv)) + 0.52e0_R8*geo%fteps(ift)**3*nu1(icv)/(1.0e0_R8+&
 &           0.89e0_R8*result2*nu1(icv))
           arg11 = pl%ti(icv)/(mp*am(ismain))
-          result11 = SQRT(arg11)
-          nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*result11*&
+          result12 = SQRT(arg11)
+          nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*result12*&
 &           2.0e0_R8*pi*geo%fteps(ift)**1.5e0_R8)
-          arg12 = geo%fteps(ift)
-          result1 = SQRT(arg12)
+          arg13 = geo%fteps(ift)
+          result1 = SQRT(arg13)
           result2 = SQRT(nu2(icv))
           arg2 = geo%fteps(ift)**3
           result3 = SQRT(arg2)
@@ -2017,58 +2175,103 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &           ))/(1.0e0_R8+1.03e0_R8*result2+0.31e0_R8*nu2(icv)) + &
 &           1.17e0_R8*geo%fteps(ift)**3*nu2(icv)/(1.0e0_R8+0.74e0_R8*&
 &           result3*nu2(icv))
-        END DO
+        END IF
       END IF
     END DO
 !lk 19.09.07 }
-!    ..interpolate k1, k2, te, ti and ne2 to cell faces
+!    ..interpolate te, ti and ne2 to cell faces
     wrk1 = 1.0_R8
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, pl%te, tef)
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, pl%ti, tif)
     CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, dv%ne2, ne2f)
-    CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, k1, k1f)
-    CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, k2, k2f)
-    DO ift=1,mpg%nft
-      IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
-!core flux tube; eventually: check based on ftReg(iFt)?
-        DO i=1,mpg%ftfcp(ift, 2)
-          ifc = mpg%ftfc(mpg%ftfcp(ift, 1)+i-1)
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
-          co%f_luc_ke(ifc) = 1.0_R8/k1f(ifc)*0.58e0_R8*result1
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
-          co%f_luc_ki(ifc) = 1.0_R8/k2f(ifc)*1.60e0_R8*result1
-          co%f_luc_et(ifc) = switch%cvsa_mltpl/(1.0e0_R8+15.12e16_R8/geo&
-&           %ftconn(ift)*(tif(ifc)/ev)**2/ne2f(ifc))/(1.0e0_R8+&
-&           15.12e16_R8*geo%fteps(ift)**1.5e0_R8/geo%ftconn(ift)*(tif(&
-&           ifc)/ev)**2/ne2f(ifc))
-          co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
-          co%f_luc_al(ifc) = co%f_luc_ke(ifc)
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is)) THEN
-              cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
-              cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
-              vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
-            END IF
-          END DO
-          chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
-          csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
-          calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
-          chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+    CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, tau, tauf)
+    CALL INTFACE(ncv, nfc, mpg%fccv, wrk1, tauia(:, ismain), tauiaf)
+!    ..compute flux limits at faces
+!lkw 12.10.22 {
+    DO ifc=1,nfc
+!lkw 12.10.22 {
+      IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .OR. mpg%&
+&         cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+! compute conn and eps on the face
+        connf = 0.0_R8
+        epsf = 0.0_R8
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1))) THEN
+          ift = mpg%cvft(mpg%fccv(ifc, 1))
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            connf = connf + geo%ftconn(ift)
+            epsf = epsf + geo%fteps(ift)
+          END IF
+        END IF
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          ift = mpg%cvft(mpg%fccv(ifc, 2))
+          IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+            connf = connf + geo%ftconn(ift)
+            epsf = epsf + geo%fteps(ift)
+          END IF
+        END IF
+! parameters at faces
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          connf = 0.5*connf
+          epsf = 0.5*epsf
+        END IF
+        arg13 = tef(ifc)/me
+        result1 = SQRT(arg13)
+        nu1f = connf/(tauf(ifc)*result1*2.0e0_R8*pi*epsf**1.5e0_R8)
+        result1 = SQRT(nu1f)
+        arg13 = epsf**3
+        result2 = SQRT(arg13)
+        k1f = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*result1+1.53e0_R8*nu1f) + &
+&         0.52e0_R8*epsf**3*nu1f/(1.0e0_R8+0.89e0_R8*result2*nu1f)
+        arg13 = tif(ifc)/(mp*am(ismain))
+        result1 = SQRT(arg13)
+        nu2f = connf/(tauiaf(ifc)*result1*2.0e0_R8*pi*epsf**1.5e0_R8)
+! compute flux limits
+        result1 = SQRT(epsf)
+        result2 = SQRT(nu2f)
+        arg13 = epsf**3
+        result3 = SQRT(arg13)
+        k2f = (0.66e0_R8+1.88e0_R8*result1-1.54e0_R8*epsf)/(1.0e0_R8+&
+&         1.03e0_R8*result2+0.31e0_R8*nu2f) + 1.17e0_R8*epsf**3*nu2f/(&
+&         1.0e0_R8+0.74e0_R8*result3*nu2f)
+        arg13 = epsf**3
+        result1 = SQRT(arg13)
+        co%f_luc_ke(ifc) = 1.0_R8/k1f*0.58e0_R8*result1
+        arg13 = epsf**3
+        result1 = SQRT(arg13)
+        co%f_luc_ki(ifc) = 1.0_R8/k2f*1.60e0_R8*result1
+        co%f_luc_et(ifc) = switch%cvsa_mltpl/(1.0e0_R8+15.12e16_R8/connf&
+&         *(tif(ifc)/ev)**2/ne2f(ifc))/(1.0e0_R8+15.12e16_R8*epsf**&
+&         1.5e0_R8/connf*(tif(ifc)/ev)**2/ne2f(ifc))
+        co%f_luc_sg(ifc) = co%f_luc_ke(ifc)
+        co%f_luc_al(ifc) = co%f_luc_ke(ifc)
+        DO is=0,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            cvsa(ifc, 0, is) = cvsa(ifc, 0, is)*co%f_luc_et(ifc)
+            cvsahz(ifc, 0, is) = cvsahz(ifc, 0, is)*co%f_luc_et(ifc)
+            vsaf_cl(ifc, 0, is) = vsaf_cl(ifc, 0, is)*co%f_luc_et(ifc)
+          END IF
         END DO
-        DO i=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
+        chce(ifc, 0) = chce(ifc, 0)*co%f_luc_ke(ifc)
+        csig(ifc, 0) = csig(ifc, 0)*co%f_luc_sg(ifc)
+        calf(ifc, 0) = calf(ifc, 0)*co%f_luc_al(ifc)
+        chci(ifc, 0) = chci(ifc, 0)*co%f_luc_ki(ifc)
+      END IF
+    END DO
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          arg13 = geo%fteps(ift)**3
+          result1 = SQRT(arg13)
           t0 = 1.0_R8/k1(icv)*0.58e0_R8*result1
           co%sigx_c(icv) = co%sigx_c(icv)*t0
           co%alfx_c(icv) = co%alfx_c(icv)*t0
-          arg12 = geo%fteps(ift)**3
-          result1 = SQRT(arg12)
+          arg13 = geo%fteps(ift)**3
+          result1 = SQRT(arg13)
           t0 = 1.0_R8/k2(icv)*1.60e0_R8*result1
           co%hcix_c(icv) = co%hcix_c(icv)*t0
-        END DO
+        END IF
       END IF
     END DO
   END IF
@@ -2082,8 +2285,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (.NOT.is_neutral(is)) THEN
-        arg13(:) = 'b2trcl_luciani_cvsahzx'//chns
-        CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg13(:))
+        arg14(:) = 'b2trcl_luciani_cvsahzx'//chns
+        CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg14(:))
       END IF
     END DO
   END IF
@@ -2230,8 +2433,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
         END IF
         arg11 = (pl%te(mpg%fccv(ifc, 1))+pl%te(mpg%fccv(ifc, 2)))/2.0_R8&
 &         /me
-        result11 = SQRT(arg11)
-        jemax = result11*qe*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv(ifc&
+        result12 = SQRT(arg11)
+        jemax = result12*qe*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv(ifc&
 &         , 2)))/2.0_R8*abs3
         IF (calf(ifc, 0)*dte(ifc) .GE. 0.) THEN
           abs4 = calf(ifc, 0)*dte(ifc)
@@ -2254,8 +2457,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           abs5 = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
         END IF
         arg11 = pl%te(icv)/me
-        result11 = SQRT(arg11)
-        jemax = result11*qe*dv%ne(icv)*abs5
+        result12 = SQRT(arg11)
+        jemax = result12*qe*dv%ne(icv)*abs5
         IF (co%alfx_c(icv) .GE. 0.) THEN
           abs6 = co%alfx_c(icv)
         ELSE
@@ -2287,9 +2490,9 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   END WHERE
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
-  arg14(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
-  result12 = SQRT(arg14(:))
-  wrkc = result12/abs7
+  arg15(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
+  result13 = SQRT(arg15(:))
+  wrkc = result13/abs7
   wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)*switch%&
 &   b2tfhi_fsigkt
   CALL B2TXCX_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc&
@@ -2306,8 +2509,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   IF (switch%b2npmo_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
-      arg15(:) = 'b2trcl_luciani_fllim_cvsahz_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg15(:))
+      arg16(:) = 'b2trcl_luciani_fllim_cvsahz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg16(:))
     END DO
   END IF
 !        call my_out_us(70,nFc,1,cvsahz(1,1,is),
@@ -2332,34 +2535,34 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 17.06.08 {
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
-      arg16(:) = 'cl_cvsa_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 0, is), arg16(:))
-      arg17(:) = 'cl_cvsa_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 1, is), arg17(:))
-      arg18(:) = 'cl_cvsahz_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg18(:))
-      arg19(:) = 'cl_cvsahz_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 1, is), arg19(:))
-      arg110(:) = 'cl_cvsa_cl_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 0, is), arg110(:))
-      arg18(:) = 'cl_cvsa_cl_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 1, is), arg18(:))
-      arg110(:) = 'cl_cvsahz_clx'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 0, is), arg110(:))
-      arg110(:) = 'cl_cvsahz_cly'//chns
-      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 1, is), arg110(:))
-      arg111(:) = 'cl_cthe'//chns
-      CALL MY_OUT_US(70, ncv, 0, cthe(1, is), arg111(:))
-      arg111(:) = 'cl_cthi'//chns
-      CALL MY_OUT_US(70, ncv, 0, cthi(1, is), arg111(:))
+      arg17(:) = 'cl_cvsa_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 0, is), arg17(:))
+      arg18(:) = 'cl_cvsa_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa(1, 1, is), arg18(:))
+      arg19(:) = 'cl_cvsahz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 0, is), arg19(:))
+      arg110(:) = 'cl_cvsahz_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz(1, 1, is), arg110(:))
+      arg111(:) = 'cl_cvsa_cl_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 0, is), arg111(:))
+      arg19(:) = 'cl_cvsa_cl_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsa_cl(1, 1, is), arg19(:))
+      arg111(:) = 'cl_cvsahz_clx'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 0, is), arg111(:))
+      arg111(:) = 'cl_cvsahz_cly'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsahz_cl(1, 1, is), arg111(:))
+      arg112(:) = 'cl_cthe'//chns
+      CALL MY_OUT_US(70, ncv, 0, cthe(1, is), arg112(:))
+      arg112(:) = 'cl_cthi'//chns
+      CALL MY_OUT_US(70, ncv, 0, cthi(1, is), arg112(:))
       DO is0=0,ns-1
         WRITE(chns0, '(i3.3)') is0
-        arg18(:) = 'cl_csigin_th'//chns//'_'//chns0
-        CALL MY_OUT_US(70, nfc, 1, csigin(1, 0, is, is0), arg18(:&
+        arg19(:) = 'cl_csigin_th'//chns//'_'//chns0
+        CALL MY_OUT_US(70, nfc, 1, csigin(1, 0, is, is0), arg19(:&
 &                       ))
-        arg19(:) = 'cl_csigin_r'//chns//'_'//chns0
-        CALL MY_OUT_US(70, nfc, 1, csigin(1, 1, is, is0), arg19(:&
-&                       ))
+        arg110(:) = 'cl_csigin_r'//chns//'_'//chns0
+        CALL MY_OUT_US(70, nfc, 1, csigin(1, 1, is, is0), arg110(&
+&                       :))
       END DO
     END DO
     CALL MY_OUT_US(70, nfc, 1, chce(1, 0), 'cl_chce_th')

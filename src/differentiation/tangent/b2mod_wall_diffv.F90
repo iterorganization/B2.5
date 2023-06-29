@@ -16,6 +16,7 @@ MODULE B2MOD_WALL_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_LAYER_DIFFV
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -26,37 +27,6 @@ MODULE B2MOD_WALL_DIFFV
   PARAMETER (ndepth=201, nline=15)
 !xpb  Namelist data
   INTEGER, SAVE :: nbnd, ndepth_nml
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
   INTEGER, SAVE :: imapx(nwall), imapy(nwall)
   INTEGER, SAVE :: plate_model, plate_option
   LOGICAL :: inertial_cooling(nwall)
@@ -67,19 +37,22 @@ MODULE B2MOD_WALL_DIFFV
 & plate_time_factor(nwall), coating_thickness(nwall), deposition(nwall, &
 & ntrack), monolayer_deposition(nwall, ntrack), erosion(nwall, ntrack), &
 & monolayer_erosion(nwall, ntrack), plate_time(nwall), plate_area(nwall)&
-& , chemical_sputtering(nwall, 0:42-1+6+3+3), physical_sputtering(nwall&
-& , 0:42-1+6+3+3), physical_sputtering_energy(nwall, 0:42-1+6+3+3), &
-& res_sputtering(nwall, 0:42-1+6+3+3), thermal_evaporation(nwall, 0:42-1&
-& +6+3+3), backscattering(nwall, 0:42-1+6+3+3), backscattering_energy(&
-& nwall, 0:42-1+6+3+3)
+& , chemical_sputtering(nwall, 0:def_nsd-1+def_natm+def_nmol+def_nion), &
+& physical_sputtering(nwall, 0:def_nsd-1+def_natm+def_nmol+def_nion), &
+& physical_sputtering_energy(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), res_sputtering(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), thermal_evaporation(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), backscattering(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), backscattering_energy(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion)
 !
   CHARACTER(len=6), SAVE :: surface_material_name(nwall)
   CHARACTER(len=6), SAVE :: coating_material_name(nwall)
   CHARACTER(len=6), SAVE :: bulk_material_name(nwall)
 !
-  INTEGER :: xymap(-1:200, -1:100)
+  INTEGER :: xymap(-1:def_nxd, -1:def_nyd)
 !
-  INTEGER, SAVE :: track_index(0:42-1)
+  INTEGER, SAVE :: track_index(0:def_nsd-1)
 !
   INTEGER, ALLOCATABLE, SAVE :: imapw(:), imapreg(:), wall_begin(:), &
 & wall_end(:)
@@ -167,12 +140,12 @@ CONTAINS
     CALL SUBINI('b2mod_wall_init')
 !xpb  Geometric information
     errdim = .false.
-    IF (nx .GT. 200) THEN
-      WRITE(*, *) 'alloc_b2mod_wall_init: nxd > def_nxd', nx, 200
+    IF (nx .GT. def_nxd) THEN
+      WRITE(*, *) 'alloc_b2mod_wall_init: nxd > def_nxd', nx, def_nxd
       errdim = .true.
     END IF
-    IF (ny .GT. 100) THEN
-      WRITE(*, *) 'alloc_b2mod_wall_init: nyd > def_nyd', ny, 100
+    IF (ny .GT. def_nyd) THEN
+      WRITE(*, *) 'alloc_b2mod_wall_init: nyd > def_nyd', ny, def_nyd
       errdim = .true.
     END IF
     CALL XERTST(.NOT.errdim, 'faulty def_nxd, def_nyd')

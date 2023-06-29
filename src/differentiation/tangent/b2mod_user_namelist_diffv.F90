@@ -17,47 +17,17 @@ MODULE B2MOD_USER_NAMELIST_DIFFV
   USE B2MOD_DIAG_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
   INTEGER :: npfrgrpd, nntrgrpd
   PARAMETER (npfrgrpd=6, nntrgrpd=16)
   INTEGER :: nhetrgtx
-  PARAMETER (nhetrgtx=300)
-  INTEGER :: lhetrgts(nhetrgtx), lpfrgrp(300), lntrgrp(300)
-  INTEGER :: l_h_mol(3, 3)
+  PARAMETER (nhetrgtx=def_nlim)
+  INTEGER :: lhetrgts(nhetrgtx), lpfrgrp(def_nlim), lntrgrp(def_nlim)
+  INTEGER :: l_h_mol(def_nmol, 3)
 ! VARIABLES RELATED TO DEFINITION OF MIDPLANES AND SEPARATRIX
 ! - [oi]mp: list of CVs belonging to the [OI]MP, defined through the segment rz[oi]mp
 !           it should be built as an ordered list from core to SOL. 
@@ -67,7 +37,7 @@ MODULE B2MOD_USER_NAMELIST_DIFFV
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
 !             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates 
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
-  INTEGER, PARAMETER :: nromp=100*4
+  INTEGER, PARAMETER :: nromp=def_nyd*4
   INTEGER, SAVE :: omp(nromp), icsepomp, nomp, ifssep, imp(nromp), &
 & icsepimp, nimp
   REAL(kind=r8) :: rzomp(2, 2), rzimp(2, 2)
