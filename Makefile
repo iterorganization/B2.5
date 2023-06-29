@@ -514,6 +514,14 @@ ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
 ${DOCDIR}/b2cdcn.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdcn.py
 	-cd ${DOCDIR}; ${PYTHON} b2cdcn.py || echo "! Error building b2cdcn.F from b2input.xml" > ${DOCDIR}/b2cdcn.F
 
+DIMSDIR = ${SRCDIR}/modules
+ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
+DIMSDIR = ${SRCDIR}/modules.local
+endif
+
+${DIFFDIR}/b2mod_dimensions.F: ${DIMSDIR}/b2mod_dimensions.F
+	ln -sf  $< ${DIFFDIR}
+
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
 	ln -sf ${EIRDIR}/libgr_dummy.a ${OBJDIR}
@@ -1252,7 +1260,7 @@ endif
 
 else
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90}
+depend: ${DIFFDIR}/b2mod_dimensions.F ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${SOLPSINCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
 	sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies
