@@ -14,13 +14,14 @@
 !
 MODULE B2MOD_AD_DIFF
   USE B2MOD_TYPES
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
 !     This module is intended to collect variables within B2.5 which need to be 'visible'
 !     to calling routines as required by adjoint AD with Tapenade
 !
   INTEGER :: nsdmax
-  PARAMETER (nsdmax=42)
+  PARAMETER (nsdmax=def_nsd)
   INTEGER :: cvregmax
   PARAMETER (cvregmax=8)
   INTEGER :: nncf
@@ -76,7 +77,7 @@ MODULE B2MOD_AD_DIFF
   INTEGER, SAVE :: b2mndt_itcnt=0
 !
 !srv 16.02.12 29.09.15
-  REAL(kind=r8), SAVE :: senepar, senipar, sconpar(0:42-1), scurpar
+  REAL(kind=r8), SAVE :: senepar, senipar, sconpar(0:def_nsd-1), scurpar
 !Solovyev 01.05.14
 !Solovyev 01.05.14, 24.05.14
   REAL(kind=r8), SAVE :: prev_cur_delta, cur_delta, po_step, po_prev, &

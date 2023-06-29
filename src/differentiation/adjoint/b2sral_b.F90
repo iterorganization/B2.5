@@ -157,9 +157,9 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
 & b2mod_math_initialised, small_r4_constant
   USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
   USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, my_out_folder, &
-& ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, &
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
+& filename_b2w, ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, &
+& ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, &
+& ncall_b2sqcx, ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !
@@ -403,11 +403,11 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
 !
 ! ..compute source coefficients
 !   ..compute electron rate coefficients
-  CALL PUSHINTEGER4(ncall_b2sqel)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
   CALL PUSHREAL4(small_r4_constant, r4/8)
+  CALL PUSHINTEGER4(ncall_b2sqel)
   CALL PUSHREAL8ARRAY(st%rt%rza, r8*SIZE(st%rt%rza, 1)*SIZE(st%rt%rza, 2&
 &               )/8)
   CALL PUSHREAL8ARRAY(st%rt%rz2, r8*SIZE(st%rt%rz2, 1)*SIZE(st%rt%rz2, 2&
@@ -424,14 +424,18 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
 &                            , ' b2stbc called'
     CALL PUSHREAL8(dt_prev, r8/8)
     CALL PUSHBOOLEAN(feedback_namelist_used)
-    CALL PUSHREAL8ARRAY(fb_rescale, r8*6/8)
-    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
-    CALL PUSHREAL8ARRAY(fb_const, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_rescale, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    CALL PUSHREAL8ARRAY(fb_const, r8*def_natm/8)
     CALL PUSHREAL8(cum_volrec, r8/8)
-    CALL PUSHREAL8ARRAY(fb_current, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_prev, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_target, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_current, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(fb_prev, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(fb_target, r8*def_natm/8)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
+    CALL PUSHBOOLEAN(b2mod_math_initialised)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL PUSHBOOLEAN(lfeedback)
     CALL PUSHREAL8ARRAY(enipar, r8*nbcd*2/8)
@@ -441,10 +445,6 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
     CALL PUSHINTEGER4(ncall_b2stbc)
     CALL PUSHCHARACTERARRAY(my_out_folder, 7)
     CALL PUSHINTEGER4(ncall_b2stbc_phys)
-    CALL PUSHREAL8(cutlo, r8/8)
-    CALL PUSHREAL8(cutll, r8/8)
-    CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHBOOLEAN(wrong_flow)
     CALL PUSHREAL8ARRAY(st%psnc%na, r8*SIZE(st%psnc%na, 1)*SIZE(st%psnc%&
 &                 na, 2)/8)
@@ -542,14 +542,14 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
   CALL PUSHREAL8(int1l, r8/8)
   CALL PUSHREAL8(int4r, r8/8)
   CALL PUSHREAL8(int4l, r8/8)
-  CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
-  CALL PUSHINTEGER4(ncall_b2stbr)
-  CALL PUSHINTEGER4(ncall_b2stbr_phys)
-  CALL PUSHCHARACTERARRAY(my_out_folder, 7)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
   CALL PUSHREAL4(small_r4_constant, r4/8)
+  CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
+  CALL PUSHINTEGER4(ncall_b2stbr)
+  CALL PUSHINTEGER4(ncall_b2stbr_phys)
+  CALL PUSHCHARACTERARRAY(my_out_folder, 7)
   CALL PUSHREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
 &               sch0, 2)/8)
   CALL PUSHREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
@@ -1082,14 +1082,14 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
 &              she0, 2)/8)
   CALL POPREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
 &              sch0, 2)/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(ncall_b2stbr_phys)
   CALL POPINTEGER4(ncall_b2stbr)
   CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
+  CALL POPREAL4(small_r4_constant, r4/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
   CALL POPREAL8(int4l, r8/8)
   CALL POPREAL8(int4r, r8/8)
   CALL POPREAL8(int1l, r8/8)
@@ -1181,10 +1181,6 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
     CALL POPREAL8ARRAY(st%psnc%na, r8*SIZE(st%psnc%na, 1)*SIZE(st%psnc%&
 &                na, 2)/8)
     CALL POPBOOLEAN(wrong_flow)
-    CALL POPREAL4(small_r4_constant, r4/8)
-    CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8(cutll, r8/8)
-    CALL POPREAL8(cutlo, r8/8)
     CALL POPINTEGER4(ncall_b2stbc_phys)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPINTEGER4(ncall_b2stbc)
@@ -1194,14 +1190,18 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
     CALL POPREAL8ARRAY(enipar, r8*nbcd*2/8)
     CALL POPBOOLEAN(lfeedback)
     CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
-    CALL POPREAL8ARRAY(fb_target, r8*6/8)
-    CALL POPREAL8ARRAY(fb_prev, r8*6/8)
-    CALL POPREAL8ARRAY(fb_current, r8*6/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
+    CALL POPBOOLEAN(b2mod_math_initialised)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
+    CALL POPREAL8ARRAY(fb_target, r8*def_natm/8)
+    CALL POPREAL8ARRAY(fb_prev, r8*def_natm/8)
+    CALL POPREAL8ARRAY(fb_current, r8*def_natm/8)
     CALL POPREAL8(cum_volrec, r8/8)
-    CALL POPREAL8ARRAY(fb_const, r8*6/8)
-    CALL POPREAL8ARRAY(charge_frac, r8*42/8)
-    CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
+    CALL POPREAL8ARRAY(fb_const, r8*def_natm/8)
+    CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    CALL POPREAL8ARRAY(saved_fb_actuator, r8*def_natm/8)
+    CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
     CALL POPBOOLEAN(feedback_namelist_used)
     CALL POPREAL8(dt_prev, r8/8)
     CALL B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb, &
@@ -1214,11 +1214,11 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
 &              /8)
   CALL POPREAL8ARRAY(st%rt%rza, r8*SIZE(st%rt%rza, 1)*SIZE(st%rt%rza, 2)&
 &              /8)
+  CALL POPINTEGER4(ncall_b2sqel)
   CALL POPREAL4(small_r4_constant, r4/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
   CALL POPREAL8(cutll, r8/8)
   CALL POPREAL8(cutlo, r8/8)
-  CALL POPINTEGER4(ncall_b2sqel)
   CALL B2SQEL_B(ncv, ns, ismain, switch, ev, st%pl%te, stb%pl%te, st%rt&
 &         , stb%rt, st%rtw, stb%rtw)
   CALL POPREAL8ARRAY(st%dv%wedia, r8*SIZE(st%dv%wedia, 1)*SIZE(st%dv%&
@@ -1337,9 +1337,9 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 & small_r4_constant
   USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
   USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, my_out_folder, &
-& ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, &
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
+& filename_b2w, ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, &
+& ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, &
+& ncall_b2sqcx, ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !

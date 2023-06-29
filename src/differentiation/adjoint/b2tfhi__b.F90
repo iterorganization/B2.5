@@ -130,11 +130,12 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), floi0_mdf(nfc, 0:1)&
 & , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), fhi0_mdf(nfc, 0:1), &
 & flon0(nfc, 0:1), flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1&
-& )
+& ), fhi_32(nfc, 0:1), fhi_52(nfc, 0:1)
   REAL(kind=r8) :: floi0b(nfc, 0:1), coni0b(nfc, 0:1), floi0_mdfb(nfc, 0&
 & :1), dumm0b(nfc, 0:1), dumm1b(nfc, 0:1), fhi0_mdfb(nfc, 0:1), flon0b(&
-& nfc, 0:1), flokt0b(nfc, 0:1), flozt0b(nfc, 0:1), flo0_exbb(nfc, 0:1)
-!pax
+& nfc, 0:1), flokt0b(nfc, 0:1), flozt0b(nfc, 0:1), flo0_exbb(nfc, 0:1), &
+& fhi_32b(nfc, 0:1), fhi_52b(nfc, 0:1)
+!pax      
 !srv 25.01.02
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
 & nfc), tnf(nfc), wrkf(nfc, 0:1), nati(ncv), nati2(ncv), nativ(nvx), &
@@ -357,7 +358,7 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, pl%ti, &
-&             floi0_mdf, co%chci, fhi0_mdf, dumm0, dumm1)
+&             floi0_mdf, co%chci, fhi0_mdf, fhi_32, fhi_52)
 !
 !   ..compute ion fluxes
   CALL PUSHREAL8ARRAY(dv%fhi(:, 0), r8*SIZE(dv%fhi, 1)/8)
@@ -493,6 +494,10 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 &                   'b2tfhi__fhiPSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhipsch(1, 1), &
 &                   'b2tfhi__fhiPSch_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 0), 'b2tfhi__fhi_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 1), 'b2tfhi__fhi_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 0), 'b2tfhi__fhi_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 1), 'b2tfhi__fhi_52_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 0), &
 &                   'b2tfhi__fchvispar_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 1), &
@@ -524,6 +529,20 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     CALL MY_OUT_US(70, nfc, 1, dv%conn(1, 1), 'b2tfhi__conn_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fhn(1, 0), 'b2tfhi__fhn_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhn(1, 1), 'b2tfhi__fhn_r')
+  END IF
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhi_mdf(1, 0), &
+&                   'b2tfhi__fhi_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhi_mdf(1, 1), &
+&                   'b2tfhi__fhi_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhipsch(1, 0), &
+&                   'b2tfhi__fhiPSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhipsch(1, 1), &
+&                   'b2tfhi__fhiPSch_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 0), 'b2tfhi__fhi_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 1), 'b2tfhi__fhi_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 0), 'b2tfhi__fhi_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 1), 'b2tfhi__fhi_52_r')
   END IF
   CALL POPCONTROL2B(branch)
   IF (branch .EQ. 0) THEN
@@ -628,10 +647,11 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   floi0_mdfb(:, 0) = floi0_mdfb(:, 0) - tif*dvb%fhi(:, 0)
   tifb = tifb + (floi0(:, 0)-floi0_mdf(:, 0))*dvb%fhi(:, 0)
   dvb%fhi(:, 0) = 0.D0
-  dumm1b = 0.D0
+  fhi_32b = 0.D0
+  fhi_52b = 0.D0
   CALL CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, pl%ti, &
 &             plb%ti, floi0_mdf, floi0_mdfb, co%chci, cob%chci, fhi0_mdf&
-&             , fhi0_mdfb, dumm0, dumm0b, dumm1, dumm1b)
+&             , fhi0_mdfb, fhi_32, fhi_32b, fhi_52, fhi_52b)
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     nnfb = 0.D0
@@ -883,8 +903,8 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), floi0_mdf(nfc, 0:1)&
 & , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), fhi0_mdf(nfc, 0:1), &
 & flon0(nfc, 0:1), flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1&
-& )
-!pax
+& ), fhi_32(nfc, 0:1), fhi_52(nfc, 0:1)
+!pax      
 !srv 25.01.02
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
 & nfc), tnf(nfc), wrkf(nfc, 0:1), nati(ncv), nati2(ncv), nativ(nvx), &
@@ -1083,7 +1103,7 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, floi0_mdf, &
-&                co%chci, fhi0_mdf, dumm0, dumm1)
+&                co%chci, fhi0_mdf, fhi_32, fhi_52)
 !
 !   ..compute ion fluxes
   dv%fhi(:, 0) = fhi0_mdf(:, 0) + (floi0(:, 0)-floi0_mdf(:, 0))*tif
@@ -1207,6 +1227,10 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &                   'b2tfhi__fhiPSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhipsch(1, 1), &
 &                   'b2tfhi__fhiPSch_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 0), 'b2tfhi__fhi_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 1), 'b2tfhi__fhi_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 0), 'b2tfhi__fhi_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 1), 'b2tfhi__fhi_52_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 0), &
 &                   'b2tfhi__fchvispar_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 1), &
@@ -1239,6 +1263,21 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
     CALL MY_OUT_US(70, nfc, 1, dv%fhn(1, 0), 'b2tfhi__fhn_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhn(1, 1), 'b2tfhi__fhn_r')
   END IF
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhi_mdf(1, 0), &
+&                   'b2tfhi__fhi_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhi_mdf(1, 1), &
+&                   'b2tfhi__fhi_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhipsch(1, 0), &
+&                   'b2tfhi__fhiPSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhipsch(1, 1), &
+&                   'b2tfhi__fhiPSch_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 0), 'b2tfhi__fhi_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_32(1, 1), 'b2tfhi__fhi_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 0), 'b2tfhi__fhi_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhi_52(1, 1), 'b2tfhi__fhi_52_r')
+  END IF
+!
 ! ..return
   ncall_b2tfhi = ncall_b2tfhi + 1
   CALL SUBEND()

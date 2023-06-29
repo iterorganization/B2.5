@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2tqna in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata hce_exb
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna hce_exb
 !                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
 !                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
 !                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
@@ -14,8 +14,8 @@
 !                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !                vla0 hce0 dzt0 dpa0 hci_exb
 !   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata hce_exb
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna hce_exb
 !                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
 !                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
 !                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
@@ -1923,7 +1923,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..extensive tests on first few calls
   IF (ncall_b2tqna .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG_NODIFF(nfc, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
     arg1 = ncv*ns
     CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')

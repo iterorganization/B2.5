@@ -1,10 +1,10 @@
       module b2mod_b2plot_wall_loading
       use b2mod_types
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 c======================================================================
 c*** Header file for the routines calculating the wall loading
-c*** !!! If used, must be preceded by DIMENSIONS.F !!!
+c*** !!! If used, must be preceded by b2mod_dimensions !!!
 c======================================================================
 c
 c  version : 06.09.97 19:59

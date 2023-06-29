@@ -115,7 +115,6 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 & ncv), wrkfb(nfc), wrkg0b(ncv, 0:1), wrkg1b(ncv, 0:1), wrkg2b(ncv, 0:1)&
 & , dnacb(ncv, 0:1), dlbcb(ncv, 0:1), dtecb(ncv, 0:1), dticb(ncv, 0:1), &
 & dktcb(ncv), fac_dissb, fac_sheathb, csfsb(ncv)
-  REAL(kind=r8), SAVE :: lpar_ref=10.0_R8
 !   ..procedures
   INTRINSIC MIN, MAX, SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
@@ -134,6 +133,13 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   REAL(kind=r8) :: result1
   REAL(r8), DIMENSION(nCv) :: arg10
   REAL(r8), DIMENSION(nCv) :: arg10b
+!
+!-----------------------------------------------------------------------
+!.computation
+!
+! ..preliminaries
+!   ..subprogram start-up calls
+!   ..set internal parameters on first call
   REAL(kind=r8), DIMENSION(ncv) :: tempb
   REAL(r8), DIMENSION(ncv) :: tempb0
   REAL(r8), DIMENSION(ncv) :: tempb1
@@ -147,24 +153,9 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   REAL(kind=r8) :: tempb8
   INTEGER :: branch
 !
-!-----------------------------------------------------------------------
-!.computation
-!
-! ..preliminaries
-!   ..subprogram start-up calls
-!   ..set internal parameters on first call
-  IF (ncall_b2sikt .EQ. 0) CALL IPGETR('b2sikt_fac_diss_lpar', lpar_ref)
-!
 ! ..compute heat source terms
 !   ..initialize sources to zero
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, skt0, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_prod, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_diss, 1)
+  CALL PUSHINTEGER4(arg1)
   arg1 = ncv*2
   CALL SFILL_NODIFF(arg1, 0.0e0_R8, dnac, 1)
   arg1 = ncv*2
@@ -252,7 +243,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         CALL PUSHCONTROL2B(3)
       ELSE IF (switch%b2sikt_fac_diss_core_mode .EQ. 1) THEN
         wrk3 = co%sigx_kt*geo%cvvol*pl%kt*(geo%cvbb(:, 3)/(geo%cvbb(:, 0&
-&         )*lpar_ref))**2
+&         )*switch%b2sikt_lpar_ref))**2
         CALL PUSHCONTROL2B(2)
       ELSE
         arg10(:) = SQRT(pl%kt)
@@ -286,7 +277,6 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       t2 = fac_sheath*wrk2(ic)
       CALL PUSHREAL8(t3, r8/8)
       t3 = fac_diss*wrk3(ic)
-      CALL PUSHREAL8(t4, r8/8)
       t4 = wrks(ic)
       IF (switch%b2sikt_min_source .EQ. 1 .AND. t0 + t1 - pl%kt(ic)*t2 -&
 &         t3 .LT. 0.0_R8) THEN
@@ -299,24 +289,12 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       ELSE
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8(she0(ic, 0), r8/8)
-      she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
-      CALL PUSHREAL8(shi0(ic, 0), r8/8)
-      shi0(ic, 0) = -t0
       IF (switch%b2sikt_kt_source_stab .EQ. 0) THEN
-        CALL PUSHREAL8(skt0(ic, 0), r8/8)
-        skt0(ic, 0) = t0 + t1 - t3 - t4
-        CALL PUSHREAL8(skt0(ic, 1), r8/8)
-        skt0(ic, 1) = -t2
         CALL PUSHCONTROL1B(0)
       ELSE
         IF (t0 + t1 .LT. 0.0_R8) THEN
-          CALL PUSHREAL8(skt0(ic, 0), r8/8)
-          skt0(ic, 0) = 0.0_R8
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8(skt0(ic, 0), r8/8)
-          skt0(ic, 0) = t0 + t1
           CALL PUSHCONTROL1B(1)
         END IF
         IF (t0 + t1 .GT. 0.0_R8) THEN
@@ -328,14 +306,8 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
           min1 = t0 + t1
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8(skt0(ic, 1), r8/8)
-        skt0(ic, 1) = (min1-t3-t4)/(1.0e-8_R8*ev+pl%kt(ic)) - t2
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8(skt_prod(ic), r8/8)
-      skt_prod(ic) = t0 + t1
-      CALL PUSHREAL8(skt_diss(ic), r8/8)
-      skt_diss(ic) = t2*pl%kt(ic) + t3 + t4
     END DO
     CALL PUSHCONTROL1B(0)
   ELSE
@@ -344,90 +316,21 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !
 ! ..output
   IF (switch%b2sikt_iout .EQ. 1) THEN
-    wrks = she0(:, 0) + she0(:, 1)*pl%te + she0(:, 2)*dv%ne + she0(:, 3)&
-&     *pl%te*dv%ne
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_she')
-    wrks = shi0(:, 0) + shi0(:, 1)*pl%ti + shi0(:, 2)*dv%ni(:, 0) + shi0&
-&     (:, 3)*pl%ti*dv%ni(:, 0)
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_shi')
-    wrks = skt0(:, 0) + skt0(:, 1)*pl%kt + skt0(:, 2)*dv%ni(:, 1) + skt0&
-&     (:, 3)*pl%kt*dv%ni(:, 1)
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_skt')
-    CALL MY_OUT_US(70, ncv, 0, skt_prod, 'b2sikt_skt_prod')
-    CALL MY_OUT_US(70, ncv, 0, skt_diss, 'b2sikt_skt_diss')
-    wrks = geo%cvvol(:)*((pl%ti(:)+pl%te(:))*co%dna_exb(:)*(dnac(:, 0)*&
-&     dlbc(:, 0)))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_prod_na_x')
-    wrks = geo%cvvol(:)*((pl%ti(:)+pl%te(:))*co%dna_exb(:)*(dnac(:, 1)*&
-&     dlbc(:, 1)))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_prod_na_y')
-    wrks = geo%cvvol(:)*(2.0_R8/3.0_R8*co%hce_exb(:)*switch%&
-&     b2sikt_fac_aniso*(dtec(:, 0)*dlbc(:, 0)))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_prod_te_x')
-    wrks = geo%cvvol(:)*(2.0_R8/3.0_R8*co%hce_exb(:)*switch%&
-&     b2sikt_fac_aniso*(dtec(:, 1)*dlbc(:, 1)))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_prod_te_y')
-    wrks = geo%cvvol(:)*(2.0_R8/3.0_R8*co%hci_exb(:)*switch%&
-&     b2sikt_fac_aniso*(dtic(:, 0)*dlbc(:, 0)))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_prod_ti_x')
-    wrks = geo%cvvol(:)*(2.0_R8/3.0_R8*co%hci_exb(:)*switch%&
-&     b2sikt_fac_aniso*(dtic(:, 1)*dlbc(:, 1)))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_prod_ti_y')
-    CALL MY_OUT_US(70, ncv, 0, connfs, 'b2sikt_connfs')
-    CALL MY_OUT_US(70, ncv, 0, csfs, 'b2sikt_csfs')
-    CALL MY_OUT_US(70, ncv, 0, dnac(:, 0), 'b2sikt_dnac0')
-    CALL MY_OUT_US(70, ncv, 0, dnac(:, 1), 'b2sikt_dnac1')
-    CALL MY_OUT_US(70, ncv, 0, dtec(:, 0), 'b2sikt_dtec0')
-    CALL MY_OUT_US(70, ncv, 0, dtec(:, 1), 'b2sikt_dtec1')
-    CALL MY_OUT_US(70, ncv, 0, dtic(:, 0), 'b2sikt_dtic0')
-    CALL MY_OUT_US(70, ncv, 0, dtic(:, 1), 'b2sikt_dtic1')
-    CALL MY_OUT_US(70, ncv, 0, dlbc(:, 0), 'b2sikt_dlbc0')
-    CALL MY_OUT_US(70, ncv, 0, dlbc(:, 1), 'b2sikt_dlbc1')
 !!some temporary/experimental output computations for source due to Reynolds stress
     CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, dv%vaecrb(:, 0, ismain&
 &              ), wrk0)
     CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellr, dv%vaecrb(:, 1, ismain&
 &              ), wrk1)
-    CALL PUSHREAL8ARRAY(wrk2, r8*ncv/8)
-    wrk2 = wrk0*dlbc(:, 0) + wrk1*dlbc(:, 1)
-    wrks = -(2.0_R8/3.0_R8*geo%cvvol*pl%na(:, ismain)*wrk2*(switch%&
-&     b2sikt_fac_vis_rs*co%dna_exb*am(ismain)*mp*wrk2+pl%kt))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_RS_symmetric')
-    CALL PUSHREAL8ARRAY(wrkg0, r8*ncv*2/8)
-    CALL PUSHREAL8ARRAY(dv%vaecrb(:, 0, ismain), r8*SIZE(dv%vaecrb, 1)/8&
-&                )
-    CALL GRADC_DIV_NODIFF(ncv, nfc, nvx, 1, geo, mpg, wrk0, dv%vaecrb(:&
-&                   , 0, ismain), wrkg0)
-    CALL PUSHREAL8ARRAY(wrkg1, r8*ncv*2/8)
-    CALL PUSHREAL8ARRAY(dv%vaecrb(:, 1, ismain), r8*SIZE(dv%vaecrb, 1)/8&
-&                )
-    CALL GRADC_DIV_NODIFF(ncv, nfc, nvx, 1, geo, mpg, wrk1, dv%vaecrb(:&
-&                   , 1, ismain), wrkg1)
-    wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
-    wrk2 = wrk0*geo%cvbb(:, 3)/geo%cvbb(:, 2)
-    CALL PUSHREAL8ARRAY(wrkg2, r8*ncv*2/8)
-    CALL GRADC_DIV_NODIFF(ncv, nfc, nvx, 1, geo, mpg, wrk2, wrkf, wrkg2)
-    wrks = switch%b2sikt_fac_vis_rs*2.0_R8*geo%cvvol*co%dna_exb*am(&
-&     ismain)*mp*pl%na(:, ismain)*(wrkg0(:, 0)**2+wrkg1(:, 1)**2+0.5_R8*&
-&     (wrkg0(:, 1)**2+wrkg1(:, 0)**2+wrkg2(:, 0)**2+wrkg2(:, 1)**2)+&
-&     wrkg1(:, 0)*wrkg0(:, 1))
-    CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_RS_deviatoric')
-    CALL POPREAL8ARRAY(wrkg2, r8*ncv*2/8)
-    CALL POPREAL8ARRAY(dv%vaecrb(:, 1, ismain), r8*SIZE(dv%vaecrb, 1)/8)
-    CALL POPREAL8ARRAY(wrkg1, r8*ncv*2/8)
     wrk1b = 0.D0
     wrkg1b = 0.D0
     CALL GRADC_DIV_B(ncv, nfc, nvx, 1, geo, geob, mpg, mpgb, wrk1, wrk1b&
 &              , dv%vaecrb(:, 1, ismain), dvb%vaecrb(:, 1, ismain), &
 &              wrkg1, wrkg1b)
-    CALL POPREAL8ARRAY(dv%vaecrb(:, 0, ismain), r8*SIZE(dv%vaecrb, 1)/8)
-    CALL POPREAL8ARRAY(wrkg0, r8*ncv*2/8)
     wrk0b = 0.D0
     wrkg0b = 0.D0
     CALL GRADC_DIV_B(ncv, nfc, nvx, 1, geo, geob, mpg, mpgb, wrk0, wrk0b&
 &              , dv%vaecrb(:, 0, ismain), dvb%vaecrb(:, 0, ismain), &
 &              wrkg0, wrkg0b)
-    CALL POPREAL8ARRAY(wrk2, r8*ncv/8)
     CALL INTCELL_BWD(nfc, ncv, mpg, mpg%intcellr, dv%vaecrb(:, 1, ismain&
 &              ), dvb%vaecrb(:, 1, ismain), wrk1, wrk1b)
     CALL INTCELL_BWD(nfc, ncv, mpg, mpg%intcellp, dv%vaecrb(:, 0, ismain&
@@ -441,21 +344,17 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     wrk2b = 0.D0
     wrk3b = 0.D0
     DO ic=mpg%nci,1,-1
-      CALL POPREAL8(skt_diss(ic), r8/8)
-      CALL POPREAL8(skt_prod(ic), r8/8)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8(skt0(ic, 1), r8/8)
         t2b = -skt0b(ic, 1)
         skt0b(ic, 1) = 0.D0
-        CALL POPREAL8(skt0(ic, 0), r8/8)
         t0b = skt0b(ic, 0)
         t1b = skt0b(ic, 0)
         t3b = -skt0b(ic, 0)
         t4b = -skt0b(ic, 0)
         skt0b(ic, 0) = 0.D0
       ELSE
-        CALL POPREAL8(skt0(ic, 1), r8/8)
+        t4 = wrks(ic)
         temp = 1.0e-8_R8*ev + pl%kt(ic)
         tempb8 = skt0b(ic, 1)/temp
         t2b = -skt0b(ic, 1)
@@ -476,19 +375,15 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8(skt0(ic, 0), r8/8)
           skt0b(ic, 0) = 0.D0
         ELSE
-          CALL POPREAL8(skt0(ic, 0), r8/8)
           t0b = t0b + skt0b(ic, 0)
           t1b = t1b + skt0b(ic, 0)
           skt0b(ic, 0) = 0.D0
         END IF
       END IF
-      CALL POPREAL8(shi0(ic, 0), r8/8)
       t0b = t0b - shi0b(ic, 0)
       shi0b(ic, 0) = 0.D0
-      CALL POPREAL8(she0(ic, 0), r8/8)
       t2b = t2b + pl%kt(ic)*she0b(ic, 0)
       plb%kt(ic) = plb%kt(ic) + t2*she0b(ic, 0)
       t1b = t1b - she0b(ic, 0)
@@ -501,7 +396,6 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         t2b = 0.D0
         t3b = 0.D0
       END IF
-      CALL POPREAL8(t4, r8/8)
       wrksb(ic) = wrksb(ic) + t4b
       CALL POPREAL8(t3, r8/8)
       fac_dissb = wrk3(ic)*t3b
@@ -545,7 +439,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       END IF
     ELSE IF (branch .EQ. 2) THEN
       tempb7 = geo%cvvol*geo%cvbb(:, 3)**2*wrk3b/(geo%cvbb(:, 0)**2*&
-&       lpar_ref**2)
+&       switch%b2sikt_lpar_ref**2)
       cob%sigx_kt = cob%sigx_kt + pl%kt*tempb7
       plb%kt = plb%kt + co%sigx_kt*tempb7
       wrkvb = 0.D0
@@ -692,9 +586,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   arg1 = ncv*2
   arg1 = ncv*2
   arg1 = ncv*2
-  arg1 = ncv*4
-  arg1 = ncv*4
-  arg1 = ncv*4
+  CALL POPINTEGER4(arg1)
 END SUBROUTINE B2SIKT_B
 !
 !
@@ -775,7 +667,6 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 & , wrkg0(ncv, 0:1), wrkg1(ncv, 0:1), wrkg2(ncv, 0:1), dnac(ncv, 0:1), &
 & dlbc(ncv, 0:1), dtec(ncv, 0:1), dtic(ncv, 0:1), dktc(ncv), fac_diss, &
 & fac_sheath, csfs(ncv), connfs(ncv), rhol(ncv)
-  REAL(kind=r8), SAVE :: lpar_ref=10.0_R8
 !   ..procedures
   INTRINSIC MIN, MAX, SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
@@ -807,7 +698,6 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
       CALL XERTST(icsepomp .GT. 0, &
 &           'Invalid icsepomp value, check rzomp in b2.user.parameters')
     END IF
-    CALL IPGETR('b2sikt_fac_diss_lpar', lpar_ref)
   END IF
 !   ..test nCv, ns
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv')
@@ -927,7 +817,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 &         )*geo%cvconn))**2
       ELSE IF (switch%b2sikt_fac_diss_core_mode .EQ. 1) THEN
         wrk3 = co%sigx_kt*geo%cvvol*pl%kt*(geo%cvbb(:, 3)/(geo%cvbb(:, 0&
-&         )*lpar_ref))**2
+&         )*switch%b2sikt_lpar_ref))**2
       ELSE
         arg10(:) = SQRT(pl%kt)
         CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, arg10(:), wrkv, &

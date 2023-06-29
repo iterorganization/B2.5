@@ -16,38 +16,8 @@ MODULE B2MOD_B2PLOT_DIFF
 !
   USE B2MOD_TYPES
   USE B2MOD_LAYER_DIFF, ONLY : ntrack
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
-!
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
 !
 !
   REAL(kind=r8), ALLOCATABLE, SAVE :: work(:, :, :, :), wrk(:), vxa(:, :&
@@ -58,7 +28,8 @@ MODULE B2MOD_B2PLOT_DIFF
 & , :), targetr(:, :), targetz(:, :), wwrk(:), wrk_hlp(:), ewrk_hlp(:), &
 & wwrk_hlp(:), twrk_hlp(:)
 !
-  REAL(kind=r8), SAVE :: pp1(2, 300+2*100), pp2(2, 300+2*100)
+  REAL(kind=r8), SAVE :: pp1(2, def_nlim+2*def_nyd), pp2(2, def_nlim+2*&
+& def_nyd)
 !
   INTEGER, ALLOCATABLE, SAVE :: ind_hlp(:), indt_hlp(:)
 !

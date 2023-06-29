@@ -30,48 +30,18 @@ MODULE B2US_FEEDBACK_DIFF
   USE B2US_PLASMA_DIFF
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp, ifssep, nimp&
 & , imp, icsepimp
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
   INTEGER, PARAMETER :: nvac=4, nvacreg=4, nmxfbreg=1000
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !
 !   ..variables
   REAL(kind=r8), SAVE :: cum_volrec, dt_prev, ddtim
   LOGICAL, SAVE :: feedback_namelist_used
   LOGICAL, SAVE :: feedback_read, control_read
   LOGICAL, SAVE :: feedback_allocated=.false.
-  REAL(kind=r8) :: charge_frac(42)
-  REAL(kind=r8) :: charge_fracb(42)
+  REAL(kind=r8) :: charge_frac(def_nsd)
+  REAL(kind=r8) :: charge_fracb(def_nsd)
 !
   INTEGER, SAVE :: icped=0
   INTEGER, SAVE :: b2sral_style=2
@@ -85,20 +55,22 @@ MODULE B2US_FEEDBACK_DIFF
   INTEGER, SAVE :: nfb=0
 !   ..namelists
 ! csc new namelist merging all feedback schemes
-  REAL(kind=r8), SAVE :: fb_target(6)=0.0_R8, fb_time(6)=0.0_R8, &
-& saved_fb_actuator(6)=0.0_R8, fb_alpha(6)=0.001_R8, fb_beta(6)=1.0_R8, &
-& fb_const(6)=0.0_R8, fb_puff_min(6)=0.0_R8, fb_puff_max(6)=0.0_R8, &
-& fb_overshoot(6)=0.0_R8, fb_current(6)=0.0_R8, fb_prev(6)=0.0_R8, &
-& fb_rescale(6)=1.0_R8
-  REAL(kind=r8), SAVE :: fb_targetb(6)=0.D0, saved_fb_actuatorb(6)=0.D0&
-& , fb_constb(6)=0.D0, fb_currentb(6)=0.D0, fb_prevb(6)=0.D0, &
-& fb_rescaleb(6)=0.D0
+  REAL(kind=r8), SAVE :: fb_target(def_natm)=0.0_R8, fb_time(def_natm)=&
+&   0.0_R8, saved_fb_actuator(def_natm)=0.0_R8, fb_alpha(def_natm)=&
+&   0.001_R8, fb_beta(def_natm)=1.0_R8, fb_const(def_natm)=0.0_R8, &
+& fb_puff_min(def_natm)=0.0_R8, fb_puff_max(def_natm)=0.0_R8, &
+& fb_overshoot(def_natm)=0.0_R8, fb_current(def_natm)=0.0_R8, fb_prev(&
+& def_natm)=0.0_R8, fb_rescale(def_natm)=1.0_R8
+  REAL(kind=r8), SAVE :: fb_targetb(def_natm)=0.D0, saved_fb_actuatorb(&
+& def_natm)=0.D0, fb_constb(def_natm)=0.D0, fb_currentb(def_natm)=0.D0, &
+& fb_prevb(def_natm)=0.D0, fb_rescaleb(def_natm)=0.D0
 !
 !contains face label to define list of faces for feedback
 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
-  INTEGER, SAVE :: fb_reg_par(6, 2)=0, fb_species(6)=0, fb_ib(6)=-1, &
-& fb_type(6)=0, fb_rescale_option(6)=0, fb_actuator(6)=0, fb_istra(6)=0&
-& , fb_reg(nmxfbreg)=0, fb_regp(6, 2)=0
+  INTEGER, SAVE :: fb_reg_par(def_natm, 2)=0, fb_species(def_natm)=0, &
+& fb_ib(def_natm)=-1, fb_type(def_natm)=0, fb_rescale_option(def_natm)=0&
+& , fb_actuator(def_natm)=0, fb_istra(def_natm)=0, fb_reg(nmxfbreg)=0, &
+& fb_regp(def_natm, 2)=0
 !
 ! csc old switches
   INTEGER, SAVE :: fhiycore_kinetic_energy
@@ -226,7 +198,7 @@ CONTAINS
       filename = 'b2.feedback_save.parameters.'//edition
     END IF
 !xpb We do the write explicitly to avoid array overflows when the problem
-!xpb size is changed in DIMENSIONS.F
+!xpb size is changed in b2mod_dimensions
     IF (feedback_namelist_used) THEN
       OPEN(nwrite, file=trim(filename)) 
       WRITE(nwrite, '(a9)') '&FEEDBACK'
@@ -541,8 +513,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 10
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = fnaycore
@@ -564,8 +536,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 11
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = fheycore
@@ -585,8 +557,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 12
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = fhiycore
@@ -606,8 +578,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 13
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = fchycore
@@ -627,8 +599,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 14
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = ndes
@@ -649,8 +621,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 3
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = nesepm
@@ -672,8 +644,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 3
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = nesepm_sol
@@ -699,8 +671,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 14
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = ndes_sol
@@ -725,8 +697,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 3
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = nesepm_pfr
@@ -753,8 +725,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 13
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = private_flux_puff
@@ -779,8 +751,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 15
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = volrec_sol
@@ -806,8 +778,8 @@ CONTAINS
         nfb = nfb + 1
         ifbb = nfb
       END IF
-      CALL XERTST(nfb .LE. 6, 'init_feedback: increase size of DEF_NATM'&
-&          )
+      CALL XERTST(nfb .LE. def_natm, &
+&           'init_feedback: increase size of DEF_NATM')
       fb_type(ifbb) = 16
       fb_rescale_option(ifbb) = 1
       fb_target(ifbb) = nepedm_sol
@@ -817,7 +789,8 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
 !
-    CALL XERTST(nfb .LE. 6, 'b2mod_feedback: increase size of DEF_NATM')
+    CALL XERTST(nfb .LE. def_natm, &
+&         'b2mod_feedback: increase size of DEF_NATM')
 !
     DO ifb=1,nfb
       IF (fb_actuator(ifb) .EQ. 1) THEN
@@ -1307,7 +1280,7 @@ CONTAINS
             CALL PUSHINTEGER4(is_end)
             is_end = eb2spcr(b2espcr(fb_species(ifb))) + nfluids(b2espcr&
 &             (fb_species(ifb)))
-            CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
+            CALL PUSHREAL8ARRAY(charge_frac, r8*100/8)
             charge_frac = 0.0_R8
             CALL PUSHREAL8(sum_s, r8/8)
             sum_s = 0.0_R8
@@ -1340,7 +1313,7 @@ CONTAINS
             END DO
             CALL PUSHINTEGER4(is - 1)
             CALL PUSHINTEGER4(ad_from4)
-            CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
+            CALL PUSHREAL8ARRAY(charge_frac, r8*100/8)
             charge_frac = charge_frac/sum_s
             CALL PUSHCONTROL5B(5)
           CASE (7) 
@@ -2659,7 +2632,7 @@ CONTAINS
               CALL POPREAL8(fb_current(ifb), r8/8)
               fb_currentb(ifb) = 0.D0
             ELSE
-              CALL POPREAL8ARRAY(charge_frac, r8*42/8)
+              CALL POPREAL8ARRAY(charge_frac, r8*100/8)
               sum_sb = -(SUM(charge_frac*charge_fracb)/sum_s**2)
               charge_fracb = charge_fracb/sum_s
               CALL POPINTEGER4(ad_from4)
@@ -2681,7 +2654,7 @@ CONTAINS
                 CALL POPINTEGER4(iss)
               END DO
               CALL POPREAL8(sum_s, r8/8)
-              CALL POPREAL8ARRAY(charge_frac, r8*42/8)
+              CALL POPREAL8ARRAY(charge_frac, r8*100/8)
               CALL POPINTEGER4(is_end)
               CALL POPINTEGER4(is_start)
               CALL POPREAL8(fb_current(ifb), r8/8)
@@ -3812,7 +3785,8 @@ CONTAINS
 !
 !number of feedback imposed
     nfb = nspecies
-    CALL XERTST(nfb .LE. 6, 'b2us_feedback: increase size of DEF_NATM')
+    CALL XERTST(nfb .LE. def_natm, &
+&         'b2us_feedback: increase size of DEF_NATM')
     fb_type(1:nfb) = na_feedback_choice(0:nspecies-1)
     fb_rescale_option(1:nfb) = na_feedback_option(0:nspecies-1)
     fb_actuator(1:nfb) = na_feedback_actuator(0:nspecies-1)

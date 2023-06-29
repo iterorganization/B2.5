@@ -59,7 +59,7 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ic, icv, ift, is, k
+  INTEGER :: ic, icv, ifc, ift, is, k
   INTEGER, SAVE :: nsmooth=2
   INTEGER, SAVE :: ncall=0
 !srv 11.07.99
@@ -83,8 +83,20 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
   REAL(kind=r8) :: tempb
   REAL(kind=r8) :: temp0
   REAL(kind=r8) :: tempb0
+  REAL(kind=r8) :: tmp
+  REAL(kind=r8) :: tmpb
+  REAL(kind=r8) :: tmp0
+  REAL(kind=r8) :: tmpb0
+  REAL(kind=r8) :: tmp1
+  REAL(kind=r8) :: tmpb1
+  REAL(kind=r8) :: tmp2
+  REAL(kind=r8) :: tmpb2
   REAL(kind=r8) :: temp1
   REAL(kind=r8) :: tempb1
+  REAL(kind=r8) :: tmp3
+  REAL(kind=r8) :: tmpb3
+  REAL(kind=r8) :: tmp4
+  REAL(kind=r8) :: tmpb4
   REAL(kind=r8), DIMENSION(ncv) :: tempb2
   REAL(kind=r8), DIMENSION(ncv) :: temp2
   REAL(kind=r8), DIMENSION(ncv) :: tempb3
@@ -99,6 +111,14 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
   REAL(kind=r8) :: tempb8
   REAL(r8) :: temp7
   REAL(r8) :: tempb9
+  REAL(kind=r8) :: tmp5
+  REAL(kind=r8) :: tmpb5
+  REAL(kind=r8) :: tmp6
+  REAL(kind=r8) :: tmpb6
+  REAL(kind=r8) :: tmp7
+  REAL(kind=r8) :: tmpb7
+  REAL(kind=r8) :: tmp8
+  REAL(kind=r8) :: tmpb8
   REAL(kind=r8), DIMENSION(nfc) :: tempb10
   INTEGER :: ad_from
   INTEGER :: ad_to
@@ -158,6 +178,28 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
               CALL PUSHCONTROL1B(0)
             END IF
           END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+          DO ifc=1,nfc
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+              tmp = qip0(mpg%fccv(ifc, 1))
+              qip0(mpg%fccv(ifc, 2)) = tmp
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+            END IF
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+              tmp0 = qip0(mpg%fccv(ifc, 2))
+              qip0(mpg%fccv(ifc, 1)) = tmp0
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
+          END DO
 !smoothing: interpolate to faces and back to cell centers
 !
           CALL PUSHREAL8ARRAY(wght, r8*nfc*2/8)
@@ -165,6 +207,28 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           DO k=1,nsmooth
             CALL INTFACE_FWD(ncv, nfc, mpg%fccv, wght, qip0, wrkf)
             CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, wrkf, qip0)
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+            DO ifc=1,nfc
+              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+&                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+                tmp1 = qip0(mpg%fccv(ifc, 1))
+                CALL PUSHREAL8(qip0(mpg%fccv(ifc, 2)), r8/8)
+                qip0(mpg%fccv(ifc, 2)) = tmp1
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHCONTROL1B(1)
+              END IF
+              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+&                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+                tmp2 = qip0(mpg%fccv(ifc, 2))
+                CALL PUSHREAL8(qip0(mpg%fccv(ifc, 1)), r8/8)
+                qip0(mpg%fccv(ifc, 1)) = tmp2
+                CALL PUSHCONTROL1B(1)
+              ELSE
+                CALL PUSHCONTROL1B(0)
+              END IF
+            END DO
           END DO
           CALL PUSHCONTROL1B(0)
         ELSE
@@ -192,6 +256,30 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
               CALL PUSHCONTROL1B(0)
             END IF
           END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+          DO ifc=1,nfc
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+              tmp3 = qip0(mpg%fccv(ifc, 1))
+              CALL PUSHREAL8(qip0(mpg%fccv(ifc, 2)), r8/8)
+              qip0(mpg%fccv(ifc, 2)) = tmp3
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+            END IF
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+              tmp4 = qip0(mpg%fccv(ifc, 2))
+              CALL PUSHREAL8(qip0(mpg%fccv(ifc, 1)), r8/8)
+              qip0(mpg%fccv(ifc, 1)) = tmp4
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
+          END DO
           CALL PUSHCONTROL1B(0)
         ELSE
           CALL PUSHCONTROL1B(1)
@@ -207,6 +295,19 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         qipgen = qip1*DATAN(qip0/qip1)*SQRT(geo%cvbb(:, 3))
         CALL GRAD_P_FWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, qipgen, wrkv, &
 &                 gqipgen)
+!set gqipgen to zero on faces not in touch with core
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+&             mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            CALL PUSHREAL8(gqipgen(ifc), r8/8)
+            gqipgen(ifc) = 0.0_R8
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
+        END DO
 !
 !       ..compute tau, nu, alpha, and interpolate to faces
         CALL PUSHREAL8ARRAY(tauia1, r8*ncv/8)
@@ -246,6 +347,32 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
             END DO
             CALL PUSHINTEGER4(ic - 1)
             CALL PUSHINTEGER4(ad_from1)
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
+        END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy values of tauia1, nu1, alpha1 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            tmp5 = tauia1(mpg%fccv(ifc, 1))
+            tauia1(mpg%fccv(ifc, 2)) = tmp5
+            tmp6 = alpha1(mpg%fccv(ifc, 1))
+            alpha1(mpg%fccv(ifc, 2)) = tmp6
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+            tmp7 = tauia1(mpg%fccv(ifc, 2))
+            tauia1(mpg%fccv(ifc, 1)) = tmp7
+            tmp8 = alpha1(mpg%fccv(ifc, 2))
+            alpha1(mpg%fccv(ifc, 1)) = tmp8
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -294,6 +421,30 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         tauia1b = 0.D0
         tauia1b = alpha1*wrkcb
         alpha1b = tauia1*wrkcb
+        DO ifc=nfc,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            tmpb8 = alpha1b(mpg%fccv(ifc, 1))
+            alpha1b(mpg%fccv(ifc, 1)) = 0.D0
+            alpha1b(mpg%fccv(ifc, 2)) = alpha1b(mpg%fccv(ifc, 2)) + &
+&             tmpb8
+            tmpb7 = tauia1b(mpg%fccv(ifc, 1))
+            tauia1b(mpg%fccv(ifc, 1)) = 0.D0
+            tauia1b(mpg%fccv(ifc, 2)) = tauia1b(mpg%fccv(ifc, 2)) + &
+&             tmpb7
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            tmpb6 = alpha1b(mpg%fccv(ifc, 2))
+            alpha1b(mpg%fccv(ifc, 2)) = 0.D0
+            alpha1b(mpg%fccv(ifc, 1)) = alpha1b(mpg%fccv(ifc, 1)) + &
+&             tmpb6
+            tmpb5 = tauia1b(mpg%fccv(ifc, 2))
+            tauia1b(mpg%fccv(ifc, 2)) = 0.D0
+            tauia1b(mpg%fccv(ifc, 1)) = tauia1b(mpg%fccv(ifc, 1)) + &
+&             tmpb5
+          END IF
+        END DO
         nu1b = 0.D0
         DO ift=mpg%nft,1,-1
           CALL POPCONTROL1B(branch)
@@ -373,6 +524,13 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         CALL POPREAL8ARRAY(alpha1, r8*ncv/8)
         CALL POPREAL8ARRAY(nu1, r8*ncv/8)
         CALL POPREAL8ARRAY(tauia1, r8*ncv/8)
+        DO ifc=nfc,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            CALL POPREAL8(gqipgen(ifc), r8/8)
+            gqipgenb(ifc) = 0.D0
+          END IF
+        END DO
         qipgenb = 0.D0
         CALL GRAD_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, qipgen, &
 &                 qipgenb, wrkv, wrkvb, gqipgen, gqipgenb)
@@ -397,6 +555,22 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         teb = teb + tempb3
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
+          DO ifc=nfc,1,-1
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              CALL POPREAL8(qip0(mpg%fccv(ifc, 1)), r8/8)
+              tmpb4 = qip0b(mpg%fccv(ifc, 1))
+              qip0b(mpg%fccv(ifc, 1)) = 0.D0
+              qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + tmpb4
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(qip0(mpg%fccv(ifc, 2)), r8/8)
+              tmpb3 = qip0b(mpg%fccv(ifc, 2))
+              qip0b(mpg%fccv(ifc, 2)) = 0.D0
+              qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + tmpb3
+            END IF
+          END DO
           DO ift=mpg%nft,1,-1
             CALL POPCONTROL1B(branch)
             IF (branch .NE. 0) THEN
@@ -422,6 +596,24 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           DO k=nsmooth,1,-1
+            DO ifc=nfc,1,-1
+              CALL POPCONTROL1B(branch)
+              IF (branch .NE. 0) THEN
+                CALL POPREAL8(qip0(mpg%fccv(ifc, 1)), r8/8)
+                tmpb2 = qip0b(mpg%fccv(ifc, 1))
+                qip0b(mpg%fccv(ifc, 1)) = 0.D0
+                qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + &
+&                 tmpb2
+              END IF
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPREAL8(qip0(mpg%fccv(ifc, 2)), r8/8)
+                tmpb1 = qip0b(mpg%fccv(ifc, 2))
+                qip0b(mpg%fccv(ifc, 2)) = 0.D0
+                qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + &
+&                 tmpb1
+              END IF
+            END DO
             CALL INTCELL_BWD(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfb, &
 &                      qip0, qip0b)
             qip0b = 0.D0
@@ -429,6 +621,20 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 &                      , wrkfb)
           END DO
           CALL POPREAL8ARRAY(wght, r8*nfc*2/8)
+          DO ifc=nfc,1,-1
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              tmpb0 = qip0b(mpg%fccv(ifc, 1))
+              qip0b(mpg%fccv(ifc, 1)) = 0.D0
+              qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + tmpb0
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              tmpb = qip0b(mpg%fccv(ifc, 2))
+              qip0b(mpg%fccv(ifc, 2)) = 0.D0
+              qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + tmpb
+            END IF
+          END DO
           DO ift=mpg%nft,1,-1
             CALL POPCONTROL1B(branch)
             IF (branch .NE. 0) THEN
@@ -500,7 +706,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ic, icv, ift, is, k
+  INTEGER :: ic, icv, ifc, ift, is, k
   INTEGER, SAVE :: nsmooth=2
   INTEGER, SAVE :: ncall=0
 !srv 11.07.99
@@ -564,12 +770,34 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
               END DO
             END IF
           END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+          DO ifc=1,nfc
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc&
+&             , 2)) = qip0(mpg%fccv(ifc, 1))
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, &
+&             1)) = qip0(mpg%fccv(ifc, 2))
+          END DO
 !smoothing: interpolate to faces and back to cell centers
 !
           wght = 1.0_R8
           DO k=1,nsmooth
             CALL INTFACE(ncv, nfc, mpg%fccv, wght, qip0, wrkf)
             CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, qip0)
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+            DO ifc=1,nfc
+              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+&                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
+&               fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
+              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+&                 %cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(&
+&               ifc, 1)) = qip0(mpg%fccv(ifc, 2))
+            END DO
           END DO
         END IF
 !
@@ -588,6 +816,18 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
               END DO
             END IF
           END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+          DO ifc=1,nfc
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc&
+&             , 2)) = qip0(mpg%fccv(ifc, 1))
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, &
+&             1)) = qip0(mpg%fccv(ifc, 2))
+          END DO
         END IF
 !
 !
@@ -598,6 +838,14 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
         qipgen = qip1*DATAN(qip0/qip1)*SQRT(geo%cvbb(:, 3))
         CALL GRAD_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, qipgen, wrkv, &
 &                    gqipgen)
+!set gqipgen to zero on faces not in touch with core
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+&             mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) gqipgen(ifc) = &
+&             0.0_R8
+        END DO
 !
 !       ..compute tau, nu, alpha, and interpolate to faces
         tauia1 = 0.0e0_R8
@@ -628,6 +876,22 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 &               0.7e0_R8*SQRT(nu1(icv))+nu1(icv)**2*geo%fteps(ift)**3)-&
 &               1.0e0_R8)*0.533e0_R8
             END DO
+          END IF
+        END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy values of tauia1, nu1, alpha1 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
+            alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
+          END IF
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+            tauia1(mpg%fccv(ifc, 1)) = tauia1(mpg%fccv(ifc, 2))
+            alpha1(mpg%fccv(ifc, 1)) = alpha1(mpg%fccv(ifc, 2))
           END IF
         END DO
 !

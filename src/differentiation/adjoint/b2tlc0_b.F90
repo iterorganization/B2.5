@@ -56,8 +56,8 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
 !     ------------------------------------------------------------------
 !   ..local variables
   INTEGER :: ifc, is
-  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1&
-& ), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
+  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, t3, dpb, vbar, maxfluxlimit&
+& (0:1), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
   REAL(kind=r8) :: t0b, t1b, t2b, dpbb, vbarb, pbb(ncv), dpbfb(nfc, 0:1)&
 & , pbvb(nvx)
   CHARACTER :: charns*3
@@ -183,8 +183,18 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
 &                 , dpbf)
           DO ifc=1,nfc
             t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-            t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
-&             2.0_R8
+! lkw 30.09.2022{
+            t3 = dpbf(ifc, 0)*geo%fcqalf(ifc, 0) + dpbf(ifc, 1)*geo%&
+&             fcqalf(ifc, 1)
+            CALL PUSHREAL8(t1, r8/8)
+            t1 = na(mpg%fccv(ifc, 1), is)
+! lkw 30.09.2022}
+            IF (t3 .GT. 0) THEN
+              t1 = na(mpg%fccv(ifc, 2), is)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
 !    ..limit total gradient
             CALL PUSHREAL8(dpb, r8/8)
             dpb = cdpa0(ifc, is)*SQRT(dpbf(ifc, 0)**2+dpbf(ifc, 1)**2)
@@ -380,8 +390,6 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
 &           , 0, is)*cdpab(ifc, 0, is)
           cdpahzb(ifc, 0, is) = t2*cdpahzb(ifc, 0, is)
           cdpab(ifc, 0, is) = t2*cdpab(ifc, 0, is)
-          t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
-&           2.0_R8
           CALL POPREAL8(t2, r8/8)
           temp4 = 1.0/gamma
           temp3 = b2tlc0_cutlo + alpha*vbar*t1/4.0e0_R8
@@ -420,10 +428,13 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
           END IF
           dpbfb(ifc, 0) = dpbfb(ifc, 0) + 2*dpbf(ifc, 0)*tempb0
           dpbfb(ifc, 1) = dpbfb(ifc, 1) + 2*dpbf(ifc, 1)*tempb0
-          nab(mpg%fccv(ifc, 1), is) = nab(mpg%fccv(ifc, 1), is) + t1b/&
-&           2.0_R8
-          nab(mpg%fccv(ifc, 2), is) = nab(mpg%fccv(ifc, 2), is) + t1b/&
-&           2.0_R8
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            nab(mpg%fccv(ifc, 2), is) = nab(mpg%fccv(ifc, 2), is) + t1b
+            t1b = 0.D0
+          END IF
+          CALL POPREAL8(t1, r8/8)
+          nab(mpg%fccv(ifc, 1), is) = nab(mpg%fccv(ifc, 1), is) + t1b
           tnb(mpg%fccv(ifc, 1)) = tnb(mpg%fccv(ifc, 1)) + t0b/2.0_R8
           tnb(mpg%fccv(ifc, 2)) = tnb(mpg%fccv(ifc, 2)) + t0b/2.0_R8
         END DO
@@ -481,8 +492,8 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
 !     ------------------------------------------------------------------
 !   ..local variables
   INTEGER :: ifc, is
-  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1&
-& ), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
+  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, t3, dpb, vbar, maxfluxlimit&
+& (0:1), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
   CHARACTER :: charns*3
 !   ..procedures
   INTRINSIC MAX, ABS, SQRT
@@ -577,8 +588,12 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
           CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pb, pbv, dpbf)
           DO ifc=1,nfc
             t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-            t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
-&             2.0_R8
+! lkw 30.09.2022{
+            t3 = dpbf(ifc, 0)*geo%fcqalf(ifc, 0) + dpbf(ifc, 1)*geo%&
+&             fcqalf(ifc, 1)
+            t1 = na(mpg%fccv(ifc, 1), is)
+! lkw 30.09.2022}
+            IF (t3 .GT. 0) t1 = na(mpg%fccv(ifc, 2), is)
 !    ..limit total gradient
             dpb = cdpa0(ifc, is)*SQRT(dpbf(ifc, 0)**2+dpbf(ifc, 1)**2)
             vbar = SQRT(8.0_R8*t0/(pi*(am(is)*mp)))*geo%fcs(ifc)
