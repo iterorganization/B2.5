@@ -369,6 +369,7 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
+      real (kind=R8) :: b2sikt_lpar_ref
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -485,6 +486,7 @@ c b2stbc
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
+      real (kind=R8) :: b2stbc_cor9
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
@@ -861,6 +863,7 @@ c k-enstrophy model
       s % b2tfhi_fsigkt = 0.0_R8
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0e0_R8
+      s % b2sikt_lpar_ref = 10.0_R8
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -980,6 +983,7 @@ c b2stbc_phys
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
+      s % b2stbc_cor9 = 0.0_R8
 
 c b2trno
       s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
@@ -1377,6 +1381,7 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
+      call ipgetr ('b2sikt_fac_diss_lpar', s % b2sikt_lpar_ref)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1517,6 +1522,7 @@ c b2stbc
         call ipgetr ('b2stbc_nesepm', s%nesepm)
         call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
         call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+        call ipgetr ('b2stbc_BC2_cor9', s%b2stbc_cor9)
 
 c b2trno
         call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)         !lk 31.01.08

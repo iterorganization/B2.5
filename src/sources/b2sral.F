@@ -43,7 +43,7 @@
      & , only : dab2, lkindi, lkindm, lkindp
 #endif
       use b2mod_ad
-     & , only : b2sral_elm_count, my_out_folder,
+     & , only : b2sral_elm_count, my_out_folder, filename_b2w,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
