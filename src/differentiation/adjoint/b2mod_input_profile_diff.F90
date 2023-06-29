@@ -27,44 +27,14 @@ MODULE B2MOD_INPUT_PROFILE_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
   INTEGER :: nrr, nxx, nss
   INTEGER, PARAMETER :: nkind_source=4, nkind_data=2, nscale=10
   INTEGER, PARAMETER :: nkind_coeff=9
   INTEGER, SAVE :: csig_an_style=1
-  PARAMETER (nrr=100+2, nxx=200+2, nss=42)
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
+  PARAMETER (nrr=def_nyd+2, nxx=def_nxd+2, nss=def_nsd)
   INTEGER, SAVE :: nsdata(nkind_data, nkind_source, 0:nss)
   INTEGER, SAVE :: nxdata(nkind_data, nkind_source, 0:nss)
   REAL(kind=r8), SAVE :: sdata(2, nrr, nkind_source, 0:nss)
@@ -104,8 +74,8 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: ncv, ns
 !
-!      call xertst (nCv.le.200, 'faulty input nx')
-    CALL XERTST(ns .LE. 42, 'faulty input ns')
+!      call xertst (nCv.le.DEF_NXD, 'faulty input nx')
+    CALL XERTST(ns .LE. def_nsd, 'faulty input ns')
 !
     RETURN
   END SUBROUTINE ALLOC_INPUT_PROFILE
@@ -315,13 +285,13 @@ CONTAINS
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 !
-            CALL PUSHREAL8ARRAY(pr, r8*102/8)
+            CALL PUSHREAL8ARRAY(pr, r8*nrr/8)
             CALL CALC_DIST_NODIFF(mpg, geo, omp, nomp, icsepomp, pr)
 !
-            CALL PUSHREAL8ARRAY(d, r8*102/8)
+            CALL PUSHREAL8ARRAY(d, r8*nrr/8)
             CALL E01BEF(ndat, r, f, d, ifail)
             IF (elm_data) THEN
-              CALL PUSHREAL8ARRAY(delm, r8*102/8)
+              CALL PUSHREAL8ARRAY(delm, r8*nrr/8)
               CALL E01BEF(ndat, r, felm, delm, ifail)
               CALL PUSHCONTROL1B(0)
             ELSE
@@ -691,13 +661,13 @@ CONTAINS
 &                   ifail)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL8ARRAY(delm, r8*102/8)
+              CALL POPREAL8ARRAY(delm, r8*nrr/8)
               CALL E01BEF_B(ndat, r, rb, felm, felmb, delm, delmb, ifail&
 &                    )
             END IF
-            CALL POPREAL8ARRAY(d, r8*102/8)
+            CALL POPREAL8ARRAY(d, r8*nrr/8)
             CALL E01BEF_B(ndat, r, rb, f, fb, d, db, ifail)
-            CALL POPREAL8ARRAY(pr, r8*102/8)
+            CALL POPREAL8ARRAY(pr, r8*nrr/8)
             CALL POPINTEGER4(ad_to)
             DO i=ad_to,1,-1
               CALL POPCONTROL1B(branch)
@@ -867,7 +837,7 @@ CONTAINS
           ndat = ndata(kind_data, kind_coeff, spec)
           IF (ndat .NE. 0) THEN
             CALL XERTST(ndat .LE. nrr, &
-&                'Increase NYD in DIMENSIONS.F to match size of profile'&
+&            'Increase NYD in b2mod_dimensions to match size of profile'&
 &                )
             nspec = 1
             nsp(1) = spec

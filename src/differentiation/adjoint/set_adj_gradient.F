@@ -128,6 +128,7 @@
             write (key, *) "enkpar, boundary ",ss2
           ! recycling
           case (16)
+            grad(idir) = b2recycb(paris(ip),parib(ip))
             write(ss1,"(I3)") paris(ip)
             write(ss2,"(I3)") parib(ip)
             write (key, *) "b2recyc, species ",ss1,", stratum ",ss2

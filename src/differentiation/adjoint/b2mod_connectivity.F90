@@ -12,9 +12,8 @@ module b2mod_connectivity
     use b2mod_cellhelper
     use logging
     use helper
-
+    use b2mod_dimensions
     implicit none
-#include "DIMENSIONS.F"
 
     integer, parameter :: NO_CONNECTIVITY = huge(0) !< Constant to mark in
         !< connectivity arrays that no connectivity available
@@ -1217,58 +1216,62 @@ contains
       iy = topcut(1)+1
       ix = leftcut(1)-1
       lefttargetindex(1)=GRID_UNDEFINED
-      do while (ix.gt.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
-        if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          Xvertices(:) = crx(ix,iy,:)
-          Yvertices(:) = cry(ix,iy,:)
-          geoType = cellGeoType(Xvertices, Yvertices)
-          if (geoType /= CGEO_TRIA_NOLEFT .and. &
-            & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
-            lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
-          else if (geoType /= CGEO_TRIA_NOTOP .and. &
-            & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-            lefttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
-          else if (geoType /= CGEO_TRIA_NOBOT .and. &
-            & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-            lefttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) then
+        do while (ix.gt.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
+          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
+            if (geoType /= CGEO_TRIA_NOLEFT .and. &
+              & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
+              lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
+            else if (geoType /= CGEO_TRIA_NOTOP .and. &
+              & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+              lefttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
+            else if (geoType /= CGEO_TRIA_NOBOT .and. &
+              & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
+              lefttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+            endif
+          else
+            ix = ix-1
           endif
-        else
-          ix = ix-1
-        endif
-      end do
+        end do
 #ifdef BUILDING_CARRE
-      if (.not. lefttargetindex(1).ne.GRID_UNDEFINED) stop 'Left target not found!'
+        if (.not. lefttargetindex(1).ne.GRID_UNDEFINED) stop 'Left target not found!'
 #else
-      call xertst(lefttargetindex(1).ne.GRID_UNDEFINED, 'Left target not found!')
+        call xertst(lefttargetindex(1).ne.GRID_UNDEFINED, 'Left target not found!')
 #endif
+      endif
 ! We identify the structure index of the right target
       iy = topcut(1)+1
       ix = rightcut(1)
       righttargetindex(1)=GRID_UNDEFINED
-      do while (ix.lt.nx .and. righttargetindex(1).eq.GRID_UNDEFINED)
-        if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          Xvertices(:) = crx(ix,iy,:)
-          Yvertices(:) = cry(ix,iy,:)
-          geoType = cellGeoType(Xvertices, Yvertices)
-          if (geoType /= CGEO_TRIA_NORIGHT .and. &
-            & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
-            righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
-          else if (geoType /= CGEO_TRIA_NOTOP .and. &
-            & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-            righttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
-          else if (geoType /= CGEO_TRIA_NOBOT .and. &
-            & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-            righttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) then
+        do while (ix.lt.nx .and. righttargetindex(1).eq.GRID_UNDEFINED)
+          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
+            if (geoType /= CGEO_TRIA_NORIGHT .and. &
+              & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
+              righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
+            else if (geoType /= CGEO_TRIA_NOTOP .and. &
+              & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+              righttargetindex(1) = cflag(ix,iy,CELLFLAG_TOPFACE)
+            else if (geoType /= CGEO_TRIA_NOBOT .and. &
+              & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
+              righttargetindex(1) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+            endif
+          else
+            ix = ix+1
           endif
-        else
-          ix = ix+1
-        endif
-      end do
+        end do
 #ifdef BUILDING_CARRE
-      if (.not. righttargetindex(1).ne.GRID_UNDEFINED) stop 'Right target not found!'
+        if (.not. righttargetindex(1).ne.GRID_UNDEFINED) stop 'Right target not found!'
 #else
-      call xertst(righttargetindex(1).ne.GRID_UNDEFINED, 'Right target not found!')
+        call xertst(righttargetindex(1).ne.GRID_UNDEFINED, 'Right target not found!')
 #endif
+      endif
 
     ! X-flux component
       do iy=-1,iyt
@@ -1280,12 +1283,15 @@ contains
             Yvertices(:) = cry(ix,iy,:)
             geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1) &
+                 & .and. lefttargetindex(1) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
                  & region(ix,iy,1)=1
             if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(1) &
+                 & .and. lefttargetindex(1) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOTOP) &
                  & region(topix(ix,iy),topiy(ix,iy),2)=-1
             if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) == lefttargetindex(1) &
+                 & .and. lefttargetindex(1) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOBOT) &
                  & region(ix,iy,2)=-1
           endif
@@ -1299,12 +1305,15 @@ contains
             Yvertices(:) = cry(ix,iy,:)
             geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_RIGHTFACE) == righttargetindex(1) &
+                 & .and. righttargetindex(1) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NORIGHT) &
                  & region(rightix(ix,iy),rightiy(ix,iy),1)=4*nncut
             if (cflag(ix, iy, CELLFLAG_TOPFACE) == righttargetindex(1) &
+                 & .and. righttargetindex(1) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOTOP) &
                  & region(topix(ix,iy),topiy(ix,iy),2)=-4*nncut
             if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) == righttargetindex(1) &
+                 & .and. righttargetindex(1) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOBOT) &
                  & region(ix,iy,2)=-4*nncut
           endif
@@ -1338,84 +1347,74 @@ contains
         iy = topcut(2)+1
         ix = rightcut(2)-1
         do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)) .and. &
-         & ix.lt.rightcut(1))
+         & ix.le.nx)
           ix = ix + 1
         end do
-#ifdef BUILDING_CARRE
-        if (ix.eq.rightcut(1)) &
-         & stop 'Second separatrix does not have a left strike point!'
-#else
-        call xertst(ix.lt.rightcut(1), &
-         & 'Second separatrix does not have a left strike point!')
-#endif
         lefttargetindex(2)=GRID_UNDEFINED
-        do while (ix.gt.ixbreak .and. lefttargetindex(2).eq.GRID_UNDEFINED)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            Xvertices(:) = crx(ix,iy,:)
-            Yvertices(:) = cry(ix,iy,:)
-            geoType = cellGeoType(Xvertices, Yvertices)
-            if (geoType /= CGEO_TRIA_NOLEFT .and. &
-              & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(2) = cflag(ix,iy,CELLFLAG_LEFTFACE)
-            else if (geoType /= CGEO_TRIA_NOTOP .and. &
-              & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
-            else if (geoType /= CGEO_TRIA_NOBOT .and. &
-              & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-              lefttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+        if (ix.le.nx) then
+          do while (ix.gt.ixbreak .and. lefttargetindex(2).eq.GRID_UNDEFINED)
+            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
+              if (geoType /= CGEO_TRIA_NOLEFT .and. &
+                & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
+                lefttargetindex(2) = cflag(ix,iy,CELLFLAG_LEFTFACE)
+              else if (geoType /= CGEO_TRIA_NOTOP .and. &
+                & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+                lefttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
+              else if (geoType /= CGEO_TRIA_NOBOT .and. &
+                & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
+                lefttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+              endif
+            else
+              ix = ix-1
             endif
-          else
-            ix = ix-1
-          endif
-        end do
+          end do
 #ifdef BUILDING_CARRE
-        if (.not. lefttargetindex(2).ne.GRID_UNDEFINED) &
-         & stop 'Second left target not found!'
+          if (.not. lefttargetindex(2).ne.GRID_UNDEFINED) &
+           & stop 'Second left target not found!'
 #else
-        call xertst(lefttargetindex(2).ne.GRID_UNDEFINED, &
-         & 'Second left target not found!')
+          call xertst(lefttargetindex(2).ne.GRID_UNDEFINED, &
+           & 'Second left target not found!')
 #endif
+        endif
 ! We identify the structure index of the second right target
         iy = topcut(2)+1
         ix = leftcut(2)
         do while (.not.isRealCell(cflag(ix, iy, CELLFLAG_TYPE)) .and. &
-         & ix.gt.leftcut(1) )
+         & ix.ge.0 )
           ix = ix - 1
         end do
-#ifdef BUILDING_CARRE
-        if (ix.eq.leftcut(1)) &
-         & stop 'Second separatrix does not have a right strike point!'
-#else
-        call xertst(ix.gt.leftcut(1), &
-         & 'Second separatrix does not have a right strike point!')
-#endif
         righttargetindex(2)=GRID_UNDEFINED
-        do while (ix.lt.ixbreak .and. righttargetindex(2).eq.GRID_UNDEFINED)
-          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            Xvertices(:) = crx(ix,iy,:)
-            Yvertices(:) = cry(ix,iy,:)
-            geoType = cellGeoType(Xvertices, Yvertices)
-            if (geoType /= CGEO_TRIA_NORIGHT .and. &
-              & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
-              righttargetindex(2) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
-            else if (geoType /= CGEO_TRIA_NOTOP .and. &
-              & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
-              righttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
-            else if (geoType /= CGEO_TRIA_NOBOT .and. &
-              & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-              righttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+        if (ix.ge.0) then
+          do while (ix.lt.ixbreak .and. righttargetindex(2).eq.GRID_UNDEFINED)
+            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
+              if (geoType /= CGEO_TRIA_NORIGHT .and. &
+                & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
+                righttargetindex(2) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
+              else if (geoType /= CGEO_TRIA_NOTOP .and. &
+                & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+                righttargetindex(2) = cflag(ix,iy,CELLFLAG_TOPFACE)
+              else if (geoType /= CGEO_TRIA_NOBOT .and. &
+                & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
+                righttargetindex(2) = cflag(ix,iy,CELLFLAG_BOTTOMFACE)
+              endif
+            else
+              ix = ix+1
             endif
-          else
-            ix = ix+1
-          endif
-        end do
+          end do
 #ifdef BUILDING_CARRE
-        if (.not. righttargetindex(2).ne.GRID_UNDEFINED) &
-      &  stop 'Second right target not found!'
+          if (.not. righttargetindex(2).ne.GRID_UNDEFINED) &
+      &    stop 'Second right target not found!'
 #else
-        call xertst(righttargetindex(2).ne.GRID_UNDEFINED, &
-      &  'Second right target not found!')
+          call xertst(righttargetindex(2).ne.GRID_UNDEFINED, &
+      &    'Second right target not found!')
 #endif
+        endif
         do iy=-1,iyt
 ! We find the cells contacting the second left target: x-region 5
           ix = nx
@@ -1425,11 +1424,14 @@ contains
               Yvertices(:) = cry(ix,iy,:)
               geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(2) &
+                 & .and. lefttargetindex(2) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=5
               if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(2) &
+                 & .and. lefttargetindex(2) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOTOP) &
                  & region(topix(ix,iy),topiy(ix,iy),2)=-5
               if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) == lefttargetindex(2) &
+                 & .and. lefttargetindex(2) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOBOT) region(ix,iy,2)=-5
             endif
             ix = ix - 1
@@ -1442,12 +1444,15 @@ contains
               Yvertices(:) = cry(ix,iy,:)
               geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_RIGHTFACE) == righttargetindex(2) &
+                 & .and. righttargetindex(2) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NORIGHT) &
                  & region(rightix(ix,iy),rightiy(ix,iy),1)=4
               if (cflag(ix, iy, CELLFLAG_TOPFACE) == righttargetindex(2) &
+                 & .and. righttargetindex(2) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOTOP) &
                  & region(topix(ix,iy),topiy(ix,iy),2)=-4
               if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) == righttargetindex(2) &
+                 & .and. righttargetindex(2) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOBOT) &
                  & region(ix,iy,2)=-4
             endif

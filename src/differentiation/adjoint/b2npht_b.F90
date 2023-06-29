@@ -261,13 +261,6 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !
 !   ..sources due to k-eps model
   IF (switch%solve_keps .GT. 0) THEN
-    CALL PUSHINTEGER4(ncall_b2sikt)
-    CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-    CALL PUSHREAL8ARRAY(skt_diss, r8*ncv/8)
-    CALL PUSHREAL8ARRAY(skt_prod, r8*ncv/8)
-    CALL PUSHREAL8ARRAY(skt0, r8*ncv*4/8)
-    CALL PUSHREAL8ARRAY(shikt, r8*ncv*4/8)
-    CALL PUSHREAL8ARRAY(shekt, r8*ncv*4/8)
     CALL PUSHREAL8ARRAY(dv%vaecrb, r8*SIZE(dv%vaecrb, 1)*SIZE(dv%vaecrb&
 &                 , 2)*SIZE(dv%vaecrb, 3)/8)
     CALL B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl, &
@@ -670,13 +663,6 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
     CALL B2SAXPY_BWD(arg1, 1.0e0_R8, shekt, shektb, 1, she0, she0b, 1)
     CALL POPREAL8ARRAY(dv%vaecrb, r8*SIZE(dv%vaecrb, 1)*SIZE(dv%vaecrb, &
 &                2)*SIZE(dv%vaecrb, 3)/8)
-    CALL POPREAL8ARRAY(shekt, r8*ncv*4/8)
-    CALL POPREAL8ARRAY(shikt, r8*ncv*4/8)
-    CALL POPREAL8ARRAY(skt0, r8*ncv*4/8)
-    CALL POPREAL8ARRAY(skt_prod, r8*ncv/8)
-    CALL POPREAL8ARRAY(skt_diss, r8*ncv/8)
-    CALL POPCHARACTERARRAY(my_out_folder, 7)
-    CALL POPINTEGER4(ncall_b2sikt)
     CALL B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, geob&
 &           , mpg, mpgb, pl, plb, dv, dvb, rt%rza, co, cob, st_ext, &
 &           st_extb, shekt, shektb, shikt, shiktb, skt0, skt0b, skt_prod&
