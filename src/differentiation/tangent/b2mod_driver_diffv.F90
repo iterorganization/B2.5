@@ -93,42 +93,12 @@ MODULE B2MOD_DRIVER_DIFFV
   USE B2MOD_EIRBRA
   USE B2MOD_B2_TO_ASTRA, ONLY : write_b2_to_astra
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !   ..common blocks
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !   ..local variables
   INTEGER :: ncall, ntim, mvinc, mvnum, jsep, jxi, jxa, isfb, ix1, ix2, &
 & ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5, nxtl, nxtr
@@ -3636,8 +3606,8 @@ CONTAINS
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
-    CALL XERTST(natmi .LE. 6, &
-&         'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+    CALL XERTST(natmi .LE. def_natm, &
+&         'Increase DEF_NATM in b2mod_dimensions and recompile !')
     CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%nnreg(0), nstra, natm, &
 &                   switch)
 !xpb initialize the data necessary for boundary conditions
@@ -5100,8 +5070,8 @@ CONTAINS
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
-    CALL XERTST(natmi .LE. 6, &
-&         'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+    CALL XERTST(natmi .LE. def_natm, &
+&         'Increase DEF_NATM in b2mod_dimensions and recompile !')
     CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%nnreg(0), nstra, natm, &
 &                   switch)
 !xpb initialize the data necessary for boundary conditions

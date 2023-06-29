@@ -79,7 +79,7 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
   REAL(kind=r8) :: t0d(nbdirsmax), pb_d(nbdirsmax, ncv), nb_d(nbdirsmax&
 & , ncv), tt1d(nbdirsmax, mpg%nft), tt2d(nbdirsmax, mpg%nft)
 ! IYS 27.11.2017
-  LOGICAL :: too_low_density
+  LOGICAL :: too_low_density(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST, IPGETR, B2XXGS
   INTEGER :: nd
@@ -156,27 +156,28 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
       IF (mpg%cvonclosedsurface(icv)) THEN
 ! IYS 27.03.2019
         ift = mpg%cvft(icv)
-        tt0(ift) = tt0(ift) + geo%cvvol(icv)
-        DO nd=1,nbdirs
-          tt1d(nd, ift) = tt1d(nd, ift) + geo%cvvol(icv)*(nb_d(nd, icv)-&
-&           nbd(nd, icv))
-          tt2d(nd, ift) = tt2d(nd, ift) + geo%cvvol(icv)*(pb_d(nd, icv)-&
-&           pbd(nd, icv))
-        END DO
-        tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
-        tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          tt0(ift) = tt0(ift) + geo%cvvol(icv)
+          DO nd=1,nbdirs
+            tt1d(nd, ift) = tt1d(nd, ift) + geo%cvvol(icv)*(nb_d(nd, icv&
+&             )-nbd(nd, icv))
+            tt2d(nd, ift) = tt2d(nd, ift) + geo%cvvol(icv)*(pb_d(nd, icv&
+&             )-pbd(nd, icv))
+          END DO
+          tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
+          tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
+        END IF
       END IF
     END DO
-    DO ift=1,mpg%nft
-! IYS 27.11.2017
-      too_low_density = .false.
 ! Check whether the density and/or pressure falls below the threshold 'b2mndr_na_min'
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
-      DO i=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
-        icv = mpg%ftcv(i)
-        IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
+    too_low_density = .false.
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
           DO nd=1,nbdirs
             t0d(nd) = pbd(nd, icv) + tt2d(nd, ift)/tt0(ift) + &
@@ -186,7 +187,7 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
           t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(icv)&
 &           -pb(icv)-tt2(ift)/tt0(ift))
           IF (t0 .LT. pb(icv)*switch%b2mndr_na_min/nb(icv)) THEN
-            GOTO 100
+            too_low_density(ift) = .true.
           ELSE
             DO nd=1,nbdirs
               pbd(nd, icv) = t0d(nd)
@@ -199,7 +200,7 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
             t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
 &             icv)-nb(icv)-tt1(ift)/tt0(ift))
             IF (t0 .LT. switch%b2mndr_na_min) THEN
-              GOTO 110
+              too_low_density(ift) = .true.
             ELSE
               DO nd=1,nbdirs
                 nbd(nd, icv) = t0d(nd)
@@ -209,21 +210,26 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
           END IF
         ELSE
           DO nd=1,nbdirs
-!srv 25.07.17 {
+! in core, but not part of a flux tube in the mesh => normal correction
             nbd(nd, icv) = nb_d(nd, icv)
-!srv 25.07.17 }
             pbd(nd, icv) = pb_d(nd, icv)
           END DO
           nb(icv) = nb_(icv)
           pb(icv) = pb_(icv)
         END IF
-      END DO
-      GOTO 120
- 100  too_low_density = .true.
-      GOTO 120
- 110  too_low_density = .true.
- 120  IF (too_low_density) THEN
-! cancel smoothing of the correction on the surface if the corrected density is too low
+      ELSE
+        DO nd=1,nbdirs
+! not in core => normal correction
+          nbd(nd, icv) = nb_d(nd, icv)
+          pbd(nd, icv) = pb_d(nd, icv)
+        END DO
+        nb(icv) = nb_(icv)
+        pb(icv) = pb_(icv)
+      END IF
+    END DO
+! cancel smoothing of the correction on the surfaces where the corrected density is too low
+    DO ift=1,mpg%nft
+      IF (too_low_density(ift)) THEN
         DO i=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
           icv = mpg%ftcv(i)
           DO nd=1,nbdirs
@@ -329,7 +335,7 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
   REAL(kind=r8) :: t0, pb_(ncv), nb_(ncv), tt0(mpg%nft), tt1(mpg%nft), &
 & tt2(mpg%nft)
 ! IYS 27.11.2017
-  LOGICAL :: too_low_density
+  LOGICAL :: too_low_density(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST, IPGETR, B2XXGS
 !   ..initialisation
@@ -372,48 +378,52 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
       IF (mpg%cvonclosedsurface(icv)) THEN
 ! IYS 27.03.2019
         ift = mpg%cvft(icv)
-        tt0(ift) = tt0(ift) + geo%cvvol(icv)
-        tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
-        tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          tt0(ift) = tt0(ift) + geo%cvvol(icv)
+          tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
+          tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
+        END IF
       END IF
     END DO
-    DO ift=1,mpg%nft
-! IYS 27.11.2017
-      too_low_density = .false.
 ! Check whether the density and/or pressure falls below the threshold 'b2mndr_na_min'
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
-      DO i=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
-        icv = mpg%ftcv(i)
-        IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
+    too_low_density = .false.
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
           t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(icv)&
 &           -pb(icv)-tt2(ift)/tt0(ift))
           IF (t0 .LT. pb(icv)*switch%b2mndr_na_min/nb(icv)) THEN
-            too_low_density = .true.
-            GOTO 100
+            too_low_density(ift) = .true.
           ELSE
             pb(icv) = t0
 ! IYS 19.12.2017
             t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
 &             icv)-nb(icv)-tt1(ift)/tt0(ift))
             IF (t0 .LT. switch%b2mndr_na_min) THEN
-              too_low_density = .true.
-              GOTO 100
+              too_low_density(ift) = .true.
             ELSE
               nb(icv) = t0
             END IF
           END IF
         ELSE
-!srv 25.07.17 {
+! in core, but not part of a flux tube in the mesh => normal correction
           nb(icv) = nb_(icv)
-!srv 25.07.17 }
           pb(icv) = pb_(icv)
         END IF
-      END DO
- 100  IF (too_low_density) THEN
-! cancel smoothing of the correction on the surface if the corrected density is too low
+      ELSE
+! not in core => normal correction
+        nb(icv) = nb_(icv)
+        pb(icv) = pb_(icv)
+      END IF
+    END DO
+! cancel smoothing of the correction on the surfaces where the corrected density is too low
+    DO ift=1,mpg%nft
+      IF (too_low_density(ift)) THEN
         DO i=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
           icv = mpg%ftcv(i)
           nb(icv) = nb_(icv)

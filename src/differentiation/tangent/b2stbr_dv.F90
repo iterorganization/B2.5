@@ -67,37 +67,7 @@ SUBROUTINE B2STBR_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   USE B2MOD_RUNNING_AVERAGE_DIFFV, ONLY : running_average, &
 & run_av_get_sources
   USE B2MOD_TALLIES_DIFFV
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
+  USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -2376,37 +2346,7 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
   USE B2MOD_RUNNING_AVERAGE_DIFFV, ONLY : running_average, &
 & run_av_get_sources
   USE B2MOD_TALLIES_DIFFV
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
+  USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -4656,6 +4596,7 @@ SUBROUTINE B2STBR_INIT_DV(ns, switch, mpg, mpgd, nbdirs)
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -4758,7 +4699,8 @@ SUBROUTINE B2STBR_INIT_DV(ns, switch, mpg, mpgd, nbdirs)
 !
   CALL READ_NEUTRALS_NAMELIST_DV(ns, mpg, mpgd, switch, &
 &                          new_sputter_namelist, nbdirs)
-  CALL XERTST(nstrat .LE. nstraid, 'Increase DEF_NSTRA in DIMENSIONS.F')
+  CALL XERTST(nstrat .LE. nstraid, &
+&       'Increase DEF_NSTRA in b2mod_dimensions')
   CALL ALLOC_B2MOD_NEUTR_SRC_SCALING(ns, nstrat)
   IF (new_sputter_namelist) CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
   IF (neutrals_time_mod .GT. 0.0_R8) THEN
@@ -4781,7 +4723,7 @@ SUBROUTINE B2STBR_INIT_DV(ns, switch, mpg, mpgd, nbdirs)
 &                           )
     new_sputter_namelist = .true.
     CALL XERTST(nstrat .LE. nstraid, &
-&         'Increase DEF_NSTRA in DIMENSIONS.F')
+&         'Increase DEF_NSTRA in b2mod_dimensions')
     CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
     IF (neutrals_time_mod .GT. 0.0_R8) THEN
       catch_up = MOD(tim, neutrals_time_mod) .GE. neutrals_time_switch &
@@ -4859,6 +4801,7 @@ SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -4956,7 +4899,8 @@ SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
 &   .NE. 0
 !
   CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, new_sputter_namelist)
-  CALL XERTST(nstrat .LE. nstraid, 'Increase DEF_NSTRA in DIMENSIONS.F')
+  CALL XERTST(nstrat .LE. nstraid, &
+&       'Increase DEF_NSTRA in b2mod_dimensions')
   CALL ALLOC_B2MOD_NEUTR_SRC_SCALING(ns, nstrat)
   IF (new_sputter_namelist) CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
   IF (neutrals_time_mod .GT. 0.0_R8) THEN
@@ -4978,7 +4922,7 @@ SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
     CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, .true.)
     new_sputter_namelist = .true.
     CALL XERTST(nstrat .LE. nstraid, &
-&         'Increase DEF_NSTRA in DIMENSIONS.F')
+&         'Increase DEF_NSTRA in b2mod_dimensions')
     CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
     IF (neutrals_time_mod .GT. 0.0_R8) THEN
       catch_up = MOD(tim, neutrals_time_mod) .GE. neutrals_time_switch &

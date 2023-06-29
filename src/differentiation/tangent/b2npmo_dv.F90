@@ -43,9 +43,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
-& mpgd, itcnt, solving, rxf, pl, pld, dv, dvd, rt, rtd, co, cod, sr, srd&
-& , st_ext, st_extd, ierr, nbdirs)
+SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
+& geod, mpg, mpgd, itcnt, solving, rxf, pl, pld, dv, dvd, rt, rtd, co, &
+& cod, sr, srd, st_ext, st_extd, ierr, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -85,7 +85,7 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 !
 !   ..input arguments (unchanged on exit)
 !srv 13.01.17
-  INTEGER :: ncv, nfc, nvx, ns, ismain, itcnt
+  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -241,6 +241,7 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd0
   REAL(kind=r8) :: temp2
+  REAL(r8) :: temp3
   INTEGER :: nbdirs
 !   ..initialisation
 !
@@ -907,8 +908,10 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   IF (switch%ion_vlct_restrict .NE. 0) THEN
 !iyv 19.07.12 { !srv 17.01.14
     DO is=0,ns-1
-      IF (.NOT.is_neutral(is)) THEN
-        DO icv=1,ncv
+      DO icv=1,ncv
+        IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .LE. 1) .OR. (&
+&           switch%tn_style .EQ. 2 .AND. (NINT(zn(is)) .NE. 1 .OR. is &
+&           .NE. ismain0))) THEN
 !iyv 03.02.14
           temp2 = pz(icv)/rz(icv)
           DO nd=1,nbdirs
@@ -924,32 +927,44 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
             END IF
           END DO
           cst = temp2
-          IF (pl%ua(icv, is) .GE. 0.) THEN
-            abs0 = pl%ua(icv, is)
-          ELSE
-            abs0 = -pl%ua(icv, is)
-          END IF
-          IF (abs0 .GT. switch%ion_vlct_restrict_m*cst) THEN
-            vcount(is) = vcount(is) + 1
-            IF (switch%vlct_diagno .GE. 2) THEN
-              WRITE(6, '(a,a,i3,a,i4,a,i4,a)') &
-&             'Parallel velocity restriction applied ', 'to species ', &
-&             is, ' in cell (', icv, '):'
-              WRITE(6, '(a,1p,1e12.5,a,1e12.5,a,1e12.5)') 'Mach ', &
-&             switch%ion_vlct_restrict_m, ': ', switch%&
-&             ion_vlct_restrict_m*cst, ' Ua:', pl%ua(icv, is)
+        ELSE
+          arg1 = pl%tn(icv)/(mp*am(is))
+          temp3 = SQRT(arg1)
+          DO nd=1,nbdirs
+            arg1d(nd) = pld%tn(nd, icv)/(mp*am(is))
+            IF (arg1 .EQ. 0.D0) THEN
+              cstd(nd) = 0.D0
+            ELSE
+              cstd(nd) = arg1d(nd)/(2.0*temp3)
             END IF
-            arg13 = switch%ion_vlct_restrict_m*cst
-            DO nd=1,nbdirs
-!iyv 03.02.14
-              arg13d(nd) = switch%ion_vlct_restrict_m*cstd(nd)
-              pld%ua(nd, icv, is) = SIGN(1.d0, arg13*pl%ua(icv, is))*&
-&               arg13d(nd)
-            END DO
-            pl%ua(icv, is) = SIGN(arg13, pl%ua(icv, is))
+          END DO
+          cst = temp3
+        END IF
+        IF (pl%ua(icv, is) .GE. 0.) THEN
+          abs0 = pl%ua(icv, is)
+        ELSE
+          abs0 = -pl%ua(icv, is)
+        END IF
+        IF (abs0 .GT. switch%ion_vlct_restrict_m*cst) THEN
+          vcount(is) = vcount(is) + 1
+          IF (switch%vlct_diagno .GE. 2) THEN
+            WRITE(6, '(a,a,i3,a,i4,a,i4,a)') &
+&           'Parallel velocity restriction applied ', 'to species ', is&
+&           , ' in cell (', icv, '):'
+            WRITE(6, '(a,1p,1e12.5,a,1e12.5,a,1e12.5)') 'Mach ', switch%&
+&           ion_vlct_restrict_m, ': ', switch%ion_vlct_restrict_m*cst, &
+&           ' Ua:', pl%ua(icv, is)
           END IF
-        END DO
-      END IF
+          arg13 = switch%ion_vlct_restrict_m*cst
+          DO nd=1,nbdirs
+!iyv 03.02.14
+            arg13d(nd) = switch%ion_vlct_restrict_m*cstd(nd)
+            pld%ua(nd, icv, is) = SIGN(1.d0, arg13*pl%ua(icv, is))*&
+&             arg13d(nd)
+          END DO
+          pl%ua(icv, is) = SIGN(arg13, pl%ua(icv, is))
+        END IF
+      END DO
     END DO
     IF (switch%vlct_diagno .GE. 1) THEN
       DO is=0,ns-1
@@ -1011,8 +1026,8 @@ END SUBROUTINE B2NPMO_DV
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-& itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
+SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
+& , mpg, itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -1049,7 +1064,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !
 !   ..input arguments (unchanged on exit)
 !srv 13.01.17
-  INTEGER :: ncv, nfc, nvx, ns, ismain, itcnt
+  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1627,32 +1642,37 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   IF (switch%ion_vlct_restrict .NE. 0) THEN
 !iyv 19.07.12 { !srv 17.01.14
     DO is=0,ns-1
-      IF (.NOT.is_neutral(is)) THEN
-        DO icv=1,ncv
+      DO icv=1,ncv
+        IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .LE. 1) .OR. (&
+&           switch%tn_style .EQ. 2 .AND. (NINT(zn(is)) .NE. 1 .OR. is &
+&           .NE. ismain0))) THEN
 !iyv 03.02.14
           arg13 = pz(icv)/rz(icv)
           cst = SQRT(arg13)
-          IF (pl%ua(icv, is) .GE. 0.) THEN
-            abs0 = pl%ua(icv, is)
-          ELSE
-            abs0 = -pl%ua(icv, is)
+        ELSE
+          arg1 = pl%tn(icv)/(mp*am(is))
+          cst = SQRT(arg1)
+        END IF
+        IF (pl%ua(icv, is) .GE. 0.) THEN
+          abs0 = pl%ua(icv, is)
+        ELSE
+          abs0 = -pl%ua(icv, is)
+        END IF
+        IF (abs0 .GT. switch%ion_vlct_restrict_m*cst) THEN
+          vcount(is) = vcount(is) + 1
+          IF (switch%vlct_diagno .GE. 2) THEN
+            WRITE(6, '(a,a,i3,a,i4,a,i4,a)') &
+&           'Parallel velocity restriction applied ', 'to species ', is&
+&           , ' in cell (', icv, '):'
+            WRITE(6, '(a,1p,1e12.5,a,1e12.5,a,1e12.5)') 'Mach ', switch%&
+&           ion_vlct_restrict_m, ': ', switch%ion_vlct_restrict_m*cst, &
+&           ' Ua:', pl%ua(icv, is)
           END IF
-          IF (abs0 .GT. switch%ion_vlct_restrict_m*cst) THEN
-            vcount(is) = vcount(is) + 1
-            IF (switch%vlct_diagno .GE. 2) THEN
-              WRITE(6, '(a,a,i3,a,i4,a,i4,a)') &
-&             'Parallel velocity restriction applied ', 'to species ', &
-&             is, ' in cell (', icv, '):'
-              WRITE(6, '(a,1p,1e12.5,a,1e12.5,a,1e12.5)') 'Mach ', &
-&             switch%ion_vlct_restrict_m, ': ', switch%&
-&             ion_vlct_restrict_m*cst, ' Ua:', pl%ua(icv, is)
-            END IF
 !iyv 03.02.14
-            arg13 = switch%ion_vlct_restrict_m*cst
-            pl%ua(icv, is) = SIGN(arg13, pl%ua(icv, is))
-          END IF
-        END DO
-      END IF
+          arg13 = switch%ion_vlct_restrict_m*cst
+          pl%ua(icv, is) = SIGN(arg13, pl%ua(icv, is))
+        END IF
+      END DO
     END DO
     IF (switch%vlct_diagno .GE. 1) THEN
       DO is=0,ns-1

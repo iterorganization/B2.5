@@ -120,7 +120,6 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 & dtecd(nbdirsmax, ncv, 0:1), dticd(nbdirsmax, ncv, 0:1), dktcd(&
 & nbdirsmax, ncv), fac_dissd(nbdirsmax), fac_sheathd(nbdirsmax), csfsd(&
 & nbdirsmax, ncv)
-  REAL(kind=r8), SAVE :: lpar_ref=10.0_R8
 !   ..procedures
   INTRINSIC MIN, MAX, SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
@@ -173,7 +172,6 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
       CALL XERTST(icsepomp .GT. 0, &
 &           'Invalid icsepomp value, check rzomp in b2.user.parameters')
     END IF
-    CALL IPGETR('b2sikt_fac_diss_lpar', lpar_ref)
   END IF
 !   ..test nCv, ns
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv')
@@ -396,7 +394,8 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
         END DO
       ELSE IF (switch%b2sikt_fac_diss_core_mode .EQ. 1) THEN
         temp5 = geo%cvvol*(geo%cvbb(:, 3)*geo%cvbb(:, 3))
-        temp4 = geo%cvbb(:, 0)*geo%cvbb(:, 0)*(lpar_ref*lpar_ref)
+        temp4 = geo%cvbb(:, 0)*geo%cvbb(:, 0)*(switch%b2sikt_lpar_ref*&
+&         switch%b2sikt_lpar_ref)
         DO nd=1,nbdirs
           wrk3d(nd, :) = temp5*(pl%kt*cod%sigx_kt(nd, :)+co%sigx_kt*pld%&
 &           kt(nd, :))/temp4
@@ -729,7 +728,6 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 & , wrkg0(ncv, 0:1), wrkg1(ncv, 0:1), wrkg2(ncv, 0:1), dnac(ncv, 0:1), &
 & dlbc(ncv, 0:1), dtec(ncv, 0:1), dtic(ncv, 0:1), dktc(ncv), fac_diss, &
 & fac_sheath, csfs(ncv), connfs(ncv), rhol(ncv)
-  REAL(kind=r8), SAVE :: lpar_ref=10.0_R8
 !   ..procedures
   INTRINSIC MIN, MAX, SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
@@ -766,7 +764,6 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
       CALL XERTST(icsepomp .GT. 0, &
 &           'Invalid icsepomp value, check rzomp in b2.user.parameters')
     END IF
-    CALL IPGETR('b2sikt_fac_diss_lpar', lpar_ref)
   END IF
 !   ..test nCv, ns
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv')
@@ -891,7 +888,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 &         )*geo%cvconn))**2
       ELSE IF (switch%b2sikt_fac_diss_core_mode .EQ. 1) THEN
         wrk3 = co%sigx_kt*geo%cvvol*pl%kt*(geo%cvbb(:, 3)/(geo%cvbb(:, 0&
-&         )*lpar_ref))**2
+&         )*switch%b2sikt_lpar_ref))**2
       ELSE
         result12 = SQRT(pl%kt)
         CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, result12, wrkv, &

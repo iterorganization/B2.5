@@ -369,7 +369,7 @@
           deallocate (regFaces)
           close(70)
 
-          !! OUTER MIPLANE
+          !! OUTER MIDPLANE
           open(70,file=trim(folder)//'midpln.dat')
           allocate (clength_r(1:nomp))
           call calc_dist_nodiff(mpg,geo,omp,nomp,icsepomp,clength_r)
@@ -384,7 +384,7 @@
           deallocate (clength_r)
           close(70)
 
-          !! INNER MIPLANE
+          !! INNER MIDPLANE
           open(70,file=trim(folder)//'midpln_i.dat')
           allocate (clength_r(1:nimp))
           call calc_dist_nodiff(mpg,geo,imp,nimp,icsepimp,clength_r)
@@ -418,8 +418,9 @@
        call my_out_us(70,nCv,0,geo%cvSz,'Cv.Sz')
        call my_out_us(70,nCv,0,geo%cvOnedBsq,'Cv.OnedBsq')
        call my_out_us(70,nCv,0,geo%cvBzB,'Cv.BzB')
-       call my_out_us(70,nCv,0,geo%cvX,'Cv.cRc')          ! R-coordinate of the (ix,iy) cell centre
-       call my_out_us(70,nCv,0,geo%cvY,'Cv.cZc')          ! Z-coordinate of the (ix,iy) cell centre 
+       call my_out_us(70,nCv,0,geo%cvX,'Cv.cRc')                       ! R-coordinate of the (ix,iy) cell centre
+       call my_out_us(70,nCv,0,geo%cvY,'Cv.cZc')                       ! Z-coordinate of the (ix,iy) cell centre 
+       call my_outi_us(70,nCv,0,mpg%cvReg,'Cv.reg')                    !lkw 20.09.2022
          open(70,file=trim(folder)//'czc.dat')                         !srv 26.09.17
          write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
          write(70,hlp_frm) (geo%cvY(ic),ic=1,nCv)

@@ -20,6 +20,7 @@ c
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -59,6 +60,7 @@ c
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -116,6 +118,7 @@ c  shift : data offset in the Eirene arrays
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -157,6 +160,7 @@ c
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -200,6 +204,7 @@ c
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE

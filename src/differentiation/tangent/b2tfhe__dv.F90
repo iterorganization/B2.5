@@ -123,10 +123,10 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: facdriftm, fac_exbm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), dumm0(nfc, 0:1), dumm1(nfc, 0:1), pe(ncv)
+& fhe0_mdf(nfc, 0:1), fhe_32(nfc, 0:1), fhe_52(nfc, 0:1), pe(ncv)
   REAL(kind=r8) :: tefd(nbdirsmax, nfc), nefd(nbdirsmax, nfc), tefhd(&
-& nbdirsmax, nfc), fhe0_mdfd(nbdirsmax, nfc, 0:1), dumm0d(nbdirsmax, nfc&
-& , 0:1), dumm1d(nbdirsmax, nfc, 0:1)
+& nbdirsmax, nfc), fhe0_mdfd(nbdirsmax, nfc, 0:1), fhe_32d(nbdirsmax, &
+& nfc, 0:1), fhe_52d(nbdirsmax, nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -317,15 +317,15 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !
 !   ..apply discretization scheme
   DO nd=1,nbdirsmax
-    dumm0d(nd, :, :) = 0.D0
+    fhe_32d(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
     fhe0_mdfd(nd, :, :) = 0.D0
   END DO
   CALL CALCFLOW_DV(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, geod, &
 &            mpg, mpgd, pl%te, pld%te, floe0_mdf, floe0_mdfd, co%chce, &
-&            cod%chce, fhe0_mdf, fhe0_mdfd, dumm0, dumm0d, dumm1, dumm1d&
-&            , nbdirs)
+&            cod%chce, fhe0_mdf, fhe0_mdfd, fhe_32, fhe_32d, fhe_52, &
+&            fhe_52d, nbdirs)
   alfe0 = co%calf(:, 0)
   tefh = tef
   DO nd=1,nbdirs
@@ -372,7 +372,6 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   END DO
   dv%floe = dv%floe + floe0
   dv%cone(:, :, 0) = dv%cone(:, :, 0) + cone0
-!srv 18.06.08 }
 !
 !
 !
@@ -431,6 +430,10 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 &                   'b2tfhe__fhe_mdf_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
 &                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
 &                   'b2tfhe__fhePSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
@@ -439,6 +442,20 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !srv 13.01.17
     CALL MY_OUT_US(70, nfc, 1, ehy, 'b2tfhe__eh_r')
 !srv 13.01.17
+  END IF
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 0), &
+&                   'b2tfhe__fhe_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
+&                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
+&                   'b2tfhe__fhePSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
+&                   'b2tfhe__fhePSch_r')
   END IF
 ! ..return
   ncall_b2tfhe = ncall_b2tfhe + 1
@@ -542,7 +559,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
   REAL(kind=r8) :: facdriftm, fac_exbm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), dumm0(nfc, 0:1), dumm1(nfc, 0:1), pe(ncv)
+& fhe0_mdf(nfc, 0:1), fhe_32(nfc, 0:1), fhe_52(nfc, 0:1), pe(ncv)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -665,7 +682,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, mpg&
-&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, dumm0, dumm1)
+&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, fhe_32, fhe_52)
 !
 !   ..compute fluxes
   alfe0 = co%calf(:, 0)
@@ -689,7 +706,6 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !    this on mdf /= 0?
   dv%floe = dv%floe + floe0
   dv%cone(:, :, 0) = dv%cone(:, :, 0) + cone0
-!srv 18.06.08 }
 !
 !
 !
@@ -748,6 +764,10 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 &                   'b2tfhe__fhe_mdf_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
 &                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
 &                   'b2tfhe__fhePSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
@@ -756,6 +776,20 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !srv 13.01.17
     CALL MY_OUT_US(70, nfc, 1, ehy, 'b2tfhe__eh_r')
 !srv 13.01.17
+  END IF
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 0), &
+&                   'b2tfhe__fhe_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
+&                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
+&                   'b2tfhe__fhePSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
+&                   'b2tfhe__fhePSch_r')
   END IF
 ! ..return
   ncall_b2tfhe = ncall_b2tfhe + 1

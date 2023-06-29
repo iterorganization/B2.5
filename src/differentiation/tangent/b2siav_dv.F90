@@ -87,7 +87,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ic, icv, ift, k
+  INTEGER :: ic, icv, ifc, ift, k
   INTEGER, SAVE :: nsmooth=2
 !srv 17.06.02
   CHARACTER :: chns*3, chk*1
@@ -205,6 +205,26 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
             END DO
           END IF
         END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            DO nd=1,nbdirs
+              qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc, 1))
+            END DO
+            qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
+          END IF
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+            DO nd=1,nbdirs
+              qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc, 2))
+            END DO
+            qip0(mpg%fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
+          END IF
+        END DO
 !smoothing: interpolate to faces and back to cell centers
 !
         wght = 1.0_R8
@@ -216,6 +236,26 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 &                   wrkfd, nbdirs)
           CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, qip0&
 &                   , qip0d, nbdirs)
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+          DO ifc=1,nfc
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+              DO nd=1,nbdirs
+                qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc, 1)&
+&                 )
+              END DO
+              qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
+            END IF
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+              DO nd=1,nbdirs
+                qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc, 2)&
+&                 )
+              END DO
+              qip0(mpg%fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
+            END IF
+          END DO
         END DO
       ELSE
         DO nd=1,nbdirsmax
@@ -246,6 +286,26 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
               qip0(icv) = -(geo%cvbb(icv, 3)*(hcix_c(icv)*gti(icv, 0)/&
 &               geo%cvbb(icv, 0))) - temp1*(temp*gti(icv, 1)/temp0)
             END DO
+          END IF
+        END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            DO nd=1,nbdirs
+              qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc, 1))
+            END DO
+            qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
+          END IF
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+            DO nd=1,nbdirs
+              qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc, 2))
+            END DO
+            qip0(mpg%fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
           END IF
         END DO
       END IF
@@ -365,6 +425,34 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
           END DO
         END IF
       END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy values of tauia1, nu1, alpha1 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+      DO ifc=1,nfc
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+          DO nd=1,nbdirs
+            tauia1d(nd, mpg%fccv(ifc, 2)) = tauia1d(nd, mpg%fccv(ifc, 1)&
+&             )
+            alpha1d(nd, mpg%fccv(ifc, 2)) = alpha1d(nd, mpg%fccv(ifc, 1)&
+&             )
+          END DO
+          tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
+          alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
+        END IF
+        IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          DO nd=1,nbdirs
+            tauia1d(nd, mpg%fccv(ifc, 1)) = tauia1d(nd, mpg%fccv(ifc, 2)&
+&             )
+            alpha1d(nd, mpg%fccv(ifc, 1)) = alpha1d(nd, mpg%fccv(ifc, 2)&
+&             )
+          END DO
+          tauia1(mpg%fccv(ifc, 1)) = tauia1(mpg%fccv(ifc, 2))
+          alpha1(mpg%fccv(ifc, 1)) = alpha1(mpg%fccv(ifc, 2))
+        END IF
+      END DO
       arg10(:) = te + ti
       temp7 = SQRT(arg10(:))
       result10 = temp7
@@ -411,6 +499,19 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 !         corresponding to parallel viscosity connected with heat flow
       CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk0, &
 &               wrk0d, wrkv, wrkvd, wrk1, wrk1d, nbdirs)
+!zero out spurious contributions outside of separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+      DO icv=1,ncv
+        IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+          DO nd=1,nbdirs
+            wrk1d(nd, icv) = 0.D0
+          END DO
+          wrk1(icv) = 0.0_R8
+        END IF
+      END DO
+!calculate the actual source
+!
       arg11(:) = geo%cvbb(:, 3)
       result11 = SQRT(arg11(:))
       DO nd=1,nbdirsmax
@@ -616,7 +717,7 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ic, icv, ift, k
+  INTEGER :: ic, icv, ifc, ift, k
   INTEGER, SAVE :: nsmooth=2
 !srv 17.06.02
   CHARACTER :: chns*3, chk*1
@@ -694,12 +795,34 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
             END DO
           END IF
         END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc, 2&
+&           )) = qip0(mpg%fccv(ifc, 1))
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, 1)&
+&           ) = qip0(mpg%fccv(ifc, 2))
+        END DO
 !smoothing: interpolate to faces and back to cell centers
 !
         wght = 1.0_R8
         DO k=1,nsmooth
           CALL INTFACE(ncv, nfc, mpg%fccv, wght, qip0, wrkf)
           CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, qip0)
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+          DO ifc=1,nfc
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc&
+&             , 2)) = qip0(mpg%fccv(ifc, 1))
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, &
+&             1)) = qip0(mpg%fccv(ifc, 2))
+          END DO
         END DO
       END IF
 !
@@ -716,6 +839,18 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
 &               , 0)*geo%cvbb(icv, 3))*(ni(icv)*ti(icv)/qe)*gti(icv, 1)
             END DO
           END IF
+        END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy value of qip0 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+        DO ifc=1,nfc
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc, 2&
+&           )) = qip0(mpg%fccv(ifc, 1))
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, 1)&
+&           ) = qip0(mpg%fccv(ifc, 2))
         END DO
       END IF
 !
@@ -764,6 +899,22 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
           END DO
         END IF
       END DO
+!to ensure that subsequent steps lead to well-defined value on separatrix:
+!copy values of tauia1, nu1, alpha1 across separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+      DO ifc=1,nfc
+        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+          tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
+          alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
+        END IF
+        IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+          tauia1(mpg%fccv(ifc, 1)) = tauia1(mpg%fccv(ifc, 2))
+          alpha1(mpg%fccv(ifc, 1)) = alpha1(mpg%fccv(ifc, 2))
+        END IF
+      END DO
 !
 !       ..compute qip1
       arg10(:) = te + ti
@@ -787,6 +938,14 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
 !       ..finally calculate the r.h.s. contribution to the parallel balance
 !         corresponding to parallel viscosity connected with heat flow
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrk0, wrkv, wrk1)
+!zero out spurious contributions outside of separatrix
+!wdk todo: rationalize this when separatrix-structure is introduced?
+!
+      DO icv=1,ncv
+        IF (.NOT.mpg%cvonclosedsurface(icv)) wrk1(icv) = 0.0_R8
+      END DO
+!calculate the actual source
+!
       arg11(:) = geo%cvbb(:, 3)
       result11 = SQRT(arg11(:))
       smbvh(:, 0) = switch%addvis*geo%cvvol*geo%cvbb(:, 0)*result11*geo%&

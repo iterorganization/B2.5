@@ -20,6 +20,7 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2US_GEO_DIFFV
   USE CARRE_CONSTANTS
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -29,39 +30,8 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
 !*  lcbs          : boundary segments representing the core boundary in B2
 !*  ncbs          : number of these boundary segments
 !ank }
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
   INTEGER :: nbcd, nnisod
-  PARAMETER (nbcd=6*(4/2+1), nnisod=10)
+  PARAMETER (nbcd=def_nbc, nnisod=def_niso)
   REAL(kind=r8), SAVE :: conpar(0:nsdmax-1, nbcd, 3)
   REAL(kind=r8), SAVE :: conpard(nbdirsmax, 0:nsdmax-1, nbcd, 3)
   REAL(kind=r8), SAVE :: mompar(0:nsdmax-1, nbcd, 2)
@@ -81,9 +51,9 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
   INTEGER, SAVE :: abcstart(nbcd)
   INTEGER, SAVE :: abcend(nbcd)
   INTEGER, SAVE :: bc_list_size(nbcd)
-  INTEGER, SAVE :: bc_list_x(2*(200+100), nbcd)
-  INTEGER, SAVE :: bc_list_y(2*(200+100), nbcd)
-  CHARACTER, SAVE :: bc_list_char(2*(200+100), nbcd)
+  INTEGER, SAVE :: bc_list_x(2*(def_nxd+def_nyd), nbcd)
+  INTEGER, SAVE :: bc_list_y(2*(def_nxd+def_nyd), nbcd)
+  CHARACTER, SAVE :: bc_list_char(2*(def_nxd+def_nyd), nbcd)
   INTEGER, SAVE :: bccon(0:nsdmax-1, nbcd)
   INTEGER, SAVE :: bcmom(0:nsdmax-1, nbcd)
   INTEGER, SAVE :: bcene(nbcd)
@@ -100,8 +70,8 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
   REAL(kind=r8), SAVE :: niiso(0:nsdmax-1)
   INTEGER, SAVE :: lcbs(nbcd)
   INTEGER, SAVE :: nbcfaces(nbcd)
-  INTEGER, SAVE :: bc_faces(2*(200+100), nbcd)
-  REAL(kind=r8), SAVE :: bc_face_ori(2*(200+100), nbcd)
+  INTEGER, SAVE :: bc_faces(2*(def_nxd+def_nyd), nbcd)
+  REAL(kind=r8), SAVE :: bc_face_ori(2*(def_nxd+def_nyd), nbcd)
 !
   INTEGER, SAVE :: nbc, nniso, ncbs
   REAL(kind=r8), SAVE :: gammai, gammae, teiso, tiiso, phiiso
@@ -158,8 +128,9 @@ CONTAINS
 !WG_TODO for now: call alloc_b2mod_boundary with dummy nx=1,ny=1;
     CALL ALLOC_B2MOD_BOUNDARY(1, 1, ns, nbcd, nnisod)
     CALL READ_B2MOD_BOUNDARY_NAMELIST_DV(ns, mpg, mpgd, .true., nbdirs)
-    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-    CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F')
+    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+    CALL XERTST(nniso .LE. nnisod, &
+&         'increase DEF_NISO in b2mod_dimensions')
     CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
     IF (boundary_time_mod .GT. 0.0_R8) THEN
       arg1 = tim/boundary_time_mod
@@ -179,9 +150,9 @@ CONTAINS
       WRITE(*, *) 'b2stbc: catching up ...'
       CALL READ_B2MOD_BOUNDARY_NAMELIST_DV(ns, mpg, mpgd, .true., nbdirs&
 &                                   )
-      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F'&
-&          )
+      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+      CALL XERTST(nniso .LE. nnisod, &
+&           'increase DEF_NISO in b2mod_dimensions')
       CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
       IF (boundary_time_mod .GT. 0.0_R8) THEN
         catch_up = boundary_time_switch .GT. 0.0_R8 .AND. MOD(tim, &
@@ -214,8 +185,9 @@ CONTAINS
 !WG_TODO for now: call alloc_b2mod_boundary with dummy nx=1,ny=1;
     CALL ALLOC_B2MOD_BOUNDARY(1, 1, ns, nbcd, nnisod)
     CALL READ_B2MOD_BOUNDARY_NAMELIST(ns, mpg, .true.)
-    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-    CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F')
+    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+    CALL XERTST(nniso .LE. nnisod, &
+&         'increase DEF_NISO in b2mod_dimensions')
     CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
     IF (boundary_time_mod .GT. 0.0_R8) THEN
       arg1 = tim/boundary_time_mod
@@ -234,9 +206,9 @@ CONTAINS
     DO WHILE (catch_up)
       WRITE(*, *) 'b2stbc: catching up ...'
       CALL READ_B2MOD_BOUNDARY_NAMELIST(ns, mpg, .true.)
-      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F'&
-&          )
+      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+      CALL XERTST(nniso .LE. nnisod, &
+&           'increase DEF_NISO in b2mod_dimensions')
       CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
       IF (boundary_time_mod .GT. 0.0_R8) THEN
         catch_up = boundary_time_switch .GT. 0.0_R8 .AND. MOD(tim, &
@@ -288,9 +260,9 @@ CONTAINS
         bc_elm_count = INT(arg1)
       END IF
       CALL READ_B2MOD_BOUNDARY_NAMELIST(ns, mpg, .true.)
-      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F'&
-&          )
+      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+      CALL XERTST(nniso .LE. nnisod, &
+&           'increase DEF_NISO in b2mod_dimensions')
       CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
     END IF
     RETURN

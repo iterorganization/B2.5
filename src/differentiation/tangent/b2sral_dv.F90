@@ -145,9 +145,9 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 & b2mod_math_initialised, small_r4_constant
   USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
   USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, my_out_folder, &
-& ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, &
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
+& filename_b2w, ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, &
+& ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, &
+& ncall_b2sqcx, ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -811,9 +811,9 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 & small_r4_constant
   USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
   USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, my_out_folder, &
-& ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, &
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
+& filename_b2w, ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, &
+& ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, &
+& ncall_b2sqcx, ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE

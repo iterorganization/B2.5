@@ -20,6 +20,7 @@ MODULE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
+!
   PRIVATE 
   PUBLIC :: alloc_mapping, dealloc_mapping, alloc_mapping_bc, &
 & dealloc_mapping_bc, alloc_mapping_rc, dealloc_mapping_rc, &
@@ -30,14 +31,14 @@ MODULE B2US_MAP_DIFFV
 & alloc_mapping_cf_dv, dealloc_mapping_cf_dv, read_mapping_dv
 !
 ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
-!         listing for every cell the corresponding face numbers 
+!         listing for every cell the corresponding face numbers
 ! (nFc,2) listing for every face the two corresponding cells
 ! (nFc,2) listing for every face the two corresponding vertices
-! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices 
-!         listing for every cell the corresponding vertex numbers        
-! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces  
+! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices
+!         listing for every cell the corresponding vertex numbers
+! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces
 !         listing for every vertex the corresponding face numbers
-! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
+! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells
 !         listing for every vertex the corresponding cell numbers
 ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
 !         listing for every flux tube the corresponding cell numbers
@@ -46,7 +47,7 @@ MODULE B2US_MAP_DIFFV
 !         listing for every cell the corresponding flux tube
 ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
 !         listing for every flux surface the corresponding cell face numbers
-! Region numbers of the cell faces 
+! Region numbers of the cell faces
 ! Region numbers of the cells
 ! Region numbers of the flux tubes
 ! Logical to indicate whether a cell is on a closed flux surface
@@ -84,7 +85,7 @@ MODULE B2US_MAP_DIFFV
 ! back projection of cv indices to structured grid
 ! back projection of fc indices for x-faces to structured grid
 ! back projection of fc indices for y-faces to structured grid
-! back projection of Vx indices to structured grid 
+! back projection of Vx indices to structured grid
 !
 ! corner indices; to be used in converting target information
 ! indices of central cuts; to be used in converting triangle information
@@ -92,6 +93,7 @@ MODULE B2US_MAP_DIFFV
 ! (nFc) indicates for each face the corresponding face label
 ! (nFt) indicates for each flux tube the corresponding label
 ! (nCv) indicates for each control volume the corresponding label
+!
   TYPE, PUBLIC :: MAPPING
       INTEGER :: ncv, nfc, nvx, ncg, nci, ncmxvx, ncmxfc, nvmxcv, nvmxfc&
 &     , nfs, nft, nbc, mxnbc, nrc, mxnrc, ncmxnv, ncf, mxncf, mxstencil
@@ -327,6 +329,7 @@ CONTAINS
         md0%cvonclosedsurface(nd, 1:m%ncv) = .true.
       END DO
       ALLOCATE(m%cvonclosedsurface(m%ncv))
+!
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
       ALLOCATE(md0%intcellp(nbdirsmax, m%ncmxfc))
@@ -340,16 +343,8 @@ CONTAINS
       END DO
       ALLOCATE(m%intcellr(m%ncmxfc))
 !
-      ALLOCATE(md0%cvnvp(nbdirsmax, m%ncv, 2))
-      DO nd=1,nbdirsmax
-        md0%cvnvp(nd, 1:m%ncv, 1:2) = 0
-      END DO
-      ALLOCATE(m%cvnvp(m%ncv, 2))
-      ALLOCATE(md0%cvnv(nbdirsmax, m%ncmxnv))
-      DO nd=1,nbdirsmax
-        md0%cvnv(nd, 1:m%ncmxnv) = 0
-      END DO
-      ALLOCATE(m%cvnv(m%ncmxnv))
+!      allocate (m%cvNvP(m%nCv,2))
+!      allocate (m%cvNv(m%nCmxNv))
 !
       IF (m%isclassicalgrid .EQ. 1) THEN
         ALLOCATE(md0%imapcv(nbdirsmax, -1:m%nx, -1:m%ny))
@@ -471,13 +466,14 @@ CONTAINS
       ALLOCATE(m%cvreg(m%ncv))
       ALLOCATE(m%ftreg(m%nft))
       ALLOCATE(m%cvonclosedsurface(m%ncv))
+!
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
       ALLOCATE(m%intcellp(m%ncmxfc))
       ALLOCATE(m%intcellr(m%ncmxfc))
 !
-      ALLOCATE(m%cvnvp(m%ncv, 2))
-      ALLOCATE(m%cvnv(m%ncmxnv))
+!      allocate (m%cvNvP(m%nCv,2))
+!      allocate (m%cvNv(m%nCmxNv))
 !
       IF (m%isclassicalgrid .EQ. 1) THEN
         ALLOCATE(m%imapcv(-1:m%nx, -1:m%ny))
@@ -512,6 +508,7 @@ CONTAINS
     END IF
   END SUBROUTINE ALLOC_MAPPING
 
+!
 !*********************************************************************
 !
   SUBROUTINE INITIALIZE_MAPPING(m)
@@ -538,13 +535,14 @@ CONTAINS
     m%cvreg = 0
     m%ftreg = 0
     m%cvonclosedsurface = .false.
+!
 !      m%intfaceV = 0._R8
 !      m%intvertexV = 0._R8
     m%intcellp = 0._R8
     m%intcellr = 0_R8
 !
-    m%cvnvp = 0
-    m%cvnv = 0
+!      m%cvNvP = 0
+!      m%cvNv = 0
 !
     IF (m%isclassicalgrid .EQ. 1) THEN
       m%imapcv = 0
@@ -665,8 +663,8 @@ CONTAINS
       END IF
       DEALLOCATE(m%cvonclosedsurface)
 !
-!      deallocate (m%intfaceV) 
-!      deallocate (m%intvertexV) 
+!      deallocate (m%intfaceV)
+!      deallocate (m%intvertexV)
       IF (ALLOCATED(md0%intcellp)) THEN
         DEALLOCATE(md0%intcellp)
       END IF
@@ -676,14 +674,19 @@ CONTAINS
       END IF
       DEALLOCATE(m%intcellr)
 !
-      IF (ALLOCATED(md0%cvnvp)) THEN
-        DEALLOCATE(md0%cvnvp)
+      IF (ALLOCATED(m%cvnvp)) THEN
+        IF (ALLOCATED(md0%cvnvp)) THEN
+          DEALLOCATE(md0%cvnvp)
+        END IF
+        DEALLOCATE(m%cvnvp)
       END IF
-      DEALLOCATE(m%cvnvp)
-      IF (ALLOCATED(md0%cvnv)) THEN
-        DEALLOCATE(md0%cvnv)
+      IF (ALLOCATED(m%cvnv)) THEN
+        IF (ALLOCATED(md0%cvnv)) THEN
+          DEALLOCATE(md0%cvnv)
+        END IF
+        DEALLOCATE(m%cvnv)
       END IF
-      DEALLOCATE(m%cvnv)
+!
       IF (ALLOCATED(md0%imapcv)) THEN
         DEALLOCATE(md0%imapcv)
       END IF
@@ -720,6 +723,7 @@ CONTAINS
         DEALLOCATE(md0%cvlbl)
       END IF
       DEALLOCATE(m%cvlbl)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_DV
@@ -761,13 +765,18 @@ CONTAINS
       DEALLOCATE(m%ftreg)
       DEALLOCATE(m%cvonclosedsurface)
 !
-!      deallocate (m%intfaceV) 
-!      deallocate (m%intvertexV) 
+!      deallocate (m%intfaceV)
+!      deallocate (m%intvertexV)
       DEALLOCATE(m%intcellp)
       DEALLOCATE(m%intcellr)
 !
-      DEALLOCATE(m%cvnvp)
-      DEALLOCATE(m%cvnv)
+      IF (ALLOCATED(m%cvnvp)) THEN
+        DEALLOCATE(m%cvnvp)
+      END IF
+      IF (ALLOCATED(m%cvnv)) THEN
+        DEALLOCATE(m%cvnv)
+      END IF
+!
       DEALLOCATE(m%imapcv)
       DEALLOCATE(m%imapfcx)
       DEALLOCATE(m%imapfcy)
@@ -780,6 +789,7 @@ CONTAINS
       DEALLOCATE(m%fclbl)
       DEALLOCATE(m%ftlbl)
       DEALLOCATE(m%cvlbl)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING
@@ -906,6 +916,7 @@ CONTAINS
         DEALLOCATE(md0%bcfcor)
       END IF
       DEALLOCATE(m%bcfcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_BC_DV
@@ -928,6 +939,7 @@ CONTAINS
       DEALLOCATE(m%bcfcp)
       DEALLOCATE(m%bcfc)
       DEALLOCATE(m%bcfcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_BC
@@ -1192,6 +1204,7 @@ CONTAINS
         DEALLOCATE(md0%cffcor)
       END IF
       DEALLOCATE(m%cffcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_CF_DV
@@ -1213,6 +1226,7 @@ CONTAINS
       DEALLOCATE(m%cfreg)
       DEALLOCATE(m%cfoncv)
       DEALLOCATE(m%cffcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_CF
@@ -1401,12 +1415,12 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: i, icv, ivx, ivx1, inv, inv1, inv2, invmx
-    INTEGER, ALLOCATABLE :: indcv(:)
+    INTEGER, ALLOCATABLE :: indcv(:), cvnvloc(:)
     INTRINSIC MAXVAL
     EXTERNAL XERRAB
     INTRINSIC MOD
 !wdk  This initialization routine precomputes a number of arrays
-!wdk  in the mapping that are not stored in the b2fgmtry file, but 
+!wdk  in the mapping that are not stored in the b2fgmtry file, but
 !wdk  can be derived directly from data in that file
 !
 !   ..regions
@@ -1425,9 +1439,11 @@ CONTAINS
     END IF
 !
 !   ..set up connectivity information for the matrix stencil
-!
-    ALLOCATE(indcv(4*4+4+1))
-! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
+    ALLOCATE(m%cvnvp(m%ncv, 2))
+    ALLOCATE(cvnvloc(10*m%ncv))
+! initial overestimate of size cvNv array
+    ALLOCATE(indcv(100))
+! (over)estimate of max number number of neighbors an individual cell could have
 !
     inv = 1
     DO icv=1,m%ncv
@@ -1446,25 +1462,33 @@ CONTAINS
         invmx = invmx + m%vxcvp(ivx1, 2)
       END DO
 ! remove duplicates
-      m%cvnv(m%cvnvp(icv, 1)) = indcv(1)
+      cvnvloc(m%cvnvp(icv, 1)) = indcv(1)
       i = 1
 ! TODO: sort by cell number, keeping first cell fixed (main diagonal)
       DO 100 inv1=2,invmx
         DO inv2=1,i
-          IF (m%cvnv(m%cvnvp(icv, 1)+inv2-1) .EQ. indcv(inv1)) GOTO 100
+          IF (cvnvloc(m%cvnvp(icv, 1)+inv2-1) .EQ. indcv(inv1)) GOTO 100
         END DO
 ! duplicate element
 ! new element found
         i = i + 1
-        m%cvnv(m%cvnvp(icv, 1)+i-1) = indcv(inv1)
+        cvnvloc(m%cvnvp(icv, 1)+i-1) = indcv(inv1)
  100  CONTINUE
       m%cvnvp(icv, 2) = i
       inv = inv + i
     END DO
+! allocate and fill m%cvNv
+!
+    m%ncmxnv = inv - 1
+    ALLOCATE(m%cvnv(m%ncmxnv))
+    m%cvnv = cvnvloc(1:m%ncmxnv)
 !
 !csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
+! clean up
     m%mxstencil = MAXVAL(m%cvnvp(1:m%ncv, 2))
 !
+!
+    DEALLOCATE(cvnvloc)
     DEALLOCATE(indcv)
 !
 !

@@ -338,7 +338,7 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..extensive tests on first few calls
   IF (ncall_b2tqna .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG_NODIFF(nfc, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
     arg11 = ncv*ns
     CALL B2XVSG_NODIFF(arg11, pl%na, 1, 'na', '.gt.')
@@ -1481,7 +1481,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..extensive tests on first few calls
   IF (ncall_b2tqna .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG_NODIFF(nfc, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
     arg11 = ncv*ns
     CALL B2XVSG_NODIFF(arg11, pl%na, 1, 'na', '.gt.')
