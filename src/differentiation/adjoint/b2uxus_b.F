@@ -86,14 +86,14 @@
        call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux9p_cpu', cpu)
        if(style.eq.2) then
-         mult_nonzero=10
+         mult_nonzero=1
          mult_solvdim=15
          mult_solvdim1=10
          call ipgeti ('b2uxus_mult_nonzero', mult_nonzero)
          call ipgeti ('b2uxus_mult_solvdim', mult_solvdim)
          call ipgeti ('b2uxus_mult_solvdim1', mult_solvdim1)
          nnd=nCv
-         n_nonzeros=mpg%nCmxNv
+         n_nonzeros=mult_nonzero*mpg%nCmxNv
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
          call alloc_b2mod_ma28_for_us                                  !sv 13.10.06

@@ -70,37 +70,7 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
   USE B2MOD_RUNNING_AVERAGE_DIFF, ONLY : running_average, &
 & run_av_get_sources
   USE B2MOD_TALLIES_DIFF
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
+  USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -1952,13 +1922,13 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
   EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, smax, smin, &
 &     GET_JSEP
   REAL(kind=r8) :: smax, smin
+  INTRINSIC MOD
 !   ..initialisation
   SAVE sput_src, sput_chem_model, reflection_on, sputter_energy_on
   INTRINSIC SUM
   EXTERNAL FIND_FILE
   INTRINSIC TRIM
   EXTERNAL CHECK_CDF_STATUS
-  INTRINSIC MOD
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -2074,13 +2044,13 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
       CALL PUSHREAL8(int1l, r8/8)
       CALL PUSHREAL8(int4r, r8/8)
       CALL PUSHREAL8(int4l, r8/8)
-      CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
-      CALL PUSHINTEGER4(ncall_b2stbr_phys)
-      CALL PUSHCHARACTERARRAY(my_out_folder, 7)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
       CALL PUSHREAL4(small_r4_constant, r4/8)
+      CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
+      CALL PUSHINTEGER4(ncall_b2stbr_phys)
+      CALL PUSHCHARACTERARRAY(my_out_folder, 7)
       CALL PUSHREAL8ARRAY(kin_frac_hyb, r8*mpg%nfc/8)
       CALL PUSHREAL8ARRAY(fluid_frac_hyb, r8*nfc/8)
       CALL PUSHREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
@@ -2301,13 +2271,13 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
     CALL POPREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
     CALL POPREAL8ARRAY(fluid_frac_hyb, r8*nfc/8)
     CALL POPREAL8ARRAY(kin_frac_hyb, r8*mpg%nfc/8)
+    CALL POPCHARACTERARRAY(my_out_folder, 7)
+    CALL POPINTEGER4(ncall_b2stbr_phys)
+    CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
     CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPCHARACTERARRAY(my_out_folder, 7)
-    CALL POPINTEGER4(ncall_b2stbr_phys)
-    CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
     CALL POPREAL8(int4l, r8/8)
     CALL POPREAL8(int4r, r8/8)
     CALL POPREAL8(int1l, r8/8)
@@ -2416,37 +2386,7 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
   USE B2MOD_RUNNING_AVERAGE_DIFF, ONLY : running_average, &
 & run_av_get_sources
   USE B2MOD_TALLIES_DIFF
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
+  USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -4291,13 +4231,13 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
   EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, smax, smin, &
 &     GET_JSEP
   REAL(kind=r8) :: smax, smin
+  INTRINSIC MOD
 !   ..initialisation
   SAVE sput_src, sput_chem_model, reflection_on, sputter_energy_on
   INTRINSIC SUM
   EXTERNAL FIND_FILE
   INTRINSIC TRIM
   EXTERNAL CHECK_CDF_STATUS
-  INTRINSIC MOD
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -4694,6 +4634,7 @@ SUBROUTINE B2STBR_INIT_B(ns, switch, mpg, mpgb)
   USE B2MOD_SWITCHES_DIFF
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
@@ -4792,7 +4733,8 @@ SUBROUTINE B2STBR_INIT_B(ns, switch, mpg, mpgb)
 !
   CALL READ_NEUTRALS_NAMELIST_B(ns, mpg, mpgb, switch, &
 &                         new_sputter_namelist)
-  CALL XERTST(nstrat .LE. nstraid, 'Increase DEF_NSTRA in DIMENSIONS.F')
+  CALL XERTST(nstrat .LE. nstraid, &
+&       'Increase DEF_NSTRA in b2mod_dimensions')
   CALL ALLOC_B2MOD_NEUTR_SRC_SCALING(ns, nstrat)
   IF (new_sputter_namelist) CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
   IF (neutrals_time_mod .GT. 0.0_R8) THEN
@@ -4813,7 +4755,7 @@ SUBROUTINE B2STBR_INIT_B(ns, switch, mpg, mpgb)
     CALL READ_NEUTRALS_NAMELIST_B(ns, mpg, mpgb, switch, .true.)
     new_sputter_namelist = .true.
     CALL XERTST(nstrat .LE. nstraid, &
-&         'Increase DEF_NSTRA in DIMENSIONS.F')
+&         'Increase DEF_NSTRA in b2mod_dimensions')
     CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
     IF (neutrals_time_mod .GT. 0.0_R8) THEN
       catch_up = MOD(tim, neutrals_time_mod) .GE. neutrals_time_switch &
@@ -4891,6 +4833,7 @@ SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
   USE B2MOD_SWITCHES_DIFF
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
@@ -4986,7 +4929,8 @@ SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
 &   .NE. 0
 !
   CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, new_sputter_namelist)
-  CALL XERTST(nstrat .LE. nstraid, 'Increase DEF_NSTRA in DIMENSIONS.F')
+  CALL XERTST(nstrat .LE. nstraid, &
+&       'Increase DEF_NSTRA in b2mod_dimensions')
   CALL ALLOC_B2MOD_NEUTR_SRC_SCALING(ns, nstrat)
   IF (new_sputter_namelist) CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
   IF (neutrals_time_mod .GT. 0.0_R8) THEN
@@ -5007,7 +4951,7 @@ SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
     CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, .true.)
     new_sputter_namelist = .true.
     CALL XERTST(nstrat .LE. nstraid, &
-&         'Increase DEF_NSTRA in DIMENSIONS.F')
+&         'Increase DEF_NSTRA in b2mod_dimensions')
     CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
     IF (neutrals_time_mod .GT. 0.0_R8) THEN
       catch_up = MOD(tim, neutrals_time_mod) .GE. neutrals_time_switch &

@@ -147,39 +147,9 @@ CONTAINS
 &   inseltop, inselbot, istyle)
 !
     USE B2MOD_TYPES
+    USE B2MOD_DIMENSIONS
     IMPLICIT NONE
 !!   ..input arguments (unchanged on exit)
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !
     INTEGER, INTENT(IN) :: nx, ny, istyle, periodic_bc
 !!   .. output arguments
@@ -635,10 +605,10 @@ CONTAINS
       ELSE
         nncut = nncut
       END IF
-      IF (nncut .GT. 4) THEN
-        WRITE(*, *) ' Increase DEF_NCUT in DIMENSIONS.F!'
-        WRITE(*, *) ' nncut = ', nncut, ' DEF_NCUT = ', 4
-        CALL XERTST(nncut .LE. 4, 'faulty parameter DEF_NCUT')
+      IF (nncut .GT. def_ncut) THEN
+        WRITE(*, *) ' Increase DEF_NCUT in b2mod_dimensions!'
+        WRITE(*, *) ' nncut = ', nncut, ' DEF_NCUT = ', def_ncut
+        CALL XERTST(nncut .LE. def_ncut, 'faulty parameter DEF_NCUT')
 !
       END IF
     END DO

@@ -331,13 +331,17 @@ SUBROUTINE B2UPHT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
-      tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
-      tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
-      tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
-      tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
-      CALL PUSHCONTROL1B(1)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+        tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
+        tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
+        tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
+        tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
+        CALL PUSHCONTROL2B(2)
+      ELSE
+        CALL PUSHCONTROL2B(1)
+      END IF
     ELSE
-      CALL PUSHCONTROL1B(0)
+      CALL PUSHCONTROL2B(0)
     END IF
   END DO
 !
@@ -346,17 +350,21 @@ SUBROUTINE B2UPHT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
-      CALL PUSHREAL8(dti1(icv), r8/8)
-      dti1(icv) = tt1(ift)/tt0(ift) + corr_core_dt*(dti1(icv)-tt1(ift)/&
-&       tt0(ift))
+        CALL PUSHREAL8(dti1(icv), r8/8)
+        dti1(icv) = tt1(ift)/tt0(ift) + corr_core_dt*(dti1(icv)-tt1(ift)&
+&         /tt0(ift))
 ! IYS 19.12.2017
-      CALL PUSHREAL8(dte1(icv), r8/8)
-      dte1(icv) = tt3(ift)/tt2(ift) + corr_core_dt*(dte1(icv)-tt3(ift)/&
-&       tt2(ift))
-      CALL PUSHCONTROL1B(0)
+        CALL PUSHREAL8(dte1(icv), r8/8)
+        dte1(icv) = tt3(ift)/tt2(ift) + corr_core_dt*(dte1(icv)-tt3(ift)&
+&         /tt2(ift))
+        CALL PUSHCONTROL2B(0)
+      ELSE
+        CALL PUSHCONTROL2B(1)
+      END IF
     ELSE
-      CALL PUSHCONTROL1B(1)
+      CALL PUSHCONTROL2B(2)
     END IF
     dte(icv) = dte1(icv)
 !srv 25.07.17
@@ -557,7 +565,7 @@ SUBROUTINE B2UPHT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     dtib(icv) = 0.D0
     dte1b(icv) = dte1b(icv) + dteb(icv)
     dteb(icv) = 0.D0
-    CALL POPCONTROL1B(branch)
+    CALL POPCONTROL2B(branch)
     IF (branch .EQ. 0) THEN
       ift = mpg%cvft(icv)
       CALL POPREAL8(dte1(icv), r8/8)
@@ -577,16 +585,18 @@ SUBROUTINE B2UPHT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     END IF
   END DO
   DO icv=ncv,1,-1
-    CALL POPCONTROL1B(branch)
+    CALL POPCONTROL2B(branch)
     IF (branch .NE. 0) THEN
-      ift = mpg%cvft(icv)
-      tempb = geo%cvvol(icv)*tt3b(ift)
-      neb(icv) = neb(icv) + dte1(icv)*tempb + geo%cvvol(icv)*tt2b(ift)
-      dte1b(icv) = dte1b(icv) + ne(icv)*tempb
-      tempb = geo%cvvol(icv)*tt1b(ift)
-      nib(icv, 1) = nib(icv, 1) + dti1(icv)*tempb + geo%cvvol(icv)*tt0b(&
-&       ift)
-      dti1b(icv) = dti1b(icv) + ni(icv, 1)*tempb
+      IF (branch .NE. 1) THEN
+        ift = mpg%cvft(icv)
+        tempb = geo%cvvol(icv)*tt3b(ift)
+        neb(icv) = neb(icv) + dte1(icv)*tempb + geo%cvvol(icv)*tt2b(ift)
+        dte1b(icv) = dte1b(icv) + ne(icv)*tempb
+        tempb = geo%cvvol(icv)*tt1b(ift)
+        nib(icv, 1) = nib(icv, 1) + dti1(icv)*tempb + geo%cvvol(icv)*&
+&         tt0b(ift)
+        dti1b(icv) = dti1b(icv) + ni(icv, 1)*tempb
+      END IF
     END IF
     CALL POPREAL8(dti1(icv), r8/8)
     dtib(icv) = dtib(icv) + dti1b(icv)
@@ -1022,10 +1032,12 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
-      tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
-      tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
-      tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
-      tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+        tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
+        tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
+        tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
+        tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
+      END IF
     END IF
   END DO
 !
@@ -1034,12 +1046,14 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
-      dti1(icv) = tt1(ift)/tt0(ift) + corr_core_dt*(dti1(icv)-tt1(ift)/&
-&       tt0(ift))
+        dti1(icv) = tt1(ift)/tt0(ift) + corr_core_dt*(dti1(icv)-tt1(ift)&
+&         /tt0(ift))
 ! IYS 19.12.2017
-      dte1(icv) = tt3(ift)/tt2(ift) + corr_core_dt*(dte1(icv)-tt3(ift)/&
-&       tt2(ift))
+        dte1(icv) = tt3(ift)/tt2(ift) + corr_core_dt*(dte1(icv)-tt3(ift)&
+&         /tt2(ift))
+      END IF
     END IF
     dte(icv) = dte1(icv)
 !srv 25.07.17

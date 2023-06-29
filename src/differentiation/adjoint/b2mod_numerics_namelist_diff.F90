@@ -15,38 +15,8 @@
 MODULE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_TYPES
   USE B2MOD_AD_DIFF, ONLY : nsdmax, cvregmax
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
-!
-!
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
 !
 !
   REAL(kind=r8), SAVE :: dtco(0:nsdmax-1, 0:cvregmax)
@@ -117,7 +87,8 @@ CONTAINS
       WRITE(*, *) 'Allocating space for b2mod_numerics'
 !
       ALLOCATE(time_factor(ncv))
-      CALL XERTST(nsd .LE. nsdmax, 'increase DEF_NSD in DIMENSIONS.F')
+      CALL XERTST(nsd .LE. nsdmax, &
+&           'increase DEF_NSD in b2mod_dimensions')
       CALL XERTST(nnreg(0) .LE. cvregmax, 'increase CVREGMAX')
       dtco = 1.0_R8
       dtmo = 1.0_R8

@@ -39,6 +39,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2stel
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
@@ -66,41 +67,10 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !-----------------------------------------------------------------------
 !.declarations
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !   ..local variables
 !, k
   INTEGER :: icv, is
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(6)
+!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
   REAL(kind=r8) :: rf0, t0, t1, tkin, t1i, t1n
@@ -704,6 +674,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2stel
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
@@ -737,41 +708,10 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 !-----------------------------------------------------------------------
 !.declarations
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !   ..local variables
 !, k
   INTEGER :: icv, is
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(6)
+!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
   REAL(kind=r8) :: rf0, t0, t1, tkin, t1i, t1n

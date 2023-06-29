@@ -76,14 +76,12 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
   REAL(kind=r8) :: t0b, pb_b(ncv), nb_b(ncv), tt1b(mpg%nft), tt2b(mpg%&
 & nft)
 ! IYS 27.11.2017
-  LOGICAL :: too_low_density
+  LOGICAL :: too_low_density(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST, IPGETR, B2XXGS
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: tempb
   INTEGER :: branch
-  INTEGER :: ad_count
-  INTEGER :: i0
   INTEGER :: ad_from
   INTEGER :: ad_to
 !   ..initialisation
@@ -126,33 +124,34 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
       IF (mpg%cvonclosedsurface(icv)) THEN
 ! IYS 27.03.2019
         ift = mpg%cvft(icv)
-        tt0(ift) = tt0(ift) + geo%cvvol(icv)
-        tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
-        tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
-        CALL PUSHCONTROL1B(1)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          tt0(ift) = tt0(ift) + geo%cvvol(icv)
+          tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
+          tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
+          CALL PUSHCONTROL2B(2)
+        ELSE
+          CALL PUSHCONTROL2B(1)
+        END IF
       ELSE
-        CALL PUSHCONTROL1B(0)
+        CALL PUSHCONTROL2B(0)
       END IF
     END DO
-    CALL PUSHINTEGER4(ift)
-    DO ift=1,mpg%nft
-! IYS 27.11.2017
-      too_low_density = .false.
-      ad_count = 1
 ! Check whether the density and/or pressure falls below the threshold 'b2mndr_na_min'
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
-      DO i=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
-        CALL PUSHINTEGER4(icv)
-        icv = mpg%ftcv(i)
-        IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
+    too_low_density = .false.
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
           CALL PUSHREAL8(t0, r8/8)
           t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(icv)&
 &           -pb(icv)-tt2(ift)/tt0(ift))
           IF (t0 .LT. pb(icv)*switch%b2mndr_na_min/nb(icv)) THEN
-            GOTO 100
+            too_low_density(ift) = .true.
+            CALL PUSHCONTROL3B(1)
           ELSE
             CALL PUSHREAL8(pb(icv), r8/8)
             pb(icv) = t0
@@ -160,49 +159,37 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
             t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
 &             icv)-nb(icv)-tt1(ift)/tt0(ift))
             IF (t0 .LT. switch%b2mndr_na_min) THEN
-              GOTO 110
+              too_low_density(ift) = .true.
+              CALL PUSHCONTROL3B(0)
             ELSE
               CALL PUSHREAL8(nb(icv), r8/8)
               nb(icv) = t0
-              CALL PUSHCONTROL1B(1)
+              CALL PUSHCONTROL3B(4)
             END IF
           END IF
         ELSE
-!srv 25.07.17 {
+! in core, but not part of a flux tube in the mesh => normal correction
           CALL PUSHREAL8(nb(icv), r8/8)
           nb(icv) = nb_(icv)
-!srv 25.07.17 }
           CALL PUSHREAL8(pb(icv), r8/8)
           pb(icv) = pb_(icv)
-          CALL PUSHCONTROL1B(0)
+          CALL PUSHCONTROL3B(3)
         END IF
-        ad_count = ad_count + 1
-      END DO
-      CALL PUSHCONTROL2B(0)
-      CALL PUSHINTEGER4(ad_count)
-      CALL PUSHCONTROL2B(0)
-      GOTO 120
- 100  CALL PUSHCONTROL2B(1)
-      CALL PUSHINTEGER4(ad_count)
-      too_low_density = .true.
-      CALL PUSHCONTROL2B(1)
-      GOTO 120
- 110  CALL PUSHCONTROL2B(2)
-      CALL PUSHINTEGER4(ad_count)
-      too_low_density = .true.
-      CALL PUSHCONTROL2B(2)
- 120  IF (too_low_density) THEN
+      ELSE
+! not in core => normal correction
+        CALL PUSHREAL8(nb(icv), r8/8)
+        nb(icv) = nb_(icv)
+        CALL PUSHREAL8(pb(icv), r8/8)
+        pb(icv) = pb_(icv)
+        CALL PUSHCONTROL3B(2)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(ift)
+! cancel smoothing of the correction on the surfaces where the corrected density is too low
+    DO ift=1,mpg%nft
+      IF (too_low_density(ift)) THEN
         ad_from = mpg%ftcvp(ift, 1)
-! cancel smoothing of the correction on the surface if the corrected density is too low
-        DO i=ad_from,mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
-          CALL PUSHINTEGER4(icv)
-          icv = mpg%ftcv(i)
-          CALL PUSHREAL8(nb(icv), r8/8)
-          nb(icv) = nb_(icv)
-!srv 25.07.17 }
-          CALL PUSHREAL8(pb(icv), r8/8)
-          pb(icv) = pb_(icv)
-        END DO
+        i = mpg%ftcvp(ift, 1) + mpg%ftcvp(ift, 2)
         CALL PUSHINTEGER4(i - 1)
         CALL PUSHINTEGER4(ad_from)
         CALL PUSHCONTROL1B(1)
@@ -242,8 +229,6 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
   END IF
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
-    tt1b = 0.D0
-    tt2b = 0.D0
     nb_b = 0.D0
     pb_b = 0.D0
     DO ift=mpg%nft,1,-1
@@ -253,70 +238,74 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
         CALL POPINTEGER4(ad_to)
         DO i=ad_to,ad_from,-1
           icv = mpg%ftcv(i)
-          CALL POPREAL8(pb(icv), r8/8)
           pb_b(icv) = pb_b(icv) + pbb(icv)
           pbb(icv) = 0.D0
-          CALL POPREAL8(nb(icv), r8/8)
           nb_b(icv) = nb_b(icv) + nbb(icv)
           nbb(icv) = 0.D0
-          CALL POPINTEGER4(icv)
         END DO
       END IF
-      CALL POPCONTROL2B(branch)
-      CALL POPINTEGER4(ad_count)
-      DO 150 i0=1,ad_count
-        IF (i0 .EQ. 1) THEN
-          CALL POPCONTROL2B(branch)
-          IF (branch .EQ. 0) THEN
-            GOTO 150
-          ELSE IF (branch .EQ. 1) THEN
-            t0b = 0.D0
-            GOTO 130
-          ELSE
-            t0b = 0.D0
-          END IF
-        ELSE
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL8(pb(icv), r8/8)
-            pb_b(icv) = pb_b(icv) + pbb(icv)
-            pbb(icv) = 0.D0
-            CALL POPREAL8(nb(icv), r8/8)
-            nb_b(icv) = nb_b(icv) + nbb(icv)
-            nbb(icv) = 0.D0
-            GOTO 140
-          ELSE
-            CALL POPREAL8(nb(icv), r8/8)
-            t0b = nbb(icv)
-            nbb(icv) = 0.D0
-          END IF
-        END IF
-        tempb = corr_core_dn(isb)*t0b
-        nbb(icv) = nbb(icv) + t0b - tempb
-        tt1b(ift) = tt1b(ift) + t0b/tt0(ift) - tempb/tt0(ift)
-        nb_b(icv) = nb_b(icv) + tempb
-        CALL POPREAL8(pb(icv), r8/8)
-        t0b = pbb(icv)
-        pbb(icv) = 0.D0
- 130    tempb = corr_core_dn(isb)*t0b
-        CALL POPREAL8(t0, r8/8)
-        pbb(icv) = pbb(icv) + t0b - tempb
-        tt2b(ift) = tt2b(ift) + t0b/tt0(ift) - tempb/tt0(ift)
-        pb_b(icv) = pb_b(icv) + tempb
- 140    CALL POPINTEGER4(icv)
- 150  CONTINUE
     END DO
     CALL POPINTEGER4(ift)
-    DO icv=mpg%nci,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
+    tt1b = 0.D0
+    tt2b = 0.D0
+    DO 110 icv=ncv,1,-1
+      CALL POPCONTROL3B(branch)
+      IF (branch .LT. 2) THEN
+        IF (branch .EQ. 0) THEN
+          ift = mpg%cvft(icv)
+          t0b = 0.D0
+        ELSE
+          ift = mpg%cvft(icv)
+          t0b = 0.D0
+          GOTO 100
+        END IF
+      ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL8(pb(icv), r8/8)
+        pb_b(icv) = pb_b(icv) + pbb(icv)
+        pbb(icv) = 0.D0
+        CALL POPREAL8(nb(icv), r8/8)
+        nb_b(icv) = nb_b(icv) + nbb(icv)
+        nbb(icv) = 0.D0
+        GOTO 110
+      ELSE IF (branch .EQ. 3) THEN
+        CALL POPREAL8(pb(icv), r8/8)
+        pb_b(icv) = pb_b(icv) + pbb(icv)
+        pbb(icv) = 0.D0
+        CALL POPREAL8(nb(icv), r8/8)
+        nb_b(icv) = nb_b(icv) + nbb(icv)
+        nbb(icv) = 0.D0
+        GOTO 110
+      ELSE
+        CALL POPREAL8(nb(icv), r8/8)
+        t0b = nbb(icv)
+        nbb(icv) = 0.D0
         ift = mpg%cvft(icv)
-        tempb = geo%cvvol(icv)*tt2b(ift)
-        pb_b(icv) = pb_b(icv) + tempb
-        pbb(icv) = pbb(icv) - tempb
-        tempb = geo%cvvol(icv)*tt1b(ift)
-        nb_b(icv) = nb_b(icv) + tempb
-        nbb(icv) = nbb(icv) - tempb
+      END IF
+      tempb = corr_core_dn(isb)*t0b
+      nbb(icv) = nbb(icv) + t0b - tempb
+      tt1b(ift) = tt1b(ift) + t0b/tt0(ift) - tempb/tt0(ift)
+      nb_b(icv) = nb_b(icv) + tempb
+      CALL POPREAL8(pb(icv), r8/8)
+      t0b = pbb(icv)
+      pbb(icv) = 0.D0
+ 100  tempb = corr_core_dn(isb)*t0b
+      CALL POPREAL8(t0, r8/8)
+      pbb(icv) = pbb(icv) + t0b - tempb
+      tt2b(ift) = tt2b(ift) + t0b/tt0(ift) - tempb/tt0(ift)
+      pb_b(icv) = pb_b(icv) + tempb
+ 110 CONTINUE
+    DO icv=mpg%nci,1,-1
+      CALL POPCONTROL2B(branch)
+      IF (branch .NE. 0) THEN
+        IF (branch .NE. 1) THEN
+          ift = mpg%cvft(icv)
+          tempb = geo%cvvol(icv)*tt2b(ift)
+          pb_b(icv) = pb_b(icv) + tempb
+          pbb(icv) = pbb(icv) - tempb
+          tempb = geo%cvvol(icv)*tt1b(ift)
+          nb_b(icv) = nb_b(icv) + tempb
+          nbb(icv) = nbb(icv) - tempb
+        END IF
       END IF
     END DO
   ELSE
@@ -413,7 +402,7 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
   REAL(kind=r8) :: t0, pb_(ncv), nb_(ncv), tt0(mpg%nft), tt1(mpg%nft), &
 & tt2(mpg%nft)
 ! IYS 27.11.2017
-  LOGICAL :: too_low_density
+  LOGICAL :: too_low_density(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST, IPGETR, B2XXGS
 !   ..initialisation
@@ -456,48 +445,52 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
       IF (mpg%cvonclosedsurface(icv)) THEN
 ! IYS 27.03.2019
         ift = mpg%cvft(icv)
-        tt0(ift) = tt0(ift) + geo%cvvol(icv)
-        tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
-        tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          tt0(ift) = tt0(ift) + geo%cvvol(icv)
+          tt1(ift) = tt1(ift) + geo%cvvol(icv)*(nb_(icv)-nb(icv))
+          tt2(ift) = tt2(ift) + geo%cvvol(icv)*(pb_(icv)-pb(icv))
+        END IF
       END IF
     END DO
-    DO ift=1,mpg%nft
-! IYS 27.11.2017
-      too_low_density = .false.
 ! Check whether the density and/or pressure falls below the threshold 'b2mndr_na_min'
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
-      DO i=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
-        icv = mpg%ftcv(i)
-        IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
+    too_low_density = .false.
+    DO icv=1,ncv
+      IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
+        ift = mpg%cvft(icv)
+        IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
           t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(icv)&
 &           -pb(icv)-tt2(ift)/tt0(ift))
           IF (t0 .LT. pb(icv)*switch%b2mndr_na_min/nb(icv)) THEN
-            too_low_density = .true.
-            GOTO 100
+            too_low_density(ift) = .true.
           ELSE
             pb(icv) = t0
 ! IYS 19.12.2017
             t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
 &             icv)-nb(icv)-tt1(ift)/tt0(ift))
             IF (t0 .LT. switch%b2mndr_na_min) THEN
-              too_low_density = .true.
-              GOTO 100
+              too_low_density(ift) = .true.
             ELSE
               nb(icv) = t0
             END IF
           END IF
         ELSE
-!srv 25.07.17 {
+! in core, but not part of a flux tube in the mesh => normal correction
           nb(icv) = nb_(icv)
-!srv 25.07.17 }
           pb(icv) = pb_(icv)
         END IF
-      END DO
- 100  IF (too_low_density) THEN
-! cancel smoothing of the correction on the surface if the corrected density is too low
+      ELSE
+! not in core => normal correction
+        nb(icv) = nb_(icv)
+        pb(icv) = pb_(icv)
+      END IF
+    END DO
+! cancel smoothing of the correction on the surfaces where the corrected density is too low
+    DO ift=1,mpg%nft
+      IF (too_low_density(ift)) THEN
         DO i=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
           icv = mpg%ftcv(i)
           nb(icv) = nb_(icv)

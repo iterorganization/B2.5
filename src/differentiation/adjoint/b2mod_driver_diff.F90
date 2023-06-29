@@ -93,40 +93,10 @@ MODULE B2MOD_DRIVER_DIFF
   USE B2MOD_EIRBRA
   USE B2MOD_B2_TO_ASTRA, ONLY : write_b2_to_astra
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
 !   ..common blocks
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !   ..local variables
   INTEGER :: ncall, ntim, mvinc, mvnum, jsep, jxi, jxa, isfb, ix1, ix2, &
 & ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5, nxtl, nxtr
@@ -2031,27 +2001,27 @@ MODULE B2MOD_DRIVER_DIFF
 
 CONTAINS
 !  Differentiation of b2mndr_0 as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncf:in-out b2data:in-out b2dataoncf:in-out
-!                par_opt_phys:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
-!                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
-!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
-!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
-!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
-!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
-!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
-!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
-!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
-!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
-!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
-!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
-!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
-!                geo.ftbbav2:in-out geo.fspsi:in-out state.pl.na:in-out
-!                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
-!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
-!                state.pl.zt:in-out state.co.csig:in-out state.co.calf:in-out
-!                state.co.csig_an:in-out state.co.calf_an:in-out
+!   Plus diff mem management of: b2voloncf:in-out b2data:in-out
+!                b2dataoncf:in-out rtlsa:out rtlcx:out rtlqa:out
+!                rtlra:out par_opt_phys:in-out mpg.bcfcor:in-out
+!                mpg.rcfcor:in-out mpg.cffcor:in-out mpg.intcellp:in-out
+!                mpg.intcellr:in-out geo.cvbb:in-out geo.cvx:in-out
+!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
+!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
+!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
+!                geo.fcbb:in-out geo.fcs:in-out geo.fchc:in-out
+!                geo.fcht:in-out geo.fchz:in-out geo.fcvol:in-out
+!                geo.fcqgam:in-out geo.fcqalf:in-out geo.fcqbet:in-out
+!                geo.fcpbs:in-out geo.fcpbshz:in-out geo.fcbzb:in-out
+!                geo.fceb:in-out geo.vxbb:in-out geo.vxx:in-out
+!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
+!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
+!                geo.vxbzb:in-out geo.cvconn:in-out geo.ftconn:in-out
+!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
+!                state.pl.na:in-out state.pl.ua:in-out state.pl.po:in-out
+!                state.pl.te:in-out state.pl.ti:in-out state.pl.tn:in-out
+!                state.pl.kt:in-out state.pl.zt:in-out state.co.csig:in-out
+!                state.co.calf:in-out state.co.csig_an:in-out state.co.calf_an:in-out
 !                state.co.csig_cl:in-out state.co.calf_cl:in-out
 !                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
 !                state.co.chce_exb:in-out state.co.chvi:in-out
@@ -3625,8 +3595,8 @@ CONTAINS
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
-    CALL XERTST(natmi .LE. 6, &
-&         'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+    CALL XERTST(natmi .LE. def_natm, &
+&         'Increase DEF_NATM in b2mod_dimensions and recompile !')
     CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%nnreg(0), nstra, natm, &
 &                   switch)
 !xpb initialize the data necessary for boundary conditions
@@ -5087,8 +5057,8 @@ CONTAINS
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
-    CALL XERTST(natmi .LE. 6, &
-&         'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+    CALL XERTST(natmi .LE. def_natm, &
+&         'Increase DEF_NATM in b2mod_dimensions and recompile !')
     CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%nnreg(0), nstra, natm, &
 &                   switch)
 !xpb initialize the data necessary for boundary conditions
@@ -5121,10 +5091,10 @@ CONTAINS
 
 !  Differentiation of b2mndr_1 in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: j
-!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
-!                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys mean parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!   with respect to varying inputs: enepar conpar enkpar potpar
+!                mompar enipar b2recyc *rtlsa *rtlcx *rtlqa *rtlra
+!                sigma *par_opt_phys mean tdata parm_hce parm_hci
+!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
 !                j switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
@@ -5134,15 +5104,15 @@ CONTAINS
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   RW status of diff variables: *rtlsa:out *rtlcx:out *rtlqa:out
-!                *rtlra:out cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
+!   RW status of diff variables: *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:out conpar:out enkpar:out
 !                potpar:out mompar:out enipar:out b2recyc:out userfluxparm:(loc)
+!                cutlo:(loc) *rtlsa:out *rtlcx:out *rtlqa:out *rtlra:out
 !                sigma:out *par_opt_phys:out mean:out cfvla:(loc)
 !                cfvsa:(loc) cfalf:(loc) cfdpa:(loc) cfsig:(loc)
-!                cfdna:(loc) cfhce:(loc) cfhci:(loc) parm_hce:out
-!                parm_hci:out parm_vla:out parm_vsa:out parm_alf:out
-!                parm_dpa:out parm_sig:out parm_dna:out tdata:out
+!                cfdna:(loc) cfhce:(loc) cfhci:(loc) tdata:out
+!                parm_hce:out parm_hci:out parm_vla:out parm_vsa:out
+!                parm_alf:out parm_dpa:out parm_sig:out parm_dna:out
 !                int4l:(loc) int1l:(loc) int2l:(loc) int3l:(loc)
 !                int0l:(loc) fb_target:(loc) fb_prev:(loc) fb_current:(loc)
 !                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
@@ -5277,8 +5247,8 @@ CONTAINS
 !                *(state.psnc.tn):(loc) *(state.psnc.kt):(loc)
 !                *(state.psnc.ne):(loc) state.psnc.ni:(loc) *(state.psnc.ni):(loc)
 !                state.psnc.nn:(loc) *(state.psnc.nn):(loc) *(state.psnc.kinrgy):(loc)
-!   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
-!                b2voloncf:in b2data:in b2dataoncf:in par_opt_phys:in
+!   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
+!                rtlsa:in rtlcx:in rtlqa:in rtlra:in par_opt_phys:in
 !                mpg.bcfcor:in mpg.rcfcor:in mpg.cffcor:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
@@ -5682,14 +5652,14 @@ CONTAINS
     END IF
     CALL PUSHREAL8(dt_prev, r8/8)
     CALL PUSHBOOLEAN(feedback_namelist_used)
-    CALL PUSHREAL8ARRAY(fb_rescale, r8*6/8)
-    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
-    CALL PUSHREAL8ARRAY(fb_const, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_rescale, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    CALL PUSHREAL8ARRAY(fb_const, r8*def_natm/8)
     CALL PUSHREAL8(cum_volrec, r8/8)
-    CALL PUSHREAL8ARRAY(fb_current, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_prev, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_target, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_current, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(fb_prev, r8*def_natm/8)
+    CALL PUSHREAL8ARRAY(fb_target, r8*def_natm/8)
     IF (ALLOCATED(bv_na)) THEN
       CALL PUSHREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*SIZE(bv_na, 2)/8)
       CALL PUSHCONTROL1B(1)
@@ -5772,6 +5742,10 @@ CONTAINS
     CALL PUSHREAL8ARRAY(cfvsa, r8*nsdecl)
     CALL PUSHREAL8ARRAY(cflim, r8)
     CALL PUSHREAL8ARRAY(cfvla, r8*nsdecl)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
+    CALL PUSHBOOLEAN(b2mod_math_initialised)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHINTEGER4(eirene_mod)
     CALL PUSHREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
@@ -5930,10 +5904,6 @@ CONTAINS
     CALL PUSHINTEGER4(ncall_b2tqca)
     CALL PUSHINTEGER4(ncall_b2tqin)
     CALL PUSHINTEGER4(ncall_b2stbc_phys)
-    CALL PUSHREAL8(cutlo, r8/8)
-    CALL PUSHREAL8(cutll, r8/8)
-    CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8ARRAY(state_ext%na, r8*SIZE(state_ext%na, 1)*SIZE(&
 &                 state_ext%na, 2)/8)
     CALL PUSHREAL8ARRAY(state_ext%ua, r8*SIZE(state_ext%ua, 1)*SIZE(&
@@ -6478,10 +6448,6 @@ CONTAINS
     CALL B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb, &
 &                        state, stateb1, state_ext, state_extb, switch%&
 &                        boris, j, jb)
-    IF (ALLOCATED(rtlsab)) rtlsab = 0.D0
-    IF (ALLOCATED(rtlcxb)) rtlcxb = 0.D0
-    IF (ALLOCATED(rtlqab)) rtlqab = 0.D0
-    IF (ALLOCATED(rtlrab)) rtlrab = 0.D0
     eneparb = 0.D0
     conparb = 0.D0
     enkparb = 0.D0
@@ -6490,6 +6456,10 @@ CONTAINS
     eniparb = 0.D0
     b2recycb = 0.D0
     userfluxparmb = 0.D0
+    IF (ALLOCATED(rtlsab)) rtlsab = 0.D0
+    IF (ALLOCATED(rtlcxb)) rtlcxb = 0.D0
+    IF (ALLOCATED(rtlqab)) rtlqab = 0.D0
+    IF (ALLOCATED(rtlrab)) rtlrab = 0.D0
     cfvlab = 0.D0
     cfvsab = 0.D0
     cfalfb = 0.D0
@@ -6498,6 +6468,7 @@ CONTAINS
     cfdnab = 0.D0
     cfhceb = 0.D0
     cfhcib = 0.D0
+    tdatab = 0.D0
     parm_hceb = 0.D0
     parm_hcib = 0.D0
     parm_vlab = 0.D0
@@ -6506,7 +6477,6 @@ CONTAINS
     parm_dpab = 0.D0
     parm_sigb = 0.D0
     parm_dnab = 0.D0
-    tdatab = 0.D0
     int4lb = 0.D0
     int1lb = 0.D0
     int2lb = 0.D0
@@ -6740,16 +6710,6 @@ CONTAINS
     toldb0 = toldb
     uoldb0 = uoldb
     moldb0 = moldb
-    core_dt_suppressionb0 = core_dt_suppressionb
-    dtmob0(0:nsdmax-1, 0:cvregmax) = dtmob(0:nsdmax-1, 0:cvregmax)
-    core_dt_factorb0 = core_dt_factorb
-    dtcob0(0:nsdmax-1, 0:cvregmax) = dtcob(0:nsdmax-1, 0:cvregmax)
-    corr_core_dtb0 = corr_core_dtb
-    corr_core_dnb0(0:nsdmax-1) = corr_core_dnb(0:nsdmax-1)
-    time_factor_requiredb0 = time_factor_requiredb
-    dtenb0(0:cvregmax) = dtenb(0:cvregmax)
-    dteib0(0:cvregmax) = dteib(0:cvregmax)
-    dteeb0(0:cvregmax) = dteeb(0:cvregmax)
     parm_dnab0(0:nsdmax-1) = parm_dnab(0:nsdmax-1)
     parm_sigb0 = parm_sigb
     parm_dpab0(0:nsdmax-1) = parm_dpab(0:nsdmax-1)
@@ -6760,6 +6720,16 @@ CONTAINS
     parm_hcib0(0:nsdmax-1) = parm_hcib(0:nsdmax-1)
     parm_hceb0 = parm_hceb
     transport_time_switchb0 = transport_time_switchb
+    core_dt_suppressionb0 = core_dt_suppressionb
+    dtmob0(0:nsdmax-1, 0:cvregmax) = dtmob(0:nsdmax-1, 0:cvregmax)
+    core_dt_factorb0 = core_dt_factorb
+    dtcob0(0:nsdmax-1, 0:cvregmax) = dtcob(0:nsdmax-1, 0:cvregmax)
+    corr_core_dtb0 = corr_core_dtb
+    corr_core_dnb0(0:nsdmax-1) = corr_core_dnb(0:nsdmax-1)
+    time_factor_requiredb0 = time_factor_requiredb
+    dtenb0(0:cvregmax) = dtenb(0:cvregmax)
+    dteib0(0:cvregmax) = dteib(0:cvregmax)
+    dteeb0(0:cvregmax) = dteeb(0:cvregmax)
     cfdf0b0(0:7, 0:nsdecl-1) = cfdf0b(0:7, 0:nsdecl-1)
     rcionb0(0:nsdmax-1, 1:nstraid) = rcionb(0:nsdmax-1, 1:nstraid)
     e_fcb0 = e_fcb
@@ -6798,7 +6768,7 @@ CONTAINS
     zaminb0(0:nsdecl-1) = zaminb(0:nsdecl-1)
     ITERCOUNT = 0
     CALL ADSTACK_STARTREPEAT()
-    DO WHILE ((cumul .GT. res_quit) .and. (ITERCOUNT.le.ntim))
+    DO WHILE ((cumul .GT. res_quit) .and. (ITERCOUNT.lt.ntim))
       stateb0 = stateb1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) CALL POPREAL8(tim, r8/8)
@@ -7281,10 +7251,6 @@ CONTAINS
 &                  state_ext%ua, 2)/8)
       CALL POPREAL8ARRAY(state_ext%na, r8*SIZE(state_ext%na, 1)*SIZE(&
 &                  state_ext%na, 2)/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
-      CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8(cutll, r8/8)
-      CALL POPREAL8(cutlo, r8/8)
       CALL POPINTEGER4(ncall_b2stbc_phys)
       CALL POPINTEGER4(ncall_b2tqin)
       CALL POPINTEGER4(ncall_b2tqca)
@@ -7401,6 +7367,10 @@ CONTAINS
       CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
       CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
       CALL POPINTEGER4(eirene_mod)
+      CALL POPREAL4(small_r4_constant, r4/8)
+      CALL POPBOOLEAN(b2mod_math_initialised)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL POPREAL8ARRAY(cfvla, r8*nsdecl)
       CALL POPREAL8ARRAY(cflim, r8)
       CALL POPREAL8ARRAY(cfvsa, r8*nsdecl)
@@ -7458,14 +7428,14 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*&
 &                                     SIZE(bv_na, 2)/8)
-      CALL POPREAL8ARRAY(fb_target, r8*6/8)
-      CALL POPREAL8ARRAY(fb_prev, r8*6/8)
-      CALL POPREAL8ARRAY(fb_current, r8*6/8)
+      CALL POPREAL8ARRAY(fb_target, r8*def_natm/8)
+      CALL POPREAL8ARRAY(fb_prev, r8*def_natm/8)
+      CALL POPREAL8ARRAY(fb_current, r8*def_natm/8)
       CALL POPREAL8(cum_volrec, r8/8)
-      CALL POPREAL8ARRAY(fb_const, r8*6/8)
-      CALL POPREAL8ARRAY(charge_frac, r8*42/8)
-      CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
-      CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
+      CALL POPREAL8ARRAY(fb_const, r8*def_natm/8)
+      CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
+      CALL POPREAL8ARRAY(saved_fb_actuator, r8*def_natm/8)
+      CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
       CALL POPBOOLEAN(feedback_namelist_used)
       CALL POPREAL8(dt_prev, r8/8)
       CALL POPCONTROL1B(branch)
@@ -7516,19 +7486,11 @@ CONTAINS
       parm_vlab = 0.D0
       parm_hcib = 0.D0
       parm_hceb = 0.D0
-      b2recycb = 0.D0
-      momparb = 0.D0
-      enkparb = 0.D0
       IF (ALLOCATED(rtlrab)) rtlrab = 0.D0
       IF (ALLOCATED(rtlqab)) rtlqab = 0.D0
       IF (ALLOCATED(rtlcxb)) rtlcxb = 0.D0
       IF (ALLOCATED(rtlsab)) rtlsab = 0.D0
-      parm_dnab = 0.D0
-      parm_hceb = 0.D0
-      parm_hcib = 0.D0
-      parm_vsab = 0.D0
-      parm_sigb = 0.D0
-      parm_alfb = 0.D0
+      b2recycb = 0.D0
       conparb = 0.D0
       momparb = 0.D0
       potparb = 0.D0
@@ -7941,16 +7903,6 @@ CONTAINS
     toldb = toldb0
     uoldb = uoldb0
     moldb = moldb0
-    core_dt_suppressionb = core_dt_suppressionb0
-    dtmob(0:nsdmax-1, 0:cvregmax) = dtmob0(0:nsdmax-1, 0:cvregmax)
-    core_dt_factorb = core_dt_factorb0
-    dtcob(0:nsdmax-1, 0:cvregmax) = dtcob0(0:nsdmax-1, 0:cvregmax)
-    corr_core_dtb = corr_core_dtb0
-    corr_core_dnb(0:nsdmax-1) = corr_core_dnb0(0:nsdmax-1)
-    time_factor_requiredb = time_factor_requiredb0
-    dtenb(0:cvregmax) = dtenb0(0:cvregmax)
-    dteib(0:cvregmax) = dteib0(0:cvregmax)
-    dteeb(0:cvregmax) = dteeb0(0:cvregmax)
     parm_dnab(0:nsdmax-1) = parm_dnab0(0:nsdmax-1)
     parm_sigb = parm_sigb0
     parm_dpab(0:nsdmax-1) = parm_dpab0(0:nsdmax-1)
@@ -7961,6 +7913,16 @@ CONTAINS
     parm_hcib(0:nsdmax-1) = parm_hcib0(0:nsdmax-1)
     parm_hceb = parm_hceb0
     transport_time_switchb = transport_time_switchb0
+    core_dt_suppressionb = core_dt_suppressionb0
+    dtmob(0:nsdmax-1, 0:cvregmax) = dtmob0(0:nsdmax-1, 0:cvregmax)
+    core_dt_factorb = core_dt_factorb0
+    dtcob(0:nsdmax-1, 0:cvregmax) = dtcob0(0:nsdmax-1, 0:cvregmax)
+    corr_core_dtb = corr_core_dtb0
+    corr_core_dnb(0:nsdmax-1) = corr_core_dnb0(0:nsdmax-1)
+    time_factor_requiredb = time_factor_requiredb0
+    dtenb(0:cvregmax) = dtenb0(0:cvregmax)
+    dteib(0:cvregmax) = dteib0(0:cvregmax)
+    dteeb(0:cvregmax) = dteeb0(0:cvregmax)
     cfdf0b(0:7, 0:nsdecl-1) = cfdf0b0(0:7, 0:nsdecl-1)
     rcionb(0:nsdmax-1, 1:nstraid) = rcionb0(0:nsdmax-1, 1:nstraid)
     e_fcb = e_fcb0
@@ -8464,10 +8426,6 @@ CONTAINS
 &                state_ext%ua, 2)/8)
     CALL POPREAL8ARRAY(state_ext%na, r8*SIZE(state_ext%na, 1)*SIZE(&
 &                state_ext%na, 2)/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
-    CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8(cutll, r8/8)
-    CALL POPREAL8(cutlo, r8/8)
     CALL POPINTEGER4(ncall_b2stbc_phys)
     CALL POPINTEGER4(ncall_b2tqin)
     CALL POPINTEGER4(ncall_b2tqca)
@@ -8584,6 +8542,10 @@ CONTAINS
     CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
     CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL POPINTEGER4(eirene_mod)
+    CALL POPREAL4(small_r4_constant, r4/8)
+    CALL POPBOOLEAN(b2mod_math_initialised)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL POPREAL8ARRAY(cfvla, r8*nsdecl)
     CALL POPREAL8ARRAY(cflim, r8)
     CALL POPREAL8ARRAY(cfvsa, r8*nsdecl)
@@ -8641,14 +8603,14 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*SIZE(&
 &                                   bv_na, 2)/8)
-    CALL POPREAL8ARRAY(fb_target, r8*6/8)
-    CALL POPREAL8ARRAY(fb_prev, r8*6/8)
-    CALL POPREAL8ARRAY(fb_current, r8*6/8)
+    CALL POPREAL8ARRAY(fb_target, r8*def_natm/8)
+    CALL POPREAL8ARRAY(fb_prev, r8*def_natm/8)
+    CALL POPREAL8ARRAY(fb_current, r8*def_natm/8)
     CALL POPREAL8(cum_volrec, r8/8)
-    CALL POPREAL8ARRAY(fb_const, r8*6/8)
-    CALL POPREAL8ARRAY(charge_frac, r8*42/8)
-    CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
+    CALL POPREAL8ARRAY(fb_const, r8*def_natm/8)
+    CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    CALL POPREAL8ARRAY(saved_fb_actuator, r8*def_natm/8)
+    CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
     CALL POPBOOLEAN(feedback_namelist_used)
     CALL POPREAL8(dt_prev, r8/8)
     CALL POPCONTROL1B(branch)
@@ -8687,7 +8649,7 @@ CONTAINS
 !   csc the next enables to save the sensitivity of transport coefficients
 !   for each point of the domain but only for the call to b2tqna within
 !   the next call to b2mndt
-    last_call_transp = .true.
+    last_call_transp = .false.
     CALL B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0, &
 &           state%rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, &
 &           ntim, switch, switchb, geo, geob, mpg, mpgb, state, stateb1&

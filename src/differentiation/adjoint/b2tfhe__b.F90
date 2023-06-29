@@ -122,9 +122,9 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
   REAL(kind=r8) :: facdriftm, fac_exbm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), dumm0(nfc, 0:1), dumm1(nfc, 0:1), pe(ncv)
+& fhe0_mdf(nfc, 0:1), fhe_32(nfc, 0:1), fhe_52(nfc, 0:1), pe(ncv)
   REAL(kind=r8) :: tefb(nfc), nefb(nfc), tefhb(nfc), fhe0_mdfb(nfc, 0:1)&
-& , dumm0b(nfc, 0:1), dumm1b(nfc, 0:1)
+& , fhe_32b(nfc, 0:1), fhe_52b(nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -249,8 +249,8 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_FWD(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, geob, &
-&             mpg, mpgb, pl%te, floe0_mdf, co%chce, fhe0_mdf, dumm0, &
-&             dumm1)
+&             mpg, mpgb, pl%te, floe0_mdf, co%chce, fhe0_mdf, fhe_32, &
+&             fhe_52)
 !
 !   ..compute fluxes
   alfe0 = co%calf(:, 0)
@@ -281,7 +281,6 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
   CALL PUSHREAL8ARRAY(dv%cone(:, :, 0), r8*SIZE(dv%cone, 1)*SIZE(dv%cone&
 &               , 2)/8)
   dv%cone(:, :, 0) = dv%cone(:, :, 0) + cone0
-!srv 18.06.08 }
 !
 !
 !
@@ -340,6 +339,10 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
 &                   'b2tfhe__fhe_mdf_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
 &                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
 &                   'b2tfhe__fhePSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
@@ -348,6 +351,20 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
 !srv 13.01.17
     CALL MY_OUT_US(70, nfc, 1, ehy, 'b2tfhe__eh_r')
 !srv 13.01.17
+  END IF
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 0), &
+&                   'b2tfhe__fhe_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
+&                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
+&                   'b2tfhe__fhePSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
+&                   'b2tfhe__fhePSch_r')
   END IF
   cone0b = 0.D0
   CALL POPREAL8ARRAY(dv%cone(:, :, 0), r8*SIZE(dv%cone, 1)*SIZE(dv%cone&
@@ -398,12 +415,12 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
   tefb = tefb + (floe0(:, 0)-floe0_mdf(:, 0))*dvb%fhe(:, 0) + tefhb
   dvb%fhe(:, 0) = 0.D0
   cob%calf(:, 0) = cob%calf(:, 0) + alfe0b
-  dumm0b = 0.D0
-  dumm1b = 0.D0
+  fhe_32b = 0.D0
+  fhe_52b = 0.D0
   CALL CALCFLOW_BWD(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, geob, &
 &             mpg, mpgb, pl%te, plb%te, floe0_mdf, floe0_mdfb, co%chce, &
-&             cob%chce, fhe0_mdf, fhe0_mdfb, dumm0, dumm0b, dumm1, &
-&             dumm1b)
+&             cob%chce, fhe0_mdf, fhe0_mdfb, fhe_32, fhe_32b, fhe_52, &
+&             fhe_52b)
   nefb = 0.D0
   dvb%fne_he(:, 1) = dvb%fne_he(:, 1) + 1.5e0_R8*floe0_mdfb(:, 1)
   nefb = co%chve(:, 1)*floe0_mdfb(:, 1) + co%chve(:, 0)*floe0_mdfb(:, 0)&
@@ -570,7 +587,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
   REAL(kind=r8) :: facdriftm, fac_exbm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), dumm0(nfc, 0:1), dumm1(nfc, 0:1), pe(ncv)
+& fhe0_mdf(nfc, 0:1), fhe_32(nfc, 0:1), fhe_52(nfc, 0:1), pe(ncv)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -693,7 +710,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, mpg&
-&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, dumm0, dumm1)
+&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, fhe_32, fhe_52)
 !
 !   ..compute fluxes
   alfe0 = co%calf(:, 0)
@@ -717,7 +734,6 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !    this on mdf /= 0?
   dv%floe = dv%floe + floe0
   dv%cone(:, :, 0) = dv%cone(:, :, 0) + cone0
-!srv 18.06.08 }
 !
 !
 !
@@ -776,6 +792,10 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 &                   'b2tfhe__fhe_mdf_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
 &                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
 &                   'b2tfhe__fhePSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
@@ -784,6 +804,20 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !srv 13.01.17
     CALL MY_OUT_US(70, nfc, 1, ehy, 'b2tfhe__eh_r')
 !srv 13.01.17
+  END IF
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 0), &
+&                   'b2tfhe__fhe_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
+&                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 0), 'b2tfhe__fhe_32_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_32(1, 1), 'b2tfhe__fhe_32_r')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 0), 'b2tfhe__fhe_52_th')
+    CALL MY_OUT_US(70, nfc, 1, fhe_52(1, 1), 'b2tfhe__fhe_52_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
+&                   'b2tfhe__fhePSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
+&                   'b2tfhe__fhePSch_r')
   END IF
 ! ..return
   ncall_b2tfhe = ncall_b2tfhe + 1

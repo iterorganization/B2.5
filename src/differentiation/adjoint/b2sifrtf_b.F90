@@ -536,6 +536,13 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   CHARACTER(len=15) :: arg11
   CHARACTER(len=12) :: arg12
   CHARACTER(len=11) :: arg13
+!
+!-----------------------------------------------------------------------
+!.computation
+!
+! ..preliminaries
+!   ..subprogram start-up calls
+!   ..set internal parameters on first call
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: tempb
   REAL(kind=r8) :: temp0
@@ -549,33 +556,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   REAL(kind=r8) :: temp4
   REAL(kind=r8) :: tempb4
   INTEGER :: branch
-!
-!-----------------------------------------------------------------------
-!.computation
-!
-! ..preliminaries
-!   ..subprogram start-up calls
-!   ..set internal parameters on first call
-  IF (ncall_b2sifrtf .EQ. 0) THEN
-    CALL IPGETI('b2sifrtf_iout', iout)
-    CALL IPGETI('b2wdat_iout', iout_b2wdat)
-!iys 17.04.17
-    CALL IPGETI('b2npmo_iout', iout_b2npmo)
-  END IF
-!
-!   ..initialize to 0
-!srv 11.09.09
-!srv 11.09.09
-  CALL PUSHINTEGER4(arg1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbfrial, 1)
-!srv 13.01.17 { !srv 05.07.17
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbfreal, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfial, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfeal, 1)
 !srv 13.01.17 }
 ! ..compute friction
 !   ..loop over all other species
@@ -591,29 +571,16 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 &         isb)*am(is)/(am(isb)+am(is)))/zetap(icv)*kabvp(icv)
         t0 = na(icv, isb)*na(icv, is)
         IF (switch%b2sifr_styl0 .EQ. 0) THEN
-          CALL PUSHREAL8(smbfrial(icv, 0), r8/8)
-          smbfrial(icv, 0) = smbfrial(icv, 0) + coef*t0*ua(icv, is)
-          CALL PUSHREAL8(smbfrial(icv, 1), r8/8)
-          smbfrial(icv, 1) = smbfrial(icv, 1) - coef*t0
           CALL PUSHCONTROL2B(3)
         ELSE IF (switch%b2sifr_styl0 .EQ. 1) THEN
-          CALL PUSHREAL8(smbfrial(icv, 0), r8/8)
-          smbfrial(icv, 0) = smbfrial(icv, 0) + coef*t0*ua(icv, is)
           CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
-          CALL PUSHREAL8(smbfrial(icv, 3), r8/8)
-          smbfrial(icv, 3) = smbfrial(icv, 3) - coef*t0/result1
           CALL PUSHCONTROL2B(2)
         ELSE IF (switch%b2sifr_styl0 .EQ. 2) THEN
           CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
-          CALL PUSHREAL8(smbfrial(icv, 2), r8/8)
-          smbfrial(icv, 2) = smbfrial(icv, 2) + coef*t0*ua(icv, is)/&
-&           result1
           CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
-          CALL PUSHREAL8(smbfrial(icv, 3), r8/8)
-          smbfrial(icv, 3) = smbfrial(icv, 3) - coef*t0/result1
           CALL PUSHCONTROL2B(1)
         ELSE
           CALL PUSHCONTROL2B(0)
@@ -634,11 +601,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       CALL PUSHREAL8(coef, r8/8)
       coef = switch%b2sifr_phm1*(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))**2*&
 &       rz2(icv, isb)*qe**2/(sigx_c(icv)*zeff(icv))
-      t0 = na(icv, isb)*ne(icv)
-      CALL PUSHREAL8(smbfreal(icv, 0), r8/8)
-      smbfreal(icv, 0) = smbfreal(icv, 0) + coef*t0*ue(icv)
-      CALL PUSHREAL8(smbfreal(icv, 1), r8/8)
-      smbfreal(icv, 1) = smbfreal(icv, 1) - coef*t0
     END DO
     CALL PUSHCONTROL1B(0)
   ELSE
@@ -656,9 +618,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       CALL PUSHREAL8(coef, r8/8)
       coef = -(switch%b2sifr_phm2*alfx_c(icv)*ce1(icv)*rz2(icv, isb)*(me&
 &       /qe)/zetae(icv)/(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))/wrk(icv))
-      t0 = na(icv, isb)*gte(icv)
-      CALL PUSHREAL8(smbtfeal(icv, 0), r8/8)
-      smbtfeal(icv, 0) = smbtfeal(icv, 0) + coef*t0
     END DO
     CALL PUSHCONTROL1B(1)
   ELSE
@@ -717,114 +676,12 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         CALL PUSHREAL8(t0, r8/8)
         t0 = na(icv, isb)*na(icv, is)/(na(icv, isb)+na(icv, is))*gti(icv&
 &         )
-        CALL PUSHREAL8(smbtfial(icv, 0), r8/8)
-        smbtfial(icv, 0) = smbtfial(icv, 0) + fllim_al_ab*coef*t0
       END DO
       CALL PUSHCONTROL1B(1)
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
   END DO
-!
-!
-  CALL PUSHREAL8ARRAY(smbfria, r8*ncv*4/8)
-  smbfria = smbfrial
-!
-  IF (iout .NE. 0) THEN
-!  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
-    WRITE(chns, '(i3.3)') isb
-!
-!srv 05.07.17 {
-    CALL PUSHREAL8ARRAY(wrk, r8*ncv/8)
-    wrk = geo%cvvol*geo%cvhz*(smbfria(:, 0)+smbfria(:, 1)*ua(:, isb)+&
-&     smbfria(:, 2)*na(:, isb)*mp*am(isb)+smbfria(:, 3)*ua(:, isb)*na(:&
-&     , isb)*mp*am(isb))
-    arg10(:) = 'b2sifrtf_smofria'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg10(:))
-    wrk = geo%cvvol*geo%cvhz*(smbfreal(:, 0)+smbfreal(:, 1)*ua(:, isb))
-    arg10(:) = 'b2sifrtf_smofrea'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg10(:))
-    wrk = geo%cvvol*geo%cvhz*smbtfial(:, 0)
-    arg10(:) = 'b2sifrtf_smotfia'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg10(:))
-    wrk = geo%cvvol*geo%cvhz*smbtfeal(:, 0)
-    arg10(:) = 'b2sifrtf_smotfea'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg10(:))
-!srv 05.07.17 }
-    CALL MY_OUT_US(70, ncv, 0, ue, 'b2sifrtf_ue')
-    CALL PUSHCONTROL1B(0)
-  ELSE
-    CALL PUSHCONTROL1B(1)
-  END IF
-!
-  IF (iout .GT. 1) THEN
-!srv 05.07.17
-    DO is=0,ns-1
-      WRITE(chis, '(i3.3)') is
-      DO icv=1,ncv
-        CALL PUSHREAL8(wrk(icv), r8/8)
-        wrk(icv) = FKABVP(icv, isb, is)
-      END DO
-      arg11(:) = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
-      DO icv=1,ncv
-        CALL PUSHREAL8(wrk(icv), r8/8)
-        wrk(icv) = FKABTF(icv, isb, is)
-      END DO
-      arg11(:) = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
-      DO icv=1,ncv
-        CALL PUSHREAL8(wrk(icv), r8/8)
-        wrk(icv) = FKABTF(icv, is, isb)
-      END DO
-      arg11(:) = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
-      DO icv=1,ncv
-        CALL PUSHREAL8(wrk(icv), r8/8)
-        wrk(icv) = FKA(icv, isb)
-      END DO
-      arg12(:) = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
-      DO icv=1,ncv
-        CALL PUSHREAL8(wrk(icv), r8/8)
-        wrk(icv) = FKA(icv, is)
-      END DO
-      arg12(:) = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
-    END DO
-!
-    CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, wrk)
-    CALL MY_OUT_US(70, ncv, 0, wrk, 'b2sifrtf_f_luc_sg')
-    CALL MY_OUT_US(70, ncv, 0, ce1, 'b2sifrtf_ce1')
-    CALL MY_OUT_US(70, ncv, 0, ce2, 'b2sifrtf_ce2')
-    CALL MY_OUT_US(70, ncv, 0, cimp1, 'b2sifrtf_cimp1')
-    CALL MY_OUT_US(70, ncv, 0, cimp2, 'b2sifrtf_cimp2')
-    CALL MY_OUT_US(70, ncv, 0, alfx_c, 'b2sifrtf_alfx_c')
-    CALL MY_OUT_US(70, ncv, 0, sigx_c, 'b2sifrtf_sigx_c')
-    CALL MY_OUT_US(70, ncv, 0, zetae, 'b2sifrtf_zetae')
-!
-    arg13(:) = 'b2sifrtf_ua'//chns
-    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg13(:))
-    DO is=ns-1,0,-1
-      DO icv=ncv,1,-1
-        CALL POPREAL8(wrk(icv), r8/8)
-      END DO
-      DO icv=ncv,1,-1
-        CALL POPREAL8(wrk(icv), r8/8)
-      END DO
-      DO icv=ncv,1,-1
-        CALL POPREAL8(wrk(icv), r8/8)
-      END DO
-      DO icv=ncv,1,-1
-        CALL POPREAL8(wrk(icv), r8/8)
-      END DO
-      DO icv=ncv,1,-1
-        CALL POPREAL8(wrk(icv), r8/8)
-      END DO
-    END DO
-  END IF
-  CALL POPCONTROL1B(branch)
-  IF (branch .EQ. 0) CALL POPREAL8ARRAY(wrk, r8*ncv/8)
   smbtfealb = 0.D0
   smbtfealb = smbtfeab + smbtfb
   smbtfialb = 0.D0
@@ -832,7 +689,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   smbfrealb = 0.D0
   smbfrealb = smbfreab
   smbfrialb = 0.D0
-  CALL POPREAL8ARRAY(smbfria, r8*ncv*4/8)
   smbfrialb = smbfriab
   kab = 0.D0
   kbb = 0.D0
@@ -843,7 +699,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) THEN
       DO icv=mpg%nci,1,-1
-        CALL POPREAL8(smbtfial(icv, 0), r8/8)
         fllim_al_abb = coef*t0*smbtfialb(icv, 0)
         coefb = fllim_al_ab*t0*smbtfialb(icv, 0)
         t0b = fllim_al_ab*coef*smbtfialb(icv, 0)
@@ -937,7 +792,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
     wrkb = 0.D0
     DO icv=mpg%nci,1,-1
       t0 = na(icv, isb)*gte(icv)
-      CALL POPREAL8(smbtfeal(icv, 0), r8/8)
       coefb = t0*smbtfealb(icv, 0)
       t0b = coef*smbtfealb(icv, 0)
       nab(icv, isb) = nab(icv, isb) + gte(icv)*t0b
@@ -964,10 +818,8 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   IF (branch .EQ. 0) THEN
     DO icv=mpg%nci,1,-1
       t0 = na(icv, isb)*ne(icv)
-      CALL POPREAL8(smbfreal(icv, 1), r8/8)
       coefb = t0*ue(icv)*smbfrealb(icv, 0) - t0*smbfrealb(icv, 1)
       t0b = coef*ue(icv)*smbfrealb(icv, 0) - coef*smbfrealb(icv, 1)
-      CALL POPREAL8(smbfreal(icv, 0), r8/8)
       ueb(icv) = ueb(icv) + coef*t0*smbfrealb(icv, 0)
       nab(icv, isb) = nab(icv, isb) + ne(icv)*t0b
       neb(icv) = neb(icv) + na(icv, isb)*t0b
@@ -992,12 +844,10 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
             t0b = 0.D0
           ELSE
             t0 = na(icv, isb)*na(icv, is)
-            CALL POPREAL8(smbfrial(icv, 3), r8/8)
             tempb0 = -(smbfrialb(icv, 3)/result1)
             result1b = -(coef*t0*tempb0/result1)
             CALL POPREAL8(result1, r8/8)
             CALL ROXA_B(icv, isb, result1b)
-            CALL POPREAL8(smbfrial(icv, 2), r8/8)
             temp0 = ua(icv, is)/result1
             coefb = t0*tempb0 + t0*temp0*smbfrialb(icv, 2)
             t0b = coef*tempb0 + coef*temp0*smbfrialb(icv, 2)
@@ -1009,14 +859,12 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
           END IF
         ELSE IF (branch .EQ. 2) THEN
           t0 = na(icv, isb)*na(icv, is)
-          CALL POPREAL8(smbfrial(icv, 3), r8/8)
           tempb0 = -(smbfrialb(icv, 3)/result1)
           coefb = t0*tempb0
           t0b = coef*tempb0
           result1b = -(coef*t0*tempb0/result1)
           CALL POPREAL8(result1, r8/8)
           CALL ROXA_B(icv, isb, result1b)
-          CALL POPREAL8(smbfrial(icv, 0), r8/8)
           tempb0 = ua(icv, is)*smbfrialb(icv, 0)
           uab(icv, is) = uab(icv, is) + coef*t0*smbfrialb(icv, 0)
           coefb = coefb + t0*tempb0
@@ -1024,10 +872,8 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         ELSE
           tempb0 = ua(icv, is)*smbfrialb(icv, 0)
           t0 = na(icv, isb)*na(icv, is)
-          CALL POPREAL8(smbfrial(icv, 1), r8/8)
           coefb = t0*tempb0 - t0*smbfrialb(icv, 1)
           t0b = coef*tempb0 - coef*smbfrialb(icv, 1)
-          CALL POPREAL8(smbfrial(icv, 0), r8/8)
           uab(icv, is) = uab(icv, is) + coef*t0*smbfrialb(icv, 0)
         END IF
         nab(icv, isb) = nab(icv, isb) + na(icv, is)*t0b
@@ -1047,10 +893,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       END DO
     END IF
   END DO
-  arg1 = ncv*4
-  arg1 = ncv*4
-  arg1 = ncv*4
-  CALL POPINTEGER4(arg1)
 
 CONTAINS
 !  Differentiation of fkabvp in reverse (adjoint) mode (with options context noISIZE r8):

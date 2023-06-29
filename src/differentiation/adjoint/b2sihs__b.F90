@@ -887,8 +887,6 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     shefr = 0.0_R8
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
-        CALL PUSHINTEGER4(ncall_b2sifrtf)
-        CALL PUSHCHARACTERARRAY(my_out_folder, 7)
         CALL PUSHREAL8ARRAY(smbtfia, r8*ncv*4/8)
         CALL PUSHREAL8ARRAY(smbtfea, r8*ncv*4/8)
         CALL PUSHREAL8ARRAY(smbfria, r8*ncv*4/8)
@@ -1535,8 +1533,6 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         CALL POPREAL8ARRAY(smbfria, r8*ncv*4/8)
         CALL POPREAL8ARRAY(smbtfea, r8*ncv*4/8)
         CALL POPREAL8ARRAY(smbtfia, r8*ncv*4/8)
-        CALL POPCHARACTERARRAY(my_out_folder, 7)
-        CALL POPINTEGER4(ncall_b2sifrtf)
         smbchb = 0.D0
         smbtfb = 0.D0
         CALL B2SIFRTF_B(ncv, nfc, nvx, ns, is, ismain, switch, geo, geob&

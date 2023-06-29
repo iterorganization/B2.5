@@ -40,7 +40,8 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, ua&
 !.end b2tvspa
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+!lkw 20.06.2022
+  INTEGER :: ncv, nfc, nvx, ns, ifc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY) :: geob
@@ -118,6 +119,30 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, ua&
         CALL PUSHCONTROL1B(0)
       END IF
     END DO
+    CALL PUSHCONTROL1B(1)
+  ELSE
+    CALL PUSHCONTROL1B(0)
+  END IF
+!lkw 20.06.2022{
+  DO ifc=1,nfc
+    IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&       cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
+  END DO
+  DO ifc=nfc,1,-1
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) THEN
+      fchvisparb(ifc, 1) = 0.D0
+      fchvisparb(ifc, 0) = 0.D0
+    END IF
+  END DO
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
+    fchvisparb = 0.D0
+  ELSE
     dvparb = 0.D0
     dvparb = geo%fcs*switch%fhe_vis_par*fac_vis*gonedbsq(:, 0)*geo%&
 &     fcqalf(:, 1)*fchvisparb(:, 1) - geo%fcs*switch%fhe_vis_par*fac_vis&
@@ -138,8 +163,6 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, ua&
         uab(:, is) = uab(:, is) + SQRT(geo%cvbb(:, 3))*wrkb
       END IF
     END DO
-  ELSE
-    fchvisparb = 0.D0
   END IF
 END SUBROUTINE B2TVSPA_B
 !srv 20.09.06 }
@@ -177,7 +200,8 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 !.end b2tvspa
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+!lkw 20.06.2022
+  INTEGER :: ncv, nfc, nvx, ns, ifc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -257,6 +281,15 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
   ELSE
     fchvispar = 0.0e0_R8
   END IF
+!lkw 20.06.2022{
+  DO ifc=1,nfc
+    IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&       cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+      fchvispar(ifc, 0) = 0.0e0_R8
+      fchvispar(ifc, 1) = 0.0e0_R8
+    END IF
+  END DO
+!lkw 20.06.2022}
 ! ..return
   CALL SUBEND()
   RETURN

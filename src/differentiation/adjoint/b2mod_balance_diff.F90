@@ -1618,9 +1618,16 @@ CONTAINS
       END IF
     END IF
 !
+!     Average now accumulates total to be rescaled before write
+!     using ntim < 0
     IF (balance_average .NE. 0) THEN
-      avmlt = 1.0_R8
-      curmlt = RRATIO(1, ntim)
+      IF (ntim .LT. 0) THEN
+        avmlt = RRATIO(1, itim)
+        curmlt = 0._R8
+      ELSE
+        avmlt = 1.0_R8
+        curmlt = 1.0_R8
+      END IF
     ELSE
       avmlt = 0.0_R8
       curmlt = 1.0_R8

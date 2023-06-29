@@ -153,41 +153,11 @@ SUBROUTINE B2STBC_FB_PRE_NODIFF(ncv, nfc, nvx, ns, ismain, boris, switch&
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
 !.end b2stbc_fb_pre
-!
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
 !
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain, diagno
@@ -220,8 +190,8 @@ SUBROUTINE B2STBC_FB_PRE_NODIFF(ncv, nfc, nvx, ns, ismain, boris, switch&
   INTEGER, SAVE :: coreregno, coreregn2, solregno, pfrregno1, pfrregno2&
 & , isfeedback
   REAL(kind=r8) :: na_feedback_current, na_feedback_rescale, &
-& vol_feedback, dtim, na_feedback_prev(0:6-1), na_feedback_save(0:6-1), &
-& dt_prev, sum_e, sum_s, total_flux
+& vol_feedback, dtim, na_feedback_prev(0:def_natm-1), na_feedback_save(0&
+& :def_natm-1), dt_prev, sum_e, sum_s, total_flux
   REAL(kind=r8), ALLOCATABLE :: charge_frac(:)
   INTEGER, SAVE :: b2sral_style=2
   CHARACTER(len=72) :: message
@@ -244,8 +214,8 @@ SUBROUTINE B2STBC_FB_PRE_NODIFF(ncv, nfc, nvx, ns, ismain, boris, switch&
 !   ..initialisation
   DATA ncall /0/
   DATA dtim /1.0_R8/
-  DATA na_feedback_save /6*0.0_R8/
-  DATA na_feedback_prev /6*0.0_R8/
+  DATA na_feedback_save /def_natm*0.0_R8/
+  DATA na_feedback_prev /def_natm*0.0_R8/
   DATA coreregno /1/
   DATA coreregn2 /4/
   DATA solregno /3/

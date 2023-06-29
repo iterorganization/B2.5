@@ -444,6 +444,7 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: b2tfhi_fsigkt
       REAL(kind=r8) :: b2tfhi_fkt_hie
       REAL(kind=r8) :: b2tfhe_vis_kt
+      REAL(kind=r8) :: b2sikt_lpar_ref
       REAL(kind=r8) :: b2tqna_ballooning
       REAL(kind=r8) :: b2tqna_bb_ref
       REAL(kind=r8) :: b2tqna_ballooning_rescale
@@ -529,6 +530,7 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: nesepm
       REAL(kind=r8) :: ndes_sol
       REAL(kind=r8) :: nesepm_overshoot
+      REAL(kind=r8) :: b2stbc_cor9
       REAL(kind=r8) :: b2trno_alpha_stoch
       INTEGER :: b2stbc_feedback
       INTEGER :: med_style
@@ -632,6 +634,7 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: b2mndr_stim
       REAL(kind=r8) :: neutral_rescale
       REAL(kind=r8) :: cvsa_mltpl
+      REAL(kind=r8) :: b2stbc_cor9
   END TYPE SWITCHES_DIFF
 
 CONTAINS
@@ -919,7 +922,7 @@ CONTAINS
     s%b2npmo_diagno = 0
     s%ion_vlct_restrict = 0
     s%ion_vlct_restrict_m = 3.0_R8
-    s%vlct_diagno = 1
+    s%vlct_diagno = 0
     s%b2tqna_diagno = 0
 !
     s%set_na_numerical = 0
@@ -966,7 +969,7 @@ CONTAINS
     s%solve_keps = 0
     s%keps_local = 1
     s%keps_iout = 0
-    s%keps_cd = 1.0_R8
+    s%keps_cd = 0.3_R8
     s%keps_heat = 2.0_R8
     s%keps_heat_i = 2.0_R8
     s%keps_sig = 1.0e-4_R8
@@ -980,7 +983,7 @@ CONTAINS
     s%keps_dzt = 0.01_R8
     s%keps_inc = 1.0_R8
     s%keps_fac = 1.0_R8
-    s%keps_shear = 1.0e1_R8
+    s%keps_shear = 0.0e1_R8
     s%b2sikt_iout = 0
     s%b2sikt_style = 0
     s%b2sikt_model = 1
@@ -990,10 +993,10 @@ CONTAINS
     s%b2sikt_min_source = 0
     s%b2sikt_kt_source_stab = 1
     s%b2sikt_fac_aniso = 1.0_R8
-    s%b2sikt_fac_sheath = 1.0_R8
+    s%b2sikt_fac_sheath = 0.0_R8
     s%b2sikt_fac_sheath_core = 0.0_R8
-    s%b2sikt_fac_diss = 0.0_R8
-    s%b2sikt_fac_diss_core = 0.0_R8
+    s%b2sikt_fac_diss = 10.0_R8
+    s%b2sikt_fac_diss_core = 10.0_R8
     s%b2sikt_fac_vis_rs = 0.0_R8
     s%b2tfhi_fflokt = 0.0_R8
     s%b2tfhi_fconkt = 0.0_R8
@@ -1002,6 +1005,7 @@ CONTAINS
     s%b2tfhi_fsigkt = 0.0_R8
     s%b2tfhi_fkt_hie = 0.0_R8
     s%b2tfhe_vis_kt = 0.0e0_R8
+    s%b2sikt_lpar_ref = 10.0_R8
 !
 ! b2tqna
     s%b2tqna_ballooning = 0.0_R8
@@ -1103,7 +1107,7 @@ CONTAINS
 !
 ! b2siav
     s%b2siav_qstyle = 0
-    s%addvis = 0.0_R8
+    s%addvis = 1.0_R8
     s%addvis1 = 1.0_R8
     s%cqip1 = 0.5_R8
     s%cvsa_mltpl = 1.0_R8
@@ -1127,6 +1131,7 @@ CONTAINS
     s%nesepm = 0.0_R8
     s%nesepm_overshoot = 0.0_R8
     s%ndes_sol = 0.0_R8
+    s%b2stbc_cor9 = 0.0_R8
 !
 ! b2trno
 !srv 17.12.13
@@ -1566,6 +1571,7 @@ CONTAINS
     CALL IPGETR('b2tfhi_fsigkt', s%b2tfhi_fsigkt)
     CALL IPGETR('b2tfhi_fkt_hie', s%b2tfhi_fkt_hie)
     CALL IPGETR('b2tfhe_vis_kt', s%b2tfhe_vis_kt)
+    CALL IPGETR('b2sikt_fac_diss_lpar', s%b2sikt_lpar_ref)
 !
 ! b2tqna
     CALL IPGETI('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1717,6 +1723,7 @@ CONTAINS
     CALL IPGETR('b2stbc_nesepm', s%nesepm)
     CALL IPGETR('b2stbc_ndes_sol', s%ndes_sol)
     CALL IPGETR('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+    CALL IPGETR('b2stbc_BC2_cor9', s%b2stbc_cor9)
 !
 ! b2trno
     CALL IPGETR('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)

@@ -18,38 +18,8 @@ MODULE B2MOD_PAR_OPT_DIFF
   USE B2MOD_AD_DIFF, ONLY : nncf, b2rr, b2voloncf, b2voloncfb, b2data, &
 & b2datab, b2dataoncf, b2dataoncfb
   USE B2US_MAP_DIFF
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
-!
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
 !
 ! VARIABLES RELATED TO COST FUNCTION DEFINITION
 ! - mxnCf: maximum number of cost functions allowed
@@ -63,7 +33,7 @@ MODULE B2MOD_PAR_OPT_DIFF
 ! - cfweight: multiplier to the cost function
 ! - cfread: according to cftype, decide if reading experimental data from file for cost function
 ! - ncfdata: number of experimental data points read from file for each cost function
-! - cfdata(nncf,4,300): stores the experimental data points for each cost function
+! - cfdata(nncf,4,DEF_NLIM): stores the experimental data points for each cost function
 !   column 1 stores the curvilinear spatial coordinate (e.g. along OMP or target)
 !   column 2 stores the experimental data value
 !   column 3 stores the standard deviation sigma
@@ -86,7 +56,7 @@ MODULE B2MOD_PAR_OPT_DIFF
   LOGICAL, SAVE :: cfread(nncf)=.false.
   INTEGER, SAVE :: cfdef(nncf)
   INTEGER, SAVE :: ncfdata(nncf), ncf, cf_reg(mxncf), cf_regp(nncf, 2)
-  REAL(kind=r8), SAVE :: cfdata(nncf, 4, 300), cfweight(nncf)
+  REAL(kind=r8), SAVE :: cfdata(nncf, 4, def_nlim), cfweight(nncf)
   INTEGER :: nvmx, nsigmx
   PARAMETER (nvmx=50, nsigmx=10)
 !sc type of prior
@@ -300,7 +270,7 @@ CONTAINS
           ncfdata(icf) = ncfdata(icf) + 1
           GOTO 5
  15       CLOSE(99) 
-          CALL XERTST(ncfdata(icf) .LE. 300, &
+          CALL XERTST(ncfdata(icf) .LE. def_nlim, &
 &               'Cost function data limited to DEF_NLIM!')
           OPEN(unit=99, file=cffile, status='old', action='read') 
           DO i=1,ncfdata(icf)
@@ -940,7 +910,7 @@ CONTAINS
           ncfdata(icf) = ncfdata(icf) + 1
           GOTO 5
  15       CLOSE(99) 
-          CALL XERTST(ncfdata(icf) .LE. 300, &
+          CALL XERTST(ncfdata(icf) .LE. def_nlim, &
 &               'Cost function data limited to DEF_NLIM!')
           OPEN(unit=99, file=cffile, status='old', action='read') 
           DO i=1,ncfdata(icf)

@@ -15,41 +15,11 @@
 MODULE B2MOD_TRANSPORT_MODELS_DIFF
   USE B2MOD_TYPES
   USE B2MOD_VERSION_DIFF
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
   LOGICAL, SAVE :: transport_models_allocated=.false.
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
-  REAL(kind=r8), SAVE :: eta_hce_mult(-1:100)
+  REAL(kind=r8), SAVE :: eta_hce_mult(-1:def_nyd)
 !
   NAMELIST /transport_models/ eta_hce_mult
 
@@ -60,9 +30,12 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: nxd, nyd, nsd
     transport_models_allocated = .true.
-    CALL XERTST(nxd .LE. 200, 'Increase DEF_NXD in DIMENSIONS.F')
-    CALL XERTST(nyd .LE. 100, 'Increase DEF_NYD in DIMENSIONS.F')
-    CALL XERTST(nsd .LE. 42, 'Increase DEF_NSD in DIMENSIONS.F')
+    CALL XERTST(nxd .LE. def_nxd, 'Increase DEF_NXD in b2mod_dimensions'&
+&        )
+    CALL XERTST(nyd .LE. def_nyd, 'Increase DEF_NYD in b2mod_dimensions'&
+&        )
+    CALL XERTST(nsd .LE. def_nsd, 'Increase DEF_NSD in b2mod_dimensions'&
+&        )
   END SUBROUTINE ALLOC_B2MOD_TRANSPORT_MODELS
 
 !

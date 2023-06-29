@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2tral in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
@@ -28,8 +28,8 @@
 !                *(co.f_luc_al) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
 !                *(pl.tn) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
@@ -264,14 +264,14 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHREAL8ARRAY(cfvsa, r8*nsdecl)
   CALL PUSHREAL8ARRAY(cflim, r8)
   CALL PUSHREAL8ARRAY(cfvla, r8*nsdecl)
-  CALL PUSHINTEGER4(ncall_transp_keps)
-  CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-  CALL PUSHINTEGER4(ncall_b2tqna)
-  CALL PUSHINTEGER4(ncall_b2tlh0)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
   CALL PUSHREAL4(small_r4_constant, r4/8)
+  CALL PUSHINTEGER4(ncall_transp_keps)
+  CALL PUSHCHARACTERARRAY(my_out_folder, 7)
+  CALL PUSHINTEGER4(ncall_b2tqna)
+  CALL PUSHINTEGER4(ncall_b2tlh0)
   CALL PUSHREAL8ARRAY(co%csig, r8*SIZE(co%csig, 1)*SIZE(co%csig, 2)/8)
   CALL PUSHREAL8ARRAY(co%calf, r8*SIZE(co%calf, 1)*SIZE(co%calf, 2)/8)
   CALL PUSHREAL8ARRAY(co%csig_an, r8*SIZE(co%csig_an, 1)*SIZE(co%csig_an&
@@ -333,6 +333,10 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 23.11.10
 !srv 09.01.01 03.06.03
 !xpb
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
+  CALL PUSHBOOLEAN(b2mod_math_initialised)
+  CALL PUSHREAL4(small_r4_constant, r4/8)
   CALL PUSHINTEGER4(ncall_b2ttia)
   CALL PUSHINTEGER4(ncall_b2tlnl)
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
@@ -340,10 +344,6 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHINTEGER4(ncall_b2tqce)
   CALL PUSHINTEGER4(ncall_b2tqca)
   CALL PUSHINTEGER4(ncall_b2tqin)
-  CALL PUSHREAL8(cutlo, r8/8)
-  CALL PUSHREAL8(cutll, r8/8)
-  CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
   CALL PUSHREAL8ARRAY(co%fllimvisc, r8*SIZE(co%fllimvisc, 1)*SIZE(co%&
 &               fllimvisc, 2)/8)
   CALL PUSHREAL8ARRAY(co%vsaf_cl, r8*SIZE(co%vsaf_cl, 1)*SIZE(co%vsaf_cl&
@@ -751,10 +751,6 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              , 2)*SIZE(co%vsaf_cl, 3)/8)
   CALL POPREAL8ARRAY(co%fllimvisc, r8*SIZE(co%fllimvisc, 1)*SIZE(co%&
 &              fllimvisc, 2)/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
   CALL POPINTEGER4(ncall_b2tqin)
   CALL POPINTEGER4(ncall_b2tqca)
   CALL POPINTEGER4(ncall_b2tqce)
@@ -762,6 +758,10 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(ncall_b2tlnl)
   CALL POPINTEGER4(ncall_b2ttia)
+  CALL POPREAL4(small_r4_constant, r4/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
   dummyzerodiffb = 0.D0
   dummyzerodiffb0 = 0.D0
   CALL B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, switchb, &
@@ -829,14 +829,14 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              , 2)/8)
   CALL POPREAL8ARRAY(co%calf, r8*SIZE(co%calf, 1)*SIZE(co%calf, 2)/8)
   CALL POPREAL8ARRAY(co%csig, r8*SIZE(co%csig, 1)*SIZE(co%csig, 2)/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
   CALL POPINTEGER4(ncall_b2tlh0)
   CALL POPINTEGER4(ncall_b2tqna)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(ncall_transp_keps)
+  CALL POPREAL4(small_r4_constant, r4/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
   CALL POPREAL8ARRAY(cfvla, r8*nsdecl)
   CALL POPREAL8ARRAY(cflim, r8)
   CALL POPREAL8ARRAY(cfvsa, r8*nsdecl)

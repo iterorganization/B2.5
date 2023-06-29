@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2trno in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
 !                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -21,8 +21,8 @@
 !                *(co.vsa0) *(co.hcib) *(co.vla0) *(pl.na) *(pl.ua)
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
 !                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -244,13 +244,13 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHREAL8ARRAY(cfvsa, r8*nsdecl)
   CALL PUSHREAL8ARRAY(cflim, r8)
   CALL PUSHREAL8ARRAY(cfvla, r8*nsdecl)
-  CALL PUSHINTEGER4(ncall_transp_keps)
-  CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-  CALL PUSHINTEGER4(ncall_b2tqna)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
   CALL PUSHREAL4(small_r4_constant, r4/8)
+  CALL PUSHINTEGER4(ncall_transp_keps)
+  CALL PUSHCHARACTERARRAY(my_out_folder, 7)
+  CALL PUSHINTEGER4(ncall_b2tqna)
   CALL PUSHREAL8ARRAY(co%hci_exb, r8*SIZE(co%hci_exb, 1)/8)
   CALL PUSHREAL8ARRAY(co%hce_exb, r8*SIZE(co%hce_exb, 1)/8)
   CALL PUSHREAL8ARRAY(co%dna_exb, r8*SIZE(co%dna_exb, 1)/8)
@@ -948,13 +948,13 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8ARRAY(co%dna_exb, r8*SIZE(co%dna_exb, 1)/8)
   CALL POPREAL8ARRAY(co%hce_exb, r8*SIZE(co%hce_exb, 1)/8)
   CALL POPREAL8ARRAY(co%hci_exb, r8*SIZE(co%hci_exb, 1)/8)
+  CALL POPINTEGER4(ncall_b2tqna)
+  CALL POPCHARACTERARRAY(my_out_folder, 7)
+  CALL POPINTEGER4(ncall_transp_keps)
   CALL POPREAL4(small_r4_constant, r4/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
   CALL POPREAL8(cutll, r8/8)
   CALL POPREAL8(cutlo, r8/8)
-  CALL POPINTEGER4(ncall_b2tqna)
-  CALL POPCHARACTERARRAY(my_out_folder, 7)
-  CALL POPINTEGER4(ncall_transp_keps)
   CALL POPREAL8ARRAY(cfvla, r8*nsdecl)
   CALL POPREAL8ARRAY(cflim, r8)
   CALL POPREAL8ARRAY(cfvsa, r8*nsdecl)

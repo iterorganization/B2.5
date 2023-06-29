@@ -199,7 +199,7 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
     END SELECT
     IF (par_opt_phys(ii) .LT. prior_range(ii, 1) .OR. par_opt_phys(ii) &
 &       .GT. prior_range(ii, 2)) THEN
-      prior = LOG(0.0_R8)
+      prior = 1.0E+60_R8
       inrange = .false.
     END IF
   END DO
@@ -232,7 +232,7 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
     END SELECT
     IF (sigma(ii) .LT. prior_range(ii+isigma, 1) .OR. sigma(ii) .GT. &
 &       prior_range(ii+isigma, 2)) THEN
-      prior = LOG(0.0_R8)
+      prior = 1.0E+60_R8
       inrange = .false.
     END IF
   END DO
@@ -262,7 +262,7 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
     END SELECT
     IF (mean(ii) .LT. prior_range(ii+imean, 1) .OR. mean(ii) .GT. &
 &       prior_range(ii+imean, 2)) THEN
-      prior = LOG(0.0_R8)
+      prior = 1.0E+60_R8
       inrange = .false.
     END IF
   END DO

@@ -51,44 +51,10 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2US_GEO_DIFF
   USE B2MOD_AD_DIFF, ONLY : nsdmax
   USE B2MOD_EIRDIAG
+  USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !  version : 28.12.96 21:39
-!
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
 !
 !
 !     COUPLING-DEFINITION COMMON (KOPPLDIM)
@@ -96,16 +62,18 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFF
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
   INTEGER :: nxdd, nydd, nstra, nfl
-  PARAMETER (nxdd=200+4*5, nydd=100, nstra=(5*4/2+2)*6+1, nfl=42)
+  PARAMETER (nxdd=def_nxd+def_ncut*5, nydd=def_nyd, nstra=def_nstra, nfl&
+& = def_nfl)
   INTEGER :: natm, nmol, nion, npls, nspz
-  PARAMETER (natm=6, nmol=3, nion=3, npls=42-6+(6+3)*(6+3), nspz=6+3+3+(&
-&   42-6)+(6+3)*(6+3))
+  PARAMETER (natm=def_natm, nmol=def_nmol, nion=def_nion, npls=def_npls&
+& , nspz=def_natm+def_nmol+def_nion+def_npls)
   INTEGER :: nlim, nsts, nsrfs, nsgmx
-  PARAMETER (nlim=300, nsts=50, nsrfs=4)
-  PARAMETER (nsgmx=300+max(2, 4)*100)
+  PARAMETER (nlim=def_nlim, nsts=def_nsts, nsrfs=def_nsrfs)
+  PARAMETER (nsgmx=def_nlim+max(2, def_ncut)*def_nyd)
 !
   INTEGER :: n1st, n2nd, n3rd
-  PARAMETER (n1st=100+1, n2nd=200+1+4+(4/2-1)*(1+0), n3rd=1)
+  PARAMETER (n1st=def_nyd+1, n2nd=def_nxd+1+def_ncut+(def_ncut/2-1)*(1+&
+&   def_isoextra), n3rd=1)
   INTEGER :: n1f, n2f, n3f
   PARAMETER (n1f=1-1/n1st, n2f=1-1/n2nd, n3f=1-1/n3rd)
   INTEGER :: ngitt, ngittp
@@ -116,20 +84,16 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFF
   INTEGER :: ndxp, ndyp, nlimps
   PARAMETER (ndxp=nxdd+1, ndyp=nydd+1, nlimps=nlim+nsts)
   INTEGER :: ngtsft, nlmpgs
-  PARAMETER (ngtsft=1*ngitt)
+  PARAMETER (ngtsft=def_ngstal*ngitt)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
 !
 !***  EIRENE control from B2
 !
 !  version : 28.06.2000 18:01
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-  REAL(kind=r8) :: sps_absr(40), sps_trno(40), sps_trni(40), sps_mtri(40&
-& ), sps_tmpr(40), sps_spph(40), sps_spch(40)
+  REAL(kind=r8) :: sps_absr(def_nspcsrfg), sps_trno(def_nspcsrfg), &
+& sps_trni(def_nspcsrfg), sps_mtri(def_nspcsrfg), sps_tmpr(def_nspcsrfg)&
+& , sps_spph(def_nspcsrfg), sps_spch(def_nspcsrfg)
 ! VERSION: 01.07.2000 23:24
 !
 !*** Control parameters for transfer from B2 to Eirene
@@ -139,7 +103,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFF
 !*** DELTAT and EIRENE_STEP_CPU are left in the dummy variable list in
 !*** the eirsrt routine just to minimize the number of possible errors.
 !***>>  Control parameters:
-!*** 40:  max. number of groups of surfaces for which the data
+!*** DEF_NSPCSRFG:  max. number of groups of surfaces for which the data
 !***                can be transferred (e. g., pump duct, e.t.c)
 !*** n_spcsrf:  actual number of such groups as input from B2
 !*** l_spcsrf:  list of surface segments (non-default standard surfaces
@@ -159,19 +123,19 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFF
 !*** sps_mtrl:  surface material in human notation (e.g., C)
 !*** sps_id:    identifier of the group of surfaces (assigned in DG)
   INTEGER :: nn_spcsrf
-  PARAMETER (nn_spcsrf=300+50)
-  INTEGER :: n_spcsrf, l_spcsrf(nn_spcsrf), i_spcsrf(40), j_spcsrf(40), &
-& sps_sgrp(40)
-  CHARACTER(len=8) :: sps_mtrl(40), sps_id(40)
+  PARAMETER (nn_spcsrf=def_nlim+def_nsts)
+  INTEGER :: n_spcsrf, l_spcsrf(nn_spcsrf), i_spcsrf(def_nspcsrfg), &
+& j_spcsrf(def_nspcsrfg), sps_sgrp(def_nspcsrfg)
+  CHARACTER(len=8) :: sps_mtrl(def_nspcsrfg), sps_id(def_nspcsrfg)
   COMMON /spcsrfcom/ sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, &
 & sps_spph, sps_spch, n_spcsrf, l_spcsrf, i_spcsrf, j_spcsrf, sps_sgrp
   COMMON /spcsrfcch/ sps_mtrl, sps_id
   SAVE /spcsrfcom/, /spcsrfcch/
   INTEGER :: nstraid, natmid, nmolid, nionid, nstsid, nlimpsd
-  PARAMETER (nstraid=(5*4/2+2)*6+1)
-  PARAMETER (natmid=6, nmolid=3, nionid=3)
-  PARAMETER (nstsid=50)
-  PARAMETER (nlimpsd=300+50)
+  PARAMETER (nstraid=def_nstra)
+  PARAMETER (natmid=def_natm, nmolid=def_nmol, nionid=def_nion)
+  PARAMETER (nstsid=def_nsts)
+  PARAMETER (nlimpsd=def_nlim+def_nsts)
   REAL(kind=r8), SAVE :: recyc(0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: b2recyc(0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: b2recycb(0:nsdmax-1, nstraid),b2recycb0(0:nsdmax-1, nstraid)
@@ -194,20 +158,21 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFF
   REAL(kind=r8), SAVE :: phys_sput(0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: gpdata(100, 2, nstraid)
   REAL(kind=r8), SAVE :: time_dep_puff_param(10, nstraid)
-  REAL(kind=r8), SAVE :: rc_face_ori(2*(200+100), nstraid)
-  CHARACTER(len=16), SAVE :: textan(0:6-1), textmn(0:3-1), textin(0:3-1)
-  REAL(kind=r8), SAVE :: chemical_sputter_yield(0:300+50)
+  REAL(kind=r8), SAVE :: rc_face_ori(2*(def_nxd+def_nyd), nstraid)
+  CHARACTER(len=16), SAVE :: textan(0:def_natm-1), textmn(0:def_nmol-1)&
+& , textin(0:def_nion-1)
+  REAL(kind=r8), SAVE :: chemical_sputter_yield(0:def_nlim+def_nsts)
   INTEGER, SAVE :: rcpos(nstraid)
   INTEGER, SAVE :: rcstart(nstraid)
   INTEGER, SAVE :: rcend(nstraid)
   INTEGER, SAVE :: arcstart(nstraid)
   INTEGER, SAVE :: arcend(nstraid)
   INTEGER, SAVE :: rc_list_size(nstraid)
-  INTEGER, SAVE :: rc_list_x(2*(200+100), nstraid)
-  INTEGER, SAVE :: rc_list_y(2*(200+100), nstraid)
-  CHARACTER, SAVE :: rc_list_char(2*(200+100), nstraid)
+  INTEGER, SAVE :: rc_list_x(2*(def_nxd+def_nyd), nstraid)
+  INTEGER, SAVE :: rc_list_y(2*(def_nxd+def_nyd), nstraid)
+  CHARACTER, SAVE :: rc_list_char(2*(def_nxd+def_nyd), nstraid)
   INTEGER, SAVE :: nrcfaces(nstraid)
-  INTEGER, SAVE :: rc_faces(2*(200+100), nstraid)
+  INTEGER, SAVE :: rc_faces(2*(def_nxd+def_nyd), nstraid)
   INTEGER, SAVE :: targsp(nstraid, ntrack)
   LOGICAL, SAVE :: chemsp(nstraid)
   LOGICAL, SAVE :: time_dep_puff(nstraid)
@@ -231,7 +196,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFF
   CHARACTER(len=1), SAVE :: hyb_type(nstraid)
   INTEGER, SAVE :: mlcmp(natmid, nmolid), micmp(natmid, nionid), latmscl&
 & (natmid), lmolscl(nmolid), lionscl(nionid), lcns(nstsid), ltns(nstsid)&
-& , lsns(nstraid*4), ksns(nstraid), msns(2, nstraid)
+& , lsns(nstraid*def_nsrfs), ksns(nstraid), msns(2, nstraid)
   REAL(kind=r8), SAVE :: gpfc(natmid, nstraid)
   REAL(kind=r8), SAVE :: rcfe(nstraid), rcfi(nstraid)
 !
@@ -834,7 +799,7 @@ CONTAINS
     END DO
     DO is=1,nstrai
       CALL XERTST(0 .LE. ksns(is), 'faulty input ksns')
-      CALL XERTST(ksns(is) .LE. 4, 'faulty input ksns')
+      CALL XERTST(ksns(is) .LE. def_nsrfs, 'faulty input ksns')
     END DO
     DO is=1,SUM(ksns(1:nstrai))
       CALL XERTST(lsns(is) .LE. nlim + nsts, 'faulty input lsns')
@@ -1380,7 +1345,7 @@ CONTAINS
     END DO
     DO is=1,nstrai
       CALL XERTST(0 .LE. ksns(is), 'faulty input ksns')
-      CALL XERTST(ksns(is) .LE. 4, 'faulty input ksns')
+      CALL XERTST(ksns(is) .LE. def_nsrfs, 'faulty input ksns')
     END DO
     DO is=1,SUM(ksns(1:nstrai))
       CALL XERTST(lsns(is) .LE. nlim + nsts, 'faulty input lsns')
@@ -1754,7 +1719,7 @@ CONTAINS
     END DO
     DO is=1,nstrai
       CALL XERTST(0 .LE. ksns(is), 'faulty input ksns')
-      CALL XERTST(ksns(is) .LE. 4, 'faulty input ksns')
+      CALL XERTST(ksns(is) .LE. def_nsrfs, 'faulty input ksns')
     END DO
     DO is=1,SUM(ksns(1:nstrai))
       CALL XERTST(lsns(is) .LE. nlim + nsts, 'faulty input lsns')
