@@ -4397,11 +4397,17 @@
         integer :: nx, ny
         real (kind=R8) :: ro(2), zo(2), rzomp(2,2)
         real (kind=R8) :: ri(2), zi(2), rzimp(2,2)
-        integer :: ix, iy, iymin, iymax, iout, n_omp, n_imp
+        integer :: ix, iy, iyi, iyo, iymin, iymax, iout,
+     .             n_omp, n_imp, n_sep
+        integer :: autodet = 1
 #ifndef F2003
         integer newunit
         external newunit
 #endif
+
+        call ipgeti ('b2us_auto_midplane_det',autodet)
+        call xertst (0.le.autodet.and.autodet.le.1,
+     .  'faulty parameter b2us_auto_midplane_det')
 
         ! This subroutine calculates arrays rzomp and rzimp with the R-Z coordinates
         ! of two points laying on the straight line going through all
@@ -4409,6 +4415,16 @@
         ! Writes the coordinates into b2.user.parameters
 
 *   ..find the poloidal number of outer midplane cell as the cell with min Bz
+        
+        if (autodet.eq.0) then
+
+          call get_jsep(nx,ny,n_imp,n_omp,n_sep)
+          iyi = n_sep
+          iyo = n_sep
+
+        else
+
+        write (*,*) 'Attempting automatic detection of OMP and IMP'
 
         if(nnreg(0).eq.8) then
           n_omp = rightcut(2)
@@ -4435,40 +4451,8 @@
             if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
         endif
-        write(*,*) ' Found OMP location at ix = ' , n_omp
-        iymax = iy
-        do while (isRealCell(cflags(n_omp,iymax+1,CELLFLAG_TYPE)))
-          iymax = iymax + 1
-        end do
-        iymin = iy
-        do while (isRealCell(cflags(n_omp,iymin-1,CELLFLAG_TYPE)))
-          iymin = iymin - 1
-        end do
-        write(*,*) 'Inner and outermost flux tube at OMP at '//
-     &             'iymin, iymax  = ',iymin, iymax
-
-        
-
-        ro(1)=0.25_R8*(crx(n_omp,iymin,0)+crx(n_omp,iymin,1)+ ! R-coordinate of center of [n_omp,-1] cell
-     &                 crx(n_omp,iymin,2)+crx(n_omp,iymin,3))
-        zo(1)=0.25_R8*(cry(n_omp,iymin,0)+cry(n_omp,iymin,1)+ ! Z-coordinate of center of [n_omp,-1] cell
-     &                 cry(n_omp,iymin,2)+cry(n_omp,iymin,3))
-        ro(2)=0.25_R8*(crx(n_omp,iymax,0)+crx(n_omp,iymax,1)+ ! R-coordinate of center of [n_omp,ny] cell
-     &                 crx(n_omp,iymax,2)+crx(n_omp,iymax,3))
-        zo(2)=0.25_R8*(cry(n_omp,iymax,0)+cry(n_omp,iymax,1)+ ! Z-coordinate of center of [n_omp,ny] cell
-     &                 cry(n_omp,iymax,2)+cry(n_omp,iymax,3))
-        if(ro(2).gt.ro(1)) then
-          rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
-          rzomp(2,1)=zo(1)+                                               ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
-     &              (rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
-          rzomp(1,2)=ro(2)*1.1_R8                                         ! take a coordinate to the right of ro(2)
-          rzomp(2,2)=zo(1)+                                               ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
-     &              (rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
-        else
-          write(*,*) ' ro(1:2) :', ro(1), ro(2)
-          write(*,*) ' zo(1:2) :', zo(1), zo(2)
-          call xerrab('conv_midplane: unexpected coordinates for rzomp')
-        endif
+        iyo = iy
+        write(*,*) ' Found OMP location at ix, iy = ' , n_omp, iyo
 
 *   ..find the poloidal number of the inner midplane cell as the cell with max Bz
 
@@ -4498,12 +4482,59 @@
             if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
         endif
-        write(*,*) ' Found IMP location at ix = ' , n_imp
-        iymax = iy
+        iyi = iy
+        write(*,*) ' Found IMP location at ix, iy = ' , n_imp, iyi
+
+        endif ! autodet
+
+
+        ! Computing coordinates at OMP
+        iymax = iyo
+        do while (isRealCell(cflags(n_omp,iymax+1,CELLFLAG_TYPE)))
+          iymax = iymax + 1
+        end do
+        iymin = iyo
+        do while (isRealCell(cflags(n_omp,iymin-1,CELLFLAG_TYPE)))
+          iymin = iymin - 1
+        end do
+        write(*,*) 'Inner and outermost flux tube at OMP at '//
+     &             'iymin, iymax  = ',iymin, iymax
+
+        
+
+        ro(1)=0.25_R8*(crx(n_omp,iymin,0)+crx(n_omp,iymin,1)+ ! R-coordinate of center of [n_omp,-1] cell
+     &                 crx(n_omp,iymin,2)+crx(n_omp,iymin,3))
+        zo(1)=0.25_R8*(cry(n_omp,iymin,0)+cry(n_omp,iymin,1)+ ! Z-coordinate of center of [n_omp,-1] cell
+     &                 cry(n_omp,iymin,2)+cry(n_omp,iymin,3))
+        ro(2)=0.25_R8*(crx(n_omp,iymax,0)+crx(n_omp,iymax,1)+ ! R-coordinate of center of [n_omp,ny] cell
+     &                 crx(n_omp,iymax,2)+crx(n_omp,iymax,3))
+        zo(2)=0.25_R8*(cry(n_omp,iymax,0)+cry(n_omp,iymax,1)+ ! Z-coordinate of center of [n_omp,ny] cell
+     &                 cry(n_omp,iymax,2)+cry(n_omp,iymax,3))
+        if(ro(2).gt.ro(1)) then
+          rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
+          rzomp(2,1)=zo(1)+                                               ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
+     &              (rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+          rzomp(1,2)=ro(2)*1.1_R8                                         ! take a coordinate to the right of ro(2)
+          rzomp(2,2)=zo(1)+                                               ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
+     &              (rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+        else
+          write(*,*) ' ro(1:2) :', ro(1), ro(2)
+          write(*,*) ' zo(1:2) :', zo(1), zo(2)
+          if (autodet.eq.1) then
+            write (*,*) 'Automatic detection OMP failed. Consider '//
+     .                  'setting b2us_auto_midplane_det to 0, and '
+            write (*,*) 'specifying OMP/IMP through b2mwti_jxa, '//
+     .                  'b2mwti_jxi, and b2mwti_jsep'
+          endif
+          call xerrab('conv_midplane: unexpected coordinates for rzomp')
+        endif
+
+        ! Computing coordinates at IMP
+        iymax = iyi
         do while (isRealCell(cflags(n_imp,iymax+1,CELLFLAG_TYPE)))
           iymax = iymax + 1
         end do
-        iymin = iy
+        iymin = iyi
         do while (isRealCell(cflags(n_imp,iymin-1,CELLFLAG_TYPE)))
           iymin = iymin - 1
         end do
@@ -4529,8 +4560,16 @@
         else
           write(*,*) ' ri(1:2) :', ri(1), ri(2)
           write(*,*) ' zi(1:2) :', zi(1), zi(2)
+          if (autodet.eq.1) then
+            write (*,*) 'Automatic detection OMP failed. Consider '//
+     .                  'setting b2us_auto_midplane_det to 0, and '
+            write (*,*) 'specifying OMP/IMP through b2mwti_jxa, '//
+     .                  'b2mwti_jxi, and b2mwti_jsep'
+          endif
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
+
+
 
 #ifdef F2003
         open(newunit=iout,file='info.dat')
