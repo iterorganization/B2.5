@@ -32,12 +32,15 @@ c======================================================================
       use b2mod_subsys
       implicit none
 #include <DIMENSIONS.F>
-      integer i,j,k,n,il
+      integer i,j,k,n
       logical lim_cnf,target_east,target_west
+#ifdef DBG
+      integer il
+#endif
 c<<<
-      integer lun_w
-      parameter (lun_w=96)
-      character tab
+c     integer lun_w
+c     parameter (lun_w=96)
+c     character tab
 c>>>
       integer use_eirene, ncall
       data use_eirene/0/, ncall/0/
@@ -49,7 +52,7 @@ c======================================================================
       if (ncall.eq.0) call ipgeti ('b2mndr_eirene', use_eirene)
       ncall = ncall + 1
 c<<<
-      tab=char(9)
+c     tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
 c      if(nnreg(0).lt.7) then
