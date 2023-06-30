@@ -199,7 +199,9 @@
       integer n, incx, incy
       real (kind=R8) ::
      *   sa, sx(0:*), sy(0:*)
+#if ( !defined(NO_OPENMP_MYBLAS) || defined(WITH_FTIMINGS) )
       logical do_parallel
+#endif
 *     ------------------------------------------------------------------
 *     B2SAXPY (BLAS routine) performs the vector operation y:=y+sa*x.
 *     x and y are d.p. real vectors, described by (n,sx,incx) and
@@ -210,7 +212,9 @@
       integer i, ix, iy
       external xerrab
 *     ------------------------------------------------------------------
+#if ( !defined(NO_OPENMP_MYBLAS) || defined(WITH_FTIMINGS) )
       do_parallel =  (.not. in_parallel()) .and. (n > 7000)
+#endif
 #ifdef WITH_FTIMINGS
       call timer%start("b2saxpy")
       if (do_parallel) call timer%start("parallel")
