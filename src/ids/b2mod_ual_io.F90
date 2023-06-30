@@ -9239,6 +9239,7 @@ contains
     return
     end subroutine write_sourced_value_root
 
+#if IMAS_MINOR_VERSION > 36
     subroutine write_sourced_rz( val, rvalue, zvalue )
     implicit none
     type(ids_summary_rz1d_dynamic) :: val
@@ -9253,6 +9254,7 @@ contains
 
     return
     end subroutine write_sourced_rz
+#endif
 
     subroutine write_errored_value( val, value, error )
     implicit none
