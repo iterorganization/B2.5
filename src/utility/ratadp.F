@@ -294,15 +294,16 @@
 
       contains
 
-*!!   (hydfud is the fudge factor for the density dependence in the
-*!!   hydrogen ionisation rate coefficient; see the code.)
       function hydfud(temp,dens)
       implicit none
       real(kind=R8) :: hydfud
       real(kind=R8), intent(in) :: temp, dens
+*!!   (hydfud is the fudge factor for the density dependence in the
+*!!   hydrogen ionisation rate coefficient; see the code.)
 
       hydfud = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*temp**(-0.60_R8))
 
       return
       end function hydfud
+
       end subroutine ratadp
