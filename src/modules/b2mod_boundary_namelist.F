@@ -1999,6 +1999,14 @@ cc BCENI
           changed = .true.
         endif 
 
+cc BCPOT
+
+        if (bcpot(ib).eq.3) then 
+          bcpot(ib) = 11
+          write(*,*) 'Automatically changing BCPOT from 3 to 11'
+          changed = .true.
+        endif 
+
       enddo
 
       if (changed) then
