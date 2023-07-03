@@ -190,7 +190,7 @@ c     output for analysis/debugging
         do istra = 1, nstrat
           if (b2species_start(istra).ge.0) then
             do is = b2species_start(istra), b2species_end(istra)
-              if (zn(is).eq.1.0_R8) then
+              if (nint(zn(is)).eq.1) then
                 if(erecyc(is,istra)>0.0_R8.or.
      2            mrecyc(is,istra)>0.0_R8)
      3            write(*,*)'recycle_afn incompatible with ',

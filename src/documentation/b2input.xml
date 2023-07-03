@@ -575,6 +575,14 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>conv_triangles_old_co</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When converting a structured case with b2us and conv_triangles_old_co = 1, the coordinates of the nodes of the triangles from the original fort.33 file will be used in the unstructured format. Otherwise, the triangular mesh will be exactly matched to the B2.5 grid. 
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -2068,7 +2076,7 @@
 				</description>
 				<switch>
 					<name>b2tlc0_alpha</name>
-					<default>0.0 (if b2mn_afn = 0); 1.0 (else)</default>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (otherwise)</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2089,7 +2097,7 @@
 				</description>
 				<switch>
 					<name>b2tlh0_alpha</name>
-					<default>0.0 (if b2mn_afn = 0); 1.0 (else)</default>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (otherwise)</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2109,12 +2117,12 @@
 					Parameters for the flux limit to the viscosity of the neutrals. Alpha is a multiplier to the classical flux limit value.
 					The larger &alpha; is, the weaker the flux limit is.
 					&gamma; is the exponent used in the flux-limiting formula.
-					The smaller &gamma; is, the sbtronger the flux limit is.
+					The smaller &gamma; is, the stronger the flux limit is.
 					If alpha.eq.0, no flux limit is applied.
 				</description>
 				<switch>
 					<name>b2tlv0_alpha</name>
-					<default>0.0 (if b2mn_afn = 0); 1.0 (else)</default>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (otherwise)</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2519,7 +2527,7 @@
 					Multiplier for the dissipation term of kt in the core region.
 				</description>
 			</switch>
-                        <switch>
+			<switch>
 				<name>b2mn_afn</name>
 				<default>0</default>
 				<type>integer</type>
@@ -2532,7 +2540,7 @@
 				<default>0</default>
 				<type>integer</type>
                                 <description>
-					When set to 1, the AFN recycling boundary conditions are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no spefication of b2stbr_recycle_afn, the switch is automatically set to 1.
+					When set to 1, the AFN recycling boundary conditions are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_recycle_afn, the switch is automatically set to 1.
 				</description>
 			</switch>
 			<switch>
@@ -2548,7 +2556,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no spefication of b2stbr_transport_afn, the switch is automatically set to 1. 
+					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_transport_afn, the switch is automatically set to 1. 
 				</description>
 			</switch>
 			<switch>
@@ -2564,7 +2572,7 @@
 				<default>0.1</default>
 				<type>real</type>
 				<description>
-					Macroscopic length scale used to calculate the local Knudsen number. 
+					Macroscopic length scale (in m) used to calculate the local Knudsen number. 
 				</description>
 			</switch>
 			<switch>
@@ -2572,6 +2580,7 @@
 				<default>0.01</default>
 				<type>real</type>
 				<description>
+					Should be used in combination with MAXW in b2.neutrals.parameters (see description MAXW).
 				</description>
 			</switch>
 			<switch>
@@ -2579,6 +2588,7 @@
 				<default>0.1</default>
 				<type>real</type>
                                 <description>
+					Should be used in combination with MAXW in b2.neutrals.parameters (see description MAXW).
 				</description>
 			</switch>
 			<switch>
@@ -3862,7 +3872,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If '1', flux limit to neutrals contribution to vsa0 - the viscoity is applied in b2tlv0.F. It is recommended '1'.
+					If '1', flux limit to neutrals contribution to vsa0 - the viscosity is applied in b2tlv0.F. It is recommended '1'.
 					b2tlv0.F has the flux limit parameters &alpha; and &gamma; which are given by 'b2tlv0_alpha' and 'b2tlv0_gamma'. 
 				</description>
 			</switch>
@@ -4695,10 +4705,10 @@
 			<switch>
 				<name>SURF_MAT</name>
 				<default>'C'</default>
-				<type>character*1 array of length (NSTRAT)</type>
+				<type>character*2 array of length (NSTRAT)</type>
 				<description>
-                                        Contains the surface material for surface strata, used for AFN neutrals. Possible options: 
-                                        'Be' (beryllium), 'C' (carbon), 'Fe' (iron), 'Mo' (molybdenum) and 'W' (tungsten).       
+					Contains the surface material for surface strata, used for AFN neutrals. Possible options:
+					'Be' (beryllium), 'C' (carbon), 'Fe' (iron), 'Mo' (molybdenum) and 'W' (tungsten).       
 				</description>
 			</switch>
 			<switch>
@@ -4706,7 +4716,7 @@
 				<default>0</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description> 
-                                        If 1, adding sheath acceleration for the ions hitting the boundary. Used for AFN boundary conditions.  
+					If 1, adding sheath acceleration for the ions hitting the boundary. Used for AFN boundary conditions.  
 				</description>
 			</switch>
 			<switch>
@@ -4714,7 +4724,7 @@
 				<default>1</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description> 
-                                        Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.    
+					Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.    
 				</description>
 			</switch>
 			<switch>
@@ -4722,7 +4732,7 @@
 				<default>3.0</default>
 				<type>real*8</type>
 				<description> 
-                                        Franck-Condon energy assigned to the thermally released fraction of recycled hydrogen neutrals, used in the AFN boundary condition. It is assumed that thermally released molecules are dissociated immediately at the surface and get an energy E_FC (eV) and are emitted isotropically. 3.0 eV is the value typically used in the EIRENE input file.   
+					Franck-Condon energy assigned to the thermally released fraction of recycled hydrogen neutrals, used in the AFN boundary condition. It is assumed that thermally released molecules are dissociated immediately at the surface and get an energy E_FC (eV) and are emitted isotropically. 3.0 eV is the value typically used in the EIRENE input file.   
 				</description>
 			</switch>
 			<switch>
