@@ -4538,9 +4538,14 @@
         do while (isRealCell(cflags(n_imp,iymin-1,CELLFLAG_TYPE)))
           iymin = iymin - 1
         end do
-        write(*,*) 'Inner and outermost flux tube at OMP at '//
+        write(*,*) 'Inner and outermost flux tube at IMP at '//
      &             'iymin, iymax  = ', iymin, iymax
-       
+        if (nnreg(0).eq.1) then
+        ! swap iymin and iymax for calculation below if we deal with slab or linear cases
+          iyi = iymin
+          iymin = iymax
+          iymax = iyi
+        end if
         ri(1)=0.25_R8*(crx(n_imp,iymax,0)+crx(n_imp,iymax,1)+ ! R-coordinate of center of [n_imp,ny] cell
      &                 crx(n_imp,iymax,2)+crx(n_imp,iymax,3))
         zi(1)=0.25_R8*(cry(n_imp,iymax,0)+cry(n_imp,iymax,1)+ ! Z-coordinate of center of [n_imp,ny] cell
