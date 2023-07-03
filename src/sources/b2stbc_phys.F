@@ -8091,7 +8091,8 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCPOT=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCPOT = 11')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a,1p,g14.7,a)')
