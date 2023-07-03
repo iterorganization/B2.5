@@ -2539,7 +2539,7 @@
 				<name>b2stbr_recycle_afn</name>
 				<default>0</default>
 				<type>integer</type>
-                                <description>
+				<description>
 					When set to 1, the AFN recycling boundary conditions are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_recycle_afn, the switch is automatically set to 1.
 				</description>
 			</switch>
@@ -2547,7 +2547,7 @@
 				<name>b2stbr_afn_bcs_use_coarse</name>
 				<default>1</default>
 				<type>integer</type>
-                                <description>
+				<description>
 					When set to 1, the coarse representation of the integrated TRIM reflection coefficients is used for the AFN boundary conditions, which is expected to be sufficient. In case you want to use the original fine representation, use b2stbr_afn_bcs_use_coarse = 0. However, the fine representation is only present for D on Be, C and W. 
 				</description>
 			</switch>
@@ -2587,7 +2587,7 @@
 				<name>b2stbr_kn_b2</name>
 				<default>0.1</default>
 				<type>real</type>
-                                <description>
+				<description>
 					Should be used in combination with MAXW in b2.neutrals.parameters (see description MAXW).
 				</description>
 			</switch>
@@ -2595,7 +2595,7 @@
 				<name>b2stbr_remove_fc_el</name>
 				<default>0</default>
 				<type>integer</type>
-                                <description>
+				<description>
 					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values. 
 				</description>
 			</switch>
