@@ -1963,7 +1963,7 @@ cwdk also need to correct for degenerate faces?
 
 cc Here outdated BCs that will not be revived in the WG code can be automatically replaced by new versions.
 cc This should only be done if the change is backward compatible! For example, the non-drift sheath BC BCMOM = 3 can be automaticaly replaced by
-cc BCMOM = 13, because it is drift-compatible but gaves the same result as the old BCMOM = 3 for cases without drifts.
+cc BCMOM = 13, because it is drift-compatible but gives the same result as the old BCMOM = 3 for cases without drifts.
 
       changed = .false.
       do ib=1,m%nBc

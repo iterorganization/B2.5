@@ -2455,8 +2455,8 @@ cwdk also need to correct for degenerate faces?
      .   'ltns= ',(ltns(is),',',is =1,nnstsi)
       end if
 
-      write (iout,'(1x,a,(1x,T14,10(2x,4a1)))') 
-     .   'surf_mat= ',(ap,surf_mat(is),ap,',',is=1,nstrai)
+      write (iout,'(1x,a,(1x,T14,10(2x,4a2)))') 
+     .   'surf_mat = ',(ap,surf_mat(is),ap,',',is=1,nstrai)
 
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
      .   'maxw= ',(maxw(is),',',is =1,nstrai)

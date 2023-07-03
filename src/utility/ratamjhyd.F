@@ -282,15 +282,15 @@ c     Add Bremsstrahlung
             if (streql(crc,'EI')) then
               rtqa(:,:,0) = rates
             elseif (streql(crc,'RC')) then
-	      if (fix_recomb.ne.0.and.nz.le.zmax_recomb) then
-	        rtqr(:,:,nz) = rates
-	      else
-	        rtqr(:,:,nz) = rates +
+              if (fix_recomb.ne.0.and.nz.le.zmax_recomb) then
+                rtqr(:,:,nz) = rates
+              else
+                rtqr(:,:,nz) = rates +
      1            depot*(am*(mp+me)/(me+am*mp))*rtra(:,:,nz)
-		call xertst(any(rtqr(:,:,nz)<0.0_R8),
+                call xertst(any(rtqr(:,:,nz)<0.0_R8),
      1            'Negative rates present, try turning on ',
      2            'b2ardr_fix_recomb')
-	      end if
+              end if
             else
               call xerrab('Not allowed combination of H.10 and CRC')
             endif
