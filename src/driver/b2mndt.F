@@ -224,11 +224,6 @@ cwdk    For unstructured solver, start with simple reading of start-values
         st%dv%facdrift = switch%facdrift_start
         st%dv%fac_vis  = switch%facvis_start
 
-c checks for use of new energy equations
-       if (switch%tn_style.ne.0) then
-         call xertst(ns.eq.2,
-     &        'new energy equations only for single species')
-       endif
 #ifdef WG_TODO
         call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
 #endif
