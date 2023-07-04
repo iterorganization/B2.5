@@ -549,6 +549,7 @@
       type (mapping), intent (inout) :: m
       integer :: i, iCv, iVx, iVx1, iNv, iNv1, iNv2, iNvmx
       integer, allocatable :: indCv(:), cvNvLoc(:)
+      integer, save :: periodic_bc = 0
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
 cwdk  can be derived directly from data in that file
@@ -559,7 +560,9 @@ cwdk  can be derived directly from data in that file
 
 *   ..identify cells on closed surfaces
       if (m%nnreg(0).eq.1) then
-        call xerrab ('periodic_bc not yet supported for nnreg(0)=1.')
+        call ipgeti ('b2agfs_periodic_bc',periodic_bc)
+        call xertst (periodic_bc.eq.0,
+     &    'periodic_bc not yet supported for nnreg(0)=1.')
 !WG_TODO        m%cvOnClosedSurface = periodic_bc.eq.1
       else if (m%nnreg(0).eq.2 .or. m%nnreg(0).eq.4 .or.
      .         m%nnreg(0).eq.5 .or. m%nnreg(0).eq.8) then
