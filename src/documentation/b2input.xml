@@ -2564,7 +2564,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					0: solving the total energy equation for all ion + (fluid) neutral species together; 1: solving the total energy equation without the contributions from hydrogenic neutrals. It is still assumed that the hydrogenic neutrals have the same temperature as the ions, i.e. tn=ti. (not recommended to turn on); 2: separate energy equation for the hydrogenic neutrals (tn.ne.ti). 
+					0: solving the total energy equation for all ion + (fluid) neutral species together; 1: solving the total energy equation without the contributions from hydrogenic neutrals. It is still assumed that the hydrogenic neutrals have the same temperature as the ions, i.e. tn=ti. (not recommended to turn on); 2: separate energy equation for the hydrogenic neutrals (tn.ne.ti). For simulations with hydrogenic mixtures and b2mn_tn_style = 2, a total energy equation for all hydrogenic neutrals together will be solved assuming tn for each hydrogenic neutral species.  
 				</description>
 			</switch>
 			<switch>
