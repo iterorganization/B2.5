@@ -130,27 +130,25 @@ cmb   Mixed materials not taken into account.
         do it=0,itm
           if (use_coarse.eq.0) then
 cc the finer tables were used for the original AFN work, but are too large to add to git for each H, D ,T x wall material combination
-          filename =
-     1     recycle_code(is)(1:len_trim(recycle_code(is)))//
-     2     target_code(it)(1:len_trim(target_code(it)))//
-     3     '.fnn'
+            filename =
+     1       recycle_code(is)(1:len_trim(recycle_code(is)))//
+     2       target_code(it)(1:len_trim(target_code(it)))//
+     3       '.fnn'
           else
 cc therefore coarser tables were added for every [H D T] x [Be C Fe Mo W] combination. The difference with the finer tables should be only a few percent
-          filename =
-     1     recycle_code(is)(1:len_trim(recycle_code(is)))//
-     2     target_code(it)(1:len_trim(target_code(it)))//
-     3     '.fnn.coarse'
+            filename =
+     1       recycle_code(is)(1:len_trim(recycle_code(is)))//
+     2       target_code(it)(1:len_trim(target_code(it)))//
+     3       '.fnn.coarse'
           endif
           call lower_case(filename)
-cc first search in regular location (on git)
+cc first search if a new file has been made and stored locally by the user
+cc in the SOLPSTOP/data.local tree structure, then in refl.data.local (not tracked by git),
+cc then search in regular location (on git)
           if(open_file(96,filename,
      1      'data.local/trim.data/refl.data|' //
-     2      'modules/B2.5/Database/trim.data/refl.data')) then
-            trimrecyc_present(is,it) = .true.
-cc check also if a new file has been made and stored locally by the user in refl.data.local (not tracked by git)
-          elseif(open_file(96,filename,
-     1      'data.local/trim.data/refl.data|' //
-     2      'modules/B2.5/Database/trim.data/refl.data.local')) then
+     2      'modules/B2.5/Database/trim.data/refl.data.local|' //
+     3      'modules/B2.5/Database/trim.data/refl.data')) then
             trimrecyc_present(is,it) = .true.
           endif
           if (trimrecyc_present(is,it)) then
