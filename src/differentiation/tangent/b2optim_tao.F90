@@ -249,26 +249,28 @@
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
-      isigma = npar_opt - nsigma_opt - nmean_opt + 1
-      do ipar = 1, nsigma
-        if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
-          write(str,"(I1)") isigma
-          if (isigma.ge.10) write(str,"(I2)") isigma
-          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', sigma(ipar)
-          isigma = isigma + 1
-        endif
-      end do
-      imean = npar_opt - nmean_opt + 1
-      do ipar = 1, nmean
-        if (mean_opt(ipar)) then
-          mean(ipar) = x_v(imean)*par_rescale(imean)
-          write(str,"(I1)") imean
-          if (imean.ge.10) write(str,"(I2)") imean
-          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', mean(ipar)
-          imean = imean + 1
-        endif
-      end do
+      if (cftype(1) .eq. 6) then
+        isigma = npar_opt - nsigma_opt - nmean_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = x_v(isigma)*par_rescale(isigma)
+            write(str,"(I1)") isigma
+            if (isigma.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', sigma(ipar)
+            isigma = isigma + 1
+          endif
+        end do
+        imean = npar_opt - nmean_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = x_v(imean)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (imean.ge.10) write(str,"(I2)") imean
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', mean(ipar)
+            imean = imean + 1
+          endif
+        end do
+      endif
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
@@ -336,26 +338,28 @@
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
-      isigma = npar_opt - nsigma_opt - nmean_opt + 1
-      do ipar = 1, nsigma
-        if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
-          write(str,"(I1)") isigma
-          if (isigma.ge.10) write(str,"(I2)") isigma
-          write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
-          isigma = isigma + 1
-        endif
-      end do
-      imean = npar_opt - nmean_opt + 1
-      do ipar = 1, nmean
-        if (mean_opt(ipar)) then
-          mean(ipar) = x_v(imean)*par_rescale(imean)
-          write(str,"(I1)") imean
-          if (imean.ge.10) write(str,"(I2)") imean
-          write(*,*) 'TAO: eval_F with x',trim(str),'= ', mean(ipar)
-          imean = imean + 1
-        endif
-      end do
+      if (cftype(1) .eq. 6)  then
+        isigma = npar_opt - nsigma_opt - nmean_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = x_v(isigma)*par_rescale(isigma)
+            write(str,"(I1)") isigma
+            if (isigma.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
+            isigma = isigma + 1
+          endif
+        end do
+        imean = npar_opt - nmean_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = x_v(imean)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (imean.ge.10) write(str,"(I2)") imean
+            write(*,*) 'TAO: eval_F with x',trim(str),'= ', mean(ipar)
+            imean = imean + 1
+          endif
+        end do
+      endif
       call b2mn_step(switch, geo, mpg, state, state_ext, j)
       F = j(1)
 
@@ -397,26 +401,28 @@
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
-      isigma = npar_opt - nsigma_opt - nmean_opt + 1
-      do ipar = 1, nsigma
-        if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
-          write(str,"(I1)") isigma
-          if (isigma.ge.10) write(str,"(I2)") isigma
-          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', sigma(ipar)
-          isigma = isigma + 1
-        endif
-      end do
-      imean = npar_opt - nmean_opt + 1
-      do ipar = 1, nmean
-        if (mean_opt(ipar)) then
-          mean(ipar) = x_v(imean)*par_rescale(imean)
-          write(str,"(I1)") imean
-          if (imean.ge.10) write(str,"(I2)") imean
-          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', mean(ipar)
-          imean = imean + 1
-        endif
-      end do
+      if (cftype(1) .eq. 6) then
+        isigma = npar_opt - nsigma_opt - nmean_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = x_v(isigma)*par_rescale(isigma)
+            write(str,"(I1)") isigma
+            if (isigma.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', sigma(ipar)
+            isigma = isigma + 1
+          endif
+        end do
+        imean = npar_opt - nmean_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = x_v(imean)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (imean.ge.10) write(str,"(I2)") imean
+            write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', mean(ipar)
+            imean = imean + 1
+          endif
+        end do
+      endif
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions

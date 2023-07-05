@@ -282,28 +282,30 @@
           write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
         enddo
-        isigma = npar - nsigma_opt - nmean_opt + 1
-        do ipar = 1, nsigma
-          if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
-            write(str,"(I1)") isigma
-            if (ipar.ge.10) write(str,"(I2)") isigma
-            write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
-     &       sigma(ipar)
-            isigma = isigma + 1
-          endif
-        enddo
-        imean= npar - nmean_opt + 1
-        do ipar = 1, nmean
-          if (mean_opt(ipar)) then
-            mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
-            write(str,"(I1)") imean
-            if (ipar.ge.10) write(str,"(I2)") imean
-            write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
-     &       mean(ipar)
-            imean = imean + 1
-          endif
-        enddo
+        if (cftype(1) .eq. 6) then
+          isigma = npar - nsigma_opt - nmean_opt + 1
+          do ipar = 1, nsigma
+            if (sigma_opt(ipar)) then
+              sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
+              write(str,"(I1)") isigma
+              if (ipar.ge.10) write(str,"(I2)") isigma
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         sigma(ipar)
+              isigma = isigma + 1
+            endif
+          enddo
+          imean= npar - nmean_opt + 1
+          do ipar = 1, nmean
+            if (mean_opt(ipar)) then
+              mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
+              write(str,"(I1)") imean
+              if (ipar.ge.10) write(str,"(I2)") imean
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         mean(ipar)
+              imean = imean + 1
+            endif
+          enddo
+        endif
         call b2mn_step(switch, geo, mpg, state, state_ext, j)
       endif
       F = DBLE(j(1))
@@ -332,28 +334,30 @@
           write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
         enddo
-        isigma = npar - nsigma_opt - nmean_opt + 1
-        do ipar = 1, nsigma
-          if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
-            write(str,"(I1)") isigma
-            if (ipar.ge.10) write(str,"(I2)") isigma
-            write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
-     &       sigma(ipar)
-            isigma = isigma + 1
-          endif
-        enddo
-        imean = npar - nmean_opt + 1
-        do ipar = 1, nmean
-          if (mean_opt(ipar)) then
-            mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
-            write(str,"(I1)") imean
-            if (ipar.ge.10) write(str,"(I2)") imean
-            write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
-     &       mean(ipar)
-            imean = imean + 1
-          endif
-        enddo
+        if (cftype(1) .eq. 6) then
+          isigma = npar - nsigma_opt - nmean_opt + 1
+          do ipar = 1, nsigma
+            if (sigma_opt(ipar)) then
+              sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
+              write(str,"(I1)") isigma
+              if (ipar.ge.10) write(str,"(I2)") isigma
+              write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &         sigma(ipar)
+              isigma = isigma + 1
+            endif
+          enddo
+          imean = npar - nmean_opt + 1
+          do ipar = 1, nmean
+            if (mean_opt(ipar)) then
+              mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
+              write(str,"(I1)") imean
+              if (ipar.ge.10) write(str,"(I2)") imean
+              write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &         mean(ipar)
+              imean = imean + 1
+            endif
+          enddo
+        endif
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
