@@ -55,7 +55,8 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  cvsahz_cl(nFc,0:1,0:ns-1),                               !srv 09.01.01
      &  fllimvisc(nFc,0:ns-1), 
      &  cvsahz(nFc,0:1,0:ns-1),   !srv 09.01.01
-     &  csig_cl(nFc,0:1), calf_cl(nFc,0:1)
+     &  csig_cl(nFc,0:1), calf_cl(nFc,0:1),
+     &  cdna(nFc,0:1,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -106,7 +107,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       real (kind=R8) :: tau(nCv), nu1(nCv),                           !lk 12.05.11
      &    k1(nCv), t1, t2                                             !lk 12.05.11
       real (kind=R8) ::
-     *  hce(nCv,0:1), sig(nCv,0:1),
+     *  hce(nCv,0:1), sig(nCv,0:1), dna(nCv,0:1,0:ns-1),
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
      3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv),                  !srv 01.07.99 09.01.01
@@ -170,7 +171,8 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 
 * ..compute transport coefficients
 *   ..compute differential classical transport coefficients
-      call b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, vsa, hci)        !srv 01.07.09 20.09.11
+      call b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, vsa, hci,        !srv 01.07.09 20.09.11
+     1 dna)                                                                   
       call b2tqce (nCv, switch, geo, mpg, pl, dv, hce, sig, alf)              !srv 01.07.09 20.09.11
       call b2tqin (nCv, ns, nscx, iscx, switch, geo, pl, rt, sigin)           !xpb
       call sfill (nCv*ns, switch%cthev, cthe,1)

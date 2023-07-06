@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, 
-     1 vsa, hci)
+     1 vsa, hci, dna)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -25,7 +25,7 @@
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  vsa(nCv,0:1,0:ns-1), hci(nCv,0:1)
+     *  vsa(nCv,0:1,0:ns-1), hci(nCv,0:1), dna(nCv,0:1,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -73,7 +73,7 @@
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
-     *  t, t0, t1, tau(nCv), tnp, w                                   !srv 11.09.09
+     *  t, t0, t1, tau(nCv), tnp, w, bhmdiff                          !srv 11.09.09
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
 *   ..procedures
       intrinsic abs, sqrt
@@ -196,7 +196,13 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
        call sfill (nCv, 0.0_R8, vsa(1,1,is), 1)
       enddo
       call sfill (nCv, 0.0_R8, hci(1,1), 1)
-
+*!! test Bohm-like perpendicular diffusion coefficient
+      bhmdiff = 3.0E+00_R8
+      do is = 0, ns-1
+       call sfill(nCv, 0.0_R8, dna(1:nCv,0,is), 1)
+       call sfill(nCv, bhmdiff, dna(1:nCv,1,is), 1)
+      enddo
+*! separo
       if(switch%b2tqca_iout.ne.0 .or. switch%b2npmo_iout.ne.0) then       !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
