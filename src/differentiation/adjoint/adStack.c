@@ -62,10 +62,10 @@ static unsigned int adbitbuf = 0 ;
 static int adbitibuf = 0 ;
 
 /** Accumulates the number of bytes pushed and popped */
-static unsigned long long int pushPopTraffic = 0 ;
+static u_int64_t pushPopTraffic = 0 ;
 
 /** Remembers the maximum number of stack Blocks used */
-static long int maxBlocks = 0 ;
+static u_int64_t maxBlocks = 0 ;
 
 //[llh] Don't know how to manage pushPopTraffic and maxBlocks in the OpenMP case ?
 
@@ -126,18 +126,38 @@ void setCurrentLocationToFreePush(RepetitionLevel *repetitionLevel) {
 int currentLocationStrictBelowFreePush(RepetitionLevel *repetitionLevel) {
   //[llh] I'd prefer to test directly on curStack->rank and tappos directly,
   // but it's hard because N;BLOCK_SIZE <=> N+1;0 and both happen due to initial NULL curStack...
-  long int curL = (curStack->rank -1)*BLOCK_SIZE + tappos ;
-  long int fpL = (repetitionLevel->freePushBlock->rank -1)*BLOCK_SIZE + repetitionLevel->freePush ;
-  return (curL<fpL) ;
+  int curL1 = curStack->rank ;
+  int curL2 = tappos ;
+  int fpL1 = repetitionLevel->freePushBlock->rank ;
+  int fpL2 = repetitionLevel->freePush ;
+  if (curL2==BLOCK_SIZE) {++curL1 ; curL2=0 ;}
+  if (fpL2==BLOCK_SIZE) {++fpL1 ; fpL2=0 ;}
+  if (traceOn && (curL1<fpL1 || (curL1==fpL1 && curL2<fpL2))) {
+    printf("  CURRENT %1i.%05i STRICTLY BELOW %1i.%05i \n",curStack->rank,tappos,repetitionLevel->freePushBlock->rank,repetitionLevel->freePush) ;
+    printf("  current %1i.%05i strictly below %1i.%05i \n",curL1,curL2,fpL1,fpL2) ;
+  }
+  return (curL1<fpL1 || (curL1==fpL1 && curL2<fpL2)) ;
+
+/*   u_int64_t curL = (curStack->rank -1)*BLOCK_SIZE + tappos ; */
+/*   u_int64_t fpL = (repetitionLevel->freePushBlock->rank -1)*BLOCK_SIZE + repetitionLevel->freePush ; */
+/*   return (curL<fpL) ; */
 }
 
 //TODO: try inline this function for efficiency:
 int currentLocationEqualsFreePush(RepetitionLevel *repetitionLevel) {
   //[llh] I'd prefer to test directly on curStack->rank and tappos directly,
   // but it's hard because N;BLOCK_SIZE <=> N+1;0 and both happen due to initial NULL curStack...
-  long int curL = (curStack->rank -1)*BLOCK_SIZE + tappos ;
-  long int fpL = (repetitionLevel->freePushBlock->rank -1)*BLOCK_SIZE + repetitionLevel->freePush ;
-  return (curL==fpL) ;
+  int curL1 = curStack->rank ;
+  int curL2 = tappos ;
+  int fpL1 = repetitionLevel->freePushBlock->rank ;
+  int fpL2 = repetitionLevel->freePush ;
+  if (curL2==BLOCK_SIZE) {++curL1 ; curL2=0 ;}
+  if (fpL2==BLOCK_SIZE) {++fpL1 ; fpL2=0 ;}
+  return (curL1==fpL1 && curL2==fpL2) ;
+
+/*   u_int64_t curL = (curStack->rank -1)*BLOCK_SIZE + tappos ; */
+/*   u_int64_t fpL = (repetitionLevel->freePushBlock->rank -1)*BLOCK_SIZE + repetitionLevel->freePush ; */
+/*   return (curL==fpL) ; */
 }
 
 void showLocation(DoubleChainedBlock *locBlock, int loc) {
@@ -148,9 +168,12 @@ void showRepetitionLevels() {
   RepetitionLevel *repetitionPoint = topRepetitionPoint ;
   while (repetitionPoint) {
     printf("  REPETITION LEVEL ACTIVE:%i BP?%i", repetitionPoint->active, repetitionPoint->hasBackPop) ;
-    printf(" BP:") ; showLocation(repetitionPoint->backPopBlock, repetitionPoint->backPop) ;
-    printf(" RP:") ; showLocation(repetitionPoint->resumePointBlock, repetitionPoint->resumePoint) ;
-    printf(" FP:") ; showLocation(repetitionPoint->freePushBlock, repetitionPoint->freePush) ;
+    if (repetitionPoint->backPopBlock)
+      printf(" BP:") ; showLocation(repetitionPoint->backPopBlock, repetitionPoint->backPop) ;
+    if (repetitionPoint->resumePointBlock)
+      printf(" RP:") ; showLocation(repetitionPoint->resumePointBlock, repetitionPoint->resumePoint) ;
+    if (repetitionPoint->freePushBlock)
+      printf(" FP:") ; showLocation(repetitionPoint->freePushBlock, repetitionPoint->freePush) ;
     printf("\n") ;
     repetitionPoint = repetitionPoint->previous ;
     if (repetitionPoint) printf("  ...in") ;
@@ -233,6 +256,12 @@ void adStack_startRepeat() {
   newRepetitionLevel->previous = topRepetitionPoint ;
   newRepetitionLevel->hasBackPop = 0 ;
   newRepetitionLevel->active = 1 ;
+  newRepetitionLevel->backPopBlock = NULL ;
+  newRepetitionLevel->backPop = 0 ;
+  newRepetitionLevel->resumePointBlock = NULL ;
+  newRepetitionLevel->resumePoint = 0 ;
+  newRepetitionLevel->freePushBlock = NULL ;
+  newRepetitionLevel->freePush = 0 ;
   // Copy the bits buffer:
   newRepetitionLevel->storedadbitbuf = adbitbuf ;
   newRepetitionLevel->storedadbitibuf = adbitibuf ;
@@ -1002,11 +1031,11 @@ void popControl8b(int *cc) {
 
 void adStack_showPeakSize() {
   printf("Peak stack size (%1li blocks): %1llu bytes\n",
-         maxBlocks, maxBlocks*((long long int)BLOCK_SIZE)) ;
+         maxBlocks, maxBlocks*((long int)BLOCK_SIZE)) ;
 }
 
 void adStack_showTotalTraffic() {
-  printf("Total push/pop traffic %1llu bytes\n", pushPopTraffic) ;
+  printf("Total push/pop traffic %1lu bytes\n", pushPopTraffic) ;
 }
 
 void adStack_showStackSize(int label) {
