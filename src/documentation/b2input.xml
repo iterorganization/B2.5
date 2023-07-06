@@ -2750,7 +2750,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Gives the real-time interval between movie frames.
+					Another option for movie output. Gives the real-time interval between movie frames. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
@@ -2807,7 +2807,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for plasma state file output. If greater than 0, gives the real-time interval between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_ntim_save).
+					Another option for plasma state file output. If greater than 0, gives the real-time interval between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_ntim_save). Must then be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
@@ -2827,6 +2827,7 @@
 			  <type>real</type>
 			  <description>
 				Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_av.
+				If non-zero, must be at least as large as the simulation timestep.
 				If used, an IDS time slice will be written at the end of run.
 				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
 			  </description>
@@ -2932,7 +2933,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Produces a numbered 'tran' file every trantim real-time seconds. An endstate file is written if it falls between scheduled write-up times. Only available within the -DJET environment.
+					Produces a numbered 'tran' file every trantim real-time seconds. An endstate file is written if it falls between scheduled write-up times. Only available within the -DJET environment. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
