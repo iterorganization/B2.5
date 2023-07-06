@@ -1122,20 +1122,32 @@
        call ipgetr ('b2mndr_trantim', delta_tran_time)
        if (delta_tran_time.gt.0.0_R8)
      >  write(*,*) 'Saving tran files every ',delta_tran_time,' seconds'
+       call xertst (delta_tran_time.eq.0.0_R8.or.
+     &              delta_tran_time.ge.dteff,
+     &  'b2mndr_trantim too short compared to timestep !')
 #endif
        call ipgetr ('b2mndr_cdfmovietim', delta_cdfmovie_time)
        if (delta_cdfmovie_time.gt.0.0_R8)
      >  write(*,*) 'Saving CDF movie files every ',
      1  delta_cdfmovie_time,' simulation seconds'
+       call xertst (delta_cdfmovie_time.eq.0.0_R8.or.
+     &              delta_cdfmovie_time.ge.dteff,
+     &  'b2mndr_cdfmovietim too short compared to timestep !')
        call ipgetr ('b2mndr_plasmatim', delta_plasma_time)
        if (delta_plasma_time.gt.0.0_R8)
      >  write(*,*) 'Saving plasma state files every ',
      1  delta_plasma_time,' simulation seconds'
+       call xertst (delta_plasma_time.eq.0.0_R8.or.
+     &              delta_plasma_time.ge.dteff,
+     &  'b2mndr_plasmatim too short compared to timestep !')
        call ipgetr ('b2mndr_ids_time', delta_ids_time)
        if (delta_ids_time.gt.0.0_R8)
 #ifdef IMAS
      >  write(*,*) 'Writing IDS every ',
      1  delta_ids_time,' simulation seconds'
+       call xertst (delta_ids_time.eq.0.0_R8.or.
+     &              delta_ids_time.ge.dteff,
+     &  'b2mndr_ids_time too short compared to timestep !')
 #else
      >  write(*,*)
      1   'Not compiled with IMAS option, IDS will not be written.'
@@ -2099,7 +2111,7 @@ cxpb for neutral fluxes used in b2stbc_phys
 #endif
       call b2stbr_init (nx, ny, ns, BoRiS)
 c new CDF movie option (1st frame at t=0)
-      if(tim.ge.save_cdfmovie_time.and.
+      if(tim.ge.(save_cdfmovie_time-dteff/2.0_R8).and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(use_eirene.eq.0) then
 #ifndef NO_CDF
@@ -2359,7 +2371,8 @@ csw 09oct2012 set default potential already at this point (BCs)
         end if
 
 #ifdef JET
-        if(tim.ge.save_tran_time.and.delta_tran_time.gt.0.0_R8) then
+        if(tim.ge.(save_tran_time-dteff/2.0_R8).and.
+     &     delta_tran_time.gt.0.0_R8) then
           tran_num=tran_num+1
           if(tran_num.le.99) then
             write(tran_file_name,'(a4,i2)') 'tran',tran_num
@@ -2376,7 +2389,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         endif
 #endif
 c new CDF movie option
-        if(tim.ge.save_cdfmovie_time.and.
+        if(tim.ge.(save_cdfmovie_time-dteff/2.0_R8).and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
           call cdfmovie(ncid,nx,ny,ns)
@@ -2487,7 +2500,8 @@ c new CDF movie option
         write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
 #endif
         write_save=write_save.or.
-     .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
+     .   (tim.ge.(save_plasma_time-dteff/2.0_R8).and.
+     .    delta_plasma_time.gt.0.0_R8)
         if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.
      .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
@@ -2496,7 +2510,8 @@ c new CDF movie option
           edition=edition+1
           if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8)
      .     cputarget=cputarget+cpuincrement
-          if(tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
+          if(tim.ge.(save_plasma_time-dteff/2.0_R8).and.
+     .       delta_plasma_time.gt.0.0_R8)
      .     save_plasma_time=save_plasma_time+delta_plasma_time
           if(edition.gt.9999) then
             edition=0
@@ -2612,7 +2627,8 @@ c new CDF movie option
         write_ids = ids_save.gt.0 .and. ntim.gt.0
         if (write_ids) write_ids = mod(itim,ids_save).eq.0
         write_ids = write_ids .or.
-     .   (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
+     .   (tim.ge.(save_ids_time-dteff/2.0_R8).and.
+     .    delta_ids_time.gt.0.0_R8)
         process_ids = write_ids
         write_av = ids_av.gt.0 .and. ntim.gt.0 .and. ntim_batch.gt.0
         if (write_av) write_av = mod(itim,ids_av*ntim_batch).eq.0
@@ -2928,7 +2944,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           end if
 #endif
           if (.not.continued) continued = .true.
-          if (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
+          if (tim.ge.(save_ids_time-dteff/2.0_R8).and.
+     .        delta_ids_time.gt.0.0_R8)
      .     save_ids_time=save_ids_time+delta_ids_time
         end if
         first_time_step=.false.
