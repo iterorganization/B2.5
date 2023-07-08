@@ -270,6 +270,7 @@
       implicit none
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (inout) :: gm
+      external cfrure
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
@@ -319,6 +320,7 @@
       implicit none
       integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (in) :: gm
+      external cfwure
 
 ! cell volumes
       call cfwure (nout, nCv*4, gm%cvBb,   'cvBb')
@@ -361,6 +363,7 @@
       implicit none
       integer, intent(in) :: nCv, nFc, nVx, nFs, nFt
       type (geometry), intent (in) :: gm
+      external b2xvsg, xertst
 
       call xertst (nCv.gt.0, 'faulty argument nCv !')
       call xertst (nFc.gt.0, 'faulty argument nFc !')
@@ -405,6 +408,7 @@
       real (kind=R8) :: hzconst, dux, duy, du, sbf, Psi1, Psi2
       logical active, match_found
       intrinsic maxval
+      external b2xbzb, intface, intvertex, xerrab, xertst
 
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -768,6 +772,7 @@
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), Lr, Ll,
      .  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)
+      external ipgeti, my_out_us, xerrab
 
       call ipgeti ('b2mndr_conn_style', conn_style)
       call ipgeti ('b2mndr_conn_iout', iout)

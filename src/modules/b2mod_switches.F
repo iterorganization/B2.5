@@ -1009,6 +1009,7 @@ c med
 
       implicit none
       type (switches), intent (inout) :: s
+      external ipgeti, ipgetr
 
       call alloc_switches (s)
 
@@ -1556,6 +1557,7 @@ c check the bounds of the switches themselves
       implicit none
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
+      external xerrab, xertst
 
 c tn_style
 c tn_style = 0: default combined ion-neutral energy equation
@@ -1969,6 +1971,7 @@ c check the inter-consistency of different switches (e.g. certain combinations o
 
       implicit none
       type(switches), intent(in out) :: s
+      external xerrab, xertst
 
       if (s%pot_eq.ne.1.and.s%no_current.ne.1) then
         call xerrab ('If b2news_poteq.ne.1,'//

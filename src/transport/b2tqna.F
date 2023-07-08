@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqna (nCv, nFc, nVx, ns,
-     &   nscx, nscxmax, iscx, ismain, ismain0,
+      subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &   switch, geo, mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0,
      &   vsa0, hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0,
      &   dzt0, dna_ExB, hce_ExB, hci_ExB)
@@ -42,7 +41,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
-     *  ismain, ismain0
+     *  ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -423,13 +422,12 @@ cxpb Corrected for dimensionality
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.nint(zn(is)).ne.1.or.is.ne.ismain0)
-     &    then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
 *     ..compute hcn0
-        if (is_neutral(is).and.nint(zn(is)).eq.1.and.is.eq.ismain0) then
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
@@ -478,14 +476,12 @@ cxpb Corrected for dimensionality
               hci0 = hci0 + hcib(:,is)
             endif
           else
-            if (.not.is_neutral(is).or.nint(zn(is)).ne.1
-     &           .or.is.ne.ismain0) then
+            if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
               hci0 = hci0 + hcib(:,is)
             endif
           endif
 *       ..re-compute hcn0
-          if (is_neutral(is).and.nint(zn(is)).eq.1.and.is.eq.ismain0)
-     &     then
+          if (is_neutral(is).and.nint(zn(is)).eq.1) then
             hcn0 = hcn0 + hcib(:,is)
           endif
         enddo
@@ -571,14 +567,15 @@ c ank added blobby transport
 c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       if(switch%transport_keps.ne.0) then
         call set_transport_keps(
-     &    nCv, nFc, nVx, ns, ismain, ismain0, switch, geo, mpg,
+     &    nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, sig0, alf0,
      &    dkt0, dzt0, dna_ExB,
      &    hce_ExB, hci_ExB)
       endif
 
       if(switch%transport_afn.ne.0) then
-        call set_transport_afn(nCv, ns, nscx, iscx, ismain0, switch,
+        call set_transport_afn(nCv,
+     &   ns, nscx, iscx, switch,
      &   pl, dv, rt,
      &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
       endif
@@ -1100,8 +1097,8 @@ c
             vsa0(ix,iy,is) = vsa0(ix,iy,is)*fvsc(ix,iy,is)
             if (switch%tn_style.eq.0.or.
      &         (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
-     &         (switch%tn_style.eq.2.and.(.not.is_neutral(is)).or.
-     &          nint(zn(is)).ne.1.or.is.ne.ismain0))
+     &         (switch%tn_style.eq.2.and.
+     &         (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
      >       hcib(ix,iy,is) = hcib(ix,iy,is)*ftic(ix,iy,is)           !srv 19.05.03
             hci0(ix,iy)    = hci0(ix,iy) + hcib(ix,iy,is)
           enddo
@@ -1749,8 +1746,8 @@ c
           do is=0,ns-1
             if (switch%tn_style.eq.0.or.
      &         (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
-     &         (switch%tn_style.eq.2.and.(.not.is_neutrals(is).or.
-     &          nint(zn(is)).ne.1.or.is.ne.ismain0)))
+     &         (switch%tn_style.eq.2.and.
+     &         (.not.is_neutrals(is).or.nint(zn(is)).ne.1)))
      >       hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
           enddo
         enddo
@@ -1789,8 +1786,8 @@ c
               do is=0,ns-1
                 if (switch%tn_style.eq.0.or.
      &             (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
-     &             (switch%tn_style.eq.2.and.(.not.is_neutral(is)).or.
-     &              nint(zn(is)).ne.1.or.is.ne.ismain0))
+     &             (switch%tn_style.eq.2.and.
+     &             (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
      >           hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
               enddo
             enddo
@@ -2445,8 +2442,8 @@ c MW working end 3
           do is=0,ns-1
             if (switch%tn_style.eq.0.or.
      &         (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
-     &         (switch%tn_style.eq.2.and.(.not.is_neutral(is)).or.
-     &          nint(zn(is)).ne.1.or.is.ne.ismain0))
+     &         (switch%tn_style.eq.2.and.
+     &         (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
      >       hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
           enddo
         enddo
@@ -3573,8 +3570,8 @@ c      close(14)
      &           (hy1(ix,iy)/hy1(ixref,iy))**2
            if (switch%tn_style.eq.0.or.
      &        (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
-     &        (switch%tn_style.eq.2.and.(.not.is_neutral(is)).or.
-     &         nint(zn(is)).ne.1.or.is.ne.ismain0))
+     &        (switch%tn_style.eq.2.and.
+     &        (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
      >      hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
            hcib(ix,iy,is)=hcib(ix,iy,is)+dfhcb*na(ix,iy,is)
            hvi0(ix,iy,1)=hvi0(ix,iy,1)+vwt(ispecies,istate,iy)*
@@ -3599,8 +3596,8 @@ c      close(14)
            dfhcb=fix_hci
            if (switch%tn_style.eq.0.or.
      &        (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
-     &        (switch%tn_style.eq.2.and.(.not.is_neutral(is)).or.
-     &         nint(zn(is)).ne.1.or.is.ne.ismain0))
+     &        (switch%tn_style.eq.2.and.
+     &        (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
      >      hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
            hcib(ix,iy,is)=hcib(ix,iy,is)+dfhcb*na(ix,iy,is)
           enddo
@@ -3684,9 +3681,10 @@ c      close(14)
 c**************************************************************************************
 c*****************     New KU Leuven transport model for neutrals *********************
 c**************************************************************************************
-      subroutine set_transport_afn(nCv, ns, nscx, iscx, ismain0, switch,
-     &            pl, dv, rt,
-     &            dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
+      subroutine set_transport_afn(nCv,
+     &   ns, nscx, iscx, switch,
+     &   pl, dv, rt,
+     &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
@@ -3701,7 +3699,7 @@ c*******************************************************************************
       implicit none
 
 *   ..input arguments (unchanged on exit)
-      integer nCv, ns, nscx, iscx(0:nscxmax-1), ismain0
+      integer nCv, ns, nscx, iscx(0:nscxmax-1)
       type (switches), intent (in) :: switch
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -3787,13 +3785,12 @@ c*******************************************************************************
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.nint(zn(is)).ne.1.or.is.ne.ismain0)
-     &    then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1)then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
 *     ..compute hcn0
-        if (is_neutral(is).and.nint(zn(is)).eq.1.and.is.eq.ismain0) then
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
@@ -3804,7 +3801,7 @@ c*******************************************************************************
       end subroutine set_transport_afn
 
       subroutine set_transport_keps(
-     &     nCv, nFc, nVx, ns, ismain, ismain0, switch, geo, mpg,
+     &     nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &     pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, sig0, alf0,
      &     dkt0, dzt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
@@ -3823,7 +3820,7 @@ c*******************************************************************************
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer nCv, nFc, nVx, ns, ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -3929,8 +3926,7 @@ cwdk same dna_ExB for all ion species
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.nint(zn(is)).ne.1.or.is.ne.ismain0)
-     &    then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
           hci0 = hci0 + hcib(:,is)
          endif
         endif

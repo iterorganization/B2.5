@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_phys (nCv, nFc, nVx, ns,
-     &  ismain0, nscx, nscxmax, iscx,
+      subroutine b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &  dtim, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
@@ -48,8 +47,7 @@
       type (B2Rates), intent (in) :: rt
       type (B2RatesWork), intent (in) :: rtw
       type (B2StateExt), intent (in) :: st_ext
-      integer nCv, nFc, nVx, ns, ismain0,
-     *     nscx, nscxmax, iscx(0:nscxmax-1)
+      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
       integer sput_src, sput_chem_model,
      *     reflection_on, sputter_energy_on
       logical main_call, new_sputter_namelist
@@ -834,8 +832,7 @@ cdpc
             Pflx = Pflx + pl%na(iCv,is)*vbar*switch%b2stbr_alpha *
      1           switch%neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          endif
-         if (switch%recycle_afn.eq.0.or.
-     &       nint(zn(is0)).ne.1.or.is0.ne.ismain0) then
+         if (switch%recycle_afn.eq.0.or.nint(zn(is0)).ne.1) then
 !! default neutral recycling/reflection model (always for non-hydrogenic species)
            srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
      &      b2recyc(is,istra)*t0

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr (nCv, nFc, nVx, ns,
-     &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
+     &  nscx, nscxmax, iscx, ismain, dtim,
      &  switch, geo, mpg, st, st_ext, main_call)
       use b2mod_types
 !WG_TODO      use b2mod_wall
@@ -69,7 +69,7 @@
       implicit none
 *   ..input arguments
       integer nCv, nFc, nVx, ns
-      integer nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
+      integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
@@ -404,8 +404,7 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
 #endif
-        call b2stbr_phys (nCv, nFc, nVx, ns,
-     &   ismain0, nscx, nscxmax, iscx,
+        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
      &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
      &   tchem, tchee, tphys, tphye,

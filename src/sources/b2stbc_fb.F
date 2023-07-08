@@ -187,7 +187,7 @@
 
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_fb_pre (nCv, nFc, ns, ismain, ismain0,
+      subroutine b2stbc_fb_pre (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
       use b2mod_types
       use b2mod_rates
@@ -217,7 +217,7 @@
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, ns, ismain, ismain0
+      integer nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -1303,7 +1303,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
               psnc%kinrgy = dv%kinrgy
 *   ..compute initial ni
               call b2xpni (nCv, ns, pl%na, dv%ni)
-              call b2xpnn (nCv, ns, ismain0, pl%na, dv%nn)
+              call b2xpnn (nCv, ns, pl%na, dv%nn)
 *   ..compute ni0
               psnl%ni = dv%ni
               psnc%ni = dv%ni

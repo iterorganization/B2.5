@@ -645,7 +645,7 @@ contains
           state%rt%iscx(k) = -1
         enddo
         call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
-        call b2xpnn (mpg%nCv, ns, ismain0, state%pl%na, state%dv%nn)
+        call b2xpnn (mpg%nCv, ns, state%pl%na, state%dv%nn)
         call b2xpne (mpg%nCv, ns, state%rt%rz2, state%pl%na, &
             &        state_ext%ne2, state%dv%ne2)
 !   ..compute flux limit coefficients
@@ -654,7 +654,7 @@ contains
             &        state%co%chvemx, state%co%chvimx)
         call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,          &
             &        state%rt%nscx, state%rt%nscxmax,        &
-            &        state%rt%iscx, ismain, ismain0,         &
+            &        state%rt%iscx, ismain,                  &
             &        switch, geo, mpg, state%pl, state%dv,   &
             &        state%rt, state_ext, state%co)
 !   ..compute sources
@@ -1148,7 +1148,7 @@ contains
               iFc = mpg%divFc(j)
               u = 0.0_R8
               do is = 0, ns-1
-                if (is_neutral(is).and.zn(is).eq.1.and.is.eq.ismain0) then
+                if (is_neutral(is).and.nint(zn(is)).eq.1) then
                   u = u + mpg%divFcOr(j)*state%pl%tn(iCv)* &
                     & (1.5_R8*(state%dv%fna_32(iFc,0,is) + &
                     &          state%dv%fna_32(iFc,1,is) ) + &
@@ -3964,7 +3964,7 @@ contains
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 !! tn: Fluid Neutral Temperature
-                    if (js.eq.ismain0.and.nint(zn(js)).eq.1) then
+                    if (nint(zn(js)).eq.1) then
                       tmpCv(:) = state%pl%tn(:)/qe
                     else
                       tmpCv(:) = state%pl%ti(:)/qe
@@ -3977,7 +3977,7 @@ contains
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%state(1)%temperature,          &
                         &   value = tmpCv )
-                    if (js.eq.ismain0.and.nint(zn(js)).eq.1) then
+                    if (nint(zn(js)).eq.1) then
                       tmpCv(:) = state%co%hcn0(:)/state%dv%nn(:)
                       call write_IDS_quantity( transport_grid, mpg, geo,      &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &

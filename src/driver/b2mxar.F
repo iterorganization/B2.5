@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar (nCv, ns, ismain0,
-     &  switch, geo, mpg, pl, dv, diag)
+      subroutine b2mxar (nCv, ns, switch, geo, mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -13,7 +12,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, ns, ismain0
+      integer nCv, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -115,8 +114,7 @@
          prvn = prvi !dummy
         else
          do is = 0, ns-1
-          if (.not.is_neutral(is).or.nint(zn(is)).ne.1.or.is.ne.ismain0)
-     >     then
+          if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
            prvi = prvi+geo%cvVol(iCv)*pl%na(iCv,is)*pl%ti(iCv)
           else
            prvn = prvn+geo%cvVol(iCv)*pl%na(iCv,is)*pl%tn(iCv)

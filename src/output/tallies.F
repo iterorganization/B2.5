@@ -1,5 +1,4 @@
-      subroutine tallies(ns,ismain0,tim,
-     & mpg,geo,state,state_ext,switch)
+      subroutine tallies(ns,tim,mpg,geo,state,state_ext,switch)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2cmpa
@@ -11,7 +10,7 @@
       use b2us_geo
       use b2us_plasma
       implicit none
-      integer, intent(in) :: ns, ismain0
+      integer, intent(in) :: ns
       real (kind=R8), intent(in) :: tim
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
@@ -143,16 +142,14 @@
           fhpreg(mpg%fcReg(iFc),is)=fhpreg(mpg%fcReg(iFc),is)+
      1       state%dv%fhp(iFc,0,is)+state%dv%fhp(iFc,1,is)
           if (switch%tn_style.eq.0 .or. .not.is_neutral(is) .or.
-     &       (switch%tn_style.eq.2 .and.
-     &       (nint(zn(is)).ne.1 .or. is.ne.ismain0))) then
+     &       (switch%tn_style.eq.2 .and. nint(zn(is)).ne.1)) then
             qconvireg(mpg%fcReg(iFc),is)=                           !cjk
      1       qconvireg(mpg%fcReg(iFc),is)+tif(iFc)*
      1       (1.5_R8*(state%dv%fna_32(iFc,0,is)+
      1                state%dv%fna_32(iFc,1,is))+
      2        2.5_R8*(state%dv%fna_52(iFc,0,is)+
      2                state%dv%fna_52(iFc,1,is)))
-          else if (switch%tn_style.eq.2 .and.
-     &             nint(zn(is)).eq.1 .and. is.eq.ismain0) then
+          else if (switch%tn_style.eq.2 .and. nint(zn(is)).eq.1) then
             qconvireg(mpg%fcReg(iFc),is)=                           !cjk
      1       qconvireg(mpg%fcReg(iFc),is)+tnf(iFc)*
      1       (1.5_R8*(state%dv%fnn_32(iFc,0)+

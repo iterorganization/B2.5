@@ -304,7 +304,7 @@
       call sfill (nCv*4*ns, 0.0_R8, st%sr%smq, 1)
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nCv, nFc, nVx, ns,
-     &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
+     &  nscx, nscxmax, iscx, ismain, dtim,
      &  switch, geo, mpg, st, st_ext, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
@@ -381,7 +381,7 @@
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
-      call b2stel (nCv, nFc, ns, ismain, ismain0,
+      call b2stel (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, st%pl, st%dv, st%rt, st%rtw, st%srw) !srv 11.09.09 {
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
@@ -424,7 +424,7 @@
      &   st%pl%tn, st%rt%rlcx(1:nCv,0:1,0:ns-1,k), st%rtw%rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
-        call b2stcx (nCv, nFc, ns, iscx(k), ismain, ismain0, switch,
+        call b2stcx (nCv, nFc, ns, iscx(k), ismain, switch,
      &    geo, mpg, st%pl%na, st%pl%ua, st%pl%ti, st%pl%tn, st%dv%ni,
      &    st%rtw%rcx,
      &    st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%shn0,
