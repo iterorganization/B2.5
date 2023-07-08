@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,           !srv 05.07.17
-     &  itcnt, ismain, ismain0,
-     &  solving, solvereg, solvireg, solvnreg, solvtreg,                !srv 22.05.18
+     &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf,
      &  pl, dv, co, rt, sr, srw, st_ext, ierr)
       use b2mod_types
@@ -35,7 +34,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, itcnt, ismain, ismain0                 !srv 05.07.17
+      integer nCv, nFc, nVx, ns, itcnt, ismain                          !srv 05.07.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -166,8 +165,7 @@ c make sure fhn is zero when not solving a separate neutral energy equation
      &  dv%vaecrb, she0, shi0)
 #endif
       else
-       call b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  ismain, ismain0,
+       call b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, ismain,
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn,
      &  pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne, dv%fch,
      &  co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%alfx_c, co%sigx_c,

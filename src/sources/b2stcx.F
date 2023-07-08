@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nCv, nFc, ns, is0, ismain, ismain0,            !srv 09.01.01
-     &  switch, geo, mpg, na, ua, ti, tn, ni,
+      subroutine b2stcx (nCv, nFc, ns, is0, ismain, switch, geo,     !srv 09.01.01
+     &  mpg, na, ua, ti, tn, ni,
      &  rcx, sna0, smq0, shi0, shn0, rcxna, rcxmo, rcxhi)
       use b2mod_types
       use b2mod_constants
@@ -25,7 +25,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, ns, is0, ismain, ismain0
+      integer nCv, nFc, ns, is0, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -168,8 +168,7 @@ ctmp.dpc
              endif
              shi0(iCv,0) = shi0(iCv,0)+t1
            else !tn_style=2
-             if (nint(zn(is)).eq.1.and.nint(zn(is0)).eq.1.and.
-     &           is.eq.ismain0.and.is0.eq.ismain0) then ! CX between hydrogenic species
+             if (nint(zn(is)).eq.1.and.nint(zn(is0)).eq.1) then ! CX between hydrogenic species
                tkin = (mp/2.0_R8)*
      &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*
@@ -178,7 +177,7 @@ ctmp.dpc
      &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
                t1n = t0*na(iCv,is0)*na(iCv,is)*
      &            (1.5_R8*(ti(iCv)-tn(iCv)) + tkin)
-             elseif (nint(zn(is0)).eq.1.and.is0.eq.ismain0) then  ! only is0/is0+1 hydrogenic
+             elseif (nint(zn(is0)).eq.1) then  ! only is0/is0+1 hydrogenic
                tkin = (mp/2.0_R8)*
      &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
@@ -186,7 +185,7 @@ ctmp.dpc
                tkin = (mp/2.0_R8)*
      &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
                t1n = -t0*na(iCv,is0)*na(iCv,is)*1.5_R8*tn(iCv)
-             elseif (nint(zn(is)).eq.1.and.is.eq.ismain0) then  ! only is/is-1 hydrogenic
+             elseif (nint(zn(is)).eq.1) then  ! only is/is-1 hydrogenic
                tkin = (mp/2.0_R8)*
      &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*
