@@ -470,6 +470,7 @@
       integer, intent(in) :: iun
       integer :: n2, nx
       type (mapping), intent (inout) :: mpg
+      external cfruin, cfrure
 
 #ifdef WG_DEBUG
       nx_st = mpg%nx
@@ -537,6 +538,7 @@
       integer, intent(in) :: nout
       integer :: idum(0:9), n2
       type (mapping), intent (in) :: mpg
+      external cfwuin, cfwure
 
       call cfwuin (nout, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfwuin (nout, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
@@ -596,6 +598,7 @@
      *                        indFc(:), cvNvLoc(:),
      *                        old_face_list(:), new_face_list(:)
       logical :: duplicate, match_found
+      external ipgeti
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
 cwdk  can be derived directly from data in that file
@@ -971,6 +974,8 @@ cwdk  can be derived directly from data in that file
       character*260 boundary_filename
       character*10 version
       character*260 filename
+      external find_file, xerrab
+
       filename=trim(boundary_filename)
       call find_file(filename,file_ok)
       if(file_ok) then

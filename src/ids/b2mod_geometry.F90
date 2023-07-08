@@ -426,6 +426,7 @@ contains
     integer :: i, iCv
     real(kind=R8) :: Xpsi_active, Xpsi_snowflake
     logical :: active
+    external xerrab
     logical, save :: first
     data first/.true./
 

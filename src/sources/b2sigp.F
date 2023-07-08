@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sigp (nCv, nFc, nVx, isb, ismain0,
-     &  switch, geo, mpg, rzb,
+      subroutine b2sigp (nCv, nFc, nVx, isb, switch, geo, mpg, rzb,
      &  nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
       use b2mod_types
       use b2mod_constants                                         !srv 23.03.10
@@ -19,7 +18,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb, ismain0
+      integer nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -81,7 +80,7 @@
 
 * ..choose the correct temperature
       if (switch%tn_style.eq.2.and.is_neutral(isb).and.
-     &      nint(zn(isb)).eq.1.and.isb.eq.ismain0)then
+     &      nint(zn(isb)).eq.1)then
         tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
         tb = ti

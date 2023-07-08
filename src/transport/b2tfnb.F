@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, ismain0,
+      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain,
      &  switch, geo, mpg, pl, dv, co, rt, balance)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -26,7 +26,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb, ismain, ismain0
+      integer nCv, nFc, nVx, isb, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -406,13 +406,11 @@ cwdk                   (original code: simple averaging)
 *   ..limit flow by sound speed                                          ! lkw 26.10.2022{
        do iFc = 1, nFc
          if (.not.is_neutral(isb).or.switch%tn_style.eq.0.or.
-     &      (switch%tn_style.eq.2.and.
-     &      (nint(zn(isb)).ne.1.or.isb.ne.ismain0))) then
+     &      (switch%tn_style.eq.2.and.nint(zn(isb)).ne.1)) then
            t0 = max(pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
          else if (switch%tn_style.eq.1) then
            t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
-         else if (switch%tn_style.eq.2.and.nint(zn(isb)).eq.1.and.
-     &            isb.eq.ismain0) then
+         else if (switch%tn_style.eq.2.and.nint(zn(isb)).eq.1) then
            t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
          end if
          t3 = fna_mdf0(iFc,0) + fna_mdf0(iFc,1)

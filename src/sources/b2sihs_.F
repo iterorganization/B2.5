@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  ismain, ismain0,
-     &  fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
+     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
      &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
      &  rza, rz2, st_ext, she0, shi0, shn0, srw)
       use b2mod_types
@@ -36,7 +35,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0                        !srv 05.07.17
+      integer nCv, nFc, nVx, ns, ismain                               !srv 05.07.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -255,8 +254,7 @@
      1         +t0*ni(iCv,0)*ti(iCv)
            endif
           else
-           if (.not.is_neutral(is).or.nint(zn(is)).ne.1.or.
-     &         is.ne.ismain0) then
+           if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
             shidu(iCv,0) = shidu(iCv,0)+
      &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &         ti(iCv)
@@ -388,8 +386,7 @@
      &                     (ni(iCv,0)*ti(iCv))
            endif
           else
-           if (.not.is_neutral(is).or.nint(zn(is)).ne.1
-     &          .or.is.ne.ismain0) then
+           if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
             shivc(iCv,0) = shivc(iCv,0)+
      &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
             shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/

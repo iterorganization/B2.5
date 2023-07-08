@@ -335,7 +335,7 @@
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-     &    call compute_feedback(nCv, nFc, ns, ismain, ismain0,
+     &    call compute_feedback(nCv, nFc, ns, ismain,
      &     switch, geo, mpg, pl, dv, rt, psnc, psnl,
      &     main_call)
 

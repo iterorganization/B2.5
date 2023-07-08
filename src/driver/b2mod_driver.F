@@ -1887,7 +1887,7 @@ c   --> better way doing this is necessary)
       endif                                                              !srv 04.02.15 }
 *   ..compute initial ni
       call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
-      call b2xpnn (nCv, ns, ismain0, state%pl%na, state%dv%nn)
+      call b2xpnn (nCv, ns, state%pl%na, state%dv%nn)
 *   ..initialise previous state and fluxes
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )
@@ -2411,8 +2411,7 @@ c new CDF movie option
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
-            call tallies(ns,ismain0,tim,
-     .                   mpg,geo,state,state_ext,switch)
+            call tallies(ns,tim,mpg,geo,state,state_ext,switch)
           endif
         endif
         if (first_time_step) then
@@ -3091,8 +3090,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..write out last tallies if not yet done
       if(tally.gt.0) then
         if(mod(itim,tally).ne.0.and.itim.gt.1) then
-          call tallies(ns,ismain0,tim,
-     *                 mpg,geo,state,state_ext,switch)
+          call tallies(ns,tim,mpg,geo,state,state_ext,switch)
         endif
       endif
 #ifdef WG_TODO
