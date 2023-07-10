@@ -81,7 +81,7 @@
       integer, save :: npar_opt = 0
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
      &       par_opt_phys(:)
-      logical, save :: flag_optim = .false.
+      logical, save :: flag_optim = .false., reset_gradient = .false.
       integer nnvar, nncon, nnjac
       real (kind=R8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
      &  gu(nvmx), jj(nvmx*nvmx),
@@ -497,25 +497,26 @@
      &    call xertst(flag_alf.eq.1, 
      &     'Sensitivity for parm_alf requires flag_alf=1!')
 ! now some checks on spatially dependent coefficients
-        if (spatial_dep(ii) .and. 
-     &      (partype(ii).lt.1 .or. partype(ii).gt.9)) !only parm_XXX can be spatially dependent
-     >  call xerrab('b2mod_par_opt: spatial_points optimization '//
-     &              'is available only for partype 1-9')
-        if (spatial_dep(ii) .and. spatial_points(ii).le.1) then
+        if (spatial_dep(ii)) then
+        !only parm_XXX can be spatially dependent
+         call xertst(partype(ii).ge.1 .and. partype(ii).le.9, 
+     &     'b2mod_par_opt: spatial_points optimization '//
+     &     'is available only for partype 1-9')
+         if (spatial_points(ii).le.1) then
           write(*,*) 'ipar, spatial_dep, spatial_points=',
      &      ii, spatial_dep(ii), spatial_points(ii)
           call xerrab(' b2mod_par_opt: seems you want to optimize '//
      &     'spatially dependent transport coefficients but you only '//
      &     'specify one!')
-        endif
-        if (spatial_dep(ii) .and. 
-     &      spatial_points(ii).ne.ndata(1,partype(ii),paris(ii))) then
+         endif
+         if (spatial_points(ii).ne.ndata(1,partype(ii),paris(ii))) then
           write(*,*) 'ipar, spatial_dep, spatial_points, ndata=',
      &      ii, spatial_dep(ii), spatial_points(ii), 
      &       ndata(1,partype(ii),paris(ii))
           call xerrab(' b2mod_par_opt: spatial_points in '//
      &     'b2.optimization.parameters must be equal to ndata '//
      &     'in b2.transport.inputfile')
+         endif
         endif
         if (partype(ii) .eq. 1 .or. partype(ii) .eq. 2 .or.
      &      partype(ii) .eq. 3 .or. partype(ii) .eq. 5 .or.
