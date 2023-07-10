@@ -6,6 +6,11 @@
      & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
       use b2us_map
       use b2mod_dimensions
+      use b2mod_transport_namelist
+     & , only : flag_dna, flag_dpa, flag_hci, flag_hce, flag_vla,
+     &          flag_vsa, flag_sig, flag_alf
+      use b2mod_input_profile
+     & , only : ndata
       implicit none
 ! VARIABLES RELATED TO COST FUNCTION DEFINITION
 ! - mxnCf: maximum number of cost functions allowed
@@ -107,14 +112,16 @@
 
       contains
 
-      subroutine read_b2mod_par_opt(ncon, nele_jac, ns, m)
+      subroutine read_b2mod_par_opt(ncon, nele_jac, ns, m, sw)
       use b2mod_types
+      use b2mod_switches
       implicit none
       integer, intent (out) :: ncon, nele_jac
       type(mapping), intent(inout) :: m
       integer, intent (in) :: ns
+      type(switches), intent (in)   :: sw
       ! csc local variables
-      integer :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff,
+      integer :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff,
      &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
      &           ifc1, ifc2, jj, imean
       integer, allocatable :: cfReg(:)
@@ -273,14 +280,14 @@
             end do
             if (done) cycle
             m%cfRegP(icf,1) = incf +1
-            ndata = 0
+            numdata = 0
             do iCv=1,nomp
               if (omp(iCv)>m%nCi) cycle !only use internal CVs
-              m%cfReg(incf +1+ndata) = omp(iCv)
-              ndata = ndata + 1
+              m%cfReg(incf +1+numdata) = omp(iCv)
+              numdata = numdata + 1
             enddo
-            m%cfRegP(icf,2) = ndata
-            incf = incf + ndata
+            m%cfRegP(icf,2) = numdata
+            incf = incf + numdata
 
           case (2) !defined using fclabel
 
@@ -385,12 +392,12 @@
 
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
       if (any(cfread)) then
-        ndata = maxval(ncfdata(1:ncf),1)
-        allocate(b2volOnCf(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
-        allocate(b2dataOnCf(ndata)) !variable to store SOLPS data interpolated onto CF radial points
-        ndata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
-        allocate(b2rr(ncf,ndata)) !store here radial distance coordinate of SOLPS data
-        allocate(b2data(ndata)) !temporary variable to store SOLPS data for interpolation
+        numdata = maxval(ncfdata(1:ncf),1)
+        allocate(b2volOnCf(ncf,numdata)) !stores interpolated B2.5 volumes onto CF radial points
+        allocate(b2dataOnCf(numdata)) !variable to store SOLPS data interpolated onto CF radial points
+        numdata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
+        allocate(b2rr(ncf,numdata)) !store here radial distance coordinate of SOLPS data
+        allocate(b2data(numdata)) !temporary variable to store SOLPS data for interpolation
         b2rr = 0.0_R8
         b2volOnCf = 0.0_R8
         b2data = 0.0
@@ -458,7 +465,38 @@
      &   'b2mod_par_opt: spatial_points<0')
        call xertst(sum(spatial_points(1:nnvar)) .le. nvmx,
      &   'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+! check that b2tqna_inputfile is used if any space-dependent transport sensitivity is needed
+       if (any(spatial_dep(1:nnvar))) call xertst(
+     &  sw%b2tqna_transport_inputfile.eq.1, 'Sensitivity of spatially'//
+     &  ' dependent coefficients needs b2tqna_inputfile=1!')
        do ii=1,nnvar
+! check that the corresponding transport coefficients are actually active before
+! evaluating any sensitivity!!
+        if ((partype(ii) .eq. 1) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_dna.eq.1, 
+     &     'Sensitivity for parm_dna requires flag_dna=1!')
+        if ((partype(ii) .eq. 2) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_dpa.eq.1, 
+     &     'Sensitivity for parm_dpa requires flag_dpa=1!')
+        if ((partype(ii) .eq. 3) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_hci.eq.1, 
+     &     'Sensitivity for parm_hci requires flag_hci=1!')
+        if ((partype(ii) .eq. 4) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_hce.eq.1, 
+     &     'Sensitivity for parm_hce requires flag_hce=1!')
+        if ((partype(ii) .eq. 6) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_vla.eq.1, 
+     &     'Sensitivity for parm_vla requires flag_vla=1!')
+        if ((partype(ii) .eq. 7) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_vsa.eq.1, 
+     &     'Sensitivity for parm_vsa requires flag_vsa=1!')
+        if ((partype(ii) .eq. 8) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_sig.eq.1, 
+     &     'Sensitivity for parm_sig requires flag_sig=1!')
+        if ((partype(ii) .eq. 9) .and. .not.spatial_dep(ii)) 
+     &    call xertst(flag_alf.eq.1, 
+     &     'Sensitivity for parm_alf requires flag_alf=1!')
+! now some checks on spatially dependent coefficients
         if (spatial_dep(ii) .and. 
      &      (partype(ii).lt.1 .or. partype(ii).gt.9)) !only parm_XXX can be spatially dependent
      >  call xerrab('b2mod_par_opt: spatial_points optimization '//
@@ -469,6 +507,15 @@
           call xerrab(' b2mod_par_opt: seems you want to optimize '//
      &     'spatially dependent transport coefficients but you only '//
      &     'specify one!')
+        endif
+        if (spatial_dep(ii) .and. 
+     &      spatial_points(ii).ne.ndata(1,partype(ii),paris(ii))) then
+          write(*,*) 'ipar, spatial_dep, spatial_points, ndata=',
+     &      ii, spatial_dep(ii), spatial_points(ii), 
+     &       ndata(1,partype(ii),paris(ii))
+          call xerrab(' b2mod_par_opt: spatial_points in '//
+     &     'b2.optimization.parameters must be equal to ndata '//
+     &     'in b2.transport.inputfile')
         endif
         if (partype(ii) .eq. 1 .or. partype(ii) .eq. 2 .or.
      &      partype(ii) .eq. 3 .or. partype(ii) .eq. 5 .or.
