@@ -11064,7 +11064,9 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+#ifdef WG_TODO
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
+#endif
         write(99,'(a5)') '&OPTIMIZATION'
         if (ncf.gt.0) then
           write(99,'(1x,a,i3,a)') 'NCF=',ncf,','

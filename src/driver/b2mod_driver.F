@@ -1850,7 +1850,7 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
       endif
