@@ -25,6 +25,8 @@ c======================================================================
       use eirmod_wneutrals
       use eirmod_ccona
       use eirmod_cinit
+      use eirmod_comusr
+     , , only : lkindp
 #else
       use b2mod_eirbra
 #endif

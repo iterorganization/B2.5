@@ -72,7 +72,7 @@
       use eirmod_comusr
      , ,only: eirene_alloc_comusr
       use eirmod_refusr
-     , ,only: write_conbe
+     , ,only: eirene_write_conbe
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
@@ -1486,8 +1486,8 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
         NREAC=7
         IUNOUT=6
         CALL EIRENE_DEFAULTS_USR
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_INIT_CINIT
 #else
         call xerrab
@@ -2516,7 +2516,7 @@ c new CDF movie option
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
-            call write_conbe(savefile(13:16))
+            call eirene_write_conbe(savefile(13:16))
             filename=fort_lc//'13'
             inquire(file=filename,exist=found)
             if (found) then

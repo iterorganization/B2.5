@@ -70,6 +70,8 @@ module b2mod_ual_io
     use eirmod_cestim
     use eirmod_wneutrals
 #ifdef IMAS
+    use eirmod_comusr &
+     & , only : lkindi, lkindm
     use eirmod_cinit &
      & , only : fort_lc
     use eirmod_comusr &

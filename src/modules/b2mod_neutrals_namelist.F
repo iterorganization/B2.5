@@ -143,7 +143,7 @@ cank }
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
-     .     dbg_eir_mc, debug_flags(100), neutrals_count
+     .     dbg_eir_mc, debug_flags(100), neutrals_count, maxpoin
       integer, allocatable, save :: lbcstra(:)
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
@@ -153,12 +153,9 @@ cank }
       real (kind=R8), save :: neutrals_time_switch
       real (kind=R8), save :: neut_scl_lim
 
-#ifndef B25_EIRENE
-#ifndef NO_B2_CHEM_SPUT
+#if ( !defined(B25_EIRENE) && !defined(NO_B2_CHEM_SPUT) )
       real (kind=R8), save :: fchar_chemical
       integer, save :: igass_chemical, itsput_chemical, issput_chemical
-#endif
-      integer, save :: MAXPOIN
 #endif
 
 csw 21feb2012
@@ -387,7 +384,6 @@ cwdk 0% momentum recycling, for backwards compatibility
       else
         l_neutflux=0
       endif
-      MAXPOIN=2000
 
       chemical_erosion_redep_fac=1.0_R8
       chemical_erosion_be_fac=.false.
@@ -632,7 +628,6 @@ c
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
 #endif
-      call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
       call xertst (0.0_R8.lt.eirene_step_dt,
