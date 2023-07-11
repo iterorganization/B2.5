@@ -265,7 +265,7 @@ c     Add Bremsstrahlung
             if (streql(crc,'CX')) then
               rtcx(:,:,nz) = rates
             else 
-              call xerrab('Not possible yet to specify a non-CX ',
+              call xerrab('Not possible yet to specify a non-CX ' //
      1          'reaction of H.1')
             endif
           case ('H.4')
@@ -288,7 +288,7 @@ c     Add Bremsstrahlung
                 rtqr(:,:,nz) = rates +
      1            depot*(am*(mp+me)/(me+am*mp))*rtra(:,:,nz)
                 call xertst(any(rtqr(:,:,nz)<0.0_R8),
-     1            'Negative rates present, try turning on ',
+     1            'Negative rates present, try turning on ' //
      2            'b2ardr_fix_recomb')
               end if
             else
