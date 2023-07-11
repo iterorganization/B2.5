@@ -4642,12 +4642,20 @@
 				</description>
 			</switch>
 			<switch>
-				<name>RECYC</name>
+				<name>B2RECYC</name>
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their isonuclear sequence.
 					Applies to B2.5 neutral fluid species.
-					Also multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set to 0 (see b2cdci for details).
+					If B2RECYC is not explicitly specified, the values from RECYC will be taken. 
+				</description>
+			</switch>
+			<switch>
+				<name>RECYC</name>
+				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<description>
+					Multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set to 0 (see b2cdci for details).
+					If B2RECYC is not specified, RECYC will also be applied to B2.5 neutral fluid species.
 				</description>
 			</switch>
 			<switch>
