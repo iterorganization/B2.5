@@ -40,6 +40,8 @@
      , , only : sna0_eir_tot, smo0_eir_tot, smr0_eir_tot, smd0_eir_tot,
      ,          she0_eir_tot, shi0_eir_tot, sne0_eir_tot, sch0_eir_tot,
      ,          ext_sna
+      use eirmod_comusr
+     ,  , only : lkindp
       use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa

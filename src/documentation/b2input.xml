@@ -3255,8 +3255,9 @@
 					'old' for input files from SOLPS4.0 and SOLPS5.0 runs using 'old' Eirene_96
 					'new' for input files from SOLPS4.0 and SOLPS5.0 runs using 'new' Eirene_99
 					'facelift' for input files from SOLPS5.1 runs
-					'juelich' for input files from Juelich Eirene versions (2008 and younger)
+					'juelich' for input files from Juelich Eirene versions (from 2008 to 2022)
 					'iter' for input files from SOLPS4.2/4.3 and SOLPS-ITER runs
+					'msv' for input files from the Eirene Milestone Version
 				</description>
 			</switch>
 			<switch>
@@ -5528,7 +5529,7 @@
 				<default>2000</default>
 				<type>integer</type>
 				<description>
-					Maximum number of points needed to describe a region contour in Eirene.
+					Obsolete. Maximum number of points needed to describe a region contour in Eirene.
 				</description>
 			</switch>
 			<switch>
