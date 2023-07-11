@@ -4816,11 +4816,30 @@
 				</description>
 			</switch>
 			<switch>
+				<name>B2SPECIES_START</name>
+				<default>0</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model. 
+					If not specified, B2SPECIES_START = SPECIES_START.
+				</description>
+			</switch>
+			<switch>
+				<name>B2SPECIES_END</name>
+				<default>ns-1</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the last B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
+					If not specified, B2SPECIES_END = SPECIES_END.
+				</description>
+			</switch>
+			<switch>
 				<name>SPECIES_START</name>
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2.5 species involved in stratum (istra).
+					Specifies the index of the first B2.5 species involved in stratum (istra) for EIRENE.
+					SPECIES_START is also used for the B2.5 fluid neutral model, if B2SPECIES_START is not specified.
 				</description>
 			</switch>
 			<switch>
@@ -4828,7 +4847,8 @@
 				<default>ns-1</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the last B2.5 species involved in stratum (istra).
+					Specifies the index of the last B2.5 species involved in stratum (istra) for EIRENE.
+					SPECIES_END is also used for the B2.5 fluid neutral model, if B2SPECIES_END is not specified.
 				</description>
 			</switch>
 			<switch>
