@@ -2289,6 +2289,14 @@
 					Note: old option model.eq.3 removed, replaced with model.eq.1., but numerical treatment w.r.t. factor 4/3 according to old model.eq.3.
 				</description>
 			</switch>
+                        <switch>
+				<name>b2tqca_Bohm</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If Bohm.eq.1, add Bohm-like radial particle diffusion.
+				</description>
+			</switch>
 			<switch>
 				<name>b2tqce_model</name>
 				<default>1</default>

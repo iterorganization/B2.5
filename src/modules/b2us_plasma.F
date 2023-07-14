@@ -111,7 +111,7 @@
      .                                           chcn, cdkt, cdzt
         real(R8), dimension(:), allocatable :: chvemx, chvimx
         real(R8), allocatable :: cvla(:,:,:), cdna(:,:,:),
-     .                           cdna_ExB(:,:),
+     .                           cdna_Bohm(:,:,:), cdna_ExB(:,:),
      .                           cdpa(:,:,:), cvsa(:,:,:),
      .                           cvlahz(:,:,:), cdnahz(:,:,:),
      .                           cdpahz(:,:,:), cvsahz(:,:,:),
@@ -406,6 +406,7 @@ cwdk move to dv
       allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cdna_ExB( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % cdna_Bohm( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -496,6 +497,7 @@ cwdk move to dv
       allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cdna_ExB( nFc, 0:1 ) )
+      allocate( coeff % cdna_Bohm( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ) )
@@ -586,6 +588,7 @@ cwdk move to dv
       coeff % cvla = 0._R8
       coeff % cdna = 0._R8
       coeff % cdna_ExB = 0._R8
+      coeff % cdna_Bohm = 0._R8
       coeff % cdpa = 0._R8
       coeff % cvsa = 0._R8
       coeff % cvsa_cl = 0._R8
@@ -683,6 +686,7 @@ cwdk move to dv
       deallocate( coeff % cvla )
       deallocate( coeff % cdna )
       deallocate( coeff % cdna_ExB )
+      deallocate( coeff % cdna_Bohm)
       deallocate( coeff % cdpa )
       deallocate( coeff % cvsa )
       deallocate( coeff % cvsa_cl )
@@ -2369,6 +2373,7 @@ cwdk move to dv
 *  .. transport
       call cfrure (ninp, nFc*2,      st % co % calf, 'calf')
       call cfrure (ninp, nFc*2*ns,   st % co % cdna, 'cdna')
+      call cfrure (ninp, nFc*2*ns,   st % co % cdna_Bohm, 'cdna_Bohm')
       call cfrure (ninp, nFc*2*ns,   st % co % cdpa, 'cdpa')
       call cfrure (ninp, nCv,        st % co % ceqp, 'ceqp')
       call cfrure (ninp, nFc*2,      st % co % chce, 'chce')
@@ -2542,6 +2547,7 @@ cwdk move to dv
 *  .. transport
       call cfwure (nout, nFc*2,      st % co % calf, 'calf')
       call cfwure (nout, nFc*2*ns,   st % co % cdna, 'cdna')
+      call cfwure (nout, nFc*2*ns,   st % co % cdna_Bohm, 'cdna_Bohm')
       call cfwure (nout, nFc*2*ns,   st % co % cdpa, 'cdpa')
       call cfwure (nout, nCv,        st % co % ceqp, 'ceqp')
       call cfwure (nout, nFc*2,      st % co % chce, 'chce')

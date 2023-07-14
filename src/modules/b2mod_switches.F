@@ -468,6 +468,9 @@ c b2siav
       real (kind=R8) :: addvis1
       real (kind=R8) :: cqip1
 
+c b2tqca
+      integer :: b2tqca_Bohm
+
 c b2trcl
       real (kind=R8) :: cvsa_mltpl
 
@@ -980,6 +983,9 @@ c b2stbc_phys
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
+
+c b2tqca
+      s % b2tqca_Bohm = 0
 
 c b2trno
       s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
@@ -1518,6 +1524,9 @@ c b2stbc
         call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
         call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
 
+c b2tqca
+        call ipgeti ('b2tqca_Bohm', s%b2tqca_Bohm)
+
 c b2trno
         call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)         !lk 31.01.08
 
@@ -1762,6 +1771,7 @@ c b2tfcc
 
 c b2tqca
        call xertst (0.0_R8.le.s%b2tqca_phm0,'faulty input b2tqca phm0')
+       call xertst (0.le.s%b2tqca_Bohm.le.1, 'faulty input b2tqca Bohm')
 
 c b2treq
        call xertst (0.0_R8.le.s%b2treq_phm0,'faulty input b2treq phm0')

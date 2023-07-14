@@ -5,7 +5,7 @@
      1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, cdkt, csigin,          !xpb
      4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,              !srv 09.01.01
-     5  csig_cl, calf_cl)                                                !xpb
+     5  csig_cl, calf_cl, cdna_Bohm)                                     !xpb
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -56,7 +56,8 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  fllimvisc(nFc,0:ns-1), 
      &  cvsahz(nFc,0:1,0:ns-1),   !srv 09.01.01
      &  csig_cl(nFc,0:1), calf_cl(nFc,0:1),
-     &  cdna(nFc,0:1,0:ns-1)
+     &  cdna_Bohm(nFc,0:1,0:ns-1) ! Bohm like test not working
+!     real (kind=R8), intent (out) :: cdna_Bohm(nFc,0:1,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -172,7 +173,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 * ..compute transport coefficients
 *   ..compute differential classical transport coefficients
       call b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, vsa, hci,        !srv 01.07.09 20.09.11
-     1 dna)                                                                   
+     1 dna)                                                                  
       call b2tqce (nCv, switch, geo, mpg, pl, dv, hce, sig, alf)              !srv 01.07.09 20.09.11
       call b2tqin (nCv, ns, nscx, iscx, switch, geo, pl, rt, sigin)           !xpb
       call sfill (nCv*ns, switch%cthev, cthe,1)
@@ -228,6 +229,33 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         endif
        enddo
       enddo
+! Bohm diffusion coeff
+      do is = 0, ns-1
+        do iFc = 1, nFc
+          cdna_Bohm(iFc,0,is) =
+     &      (geo%fcVol(iFc,1)*dna(mpg%fcCv(iFc,1),0,is)+
+     &       geo%fcVol(iFc,2)*dna(mpg%fcCv(iFc,2),0,is))/
+     &      (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
+          cdna_Bohm(iFc,1,is) =
+     &      (geo%fcVol(iFc,1)*dna(mpg%fcCv(iFc,1),1,is)+
+     &       geo%fcVol(iFc,2)*dna(mpg%fcCv(iFc,2),1,is))/
+     &      (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
+        enddo
+      enddo
+      do is = 0, ns-1
+       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   dna(:,0,is), cdna_Bohm(:,0,is))
+       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   dna(:,1,is), cdna_Bohm(:,1,is))
+      enddo
+      do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        call my_out_us(70,nFc,1,cdna_Bohm(1,0,is),
+     1 'cl_cdna_Bohm_th'//chns)
+        call my_out_us(70,nFc,1,cdna_Bohm(1,1,is),
+     2 'cl_cdna_Bohm_r'//chns)
+      enddo
+! end Bohm
 
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  hce(:,0), chce(:,0))

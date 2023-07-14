@@ -70,10 +70,10 @@
 
 *   ..local variables
       integer iCv, is, js
-      character chns*3                                                !srv 16.06.08
+      character chns*3                                                  !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
-     *  t, t0, t1, tau(nCv), tnp, w, bhmdiff                          !srv 11.09.09
+     *  t, t0, t1, tau(nCv), tnp, w                                     !srv 11.09.09
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
 *   ..procedures
       intrinsic abs, sqrt
@@ -191,23 +191,33 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
        endif
       enddo
 *   ..compute vsay, hciy
-*!!   (classical perpendicular transport is set to 0)
+*!!   (classical perpendicular momentum transport is set to 0)
       do is = 0, ns-1
        call sfill (nCv, 0.0_R8, vsa(1,1,is), 1)
       enddo
       call sfill (nCv, 0.0_R8, hci(1,1), 1)
-*!! test Bohm-like perpendicular diffusion coefficient
-      bhmdiff = 3.0E+00_R8
+! Bohm-like radial diffusion coefficient calculation
+! Initialise Bohm
       do is = 0, ns-1
-       call sfill(nCv, 0.0_R8, dna(1:nCv,0,is), 1)
-       call sfill(nCv, bhmdiff, dna(1:nCv,1,is), 1)
+       call sfill(nCv, 0.00_R8, dna(1:nCv,0,is), 1)
+       call sfill(nCv, 0.00_R8, dna(1:nCv,1,is), 1)
       enddo
-*! separo
+! Evaluate Bohm coeff is switch not false
+      if(switch%b2tqca_Bohm.ne.0) then
+       do is = 0, ns-1
+        dna(:,1,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*1.33E+05_R8*
+     1             (5.00E-03_R8+1.00E-02_R8*
+     2            geo%cvBb(1:nCv,0)/geo%cvBb(1:nCv,2))*1.00E-02_R8
+       enddo
+      endif
+!
       if(switch%b2tqca_iout.ne.0 .or. switch%b2npmo_iout.ne.0) then       !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nCv,0,vsa(1,0,is),'b2tqca_vsa_th'//chns)
         call my_out_us(70,nCv,0,vsa(1,1,is),'b2tqca_vsa_r'//chns)
+        call my_out_us(70,nCv,0,dna(1,0,is),'b2tqca_dna_th'//chns)
+        call my_out_us(70,nCv,0,dna(1,1,is),'b2tqca_dna_r'//chns)
 !        call my_out_us(70,nCv,0,pl%na(1,is),'b2tqca_na'//chns)
        enddo
 !        call my_out_us(70,nCv,0,lnlam,'b2tqca_lnlam')
