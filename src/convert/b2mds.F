@@ -288,7 +288,8 @@ cxpb  quantities before their mapping to cell centers
       else
 #ifdef WG_TODO
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv, kin_frac_hyb, fnn_inc)
+     &                       pl, dv, kin_frac_hyb, fluid_frac_hyb,
+     &                       fnn_inc)
 #endif
       endif
 c

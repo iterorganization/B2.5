@@ -620,7 +620,7 @@ c   --> better solution wanted here..
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call, switch, geo, mpg, st,
-     &                 kin_frac_hyb,fnn_inc)
+     &                 kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
@@ -898,18 +898,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (switch%use_eirene.ne.0) then
-         if(.not.is_neutral(is) .and. switch%iout_b2wdat.eq.4) then
-!          do k=0,1 ! 3                                                  !srv 29.04.10 {
-!           write (chk,'(i1)') k
-!           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
-!     *              'b2stbr_smo_eir'//chk//chns)
-!          enddo
           wrk0=smo0_eir(:,0,is)+
      &         smo0_eir(:,1,is)*st%pl%ua(:,is)+
      &         smo0_eir(:,2,is)*st%pl%na(:,is)*mp*am(is)+
      &         smo0_eir(:,3,is)*st%pl%ua(:,is)*st%pl%na(:,is)*mp*am(is)
           call my_out_us(70,nCv,0,wrk0,'b2stbr_smo_eir'//chns)
-         endif
         else
 !        do k=0,3
 !         write (chk,'(i1)') k
@@ -927,7 +920,6 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
         if(switch%use_eirene.ne.0) then
-         if(.not.is_neutral(is)) then
           if (switch%iout_b2wdat.ne.4) then
            do k=0,1                                                   !srv 29.04.10
             write (chk,'(i1)') k
@@ -937,7 +929,6 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           endif
           wrk0=sna0_eir(:,0,is)+sna0_eir(:,1,is)*st%pl%na(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2stbr_sna_eir'//chns)
-         endif
         else
 !        do k=0,1
 !         write (chk,'(i1)') k
@@ -991,6 +982,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           write (chk,'(i1)') k
           call my_out_us(70,nCv,0,she0_eir(1,k),'b2stbr_she_eir'//chk)
           call my_out_us(70,nCv,0,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
+          call my_out_us(70,nCv,0,shn0_eir(1,k),'b2stbr_shn_eir'//chk)
          enddo
         endif
         wrk0=she0_eir(:,0)+she0_eir(:,1)*st%pl%te+
@@ -1000,6 +992,10 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      &       shi0_eir(:,2)*st%dv%ni(:,0)+
      &       shi0_eir(:,3)*st%pl%ti*st%dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_shi_eir')
+        wrk0=shn0_eir(:,0)+shn0_eir(:,1)*pl%tn+
+     &       shn0_eir(:,2)*(dv%ni(:,0)-dv%ni(:,1))+
+     &       shn0_eir(:,3)*pl%tn*(dv%ni(:,0)-dv%ni(:,1))
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_shn_eir')
        endif
 !      do k=0,3
 !       write (chk,'(i1)') k
