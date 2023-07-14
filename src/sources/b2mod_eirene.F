@@ -112,7 +112,7 @@
       contains
 
       subroutine eirene_mc(nCv, nFc, ns, dtim,
-     1 sna0, smo0, she0, shi0,
+     1 sna0, smo0, she0, shi0, shn0,
      & main_call, switch, geo, mpg, st,
      & kin_frac_hyb, fluid_frac_hyb, fnn_inc)
       use b2mod_subsys
@@ -3242,6 +3242,14 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                 shi0(ic,0)=shi0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 shi0(ic,1)=shi0(ic,1)+
      1           (min(0.0_R8,t0)-abs(t0)*rf0)/st%pl%ti(ic)
+                if (lneustra) then
+                  shn0(ic,0)=shn0(ic,0)+max(0.0_R8,t0n)+abs(t0n)*rf0
+                  shn0(ic,1)=shn0(ic,1)+
+     1             (min(0.0_R8,t0n)-abs(t0n)*rf0)/st%pl%tn(ic)
+                else
+                  shn0(ic,0) = 0.0_R8
+                  shn0(ic,1) = 0.0_R8
+                endif
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
