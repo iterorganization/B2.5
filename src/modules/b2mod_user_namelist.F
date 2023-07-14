@@ -167,6 +167,7 @@ c***  Standard set-up:
       logical old_style
       logical, save :: hydrogen, helium, neon
 #endif
+      intrinsic nint
       external ipgeti, find_file, xertst
 #ifndef F2003
       integer newunit
@@ -216,10 +217,10 @@ c***  Standard set-up:
       end do
 *   ..Definition of separatrix position in OMP list (to be improved for DN)
 ! Separatrix is defined by checking when cvReg changes value inside the OMP list
-      icsepomp = 0
+      icsepomp = nint(nomp/2.0)
       ic = 1
       found = .false.
-      do while (ic.le.nomp .and..not.found)
+      do while (ic.lt.nomp .and..not.found)
         if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
           found = .true.
           icsepomp = ic+1
@@ -365,10 +366,10 @@ c*** Set default values according to current species list
      & call xerrab('IMP LIST NOT SORTED')
       end do
 ! Find position of separatrix in IMP list (same as for OMP)
-      icsepimp = 0
+      icsepimp = nint(nomp/2.0)
       ic = 1
       found = .false.
-      do while (ic.le.nimp .and..not.found)
+      do while (ic.lt.nimp .and..not.found)
         if (m%cvReg(imp(ic)).ne.m%cvReg(imp(ic+1))) then
           found = .true.
           icsepimp = ic+1
