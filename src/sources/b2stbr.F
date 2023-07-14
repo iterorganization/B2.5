@@ -125,7 +125,7 @@
       real (kind=R8) ::                                              !srv 29.04.10 {
      &  sna0_eir(nCv,0:1,0:ns-1),
      &  smo0_eir(nCv,0:3,0:ns-1),
-     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3)
+     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3)
 #ifdef B25_EIRENE
      &, fatm_eir(nFc,0:1,nnatmi),                                    !srv 29.04.10 }
      &  fmol_eir(nFc,0:1,nnmoli),                                    !IYS 27.01.17
@@ -345,6 +345,7 @@
       call sfill (nCv*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (nCv*4, 0.0_R8, she0_eir, 1)
       call sfill (nCv*4, 0.0_R8, shi0_eir, 1)
+      call sfill (nCv*4, 0.0_R8, shn0_eir, 1)
 #ifdef B25_EIRENE
       fatm_eir = 0.0_R8
 #endif
@@ -618,7 +619,7 @@ c   --> better solution wanted here..
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
-     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
+     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
      &                 main_call, switch, geo, mpg, st,
      &                 kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 
@@ -637,12 +638,13 @@ c   --> better solution wanted here..
 
 *   add eirene sources to running average when averaging
         if (switch%iav_run > 0) call running_average (nCv, ns,
-     &      st%pl, st%dv, sna0_eir, smo0_eir, she0_eir, shi0_eir)
+     &      st%pl, st%dv, sna0_eir, smo0_eir, she0_eir, shi0_eir, 
+     &      shn0_eir)
 
 *   get averaged sources
         if (switch%ird_aver > 0) then
           call run_av_get_sources(sna0_eir, smo0_eir,
-     &                            she0_eir, shi0_eir,
+     &                            she0_eir, shi0_eir, shn0_eir,
      &                            nCv, ns)
 
         endif
@@ -651,6 +653,16 @@ c   --> better solution wanted here..
         st%srw%smo0 = st%srw%smo0 + smo0_eir
         st%srw%she0 = st%srw%she0 + she0_eir
         st%srw%shi0 = st%srw%shi0 + shi0_eir
+        if (switch%tn_style.eq.0) then     !! default, combined ion-neutral energy equation
+          st%srw%shi0 = st%srw%shi0 + shn0_eir 
+        elseif (switch%tn_style.eq.1) then !! pure ion energy equation
+          !! combination of condensation reactions (leading to non-zero shn from eirene) and tn_style = 1 is not allowed.
+          call xertst (SUM(shn0_eir).eq.0,
+     &   'shn_eir.ne.0 is not allowed for tn_style = 1')
+        else                               !! separate neutral energy equation
+          st%srw%shn0 = st%srw%shn0 + shn0_eir 
+        endif
+
 
 
 
@@ -991,6 +1003,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           write (chk,'(i1)') k
           call my_out_us(70,nCv,0,she0_eir(1,k),'b2stbr_she_eir'//chk)
           call my_out_us(70,nCv,0,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
+          call my_out_us(70,nCv,0,shn0_eir(1,k),'b2stbr_shn_eir'//chk)
          enddo
         endif
         wrk0=she0_eir(:,0)+she0_eir(:,1)*st%pl%te+
@@ -1000,6 +1013,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      &       shi0_eir(:,2)*st%dv%ni(:,0)+
      &       shi0_eir(:,3)*st%pl%ti*st%dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_shi_eir')
+        wrk0=shn0_eir(:,0)+shn0_eir(:,1)*st%pl%tn+
+     &       shn0_eir(:,2)*(st%dv%ni(:,0)-st%dv%ni(:,1))+
+     &       shn0_eir(:,3)*st%pl%tn*(st%dv%ni(:,0)-st%dv%ni(:,1))
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_shn_eir')
+
        endif
 !      do k=0,3
 !       write (chk,'(i1)') k
