@@ -20,8 +20,7 @@ c
       REAL(kind=R8), ALLOCATABLE, SAVE, PUBLIC :: 
      &  PUX(:),  PUY(:),  PVX(:),  PVY(:)
 
-      REAL(kind=R8), SAVE, PUBLIC :: L_macro,prob_cond_min,prob_cond_max
-      logical, SAVE, PUBLIC :: do_prob_cond
+      REAL(kind=R8), SAVE, PUBLIC :: L_MACRO
 
       type :: targetdata
         integer :: ntrgdat

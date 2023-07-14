@@ -457,21 +457,14 @@ csw 26feb2013
       lneustra = switch%spatial_hybrid.ne.0
 !! set L_macro for EIRENE
       L_macro = switch%L_macro_AFN
-!! set other variables related to kinetic->fluid condensation
-      if (switch%do_prob_cond.eq.1) then
-        do_prob_cond = .true.
-      else
-        do_prob_cond = .false.
-      endif
-      prob_cond_min = switch%prob_cond_min
-      prob_cond_max = switch%prob_cond_max
+
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then
           kin_frac_hyb = 1.0_R8
           fluid_frac_hyb = 1.0_R8
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,
+        call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv,
      &                       kin_frac_hyb,fluid_frac_hyb,fnn_inc)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
@@ -1913,31 +1906,31 @@ csw 26feb2014 accumulate source terms for SOLPS4.3-like averaging procedure
 c             (this is new and similar to SOLPS4 style from Kotov,
 c              it is NOT IYSs style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
-        allocate(sni_av(size(sni,1),size(sni,2), size(sni,3)))
-        allocate(smo_av(size(smo,1),size(smo,2), size(smo,3)))
-        allocate(sei_av(size(sei,1),size(sei,2), size(sei,3)))
+        allocate(sni_av(size(sni,1),size(sni,2),size(sni,3)))
+        allocate(smo_av(size(smo,1),size(smo,2),size(smo,3)))
+        allocate(sei_av(size(sei,1),size(sei,2),size(sei,3)))
         allocate(see_av(size(see,1),size(see,2)))
         sni_av=0.0_R8
         smo_av=0.0_R8
         see_av=0.0_R8
         sei_av=0.0_R8
         if (balance_netcdf.ne.0) then !djm Jan2017
-          allocate(sni_av_papl(size(sni,1), size(sni,2), size(sni,3)))
-          allocate(sni_av_pmpl(size(sni,1), size(sni,2), size(sni,3)))
-          allocate(sni_av_pipl(size(sni,1), size(sni,2), size(sni,3)))
-          allocate(sni_av_pppl(size(sni,1), size(sni,2), size(sni,3)))
-          allocate(smo_av_mapl(size(smo,1), size(smo,2), size(smo,3)))
-          allocate(smo_av_mmpl(size(smo,1), size(smo,2), size(smo,3)))
-          allocate(smo_av_mipl(size(smo,1), size(smo,2), size(smo,3)))
-          allocate(smo_av_cppv(size(smo,1), size(smo,2), size(smo,3)))
-          allocate(sei_av_eapl(size(sei,1), size(sei,2), size(sei,3)))
-          allocate(sei_av_empl(size(sei,1), size(sei,2), size(sei,3)))
-          allocate(sei_av_eipl(size(sei,1), size(sei,2), size(sei,3)))
-          allocate(sei_av_eppl(size(sei,1), size(sei,2), size(sei,3)))
-          allocate(see_av_eael(size(see,1), size(see,2)))
-          allocate(see_av_emel(size(see,1), size(see,2)))
-          allocate(see_av_eiel(size(see,1), size(see,2)))
-          allocate(see_av_epel(size(see,1), size(see,2)))
+          allocate(sni_av_papl(size(sni,1),size(sni,2),size(sni,3)))
+          allocate(sni_av_pmpl(size(sni,1),size(sni,2),size(sni,3)))
+          allocate(sni_av_pipl(size(sni,1),size(sni,2),size(sni,3)))
+          allocate(sni_av_pppl(size(sni,1),size(sni,2),size(sni,3)))
+          allocate(smo_av_mapl(size(smo,1),size(smo,2),size(smo,3)))
+          allocate(smo_av_mmpl(size(smo,1),size(smo,2),size(smo,3)))
+          allocate(smo_av_mipl(size(smo,1),size(smo,2),size(smo,3)))
+          allocate(smo_av_cppv(size(smo,1),size(smo,2),size(smo,3)))
+          allocate(sei_av_eapl(size(sei,1),size(sei,2),size(sei,3)))
+          allocate(sei_av_empl(size(sei,1),size(sei,2),size(sei,3)))
+          allocate(sei_av_eipl(size(sei,1),size(sei,2),size(sei,3)))
+          allocate(sei_av_eppl(size(sei,1),size(sei,2),size(sei,3)))
+          allocate(see_av_eael(size(see,1),size(see,2)))
+          allocate(see_av_emel(size(see,1),size(see,2)))
+          allocate(see_av_eiel(size(see,1),size(see,2)))
+          allocate(see_av_epel(size(see,1),size(see,2)))
           sni_av_papl=0.0_R8
           sni_av_pmpl=0.0_R8
           sni_av_pipl=0.0_R8
