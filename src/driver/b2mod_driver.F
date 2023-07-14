@@ -2741,7 +2741,7 @@ c new CDF movie option
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
          call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state,
-     &                        kin_frac_hyb,fnn_inc)
+     &                        kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif

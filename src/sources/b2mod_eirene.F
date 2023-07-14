@@ -61,7 +61,7 @@
       integer, save :: use_recyceir = 1
       integer, save :: nhist = 1, nrelax = 0
       real (kind=R8), save, allocatable ::
-     .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:), see_av(:,:)
+     .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:,:), see_av(:,:)
 
       real (kind=R8), save, allocatable ::                        !djm Jan2017
      .  sni_av_papl(:,:,:),sni_av_pmpl(:,:,:),
@@ -70,18 +70,18 @@
      .  smo_av_mipl(:,:,:),smo_av_cppv(:,:,:),
      .  see_av_eael(:,:), see_av_emel(:,:),
      .  see_av_eiel(:,:), see_av_epel(:,:),
-     .  sei_av_eapl(:,:), sei_av_empl(:,:),
-     .  sei_av_eipl(:,:), sei_av_eppl(:,:)
+     .  sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
+     .  sei_av_eipl(:,:,:), sei_av_eppl(:,:,:)
       real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
      &  sni_h(:,:,:,:),
      &  smo_h(:,:,:,:),
-     &  see_h(:,:,:), sei_h(:,:,:),
+     &  see_h(:,:,:), sei_h(:,:,:,:),
      &  pfluxa_h(:,:,:,:), rfluxa_h(:,:,:,:),
      &  pfluxm_h(:,:,:,:), rfluxm_h(:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sni_s(:,:,:),
      &  smo_s(:,:,:),
-     &  see_s(:,:), sei_s(:,:),
+     &  see_s(:,:), sei_s(:,:,:),
      &  pfluxa_s(:,:,:), rfluxa_s(:,:,:),
      &  pfluxm_s(:,:,:), rfluxm_s(:,:,:),
 ! _s is an abbreviation from 'sum'
@@ -93,16 +93,16 @@
      &  smo_h_mipl(:,:,:,:),smo_h_cppv(:,:,:,:),
      &  see_h_eael(:,:,:), see_h_emel(:,:,:),
      &  see_h_eiel(:,:,:), see_h_epel(:,:,:),
-     &  sei_h_eapl(:,:,:), sei_h_empl(:,:,:),
-     &  sei_h_eipl(:,:,:), sei_h_eppl(:,:,:),
+     &  sei_h_eapl(:,:,:,:), sei_h_empl(:,:,:,:),
+     &  sei_h_eipl(:,:,:,:), sei_h_eppl(:,:,:,:),
      &  sni_s_papl(:,:,:),sni_s_pmpl(:,:,:),
      &  sni_s_pipl(:,:,:),sni_s_pppl(:,:,:),
      &  smo_s_mapl(:,:,:),smo_s_mmpl(:,:,:),
      &  smo_s_mipl(:,:,:),smo_s_cppv(:,:,:),
      &  see_s_eael(:,:), see_s_emel(:,:),
      &  see_s_eiel(:,:), see_s_epel(:,:),
-     &  sei_s_eapl(:,:), sei_s_empl(:,:),
-     &  sei_s_eipl(:,:), sei_s_eppl(:,:)
+     &  sei_s_eapl(:,:,:), sei_s_empl(:,:,:),
+     &  sei_s_eipl(:,:,:), sei_s_eppl(:,:,:)
 
       real(kind=R8), allocatable, save :: hlp_stra(:)
       logical, allocatable, save :: hlp_pff(:,:)
@@ -114,7 +114,7 @@
       subroutine eirene_mc(nCv, nFc, ns, dtim,
      1 sna0, smo0, she0, shi0,
      & main_call, switch, geo, mpg, st,
-     & kin_frac_hyb, fnn_inc)
+     & kin_frac_hyb, fluid_frac_hyb, fnn_inc)
       use b2mod_subsys
       implicit none
       integer nCv, nFc, ns
@@ -3568,14 +3568,15 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
 
 * ..finalise save
       subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st,
-     &                           kin_frac_hyb,fnn_inc)
+     &                           kin_frac_hyb,fluid_frac_hyb,fnn_inc)
       implicit none
       integer, intent(in) :: nCv, nFc, ns
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
-      real(kind=R8) :: kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
+      real(kind=R8) :: kin_frac_hyb(mpg%nFc), fluid_frac_hyb(mpg%nFc),
+     &  fnn_inc(mpg%nFc,0:ns-1)
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
