@@ -1944,6 +1944,7 @@ c new CDF movie option (1st frame at t=0)
       type(B2State) :: state0
 #endif
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
+     * fluid_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
       integer nCv, nFc, nVx
       integer i, is, icf
@@ -2234,9 +2235,9 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
-          call copy_background(nCv, nFc, ns, switch, mpg, geo,
+          call copy_background(nCv, nFc, ns, switch, mpg, geo, 
      .                         state%pl, state%dv,
-     .                         kin_frac_hyb, fnn_inc)
+     .                         kin_frac_hyb,fluid_frac_hyb,fnn_inc) 
           call write_f31(mpg)
           close(31)
         end if
@@ -2668,7 +2669,8 @@ c new CDF movie option
        if (switch%save_f30.ne.0) call write_f30(nx, ny)
        if (switch%save_f31.ne.0) then
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv, kin_frac_hyb, fnn_inc)
+     &                       pl, dv, kin_frac_hyb, fluid_frac_hyb, 
+     &                       fnn_inc)
         call write_f31(nx, ny)
        end if
       end if

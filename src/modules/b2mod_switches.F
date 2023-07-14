@@ -20,6 +20,7 @@ c consistency checks for combinations of different switches (check_consistency_s
 
       type, public :: switches
 
+
       integer :: get_residuals !srv 22.05.18
       integer :: mdf_fhe       !srv 13.10.06
       integer :: mdf_fhi
@@ -64,7 +65,6 @@ c Advanced fluid neutral models
       integer :: use_auto_spatial_hyb
       integer :: diffusion_bc_safeguard
       integer :: do_volrec
-      integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
 
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
@@ -521,6 +521,7 @@ c Med
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
 
+
       s % get_residuals = 0
       s % mdf_fhe = 0
       s % mdf_fhi = 0
@@ -571,6 +572,8 @@ c Advanced fluid neutral models
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
+
+
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
@@ -635,6 +638,11 @@ c Advanced fluid neutral models
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
       s % L_macro_AFN = 0.10_R8
+
+      s % prob_cond_min = 0.1_R8
+      s % prob_cond_max = 1.0_R8
+      s % do_prob_cond = 0
+
 
       s % iout_b2wdat = 0
       s % b2sian_iout = 0
@@ -1133,6 +1141,10 @@ c Advanced fluid neutral models
       call ipgetr ('auto_spatial_hyb_Kn_1', s % auto_spatial_hyb_Kn_1)
       call ipgetr ('auto_spatial_hyb_Kn_2', s % auto_spatial_hyb_Kn_2)
       call ipgetr ('L_macro_AFN', s % L_macro_AFN)
+
+      call ipgetr ('prob_cond_min', s % prob_cond_min)
+      call ipgetr ('prob_cond_max', s % prob_cond_max)
+      call ipgeti ('do_prob_cond', s % do_prob_cond)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
