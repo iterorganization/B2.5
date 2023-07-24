@@ -178,6 +178,7 @@
       subroutine b2stbc_fb_final
       use b2mod_types
       use b2mod_feedback
+      use b2mod_usrspb
       implicit none
       feedback_namelist_used = feedback_namelist_used .or.
      .        max(saved_cbshe_core, saved_cbshi_core,
@@ -188,6 +189,12 @@
       if(feedback_namelist_used) then
         call write_b2mod_feedback(99,'    ')
       endif
+
+      if (allocated(Q_pneut_trg)) then
+        deallocate ( Q_pneut_trg, Area_pneut_trg)
+        deallocate (ix_pneut_beg, ix_pneut_end)
+      endif
+
       return
       end subroutine b2stbc_fb_final
 
@@ -213,6 +220,9 @@
       use b2mod_numerics_namelist
       use b2mod_boundary_namelist
       use b2mod_user_namelist
+!      use b2mod_trace
+      use b2mod_usrspb
+     ,   , only : Q_pneut, calc_pneut, calc_pneut_init
       use b2mod_geo
      ,   , only : hy,hz,hx
 #ifdef B25_EIRENE
@@ -336,6 +346,7 @@
       intrinsic abs, mod, nint
       external xertst, ipgetr, ipgeti
       external b2xvsg
+!      external calc_pneut, calc_pneut_init
 *   ..initialisation
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
      &  n_flux_zero/0/, na_feedback_save/DEF_NATM*0.0_R8/,
@@ -1154,176 +1165,54 @@
                 endif
               enddo
               
-#ifdef B25_EIRENE       
             case (10)  ! neutral pressure at PFR southern boundary (by A. Kukushkin)
             
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
-!=======
-!                  is_start=-1
-!                  is_end=-1
-!                  do is = 0, ns-1
-!                     if(b2espcr(is).eq.ispecies+1) then
-!                        if(is_start.eq.-1) is_start=is
-!                        is_end=is
-!                     endif
-!                  enddo
-!#ifdef B25_EIRENE
-!            case (10)
-!                   if(ncall.eq.0) then
-!                     write(*,'(a,a,i3)')
-!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'neutral pressure for sequence ',
      &                    ispecies+1
-              endif
-              
-              call get_nxt(nx, nxtl, nxtr)
-              
-              if (lpfrb_i.eq.0) then
-                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-              endif
-              
-              hlp_p=0.0_R8
-              hlp_s=0.0_R8
-              hlp_hep=0.0_R8
-
-!              print '(1x,a,6i4)',
-!     ,          '%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
-!     ,                j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
-     
-              hlp_pi=0.0_R8
-              hlp_si=0.0_R8
-              hlp_po=0.0_R8
-              hlp_so=0.0_R8
-              
-              if(lpfrs_pmp.ne.0) then !{
-
-c*** Western divertor
-
-                m=lpfrb_i
-                if(m.le.0) then !{
-                  if(lpfrs_pmp.eq.1) then !{
-                    m=leftcut(1)-1+m
-                  elseif(lpfrs_pmp.eq.2) then !}{
-                    m=nx-1+m
-                  elseif(lpfrs_pmp.eq.3 .or. lpfrs_pmp.eq.4) then !}{
-                    m=nxtl-1+m
-                  end if !}
-                end if !}
-                n=lpfrt_i
-                if(n.le.0) then !{
-                  if(lpfrs_pmp.eq.1) then !{
-                    n=leftcut(1)-1+n
-                  elseif(lpfrs_pmp.eq.2) then !}{
-                    n=nx-1+n
-                  elseif(lpfrs_pmp.eq.3) then !}{
-                    n=leftcut(2)-n
-                  elseif(lpfrs_pmp.eq.4) then !}{
-                    n=nxtl-1+n
-                  end if !}
-                end if !}
-                iy=0
-                iyp=1
-                if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.2) then
-                  iy=ny
-                  iyp=ny
-                end if
-                do j=m,n !{
-                  hlp_si=hlp_si+gs(j,iy,1)
-                  hlp=0.0_R8
-                  do k=1,nnatmi !{
-                    hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
-                    if(k.eq.j_he_at) hlp_hep=hlp_hep+
-     +                dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)*gs(j,iy,1)
-                  end do !}
-                  do k=1,nnmoli !{
-                    hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
-                  end do !}
-                  hlp_pi=hlp_pi+hlp*gs(j,iy,1)
-                end do !}
-
-c          print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
-c     ,                                     m,n,hlp_si,hlp_hep      !###
-
-c*** Eastern divertor
-
-                  m=lpfrt_o
-                  if(m.le.0) then !{
-                    if(lpfrs_pmp.eq.1) then !{
-                      m=rightcut(1)-m
-                    elseif(lpfrs_pmp.eq.2) then !}{
-                      m=nx-1+m
-                    elseif(lpfrs_pmp.eq.3) then !}{
-                      m=rightcut(2)-1+m
-                    elseif(lpfrs_pmp.eq.4) then !}{
-                      m=nxtr-1-m
-                    end if !}
-                  end if !}
-                  n=lpfrb_o
-                  if(n.le.0) then !{
-                    if(lpfrs_pmp.eq.1 .or. lpfrs_pmp.eq.2) then !{
-                      n=nx-1+n
-                    else if(lpfrs_pmp.eq.3) then !}{
-                      n=nxtr+1-n
-                    else if(lpfrs_pmp.eq.4) then !}{
-                      n=nxtl-1+n
-                    end if !}
-                  end if !}
-                  iy=0
-                  iyp=1
-                  if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then !{
-                    iy=ny
-                    iyp=ny
-                  endif !}
-                  do j=m,n !{
-                    hlp_so=hlp_so+gs(j,iy,1)
-                    hlp=0.0_R8
-                    do k=1,nnatmi !{
-                      hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
-                      if(k.eq.j_he_at) hlp_hep=hlp_hep+
-     +                dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)*gs(j,iy,1)
-                    end do !}
-                    do k=1,nnmoli !{
-                      hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
-                    end do !}
-                    hlp_po=hlp_po+hlp*gs(j,iy,1)
-                  end do !}
-
-                    hlp_s=hlp_si+hlp_so
-                    hlp_p=hlp_pi+hlp_po
-                  end if !}
-c<<<
-c        print '(a,1p,2i4,3e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
-c     ,                                   m,n,hlp_so,hlp_hep,hlp_p
-c>>>
-                if(hlp_s.gt.0.0_R8) then !{
-                  hlp_ppfr=hlp_p/hlp_s
-                  hlp_hepr=hlp_hep/hlp_s
-                end if !}
-                if(hlp_si.gt.0.0_R8) hlp_ppfi=hlp_pi/hlp_si
-                if(hlp_so.gt.0.0_R8) hlp_ppfo=hlp_po/hlp_so
+                call get_nxt(nx, nxtl, nxtr)
                 
-                print *, "neutral pressure",hlp_ppfr
-                if (isnan(hlp_ppfr)) then
-                  na_feedback_current = na_feedback_target(ispecies)
-                else
-                  na_feedback_current = hlp_ppfr
-                endif
-                ! na_feedback_current = na_feedback_target(ispecies)
+                if(lpfrs_pmp.ne.0) then !{
 
-    !               na_feedback_current = 0.5_R8 *
-    !  *                 (ne(jxi,jsep)+
-    !  *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
-                  is_start=-1
-                  is_end=-1
-                  do is = 0, ns-1
-                     if(b2espcr(is).eq.ispecies+1) then
-                        if(is_start.eq.-1) is_start=is
-                        is_end=is
-                     endif
-                  enddo
-#endif
+                  call calc_pneut_init(nx,ny,nxtl,nxtr)
+                  
+                else
+                  
+                  call xerrab(
+     &       'LPFRS_PMP = 0: neutral pressure will not be computed.' //
+     &       ' Please edit numerics namelist or do not use feedback BC')                
+
+                endif
+
+              endif
+              
+              
+! calling alloc_b2mod_user seems to be not necessary here - it is already called from b2mndr_0
+!              if (lpfrb_i.eq.0) then
+!                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+!              endif
+              
+              call calc_pneut(nx, ny)
+              
+              print *, "neutral pressure", Q_pneut
+              
+              if (isnan(Q_pneut)) then
+                  na_feedback_current = na_feedback_target(ispecies)
+              else
+                  na_feedback_current = Q_pneut
+              endif
+              
+              is_start=-1
+              is_end=-1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
+
 !<<<<<<< HEAD
                   
             case (11) ! ion saturation current at outer bottom target: to be done
@@ -2126,8 +2015,8 @@ c           Pure rescale, any variant may be used!
      &                     style_b2mndt, use_eirene, nspecies,  
      &                     ispecies, sna_pump, flxnp, flxic)
                 saved_na_feedback_actuator(ispecies) =
-     &                 sna_pump(ispecies+1) * na_feedback_rescale 
-     &                - flxic(ispecies+1)
+     &                 (sna_pump(ispecies+1) - flxic(ispecies+1)) * 
+     &                 na_feedback_rescale
               endif   ! na_feedback_option(ispecies) = 7,8
 !>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
 #endif
@@ -3392,12 +3281,10 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
       do ia = 1, nnatmi
         k = latmscl(ia)
         if (k.eq.0) cycle
-        sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) 
-     &          + eirpump(ia)
+        sna_pump(k) = sna_pump(k) + eirpump(ia)
         do im = 1, nnmoli
           if (mlcmp(ia,im).gt.0) then
-            sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
-     &              mlcmp(ia,im) * eirpump(nnatmi+im)
+            sna_pump(k) = sna_pump(k) + mlcmp(ia,im) *eirpump(nnatmi+im)
           endif
         enddo
       end do
@@ -3412,6 +3299,9 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
       print *,"Lezgini sna_pump " ,ispecies,' ',
      &        sna_pump(ispecies+1)
 c Flux from core impact
+
+      flxic = 0.0_R8
+      flxnc = 0.0_R8
 
       do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
      &       NFLUIDS(ispecies+1)

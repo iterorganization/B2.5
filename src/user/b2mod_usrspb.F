@@ -64,6 +64,9 @@ c*** Column headers:
      2    '  j_s_max','  I_s_tot', '    I_tot'/
 
       character, save :: hlp_frm*256
+      
+
+      public ::     calc_pneut_init, calc_pneut
 
       contains
 
@@ -140,37 +143,7 @@ c----------------------------------------------------------------------
 
 ! neutral pressure in PFR
 ! Q_pneut - mean, Q_pneut_trg(1) - inner PFR, Q_pneut_trg(2) - outer PFR
-      do it = 1, 2
-        iy=0
-        iyp=1
-        if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then
-          iy=ny
-          iyp=ny
-        end if
-        Area_pneut_trg(it) = 0.0_R8
-        Q_pneut_trg(it) = 0.0_R8
-
-        do ix = ix_pneut_beg(it), ix_pneut_end(it)
-          Area_pneut_trg(it) = Area_pneut_trg(it) + gs(ix,iy,1)
-
-          do k=1,nnatmi
-            Q_pneut_trg(it) = Q_pneut_trg(it) +
-     &       dab2(ix+1,iyp,k,1)*tab2(ix+1,iyp,k,1) * gs(ix,iy,1)
-          enddo
-          do k=1,nnmoli
-            Q_pneut_trg(it) = Q_pneut_trg(it) +
-     &       dmb2(ix+1,iyp,k,1)*tmb2(ix+1,iyp,k,1) * gs(ix,iy,1)
-          enddo
-        enddo
-
-        if(Area_pneut_trg(it).gt.0.0_R8)
-     &   Q_pneut_trg(it) = Q_pneut_trg(it) / Area_pneut_trg(it)
-      end do
-
-      if(Area_pneut_trg(1).gt.0.0_R8 .and. Area_pneut_trg(2).gt.0.0_R8)
-     > Q_pneut = ( Q_pneut_trg(1) * Area_pneut_trg(1) +
-     &    Q_pneut_trg(2) * Area_pneut_trg(2) ) /
-     &   (Area_pneut_trg(1) + Area_pneut_trg(2))
+      call calc_pneut(ns, ny)
 
       l=0
       u=-1.0_R8
@@ -324,18 +297,23 @@ c*** Input the DG data and prepare the geometry (this routine works once)
 
       N_Q_total = N_Q_global + ntrgts * N_Q_target
 
-      if (.not. allocated(Q_pneut_trg)) then
+      if (.not. allocated(Q_Te_max)) then
         allocate(
-     &   Q_pneut_trg(2), Area_pneut_trg(ntrgts),
+!     &   Q_pneut_trg(2), Area_pneut_trg(ntrgts),
      &   Q_Te_max(ntrgts), Q_det_wdth(ntrgts),
      &   Q_I_tot_trg(ntrgts), Q_jsat_trg(-1:ny,ntrgts),
      &   Q_jsat_max_trg(ntrgts), Q_Isat_trg(ntrgts),
      &   Q_qmax_trg(ntrgts))
-        allocate(
-     &   ix_pneut_beg(2), ix_pneut_end(2))
+!        allocate(
+!     &   ix_pneut_beg(2), ix_pneut_end(2))
         allocate(headers(N_Q_total))
       endif
 
+! The allocating of Q_pneut_trg, Area_pneut_trg, ix_pneut_beg, ix_pneut_end
+! is moved into calc_pneut_init
+
+      call calc_pneut_init(nx,ny,nxtl,nxtr)
+      
       mintopcut = ny
       if(nncut > 0) mintopcut = minval(topcut(1:nncut))
 
@@ -344,65 +322,6 @@ c*** Input the DG data and prepare the geometry (this routine works once)
       headers(3) = 'p_neut_PFRo'
       headers(4) = 'Te_min_LCFS'
 
-! Western divertor
-      if(lpfrs_pmp.ne.0) then !  iyv 11.04.22
-c***  lpfrs_pmp - location of the pump: 0 - no pump at all,
-c***              1 - in lower PFR, 2 - on the outer wall,
-c***              3 - in upper PFR, 4 - on the inner wall
-
-        ix_pneut_beg(1) = lpfrb_i !{
-        if (ix_pneut_beg(1) .le. 0) then !{
-          if (lpfrs_pmp .eq. 1) then !{
-            ix_pneut_beg(1) = leftcut(1) - 1 + ix_pneut_beg(1)
-          elseif (lpfrs_pmp .eq. 2) then !}{
-            ix_pneut_beg(1) = nx - 1 + ix_pneut_beg(1)
-          elseif(lpfrs_pmp .eq.3 .or. lpfrs_pmp .eq. 4) then !}{
-            ix_pneut_beg(1) = nxtl - 1 + ix_pneut_beg(1)
-          end if !}
-        end if !}
-        ix_pneut_end(1) = lpfrt_i
-        if (ix_pneut_end(1) .le. 0) then !{
-          if (lpfrs_pmp .eq. 1) then !{
-            ix_pneut_end(1) = leftcut(1) - 1 + ix_pneut_end(1)
-          elseif (lpfrs_pmp .eq. 2) then !}{
-            ix_pneut_end(1) = nx - 1 + ix_pneut_end(1)
-          elseif (lpfrs_pmp .eq. 3) then !}{
-            ix_pneut_end(1) = leftcut(2) - ix_pneut_end(1)
-          elseif(lpfrs_pmp.eq.4) then !}{
-            ix_pneut_end(1) = nxtl - 1 + ix_pneut_end(1)
-          end if !}
-        end if !}
-
-! Eastern divertor
-
-        ix_pneut_beg(2) = lpfrt_o
-        if (ix_pneut_beg(2) .le. 0) then !{
-          if (lpfrs_pmp .eq. 1) then !{
-            ix_pneut_beg(2) = rightcut(1) - ix_pneut_beg(2)
-          elseif(lpfrs_pmp .eq. 2) then !}{
-            ix_pneut_beg(2) = nx - 1 + ix_pneut_beg(2)
-          elseif(lpfrs_pmp .eq. 3) then !}{
-            ix_pneut_beg(2) = rightcut(2) - 1 + ix_pneut_beg(2)
-          elseif(lpfrs_pmp.eq.4) then !}{
-            ix_pneut_beg(2) = nxtr - 1 - ix_pneut_beg(2)
-          end if !}
-        end if !}
-        ix_pneut_end(2) = lpfrb_o
-        if (ix_pneut_end(2) .le. 0) then !{
-          if(lpfrs_pmp .eq. 1 .or. lpfrs_pmp .eq. 2) then !{
-            ix_pneut_end(2) = nx - 1 + ix_pneut_end(2)
-          else if(lpfrs_pmp .eq. 3) then !}{
-            ix_pneut_end(2) = nxtr + 1 - ix_pneut_end(2)
-          else if(lpfrs_pmp .eq. 4) then !}{
-            ix_pneut_end(2) = nxtl - 1 + ix_pneut_end(2)
-          end if !}
-        end if !}
-      else !}{
-        ix_pneut_beg(1) = 1
-        ix_pneut_end(1) = 0
-        ix_pneut_beg(2) = 1
-        ix_pneut_end(2) = 0
-      end if !}
 
       if (ntrgts .eq. 2) then
         do i=1,N_Q_target
@@ -612,15 +531,18 @@ c----------------------------------------------------------------------
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)
 
-      if (allocated(Q_pneut_trg))
-     &  deallocate(
-     &   Q_pneut_trg, Area_pneut_trg,
+      if (allocated(Q_Te_max)) then
+        deallocate(
      &   Q_Te_max, Q_det_wdth, Q_I_tot_trg,
      &   Q_jsat_trg, Q_Isat_trg, Q_qmax_trg)
-        deallocate(
-     &   ix_pneut_beg, ix_pneut_end)
         deallocate(headers)
+       endif
 
+      if (allocated(Q_pneut_trg)) then
+        deallocate ( Q_pneut_trg)
+        deallocate (ix_pneut_beg, ix_pneut_end)
+      endif
+      
       return
       end subroutine b2usstrf
 
@@ -629,6 +551,145 @@ c======================================================================
 c======================================================================
 c======================================================================
 
+
+      subroutine calc_pneut_init(nx,ny,nxtl,nxtr)
+      implicit none
+      
+      integer nx, ny, nxtl, nxtr
+      
+! Subroutine returns ix_pneut_beg(1:2) and ix_pneut_end91:2):
+! poloidal cell number ranges over which neutral pressure will be averaged
+
+! This subroutine is called either from b2usstri or b2stbc_fb_pre, so it is worth checking whether necessary arrays are allocated
+      if (.not. allocated(Q_pneut_trg)) then
+! More safety here since Q_pneut_trg may be allocated from b2stbc_fb
+        allocate(Q_pneut_trg(2), Area_pneut_trg(2))
+        allocate(ix_pneut_beg(2), ix_pneut_end(2))
+      endif
+  
+! Western divertor
+      if(lpfrs_pmp.ne.0) then !  iyv 11.04.22
+c***  lpfrs_pmp - location of the pump: 0 - no pump at all,
+c***              1 - in lower PFR, 2 - on the outer wall,
+c***              3 - in upper PFR, 4 - on the inner wall
+
+        ix_pneut_beg(1) = lpfrb_i !{
+        if (ix_pneut_beg(1) .le. 0) then !{
+          if (lpfrs_pmp .eq. 1) then !{
+            ix_pneut_beg(1) = leftcut(1) - 1 + ix_pneut_beg(1)
+          elseif (lpfrs_pmp .eq. 2) then !}{
+            ix_pneut_beg(1) = nx - 1 + ix_pneut_beg(1)
+          elseif(lpfrs_pmp .eq.3 .or. lpfrs_pmp .eq. 4) then !}{
+            ix_pneut_beg(1) = nxtl - 1 + ix_pneut_beg(1)
+          end if !}
+        end if !}
+        ix_pneut_end(1) = lpfrt_i
+        if (ix_pneut_end(1) .le. 0) then !{
+          if (lpfrs_pmp .eq. 1) then !{
+            ix_pneut_end(1) = leftcut(1) - 1 + ix_pneut_end(1)
+          elseif (lpfrs_pmp .eq. 2) then !}{
+            ix_pneut_end(1) = nx - 1 + ix_pneut_end(1)
+          elseif (lpfrs_pmp .eq. 3) then !}{
+            ix_pneut_end(1) = leftcut(2) - ix_pneut_end(1)
+          elseif(lpfrs_pmp.eq.4) then !}{
+            ix_pneut_end(1) = nxtl - 1 + ix_pneut_end(1)
+          end if !}
+        end if !}
+
+! Eastern divertor
+
+        ix_pneut_beg(2) = lpfrt_o
+        if (ix_pneut_beg(2) .le. 0) then !{
+          if (lpfrs_pmp .eq. 1) then !{
+            ix_pneut_beg(2) = rightcut(1) - ix_pneut_beg(2)
+          elseif(lpfrs_pmp .eq. 2) then !}{
+            ix_pneut_beg(2) = nx - 1 + ix_pneut_beg(2)
+          elseif(lpfrs_pmp .eq. 3) then !}{
+            ix_pneut_beg(2) = rightcut(2) - 1 + ix_pneut_beg(2)
+          elseif(lpfrs_pmp.eq.4) then !}{
+            ix_pneut_beg(2) = nxtr - 1 - ix_pneut_beg(2)
+          end if !}
+        end if !}
+        ix_pneut_end(2) = lpfrb_o
+        if (ix_pneut_end(2) .le. 0) then !{
+          if(lpfrs_pmp .eq. 1 .or. lpfrs_pmp .eq. 2) then !{
+            ix_pneut_end(2) = nx - 1 + ix_pneut_end(2)
+          else if(lpfrs_pmp .eq. 3) then !}{
+            ix_pneut_end(2) = nxtr + 1 - ix_pneut_end(2)
+          else if(lpfrs_pmp .eq. 4) then !}{
+            ix_pneut_end(2) = nxtl - 1 + ix_pneut_end(2)
+          end if !}
+        end if !}
+      else !}{
+        ix_pneut_beg(1) = 1
+        ix_pneut_end(1) = 0
+        ix_pneut_beg(2) = 1
+        ix_pneut_end(2) = 0
+      end if !}
+      
+      return
+      end subroutine calc_pneut_init
+c======================================================================
+
+      subroutine calc_pneut(ns,ny)
+!      use b2mod_driver
+!     ,    , only : use_eirene
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
+      implicit none
+      
+      integer ix,iy,iyp,it, ns,ny, k, is
+
+! neutral pressure in PFR
+! Q_pneut - mean, Q_pneut_trg(1) - inner PFR, Q_pneut_trg(2) - outer PFR
+
+      iy=0
+      iyp=1
+      if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then
+        iy=ny
+        iyp=ny
+      end if
+
+      do it = 1, 2
+        Area_pneut_trg(it) = 0.0_R8
+        Q_pneut_trg(it) = 0.0_R8
+
+        do ix = ix_pneut_beg(it), ix_pneut_end(it)
+          Area_pneut_trg(it) = Area_pneut_trg(it) + gs(ix,iy,1)
+
+#ifdef B25_EIRENE
+!          if(use_eirene.ne.0) then
+            do k=1,nnatmi
+              Q_pneut_trg(it) = Q_pneut_trg(it) +
+     &         dab2(ix+1,iyp,k,1)*tab2(ix+1,iyp,k,1) * gs(ix,iy,1)
+            enddo
+            do k=1,nnmoli
+              Q_pneut_trg(it) = Q_pneut_trg(it) +
+     &         dmb2(ix+1,iyp,k,1)*tmb2(ix+1,iyp,k,1) * gs(ix,iy,1)
+            enddo
+!          endif
+#else
+!          if(use_eirene.eq.0) then
+            do is=0,ns-1
+              if (is_neutral(is)) Q_pneut_trg(it) = Q_pneut_trg(it) +
+     &          na(ix,iy,is)*ti(ix,iy) * gs(ix,iy,1)
+            enddo
+!          endif
+#endif
+        enddo
+
+        if(Area_pneut_trg(it).gt.0.0_R8)
+     &   Q_pneut_trg(it) = Q_pneut_trg(it) / Area_pneut_trg(it)
+      end do
+
+      if(Area_pneut_trg(1).gt.0.0_R8 .and. Area_pneut_trg(2).gt.0.0_R8)
+     > Q_pneut = ( Q_pneut_trg(1) * Area_pneut_trg(1) +
+     &    Q_pneut_trg(2) * Area_pneut_trg(2) ) /
+     &   (Area_pneut_trg(1) + Area_pneut_trg(2))
+
+      return
+      end subroutine calc_pneut
 
       end module b2mod_usrspb
 
