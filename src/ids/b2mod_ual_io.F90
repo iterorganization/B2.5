@@ -265,6 +265,7 @@ module b2mod_ual_io
   character(len=ids_string_length), save :: comment   !< IDS properties label
   character(len=ids_string_length), save :: create_date
   character(len=ids_string_length), save :: code_commit
+  character(len=ids_string_length), save :: code_description
   character(len=ids_string_length), save :: configuration
   character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
   character*8, save :: imas_version, ual_version, adas_version
@@ -759,7 +760,11 @@ contains
 #endif
 #endif
 
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        integer, parameter :: nsources = 13
+#else
         integer, parameter :: nsources = 12
+#endif
         integer, save :: ncall = 0
         integer, save :: style = 1
         integer, save :: ismain = 1
@@ -982,21 +987,28 @@ contains
 #endif
 
         !! 2. Set code and library data
+#ifdef B25_EIRENE
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (coupled SOLPS-ITER run)"
+#else
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (standalone B2.5 run)"
+#endif
         if (streql(b2frates_flag,'adas')) then
           radiation_commit = 'B25 : '//trim(B25_git_version)// &
                       &  ' + ADAS : '//trim(ADAS_git_version)
         else
           radiation_commit = B25_git_version
         endif
-        call write_ids_code( edge_profiles%code, code_commit )
-        call write_ids_code( edge_transport%code, code_commit )
-        call write_ids_code( edge_sources%code, code_commit )
-        call write_ids_code( radiation%code, radiation_commit )
+        call write_ids_code( edge_profiles%code, code_commit, code_description )
+        call write_ids_code( edge_transport%code, code_commit, code_description )
+        call write_ids_code( edge_sources%code, code_commit, code_description )
+        call write_ids_code( radiation%code, radiation_commit, code_description )
 #if IMAS_MINOR_VERSION > 21
-        call write_ids_code( summary%code, code_commit )
+        call write_ids_code( summary%code, code_commit, code_description )
 #endif
 #if IMAS_MINOR_VERSION > 30
-        call write_ids_code( divertors%code, code_commit )
+        call write_ids_code( divertors%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
         edge_transport%model(1)%identifier%index = 1
@@ -1022,6 +1034,11 @@ contains
 #if IMAS_MINOR_VERSION > 29
         allocate( edge_transport%model(1)%code%name(1) )
         edge_transport%model(1)%code%name = source
+#if IMAS_MINOR_VERSION > 38
+        allocate( edge_transport%model(1)%code%description(1) )
+        edge_transport%model(1)%code%description = &
+            & "Snapshot IDS written by b2mod_ual_io routine"
+#endif
         allocate( edge_transport%model(1)%code%version(1) )
         edge_transport%model(1)%code%version = newversion
         allocate( edge_transport%model(1)%code%commit(1) )
@@ -1190,6 +1207,15 @@ contains
         allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        !! Neutrals
+        edge_sources%source(13)%identifier%index = 701
+        allocate( edge_sources%source(13)%identifier%name(1) )
+        edge_sources%source(13)%identifier%name = "Neutrals"
+        allocate( edge_sources%source(13)%identifier%description(1) )
+        edge_sources%source(13)%identifier%description = &
+            & "Total source due to plasma-neutral interactions from "//trim(source)
+#endif
 
         call put_equilibrium_data ( equilibrium, &
 #if IMAS_MINOR_VERSION > 21
@@ -3360,6 +3386,15 @@ contains
                 &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = sne0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                         &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! na: Ion density
             do is = 1, nsion
@@ -3535,6 +3570,17 @@ contains
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:,:) = sna0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_scalar( sources_grid,                     &
+                      &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                  end do
+                end if
+#endif
               else
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
@@ -3887,6 +3933,33 @@ contains
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:,:) = smo0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:,:) = smr0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_RADIAL_ID )
+                    tmpCv(:,:) = smd0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_DIAMAGNETIC_ID )
+                  end do
+                end if
+#endif
               end if
             end do
 
@@ -4006,6 +4079,15 @@ contains
                 &   scalar = edge_sources%source(12)%ggd( time_sind )%      &
                 &            electrons%energy,                              &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = she0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                         &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%energy,                              &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! pe: Electron pressure
             call b2xppe( nx, ny, ne, te, pe)
@@ -4106,6 +4188,15 @@ contains
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             end if
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = shi0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+#endif
             do is = 1, nsion
               if (is.le.nspecies) then
                 totCv(:,:) = 0.0_IDS_real
@@ -5456,6 +5547,15 @@ contains
                 &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = sch0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                     &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            end if
+#endif
             !! csig : Electric conductivity
             tmpFace(:,:,0) = csig(:,:,0)
             tmpFace(:,:,1) = IDS_REAL_INVALID
@@ -6428,11 +6528,12 @@ contains
         end if
 
         !! 2. Set code and library data
-        call write_ids_code( batch_profiles%code, code_commit )
-        call write_ids_code( batch_sources%code, code_commit )
+        code_description = "Batch-averaged IDS from b2mod_ual_io routine"
+        call write_ids_code( batch_profiles%code, code_commit, code_description )
+        call write_ids_code( batch_sources%code, code_commit, code_description )
 #if IMAS_MINOR_VERSION > 21
         if (do_description) &
-          &  call write_ids_code( summary%code, code_commit )
+          &  call write_ids_code( summary%code, code_commit, code_description )
 #endif
 
         !! 3. Allocate IDS.time and set it to desired values
@@ -6976,11 +7077,12 @@ contains
 
     end subroutine write_ids_properties
 
-    subroutine write_ids_code( code, commit )
+    subroutine write_ids_code( code, commit, description )
     implicit none
     type(ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
 #if IMAS_MINOR_VERSION > 29
     integer :: nlibs !< Number of declared libraries in IDS description
     character*8 ggd_version, mscl_version
@@ -7005,6 +7107,10 @@ contains
 
     allocate( code%name(1) )
     code%name = source
+#if IMAS_MINOR_VERSION > 38
+    allocate( code%description(1) )
+    code%description = description
+#endif
     allocate( code%version(1) )
     code%version = newversion
     allocate( code%commit(1) )
