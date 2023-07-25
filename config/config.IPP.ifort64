@@ -50,6 +50,8 @@ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 DEFINES += -DNO_OPT
 
+LDOPTSend += -shared-intel
+
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
