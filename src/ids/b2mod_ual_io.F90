@@ -263,6 +263,7 @@ module b2mod_ual_io
   character(len=ids_string_length), save :: comment   !< IDS properties label
   character(len=ids_string_length), save :: create_date
   character(len=ids_string_length), save :: code_commit
+  character(len=ids_string_length), save :: code_description
   character(len=ids_string_length), save :: configuration
   character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
   character*8, save :: imas_version, ual_version, adas_version
@@ -719,7 +720,9 @@ contains
         integer :: nscx, iscx(0:nscxmax-1)
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
-        real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+        real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, 0:1)
+        real(IDS_real) :: totflux( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, 0:1)
+        real(IDS_real) :: hlpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
@@ -757,7 +760,11 @@ contains
 #endif
 #endif
 
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        integer, parameter :: nsources = 13
+#else
         integer, parameter :: nsources = 12
+#endif
         integer, save :: ncall = 0
         integer, save :: style = 1
         integer, save :: ismain = 1
@@ -980,21 +987,28 @@ contains
 #endif
 
         !! 2. Set code and library data
+#ifdef B25_EIRENE
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (coupled SOLPS-ITER run)"
+#else
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (standalone B2.5 run)"
+#endif
         if (streql(b2frates_flag,'adas')) then
           radiation_commit = 'B25 : '//trim(B25_git_version)// &
                       &  ' + ADAS : '//trim(ADAS_git_version)
         else
           radiation_commit = B25_git_version
         endif
-        call write_ids_code( edge_profiles%code, code_commit )
-        call write_ids_code( edge_transport%code, code_commit )
-        call write_ids_code( edge_sources%code, code_commit )
-        call write_ids_code( radiation%code, radiation_commit )
+        call write_ids_code( edge_profiles%code, code_commit, code_description )
+        call write_ids_code( edge_transport%code, code_commit, code_description )
+        call write_ids_code( edge_sources%code, code_commit, code_description )
+        call write_ids_code( radiation%code, radiation_commit, code_description )
 #if IMAS_MINOR_VERSION > 21
-        call write_ids_code( summary%code, code_commit )
+        call write_ids_code( summary%code, code_commit, code_description )
 #endif
 #if IMAS_MINOR_VERSION > 30
-        call write_ids_code( divertors%code, code_commit )
+        call write_ids_code( divertors%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
         edge_transport%model(1)%identifier%index = 1
@@ -1020,6 +1034,11 @@ contains
 #if IMAS_MINOR_VERSION > 29
         allocate( edge_transport%model(1)%code%name(1) )
         edge_transport%model(1)%code%name = source
+#if IMAS_MINOR_VERSION > 38
+        allocate( edge_transport%model(1)%code%description(1) )
+        edge_transport%model(1)%code%description = &
+            & "Snapshot IDS written by b2mod_ual_io routine"
+#endif
         allocate( edge_transport%model(1)%code%version(1) )
         edge_transport%model(1)%code%version = newversion
         allocate( edge_transport%model(1)%code%commit(1) )
@@ -1188,6 +1207,15 @@ contains
         allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        !! Neutrals
+        edge_sources%source(13)%identifier%index = 701
+        allocate( edge_sources%source(13)%identifier%name(1) )
+        edge_sources%source(13)%identifier%name = "Neutrals"
+        allocate( edge_sources%source(13)%identifier%description(1) )
+        edge_sources%source(13)%identifier%description = &
+            & "Total source due to plasma-neutral interactions from "//trim(source)
+#endif
 
         call put_equilibrium_data ( equilibrium, &
 #if IMAS_MINOR_VERSION > 21
@@ -1363,7 +1391,7 @@ contains
         totFace(-1:nx,-1:ny,0)=abs(fht(-1:nx,-1:ny,0,0))
         totFace(-1:nx,-1:ny,1)=abs(fht(-1:nx,-1:ny,1,1))
         call divide_by_poloidal_areas(nx,ny,totFace,tmpFace)
-        call divide_by_contact_areas(nx,ny,totFace,flxFace)
+        call divide_by_contact_areas(nx,ny,totFace,hlpFace)
         call alloc_b2plot_wall_loading(nlim,nsgmx)
         allocate(wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM))
         wrdtrg = 0.0_IDS_real
@@ -1471,7 +1499,7 @@ contains
                 power_recomb_neutrals(itrg(i)) = &
                    &  power_recomb_neutrals(itrg(i)) + ewldmr_res(imol,iy+ias)
               end do
-              flxFace(ifpos(itrg(i)),iy,0) = flxFace(ifpos(itrg(i)),iy,0) + &
+              hlpFace(ifpos(itrg(i)),iy,0) = hlpFace(ifpos(itrg(i)),iy,0) + &
                 &  ewldt_res(iy+ias)/gs(ifpos(itrg(i)),iy,0)
             end do
             do iatm = 1, natmi
@@ -1486,7 +1514,7 @@ contains
             end do
           end do
 #endif
-          power_flux_peak(itrg(i)) = maxval(flxFace(ifpos(itrg(i)),0:ny-1,0))
+          power_flux_peak(itrg(i)) = maxval(hlpFace(ifpos(itrg(i)),0:ny-1,0))
         end do
 #if IMAS_MINOR_VERSION > 30
         select case ( GeometryType )
@@ -3297,11 +3325,26 @@ contains
                 &   val = edge_profiles%ggd( time_sind )%electrons%density, &
                 &   value = ne )
             !! fne: Electron particle flux
-            call divide_by_contact_areas(nx,ny,fne,totFace)
+#if IMAS_MINOR_VERSION > 38
+            call divide_by_contact_areas(nx,ny,fne(:,:,:,0),flxFace(:,:,:,0))
+            call divide_by_contact_areas(nx,ny,fne(:,:,:,1),flxFace(:,:,:,1))
+            call write_face_scalar( transport_grid,                         &
+                &   val = edge_transport%model(1)%ggd( time_sind )%         &
+                &         electrons%particles%flux_pol,                     &
+                &   value = flxFace(:,:,:,0) )
+            call write_face_scalar( transport_grid,                         &
+                &   val = edge_transport%model(1)%ggd( time_sind )%         &
+                &         electrons%particles%flux_radial,                  &
+                &   value = flxFace(:,:,:,1) )
+#else
+            hlpFace(:,:,0) = fne(:,:,0,0)
+            hlpFace(:,:,1) = fne(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_scalar( transport_grid,                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
                 &   value = totFace )
+#endif
             !! sne: Electron particle sources
             tmpCv(:,:) = ( sne(:,:,0) + sne(:,:,1) * ne(:,:) ) / vol(:,:)
             call write_cell_scalar( sources_grid,                           &
@@ -3367,6 +3410,15 @@ contains
                 &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = sne0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                         &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! na: Ion density
             do is = 1, nsion
@@ -3384,12 +3436,39 @@ contains
                     &         ion(is)%density,                              &
                     &   value = tmpCv )
             !! fna: Ion particle flux
-                totFace(:,:,0:1) = 0.0_IDS_real
+#if IMAS_MINOR_VERSION > 38
+                totflux = 0.0_IDS_real
                 do js = 1, istion(is)
-                  flxFace(-1:nx,-1:ny,0:1) =                                &
+                  flxFace = fna(:,:,:,:,ispion(is,js))
+                  call divide_by_contact_areas(nx,ny,                       &
+                      &   fna(:,:,:,0,ispion(is,js)),flxFace(:,:,:,0))
+                  call divide_by_contact_areas(nx,ny,                       &
+                      &   fna(:,:,:,1,ispion(is,js)),flxFace(:,:,:,1))
+                  totflux = totflux + flxFace
+                  call write_face_scalar( transport_grid,                   &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%particles%flux_pol,   &
+                      &   value = flxFace(:,:,:,0) )
+                  call write_face_scalar( transport_grid,                   &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%particles%flux_radial,&
+                      &   value = flxFace(:,:,:,1) )
+                end do
+                call write_face_scalar( transport_grid,                     &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                    &         ion( is )%particles%flux_pol,                 &
+                    &   value = totflux(:,:,:,0) )
+                call write_face_scalar( transport_grid,                     &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                    &         ion( is )%particles%flux_radial,              &
+                    &   value = totflux(:,:,:,1) )
+#else
+                totFace = 0.0_IDS_real
+                do js = 1, istion(is)
+                  hlpFace(-1:nx,-1:ny,0:1) =                                &
                      &   fna(-1:nx,-1:ny,0:1,0,ispion(is,js)) +             &
                      &   fna(-1:nx,-1:ny,0:1,1,ispion(is,js))
-                  call divide_by_contact_areas(nx,ny,flxFace,tmpFace)
+                  call divide_by_contact_areas(nx,ny,hlpFace,tmpFace)
                   totFace(:,:,0) = totFace(:,:,0) + tmpFace(:,:,0)
                   totFace(:,:,1) = totFace(:,:,1) + tmpFace(:,:,1)
                   call write_face_scalar( transport_grid,                   &
@@ -3401,29 +3480,50 @@ contains
                     &   val = edge_transport%model(1)%ggd( time_sind )%     &
                     &         ion( is )%particles%flux,                     &
                     &   value = totFace )
+#endif
             !! cdna: Ion diffusivity
                 do js = 1, istion(is)
-                  flxFace(:,:,0) = cdna(:,:,0,0,ispion(is,js))
-                  flxFace(:,:,1) = cdna(:,:,1,1,ispion(is,js))
+#if IMAS_MINOR_VERSION > 38
+                  call write_face_scalar( transport_grid,                   &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%particles%d_pol,      &
+                      &   value = cdna(:,:,:,0,ispion(is,js)) )
+                  call write_face_scalar( transport_grid,                   &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%particles%d_radial,   &
+                      &   value = cdna(:,:,:,1,ispion(is,js)) )
+            !! cvla: Ion diffusivity
+                  call write_face_scalar( transport_grid,                   &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%particles%v_pol,      &
+                      &   value = cvla(:,:,:,0,ispion(is,js)) )
+                  call write_face_scalar( transport_grid,                   &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%particles%v_radial,   &
+                      &   value = cvla(:,:,:,1,ispion(is,js)) )
+#else
+                  hlpFace(:,:,0) = cdna(:,:,0,0,ispion(is,js))
+                  hlpFace(:,:,1) = cdna(:,:,1,1,ispion(is,js))
                   call write_face_scalar( transport_grid,                   &
                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
                       &         ion( is )%state( js )%particles%d,          &
-                      &   value = flxFace )
+                      &   value = hlpFace )
             !! cvla: Ion diffusivity
-                  flxFace(:,:,0) = cvla(:,:,0,0,ispion(is,js))
-                  flxFace(:,:,1) = cvla(:,:,1,1,ispion(is,js))
+                  hlpFace(:,:,0) = cvla(:,:,0,0,ispion(is,js))
+                  hlpFace(:,:,1) = cvla(:,:,1,1,ispion(is,js))
                   call write_face_scalar( transport_grid,                   &
                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
                       &         ion( is )%state( js )%particles%v,          &
-                      &   value = flxFace )
+                      &   value = hlpFace )
+#endif
             !! fllim0fna: Ion flux limiter
-                  flxFace(:,:,0) = fllim0fna(:,:,0,0,ispion(is,js))
-                  flxFace(:,:,1) = fllim0fna(:,:,1,1,ispion(is,js))
+                  hlpFace(:,:,0) = fllim0fna(:,:,0,0,ispion(is,js))
+                  hlpFace(:,:,1) = fllim0fna(:,:,1,1,ispion(is,js))
                   call write_face_scalar( transport_grid,                   &
                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
                       &         ion( is )%state( js )%                      &
                       &         particles%flux_limiter,                     &
-                      &   value = flxFace )
+                      &   value = hlpFace )
                 end do
             !! sna: Ion particle sources
                 totCv(:,:) = 0.0_IDS_real
@@ -3550,6 +3650,17 @@ contains
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:,:) = sna0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_scalar( sources_grid,                     &
+                      &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                  end do
+                end if
+#endif
               else
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
@@ -3701,9 +3812,9 @@ contains
                 !! fmo: Ion momentum flux
                 totFace(:,:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  flxFace(:,:,:) = fmo(:,:,:,0,ispion(is,js)) +               &
+                  hlpFace(:,:,:) = fmo(:,:,:,0,ispion(is,js)) +               &
                      &             fmo(:,:,:,1,ispion(is,js))
-                  call divide_by_contact_areas(nx,ny,flxFace,tmpFace)
+                  call divide_by_contact_areas(nx,ny,hlpFace,tmpFace)
                   call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
@@ -3905,6 +4016,19 @@ contains
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:,:) = smo0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                end if
+#endif
               end if
             end do
 
@@ -3919,15 +4043,39 @@ contains
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%d,                           &
                 &   value = tmpCv )
+#if IMAS_MINOR_VERSION > 38
+            call write_face_scalar( transport_grid,                     &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%v_pol,                       &
+                &   value = chve(:,:,:,0) )
+            call write_face_scalar( transport_grid,                     &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%v_radial,                    &
+                &   value = chve(:,:,:,1) )
+            call divide_by_contact_areas(nx,ny,fhe(:,:,:,0),flxFace(:,:,:,0))
+            call divide_by_contact_areas(nx,ny,fhe(:,:,:,1),flxFace(:,:,:,1))
+            call write_face_scalar( transport_grid,                     &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux_pol,                    &
+                &   value = flxFace(:,:,:,0) )
+            call write_face_scalar( transport_grid,                     &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux_radial,                 &
+                &   value = flxFace(:,:,:,1) )
+#else
+            tmpFace(:,:,0) = chve(:,:,0,0)
+            tmpFace(:,:,1) = chve(:,:,1,1)
             call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%v,                           &
-                &   value = chve )
-            call divide_by_contact_areas(nx,ny,fhe,totFace)
+                &   value = tmpFace )
+            tmpFace(:,:,:) = fhe(:,:,:,0) + fhe(:,:,:,1)
+            call divide_by_contact_areas(nx,ny,tmpFace,totFace)
             call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
                 &   value = totFace )
+#endif
             call write_cell_scalar( transport_grid,                     &
                 &   scalar = edge_transport%model(1)%ggd( time_sind )%  &
                 &            electrons%energy%flux_limiter,             &
@@ -4024,6 +4172,15 @@ contains
                 &   scalar = edge_sources%source(12)%ggd( time_sind )%      &
                 &            electrons%energy,                              &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = she0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                         &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%energy,                              &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! pe: Electron pressure
             call b2xppe( nx, ny, ne, te, pe)
@@ -4042,16 +4199,41 @@ contains
                 &   val = edge_transport%model(1)%ggd( time_sind )%   &
                 &         total_ion_energy%d,                         &
                 &   value = tmpCv )
+#if IMAS_MINOR_VERSION > 38
+            call write_face_scalar( transport_grid,                   &
+                 &   val = edge_transport%model(1)%ggd( time_sind )%  &
+                 &         total_ion_energy%v_pol,                    &
+                 &   value = chvi(:,:,:,0) )
+            call write_face_scalar( transport_grid,                   &
+                 &   val = edge_transport%model(1)%ggd( time_sind )%  &
+                 &         total_ion_energy%v_pol,                    &
+                 &   value = chvi(:,:,:,1) )
+            !! fhi : Ion heat flux
+            call divide_by_contact_areas(nx,ny,fhi(:,:,:,0),flxFace(:,:,:,0))
+            call divide_by_contact_areas(nx,ny,fhi(:,:,:,1),flxFace(:,:,:,1))
+            call write_face_scalar( transport_grid,                     &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux_pol,                    &
+                &   value = flxFace(:,:,:,0) )
+            call write_face_scalar( transport_grid,                     &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux_pol,                    &
+                &   value = flxFace(:,:,:,1) )
+#else
+            tmpFace(:,:,0) = chvi(:,:,0,0)
+            tmpFace(:,:,1) = chvi(:,:,1,1)
             call write_face_scalar( transport_grid,                   &
                  &   val = edge_transport%model(1)%ggd( time_sind )%  &
                  &         total_ion_energy%v,                        &
-                 &   value = chvi )
+                 &   value = tmpFace )
             !! fhi : Ion heat flux
-            call divide_by_contact_areas(nx,ny,fhi,totFace)
+            tmpFace(:,:,:) = fhi(:,:,:,0) + fhi(:,:,:,1)
+            call divide_by_contact_areas(nx,ny,tmpFace,totFace)
             call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux,                        &
                 &   value = totFace )
+#endif
             call write_cell_scalar( transport_grid,                     &
                 &   scalar = edge_transport%model(1)%ggd( time_sind )%  &
                 &            total_ion_energy%flux_limiter,             &
@@ -4124,6 +4306,15 @@ contains
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             end if
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = shi0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+#endif
             do is = 1, nsion
               if (is.le.nspecies) then
                 totCv(:,:) = 0.0_IDS_real
@@ -4314,9 +4505,9 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fch_p: Parallel current
-            flxFace(:,:,0) = fch_p(:,:,0,0)
-            flxFace(:,:,1) = fch_p(:,:,1,1)
-            call divide_by_poloidal_areas(nx,ny,flxFace,tmpFace)
+            hlpFace(:,:,0) = fch_p(:,:,0,0)
+            hlpFace(:,:,1) = fch_p(:,:,1,1)
+            call divide_by_poloidal_areas(nx,ny,hlpFace,tmpFace)
             call write_face_scalar( edge_grid,                               &
                 &   val = edge_profiles%ggd( time_sind )%j_parallel,         &
                 &   value = tmpFace )
@@ -4325,17 +4516,17 @@ contains
             !! fchanml: Anomalous current
             call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,               & !som 02.11.21
                 &         csig_an, po, ne, na, fchanml_a, fchanml)
-            flxFace(:,:,0) = fchanml(:,:,0,0)
-            flxFace(:,:,1) = fchanml(:,:,1,0)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchanml(:,:,0,0)
+            hlpFace(:,:,1) = fchanml(:,:,1,0)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            flxFace(:,:,0) = fchanml(:,:,0,1)
-            flxFace(:,:,1) = fchanml(:,:,1,1)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchanml(:,:,0,1)
+            hlpFace(:,:,1) = fchanml(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &
@@ -4343,17 +4534,17 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchinert: Inertial current
-            flxFace(:,:,0) = fchinert(:,:,0,0)
-            flxFace(:,:,1) = fchinert(:,:,1,0)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchinert(:,:,0,0)
+            hlpFace(:,:,1) = fchinert(:,:,1,0)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_inertial,                            &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            flxFace(:,:,0) = fchinert(:,:,0,1)
-            flxFace(:,:,1) = fchinert(:,:,1,1)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchinert(:,:,0,1)
+            hlpFace(:,:,1) = fchinert(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_inertial,                            &
@@ -4361,17 +4552,17 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchin: Ion-neutral friction current
-            flxFace(:,:,0) = fchin(:,:,0,0)
-            flxFace(:,:,1) = fchin(:,:,1,0)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchin(:,:,0,0)
+            hlpFace(:,:,1) = fchin(:,:,1,0)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_ion_neutral_friction,                &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            flxFace(:,:,0) = fchin(:,:,0,1)
-            flxFace(:,:,1) = fchin(:,:,1,1)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchin(:,:,0,1)
+            hlpFace(:,:,1) = fchin(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_ion_neutral_friction,                &
@@ -4379,17 +4570,17 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvispar: Parallel viscosity current
-            flxFace(:,:,0) = fchvispar(:,:,0,0)
-            flxFace(:,:,1) = fchvispar(:,:,1,0)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchvispar(:,:,0,0)
+            hlpFace(:,:,1) = fchvispar(:,:,1,0)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_parallel_viscosity,                  &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            flxFace(:,:,0) = fchvispar(:,:,0,1)
-            flxFace(:,:,1) = fchvispar(:,:,1,1)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchvispar(:,:,0,1)
+            hlpFace(:,:,1) = fchvispar(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_parallel_viscosity,                  &
@@ -4397,17 +4588,17 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvisper: Perpendicular viscosity current
-            flxFace(:,:,0) = fchvisper(:,:,0,0)
-            flxFace(:,:,1) = fchvisper(:,:,1,0)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchvisper(:,:,0,0)
+            hlpFace(:,:,1) = fchvisper(:,:,1,0)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_perpendicular_viscosity,             &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            flxFace(:,:,0) = fchvisper(:,:,0,1)
-            flxFace(:,:,1) = fchvisper(:,:,1,1)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchvisper(:,:,0,1)
+            hlpFace(:,:,1) = fchvisper(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_perpendicular_viscosity,             &
@@ -4415,17 +4606,17 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvisq: Heat viscosity current
-            flxFace(:,:,0) = fchvisq(:,:,0,0)
-            flxFace(:,:,1) = fchvisq(:,:,1,0)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchvisq(:,:,0,0)
+            hlpFace(:,:,1) = fchvisq(:,:,1,0)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_heat_viscosity,                      &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            flxFace(:,:,0) = fchvisq(:,:,0,1)
-            flxFace(:,:,1) = fchvisq(:,:,1,1)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchvisq(:,:,0,1)
+            hlpFace(:,:,1) = fchvisq(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_heat_viscosity,                      &
@@ -4433,17 +4624,17 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchdia: Diamagnetic current
-            flxFace(:,:,0) = fchdia(:,:,0,0)
-            flxFace(:,:,1) = fchdia(:,:,1,0)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchdia(:,:,0,0)
+            hlpFace(:,:,1) = fchdia(:,:,1,0)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_diamagnetic,                         &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            flxFace(:,:,0) = fchdia(:,:,1,0)
-            flxFace(:,:,1) = fchdia(:,:,1,1)
-            call divide_by_contact_areas(nx,ny,flxFace,totFace)
+            hlpFace(:,:,0) = fchdia(:,:,1,0)
+            hlpFace(:,:,1) = fchdia(:,:,1,1)
+            call divide_by_contact_areas(nx,ny,hlpFace,totFace)
             call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_diamagnetic,                         &
@@ -5158,6 +5349,28 @@ contains
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                     end if
                 !! fna: Fluid neutral particle flux
+#if IMAS_MINOR_VERSION > 38
+                    call divide_by_contact_areas(nx,ny,fna(:,:,:,0,js),       &
+                        &   flxFace(:,:,:,0))
+                    call divide_by_contact_areas(nx,ny,fna(:,:,:,1,js),       &
+                        &   flxFace(:,:,:,1))
+                    call write_face_scalar( transport_grid,                   &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux_pol,            &
+                        &   value = flxFace(:,:,:,0) )
+                    call write_face_scalar( transport_grid,                   &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux_radial,         &
+                        &   value = flxFace(:,:,:,1) )
+                    call write_face_scalar( transport_grid,                   &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%flux_pol,   &
+                        &   value = flxFace(:,:,:,0) )
+                    call write_face_scalar( transport_grid,                   &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%flux_radial,&
+                        &   value = flxFace(:,:,:,1) )
+#else
                     tmpFace(:,:,0) = fna(:,:,0,0,js) + fna(:,:,0,1,js)
                     tmpFace(:,:,1) = fna(:,:,1,0,js) + fna(:,:,1,1,js)
                     call divide_by_contact_areas(nx,ny,tmpFace,totFace)
@@ -5169,6 +5382,7 @@ contains
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%flux,       &
                         &   value = totFace )
+#endif
                 !! pb : Fluid neutral pressure
                     call b2xppb( nx, ny, rza(:,:,js), na(:,:,js), te, ti, pb)
                     call write_quantity( edge_grid,                           &
@@ -5180,6 +5394,16 @@ contains
                         &         neutral( j )%state(1)%pressure,             &
                         &   value = pb )
                 !! cdpa: Fluid neutral diffusivity
+#if IMAS_MINOR_VERSION > 38
+                    call write_face_scalar( transport_grid,                   &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%d_pol,               &
+                        &   value = cdpa(:,:,:,0,js) )
+                    call write_face_scalar( transport_grid,                   &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%d_radial,            &
+                        &   value = cdpa(:,:,:,1,js) )
+#else
                     tmpFace(:,:,0) = cdpa(:,:,0,0,js)
                     tmpFace(:,:,1) = cdpa(:,:,1,1,js)
                     call write_face_scalar( transport_grid,                   &
@@ -5190,6 +5414,7 @@ contains
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%d,          &
                         &   value = tmpFace )
+#endif
                 !! Fluid neutral kinetic energy density
                     tmpCv(:,:) = 0.5_IDS_real*am(js)*mp*(ua(:,:,js)**2)*na(:,:,js)
                     call write_quantity( edge_grid,                           &
@@ -5217,8 +5442,8 @@ contains
                         &   b2FaceData = tmpFace,                             &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 !! fmo: Ion momentum flux
-                    flxFace(:,:,:) = fmo(:,:,:,0,js) + fmo(:,:,:,1,js)
-                    call divide_by_contact_areas(nx,ny,flxFace,tmpFace)
+                    hlpFace(:,:,:) = fmo(:,:,:,0,js) + fmo(:,:,:,1,js)
+                    call divide_by_contact_areas(nx,ny,hlpFace,tmpFace)
                     call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
@@ -5492,6 +5717,15 @@ contains
                 &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = sch0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                     &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            end if
+#endif
             !! csig : Electric conductivity
             tmpFace(:,:,0) = csig(:,:,0,0)
             tmpFace(:,:,1) = csig(:,:,1,0)
@@ -6466,11 +6700,12 @@ contains
         end if
 
         !! 2. Set code and library data
-        call write_ids_code( batch_profiles%code, code_commit )
-        call write_ids_code( batch_sources%code, code_commit )
+        code_description = "Batch-averaged IDS from b2mod_ual_io routine"
+        call write_ids_code( batch_profiles%code, code_commit, code_description )
+        call write_ids_code( batch_sources%code, code_commit, code_description )
 #if IMAS_MINOR_VERSION > 21
         if (do_description) &
-          &  call write_ids_code( summary%code, code_commit )
+          &  call write_ids_code( summary%code, code_commit, code_description )
 #endif
 
         !! 3. Allocate IDS.time and set it to desired values
@@ -7014,11 +7249,12 @@ contains
 
     end subroutine write_ids_properties
 
-    subroutine write_ids_code( code, commit )
+    subroutine write_ids_code( code, commit, description )
     implicit none
     type(ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
 #if IMAS_MINOR_VERSION > 29
     integer :: nlibs !< Number of declared libraries in IDS description
     character*8 ggd_version, mscl_version
@@ -7043,6 +7279,10 @@ contains
 
     allocate( code%name(1) )
     code%name = source
+#if IMAS_MINOR_VERSION > 38
+    allocate( code%description(1) )
+    code%description = description
+#endif
     allocate( code%version(1) )
     code%version = newversion
     allocate( code%commit(1) )
