@@ -3091,6 +3091,16 @@ c*** before correction (r), after correction (c), after iteration (i)
                     src_mo(0,3,b2espcr(is))=src_mo(0,3,b2espcr(is))+t0
                     src_ms(0,3)=src_ms(0,3)+t0
                   endif
+c Radial momentum source component
+                  t0=smo_av(ix+1,iy+1,nfl+ifl,istrai)*tflux(istrai)*
+     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
+     *             dble(ih_end)*hz(ix,iy)
+                  smr0(ix,iy,0,is)=smr0(ix,iy,0,is)+t0
+c Diamagnetic momentum source component
+                  t0=smo_av(ix+1,iy+1,2*nfl+ifl,istrai)*tflux(istrai)*
+     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
+     *             dble(ih_end)*hz(ix,iy)
+                  smd0(ix,iy,0,is)=smd0(ix,iy,0,is)+t0
                 end if !}
               end do !}  ! ix
             end do !}  ! iy
