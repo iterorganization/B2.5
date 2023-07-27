@@ -113,33 +113,6 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
           call xertst(nint(zn(ismain)).eq.1.and.nint(zn(ismain0)).eq.1,
      .     'ion-neutral current computation only supported for H/D/T !')
           iamain = b2eatcr(ismain)     ! iamain should correspond to atom of deuterium
-!*   ..get density in the guard cells (boundaries)
-!      do ix = -1, nx
-!       do iy = -1, ny
-!        if(leftix(ix,iy).eq.-2) then
-!         dab2_(ix,iy)=dab2(rightix(ix,iy)+1,rightiy(ix,iy)+1,iamain,1)
-!        elseif(rightix(ix,iy).eq.nx+1) then
-!         dab2_(ix,iy)=dab2(leftix(ix,iy)+1,leftiy(ix,iy)+1,iamain,1)
-!        else
-!         dab2_(ix,iy)=dab2(ix+1,iy+1,iamain,1)
-!        endif
-!        if(topiy(ix,iy).eq.ny+1) then
-!         dab2_(ix,iy)=dab2(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,iamain,1)
-!        elseif(bottomiy(ix,iy).eq.-2) then
-!         dab2_(ix,iy)=dab2(topix(ix,iy)+1,topiy(ix,iy)+1,iamain,1)
-!        endif
-!       enddo
-!      enddo
-!*   ..get density in the corner cells
-!      do iy = -1,ny,ny+1
-!       do ix =-1,nx
-!        if(leftix(ix,iy).eq.-2) then
-!         dab2_(ix,iy)=dab2_(rightix(ix,iy),rightiy(ix,iy))
-!        elseif(rightix(ix,iy).eq.nx+1) then
-!         dab2_(ix,iy)=dab2_(leftix(ix,iy),leftiy(ix,iy))
-!        endif
-!       enddo
-!      enddo
           sigi(:,:) = am(ismain)*mp*na(:,:,ismain)*sec/
      .                              (2.0_R8*bb(:,:,3)**2)
 !      sigia(:,:) = sigi(:,:)*dab2_(:,:)

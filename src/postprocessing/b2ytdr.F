@@ -1001,7 +1001,7 @@ c 2002-09-11: logic revised
      1  b2fstate_version)
       if (invert_bpol .eq. 1) ua = -ua
 *   ..prepare conversion arrays
-      call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
       nxm=max(nx,nx1)

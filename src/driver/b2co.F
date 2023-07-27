@@ -326,7 +326,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
 #ifdef WG_TODO
-      call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
 #endif
       call alloc_b2mod_boundary(1, 1, ns, nbcd, nnisod)
@@ -358,7 +358,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
 #endif
         if (file_exists) then
           open(unit=44,file=filename)
-          call ngread(ismain,iflag)
+          call ngread(mpg,switch,ismain,iflag)
           nnatmi = natmi
           nnmoli = nmoli
         else

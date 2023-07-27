@@ -911,18 +911,18 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-      call extend(dab2(1:nCv,1:nnatmi,1), nCv, mpg, nnatmi)
-      call extend(tab2(1:nCv,1:nnatmi,1), nCv, mpg, nnatmi)
-      call extend(dmb2(1:nCv,1:nnmoli,1), nCv, mpg, nnmoli)
-      call extend(tmb2(1:nCv,1:nnmoli,1), nCv, mpg, nnmoli)
-      call extend(dib2(1:nCv,1:nnioni,1), nCv, mpg, nnioni)
-      call extend(tib2(1:nCv,1:nnioni,1), nCv, mpg, nnioni)
-      call extend(rfluxa(1:nCv,1:nnatmi,1), nCv, mpg, nnatmi)
-      call extend(rfluxm(1:nCv,1:nnmoli,1), nCv, mpg, nnmoli)
-      call extend(pfluxa(1:nCv,1:nnatmi,1), nCv, mpg, nnatmi)
-      call extend(pfluxm(1:nCv,1:nnmoli,1), nCv, mpg, nnmoli)
-      call extend(tfluxa(1:nCv,1:nnatmi,1), nCv, mpg, nnatmi)
-      call extend(tfluxm(1:nCv,1:nnmoli,1), nCv, mpg, nnmoli)
+      call extend(dab2(1:nCv,1:nnatmi,1), mpg, nnatmi)
+      call extend(tab2(1:nCv,1:nnatmi,1), mpg, nnatmi)
+      call extend(dmb2(1:nCv,1:nnmoli,1), mpg, nnmoli)
+      call extend(tmb2(1:nCv,1:nnmoli,1), mpg, nnmoli)
+      call extend(dib2(1:nCv,1:nnioni,1), mpg, nnioni)
+      call extend(tib2(1:nCv,1:nnioni,1), mpg, nnioni)
+      call extend(rfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
+      call extend(rfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
+      call extend(pfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
+      call extend(pfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
+      call extend(tfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
+      call extend(tfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 

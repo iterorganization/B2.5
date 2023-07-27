@@ -28,7 +28,7 @@
      ,  , only : eirene_mc
       use eirmod_extrab25
       use b2mod_running_average
-     & , only : running_average, run_av_get_sources
+     & , only : run_av_get_sources
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -160,7 +160,9 @@
       external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
+#ifdef WG_TODO
       intrinsic mod
+#endif
 #if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
@@ -618,24 +620,55 @@ c   --> better solution wanted here..
          enddo
         endif
 
-*   add eirene sources to running average when averaging
-        if (switch%iav_run > 0) call running_average (nCv, ns,
-     &      st%pl, st%dv, sna0_eir, smo0_eir, she0_eir, shi0_eir)
+*       compute total Eirene sources for averaging
+cwdk only total Eirene source are averaged!
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
+cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk       down in this routine
+        do is = 0, ns-1
+          st%srw%sna0_eir_tot(:,is) = sna0_eir(:,0,is) +
+     &      sna0_eir(:,1,is)*st%pl%na(:,is)
+          st%srw%smo0_eir_tot(:,is) = smo0_eir(:,0,is) +
+     &      smo0_eir(:,1,is)*st%pl%ua(:,is) +
+     &      smo0_eir(:,2,is)*am(is)*mp*st%pl%na(:,is) +
+     &      smo0_eir(:,3,is)*am(is)*mp*st%pl%na(:,is)*st%pl%ua(:,is)
+        enddo
+        st%srw%she0_eir_tot = she0_eir(:,0) + she0_eir(:,1)*st%pl%te +
+     &    she0_eir(:,2)*st%dv%ne + she0_eir(:,3)*st%dv%ne*st%pl%te
+        st%srw%shi0_eir_tot = shi0_eir(:,0) + shi0_eir(:,1)*st%pl%ti +
+     &    shi0_eir(:,2)*st%dv%ni(:,0) +
+     &    shi0_eir(:,3)*st%dv%ni(:,0)*st%pl%ti
 
-*   get averaged sources
+*       get averaged sources
         if (switch%ird_aver > 0) then
-          call run_av_get_sources(sna0_eir, smo0_eir,
-     &                            she0_eir, shi0_eir,
-     &                            nCv, ns)
 
+cwdk if ird_aver > 0, all sources computed by Eirene are overwritten (!!!),
+cwdk i.e. fully replaced by the averaged values from b2faveri
+          sna0_eir = 0.0_R8
+          smo0_eir = 0.0_R8
+          she0_eir = 0.0_R8
+          shi0_eir = 0.0_R8
+
+cwdk get the averaged sources
+          call run_av_get_sources(
+     &     st%srw%sna0_eir_tot, st%srw%smo0_eir_tot,
+     &     st%srw%she0_eir_tot, st%srw%shi0_eir_tot,
+     &     nCv, ns)
+
+cwdk note: only total Eirene source are averaged!
+cwdk these are now put back into the constant part of the sources (0-component)
+          do is = 0,ns-1
+            sna0_eir(:,0,is) = st%srw%sna0_eir_tot(:,is)
+            smo0_eir(:,0,is) = st%srw%smo0_eir_tot(:,is)
+          enddo
+          she0_eir(:,0) = st%srw%she0_eir_tot
+          shi0_eir(:,0) = st%srw%shi0_eir_tot
         endif
 
         st%srw%sna0 = st%srw%sna0 + sna0_eir
         st%srw%smo0 = st%srw%smo0 + smo0_eir
         st%srw%she0 = st%srw%she0 + she0_eir
         st%srw%shi0 = st%srw%shi0 + shi0_eir
-
-
 
 #ifdef ASTRA
         if (use_astra.ne.0) then

@@ -4,7 +4,7 @@ c Unfortunately the Juelich compiler complains with error message
 c    (E) The STRICT/NOSTRICT option may only be specified for OPT(3).  STRICT is assumed.
 c so this optimisation is disabled by default.
 c 2002-09-11: logic revised
-      subroutine b2plot(nxd,nyd,nCv,nsd_local)
+      subroutine b2plot(nxd,nyd,nCv,nFc,nsd_local)
 #ifdef NO_OPT
 #ifdef CRAY
 !DIR$ OPTIMIZE (-O0 -hfp0)
@@ -46,6 +46,7 @@ c 2002-09-11: logic revised
       use b2mod_ranges
       use b2mod_external
       use b2us_plasma
+      use b2mod_switches
 #ifdef NAGF95
       use f90_unix       ! IGNORE
 #endif
@@ -81,8 +82,12 @@ c 2002-09-11: logic revised
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nxd,nyd,nCv,nsd_local
+      integer nxd,nyd,nCv,nFc,nsd_local
+      type (mapping) :: mpg
+      type (geometry) :: gm
       type (B2State) :: state
+      type (B2StateExt) :: st_ext
+      type (switches) :: switch
 c
 c  version : 27.07.96 20:37
 c
@@ -328,7 +333,7 @@ c
 !pb  quick and dirty, to be cleaned up 
       call alloc_b2mod_eirbra(nxd*nyd,nsd_local,natm,npls,nstra)
 #endif
-      call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       allocate(mach(-1:nxd,-1:nyd,
      *     0:max(1,nsd_local,ns_ext,natm,nmol,nion)-1))
@@ -423,9 +428,7 @@ cxpb  This call is moved up from 'f31' so that we used the original cell-faced
 cxpb  quantities before their mapping to cell centers
       call ipgeti ('b2tfnb_drift_style', drift_style)
       call ipgetr ('b2news_BoRiS', BoRiS)
-#ifdef WG_TODO
-      call b2xpni (nx, ny, ns, na, ni)
-#endif
+      call b2xpni ((nx+2)*(ny+2), ns, na, ni)
       nflai=0
       do is=0,ns-1
         if(is_neutral(is)) nflai=nflai+1
@@ -438,10 +441,8 @@ cxpb  quantities before their mapping to cell centers
      1   'copy_background not called because NX>NXDD or NY>NYDD',
      1   nx,nxdd,ny,nydd
       else
-#ifdef WG_TODO
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv)
-#endif
+     &                       state%pl, state%dv)
       endif
 c
       call ipgetr ('b2trcl_lambda', lambda)
@@ -797,8 +798,8 @@ c
 #ifdef WG_TODO
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
 #endif
+      call alloc_b2mod_user(gm,mpg,ns,nlim,nmol)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
@@ -1042,7 +1043,7 @@ c
         p2=0.0_R8
       else
         open(unit=44,file=filename)
-        call ngread(ismain,iflag)
+        call ngread(mpg,switch,ismain,iflag)
         if (natmi.gt.0)
      .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         if (nmoli.gt.0)
@@ -1151,15 +1152,13 @@ c
           endif
         enddo
         if(is_neutral(is) .and. nint(zn(is)).eq.1) then
-          nh(-1:nx,-1:ny)=nh(-1:nx,-1:ny)+na(-1:nx,-1:ny,is)
+          nh(1:nCv,1)=nh(1:nCv,1)+state%pl%na(1:nCv,is)
           do iss=1,natmi
             stmp2=trim(textan(iss-1))//'0'
             call lower_case(stmp2)
-#ifdef WG_TODO
             if(streql(stmp1,stmp2)) then
-              nh(-1:nx,-1:ny)=nh(-1:nx,-1:ny)+dab2(0:nx+1,0:ny+1,iss,1)
+              nh(1:nCv,1)=nh(1:nCv,1)+dab2(1:nCv,iss,1)
             endif
-#endif
           enddo
         endif
       enddo
@@ -2234,7 +2233,7 @@ c
           if (natmi.gt.0) then
             nz=natmi
 #ifdef WG_TODO
-            mach(:,:,0:nz-1)=tab2(0:nx+1,0:ny+1,1:nz,1)
+            mach(:,:,0:nz-1)=tab2(1:nCv,1:nz,1)
 #endif
             call copy(mach,1.0_R8/ev,nz,textan)
           else
@@ -11338,7 +11337,7 @@ c     <delta wavelength in A> nspe
         case('user')     ! call a user function "b2paux"
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2paux(istack(iistack))
+          call b2paux(mpg,gm,state,st_ext,istack(iistack))
           call pop_stack(stack_req)
         case('writ','write')    ! set writing to file
           if(.not.writing_to_file) then
