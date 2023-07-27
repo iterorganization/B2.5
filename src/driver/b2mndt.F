@@ -534,6 +534,8 @@ ctmp.dpc
         goto 1
       endif
 
+      if (switch%iav_run > 0)
+     . call running_average(nCv,ns,st%pl,st%srw)
       if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nCv,ns)
 
 * ..return

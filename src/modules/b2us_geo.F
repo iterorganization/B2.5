@@ -7,7 +7,7 @@
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
      .          init_geometry, calc_conn, check_geometry,
-     .          divide_by_area
+     .          divide_by_area, split_face_flux
 
       type, public :: geometry
 
@@ -1142,6 +1142,38 @@
       return
       end subroutine divide_by_area
 
+      subroutine split_face_flux( mpg, geo, flxFace, tmpFace )
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      real(kind=R8), intent(in) :: flxFace( mpg%nFc, 0:1 )
+      real(kind=R8), intent(out) :: tmpFace( mpg%nFc )
+      integer iFc, nFx
+
+cxpb  This routine is a hack to assign the poloidal value to 'poloidal' faces
+cxpb  and the radial value to 'radial' faces.
+
+      if (mpg%isClassicalGrid.eq.1) then
+        nFx = maxval(mpg%imapFcx)
+        do iFc = 1, nFx
+          tmpFace(iFc) = flxFace(iFc,0)
+        end do
+        do iFc = nFx+1, mpg%nFc
+          tmpFace(iFc) = flxFace(iFc,1)
+        end do
+      else
+        do iFc = 1, mpg%nFc
+          if ( geo%fcQalf(iFc,0).eq.0.0_R8 ) then
+            tmpFace(iFc) = flxFace(iFc,1)
+          else
+            tmpFace(iFc) = flxFace(iFc,0)
+          end if
+        end do
+      end if
+
+      return
+      end subroutine split_face_flux
 ***********************************************************************
 
       end module b2us_geo

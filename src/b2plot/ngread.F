@@ -15,7 +15,7 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      SUBROUTINE NGREAD (ismain,NFEND)
+      SUBROUTINE NGREAD (mpg,switch,ismain,NFEND)
 c
 c  version : 06.11.97 22:11
 c
@@ -24,33 +24,34 @@ c
       use b2mod_b2plot
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2mod_subsys
 #ifdef B25_EIRENE
       use b2mod_neutrals_namelist
       use eirmod_parmmod
      .   , only : natm, nmol, nion, nstra, nlmpgs, nspz
-#ifdef WG_TODO
-     ,          , ndx, ndy
-#endif
       use eirmod_extrab25
+      use eirmod_eirbra
       use eirmod_clogau
       use eirmod_cinit
 #endif
+      use b2us_map
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      INTEGER ismain
+      integer, intent(in) :: ismain
+      type(mapping), intent(in) :: mpg
+      type(switches), intent(in) :: switch
 
 *  -- OUTPUT ARGUMENTS --
       INTEGER NFEND
 
 *  -- LOCAL SCALARS --
-      INTEGER IS, nplsi
+      integer is, nplsi
 #ifdef B25_EIRENE
-      INTEGER NNX, NNY, IX, IY, jvft44, istra
+      integer nCvp, iCv, ix, iy, jvft44, istra
       integer i, j, k, ncl
       real (kind=R8) :: recyctmp
-      real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
       character*18 hlp_frm
       character*256 filename
@@ -86,18 +87,16 @@ C
 *
       rewind (44)
 C
-      READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
+      READ(44,'(I4,2X,i8)',END=99,ERR=99) nCvp,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
       write(*,'(3a,t27,5i5)')
-     . ' Dimensions in ',fort_lc,'44 = ',nnx,nny,natmi,nmoli,nioni
-!WG_TODO      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
+     . ' Dimensions in ',fort_lc,'44 = ',nCvp,natmi,nmoli,nioni
+      call xertst(nCvp .le. mpg%nCv, 'NGREAD: nCvp > nCv')
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
-!WG_TODO      call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
-!WG_TODO      call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
-!WG_TODO      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natmi)
-      allocate(ft44data(0:nx+1,0:ny+1))
+      call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),
+     .   nstrat,natmi,switch)
       filename='input.dat'
       call find_file(filename,ex)
       filename=fort_lc//'33'
@@ -131,102 +130,99 @@ C
 * data
 * neutral atoms
 C
-#ifdef WG_TODO
       do 14 IS = 1, NATMI
-        call gfsub2(44,ndx,ndy,nnx,nny,dab2(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,dab2(:,is,1))
         write(charns,'(i3.3)') is
-        ft44data = dab2(0:nx+1,0:ny+1,is,1)
-        if (iout.ne.0) call my_out(70,nx,ny,ft44data,'dab2_'//charns)
+        if (iout.ne.0)
+     >   call my_out_us(70,mpg%nCv,0,dab2(1,is,1),'dab2_'//charns)
    14 CONTINUE
 
       do 24 IS = 1, NATMI
-        call gfsub2(44,ndx,ndy,nnx,nny,tab2(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,tab2(:,is,1))
    24 CONTINUE
 
 * neutral molecules
 C
       do 15 IS = 1, NMOLI
-        call gfsub2(44,ndx,ndy,nnx,nny,dmb2(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,dmb2(:,is,1))
         write(charns,'(i3.3)') is
-        ft44data = dmb2(0:nx+1,0:ny+1,is,1)
-        if (iout.ne.0) call my_out(70,nx,ny,ft44data,'dmb2_'//charns)
+        if (iout.ne.0)
+     >   call my_out_us(70,mpg%nCv,0,dmb2(1,is,1),'dmb2_'//charns)
    15 CONTINUE
 
       do 25 IS = 1, NMOLI
-        call gfsub2(44,ndx,ndy,nnx,nny,tmb2(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,tmb2(:,is,1))
    25 CONTINUE
 
 * test ions
 C
       do 16 IS = 1, NIONI
-        call gfsub2(44,ndx,ndy,nnx,nny,dib2(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,dib2(:,is,1))
    16 CONTINUE
 
       do 26 IS = 1, NIONI
-        call gfsub2(44,ndx,ndy,nnx,nny,tib2(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,tib2(:,is,1))
    26 CONTINUE
 
 * neutral atom radial particle flux
 C
       do 114 IS = 1, NATMI
-        call gfsub2(44,ndx,ndy,nnx,nny,rfluxa(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,rfluxa(:,is,1))
   114 CONTINUE
 
 * neutral molecules radial particle flux
 C
       do 115 IS = 1, NMOLI
-        call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,rfluxm(:,is,1))
   115 CONTINUE
 
 * neutral atom poloidal particle flux
 C
       do 214 IS = 1, NATMI
-        call gfsub2(44,ndx,ndy,nnx,nny,pfluxa(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,pfluxa(:,is,1))
   214 CONTINUE
 
 * neutral molecules poloidal particle flux
 C
       do 215 IS = 1, NMOLI
-        call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,pfluxm(:,is,1))
   215 CONTINUE
 
 * neutral atom radial energy flux
 C
       do 314 IS = 1, NATMI
-        call gfsub2(44,ndx,ndy,nnx,nny,refluxa(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,refluxa(:,is,1))
   314 CONTINUE
 
 * neutral molecules radial energy flux
 C
       do 415 IS = 1, NMOLI
-        call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,refluxm(:,is,1))
   415 CONTINUE
 
 * neutral atom poloidal energy flux
 C
       do 514 IS = 1, NATMI
-        call gfsub2(44,ndx,ndy,nnx,nny,pefluxa(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,pefluxa(:,is,1))
   514 CONTINUE
 
 * neutral molecules poloidal energy flux
 C
       do 515 IS = 1, NMOLI
-        call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
+        call gfsub2(44,mpg%nCv,nCvp,pefluxm(:,is,1))
   515 CONTINUE
 
-      call gfsub2(44,ndx,ndy,nnx,nny,emiss(:,:,1,1))
-      call gfsub2(44,ndx,ndy,nnx,nny,emissmol(:,:,1,1))
+      call gfsub2(44,mpg%nCv,nCvp,emiss(:,1,1))
+      call gfsub2(44,mpg%nCv,nCvp,emissmol(:,1,1))
 
 cank 960511
       do is=1,nmoli
-        do ix=0,nx+1
-          do iy=0,ny+1
-            srcml(ix,iy,is,1)=0.0_R8
-            edissml(ix,iy,is,0)=0.0_R8
-          end do
+        do iCv=1,mpg%nCv
+          srcml(iCv,is,1)=0.0_R8
+          edissml(iCv,is,0)=0.0_R8
         end do
       end do
-#endif
+
       do istra=0,nstra
         do ix=1,nlimps
           wldnek(ix,istra)=0.0_R8
@@ -244,14 +240,12 @@ cank 960511
         end do
       end do
       if(jvft44 .ge. 960511) then
-#ifdef WG_TODO
         do is=1,nmoli
-          call gfsub2(44,ndx,ndy,nnx,nny,srcml(:,:,is,1))
+          call gfsub2(44,mpg%nCv,nCvp,srcml(:,is,1))
         end do
         do is=1,nmoli
-          call gfsub2(44,ndx,ndy,nnx,nny,edissml(:,:,is,0))
+          call gfsub2(44,mpg%nCv,nCvp,edissml(:,is,0))
         end do
-#endif
       end if
       if(jvft44 .ge. 960513) then
         read(44,'(3i6)') nlimi,nstsi,nstrai
@@ -470,23 +464,20 @@ cank
         end if
 
         if(jvft44 .ge. 20071209) then
-#ifdef WG_TODO
           do is = 1, natmi
-            call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
+            call gfsub2(44,mpg%nCv,nCvp,eneutrad(:,is,0))
           end do
-#endif
         end if
 
         if(jvft44 .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
-          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
 
           NCL=eirdiag_nds_ind(nstsi+1)
           IF (NCL.GT.0) THEN
+            IF(.NOT.ALLOCATED(fnmti_b2)) ALLOCATE(fnmti_b2(NCL))
+            call read_title(44)
+            READ (44,'(12i6)') (fnmti_b2(i),i=1,NCL)
             IF(.NOT.ALLOCATED(wldna_res))
      >         ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                  ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
@@ -621,47 +612,42 @@ cank
   999   continue
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
-#ifdef WG_TODO
           do is = 1, natmi
-            call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
+            call gfsub2(44,mpg%nCv,nCvp,eneutrad(:,is,0))
           end do
-#endif
         end if
       end if
 
 cc<<<
 * -- NO ERROR --
-#ifdef WG_TODO
-      call extend(dab2,ndx,ndy,natm,nnx,nny,natmi)
-      call extend(tab2,ndx,ndy,natm,nnx,nny,natmi)
-      call extend(dmb2,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(tmb2,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(dib2,ndx,ndy,nion,nnx,nny,nioni)
-      call extend(tib2,ndx,ndy,nion,nnx,nny,nioni)
-      call extend(rfluxa,ndx,ndy,natm,nnx,nny,natmi)
-      call extend(rfluxm,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(pfluxa,ndx,ndy,natm,nnx,nny,natmi)
-      call extend(pfluxm,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(refluxa,ndx,ndy,natm,nnx,nny,natmi)
-      call extend(refluxm,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(pefluxa,ndx,ndy,natm,nnx,nny,natmi)
-      call extend(pefluxm,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(emiss,ndx,ndy,1,nnx,nny,1)
-      call extend(emissmol,ndx,ndy,1,nnx,nny,1)
+      call extend(dab2,mpg,natm)
+      call extend(tab2,mpg,natm)
+      call extend(dmb2,mpg,nmol)
+      call extend(tmb2,mpg,nmol)
+      call extend(dib2,mpg,nion)
+      call extend(tib2,mpg,nion)
+      call extend(rfluxa,mpg,natm)
+      call extend(rfluxm,mpg,nmol)
+      call extend(pfluxa,mpg,natm)
+      call extend(pfluxm,mpg,nmol)
+      call extend(refluxa,mpg,natm)
+      call extend(refluxm,mpg,nmol)
+      call extend(pefluxa,mpg,natm)
+      call extend(pefluxm,mpg,nmol)
+      call extend(emiss,mpg,1)
+      call extend(emissmol,mpg,1)
 cxpb We do not extend the volumetric losses quantities
 cank 960511
-c      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
-c      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(srcml,mpg,nmol)
+c      call extend(edissml,mpg,nmol)
 cank
 cxpb 20130210
-c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
-c      call extend(emolrad,ndx,ndy,nmol,nnx,nny,nmoli)
-c      call extend(eionrad,ndx,ndy,nion,nnx,nny,nioni)
+c      call extend(eneutrad,mpg,natm)
+c      call extend(emolrad,mpg,nmol)
+c      call extend(eionrad,mpg,nion)
 cxpb
 cxpb 20180323
 cxpb
-#endif
-      deallocate(ft44data)
  1028 format()
       NFEND = 1
    99 CONTINUE

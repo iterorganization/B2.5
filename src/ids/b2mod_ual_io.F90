@@ -249,6 +249,7 @@ module b2mod_ual_io
   character(len=ids_string_length), save :: comment   !< IDS properties label
   character(len=ids_string_length), save :: create_date
   character(len=ids_string_length), save :: code_commit
+  character(len=ids_string_length), save :: code_description
   character(len=ids_string_length), save :: configuration
   character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
   character*8, save :: imas_version, ual_version, adas_version
@@ -541,7 +542,11 @@ contains
 #endif
 #endif
 
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        integer, parameter :: nsources = 13
+#else
         integer, parameter :: nsources = 12
+#endif
         integer, save :: ncall = 0
         integer, save :: style = 1
         integer, save :: ismain = 1
@@ -729,16 +734,23 @@ contains
 #endif
 
         !! 2. Set code and library data
+#ifdef B25_EIRENE
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (coupled SOLPS-ITER run)"
+#else
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (standalone B2.5 run)"
+#endif
         radiation_commit = B25_git_version
-        call write_ids_code( switch, edge_profiles%code, code_commit )
-        call write_ids_code( switch, edge_transport%code, code_commit )
-        call write_ids_code( switch, edge_sources%code, code_commit )
-        call write_ids_code( switch, radiation%code, radiation_commit )
+        call write_ids_code( switch, edge_profiles%code, code_commit, code_description )
+        call write_ids_code( switch, edge_transport%code, code_commit, code_description )
+        call write_ids_code( switch, edge_sources%code, code_commit, code_description )
+        call write_ids_code( switch, radiation%code, radiation_commit, code_description )
 #if IMAS_MINOR_VERSION > 21
-        call write_ids_code( switch, summary%code, code_commit )
+        call write_ids_code( switch, summary%code, code_commit, code_description )
 #endif
 #if IMAS_MINOR_VERSION > 30
-        call write_ids_code( switch, divertors%code, code_commit )
+        call write_ids_code( switch, divertors%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
         edge_transport%model(1)%identifier%index = 1
@@ -764,6 +776,11 @@ contains
 #if IMAS_MINOR_VERSION > 29
         allocate( edge_transport%model(1)%code%name(1) )
         edge_transport%model(1)%code%name = source
+#if IMAS_MINOR_VERSION > 38
+        allocate( edge_transport%model(1)%code%description(1) )
+        edge_transport%model(1)%code%description = &
+            & "Snapshot IDS written by b2mod_ual_io routine"
+#endif
         allocate( edge_transport%model(1)%code%version(1) )
         edge_transport%model(1)%code%version = newversion
         allocate( edge_transport%model(1)%code%commit(1) )
@@ -932,6 +949,15 @@ contains
         allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        !! Neutrals
+        edge_sources%source(13)%identifier%index = 701
+        allocate( edge_sources%source(13)%identifier%name(1) )
+        edge_sources%source(13)%identifier%name = "Neutrals"
+        allocate( edge_sources%source(13)%identifier%description(1) )
+        edge_sources%source(13)%identifier%description = &
+            & "Total source due to plasma-neutral interactions from "//trim(source)
+#endif
 
         call put_equilibrium_data ( mpg, geo, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
@@ -1483,7 +1509,7 @@ contains
 #endif
 #else
         write(0,*) 'Code was compiled without a GGD module'
-        write(0,*) 'Most IDS output is diabled !'
+        write(0,*) 'Most IDS output is disabled !'
 #endif
 
         !! Allocate and set time slice value
@@ -2648,10 +2674,22 @@ contains
                 &   value = state%dv%ne )
             !! fne: Electron particle flux
             call divide_by_area( mpg%nFc, geo, state%dv%fne, flxFace)
-            call write_face_flux( transport_grid, mpg,                      &
+#if IMAS_MINOR_VERSION > 38
+            call write_face_scalar( transport_grid, mpg,                    &
+                &   val = edge_transport%model(1)%ggd( time_sind )%         &
+                &         electrons%particles%flux_pol,                     &
+                &   value = flxFace(:,0) )
+            call write_face_scalar( transport_grid, mpg,                    &
+                &   val = edge_transport%model(1)%ggd( time_sind )%         &
+                &         electrons%particles%flux_radial,                  &
+                &   value = flxFace(:,1) )
+#else
+            call split_face_flux( mpg, geo, flxFace, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                    &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
-                &   value = flxFace )
+                &   value = tmpFace )
+#endif
             !! sne: Electron particle sources
             tmpCv(:) = ( state%sr%sne(:,0) + state%sr%sne(:,1) * state%dv%ne(:) ) / geo%cvVol(:)
             call write_cell_scalar( sources_grid, mpg,                      &
@@ -2699,6 +2737,15 @@ contains
                 &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%sne0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                    &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! na: Ion density
             do is = 1, nsion
@@ -2720,32 +2767,81 @@ contains
                 do js = 1, istion(is)
                   call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,ispion(is,js)), flxFace)
                   totflux(:,:) = totflux(:,:) + flxFace(:,:)
-                  call write_face_flux( transport_grid, mpg,                &
-                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                      &         ion( is )%state( js )%particles%flux,       &
-                      &   value = flxFace )
+#if IMAS_MINOR_VERSION > 38
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%flux_pol,    &
+                      &   value = flxFace(:,0) )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%flux_radial, &
+                      &   value = flxFace(:,1) )
+#else
+                  call split_face_flux( mpg, geo, flxFace, tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%flux,        &
+                      &   value = tmpFace )
+#endif
                 end do
-                call write_face_flux( transport_grid, mpg,                  &
-                    &   val = edge_transport%model(1)%ggd( time_sind )%     &
-                    &         ion( is )%particles%flux,                     &
-                    &   value = totflux )
+#if IMAS_MINOR_VERSION > 38
+                call write_face_scalar( transport_grid, mpg,                 &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%      &
+                    &         ion( is )%particles%flux_pol,                  &
+                    &   value = totflux(:,0) )
+                call write_face_scalar( transport_grid, mpg,                 &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%      &
+                    &         ion( is )%particles%flux_radial,               &
+                    &   value = totflux(:,1) )
+#else
+                call split_face_flux( mpg, geo, totflux, tmpFace )
+                call write_face_scalar( transport_grid, mpg,                 &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%      &
+                    &         ion( is )%particles%flux,                      &
+                    &   value = tmpFace )
+#endif
             !! cdna: Ion diffusivity
                 do js = 1, istion(is)
-                  call write_face_flux( transport_grid, mpg,                &
-                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                      &         ion( is )%state( js )%particles%d,          &
-                      &   value = state%co%cdna(:,:,ispion(is,js)) )
+#if IMAS_MINOR_VERSION > 38
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%d_pol,       &
+                      &   value = state%co%cdna(:,0,ispion(is,js)) )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%d_radial,    &
+                      &   value = state%co%cdna(:,1,ispion(is,js)) )
             !! cvla: Ion diffusivity
-                  call write_face_flux( transport_grid, mpg,                &
-                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                      &         ion( is )%state( js )%particles%v,          &
-                      &   value = state%co%cvla(:,:,ispion(is,js)) )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%v_pol,       &
+                      &   value = state%co%cvla(:,0,ispion(is,js)) )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%v_radial,    &
+                      &   value = state%co%cvla(:,1,ispion(is,js)) )
+#else
+                  call split_face_flux( mpg, geo,                            &
+                      &   state%co%cdna(:,:,ispion(is,js)), tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%d,           &
+                      &   value = tmpFace )
+                  call split_face_flux( mpg, geo,                            &
+                      &   state%co%cvla(:,:,ispion(is,js)), tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%v,           &
+                      &   value = tmpFace )
+#endif
             !! fllim0fna: Ion flux limiter
-                  call write_face_flux( transport_grid, mpg,                &
-                      &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                      &         ion( is )%state( js )%                      &
-                      &         particles%flux_limiter,                     &
-                      &   value = state%co%fllim0fna(:,:,ispion(is,js)) )
+                  call split_face_flux( mpg, geo,                            &
+                      &   state%co%fllim0fna(:,:,ispion(is,js)), tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%                       &
+                      &         particles%flux_limiter,                      &
+                      &   value = tmpFace )
                 end do
             !! sna: Ion particle sources
                 totCv(:) = 0.0_IDS_real
@@ -2837,6 +2933,18 @@ contains
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (switch%use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:) = state%srw%sna0_eir_tot(:,ispion(is,js)) /      &
+                      &   geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                      &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                  end do
+                end if
+#endif
               else
                 totCv(:) = 0.0_IDS_real
                 do js = 1, istion(is)
@@ -3062,6 +3170,20 @@ contains
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (switch%use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:) = state%srw%smo0_eir_tot(:,ispion(is,js)) / &
+                      &   geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg, &
+                      &   vectorComponent = edge_sources%source(13)%     &
+                      &                     ggd( time_sind )%ion( is )%  &
+                      &                     state( js )%momentum,        &
+                      &   b2CellData = tmpCv,                            &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                end if
+#endif
               end if
             end do
 
@@ -3076,15 +3198,39 @@ contains
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%d,                           &
                 &   value = tmpCv )
-            call write_face_flux( transport_grid, mpg,                  &
+#if IMAS_MINOR_VERSION > 38
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%v_pol,                       &
+                &   value = state%co%chve(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%v_radial,                    &
+                &   value = state%co%chve(:,1) )
+#else
+            call split_face_flux( mpg, geo, state%co%chve, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%v,                           &
-                &   value = state%co%chve )
+                &   value = tmpFace )
+#endif
             call divide_by_area( mpg%nFc, geo, state%dv%fhe, flxFace)
-            call write_face_flux( transport_grid, mpg,                  &
+#if IMAS_MINOR_VERSION > 38
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux_pol,                    &
+                &   value = flxFace(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux_radial,                 &
+                &   value = flxFace(:,1) )
+#else
+            call split_face_flux( mpg, geo, flxFace, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
-                &   value = flxFace )
+                &   value = tmpFace )
+#endif
             call write_face_scalar( transport_grid, mpg,                &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux_limiter,                &
@@ -3143,18 +3289,27 @@ contains
                 &   scalar = edge_sources%source(12)%ggd( time_sind )%      &
                 &            electrons%energy,                              &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%she0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                    &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%energy,                              &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! pe: Electron pressure
             call b2xppe( mpg%nCv, state%dv%ne, state%pl%te, pe)
-            call write_IDS_quantity( edge_grid, mpg, geo,             &
-                &   val = edge_profiles%ggd( time_sind )%electrons%   &
-                &         pressure,                                   &
+            call write_IDS_quantity( edge_grid, mpg, geo,               &
+                &   val = edge_profiles%ggd( time_sind )%electrons%     &
+                &         pressure,                                     &
                 &   value = pe )
 
             !! ti: (Common) Ion Temperature
             tmpCv(:) = state%pl%ti(:)/qe
-            call write_IDS_quantity( edge_grid, mpg, geo,             &
-                &   val = edge_profiles%ggd( time_sind )%t_i_average, &
+            call write_IDS_quantity( edge_grid, mpg, geo,               &
+                &   val = edge_profiles%ggd( time_sind )%t_i_average,   &
                 &   value = tmpCv )
             if (switch%tn_style.eq.0) then
               tmpCv(:) = state%co%hci0(:)/state%dv%ni(:,0)
@@ -3163,20 +3318,44 @@ contains
             else if (switch%tn_style.eq.2) then
               tmpCv(:) = state%co%hci0(:)/(state%dv%ni(:,0)-state%dv%nn(:))
             end if
-            call write_IDS_quantity( transport_grid, mpg, geo,        &
-                &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                &         total_ion_energy%d,                         &
+            call write_IDS_quantity( transport_grid, mpg, geo,          &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%d,                           &
                 &   value = tmpCv )
-            call write_face_flux( transport_grid, mpg,                &
-                 &   val = edge_transport%model(1)%ggd( time_sind )%  &
-                 &         total_ion_energy%v,                        &
-                 &   value = state%co%chvi )
+#if IMAS_MINOR_VERSION > 38
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%v_pol,                       &
+                &   value = state%co%chvi(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%v_radial,                    &
+                &   value = state%co%chvi(:,1) )
+#else
+            call split_face_flux( mpg, geo, state%co%chvi, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%v,                           &
+                &   value = tmpFace )
+#endif
             !! fhi : Ion heat flux
             call divide_by_area( mpg%nFc, geo, state%dv%fhi, flxFace)
-            call write_face_flux( transport_grid, mpg,                  &
+#if IMAS_MINOR_VERSION > 38
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux_pol,                    &
+                &   value = flxFace(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux_radial,                 &
+                &   value = flxFace(:,1) )
+#else
+            call split_face_flux( mpg, geo, flxFace, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux,                        &
-                &   value = flxFace )
+                &   value = tmpFace )
+#endif
             call write_face_scalar( transport_grid, mpg,                &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux_limiter,                &
@@ -3212,11 +3391,20 @@ contains
                 &   b2CellData = tmpCv )
             if (switch%use_eirene.eq.0) then
               tmpCv(:) = state%srw%b2stbr_shi(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                       &
+              call write_cell_scalar( sources_grid, mpg,                  &
                   &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             end if
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%shi0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+#endif
             do is = 1, nsion
               if (is.le.nspecies) then
                 totCv(:) = 0.0_IDS_real
@@ -3685,15 +3873,36 @@ contains
                         &   b2FaceData = flxFace(:,1),                        &
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! fna: Fluid neutral particle flux
-                    call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,js), flxFace)
-                    call write_face_flux( transport_grid, mpg,                &
+                    call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,js),  &
+                        &   flxFace)
+#if IMAS_MINOR_VERSION > 38
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux_pol,            &
+                        &   value = flxFace(:,0) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux_radial,         &
+                        &   value = flxFace(:,1) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%flux_pol,   &
+                        &   value = flxFace(:,0) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%flux_radial,&
+                        &   value = flxFace(:,1) )
+#else
+                    call split_face_flux( mpg, geo, flxFace, tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux,                &
-                        &   value = flxFace )
-                    call write_face_flux( transport_grid, mpg,                &
+                        &   value = tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%flux,       &
-                        &   value = flxFace )
+                        &   value = tmpFace )
+#endif
                 !! pb : Fluid neutral pressure
                     call write_IDS_quantity( edge_grid, mpg, geo,             &
                         &   val = edge_profiles%ggd( time_sind )%             &
@@ -3704,14 +3913,35 @@ contains
                         &         neutral( j )%state(1)%pressure,             &
                         &   value = state%dv%pa(:,js) )
                 !! cdpa: Fluid neutral diffusivity
-                    call write_face_flux( transport_grid, mpg,                &
+#if IMAS_MINOR_VERSION > 38
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%d_pol,               &
+                        &   value = state%co%cdpa(:,0,js) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%d_pol,               &
+                        &   value = state%co%cdpa(:,1,js) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%d_pol,      &
+                        &   value = state%co%cdpa(:,0,js) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%d_radial,   &
+                        &   value = state%co%cdpa(:,1,js) )
+#else
+                    call split_face_flux( mpg, geo, state%co%cdpa(:,:,js),    &
+                        &   tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%d,                   &
-                        &   value = state%co%cdpa(:,:,js) )
-                    call write_face_flux( transport_grid, mpg,                &
+                        &   value = tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%d,          &
-                        &   value = state%co%cdpa(:,:,js) )
+                        &   value = tmpFace )
+#endif
                 !! Fluid neutral kinetic energy density
                     call write_IDS_quantity( edge_grid, mpg, geo,             &
                         &   val = edge_profiles%ggd( time_sind )%             &
@@ -3748,15 +3978,17 @@ contains
                         &   b2FaceData = state%co%cvsa(:,1,js),               &
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! fllim0fna: Fluid neutral flux limiter
-                    call write_face_flux( transport_grid, mpg,                &
+                    call split_face_flux( mpg, geo,                           &
+                        &   state%co%fllim0fna(:,:,js), tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux_limiter,        &
-                        &   value = state%co%fllim0fna(:,:,js) )
-                    call write_face_flux( transport_grid, mpg,                &
+                        &   value = tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%                      &
                         &         particles%flux_limiter,                     &
-                        &   value = state%co%fllim0fna(:,:,js) )
+                        &   value = tmpFace )
                 !! fllimvisc: Fluid neutral momentum transport flux limit
                     call write_face_vector_component( transport_grid, mpg,    &
                         &   vectorComponent = edge_transport%model(1)%        &
@@ -3989,14 +4221,34 @@ contains
                         &   value = tmpCv )
                 !! fhn : Fluid neutral heat flux
                       call divide_by_area( mpg%nFc, geo, state%dv%fhn, flxFace)
-                      call write_face_flux( transport_grid, mpg,              &
+#if IMAS_MINOR_VERSION > 38
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%flux_pol,               &
+                        &   value = flxFace(:,0) )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%flux_radial,            &
+                        &   value = flxFace(:,1) )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%flux_pol,      &
+                        &   value = flxFace(:,0) )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%flux_radial,   &
+                        &   value = flxFace(:,1) )
+#else
+                      call split_face_flux( mpg, geo, flxFace, tmpFace )
+                      call write_face_scalar( transport_grid, mpg,            &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%energy%flux,                   &
-                        &   value = flxFace )
-                      call write_face_flux( transport_grid, mpg,              &
+                        &   value = tmpFace )
+                      call write_face_scalar( transport_grid, mpg,            &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%energy%flux,          &
-                        &   value = flxFace )
+                        &   value = tmpFace )
+#endif
                 !! Fluid neutral energy sources
                       tmpCv(:) = ( state%sr%shn(:,0) +                        &
                         &          state%sr%shn(:,1) * state%pl%tn(:) +       &
@@ -4111,6 +4363,15 @@ contains
                 &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%sch0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            end if
+#endif
             !! csig : Electric conductivity
             call write_face_vector_component( transport_grid, mpg,      &
                 &   vectorComponent = edge_transport%model(1)%          &
@@ -4774,12 +5035,13 @@ contains
 
     end subroutine write_ids_properties
 
-    subroutine write_ids_code( switch, code, commit )
+    subroutine write_ids_code( switch, code, commit, description )
     implicit none
     type (switches), intent(in) :: switch
     type(ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
 #if IMAS_MINOR_VERSION > 29
     integer :: nlibs !< Number of declared libraries in IDS description
     character*8 ggd_version, mscl_version
@@ -4804,6 +5066,10 @@ contains
 
     allocate( code%name(1) )
     code%name = source
+#if IMAS_MINOR_VERSION > 38
+    allocate( code%description(1) )
+    code%description = description
+#endif
     allocate( code%version(1) )
     code%version = newversion
     allocate( code%commit(1) )
@@ -5974,117 +6240,6 @@ contains
 
     return
     end subroutine write_face_scalar
-
-    !> Write a scalar B2 face quantity to ids_generic_grid_scalar
-    subroutine write_face_flux( basegrid, mpg, val, value )
-    implicit none
-#if IMAS_MINOR_VERSION < 15
-    type (ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
-        !< data structure, designed for handling grid geometry data
-#else
-    type (ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
-        !< data structure, designed for handling grid geometry data
-#endif
-    type (mapping), intent(in) :: mpg
-!WG_TODO: This needs to be a different type that allows for passing
-!         x- and y-directed fluxes through each face
-    type (ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
-        !< Type of IDS data structure, designed for scalar data handling
-        !< (in this case scalars residing on grid faces)
-    real(IDS_real), intent(in) :: value( mpg%nFc, 0:1 )
-    integer :: nSubsets  !< number of grid subsets to fill
-    integer :: iSubset   !< Grid subset iterator
-    integer :: iSubsetID !< Grid subset identifier index
-    integer :: ggdID     !< Grid identifier index
-    integer :: ndim      !< Grid subset dimension
-
-    ggdId = basegrid%identifier%index
-#if IMAS_MINOR_VERSION < 15
-    nSubsets = 2
-#else
-    nSubsets = size(basegrid%grid_subset)
-    if (nSubsets.eq.0) return
-#endif
-    !! Allocate data fields for grid subsets
-    if (.not.associated( val ) ) then
-      allocate( val(nSubsets) )
-    end if
-
-    do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
-      select case (iSubset)
-      case (1)
-        iSubsetID = GRID_SUBSET_X_ALIGNED_EDGES
-        ndim = 2
-      case (2)
-        iSubsetID = GRID_SUBSET_Y_ALIGNED_EDGES
-        ndim = 2
-      case default
-        iSubsetID = iSubset
-        ndim = IDS_INT_INVALID
-       end select
-#else
-       ndim = basegrid%grid_subset(iSubset)%dimension
-       iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
-#endif
-       if (ndim.eq.IDS_INT_INVALID) then
-         select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_MAGNETIC_AXIS,               &
-             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_INNER_STRIKEPOINT,           &
-             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-           ndim = 1
-         case( GRID_SUBSET_EDGES, &
-             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_SECOND_SEPARATRIX, &
-             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
-           ndim = 2
-         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
-             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-           ndim = 3
-         case( GRID_SUBSET_VOLUMES )
-           ndim = 4
-         end select
-       end if
-       if (ndim.ne.2) cycle
-#ifdef WG_TODO
-! Need to modify DD to allow for x- and y- directed fluxes through the same face!
-       call write_face_vector( basegrid, mpg, val( iSubset ), value, &
-           &    ggdID, iSubsetID, iSubset )
-#endif
-    end do
-
-    return
-    end subroutine write_face_flux
 
     !> Write a vector component B2 face quantity to ids_generic_grid_vector
     !! components
