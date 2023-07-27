@@ -34,22 +34,15 @@
 
       contains
 
-      subroutine running_average (nCv,ns,pl,dv,
-     &           sna0_eir, smo0_eir, she0_eir, shi0_eir)
+      subroutine running_average (nCv, ns, pl, srw)
       use b2mod_plasma
       implicit none
 c input
       integer, intent(in) :: nCv, ns
       type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (in) :: dv
-      real (kind=R8), intent(in) ::
-     *   sna0_eir(nCv,0:1,0:ns-1), smo0_eir(nCv,0:3,0:ns-1), 
-     *   she0_eir(nCv,0:3), shi0_eir(nCv,0:3)
+      type (B2SourceWork), intent (in) :: srw
 c local
-      integer :: itp, is
-      real (kind=R8) ::
-     *   sna_tot(nCv,0:ns-1), smo_tot(nCv,0:ns-1), 
-     *   she_tot(nCv), shi_tot(nCv)
+      integer :: itp
       external batch_average, batch_average_sq
 
       call subini ('running_average')
@@ -58,18 +51,6 @@ c local
       ntotdt = ntotdt + 1
 
       itp = 0
-
-cnh   Calculation of the total sources
-      do is = 0, ns-1
-        sna_tot(:,is) = sna0_eir(:,0,is) + sna0_eir(:,1,is)*pl%na(:,is)
-        smo_tot(:,is) = smo0_eir(:,0,is) + smo0_eir(:,1,is)*pl%ua(:,is)
-     1    + smo0_eir(:,2,is)*pl%na(:,is)*mp*am(is) + 
-     2    smo0_eir(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) 
-      end do
-      she_tot = she0_eir(:,0) + she0_eir(:,1)*pl%te + 
-     1  she0_eir(:,2)*dv%ne + she0_eir(:,3)*pl%te*dv%ne
-      shi_tot = shi0_eir(:,0) + shi0_eir(:,1)*pl%ti +
-     1  shi0_eir(:,2)*dv%ni(:,0) + shi0_eir(:,3)*pl%ti*dv%ni(:,0)
 
 *  calculate averaged plasma profiles and sources
       call batch_average (nCv*ns, pl%na, na_mean, itp, naver)
@@ -80,10 +61,14 @@ cnh   Calculation of the total sources
       call batch_average (nCv,    pl%kt, kt_mean, itp, naver)
       call batch_average (nCv,    pl%zt, zt_mean, itp, naver)
 
-      call batch_average (nCv*ns, sna_tot, sna_mean, itp, naver)
-      call batch_average (nCv,    she_tot, she_mean, itp, naver)
-      call batch_average (nCv,    shi_tot, shi_mean, itp, naver)
-      call batch_average (nCv*ns, smo_tot, smo_mean, itp, naver)
+      call batch_average (nCv*ns, srw%sna0_eir_tot, sna_mean,
+     .                                            itp, naver)
+      call batch_average (nCv,    srw%she0_eir_tot, she_mean,
+     .                                            itp, naver)
+      call batch_average (nCv,    srw%shi0_eir_tot, shi_mean,
+     .                                            itp, naver)
+      call batch_average (nCv*ns, srw%smo0_eir_tot, smo_mean,
+     .                                            itp, naver)
 
 *  calculate squared averaged plasma profiles
       call batch_average_sq (nCv*ns, pl%na, e_na, itp, naver)
@@ -94,10 +79,14 @@ cnh   Calculation of the total sources
       call batch_average_sq (nCv,    pl%kt, e_kt, itp, naver)
       call batch_average_sq (nCv,    pl%zt, e_zt, itp, naver)
       
-      call batch_average_sq (nCv*ns, sna_tot, e_sna, itp, naver)
-      call batch_average_sq (nCv,    she_tot, e_she, itp, naver)
-      call batch_average_sq (nCv,    shi_tot, e_shi, itp, naver)
-      call batch_average_sq (nCv*ns, smo_tot, e_smo, itp, naver)
+      call batch_average_sq (nCv*ns, srw%sna0_eir_tot, e_sna,
+     .                                            itp, naver)
+      call batch_average_sq (nCv,    srw%she0_eir_tot, e_she,
+     .                                            itp, naver)
+      call batch_average_sq (nCv,    srw%shi0_eir_tot, e_shi,
+     .                                            itp, naver)
+      call batch_average_sq (nCv*ns, srw%smo0_eir_tot, e_smo,
+     .                                            itp, naver)
 
       call subend ()
 
@@ -403,23 +392,17 @@ c local variables
       implicit none
       integer, intent(in) :: nCv, ns
       real (kind=R8), intent(out) ::
-     *  sna_out(nCv,0:1,0:ns-1), smo_out(nCv,0:3,0:ns-1),
-     &  she_out(nCv,0:3), shi_out(nCv,0:3)
+     *  sna_out(nCv,0:ns-1), smo_out(nCv,0:ns-1),
+     &  she_out(nCv), shi_out(nCv)
 
       call subini ('run_av_get_sources')
 
 c only the total sources are averaged, not the linearised components.
-c when calling the averaged sources the linearisation must be overwritten (everything in the "0" part)
 
-      sna_out(:,0,:) = sna_mean
-      smo_out(:,0,:) = smo_mean
-      she_out(:,0) =   she_mean
-      shi_out(:,0) =   shi_mean
-
-      sna_out(:,1,:) =   0.0_R8
-      smo_out(:,1:3,:) = 0.0_R8
-      she_out(:,1:3) =   0.0_R8
-      shi_out(:,1:3) =   0.0_R8
+      sna_out = sna_mean
+      smo_out = smo_mean
+      she_out = she_mean
+      shi_out = shi_mean
 
       call subend ()
 

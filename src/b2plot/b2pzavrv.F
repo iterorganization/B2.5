@@ -1,4 +1,4 @@
-      subroutine b2pzavrv(lun)
+      subroutine b2pzavrv(lun,mpg,gm,st)
 c
 c----------------------------------------------------------------------
 c***  Produces a file with coordinates of the grid cell centers and
@@ -10,19 +10,23 @@ c***
 c***  zaveraev.dat with the data for V. Zaveryaev
 c----------------------------------------------------------------------
       use b2mod_diag
-      use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
       implicit none
-      integer lun
+      integer, intent(in) :: lun
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: gm
+      type(B2State), intent(in) :: st
 c
 c*** Local variables
 c
-      integer ix,iy,i,j,in,k1,k0
+      integer iCv,i,j,in,k1,k0
       real (kind=R8), allocatable :: hlp_f(:)
       character*16 stmp
       character*256 hlp_frmr
@@ -65,32 +69,30 @@ c
 c
       allocate(hlp_f(in))
       open(lun,file='zaveraev.dat')
-      write(hlp_frmr,'(a,i2,a)') '(a9,5x,a5,7x,a5,5x,',
+      write(hlp_frmr,'(a,i2,a)') '(a6,3x,a5,7x,a5,5x,',
      . in,'(a10,2x),3x,a2,8x,a7,5x,a7,6x,a5,7x,a4,8x,a3)'
       write (lun,hlp_frmr)
-     .  '   ix  iy','R (m)','Z (m)',
+     .  '   iCv','R (m)','Z (m)',
      . ('n'//hlp_at(i)//' (m**-3)',i=1,in),
      .  'ne','Te (eV)','Ti (eV)','nHe++','nHe+','nHe'
 c
-      do ix=0,nx-1
-        do iy=0,ny-1
-          i=0
-          do j=1,3
-            if (j_h_at(j).ne.0) then
-              i=i+1
-!WG_TODO              hlp_f(i)=dab2(ix+1,iy+1,j_h_at(j),1)
-            end if
-          end do
-          write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),
-!WG_TODO     ,        (hlp_f(i),i=1,in),
-     ,         ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,         na(ix,iy,k1+1),na(ix,iy,k1)
-!WG_TODO     ,        ,dab2(ix+1,iy+1,k0,1)
-  700     format(1x,1p,2i4,48e12.3)
+      do iCv=1,mpg%nCi
+        i=0
+        do j=1,3
+          if (j_h_at(j).ne.0) then
+            i=i+1
+            hlp_f(i)=dab2(iCv,j_h_at(j),1)
+          end if
         end do
+        write (lun,700) iCv,gm%cvX(iCv),gm%cvY(iCv),
+     ,        (hlp_f(i),i=1,in),
+     ,         st%dv%ne(iCv),st%pl%te(iCv)/ev,st%pl%ti(iCv)/ev,
+     ,         st%pl%na(iCv,k1+1),st%pl%na(iCv,k1),
+     ,         dab2(iCv,k0,1)
       end do
       close (lun)
       deallocate(hlp_f)
 c
+  700 format(1x,1p,i6,48e12.3)
       return
       end subroutine b2pzavrv

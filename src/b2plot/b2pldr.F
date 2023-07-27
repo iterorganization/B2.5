@@ -1,4 +1,4 @@
-      subroutine b2pldr (ninp, nout, nx, ny, nCv, ns)
+      subroutine b2pldr (ninp, nout, nx, ny, nCv, nFc, ns)
       use b2mod_types
       use b2mod_version
       use b2mod_geo
@@ -26,7 +26,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:6), nout(0:2), nx, ny, nCv, ns
+      integer ninp(0:6), nout(0:2), nx, ny, nCv, nFc, ns
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -216,7 +216,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call alloc_b2mod_external_dummy(nx,ny)
       endif
 *   ..process
-      call b2plot(nx,ny,nCv,ns)
+      call b2plot(nx,ny,nCv,nFc,ns)
 
 * ..return
       call dealloc_b2mod_b2cmrc

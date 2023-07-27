@@ -194,6 +194,12 @@ cwdk move to dv
      .                                           rcxna, rcxhi, rcxmo,
      .                                           rqahe, rqrad, rqbrm
         real(R8), dimension(:), allocatable :: b2sihs_joule
+        real(R8), dimension(:,:), allocatable :: sna0_eir_tot,
+     .                                           smo0_eir_tot
+        real(R8), dimension(:), allocatable :: sne0_eir_tot,
+     .                                         she0_eir_tot,
+     .                                         shi0_eir_tot,
+     .                                         sch0_eir_tot
       end type B2SourceWork
 
 ! b2mod_rates
@@ -632,41 +638,41 @@ cwdk move to dv
 
 ! moved here from b2coeffwork
 
-      coeff%dna0 = 0._R8
-      coeff%dpa0 = 0._R8
-      coeff%vla0 = 0._R8
-      coeff%vma0 = 0._R8
-      coeff%vsa0 = 0._R8
-      coeff%hci0 = 0._R8
-      coeff%hcn0 = 0._R8
-      coeff%hcib = 0._R8
-      coeff%hce0 = 0._R8
-      coeff%sig0 = 0._R8
-      coeff%alf0 = 0._R8
-      coeff%dkt0 = 0._R8
-      coeff%dzt0 = 0._R8
-      coeff%dna_ExB = 0._R8
-      coeff%hce_ExB = 0._R8
-      coeff%hci_ExB = 0._R8
+      coeff % dna0 = 0._R8
+      coeff % dpa0 = 0._R8
+      coeff % vla0 = 0._R8
+      coeff % vma0 = 0._R8
+      coeff % vsa0 = 0._R8
+      coeff % hci0 = 0._R8
+      coeff % hcn0 = 0._R8
+      coeff % hcib = 0._R8
+      coeff % hce0 = 0._R8
+      coeff % sig0 = 0._R8
+      coeff % alf0 = 0._R8
+      coeff % dkt0 = 0._R8
+      coeff % dzt0 = 0._R8
+      coeff % dna_ExB = 0._R8
+      coeff % hce_ExB = 0._R8
+      coeff % hci_ExB = 0._R8
 
-      coeff%kt_neo = 0._R8
+      coeff % kt_neo = 0._R8
 
-      coeff%fllim_ki = 0._R8
-      coeff%fllim_ke = 0._R8
-      coeff%fllim_al = 0._R8
-      coeff%fllim_al_c = 0._R8
-      coeff%f_luc_ke = 0._R8
-      coeff%f_luc_ki = 0._R8
-      coeff%fllim_ki_c = 0._R8
-      coeff%f_luc_et = 0._R8
-      coeff%f_luc_sg = 0._R8
-      coeff%f_luc_al = 0._R8
-      coeff%alfx_c = 0._R8
-      coeff%sigx_c = 0._R8
-      coeff%sigx_kt = 0._R8
-      coeff%hcix_c = 0._R8
+      coeff % fllim_ki = 0._R8
+      coeff % fllim_ke = 0._R8
+      coeff % fllim_al = 0._R8
+      coeff % fllim_al_c = 0._R8
+      coeff % f_luc_ke = 0._R8
+      coeff % f_luc_ki = 0._R8
+      coeff % fllim_ki_c = 0._R8
+      coeff % f_luc_et = 0._R8
+      coeff % f_luc_sg = 0._R8
+      coeff % f_luc_al = 0._R8
+      coeff % alfx_c = 0._R8
+      coeff % sigx_c = 0._R8
+      coeff % sigx_kt = 0._R8
+      coeff % hcix_c = 0._R8
 
-      coeff%cssb =0._R8
+      coeff % cssb =0._R8
 #endif
       return
       end subroutine createB2Coeff
@@ -728,39 +734,39 @@ cwdk move to dv
       deallocate( coeff % fllim0fhi )
       deallocate( coeff % fllimvisc )
 
-      deallocate( coeff%dna0 )
-      deallocate( coeff%dpa0 )
-      deallocate( coeff%vla0 )
-      deallocate( coeff%vma0 )
-      deallocate( coeff%vsa0 )
-      deallocate( coeff%hci0 )
-      deallocate( coeff%hcn0 )
-      deallocate( coeff%hcib )
-      deallocate( coeff%hce0 )
-      deallocate( coeff%sig0 )
-      deallocate( coeff%alf0 )
-      deallocate( coeff%dkt0 )
-      deallocate( coeff%dzt0 )
-      deallocate( coeff%dna_ExB )
-      deallocate( coeff%hce_ExB )
-      deallocate( coeff%hci_ExB )
+      deallocate( coeff % dna0 )
+      deallocate( coeff % dpa0 )
+      deallocate( coeff % vla0 )
+      deallocate( coeff % vma0 )
+      deallocate( coeff % vsa0 )
+      deallocate( coeff % hci0 )
+      deallocate( coeff % hcn0 )
+      deallocate( coeff % hcib )
+      deallocate( coeff % hce0 )
+      deallocate( coeff % sig0 )
+      deallocate( coeff % alf0 )
+      deallocate( coeff % dkt0 )
+      deallocate( coeff % dzt0 )
+      deallocate( coeff % dna_ExB )
+      deallocate( coeff % hce_ExB )
+      deallocate( coeff % hci_ExB )
 
-      deallocate( coeff%kt_neo )
+      deallocate( coeff % kt_neo )
 
-      deallocate( coeff%fllim_ki )
-      deallocate( coeff%fllim_ke )
-      deallocate( coeff%fllim_al )
-      deallocate( coeff%fllim_al_c )
-      deallocate( coeff%f_luc_ke )
-      deallocate( coeff%f_luc_ki )
-      deallocate( coeff%fllim_ki_c )
-      deallocate( coeff%f_luc_et )
-      deallocate( coeff%f_luc_sg )
-      deallocate( coeff%f_luc_al )
-      deallocate( coeff%alfx_c )
-      deallocate( coeff%sigx_c )
-      deallocate( coeff%sigx_kt )
-      deallocate( coeff%hcix_c )
+      deallocate( coeff % fllim_ki )
+      deallocate( coeff % fllim_ke )
+      deallocate( coeff % fllim_al )
+      deallocate( coeff % fllim_al_c )
+      deallocate( coeff % f_luc_ke )
+      deallocate( coeff % f_luc_ki )
+      deallocate( coeff % fllim_ki_c )
+      deallocate( coeff % f_luc_et )
+      deallocate( coeff % f_luc_sg )
+      deallocate( coeff % f_luc_al )
+      deallocate( coeff % alfx_c )
+      deallocate( coeff % sigx_c )
+      deallocate( coeff % sigx_kt )
+      deallocate( coeff % hcix_c )
 
       deallocate( coeff % cssb )
 
@@ -1528,20 +1534,27 @@ cwdk move to dv
       allocate( srw % b2stbm_sna( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % b2stbm_sne( nCv ), SOURCE=0._R8 )
 
-      allocate ( srw % rsana( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rsamo( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rsahi( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rrana( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rramo( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rrahi( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rcxna( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rcxmo( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rcxhi( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rqahe( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rqrad( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate ( srw % rqbrm( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rsana( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rsamo( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rsahi( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rrana( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rramo( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rrahi( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rcxna( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rcxmo( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rcxhi( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rqahe( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rqrad( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % rqbrm( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate ( srw % b2sihs_joule( nCv ), SOURCE=0._R8)
+      allocate( srw % b2sihs_joule( nCv ), SOURCE=0._R8)
+
+      allocate( srw % sna0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8)
+      allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8)
+      allocate( srw % sne0_eir_tot( nCv ), SOURCE=0._R8)
+      allocate( srw % she0_eir_tot( nCv ), SOURCE=0._R8)
+      allocate( srw % shi0_eir_tot( nCv ), SOURCE=0._R8)
+      allocate( srw % sch0_eir_tot( nCv ), SOURCE=0._R8)
 #else
       allocate( srw % sch0( nCv, 0:3 ) )
       allocate( srw % she0( nCv, 0:3 ) )
@@ -1582,20 +1595,27 @@ cwdk move to dv
       allocate( srw % b2stbr_skt( nCv ) )
       allocate( srw % b2stbr_shn( nCv ) )
 
-      allocate ( srw % rsana( nCv, 0:ns-1 ) )
-      allocate ( srw % rsamo( nCv, 0:ns-1 ) )
-      allocate ( srw % rsahi( nCv, 0:ns-1 ) )
-      allocate ( srw % rrana( nCv, 0:ns-1 ) )
-      allocate ( srw % rramo( nCv, 0:ns-1 ) )
-      allocate ( srw % rrahi( nCv, 0:ns-1 ) )
-      allocate ( srw % rcxna( nCv, 0:ns-1 ) )
-      allocate ( srw % rcxmo( nCv, 0:ns-1 ) )
-      allocate ( srw % rcxhi( nCv, 0:ns-1 ) )
-      allocate ( srw % rqahe( nCv, 0:ns-1 ) )
-      allocate ( srw % rqrad( nCv, 0:ns-1 ) )
-      allocate ( srw % rqbrm( nCv, 0:ns-1 ) )
+      allocate( srw % rsana( nCv, 0:ns-1 ) )
+      allocate( srw % rsamo( nCv, 0:ns-1 ) )
+      allocate( srw % rsahi( nCv, 0:ns-1 ) )
+      allocate( srw % rrana( nCv, 0:ns-1 ) )
+      allocate( srw % rramo( nCv, 0:ns-1 ) )
+      allocate( srw % rrahi( nCv, 0:ns-1 ) )
+      allocate( srw % rcxna( nCv, 0:ns-1 ) )
+      allocate( srw % rcxmo( nCv, 0:ns-1 ) )
+      allocate( srw % rcxhi( nCv, 0:ns-1 ) )
+      allocate( srw % rqahe( nCv, 0:ns-1 ) )
+      allocate( srw % rqrad( nCv, 0:ns-1 ) )
+      allocate( srw % rqbrm( nCv, 0:ns-1 ) )
 
-      allocate ( srw % b2sihs_joule( nCv ) )
+      allocate( srw % b2sihs_joule( nCv ) )
+
+      allocate( srw % sna0_eir_tot( nCv, 0:ns-1 ) )
+      allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ) )
+      allocate( srw % sne0_eir_tot( nCv ) )
+      allocate( srw % she0_eir_tot( nCv ) )
+      allocate( srw % shi0_eir_tot( nCv ) )
+      allocate( srw % sch0_eir_tot( nCv ) )
 
       srw % sch0 = 0._R8
       srw % she0 = 0._R8
@@ -1650,6 +1670,13 @@ cwdk move to dv
       srw % rqbrm = 0.0_R8
 
       srw % b2sihs_joule = 0.0_R8
+
+      srw % sna0_eir_tot = 0.0_R8
+      srw % smo0_eir_tot = 0.0_R8
+      srw % sne0_eir_tot = 0.0_R8
+      srw % she0_eir_tot = 0.0_R8
+      srw % shi0_eir_tot = 0.0_R8
+      srw % sch0_eir_tot = 0.0_R8
 #endif
 
       return
@@ -1699,20 +1726,27 @@ cwdk move to dv
       deallocate( srw % b2stbm_sna )
       deallocate( srw % b2stbm_sne )
 
-      deallocate ( srw%rsana )
-      deallocate ( srw%rsamo )
-      deallocate ( srw%rsahi )
-      deallocate ( srw%rrana )
-      deallocate ( srw%rramo )
-      deallocate ( srw%rrahi )
-      deallocate ( srw%rcxna )
-      deallocate ( srw%rcxmo )
-      deallocate ( srw%rcxhi )
-      deallocate ( srw%rqahe )
-      deallocate ( srw%rqrad )
-      deallocate ( srw%rqbrm )
+      deallocate( srw % rsana )
+      deallocate( srw % rsamo )
+      deallocate( srw % rsahi )
+      deallocate( srw % rrana )
+      deallocate( srw % rramo )
+      deallocate( srw % rrahi )
+      deallocate( srw % rcxna )
+      deallocate( srw % rcxmo )
+      deallocate( srw % rcxhi )
+      deallocate( srw % rqahe )
+      deallocate( srw % rqrad )
+      deallocate( srw % rqbrm )
 
-      deallocate ( srw%b2sihs_joule )
+      deallocate( srw % b2sihs_joule )
+
+      deallocate( srw % sna0_eir_tot )
+      deallocate( srw % smo0_eir_tot )
+      deallocate( srw % sne0_eir_tot )
+      deallocate( srw % she0_eir_tot )
+      deallocate( srw % shi0_eir_tot )
+      deallocate( srw % sch0_eir_tot )
 
       return
       end subroutine destroyB2SourceWork
@@ -1726,65 +1760,66 @@ cwdk move to dv
 
       if (allocated(rt % iscx)) return
 #ifdef F2003
-      allocate (rt%iscx( 0:rt%nscxmax-1 ), SOURCE=0 )
+      allocate (rt % iscx( 0:rt%nscxmax-1 ), SOURCE=0 )
 
-      allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1),SOURCE=0._R8)
+      allocate( rt % rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1),
+     .                                        SOURCE=0._R8)
 
-      allocate( rt%rlqa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlrd( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlbr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlra( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlsa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlza( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlz2( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlpt( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlpi( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlqr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlqa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlrd( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlbr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlra( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlsa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlza( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlz2( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlpt( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlpi( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rlqr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( rt%rza( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rz2( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rpt( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rpi( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rza( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rz2( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rpt( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt % rpi( nCv, 0:ns-1 ), SOURCE=0._R8 )
 #else
-      allocate (rt%iscx( 0:rt%nscxmax-1 ) )
+      allocate (rt % iscx( 0:rt%nscxmax-1 ) )
 
-      allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1) )
+      allocate( rt % rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1) )
 
-      allocate( rt%rlqa( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlrd( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlbr( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlra( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlsa( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlza( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlz2( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlpt( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlpi( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlqr( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlqa( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlrd( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlbr( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlra( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlsa( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlza( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlz2( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlpt( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlpi( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt % rlqr( nCv, 0:1, 0:ns-1 ) )
 
-      allocate( rt%rza( nCv, 0:ns-1 ) )
-      allocate( rt%rz2( nCv, 0:ns-1 ) )
-      allocate( rt%rpt( nCv, 0:ns-1 ) )
-      allocate( rt%rpi( nCv, 0:ns-1 ) )
+      allocate( rt % rza( nCv, 0:ns-1 ) )
+      allocate( rt % rz2( nCv, 0:ns-1 ) )
+      allocate( rt % rpt( nCv, 0:ns-1 ) )
+      allocate( rt % rpi( nCv, 0:ns-1 ) )
 
-      rt%iscx = 0
+      rt % iscx = 0
 
-      rt%rlcx = 0._R8
+      rt % rlcx = 0._R8
 
-      rt%rlqa = 0._R8
-      rt%rlrd = 0._R8
-      rt%rlbr = 0._R8
-      rt%rlra = 0._R8
-      rt%rlsa = 0._R8
-      rt%rlza = 0._R8
-      rt%rlz2 = 0._R8
-      rt%rlpt = 0._R8
-      rt%rlpi = 0._R8
-      rt%rlqr = 0._R8
+      rt % rlqa = 0._R8
+      rt % rlrd = 0._R8
+      rt % rlbr = 0._R8
+      rt % rlra = 0._R8
+      rt % rlsa = 0._R8
+      rt % rlza = 0._R8
+      rt % rlz2 = 0._R8
+      rt % rlpt = 0._R8
+      rt % rlpi = 0._R8
+      rt % rlqr = 0._R8
 
-      rt%rza = 0._R8
-      rt%rz2 = 0._R8
-      rt%rpt = 0._R8
-      rt%rpi = 0._R8
+      rt % rza = 0._R8
+      rt % rz2 = 0._R8
+      rt % rpt = 0._R8
+      rt % rpi = 0._R8
 #endif
       return
       end subroutine createB2Rates
@@ -1795,22 +1830,22 @@ cwdk move to dv
 
       if (.not.allocated(rt % iscx)) return
 
-      deallocate (rt%iscx )
-      deallocate( rt%rlcx )
-      deallocate( rt%rlqa )
-      deallocate( rt%rlqr )
-      deallocate( rt%rlrd )
-      deallocate( rt%rlbr )
-      deallocate( rt%rlra )
-      deallocate( rt%rlsa )
-      deallocate( rt%rlza )
-      deallocate( rt%rlz2 )
-      deallocate( rt%rlpt )
-      deallocate( rt%rlpi )
-      deallocate( rt%rza )
-      deallocate( rt%rz2 )
-      deallocate( rt%rpt )
-      deallocate( rt%rpi )
+      deallocate( rt % iscx )
+      deallocate( rt % rlcx )
+      deallocate( rt % rlqa )
+      deallocate( rt % rlqr )
+      deallocate( rt % rlrd )
+      deallocate( rt % rlbr )
+      deallocate( rt % rlra )
+      deallocate( rt % rlsa )
+      deallocate( rt % rlza )
+      deallocate( rt % rlz2 )
+      deallocate( rt % rlpt )
+      deallocate( rt % rlpi )
+      deallocate( rt % rza )
+      deallocate( rt % rz2 )
+      deallocate( rt % rpt )
+      deallocate( rt % rpi )
 
       return
       end subroutine destroyB2Rates
@@ -1822,29 +1857,29 @@ cwdk move to dv
 
       if (allocated(rtw % rsa)) return
 #ifdef F2003
-      allocate( rtw%rsa( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw%rra( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw%rqa( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw%rrd( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw%rbr( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw%rcx( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw%rqr( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw % rsa( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw % rra( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw % rqa( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw % rrd( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw % rbr( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw % rcx( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw % rqr( nCv, 0:ns-1 ), SOURCE=0._R8 )
 #else
-      allocate( rtw%rsa( nCv, 0:ns-1 ) )
-      allocate( rtw%rra( nCv, 0:ns-1 ) )
-      allocate( rtw%rqa( nCv, 0:ns-1 ) )
-      allocate( rtw%rrd( nCv, 0:ns-1 ) )
-      allocate( rtw%rbr( nCv, 0:ns-1 ) )
-      allocate( rtw%rcx( nCv, 0:ns-1 ) )
-      allocate( rtw%rqr( nCv, 0:ns-1 ) )
+      allocate( rtw % rsa( nCv, 0:ns-1 ) )
+      allocate( rtw % rra( nCv, 0:ns-1 ) )
+      allocate( rtw % rqa( nCv, 0:ns-1 ) )
+      allocate( rtw % rrd( nCv, 0:ns-1 ) )
+      allocate( rtw % rbr( nCv, 0:ns-1 ) )
+      allocate( rtw % rcx( nCv, 0:ns-1 ) )
+      allocate( rtw % rqr( nCv, 0:ns-1 ) )
 
-      rtw%rsa = 0._R8
-      rtw%rra = 0._R8
-      rtw%rqa = 0._R8
-      rtw%rrd = 0._R8
-      rtw%rbr = 0._R8
-      rtw%rcx = 0._R8
-      rtw%rqr = 0._R8
+      rtw % rsa = 0._R8
+      rtw % rra = 0._R8
+      rtw % rqa = 0._R8
+      rtw % rrd = 0._R8
+      rtw % rbr = 0._R8
+      rtw % rcx = 0._R8
+      rtw % rqr = 0._R8
 #endif
 
       return
@@ -1854,13 +1889,13 @@ cwdk move to dv
       subroutine destroyB2RatesWork( rtw )
       type(B2RatesWork), intent(inout) :: rtw
 
-      if ( allocated( rtw%rsa ) ) deallocate( rtw%rsa )
-      if ( allocated( rtw%rra ) ) deallocate( rtw%rra )
-      if ( allocated( rtw%rqa ) ) deallocate( rtw%rqa )
-      if ( allocated( rtw%rrd ) ) deallocate( rtw%rrd )
-      if ( allocated( rtw%rbr ) ) deallocate( rtw%rbr )
-      if ( allocated( rtw%rcx ) ) deallocate( rtw%rcx )
-      if ( allocated( rtw%rqr ) ) deallocate( rtw%rqr )
+      if ( allocated( rtw % rsa ) ) deallocate( rtw % rsa )
+      if ( allocated( rtw % rra ) ) deallocate( rtw % rra )
+      if ( allocated( rtw % rqa ) ) deallocate( rtw % rqa )
+      if ( allocated( rtw % rrd ) ) deallocate( rtw % rrd )
+      if ( allocated( rtw % rbr ) ) deallocate( rtw % rbr )
+      if ( allocated( rtw % rcx ) ) deallocate( rtw % rcx )
+      if ( allocated( rtw % rqr ) ) deallocate( rtw % rqr )
       return
       end subroutine destroyB2RatesWork
 

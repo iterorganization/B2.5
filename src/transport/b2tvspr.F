@@ -77,7 +77,7 @@
          dva = 0.25_R8*dva*vsa0(:,is)
 
 *      ..set dva in guard cells (constant extrapolation from domain cell)
-         call extend(dva,nCv,mpg,1)
+         call extend(dva,mpg,1)
 
 *      ..compute current density in cell centers through divergence theorem
          call intface(nCv,nFc,mpg%fcCv,weight,dva,wrkf) 

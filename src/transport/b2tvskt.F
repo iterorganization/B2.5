@@ -79,7 +79,7 @@
      &    dna_ExB*am(ismain)*mp*na(:,ismain)
 
 *     ..set dva in guard cells (constant extrapolation from domain cell)
-        call extend(dva,nCv,mpg,1)
+        call extend(dva,mpg,1)
 
 *     ..compute current density in cell centers through divergence theorem
         call intface(nCv,nFc,mpg%fcCv,weight,dva,wrkf) 

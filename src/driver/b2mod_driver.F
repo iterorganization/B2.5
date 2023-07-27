@@ -70,7 +70,7 @@
       use b2us_io
       use b2mod_par_opt
       use b2mod_b2plot
-     , , only : nlimi
+     , , only : wklng, nlimi, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -89,8 +89,6 @@
       use eirmod_extrab25
       use eirmod_wneutrals
       use b2mod_eirene
-      use b2mod_b2plot
-     , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 #ifdef NAGFOR
       use f90_unix_proc ! IGNORE
 #endif
@@ -338,9 +336,7 @@
       integer ix, iy
 #endif
 #ifdef B25_EIRENE
-#ifdef WG_TODO
       integer iflag
-#endif
 #endif
       character*256 filename
       logical ex, found
@@ -1426,7 +1422,7 @@ csw 09oct2012
 #ifdef USE_IMPGYRO
 *   ..call IMPGYRO
       call impgyro_init (nx, ny, ns, ismain) !yamoto
-      write(*,*) 'b2ig: set ns_ext', ns_ext
+      write(*,*) 'b2ig: set ns_ext', state_ext%ns
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
@@ -1974,22 +1970,18 @@ cxpb for neutral fluxes used in b2stbc_phys
       call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
-#ifdef WG_TODO
       if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
-        call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+        call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
-          call ngread(ismain,iflag)
+          call ngread(mpg,switch,ismain,iflag)
         endif
       endif
-#endif
 #else
-#ifdef WG_TODO
       if (ids_save.ne.0.or.delta_ids_time.gt.0.0_R8)
-     > call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+     > call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
      .                         natm,nmol,nion,nlimps)
-#endif
 #endif
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.(save_cdfmovie_time-dtim/2.0_R8).and.
@@ -3429,8 +3421,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_b2mod_transport_disruption
       if(boundary_sources.ne.0) call dealloc_b2mod_boundary_sources     !srv 26.02.18
       if(equation_sources.ne.0) call dealloc_b2mod_equation_sources     !srv 26.02.18
-#ifdef B25_EIRENE
       call dealloc_b2mod_b2plot
+#ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
