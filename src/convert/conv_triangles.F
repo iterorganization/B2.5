@@ -140,10 +140,11 @@
             node_vert(NNODES)=ivx ! store plasma vertex number corresponding to the node
           endif
         else
-          write (*,*) 'Vertex ', ivx , ' with coordinates (x, y) = (',
-     .                 gm%vxX(ivx), ', ', gm%vxY(ivx), ') not used. ',
-     .                'Likely X-point duplicate; not included among ',
-     .                'triangle nodes.'
+          write (*,'(a,i6,a,1p,1e15.8,a,1e15.8,a/a)')
+     .     'Vertex ', ivx ,' with coordinates (x, y) = (',
+     .      gm%vxX(ivx),',',gm%vxY(ivx),') not used. ',
+     .     'Likely X-point duplicate; not included among '//
+     .     'triangle nodes.'
         endif
       end do
       !! Store number of nodes corresponding to plasma grid vertices
