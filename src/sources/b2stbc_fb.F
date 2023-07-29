@@ -309,11 +309,11 @@
      4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
      4  volrec_curr,
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
-     6  cbsnafac, cbsnainc, bsign, 
+     6  cbsnafac, cbsnainc, ! bsign, 
 #ifdef B25_EIRENE
      &  flxic(nspecies), flxnp(nspecies),
-     &  hlp_p,hlp_s,hlp_si,hlp_hep,hlp_so,hlp_pi,
-     &  hlp_po,hlp,hlp_hepr,hlp_ppfi,hlp_ppfo,hlp_ppfr,
+!     &  hlp_p,hlp_s,hlp_si,hlp_hep,hlp_so,hlp_pi,
+!     &  hlp_po,hlp,hlp_hepr,hlp_ppfi,hlp_ppfo,hlp_ppfr,
 #endif
      7  private_flux_puff, private_flux_area,
      8  neutral_sources_rescale,sna_pump(nspecies),ia,im,ip,
@@ -1728,18 +1728,20 @@
      &               na_feedback_alpha(ispecies) * na_feedback_current
 
 #ifdef B25_EIRENE                
-            case (7) ! adjusting puffing as a function of pumping
-c           Pure rescale, any variant may be used!
-               na_feedback_rescale =
-     &          (na_feedback_target(ispecies) /
-     &         na_feedback_current)
-     
-            case (8) ! rescale slowed by tanh_log
+            case (7) ! combination of pure rescaling and rescaling slowed by tanh(log(x))
+                     ! which is tested for na_feedback_actuator = 1 and na_feedback_use_pump = 1
+                      
+!###!c           Pure rescale, any variant may be used!
+!###!               na_feedback_rescale =
+!###!     &          (na_feedback_target(ispecies) /
+!###!     &         na_feedback_current)
+!###!     
+!###!            case (8) 
 
                 if(ncall.eq.0) then
                   write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
-     &                    'tanh_log_rescale for sequence ',
+     &   'combined pure rescale and tanh_log_rescale for sequence ',
      &                    ispecies+1
                 endif
 
@@ -1851,15 +1853,26 @@ c           Pure rescale, any variant may be used!
                  saved_na_feedback_actuator(ispecies) =
      &                 conpar(is_start, na_feedback_ib(ispecies), 1)
               end if
+              
+              if (na_feedback_use_pump(ispecies) .eq. 0) then
+                t0 = saved_na_feedback_actuator(ispecies)
+#ifdef B25_EIRENE
+              else
+                call calc_pump_and_flux (nx,ny,ns,mdf_fnb,
+     &                     style_b2mndt, use_eirene, nspecies,  
+     &                     ispecies, sna_pump, flxnp, flxic)
+                t0 = (sna_pump(ispecies+1) - flxic(ispecies+1)) 
+#endif
+              endif   
 
-              if (na_feedback_option(ispecies).lt.4) then
+              if (na_feedback_option(ispecies).lt.4 .or.
+     &               na_feedback_option(ispecies).gt.6) then
 !###!                if ( (abs(na_feedback_rescale-1.0_R8) .gt. 0.01_R8)
 !###!     &                        .or. (int_ntim(ispecies).eq.0) ) then
 !###!                  int_flux(ispecies) = int_flux(ispecies) +
 !###!     &                   saved_na_feedback_actuator(ispecies)
 !###!                  int_ntim(ispecies) = int_ntim(ispecies) + 1
-                  saved_na_feedback_actuator(ispecies) =
-     &                  saved_na_feedback_actuator(ispecies) *
+                  saved_na_feedback_actuator(ispecies) = t0 *
      &                  na_feedback_rescale
 !###!                else
 !###!                  print *,"feedback_set_avg_flux"
@@ -1887,9 +1900,9 @@ c           Pure rescale, any variant may be used!
      &                 na_feedback_rescale
               end if
 
-#ifdef B25_EIRENE
-              if (na_feedback_option(ispecies).eq.7.or.
-     &               na_feedback_option(ispecies).eq.8) then
+!###!#ifdef B25_EIRENE
+!###!              if (na_feedback_option(ispecies).eq.7.or.
+!###!     &               na_feedback_option(ispecies).eq.8) then
 !<<<<<<< HEAD
 !                sna_pump = 0.0_R8
 !                do ia = 1, nnatmi
@@ -2011,15 +2024,15 @@ c           Pure rescale, any variant may be used!
 !     &                - flxic(ispecies+1)
 !              endif  ! na_feedback_option(ispecies) = 7,8
 !=======
-                call calc_pump_and_flux (nx,ny,ns,mdf_fnb,
-     &                     style_b2mndt, use_eirene, nspecies,  
-     &                     ispecies, sna_pump, flxnp, flxic)
-                saved_na_feedback_actuator(ispecies) =
-     &                 (sna_pump(ispecies+1) - flxic(ispecies+1)) * 
-     &                 na_feedback_rescale
-              endif   ! na_feedback_option(ispecies) = 7,8
+!###!                call calc_pump_and_flux (nx,ny,ns,mdf_fnb,
+!###!     &                     style_b2mndt, use_eirene, nspecies,  
+!###!     &                     ispecies, sna_pump, flxnp, flxic)
+!###!                saved_na_feedback_actuator(ispecies) =
+!###!     &                 (sna_pump(ispecies+1) - flxic(ispecies+1)) * 
+!###!     &                 na_feedback_rescale
+!###!              endif   ! na_feedback_option(ispecies) = 7,8
 !>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
-#endif
+!#endif
                   
               if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
      &             saved_na_feedback_actuator(ispecies) =

@@ -634,6 +634,8 @@ c======================================================================
       subroutine calc_pneut(ns,ny)
 !      use b2mod_driver
 !     ,    , only : use_eirene
+      use b2mod_plasma
+     ,    , only : na, ti
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif

@@ -26,7 +26,8 @@
      & na_feedback_actuator(0:DEF_NATM-1),
      & na_feedback_ix1(0:DEF_NATM-1), na_feedback_ix2(0:DEF_NATM-1), 
      & na_feedback_iy1(0:DEF_NATM-1), na_feedback_iy2(0:DEF_NATM-1), 
-     & na_feedback_ib(0:DEF_NATM-1)
+     & na_feedback_ib(0:DEF_NATM-1),
+     & na_feedback_use_pump(0:DEF_NATM-1)
       real (kind=R8) :: int_flux(DEF_NATM),
      &  max_na_feedback_current(DEF_NATM)=0.0_R8
       integer :: int_ntim(DEF_NATM)
@@ -59,7 +60,7 @@
      & na_feedback_iy1, na_feedback_iy2, 
      & na_feedback_ib,
      & na_feedback_puff_min, na_feedback_puff_max,
-     & na_feedback_overshoot
+     & na_feedback_overshoot, na_feedback_use_pump
       data 
      & feedback_namelist_used/.false./, feedback_read/.false./,
      & control_read/.false./,
@@ -79,8 +80,8 @@
      & na_feedback_const/DEF_NATM*0.0_R8/,
      & na_feedback_puff_min/DEF_NATM*0.0_R8/,
      & na_feedback_puff_max/DEF_NATM*0.0_R8/,
-     & na_feedback_overshoot/DEF_NATM*0.0_R8/
-
+     & na_feedback_overshoot/DEF_NATM*0.0_R8/,
+     & na_feedback_use_pump/DEF_NATM*0/
       contains
 
       subroutine read_b2mod_feedback(nread,edition,found)
