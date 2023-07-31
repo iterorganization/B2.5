@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, 
-     1 vsa, hci, dna)
+     1 vsa, hci)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -25,7 +25,7 @@
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  vsa(nCv,0:1,0:ns-1), hci(nCv,0:1), dna(nCv,0:1,0:ns-1)
+     *  vsa(nCv,0:1,0:ns-1), hci(nCv,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -196,28 +196,12 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
        call sfill (nCv, 0.0_R8, vsa(1,1,is), 1)
       enddo
       call sfill (nCv, 0.0_R8, hci(1,1), 1)
-! Bohm-like radial diffusion coefficient calculation
-! Initialise Bohm
-      do is = 0, ns-1
-       call sfill(nCv, 0.00_R8, dna(1:nCv,0,is), 1)
-       call sfill(nCv, 0.00_R8, dna(1:nCv,1,is), 1)
-      enddo
-! Evaluate Bohm coeff is switch not false
-      if(switch%b2tqca_Bohm.ne.0) then
-       do is = 0, ns-1
-        dna(:,1,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*1.33E+05_R8*
-     1             (5.00E-03_R8+1.00E-02_R8*
-     2            geo%cvBb(1:nCv,0)/geo%cvBb(1:nCv,2))*1.00E-02_R8
-       enddo
-      endif
-!
+
       if(switch%b2tqca_iout.ne.0 .or. switch%b2npmo_iout.ne.0) then       !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nCv,0,vsa(1,0,is),'b2tqca_vsa_th'//chns)
         call my_out_us(70,nCv,0,vsa(1,1,is),'b2tqca_vsa_r'//chns)
-        call my_out_us(70,nCv,0,dna(1,0,is),'b2tqca_dna_th'//chns)
-        call my_out_us(70,nCv,0,dna(1,1,is),'b2tqca_dna_r'//chns)
 !        call my_out_us(70,nCv,0,pl%na(1,is),'b2tqca_na'//chns)
        enddo
 !        call my_out_us(70,nCv,0,lnlam,'b2tqca_lnlam')
