@@ -2290,11 +2290,12 @@
 				</description>
 			</switch>
                         <switch>
-				<name>b2tqca_Bohm</name>
+				<name>transport_bohm</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If Bohm.eq.1, add Bohm-like radial particle diffusion.
+					If transport_bohm.eq.1, add Bohm-like radial particle diffusion.
+                                        If transport_bohm.eq.0, no Bohm-like contribution added.
 				</description>
 			</switch>
 			<switch>

@@ -575,7 +575,13 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       endif
-
+c sc  implementation of Bohm like diffusion coefficient 12.07.2023-?
+      if(switch%transport_bohm.ne.0) then
+        call set_transport_bohm(nCv, nFc,
+     &   nVx, ns, nscx, iscx, switch, geo, 
+     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &   hcn0,hcib)
+      endif
 cdpc
       if(switch%b2tqna_ballooning.ne.0.0_R8) then
         do iCv = 1, nCv
@@ -3926,3 +3932,111 @@ cwdk same dna_ExB for all ion species
 
       end subroutine set_transport_keps
 
+c**************************************************************************************
+c************* New KU Leuven transport model for Bohm-like coefficient ****************
+c**************************************************************************************
+      subroutine set_transport_bohm(nCv, nFc,
+     &   nVx, ns, nscx, iscx, switch, geo, 
+     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &   hcn0,hcib)
+      use b2mod_types
+      use b2mod_math
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_b2cmpa
+      use b2mod_b2cmpt
+      use b2mod_rates
+      use b2mod_transport_namelist
+      use b2mod_switches
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      use b2mod_subsys
+      implicit none
+
+*   ..input arguments (unchanged on exit)
+      integer nCv, nFc, nVx, ns, nscx, iscx(0:nscxmax-1)
+      type (switches), intent (in) :: switch
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2StateExt), intent (in) :: st_ext
+      real (kind=R8) :: t_av, df0
+*   ..input/output arguments
+      real (kind=R8), intent(inout) ::
+     &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
+*   ..output arguments (unspecified on entry)
+      real (kind=R8) ::
+     *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
+!        dna0(nCv,0:1,0:ns-1), dpa0(nCv,0:ns-1),
+     &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
+     &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
+*   ..workspace arguments (unspecified on entry and on exit)
+      real (kind=R8) ::
+     *  wrk0(nCv), vcx, dion
+      integer is, k, ic, iCv
+      character chns*3 ! to be removed
+
+*   ..subprogram start-up calls
+      call subini ('set_transport_bohm')
+      do is = 0, ns-1
+*     ..compute dna0 (Bohm-like diffusion)
+        dna0(:,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*1.33E+05_R8*
+     1            (5.00E-03_R8+1.00E-02_R8*
+     2            geo%cvBb(1:nCv,0)/geo%cvBb(1:nCv,2))*1.00E-02_R8
+        vsa0(:,is) = switch%gammaD*am(is)*mp*na(:,is)*dna0(:,is)
+        hcib(:,is)= switch%gammaD*na(:,is)*dna0(:,is)
+        hce0 = switch%gammaD*ne*dna_Bohm
+        vla0(:,0,is) = 2.0_R8*dna0(:,is)/0.88_R8*6.5_R8
+
+        wrk0 = sqrt(pl%tn/mp)
+        do iCv = 1, nCv
+!          vcx=0.0_R8
+!          do ic = 0, ns-1
+!            t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
+!            vcx = vcx + pl%na(iCv,ic) * 
+!     &         expu(rt%rlcx(iCv,0,ic,k) +
+!     &         rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
+!          enddo
+!          dion=expu(
+!     2        rt%rlsa(iCv,0,is)+
+!     3        rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
+!*         ..For now, no neutral-neutral collisions inlcuded
+!            df0=(wrk0(iCv)/sqrt(am(is)))**2/
+!     1           (vcx+dion*dv%ne(iCv))
+!            ! limit df0
+!            df0=max(switch%b2tqna_min_df0,
+!     &          min(switch%b2tqna_max_df0,df0))
+!
+            dpa0(iCv,is) = 0.00_R8
+        enddo !! end loop over cells
+      enddo !! end loop over species
+
+*   ..recompute hci0, hcn0
+      hci0 = 0.0_R8
+      hcn0 = 0.0_R8
+      do is = 0, ns-1
+*     ..compute hci0
+        if (switch%tn_style.eq.0) then
+          hci0 = hci0 + hcib(:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is))then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        else
+         if (.not.is_neutral(is).or.zn(is).ne.1)then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        endif
+*     ..compute hcn0
+        if (is_neutral(is).and.zn(is).eq.1) then
+          hcn0 = hcn0 + hcib(:,is)
+        endif
+      enddo
+
+*   ..return
+      call subend ()
+      return
+      end subroutine set_transport_bohm
