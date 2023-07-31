@@ -52,6 +52,8 @@ DEFINES += -DNO_OPT
 
 LDOPTSend += -shared-intel
 
+MAKETAGS = etags -o
+
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
