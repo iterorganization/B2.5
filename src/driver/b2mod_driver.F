@@ -163,7 +163,7 @@
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
-     &  ixfb, iyfb, ax, ay
+     &  ixfb, iyfb, ax, ay, scl
 !WG_TODO      real (kind=R8), allocatable ::
 !WG_TODO     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
 !WG_TODO     *  rza0(:,:), rz20(:,:), rpt0(:,:), rpi0(:,:)
@@ -187,7 +187,7 @@
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
-      integer :: ncon, nele_jac
+      integer :: ncon, nele_jac, istra
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer ncid
@@ -247,6 +247,8 @@
      *  min_areshe, min_areshi, min_aresco, res_quit, res_max
       logical quit_residual, test_residual
       real (kind=R8) :: hzconst                                      !srv 30.01.10
+      logical streql
+      external streql
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, etim, idout0, idout1,
@@ -1268,17 +1270,28 @@ c and hence the reaction rates have to be rescaled here.
            write(*,*) 'Adding ',log(switch%neutral_sources_rescale),
      *         ' to relevant rtlra and rtlqr'
            do is=0,ns-2
+             scl = switch%neutral_sources_rescale
+             do istra=1,nstrai
+               if (streql(crcstra(istra),'V').and.
+     *           (species_start(istra).eq.is)) then
+                 scl = scl*strasclfl(istra)
+               endif
+             enddo
              if(is_neutral(is) .and. lnext(is,is+1)) then
-                rtlra(:,:,is+1)=rtlra(:,:,is+1)+
-     *             log(switch%neutral_sources_rescale)
+                rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
-                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+             !mb 22.05.18
-     *             log(switch%neutral_sources_rescale)
+                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18     
                 write(*,'(i3,1p,2e16.8)')
      *             is,zamax(is),rtlqr(0,0,is+1)
              endif
            enddo
-         else
+           if (switch%spatial_hybrid.eq.1) then
+             write(*,*) 'Neutral sources rescaling has to be turned '//
+     *                  'off for hybrid fluid-kinetic model!'
+             write(0,*) 'Neutral sources rescaling has to be turned '//
+     *                  'off for hybrid fluid-kinetic model!'
+           endif
+         elseif (switch%spatial_hybrid.eq.0) then
            write(*,*) 'Neutral sources rescaling not turned on '//
      *                'while coupled to Eirene!'
            write(0,*) 'Neutral sources rescaling not turned on '//

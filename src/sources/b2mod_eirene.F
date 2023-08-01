@@ -675,11 +675,11 @@ c first save the original NPTS provided by the Eirene input files.
             if (pfrregno1.ne.pfrregno2) then !{
               tflux(istrai)=(cbsna(0,isfeedback,pfrregno1)+
      1         cbsna(0,isfeedback,pfrregno2))/
-     2         switch%neutral_sources_rescale
+     2         (switch%neutral_sources_rescale*strasclfl(istrai))
             else !}{
               tflux(istrai)=
      1         cbsna(0,isfeedback,pfrregno1)/
-     2         switch%neutral_sources_rescale
+     2         (switch%neutral_sources_rescale*strasclfl(istrai))
             end if !}
             if(ncall.eq.0) then
               if(nesepm_pfr.gt.0.0_R8) then
@@ -695,28 +695,28 @@ c first save the original NPTS provided by the Eirene input files.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"nesepm_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.volrec_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"volrec_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.ndes_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"ndes_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.nepedm_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
 #endif
