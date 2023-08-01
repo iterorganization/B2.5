@@ -77,7 +77,7 @@ cank }
      *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
      1   gpfc(:,:), gpdata(:,:,:), time_dep_puff_param(:,:),
-     2   RC_FACE_ORI(:,:)
+     2   RC_FACE_ORI(:,:), STRASCLFL(:)
 #if ( !defined(NO_B2_CHEM_SPUT) && !defined(SOLPS4_3) )
       real (kind=R8), allocatable, save ::
      *   chemical_sputter_yield(:)
@@ -136,6 +136,7 @@ cank }
       real (kind=R8), save :: gpdata(100,2,NSTRAID)
       real (kind=R8), save :: time_dep_puff_param(10,NSTRAID)
       real (kind=R8), save :: RC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NSTRAID)
+      real (kind=R8), save :: STRASCLFL(NSTRAID)
       character*16, save ::
      *   textan(0:DEF_NATM-1),
      *   textmn(0:DEF_NMOL-1),
@@ -248,7 +249,8 @@ csw 21feb2012
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
      .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case,
      .  e_fc,      !mb Franck-Condon energy contribution
-     . accel_ion   !mb flag for ion acceleration through sheath potential
+     .  accel_ion, !mb flag for ion acceleration through sheath potential
+     .  strasclfl
 
       interface read_neutrals_namelist
         module procedure read_neutrals_namelist_st
@@ -339,6 +341,7 @@ csw 21feb2012
       allocate(msns(2,nstra_in))
       allocate(accel_ion(NSTRAID))
       allocate(textan(0:natm_in-1))
+      allocate(STRASCLFL(NSTRAID))
       if (nmol_in.gt.0) allocate(textmn(0:nmol_in-1))
       if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
@@ -514,6 +517,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         latmscl(ispecies)=ispecies
         is0 = is
       enddo
+      strasclfl = 1.0_R8
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i4)'
       write(*,hlp_frm) 'b2espcr : ',b2espcr(0:nsd-1)
       write(*,hlp_frm) 'b2eatcr : ',b2eatcr(0:nsd-1)
@@ -602,6 +606,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(ksns)
       deallocate(msns)
       deallocate(textan)
+      deallocate(strasclfl)
       if (allocated(textmn)) deallocate(textmn)
       if (allocated(textin)) deallocate(textin)
 #ifndef NO_B2_CHEM_SPUT
@@ -920,6 +925,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
      .     'time_dep_puff_func set for a non-puff stratum')
           endif
         endif
+        call xertst (0.0_R8.le.strasclfl(istra), 'faulty input strascl')
       enddo
       do is = 0, ns-1
         call xertst(1.le.b2espcr(is).and.b2espcr(is).le.nspecies,
@@ -2473,6 +2479,9 @@ cwdk also need to correct for degenerate faces?
      .   'accel_ion= ',(accel_ion(is),',',is =1,nstrai)
 
       write (iout,'(1x,a,f10.7,a1)') 'e_fc=',e_fc,','
+
+      write (iout,'(1x,a,(1x,T12,10(f6.2,a1,1x)))')
+     .   'strasclfl= ',(strasclfl(is),',',is =1,nstrai)
 
       write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'b2espcr= ',(b2espcr(is),',',is=0,ns-1)
