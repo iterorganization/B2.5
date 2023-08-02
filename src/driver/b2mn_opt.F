@@ -22,16 +22,12 @@
       use b2mod_exp_file_names
       use b2mod_driver
       use b2mod_xerset
-#ifdef USE_MPI
-#if MPI_MOD > 0
+#if ( defined(USE_MPI) && MPI_MOD > 0 )
       use mpi      ! IGNORE
 #endif
-#endif
       implicit none
-#ifdef USE_MPI
-#if MPI_MOD < 1
+#if ( defined(USE_MPI) && MPI_MOD < 1 )
       include 'mpif.h'
-#endif
 #endif
 
 *-----------------------------------------------------------------------

@@ -21,8 +21,7 @@
       if(first) then
 #ifdef NO_GETENV
         save_solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps/solps-iter'
-#else
-#ifdef USE_PXFGETENV
+#elif defined(USE_PXFGETENV)
         CALL PXFGETENV ('SOLPSTOP', 0, save_solpstop, lenval, ierror)
 #else
         call get_environment_variable('SOLPSTOP',
@@ -33,7 +32,6 @@
           save_solpstop=
      .     '/afs/ipp-garching.mpg.de/u/dpc/solps/solps-iter'
         endif
-#endif
 #endif
         write(*,*) 'SOLPSTOP = : ',trim(save_solpstop)
         first=.false.
