@@ -641,10 +641,10 @@ cdpc-debug
       write (*,*) 'Geometry created'
 !     write unstructured b2fgmtry file
 #ifdef F2003
-      open (newunit=nout_us,file='b2fgmtry_us',iostat=io)
+      open (newunit=nout_us,file='b2fgmtry',iostat=io)
 #else
       nout_us = newunit()
-      open (unit=nout_us,file='b2fgmtry_us',iostat=io)
+      open (unit=nout_us,file='b2fgmtry',iostat=io)
 #endif
 
 !   ..write headers for output files
