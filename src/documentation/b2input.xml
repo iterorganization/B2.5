@@ -2580,10 +2580,10 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Advanced hybrid option. Forbidden to use for multispecies simulations (ns &gt; 1) and only in use for the strata with HYB_TYPE='A'. 
-					The local charge-exchange Knudsen number Kn is calculated at the boundary. 
+					Advanced hybrid option. Forbidden to use for multispecies simulations (ns &gt; 1) and only in use for the strata with HYB_TYPE='A'.
+					The local charge-exchange Knudsen number Kn is calculated at the boundary.
 					If (Kn &lt; auto_spatial_hyb_Kn_1) then the recycled atom is treated as a fluid.
-                                        If (Kn &gt; auto_spatial_hyb_Kn_2) then the recycled atom is treated kinetically.
+					If (Kn &gt; auto_spatial_hyb_Kn_2) then the recycled atom is treated kinetically.
 					(otherwise) linear combination between fluid and kinetic.
 				</description>
 			</switch>
