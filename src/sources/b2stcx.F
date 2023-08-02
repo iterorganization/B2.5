@@ -164,7 +164,7 @@ ctmp.dpc
              endif
              shi0(iCv,0) = shi0(iCv,0)+t1 
            else !tn_style=2
-             if (zn(is).eq.1.and.zn(is0).eq.1) then ! CX between hydrogenic species
+             if (nint(zn(is)).eq.1.and.nint(zn(is0)).eq.1) then ! CX between hydrogenic species
                tkin = (mp/2.0_R8)*
      &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*
@@ -173,7 +173,7 @@ ctmp.dpc
      &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
                t1n = t0*na(iCv,is0)*na(iCv,is)*
      &            (1.5_R8*(ti(iCv)-tn(iCv)) + tkin)
-             elseif (zn(is0).eq.1) then  ! only is0/is0+1 hydrogenic
+             elseif (nint(zn(is0)).eq.1) then  ! only is0/is0+1 hydrogenic
                tkin = (mp/2.0_R8)*
      &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
@@ -181,7 +181,7 @@ ctmp.dpc
                tkin = (mp/2.0_R8)*
      &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
                t1n = -t0*na(iCv,is0)*na(iCv,is)*1.5_R8*tn(iCv)
-             elseif (zn(is).eq.1) then  ! only is/is-1 hydrogenic
+             elseif (nint(zn(is)).eq.1) then  ! only is/is-1 hydrogenic
                tkin = (mp/2.0_R8)*
      &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*
