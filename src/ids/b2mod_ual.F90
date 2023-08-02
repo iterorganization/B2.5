@@ -32,11 +32,9 @@ module b2mod_ual
     use ids_schemas &   ! IGNORE
      & ,only: ids_divertors
 #endif
-#else
-# ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
     use euITM_schemas   ! IGNORE
     use euITM_routines  ! IGNORE
-# endif
 #endif
 
   implicit none
@@ -667,12 +665,10 @@ contains
 #ifdef IMAS
         integer :: lStatus = 0
         character(32) :: lTreename = "ids"
-#else
-# ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
         character(32) :: lTreename = "euitm"
-# else
+#else
         character(32) :: lTreename = "none"
-# endif
 #endif
 
         integer :: lShot = 1, lRun = 0
@@ -772,8 +768,7 @@ contains
 # endif
                 end if
             end if
-#else
-# ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
             if( lUseHdf5) then
                 call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
@@ -798,9 +793,8 @@ contains
                         &   lRefrun, idx)
                 end if
             end if
-# else
+#else
             idx = 0
-# endif
 #endif
         end if
 
@@ -823,10 +817,8 @@ contains
         !! Close IDS
         call imas_close( idx, status )
         call xertst( status.eq.0, 'Error closing IMAS database !' )
-#else
-# ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
         call euITM_close( idx )
-# endif
 #endif
     end subroutine close_ual
 
