@@ -247,8 +247,6 @@
      *  min_areshe, min_areshi, min_aresco, res_quit, res_max
       logical quit_residual, test_residual
       real (kind=R8) :: hzconst                                      !srv 30.01.10
-      logical streql
-      external streql
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, etim, idout0, idout1,
@@ -360,6 +358,8 @@
 *   ..procedures
       real (kind=R8) :: rratio, smax
       external rratio, smax
+      logical streql
+      external streql
 *-----------------------------------------------------------------------
 *.documentation
 *
