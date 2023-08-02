@@ -576,6 +576,22 @@
 				</switch>
 			</switchgroup>
 			<switch>
+				<name>b2us_write_b2fgmtry_us</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, unstructured b2fgmtry_us file is written by b2us. When set to 0, it is not.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_write_b2fstati_us</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, unstructured b2fstati_us file is written by b2us. When set to 0, it is not.
+				</description>
+			</switch>
+			<switch>
 				<name>conv_triangles_old_co</name>
 				<default>0</default>
 				<type>integer</type>
