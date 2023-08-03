@@ -159,6 +159,11 @@ c     output for analysis/debugging
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+*   ..automatic spatial hybrid not allowed for multispecies
+      if(switch%use_auto_spatial_hyb.ne.0.and.ns.gt.1) then
+        call xerrab('automatic spatial hybrid option not allowed '//
+     &    'for multispecies')
+      endif
 *   ..extensive tests on first few calls
       if(ncall_b2stbr_phys.lt.3) then
 *    ..test sign of vol

@@ -211,7 +211,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       integer icount
 #endif
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      integer i,j,k,l,js,ls,kks,n,itmp,ind
+      integer i,j,k,l,js,ls,kks,n,itmp,ind,nplsh
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       integer, save, allocatable :: NPTS_input(:)
@@ -907,7 +907,13 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         endif
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
-          call post_couple(nCv,nFc,ns,nstrat)
+          nplsh = 0
+          do is = 0,ns-1
+            if (is_neutral(is).and.nint(zn(is)).eq.1) then
+              nplsh = nplsh + 1
+            end if
+          end do
+          call post_couple(nCv,nFc,ns,nstrat,nplsh)
           write(*,*) 'Called post_couple'
         endif
       elseif(.not.main_call) then !}{
