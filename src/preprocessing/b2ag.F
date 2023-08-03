@@ -130,7 +130,7 @@
 *$$$  call cfopen (ninp(1),'b2mhdeq','old','formatted')
 *     (b2mhdeq is reserved for numerical mhd equilibrium data)
       call cfopen (nout(0),'b2ag.prt','new','formatted')
-      call cfopen (nout(1),'b2fgmtry','new','un*formatted')
+      call cfopen (nout(1),'b2fgmtry_st','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..read b2ag.dat file

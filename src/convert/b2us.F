@@ -80,7 +80,8 @@
       integer :: ismain = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: boundary_namelist=0, neutrals_namelist = 0
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
+      integer :: write_b2fgmtry_us=1, write_b2fstati_us=1
+      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) :: hzconst                                      !srv 30.01.10
       real (kind=R8) :: zpdum(0:nsdecl-1,4)
       character lblgm*120, lblmn*120, lblcp*120, lblps*120
@@ -249,7 +250,15 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 !     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 
-*   ..write headers for output files
+
+*   ..write unstructured geometry
+
+      call ipgeti('b2us_write_b2fgmtry_us',write_b2fgmtry_us)
+
+      if (write_b2fgmtry_us.eq.1) then
+
+*   ..write header for gmtry file
+
       call cfverw (nout(1), newversion)
       idum(0) = mpg%nCi
       idum(1) = mpg%nCg
@@ -284,14 +293,32 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       idum(0) = mpg%nCv
       idum(1) = mpg%nFc
       idum(2) = ns
+
+*   ..write actual geometry info
+
+      call write_b2fgmtry (nout(1), mpg, gm)
+
+      endif
+
+
+*   ..write unstructured state
+
+      call ipgeti('b2us_write_b2fstati_us',write_b2fstati_us)
+
+      if (write_b2fstati_us.eq.1) then
+
+*   ..write header for stati file
+
       call cfverw (nout(2), newversion)
       call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(2), 120, lblps, 'label')
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
 
-*   ..write state and geometry
-      call write_b2fgmtry (nout(1), mpg, gm)
+*   ..write actual state info
+
       call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+
+      endif
 
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
