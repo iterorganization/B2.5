@@ -1,8 +1,9 @@
       integer function find_loc(array,ndim,value)
-      !! Function that looks for the location of the integer value in array with dimensions ndim
+!! Function that looks for the location of the integer value in array with dimensions ndim
 
       implicit none
-      integer, intent (in) :: array(1:ndim),ndim,value
+      integer, intent (in) :: ndim
+      integer, intent (in) :: array(1:ndim), value
       integer :: i
 
       find_loc = 0
@@ -12,5 +13,6 @@
           exit
         endif
       enddo
-      
+
+      return
       end function find_loc
