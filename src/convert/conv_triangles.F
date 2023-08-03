@@ -35,6 +35,7 @@
       integer :: artificial_slab=0, overwrite_ntrfrm = 0,
      .            is_narrow_grid = 0, use_old_co = 0
       real(R8) :: xc, yc, dist = 1.0_R8
+      real(R8) :: tol_align = 1.0e-4_R8
       logical :: ffound
       character(500) :: line
       type :: tri_elem
@@ -56,6 +57,7 @@
       call ipgeti ('is_narrow_grid', is_narrow_grid)
       call ipgetr ('conv_triangles_dist',dist)
       call ipgeti ('conv_triangles_old_co', use_old_co)
+      call ipgetr ('conv_triangles_tol', tol_align)
 
 !  if input.dat exists check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
@@ -140,10 +142,11 @@
             node_vert(NNODES)=ivx ! store plasma vertex number corresponding to the node
           endif
         else
-          write (*,*) 'Vertex ', ivx , ' with coordinates (x, y) = (',
-     .                 gm%vxX(ivx), ', ', gm%vxY(ivx), ') not used. ',
-     .                'Likely X-point duplicate; not included among ',
-     .                'triangle nodes.'
+          write (*,'(a,i6,a,1p,1e15.8,a,1e15.8,a/a)')
+     .     'Vertex ', ivx ,' with coordinates (x, y) = (',
+     .      gm%vxX(ivx),',',gm%vxY(ivx),') not used. ',
+     .     'Likely X-point duplicate; not included among '//
+     .     'triangle nodes.'
         endif
       end do
       !! Store number of nodes corresponding to plasma grid vertices
@@ -371,7 +374,7 @@
                 if (is1 > 3) is1 = 1
                 call find_face_number (icv,elem_new(is, iel),
      .            elem_new(is1,iel), nnodes, npnodes, node_vert,
-     .            xc_new, yc_new, ifc, mpg, gm)
+     .            xc_new, yc_new, ifc, mpg, gm, tol_align)
                 isig = 1
                 if (ifc > 0) then
                   if (icv == mpg%fcCv(ifc,2)) isig = -1
@@ -390,7 +393,7 @@
               if (is1 > 3) is1 = 1
               call find_face_number (icv, elem_new(is, iel),
      .          elem_new(is1,iel), nnodes, npnodes, node_vert,
-     .          xc_new, yc_new, ifc, mpg, gm)
+     .          xc_new, yc_new, ifc, mpg, gm, tol_align)
               isig = 1
               if (ifc > 0) then
                 if (icv == mpg%fcCv(ifc,2)) isig = -1
@@ -526,7 +529,8 @@
 
       subroutine find_face_number (icv, in1, in2,
      .                             nnodes, npnodes, node_vert,
-     .                             xc_new, yc_new, ifc, mpg, gm)
+     .                             xc_new, yc_new, ifc, mpg, gm,
+     .                             tol_align)
 
       use b2mod_types
       use b2us_map
@@ -544,6 +548,7 @@
       integer :: nv, nf, j, jfc, jv1, jv2
       real(R8) :: px1, py1, px2, py2, vpx, vpy,
      .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq, vvp, vvf
+      real(R8) :: tol_align
       logical :: found
 
       nv = mpg%cvVxP(icv,2)
@@ -598,7 +603,7 @@
           vfy = vfy/vvf
 !  check if p and f are parallel
           det = abs(vfx*vpy - vfy*vpx)
-          if (det > 1.D-4) cycle
+          if (det > tol_align) cycle
 !  check that the "new" point lies on interval (x1,y1) -- (x2,y2)
           if ((node_vert(in1) /= jv1) .and. (node_vert(in1) /= jv2))then
             d = vvf*vfy*px1 - vvf*vfx*py1 + (fx2*fy1-fx1*fy2)

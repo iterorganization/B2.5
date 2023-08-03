@@ -821,13 +821,13 @@
 
 *   ..read unstructured geometry
 #ifdef F2003
-      open (newunit=ninp_us,file='b2fgmtry_us',iostat=io)
+      open (newunit=ninp_us,file='b2fgmtry',iostat=io)
 #else
       ninp_us = newunit()
-      open (unit=ninp_us,file='b2fgmtry_us',iostat=io)
+      open (unit=ninp_us,file='b2fgmtry',iostat=io)
 #endif
       if (io.eq.0) then
-      call cfopen (ninp_us,'b2fgmtry_us','old','un*formatted')
+      call cfopen (ninp_us,'b2fgmtry','old','un*formatted')
       call cfverr (ninp_us, b2fgmtry_version)
       call cfruin (ninp_us,7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
       mpg%nCi = idum(0) 
@@ -864,10 +864,10 @@
 
 *   ..write unstructured b2fstati
 #ifdef F2003
-      open (newunit=nout_us,file='b2fstati_us',iostat=io)
+      open (newunit=nout_us,file='b2fstati',iostat=io)
 #else
       nout_us = newunit()
-      open (unit=nout_us,file='b2fstati_us',iostat=io)
+      open (unit=nout_us,file='b2fstati',iostat=io)
 #endif
       idum(0) = mpg%nCv
       idum(1) = mpg%nFc
@@ -885,7 +885,7 @@
       call dealloc_mapping(mpg)
       call destroyB2State(state)
       else
-        write(*,*) 'b2fgmtry_us not found. Not creating b2fstati_us.'
+        write(*,*) 'b2fgmtry not found. Not creating b2fstati.'
       endif
 
 * ..return
