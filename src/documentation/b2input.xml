@@ -2290,14 +2290,9 @@
 				</description>
 			</switch>
                         <switch>
-				<name>transport_bohm</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If transport_bohm.eq.1, add Bohm-like radial particle diffusion.
-                                        If transport_bohm.eq.0, no Bohm-like contribution added.
 				</description>
 			</switch>
+
 			<switch>
 				<name>b2tqce_model</name>
 				<default>1</default>
@@ -2482,6 +2477,24 @@
 				<type>real</type>
 				<description>
 					Multiplier for the diffusivity in kt-equation (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_transport_bohm</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Compute transport coefficients based on a Bohm-like diffusion model. 
+					If '0': transport coefficients not computed based on Bohm diffusion model.
+					If '1': transport coefficients computed using Bohm diffusion model. Warning: under development!
+				</description>
+			</switch>
+                        <switch>
+				<name>bohm_gammaD</name>
+				<default>3.00</default>
+				<type>real</type>
+				<description>
+					Sets the correction for energy transport since the energy confinement is poorer compared to the particle confinement.
 				</description>
 			</switch>
 			<switch>

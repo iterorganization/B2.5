@@ -123,6 +123,10 @@ c Advanced fluid neutral models
       real (kind=R8) :: L_macro_AFN
       real (kind=R8) :: neutral_sources_rescale
 
+c ECH model
+      integer :: use_ech
+      integer :: ECH_out
+
 c iout switches
       integer :: iout_b2wdat
       integer :: b2sian_iout
@@ -370,6 +374,10 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
 
+c Bohm-like diffusion model
+      integer :: transport_bohm
+      real (kind=R8) :: bohm_gammaD
+
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
       real (kind=R8) :: b2tqna_bb_ref
@@ -468,9 +476,6 @@ c b2siav
       real (kind=R8) :: addvis1
       real (kind=R8) :: cqip1
 
-c b2tqna
-      integer :: transport_bohm
-
 c b2trcl
       real (kind=R8) :: cvsa_mltpl
 
@@ -491,6 +496,7 @@ c b2stbc
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
+
 c Feedback
       integer :: b2stbc_feedback
 
@@ -624,6 +630,11 @@ c Advanced fluid neutral models
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
       s % L_macro_AFN = 0.10_R8
 
+c ECH model
+      s % use_ech = 0
+      s % ECH_out = 0
+
+c iout
       s % iout_b2wdat = 0
       s % b2sian_iout = 0
       s % b2sicf_iout = 0
@@ -865,6 +876,10 @@ c k-enstrophy model
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0e0_R8
 
+c Bohm-like diffusion model
+      s % transport_bohm = 0
+      s % bohm_gammaD = 3.0_R8
+
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
       s % b2tqna_bb_ref = 0.0_R8
@@ -984,9 +999,6 @@ c b2stbc_phys
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
 
-c b2tqna
-      s % transport_bohm = 0
-
 c b2trno
       s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
 
@@ -1055,7 +1067,7 @@ c med
       call ipgeti ('b2tqna_user_transport', s % user_transport)             !mb  11.10.17
 
 c Advanced fluid neutral models
-      call ipgeti ('b2mn_tn_style',s % tn_style)
+      call ipgeti ('b2mn_tn_style', s % tn_style)
       call ipgeti ('b2stbr_recycle_afn', s % recycle_afn)
       call ipgeti ('b2stbr_use_uy_uz_0', s % use_uy_uz_0)
       call ipgeti ('b2stbr_use_uy_uz_1', s % use_uy_uz_1)
@@ -1124,6 +1136,9 @@ c Advanced fluid neutral models
       call ipgetr ('auto_spatial_hyb_Kn_2', s % auto_spatial_hyb_Kn_2)
       call ipgetr ('L_macro_AFN', s % L_macro_AFN)
 
+c ECH model
+      call ipgeti ('b2stbr_ech', s % use_ech)
+
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
       call ipgeti ('b2sian_iout', s % b2sian_iout)
@@ -1172,6 +1187,7 @@ c iout switches
       call ipgeti ('b2stbr_phys_iout', s % b2stbr_phys_iout)                  !srv 11.07.05
       call ipgeti('b2wdat_append', s % b2wdat_append)
       call ipgeti ('b2stbr_AFN_out',s % AFN_out)
+      call ipgeti ('b2stbr_ECH_out',s % ECH_out)
       call ipgeti('copy_background_iout', s%copy_background_iout)   !srv 14.07.10
       call ipgeti ('eirene_mc_iout', s % eirene_mc_iout)
       call ipgeti ('b2mndr_iout', s % b2mndr_iout)
@@ -1384,6 +1400,10 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
 
+c Bohm-like diffusion model
+        call ipgeti ('b2tqna_transport_bohm', s%transport_bohm)
+        call ipgetr ('b2tqna_bohm_gammaD', s%bohm_gammaD)
+
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
       call ipgetr ('b2tqna_min_df0', s%b2tqna_min_df0)
@@ -1523,9 +1543,6 @@ c b2stbc
         call ipgetr ('b2stbc_nesepm', s%nesepm)
         call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
         call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
-
-c b2tqna
-        call ipgeti ('transport_bohm', s%transport_bohm)
 
 c b2trno
         call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)         !lk 31.01.08
@@ -1772,10 +1789,6 @@ c b2tfcc
 c b2tqca
        call xertst (0.0_R8.le.s%b2tqca_phm0,'faulty input b2tqca phm0')
 
-c b2tqna
-       call xertst (0.le.s%transport_bohm.le.1,
-     1                                    'faulty input transport bohm')
-
 c b2treq
        call xertst (0.0_R8.le.s%b2treq_phm0,'faulty input b2treq phm0')
 
@@ -1804,6 +1817,13 @@ c neutral flux limiters
 c b2mwqt
        call xertst (0.le.s%b2mwqt_style,
      &                              'faulty parameter b2mwqt style')
+
+c AFN model
+      call xertst (0.le.s%recycle_afn.le.1,
+     &  'b2stbr_recycle_afn value not coded')
+
+c ECH model
+      call xertst (0.le.s%use_ech.le.1, 'b2stbr_ech value not coded')
 
 c k-enstrophy model
       call xertst (0.le.s%solve_keps .and. s%solve_keps.le.2,
@@ -1872,6 +1892,13 @@ c k-enstrophy model
       call xertst (0.le.s%b2sikt_min_source .and.
      &  s%b2sikt_min_source.le.2,
      &  'b2sikt_min_source must be either 0, 1 or 2')
+
+c Bohm-like diffusion model
+       call xertst (0.le.s%transport_bohm.le.1,
+     1                          'b2tqna_transport_bohm value not coded')
+       call xertst (0.0_R8.lt.s%bohm_gammaD,
+     1                                   'bohm_gammaD must be .gt. 0.0')
+
 
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
@@ -2017,8 +2044,25 @@ c check the inter-consistency of different switches (e.g. certain combinations o
 
 c AFN neutral model
       if(s%AFN_out.ne.0.and.s%recycle_afn.eq.0) then
-        call xerrab('b2stbr_recycle_afn should be 1 when writing '//
+        call xerrab ('b2stbr_recycle_afn should be 1 when writing '//
      &   'AFN output')
+      endif
+      if(s%transport_afn.ne.0.and.s%recycle_afn.eq.0) then
+        call xerrab ('b2stbr_recycle_afn should be 1 when using '//
+     &   'AFN transport coefficients')
+      endif
+      if(s%transport_bohm.ne.0.and.s%recycle_afn.ne.0) then
+        call xerrab ('faulty inputs: cannot use both Bohm and ' //
+     &   'AFN model')
+      endif
+
+c ECH model
+      if(s%ECH_out.ne.0.and.s%use_ech.eq.0) then
+        call xerrab('b2stbr_ech should be 1 when writing ECH output')
+      endif
+      if(s%ECH_out.ne.0.and.s%ECH_out.ne.1.and.s%ECH_out.ne.2) then
+        call xerrab('b2stbr_ECH_out should be either 0 (no output),' //
+     &   '1 (standard output) or 2 (large output)')
       endif
 
 c spatially hybrid neutrals
