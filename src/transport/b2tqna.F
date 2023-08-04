@@ -4,7 +4,8 @@
       subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &   switch, geo, mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0,
      &   vsa0, hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0,
-     &   dzt0, dna_ExB, hce_ExB, hci_ExB)
+     &   dzt0, dna_ExB, hce_ExB, hci_ExB, dna_bohm, vla_bohm,
+     &   vsa_bohm)
       use b2mod_types
       use b2mod_math
       use b2mod_transport_namelist
@@ -55,6 +56,10 @@
      *  hce0(nCv), sig0(nCv), alf0(nCv),
      &  hvi0(nCv,0:1), hve0(nCv,0:1), dkt0(nCv), dzt0(nCv),
      &  dna_ExB(nCv), hce_ExB(nCv), hci_ExB(nCv)
+*   Bohm-like diffusion coefficients
+      real (kind=R8) ::
+     *  dna_bohm(nCv,0:1,0:ns-1), vla_bohm(nCv,0:1,0:ns-1),
+     &  vsa_bohm(nCv,0:1,0:ns-1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nCv)
@@ -270,6 +275,11 @@
       call sfill (nCv, 0.0_R8, dna_ExB, 1)
       call sfill (nCv, 0.0_R8, hce_ExB, 1)
       call sfill (nCv, 0.0_R8, hci_ExB, 1)
+c Initialise Bohm
+      call sfill (nCv*ns*2, 0.0_R8, dna_bohm, 1)
+      call sfill (nCv*ns*2, 0.0_R8, vla_bohm, 1)
+      call sfill (nCv*ns*2, 0.0_R8, vsa_bohm, 1)
+
       do is = 0, ns-1
         k=-1
         max_df0_tmp=0.0_R8
@@ -575,12 +585,19 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       endif
-c sc  implementation of Bohm like diffusion coefficient 12.07.2023-?
+c sc  implementation of Bohm-like diffusion coefficient 12.07.2023-?
       if(switch%transport_bohm.ne.0) then
+! Maybe useless (see row 260)
+        dna0(:,:) = 0.00_R8
+        dpa0(:,:) = 0.00_R8
+        vla0(:,:,:) = 0.00_R8
+!        vma0(:,:) = 0.00_R8
+        vsa0(:,:) = 0.00_R8
+! End Maybe useless
         call set_transport_bohm(nCv, nFc,
-     &   nVx, ns, nscx, iscx, switch, geo, 
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0,hcib)
+     &   nVx, ns, nscx, iscx, ismain, switch, geo, 
+     &   mpg, pl, dv, rt, st_ext, dna_bohm, vla_bohm,
+     &   vsa_bohm, hci0, hce0, hcn0, hcib)
       endif
 cdpc
       if(switch%b2tqna_ballooning.ne.0.0_R8) then
@@ -689,6 +706,14 @@ cdpc
           call my_out_us(70,nCv,0,vla0(1,1,is),'b2tqna_vla0y'//chns)
           wrk0 = hcib(:,is)/pl%na(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2tqna_hcib'//chns)
+          if(switch%transport_bohm.eq.1) then
+            call my_out_us(70,nCv,0,dna_bohm(:,1,is),
+     &                     'b2tqna_dnaBohm'//chns)
+            call my_out_us(70,nCv,0,vla_bohm(:,1,is),
+     &                     'b2tqna_vlaBohm'//chns)
+            call my_out_us(70,nCv,0,vsa_bohm(:,1,is),
+     &                     'b2tqna_vsaBohm'//chns)
+          endif
         enddo
 !        call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
         wrk0=hce0/dv%ne
@@ -3936,9 +3961,9 @@ c*******************************************************************************
 c************* New KU Leuven transport model for Bohm-like coefficient ****************
 c**************************************************************************************
       subroutine set_transport_bohm(nCv, nFc,
-     &   nVx, ns, nscx, iscx, switch, geo, 
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0,hcib)
+     &   nVx, ns, nscx, iscx, ismain, switch, geo, 
+     &   mpg, pl, dv, rt, st_ext, dna_bohm, vla_bohm,
+     &   vsa_bohm, hci0, hce0, hcn0, hcib)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
@@ -3955,7 +3980,7 @@ c*******************************************************************************
       implicit none
 
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, iscx(0:nscxmax-1)
+      integer nCv, nFc, nVx, ns, ismain, nscx, iscx(0:nscxmax-1)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -3963,56 +3988,58 @@ c*******************************************************************************
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
-      real (kind=R8) :: t_av, df0
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
-     &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
+     &  hce0(nCv), hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1) 
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
-!        dna0(nCv,0:1,0:ns-1), dpa0(nCv,0:ns-1),
-     &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
-     &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
+     *  dna_bohm(nCv,0:1,0:ns-1), vla_bohm(nCv,0:1,0:ns-1),
+     &  vsa_bohm(nCv,0:1,0:ns-1)
+!     &  vma_bohm(nCv,0:1,0:ns-1)                                        !srv 15.12.05
 *   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *  wrk0(nCv), vcx, dion
-      integer is, k, ic, iCv
-      character chns*3 ! to be removed
+      integer is, iCv
+      real (kind=R8) :: rholi(nCv), rhole(nCv)
+      character chns*3
 
 *   ..subprogram start-up calls
       call subini ('set_transport_bohm')
       do is = 0, ns-1
-*     ..compute dna0 (Bohm-like diffusion)
-        dna0(:,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*1.33E+05_R8*
-     1            (5.00E-03_R8+1.00E-02_R8*
-     2            geo%cvBb(1:nCv,0)/geo%cvBb(1:nCv,2))*1.00E-02_R8
-        vsa0(:,is) = switch%gammaD*am(is)*mp*na(:,is)*dna0(:,is)
-        hcib(:,is)= switch%gammaD*na(:,is)*dna0(:,is)
-        hce0 = switch%gammaD*ne*dna_Bohm
-        vla0(:,0,is) = 2.0_R8*dna0(:,is)/0.88_R8*6.5_R8
+        if(.not.is_neutral(is)) then
+*   ..compute local larmor radius
+          rholi(:) = am(is)*mp*sqrt(2.0_R8*pl%ti/(am(is)*mp))/
+     &         abs(rt%rza(:,is)*qe*geo%cvBb(:,3))
+*   ..compute dna_bohm (Bohm-like particle diffusion)
+          dna_bohm(:,0,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*
+     &              1.33E+05_R8*(rholi(:)+1.00E-02_R8*
+     &              geo%cvBb(:,0)/geo%cvBb(:,2))*1.00E-02_R8
+          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*
+     &              1.33E+05_R8*(rholi(:)+1.00E-02_R8*
+     &              geo%cvBb(:,1)/geo%cvBb(:,2))*1.00E-02_R8
+*   ..compute vsa_bohm, hcib, vla_bohm (Bohm-like)
+          vsa_bohm(:,1,is) = switch%bohm_gammaD*am(is)*mp*
+     &                     pl%na(:,is)*dna_bohm(:,1,is)
+          vsa_bohm(:,0,is) = switch%bohm_gammaD*am(is)*mp*
+     &                     pl%na(:,is)*dna_bohm(:,0,is)
+          hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
+          vla_bohm(:,0,is) = 2.0_R8*dna_bohm(:,0,is)/0.88_R8*6.5_R8 ! R=0.88 for TCV (Tom's paper) -> has to be generalised
+          vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/0.88_R8*6.5_R8
+        elseif(is_neutral(is).and.switch%use_eirene.eq.0) then
+          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*1.33E+05_R8*
+     &               1/(2.0_R8/0.25_R8 + 1.00E+02_R8)*1.00E-02_R8 ! a=0.25 for TCV -> generalised
+          dna_bohm(:,0,is) = dna_bohm(:,1,is) ! isotropic for neutrals
+          vsa_bohm(:,1,is) = switch%bohm_gammaD*am(is)*mp*pl%na(:,is)*
+     &                       dna_bohm(:,1,is)
+          hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
+          vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/0.88_R8*6.5_R8
+        endif
+      enddo
 
-        wrk0 = sqrt(pl%tn/mp)
-        do iCv = 1, nCv
-!          vcx=0.0_R8
-!          do ic = 0, ns-1
-!            t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
-!            vcx = vcx + pl%na(iCv,ic) * 
-!     &         expu(rt%rlcx(iCv,0,ic,k) +
-!     &         rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
-!          enddo
-!          dion=expu(
-!     2        rt%rlsa(iCv,0,is)+
-!     3        rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
-!*         ..For now, no neutral-neutral collisions inlcuded
-!            df0=(wrk0(iCv)/sqrt(am(is)))**2/
-!     1           (vcx+dion*dv%ne(iCv))
-!            ! limit df0
-!            df0=max(switch%b2tqna_min_df0,
-!     &          min(switch%b2tqna_max_df0,df0))
-!
-            dpa0(iCv,is) = 0.00_R8
-        enddo !! end loop over cells
-      enddo !! end loop over species
+*   ..compute rhole, hce0 (Bohm-like)
+      rhole(:) = me*sqrt(2.0_R8*pl%te/(me))/abs(qe*geo%cvBb(:,3))
+      hce0(:) = switch%bohm_gammaD*dv%ne(:)*1.00_R8/3.00_R8*
+     &         1.00_R8/16.00_R8*1.33E+05_R8*(rhole(:)+1.00E-02_R8*
+     &         geo%cvBb(:,1)/geo%cvBb(:,2))*1.00E-02_R8
+  
 
 *   ..recompute hci0, hcn0
       hci0 = 0.0_R8

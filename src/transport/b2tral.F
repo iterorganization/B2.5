@@ -138,10 +138,6 @@
         co%cvsa(:,1,is)   =    co%cvsa_cl(:,1,is)   + co%cvsa(:,1,is)
         co%cvsahz(:,0,is) = ft*co%cvsahz_cl(:,0,is) + co%cvsahz(:,0,is)
         co%cvsahz(:,1,is) =    co%cvsahz_cl(:,1,is) + co%cvsahz(:,1,is)
-! OLD - Add Bohm radial diffusion
-!        co%cdna(:,0,is)   =    co%cdna(:,0,is) + co%cdna_Bohm(:,0,is)
-!        co%cdna(:,1,is)   =    co%cdna(:,1,is) + co%cdna_Bohm(:,1,is)
-! End add Bohm
        else
         co%cvsa(:,:,is)   =    co%cvsa_cl(:,:,is) + co%cvsa(:,:,is)
         co%cvsahz(:,:,is) =    co%cvsahz_cl(:,:,is) + co%cvsahz(:,:,is)
@@ -178,9 +174,9 @@
        else
         co%cddi(:,:,is) = 0.0_R8
        endif 
-      enddo                                                           !srv 13.10.06 }
+      enddo                                                             !srv 13.10.06 }
 *  ..check that we have some particle diffusion
-      if (ncall_b2tral.le.3) then                                            !srv 12.03.12 {
+      if (ncall_b2tral.le.3) then                                       !srv 12.03.12 {
         do is = 0, ns-1
 cwdk combined check for poloidal or radial diffusion
           wrkf(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) + 
