@@ -565,7 +565,7 @@
       write (nblk14,'(12i6)') (1, i=1,ntarg)
       do i = 1, ntarg
         imodel = imodel + 1
-        do j = 1, ntarg-1
+        do j = 1, i-1
           if (rcstart(i).eq.rcstart(j)) then
             imodel = imodel - 1 ! surface is already defined
             exit
