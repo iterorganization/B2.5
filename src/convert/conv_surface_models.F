@@ -361,6 +361,7 @@
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
       integer, allocatable :: ipos_b2(:)
       integer :: artificial_slab=0
+      logical :: exists
 #ifndef F2003
       integer newunit
       external newunit
@@ -379,6 +380,12 @@
 !  skip neutral sources without associated faces
 !  CRCSTRA = 'V','C','T'
         if (mpg%rcFcP(istra,2) == 0) cycle
+!nh     check if the surface is not already written for a different species
+        exists = .false.
+        do i = 1,istra-1
+          if (rcstart(istra).eq.rcstart(i)) exists=.true.
+        end do
+        if (exists) cycle
         imodel = imodel + 1
         write (nout,'(a15,i6,a,i6)') 'recyc. surface ',istra,
      .   ' is associated with nondefault standard surface ',imodel
@@ -412,6 +419,7 @@
             deallocate (tris)
           end if
         end do
+        
       end do
 
       ntarg = imodel
