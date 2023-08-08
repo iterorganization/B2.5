@@ -539,7 +539,6 @@
 
       end if
 
-
     !! third step: find cuts
 
       do iy=-1,ny
@@ -619,6 +618,10 @@
       if(nncut.ge.2) write(*,'(1x,a,4i5)')
      & 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ',
      & leftcut1(2), rightcut1(2), topcut1(2), bottomcut1(2)
+      if(nncut.ge.3) write(*,'(1x,a,4i5)')
+     & 'Calculated leftcut3, rightcut3, topcut3, bottomcut3 = ',
+     & leftcut1(3), rightcut1(3), topcut1(3), bottomcut1(3)
+      if(nncut.ge.3) call xerrab ('Unexpected number of cuts')
 
       return
       end subroutine init_connectivity
