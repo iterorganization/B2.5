@@ -1,10 +1,11 @@
-      subroutine sort_faces(nFcList,fcList,nFcLbl,fcLbl,iLbl,m)
+      subroutine sort_vertices(nVxList,vxList,nFcLbl,fcLbl,iLbl,m)
       !! Routine that looks for all faces in fcLbl that have a particular
-      !! face label/index iLbl, and returns them as a sorted list fcList
+      !! face label/index iLbl, and returns the corresponding vertices as
+      !! a polygon
       !!
       !! Implicit assumption: faces connect into a single line
-      !! nFcList         : number of faces with label iLbl
-      !! fcList(nFcList) : sorted list of faces (on output)
+      !! nVxList         : number of vertices corresponding to faces with label iLbl
+      !! vxList(nVxList) : sorted list of vertices (on output)
       !! nFcLbl          : number of faces in fcLbl
       !! fcLbl(nFcLbl)   : face labels assigned to all faces
       !! iLbl            : label to look for within fcLbl
@@ -12,12 +13,12 @@
       use b2mod_types
       use b2us_map
       implicit none
-      integer, intent (in)        :: nFcList, nFcLbl, iLbl
-      integer, intent (inout)     :: fcList(nFcList), fcLbl(nFcLbl)
+      integer, intent (in)        :: nVxList, nFcLbl, iLbl
+      integer, intent (inout)     :: vxList(nVxList), fcLbl(nFcLbl)
       type (mapping), intent (in) :: m
 
       integer :: ncoss, icoss,
-     .           iFc, iFcList, i, imn, imx,
+     .           iVx, iVxList, i, imn, imx,
      .           ncout, istart
       integer, allocatable :: fcss(:), indfc(:)
       logical, allocatable :: lout(:)
@@ -34,7 +35,7 @@
       
 !     find all faces in fcLbl with label iLbl
       ncoss = count(fcLbl == iLbl)
-      if (ncoss.ne.nFcList) call xerrab ('Inconsistent input')
+      if (ncoss.ne.nVxList-1) call xerrab ('Inconsistent input')
       if (ncoss.eq.0) return
 
       allocate (fcss(ncoss))
@@ -44,7 +45,7 @@
       deallocate (indfc)
        
 !     sort faces for a continuous surface
-      iFcList = 0
+      iVxList = 0
       istart = 1
       allocate (lout(ncoss))
       lout = .false.
@@ -105,10 +106,15 @@
 !            write (*,*) 'face list, iLbl = ',iLbl
             do while (associated(head))
 !              write (*,*) head%fcno, head%vx1, head%vx2
-              iFcList = iFcList + 1
-              iFc = head%fcno
-              fcList(iFcList) = iFc
+              iVxList = iVxList + 1
+              iVx = head%vx1
+              vxList(iVxList) = iVx
               tail => head
+              if (.not.associated(head%next)) then
+                iVxList = iVxList + 1
+                iVx = head%vx2
+                vxList(iVxList) = iVx
+              endif
               head => head%next
               deallocate (tail)
             end do
@@ -126,14 +132,19 @@
       deallocate(lout)
 
       do while (associated(head))
-        iFcList = iFcList + 1
-        iFc = head%fcno
-        fcList(iFcList) = iFc
+        iVxList = iVxList + 1
+        iVx = head%vx1
+        vxList(iVxList) = iVx
         tail => head
+        if (.not.associated(head%next)) then
+          iVxList = iVxList + 1
+          iVx = head%vx2
+          vxList(iVxList) = iVx
+        endif
         head => head%next
         deallocate (tail)
       end do
 
       deallocate (fcss)
       
-      end subroutine sort_faces
+      end subroutine sort_vertices
