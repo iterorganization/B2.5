@@ -68,7 +68,7 @@ contains
         if (iBlock == niso + 1) then
            ixu = nnx-2
         else
-            ixu = nxiso(iBlock) - 2
+            ixu = nxiso(iBlock) - 3
         end if
         
         !if ( withSourceOffset ) ixu = ixu + 1
