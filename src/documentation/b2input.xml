@@ -2560,6 +2560,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mn_spatial_hybrid</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Switch to turn on the spatially hybrid fluid-kinetic neutral model. For multispecies simulations, the hybrid approach can only be used for the hydrogenic neutrals. For other species, you can use either a fully kinetic or purely fluid approach.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_recycle_afn</name>
 				<default>0</default>
 				<type>integer</type>
@@ -2592,6 +2600,18 @@
 				</description>
 			</switch>
 			<switch>
+				<name>use_auto_spatial_hyb</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Advanced hybrid option. Forbidden to use for multispecies simulations (ns &gt; 1) and only in use for the strata with HYB_TYPE='A'.
+					The local charge-exchange Knudsen number Kn is calculated at the boundary.
+					If (Kn &lt; auto_spatial_hyb_Kn_1) then the recycled atom is treated as a fluid.
+					If (Kn &gt; auto_spatial_hyb_Kn_2) then the recycled atom is treated kinetically.
+					(otherwise) linear combination between fluid and kinetic.
+				</description>
+			</switch>
+			<switch>
 				<name>l_macro_afn</name>
 				<default>0.1</default>
 				<type>real</type>
@@ -2613,6 +2633,22 @@
 				<type>real</type>
 				<description>
 					Should be used in combination with MAXW in b2.neutrals.parameters (see description MAXW).
+				</description>
+			</switch>
+			<switch>
+				<name>auto_spatial_hyb_Kn_1</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Should be used in combination with use_auto_spatial_hyb (see description use_auto_spatial_hyb).
+				</description>
+			</switch>
+			<switch>
+				<name>auto_spatial_hyb_Kn_2</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Should be used in combination with use_auto_spatial_hyb (see description use_auto_spatial_hyb).
 				</description>
 			</switch>
 			<switch>
@@ -4666,12 +4702,20 @@
 				</description>
 			</switch>
 			<switch>
-				<name>RECYC</name>
+				<name>B2RECYC</name>
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their isonuclear sequence.
 					Applies to B2.5 neutral fluid species.
-					Also multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set to 0 (see b2cdci for details).
+					If B2RECYC is not explicitly specified, the values from RECYC will be taken. 
+				</description>
+			</switch>
+			<switch>
+				<name>RECYC</name>
+				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<description>
+					Multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set to 0 (see b2cdci for details).
+					If B2RECYC is not specified, RECYC will also be applied to B2.5 neutral fluid species.
 				</description>
 			</switch>
 			<switch>
@@ -4727,6 +4771,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>STRASCLFL</name>
+				<default>1.0</default>
+				<type>real*8 array of length (NSTRAT)</type>
+				<description> 
+					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.     
+				</description>
+			</switch>
+			<switch>
 				<name>SURF_MAT</name>
 				<default>'C'</default>
 				<type>character*2 array of length (NSTRAT)</type>
@@ -4749,6 +4801,22 @@
 				<type>integer array of length (NSTRAT)</type>
 				<description> 
 					Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.    
+				</description>
+			</switch>
+			<switch>
+				<name>MOL</name>
+				<default>0</default>
+				<type>integer array of length (NSTRAT)</type>
+				<description> 
+					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.    
+				</description>
+			</switch>
+			<switch>
+				<name>HYB_TYPE</name>
+				<default>'M'</default>
+				<type>character*1 array of length (NSTRAT)</type>
+				<description> 
+					When HYB_TYPE='A', possibility to have automatic switching between fluid and kinetic recycling for the stratum for the advanced hybrid model. See description of use_auto_spatial_hyb. HYB_TYPE should be 'M' for all strata for multispecies simulations (ns &gt; 1).
 				</description>
 			</switch>
 			<switch>
@@ -4832,11 +4900,30 @@
 				</description>
 			</switch>
 			<switch>
+				<name>B2SPECIES_START</name>
+				<default>0</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model. 
+					If not specified, B2SPECIES_START = SPECIES_START.
+				</description>
+			</switch>
+			<switch>
+				<name>B2SPECIES_END</name>
+				<default>ns-1</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the last B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
+					If not specified, B2SPECIES_END = SPECIES_END.
+				</description>
+			</switch>
+			<switch>
 				<name>SPECIES_START</name>
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2.5 species involved in stratum (istra).
+					Specifies the index of the first B2.5 species involved in stratum (istra) for EIRENE.
+					SPECIES_START is also used for the B2.5 fluid neutral model, if B2SPECIES_START is not specified.
 				</description>
 			</switch>
 			<switch>
@@ -4844,7 +4931,8 @@
 				<default>ns-1</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the last B2.5 species involved in stratum (istra).
+					Specifies the index of the last B2.5 species involved in stratum (istra) for EIRENE.
+					SPECIES_END is also used for the B2.5 fluid neutral model, if B2SPECIES_END is not specified.
 				</description>
 			</switch>
 			<switch>

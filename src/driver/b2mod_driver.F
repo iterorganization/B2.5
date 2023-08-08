@@ -163,7 +163,7 @@
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
-     &  ixfb, iyfb, ax, ay
+     &  ixfb, iyfb, ax, ay, scl
 !WG_TODO      real (kind=R8), allocatable ::
 !WG_TODO     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
 !WG_TODO     *  rza0(:,:), rz20(:,:), rpt0(:,:), rpi0(:,:)
@@ -187,7 +187,7 @@
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
-      integer :: ncon, nele_jac
+      integer :: ncon, nele_jac, istra
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer ncid
@@ -358,6 +358,8 @@
 *   ..procedures
       real (kind=R8) :: rratio, smax
       external rratio, smax
+      logical streql
+      external streql
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -1268,17 +1270,28 @@ c and hence the reaction rates have to be rescaled here.
            write(*,*) 'Adding ',log(switch%neutral_sources_rescale),
      *         ' to relevant rtlra and rtlqr'
            do is=0,ns-2
+             scl = switch%neutral_sources_rescale
+             do istra=1,nstrai
+               if (streql(crcstra(istra),'V').and.
+     *           (species_start(istra).eq.is)) then
+                 scl = scl*strasclfl(istra)
+               endif
+             enddo
              if(is_neutral(is) .and. lnext(is,is+1)) then
-                rtlra(:,:,is+1)=rtlra(:,:,is+1)+
-     *             log(switch%neutral_sources_rescale)
+                rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
-                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+             !mb 22.05.18
-     *             log(switch%neutral_sources_rescale)
+                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18     
                 write(*,'(i3,1p,2e16.8)')
      *             is,zamax(is),rtlqr(0,0,is+1)
              endif
            enddo
-         else
+           if (switch%spatial_hybrid.eq.1) then
+             write(*,*) 'Neutral sources rescaling has to be turned '//
+     *                  'off for hybrid fluid-kinetic model!'
+             write(0,*) 'Neutral sources rescaling has to be turned '//
+     *                  'off for hybrid fluid-kinetic model!'
+           endif
+         elseif (switch%spatial_hybrid.eq.0) then
            write(*,*) 'Neutral sources rescaling not turned on '//
      *                'while coupled to Eirene!'
            write(0,*) 'Neutral sources rescaling not turned on '//
@@ -1944,6 +1957,7 @@ c new CDF movie option (1st frame at t=0)
       type(B2State) :: state0
 #endif
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
+     * fluid_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
       integer nCv, nFc, nVx
       integer i, is, icf
@@ -2234,9 +2248,9 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
-          call copy_background(nCv, nFc, ns, switch, mpg, geo,
+          call copy_background(nCv, nFc, ns, switch, mpg, geo, 
      .                         state%pl, state%dv,
-     .                         kin_frac_hyb, fnn_inc)
+     .                         kin_frac_hyb,fluid_frac_hyb,fnn_inc) 
           call write_f31(mpg)
           close(31)
         end if
@@ -2668,7 +2682,8 @@ c new CDF movie option
        if (switch%save_f30.ne.0) call write_f30(nx, ny)
        if (switch%save_f31.ne.0) then
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv, kin_frac_hyb, fnn_inc)
+     &                       pl, dv, kin_frac_hyb, fluid_frac_hyb, 
+     &                       fnn_inc)
         call write_f31(nx, ny)
        end if
       end if
@@ -2739,7 +2754,7 @@ c new CDF movie option
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
          call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state,
-     &                        kin_frac_hyb,fnn_inc)
+     &                        kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
