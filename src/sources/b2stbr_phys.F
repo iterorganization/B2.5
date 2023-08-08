@@ -159,6 +159,11 @@ c     output for analysis/debugging
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+*   ..automatic spatial hybrid not allowed for multispecies
+      if(switch%use_auto_spatial_hyb.ne.0.and.ns.gt.1) then
+        call xerrab('automatic spatial hybrid option not allowed '//
+     &    'for multispecies')
+      endif
 *   ..extensive tests on first few calls
       if(ncall_b2stbr_phys.lt.3) then
 *    ..test sign of vol
@@ -284,6 +289,7 @@ c     initialize debugging/analysis arrays
      &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
       endif !! end pre-computations KUL fluid neutrals
 
+      
       do istra = 1, nstrat
 #ifdef WG_TODO
         sput_dst_bulk=targsp(istra,1)
@@ -842,14 +848,14 @@ cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*(dv%fna(iFc,0,is) + dv%fna(iFc,1,is))) *
-     1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
+     1        neutral_sources_rescale*strasclfl(istra) ! dpc: Eirene coupling 1999.06.28
          Einc=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/geo%fcS(iFc)  ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
             vbar = sqrt(8.0_R8 * pl%ti(iCv) / (pi * am(is) * mp))
             Pflx = Pflx + pl%na(iCv,is)*vbar*alpha *
-     1           neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
+     1           neutral_sources_rescale*strasclfl(istra) ! dpc: Eirene coupling 1999.06.28
          endif
          if (switch%recycle_afn.eq.0.or.zn(is0).ne.1) then !! default neutral recycling/reflection model (always for non-hydrogenic species)
            srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
@@ -924,9 +930,10 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
                 fenerec = 0.0_R8
              endif
 
-             snan = fnnrec*neutral_sources_rescale
+             snan = fnnrec*neutral_sources_rescale*strasclfl(istra)
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
-             smon = fmomrec*geo%cvhz(iCv)*neutral_sources_rescale
+             smon = fmomrec*geo%cvhz(iCv)*neutral_sources_rescale*
+     &         strasclfl(istra)
              srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon
 
              nnsum = nnsum + nnrec
@@ -935,12 +942,12 @@ cmb   net neutral energy source from recycling
 
              if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + fenerec*
-     &                              neutral_sources_rescale
+     &           neutral_sources_rescale*strasclfl(istra)
              elseif (switch%tn_style.eq.1) then
                !! neutral energy boundary conditions are not used
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + fenerec*
-     &                              neutral_sources_rescale
+     &           neutral_sources_rescale*strasclfl(istra)
              endif
 
              if (switch%AFN_out.ne.0) then
@@ -966,7 +973,7 @@ c          while B2.5 uses internal energy equations.
      &             (tnf*pl%ua(iCv,is0)*geo%fcpbs(iFc)*
      &             pl%na(iCv,is0) +
      &             (dv%fhm(iFc,0,is0)+dv%fhm(iFc,1,is0)) ))*
-     &             neutral_sources_rescale
+     &             neutral_sources_rescale*strasclfl(istra)
 
              if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
@@ -1009,7 +1016,7 @@ c          while B2.5 uses internal energy equations.
              endif
 
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) -
-     &         fnni*neutral_sources_rescale
+     &         fnni*neutral_sources_rescale*strasclfl(istra)
 
 !! save the incident fluid neutral flux
              fnn_inc(iFc,is0) = fnni*isign
@@ -1069,7 +1076,7 @@ cmb   net momentum sources from neutral particle reflection
 
 cnh  adding the reflected particle source (with the molecular part subtracted)
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
-     1         fnnrefl*neutral_sources_rescale
+     1         fnnrefl*neutral_sources_rescale*strasclfl(istra)
              snan = fnnrefl
 
 
@@ -1082,7 +1089,7 @@ cnh  adding the reflected particle source (with the molecular part subtracted)
              endif
 
              smon = (fmomni+fmomrefl)*geo%cvhz(iCv)*
-     &              neutral_sources_rescale
+     &              neutral_sources_rescale*strasclfl(istra)
              srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon
 
              nnsum = nnsum + nni + nnrefl
@@ -1090,19 +1097,19 @@ cnh  adding the reflected particle source (with the molecular part subtracted)
 
              if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + (feneni + fenerefl)*
-     &                                          neutral_sources_rescale
+     &           neutral_sources_rescale*strasclfl(istra)
              elseif (switch%tn_style.eq.1) then
                !! neutral energy boundary conditions are not used
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + (feneni + fenerefl)*
-     &                                          neutral_sources_rescale
+     &           neutral_sources_rescale*strasclfl(istra)
              endif
 
 c remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary
 c temporary switch to evaluate the effect.
              if (switch%remove_FC_el.eq.1) then
                srw%she0(iCv,0) = srw%she0(iCv,0) + (fene_el)*
-     &                                          neutral_sources_rescale
+     &           neutral_sources_rescale*strasclfl(istra)
              endif
 
            endif
@@ -1113,7 +1120,7 @@ c temporary switch to evaluate the effect.
      &            nnsum*farea*abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))*
      &            geo%cvhz(iCv)
                srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon*
-     &                                    neutral_sources_rescale
+     &            neutral_sources_rescale*strasclfl(istra)
              nnsum = 0.0_R8
              nnwwnsum = 0.0_R8
            endif
@@ -1141,8 +1148,9 @@ c chemical sputtering
                      call chmsput(iwall,Einc,zaf(is),zn(is),
      &                    zn(sput_dst_bulk),
      &                    am(is),am(sput_dst_bulk),surface_temp,
-     &                    Pflx/neutral_sources_rescale,yldchm)
-                     t1=Pflx*neutral_sources_rescale*
+     &                    Pflx/(neutral_sources_rescale*
+     &                    strasclfl(istra)),yldchm)
+                     t1=Pflx*neutral_sources_rescale*strasclfl(istra)*
      &                    yldchm*chem_sput(is,istra)*area
                      chemical_sputtering(iwall,is) = yldchm
                   else
@@ -1157,8 +1165,9 @@ c chemical sputtering
                   if (zbulk.ne.6 .and. sput_chem_model.ne.1) then
                      call chmsput(iwall,Einc,zaf(is),zn(is),
      &                    6.0_R8,am(is),12.011_R8,surface_temp,
-     &                    Pflx/neutral_sources_rescale,yldchm)
-                     t1=Pflx*neutral_sources_rescale*
+     &                    Pflx/(neutral_sources_rescale*
+     &                    strasclfl(istra)),yldchm)
+                     t1=Pflx*neutral_sources_rescale*strasclfl(istra)*
      &                    yldchm*chem_sput(is,istra)*area
                      chemical_sputtering(iwall,is) = yldchm
                   endif
@@ -1523,18 +1532,20 @@ c radiation enhanced sublimation
                if(zbulk.eq.6) then
                   call ressput(Einc,zaf(is),zn(is),zn(sput_dst_bulk),
      &              am(is),am(sput_dst_bulk),surface_temp,
-     &              Pflx/neutral_sources_rescale,sput_dst_bulk,yldres)
+     &              Pflx/(neutral_sources_rescale*strasclfl(istra)),
+     &              sput_dst_bulk,yldres)
                   RES_sputtering(iwall,is) = yldres
-                  t1=yldres*neutral_sources_rescale*
+                  t1=yldres*neutral_sources_rescale*strasclfl(istra)*
      &              area*sput_res
                endif
                if(sput_frac_flag.ne.0) then
                   if(zbulk.ne.6) then
                     call ressput(Einc,zaf(is),zn(is),6.0_R8,
      &               am(is),12.011_R8,surface_temp,
-     &               Pflx/neutral_sources_rescale,sput_dst_bulk,yldres)
+     &               Pflx/(neutral_sources_rescale*strasclfl(istra)),
+     &               sput_dst_bulk,yldres)
                     RES_sputtering(iwall,is) = yldres
-                    t1=yldres*neutral_sources_rescale*
+                    t1=yldres*neutral_sources_rescale*strasclfl(istra)*
      &               area*sput_res
                   endif
                   t1=t1*sput_frac_chem_sum
@@ -1630,7 +1641,8 @@ cxpb  as deposition
          if(is.lt.ns-1) then
            if(lnext(is,is+1)) then
               srw%sna0(iCv,0,is+1) = srw%sna0(iCv,0,is+1)+
-     2        rcion(is,istra)*t0/neutral_sources_rescale
+     2        rcion(is,istra)*t0/(neutral_sources_rescale*
+     3        strasclfl(istra))
               if (is_neutral(is+1)) then           ! IYS 18.09.2018
               endif
            endif

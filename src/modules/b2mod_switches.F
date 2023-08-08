@@ -20,6 +20,7 @@ c consistency checks for combinations of different switches (check_consistency_s
 
       type, public :: switches
 
+
       integer :: get_residuals !srv 22.05.18
       integer :: mdf_fhe       !srv 13.10.06
       integer :: mdf_fhi
@@ -521,6 +522,7 @@ c Med
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
 
+
       s % get_residuals = 0
       s % mdf_fhe = 0
       s % mdf_fhi = 0
@@ -571,6 +573,8 @@ c Advanced fluid neutral models
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
+
+
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
@@ -635,6 +639,7 @@ c Advanced fluid neutral models
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
       s % L_macro_AFN = 0.10_R8
+
 
       s % iout_b2wdat = 0
       s % b2sian_iout = 0

@@ -361,6 +361,7 @@
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
       integer, allocatable :: ipos_b2(:)
       integer :: artificial_slab=0
+      logical :: exists
 #ifndef F2003
       integer newunit
       external newunit
@@ -379,6 +380,12 @@
 !  skip neutral sources without associated faces
 !  CRCSTRA = 'V','C','T'
         if (mpg%rcFcP(istra,2) == 0) cycle
+!nh     check if the surface is not already written for a different species
+        exists = .false.
+        do i = 1,istra-1
+          if (rcstart(istra).eq.rcstart(i)) exists = .true.
+        end do
+        if (exists) cycle
         imodel = imodel + 1
         write (nout,'(a15,i6,a,i6)') 'recyc. surface ',istra,
      .   ' is associated with nondefault standard surface ',imodel
@@ -412,6 +419,7 @@
             deallocate (tris)
           end if
         end do
+        
       end do
 
       ntarg = imodel
@@ -492,6 +500,12 @@
 
       do istra = 1, mpg%nRc
         if (idim(istra) < 0) cycle
+!nh     check if the surface is not already written for a different species
+        exists = .false.
+        do i = 1,istra-1
+          if (rcstart(istra).eq.rcstart(i)) exists=.true.
+        end do
+        if (exists) cycle
         imodel = imodel + 1
         jsts(imodel) = -imodel
 
@@ -538,10 +552,26 @@
       open (unit=nblk14,file='eirene_block14.dat')
 #endif
       write (nblk14,'(3i6)') mpg%nCv, mpg%nCi, mpg%nFc
+!nh   determine the number of surface strata
+      ntarg = 0
+      imodel = 0
+      do istra = 1, mpg%nRc
+!  skip neutral sources without associated faces
+!  CRCSTRA = 'V','C','T'
+        if (mpg%rcFcP(istra,2) == 0) cycle
+        ntarg = ntarg+1
+      end do
       write (nblk14,'(i6)') ntarg
       write (nblk14,'(12i6)') (1, i=1,ntarg)
       do i = 1, ntarg
-        write (nblk14,'(12i6)') i, jsts(i), 0, 0, 1, 1
+        imodel = imodel + 1
+        do j = 1, i-1
+          if (rcstart(i).eq.rcstart(j)) then
+            imodel = imodel - 1 ! surface is already defined
+            exit
+          end if
+        end do
+        write (nblk14,'(12i6)') i, -imodel, 0, 0, 1, 1
       end do
       close (nblk14)
 

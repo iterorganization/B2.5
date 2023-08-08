@@ -180,7 +180,7 @@ c
       end do
       if (switch%spatial_hybrid.ne.0) then
        do is = 0, nsd-1
-         if (is_neutral(is)) then
+         if (is_neutral(is).and.(nint(zn(is)).eq.1)) then
            i= i+1
            fluids_list(is)=i
            ions_list(i)=is
