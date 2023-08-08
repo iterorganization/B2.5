@@ -61,7 +61,7 @@
       integer, save :: use_recyceir = 1
       integer, save :: nhist = 1, nrelax = 0
       real (kind=R8), save, allocatable ::
-     .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:), see_av(:,:)
+     .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:,:), see_av(:,:)
 
       real (kind=R8), save, allocatable ::                        !djm Jan2017
      .  sni_av_papl(:,:,:),sni_av_pmpl(:,:,:),
@@ -70,18 +70,18 @@
      .  smo_av_mipl(:,:,:),smo_av_cppv(:,:,:),
      .  see_av_eael(:,:), see_av_emel(:,:),
      .  see_av_eiel(:,:), see_av_epel(:,:),
-     .  sei_av_eapl(:,:), sei_av_empl(:,:),
-     .  sei_av_eipl(:,:), sei_av_eppl(:,:)
+     .  sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
+     .  sei_av_eipl(:,:,:), sei_av_eppl(:,:,:)
       real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
      &  sni_h(:,:,:,:),
      &  smo_h(:,:,:,:),
-     &  see_h(:,:,:), sei_h(:,:,:),
+     &  see_h(:,:,:), sei_h(:,:,:,:),
      &  pfluxa_h(:,:,:,:), rfluxa_h(:,:,:,:),
      &  pfluxm_h(:,:,:,:), rfluxm_h(:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sni_s(:,:,:),
      &  smo_s(:,:,:),
-     &  see_s(:,:), sei_s(:,:),
+     &  see_s(:,:), sei_s(:,:,:),
      &  pfluxa_s(:,:,:), rfluxa_s(:,:,:),
      &  pfluxm_s(:,:,:), rfluxm_s(:,:,:),
 ! _s is an abbreviation from 'sum'
@@ -93,16 +93,16 @@
      &  smo_h_mipl(:,:,:,:),smo_h_cppv(:,:,:,:),
      &  see_h_eael(:,:,:), see_h_emel(:,:,:),
      &  see_h_eiel(:,:,:), see_h_epel(:,:,:),
-     &  sei_h_eapl(:,:,:), sei_h_empl(:,:,:),
-     &  sei_h_eipl(:,:,:), sei_h_eppl(:,:,:),
+     &  sei_h_eapl(:,:,:,:), sei_h_empl(:,:,:,:),
+     &  sei_h_eipl(:,:,:,:), sei_h_eppl(:,:,:,:),
      &  sni_s_papl(:,:,:),sni_s_pmpl(:,:,:),
      &  sni_s_pipl(:,:,:),sni_s_pppl(:,:,:),
      &  smo_s_mapl(:,:,:),smo_s_mmpl(:,:,:),
      &  smo_s_mipl(:,:,:),smo_s_cppv(:,:,:),
      &  see_s_eael(:,:), see_s_emel(:,:),
      &  see_s_eiel(:,:), see_s_epel(:,:),
-     &  sei_s_eapl(:,:), sei_s_empl(:,:),
-     &  sei_s_eipl(:,:), sei_s_eppl(:,:)
+     &  sei_s_eapl(:,:,:), sei_s_empl(:,:,:),
+     &  sei_s_eipl(:,:,:), sei_s_eppl(:,:,:)
 
       real(kind=R8), allocatable, save :: hlp_stra(:)
       logical, allocatable, save :: hlp_pff(:,:)
@@ -112,16 +112,16 @@
       contains
 
       subroutine eirene_mc(nCv, nFc, ns, dtim,
-     1 sna0, smo0, she0, shi0,
+     1 sna0, smo0, she0, shi0, shn0,
      & main_call, switch, geo, mpg, st,
-     & kin_frac_hyb, fnn_inc)
+     & kin_frac_hyb, fluid_frac_hyb, fnn_inc)
       use b2mod_subsys
       implicit none
       integer nCv, nFc, ns
       real (kind=R8) ::
      * dtim,
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
-     & she0(nCv,0:3), shi0(nCv,0:3)
+     & she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3)
       logical main_call                                           !dpc
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
@@ -137,12 +137,12 @@ csw 19oct2012, added save attribute!!!
      1 nesepm_istra,
 #endif
       real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
+     * recyc_hlp,vthe,t0,t0n,t1,t1n,rf0,dua,t2,t3,t4,f,
 #ifdef WG_RM
      * ndes, private_flux_puff, nesepm_sol,
      * nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
 #endif
-     * recyctmp, kin_frac_hyb(mpg%nFc), !! only relevant for generalized spatially hybrid models
+     * recyctmp, kin_frac_hyb(mpg%nFc), fluid_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
@@ -211,7 +211,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       integer icount
 #endif
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      integer i,j,k,l,js,ls,kks,n,itmp,ind
+      integer i,j,k,l,js,ls,kks,n,itmp,ind,nplsh
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       integer, save, allocatable :: NPTS_input(:)
@@ -455,13 +455,17 @@ csw 26feb2013
 
 !! set logical lneustra
       lneustra = switch%spatial_hybrid.ne.0
+!! set L_macro for EIRENE
+      L_macro = switch%L_macro_AFN
+
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then
           kin_frac_hyb = 1.0_R8
+          fluid_frac_hyb = 1.0_R8
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv,
-     &                       kin_frac_hyb,fnn_inc)
+     &                       kin_frac_hyb,fluid_frac_hyb,fnn_inc)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -637,7 +641,8 @@ c first save the original NPTS provided by the Eirene input files.
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
-                tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(ifc,is)
+                tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(ifc,is)*
+     &            fluid_frac_hyb(iFc)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) +
      &            2.0_R8*fna_mol(ifc,is)
               end do !}
@@ -670,11 +675,11 @@ c first save the original NPTS provided by the Eirene input files.
             if (pfrregno1.ne.pfrregno2) then !{
               tflux(istrai)=(cbsna(0,isfeedback,pfrregno1)+
      1         cbsna(0,isfeedback,pfrregno2))/
-     2         switch%neutral_sources_rescale
+     2         (switch%neutral_sources_rescale*strasclfl(istrai))
             else !}{
               tflux(istrai)=
      1         cbsna(0,isfeedback,pfrregno1)/
-     2         switch%neutral_sources_rescale
+     2         (switch%neutral_sources_rescale*strasclfl(istrai))
             end if !}
             if(ncall.eq.0) then
               if(nesepm_pfr.gt.0.0_R8) then
@@ -690,28 +695,28 @@ c first save the original NPTS provided by the Eirene input files.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"nesepm_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.volrec_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"volrec_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.ndes_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"ndes_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.nepedm_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/
-     2       switch%neutral_sources_rescale
+     2       (switch%neutral_sources_rescale*strasclfl(istrai))
             if(ncall.eq.0)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
 #endif
@@ -891,7 +896,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
           do while (eircount.le.repeat_first_call)
            call copy_background(nCv, nFc, ns, switch, mpg,
      &                          geo, st%pl, st%dv,
-     &                          kin_frac_hyb, fnn_inc)
+     &                          kin_frac_hyb, fluid_frac_hyb, fnn_inc)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -902,7 +907,13 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         endif
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
-          call post_couple(nCv,nFc,ns,nstrat)
+          nplsh = 0
+          do is = 0,ns-1
+            if (is_neutral(is).and.nint(zn(is)).eq.1) then
+              nplsh = nplsh + 1
+            end if
+          end do
+          call post_couple(nCv,nFc,ns,nstrat,nplsh)
           write(*,*) 'Called post_couple'
         endif
       elseif(.not.main_call) then !}{
@@ -1903,7 +1914,7 @@ c              it is NOT IYSs style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
         allocate(sni_av(size(sni,1),size(sni,2),size(sni,3)))
         allocate(smo_av(size(smo,1),size(smo,2),size(smo,3)))
-        allocate(sei_av(size(sei,1),size(sei,2)))
+        allocate(sei_av(size(sei,1),size(sei,2),size(sei,3)))
         allocate(see_av(size(see,1),size(see,2)))
         sni_av=0.0_R8
         smo_av=0.0_R8
@@ -1918,10 +1929,10 @@ c              it is NOT IYSs style)
           allocate(smo_av_mmpl(size(smo,1),size(smo,2),size(smo,3)))
           allocate(smo_av_mipl(size(smo,1),size(smo,2),size(smo,3)))
           allocate(smo_av_cppv(size(smo,1),size(smo,2),size(smo,3)))
-          allocate(sei_av_eapl(size(sei,1),size(sei,2)))
-          allocate(sei_av_empl(size(sei,1),size(sei,2)))
-          allocate(sei_av_eipl(size(sei,1),size(sei,2)))
-          allocate(sei_av_eppl(size(sei,1),size(sei,2)))
+          allocate(sei_av_eapl(size(sei,1),size(sei,2),size(sei,3)))
+          allocate(sei_av_empl(size(sei,1),size(sei,2),size(sei,3)))
+          allocate(sei_av_eipl(size(sei,1),size(sei,2),size(sei,3)))
+          allocate(sei_av_eppl(size(sei,1),size(sei,2),size(sei,3)))
           allocate(see_av_eael(size(see,1),size(see,2)))
           allocate(see_av_emel(size(see,1),size(see,2)))
           allocate(see_av_eiel(size(see,1),size(see,2)))
@@ -2025,7 +2036,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
         sni_h(:,:,:,ihist) = sni
         smo_h(:,:,:,ihist) = smo
         see_h(:,:,ihist) = see
-        sei_h(:,:,ihist) = sei
+        sei_h(:,:,:,ihist) = sei
         if (balance_netcdf.ne.0) then !djm Jan2017
           sni_h_papl(:,:,:,ihist) = sni_papl
           sni_h_pmpl(:,:,:,ihist) = sni_pmpl
@@ -2039,10 +2050,10 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           see_h_emel(:,:,ihist) = see_emel
           see_h_eiel(:,:,ihist) = see_eiel
           see_h_epel(:,:,ihist) = see_epel
-          sei_h_eapl(:,:,ihist) = sei_eapl
-          sei_h_empl(:,:,ihist) = sei_empl
-          sei_h_eipl(:,:,ihist) = sei_eipl
-          sei_h_eppl(:,:,ihist) = sei_eppl
+          sei_h_eapl(:,:,:,ihist) = sei_eapl
+          sei_h_empl(:,:,:,ihist) = sei_empl
+          sei_h_eipl(:,:,:,ihist) = sei_eipl
+          sei_h_eppl(:,:,:,ihist) = sei_eppl
         endif
         do iatm = 1,nnatmi
          pfluxa_h(:,iatm,1,ihist) = pfluxa(:,iatm,1)
@@ -2089,7 +2100,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
          sni_av = sni_av + sni_h(:,:,:,ih)
          smo_av = smo_av + smo_h(:,:,:,ih)
          see_av = see_av + see_h(:,:,ih)
-         sei_av = sei_av + sei_h(:,:,ih)
+         sei_av = sei_av + sei_h(:,:,:,ih)
          if (balance_netcdf.ne.0) then !djm Jan2017
            sni_av_papl = sni_av_papl + sni_h_papl(:,:,:,ih)
            sni_av_pmpl = sni_av_pmpl + sni_h_pmpl(:,:,:,ih)
@@ -2103,10 +2114,10 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
            see_av_emel = see_av_emel + see_h_emel(:,:,ih)
            see_av_eiel = see_av_eiel + see_h_eiel(:,:,ih)
            see_av_epel = see_av_epel + see_h_epel(:,:,ih)
-           sei_av_eapl = sei_av_eapl + sei_h_eapl(:,:,ih)
-           sei_av_empl = sei_av_empl + sei_h_empl(:,:,ih)
-           sei_av_eipl = sei_av_eipl + sei_h_eipl(:,:,ih)
-           sei_av_eppl = sei_av_eppl + sei_h_eppl(:,:,ih)
+           sei_av_eapl = sei_av_eapl + sei_h_eapl(:,:,:,ih)
+           sei_av_empl = sei_av_empl + sei_h_empl(:,:,:,ih)
+           sei_av_eipl = sei_av_eipl + sei_h_eipl(:,:,:,ih)
+           sei_av_eppl = sei_av_eppl + sei_h_eppl(:,:,:,ih)
          endif
          do iatm = 1,nnatmi
           dab2_s(:,iatm,1) = dab2_s(:,iatm,1)
@@ -2466,7 +2477,6 @@ c     *             recyctmp*flux_scale(istrai)
                   t00=sni_av(ic,ifl,istrai)*tflux(istrai)*
      *             recyctmp*flux_scale(istrai)/
      *             dble(ih_end)
-
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
      1               'a default option that has been determined ' //
@@ -2819,10 +2829,11 @@ c*** before correction (r), after correction (c), after iteration (i)
 
         if (switch%eirene_mc_iout.ne.0) then
           write (chistrai,'(i1)') istrai
-          call my_out_us(70,nCv,0,sei_av(:,istrai),'sei'//chistrai)
+          call my_out_us(70,nCv*ns,0,sei_av(:,:,istrai),'sei'//chistrai)
           if (istrai.eq.1) then
             write (chncall,'(i3.3)') ncall
-            call my_out_us(70,nCv,0,sei_av(:,istrai),'sei1_'//chncall)
+            call my_out_us(70,nCv*ns,0,sei_av(:,:,istrai),
+     .        'sei1_'//chncall)
           endif
         endif
 
@@ -2976,25 +2987,43 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
 csw 26feb2014 averaging
 c              t0=sei(ic,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
-              t0=sei_av(ic,istrai)*tflux(istrai)*
-     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1         dble(ih_end)
+              t0 = 0.0_R8       !! will go to shi0
+              t0n = 0.0_R8      !! will go to shn0 
+              do is=0,ns-1
+                if (is_neutral(is).and.lneustra) then
+                  t0n = t0n + sei_av(ic,fluids_list(is),istrai)*
+     1                  tflux(istrai)*recyc_hlp*
+     1                  flux_scale(istrai)*sclstra(0,istrai)/
+     1                  dble(ih_end)
+                 elseif (.not.is_neutral(is)) then
+                  t0 = t0 + sei_av(ic,fluids_list(is),istrai)*
+     1                  tflux(istrai)*recyc_hlp*
+     1                  flux_scale(istrai)*sclstra(0,istrai)/
+     1                  dble(ih_end)
+                 endif
+              enddo
               if (balance_netcdf.ne.0) then
-                t0_a=sei_av_eapl(ic,istrai)*tflux(istrai)* !djm Jan2017
+                if (switch%tn_style.ne.0) then
+                  call xerrab('netcdf not yet for tn_style.ne.0')
+                endif
+                t0_a=sum(sei_av_eapl(ic,1:ns,istrai))*tflux(istrai)* !djm Jan2017
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_m=sei_av_empl(ic,istrai)*tflux(istrai)*
+                t0_m=sum(sei_av_empl(ic,1:ns,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_i=sei_av_eipl(ic,istrai)*tflux(istrai)*
+                t0_i=sum(sei_av_eipl(ic,1:ns,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_p=sei_av_eppl(ic,istrai)*tflux(istrai)*
+                t0_p=sum(sei_av_eppl(ic,1:ns,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
               endif
 
               ssei(istrai)=ssei(istrai)+t0
+
+
+
 c ? RADARR ?
 csw 06mar2012 add l_neutrad
               if(l_neutrad.lt.0) then
@@ -3026,7 +3055,6 @@ c*** before correction (r), after correction (c), after iteration (i)
                 src_ei(0,3)=src_ei(0,3)+t0
                 src_es(0,3)=src_es(0,3)+t0
               endif
-              t1=0.0_R8
               if (balance_netcdf.ne.0) then
                 t1_apl=0.0_R8 !djm Jan2017
                 t1_mpl=0.0_R8
@@ -3037,6 +3065,7 @@ cxpb Correction of Eirene energy sources to B2 heat sources
 cxpb Only necessary for SOLPS5.0 equation formulation
               if (switch%BoRiS.eq.0.0_R8.and.no_sseicorr.eq.0) then !{
                 do is=0,ns-1 !{
+                  t1 = 0.0_R8
                   if(use_recyceir.gt.0) then
                     recyctmp=recyceir(istrai)
                   else
@@ -3201,10 +3230,14 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                       t1_ppl=t1_ppl-t4_ppl
                     endif
                   end if !}
+                  if (is_neutral(is).and.lneustra) then
+                    t0n=t0n+t1                !! only necessary for kinetic -> fluid condensation
+                  else
+                    t0=t0+t1                  !! only t0 is used by default
+                  endif
                 end do !} !is
               end if !}
               sseicorr(istrai)=sseicorr(istrai)+t1
-              t0=t0+t1
               if (balance_netcdf.ne.0) then
                 t0_a=t0_a+t1_apl !djm Jan2017
                 t0_m=t0_m+t1_mpl
@@ -3215,6 +3248,14 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                 shi0(ic,0)=shi0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 shi0(ic,1)=shi0(ic,1)+
      1           (min(0.0_R8,t0)-abs(t0)*rf0)/st%pl%ti(ic)
+                if (lneustra) then
+                  shn0(ic,0)=shn0(ic,0)+max(0.0_R8,t0n)+abs(t0n)*rf0
+                  shn0(ic,1)=shn0(ic,1)+
+     1             (min(0.0_R8,t0n)-abs(t0n)*rf0)/st%pl%tn(ic)
+                else
+                  shn0(ic,0) = 0.0_R8
+                  shn0(ic,1) = 0.0_R8
+                endif
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
@@ -3285,6 +3326,11 @@ c$$$                    endif
                 endif
               elseif (linearisation.eq.0) then !}{
                 shi0(ic,0)=shi0(ic,0)+t0
+                if (lneustra) then
+                  shn0(ic,0)=shn0(ic,0)+t0n
+                else
+                  shn0(ic,0)=0.0_R8
+                endif
                 if (balance_netcdf.ne.0) then !djm Jan2017
                   eirene_mc_eapl_shi0to3(ic,0,istrai)=
      &             eirene_mc_eapl_shi0to3(ic,0,istrai)+t0_a
@@ -3296,9 +3342,13 @@ c$$$                    endif
      &             eirene_mc_eppl_shi0to3(ic,0,istrai)+t0_p
                 endif
               end if !}
+
             end if !}
+
         end do !} ic
       end do !} istrai
+
+
 c
 c*** correct radiation losses for the molecule dissociation
 c
@@ -3532,21 +3582,22 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
 
 * ..finalise save
       subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st,
-     &                           kin_frac_hyb,fnn_inc)
+     &                           kin_frac_hyb,fluid_frac_hyb,fnn_inc)
       implicit none
       integer, intent(in) :: nCv, nFc, ns
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
-      real(kind=R8) :: kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
+      real(kind=R8) :: kin_frac_hyb(mpg%nFc), fluid_frac_hyb(mpg%nFc),
+     &  fnn_inc(mpg%nFc,0:ns-1)
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
       end if
       call copy_background(nCv, nFc, ns, switch,
      &                     mpg, geo, st%pl, st%dv,
-     &                     kin_frac_hyb, fnn_inc)
+     &                     kin_frac_hyb, fluid_frac_hyb, fnn_inc)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011
@@ -3857,7 +3908,8 @@ c!###}
       allocate(smo_h(size(smo,1),
      .               size(smo,2), size(smo,3), nhistd))
       allocate(see_h(size(see,1), size(see,2), nhistd))
-      allocate(sei_h(size(sei,1), size(sei,2), nhistd))
+      allocate(sei_h(size(sei,1), 
+     .               size(sei,2), size(sei,3), nhistd))
       if (balance_netcdf.ne.0) then !djm Jan2017
 #ifdef WG_TODO
         allocate(sni_h_papl(size(sni,1),
@@ -3880,10 +3932,14 @@ c!###}
         allocate(see_h_emel(size(see,1), size(see,2), nhistd))
         allocate(see_h_eiel(size(see,1), size(see,2), nhistd))
         allocate(see_h_epel(size(see,1), size(see,2), nhistd))
-        allocate(sei_h_eapl(size(sei,1), size(sei,2), nhistd))
-        allocate(sei_h_empl(size(sei,1), size(sei,2), nhistd))
-        allocate(sei_h_eipl(size(sei,1), size(sei,2), nhistd))
-        allocate(sei_h_eppl(size(sei,1), size(sei,2), nhistd))
+        allocate(sei_h_eapl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
+        allocate(sei_h_empl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
+        allocate(sei_h_eipl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
+        allocate(sei_h_eppl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
 #endif
       endif
       allocate(pfluxa_h(size(pfluxa,1),size(pfluxa,2),1,nhistd))
@@ -3976,7 +4032,8 @@ c!###}
       allocate(smo_s(size(smo,1),
      .               size(smo,2), size(smo,3)))
       allocate(see_s(size(see,1), size(see,2)))
-      allocate(sei_s(size(sei,1), size(sei,2)))
+      allocate(sei_s(size(sei,1), 
+     .               size(sei,2), size(sei,3)))
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sni_s_papl(size(sni,1),
      .                      size(sni,2), size(sni,3)))
@@ -3998,10 +4055,14 @@ c!###}
         allocate(see_s_emel(size(see,1), size(see,2)))
         allocate(see_s_eiel(size(see,1), size(see,2)))
         allocate(see_s_epel(size(see,1), size(see,2)))
-        allocate(sei_s_eapl(size(sei,1), size(sei,2)))
-        allocate(sei_s_empl(size(sei,1), size(sei,2)))
-        allocate(sei_s_eipl(size(sei,1), size(sei,2)))
-        allocate(sei_s_eppl(size(sei,1), size(sei,2)))
+        allocate(sei_s_eapl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
+        allocate(sei_s_empl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
+        allocate(sei_s_eipl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
+        allocate(sei_s_eppl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
       endif
       allocate(pfluxa_s(size(pfluxa,1),size(pfluxa,2),1))
       allocate(pfluxm_s(size(pfluxm,1),size(pfluxm,2),1))

@@ -1597,10 +1597,10 @@ cxpb current feedback not yet tested!
         if (ncall.eq.0) then
           if (saved_cbsna_pfr1.ne.0.0_R8)
      >      cbsna(0,isfeedback,pfrregno1)=saved_cbsna_pfr1
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           if (saved_cbsna_pfr2.ne.0.0_R8)
      >      cbsna(0,isfeedback,pfrregno2)=saved_cbsna_pfr2
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
         endif
         ntot = 0.0_R8
         do iy=-1,ny
@@ -1656,11 +1656,13 @@ cxpb current feedback not yet tested!
      1     ncall,': PFLUXPUFFFEEDBACK (+)',ntot,ndes,cbsnainc
           cbsna(0,isfeedback,pfrregno1)=
      .     max(0.0_R8,cbsna(0,isfeedback,pfrregno1)+
-     &     switch%neutral_sources_rescale * cbsnainc)
+     &     switch%neutral_sources_rescale*strasclfl(nesepm_istra)
+     &     *cbsnainc)
           if (pfrregno1.ne.pfrregno2)
      >     cbsna(0,isfeedback,pfrregno2)=
      .     max(0.0_R8,cbsna(0,isfeedback,pfrregno2)+
-     &     switch%neutral_sources_rescale * cbsnainc)
+     &     switch%neutral_sources_rescale*strasclfl(nesepm_istra) 
+     &     *cbsnainc)
         endif
         if (pfrregno1.ne.pfrregno2) then
           if (diagno.ge.1)
@@ -1728,18 +1730,19 @@ c nesepm contains the desired separatrix density
 c do this only once at the beginning
           if (saved_cbsna_sol.ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=saved_cbsna_sol
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
 c cbsna(0,isfeedback,solregno) contains the boundary condition we are
 c changing under feedback control
           elseif (cbsna(0,isfeedback,solregno).ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=cbsna(0,isfeedback,solregno)
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           elseif (userfluxparm(nesepm_istra,1).ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=userfluxparm(nesepm_istra,1)
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           else
             cbsna(0,isfeedback,solregno)=
-     1       1.0e18_R8*switch%neutral_sources_rescale
+     1       1.0e18_R8*switch%neutral_sources_rescale*
+     2       strasclfl(nesepm_istra)
             write(*,*) 'Warning!  ',
      1       'The gas puff was started with an initial rate of 1e18!'
           endif
@@ -1826,7 +1829,7 @@ c the key part: update the gas puff based on the ratio of desired
 c value to the current value; nesepm_alpha is used to stabilise the
 c system and defaults to 1e-3
         saved_cbsna_sol=cbsna(0,isfeedback,solregno)/
-     .   switch%neutral_sources_rescale
+     .   (switch%neutral_sources_rescale*strasclfl(nesepm_istra))
 c we save the value
         if (nesepm_overshoot.ge.1.0_R8 .and.
      1    ((nesepm_sol.gt.0.0_R8 .and.
@@ -1860,10 +1863,10 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
         if (ncall.eq.0) then
           if (saved_cbsna_pfr1.ne.0.0_R8)
      >      cbsna(0,isfeedback,pfrregno1)=saved_cbsna_pfr1
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           if (saved_cbsna_pfr2.ne.0.0_R8)
      >      cbsna(0,isfeedback,pfrregno2)=saved_cbsna_pfr2
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
         endif
       endif
       if(private_flux_puff.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8) then
@@ -1871,38 +1874,42 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
           private_flux_area=0.0_R8
           if (saved_cbsna_pfr1.ne.0.0_R8) then
             cbsna(0,isfeedback,pfrregno1)=saved_cbsna_pfr1
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           elseif (cbsna(0,isfeedback,pfrregno1).ne.0.0_R8) then
             cbsna(0,isfeedback,pfrregno1)=cbsna(0,isfeedback,pfrregno1)
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           elseif (userfluxparm(nesepm_istra,1).ne.0.0_R8) then
             if (pfrregno1.eq.pfrregno2) then
               cbsna(0,isfeedback,pfrregno1)=userfluxparm(nesepm_istra,1)
-     .         *switch%neutral_sources_rescale
+     .         *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
             else
               cbsna(0,isfeedback,pfrregno1)=userfluxparm(nesepm_istra,1)
-     .         *switch%neutral_sources_rescale/2.0_R8
+     .         *switch%neutral_sources_rescale*strasclfl(nesepm_istra)/
+     .         2.0_R8
             endif
           else
             cbsna(0,isfeedback,pfrregno1)=
-     1       1.0e18_R8*switch%neutral_sources_rescale
+     1       1.0e18_R8*switch%neutral_sources_rescale*
+     2         strasclfl(nesepm_istra)
             write(*,*) 'Warning!  ',
      1       'The gas puff was started with an initial rate of 1e18!'
           endif
           if (pfrregno1.ne.pfrregno2) then
             if (saved_cbsna_pfr2.ne.0.0_R8) then
               cbsna(0,isfeedback,pfrregno2)=saved_cbsna_pfr2
-     .         *switch%neutral_sources_rescale
+     .         *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
             elseif (cbsna(0,isfeedback,pfrregno2).ne.0.0_R8) then
               cbsna(0,isfeedback,pfrregno2)=
      .         cbsna(0,isfeedback,pfrregno2)*
-     .         switch%neutral_sources_rescale
+     .         switch%neutral_sources_rescale*strasclfl(nesepm_istra)
             elseif (userfluxparm(nesepm_istra,1).ne.0.0_R8) then
               cbsna(0,isfeedback,pfrregno2)=userfluxparm(nesepm_istra,1)
-     .         *switch%neutral_sources_rescale/2.0_R8
+     .         *switch%neutral_sources_rescale*strasclfl(nesepm_istra)/
+     .         2.0_R8
             else
               cbsna(0,isfeedback,pfrregno2)=
-     1         1.0e18_R8*switch%neutral_sources_rescale
+     1         1.0e18_R8*switch%neutral_sources_rescale*
+     2         strasclfl(nesepm_istra)
             endif
           endif
           do ix=-1,nx
@@ -1943,14 +1950,14 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
      *     (1.0_R8+nesepm_alpha*nesepm_pfr/nesepm_curr)/
      *     (1.0_R8+nesepm_alpha)
           saved_cbsna_pfr1=cbsna(0,isfeedback,pfrregno1)/
-     .     switch%neutral_sources_rescale
+     .     (switch%neutral_sources_rescale*strasclfl(nesepm_istra))
           if (pfrregno1.ne.pfrregno2) then
             cbsna(0,isfeedback,pfrregno2)=
      .       cbsna(0,isfeedback,pfrregno2)*
      *       (1.0_R8+nesepm_alpha*nesepm_pfr/nesepm_curr)/
      *       (1.0_R8+nesepm_alpha)
             saved_cbsna_pfr2=cbsna(0,isfeedback,pfrregno2)/
-     .       switch%neutral_sources_rescale
+     .       (switch%neutral_sources_rescale*strasclfl(nesepm_istra))
           endif
           if(nesepm_overshoot.ge.1.0_R8.and.
      1     nesepm_curr.gt.nesepm_pfr*nesepm_overshoot) then
@@ -1989,10 +1996,12 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
           enddo
           if(diagno.ge.1) write(*,*) 'target_flux = ',target_flux
           cbsna(0,isfeedback,pfrregno1)=switch%neutral_sources_rescale*
-     .     target_flux*private_flux_puff/private_flux_area
+     .     strasclfl(nesepm_istra)*target_flux*private_flux_puff/
+     .     private_flux_area
           if (pfrregno1.ne.pfrregno2)
      >     cbsna(0,isfeedback,pfrregno2)=switch%neutral_sources_rescale*
-     .     target_flux*private_flux_puff/private_flux_area
+     .     strasclfl(nesepm_istra)*target_flux*private_flux_puff/
+     .     private_flux_area
         endif
         if (pfrregno1.ne.pfrregno2) then
           if (diagno.ge.1)
@@ -2010,16 +2019,17 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
         if (ncall.eq.0) then
           if (saved_cbsna_sol.ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=saved_cbsna_sol
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           elseif (cbsna(0,isfeedback,solregno).ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=cbsna(0,isfeedback,solregno)
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           elseif (userfluxparm(nesepm_istra,1).ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=userfluxparm(nesepm_istra,1)
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           else
             cbsna(0,isfeedback,solregno)=
-     1       1.0e18_R8*switch%neutral_sources_rescale
+     1       1.0e18_R8*switch%neutral_sources_rescale*
+     2       strasclfl(nesepm_istra)
             write(*,*) 'Warning!  ',
      1       'The gas puff was started with an initial rate of 1e18!'
           endif
@@ -2037,7 +2047,7 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
      *     (1.0_R8+volrec_alpha*(volrec_sol/volrec_curr)**volrec_beta)/
      *     (1.0_R8+volrec_alpha)
           saved_cbsna_sol=cbsna(0,isfeedback,solregno)/
-     .     switch%neutral_sources_rescale
+     .     (switch%neutral_sources_rescale*strasclfl(nesepm_istra))
           if(volrec_overshoot.ge.1.0_R8.and.
      1     volrec_curr.gt.volrec_sol*volrec_overshoot) then
             save_gas_puff_while_overshot=cbsna(0,isfeedback,solregno)
@@ -2058,18 +2068,19 @@ c nepedm contains the desired density at the top of the pedestal
 c do this only once at the beginning
           if (saved_cbsna_sol.ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=saved_cbsna_sol
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
 c cbsna(0,isfeedback,solregno) contains the boundary condition we are
 c changing under feedback control
           elseif (cbsna(0,isfeedback,solregno).ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=cbsna(0,isfeedback,solregno)
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           elseif (userfluxparm(nesepm_istra,1).ne.0.0_R8) then
             cbsna(0,isfeedback,solregno)=userfluxparm(nesepm_istra,1)
-     .       *switch%neutral_sources_rescale
+     .       *switch%neutral_sources_rescale*strasclfl(nesepm_istra)
           else
             cbsna(0,isfeedback,solregno)=
-     1       1.0e18_R8*switch%neutral_sources_rescale
+     1       1.0e18_R8*switch%neutral_sources_rescale*
+     2       strasclfl(nesepm_istra)
             write(*,*) 'Warning!  ',
      1       'The gas puff was started with an initial rate of 1e18!'
           endif
@@ -2130,7 +2141,7 @@ c the key part: update the gas puff based on the ratio of desired
 c value to the current value; nesepm_alpha is used to stabilise the
 c system and defaults to 1e-3
         saved_cbsna_sol=cbsna(0,isfeedback,solregno)/
-     .   switch%neutral_sources_rescale
+     .   (switch%neutral_sources_rescale*strasclfl(nesepm_istra))
 c we save the value
         if (nesepm_overshoot.ge.1.0_R8 .and.
      2      nesepm_curr.gt.nepedm_sol*nesepm_overshoot) then
