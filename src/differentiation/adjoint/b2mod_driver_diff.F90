@@ -3589,7 +3589,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, mpg, mpgb)
+      CALL READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, mpg, mpgb, switch)
       ALLOCATE(par_opt_physb(npar_opt))
       par_opt_physb = 0.D0
       ALLOCATE(par_opt_phys(npar_opt))
@@ -5053,7 +5053,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg)
+      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
@@ -8649,7 +8649,7 @@ CONTAINS
 !   csc the next enables to save the sensitivity of transport coefficients
 !   for each point of the domain but only for the call to b2tqna within
 !   the next call to b2mndt
-    last_call_transp = .false.
+    last_call_transp = .true.
     CALL B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0, &
 &           state%rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, &
 &           ntim, switch, switchb, geo, geob, mpg, mpgb, state, stateb1&

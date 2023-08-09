@@ -3597,7 +3597,8 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, nbdirs)
+      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, switch, &
+&                          nbdirs)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.D0
@@ -5066,7 +5067,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg)
+      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
@@ -5450,7 +5451,7 @@ CONTAINS
     DO nd=1,nbdirsmax
       jd(nd, :) = 0.D0
     END DO
-    if (first_opt_call) then
+    if (first_opt_call .and. .not.reset_gradient) then
     DO nd=1,nbdirsmax
       stated%pl%na(nd, :, :) = 0.D0
     END DO
