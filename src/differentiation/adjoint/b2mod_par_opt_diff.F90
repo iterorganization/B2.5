@@ -19,6 +19,9 @@ MODULE B2MOD_PAR_OPT_DIFF
 & b2datab, b2dataoncf, b2dataoncfb
   USE B2US_MAP_DIFF
   USE B2MOD_DIMENSIONS
+  USE B2MOD_TRANSPORT_NAMELIST_DIFF, ONLY : flag_dna, flag_dpa, flag_hci&
+& , flag_hce, flag_vla, flag_vsa, flag_sig, flag_alf
+  USE B2MOD_INPUT_PROFILE_DIFF, ONLY : ndata
   IMPLICIT NONE
 !
 ! VARIABLES RELATED TO COST FUNCTION DEFINITION
@@ -95,6 +98,7 @@ MODULE B2MOD_PAR_OPT_DIFF
 & par_opt_phys(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: par_opt_physb(:)
   LOGICAL, SAVE :: flag_optim=.false.
+  LOGICAL, SAVE :: reset_gradient=.false.
   INTEGER :: nnvar, nncon, nnjac
   REAL(kind=r8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx), gu(nvmx), jj(&
 & nvmx*nvmx), par_rescale(nvmx)
@@ -130,16 +134,18 @@ CONTAINS
 !                b2dataoncf:in-out m.cffcor:in-out
 !
 !
-  SUBROUTINE READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, m, mb)
+  SUBROUTINE READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, m, mb, sw)
     USE B2MOD_TYPES
+    USE B2MOD_SWITCHES_DIFF
     IMPLICIT NONE
     INTEGER :: ncon, nele_jac
     TYPE(MAPPING), INTENT(INOUT) :: m
     TYPE(MAPPING_DIFF), INTENT(INOUT) :: mb
-! csc local variables
     INTEGER, INTENT(IN) :: ns
-    INTEGER :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff, noss, &
-&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean
+! csc local variables
+    TYPE(SWITCHES), INTENT(IN) :: sw
+    INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
+&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean
     INTEGER, ALLOCATABLE :: cfreg(:)
     LOGICAL :: done
     CHARACTER(len=1) :: str
@@ -312,16 +318,16 @@ CONTAINS
               GOTO 100
             ELSE
               m%cfregp(icf, 1) = incf + 1
-              ndata = 0
+              numdata = 0
               DO icv=1,nomp
 !only use internal CVs
                 IF (omp(icv) .LE. m%nci) THEN
-                  m%cfreg(incf+1+ndata) = omp(icv)
-                  ndata = ndata + 1
+                  m%cfreg(incf+1+numdata) = omp(icv)
+                  numdata = numdata + 1
                 END IF
               END DO
-              m%cfregp(icf, 2) = ndata
-              incf = incf + ndata
+              m%cfregp(icf, 2) = numdata
+              incf = incf + numdata
             END IF
           CASE (2) 
 !
@@ -446,22 +452,22 @@ CONTAINS
 !
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
     IF (ANY(cfread)) THEN
-      ndata = MAXVAL(ncfdata(1:ncf), 1)
-      ALLOCATE(b2voloncfb(ncf, ndata))
+      numdata = MAXVAL(ncfdata(1:ncf), 1)
+      ALLOCATE(b2voloncfb(ncf, numdata))
       b2voloncfb = 0.D0
-      ALLOCATE(b2voloncf(ncf, ndata))
+      ALLOCATE(b2voloncf(ncf, numdata))
 !stores interpolated B2.5 volumes onto CF radial points
-      ALLOCATE(b2dataoncfb(ndata))
+      ALLOCATE(b2dataoncfb(numdata))
       b2dataoncfb = 0.D0
-      ALLOCATE(b2dataoncf(ndata))
+      ALLOCATE(b2dataoncf(numdata))
 !variable to store SOLPS data interpolated onto CF radial points
 !max number of CVs in a cost function
-      ndata = MAXVAL(m%cfregp(1:ncf, 2))
-      ALLOCATE(b2rr(ncf, ndata))
+      numdata = MAXVAL(m%cfregp(1:ncf, 2))
+      ALLOCATE(b2rr(ncf, numdata))
 !store here radial distance coordinate of SOLPS data
-      ALLOCATE(b2datab(ndata))
+      ALLOCATE(b2datab(numdata))
       b2datab = 0.D0
-      ALLOCATE(b2data(ndata))
+      ALLOCATE(b2data(numdata))
 !temporary variable to store SOLPS data for interpolation
       b2rr = 0.0_R8
       b2voloncf = 0.0_R8
@@ -531,18 +537,94 @@ CONTAINS
 &           'b2mod_par_opt: spatial_points<0')
       CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
 &           'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+! check that b2tqna_inputfile is used if any space-dependent transport sensitivity is needed
+      IF (ANY(spatial_dep(1:nnvar))) CALL XERTST(sw%&
+&                                          b2tqna_transport_inputfile &
+&                                          .EQ. 1, &
+&                                          'Sensitivity of spatially'//&
+&                    ' dependent coefficients needs b2tqna_inputfile=1!'&
+&                                         )
       DO ii=1,nnvar
+! check that the corresponding transport coefficients are actually active before
+! evaluating any sensitivity!!
+        IF (partype(ii) .EQ. 1 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_dna&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_dna requires flag_dna=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 2 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_dpa&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_dpa requires flag_dpa=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 3 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_hci&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_hci requires flag_hci=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 4 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_hce&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_hce requires flag_hce=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 6 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_vla&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_vla requires flag_vla=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 7 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_vsa&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_vsa requires flag_vsa=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 8 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_sig&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_sig requires flag_sig=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 9 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_alf&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_alf requires flag_alf=1!'&
+&                                                                 )
+! now some checks on spatially dependent coefficients
+        IF (spatial_dep(ii)) THEN
 !only parm_XXX can be spatially dependent
-        IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
-&           .GT. 9)) CALL XERRAB(&
-&                          'b2mod_par_opt: spatial_points optimization '&
-&                          //'is available only for partype 1-9')
-        IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
-          WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
-&         spatial_dep(ii), spatial_points(ii)
-          CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+          CALL XERTST(partype(ii) .GE. 1 .AND. partype(ii) .LE. 9, &
+&               'b2mod_par_opt: spatial_points optimization '//&
+&               'is available only for partype 1-9')
+          IF (spatial_points(ii) .LE. 1) THEN
+            WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&           spatial_dep(ii), spatial_points(ii)
+            CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
 &             'spatially dependent transport coefficients but you only '&
-&               //'specify one!')
+&                 //'specify one!')
+          END IF
+          IF (spatial_points(ii) .NE. ndata(1, partype(ii), paris(ii))) &
+&         THEN
+            WRITE(*, *) 'ipar, spatial_dep, spatial_points, ndata=', ii&
+&           , spatial_dep(ii), spatial_points(ii), ndata(1, partype(ii)&
+&           , paris(ii))
+            CALL XERRAB(' b2mod_par_opt: spatial_points in '//&
+&                 'b2.optimization.parameters must be equal to ndata '//&
+&                 'in b2.transport.inputfile')
+          END IF
         END IF
         IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. &
 &           partype(ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii&
@@ -775,15 +857,17 @@ CONTAINS
 
 !
 !
-  SUBROUTINE READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, m)
+  SUBROUTINE READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, m, sw)
     USE B2MOD_TYPES
+    USE B2MOD_SWITCHES_DIFF
     IMPLICIT NONE
     INTEGER, INTENT(OUT) :: ncon, nele_jac
     TYPE(MAPPING), INTENT(INOUT) :: m
-! csc local variables
     INTEGER, INTENT(IN) :: ns
-    INTEGER :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff, noss, &
-&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean
+! csc local variables
+    TYPE(SWITCHES), INTENT(IN) :: sw
+    INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
+&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean
     INTEGER, ALLOCATABLE :: cfreg(:)
     LOGICAL :: done
     CHARACTER(len=1) :: str
@@ -952,16 +1036,16 @@ CONTAINS
               GOTO 100
             ELSE
               m%cfregp(icf, 1) = incf + 1
-              ndata = 0
+              numdata = 0
               DO icv=1,nomp
 !only use internal CVs
                 IF (omp(icv) .LE. m%nci) THEN
-                  m%cfreg(incf+1+ndata) = omp(icv)
-                  ndata = ndata + 1
+                  m%cfreg(incf+1+numdata) = omp(icv)
+                  numdata = numdata + 1
                 END IF
               END DO
-              m%cfregp(icf, 2) = ndata
-              incf = incf + ndata
+              m%cfregp(icf, 2) = numdata
+              incf = incf + numdata
             END IF
           CASE (2) 
 !
@@ -1086,16 +1170,16 @@ CONTAINS
 !
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
     IF (ANY(cfread)) THEN
-      ndata = MAXVAL(ncfdata(1:ncf), 1)
-      ALLOCATE(b2voloncf(ncf, ndata))
+      numdata = MAXVAL(ncfdata(1:ncf), 1)
+      ALLOCATE(b2voloncf(ncf, numdata))
 !stores interpolated B2.5 volumes onto CF radial points
-      ALLOCATE(b2dataoncf(ndata))
+      ALLOCATE(b2dataoncf(numdata))
 !variable to store SOLPS data interpolated onto CF radial points
 !max number of CVs in a cost function
-      ndata = MAXVAL(m%cfregp(1:ncf, 2))
-      ALLOCATE(b2rr(ncf, ndata))
+      numdata = MAXVAL(m%cfregp(1:ncf, 2))
+      ALLOCATE(b2rr(ncf, numdata))
 !store here radial distance coordinate of SOLPS data
-      ALLOCATE(b2data(ndata))
+      ALLOCATE(b2data(numdata))
 !temporary variable to store SOLPS data for interpolation
       b2rr = 0.0_R8
       b2voloncf = 0.0_R8
@@ -1165,18 +1249,94 @@ CONTAINS
 &           'b2mod_par_opt: spatial_points<0')
       CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
 &           'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+! check that b2tqna_inputfile is used if any space-dependent transport sensitivity is needed
+      IF (ANY(spatial_dep(1:nnvar))) CALL XERTST(sw%&
+&                                          b2tqna_transport_inputfile &
+&                                          .EQ. 1, &
+&                                          'Sensitivity of spatially'//&
+&                    ' dependent coefficients needs b2tqna_inputfile=1!'&
+&                                         )
       DO ii=1,nnvar
+! check that the corresponding transport coefficients are actually active before
+! evaluating any sensitivity!!
+        IF (partype(ii) .EQ. 1 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_dna&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_dna requires flag_dna=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 2 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_dpa&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_dpa requires flag_dpa=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 3 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_hci&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_hci requires flag_hci=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 4 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_hce&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_hce requires flag_hce=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 6 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_vla&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_vla requires flag_vla=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 7 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_vsa&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_vsa requires flag_vsa=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 8 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_sig&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_sig requires flag_sig=1!'&
+&                                                                 )
+        IF (partype(ii) .EQ. 9 .AND. (.NOT.spatial_dep(ii))) CALL XERTST&
+&                                                                 (&
+&                                                               flag_alf&
+&                                                                  .EQ. &
+&                                                                  1, &
+&                        'Sensitivity for parm_alf requires flag_alf=1!'&
+&                                                                 )
+! now some checks on spatially dependent coefficients
+        IF (spatial_dep(ii)) THEN
 !only parm_XXX can be spatially dependent
-        IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
-&           .GT. 9)) CALL XERRAB(&
-&                          'b2mod_par_opt: spatial_points optimization '&
-&                          //'is available only for partype 1-9')
-        IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
-          WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
-&         spatial_dep(ii), spatial_points(ii)
-          CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+          CALL XERTST(partype(ii) .GE. 1 .AND. partype(ii) .LE. 9, &
+&               'b2mod_par_opt: spatial_points optimization '//&
+&               'is available only for partype 1-9')
+          IF (spatial_points(ii) .LE. 1) THEN
+            WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&           spatial_dep(ii), spatial_points(ii)
+            CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
 &             'spatially dependent transport coefficients but you only '&
-&               //'specify one!')
+&                 //'specify one!')
+          END IF
+          IF (spatial_points(ii) .NE. ndata(1, partype(ii), paris(ii))) &
+&         THEN
+            WRITE(*, *) 'ipar, spatial_dep, spatial_points, ndata=', ii&
+&           , spatial_dep(ii), spatial_points(ii), ndata(1, partype(ii)&
+&           , paris(ii))
+            CALL XERRAB(' b2mod_par_opt: spatial_points in '//&
+&                 'b2.optimization.parameters must be equal to ndata '//&
+&                 'in b2.transport.inputfile')
+          END IF
         END IF
         IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. &
 &           partype(ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii&
