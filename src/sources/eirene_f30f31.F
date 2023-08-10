@@ -516,7 +516,7 @@ c we derive the guard cell value from its neighbouring interior cell
       implicit none
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: geo
-      integer :: i, iLbl, minLbl, maxLbl, nBFaces, nBVerts
+      integer :: i, nB, iLbl, minLbl, maxLbl, nBFaces, nBVerts
       integer, allocatable :: bVerts(:)
 
       write(*,*) 'Writing fort.30 file'
@@ -528,12 +528,29 @@ c we derive the guard cell value from its neighbouring interior cell
       minLbl = minval(mpg%fcLbl)
       maxLbl = maxval(mpg%fcLbl)
 
+      ! first pass: identify number of boundary segments to be written
+      nB = 0
       do iLbl = minLbl,maxLbl
 
         ! only treat faces with non-zero fclbl
         if (iLbl.eq.0) cycle
 
-        ! determine number of faceswith this label
+        ! determine number of faces with this label
+        nBFaces = count(mpg%fcLbl==iLbl)
+
+        if (nBFaces.gt.0) nB = nB + 1
+
+      enddo
+
+      ! write file
+      write(30,'(i3)') nB
+
+      do iLbl = minLbl,maxLbl
+
+        ! only treat faces with non-zero fclbl
+        if (iLbl.eq.0) cycle
+
+        ! determine number of faces with this label
         nBFaces = count(mpg%fcLbl==iLbl)
 
         ! corresponding number of vertices
@@ -547,7 +564,7 @@ c we derive the guard cell value from its neighbouring interior cell
           call sort_vertices(nBVerts,bVerts,mpg%nFc,mpg%fcLbl,iLbl,mpg)
 
           ! write into fort.30
-          write(30,'(a,i3)') 'Boundary fcLbl = ',iLbl
+          write(30,'(i3)') iLbl
           write(30,'(i12)') nBVerts
           do i = 1,nBVerts
             write(30,'(2(2X,E21.14))') 
