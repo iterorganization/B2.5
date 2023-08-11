@@ -71,7 +71,7 @@ cank }
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   RECYC(:,:), B2RECYC(:,:), RECYCM(:,:), ERECYC(:,:), 
+     *   RECYC(:,:), B2RECYC(:,:), RECYCM(:,:), ERECYC(:,:),
      *   MRECYC(:,:), RCION(:,:), recyceir(:),
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:),
@@ -181,7 +181,7 @@ cank }
      ,  lcns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
-      real (kind=R8), save :: RCFE(NSTRAID), RCFI(NSTRAID)      
+      real (kind=R8), save :: RCFE(NSTRAID), RCFI(NSTRAID)
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
@@ -247,7 +247,7 @@ csw 21feb2012
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
      .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case,
-     .  e_fc,      !mb Franck-Condon energy contribution 
+     .  e_fc,      !mb Franck-Condon energy contribution
      . accel_ion   !mb flag for ion acceleration through sheath potential
 
       interface read_neutrals_namelist
@@ -413,8 +413,8 @@ cmb   b2recyc is set negative here to check whether the field was read. If not r
         endif
       enddo
 cmb  Default Franck-Condon energy is 2eV per atom
-      e_fc= 3.0_R8  
-cmb  Default is to accelerate ions everywhere with sheath potential (target & wall) 
+      e_fc= 3.0_R8
+cmb  Default is to accelerate ions everywhere with sheath potential (target & wall)
       accel_ion = 1
       RCION=0.0_R8
       recyceir=1.0_R8
@@ -438,7 +438,7 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       species_start(:)=0
       species_end(:)=nsd-1
 cmb   b2species_start and end are set -100 here to check whether the field was read. If not recyc is copied into b2recyc
-      b2species_start(:)=-100                            
+      b2species_start(:)=-100
       b2species_end(:)=-100
       maxw(:) = 1
       maxw_eff(:) = 1
@@ -682,7 +682,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           if (rc_list_size(is).eq.0) then
             if (crcstra(is)=="A") then
                 ! Automatic creation of boundary condition list from structures
-              old_style(is) = .false.      
+              old_style(is) = .false.
               call build_boundary_list( rcstart(is), rcend(is),
      &               rc_list_size(is),
      &               rc_list_x(:,is), rc_list_y(:,is),
@@ -732,11 +732,11 @@ c
 *   ..set additional variables
       do istra = 1, nstrat
         if (crcstra(istra).ne.'N' .and. crcstra(istra).ne.'S' .and.
-     &      crcstra(istra).ne.'W' .and. crcstra(istra).ne.'E') 
+     &      crcstra(istra).ne.'W' .and. crcstra(istra).ne.'E')
      &      targsp(istra,:)=-1
 cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
 !   to decouple these variables for the EIRENE side and the fluid neutral side.
-!   If these fields have not been set in the namelist they are made equal to their 
+!   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
         if (b2species_start(istra).eq.-100) then
         b2species_start(istra) = species_start(istra)
@@ -882,7 +882,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
         call xertst (species_start(istra).le.species_end(istra),
      .   'faulty inputs species_start > species_end')
         call xertst (4.gt.maxw(istra), 'faulty input maxw')
-        call xertst (0.le.mol(istra).and.mol(istra).le.1, 
+        call xertst (0.le.mol(istra).and.mol(istra).le.1,
      &   'faulty input mol')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
@@ -1329,7 +1329,7 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
         m%mxnRc = ns*count(m%fcLbl /= 0)
         call alloc_mapping_rc (m)
         m%rcFcP = 0
-        
+
 #ifdef F2003
         open (newunit=idb,file='debug_neutrals.out')
 #else
@@ -1340,18 +1340,18 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
         do istra = 1, nstrai
           if (crcstra(istra) == 'A') then
             nrcl = 0
-            m%rcFcP(istra,1) = instra +1 
+            m%rcFcP(istra,1) = instra +1
             noss = rcend(istra) - rcstart(istra) + 1
             do iss = 1, noss
               indss = rcstart(istra)+iss-1
               write (*,*) ' surface index ',indss
 ! find all faces belonging to surface structure INDSS
-              call find_faces (indss, instra, nrcl, 
+              call find_faces (indss, instra, nrcl,
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
             end do              ! iss
             m%rcFcP(istra,2) = nrcl
          elseif ((crcstra(istra) /= 'T') .and. (crcstra(istra) /= 'V')
-     >      .and. (crcstra(istra) /= 'C')) then      
+     >     .and. (crcstra(istra) /= 'C')) then
             call xerrab ('CRCSTRA /= ACTV ')
           endif
         end do
@@ -1359,7 +1359,7 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
       end if
 
       if (any(rc_list_size > 0))
-     .  call xerrab 
+     .  call xerrab
      .  ('read_neutrals_namelist_us -- rc_list_size > 0')
 
       call rc_to_struct(m)
@@ -1393,7 +1393,7 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
 
       arcstra = crcstra
       arcstart = rcstart
-      arcend = arcend    
+      arcend = arcend
 c
       if(chemical_erosion_redep_fac.ne.1.0_R8)
      * write(*,*)
@@ -1421,7 +1421,7 @@ c
         endif
 cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
 !   to decouple these variables for the EIRENE side and the fluid neutral side.
-!   If these fields have not been set in the namelist they are made equal to their 
+!   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
         if (b2species_start(ist).eq.-100) then
         b2species_start(ist) = species_start(ist)
@@ -2252,7 +2252,7 @@ cwdk also need to correct for degenerate faces?
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
           accel_ion(istra) = 1
-        elseif (crcstra(istra).eq.'E') then 
+        elseif (crcstra(istra).eq.'E') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
             m%rcFc(instra) = m%cvFc(
@@ -2265,7 +2265,7 @@ cwdk also need to correct for degenerate faces?
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
           accel_ion(istra) = 1
-        elseif (crcstra(istra).eq.'A') then 
+        elseif (crcstra(istra).eq.'A') then
           minlbl(istra) = rcstart(istra)
           maxlbl(istra) = rcend(istra)
           lchar(istra) = 'A'
@@ -2275,10 +2275,10 @@ cwdk also need to correct for degenerate faces?
             indss = rcstart(istra)+iss-1
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
-            call find_faces (indss, instra, rcl(istra), 
+            call find_faces (indss, instra, rcl(istra),
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
           end do  ! iss
-          m%rcFcP(istra,2) = rcl(istra) 
+          m%rcFcP(istra,2) = rcl(istra)
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
         else
@@ -2342,7 +2342,7 @@ cwdk also need to correct for degenerate faces?
 !pb         m%rcFcOr(instra) = rc_face_ori(istrac,istra)
 !pb         m%rcFc(instra) = ifc
           else
-            call xerrab('rc_to_struct -- problem with boundary face') 
+            call xerrab('rc_to_struct -- problem with boundary face')
           end if
         end do
       end do
@@ -2401,7 +2401,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i0)') 'EIRENE_MOD = ',eirene_mod
 
       write (iout,'(1x,a,i0)') 'NSTRAI     = ',m%nRc
-      write (iout,'(1x,a,(1x,T14,10(2x,4a1)))') 
+      write (iout,'(1x,a,(1x,T14,10(2x,4a1)))')
      .       'CRCSTRA = ',(ap,arcstra(istra),ap,',',istra=1,m%nRc)
 
       write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
@@ -2412,223 +2412,226 @@ cwdk also need to correct for degenerate faces?
      .       'RCFE  =  ',(rcfe(istra),',',istra=1,m%nRc)
       write(iout,'(1x,a,(1x,T14,10(f6.2,a1,1x)))')
      .       'RCFI  =  ',(rcfi(istra),',',istra=1,m%nRc)
- 
+
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))')
      .    'recyc(0,',istra,')= ',(recyc(is,istra),',',is=0,ns-1)
       end do
 
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))')
      .    'b2recyc(0,',istra,')= ',(b2recyc(is,istra),',',is=0,ns-1)
       end do
-      
+
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))')
      .    'mrecyc(0,',istra,')= ',(mrecyc(is,istra),',',is=0,ns-1)
       end do
-      
+
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))')
      .    'erecyc(0,',istra,')= ',(erecyc(is,istra),',',is=0,ns-1)
       end do
 
       do istra = 1, m%nRc
         if (crcstra(istra) /= 'V') cycle
-        write (iout,'(1x,a,i2,a,es10.2,a1)') 
+        write (iout,'(1x,a,i2,a,es10.2,a1)')
      .    'volrecstart(',istra,')= ',volrecstart(istra),','
       end do
       write (iout,'(1x,a,es10.2,a1)') 'volrecinc= ',volrecinc,','
       write (iout,'(1x,a,es10.2,a1)') 'volrecwt= ',volrecwt,','
 
-      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
      .   'lsns= ',(abs(lsns(is)),',',is =1,max(1,sum(ksns(1:nstrai))))
-      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
      .   'ksns= ',(ksns(is),',',is =1,nstrai)
       if (nnstsi > 0) then
-        write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
      .   'lcns= ',(lcns(is),',',is =1,nnstsi)
-        write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
      .   'ltns= ',(ltns(is),',',is =1,nnstsi)
       end if
 
-      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T14,10(2x,a1,a2,a1,a1)))')
+     .   'surf_mat = ',(ap,surf_mat(is),ap,',',is=1,nstrai)
+
+      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
      .   'maxw= ',(maxw(is),',',is =1,nstrai)
-     
-      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+
+      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
      .   'mol= ',(mol(is),',',is =1,nstrai)
 
-      write (iout,'(1x,a,(1x,T12,10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T12,10(i5,a1,1x)))')
      .   'accel_ion= ',(accel_ion(is),',',is =1,nstrai)
 
       write (iout,'(1x,a,f10.7,a1)') 'e_fc=',e_fc,','
 
-      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'b2espcr= ',(b2espcr(is),',',is=0,ns-1)
-      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'eb2spcr= ',(eb2spcr(is),',',is=1,nspecies)
       if (nnmoli > 0)
-     .  write (iout,'(1x,a,(10(i3,a1,1x)))') 
+     .  write (iout,'(1x,a,(10(i3,a1,1x)))')
      .    'lmolscl(1)= ',(lmolscl(is),',',is=1,nnmoli)
       do is=1,nnmoli
-        write (iout,'(1x,a,i2,a,(10(i5,a1,1x)))') 
+        write (iout,'(1x,a,i2,a,(10(i5,a1,1x)))')
      .    'mlcmp(1,',is,')= ',(mlcmp(i,is),',',i=1,nnatmi)
       end do
       do is=1,nnatmi
-        write (iout,'(1x,a,i2,a,(10(i3,a1,1x)))') 
+        write (iout,'(1x,a,i2,a,(10(i3,a1,1x)))')
      .    'lstrascl(1,',is,')= ',(lstrascl(i,is),',',i=1,m%nRc)
       end do
       write (iout,'(1x,a,i5,a1)') 'l_neutrad= ',l_neutrad,','
       write (iout,'(1x,a,es10.2,a1)') 'neut_scl_lim= ',neut_scl_lim,','
 
-      write (iout,'(1x,a,i2,a,(10(es10.2,a1,1x)))') 
+      write (iout,'(1x,a,i2,a,(10(es10.2,a1,1x)))')
      .    'userfluxparm(',1,',1)= ',(userfluxparm(i,1),',',i=1,m%nRc)
-      write (iout,'(1x,a,i2,a,(10(es10.2,a1,1x)))') 
+      write (iout,'(1x,a,i2,a,(10(es10.2,a1,1x)))')
      .    'userfluxparm(',1,',2)= ',(userfluxparm(i,2),',',i=1,m%nRc)
 
 #ifndef NO_B2_CHEM_SPUT
-      write (iout,'(1x,a,(1x,T25,10(f6.2,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T25,10(f6.2,a1,1x)))')
      .    'chemical_sputter_yield= ',
      .    (chemical_sputter_yield(i),',',i=1,nlimps)
-      write (iout,'(1x,a,es10.2,a1)') 
+      write (iout,'(1x,a,es10.2,a1)')
      .    'fchar_chemical= ',fchar_chemical,','
-      write (iout,'(1x,a,i5,a1)') 
+      write (iout,'(1x,a,i5,a1)')
      .    'igass_chemical= ',igass_chemical,','
-      write (iout,'(1x,a,i5,a1)') 
+      write (iout,'(1x,a,i5,a1)')
      .    'itsput_chemical= ',itsput_chemical,','
-      write (iout,'(1x,a,i5,a1)') 
+      write (iout,'(1x,a,i5,a1)')
      .    'issput_chemical= ',issput_chemical,','
 #endif
 
       do i = 1, ntrack
-        write (iout,'(1x,a,i2,a,(10(i5,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(i5,a1)))')
      .    'targsp(1,',i,')= ',(targsp(is,i),',',is=1,m%nRc)
       end do
-      write (iout,'(1x,a,(1x,T10,10(l3,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T10,10(l3,a1,1x)))')
      .   'chemsp= ',(chemsp(is),',',is =1,nstrai)
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))')
      .    'mrecyc(0,',istra,')= ',(mrecyc(is,istra),',',is=0,ns-1)
       end do
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))')
      .    'rcion(0,',istra,')= ',(rcion(is,istra),',',is=0,ns-1)
       end do
-      write (iout,'(1x,a,(1x,T11,10(es10.2,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T11,10(es10.2,a1,1x)))')
      .   'recyceir= ',(recyceir(is),',',is =1,nstrai)
-      write (iout,'(1x,a,4(es10.2,a1,1x))') 
+      write (iout,'(1x,a,4(es10.2,a1,1x))')
      .   'rf_neut= ',(rf_neut(i),',',i =1,4)
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(es10.2,a1)))')
      .   'phys_sput(0,',istra,')= ',(phys_sput(is,istra),',',is=0,ns-1)
       end do
       do istra = 1, m%nRc
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)))') 
+        write (iout,'(1x,a,i2,a,(10(es10.2,a1)))')
      .   'chem_sput(0,',istra,')= ',(chem_sput(is,istra),',',is=0,ns-1)
       end do
-      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'species_start= ',(species_start(is),',',is=1,m%nRc)
-      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'species_end= ',(species_end(is),',',is=1,m%nRc)
 
-      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'b2species_start= ',(b2species_start(is),',',is=1,m%nRc)
-      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'b2species_end= ',(b2species_end(is),',',is=1,m%nRc)
 
       write (iout,'(1x,5a)') 'NEUTRALS_FILENAME=',ap,
      .                       trim(neutrals_filename),ap,','
-      write (iout,'(1x,a,es10.2,a1)') 
+      write (iout,'(1x,a,es10.2,a1)')
      .    'neutrals_time_mod= ',neutrals_time_mod,','
-      write (iout,'(1x,a,es10.2,a1)') 
+      write (iout,'(1x,a,es10.2,a1)')
      .    'neutrals_time_switch= ',neutrals_time_switch,','
-      write (iout,'(1x,a,i5,a1)') 
+      write (iout,'(1x,a,i5,a1)')
      .     'l_neutflux= ',l_neutflux,','
-      write (iout,'(1x,a,(10(i5,a1,1x),/))') 
+      write (iout,'(1x,a,(10(i5,a1,1x),/))')
      .    'b2eatcr= ',(b2eatcr(is),',',is=0,ns-1)
       if (nnatmi > 0) then
-        write (iout,'(1x,a,(10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'eb2atcr= ',(eb2atcr(is),',',is=1,nnatmi)
-        write (iout,'(1x,a,(10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'latmscl= ',(latmscl(is),',',is=1,nnatmi)
       end if
-      if (nnioni > 0) 
-     .   write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      if (nnioni > 0)
+     .   write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'lionscl= ',(lionscl(is),',',is=1,nnioni)
 
       if (nnatmi > 0) then
         do istra = 1, m%nRc
-          write (iout,'(1x,a,i2,a,(10(es10.2,a1)))') 
+          write (iout,'(1x,a,i2,a,(10(es10.2,a1)))')
      .   'gpfc(1,',istra,')= ',(gpfc(i,istra),',',i=1,nnatmi)
         end do
       end if
-      write (iout,'(1x,a,i5,a1)') 
+      write (iout,'(1x,a,i5,a1)')
      .    'dbg_eir_mc= ',dbg_eir_mc,','
-      write (iout,'(1x,a,(1x,T14,10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T14,10(i5,a1,1x)))')
      .    'debug_flags= ',(debug_flags(i),',',i=1,100)
-      write (iout,'(1x,a,(1x,T14,10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T14,10(i5,a1,1x)))')
      .    'track_index= ',(track_index(is),',',is=0,ns-1)
-      write (iout,'(1x,a,(1x,T18,10(l3,a1,1x)))') 
+      write (iout,'(1x,a,(1x,T18,10(l3,a1,1x)))')
      .    'track_chem_sput= ',(track_chem_sput(is),',',is=1,ntrack)
 
-      write (iout,'(1x,a,es10.2,a1)') 
+      write (iout,'(1x,a,es10.2,a1)')
      .    'chemical_erosion_redep_fac= ',chemical_erosion_redep_fac,','
-      write (iout,'(1x,a,l3,a1)') 
+      write (iout,'(1x,a,l3,a1)')
      .    'chemical_erosion_be_fac=   ',chemical_erosion_be_fac,','
-      write (iout,'(1x,a,es10.2,a1)') 
+      write (iout,'(1x,a,es10.2,a1)')
      .    'chemical_erosion_be_fac_a= ',chemical_erosion_be_fac_a,','
-      write (iout,'(1x,a,es10.2,a1)') 
+      write (iout,'(1x,a,es10.2,a1)')
      .    'chemical_erosion_be_fac_b= ',chemical_erosion_be_fac_b,','
-      write (iout,'(1x,a,es10.2,a1)') 
+      write (iout,'(1x,a,es10.2,a1)')
      .    'chemical_erosion_be_fac_c= ',chemical_erosion_be_fac_c,','
 
-      write (iout,'(1x,a,i5,a1)') 
+      write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        write (iout,'(1x,a,(10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))') 
+        write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))')
      .    'sps_id= ',(ap,sps_id(i),ap,',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'i_spcsrf= ',(i_spcsrf(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'j_spcsrf= ',(j_spcsrf(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(es10.2,a1,1x)))') 
+        write (iout,'(1x,a,(10(es10.2,a1,1x)))')
      .    'sps_absr= ',(sps_absr(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(es10.2,a1,1x)))') 
+        write (iout,'(1x,a,(10(es10.2,a1,1x)))')
      .    'sps_trno= ',(sps_trno(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(es10.2,a1,1x)))') 
+        write (iout,'(1x,a,(10(es10.2,a1,1x)))')
      .    'sps_trni= ',(sps_trni(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(es10.2,a1,1x)))') 
+        write (iout,'(1x,a,(10(es10.2,a1,1x)))')
      .    'sps_mtri= ',(sps_mtri(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(es10.2,a1,1x)))') 
+        write (iout,'(1x,a,(10(es10.2,a1,1x)))')
      .    'sps_tmpr= ',(sps_tmpr(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(es10.2,a1,1x)))') 
+        write (iout,'(1x,a,(10(es10.2,a1,1x)))')
      .    'sps_spph= ',(sps_spph(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(es10.2,a1,1x)))') 
+        write (iout,'(1x,a,(10(es10.2,a1,1x)))')
      .    'sps_spch= ',(sps_spch(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(i5,a1,1x)))') 
+        write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'sps_sgrp= ',(sps_sgrp(i),',',i=1,n_spcsrf)
-        write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))') 
+        write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))')
      .    'sps_mtrl= ',(ap,sps_mtrl(i),ap,',',i=1,n_spcsrf)
       end if
 
       do istra=1,m%nRc
-        write (iout,'(1x,a,i2,a,(1x,T14,10(i5,a1,1x)))') 
+        write (iout,'(1x,a,i2,a,(1x,T14,10(i5,a1,1x)))')
      .   'msns(1,',istra,')= ',(msns(i,istra),',',i =1,2)
       end do
-      write (iout,'(1x,a,l3,a1)') 
+      write (iout,'(1x,a,l3,a1)')
      .    'write_nml_neut= ',write_nml_neut,','
-      write (iout,'(1x,a,(10(l3,a1,1x)))') 
+      write (iout,'(1x,a,(10(l3,a1,1x)))')
      .    'time_dep_puff= ',(time_dep_puff(i),',',i=1,m%nRc)
-      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+      write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'ngpdata= ',(ngpdata(i),',',i=1,m%nRc)
       do istra=1,m%nRc
         if (ngpdata(istra) > 0) then
-          write (iout,'(1x,a,i2,a,(1x,T14,10(i5,a1,1x)))') 
+          write (iout,'(1x,a,i2,a,(1x,T14,10(i5,a1,1x)))')
      .     'gpdata(1,1,',istra,')= ',
      .     (gpdata(i,1,istra),',',i=1,ngpdata(istra))
-          write (iout,'(1x,a,i2,a,(1x,T14,10(i5,a1,1x)))') 
+          write (iout,'(1x,a,i2,a,(1x,T14,10(i5,a1,1x)))')
      .     'gpdata(1,2,',istra,')= ',
      .    (gpdata(i,2,istra),',',i=1,ngpdata(istra))
         end if

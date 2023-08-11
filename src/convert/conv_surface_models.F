@@ -1,5 +1,5 @@
       subroutine conv_surface_models (mpg,
-     .           bndmdl, trifc, elem_cv, nelem)
+     .           bndmdl, trifc, elem_cv, nelem, node_vert, nnode)
 
       use b2mod_types
       use b2mod_boundary_namelist
@@ -9,9 +9,10 @@
 
       implicit none
 
-      integer, intent(in) :: nelem
+      integer, intent(in) :: nelem, nnode
       type(mapping), intent(in) :: mpg
-      integer, intent(in) :: trifc(3,nelem), elem_cv(nelem)
+      integer, intent(in) :: trifc(3,nelem), elem_cv(nelem),
+     .           node_vert(nnode)
       integer, intent(inout) :: bndmdl(3,nelem)
       character(500) :: line
       integer :: ineir, iouteir, nstsi, ists, i, ier, icut, nd, nsf,
@@ -22,8 +23,9 @@
       integer, allocatable :: idim_eir(:), ipos_eir(:),
      .                        istart_eir(:), iend_eir(:), idtrg(:),
      .                        istart_dum(:), iend_dum(:)
-      logical :: found,lhelp(60)
+      logical :: found, lhelp(60)
       integer :: artificial_slab=0, spatial_hybrid = 0
+      integer :: find_loc
 #ifndef F2003
       integer newunit
       external newunit
@@ -286,15 +288,18 @@
       if (nasmod /= 0) then
         if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
           !! limiter or linear case: only NW and NE corners
+          j = find_loc(node_vert,nnode,mpg%icornVx(2))
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(2)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+          j = find_loc(node_vert,nnode,mpg%icornVx(4))
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(4)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
         elseif (count(mpg%icornVx > 0) == nasmod) then
           !! SN of DN case: 4 or 8 corners
           do i = 1, nasmod
+            j = find_loc(node_vert,nnode,mpg%icornVx(i))
             read (ineir,'(2i6)') ihelp(1), ihelp(2)
-            write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(i)
+            write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
           end do
         else
          call xerrab('conv_surface_models -- nasmod')
