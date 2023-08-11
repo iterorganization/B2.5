@@ -1950,6 +1950,70 @@ cwdk also need to correct for degenerate faces?
 
       end subroutine write_bcparms
 
+
+      subroutine replace_outdated_bcparms (ns, m)
+      implicit none
+      integer, intent(in) :: ns
+      type (mapping), intent (inout) :: m
+      integer :: ib, is
+      logical changed
+
+cc Here outdated BCs that will not be revived in the WG code can be automatically replaced by new versions.
+cc This should only be done if the change is backward compatible! For example, the non-drift sheath BC BCMOM = 3 can be automaticaly replaced by
+cc BCMOM = 13, because it is drift-compatible but gives the same result as the old BCMOM = 3 for cases without drifts.
+
+      changed = .false.
+      do ib=1,m%nBc
+        do is=0,ns-1
+cc BCMOM
+          if (bcmom(is,ib).eq.3) then
+            bcmom(is,ib) = 13
+            write(*,*) 'Automatically changing BCMOM from 3 to 13'
+            changed = .true.
+          endif 
+
+        enddo
+cc BCENE
+        if (bcene(ib).eq.3) then 
+          bcene(ib) = 15
+          write(*,*) 'Automatically changing BCENE from 3 to 15'
+          changed = .true.
+        endif 
+        if (bcene(ib).eq.12) then 
+          bcene(ib) = 15
+          write(*,*) 'Automatically changing BCENE from 12 to 15'
+          changed = .true.
+        endif 
+cc BCENI
+        if (bceni(ib).eq.3) then 
+          bceni(ib) = 15
+          write(*,*) 'Automatically changing BCENI from 3 to 15'
+          changed = .true.
+        endif 
+        if (bceni(ib).eq.12) then 
+          bceni(ib) = 15
+          write(*,*) 'Automatically changing BCENI from 12 to 15'
+          changed = .true.
+        endif 
+
+cc BCPOT
+
+        if (bcpot(ib).eq.3) then 
+          bcpot(ib) = 11
+          write(*,*) 'Automatically changing BCPOT from 3 to 11'
+          changed = .true.
+        endif 
+
+      enddo
+
+      if (changed) then
+          write(*,*) 'Some outdated BCs' //
+     .    ' in WG have been replaced automatically.'
+          write(*,*) 'See lines above.'
+      endif
+
+      end subroutine replace_outdated_bcparms
+
 ***********************************************************************
 
       subroutine bc_to_struct (m)

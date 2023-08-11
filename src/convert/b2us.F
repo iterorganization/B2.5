@@ -301,8 +301,9 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
      &                'format. '
           call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-          call conv_bcparms (ns,mpg)
-          call write_bcparms(ns,mpg)
+          call conv_bcparms (nx, ny, ns, mpg, gm)
+          call replace_outdated_bcparms(ns, mpg)
+          call write_bcparms(ns, mpg)
         else
           write (*,*) 'Found b2.boundary.parameters in unstructured '//
      &                'format. '
