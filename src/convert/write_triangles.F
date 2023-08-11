@@ -265,16 +265,17 @@
 
 !  set recycling boundary model indicators
       inquire (file='input.dat',exist=ffound)
+      allocate (node_vert(mpg%nVx))
+      node_vert = [(i, i = 1, mpg%nVx)]
       if (ffound) then
         call conv_surface_models (mpg,
-     .     bndmdl, triFc, elem_cv, nelem)
+     .     bndmdl, triFc, elem_cv, nelem, node_vert, mpg%nVx)
       else
-        allocate (node_vert(mpg%nVx))
-        node_vert = [(i, i = 1, mpg%nVx)]
         call find_nondef_surfaces (nout, mpg, elem, bndmdl,
      .     elem_cv,  nelem, node_vert, mpg%nVx)
-        deallocate (node_vert)
       end if
+      deallocate (node_vert)
+
 
 !  check for holes in the triangle mesh
       nopen = 0

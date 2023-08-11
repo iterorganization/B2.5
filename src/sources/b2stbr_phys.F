@@ -171,6 +171,22 @@ c     output for analysis/debugging
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
       endif
+*    ..give a warning when mrecyc and/or erecyc are used for AFN neutrals
+      if ((ncall_b2stbr_phys.eq.0).and.(switch%recycle_afn.ne.0)) then
+        do istra = 1, nstrat
+          if (b2species_start(istra).ge.0) then
+            do is = b2species_start(istra), b2species_end(istra)
+              if (nint(zn(is)).eq.1) then
+                if(erecyc(is,istra)>0.0_R8.or.
+     2            mrecyc(is,istra)>0.0_R8)
+     3            write(*,*)'recycle_afn incompatible with ',
+     4            'user-defined momentum and energy recycling ',
+     5            'coefficients > 0 for istra= ', istra
+              endif
+            enddo
+          endif
+        enddo
+      endif
 #ifdef WG_TODO
       if(new_sputter_namelist) then
          do itargsp=1, ntargsp
@@ -885,13 +901,6 @@ c   Nuclear Fusion 57.11 (2017): 116043.
            farea = geo%fcs(iFc) !! area of the face
            cosa = geo%fcQalf(iFc,0)
            sina = geo%fcQalf(iFc,1)
-
-
-!! end of preliminary calculations
-           if(erecyc(is,istra)>0.0_R8.or.
-     2      mrecyc(is,istra)>0.0_R8)
-     3     write(*,*)'recycle_afn incompatible with user-defined '//
-     4     'momentum and energy recycling coefficients > 0'
 
            if (is.ne.is0) then !! ion species, recycling
 

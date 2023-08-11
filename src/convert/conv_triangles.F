@@ -33,7 +33,7 @@
      .                        ixtri(:), iytri(:), bndmdl(:,:),
      .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
       integer :: artificial_slab=0, overwrite_ntrfrm = 0,
-     .            is_narrow_grid = 0
+     .            is_narrow_grid = 0, use_old_co = 0
       real(R8) :: xc, yc, dist = 1.0_R8
       logical :: ffound
       character(500) :: line
@@ -55,6 +55,7 @@
       call ipgeti ('overwrite_ntrfrm', overwrite_ntrfrm)
       call ipgeti ('is_narrow_grid', is_narrow_grid)
       call ipgetr ('conv_triangles_dist',dist)
+      call ipgeti ('conv_triangles_old_co', use_old_co)
 
 !  if input.dat exists check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
@@ -138,11 +139,18 @@
             yc_new(NNODES)=yc
             node_vert(NNODES)=ivx ! store plasma vertex number corresponding to the node
           endif
+        else
+          write (*,'(a,i6,a,1p,1e15.8,a,1e15.8,a/a)')
+     .     'Vertex ', ivx ,' with coordinates (x, y) = (',
+     .      gm%vxX(ivx),',',gm%vxY(ivx),') not used. ',
+     .     'Likely X-point duplicate; not included among '//
+     .     'triangle nodes.'
         endif
       end do
       !! Store number of nodes corresponding to plasma grid vertices
       NPNODES = NNODES
       write (*,*) 'Found ', NPNODES, ' unique plasma vertices/nodes.'
+
 
 !  now check coordinates from old fort.33 file for new index
       do ico = 1, nco_old
@@ -177,7 +185,11 @@
      .                  'to old node ', im_new_old(ic)
 !            call xerrab ('node already used')
           endif
-          !write (*,*) 'Linking node ', ic, ' to old node ', ico
+          !write (*,*) 'Linking node ', ic, ' to old node ', ico'
+          if (use_old_co.eq.1) then
+            xc_new(ic) = xc_old(ico)
+            yc_new(ic) = yc_old(ico)
+          endif
           im_old_new(ico) = ic
           im_new_old(ic) = ico
         END IF
@@ -477,7 +489,7 @@
       inquire (file='input.dat',exist=ffound)
       if (ffound) then
         call conv_surface_models (mpg,
-     .     bndmdl, trifc, elem_cv, nelem)
+     .     bndmdl, trifc, elem_cv, nelem, node_vert, nnodes)
       else
         call find_nondef_surfaces (nout, mpg,
      .     elem_new, bndmdl, elem_cv, nelem, node_vert, nnodes)
@@ -531,7 +543,7 @@
       integer, allocatable :: jvx(:)
       integer :: nv, nf, j, jfc, jv1, jv2
       real(R8) :: px1, py1, px2, py2, vpx, vpy,
-     .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq
+     .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq, vvp, vvf
       logical :: found
 
       nv = mpg%cvVxP(icv,2)
@@ -568,6 +580,9 @@
         py2 = yc_new(in2)
         vpx = px2 - px1
         vpy = py2 - py1
+        vvp = sqrt(vpx**2 + vpy**2)
+        vpx = vpx/vvp
+        vpy = vpy/vvp
         do j = 1, nf
           jfc = mpg%cvFc(mpg%cvFcP(icv,1)+j-1)
           jv1 = mpg%fcVx(jfc,1)
@@ -578,17 +593,20 @@
           fy2 = gm%vxY(jv2)*100._R8
           vfx = fx2 - fx1
           vfy = fy2 - fy1
+          vvf = sqrt(vfx**2 + vfy**2)
+          vfx = vfx/vvf
+          vfy = vfy/vvf
 !  check if p and f are parallel
           det = abs(vfx*vpy - vfy*vpx)
           if (det > 1.D-4) cycle
 !  check that the "new" point lies on interval (x1,y1) -- (x2,y2)
           if ((node_vert(in1) /= jv1) .and. (node_vert(in1) /= jv2))then
-            d = vfy*px1 - vfx*py1 + (fx2*fy1-fx1*fy2)
+            d = vvf*vfy*px1 - vvf*vfx*py1 + (fx2*fy1-fx1*fy2)
           else
-            d = vfy*px2 - vfx*py2 + (fx2*fy1-fx1*fy2)
+            d = vvf*vfy*px2 - vvf*vfx*py2 + (fx2*fy1-fx1*fy2)
           end if
           dq = d*d
-          lq = vfx*vfx + vfy*vfy
+          lq = vvf*vvf
           if (dq < 1.D-6*LQ) then
             ifc = jfc
             return

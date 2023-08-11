@@ -2910,7 +2910,8 @@ c   (ionising_core option)
 * -- BCMOM=3 -- SHEATH CONDITIONS, MACH NUMBER AS INPUT
 
         case (3)
-          call xerrab ('b2stbc_phys -- BCMOM = 3 not adapted for WG')
+          call xerrab ('b2stbc_phys -- BCMOM = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCMOM = 13')
 #ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
@@ -3705,7 +3706,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCENE=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCENE = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENE = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENE = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
@@ -4570,7 +4572,8 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=12 -- SHEATH CONDITIONS, EL ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        call xerrab ('b2stbc_phys -- BCENE = 12 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENE = 12 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENE = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
@@ -5623,7 +5626,8 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCENI=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCENI = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENI = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENI = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
@@ -6515,7 +6519,8 @@ cxpb          endif
 * -- BCENI=12 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        call xerrab ('b2stbc_phys -- BCENI = 12 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENI = 12 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENI = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
@@ -8089,7 +8094,8 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCPOT=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCPOT = 11')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a,1p,g14.7,a)')

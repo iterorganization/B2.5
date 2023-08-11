@@ -250,7 +250,7 @@ c   ..dominant ion in plasma and its neutral
 
       do is = 0, nspp - 1
          if( nint(zn(is)).eq.1 ) then
-             if( zamax(is).eq.1.0_R8 ) then
+             if( nint(zamax(is)).eq.1 ) then
                  ism  = is
              else if( is_neutral(is) ) then
                  ism0 = is
