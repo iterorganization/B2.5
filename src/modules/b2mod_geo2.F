@@ -3,6 +3,7 @@
       use b2mod_indirect
      . , only: GRID_N_CELLFLAGS
       use b2mod_cellhelper
+      use b2mod_geometry
       use carre_constants
       use b2mod_grid_mapping
 
