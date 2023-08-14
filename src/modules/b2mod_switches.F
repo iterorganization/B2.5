@@ -1516,28 +1516,28 @@ c b2siav
       call ipgetr ('b2siav_addvis1', s%addvis1)                      !srv 04.10.99
       call ipgetr ('b2siav_cqip1', s%cqip1)
       call ipgeti ('b2siav_iout', s%b2siav_iout)
-      call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)                          !srv 28.03.06
+      call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)              !srv 28.03.06
 
 c b2trcl
-      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                            !iyv 06.12.13
+      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                !iyv 06.12.13
 
 c b2stbc
-        call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
-        call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
+      call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
+      call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
 
-        call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                              !srv 14.10.99
-        call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)                  !srv 11.04.13
-        call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
-        call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)                  !srv 11.04.13
-        call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)          !srv 25.07.05
-        call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
-        call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
-        call ipgetr ('b2stbc_nesepm', s%nesepm)
-        call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
-        call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+      call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                       !srv 14.10.99
+      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
+      call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
+      call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
+      call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)   !srv 25.07.05
+      call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
+      call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
+      call ipgetr ('b2stbc_nesepm', s%nesepm)
+      call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
+      call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
 
 c b2trno
-        call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)         !lk 31.01.08
+      call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)  !lk 31.01.08
 
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
@@ -1554,6 +1554,7 @@ c Med
 
       implicit none
       type (switches), intent (inout) :: s
+      external ipgeti
 
 cnh   Default value
       s % afn = 0

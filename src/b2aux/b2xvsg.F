@@ -74,7 +74,7 @@
       integer n
       integer i, ix, iy
       real (kind=R8), allocatable :: fun1d(:)
-      external xertst
+      external xertst, b2xvs1
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvsg1')
       call xertst (1.lt.nx1.and.1.lt.ny1.and.inc.ne.0,
