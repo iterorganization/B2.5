@@ -2135,7 +2135,7 @@ contains
 #endif
 #else
         write(0,*) 'Code was compiled without a GGD module'
-        write(0,*) 'Most IDS output is diabled !'
+        write(0,*) 'Most IDS output is disabled !'
 #endif
 
         !! Allocate and set time slice value
