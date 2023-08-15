@@ -176,6 +176,7 @@
       integer :: ic, ix, iy, i, ixNb, iyNb, ixl, ixr
       integer :: xstep, ystep, nNb
       logical :: cutFound, cellFound, fullGrid
+      external xerrab
 
       nncut=0
       bottomcut1(:)=ny+1
