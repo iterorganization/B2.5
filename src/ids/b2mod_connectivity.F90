@@ -453,13 +453,13 @@ contains
 
 
   subroutine init_region(nx,ny,nncut,nncutmax, &
-      & leftcut,rightcut,topcut,bottomcut, &
+      & leftcut,rightcut,topcut,bottomcut,ccut, &
       & leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy, &
       & region,nnreg,resignore, &
       & crx,cry,periodic_bc,cflag)
     use b2mod_types
     implicit none
-    integer, intent(in) :: nx,ny,nncut,nncutmax
+    integer, intent(in) :: nx,ny,nncut,nncutmax,ccut
     integer, intent(in) :: leftcut(nncutmax),rightcut(nncutmax), &
         & topcut(nncutmax),bottomcut(nncutmax), &
         & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny),&
@@ -825,29 +825,30 @@ contains
     !
     region=0
     ! volume component
+    ! first pass: do the real cells only (internal + boundary cells)
     if(nx.eq.1) then  ! 1d-radial
         do iy=-1,ny
             do ix=-1,nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
             enddo
         enddo
         nnreg(0)=1
     else if(ny.eq.1) then  ! 1d-parallel
         do iy=-1,ny
             do ix=-1,nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
             enddo
         enddo
         nnreg(0)=1
     else if (nncut.eq.0 .and. periodic_bc.eq.1) then   ! limiter and cylindrical slab cases
         do iy = -1, inseliy
             do ix = inselix1, inselix2
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
             enddo
         enddo
         do iy = inseliy+1, ny
             do ix = -1, nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 2
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 2
             enddo
         enddo
         if (inseliy.eq.ny) then
@@ -858,7 +859,7 @@ contains
     else if (nncut.eq.0 .and. periodic_bc.eq.0) then   ! 2-D slab case
         do iy = -1, ny
             do ix = -1, nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
             end do
         end do
         nnreg(0) = 1
@@ -867,7 +868,7 @@ contains
             if(nncut.eq.1) then
                 do ix=-1,leftcut(1)-1
                     do iy=-1,ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (periodic_bc.ne.1.or.iy.lt.topcut(1)) &
                             &           region(ix,iy,0)=3
                         if(periodic_bc.eq.1.and. &
@@ -880,25 +881,25 @@ contains
                 enddo
                 do ix=leftcut(1),rightcut(1)-1
                     do iy=bottomcut(1),topcut(1)-1
-                      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
+                      if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
                     enddo
                     if(periodic_bc.eq.0) then
                         do iy=topcut(1),ny
-                          if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
+                          if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
                         enddo
                     elseif(periodic_bc.eq.1) then
                         do iy=topcut(1),inseliy-1
-                          if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
+                          if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
                         enddo
                         do iy=inseliy,ny
-                          if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)) .and. &
+                          if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE)) .and. &
                           &   ix.ge.inselix1.and.ix.le.inselix2) region(ix,iy,0)=5
                         enddo
                     endif
                 enddo
                 do ix=rightcut(1),nx
                     do iy=-1,ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (periodic_bc.eq.0.or.iy.lt.topcut(1)) &
                             &           region(ix,iy,0)=4
                         if(periodic_bc.eq.1.and. &
@@ -915,14 +916,17 @@ contains
                     nnreg(0)=4
                 endif
             elseif(nncut.eq.2) then
+                if (ccut.eq.0) then
+                   call xerrab ('Found ccut = 0 : central cut for DN not specified.')
+                endif
                 do ix = -1, leftcut(1)-1
                     do iy = -1, ny
-                      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=3
+                      if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=3
                     enddo
                 enddo
                 do ix = leftcut(1), leftcut(2)-1
                     do iy = max(bottomcut(1),bottomcut(2)), ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (iy.lt.min(topcut(1),topcut(2))) then
                             region(ix,iy,0)=1
                         else
@@ -931,22 +935,16 @@ contains
                     enddo
                 enddo
                 do iy = -1, ny
-                    ix = leftcut(2)
-                    do while (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy)) .and. &
-                           &  .not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)))
-                        region(ix,iy,0)=4
-                        ix=ix+1
+                    do ix = leftcut(2), ccut-1
+                        if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=4
                     enddo
-                    ix = rightcut(2)-1
-                    do while (isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy)) .and. &
-                           &  .not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)))
-                        region(ix,iy,0)=7
-                        ix=ix-1
+                    do ix = ccut, rightcut(2)-1
+                        if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=7
                     enddo
                 enddo
                 do ix = rightcut(2), rightcut(1)-1
                     do iy = max(bottomcut(1),bottomcut(2)), ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (iy.lt.min(topcut(1),topcut(2))) then
                             region(ix,iy,0)=5
                         else
@@ -956,7 +954,7 @@ contains
                 enddo
                 do ix = rightcut(1), nx
                     do iy = -1, ny
-                      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=8
+                      if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=8
                     enddo
                 enddo
                 nnreg(0)=8
@@ -967,7 +965,7 @@ contains
     ! Ghost cells inherit region number from internal neighbour cell
     do ix=-1,nx
         do iy=-1,ny
-            if ( cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY ) cycle
+            if (.not.isBoundaryCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
             Xvertices(:) = crx(ix,iy,:)
             Yvertices(:) = cry(ix,iy,:)
             geoType = cellGeoType(Xvertices, Yvertices)

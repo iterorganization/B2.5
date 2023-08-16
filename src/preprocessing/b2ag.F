@@ -85,7 +85,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, io
+      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, ccut1, io
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen
@@ -134,12 +134,12 @@
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..read b2ag.dat file
-      call b2ag_read_parameters (ninp, nout, nx, ny, nx1, ny1)
+      call b2ag_read_parameters (ninp, nout, nx, ny, nx1, ny1, ccut1)
 *   ..call principal driver routine
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       call alloc_b2mod_geo(nx,ny)
       call alloc_b2mod_geo2(nx1,ny1,nncutmax)
-      call b2agdr (ninp, nout, nx, ny, nx1, ny1)
+      call b2agdr (ninp, nout, nx, ny, nx1, ny1, ccut1)
 *   ..close graphics files
 *     (none)
 *   ..close other files
