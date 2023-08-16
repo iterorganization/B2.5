@@ -81,6 +81,7 @@
       integer :: use_eirene = 0, external_species = 0
       integer :: boundary_namelist=0, neutrals_namelist = 0
       integer :: write_b2fgmtry_us=1, write_b2fstati_us=1
+      integer :: tria_mode=0
       real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) :: hzconst                                      !srv 30.01.10
       real (kind=R8) :: zpdum(0:nsdecl-1,4)
@@ -324,6 +325,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call alloc_b2mod_elements(ns,zn,am)
 
+      call ipgeti ('b2us_tria_mode', tria_mode)
+
       if (boundary_namelist.eq.1) then
         bcp_filename=repeat(' ',260)
         bcp_filename(1:22) = 'b2.boundary.parameters'
@@ -420,7 +423,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       close (35)
       lcheck = (ico > 0) .and. (iel > 0) .and. (iel2 > 0) .and.
      .         (iel == iel2)
-      if (linq_33 .and. linq_34 .and. linq_35 .and. lcheck) then
+      if (linq_33 .and. linq_34 .and. linq_35 .and. lcheck
+     .  .and. tria_mode.eq.0 ) then
         write (*,*) ' files fort.33, fort.34 and fort.35 found '
         write (*,*) ' convert files to represent unstructured mesh '
         call conv_triangles(nout(0), mpg, gm, nx, ny)
