@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agdr (ninp, nout, nx, ny, nx1, ny1)
+      subroutine b2agdr (ninp, nout, nx, ny, nx1, ny1, ccut1)
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
@@ -22,7 +22,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, nout_us, io
+      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, ccut1, nout_us, io
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -316,9 +316,9 @@
 *!!   be generated with dimensions (nx1,ny1).
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
-     1 cflags1,lblgm(61:120),periodic_bc,nncut,nncutmax)
+     1 cflags1,lblgm(61:120),periodic_bc,nncut,nncutmax,ccut1)
       call init_region(nx1,ny1,nncut,nncutmax,
-     1 leftcut1,rightcut1,topcut1,bottomcut1,
+     1 leftcut1,rightcut1,topcut1,bottomcut1,ccut1,
      2 leftix1,leftiy1,rightix1,rightiy1,
      3 topix1,topiy1,bottomix1,bottomiy1,
      4 region1,nnreg,resignore1,crx1,cry1,periodic_bc,cflags1)
@@ -372,7 +372,7 @@
      & cell_width, cell_height,
      & leftix1, leftiy1, rightix1, rightiy1,
      & topix1, topiy1, bottomix1, bottomiy1,
-     & leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
+     & leftcut1, rightcut1, bottomcut1, topcut1, ccut1, cflags1)
 *   ..correct pbsx on the proper mesh
       if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
