@@ -2522,12 +2522,14 @@ c     *             recyctmp*flux_scale(istrai)
                   endif
                   if(crcstra(istrai).ne.'V' .or. t00.gt.0.0_R8) then
                     t0=t00*sclalph(j,istrai)
+#ifdef WG_TODO
                     if (balance_netcdf.ne.0) then !djm Jan2017
                       t0_a=t0_a*sclalph(j,istrai)
                       t0_m=t0_m*sclalph(j,istrai)
                       t0_i=t0_i*sclalph(j,istrai)
                       t0_p=t0_p*sclalph(j,istrai)
                     endif
+#endif
                   endif
 
 c                  if (t0.lt.0.0_R8.and.main_call.and.
@@ -2675,6 +2677,7 @@ c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
      *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
      *             dble(ih_end)*geo%cvHz(ic)
                   if (balance_netcdf.ne.0) then !djm Jan2017
+#ifdef WG_TODO
                     t0_a=smo_av_mapl(ic,ifl,istrai)*
      *                   tflux(istrai)*
      *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
@@ -2691,6 +2694,7 @@ c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
      *                   tflux(istrai)*
      *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
      *                   dble(ih_end)*geo%cvHz(ic)
+#endif
                   endif
 
                   VTHE=SQRT(ST%PL%TE(IC)/me)
@@ -2715,6 +2719,7 @@ cxpb was     1               UA(RIGHTIX(IX,IY),RIGHTIY(IX,IY),IS)/VTHE
 cxpb was                    smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)=
 cxpb was     1               smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)-
 cxpb was     .               RF0*ABS((t0/2.0_R8))/VTHE
+#ifdef WG_TODO
                     if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                       if (t0.ge.0.0_R8) then
@@ -2783,8 +2788,10 @@ c$$$     &                          (t0_a+t0_m+t0_i+t0_p)*rf0/vthe
 c$$$                    endif
                       endif
                     endif
+#endif
                   elseif (linearisation.eq.0) then !}{
                     smo0(IC,0,IS)=smo0(IC,0,IS)+t0
+#ifdef WG_TODO
                     if (balance_netcdf.ne.0) then
                       eirene_mc_mapl_smo0to3(ic,0,is,istrai)= !djm Jan2017
      &                 eirene_mc_mapl_smo0to3(ic,0,is,istrai)+t0_a
@@ -2795,6 +2802,7 @@ c$$$                    endif
                       eirene_mc_cppv_smo0to3(ic,0,is,istrai)=
      &                 eirene_mc_cppv_smo0to3(ic,0,is,istrai)+t0_p
                     endif
+#endif
                   end if !}
                   SSMO(istrai,IS)=SSMO(istrai,IS)+t0
 c*** calculate the integral sources for nregion regions, 3 instants:
@@ -2848,6 +2856,7 @@ c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0=see_av(ic,istrai)*tflux(istrai)*
      *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *         dble(ih_end)
+#ifdef WG_TODO
               if (balance_netcdf.ne.0) then
                 t0_a = see_av_eael(ic,istrai)*tflux(istrai)* !djm Jan2017
      *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
@@ -2862,11 +2871,13 @@ c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
      *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *           dble(ih_end)
               endif
+#endif
 
               if (linearisation.eq.1) then !{
                 she0(ic,0)=she0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 she0(ic,1)=she0(ic,1)+
      1           (min(0.0_R8,t0)-abs(t0)*rf0)/st%pl%te(ic)
+#ifdef WG_TODO
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
@@ -2935,8 +2946,10 @@ c$$$     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/te(ix,iy)
 c$$$                    endif
                   endif
                 endif
+#endif
               elseif (linearisation.eq.0) then !}{
                 she0(ic,0)=she0(ic,0)+t0
+#ifdef WG_TODO
                 if (balance_netcdf.ne.0) then
                   eirene_mc_eael_she0to3(ic,0,istrai)= !djm Jan2017
      &             eirene_mc_eael_she0to3(ic,0,istrai)+t0_a
@@ -2947,6 +2960,7 @@ c$$$                    endif
                   eirene_mc_epel_she0to3(ic,0,istrai)=
      &             eirene_mc_epel_she0to3(ic,0,istrai)+t0_p
                 endif
+#endif
               end if !}
               ssee(istrai)=ssee(istrai)+t0
 c*** calculate the integral sources for nregion regions, 3 instants:
@@ -3002,6 +3016,7 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
      1                  dble(ih_end)
                  endif
               enddo
+#ifdef WG_TODO
               if (balance_netcdf.ne.0) then
                 if (switch%tn_style.ne.0) then
                   call xerrab('netcdf not yet for tn_style.ne.0')
@@ -3019,10 +3034,8 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
               endif
-
+#endif
               ssei(istrai)=ssei(istrai)+t0
-
-
 
 c ? RADARR ?
 csw 06mar2012 add l_neutrad
@@ -3238,12 +3251,14 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                 end do !} !is
               end if !}
               sseicorr(istrai)=sseicorr(istrai)+t1
+#ifdef WG_TODO
               if (balance_netcdf.ne.0) then
                 t0_a=t0_a+t1_apl !djm Jan2017
                 t0_m=t0_m+t1_mpl
                 t0_i=t0_i+t1_ipl
                 t0_p=t0_p+t1_ppl
               endif
+#endif
               if (linearisation.eq.1) then !{
                 shi0(ic,0)=shi0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 shi0(ic,1)=shi0(ic,1)+
@@ -3256,6 +3271,7 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                   shn0(ic,0) = 0.0_R8
                   shn0(ic,1) = 0.0_R8
                 endif
+#ifdef WG_TODO
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
@@ -3324,6 +3340,7 @@ c$$$     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/ti(ix,iy)
 c$$$                    endif
                   endif
                 endif
+#endif
               elseif (linearisation.eq.0) then !}{
                 shi0(ic,0)=shi0(ic,0)+t0
                 if (lneustra) then
@@ -3331,6 +3348,7 @@ c$$$                    endif
                 else
                   shn0(ic,0)=0.0_R8
                 endif
+#ifdef WG_TODO
                 if (balance_netcdf.ne.0) then !djm Jan2017
                   eirene_mc_eapl_shi0to3(ic,0,istrai)=
      &             eirene_mc_eapl_shi0to3(ic,0,istrai)+t0_a
@@ -3341,6 +3359,7 @@ c$$$                    endif
                   eirene_mc_eppl_shi0to3(ic,0,istrai)=
      &             eirene_mc_eppl_shi0to3(ic,0,istrai)+t0_p
                 endif
+#endif
               end if !}
 
             end if !}

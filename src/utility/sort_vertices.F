@@ -14,7 +14,8 @@
       use b2us_map
       implicit none
       integer, intent (in)        :: nVxList, nFcLbl, iLbl
-      integer, intent (inout)     :: vxList(nVxList), fcLbl(nFcLbl)
+      integer, intent (in)        :: fcLbl(nFcLbl)
+      integer, intent (inout)     :: vxList(nVxList)
       type (mapping), intent (in) :: m
 
       integer :: ncoss, icoss,
