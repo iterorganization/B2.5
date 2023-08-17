@@ -730,7 +730,7 @@ contains
     !
 
     integer ix,iy,inseliy,inselix1,inselix2,iyt,geoType,iFace,offset
-    integer ix1,ix2
+    integer ix1,ix2,ixn,iyn,iregn,ncount
     integer ixpt,ixbreak
     integer lefttargetindex(2), righttargetindex(2)
     logical CellToTest
@@ -825,7 +825,7 @@ contains
     !
     region=0
     ! volume component
-    ! first pass: do the real cells only (internal + boundary cells)
+    ! first pass: set region for the real cells (internal + boundary cells)
     if(nx.eq.1) then  ! 1d-radial
         do iy=-1,ny
             do ix=-1,nx
@@ -985,6 +985,52 @@ contains
         end do
     end do
 
+    ! Final pass for corner cells surrounded by ghosts
+    do iy=-1,ny
+        do ix=-1,nx
+            if (.not.isGhostCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+            if (region(ix,iy,0).ne.0) cycle
+            ! check for presence of ghost neighbors
+            ncount=0
+            iregn=0
+            ixn=leftix(ix,iy)
+            iyn=leftiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            ixn=rightix(ix,iy)
+            iyn=rightiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) call xerrab('Problem with region definition')
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            ixn=topix(ix,iy)
+            iyn=topiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) call xerrab('Problem with region definition')
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            ixn=bottomix(ix,iy)
+            iyn=bottomiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) call xerrab('Problem with region definition')
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            if (iregn.ne.0) region(ix,iy,0)=iregn
+            if (iregn.eq.0) then
+               write (*,*) 'Problem identifying region for corner cell ', ix,iy
+            endif
+        end do
+    end do
+
     ! Set unused cells to region 0
     do iy=-1,ny
         do ix=-1,nx
@@ -999,6 +1045,11 @@ contains
             if(.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)) .and. &
              & region(ix,iy,0).eq.0) write(*,*) 'REGION not set for ',ix,iy,0
         enddo
+    enddo
+
+    write(*,*) 'region(:,:,0)'
+    do iy=ny,-1,-1
+        write(*,'(3276(10i1,1x))') (region(ix,iy,0),ix=-1,nx)
     enddo
 
     ! After we know the volumetric region numbers, we fix the boundary indices for
