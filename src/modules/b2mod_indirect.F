@@ -23,10 +23,9 @@
      *  leftcut(:),
      *  rightcut(:),
      *  topcut(:),
-     *  bottomcut(:),
-     *  ccut
+     *  bottomcut(:)
       integer, save ::
-     *  nncut, nnreg(0:2), periodic_bc, nncutmax, redef_gmtry
+     *  nncut, ccut, nnreg(0:2), periodic_bc, nncutmax, redef_gmtry
       integer, allocatable, save ::
      *  cflags(:,:,:)
       logical, allocatable, save ::
