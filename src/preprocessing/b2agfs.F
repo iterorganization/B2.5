@@ -680,8 +680,8 @@ c
       username = usrnam()
       if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
-     .   //'|modules/Carre/meshes/'//trim(device)
-     .   //'|modules/Carre/meshes/'//trim(device)//'/'//trim(username)
+     .   //'|modules/Carre2/meshes/'//trim(device)
+     .   //'|modules/Carre2/meshes/'//trim(device)//'/'//trim(username)
         call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
