@@ -496,6 +496,9 @@ c Feedback
 c Med
       integer :: med_style
 
+c Optimization
+      integer :: b2optim_save_states
+
       end type switches
 
       contains
@@ -990,6 +993,9 @@ c b2trno
 
 c med
       s % med_style = 0
+
+c Optimization
+      s % b2optim_save_states = 0
 
       return
       end subroutine set_defaults_switches
@@ -1533,6 +1539,9 @@ c Feedback
 c Med
       call ipgeti ('b2mndr_med_style', s%med_style)
 
+c Optimization
+      call ipgeti ('b2optim_save_states', s%b2optim_save_states)
+
       return
       end subroutine read_switches
 
@@ -1961,6 +1970,10 @@ c b2ag
 c med
       call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
      &  'faulty parameter b2mndr_med_style')
+
+c Optimization
+      call xertst (s%b2optim_save_states.ge.0,
+     &  'faulty parameter b2optim_save_states')
 
       return
       end subroutine check_values_switches

@@ -484,17 +484,20 @@ C   4          *
       double precision DAT(*)
       integer IDAT(*)
       integer ISTOP, IDUM(0:2)
-      logical quitexist, quitexist_
+      logical quitexist, quitexist_, write_state
       character(22) :: opt_state_name
       character*120 label
+      integer, save :: filen = 0
 
       write(*,*) 'IPOPT: iteration ', ITER_COUNT
       write(*,*) 'IPOPT: objval ', OBJVAL
 
 ! Experimental: write intermediate state file?
-      if (ITER_COUNT .gt. 0) then
+      write_state = (switch%b2optim_save_states.gt.0) .and.
+     &              (mod(ITER_COUNT,switch%b2optim_save_states).eq.0)
+      if (write_state) then
         write(*,*) 'IPOPT: Saving intermediate optimization state'
-        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',ITER_COUNT
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
         idum(0) = mpg%nCv
         idum(1) = mpg%nFc
@@ -502,12 +505,13 @@ C   4          *
         call cfverw (99, newversion)
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
         write (label,'(a46,i4)')
-     &    'b2optim_ipopt intermediate optimization state ',ITER_COUNT
+     &    'b2optim_ipopt intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
         call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn,
      &   am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
+        filen = filen + 1
       endif
 
 !     And set ISTOP to 1 if you want Ipopt to stop now.  Below is just a
