@@ -1204,8 +1204,8 @@ c.. Make a list of core boundaries
       do is = 0, ns-1
         call xertst (0.0_R8.lt.niiso(is), 'faulty input niiso')
       enddo
-#ifdef WG_TODO
       do ib = 1, nbc
+#ifdef WG_TODO
         if (bcchar(ib).eq.'N') then
           if(old_style(ib)) then
             call xertst (1.le.bcpos(ib).and.bcpos(ib).le.ny+1,
@@ -1315,7 +1315,8 @@ c.. Make a list of core boundaries
             end do
           endif
         endif
-        if (old_style(ib)) call xertst (bcstart(ib).le.bcend(ib),
+#endif
+        call xertst (bcstart(ib).le.bcend(ib),
      .   'faulty inputs bcstart > bcend')
         do is = 0, ns-1
           call xertst (0.le.bccon(is,ib), 'faulty input bccon')
@@ -1327,7 +1328,6 @@ c.. Make a list of core boundaries
         call xertst (0.le.bcenk(ib), 'faulty input bcenk')
         call xertst (0.le.bcenz(ib), 'faulty input bcenz')
       enddo
-#endif
 #ifdef WG_OUT
       do ib = 1, nniso
         call xertst (-1.le.nxiso1(ib).and.nxiso1(ib).le.nx,
