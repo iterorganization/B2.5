@@ -495,8 +495,10 @@ C   4          *
       write(*,*) 'IPOPT: objval ', OBJVAL
 
 ! Experimental: write intermediate state file?
-      write_state = (switch%b2optim_save_states.gt.0) .and.
-     &              (mod(ITER_COUNT,switch%b2optim_save_states).eq.0)
+      write_state = .false.
+      if (switch%b2optim_save_states.gt.0) then
+        write_state = mod(ITER_COUNT,switch%b2optim_save_states).eq.0
+      endif
       if (write_state) then
         write(*,*) 'IPOPT: Saving intermediate optimization state'
         write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen

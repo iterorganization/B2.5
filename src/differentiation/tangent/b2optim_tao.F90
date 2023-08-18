@@ -297,8 +297,10 @@
       call VecRestoreArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 ! Experimental: write intermediate state file?
-      write_state = (switch%b2optim_save_states.gt.0) .and. &
-     &              (mod(iter,switch%b2optim_save_states).eq.0)
+      write_state = .false.
+      if (switch%b2optim_save_states.gt.0) then
+        write_state = mod(iter,switch%b2optim_save_states).eq.0
+      endif
       if (write_state) then
         write(*,*) 'Saving intermediate optimization state'
         write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
@@ -447,8 +449,10 @@
 #endif
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
 ! Experimental: write intermediate state file?
-      write_state = (switch%b2optim_save_states.gt.0) .and. &
-     &              (mod(iter,switch%b2optim_save_states).eq.0)
+      write_state = .false.
+      if (switch%b2optim_save_states.gt.0) then
+        write_state = mod(iter,switch%b2optim_save_states).eq.0
+      endif
       if (write_state) then
         write(*,*) 'Saving intermediate optimization state'
         write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
