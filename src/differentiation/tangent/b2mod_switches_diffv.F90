@@ -536,6 +536,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: b2trno_alpha_stoch
       INTEGER :: b2stbc_feedback
       INTEGER :: med_style
+      INTEGER :: b2optim_save_states
   END TYPE SWITCHES
   TYPE, PUBLIC :: SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fhe_vis_par
@@ -1144,6 +1145,9 @@ CONTAINS
 ! med
     s%med_style = 0
 !
+! Optimization
+    s%b2optim_save_states = 0
+!
     RETURN
   END SUBROUTINE SET_DEFAULTS_SWITCHES
 
@@ -1741,6 +1745,9 @@ CONTAINS
 ! Med
     CALL IPGETI('b2mndr_med_style', s%med_style)
 !
+! Optimization
+    CALL IPGETI('b2optim_save_states', s%b2optim_save_states)
+!
     RETURN
   END SUBROUTINE READ_SWITCHES
 
@@ -2171,6 +2178,10 @@ CONTAINS
 ! med
     CALL XERTST(s%med_style .GE. 0 .AND. s%med_style .LE. 1, &
 &         'faulty parameter b2mndr_med_style')
+!
+! Optimization
+    CALL XERTST(s%b2optim_save_states .GE. 0, &
+&         'faulty parameter b2optim_save_states')
 !
     RETURN
   END SUBROUTINE CHECK_VALUES_SWITCHES
