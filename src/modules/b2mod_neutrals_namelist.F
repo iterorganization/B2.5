@@ -1553,10 +1553,9 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
             end do
           end if
         endif
-        if (old_style(istra))
-     .   call xertst (rcstart(istra).le.rcend(istra),
-     .   'faulty inputs rcstart > rcend')
 #endif
+        call xertst (rcstart(istra).le.rcend(istra),
+     .   'faulty inputs rcstart > rcend')
         call xertst (maxval(targsp(istra,:)).lt.ns,
      .   'faulty inputs targsp > ns')
         call xertst (targsp(istra,1).ge.-1,
