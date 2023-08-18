@@ -4,6 +4,7 @@
 
       Vec X,X_L,X_U
       Mat Hess
+      integer, save :: iter = 0, filen = 0
       end module taomodule
 
       program b2optim_tao
@@ -226,10 +227,10 @@
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean
-      integer, save :: iter = 0
       character*3 str
       character(22) :: opt_state_name
       character*120 label
+      logical :: write_state
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
@@ -295,20 +296,23 @@
       call VecRestoreArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 ! Experimental: write intermediate state file?
-      if (iter .gt. 0) then
+      write_state = (switch%b2optim_save_states.gt.0) .and. &
+     &              (mod(iter,switch%b2optim_save_states).eq.0)
+      if (write_state) then
         write(*,*) 'Saving intermediate optimization state'
-        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',iter
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
         idum(0) = mpg%nCv
         idum(1) = mpg%nFc
         idum(2) = state%ns
         call cfverw (99, newversion)
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
-        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
         call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
+        filen = filen + 1
       endif
       iter = iter + 1
       ierr = 0
@@ -379,9 +383,9 @@
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean
       character*3 str
-      integer, save :: iter = 0
       character(22) :: opt_state_name
       character*120 label
+      logical :: write_state
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
@@ -442,20 +446,23 @@
 #endif
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
 ! Experimental: write intermediate state file?
-      if (iter .gt. 0) then
+      write_state = (switch%b2optim_save_states.gt.0) .and. &
+     &              (mod(iter,switch%b2optim_save_states).eq.0)
+      if (write_state) then
         write(*,*) 'Saving intermediate optimization state'
-        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim..',iter
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
         idum(0) = mpg%nCv
         idum(1) = mpg%nFc
         idum(2) = state%ns
         call cfverw (99, newversion)
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
-        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
         call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
+        filen = filen + 1
       endif
       iter = iter + 1
       call VecRestoreArrayReadF90(XX,x_v,ierr)

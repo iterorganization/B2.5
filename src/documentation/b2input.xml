@@ -4430,6 +4430,15 @@
 			  </description>
 			</switch>
 		</category>
+		<category name="Optimization">
+			<switch>
+				<name>b2optim_save_states</name>
+				<default>0</default>
+				<description>
+					If larger than zero, specifies the number of optimization iterations between writes of the intermediate state file b2fstate_optim.XXXX.
+				</description>
+			</switch>
+		</category>
 	</module>
 	<module name="b2.parameters" type="namelist">
 		<routine name="b2cdcn">
