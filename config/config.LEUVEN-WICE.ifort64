@@ -53,6 +53,7 @@ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 ifdef TAO
 include ${PETSC_DIR}/lib/petsc/conf/variables
 LIBOPT = ${PETSC_LIB}
+CPP    = /lib/cpp -traditional
 endif
 ifdef IPOPT
 LIBOPT = -L${IPOPTDIR}/lib/ -lipopt
