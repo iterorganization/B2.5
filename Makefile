@@ -390,7 +390,7 @@ OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
-ADEXTRA = 
+ADEXTRA =
 ifdef DIFF_D
 ADEXTRA += ${CONTEXTAD}
 endif
@@ -518,6 +518,7 @@ DIMSDIR = ${SRCDIR}/modules
 ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
 DIMSDIR = ${SRCDIR}/modules.local
 endif
+DEFINES += -DDIMENSIONS_MODULE # this is needed for makedepend for Eirene
 
 ${DIFFDIR}/b2mod_dimensions.F: ${DIMSDIR}/b2mod_dimensions.F
 	ln -sf  $< ${DIFFDIR}
