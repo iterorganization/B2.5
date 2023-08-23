@@ -851,7 +851,7 @@ cdpc
          Pflx = t0/geo%fcS(iFc)  ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
             vbar = sqrt(8.0_R8 * pl%ti(iCv) / (pi * am(is) * mp))
-            Pflx = Pflx + pl%na(iCv,is)*vbar*alpha *
+            Pflx = Pflx + pl%na(iCv,is)*vbar*switch%b2stbr_alpha *
      1           switch%neutral_sources_rescale*strasclfl(istra) ! dpc: Eirene coupling 1999.06.28
          endif
          if (switch%recycle_afn.eq.0.or.nint(zn(is0)).ne.1) then
