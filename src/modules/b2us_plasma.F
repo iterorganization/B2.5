@@ -199,6 +199,7 @@ cwdk move to dv
         real(R8), dimension(:), allocatable :: sne0_eir_tot,
      .                                         she0_eir_tot,
      .                                         shi0_eir_tot,
+     .                                         shn0_eir_tot,
      .                                         sch0_eir_tot
       end type B2SourceWork
 
@@ -1553,6 +1554,7 @@ cwdk move to dv
       allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8)
       allocate( srw % sne0_eir_tot( nCv ), SOURCE=0._R8)
       allocate( srw % she0_eir_tot( nCv ), SOURCE=0._R8)
+      allocate( srw % shn0_eir_tot( nCv ), SOURCE=0._R8)
       allocate( srw % shi0_eir_tot( nCv ), SOURCE=0._R8)
       allocate( srw % sch0_eir_tot( nCv ), SOURCE=0._R8)
 #else
@@ -1615,6 +1617,7 @@ cwdk move to dv
       allocate( srw % sne0_eir_tot( nCv ) )
       allocate( srw % she0_eir_tot( nCv ) )
       allocate( srw % shi0_eir_tot( nCv ) )
+      allocate( srw % shn0_eir_tot( nCv ) )
       allocate( srw % sch0_eir_tot( nCv ) )
 
       srw % sch0 = 0._R8
@@ -1676,6 +1679,7 @@ cwdk move to dv
       srw % sne0_eir_tot = 0.0_R8
       srw % she0_eir_tot = 0.0_R8
       srw % shi0_eir_tot = 0.0_R8
+      srw % shn0_eir_tot = 0.0_R8
       srw % sch0_eir_tot = 0.0_R8
 #endif
 
@@ -1746,6 +1750,7 @@ cwdk move to dv
       deallocate( srw % sne0_eir_tot )
       deallocate( srw % she0_eir_tot )
       deallocate( srw % shi0_eir_tot )
+      deallocate( srw % shn0_eir_tot )
       deallocate( srw % sch0_eir_tot )
 
       return

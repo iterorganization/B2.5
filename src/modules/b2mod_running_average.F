@@ -22,12 +22,12 @@
      .                             sna_mean(:,:),
      .                             smo_mean(:,:),
      .                             she_mean(:),
-     .                             shi_mean(:)
+     .                             shi_mean(:), shn_mean(:)
       real (kind=R8), allocatable, save ::
      .                             e_sna(:,:),
      .                             e_smo(:,:),
      .                             e_she(:),
-     .                             e_shi(:)
+     .                             e_shi(:), e_shn(:)
 
 
       character lble*120, lbli*120, check*10
@@ -67,6 +67,8 @@ c local
      .                                            itp, naver)
       call batch_average (nCv,    srw%shi0_eir_tot, shi_mean,
      .                                            itp, naver)
+      call batch_average (nCv,    srw%shn0_eir_tot, shn_mean,
+     .                                            itp, naver)
       call batch_average (nCv*ns, srw%smo0_eir_tot, smo_mean,
      .                                            itp, naver)
 
@@ -84,6 +86,8 @@ c local
       call batch_average_sq (nCv,    srw%she0_eir_tot, e_she,
      .                                            itp, naver)
       call batch_average_sq (nCv,    srw%shi0_eir_tot, e_shi,
+     .                                            itp, naver)
+      call batch_average_sq (nCv,    srw%shn0_eir_tot, e_shn,
      .                                            itp, naver)
       call batch_average_sq (nCv*ns, srw%smo0_eir_tot, e_smo,
      .                                            itp, naver)
@@ -129,10 +133,12 @@ c local variables
          allocate (smo_mean(nCv,0:ns-1))
          allocate (she_mean(nCv))
          allocate (shi_mean(nCv))
+         allocate (shn_mean(nCv))
          allocate (e_sna(nCv,0:ns-1))
          allocate (e_smo(nCv,0:ns-1))
          allocate (e_she(nCv))
          allocate (e_shi(nCv))
+         allocate (e_shn(nCv))
 
       end if
 
@@ -157,10 +163,12 @@ c local variables
       sna_mean = 0.0_R8
       she_mean = 0.0_R8
       shi_mean = 0.0_R8
+      shn_mean = 0.0_R8
       smo_mean = 0.0_R8
       e_sna = 0.0_R8
       e_she = 0.0_R8
       e_shi = 0.0_R8
+      e_shn = 0.0_R8
       e_smo = 0.0_R8
 
       if (iav_cont > 0) then
@@ -204,6 +212,7 @@ c local variables
               call cfrure (iun, nCv*ns, sna_mean, 'sna_mean')
               call cfrure (iun, nCv,    she_mean, 'she_mean')
               call cfrure (iun, nCv,    shi_mean, 'shi_mean')
+              call cfrure (iun, nCv,    shn_mean, 'shn_mean')
               call cfrure (iun, nCv*ns, smo_mean, 'smo_mean')
             end if
 
@@ -221,6 +230,7 @@ c local variables
               call cfrure (iun, nCv*ns, e_sna, 'e_sna')
               call cfrure (iun, nCv,    e_she, 'e_she')
               call cfrure (iun, nCv,    e_shi, 'e_shi')
+              call cfrure (iun, nCv,    e_shn, 'e_shn')
               call cfrure (iun, nCv*ns, e_smo, 'e_smo')
             end if
 
@@ -263,10 +273,12 @@ c local variables
       deallocate (smo_mean)
       deallocate (she_mean)
       deallocate (shi_mean)
+      deallocate (shn_mean)
       deallocate (e_sna)
       deallocate (e_smo)
       deallocate (e_she)
       deallocate (e_shi)
+      deallocate (e_shn)
 
       return
       end subroutine run_av_fin
@@ -333,6 +345,7 @@ c local variables
          call cfwure (iun, nCv*ns, sna_mean, 'sna_mean')
          call cfwure (iun, nCv,    she_mean, 'she_mean')
          call cfwure (iun, nCv,    shi_mean, 'shi_mean')
+         call cfwure (iun, nCv,    shn_mean, 'shn_mean')
          call cfwure (iun, nCv*ns, smo_mean, 'smo_mean')
 
       end if
@@ -352,6 +365,7 @@ c local variables
          call cfwure (iun, nCv*ns, e_sna, 'e_sna')
          call cfwure (iun, nCv,    e_she, 'e_she')
          call cfwure (iun, nCv,    e_shi, 'e_shi')
+         call cfwure (iun, nCv,    e_shn, 'e_shn')
          call cfwure (iun, nCv*ns, e_smo, 'e_smo')
 
       end if
@@ -388,12 +402,12 @@ c local variables
       end subroutine run_av_get_plasma
 
       subroutine run_av_get_sources (sna_out, smo_out, she_out, shi_out,
-     &                          nCv, ns)
+     &                         shn_out, nCv, ns)
       implicit none
       integer, intent(in) :: nCv, ns
       real (kind=R8), intent(out) ::
      *  sna_out(nCv,0:ns-1), smo_out(nCv,0:ns-1),
-     &  she_out(nCv), shi_out(nCv)
+     &  she_out(nCv), shi_out(nCv), shn_out(nCv)
 
       call subini ('run_av_get_sources')
 
@@ -403,6 +417,7 @@ c only the total sources are averaged, not the linearised components.
       smo_out = smo_mean
       she_out = she_mean
       shi_out = shi_mean
+      shn_out = shn_mean
 
       call subend ()
 

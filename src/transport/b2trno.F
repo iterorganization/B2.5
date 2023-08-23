@@ -438,21 +438,21 @@ c the logic statements below could be simplfied but for now we go for readabilit
      &                           'b2trno_dnahz_th'//chns)
         call my_out_us(70,nFc,1,co%cdnahz(1,1,is),
      &                           'b2trno_dnahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cdpahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cdpahz(1,0,is),
      &                           'b2trno_cdpahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cdpahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cdpahz(1,1,is),
      &                           'b2trno_cdpahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvlahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvlahz(1,0,is),
      &                           'b2trno_cvlahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvlahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvlahz(1,1,is),
      &                           'b2trno_cvlahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvsahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),
      &                           'b2trno_cvsahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvsahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),
      &                           'b2trno_cvsahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvmahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvmahz(1,0,is),
      &                           'b2trno_cvmahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvmahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvmahz(1,1,is),
      &                           'b2trno_cvmahz_r'//chns)
         if (flux_limit_style.eq.2) then                                 !srv 07.12.15 {
          call my_out_us(70,nFc,1,co%chcb(1,0,is),

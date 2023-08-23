@@ -136,7 +136,7 @@
       call cfopen (ninp(1),'stra.dat','old','formatted')
       call cfopen (ninp(2),'weis.dat','old','formatted')
       call cfopen (ninp(3),'b2fpardf','old','un*formatted')
-!wdk      call cfopen (ninp(4),'b2fgmtry','old','un*formatted')
+!wdk      call cfopen (ninp(4),'b2fgmtry_st','old','un*formatted')
       call cfopen (nout(0),'b2ar.prt','new','formatted')
       call cfopen (nout(1),'b2frates','new','un*formatted')
 *   ..mark output unit for error messages
