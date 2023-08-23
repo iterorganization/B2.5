@@ -336,7 +336,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
      .  ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (switch%b2stbr_neutrals_namelist.eq.1 .or.
      &    switch%use_eirene.ne.0)
-     > call read_neutrals_namelist(ns, mpg, .false.)
+     > call read_neutrals_namelist(ns, mpg, switch, .false.)
       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstraid,natm,
      . switch)
       write_nml_user = .false.

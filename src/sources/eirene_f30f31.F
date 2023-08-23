@@ -454,13 +454,14 @@ c we derive the guard cell value from its neighbouring interior cell
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
             if (zab(ifl).ne.0.and.mol(istra).eq.0) then !! ion species
               trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*
+     &                mpg%rcFcOr(ian+i-1)*dv%kin_frac_hyb(iFc)
             elseif (zab(ifl).eq.0.and.mol(istra).eq.0) then !! neutral atom species
               trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*dv%kin_frac_hyb(iFc)
               fnib(iFc,ifl) = fnn_inc_b(iFc,ifl)
             elseif (zab(ifl).eq.0.and.mol(istra).eq.1) then     !! neutral molecule species
               trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)*
-     &                                  fluid_frac_hyb(iFc)
+     &                                  dv%fluid_frac_hyb(iFc)
               fnib(iFc,ifl) = 0.0_R8
             else
               if (fnn_mol_b(iFc,ifl).gt.0) then

@@ -1970,7 +1970,7 @@ cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
-      call read_neutrals_namelist(ns, mpg, .true.)
+      call read_neutrals_namelist(ns, mpg, switch, .true.)
       if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
         call init_feedback(nFc, ns, switch, mpg)
       endif
