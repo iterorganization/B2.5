@@ -10794,9 +10794,9 @@ c
 
       cflag=.true.
       FLVALUE: select case(cval)
-        case('f30')      ! write fort.30
-          call write_f30
 #ifdef WG_TODO
+        case('f30')      ! write fort.30
+          call write_f30(gm, mpg)
         case('f31')      ! write fort.31
           call write_f31(nx, ny)
 #endif

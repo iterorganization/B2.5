@@ -452,14 +452,20 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
-            if (zab(ifl).ne.0) then !! ion species
+            if (zab(ifl).ne.0.and.mol(istra).eq.0) then !! ion species
               trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*
-     &                mpg%rcFcOr(ian+i-1)*dv%kin_frac_hyb(iFc)
-            elseif (mol(istra).eq.0) then !! neutral atom species
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.0) then !! neutral atom species
               trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*dv%kin_frac_hyb(iFc)
-            else                          !! neutral molecule species
-              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)
+              fnib(iFc,ifl) = fnn_inc_b(iFc,ifl)
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.1) then     !! neutral molecule species
+              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)*
+     &                                  fluid_frac_hyb(iFc)
+              fnib(iFc,ifl) = 0.0_R8
+            else
+              if (fnn_mol_b(iFc,ifl).gt.0) then
+                call xerrab ('no molecular contribution expected here')
+              endif
             endif
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !! istra, i, ifl = ',istra,i,ifl
@@ -499,7 +505,75 @@ c we derive the guard cell value from its neighbouring interior cell
       return
       end subroutine copy_background
 
-      subroutine write_f30
+      subroutine write_f30(geo,mpg)
+      use b2us_map
+      use b2us_geo
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      integer :: i, nB, iLbl, minLbl, maxLbl, nBFaces, nBVerts
+      integer, allocatable :: bVerts(:)
+
+      write(*,*) 'Writing fort.30 file'
+
+      ! open the file
+      open(unit=30,file='fort.30')
+
+      ! identify range of face labels
+      minLbl = minval(mpg%fcLbl)
+      maxLbl = maxval(mpg%fcLbl)
+
+      ! first pass: identify number of boundary segments to be written
+      nB = 0
+      do iLbl = minLbl,maxLbl
+
+        ! only treat faces with non-zero fclbl
+        if (iLbl.eq.0) cycle
+
+        ! determine number of faces with this label
+        nBFaces = count(mpg%fcLbl==iLbl)
+
+        if (nBFaces.gt.0) nB = nB + 1
+
+      enddo
+
+      ! write file
+      write(30,'(i3)') nB
+
+      do iLbl = minLbl,maxLbl
+
+        ! only treat faces with non-zero fclbl
+        if (iLbl.eq.0) cycle
+
+        ! determine number of faces with this label
+        nBFaces = count(mpg%fcLbl==iLbl)
+
+        ! corresponding number of vertices
+        nBVerts = nBFaces + 1
+
+        if (nBFaces.gt.0) then
+
+          allocate (bVerts(nBVerts))
+
+          ! sort vertices of the boundary faces into a polygon
+          call sort_vertices(nBVerts,bVerts,mpg%nFc,mpg%fcLbl,iLbl,mpg)
+
+          ! write into fort.30
+          write(30,'(i3)') iLbl
+          write(30,'(i12)') nBVerts
+          do i = 1,nBVerts
+            write(30,'(2(2X,E21.14))') 
+     .        geo%vxX(bVerts(i)), geo%vxY(bVerts(i))
+          end do
+
+          deallocate (bVerts)
+
+        end if
+      end do
+
+      ! close file
+      close(30)
+
       return
       end subroutine write_f30
 c
@@ -631,3 +705,4 @@ c
 #endif
       return
       end subroutine write_f31
+      

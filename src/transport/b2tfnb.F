@@ -32,7 +32,7 @@
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl
       type(B2Rates), intent (in) :: rt
-      logical balance                                                   !djm Jan2017
+      logical balance                                                    !djm Jan2017
 *   ..input/output arguments
       type(B2Coeff), intent (inout) :: co
       type(B2Derivatives), intent (inout) :: dv
@@ -55,8 +55,8 @@
 *.declarations
 
 *   ..local variables
-      integer iCv1, iCv2, iFc, meth                                     !srv 13.10.06
-      character chns*3                                                  !srv 16.09.02
+      integer iCv1, iCv2, iFc, meth                                      !srv 13.10.06
+      character chns*3                                                   !srv 16.09.02
       real (kind=R8) :: drift_hyb
       real (kind=R8) ::
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1),
@@ -64,10 +64,10 @@
      *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1)
       real (kind=R8) ::
-     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                       !srv 21.10.10
+     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                        !srv 21.10.10
      &   kmpr(nCv), kmprv(nVx),
-     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,    !srv 05.03.16
-     &   rdiv                                                           !srv 05.03.16
+     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
+     &   rdiv                                                            !srv 05.03.16
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
@@ -75,18 +75,18 @@
      *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
      *   ub2dia(nFc,0:1),
-     *   nbcor(nVx),                                                    !srv 01.10.99 !lk 09.06.11
+     *   nbcor(nVx),                                                     !srv 01.10.99 !lk 09.06.11
      *   nbti(nCv),
-     *   nbzb(nCv), nbzbc(nVx),                                         !srv 13.05.16
+     *   nbzb(nCv), nbzbc(nVx),                                          !srv 13.05.16
      *   dnb(nFc,0:1), dpb(nFc,0:1), dpbc(nCv), dpbm(nFc),
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
      *   nbf(nFc),
      *   dOnedBsq(nFc,0:1),
      *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
-      real (kind=R8) :: weight(nFc,2)                                   !lk
+      real (kind=R8) :: weight(nFc,2)                                    !lk
       integer :: xcount
-c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
@@ -118,7 +118,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
        call b2xvsg (nFc, wrk0, 1, 'cdpa0','.ge.')
        wrk1(:) = co%cdpa(:,1,isb)*geo%fcQalf(:,1)
        call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
-c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
       endif
@@ -284,7 +284,7 @@ cwdk                   (original code: simple averaging)
      &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
         enddo
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
-        if (isb.ne.ismain .and. .not.is_neutral(isb)) then                !lk 02.06.11 {
+        if (isb.ne.ismain .and. .not.is_neutral(isb)) then               !lk 02.06.11 {
           do iFc = 1, nFc
             !wdk for unstructured grids: apply flux limits
             !    to total drift velocities (instead of individual poloidal and radial
@@ -318,8 +318,8 @@ cwdk                   (original code: simple averaging)
             ub2dia(iFc,0) = ub2dia(iFc,0)/(1.0_R8 + t3/vbar)
             ub2dia(iFc,1) = ub2dia(iFc,1)/(1.0_R8 + t3/vbar)
           enddo
-        endif                                                             !lk 02.06.11 }
-        if (isb.eq.ismain) then                                           !lkw 25.10.2022 {
+        endif                                                            !lk 02.06.11 }
+        if (isb.eq.ismain) then                                          !lkw 25.10.2022 {
           do iFc = 1, nFc
             iCv1 = mpg%fcCv(iFc,1)
             iCv2 = mpg%fcCv(iFc,2)
@@ -333,7 +333,7 @@ cwdk                   (original code: simple averaging)
             dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
             dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
            enddo
-         endif                                                            !lkw 25.10.2022}
+         endif                                                           !lkw 25.10.2022}
       endif
 
 *   ..compute differences of pa at cell faces and poloidal gradients
@@ -403,7 +403,7 @@ cwdk                   (original code: simple averaging)
       call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &     flo_mdf, co%cdna(:,:,isb), fna_mdf0(:,:),
      &     dv%fna_32(:,:,isb), dv%fna_52(:,:,isb))
-*   ..limit flow by sound speed                                          ! lkw 26.10.2022{
+*   ..limit flow by sound speed                                           ! lkw 26.10.2022{
        do iFc = 1, nFc
          if (.not.is_neutral(isb).or.switch%tn_style.eq.0.or.
      &      (switch%tn_style.eq.2.and.nint(zn(isb)).ne.1)) then
@@ -424,27 +424,27 @@ cwdk                   (original code: simple averaging)
          fna_mdf0(iFc,0)   = fna_mdf0(iFc,0)*wrk4(iFc)
          fna_mdf0(iFc,1)   = fna_mdf0(iFc,1)*wrk4(iFc)
        enddo                                                             ! lkw 26.10.2022}
-     
+
 !   ..keep the convective flow "correction" factor for further output
       do iFc = 1, nFc
-        if (flo_mdf(iFc,0) == 0.0_R8 .and. 
+        if (flo_mdf(iFc,0) == 0.0_R8 .and.
      &        dv%fna_32(iFc,0,isb) == 0.0_R8) then
           flo_factor(iFc,0) = 1.0_R8
         else
-         call xertst (flo_mdf(iFc,0) /= 0.0_R8, 'faulty transformation'
-     & // ' of poloidal convective particle flow, is = '//chns)
-         flo_factor(iFc,0) = dv%fna_32(iFc,0,isb) / 
-     &              (flo_mdf(iFc,0) * nbf(iFc)) 
-        endif  
-                    if (flo_mdf(iFc,1) == 0.0_R8 .and. 
-     &        dv%fna_32(iFc,1,isb) == 0.0_R8) then
+          call xertst (flo_mdf(iFc,0) /= 0.0_R8, 'faulty transformation'
+     &     // ' of poloidal convective particle flow, is = '//chns)
+          flo_factor(iFc,0) = dv%fna_32(iFc,0,isb) /
+     &              (flo_mdf(iFc,0) * nbf(iFc))
+        endif
+        if (flo_mdf(iFc,1) == 0.0_R8 .and.
+     &      dv%fna_32(iFc,1,isb) == 0.0_R8) then
           flo_factor(iFc,1) = 1.0_R8
         else
-         call xertst (flo_mdf(iFc,1) /= 0.0_R8, 'faulty transformation'
-     & // ' of radial convective particle flow, is = '//chns)
-         flo_factor(iFc,1) = dv%fna_32(iFc,1,isb) / 
-     &              (flo_mdf(iFc,1) * nbf(iFc)) 
-        endif  
+          call xertst (flo_mdf(iFc,1) /= 0.0_R8, 'faulty transformation'
+     &     // ' of radial convective particle flow, is = '//chns)
+          flo_factor(iFc,1) = dv%fna_32(iFc,1,isb) /
+     &              (flo_mdf(iFc,1) * nbf(iFc))
+        endif
       enddo
 
 *   ..compute Rhie-Chow term
@@ -582,8 +582,8 @@ cwdk                   (original code: simple averaging)
       dv%conb(:,:,2) = dv%conb(:,:,1)
 
 *   ..flux limit
-      if ((alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8) .and.          !srv 20.11.08
-     *     switch%b2tlc0_alpha.eq.0.0_R8 ) then                                   ! neutral flux limit
+      if ((alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8) .and.  !srv 20.11.08
+     *     switch%b2tlc0_alpha.eq.0.0_R8 ) then                          ! neutral flux limit
        call xerrab('Flux limit to be adapted for WG')
 cwdk try to introduce a common flux limit here?
        do iFc = 1,nFc
@@ -606,12 +606,12 @@ cwdk try to introduce a common flux limit here?
         dv%fna_nodrift(iFc,0,isb) = dv%fna_nodrift(iFc,0,isb) / t0
         dv%fna_32nd(iFc,0,isb) = dv%fna_32nd(iFc,0,isb) / t0
         dv%fna_52nd(iFc,0,isb) = dv%fna_52nd(iFc,0,isb) / t0
-        dv%flob(iFc,0) = dv%flob(iFc,0) / t0                         ! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
-        dv%conb(iFc,0,0:4) = dv%conb(iFc,0,0:4) / t0                 !srv 13.10.06 {
+        dv%flob(iFc,0) = dv%flob(iFc,0) / t0                             ! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
+        dv%conb(iFc,0,0:4) = dv%conb(iFc,0,0:4) / t0                     !srv 13.10.06 {
         dv%fna_he(iFc,0,isb)   = dv%fna_he(iFc,0,isb)/t0
         dv%fna_fcor(iFc,0,isb) = dv%fna_fcor(iFc,0,isb)/t0
         dv%fna_mdf(iFc,0,isb) = dv%fna_mdf(iFc,0,isb)/t0
-        dv%fnaPSch(iFc,0,isb)  = dv%fnaPSch(iFc,0,isb)/t0            !srv 13.10.06 }
+        dv%fnaPSch(iFc,0,isb)  = dv%fnaPSch(iFc,0,isb)/t0                !srv 13.10.06 }
         co%fllim0fna(iFc,0,isb) = t0
 *     ..radial direction
         maxfluxlimit(1)=max(maxfluxlimit(1),t1)
@@ -621,25 +621,25 @@ cwdk try to introduce a common flux limit here?
         dv%fna_nodrift(iFc,1,isb) = dv%fna_nodrift(iFc,1,isb) / t1
         dv%fna_32nd(iFc,1,isb) = dv%fna_32nd(iFc,1,isb) / t1
         dv%fna_52nd(iFc,1,isb) = dv%fna_52nd(iFc,1,isb) / t1
-        dv%flob(iFc,1) = dv%flob(iFc,1) / t1                         ! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
-        dv%conb(iFc,1,0:4) = dv%conb(iFc,1,0:4) / t1                 !srv 13.10.06 {
+        dv%flob(iFc,1) = dv%flob(iFc,1) / t1                             ! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
+        dv%conb(iFc,1,0:4) = dv%conb(iFc,1,0:4) / t1                     !srv 13.10.06 {
         dv%fna_he(iFc,1,isb)   = dv%fna_he(iFc,1,isb)/t1
         dv%fna_fcor(iFc,1,isb) = dv%fna_fcor(iFc,1,isb)/t1
         dv%fna_mdf(iFc,1,isb) = dv%fna_mdf(iFc,1,isb)/t1
-        dv%fnaPSch(iFc,1,isb)  = dv%fnaPSch(iFc,1,isb)/t1            !srv 13.10.06 }
+        dv%fnaPSch(iFc,1,isb)  = dv%fnaPSch(iFc,1,isb)/t1                !srv 13.10.06 }
         co%fllim0fna(iFc,1,isb) = t1
        enddo
       endif
 
       if(switch%b2npco_iout.ne.0
      &                     .or. switch%b2tfnb_iout .eq. 1 .or.
-     &                               switch%iout_b2wdat.eq.4) then                   !srv 11.09.09 {
+     &                               switch%iout_b2wdat.eq.4) then       !srv 11.09.09 {
 cwdk to be considered: con_mdf, con_2dia not easily recoverable?
 cwdk should this be conb in general? (but without the rescaling for pressure)
        call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb)
        wrk1 = geo%fcPbs*wrk0*nbf
        wrk2 = term
-       wrk3 = dv%vaecrb(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0) 
+       wrk3 = dv%vaecrb(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
      &   * (1.0_R8 + (flo_factor(:,0) - 1.0_R8) * drift_hyb) ! to account possible correction due to hybridization
 !       wrk4 = -con_2dia*dnb(:,0)
 !       wrk5 = -co%cdpa(:,0,isb)*dpb(:,0)
@@ -663,9 +663,9 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call my_out_us(70,nFc,1,dpb(1,0),'b2tfnb_dpb_th'//chns)
        call my_out_us(70,nFc,1,dpbm,'b2tfnb_dpbm'//chns)
        if (switch%iout_b2wdat .ne. 4)
-     &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_dpccorhzna_th'//chns)            !srv 05.11.09
+     &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_dpccorhzna_th'//chns)       !srv 05.11.09
        if (switch%b2tfnb_iout.eq.1)
-     &  call my_out_us(70,nFc,1,wrk8,'b2tfnb_cvlbna_th'//chns)                !iys 17.04.2012
+     &  call my_out_us(70,nFc,1,wrk8,'b2tfnb_cvlbna_th'//chns)           !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
@@ -681,7 +681,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &   call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahz_th'//chns)
        call my_out_us(70,nFc,1,dv%fna_fcor(1,0,isb),
      &              'b2tfnb_fnb_fcor_th'//chns)
-      endif                                                     !srv 11.09.09 }
+      endif                                                              !srv 11.09.09 }
 
       if (alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8
      > .and. ncall_b2tfnb.lt.100) then
@@ -691,8 +691,8 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
       endif
 
       if(switch%b2npco_iout.ne.0
-     & .or. switch%b2tfnb_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then               !srv 11.09.09 {
-       wrk3 = dv%vaecrb(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1) 
+     & .or. switch%b2tfnb_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then !srv 11.09.09 {
+       wrk3 = dv%vaecrb(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
      &   * (1.0_R8 + (flo_factor(:,1) - 1.0_R8) * drift_hyb) ! to account possible correction due to hybridization
 !       wrk4 = -con_2dia*dnb(:,1)
 !       wrk5 = -co%cdpa(:,1,isb)*dpb(:,1)

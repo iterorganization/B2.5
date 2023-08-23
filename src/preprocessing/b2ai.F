@@ -117,9 +117,9 @@
 *   ..open files
       call cfopen (ninp(0),'b2ag.dat','old','formatted')
       call cfopen (ninp(1),'b2ai.dat','old','formatted')
-      call cfopen (ninp(2),'b2fgmtry','old','un*formatted')
+      call cfopen (ninp(2),'b2fgmtry_st','old','un*formatted')
       call cfopen (nout(0),'b2ai.prt','new','formatted')
-      call cfopen (nout(1),'b2fstati','new','un*formatted')
+      call cfopen (nout(1),'b2fstati_st','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain nx, ny, ns
