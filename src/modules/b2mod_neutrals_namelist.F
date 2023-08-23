@@ -41,15 +41,15 @@ cank }
 #ifndef SOLPS4_3
       use eirmod_extrab25
       use eirmod_parmmod
-     &    , only : nlim, nsts, nlimps
+     & , only : nlim, nsts, nlimps
 #else
       use parmmod        ! IGNORE
-     &    , only : nfl, natm, nmol, nion, nlim, nsts, nlimps
+     & , only : nfl, natm, nmol, nion, nlim, nsts, nlimps
       use braeir         ! IGNORE
-     &    , only : itsput_chemical, issput_chemical, igass_chemical,
-     &             chemical_sputter_yield, fchar_chemical
+     & , only : itsput_chemical, issput_chemical, igass_chemical,
+     &          chemical_sputter_yield, fchar_chemical
       use eirdiag        ! IGNORE
-     &    , only : nnatmi, nnmoli, nnioni, nnstsi
+     & , only : nnatmi, nnmoli, nnioni, nnstsi
       use ceirsrt        ! IGNORE
 #endif
       use eirmod_solps
@@ -262,7 +262,7 @@ csw 21feb2012
       subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
      &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_b2cmpa
       implicit none
       integer, intent(in) :: nxd, nyd, nsd,
@@ -1257,17 +1257,19 @@ c.. Test consistency with physical edges within the computational domain
 #endif
       end subroutine read_neutrals_namelist_st
 
-      subroutine read_neutrals_namelist_us(ns, m, dotest)
+      subroutine read_neutrals_namelist_us(ns, m, switch, dotest)
       use b2mod_wall
-     & ,only : track_index, ntrack, track_species
+     & , only : track_index, ntrack, track_species
       use b2mod_indirect
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
       use b2us_map
+      use b2mod_switches
       implicit none
       type(mapping), intent(inout) :: m
+      type(switches), intent(in) :: switch
       integer ns
       logical dotest
       integer is, ist, ix, istra, i, j, k, n, ii(1), itrack,
@@ -1408,14 +1410,14 @@ cwvu    for (advanced) spatially hybrid, might need even more.
 c
       if(chemical_erosion_redep_fac.ne.1.0_R8)
      * write(*,*)
-     1 'Note: chemical_erosion_redep_fac = ',
-     2 chemical_erosion_redep_fac
+     1  'Note: chemical_erosion_redep_fac = ',
+     2   chemical_erosion_redep_fac
       if(chemical_erosion_be_fac)
      1 write(*,*) 'Note: suppression of chemical sputtering by Be ',
-     2 'is active with parameters ',
-     3 chemical_erosion_be_fac_a,
-     4 chemical_erosion_be_fac_b,
-     5 chemical_erosion_be_fac_c
+     2  'is active with parameters ',
+     3   chemical_erosion_be_fac_a,
+     4   chemical_erosion_be_fac_b,
+     5   chemical_erosion_be_fac_c
 c
       do istra = 1, nstrat
         do is = 1, nnatmi
@@ -1435,10 +1437,10 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
 !   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
         if (b2species_start(ist).eq.-100) then
-        b2species_start(ist) = species_start(ist)
+          b2species_start(ist) = species_start(ist)
         endif
         if (b2species_end(ist).eq.-100) then
-        b2species_end(ist) = species_end(ist)
+          b2species_end(ist) = species_end(ist)
         endif
         do is = 0, ns-1
           if (b2recyc(is,ist).lt.0.0_R8) then
@@ -2378,8 +2380,6 @@ cwdk also need to correct for degenerate faces?
       close (iout)
 
       end subroutine rc_to_struct
-
-
 
 ***********************************************************************
 

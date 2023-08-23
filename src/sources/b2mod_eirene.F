@@ -639,7 +639,7 @@ c first save the original NPTS provided by the Eirene input files.
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
                 tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(ifc,is)*
-     &            fluid_frac_hyb(iFc)
+     &            st%dv%fluid_frac_hyb(iFc)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) +
      &            2.0_R8*fna_mol(ifc,is)
               end do !}
