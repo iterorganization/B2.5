@@ -232,19 +232,17 @@ cdjm Jan2017 update particle source components for balance
      &   dv%fzt, dv%reszt)
       endif
 
-
 c residuals for separate neutral energy equation
       if (switch % tn_style.eq.2) then   !! separate neutral energy equation
-       if (any(solvnreg(0:mpg%nnreg(0))).or.
-     &     switch%get_residuals.eq.1) then
+        if (any(solvnreg(0:mpg%nnreg(0))).or.
+     &      switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
           call b2ursd (nCv, nFc, mpg, dv%nn, pl%tn, shn0, dv%fhn,
      &     dv%reshn)
-       endif
+        endif
       else
         dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
       endif
-
 
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/

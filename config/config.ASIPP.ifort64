@@ -5,7 +5,7 @@ endif
 ifndef NAGDIR
   $(error NAGDIR not defined)
 endif
-LD_NETCDF ?= -L${NCDIR} -lnetcdf
+LD_NETCDF ?= `nc-config --libs` -lnetcdff
 ifdef NCARG_ROOT
 LD_NCARG  ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 ifndef MSCL_ROOT

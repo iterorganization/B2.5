@@ -12,7 +12,7 @@
      & cell_width, cell_height,
      1 leftix1, leftiy1, rightix1, rightiy1,
      2 topix1, topiy1, bottomix1, bottomiy1,
-     3 leftcut1, rightcut1, bottomcut1, topcut1,
+     3 leftcut1, rightcut1, bottomcut1, topcut1, ccut1,
      & cflags1)
       use b2mod_types
       use b2mod_math
@@ -48,7 +48,7 @@
      2  topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
      3  bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
      4  leftcut1(1:nncutmax), rightcut1(1:nncutmax),
-     5  bottomcut1(1:nncutmax), topcut1(1:nncutmax)
+     5  bottomcut1(1:nncutmax), topcut1(1:nncutmax), ccut1
       integer, intent(in) :: cflags1(-1:nx1,-1:ny1, CARREOUT_NCELLFLAGS)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -225,6 +225,7 @@
          rightcut = rightcut1
          bottomcut = bottomcut1
          topcut = topcut1
+         ccut = ccut1
          cflags = cflags1
 *   ..extrapolate magnetic field to edges
          do iy = -1, ny
@@ -243,7 +244,7 @@
          enddo
 
          call init_region(nx,ny,nncut,nncutmax,
-     1     leftcut,rightcut,topcut,bottomcut,
+     1     leftcut,rightcut,topcut,bottomcut,ccut,
      1     leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
      2     region,nnreg,resignore,crx,cry,periodic_bc,cflags)
 
@@ -882,7 +883,7 @@ cxpb  extra test since cases beyond double-null are not yet coded
      1 leftcut(2), rightcut(2), topcut(2), bottomcut(2)
 
       call init_region(nx,ny,nncut,nncutmax,
-     1 leftcut,rightcut,topcut,bottomcut,
+     1 leftcut,rightcut,topcut,bottomcut,ccut,
      1 leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
      2 region,nnreg,resignore,crx,cry,periodic_bc,cflags)
 
