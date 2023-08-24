@@ -3,7 +3,7 @@
 
       subroutine b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &  nscxmax, ismain, ismain0, dtim, switch, geo, mpg,
-     &  st, st_ext, ierr)
+     &  st, st_ext, st_avg, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_numerics_namelist
@@ -64,6 +64,7 @@
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
+      type (B2Average), intent (in) :: st_avg
 *   ..output arguments                                                    !xpb
       integer ierr
       logical wrong_flow
@@ -336,7 +337,7 @@ c   extra call at this place within internal iteration)
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nCv, nFc, nVx, ns,
      &    nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &    switch, geo, mpg, st, st_ext, wrong_flow, .false.)
+     &    switch, geo, mpg, st, st_ext, st_avg, wrong_flow, .false.)
 #ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.

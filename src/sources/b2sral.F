@@ -3,7 +3,7 @@
 
       subroutine b2sral (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &  switch, geo, mpg, st, st_ext, wrong_flow, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, wrong_flow, main_call)
       use b2mod_types
       use b2mod_constants
       use b2mod_tallies
@@ -65,6 +65,7 @@
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
+      type (B2Average), intent (in) :: st_avg
       logical wrong_flow                                                 !xpb
       logical main_call                                                  !dpc
 *   ..common blocks
@@ -305,7 +306,7 @@
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, dtim,
-     &  switch, geo, mpg, st, st_ext, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))

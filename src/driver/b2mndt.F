@@ -3,7 +3,7 @@
 
       subroutine b2mndt (nout, nCv, nFc, nVx, ns,
      . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch,
-     . geo, mpg, st, st_ext, ierr)
+     . geo, mpg, st, st_ext, st_avg, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_diag
@@ -67,6 +67,7 @@
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
+      type (B2Average), intent (inout) :: st_avg
 *   ..output arguments (unspecified on entry)
       integer ierr
 *   ..common blocks
@@ -332,7 +333,7 @@ ctmp.dpc
           main_call = ntim.ne.0
           call b2sral (nCv, nFc, nVx, ns,
      &     nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &     switch, geo, mpg, st, st_ext, wrong_flow, main_call)
+     &     switch, geo, mpg, st, st_ext, st_avg, wrong_flow, main_call)
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -385,7 +386,7 @@ ctmp.dpc
 #endif
             call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &       nscxmax, ismain, ismain0, dtim, switch,
-     &       geo, mpg, st, st_ext, ier0)
+     &       geo, mpg, st, st_ext, st_avg, ier0)
             flush(6)
 #ifdef WG_TODO
 ! ier0 seems not appearing anymore in b2news. Additionally, irreducible loops should be avoided for Adjoint AD
@@ -535,7 +536,7 @@ ctmp.dpc
       endif
 
       if (switch%iav_run > 0)
-     . call running_average(nCv,ns,st%pl,st%srw)
+     . call running_average(nCv,ns,st%pl,st%srw,st_avg)
       if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nCv,ns)
 
 * ..return

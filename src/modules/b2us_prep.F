@@ -22,6 +22,7 @@
       use b2us_plasma
       use b2mod_b2cmfs
       use b2mod_connectivity
+      use b2mod_running_average
       use carre_constants
 
       implicit none
@@ -30,7 +31,7 @@
 
       public :: calc_mapping,
      .          prep_geometry,
-     .          prep_plasma, prep_plasma_ext, prep_state,
+     .          prep_plasma, prep_plasma_ext, prep_state, prep_average,
      .          to_struct_plasma,
      .          conv_regions, conv_midplane                             !srv 16.11.22
 
@@ -2289,7 +2290,7 @@
       call createB2State (nCv, nFc, ns, st)
       call createB2Diagnostic( nCv, ns, nnreg, st % diag )
 
-!      nfx = (nx+1)*ny
+!     nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -2298,8 +2299,8 @@
       do iy = 0, ny-1
         do ix = 0, nx-1
           if(mpg%imapCv(ix,iy)/=0) then
-            ic =  mpg%imapCv(ix,iy)
-!          ic = (ix+1) + iy*nx
+            ic = mpg%imapCv(ix,iy)
+!           ic = (ix+1) + iy*nx
 ! B2plasma
             st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
             st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
@@ -2338,7 +2339,7 @@
             st % dv % ne(ic) = ne(ix,iy)
             st % dv % ne2(ic) = ne2(ix,iy)
             st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!          st % dv % ue(ic) = ue(ix,iy)
+!           st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
             st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2346,7 +2347,7 @@
             st % dv % respo(ic) = respo(ix,iy)
             st % dv % reshe(ic) = reshe(ix,iy)
             st % dv % reshi(ic) = reshi(ix,iy)
-!          st % dv % resht(ic) = resht(ix,iy)
+!           st % dv % resht(ic) = resht(ix,iy)
             st % dv % resmt(ic) = resmt(ix,iy)
             st % dv % reskt(ic) = reskt(ix,iy)
             st % dv % reszt(ic) = reszt(ix,iy)
@@ -2356,7 +2357,7 @@
             st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
             st % dv % corut(ic) = corut(ix,iy)
             st % dv % corpo(ic) = corpo(ix,iy)
-!          st % dv % cortt(ic) = cortt(ix,iy)
+!           st % dv % cortt(ic) = cortt(ix,iy)
             st % dv % corte(ic) = corte(ix,iy)
             st % dv % corti(ic) = corti(ix,iy)
 
@@ -2367,12 +2368,12 @@
             st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!          st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!          st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!          st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!          st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!          st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!          st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!           st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!           st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!           st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!           st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!           st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!           st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
             st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2389,13 +2390,14 @@
             st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
             st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
             st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+
           end if
         end do
       end do
 
 ! guard cells iy = -1 and iy = ny
       do ix = 0, nx-1
-!        ic = nCi + ix+1
+!       ic = nCi + ix+1
         iy = -1
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2437,7 +2439,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2445,7 +2447,7 @@
           st % dv % respo(ic) = respo(ix,iy)
           st % dv % reshe(ic) = reshe(ix,iy)
           st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
+!         st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
           st % dv % reskt(ic) = reskt(ix,iy)
           st % dv % reszt(ic) = reszt(ix,iy)
@@ -2455,7 +2457,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2466,12 +2468,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2490,7 +2492,7 @@
           st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
           st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
         endif
- !       ic = nCi + nx + ix+1
+ !      ic = nCi + nx + ix+1
         iy = ny
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2532,7 +2534,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2550,7 +2552,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2561,12 +2563,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2589,7 +2591,7 @@
 
 ! guard cells ix = -1 and ix = nx
       do iy = 0, ny-1
-!        ic = nCi + 2*nx + iy+1
+!       ic = nCi + 2*nx + iy+1
         ix = -1
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2631,7 +2633,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2639,7 +2641,7 @@
           st % dv % respo(ic) = respo(ix,iy)
           st % dv % reshe(ic) = reshe(ix,iy)
           st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
+!         st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
           st % dv % reskt(ic) = reskt(ix,iy)
           st % dv % reszt(ic) = reszt(ix,iy)
@@ -2649,7 +2651,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2660,12 +2662,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2685,7 +2687,7 @@
           st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
         end if
 
-!        ic = nCi + 2*nx + ny + iy+1
+!       ic = nCi + 2*nx + ny + iy+1
         ix = nx
         if(mpg%imapCv(ix,iy)/=0) then
           ic = mpg%imapCv(ix,iy)
@@ -2727,7 +2729,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2735,7 +2737,7 @@
           st % dv % respo(ic) = respo(ix,iy)
           st % dv % reshe(ic) = reshe(ix,iy)
           st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
+!         st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
           st % dv % reskt(ic) = reskt(ix,iy)
           st % dv % reszt(ic) = reszt(ix,iy)
@@ -2745,7 +2747,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2756,12 +2758,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2785,7 +2787,7 @@
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
-!          iFc = ix+1 + iy*(nx+1)
+!         iFc = ix+1 + iy*(nx+1)
           if(mpg%imapFcx(ix,iy)/=0) then
             iFc = mpg%imapFcx(ix,iy)
 ! B2coeff
@@ -2862,7 +2864,7 @@
      .              fna_eir(ix,iy,0,0:1,0:ns-1)
             st % dv % fne_eir(iFc,0:1) =
      .              fne_eir(ix,iy,0,0:1)
-           st % dv % fna_nodrift(iFc,0:1,0:ns-1) =
+            st % dv % fna_nodrift(iFc,0:1,0:ns-1) =
      .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
             st % dv % fhe(iFc,0:1) = fhe(ix,iy,0,0:1)
@@ -2919,6 +2921,7 @@
 !          st % psnc % fna(iFc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
 !          st % psnc % fhe(iFc,0:1) = fhe(ix,iy,0,0:1)
 !          st % psnc % fhi(iFc,0:1) = fhi(ix,iy,0,0:1)
+
           end if
         end do
       end do
@@ -3051,14 +3054,15 @@
           st % dv % floi_noc(iFc,0:1) = floi_noc(ix,iy,1,0:1)
 
 ! B2PlasmaSnapshot
-!          st % psnl % fch(iFc,0:1) = fch(ix,iy,1,0:1)
-!          st % psnl % fna(iFc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-!          st % psnl % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
-!          st % psnl % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
-!          st % psnc % fch(iFc,0:1) = fch(ix,iy,1,0:1)
+!         st % psnl % fch(iFc,0:1) = fch(ix,iy,1,0:1)
+!         st % psnl % fna(iFc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+!         st % psnl % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
+!         st % psnl % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
+!         st % psnc % fch(iFc,0:1) = fch(ix,iy,1,0:1)
 !         st % psnc % fna(iFc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-!          st % psnc % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
-!          st % psnc % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
+!         st % psnc % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
+!         st % psnc % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
+
           end if
         end do
       end do
@@ -3066,15 +3070,15 @@
       st % diag % aresco(0:ns-1) = aresco(0:ns-1)
       st % diag % aresmo(0:ns-1) = aresmo(0:ns-1)
 
-!      st % diag % acorpa(0:ns-1) = acorpa(0:ns-1)
-!      st % diag % acorua(0:ns-1) = acorua(0:ns-1)
+!     st % diag % acorpa(0:ns-1) = acorpa(0:ns-1)
+!     st % diag % acorua(0:ns-1) = acorua(0:ns-1)
 
-!      st % diag % rescoreg(0:nnreg(0),0:ns-1) =
-!     .            rescoreg(0:nnreg(0),0:ns-1)
-!      st % diag % resmoreg(0:nnreg(0),0:ns-1) =
-!     .            resmoreg(0:nnreg(0),0:ns-1)
-!      st % diag % reshereg(0:nnreg(0)) = reshereg(0:nnreg(0))
-!      st % diag % reshireg(0:nnreg(0)) = reshireg(0:nnreg(0))
+!     st % diag % rescoreg(0:nnreg(0),0:ns-1) =
+!    .            rescoreg(0:nnreg(0),0:ns-1)
+!     st % diag % resmoreg(0:nnreg(0),0:ns-1) =
+!    .            resmoreg(0:nnreg(0),0:ns-1)
+!     st % diag % reshereg(0:nnreg(0)) = reshereg(0:nnreg(0))
+!     st % diag % reshireg(0:nnreg(0)) = reshireg(0:nnreg(0))
 
       end subroutine prep_plasma
 
@@ -3092,7 +3096,7 @@
       call createB2Plasma( nCv, ns, st % pl )
       call createB2Derivatives( nCv, nFc, ns, st % dv )
 
-!      nfx = (nx+1)*ny
+!     nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -3212,10 +3216,9 @@
 ! y faces
       do ix = 0, nx-1
         do iy = 0, ny
-!          iFc = nfx + iy+1 + ix*(ny+1)
+!         iFc = nfx + iy+1 + ix*(ny+1)
           if(mpg%imapFcy(ix,iy)/=0) then
             iFc = mpg%imapFcy(ix,iy)
-
 
 ! fluxes
           st % dv % fch(iFc,0:1) = fch(ix,iy,1,0:1)
@@ -3304,6 +3307,48 @@
 
       end subroutine prep_state
 
+**********************************************************************
+
+      subroutine prep_average ( nx, ny, ns, nCv, mpg, avg)
+
+      implicit none
+      integer, intent(in) :: nx, ny, ns, nCv
+      type(mapping), intent(in) :: mpg
+      type(B2Average), intent(inout) :: avg
+      integer :: ix, iy, ic
+
+      do iy = 0, ny-1
+        do ix = 0, nx-1
+          if (mpg%imapCv(ix,iy).ne.0) then
+            ic = mpg%imapCv(ix,iy)
+
+            avg % na_mean(ic,0:ns-1) = na_mean(ix,iy,0:ns-1)
+            avg % te_mean(ic) = te_mean(ix,iy)
+            avg % ti_mean(ic) = ti_mean(ix,iy)
+            avg % po_mean(ic) = po_mean(ix,iy)
+            avg % ua_mean(ic,0:ns-1) = ua_mean(ix,iy,0:ns-1)
+
+            avg % sna_mean(ic,0:ns-1) = sna_mean(ix,iy,0:ns-1)
+            avg % she_mean(ic) = she_mean(ix,iy)
+            avg % shi_mean(ic) = shi_mean(ix,iy)
+            avg % smo_mean(ic,0:ns-1) = smo_mean(ix,iy,0:ns-1)
+
+            avg % e_na(ic,0:ns-1) = e_na(ix,iy,0:ns-1)
+            avg % e_te(ic) = e_te(ix,iy)
+            avg % e_ti(ic) = e_ti(ix,iy)
+            avg % e_po(ic) = e_po(ix,iy)
+            avg % e_ua(ic,0:ns-1) = e_ua(ix,iy,0:ns-1)
+
+            avg % e_sna(ic,0:ns-1) = e_sna(ix,iy,0:ns-1)
+            avg % e_she(ic) = e_she(ix,iy)
+            avg % e_shi(ic) = e_shi(ix,iy)
+            avg % e_smo(ic,0:ns-1) = e_smo(ix,iy,0:ns-1)
+
+          end if
+        end do
+      end do
+
+      end subroutine prep_average
 **********************************************************************
 
       subroutine to_struct_plasma (ns, mpg, st)

@@ -37,7 +37,6 @@
 
       itp = itim + 1
 
-
 *  calculate averaged plasma profiles and sources
       call batch_average (nCv*ns, na, na_mean, itp, ntim_batch)
       call batch_average (nCv,    te, te_mean, itp, ntim_batch)
@@ -63,7 +62,6 @@
       call batch_average_sq (nCv,    she_tot, e_she, itp, ntim_batch)
       call batch_average_sq (nCv,    shi_tot, e_shi, itp, ntim_batch)
       call batch_average_sq (nCv*ns, smo_tot, e_smo, itp, ntim_batch)
-
 
       naver = naver + 1
 
