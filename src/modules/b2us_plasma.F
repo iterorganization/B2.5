@@ -6,7 +6,7 @@
 !     private
       public :: B2state, B2Plasma, B2Derivatives, B2coeff, B2rates,
      .          B2ratesWork, B2Source, B2SourceWork, B2PlasmaSnapShot,
-     .          B2Diagnostic, B2Update
+     .          B2Diagnostic, B2Update, B2Average
 
 ! Plasma state derived types
 
@@ -282,9 +282,8 @@ cwdk move to dv
         type(B2Update) :: update
       end type B2State
 
-
 ! External plasma
-! As simplified type containg all data on possible external species
+! A simplified type containg all data on possible external species
 ! To be considered: move to a separate module b2us_plasma_ext?
       type B2StateExt
 
@@ -305,6 +304,24 @@ cwdk move to dv
         real(R8), dimension(:,:), allocatable :: sna, smo
 
       end type B2StateExt
+
+! Averaged plasma state
+      type B2Average
+
+        real(R8), dimension(:,:), allocatable :: na_mean, ua_mean
+        real(R8), dimension(:), allocatable :: te_mean, ti_mean,
+     .                                         po_mean,
+     .                                         kt_mean, zt_mean
+        real(R8), dimension(:,:), allocatable :: sna_mean, smo_mean
+        real(R8), dimension(:), allocatable :: she_mean, shi_mean,
+     .                                         shn_mean
+        real(R8), dimension(:,:), allocatable :: e_na, e_ua
+        real(R8), dimension(:), allocatable :: e_te, e_ti, e_po,
+     .                                         e_kt, e_zt
+        real(R8), dimension(:,:), allocatable :: e_sna, e_smo
+        real(R8), dimension(:), allocatable :: e_she, e_shi, e_shn
+
+      end type B2Average
 
       contains
 

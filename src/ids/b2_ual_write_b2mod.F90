@@ -297,6 +297,7 @@ program b2_ual_write_b2mod
     type(geometry)   :: geo
     type(B2State)    :: state
     type(B2StateExt) :: state_ext
+    type(B2Average)  :: state_avg
     integer :: num_step !< Number of steps
     integer :: narg     !< Total Number of input arguments (shot, run etc.)
     integer :: cptArg
@@ -404,7 +405,7 @@ program b2_ual_write_b2mod
 
     !! Run main B2 routine to process and read the B2 data
     write(0,*) "Running b2mn_init"
-    call b2mn_init (switch, geo, mpg, state, state_ext)
+    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
     write(0,*) "b2mn_init completed"
 
     !! If steps were defined then run the b2mn_step routine for the number of
@@ -412,7 +413,7 @@ program b2_ual_write_b2mod
     if( num_step .gt. -1 ) then
         write(0,*) "Running b2mn_step(", num_step, ")"
         write(0,*) "num_step: ", num_step
-        call b2mn_step( switch, geo, mpg, state, state_ext, J )
+        call b2mn_step( switch, geo, mpg, state, state_ext, state_avg, J )
         write(0,*) "b2mn_step() completed"
     end if
 
@@ -536,7 +537,7 @@ program b2_ual_write_b2mod
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( geo, mpg, state, state_ext, switch, &
+          call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
              &  edge_profiles, edge_sources, edge_transport, &
              &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
@@ -561,7 +562,7 @@ program b2_ual_write_b2mod
       if (database.eq.'iter') database = 'ITER'
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( geo, mpg, state, state_ext, switch, &
+      call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
          &  edge_profiles, edge_sources, edge_transport, &
          &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21

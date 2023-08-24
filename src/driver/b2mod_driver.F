@@ -307,7 +307,7 @@
       contains
 
       subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo,
-     &  mpg, state, state_ext)
+     &  mpg, state, state_ext, state_avg)
       use b2mod_ad
      & , only : old_erosion, old_deposition
       implicit none
@@ -323,6 +323,7 @@
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2Average), intent (inout)  :: state_avg
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
@@ -1624,21 +1625,20 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
-
 *   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nCv, ns)
 
 *   initialize and/or read running averages
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nCv, ns, .true., lrer)
+        call run_av_init (iav_cont, nCv, ns, .true., lrer, state_avg)
       end if
 
 *   get averaged plasma profiles
       if (ird_aver > 0)
      &  call run_av_get_plasma (state%pl%na, state%pl%te,
      &             state%pl%ti, state%pl%ua, state%pl%po,
-     &             state%pl%kt, state%pl%zt, nCv, ns)
+     &             state%pl%kt, state%pl%zt, nCv, ns, state_avg)
 
       write (*,*) 'Starting conversion to unstructured format...'
 
@@ -2018,7 +2018,7 @@ c new CDF movie option (1st frame at t=0)
       end subroutine b2mndr_0
 
       subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state,
-     &  state_ext, J)
+     &  state_ext, state_avg, J)
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -2051,7 +2051,8 @@ c new CDF movie option (1st frame at t=0)
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      type(switches), intent (inout)      :: switch
+      type(B2Average), intent (inout)  :: state_avg
+      type(switches), intent (inout)   :: switch
 #ifdef FIXED_POINT
       type(B2State) :: state0
 #endif
@@ -2216,7 +2217,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           call b2mndt (nout, nCv, nFc, nVx, ns,
      .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
      .      state%rt%iscx, itim, dtim, ntim,
-     .      switch, geo, mpg, state, state_ext, ierr)
+     .      switch, geo, mpg, state, state_ext, state_avg, ierr)
 #ifndef FIXED_POINT
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
@@ -2407,7 +2408,8 @@ c new CDF movie option
              edition_run = edition_run + 1
              write (run_av_name,'(a14,i4.4)')
      .              'run_av/run_av.',edition_run
-             call run_av_save (run_av_name,nCv,ns,.true.,.false.)
+             call run_av_save (run_av_name,nCv,ns,.true.,.false.,
+     .                         state_avg)
              write(*,*) 'Saved ',run_av_name
           end if
         end if
@@ -2617,7 +2619,7 @@ c new CDF movie option
           if (iav_run > 0) then
             write (aver_name,'(a17,a4)')
      .              'plasmastate_aver.',savefile(13:16)
-            call run_av_save (aver_name,nCv,ns,.true.,.true.)
+            call run_av_save (aver_name,nCv,ns,.true.,.true.,state_avg)
             write (*,*) aver_name,' saved '
           end if
         endif
@@ -2770,7 +2772,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (process_ids) then
                     time_slice_index = num_time_slices
                     call B25_process_ids(
-     &               geo, mpg, state, state_ext, switch,
+     &               geo, mpg, state, state_ext, state_avg, switch,
      &               edge_profiles, edge_sources, edge_transport,
      &               radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
@@ -2802,7 +2804,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (status.ne.0) idx = 0
             if (process_ids) then
               call B25_process_ids(
-     &          geo, mpg, state, state_ext, switch,
+     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
      &           radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
@@ -2824,7 +2826,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             num_time_slices = num_time_slices + 1
             time_slice_index = num_time_slices
             call B25_process_ids(
-     &          geo, mpg, state, state_ext, switch,
+     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
      &          radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
@@ -2909,7 +2911,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       return
       end subroutine b2mndr_1
 
-      subroutine b2mndr_2(nout, ns, switch, geo, mpg, state, state_ext)
+      subroutine b2mndr_2(nout, ns, switch, geo, mpg,
+     &                    state, state_ext, state_avg)
       use b2mod_switches
       use b2mod_ad
      & , only : old_erosion, old_deposition
@@ -2927,6 +2930,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2Average), intent (inout)  :: state_avg
       integer nCv, nFc, is                                               !srv 29.11.18
 #ifdef WG_TODO
       character*256 filename
@@ -3134,7 +3138,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, switch,
+     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
      &      radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
@@ -3279,7 +3283,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 end if
                 time_slice_index = num_time_slices
                 call B25_process_ids(
-     &            geo, mpg, state, state_ext, switch,
+     &            geo, mpg, state, state_ext, state_avg, switch,
      &            edge_profiles, edge_sources, edge_transport,
      &            radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
@@ -3315,7 +3319,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, switch,
+     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
      &      radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
@@ -3385,8 +3389,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       endif
 
       if (iav_run > 0) then
-        call run_av_save ('b2favere',nCv,ns,.true.,.true.)
-        call run_av_fin
+        call run_av_save ('b2favere',nCv,ns,.true.,.true.,state_avg)
+        call run_av_fin (state_avg)
       end if
 
       if (ibatch_av_all > 0) call batch_av_all_fin

@@ -389,7 +389,7 @@ contains
     !!          checks for correct use of the routine.
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
-    subroutine B25_process_ids( geo, mpg, state, state_ext, switch, &
+    subroutine B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
             &   edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
@@ -413,6 +413,7 @@ contains
         type (mapping), intent(inout) :: mpg
         type (B2state), intent(inout) :: state
         type (B2stateExt), intent(inout) :: state_ext
+        type (B2Average), intent(in) :: state_avg
         type (switches), intent(inout) :: switch
         type (ids_equilibrium) :: equilibrium !< IDS designed to
             !< store equilibrium data
@@ -666,7 +667,7 @@ contains
         call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns,         &
      &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx,     &
      &   ismain, ismain0, dtim,                              &
-     &   switch, geo, mpg, state, state_ext, wrong_flow, .false.)
+     &   switch, geo, mpg, state, state_ext, state_avg, wrong_flow, .false.)
 
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory

@@ -114,6 +114,8 @@ program b2_ual_rewrite
     type (mapping) :: mpg
     type (B2state) :: state
     type (B2StateExt) :: state_ext
+    type (B2Average) :: state_avg
+
     type (switches) :: switch
     character(len=24) :: shot_string
     character(len=24) :: run_string
@@ -132,7 +134,7 @@ program b2_ual_rewrite
     treename = 'ids'
     same_run_number = .true.
     write (*,*) 'Starting b2mn init'
-    call b2mn_init (switch, geo, mpg, state, state_ext)
+    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
     ! call b2mn_step(0)
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
@@ -329,7 +331,7 @@ program b2_ual_rewrite
       call xertst( status.eq.0, 'Error creating new IDS !')
     end if
     !! Create/Write the set data to IDSs
-    call B25_process_ids( geo, mpg, state, state_ext, switch, &
+    call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
       &  edge_profiles, edge_sources, edge_transport, &
       &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21

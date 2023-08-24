@@ -3,7 +3,7 @@
 
       subroutine b2stbr (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, dtim,
-     &  switch, geo, mpg, st, st_ext, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, main_call)
       use b2mod_types
 !WG_TODO      use b2mod_wall
       use b2mod_diag
@@ -76,6 +76,7 @@
       type (mapping), intent (inout) :: mpg
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (in) :: st_ext
+      type (B2Average), intent(in) :: st_avg
       logical main_call
 *   ..local variables
 #ifdef WG_TODO
@@ -658,7 +659,7 @@ cwdk get the averaged sources
      &     st%srw%sna0_eir_tot, st%srw%smo0_eir_tot,
      &     st%srw%she0_eir_tot, st%srw%shi0_eir_tot,
      &     st%srw%shn0_eir_tot,
-     &     nCv, ns)
+     &     nCv, ns, st_avg)
 
 cwdk note: only total Eirene source are averaged!
 cwdk these are now put back into the constant part of the sources (0-component)

@@ -21,6 +21,7 @@
       use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
+      use b2mod_running_average
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
@@ -96,6 +97,7 @@
       type(geometry), save :: gm
       type(B2State), save :: state
       type(B2StateExt), save :: state_ext
+      type(B2Average), save :: state_avg
       type(switches), save :: switch
       integer :: ntm, is, natm_loc
 #ifdef B25_EIRENE
@@ -248,73 +250,86 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 !     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 
-
 *   ..write unstructured geometry
 
-      call ipgeti('b2us_write_b2fgmtry_us',write_b2fgmtry_us)
+      call ipgeti('b2us_write_b2fgmtry_us', write_b2fgmtry_us)
 
       if (write_b2fgmtry_us.eq.1) then
 
 *   ..write header for gmtry file
 
-      call cfverw (nout(1), newversion)
-      idum(0) = mpg%nCi
-      idum(1) = mpg%nCg
-      idum(2) = mpg%nCv
-      idum(3) = mpg%nFc
-      idum(4) = mpg%nVx
-      idum(5) = mpg%nFs
-      idum(6) = mpg%nFt
-      call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      idum(0) = mpg%nCmxVx
-      idum(1) = mpg%nCmxFc
-      idum(2) = mpg%nVmxCv
-      idum(3) = mpg%nVmxFc
-      idum(4) = mpg%nCmxNv
-      call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      idum(0) = mpg%isClassicalGrid
-      call cfwuin (nout(1),1,idum,'isClassicalGrid')
-      if (mpg%isClassicalGrid == 1) then
-        idum(0) = mpg%nx
-        idum(1) = mpg%ny
-        idum(2) = mpg%nncut
-      else
-        ! dummy values for unstructured grid
-        idum(0) = -1
-        idum(1) = -1
-        idum(2) = -1
-      endif
-      call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
-      call cfwuch (nout(1), 120, lblgm, 'label')
-      idum(0) = isymm
-      call cfwuin (nout(1), 1, idum, 'isymm')
-      idum(0) = mpg%nCv
-      idum(1) = mpg%nFc
-      idum(2) = ns
+        call cfverw (nout(1), newversion)
+        idum(0) = mpg%nCi
+        idum(1) = mpg%nCg
+        idum(2) = mpg%nCv
+        idum(3) = mpg%nFc
+        idum(4) = mpg%nVx
+        idum(5) = mpg%nFs
+        idum(6) = mpg%nFt
+        call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+        idum(0) = mpg%nCmxVx
+        idum(1) = mpg%nCmxFc
+        idum(2) = mpg%nVmxCv
+        idum(3) = mpg%nVmxFc
+        idum(4) = mpg%nCmxNv
+        call cfwuin (nout(1),5,idum,
+     .               'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+        idum(0) = mpg%isClassicalGrid
+        call cfwuin (nout(1),1,idum,'isClassicalGrid')
+        if (mpg%isClassicalGrid == 1) then
+          idum(0) = mpg%nx
+          idum(1) = mpg%ny
+          idum(2) = mpg%nncut
+        else
+          ! dummy values for unstructured grid
+          idum(0) = -1
+          idum(1) = -1
+          idum(2) = -1
+        endif
+        call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
+        call cfwuch (nout(1), 120, lblgm, 'label')
+        idum(0) = isymm
+        call cfwuin (nout(1), 1, idum, 'isymm')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = ns
 
 *   ..write actual geometry info
 
-      call write_b2fgmtry (nout(1), mpg, gm)
+        call write_b2fgmtry (nout(1), mpg, gm)
 
       endif
 
-
 *   ..write unstructured state
 
-      call ipgeti('b2us_write_b2fstati_us',write_b2fstati_us)
+      call ipgeti('b2us_write_b2fstati_us', write_b2fstati_us)
 
       if (write_b2fstati_us.eq.1) then
 
 *   ..write header for stati file
 
-      call cfverw (nout(2), newversion)
-      call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
-      call cfwuch (nout(2), 120, lblps, 'label')
-      call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
+        call cfverw (nout(2), newversion)
+        call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
+        call cfwuch (nout(2), 120, lblps, 'label')
+        call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
 
 *   ..write actual state info
 
-      call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+        call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+
+*   ..also handle the averaged source file
+
+        call find_file('b2faveri', file_exists)
+        if (file_exists) then
+          call read_b2faveri_st ( nx, ny, ns)
+          call run_av_init ( 0, mpg%nCv, ns, .false., .false.,
+     .                       state_avg)
+          call prep_average ( nx, ny, ns, mpg%nCv, mpg, state_avg)
+          call run_av_save ('b2faveri_us', mpg%nCv, ns, .true., .true.,
+     .                       state_avg)
+          call run_av_fin( state_avg )
+          call dealloc_avg_st
+        end if
 
       endif
 

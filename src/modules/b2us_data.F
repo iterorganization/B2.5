@@ -9,6 +9,7 @@ c**********************************************************
       type(geometry), save   :: geo
       type(B2State), save    :: state
       type(B2StateExt), save :: state_ext
+      type(B2Average), save  :: state_avg
       type(switches), save   :: switch
 c**********************************************************
       end module b2us_data
