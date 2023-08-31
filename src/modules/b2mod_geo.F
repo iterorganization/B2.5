@@ -2141,8 +2141,8 @@ c conn
      &     periodic_bc, nncut, inseltop, inselbot, istyle )
 
       use b2mod_types
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 
     !!   ..input arguments (unchanged on exit)
       integer, intent(in) :: nx, ny, istyle, periodic_bc
@@ -2580,7 +2580,7 @@ c conn
 
         nncut=max(nncut,ic)
         if(nncut.gt.DEF_NCUT) then
-          write(*,*) ' Increase DEF_NCUT in DIMENSIONS.F!'
+          write(*,*) ' Increase DEF_NCUT in b2mod_dimensions.F!'
           write(*,*) ' nncut = ',nncut,' DEF_NCUT = ',DEF_NCUT
 #ifdef BUILDING_CARRE
           stop 'faulty parameter DEF_NCUT'

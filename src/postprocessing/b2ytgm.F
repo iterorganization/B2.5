@@ -10,8 +10,8 @@
       use b2mod_b2cmgs
       use b2mod_constants
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nget, nx1, ny1
 *   ..output arguments (unspecified on entry)
@@ -293,7 +293,7 @@ cdpc
       nncut = idum(0)
       call xertst (0.le.nncut,'faulty input nncut')
       call xertst (nncut.le.DEF_NCUT,
-     . 'increase DEF_NCUT in DIMENSIONS.F!')
+     . 'increase DEF_NCUT in b2mod_dimensions!')
       call cfruin (nget, nncut, leftcut1, 'leftcut')
       call cfruin (nget, nncut, rightcut1, 'rightcut')
       call cfruin (nget, nncut, topcut1, 'topcut')

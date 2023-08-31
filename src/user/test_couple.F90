@@ -48,7 +48,7 @@
       if(error) then
         write(*,*) 'ERROR IN COUPLING PARAMETERS'
         write(*,*) 'PLEASE CHECK THAT BOTH EIRENE AND B2.5 ARE COMPILED'
-        write(*,*) 'WITH THE SAME PARAMETERS FROM THE DIMENSIONS.F FILE'
+        write(*,*) 'WITH THE SAME PARAMETERS FROM THE b2mod_dimensions.F FILE'
         write(*,*) 'COUPLING TEST FAILED'
       else      
         write(*,*) 'COUPLING TEST PASSED'

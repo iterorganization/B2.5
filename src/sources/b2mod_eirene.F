@@ -470,7 +470,7 @@ csw 26feb2013
         call alloc_b2mod_neutrals_save(nstraid)
         call read_b2mod_neutrals_save(99,'    ',saved_volrec_used)
         call xertst(nstrat.le.nstraid,
-     &   'Increase DEF_NSTRA in DIMENSIONS.F')
+     &   'Increase DEF_NSTRA in b2mod_dimensions')
         if(maxval(saved_volrec).gt.0.0_R8) then !{
           volsumnold(1:nstrat) = saved_volrec(1:nstrat)
         else !}{
@@ -4407,6 +4407,7 @@ c!###}
       use eirmod_braeir
 #else
       use b2mod_braeir
+      use b2mod_dimensions
 #endif
       implicit none
       integer nhistd
@@ -4582,6 +4583,7 @@ c!###}
       use eirmod_braeir
 #else
       use b2mod_braeir
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE

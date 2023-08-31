@@ -1,6 +1,6 @@
       module b2mod_b2zhco
       use b2mod_types
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
       implicit none
       integer :: zhd_corr=1, zhd_corrT=1, zhcscorr=1, zhcscorr_vq=1,
      &  zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0

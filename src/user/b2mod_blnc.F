@@ -101,7 +101,7 @@ c*** Column headers:
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
 c
 c  version : 19.07.2001 18:46
 c

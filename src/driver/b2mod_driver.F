@@ -128,9 +128,9 @@
      ,        num_time_slices, num_batch_slices
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 *   ..common blocks
-#     include "DIMENSIONS.F"
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
@@ -2054,7 +2054,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call xertst (natmi.le.DEF_NATM,
-     .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
 cxpb initialize the data necessary for boundary conditions
       call get_boundary_namelist
       if (boundary_namelist.ge.1) then

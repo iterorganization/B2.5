@@ -59,6 +59,7 @@ c
 #endif
 #else
       use b2mod_braeir
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -738,6 +739,7 @@ c
 #endif
 #else
       use b2mod_braeir
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE

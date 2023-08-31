@@ -11,6 +11,7 @@
       use b2mod_eirbra
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
       integer nx, ny
 #ifndef B25_EIRENE

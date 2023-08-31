@@ -32,6 +32,7 @@
       use timings
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -74,7 +75,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-#     include <DIMENSIONS.F>
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, ireg
 !     integer k

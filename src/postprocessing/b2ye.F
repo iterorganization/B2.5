@@ -16,10 +16,9 @@
 #ifdef B25_EIRENE
       use eirmod_infcop
 #endif
-
+      use b2mod_dimensions
       implicit none
 
-#include "DIMENSIONS.F"
 #ifndef NO_CDF
 #     include <netcdf.inc>
 

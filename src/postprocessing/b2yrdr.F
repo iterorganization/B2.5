@@ -8,8 +8,8 @@
       use b2mod_ppout
       use b2mod_ipmain
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer ninp(0:3), nout(0:1)
 *   ..output arguments (unspecified on entry)
@@ -295,7 +295,7 @@
       call ipgeti ('b2yrdr_ns', ns1)
       call xertst (0.lt.ns1, 'faulty input ns1')
       call xertst (DEF_NSD.ge.ns1,
-     . 'increase size of DEF_NSD in DIMENSIONS.F')
+     . 'increase size of DEF_NSD in b2mod_dimensions.F')
 *   ..read atomic rate data
       write(*,*) 'ns1 =',ns1
       call alloc_b2mod_ppout(nx,ny,ns1)

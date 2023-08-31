@@ -48,8 +48,8 @@ cank }
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #endif

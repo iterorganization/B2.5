@@ -30,8 +30,8 @@ c======================================================================
       use eirmod_extrab25
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
       integer i,j,k,n
       logical lim_cnf,target_east,target_west
 #ifdef DBG

@@ -19,8 +19,8 @@ c
 #ifdef B25_EIRENE
       use eirmod_parmmod
 #endif
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #endif

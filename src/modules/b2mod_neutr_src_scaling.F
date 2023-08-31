@@ -55,8 +55,8 @@ cxpb The actual used size is (0:natmi,nstra) but natmi is not known yet
       end subroutine dealloc_b2mod_neutr_src_scaling
 
       subroutine read_b2mod_neutr_src_scaling(nread,ns,nstra)
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
       integer nread, ns, nstra, idum(0:9)
       external cfruin, cfrure
 

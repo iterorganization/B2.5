@@ -1,7 +1,8 @@
       module b2mod_user_namelist
       use b2mod_types
       use b2mod_diag
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
+      implicit none
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)
       integer nhetrgtx
@@ -296,7 +297,7 @@ c*** Set default values according to current species list
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
       if (filedata(ntrc_uss)) call xertst(nlim.le.DEF_NLIM,
-     . 'insufficient size of DEF_NLIM in DIMENSIONS.F !')
+     . 'insufficient size of DEF_NLIM in b2mod_dimensions.F !')
 
       call subend ()
       return
