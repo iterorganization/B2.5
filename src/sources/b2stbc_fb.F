@@ -219,8 +219,8 @@
       use b2mod_plasma
      , ,only: na0, ne0, fna0, kinrgy0, ni0,
      ,        nap, nep, fnap, kinrgyp
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
       real (kind=R8) :: BoRiS,

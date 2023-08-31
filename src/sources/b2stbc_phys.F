@@ -41,8 +41,8 @@
 #endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0, diagno
       real (kind=R8) ::

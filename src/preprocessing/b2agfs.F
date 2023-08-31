@@ -16,8 +16,8 @@
      . ,only: GRID_N_CELLFLAGS
       use carre_constants
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
 *   ..output arguments
@@ -426,7 +426,7 @@ cxpb interact with the rest of the plasma domain.
 
         nncut=max(nncut,ic)
         if(nncut.gt.nncutmax) then
-          write(*,*) ' Increase DEF_NCUT in DIMENSIONS.F!'
+          write(*,*) ' Increase DEF_NCUT in b2mod_dimensions.F!'
           write(*,*) ' nncut = ',nncut,' DEF_NCUT = ',DEF_NCUT
           call xertst (nncut.le.DEF_NCUT,'faulty parameter DEF_NCUT')
         end if

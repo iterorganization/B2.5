@@ -113,8 +113,7 @@ c*** Column headers:
       use eirmod_clgin
      ,   , only : iliin
 #endif
-
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
 
 c----------------------------------------------------------------------
 c*** debug_flags usage:

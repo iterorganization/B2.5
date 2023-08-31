@@ -1,6 +1,9 @@
       module b2mod_ld_namelist
       use b2mod_types
       use b2mod_indirect
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -21,7 +24,6 @@
      *     regionZ(:, :)
       integer, allocatable, save :: nNodesInExternalRegion(:)
 #else
-#     include "DIMENSIONS.F"
       integer NCOIL_MAX
       parameter (NCOIL_MAX=20)
       real (kind=R8), save :: R1(0:NCOIL_MAX - 1)

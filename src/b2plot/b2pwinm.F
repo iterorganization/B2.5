@@ -13,8 +13,8 @@ c======================================================================
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
@@ -92,7 +92,7 @@ c*** Starting points of the segments
          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
          write(0,*) 'Current number of requested elements: ',lppp
          call xerrab
-     .    (' ==> Increase DEF_NLIM in DIMENSIONS.F')
+     .    (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
        end if !}
        do i=1,lppp !{
         pp1(1,i)=0.001_R8*ppp1(1,i)
@@ -107,7 +107,7 @@ c*** Ending points of the segments
          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
          write(0,*) 'Current number of requested elements: ',lppp
          call xerrab
-     .    (' ==> Increase DEF_NLIM in DIMENSIONS.F')
+     .    (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
        end if !}
        do i=1,lppp !{
         pp2(1,i)=0.001_R8*ppp2(1,i)
@@ -226,7 +226,7 @@ c*** List of segments to be skipped
          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
          write(0,*) 'Current number of requested elements: ',lskipel(j)
          call xerrab
-     .    (' ==> Increase DEF_NLIM in DIMENSIONS.F')
+     .    (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
         end if !}
         lskip(lskipel(j)) = .true.
        end do

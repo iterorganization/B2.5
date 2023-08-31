@@ -83,8 +83,8 @@ c 2002-09-11: logic revised
 #endif
       use b2mod_ipmain
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 
 *   ..input arguments (unchanged on exit)
       integer ninp(0:8), nout(0:6), nx1, ny1
@@ -927,7 +927,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2ytdr_ns', ns1)
       call xertst (0.lt.ns1, 'faulty input ns1')
       call xertst (DEF_NSD.ge.ns1,
-     . 'increase size of DEF_NSD in DIMENSIONS.F')
+     . 'increase size of DEF_NSD in b2mod_dimensions')
       call ipgeti ('b2ytdr_non_commensurate', non_commensurate)
       if (non_commensurate.eq.1 .or. nx.ne.nx1 .or. ny.ne.ny1) then
         same_grid = .false.
@@ -1515,7 +1515,7 @@ c 2002-09-11: logic revised
      .   (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
         call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
-     .   'Increase DEF_NSTRA in DIMENSIONS.F')
+     .   'Increase DEF_NSTRA in b2mod_dimensions')
         ib1 = 0
         nstrai1 = 0
         nstrat1 = 0
@@ -2086,9 +2086,9 @@ c 2002-09-11: logic revised
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((boundary_namelist.eq.1.or.todo).and..not.found)
        call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+       call xertst (nbc.le.nbcd, 'increase DEF_NBC in b2mod_dimensions')
        call xertst (nniso.le.nnisod,
-     .  'increase DEF_NISO in DIMENSIONS.F')
+     .  'increase DEF_NISO in b2mod_dimensions')
        if (same_bundling.and.same_grid) then
         if (first_pass) then
           write(nout(5),'(a)') 'b2.boundary.parameters'
@@ -2198,7 +2198,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1 .and. bcpos1(ib).ne.-2) then  ! must duplicate the X b.c.
               nbc1 = nbc1 + ib2-ib1
               call xertst (nbc1.le.nbcd,
-     .         'increase DEF_NBC in DIMENSIONS.F')
+     .         'increase DEF_NBC in b2mod_dimensions')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
@@ -2330,7 +2330,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1) then  ! must duplicate the Y b.c.
               nbc1 = nbc1 + ib2-ib1
               call xertst (nbc1.le.nbcd,
-     .         'increase DEF_NBC in DIMENSIONS.F')
+     .         'increase DEF_NBC in b2mod_dimensions')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
@@ -11521,7 +11521,7 @@ cxpb as they no longer necessarily point to the same species
          call find_file(filename,todo)
          call read_neutrals_namelist(nx, ny, ns, .false.)
          call xertst (nstrai.le.nstraid,
-     >      'Increase DEF_NSTRA in DIMENSIONS.F')
+     >      'Increase DEF_NSTRA in b2mod_dimensions')
          call find_file(new_filename,found)
          if (found) write(6,*) trim(new_filename), ' already present!'
        else
@@ -13137,6 +13137,7 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
       subroutine de_bundle(ns, zn, am, zamin, zamax,
      *   is0, ic, bundle_contr, zn0, am0, zamin0, zamax0)
       use b2mod_types
+      use b2mod_dimensions
       implicit none
 *   ..arguments for input bundles (unchanged upon exit)
       integer ns
@@ -13178,6 +13179,7 @@ cxpb basic species 'ic'
      *   ns, is0, bundle_contr, zn0, am0, zamin0, zamax0,
      *   ns1, is1, bundle_frac, zn1, am1, zamin1, zamax1)
       use b2mod_types
+      use b2mod_dimensions
       implicit none
 *   ..arguments for input de-bundled data (unchanged upon exit)
       integer ns

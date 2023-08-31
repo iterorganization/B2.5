@@ -7,8 +7,8 @@
       use b2mod_numerics_namelist
       use b2mod_user_namelist
       use b2mod_b2plot_wall_loading
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 
 c
 c  version : 06.21.2022 by Ilya Senichenkov
@@ -79,8 +79,7 @@ c*** Column headers:
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
-
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
 
 c----------------------------------------------------------------------
 c*** debug_flags usage:

@@ -631,8 +631,8 @@ contains
 #ifdef NO_OPT
 !DIR$ NOOPTIMIZE
 #endif
+        use b2mod_dimensions
         implicit none
-#include <DIMENSIONS.F>
         type (ids_equilibrium) :: equilibrium !< IDS designed to
             !< store equilibrium data
         type (ids_edge_profiles) :: edge_profiles !< IDS designed to
