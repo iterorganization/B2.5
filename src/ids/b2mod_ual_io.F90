@@ -722,8 +722,10 @@ contains
         integer :: nscx, iscx(0:nscxmax-1)
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
+#if IMAS_MINOR_VERSION > 38
         real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, 0:1)
         real(IDS_real) :: totflux( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, 0:1)
+#endif
         real(IDS_real) :: hlpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
