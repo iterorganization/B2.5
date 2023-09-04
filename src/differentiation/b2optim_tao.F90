@@ -224,6 +224,8 @@
       use b2mod_b2cmpa_diff
       use b2mod_par_opt_diff &
      , only : par_rescale, sigma, mean
+      use b2mod_ad_diff &
+     , only : primal_iterations, gradient_iterations
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean
@@ -291,6 +293,8 @@
       end do
 #endif
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
+      write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
+      write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
       call VecRestoreArrayF90(grad,g_v,ierr)
@@ -323,6 +327,8 @@
       subroutine FormFunction(tao, XX, F, dummy, ierr)
       use b2mod_par_opt_diff &
       , only : sigma, mean
+      use b2mod_ad_diff &
+     , only : primal_iterations
       implicit none
       real(kind=r8) j(nncf)
       integer ipar, isigma, imean
@@ -367,6 +373,7 @@
       endif
       call b2mn_step(switch, geo, mpg, state, state_ext, j)
       F = j(1)
+      write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
 
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
@@ -381,6 +388,8 @@
       use b2mod_b2cmpa_diff
       use b2mod_par_opt_diff &
       , only : sigma, mean
+      use b2mod_ad_diff &
+     , only : primal_iterations, gradient_iterations
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean
@@ -447,6 +456,8 @@
       end do
 #endif
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
+      write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
+      write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
 ! Experimental: write intermediate state file?
       write_state = .false.
       if (switch%b2optim_save_states.gt.0) then

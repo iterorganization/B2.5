@@ -161,6 +161,9 @@ MODULE B2MOD_AD_DIFF
   INTEGER, SAVE :: ncall_b2xehx=0
   INTEGER, SAVE :: ncall_b2xehy=0
   INTEGER, SAVE :: ncall_b2mndt=0
+!
+  INTEGER, SAVE :: gradient_iterations=0
+  INTEGER, SAVE :: primal_iterations=0
   DATA fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))', &
 &      '(1p,7(1x,e17.9e3))', '(1p,8(1x,e15.7e3))', '(1p,9(1x,e13.5e3))'&
 &      , '(1p,10(1x,e12.4e3))'/
