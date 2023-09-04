@@ -1940,9 +1940,6 @@ c new CDF movie option (1st frame at t=0)
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
       type(switches), intent (inout)      :: switch
-#ifdef FIXED_POINT
-      type(B2State) :: state0
-#endif
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
       integer nCv, nFc, nVx
@@ -2002,7 +1999,6 @@ cwdk  set some integers
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
 ! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-      state0 = state
 ! $AD FP-LOOP "state"
       do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
 #else
@@ -2518,11 +2514,10 @@ c new CDF movie option
 #endif
 #endif
 #ifdef FIXED_POINT
-        call calc_res_fp(nCv, ns, state, state0, res_max)
         write(*,*) 'MAX RESIDUAL ',res_max
-        state0 = state
 *   ..end loop
       end do
+      primal_iterations = itim
 *   ..call cost function
       call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
      &    state_ext, switch%BoRiS, J)
@@ -2534,6 +2529,7 @@ c new CDF movie option
         goto 1
 *   ..end loop
       endif  !}
+      primal_iterations = itim
 #endif
       call subend ()
       return
