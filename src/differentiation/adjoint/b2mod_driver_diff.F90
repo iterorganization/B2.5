@@ -5397,7 +5397,6 @@ CONTAINS
     TYPE(B2STATEEXT_DIFF), INTENT(INOUT) :: state_extb
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES), INTENT(INOUT) :: switchb
-    TYPE(B2STATE) :: state0
 !! incident fluid neutral flux
     REAL(kind=r8) :: j(nncf), kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0:&
 &   ns-1)
@@ -5448,7 +5447,6 @@ CONTAINS
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
 ! Note that when compiling the 1 version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-    state0 = state
     DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim)
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &     'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr&
@@ -5573,9 +5571,7 @@ CONTAINS
           res_max = res_max
         END IF
       END IF
-      CALL CALC_RES_FP_NODIFF(ncv, ns, state, state0, res_max)
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      state0 = state
     END DO
     primal_iterations = itim
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
@@ -6394,9 +6390,7 @@ CONTAINS
     END IF
     WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, ' TIME '&
 &   , tim, ' NTIM ', ntim, ' DTIM ', dtim
-    CALL CALC_RES_FP_NODIFF(ncv, ns, state, state0, res_max)
     WRITE(*, *) 'MAX RESIDUAL ', res_max
-    state0 = state
 !   ..end loop
 !   ..call cost function
     IF (ALLOCATED(b2dataoncf)) THEN
@@ -9044,7 +9038,6 @@ CONTAINS
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(SWITCHES), INTENT(INOUT) :: switch
-    TYPE(B2STATE) :: state0
 !! incident fluid neutral flux
     REAL(kind=r8) :: j(nncf), kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0:&
 &   ns-1)
@@ -9092,7 +9085,6 @@ CONTAINS
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
 ! Note that when compiling the 1 version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-    state0 = state
     DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim)
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &     'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr&
@@ -9217,9 +9209,7 @@ CONTAINS
           res_max = res_max
         END IF
       END IF
-      CALL CALC_RES_FP_NODIFF(ncv, ns, state, state0, res_max)
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      state0 = state
     END DO
 !   ..end loop
     primal_iterations = itim
