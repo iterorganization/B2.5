@@ -228,7 +228,7 @@
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use eirmod_braeir
-      use eirmod_extrab25, only : eirene_sps_absr_update
+!      use eirmod_extrab25, only : eirene_sps_absr_update
 #endif
       use b2mod_subsys
       use b2mod_external
@@ -238,7 +238,7 @@
       use b2mod_driver
      , ,only : pbs, ua
       use b2mod_sources
-     , ,only : rqrad
+     , ,only : rqrad, rqbrm
       use b2mod_b2plot_wall_loading
       implicit none
 #include <DIMENSIONS.F>
@@ -311,7 +311,7 @@
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
      6  cbsnafac, cbsnainc, ! bsign, 
 #ifdef B25_EIRENE
-     &  flxic(nspecies), flxnp(nspecies),
+     &  flxic(nspecies), flxnp(nspecies), sps_abs_rescale(1:nspz),
 !     &  hlp_p,hlp_s,hlp_si,hlp_hep,hlp_so,hlp_pi,
 !     &  hlp_po,hlp,hlp_hepr,hlp_ppfi,hlp_ppfo,hlp_ppfr,
 #endif
@@ -1132,30 +1132,9 @@
      &            ispecies+1
               endif
 
-!<<<<<<< HEAD
-!              na_feedback_current = 0.5_R8 *
-!     *         (ne(jxi,jsep)+
-!     *          ne(topix(jxi,jsep),topiy(jxi,jsep)))
-!              is_start=-1
-!              is_end=-1
-!              do is = 0, ns-1
-!                if(b2espcr(is).eq.ispecies+1) then
-!                  if(is_start.eq.-1) is_start=is
-!                  is_end=is
-!                endif
-!              enddo
-!
-!            case default
-!              write(*,*) 'na feedback_choice not coded ',
-!     &                    na_feedback_choice(ispecies)
-!
-!            end select
-!
-!=======
               na_feedback_current = 0.5_R8 *
      *                 (ne(jxi,jsep)+
      *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
-!<<<<<<< HEAD
               is_start=-1
               is_end=-1
               do is = 0, ns-1
@@ -1212,9 +1191,7 @@
                   is_end=is
                 endif
               enddo
-
-!<<<<<<< HEAD
-                  
+               
             case (11) ! ion saturation current at outer bottom target: to be done
             
               if(ncall.eq.0) then
@@ -1224,17 +1201,6 @@
      &                ispecies+1
                 if (fb_istyle_fchi.eq.0) then
                   write(*,'(a)')
-!=======
-!#endif
-!            case (11)
-!                if(ncall.eq.0) then
-!                     write(*,'(a,a,i3)')
-!     &                    'b2stbc_fb_pre_choice: using ',
-!     &                    'ion satuarion current for sequence ',
-!     &                    ispecies+1
-!                    if (fb_istyle_fchi.eq.0) then
-!                      write(*,'(a)')
-!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
      &                'increasing particle content to increase jsat...'
                 elseif (fb_istyle_fchi.eq.1) then
                   write(*,'(a)')
@@ -1242,9 +1208,6 @@
                 endif
               endif
                   
-
-!<<<<<<< HEAD
-!<<<<<<< HEAD
               call b2xprz (nx, ny, ns, mp, am, na, rz)
               fchi = 0.0_R8
               te_max = 0.0_R8
@@ -1258,74 +1221,10 @@
                     t0 = 0.0e0_R8
                     do is = 0, ns-1
                       t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-!=======
-!                  call b2xprz (nx, ny, ns, mp, am, na, rz)
-!                  fchi = 0.0_R8
-!                  te_max = 0.0_R8
-!          do IB = 1, NBC
-!        IF(BCCHAR(IB).EQ.'E') THEN
-!          DO IY = 1, BC_LIST_SIZE(IB)
-!            s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
-!            CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-!     &              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-!            t0 = 0.0e0_R8
-!            do is = 0, ns-1
-!              t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-!>>>>>>> ea269646... Changes to be committed:
-!     &                  fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
-!     &                  /(hy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-!     &                  hz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-!                    enddo
-!=======
-!                  call b2xprz (nx, ny, ns, mp, am, na, rz)
-!                  fchi = 0.0_R8
-!                  te_max = 0.0_R8
-!          do IB = 1, NBC
-!        IF(BCCHAR(IB).EQ.'E') THEN
-!          DO IY = 1, BC_LIST_SIZE(IB)
-!            ! s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
-!            t0 = 0.0e0_R8
-!            do is = 0, ns-1
-!              t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
      &                  fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) /
      &                  gs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
                     enddo
-!>>>>>>> 5a92b1be... Changes to be committed:
-!=======
-!                  call b2xprz (nx, ny, ns, mp, am, na, rz)
-!                  fchi = 0.0_R8
-!                  te_max = 0.0_R8
-!                do IB = 1, NBC
-!              IF(BCCHAR(IB).EQ.'E') THEN
-!                DO IY = 1, BC_LIST_SIZE(IB)
-!                  ! s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
-!                  t0 = 0.0e0_R8
-!                  do is = 0, ns-1
-!              t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-!     &                  fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
-!     &        /gs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
-!              enddo
-!
-!              if (abs(qe*t0).gt.fchi) then
-!                fchi = abs(qe*t0)
-!                te_max = te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-!              endif
-!              enddo
-!              print *,"te=",te_max/qe,"fchi=",fchi
-!              ENDIF
-!              end do
-!              na_feedback_current = fchi
-!              is_start=-1
-!              is_end=-1
-!              do is = 0, ns-1
-!                  if(b2espcr(is).eq.ispecies+1) then
-!                    if(is_start.eq.-1) is_start=is
-!                    is_end=is
-!                  endif
-!              enddo
-!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
 
-!<<<<<<< HEAD
                     if (abs(qe*t0).gt.fchi) then
                       fchi = abs(qe*t0)
                       te_max = te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
@@ -1338,18 +1237,6 @@
               end do
            
               na_feedback_current = fchi
-!=======
-!            if (abs(qe*t0).gt.fchi) then
-!              fchi = abs(qe*t0)
-!              te_max = te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-!            endif
-!          enddo
-!          print *,"te=",te_max/qe,"fchi=",fchi
-!          ENDIF
-!          end do
-!          na_feedback_current = fchi
-
-!<<<<<<< HEAD
               is_start=-1
               is_end=-1
               
@@ -1369,61 +1256,6 @@
      &                    ispecies+1
                 na_feedback_target(ispecies) = ! FIXME: condition is required here
      &          na_feedback_target(ispecies) ** (-1)
-!              endif
-!              
-!              hlp_ppwo=0.0_R8
-!              
-!              do iy=0,ny-1 !{
-!                hlp=abs(fht(nx,iy,0))
-!                s=gs(nx,iy,0)
-!                do is=0,ns_ext-1 !{
-!                  hlp=hlp+abs(fa_ext(nx,iy,0,is)*(
-!     .               (pt_ext(nx,iy,is)*hx(nx-1,iy)+
-!     .               pt_ext(nx-1,iy,is)*hx(nx,iy))/
-!     .               (hx(nx-1,iy)+hx(nx,iy))*ev+
-!     .               (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
-!     .               (ua(nx,iy,is)**2*hx(nx-1,iy)+
-!     .               ua(nx-1,iy,is)**2*hx(nx,iy))/
-!     .               (hx(nx-1,iy)+hx(nx,iy))))
-!                end do !}
-!          
-!               hlp = hlp / s
-!#ifdef B25_EIRENE
-!                if (use_eirene.ne.0) then !{
-!                  do js=1,nsts !{
-!                    if (eirdiag_nds_typ(js).ne.2) cycle
-!                    if (eirdiag_nds_srf(js).ne.nx) cycle
-!                    if (eirdiag_nds_start(js).gt.(iy+1)) cycle
-!                    if (eirdiag_nds_end(js).lt.(iy+1)) cycle
-!                    ind=eirdiag_nds_ind(js)
-!                    ias=ind+1-(eirdiag_nds_start(js)-1)
-!                    hlp=hlp+ewldt_res(iy+ias)
-!                  end do !}
-!                end if !}
-!#endif
-!                hlp_ppwo=max(hlp_ppwo,hlp)
-!              end do !}
-            
-!              na_feedback_current = 1 / hlp_ppwo
-        
-!              is_start=-1
-!              is_end=-1
-            
-!              do is = 0, ns-1
-!                if(b2espcr(is).eq.ispecies+1) then
-!                  if(is_start.eq.-1) is_start=is
-!                  is_end=is
-!                endif
-!              enddo
-!=======
-!          case (12)
-!            if(ncall.eq.0) then
-!              write(*,'(a,a,i3)')
-!     &        'b2stbc_fb_pre_choice: using ',
-!     &        'power flux current for sequence ',
-!     &        ispecies+1
-!              na_feedback_target(ispecies) = 
-!     &        na_feedback_target(ispecies) ** (-1)
                 call alloc_b2plot_wall_loading(nlim,nsgmx)
               endif
               
@@ -1452,70 +1284,61 @@
               endif
 
               na_feedback_current = 0.0_R8
-              t0 = 0.0_R8
-!>>>>>>> ea269646... Changes to be committed:
+!              t0 = 0.0_R8
               is_start=-1
               is_end=-1
               do is = 0, ns-1
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
-!<<<<<<< HEAD
-!                  is_end=is
-!                endif
-!              enddo
-!          
-!            case default
-!            
-!                  write(*,*) 'na feedback_choice not coded ',
-!=======
-                  do iy = na_feedback_iy1(ispecies),
-     &                    na_feedback_iy2(ispecies)
-                    do ix = na_feedback_ix1(ispecies),
-     &                      na_feedback_ix2(ispecies)
-                      na_feedback_current =
-     &                    na_feedback_current +
-     &                    rqrad(ix,iy,is)
-                    enddo
-                  enddo
-               
                   is_end=is
                 endif
               enddo
-              
-              if (bcene(1).eq.16) then
-                t0 = t0 + enepar(1,1) 
-              endif
-              if (bcene(2).eq.16) then
-                t0 = t0 + enepar(2,1) 
-              endif
-              if (bceni(1).eq.27) then
-                t0 = t0 + enipar(1,1) 
-              endif
-              if (bceni(2).eq.27) then
-                t0 = t0 + enipar(2,1) 
-              endif
-              
-              if (t0.eq.0.0_R8) then
-                do ix = leftcut(1),rightcut(1) - 1
-                  t0 = t0 + fhe(ix,-1,1)+fhi(ix,-1,1)
+
+              do iy = na_feedback_iy1(ispecies),
+     &                    na_feedback_iy2(ispecies)
+                do ix = na_feedback_ix1(ispecies),
+     &                      na_feedback_ix2(ispecies)
+                  do is = 0, ns-1
+                    na_feedback_current =
+     &   na_feedback_current + rqbrm(ix,iy,is) + rqrad(ix,iy,is)
+                  enddo
+#ifdef B25_EIRENE
+                    na_feedback_current = na_feedback_current -
+     &    sum(eneutrad(ix+1,iy+1,1:nnatmi,0)) - 
+     &        sum(emolrad(ix+1,iy+1,1:nnmoli,0)) -
+     &           sum(eionrad(ix+1,iy+1,1:nnioni,0))              
+#endif
+                  enddo
                 enddo
-              endif
+               
+!              if (bcene(1).eq.16) then
+!                t0 = t0 + enepar(1,1) 
+!              endif
+!              if (bcene(2).eq.16) then
+!                t0 = t0 + enepar(2,1) 
+!              endif
+!              if (bceni(1).eq.27) then
+!                t0 = t0 + enipar(1,1) 
+!              endif
+!              if (bceni(2).eq.27) then
+!                t0 = t0 + enipar(2,1) 
+!              endif
+!              
+!              if (t0.eq.0.0_R8) then
+!                do ix = leftcut(1),rightcut(1) - 1
+!                  t0 = t0 + fhe(ix,-1,1)+fhi(ix,-1,1)
+!                enddo
+!              endif
               
               print *,"income power=",t0, "radiated power",
      &          na_feedback_current
      
               if (na_feedback_current.eq.0.0_R8) then
                 na_feedback_current = na_feedback_target(ispecies)
-              else
-                na_feedback_current = na_feedback_current/t0
+!              else
+!                na_feedback_current = na_feedback_current/t0
               endif
-!<<<<<<< HEAD
-!              
-!            case default
-!                  
-!              write(*,*) 'na feedback_choice not coded ',
-!>>>>>>> ea269646... Changes to be committed:
-!=======
+
             case (14)
             
               if(ncall.eq.0) then
@@ -1526,36 +1349,40 @@
               endif
                 
               na_feedback_current = 0.0_R8
-              t0 = 0.0_R8
+!              t0 = 0.0_R8
 
-              if (bcene(1).eq.16) then
-                t0 = t0 + enepar(1,1) 
-              endif
-              if (bcene(2).eq.16) then
-                t0 = t0 + enepar(2,1) 
-              endif
-              if (bceni(1).eq.27) then
-                t0 = t0 + enipar(1,1) 
-              endif
-              if (bceni(2).eq.27) then
-                t0 = t0 + enipar(2,1) 
-              endif
-              if (t0.eq.0.0_R8) then
-                do ix = leftcut(1),rightcut(1) - 1
-                  t0 = t0 + fhe(ix,-1,1)+fhi(ix,-1,1)
-                enddo
-              endif
+!              if (bcene(1).eq.16) then
+!                t0 = t0 + enepar(1,1) 
+!              endif
+!              if (bcene(2).eq.16) then
+!                t0 = t0 + enepar(2,1) 
+!              endif
+!              if (bceni(1).eq.27) then
+!                t0 = t0 + enipar(1,1) 
+!              endif
+!              if (bceni(2).eq.27) then
+!                t0 = t0 + enipar(2,1) 
+!              endif
+!              if (t0.eq.0.0_R8) then
+!                do ix = leftcut(1),rightcut(1) - 1
+!                  t0 = t0 + fhe(ix,-1,1)+fhi(ix,-1,1)
+!                enddo
+!              endif
 
-              na_feedback_current = sum(rqrad)
+              na_feedback_current = sum(rqrad) + sum(rqbrm)
+#ifdef B25_EIRENE
+     & - sum(eneutrad(:,:,1:nnatmi,0)) - sum(emolrad(:,:,1:nnmoli,0)) -
+     &           sum(eionrad(:,:,1:nnioni,0))              
+#endif
 
               if (na_feedback_current.eq.0.0_R8) then
                 na_feedback_current = na_feedback_target(ispecies)
               else
-                na_feedback_current = na_feedback_current -
-     &            0.5_R8 * (sum(emolrad) + sum(eneutrad) + sum(eionrad))
+!                na_feedback_current = na_feedback_current -
+!     &            0.5_R8 * (sum(emolrad) + sum(eneutrad) + sum(eionrad))
                 print *,"income power=",t0, "radiated power",
-     &          na_feedback_current
-                     na_feedback_current = na_feedback_current/t0
+     &                            na_feedback_current
+!                     na_feedback_current = na_feedback_current/t0
               endif
 
               is_start=-1
@@ -1568,15 +1395,78 @@
                   endif
               enddo
               
+            case (15)  ! total radiation outside the separatrix
+            
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_choice: using ',
+     &            'total radiation outside the separatrix ',
+     &                    ispecies+1
+              endif
+
+              na_feedback_current = 0.0_R8
+!              t0 = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
+              
+              do iy = -1, ny
+                do ix = -1, nx
+                  if (.not. ON_CLOSED_SURFACE(ix,iy)) then
+                    do is = 0, ns-1  
+                      na_feedback_current = na_feedback_current +
+     &                       rqbrm(ix,iy,is) + rqrad(ix,iy,is)
+                    enddo
+#ifdef B25_EIRENE
+                    na_feedback_current = na_feedback_current -
+     &    sum(eneutrad(ix+1,iy+1,1:nnatmi,0)) - 
+     &        sum(emolrad(ix+1,iy+1,1:nnmoli,0)) -
+     &           sum(eionrad(ix+1,iy+1,1:nnioni,0))              
+#endif
+                  endif  
+                enddo
+              enddo
+               
+              
+!              if (bcene(1).eq.16) then
+!                t0 = t0 + enepar(1,1) 
+!              endif
+!              if (bcene(2).eq.16) then
+!                t0 = t0 + enepar(2,1) 
+!              endif
+!              if (bceni(1).eq.27) then
+!                t0 = t0 + enipar(1,1) 
+!              endif
+!              if (bceni(2).eq.27) then
+!                t0 = t0 + enipar(2,1) 
+!              endif
+              
+!              if (t0.eq.0.0_R8) then
+!                do ix = leftcut(1),rightcut(1) - 1
+!                  t0 = t0 + fhe(ix,-1,1)+fhi(ix,-1,1)
+!                enddo
+!              endif
+              
+              print *,"income power=",t0, 
+     &   "radiated power outside the separatrix", na_feedback_current
+     
+              if (na_feedback_current.eq.0.0_R8) then
+                na_feedback_current = na_feedback_target(ispecies)
+!              else
+!                na_feedback_current = na_feedback_current/t0
+              endif
               
             case default
                   
               write(*,*) 'na feedback_choice not coded ',
-!>>>>>>> 5a92b1be... Changes to be committed:
      &                 na_feedback_choice(ispecies)
 
             end select
-!>>>>>>> 9e9da198... Changes to be committed:
 ! phase 2:
 
             select case(na_feedback_option(ispecies))
@@ -1763,9 +1653,6 @@
               write(*,*) 'na feedback_option not coded ',
      &                     na_feedback_option(ispecies)
 
-!<<<<<<< HEAD
-!            end select
-!=======
             end select
                
 ! Needed for na_feedback_choice() = 11: to be further improved
@@ -1774,15 +1661,6 @@
               na_feedback_rescale = 1/na_feedback_rescale
             endif
             
-!>>>>>>> 9e9da198... Changes to be committed:
-
-            write(*,'(a,1x,1p,i3,6g15.6)')
-     &       'na_feedback_rescale ', ispecies+1,
-     &        na_feedback_current,
-     &        na_feedback_target(ispecies),
-     &        na_feedback_rescale,
-     &        na_feedback_prev(ispecies),
-     &        dteff, dt_prev
 
 ! phase 3:
 
@@ -1799,49 +1677,6 @@
      &           ispecies+1
               endif
 
-!<<<<<<< HEAD
-!              if((feedback_namelist_used .and. ncall .eq. 0) .and.
-!     &           saved_na_feedback_actuator(ispecies) .eq. 0.0_R8) then
-!                write(message,'(a,i3,a,i2,a)')
-!     .            'Initial gas puff strength.le.0, set by CONPAR(',
-!     .            is_start,',',na_feedback_ib(ispecies),',1) !'
-!                call xertst(
-!     .            conpar(is_start, na_feedback_ib(ispecies), 1)
-!     .            .gt.0.0_R8, trim(message) )
-!                saved_na_feedback_actuator(ispecies) =
-!     &          conpar(is_start, na_feedback_ib(ispecies), 1)
-!              endif
-!
-!              if (na_feedback_option(ispecies).lt.4) then
-!                saved_na_feedback_actuator(ispecies) =
-!     &            saved_na_feedback_actuator(ispecies) *
-!     &            na_feedback_rescale
-!              else
-!                saved_na_feedback_actuator(ispecies) =
-!     &            na_feedback_rescale
-!              end if
-!              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
-!     &          saved_na_feedback_actuator(ispecies) =
-!     &            max(na_feedback_puff_min(ispecies),
-!     &            saved_na_feedback_actuator(ispecies))
-!              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
-!     &          saved_na_feedback_actuator(ispecies) =
-!     &            min(na_feedback_puff_max(ispecies),
-!     &            saved_na_feedback_actuator(ispecies))
-!
-!              if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
-!     &           na_feedback_current .gt.
-!     &           na_feedback_target(ispecies) *
-!     &           na_feedback_overshoot(ispecies)) then
-!                conpar(is_start, na_feedback_ib(ispecies), 1) =
-!     &            0.0_R8
-!              else
-!                conpar(is_start, na_feedback_ib(ispecies), 1) =
-!     &            saved_na_feedback_actuator(ispecies)
-!              endif
-!
-!            case (2) ! rescale na
-!=======
               if((feedback_namelist_used .and. ncall .eq. 0) .and.
      &            saved_na_feedback_actuator(ispecies) .eq. 0.0_R8) then
                  write(message,'(a,i3,a,i2,a)')
@@ -1865,14 +1700,17 @@
 #endif
               endif   
 
-              if (na_feedback_option(ispecies).lt.4 .or.
+#ifdef B25_EIRENE
+              if (mod(ncall,eirene_mod) .eq. 0) then 
+#endif
+                if (na_feedback_option(ispecies).lt.4 .or.
      &               na_feedback_option(ispecies).gt.6) then
 !###!                if ( (abs(na_feedback_rescale-1.0_R8) .gt. 0.01_R8)
 !###!     &                        .or. (int_ntim(ispecies).eq.0) ) then
 !###!                  int_flux(ispecies) = int_flux(ispecies) +
 !###!     &                   saved_na_feedback_actuator(ispecies)
 !###!                  int_ntim(ispecies) = int_ntim(ispecies) + 1
-                  saved_na_feedback_actuator(ispecies) = t0 *
+                   saved_na_feedback_actuator(ispecies) = t0 *
      &                  na_feedback_rescale
 !###!                else
 !###!                  print *,"feedback_set_avg_flux"
@@ -1895,165 +1733,34 @@
 !###!                print *, "avg_flux=",int_flux(ispecies)/
 !###!     &                  Real(int_ntim(ispecies))
 !###!                print *, "current_val=",na_feedback_const(ispecies)
-              else
-                saved_na_feedback_actuator(ispecies) =
+                else
+                  saved_na_feedback_actuator(ispecies) =
      &                 na_feedback_rescale
-              end if
+                end if
 
-!###!#ifdef B25_EIRENE
-!###!              if (na_feedback_option(ispecies).eq.7.or.
-!###!     &               na_feedback_option(ispecies).eq.8) then
-!<<<<<<< HEAD
-!                sna_pump = 0.0_R8
-!                do ia = 1, nnatmi
-!                  k = latmscl(ia)
-!                  if (k.eq.0) cycle
-!                  sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + 
-!     &                           eirpump(ia)
-!                  do im = 1, nnmoli
-!                    if (mlcmp(ia,im).gt.0) then
-!                        sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
-!     &                           mlcmp(ia,im) * eirpump(nnatmi+im)
-!                    endif
-!                  enddo
-!                end do
-!                
-!                do ip = 1, nnplsi
-!                  is = latmscl(lkindp(ip))
-!                  if (is.eq.0) cycle
-!                  sna_pump(is) = sna_pump(is) +
-!     &                eirpump(nnatmi+nnmoli+nnioni+ip)
-!                enddo
-!                    
-!                print *,"Lezgini sna_pump " ,ispecies,' ',
-!     &              sna_pump(ispecies+1)
-!c Flux from core impact
-!
-!                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
-!     &                          NFLUIDS(ispecies+1)
-!         Loop over B2 boundaries
-!                  do ic = 1,nbc
-!
-!                    if (BCCHAR(IC).eq.'S') then
-!                      idir  = 1
-!                      bsign = 1.0_R8
-!                    else if (BCCHAR(IC).eq.'N') then
-!                      idir  = 1
-!                      bsign =-1.0_R8
-!                    else if (BCCHAR(IC).eq.'W') then
-!                      idir  = 0
-!                      bsign = 1.0_R8
-!                    else if (BCCHAR(IC).eq.'E') then
-!                      idir  = 0
-!                      bsign =-1.0_R8
-!                    else
-!                      cycle
-!                    end if
-!
-!!           Loop over poloidal coordinate along this boundary
-!                    do ix = 1, BC_LIST_SIZE(ic)
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!             Check whether it is a southern boundary
-!                      if (BCCHAR(ic).EQ.'S') then
-!                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                      else if (BCCHAR(ic).EQ.'N') then
-!                        ixf = BC_LIST_X(ix,ic)
-!                        iyf = BC_LIST_Y(ix,ic)
-!                      else if (BCCHAR(ic).EQ.'W') then
-!                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                      else if (BCCHAR(ic).eq.'E') then
-!                        ixf = BC_LIST_X(ix,ic)
-!                        iyf = BC_LIST_Y(ix,ic)
-!                      end if
-!
-!!             Check whether this is part of the core boundary
-!                      if (core_boundary(ic)) then
-! Count fluid neutrals if not coupled to Eirene
-!                        if (is_neutral(is).and.use_eirene.eq.0) then
-!                          flxnc(ispecies+1) = flxnc(ispecies+1) +
-!     .                         bsign * fna(ixf,iyf,idir,is)
-!                        else if (.not.is_neutral(is)) then ! not neutral
-!                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
-!                            flxic(ispecies+1) = flxic(ispecies+1) +
-!     .                         bsign * fna(ixf,iyf,idir,is)
-!!                          print *, "Lezgini ion core flux", flxic(ispecies+1)
-!                          else
-!                            flxic(ispecies+1) = flxic(ispecies+1) +
-!     .                         bsign * fna_mdf(ixf,iyf,idir,is)
-!                          end if
-!                        end if  
-!                      end if
-!                        
-!                   end do   ! ix
-!                   
-!                 end do  !ic
-!                 
-!               end do  !is
-!               
-!               do is = 1,ncns
-!c**       Here "is" is not a species index, but the index of Eirene surface,
-!!!!    because
-!c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
-!c**       lcns() - index of these 'non-default' surfaces
-!
-!                 js = lcns(is) + nnlimi
-!c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
-!                 do j = 1,nnatmi
-!                   print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
-!     &            " ,ls=",(ispecies+1)
-!                   if (latmscl(j) .eq. ispecies+1) then
-!                     flxnc(ispecies+1) = flxnc(ispecies+1) -
-!     &                   wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-!                     do ic=1,nnmoli
-!                       if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
-!     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
-!     &               - wldrm(js,ic,0) - wldpm(js,ic,0))
-!                     end do
-!                   end if
-!                 end do
-!               end do
-!c -------------------------------------------------------------------------------------
-!               print *, "Lezgini ion core flux", flxic(ispecies+1)
-!               print *, "Lezgini neut core flux", flxnc(ispecies+1)
-!               
-!               saved_na_feedback_actuator(ispecies) =
-!     &                 sna_pump(ispecies+1) * na_feedback_rescale 
-!     &                - flxic(ispecies+1)
-!              endif  ! na_feedback_option(ispecies) = 7,8
-!=======
-!###!                call calc_pump_and_flux (nx,ny,ns,mdf_fnb,
-!###!     &                     style_b2mndt, use_eirene, nspecies,  
-!###!     &                     ispecies, sna_pump, flxnp, flxic)
-!###!                saved_na_feedback_actuator(ispecies) =
-!###!     &                 (sna_pump(ispecies+1) - flxic(ispecies+1)) * 
-!###!     &                 na_feedback_rescale
-!###!              endif   ! na_feedback_option(ispecies) = 7,8
-!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
-!#endif
                   
-              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+                if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
      &             saved_na_feedback_actuator(ispecies) =
      &                 max(na_feedback_puff_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
-              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+                if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
      &            saved_na_feedback_actuator(ispecies) =
      &                 min(na_feedback_puff_max(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
 
-              if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
+                if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
      &                     na_feedback_current .gt.
      &                 na_feedback_target(ispecies) *
      &                 na_feedback_overshoot(ispecies)) then
-                conpar(is_start, na_feedback_ib(ispecies), 1) =
+                  conpar(is_start, na_feedback_ib(ispecies), 1) =
      &                    0.0_R8
-              else
-                conpar(is_start, na_feedback_ib(ispecies), 1) =
+                else
+                  conpar(is_start, na_feedback_ib(ispecies), 1) =
      &                 saved_na_feedback_actuator(ispecies)
+                endif
+#ifdef B25_EIRENE
               endif
-             
+#endif             
               print *,"Lezgini b2stbc_fb"
               print *,"Lezgini conpar ",conpar
      &            (is_start, na_feedback_ib(ispecies), 1)
@@ -2062,7 +1769,6 @@
      &            na_feedback_ib(ispecies)
             
             case (2) ! rescale na
-!>>>>>>> 9e9da198... Changes to be committed:
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -2151,234 +1857,26 @@
                  total_flux = saved_na_feedback_actuator(ispecies)
               endif
 
-!<<<<<<< HEAD
-!              do is = is_start, is_end
-!                iss = is-is_start+1
-!                conpar(is, na_feedback_ib(ispecies), 1) =
-!     &            total_flux * charge_frac(iss)
-!              end do
-!
-!            case default
-!              write(*,*) 'na feedback_choice not coded ',
-!     &                    na_feedback_choice(ispecies)
-!=======
               do is = is_start, is_end
                 iss = is-is_start+1
                 conpar(is, na_feedback_ib(ispecies), 1) =
      &                total_flux * charge_frac(iss)
-!<<<<<<< HEAD
               end do
                 
 #ifdef B25_EIRENE
             case (4)  ! absorbtion coefficient. Issue: algorithm for finding pumping surfaces should be improved
+                      ! to be more correct: saved_na_feedback_actuator is a factor which an initial absorbtion coefficients 
+                      ! (on different pumping surfaces) should be multiplied by
             
               if(ncall.eq.0) then
                   write(*,'(a,a,i3)')
-!=======
-!                  end do
-!#ifdef B25_EIRENE
-!                case (4)
-!                  if(ncall.eq.0) then
-!                     write(*,'(a,a,i3)')
-!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'sps_absr changing',
      &                    ispecies+1
               endif
               
               if (saved_na_feedback_actuator(ispecies).eq.0) then
-                    saved_na_feedback_actuator(ispecies) = sps_absr(1)  
-!<<<<<<< HEAD
-!              endif
-!    !               if ((abs(na_feedback_current/
-!    !  &                na_feedback_target(ispecies)-1).gt.0.05)
-!    !  &                .or.(int_ntim(ispecies).eq.0)) then
-!    !                   int_flux(ispecies) = int_flux(ispecies) 
-!    !  &                + saved_na_feedback_actuator(ispecies)
-!    !                   int_ntim(ispecies) = int_ntim(ispecies) + 1
-!    !                   saved_na_feedback_actuator(ispecies) =
-!    !  &                saved_na_feedback_actuator(ispecies) /
-!    !  &                na_feedback_rescale
-!    !                 else
-!    !                   print *,"feedback_set_avg_sps_absr"
-!    !                   saved_na_feedback_actuator(ispecies) = 
-!    !  &                int_flux(ispecies)/Real(int_ntim(ispecies))
-!    !                 end if
-!    
-!#ifdef B25_EIRENE
-!              if (na_feedback_option(ispecies).eq.7.or.
-!     &               na_feedback_option(ispecies).eq.8) then
-!     
-!                sna_pump = 0.0_R8
-!                
-!                do ia = 1, nnatmi
-!                  k = latmscl(ia)
-!                  if (k.eq.0) cycle
-!                    sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +  
-!     &                     eirpump(ia)
-!                  do im = 1, nnmoli
-!                    if (mlcmp(ia,im).gt.0) then
-!                      sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
-!     &                  mlcmp(ia,im) * eirpump(nnatmi+im)
-!                    endif
-!                  enddo
-!                end do
-!                
-!                do ip = 1, nnplsi
-!                  is = latmscl(lkindp(ip))
-!                  if (is.eq.0) cycle
-!                  sna_pump(is) = sna_pump(is) +
-!     &                eirpump(nnatmi+nnmoli+nnioni+ip)
-!                enddo
-!                
-!                print *,"Lezgini sna_pump " ,ispecies,' ',
-!     &              sna_pump(ispecies+1)
-!c Flux from core impact
-!
-!                do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + 
-!     &                    NFLUIDS(ispecies+1)
-!
-!!         Loop over B2 boundaries
-!                  do ic = 1,nbc
-!
-!                    if (BCCHAR(IC).eq.'S') then
-!                      idir  = 1
-!                      bsign = 1.0_R8
-!                    else if (BCCHAR(IC).eq.'N') then
-!                      idir  = 1
-!                      bsign =-1.0_R8
-!                    else if (BCCHAR(IC).eq.'W') then
-!                      idir  = 0
-!                      bsign = 1.0_R8
-!                    else if (BCCHAR(IC).eq.'E') then
-!                      idir  = 0
-!                      bsign =-1.0_R8
-!                    else
-!                      cycle
-!                    end if
-!
-!!           Loop over poloidal coordinate along this boundary
-!                    do ix = 1, BC_LIST_SIZE(ic)
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!             Check whether it is a southern boundary
-!                      if (BCCHAR(ic).EQ.'S') then
-!                        ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                        iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                      else if (BCCHAR(ic).EQ.'N') then
-!                        ixf = BC_LIST_X(ix,ic)
-!                        iyf = BC_LIST_Y(ix,ic)
-!                      else if (BCCHAR(ic).EQ.'W') then
-!                        ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                        iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-!                      else if (BCCHAR(ic).eq.'E') then
-!                        ixf = BC_LIST_X(ix,ic)
-!                        iyf = BC_LIST_Y(ix,ic)
-!                      end if
-!
-!!             Check whether this is part of the core boundary
-!                      if (core_boundary(ic)) then
-!!                      Count fluid neutrals if not coupled to Eirene
-!                        if (is_neutral(is).and.use_eirene.eq.0) then
-!                          flxnc(ispecies+1) = flxnc(ispecies+1) +
-!     .                      bsign * fna(ixf,iyf,idir,is)
-!                        else if (.not.is_neutral(is)) then ! not neutral
-!                          if (mdf_fnb.eq.0 .and. style_b2mndt.le.0) then
-!                            flxic(ispecies+1) = flxic(ispecies+1) +
-!     .                          bsign * fna(ixf,iyf,idir,is)
-!!                            print *, "Lezgini ion core flux", flxic(ispecies+1)
-!                          else
-!                            flxic(ispecies+1) = flxic(ispecies+1) +
-!     .                        bsign * fna_mdf(ixf,iyf,idir,is)
-!                          end if
-!                        end if  
-!                      end if  
-!              
-!                    end do   ! ix
-!                   
-!                  end do  ! ic
-!                
-!                end do  ! is
-!             
-!                do is = 1,ncns
-!c**       Here "is" is not a species index, but the index of Eirene surface,
-!!!!    because
-!c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
-!c**       lcns() - index of these 'non-default' surfaces
-!
-!                  js = lcns(is) + nnlimi
-!                  
-!c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
-!                  do j = 1,nnatmi
-!                    print *, "latmscl(",j,")=",latmscl(j)," ,is=",is,
-!     &                             " ,ls=",(ispecies+1)
-!                    if (latmscl(j) .eq. ispecies+1) then
-!                      flxnc(ispecies+1) = flxnc(ispecies+1)
-!     &                  - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-!                      do ic=1,nnmoli
-!                        if (mlcmp(j,ic) .gt. 0) flxnc(ispecies+1) = 
-!     &        flxnc(ispecies+1) - mlcmp(j,ic) * (wldnm(js,ic,0)
-!     &                       - wldrm(js,ic,0) - wldpm(js,ic,0))
-!                      end do
-!                    end if
-!                  end do
-!                end do
-!c -------------------------------------------------------------------------------------
-!                print *, "Lezgini ion core flux", flxic(ispecies+1)
-!                print *, "Lezgini neut core flux", flxnc(ispecies+1)
-!              
-!              endif ! na_feedback_option(ispecies) = 7,8
-!#endif
-!
-!              flxnp = 0.0_R8
-!            
-!              do ic = 1,nstrat
-!                if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
-!                  do j = 1,nnatmi
-!                    if (latmscl(j) .eq. ispecies+1) then
-!                      flxnp(ispecies+1) = flxnp(ispecies+1) +
-!     &                 userfluxparm(ic,1) * gpfc(j,ic)
-!                    endif
-!                  end do
-!                endif       
-!              end do
-!            
-!!              print *, "Lezgini puff flux", flxnp(ispecies+1)
-!            ! call cfruin (ninp(1), 1, idum, 'itim')
-!            ! itim = idum(0)
-!            
-!              int_ntim(ispecies) = int_ntim(ispecies) + 1
-!            
-!!              print *,"itim",int_ntim(ispecies),eirene_mod
-!            
-!              if (mod(int_ntim(ispecies),eirene_mod).eq.0) then
-!                saved_na_feedback_actuator(ispecies) =
-!     &             saved_na_feedback_actuator(ispecies) /
-!     &             na_feedback_rescale*(flxnp(ispecies+1) + 
-!     &             flxic(ispecies+1))/sna_pump(ispecies+1)
-!              endif
-!            
-!              if (na_feedback_puff_min(ispecies) .ge. 0.0_R8)
-!     &          saved_na_feedback_actuator(ispecies) =
-!     &                 max(na_feedback_puff_min(ispecies),
-!     &                 saved_na_feedback_actuator(ispecies))
-!              if (na_feedback_puff_max(ispecies) .gt. 0.0_R8)
-!     &          saved_na_feedback_actuator(ispecies) =
-!     &                 min(na_feedback_puff_max(ispecies),
-!     &                 saved_na_feedback_actuator(ispecies))
-!              do j=1,n_spcsrf
-!                if (INDEX(sps_id(j),'pump').ne.0) then  
-!! FIXME: another condition to find pumping surface might be required
-!                  print *,'pump is' ,j, ' special surf'
-!                  call eirene_sps_absr_update(j,
-!     &              saved_na_feedback_actuator(ispecies))
-!                endif
-!              enddo
-!               
-!            case default
-!                  
-!               write(*,*) 'na feedback_choice not coded ',
-!=======
+                    saved_na_feedback_actuator(ispecies) = 1.0_R8    !sps_absr(1)  
               endif
                 
               call calc_pump_and_flux(nx,ny,ns,mdf_fnb,
@@ -2397,55 +1895,65 @@
                 endif
               end do
               
-              print *, "Lezgini puff flux", flxnp(ispecies+1)
+!              print *, "Lezgini puff flux", flxnp(ispecies+1)
                 
-              int_ntim(ispecies) = int_ntim(ispecies) + 1
-              print *,"itim",int_ntim(ispecies),eirene_mod
-              if (mod(int_ntim(ispecies),eirene_mod).eq.0) then
-                saved_na_feedback_actuator(ispecies) =
-     &              saved_na_feedback_actuator(ispecies) /
-     &          na_feedback_rescale*(flxnp(ispecies+1)
-     &              +flxic(ispecies+1))/sna_pump(ispecies+1)
+!              int_ntim(ispecies) = int_ntim(ispecies) + 1
+!              print *,"itim",int_ntim(ispecies),eirene_mod
+
+              if (mod(ncall,eirene_mod).eq.0 .and. ncall .gt. 0) then
+                t0 = 1.0_R8 / na_feedback_rescale *
+     &    (flxnp(ispecies+1) + flxic(ispecies+1)) / sna_pump(ispecies+1)
+     
+! t0 here is a factor which ajusts the absorbtion coefficient on current call to Eirene,
+! while saved_na_feedback_actuator(ispecies) is a product of t0 factors over all timesteps performed,
+! so saved_na_feedback_actuator(ispecies) is a factor which initial absorbtion coefficient (i.e.
+! one read from b2.neutrals.parameters or input.dat (in a form of albedo)) is multiplied by at the current time step.
+! This saved_na_feedback_actuator(ispecies) is saved in b2.feedback_save.parameters to be used as the code resumes after the stopping.      
+     
+                  call eirene_recyct_update(ispecies+1,
+     &               t0)
+                  saved_na_feedback_actuator(ispecies) = 
+     &               saved_na_feedback_actuator(ispecies) * t0
+!                endif
               endif
               
-              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
-     &                 saved_na_feedback_actuator(ispecies) =
-     &                 max(na_feedback_puff_min(ispecies),
-     &                 saved_na_feedback_actuator(ispecies))
-              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
-     &                 saved_na_feedback_actuator(ispecies) =
-     &                 min(na_feedback_puff_max(ispecies),
-     &                 saved_na_feedback_actuator(ispecies))
-              do j=1,n_spcsrf
-                if (INDEX(sps_id(j),'pump').ne.0) then
-                  print *,'pump is' ,j, ' special surf'
-                  call eirene_sps_absr_update(j,
-     &              saved_na_feedback_actuator(ispecies))
-                endif
-              enddo
+!!!! WAS IST DAS?
+!!!! DAS IST KAPUTT!
+!!!! DAS ZU TUN IST ZEHR NICH GUT...
+!              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+!     &                 saved_na_feedback_actuator(ispecies) =
+!     &                 max(na_feedback_puff_min(ispecies),
+!     &                 saved_na_feedback_actuator(ispecies))
+!              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+!     &                 saved_na_feedback_actuator(ispecies) =
+!     &                 min(na_feedback_puff_max(ispecies),
+!     &                 saved_na_feedback_actuator(ispecies))
+!!!! WAS IST DAS?
+!!!! DAS IST KAPUTT!
+!!!! DAS ZU TUN IST ZEHR NICH GUT...
+
 #endif
             case default
     
-              write(*,*) 'na feedback_choice not coded ',
-!>>>>>>> ca9afd96... 	modified:   src/sources/b2stbc_fb.F
-     &                 na_feedback_choice(ispecies)
+              write(*,*) 'na feedback_actuator not coded ',
+     &                 na_feedback_actuator(ispecies)
      
-!>>>>>>> 9e9da198... Changes to be committed:
-
             end select
 
-!<<<<<<< HEAD
-!            if (na_feedback_actuator(ispecies).eq.1 .or.
-!     &          na_feedback_actuator(ispecies).eq.3)
-!     >        write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ',
-!     &         ispecies+1, saved_na_feedback_actuator(ispecies)
-!=======
             if (na_feedback_actuator(ispecies).eq.1 .or.
      &          na_feedback_actuator(ispecies).eq.3 .or.
      &              na_feedback_actuator(ispecies).eq.4)
      >        write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ',
      &              ispecies+1, saved_na_feedback_actuator(ispecies)
-!>>>>>>> 9e9da198... Changes to be committed:
+
+            write(*,'(a,1x,1p,i3,7g15.6)')
+     &       'na_feedback_rescale ', ispecies+1,
+     &        na_feedback_current,
+     &        na_feedback_target(ispecies),
+     &        saved_na_feedback_actuator(ispecies),
+     &        na_feedback_rescale,
+     &        na_feedback_prev(ispecies),
+     &        dteff, dt_prev
 
             if (na_feedback_choice(ispecies).eq.6)
      >          deallocate(charge_frac)
@@ -3404,4 +2912,40 @@ c ------------------------------------------------------------------------------
       print *, "Lezgini neut core flux", flxnc(ispecies+1)
       
       end subroutine calc_pump_and_flux
+      
+      subroutine eirene_recyct_update(ispecies, factor)
+        use eirmod_clgin
+        use b2mod_neutrals_namelist
+        implicit none
+        integer, intent(in) :: ispecies   ! Index of B2.5 species (or isonuclear sequence)
+        real (kind=R8), intent(in) :: factor    ! factor to multiply the absorbtion coefficient
+                                          ! note that recyct is (1.0 - absorbtion coefficient)
+        real (kind=R8) t0
+        integer ja, l, jm, k
+        
+      do l=1, nnlimi + ncns  ! loop over Eirene surfaces
+        do ja = 1,nnatmi
+          if (latmscl(ja) .eq. ispecies) then                       ! Eirene atom corresponds to B2.5 isonuclear sequence
+            if (recyct(ja,l) > 0.0 .and. recyct(ja,l) < 1.0) then   ! this condition is required to not disturb those surfaces where albedo is exactly 1.0
+              t0 = 1.0 + factor * (recyct(ja,l) - 1.0)
+              if (t0 > 0.0 .and. t0 < 1.0) recyct(ja,l) = t0        ! again, not to make albedo =1.0 for those surfaces where it was set less than 1.0
+        write(*,*) "latmscl(",ja,")=",latmscl(ja)," ,ispecies=",ispecies
+        write(*,*) ja, l, recyct(ja,l)
+            endif
+            do jm = 1,nnmoli                                        ! check whether this atom constitutes a part of the molecule and update the albedo for such molecule in the same manner
+              if (mlcmp(ja,jm) .gt. 0) then
+                if (recyct(jm+nnatmi,l) > 0.0 
+     &                    .and. recyct(jm+nnatmi,l) < 1.0) then
+                  t0 = 1.0 + factor * (recyct(jm+nnatmi,l) - 1.0)
+                  if (t0 > 0.0 .and. t0 < 1.0) recyct(jm+nnatmi,l) = t0
+        write(*,*) jm+nnatmi, l, recyct(jm+nnatmi,l)
+                endif
+              endif
+            enddo
+          endif
+        enddo
+      enddo
+          
+      end subroutine eirene_recyct_update
+      
 #endif
