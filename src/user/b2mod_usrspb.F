@@ -11,7 +11,7 @@
 #include <DIMENSIONS.F>
 
 c
-c  version : 06.21.2022 by Ilya Senichenkov
+c  version : 31.08.2023 by Ilya Senichenkov
 c
 c----------------------------------------------------------------------
 c*** This tracing file is alternative to user.trc - it contains different traced quantities and
@@ -36,7 +36,7 @@ c*** N_Q_global:  number of output quantities
 c*** N_Q_target:   number of output per each target
 c
       integer lv, N_Q_global, N_Q_target  !iyv 11.04.22
-      parameter (lv=20221006, N_Q_global=4, N_Q_target=6)  ! IYS 22.03.2022 iyv 11.04.22
+      parameter (lv=20230831, N_Q_global=6, N_Q_target=6)  ! IYS 22.03.2022 iyv 11.04.22
 
       integer, save :: N_Q_total
       integer ltrc
@@ -48,7 +48,8 @@ c***
 c----------------------------------------------------------------------
 
       integer, save :: lun, mintopcut
-      real (kind=R8), save :: Q_pneut, Q_Te_min_LCFS
+      real (kind=R8), save :: Q_pneut, Q_Te_min_LCFS, 
+     &    Q_rad_tot, Q_rad_SOL
       real (kind=R8), allocatable, save ::
      &    Q_pneut_trg(:),
      &    Q_Te_max(:), Q_det_wdth(:), Area_pneut_trg(:),
@@ -104,7 +105,7 @@ c----------------------------------------------------------------------
 
       real (kind=R8) :: BoRiS
 
-      real (kind=R8) :: u
+      real (kind=R8) :: u, t0
 
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
@@ -245,13 +246,36 @@ c------------------------------
       enddo
 
       Q_Te_min_LCFS = Q_Te_min_LCFS / eV
+      
+c------------------------------
+! Total radiated power and radiated power outside the separatrix
+      Q_rad_tot =  0.0_R8
+      Q_rad_SOL =  0.0_R8
+       
+      do ix=0,nx-1
+        do iy=0,ny-1
+          t0 = 0.0_R8
+          do is=0,ns
+            t0 = t0 + rqbrm(ix,iy,is) + rqrad(ix,iy,is)
+          enddo
+#ifdef B25_EIRENE
+          t0 = t0 - sum(eneutrad(ix+1,iy+1,1:nnatmi,0)) - 
+     &        sum(emolrad(ix+1,iy+1,1:nnmoli,0)) -
+     &           sum(eionrad(ix+1,iy+1,1:nnioni,0))              
+#endif
+          
+          Q_rad_tot = Q_rad_tot + t0  
+          if (.not. ON_CLOSED_SURFACE(ix,iy)) Q_rad_SOL = Q_rad_SOL + t0
+        enddo
+      enddo
+
 
 c*** Write the data in a separate file for plotting...
 c
       write(lun,hlp_frm) tim,
      &     Q_pneut,
      &    (Q_pneut_trg(it), it=1,2),
-     &     Q_Te_min_LCFS,
+     &     Q_Te_min_LCFS, Q_rad_tot, Q_rad_SOL,
      &    (Q_Te_max(it), it=1,ntrgts),
      &    (Q_det_wdth(it), it=1,ntrgts),
      &    (Q_qmax_trg(it), it=1,ntrgts),         !iyv 11.04.22
@@ -321,6 +345,8 @@ c*** Input the DG data and prepare the geometry (this routine works once)
       headers(2) = 'p_neut_PFRi'
       headers(3) = 'p_neut_PFRo'
       headers(4) = 'Te_min_LCFS'
+      headers(5) = '  Q_rad_tot'
+      headers(6) = '  Q_rad_SOL'
 
 
       if (ntrgts .eq. 2) then
