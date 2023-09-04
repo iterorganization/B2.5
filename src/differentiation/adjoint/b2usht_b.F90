@@ -222,6 +222,12 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
   IF (ANY(solveee(0:mpg%nnreg(0))) .AND. ANY(solveei(0:mpg%nnreg(0))) &
 &     .AND. ANY(solveen(0:mpg%nnreg(0))) .AND. ANY(solveet(0:mpg%nnreg(0&
 &     )))) THEN
+    new_matrix = .false.
+    DO ireg=0,mpg%nnreg(0)
+      new_matrix = (new_matrix .OR. solveet(ireg)) .NEQV. last_solve_9(&
+&       ireg)
+    END DO
+    IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
 ! ..total heat correction equation
 !   ..compute flo0, con0
     flo0 = floe + floi + flon
@@ -386,6 +392,11 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
 !
 ! ..electron temperature correction equation
   IF (ANY(solveee(0:mpg%nnreg(0)))) THEN
+    new_matrix = .false.
+    DO ireg=0,mpg%nnreg(0)
+      new_matrix = (new_matrix .OR. solveee(ireg)) .NEQV. solveet(ireg)
+    END DO
+    IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
 !   ..compute flo0, con0
     flo0 = floe
     con0(:, :, 0) = cone(:, :, 0)
@@ -523,6 +534,11 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
 !
 ! ..atom temperature correction equation
   IF (ANY(solveei(0:mpg%nnreg(0)))) THEN
+    new_matrix = .false.
+    DO ireg=0,mpg%nnreg(0)
+      new_matrix = (new_matrix .OR. solveei(ireg)) .NEQV. solveee(ireg)
+    END DO
+    IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
 !   ..compute flo0, con0
     flo0 = floi
     con0(:, :, 0) = coni(:, :, 0)
@@ -657,6 +673,12 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
 !srv 22.05.18
 ! ..neutral atom temperature correction equation
     IF (ANY(solveen(0:mpg%nnreg(0)))) THEN
+      new_matrix = .false.
+      DO ireg=0,mpg%nnreg(0)
+        new_matrix = (new_matrix .OR. solveen(ireg)) .NEQV. solveei(ireg&
+&         )
+      END DO
+      IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
 !   ..compute flo0, con0
       flo0 = flon
       con0(:, :, 0) = conn
@@ -796,6 +818,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
 ! ..turbulent kinetic energy correction equation
 !solve_keps - kt
   IF (switch%solve_keps .GT. 0 .AND. ANY(solvekt(0:mpg%nnreg(0)))) THEN
+    CALL RESTART_MA28_FOR_US()
 !   ..compute flo0, con0
     flo0 = flokt
     con0(:, :, 0) = conkt
@@ -928,6 +951,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
 ! ..turbulent enstrophy correction equation
 !solve_keps - enstrophy
   IF (switch%solve_keps .GT. 1 .AND. ANY(solvezt(0:mpg%nnreg(0)))) THEN
+    CALL RESTART_MA28_FOR_US()
 !   ..compute flo0, con0
     flo0 = flozt
     con0(:, :, 0) = conzt
