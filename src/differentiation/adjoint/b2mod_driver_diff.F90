@@ -5577,6 +5577,7 @@ CONTAINS
       WRITE(*, *) 'MAX RESIDUAL ', res_max
       state0 = state
     END DO
+    primal_iterations = itim
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &   'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr, &
 &   quit
@@ -7893,6 +7894,7 @@ CONTAINS
       CALL ADSTACK_RESETREPEAT()
     END DO
     write(*,*) 'TOTAL ADJOINT GRADIENT ITERATIONS ',ITERCOUNT
+    gradient_iterations = ITERCOUNT
     switchb = switchb0
     state_extb = state_extb0
     geob = geob0
@@ -9220,6 +9222,7 @@ CONTAINS
       state0 = state
     END DO
 !   ..end loop
+    primal_iterations = itim
 !   ..call cost function
     CALL B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, state, &
 &                             state_ext, switch%boris, j)
