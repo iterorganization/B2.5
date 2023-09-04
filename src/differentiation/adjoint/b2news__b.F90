@@ -1378,6 +1378,12 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &                 /8)
     CALL PUSHREAL8ARRAY(st%pl%ua, r8*SIZE(st%pl%ua, 1)*SIZE(st%pl%ua, 2)&
 &                 /8)
+    new_matrix = .false.
+    DO ireg=0,mpg%nnreg(0)
+      new_matrix = (new_matrix .OR. solveco(is, ireg)) .NEQV. &
+&       last_solve_9(ireg)
+    END DO
+    IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
     CALL B2NPCO_NODIFF(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2), &
 &                solvedum, b2news_solving(1), solvedm2, ncall_b2news_, &
 &                is, rxf0, switch, geo, mpg, st%pl, st%dv, st%sr, ier0)
@@ -1638,6 +1644,12 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
         CALL PUSHINTEGER4(ier0)
         CALL PUSHREAL8ARRAY(st%dv%respo, r8*SIZE(st%dv%respo, 1)/8)
         CALL PUSHREAL8ARRAY(st%pl%po, r8*SIZE(st%pl%po, 1)/8)
+        new_matrix = .false.
+        DO ireg=0,mpg%nnreg(0)
+          new_matrix = (new_matrix .OR. solvepo(ireg)) .NEQV. &
+&           last_solve_9(ireg)
+        END DO
+        IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
         CALL B2NPPO_NODIFF(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(3&
 &                    ), solvepo, ncall_b2news_, rxf2, switch, geo, mpg, &
 &                    st%pl, st%dv, st%sr, ier0)
@@ -2035,6 +2047,13 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &                   2)/8)
       CALL PUSHREAL8ARRAY(st%pl%ua, r8*SIZE(st%pl%ua, 1)*SIZE(st%pl%ua, &
 &                   2)/8)
+      new_matrix = .false.
+      DO ireg=0,mpg%nnreg(0)
+        new_matrix = (new_matrix .OR. solveco(is, ireg)) .NEQV. &
+&         last_solve_9(ireg)
+      END DO
+      IF (new_matrix) CALL RESTART_MA28_FOR_US()
+      last_solve_9(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
       CALL B2NPCO_NODIFF(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2)&
 &                  , solvedum, b2news_solving(1), solvedm2, &
 &                  ncall_b2news_, is, rxf0, switch, geo, mpg, st%pl, st%&
@@ -2232,6 +2251,13 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
       CALL POPINTEGER4(ncall_b2upco)
       CALL POPCHARACTERARRAY(my_out_folder, 7)
       CALL POPINTEGER4(ncall_b2ursc)
+      new_matrix = .false.
+      DO ireg=0,mpg%nnreg(0)
+        new_matrix = (new_matrix .OR. solveco(is, ireg)) .NEQV. &
+&         last_solve_9(ireg)
+      END DO
+      IF (new_matrix) CALL RESTART_MA28_FOR_US()
+      last_solve_9(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
       CALL B2NPCO_B(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2), &
 &             solvedum, b2news_solving(1), solvedm2, ncall_b2news_, is, &
 &             rxf0, switch, switchb, geo, geob, mpg, mpgb, st%pl, stb%pl&
@@ -2656,6 +2682,13 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
         CALL POPREAL8ARRAY(st%dv%respo, r8*SIZE(st%dv%respo, 1)/8)
         CALL POPINTEGER4(ier0)
         CALL POPINTEGER4(ncall_b2ursd)
+        new_matrix = .false.
+        DO ireg=0,mpg%nnreg(0)
+          new_matrix = (new_matrix .OR. solvepo(ireg)) .NEQV. &
+&           last_solve_9(ireg)
+        END DO
+        IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
+        last_solve_9(0:mpg%nnreg(0)) = solvepo(0:mpg%nnreg(0))
         CALL B2NPPO_B(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(3), &
 &               solvepo, ncall_b2news_, rxf2, switch, geo, geob, mpg, &
 &               mpgb, st%pl, stb%pl, st%dv, stb%dv, st%sr, stb%sr, ier0)
@@ -2808,6 +2841,13 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     CALL POPINTEGER4(ncall_b2upco)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPINTEGER4(ncall_b2ursc)
+    new_matrix = .false.
+    DO ireg=0,mpg%nnreg(0)
+      new_matrix = (new_matrix .OR. solveco(is, ireg)) .NEQV. &
+&       last_solve_9(ireg)
+    END DO
+    IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
+    last_solve_9(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
     CALL B2NPCO_B(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2), &
 &           solvedum, b2news_solving(1), solvedm2, ncall_b2news_, is, &
 &           rxf0, switch, switchb, geo, geob, mpg, mpgb, st%pl, stb%pl, &

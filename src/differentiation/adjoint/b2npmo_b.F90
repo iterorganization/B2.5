@@ -616,6 +616,13 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
 &                   %pcca, 2)/8)
       CALL PUSHREAL8ARRAY(dv%corua(:, is), r8*SIZE(dv%corua, 1)/8)
       CALL PUSHREAL8ARRAY(dv%resmo(:, is), r8*SIZE(dv%resmo, 1)/8)
+      new_matrix = .false.
+      DO ireg=0,mpg%nnreg(0)
+        new_matrix = (new_matrix .OR. solvemo(is, ireg)) .NEQV. &
+&         last_solve_9(ireg)
+      END DO
+      IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
+      last_solve_9(0:mpg%nnreg(0)) = solvemo(is, 0:mpg%nnreg(0))
       CALL B2USMO_NODIFF(ncv, nfc, nvx, is, switch, geo, mpg, mpg%nnreg(&
 &                  0), b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, &
 &                  rob1, pb, pb1, pl%ua(:, is), smb, flcb, cvcb, dv%&
@@ -707,6 +714,12 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
     CALL PUSHREAL8ARRAY(dv%pccm, r8*SIZE(dv%pccm, 1)*SIZE(dv%pccm, 2)/8)
     CALL PUSHREAL8ARRAY(dv%corut, r8*SIZE(dv%corut, 1)/8)
     CALL PUSHREAL8ARRAY(dv%resmt, r8*SIZE(dv%resmt, 1)/8)
+    new_matrix = .false.
+    DO ireg=0,mpg%nnreg(0)
+      new_matrix = (new_matrix .OR. solvemt(ireg)) .NEQV. last_solve_9(&
+&       ireg)
+    END DO
+    last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
     CALL B2USMO_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpg%nnreg(0)&
 &                , solvemt, itcnt, switch%b2npmo_rxg, ro, rz, pr, pz, &
 &                wrk0, smt, flct, cvct, dv%resmt, ctcft, dv%corut, dv%&
@@ -935,6 +948,12 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
     cvctb = 0.D0
     ctcftb = 0.D0
     wrk1b = 0.D0
+    new_matrix = .false.
+    DO ireg=0,mpg%nnreg(0)
+      new_matrix = (new_matrix .OR. solvemt(ireg)) .NEQV. last_solve_9(&
+&       ireg)
+    END DO
+    last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
     CALL B2USMO_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, mpg%&
 &           nnreg(0), solvemt, itcnt, switch%b2npmo_rxg, ro, rob0, rz, &
 &           rzb, pr, pz, pzb, wrk0, wrk0b, smt, smtb, flct, flctb, cvct&
@@ -1048,6 +1067,13 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
       CALL POPCHARACTERARRAY(my_out_folder, 7)
       rob1b = 0.D0
       pb1b = 0.D0
+      new_matrix = .false.
+      DO ireg=0,mpg%nnreg(0)
+        new_matrix = (new_matrix .OR. solvemo(is, ireg)) .NEQV. &
+&         last_solve_9(ireg)
+      END DO
+      IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
+      last_solve_9(0:mpg%nnreg(0)) = solvemo(is, 0:mpg%nnreg(0))
       CALL B2USMO_B(ncv, nfc, nvx, is, switch, geo, geob, mpg, mpgb, mpg&
 &             %nnreg(0), b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob&
 &             , robb, rob1, rob1b, pb, pb1, pb1b, pl%ua(:, is), plb%ua(:&
