@@ -8463,11 +8463,11 @@ c              fchi=0.0_R8
           srw%sch0(iCv1,1) = srw%sch0(iCv1,1) - t0
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-            if (switch%eirene_sheath_pot.eq.1) then
-              ! B2 indexing for delta_sheathxb
-              delta_sheathb(ifc) =
+          if (switch%eirene_sheath_pot.eq.1) then
+            ! B2 indexing for delta_sheathxb
+            delta_sheathb(iFc) =
      &          qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
-            endif
+          endif
 #endif
 cwdk Todo: seecmodel
           wrong_flow = .false.
