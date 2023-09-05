@@ -575,12 +575,12 @@ csw 16oct2012 init ier0
      &        solvepo(ireg).neqv.last_solve_9(ireg)
             end do
             if (new_matrix.or..true.) call restart_ma28_for_us
-              call b2nppo (nCv, nFc, nVx, mpg%nnreg(0),                  !srv 22.05.18
+            call b2nppo (nCv, nFc, nVx, mpg%nnreg(0),                    !srv 22.05.18
      &        b2news_solving(3), solvepo, ncall_b2news_, rxf2, switch,
      &        geo, mpg, st%pl, st%dv, st%sr, ier0)
             last_solve_9(0:mpg%nnreg(0))=solvepo(0:mpg%nnreg(0))
           else
-             call xerrab ('visper not yet available for WG')
+            call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
             call b2npp7 (nx, ny, mpg%nnreg(0), b2news_solving(3),        !srv 27.01.00 22.05.18
      &       solvepo, ncall_b2news_, rxf2, ne, te, conc, avisper,        !srv 27.01.00

@@ -234,7 +234,9 @@ endif
 ifdef USE_MPI
 DEFINES += ${USE_MPI}
 else
+ifeq ($(shell [ -d ${SOLPSTOP}/modules/solps4-5/src/Eirene_commons ] && echo yes || echo no ),yes)
 SOLPS4INCLUDE += -I${SOLPSTOP}/modules/solps4-5/src/Eirene_commons
+endif
 endif
 ifdef USE_OPENMP
 DEFINES += ${USE_OPENMP}
