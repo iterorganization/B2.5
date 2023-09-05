@@ -39,7 +39,7 @@ commands in the terminal while in the SOLPS-ITER project main directory:
 
     $ tcsh
     $ source setup.csh
-    $ cd $SOLPSTOP/modules/B2.5/documentation/
+    $ cd $SOLPSTOP/modules/B2.5/src/documentation/
     $ make doc
     $ firefox source/Doxygen/html/index.html
 
