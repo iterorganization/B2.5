@@ -6,7 +6,7 @@
       implicit none
       real(kind=R8), intent (inout) :: prior
       logical, intent (inout) :: inrange
-      integer :: ii, isigma, imean
+      integer :: ii, isigma, imean, ind
       real(kind=R8) :: aa, bb
       intrinsic sqrt, exp, log_gamma
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
@@ -43,28 +43,30 @@
 
 ! Now loop only on sigma vector
       isigma = npar_opt - nsigma_opt - nmean_opt
-      do ii = 1, nsigma_opt
-        select case (prior_type(ii+isigma))
+      ind = 1 !index for prior vectors
+      do ii = 1, nsigma
+        if (.not.sigma_opt(ii)) cycle
+        select case (prior_type(ind+isigma))
         case (0) !Uniform distribution
           prior = prior
         case (1) !Uninformative, proper, Gaussian prior.
-          prior = prior - log(prior_par(ii+isigma,2)) -
+          prior = prior - log(prior_par(ind+isigma,2)) -
      &            0.5_R8*log(2.0_R8*pi) - 
-     &            0.5_R8*((sigma(ii)-prior_par(ii+isigma,1))/
-     &            prior_par(ii+isigma,2))**2
+     &            0.5_R8*((sigma(ii)-prior_par(ind+isigma,1))/
+     &            prior_par(ind+isigma,2))**2
         case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-          aa = (prior_par(ii+isigma,1)/prior_par(ii+isigma,2))**2
-          bb = prior_par(ii+isigma,1)/prior_par(ii+isigma,2)**2
+          aa = (prior_par(ind+isigma,1)/prior_par(ind+isigma,2))**2
+          bb = prior_par(ind+isigma,1)/prior_par(ind+isigma,2)**2
           prior = prior + (aa-1)*log(sigma(ii)) -
      &            bb*sigma(ii) + aa*log(bb) - log_gamma(aa)
         case (3) !Jeffrey's 1/sigma
           prior = prior - log(sigma(ii))
         case default
-          write(*,*) prior_type(ii+isigma)
+          write(*,*) prior_type(ind+isigma)
           call xerrab ('prior_type out of bounds for sigma')
         end select
-        if (sigma(ii).lt.prior_range(ii+isigma,1) .or.
-     &      sigma(ii).gt.prior_range(ii+isigma,2)) then
+        if (sigma(ii).lt.prior_range(ind+isigma,1) .or.
+     &      sigma(ii).gt.prior_range(ind+isigma,2)) then
           prior = 1.0E+60_R8
           inrange = .false.
         endif
@@ -72,26 +74,28 @@
 
 ! Now loop only on mean vector
       imean = npar_opt - nmean_opt
-      do ii = 1, nmean_opt
-        select case (prior_type(ii+imean))
+      ind = 1 !index for prior vectors
+      do ii = 1, nmean
+        if (.not.mean_opt(ii)) cycle
+        select case (prior_type(ind+imean))
         case (0) !Uniform distribution
           prior = prior
         case (1) !Uninformative, proper, Gaussian prior.
-          prior = prior - log(prior_par(ii+imean,2)) -
+          prior = prior - log(prior_par(ind+imean,2)) -
      &            0.5_R8*log(2.0_R8*pi) -
-     &            0.5_R8*((mean(ii)-prior_par(ii+imean,1))/
-     &            prior_par(ii+imean,2))**2
+     &            0.5_R8*((mean(ii)-prior_par(ind+imean,1))/
+     &            prior_par(ind+imean,2))**2
         case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-          aa = (prior_par(ii+imean,1)/prior_par(ii+imean,2))**2
-          bb = prior_par(ii+imean,1)/prior_par(ii+imean,2)**2
+          aa = (prior_par(ind+imean,1)/prior_par(ind+imean,2))**2
+          bb = prior_par(ind+imean,1)/prior_par(ind+imean,2)**2
           prior = prior + (aa-1)*log(mean(ii)) -
      &            bb*mean(ii) + aa*log(bb) - log_gamma(aa)
         case default
-          write(*,*) prior_type(ii+imean)
+          write(*,*) prior_type(ind+imean)
           call xerrab ('prior_type out of bounds for mean')
         end select
-        if (mean(ii).lt.prior_range(ii+imean,1) .or.
-     &      mean(ii).gt.prior_range(ii+imean,2)) then
+        if (mean(ii).lt.prior_range(ind+imean,1) .or.
+     &      mean(ii).gt.prior_range(ind+imean,2)) then
           prior = 1.0E+60_R8
           inrange = .false.
         endif
