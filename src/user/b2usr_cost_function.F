@@ -1,20 +1,21 @@
       subroutine b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, st,
      & st_ext, BoRiS, J)
       use b2mod_types
+      use b2us_map
+      use b2us_plasma
+      use b2us_geo
+      use b2mod_par_opt
+#ifndef TEST_MAP
       use b2mod_constants
       use b2mod_user_namelist
      & , only : omp, nomp, icsepomp
       use b2mod_b2cmpa
      & , only : am
-      use b2us_map
-      use b2us_plasma
-      use b2us_geo
-      use b2mod_par_opt
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : vold, cfnorm, nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
-#ifdef TEST_MAP
+#else
       use b2mod_transport_namelist
      & , only : parm_dna
 #endif
@@ -158,20 +159,8 @@
             J(icf) = J(icf)/ev
           case (5) !max heat flux density on desired FCs
             do iFc = ic1, ic2
-              qq = 0.0
-              iCv = min(mpg%fcCv(mpg%cfReg(iFc),1),
-     &                  mpg%fcCv(mpg%cfReg(iFc),2))
-              if (iCv.gt.mpg%nCi) iCv = max(mpg%fcCv(mpg%cfReg(iFc),1),
-     &          mpg%fcCv(mpg%cfReg(iFc),2))
-              qq = st%dv%fhe(mpg%cfReg(iFc),0) + 
-     &             st%dv%fhi(mpg%cfReg(iFc),0) + 
-     &             (1-BoRiS)*st%dv%fne(mpg%cfReg(iFc),0)*st%pl%te(iCv)
-              do is = 0, ns-1
-                qq = qq + st%dv%fna(mpg%cfReg(iFc),0,is)*
-     &               (st%rt%rpt(iCv,is)*ev + 
-     &               (1-BoRiS)*(st%dv%kinrgy(iCv,is)+st%pl%ti(iCv)))
-              end do
-              qq = qq*mpg%cfFcOr(iFc)/geo%fcS(mpg%cfReg(iFc))
+              qq = st%dv%fht(iFc,0)*mpg%cfFcOr(iFc)/
+     &             geo%fcS(mpg%cfReg(iFc))
               J(icf) = max(J(icf),qq)*cfweight(icf)
             enddo
           case (6) !loglikelihood + log prior for Bayesian MAP estimate
