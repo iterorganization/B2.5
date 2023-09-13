@@ -4,22 +4,24 @@
 !  Differentiation of b2tfnb in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: *(dv.fchvispar) *(dv.fchvisper)
 !                *(dv.fchvisq) *(dv.fchinert) *(dv.fchanml) *(dv.fchviskt)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb) *(dv.kinrgy)
-!                *(dv.flob) *(dv.conb) *(dv.pcca) *(dv.pa) *(dv.vadia)
-!                *(dv.wadia) *(dv.vaecrb) *(rt.rza) *(co.cvla)
-!                *(co.cdna) *(co.cdna_exb) *(co.cdpa) *(co.cvlahz)
-!                *(co.cdpahz) *(co.cddi) *(co.cssb) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.ti) *(pl.tn)
+!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_53)
+!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb)
+!                *(dv.kinrgy) *(dv.flob) *(dv.conb) *(dv.pcca)
+!                *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
+!                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
+!                *(pl.tn)
 !   with respect to varying inputs: *(dv.fchvispar) *(dv.fchvisper)
 !                *(dv.fchvisq) *(dv.fchinert) *(dv.fchanml) *(dv.fchviskt)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb) *(dv.kinrgy)
-!                *(dv.flob) *(dv.conb) *(dv.pcca) *(dv.pa) *(dv.vadia)
-!                *(dv.wadia) *(dv.vaecrb) *(rt.rza) *(co.cvla)
-!                *(co.cdna) *(co.cdna_exb) *(co.cdpa) *(co.cvlahz)
-!                *(co.cdpahz) *(co.cddi) *(co.cssb) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.ti) *(pl.tn)
+!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_53)
+!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb)
+!                *(dv.kinrgy) *(dv.flob) *(dv.conb) *(dv.pcca)
+!                *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
+!                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
+!                *(pl.tn)
 !   Plus diff mem management of: dv.fchvispar:in dv.fchvisper:in
 !                dv.fchvisq:in dv.fchinert:in dv.fchanml:in dv.fchviskt:in
 !                dv.fna:in dv.fna_mdf:in dv.fna_52:in dv.fna_32:in
@@ -125,8 +127,8 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, ismain0, switch, switchb&
 & gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1), term(nfc), flob0(nfc, &
 & 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
   REAL(kind=r8) :: flob(nfc, 0:1), flo_mdfb(nfc, 0:1), flo2diab(nfc, 0:1&
-& ), flo_heb(nfc, 0:1), vbarb, t0b, t1b, t2b, t3b, termb(nfc), flob0b(&
-& nfc, 0:1), conb0b(nfc, 0:1), scurb(nfc, 0:1)
+& ), flo_heb(nfc, 0:1), flo_53b(nfc, 0:1), vbarb, t0b, t1b, t2b, t3b, &
+& termb(nfc), flob0b(nfc, 0:1), conb0b(nfc, 0:1), scurb(nfc, 0:1)
 !srv 21.10.10
 !srv 05.03.16
 !srv 05.03.16
@@ -573,6 +575,9 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, ismain0, switch, switchb&
 &   drift_hyb*dv%vaecrb(:, 0, isb)*geo%fcs*geo%fcqalf(:, 0)
   flo_he(:, 1) = 5.0_R8/3.0_R8*co%cvla(:, 1, isb) + drift_hyb*dv%vaecrb(&
 &   :, 1, isb)*geo%fcs*geo%fcqalf(:, 1)
+  flo_53(:, 0) = geo%fcpbs*wrk0 + dv%vaecrb(:, 0, isb)*geo%fcs*geo%&
+&   fcqalf(:, 0)
+  flo_53(:, 1) = dv%vaecrb(:, 1, isb)*geo%fcs*geo%fcqalf(:, 1)
   flo2dia(:, 0) = geo%fcpbshz*wrk0 + co%cvlahz(:, 0, isb) + (drift_hyb*&
 &   dv%vaecrb(:, 0, isb)+2.0_R8*dv%vadia(:, 0, isb))*geo%fcs*geo%fcqalf(&
 &   :, 0)*geo%fchz
@@ -1692,12 +1697,19 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, ismain0, switch, switchb&
   CALL POPREAL8ARRAY(dv%fna_32(:, 0, isb), r8*SIZE(dv%fna_32, 1)/8)
   tempb3 = (1.0_R8-drift_hyb)*dvb%fna_32(:, 0, isb)
   nbfb = nbfb + (flo(:, 0)-flo_mdf(:, 0))*dvb%fna_32(:, 0, isb) + (geo%&
-&   fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb)+scur(:, 0))*tempb3 + (&
-&   flo_he(:, 1)-5.0_R8*(flo_mdf(:, 1)/3.0_R8))*dvb%fna_he(:, 1, isb) + &
-&   dv%vaecrb(:, 1, isb)*tempb11
+&   fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb)+scur(:, 0))*tempb3 + &
+&   flo_53(:, 1)*dvb%fna_53(:, 1, isb)
   dvb%vaecrb(:, 0, isb) = dvb%vaecrb(:, 0, isb) + geo%fcs*geo%fcqalf(:, &
 &   0)*nbf*tempb3
   scurb(:, 0) = scurb(:, 0) + nbf*tempb3
+  flo_53b = 0.D0
+  flo_53b(:, 1) = flo_53b(:, 1) + nbf*dvb%fna_53(:, 1, isb)
+  dvb%fna_53(:, 1, isb) = 0.D0
+  flo_53b(:, 0) = flo_53b(:, 0) + nbf*dvb%fna_53(:, 0, isb)
+  nbfb = nbfb + flo_53(:, 0)*dvb%fna_53(:, 0, isb) + (flo_he(:, 1)-&
+&   5.0_R8*(flo_mdf(:, 1)/3.0_R8))*dvb%fna_he(:, 1, isb) + dv%vaecrb(:, &
+&   1, isb)*tempb11
+  dvb%fna_53(:, 0, isb) = 0.D0
   fna_mdf0b = 0.D0
   dpbb = 0.D0
   flo_heb = 0.D0
@@ -1954,12 +1966,18 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, ismain0, switch, switchb&
   dvb%vaecrb(:, 1, isb) = dvb%vaecrb(:, 1, isb) + drift_hyb*tempb9
   dvb%vadia(:, 1, isb) = dvb%vadia(:, 1, isb) + 2.0_R8*tempb9
   wrk0b = 0.D0
-  wrk0b = geo%fcpbshz*flo2diab(:, 0) + geo%fcpbs*flo_heb(:, 0) + geo%&
-&   fcpbs*flo_mdfb(:, 0) + geo%fcpbs*flob(:, 0)
+  wrk0b = geo%fcpbshz*flo2diab(:, 0) + geo%fcpbs*flo_53b(:, 0) + geo%&
+&   fcpbs*flo_heb(:, 0) + geo%fcpbs*flo_mdfb(:, 0) + geo%fcpbs*flob(:, 0&
+&   )
   cob%cvlahz(:, 0, isb) = cob%cvlahz(:, 0, isb) + flo2diab(:, 0)
   tempb9 = geo%fcqalf(:, 0)*geo%fcs*geo%fchz*flo2diab(:, 0)
   dvb%vaecrb(:, 0, isb) = dvb%vaecrb(:, 0, isb) + drift_hyb*tempb9
   dvb%vadia(:, 0, isb) = dvb%vadia(:, 0, isb) + 2.0_R8*tempb9
+  dvb%vaecrb(:, 1, isb) = dvb%vaecrb(:, 1, isb) + geo%fcs*geo%fcqalf(:, &
+&   1)*flo_53b(:, 1)
+  flo_53b(:, 1) = 0.D0
+  dvb%vaecrb(:, 0, isb) = dvb%vaecrb(:, 0, isb) + geo%fcs*geo%fcqalf(:, &
+&   0)*flo_53b(:, 0)
   cob%cvla(:, 1, isb) = cob%cvla(:, 1, isb) + 5.0_R8*flo_heb(:, 1)/&
 &   3.0_R8
   dvb%vaecrb(:, 1, isb) = dvb%vaecrb(:, 1, isb) + geo%fcqalf(:, 1)*&

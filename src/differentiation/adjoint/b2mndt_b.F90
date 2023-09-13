@@ -4,9 +4,9 @@
 !  Differentiation of b2mndt in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: enepar conpar enkpar potpar
 !                mompar enipar b2recyc userfluxparm cfvla cfvsa
-!                cfalf cfdpa cfsig cfdna cfhce cfhci tdata parm_hce
-!                parm_hci parm_vla parm_vsa parm_alf parm_dpa parm_sig
-!                parm_dna int4l int1l int2l int3l int0l fb_target
+!                cfalf cfdpa cfsig cfdna cfhce cfhci parm_hce parm_hci
+!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                tdata int4l int1l int2l int3l int0l fb_target
 !                fb_prev fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -41,43 +41,45 @@
 !                *(st.dv.fchvisq) *(st.dv.fchinert) *(st.dv.fchanml)
 !                *(st.dv.fchviskt) *(st.dv.fch_pi_c) *(st.dv.fch_pi_f)
 !                *(st.dv.fni_he) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fhe)
-!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
-!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
-!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
-!                *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resco) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.corua) *(st.dv.corpa)
-!                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
-!                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
-!                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
-!                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
-!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
-!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
-!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ua)
-!                *(st.psnc.te) *(st.psnc.ti) *(st.psnc.tn) *(st.psnc.kt)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
-!                (global)*rtlsa[_:_,_:_,_:_] (global)*rtlcx[_:_,_:_,_:_]
-!                (global)*rtlqa[_:_,_:_,_:_] (global)*rtlra[_:_,_:_,_:_]
+!                *(st.dv.fna_32) *(st.dv.fna_53) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.fna_exb) *(st.dv.fmo) *(st.dv.fne_he)
+!                *(st.dv.fne_53) *(st.dv.fhe) *(st.dv.fhe_mdf)
+!                *(st.dv.fhepsch) *(st.dv.fhe_exb) *(st.dv.fhi)
+!                *(st.dv.fhi_mdf) *(st.dv.fhipsch) *(st.dv.fhi_exb)
+!                *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp)
+!                *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.flob) *(st.dv.floe)
+!                *(st.dv.floi) *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt)
+!                *(st.dv.conn) *(st.dv.conkt) *(st.dv.conzt) *(st.dv.conb)
+!                *(st.dv.cone) *(st.dv.coni) *(st.dv.resmo) *(st.dv.resco)
+!                *(st.dv.respo) *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht)
+!                *(st.dv.resmt) *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt)
+!                *(st.dv.corua) *(st.dv.corpa) *(st.dv.corut) *(st.dv.corpo)
+!                *(st.dv.cortt) *(st.dv.corte) *(st.dv.corti) *(st.dv.cortn)
+!                *(st.dv.corkt) *(st.dv.corzt) *(st.dv.pcca) *(st.dv.pccm)
+!                *(st.dv.ne) *(st.dv.ni) *(st.dv.nn) *(st.dv.ue)
+!                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
+!                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
+!                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa)
+!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
+!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
+!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
+!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
+!                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
+!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
+!                *(st.psnc.nn) *(st.psnc.kinrgy) (global)*rtlsa[_:_,_:_,_:_]
+!                (global)*rtlcx[_:_,_:_,_:_] (global)*rtlqa[_:_,_:_,_:_]
+!                (global)*rtlra[_:_,_:_,_:_]
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar b2recyc userfluxparm cfvla cfvsa
-!                cfalf cfdpa cfsig cfdna cfhce cfhci tdata parm_hce
-!                parm_hci parm_vla parm_vsa parm_alf parm_dpa parm_sig
-!                parm_dna int4l int1l int2l int3l int0l fb_target
+!                cfalf cfdpa cfsig cfdna cfhce cfhci parm_hce parm_hci
+!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                tdata int4l int1l int2l int3l int0l fb_target
 !                fb_prev fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -112,38 +114,40 @@
 !                *(st.dv.fchvisq) *(st.dv.fchinert) *(st.dv.fchanml)
 !                *(st.dv.fchviskt) *(st.dv.fch_pi_c) *(st.dv.fch_pi_f)
 !                *(st.dv.fni_he) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fhe)
-!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
-!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
-!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
-!                *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resco) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.corua) *(st.dv.corpa)
-!                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
-!                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
-!                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
-!                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
-!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
-!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
-!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ua)
-!                *(st.psnc.te) *(st.psnc.ti) *(st.psnc.tn) *(st.psnc.kt)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
-!                (global)*rtlsa[_:_,_:_,_:_] (global)*rtlcx[_:_,_:_,_:_]
-!                (global)*rtlqa[_:_,_:_,_:_] (global)*rtlra[_:_,_:_,_:_]
+!                *(st.dv.fna_32) *(st.dv.fna_53) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.fna_exb) *(st.dv.fmo) *(st.dv.fne_he)
+!                *(st.dv.fne_53) *(st.dv.fhe) *(st.dv.fhe_mdf)
+!                *(st.dv.fhepsch) *(st.dv.fhe_exb) *(st.dv.fhi)
+!                *(st.dv.fhi_mdf) *(st.dv.fhipsch) *(st.dv.fhi_exb)
+!                *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp)
+!                *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.flob) *(st.dv.floe)
+!                *(st.dv.floi) *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt)
+!                *(st.dv.conn) *(st.dv.conkt) *(st.dv.conzt) *(st.dv.conb)
+!                *(st.dv.cone) *(st.dv.coni) *(st.dv.resmo) *(st.dv.resco)
+!                *(st.dv.respo) *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht)
+!                *(st.dv.resmt) *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt)
+!                *(st.dv.corua) *(st.dv.corpa) *(st.dv.corut) *(st.dv.corpo)
+!                *(st.dv.cortt) *(st.dv.corte) *(st.dv.corti) *(st.dv.cortn)
+!                *(st.dv.corkt) *(st.dv.corzt) *(st.dv.pcca) *(st.dv.pccm)
+!                *(st.dv.ne) *(st.dv.ni) *(st.dv.nn) *(st.dv.ue)
+!                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
+!                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
+!                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa)
+!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
+!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
+!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
+!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
+!                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
+!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
+!                *(st.psnc.nn) *(st.psnc.kinrgy) (global)*rtlsa[_:_,_:_,_:_]
+!                (global)*rtlcx[_:_,_:_,_:_] (global)*rtlqa[_:_,_:_,_:_]
+!                (global)*rtlra[_:_,_:_,_:_]
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
@@ -618,10 +622,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
       CALL PUSHREAL8ARRAY(cfvsa, r8*nsdecl)
       CALL PUSHREAL8ARRAY(cflim, r8)
       CALL PUSHREAL8ARRAY(cfvla, r8*nsdecl)
-      CALL PUSHREAL8(cutlo, r8/8)
-      CALL PUSHREAL8(cutll, r8/8)
-      CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHINTEGER4(ncall_b2trcl)
       CALL PUSHINTEGER4(ncall_b2ttia)
       CALL PUSHINTEGER4(ncall_transp_keps)
@@ -635,6 +635,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
       CALL PUSHINTEGER4(ncall_b2tlh0)
       CALL PUSHINTEGER4(ncall_b2tqca)
       CALL PUSHINTEGER4(ncall_b2tqin)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
+      CALL PUSHBOOLEAN(b2mod_math_initialised)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8ARRAY(st%co%csig, r8*SIZE(st%co%csig, 1)*SIZE(st%co%&
 &                   csig, 2)/8)
       CALL PUSHREAL8ARRAY(st%co%calf, r8*SIZE(st%co%calf, 1)*SIZE(st%co%&
@@ -798,10 +802,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
       ELSE
         CALL PUSHCONTROL1B(0)
       END IF
-      CALL PUSHREAL8(cutlo, r8/8)
-      CALL PUSHREAL8(cutll, r8/8)
-      CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
       CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
       IF (ALLOCATED(rrahireg)) THEN
@@ -899,6 +899,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
       CALL PUSHINTEGER4(b2sral_elm_count)
       CALL PUSHINTEGER4(ncall_b2tfrn)
       CALL PUSHINTEGER4(ncall_b2stbc_phys)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
+      CALL PUSHBOOLEAN(b2mod_math_initialised)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8ARRAY(st_ext%na, r8*SIZE(st_ext%na, 1)*SIZE(st_ext%&
 &                   na, 2)/8)
       CALL PUSHREAL8ARRAY(st_ext%ua, r8*SIZE(st_ext%ua, 1)*SIZE(st_ext%&
@@ -1157,10 +1161,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
         CALL PUSHREAL8ARRAY(cfvsa, r8*nsdecl)
         CALL PUSHREAL8ARRAY(cflim, r8)
         CALL PUSHREAL8ARRAY(cfvla, r8*nsdecl)
-        CALL PUSHREAL8(cutlo, r8/8)
-        CALL PUSHREAL8(cutll, r8/8)
-        CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL PUSHINTEGER4(eirene_mod)
         CALL PUSHREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
         CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
@@ -1313,6 +1313,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
         CALL PUSHINTEGER4(ncall_b2tqca)
         CALL PUSHINTEGER4(ncall_b2tqin)
         CALL PUSHINTEGER4(ncall_b2stbc_phys)
+        CALL PUSHREAL8(cutlo, r8/8)
+        CALL PUSHREAL8(cutll, r8/8)
+        CALL PUSHBOOLEAN(b2mod_math_initialised)
+        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL PUSHINTEGER4(ier0)
         CALL PUSHREAL8ARRAY(st_ext%na, r8*SIZE(st_ext%na, 1)*SIZE(st_ext&
 &                     %na, 2)/8)
@@ -1500,6 +1504,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                     st%dv%fna_52, 2)*SIZE(st%dv%fna_52, 3)/8)
         CALL PUSHREAL8ARRAY(st%dv%fna_32, r8*SIZE(st%dv%fna_32, 1)*SIZE(&
 &                     st%dv%fna_32, 2)*SIZE(st%dv%fna_32, 3)/8)
+        CALL PUSHREAL8ARRAY(st%dv%fna_53, r8*SIZE(st%dv%fna_53, 1)*SIZE(&
+&                     st%dv%fna_53, 2)*SIZE(st%dv%fna_53, 3)/8)
         CALL PUSHREAL8ARRAY(st%dv%fna_52nd, r8*SIZE(st%dv%fna_52nd, 1)*&
 &                     SIZE(st%dv%fna_52nd, 2)*SIZE(st%dv%fna_52nd, 3)/8)
         CALL PUSHREAL8ARRAY(st%dv%fna_32nd, r8*SIZE(st%dv%fna_32nd, 1)*&
@@ -1525,6 +1531,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                     st%dv%fne_he, 2)/8)
         CALL PUSHREAL8ARRAY(st%dv%fne_eir, r8*SIZE(st%dv%fne_eir, 1)*&
 &                     SIZE(st%dv%fne_eir, 2)/8)
+        CALL PUSHREAL8ARRAY(st%dv%fne_53, r8*SIZE(st%dv%fne_53, 1)*SIZE(&
+&                     st%dv%fne_53, 2)/8)
         CALL PUSHREAL8ARRAY(st%dv%fhe, r8*SIZE(st%dv%fhe, 1)*SIZE(st%dv%&
 &                     fhe, 2)/8)
         CALL PUSHREAL8ARRAY(st%dv%fhe_mdf, r8*SIZE(st%dv%fhe_mdf, 1)*&
@@ -1809,6 +1817,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                       SIZE(st%dv%fna_52, 2)*SIZE(st%dv%fna_52, 3)/8)
           CALL PUSHREAL8ARRAY(st%dv%fna_32, r8*SIZE(st%dv%fna_32, 1)*&
 &                       SIZE(st%dv%fna_32, 2)*SIZE(st%dv%fna_32, 3)/8)
+          CALL PUSHREAL8ARRAY(st%dv%fna_53, r8*SIZE(st%dv%fna_53, 1)*&
+&                       SIZE(st%dv%fna_53, 2)*SIZE(st%dv%fna_53, 3)/8)
           CALL PUSHREAL8ARRAY(st%dv%fna_52nd, r8*SIZE(st%dv%fna_52nd, 1)&
 &                       *SIZE(st%dv%fna_52nd, 2)*SIZE(st%dv%fna_52nd, 3)&
 &                       /8)
@@ -2064,6 +2074,16 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
               stb%dv%fch_p(:, 0) = stb%dv%fch_p(:, 0) - wrkfb/(qe*(geo%&
 &               fcpbs+b2news_cutlo))
             END IF
+            CALL B2XPEN_B(ncv, nfc, ns, mpg, st%dv%fna, stb%dv%fna, st%&
+&                   dv%fna_53, stb%dv%fna_53, st%dv%fne_53, stb%dv%&
+&                   fne_53, st%dv%fch, stb%dv%fch, st%dv%fhe, stb%dv%fhe&
+&                   , st%dv%fhi, stb%dv%fhi, st%dv%fhn, stb%dv%fhn, st%&
+&                   rt%rpt, stb%rt%rpt, st%pl%te, stb%pl%te, st%pl%ti, &
+&                   stb%pl%ti, st%pl%tn, stb%pl%tn, st%pl%po, stb%pl%po&
+&                   , switch%boris, st%dv%fhm, stb%dv%fhm, st%dv%fhp, &
+&                   stb%dv%fhp, st%dv%fhj, stb%dv%fhj, st%dv%fht, stb%dv&
+&                   %fht)
+            stb%dv%fht = 0.D0
             CALL POPREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/&
 &                        8)
             CALL POPREAL8ARRAY(st%dv%vedia, r8*SIZE(st%dv%vedia, 1)*SIZE&
@@ -2112,6 +2132,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
               CALL POPREAL8ARRAY(st%dv%fna_52nd, r8*SIZE(st%dv%fna_52nd&
 &                          , 1)*SIZE(st%dv%fna_52nd, 2)*SIZE(st%dv%&
 &                          fna_52nd, 3)/8)
+              CALL POPREAL8ARRAY(st%dv%fna_53, r8*SIZE(st%dv%fna_53, 1)*&
+&                          SIZE(st%dv%fna_53, 2)*SIZE(st%dv%fna_53, 3)/8&
+&                         )
               CALL POPREAL8ARRAY(st%dv%fna_32, r8*SIZE(st%dv%fna_32, 1)*&
 &                          SIZE(st%dv%fna_32, 2)*SIZE(st%dv%fna_32, 3)/8&
 &                         )
@@ -2374,6 +2397,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                          )*SIZE(st%dv%fhe_mdf, 2)/8)
               CALL POPREAL8ARRAY(st%dv%fhe, r8*SIZE(st%dv%fhe, 1)*SIZE(&
 &                          st%dv%fhe, 2)/8)
+              CALL POPREAL8ARRAY(st%dv%fne_53, r8*SIZE(st%dv%fne_53, 1)*&
+&                          SIZE(st%dv%fne_53, 2)/8)
               CALL POPREAL8ARRAY(st%dv%fne_eir, r8*SIZE(st%dv%fne_eir, 1&
 &                          )*SIZE(st%dv%fne_eir, 2)/8)
               CALL POPREAL8ARRAY(st%dv%fne_he, r8*SIZE(st%dv%fne_he, 1)*&
@@ -2405,6 +2430,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
               CALL POPREAL8ARRAY(st%dv%fna_52nd, r8*SIZE(st%dv%fna_52nd&
 &                          , 1)*SIZE(st%dv%fna_52nd, 2)*SIZE(st%dv%&
 &                          fna_52nd, 3)/8)
+              CALL POPREAL8ARRAY(st%dv%fna_53, r8*SIZE(st%dv%fna_53, 1)*&
+&                          SIZE(st%dv%fna_53, 2)*SIZE(st%dv%fna_53, 3)/8&
+&                         )
               CALL POPREAL8ARRAY(st%dv%fna_32, r8*SIZE(st%dv%fna_32, 1)*&
 &                          SIZE(st%dv%fna_32, 2)*SIZE(st%dv%fna_32, 3)/8&
 &                         )
@@ -2612,6 +2640,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
               CALL POPREAL8ARRAY(st_ext%na, r8*SIZE(st_ext%na, 1)*SIZE(&
 &                          st_ext%na, 2)/8)
               CALL POPINTEGER4(ier0)
+              CALL POPREAL4(small_r4_constant, r4/8)
+              CALL POPBOOLEAN(b2mod_math_initialised)
+              CALL POPREAL8(cutll, r8/8)
+              CALL POPREAL8(cutlo, r8/8)
               CALL POPINTEGER4(ncall_b2stbc_phys)
               CALL POPINTEGER4(ncall_b2tqin)
               CALL POPINTEGER4(ncall_b2tqca)
@@ -2731,10 +2763,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
               CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
               CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
               CALL POPINTEGER4(eirene_mod)
-              CALL POPREAL4(small_r4_constant, r4/8)
-              CALL POPBOOLEAN(b2mod_math_initialised)
-              CALL POPREAL8(cutll, r8/8)
-              CALL POPREAL8(cutlo, r8/8)
               CALL POPREAL8ARRAY(cfvla, r8*nsdecl)
               CALL POPREAL8ARRAY(cflim, r8)
               CALL POPREAL8ARRAY(cfvsa, r8*nsdecl)
@@ -2956,6 +2984,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                      st_ext%ua, 2)/8)
           CALL POPREAL8ARRAY(st_ext%na, r8*SIZE(st_ext%na, 1)*SIZE(&
 &                      st_ext%na, 2)/8)
+          CALL POPREAL4(small_r4_constant, r4/8)
+          CALL POPBOOLEAN(b2mod_math_initialised)
+          CALL POPREAL8(cutll, r8/8)
+          CALL POPREAL8(cutlo, r8/8)
           CALL POPINTEGER4(ncall_b2stbc_phys)
           CALL POPINTEGER4(ncall_b2tfrn)
           CALL POPINTEGER4(b2sral_elm_count)
@@ -3020,10 +3052,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                                         /8)
           CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
           CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
-          CALL POPBOOLEAN(b2mod_math_initialised)
-          CALL POPREAL8(cutll, r8/8)
-          CALL POPREAL8(cutlo, r8/8)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL8ARRAY(time_factor, r8*SIZE(&
 &                                         time_factor, 1)/8)
@@ -3192,6 +3220,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                      co%calf, 2)/8)
           CALL POPREAL8ARRAY(st%co%csig, r8*SIZE(st%co%csig, 1)*SIZE(st%&
 &                      co%csig, 2)/8)
+          CALL POPREAL4(small_r4_constant, r4/8)
+          CALL POPBOOLEAN(b2mod_math_initialised)
+          CALL POPREAL8(cutll, r8/8)
+          CALL POPREAL8(cutlo, r8/8)
           CALL POPINTEGER4(ncall_b2tqin)
           CALL POPINTEGER4(ncall_b2tqca)
           CALL POPINTEGER4(ncall_b2tlh0)
@@ -3205,10 +3237,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
           CALL POPINTEGER4(ncall_transp_keps)
           CALL POPINTEGER4(ncall_b2ttia)
           CALL POPINTEGER4(ncall_b2trcl)
-          CALL POPREAL4(small_r4_constant, r4/8)
-          CALL POPBOOLEAN(b2mod_math_initialised)
-          CALL POPREAL8(cutll, r8/8)
-          CALL POPREAL8(cutlo, r8/8)
           CALL POPREAL8ARRAY(cfvla, r8*nsdecl)
           CALL POPREAL8ARRAY(cflim, r8)
           CALL POPREAL8ARRAY(cfvsa, r8*nsdecl)

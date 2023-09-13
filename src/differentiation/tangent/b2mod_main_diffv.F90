@@ -523,8 +523,8 @@ CONTAINS
 !                tdata j
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys mean parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
+!                parm_sig parm_dna tdata sigma *par_opt_phys mean
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
@@ -538,16 +538,16 @@ CONTAINS
 !                *rtlra:in cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:in-out conpar:in-out
 !                enkpar:in potpar:in-out mompar:in enipar:in-out
-!                b2recyc:in userfluxparm:(loc) sigma:in *par_opt_phys:in
-!                mean:in cfvla:(loc) cfvsa:(loc) cfalf:(loc) cfdpa:(loc)
-!                cfsig:(loc) cfdna:(loc) cfhce:(loc) cfhci:(loc)
-!                parm_hce:in parm_hci:in parm_vla:in parm_vsa:in
-!                parm_alf:in parm_dpa:in parm_sig:in parm_dna:in
-!                tdata:in-out int4l:(loc) int1l:(loc) int2l:(loc)
-!                int3l:(loc) int0l:(loc) fb_target:(loc) fb_prev:(loc)
-!                fb_current:(loc) fb_const:(loc) charge_frac:(loc)
-!                saved_fb_actuator:(loc) fb_rescale:(loc) j:out
-!                geo.cvbb:(loc) switch.keps_cd:in switch.keps_heat:in
+!                b2recyc:in userfluxparm:(loc) cfvla:(loc) cfvsa:(loc)
+!                cfalf:(loc) cfdpa:(loc) cfsig:(loc) cfdna:(loc)
+!                cfhce:(loc) cfhci:(loc) parm_hce:in parm_hci:in
+!                parm_vla:in parm_vsa:in parm_alf:in parm_dpa:in
+!                parm_sig:in parm_dna:in tdata:in-out sigma:in
+!                *par_opt_phys:in mean:in int4l:(loc) int1l:(loc)
+!                int2l:(loc) int3l:(loc) int0l:(loc) fb_target:(loc)
+!                fb_prev:(loc) fb_current:(loc) fb_const:(loc)
+!                charge_frac:(loc) saved_fb_actuator:(loc) fb_rescale:(loc)
+!                j:out geo.cvbb:(loc) switch.keps_cd:in switch.keps_heat:in
 !                switch.keps_heat_i:in switch.keps_sig:in switch.keps_alf:in
 !                switch.keps_visc:in switch.keps_dkt:in switch.keps_dzt:in
 !                switch.keps_shear:in switch.b2sikt_fac_sheath:in
@@ -634,30 +634,32 @@ CONTAINS
 !                *(state.dv.fni_he):(loc) state.dv.fna:(loc) *(state.dv.fna):(loc)
 !                state.dv.fna_mdf:(loc) *(state.dv.fna_mdf):(loc)
 !                state.dv.fna_52:(loc) state.dv.fna_32:(loc) *(state.dv.fna_32):(loc)
-!                state.dv.fna_53:(loc) state.dv.fna_52nd:(loc)
-!                state.dv.fna_32nd:(loc) state.dv.fna_nodrift:(loc)
-!                state.dv.fna_he:(loc) *(state.dv.fna_he):(loc)
-!                state.dv.fnapsch:(loc) *(state.dv.fnapsch):(loc)
-!                state.dv.fna_fcor:(loc) *(state.dv.fna_fcor):(loc)
-!                state.dv.fna_eir:(loc) *(state.dv.fna_eir):(loc)
-!                state.dv.fna_exb:(loc) *(state.dv.fna_exb):(loc)
-!                state.dv.fmo:(loc) *(state.dv.fmo):(loc) state.dv.fne:(loc)
-!                *(state.dv.fne):(loc) state.dv.fne_he:(loc) *(state.dv.fne_he):(loc)
+!                state.dv.fna_53:(loc) *(state.dv.fna_53):(loc)
+!                state.dv.fna_52nd:(loc) state.dv.fna_32nd:(loc)
+!                state.dv.fna_nodrift:(loc) state.dv.fna_he:(loc)
+!                *(state.dv.fna_he):(loc) state.dv.fnapsch:(loc)
+!                *(state.dv.fnapsch):(loc) state.dv.fna_fcor:(loc)
+!                *(state.dv.fna_fcor):(loc) state.dv.fna_eir:(loc)
+!                *(state.dv.fna_eir):(loc) state.dv.fna_exb:(loc)
+!                *(state.dv.fna_exb):(loc) state.dv.fmo:(loc) *(state.dv.fmo):(loc)
+!                state.dv.fne:(loc) state.dv.fne_he:(loc) *(state.dv.fne_he):(loc)
 !                state.dv.fne_32:(loc) state.dv.fne_52:(loc) state.dv.fne_eir:(loc)
-!                state.dv.fne_53:(loc) state.dv.fhe:(loc) *(state.dv.fhe):(loc)
-!                state.dv.fhe_mdf:(loc) *(state.dv.fhe_mdf):(loc)
-!                state.dv.fhepsch:(loc) *(state.dv.fhepsch):(loc)
-!                state.dv.fhe_eir:(loc) state.dv.fhe_exb:(loc)
-!                *(state.dv.fhe_exb):(loc) state.dv.fhi:(loc) *(state.dv.fhi):(loc)
-!                state.dv.fhi_mdf:(loc) *(state.dv.fhi_mdf):(loc)
-!                state.dv.fhipsch:(loc) *(state.dv.fhipsch):(loc)
-!                state.dv.fhi_eir:(loc) state.dv.fhi_exb:(loc)
-!                *(state.dv.fhi_exb):(loc) state.dv.fnn:(loc) *(state.dv.fnn):(loc)
-!                state.dv.fnn_32:(loc) state.dv.fnn_52:(loc) state.dv.fhn:(loc)
-!                *(state.dv.fhn):(loc) state.dv.fhm:(loc) *(state.dv.fhm):(loc)
-!                state.dv.fhp:(loc) state.dv.fhj:(loc) state.dv.fht:(loc)
-!                state.dv.fkt:(loc) *(state.dv.fkt):(loc) state.dv.fzt:(loc)
-!                *(state.dv.fzt):(loc) state.dv.kinrgy:(loc) *(state.dv.kinrgy):(loc)
+!                state.dv.fne_53:(loc) *(state.dv.fne_53):(loc)
+!                state.dv.fhe:(loc) *(state.dv.fhe):(loc) state.dv.fhe_mdf:(loc)
+!                *(state.dv.fhe_mdf):(loc) state.dv.fhepsch:(loc)
+!                *(state.dv.fhepsch):(loc) state.dv.fhe_eir:(loc)
+!                state.dv.fhe_exb:(loc) *(state.dv.fhe_exb):(loc)
+!                state.dv.fhi:(loc) *(state.dv.fhi):(loc) state.dv.fhi_mdf:(loc)
+!                *(state.dv.fhi_mdf):(loc) state.dv.fhipsch:(loc)
+!                *(state.dv.fhipsch):(loc) state.dv.fhi_eir:(loc)
+!                state.dv.fhi_exb:(loc) *(state.dv.fhi_exb):(loc)
+!                state.dv.fnn:(loc) *(state.dv.fnn):(loc) state.dv.fnn_32:(loc)
+!                state.dv.fnn_52:(loc) state.dv.fhn:(loc) *(state.dv.fhn):(loc)
+!                state.dv.fhm:(loc) *(state.dv.fhm):(loc) state.dv.fhp:(loc)
+!                *(state.dv.fhp):(loc) state.dv.fhj:(loc) *(state.dv.fhj):(loc)
+!                state.dv.fht:(loc) *(state.dv.fht):(loc) state.dv.fkt:(loc)
+!                *(state.dv.fkt):(loc) state.dv.fzt:(loc) *(state.dv.fzt):(loc)
+!                state.dv.kinrgy:(loc) *(state.dv.kinrgy):(loc)
 !                state.dv.conc:(loc) *(state.dv.conc):(loc) state.dv.flob:(loc)
 !                *(state.dv.flob):(loc) state.dv.floe:(loc) *(state.dv.floe):(loc)
 !                state.dv.floi:(loc) *(state.dv.floi):(loc) state.dv.floe_noc:(loc)

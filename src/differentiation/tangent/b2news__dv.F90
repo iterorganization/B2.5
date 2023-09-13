@@ -30,37 +30,38 @@
 !                *(st.dv.fchvisq) *(st.dv.fchinert) *(st.dv.fchanml)
 !                *(st.dv.fchviskt) *(st.dv.fch_pi_c) *(st.dv.fch_pi_f)
 !                *(st.dv.fni_he) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fhe)
-!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
-!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
-!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
-!                *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resco) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.corua) *(st.dv.corpa)
-!                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
-!                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
-!                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
-!                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
-!                *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi)
-!                *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx)
-!                *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni)
-!                *(st.psnc.fna) *(st.psnc.kinrgy)
+!                *(st.dv.fna_32) *(st.dv.fna_53) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.fna_exb) *(st.dv.fmo) *(st.dv.fne_he)
+!                *(st.dv.fne_53) *(st.dv.fhe) *(st.dv.fhe_mdf)
+!                *(st.dv.fhepsch) *(st.dv.fhe_exb) *(st.dv.fhi)
+!                *(st.dv.fhi_mdf) *(st.dv.fhipsch) *(st.dv.fhi_exb)
+!                *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp)
+!                *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.flob) *(st.dv.floe)
+!                *(st.dv.floi) *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt)
+!                *(st.dv.conn) *(st.dv.conkt) *(st.dv.conzt) *(st.dv.conb)
+!                *(st.dv.cone) *(st.dv.coni) *(st.dv.resmo) *(st.dv.resco)
+!                *(st.dv.respo) *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht)
+!                *(st.dv.resmt) *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt)
+!                *(st.dv.corua) *(st.dv.corpa) *(st.dv.corut) *(st.dv.corpo)
+!                *(st.dv.cortt) *(st.dv.corte) *(st.dv.corti) *(st.dv.cortn)
+!                *(st.dv.corkt) *(st.dv.corzt) *(st.dv.pcca) *(st.dv.pccm)
+!                *(st.dv.ne) *(st.dv.ni) *(st.dv.nn) *(st.dv.ue)
+!                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
+!                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
+!                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza) *(st.rt.rz2)
+!                *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra)
+!                *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.fna) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci tdata parm_hce parm_hci
-!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
 !                int4l int1l int2l int3l int0l fb_target fb_prev
 !                fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
@@ -96,37 +97,39 @@
 !                *(st.dv.fchvisq) *(st.dv.fchinert) *(st.dv.fchanml)
 !                *(st.dv.fchviskt) *(st.dv.fch_pi_c) *(st.dv.fch_pi_f)
 !                *(st.dv.fni_he) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fhe)
-!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
-!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
-!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
-!                *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resco) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.corua) *(st.dv.corpa)
-!                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
-!                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
-!                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
-!                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
-!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
-!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
-!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ua)
-!                *(st.psnc.te) *(st.psnc.ti) *(st.psnc.tn) *(st.psnc.kt)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.fna)
-!                *(st.psnc.kinrgy) (global)b2recyc[1:nstraid,0:nsdmax-1]
+!                *(st.dv.fna_32) *(st.dv.fna_53) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.fna_exb) *(st.dv.fmo) *(st.dv.fne_he)
+!                *(st.dv.fne_53) *(st.dv.fhe) *(st.dv.fhe_mdf)
+!                *(st.dv.fhepsch) *(st.dv.fhe_exb) *(st.dv.fhi)
+!                *(st.dv.fhi_mdf) *(st.dv.fhipsch) *(st.dv.fhi_exb)
+!                *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp)
+!                *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.flob) *(st.dv.floe)
+!                *(st.dv.floi) *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt)
+!                *(st.dv.conn) *(st.dv.conkt) *(st.dv.conzt) *(st.dv.conb)
+!                *(st.dv.cone) *(st.dv.coni) *(st.dv.resmo) *(st.dv.resco)
+!                *(st.dv.respo) *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht)
+!                *(st.dv.resmt) *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt)
+!                *(st.dv.corua) *(st.dv.corpa) *(st.dv.corut) *(st.dv.corpo)
+!                *(st.dv.cortt) *(st.dv.corte) *(st.dv.corti) *(st.dv.cortn)
+!                *(st.dv.corkt) *(st.dv.corzt) *(st.dv.pcca) *(st.dv.pccm)
+!                *(st.dv.ne) *(st.dv.ni) *(st.dv.nn) *(st.dv.ue)
+!                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
+!                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
+!                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa)
+!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
+!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
+!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
+!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
+!                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
+!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
+!                *(st.psnc.nn) *(st.psnc.fna) *(st.psnc.kinrgy)
+!                (global)b2recyc[1:nstraid,0:nsdmax-1]
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
@@ -396,6 +399,8 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
   REAL(r8), DIMENSION(nCv) :: temp0
   REAL(r8), DIMENSION(nbdirsmax, SIZE(st_ext%za, 1), SIZE(st_ext%za, 2)) :: &
 & dummyzerodiffd
+  REAL(r8), DIMENSION(nbdirsmax, SIZE(st_ext%za, 1), SIZE(st_ext%za, 2)) :: &
+& dummyzerodiffd0
   REAL(r8), DIMENSION(nCv) :: temp1
   INTEGER :: nbdirs
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -1075,9 +1080,13 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &          fna_he, st_ext%fa, st%dv%fch_p, std%dv%fch_p, st%dv%fne_he, &
 &          std%dv%fne_he, nbdirs)
 !srv 13.05.99 21.01.00 11.10.02
-  CALL B2XPFE_NODIFF(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, &
-&              st_ext%za, st%dv%fna_53, st_ext%fa, st%dv%fch_p, st%dv%&
-&              fne_53)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd0(nd, :, :) = 0.D0
+  END DO
+  CALL B2XPFE_DV(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, std%&
+&          rt%rza, st_ext%za, dummyzerodiffd0, st%dv%fna_53, std%dv%&
+&          fna_53, st_ext%fa, st%dv%fch_p, std%dv%fch_p, st%dv%fne_53, &
+&          std%dv%fne_53, nbdirs)
   CALL B2XPFE_NODIFF(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, &
 &              st_ext%za, st%dv%fna_32nd, st_ext%fa, st%dv%fch_32, st%dv&
 &              %fne_32)
@@ -1140,10 +1149,13 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
 !
-  CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53, st%dv%&
-&              fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt&
-&              %rpt, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%&
-&              boris, st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
+  CALL B2XPEN_DV(ncv, nfc, ns, mpg, st%dv%fna, std%dv%fna, st%dv%fna_53&
+&          , std%dv%fna_53, st%dv%fne_53, std%dv%fne_53, st%dv%fch, std%&
+&          dv%fch, st%dv%fhe, std%dv%fhe, st%dv%fhi, std%dv%fhi, st%dv%&
+&          fhn, std%dv%fhn, st%rt%rpt, std%rt%rpt, st%pl%te, std%pl%te, &
+&          st%pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, st%pl%po, std%pl%po&
+&          , switch%boris, st%dv%fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp&
+&          , st%dv%fhj, std%dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
   CALL B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
