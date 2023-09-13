@@ -3,18 +3,19 @@
 !
 !  Differentiation of b2tfnb in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
-!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb)
-!                *(dv.kinrgy) *(dv.flob) *(dv.conb) *(dv.vadia)
-!                *(dv.wadia) *(dv.vaecrb)
+!                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
+!                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
+!                *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
 !   with respect to varying inputs: *(dv.fchvispar) *(dv.fchvisper)
 !                *(dv.fchvisq) *(dv.fchinert) *(dv.fchanml) *(dv.fchviskt)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb) *(dv.kinrgy)
-!                *(dv.flob) *(dv.conb) *(dv.pcca) *(dv.pa) *(dv.vadia)
-!                *(dv.wadia) *(dv.vaecrb) *(rt.rza) *(co.cvla)
-!                *(co.cdna) *(co.cdna_exb) *(co.cdpa) *(co.cvlahz)
-!                *(co.cdpahz) *(co.cddi) *(co.cssb) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.ti) *(pl.tn)
+!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_53)
+!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb)
+!                *(dv.kinrgy) *(dv.flob) *(dv.conb) *(dv.pcca)
+!                *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
+!                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
+!                *(pl.tn)
 !   Plus diff mem management of: dv.fchvispar:in dv.fchvisper:in
 !                dv.fchvisq:in dv.fchinert:in dv.fchanml:in dv.fchviskt:in
 !                dv.fna:in dv.fna_mdf:in dv.fna_52:in dv.fna_32:in
@@ -124,9 +125,10 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, ismain0, switch, &
 & 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
   REAL(kind=r8) :: flod(nbdirsmax, nfc, 0:1), flo_mdfd(nbdirsmax, nfc, 0&
 & :1), flo2diad(nbdirsmax, nfc, 0:1), flo_hed(nbdirsmax, nfc, 0:1), &
-& vbard(nbdirsmax), t0d(nbdirsmax), t1d(nbdirsmax), t2d(nbdirsmax), t3d(&
-& nbdirsmax), termd(nbdirsmax, nfc), flob0d(nbdirsmax, nfc, 0:1), conb0d&
-& (nbdirsmax, nfc, 0:1), scurd(nbdirsmax, nfc, 0:1)
+& flo_53d(nbdirsmax, nfc, 0:1), vbard(nbdirsmax), t0d(nbdirsmax), t1d(&
+& nbdirsmax), t2d(nbdirsmax), t3d(nbdirsmax), termd(nbdirsmax, nfc), &
+& flob0d(nbdirsmax, nfc, 0:1), conb0d(nbdirsmax, nfc, 0:1), scurd(&
+& nbdirsmax, nfc, 0:1)
 !srv 21.10.10
 !srv 05.03.16
 !srv 05.03.16
@@ -868,6 +870,9 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, ismain0, switch, &
     flo_hed(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
+    flo_53d(nd, :, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
     flo2diad(nd, :, :) = 0.D0
   END DO
   temp6 = geo%fcqalf(:, 0)*geo%fcs*geo%fchz
@@ -886,6 +891,10 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, ismain0, switch, &
 &     , :, 0, isb)
     flo_hed(nd, :, 1) = 5.0_R8*cod%cvla(nd, :, 1, isb)/3.0_R8 + &
 &     drift_hyb*geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb)
+    flo_53d(nd, :, 0) = geo%fcpbs*wrk0d(nd, :) + geo%fcs*geo%fcqalf(:, 0&
+&     )*dvd%vaecrb(nd, :, 0, isb)
+    flo_53d(nd, :, 1) = geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, &
+&     isb)
     flo2diad(nd, :, 0) = geo%fcpbshz*wrk0d(nd, :) + cod%cvlahz(nd, :, 0&
 &     , isb) + temp6*(drift_hyb*dvd%vaecrb(nd, :, 0, isb)+2.0_R8*dvd%&
 &     vadia(nd, :, 0, isb))
@@ -1152,6 +1161,11 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, ismain0, switch, &
 &     ) + (flo(:, 0)-flo_mdf(:, 0))*nbfd(nd, :) - dpb(:, 0)*cod%cdpa(nd&
 &     , :, 0, isb) - co%cdpa(:, 0, isb)*dpbd(nd, :, 0)
 !
+    dvd%fna_53(nd, :, 0, isb) = nbf*flo_53d(nd, :, 0) + flo_53(:, 0)*&
+&     nbfd(nd, :)
+    dvd%fna_53(nd, :, 1, isb) = nbf*flo_53d(nd, :, 1) + flo_53(:, 1)*&
+&     nbfd(nd, :)
+!
 !   ..compute ExB fluxes for k-model
     dvd%fna_exb(nd, :, :) = 0.D0
   END DO
@@ -1241,7 +1255,6 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, ismain0, switch, &
   dv%fna_he(:, 1, isb) = 5.0_R8*(fna_mdf0(:, 1)/3.0_R8) + temp13*(dv%&
 &   vaecrb(:, 1, isb)*nbf) + temp12*nbf - 5.0_R8*(co%cdpa(:, 1, isb)*(&
 &   dpb(:, 1)/3.0_R8))
-!
   dv%fna_53(:, 0, isb) = flo_53(:, 0)*nbf
   dv%fna_53(:, 1, isb) = flo_53(:, 1)*nbf
 !

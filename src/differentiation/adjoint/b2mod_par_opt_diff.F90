@@ -82,7 +82,7 @@ MODULE B2MOD_PAR_OPT_DIFF
 !                 optimization libraries through b2optim_tao/b2optim_ipopt, and to the routine for
 !                 calculating the prior (if needed)
 ! - nsigma_opt stores only the number of sigmas that are actually optimized (which can be .le. nsigma).
-!   similarly sigma_opt stores only such sigmas that are optimized. This differentiation is needed to
+! - sigma_opt: logical that tells the specific sigmas that are optimized. This differentiation is needed to
 !   correctly pass the optimization variables to the optimization libraries
 ! - nmean_opt, mean_opt, do the same as for sigma but for the error mean
 ! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
@@ -790,7 +790,7 @@ CONTAINS
     typeold = prior_type
     parold = prior_par
     rangeold = prior_range
-    DO ipp=1,nnvar+(nsigma-nsigma_opt)+(nmean-nmean_opt)
+    DO ipp=1,nnvar
       prior_type(idd) = typeold(ipp)
       prior_par(idd, 1) = parold(ipp, 1)
       prior_par(idd, 2) = parold(ipp, 2)
@@ -810,7 +810,6 @@ CONTAINS
 !next index
       idd = idd + 1
     END DO
-    npar_opt = npar_opt - (nsigma-nsigma_opt) - (nmean-nmean_opt)
     IF (flag_optim .OR. cftype(1) .EQ. 6) THEN
       CALL XERTST(ANY(x0(1:npar_opt) .LT. inf_opt*10.0_R8), &
 &           'b2mod_par_opt: initial guess x0 MUST be specified for '//&
@@ -1502,7 +1501,7 @@ CONTAINS
     typeold = prior_type
     parold = prior_par
     rangeold = prior_range
-    DO ipp=1,nnvar+(nsigma-nsigma_opt)+(nmean-nmean_opt)
+    DO ipp=1,nnvar
       prior_type(idd) = typeold(ipp)
       prior_par(idd, 1) = parold(ipp, 1)
       prior_par(idd, 2) = parold(ipp, 2)
@@ -1522,7 +1521,6 @@ CONTAINS
 !next index
       idd = idd + 1
     END DO
-    npar_opt = npar_opt - (nsigma-nsigma_opt) - (nmean-nmean_opt)
     IF (flag_optim .OR. cftype(1) .EQ. 6) THEN
       CALL XERTST(ANY(x0(1:npar_opt) .LT. inf_opt*10.0_R8), &
 &           'b2mod_par_opt: initial guess x0 MUST be specified for '//&

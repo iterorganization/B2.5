@@ -6,17 +6,14 @@
 !                *b2dataoncf j
 !   with respect to varying inputs: cfnorm vold *b2voloncf *b2data
 !                *b2dataoncf sigma *par_opt_phys mean *(st.pl.na)
-!                *(st.pl.te) *(st.pl.ti) *(st.dv.fna) *(st.dv.fne)
-!                *(st.dv.fhe) *(st.dv.fhi) *(st.dv.kinrgy) *(st.dv.ne)
-!                *(st.rt.rpt)
+!                *(st.pl.te) *(st.pl.ti) *(st.dv.fht) *(st.dv.ne)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
 !                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
 !                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
 !                geo.fcqbet:in geo.vxvol:in st_ext.am:in st_ext.na:in
 !                st_ext.ta:in st.pl.na:in st.pl.te:in st.pl.ti:in
-!                st.dv.fna:in st.dv.fne:in st.dv.fhe:in st.dv.fhi:in
-!                st.dv.kinrgy:in st.dv.ne:in st.rt.rpt:in
+!                st.dv.fht:in st.dv.ne:in
 !
 !
 !
@@ -31,13 +28,13 @@
 SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 & mpgd, st, std, st_ext, st_extd, boris, j, jd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp
-  USE B2MOD_B2CMPA_DIFFV, ONLY : am
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2US_GEO_DIFFV
   USE B2MOD_PAR_OPT_DIFFV
+  USE B2MOD_CONSTANTS
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp
+  USE B2MOD_B2CMPA_DIFFV, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : vold, voldd, cfnorm, cfnormd, nncf, b2rr, &
@@ -69,7 +66,6 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
-  INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB
   REAL(kind=r8) :: max1
@@ -266,44 +262,11 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
       CASE (5) 
 !max heat flux density on desired FCs
         DO ifc=ic1,ic2
-          qq = 0.0
-          IF (mpg%fccv(mpg%cfreg(ifc), 1) .GT. mpg%fccv(mpg%cfreg(ifc), &
-&             2)) THEN
-            icv = mpg%fccv(mpg%cfreg(ifc), 2)
-          ELSE
-            icv = mpg%fccv(mpg%cfreg(ifc), 1)
-          END IF
-          IF (icv .GT. mpg%nci) THEN
-            IF (mpg%fccv(mpg%cfreg(ifc), 1) .LT. mpg%fccv(mpg%cfreg(ifc)&
-&               , 2)) THEN
-              icv = mpg%fccv(mpg%cfreg(ifc), 2)
-            ELSE
-              icv = mpg%fccv(mpg%cfreg(ifc), 1)
-            END IF
-          END IF
           DO nd=1,nbdirs
-            qqd(nd) = std%dv%fhe(nd, mpg%cfreg(ifc), 0) + std%dv%fhi(nd&
-&             , mpg%cfreg(ifc), 0) + (1-boris)*(st%pl%te(icv)*std%dv%fne&
-&             (nd, mpg%cfreg(ifc), 0)+st%dv%fne(mpg%cfreg(ifc), 0)*std%&
-&             pl%te(nd, icv))
+            qqd(nd) = mpg%cffcor(ifc)*std%dv%fht(nd, ifc, 0)/geo%fcs(mpg&
+&             %cfreg(ifc))
           END DO
-          qq = st%dv%fhe(mpg%cfreg(ifc), 0) + st%dv%fhi(mpg%cfreg(ifc), &
-&           0) + (1-boris)*st%dv%fne(mpg%cfreg(ifc), 0)*st%pl%te(icv)
-          DO is=0,ns-1
-            temp = ev*st%rt%rpt(icv, is) + (-boris+1)*(st%dv%kinrgy(icv&
-&             , is)+st%pl%ti(icv))
-            temp0 = st%dv%fna(mpg%cfreg(ifc), 0, is)
-            DO nd=1,nbdirs
-              qqd(nd) = qqd(nd) + temp*std%dv%fna(nd, mpg%cfreg(ifc), 0&
-&               , is) + temp0*(ev*std%rt%rpt(nd, icv, is)+(1-boris)*(std&
-&               %dv%kinrgy(nd, icv, is)+std%pl%ti(nd, icv)))
-            END DO
-            qq = qq + temp0*temp
-          END DO
-          DO nd=1,nbdirs
-            qqd(nd) = mpg%cffcor(ifc)*qqd(nd)/geo%fcs(mpg%cfreg(ifc))
-          END DO
-          qq = qq*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
+          qq = st%dv%fht(ifc, 0)*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             DO nd=1,nbdirs
               max1d(nd) = qqd(nd)
@@ -613,13 +576,13 @@ END SUBROUTINE B2USR_COST_FUNCTION_DV
 SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 & st_ext, boris, j)
   USE B2MOD_TYPES
-  USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp
-  USE B2MOD_B2CMPA_DIFFV, ONLY : am
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2US_GEO_DIFFV
   USE B2MOD_PAR_OPT_DIFFV
+  USE B2MOD_CONSTANTS
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp
+  USE B2MOD_B2CMPA_DIFFV, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : vold, cfnorm, nncf, b2rr, b2voloncf, b2data&
@@ -642,7 +605,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
-  INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB
   REAL(kind=r8) :: max1
@@ -751,28 +713,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       CASE (5) 
 !max heat flux density on desired FCs
         DO ifc=ic1,ic2
-          qq = 0.0
-          IF (mpg%fccv(mpg%cfreg(ifc), 1) .GT. mpg%fccv(mpg%cfreg(ifc), &
-&             2)) THEN
-            icv = mpg%fccv(mpg%cfreg(ifc), 2)
-          ELSE
-            icv = mpg%fccv(mpg%cfreg(ifc), 1)
-          END IF
-          IF (icv .GT. mpg%nci) THEN
-            IF (mpg%fccv(mpg%cfreg(ifc), 1) .LT. mpg%fccv(mpg%cfreg(ifc)&
-&               , 2)) THEN
-              icv = mpg%fccv(mpg%cfreg(ifc), 2)
-            ELSE
-              icv = mpg%fccv(mpg%cfreg(ifc), 1)
-            END IF
-          END IF
-          qq = st%dv%fhe(mpg%cfreg(ifc), 0) + st%dv%fhi(mpg%cfreg(ifc), &
-&           0) + (1-boris)*st%dv%fne(mpg%cfreg(ifc), 0)*st%pl%te(icv)
-          DO is=0,ns-1
-            qq = qq + st%dv%fna(mpg%cfreg(ifc), 0, is)*(st%rt%rpt(icv, &
-&             is)*ev+(1-boris)*(st%dv%kinrgy(icv, is)+st%pl%ti(icv)))
-          END DO
-          qq = qq*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
+          qq = st%dv%fht(ifc, 0)*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             max1 = qq
           ELSE

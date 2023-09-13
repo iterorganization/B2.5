@@ -27,7 +27,7 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
   REAL(kind=r8), INTENT(INOUT) :: prior
   REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(INOUT) :: priord
   LOGICAL, INTENT(INOUT) :: inrange
-  INTEGER :: ii, isigma, imean
+  INTEGER :: ii, isigma, imean, ind
   REAL(kind=r8) :: aa, bb
   INTRINSIC SQRT, EXP, LOG_GAMMA
   INTRINSIC LOG
@@ -94,91 +94,99 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
 !
 ! Now loop only on sigma vector
   isigma = npar_opt - nsigma_opt - nmean_opt
-  DO ii=1,nsigma_opt
-    SELECT CASE  (prior_type(ii+isigma)) 
-    CASE (0) 
+!index for prior vectors
+  ind = 1
+  DO ii=1,nsigma
+    IF (sigma_opt(ii)) THEN
+      SELECT CASE  (prior_type(ind+isigma)) 
+      CASE (0) 
 !Uniform distribution
-      prior = prior
-    CASE (1) 
+        prior = prior
+      CASE (1) 
 !Uninformative, proper, Gaussian prior.
-      arg1 = 2.0_R8*pi
-      temp = prior_par(ii+isigma, 2)*prior_par(ii+isigma, 2)
-      DO nd=1,nbdirs
-        priord(nd) = priord(nd) - 0.5_R8*2*(sigma(ii)-prior_par(ii+&
-&         isigma, 1))*sigmad(nd, ii)/temp
-      END DO
-      prior = prior - LOG(arg1)*0.5_R8 - LOG(prior_par(ii+isigma, 2)) - &
-&       0.5_R8*((sigma(ii)-prior_par(ii+isigma, 1))*(sigma(ii)-prior_par&
-&       (ii+isigma, 1))/temp)
-    CASE (2) 
+        arg1 = 2.0_R8*pi
+        temp = prior_par(ind+isigma, 2)*prior_par(ind+isigma, 2)
+        DO nd=1,nbdirs
+          priord(nd) = priord(nd) - 0.5_R8*2*(sigma(ii)-prior_par(ind+&
+&           isigma, 1))*sigmad(nd, ii)/temp
+        END DO
+        prior = prior - LOG(arg1)*0.5_R8 - LOG(prior_par(ind+isigma, 2))&
+&         - 0.5_R8*((sigma(ii)-prior_par(ind+isigma, 1))*(sigma(ii)-&
+&         prior_par(ind+isigma, 1))/temp)
+      CASE (2) 
 ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-      aa = (prior_par(ii+isigma, 1)/prior_par(ii+isigma, 2))**2
-      bb = prior_par(ii+isigma, 1)/prior_par(ii+isigma, 2)**2
-      result1 = LOG_GAMMA(aa)
-      DO nd=1,nbdirs
-        priord(nd) = priord(nd) + ((aa-1)/sigma(ii)-bb)*sigmad(nd, ii)
-      END DO
-      prior = prior + (aa-1)*LOG(sigma(ii)) - bb*sigma(ii) + aa*LOG(bb) &
-&       - result1
-    CASE (3) 
+        aa = (prior_par(ind+isigma, 1)/prior_par(ind+isigma, 2))**2
+        bb = prior_par(ind+isigma, 1)/prior_par(ind+isigma, 2)**2
+        result1 = LOG_GAMMA(aa)
+        DO nd=1,nbdirs
+          priord(nd) = priord(nd) + ((aa-1)/sigma(ii)-bb)*sigmad(nd, ii)
+        END DO
+        prior = prior + (aa-1)*LOG(sigma(ii)) - bb*sigma(ii) + aa*LOG(bb&
+&         ) - result1
+      CASE (3) 
 !Jeffrey's 1/sigma
-      DO nd=1,nbdirs
-        priord(nd) = priord(nd) - sigmad(nd, ii)/sigma(ii)
-      END DO
-      prior = prior - LOG(sigma(ii))
-    CASE DEFAULT
-      WRITE(*, *) prior_type(ii+isigma)
-      CALL XERRAB('prior_type out of bounds for sigma')
-    END SELECT
-    IF (sigma(ii) .LT. prior_range(ii+isigma, 1) .OR. sigma(ii) .GT. &
-&       prior_range(ii+isigma, 2)) THEN
-      prior = 1.0e+60_R8
-      inrange = .false.
-      DO nd=1,nbdirsmax
-        priord(nd) = 0.D0
-      END DO
+        DO nd=1,nbdirs
+          priord(nd) = priord(nd) - sigmad(nd, ii)/sigma(ii)
+        END DO
+        prior = prior - LOG(sigma(ii))
+      CASE DEFAULT
+        WRITE(*, *) prior_type(ind+isigma)
+        CALL XERRAB('prior_type out of bounds for sigma')
+      END SELECT
+      IF (sigma(ii) .LT. prior_range(ind+isigma, 1) .OR. sigma(ii) .GT. &
+&         prior_range(ind+isigma, 2)) THEN
+        prior = 1.0e+60_R8
+        inrange = .false.
+        DO nd=1,nbdirsmax
+          priord(nd) = 0.D0
+        END DO
+      END IF
     END IF
   END DO
 !
 ! Now loop only on mean vector
   imean = npar_opt - nmean_opt
-  DO ii=1,nmean_opt
-    SELECT CASE  (prior_type(ii+imean)) 
-    CASE (0) 
+!index for prior vectors
+  ind = 1
+  DO ii=1,nmean
+    IF (mean_opt(ii)) THEN
+      SELECT CASE  (prior_type(ind+imean)) 
+      CASE (0) 
 !Uniform distribution
-      prior = prior
-    CASE (1) 
+        prior = prior
+      CASE (1) 
 !Uninformative, proper, Gaussian prior.
-      arg1 = 2.0_R8*pi
-      temp = prior_par(ii+imean, 2)*prior_par(ii+imean, 2)
-      DO nd=1,nbdirs
-        priord(nd) = priord(nd) - 0.5_R8*2*(mean(ii)-prior_par(ii+imean&
-&         , 1))*meand(nd, ii)/temp
-      END DO
-      prior = prior - LOG(arg1)*0.5_R8 - LOG(prior_par(ii+imean, 2)) - &
-&       0.5_R8*((mean(ii)-prior_par(ii+imean, 1))*(mean(ii)-prior_par(ii&
-&       +imean, 1))/temp)
-    CASE (2) 
+        arg1 = 2.0_R8*pi
+        temp = prior_par(ind+imean, 2)*prior_par(ind+imean, 2)
+        DO nd=1,nbdirs
+          priord(nd) = priord(nd) - 0.5_R8*2*(mean(ii)-prior_par(ind+&
+&           imean, 1))*meand(nd, ii)/temp
+        END DO
+        prior = prior - LOG(arg1)*0.5_R8 - LOG(prior_par(ind+imean, 2)) &
+&         - 0.5_R8*((mean(ii)-prior_par(ind+imean, 1))*(mean(ii)-&
+&         prior_par(ind+imean, 1))/temp)
+      CASE (2) 
 ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-      aa = (prior_par(ii+imean, 1)/prior_par(ii+imean, 2))**2
-      bb = prior_par(ii+imean, 1)/prior_par(ii+imean, 2)**2
-      result1 = LOG_GAMMA(aa)
-      DO nd=1,nbdirs
-        priord(nd) = priord(nd) + ((aa-1)/mean(ii)-bb)*meand(nd, ii)
-      END DO
-      prior = prior + (aa-1)*LOG(mean(ii)) - bb*mean(ii) + aa*LOG(bb) - &
-&       result1
-    CASE DEFAULT
-      WRITE(*, *) prior_type(ii+imean)
-      CALL XERRAB('prior_type out of bounds for mean')
-    END SELECT
-    IF (mean(ii) .LT. prior_range(ii+imean, 1) .OR. mean(ii) .GT. &
-&       prior_range(ii+imean, 2)) THEN
-      prior = 1.0e+60_R8
-      inrange = .false.
-      DO nd=1,nbdirsmax
-        priord(nd) = 0.D0
-      END DO
+        aa = (prior_par(ind+imean, 1)/prior_par(ind+imean, 2))**2
+        bb = prior_par(ind+imean, 1)/prior_par(ind+imean, 2)**2
+        result1 = LOG_GAMMA(aa)
+        DO nd=1,nbdirs
+          priord(nd) = priord(nd) + ((aa-1)/mean(ii)-bb)*meand(nd, ii)
+        END DO
+        prior = prior + (aa-1)*LOG(mean(ii)) - bb*mean(ii) + aa*LOG(bb) &
+&         - result1
+      CASE DEFAULT
+        WRITE(*, *) prior_type(ind+imean)
+        CALL XERRAB('prior_type out of bounds for mean')
+      END SELECT
+      IF (mean(ii) .LT. prior_range(ind+imean, 1) .OR. mean(ii) .GT. &
+&         prior_range(ind+imean, 2)) THEN
+        prior = 1.0e+60_R8
+        inrange = .false.
+        DO nd=1,nbdirsmax
+          priord(nd) = 0.D0
+        END DO
+      END IF
     END IF
   END DO
   CALL SUBEND()
@@ -205,7 +213,7 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
   IMPLICIT NONE
   REAL(kind=r8), INTENT(INOUT) :: prior
   LOGICAL, INTENT(INOUT) :: inrange
-  INTEGER :: ii, isigma, imean
+  INTEGER :: ii, isigma, imean, ind
   REAL(kind=r8) :: aa, bb
   INTRINSIC SQRT, EXP, LOG_GAMMA
   INTRINSIC LOG
@@ -253,66 +261,74 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
 !
 ! Now loop only on sigma vector
   isigma = npar_opt - nsigma_opt - nmean_opt
-  DO ii=1,nsigma_opt
-    SELECT CASE  (prior_type(ii+isigma)) 
-    CASE (0) 
+!index for prior vectors
+  ind = 1
+  DO ii=1,nsigma
+    IF (sigma_opt(ii)) THEN
+      SELECT CASE  (prior_type(ind+isigma)) 
+      CASE (0) 
 !Uniform distribution
-      prior = prior
-    CASE (1) 
+        prior = prior
+      CASE (1) 
 !Uninformative, proper, Gaussian prior.
-      arg1 = 2.0_R8*pi
-      prior = prior - LOG(prior_par(ii+isigma, 2)) - 0.5_R8*LOG(arg1) - &
-&       0.5_R8*((sigma(ii)-prior_par(ii+isigma, 1))/prior_par(ii+isigma&
-&       , 2))**2
-    CASE (2) 
+        arg1 = 2.0_R8*pi
+        prior = prior - LOG(prior_par(ind+isigma, 2)) - 0.5_R8*LOG(arg1)&
+&         - 0.5_R8*((sigma(ii)-prior_par(ind+isigma, 1))/prior_par(ind+&
+&         isigma, 2))**2
+      CASE (2) 
 ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-      aa = (prior_par(ii+isigma, 1)/prior_par(ii+isigma, 2))**2
-      bb = prior_par(ii+isigma, 1)/prior_par(ii+isigma, 2)**2
-      result1 = LOG_GAMMA(aa)
-      prior = prior + (aa-1)*LOG(sigma(ii)) - bb*sigma(ii) + aa*LOG(bb) &
-&       - result1
-    CASE (3) 
+        aa = (prior_par(ind+isigma, 1)/prior_par(ind+isigma, 2))**2
+        bb = prior_par(ind+isigma, 1)/prior_par(ind+isigma, 2)**2
+        result1 = LOG_GAMMA(aa)
+        prior = prior + (aa-1)*LOG(sigma(ii)) - bb*sigma(ii) + aa*LOG(bb&
+&         ) - result1
+      CASE (3) 
 !Jeffrey's 1/sigma
-      prior = prior - LOG(sigma(ii))
-    CASE DEFAULT
-      WRITE(*, *) prior_type(ii+isigma)
-      CALL XERRAB('prior_type out of bounds for sigma')
-    END SELECT
-    IF (sigma(ii) .LT. prior_range(ii+isigma, 1) .OR. sigma(ii) .GT. &
-&       prior_range(ii+isigma, 2)) THEN
-      prior = 1.0e+60_R8
-      inrange = .false.
+        prior = prior - LOG(sigma(ii))
+      CASE DEFAULT
+        WRITE(*, *) prior_type(ind+isigma)
+        CALL XERRAB('prior_type out of bounds for sigma')
+      END SELECT
+      IF (sigma(ii) .LT. prior_range(ind+isigma, 1) .OR. sigma(ii) .GT. &
+&         prior_range(ind+isigma, 2)) THEN
+        prior = 1.0e+60_R8
+        inrange = .false.
+      END IF
     END IF
   END DO
 !
 ! Now loop only on mean vector
   imean = npar_opt - nmean_opt
-  DO ii=1,nmean_opt
-    SELECT CASE  (prior_type(ii+imean)) 
-    CASE (0) 
+!index for prior vectors
+  ind = 1
+  DO ii=1,nmean
+    IF (mean_opt(ii)) THEN
+      SELECT CASE  (prior_type(ind+imean)) 
+      CASE (0) 
 !Uniform distribution
-      prior = prior
-    CASE (1) 
+        prior = prior
+      CASE (1) 
 !Uninformative, proper, Gaussian prior.
-      arg1 = 2.0_R8*pi
-      prior = prior - LOG(prior_par(ii+imean, 2)) - 0.5_R8*LOG(arg1) - &
-&       0.5_R8*((mean(ii)-prior_par(ii+imean, 1))/prior_par(ii+imean, 2)&
-&       )**2
-    CASE (2) 
+        arg1 = 2.0_R8*pi
+        prior = prior - LOG(prior_par(ind+imean, 2)) - 0.5_R8*LOG(arg1) &
+&         - 0.5_R8*((mean(ii)-prior_par(ind+imean, 1))/prior_par(ind+&
+&         imean, 2))**2
+      CASE (2) 
 ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
-      aa = (prior_par(ii+imean, 1)/prior_par(ii+imean, 2))**2
-      bb = prior_par(ii+imean, 1)/prior_par(ii+imean, 2)**2
-      result1 = LOG_GAMMA(aa)
-      prior = prior + (aa-1)*LOG(mean(ii)) - bb*mean(ii) + aa*LOG(bb) - &
-&       result1
-    CASE DEFAULT
-      WRITE(*, *) prior_type(ii+imean)
-      CALL XERRAB('prior_type out of bounds for mean')
-    END SELECT
-    IF (mean(ii) .LT. prior_range(ii+imean, 1) .OR. mean(ii) .GT. &
-&       prior_range(ii+imean, 2)) THEN
-      prior = 1.0e+60_R8
-      inrange = .false.
+        aa = (prior_par(ind+imean, 1)/prior_par(ind+imean, 2))**2
+        bb = prior_par(ind+imean, 1)/prior_par(ind+imean, 2)**2
+        result1 = LOG_GAMMA(aa)
+        prior = prior + (aa-1)*LOG(mean(ii)) - bb*mean(ii) + aa*LOG(bb) &
+&         - result1
+      CASE DEFAULT
+        WRITE(*, *) prior_type(ind+imean)
+        CALL XERRAB('prior_type out of bounds for mean')
+      END SELECT
+      IF (mean(ii) .LT. prior_range(ind+imean, 1) .OR. mean(ii) .GT. &
+&         prior_range(ind+imean, 2)) THEN
+        prior = 1.0e+60_R8
+        inrange = .false.
+      END IF
     END IF
   END DO
   CALL SUBEND()
