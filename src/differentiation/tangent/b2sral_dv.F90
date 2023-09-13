@@ -8,16 +8,15 @@
 !                fb_rescale *(st.pl.na) *(st.dv.fchvispar) *(st.dv.fchinert)
 !                *(st.dv.fchanml) *(st.dv.fna) *(st.dv.fna_mdf)
 !                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fne)
-!                *(st.dv.kinrgy) *(st.dv.ne) *(st.dv.pa) *(st.sr.sch)
-!                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
-!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0)
-!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
-!                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza)
-!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
-!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
-!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.fna)
-!                *(st.psnc.kinrgy)
+!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.kinrgy)
+!                *(st.dv.ne) *(st.dv.pa) *(st.sr.sch) *(st.sr.she)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza) *(st.rt.rz2)
+!                *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra)
+!                *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.fna) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm int4l int1l int2l int3l
 !                int0l fb_target fb_prev fb_current fb_const charge_frac
@@ -32,7 +31,7 @@
 !                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fchviskt)
 !                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
 !                *(st.dv.fna_he) *(st.dv.fnapsch) *(st.dv.fna_fcor)
-!                *(st.dv.fna_eir) *(st.dv.fne) *(st.dv.fhe) *(st.dv.fhepsch)
+!                *(st.dv.fna_eir) *(st.dv.fhe) *(st.dv.fhepsch)
 !                *(st.dv.fhi) *(st.dv.fhipsch) *(st.dv.fhm) *(st.dv.fkt)
 !                *(st.dv.kinrgy) *(st.dv.pcca) *(st.dv.ne) *(st.dv.ni)
 !                *(st.dv.nn) *(st.dv.pa) *(st.dv.vadia) *(st.dv.wadia)
@@ -234,10 +233,9 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   REAL(r8) :: result20
   CHARACTER(len=11) :: arg11
   CHARACTER(len=10) :: arg12
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st_ext%za, 1), SIZE(st_ext%za, 2)) :: &
-& dummyzerodiffd
+  TYPE(B2PLASMASNAPSHOT_DIFFV) :: dummyzerodiffd
   INTEGER :: nd
-  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd1
+  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd0
   INTEGER :: nbdirs
 !   ..initialisation
   DATA sources_inputfile /0/
@@ -294,13 +292,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
     CALL B2XVSG_NODIFF(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
   END IF
 !   ..compute fne, fni
-  DO nd=1,nbdirsmax
-    dummyzerodiffd(nd, :, :) = 0.D0
-  END DO
-  CALL B2XPFE_DV(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, std%&
-&          rt%rza, st_ext%za, dummyzerodiffd, st%dv%fna, std%dv%fna, &
-&          st_ext%fa, st%dv%fch, std%dv%fch, st%dv%fne, std%dv%fne, &
-&          nbdirs)
+  CALL B2XPFE_NODIFF(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, &
+&              st_ext%za, st%dv%fna, st_ext%fa, st%dv%fch, st%dv%fne)
   CALL B2XPFI_NODIFF(nfc, ns, st%dv%fna, st%dv%fni)
 !xpb
 !
@@ -409,29 +402,29 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !srv 28.07.08 03.11.17
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
-    std%psnl%na = 0.0_R8
-    std%psnl%ua = 0.0_R8
-    std%psnl%po = 0.0_R8
-    std%psnl%te = 0.0_R8
-    std%psnl%ti = 0.0_R8
-    std%psnl%tn = 0.0_R8
-    std%psnl%kt = 0.0_R8
-    std%psnl%zt = 0.0_R8
-    std%psnl%ne = 0.0_R8
-    std%psnl%ni = 0.0_R8
-    std%psnl%nn = 0.0_R8
-    std%psnl%fch = 0.0_R8
-    std%psnl%fna = 0.0_R8
-    std%psnl%fhi = 0.0_R8
-    std%psnl%fhe = 0.0_R8
-    std%psnl%fhn = 0.0_R8
-    std%psnl%fkt = 0.0_R8
-    std%psnl%fzt = 0.0_R8
-    std%psnl%kinrgy = 0.0_R8
+    dummyzerodiffd%na = 0.0_R8
+    dummyzerodiffd%ua = 0.0_R8
+    dummyzerodiffd%po = 0.0_R8
+    dummyzerodiffd%te = 0.0_R8
+    dummyzerodiffd%ti = 0.0_R8
+    dummyzerodiffd%tn = 0.0_R8
+    dummyzerodiffd%kt = 0.0_R8
+    dummyzerodiffd%zt = 0.0_R8
+    dummyzerodiffd%ne = 0.0_R8
+    dummyzerodiffd%ni = 0.0_R8
+    dummyzerodiffd%nn = 0.0_R8
+    dummyzerodiffd%fch = 0.0_R8
+    dummyzerodiffd%fna = 0.0_R8
+    dummyzerodiffd%fhi = 0.0_R8
+    dummyzerodiffd%fhe = 0.0_R8
+    dummyzerodiffd%fhn = 0.0_R8
+    dummyzerodiffd%fkt = 0.0_R8
+    dummyzerodiffd%fzt = 0.0_R8
+    dummyzerodiffd%kinrgy = 0.0_R8
     CALL B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd, &
 &            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
 &            std%co, st%rt, std%rt, st%rtw, st_ext, st_extd, st%srw, std&
-&            %srw, st%psnc, std%psnc, st%psnl, std%psnl, &
+&            %srw, st%psnc, std%psnc, st%psnl, dummyzerodiffd, &
 &            wrong_flow, main_call, nbdirs)
     DO nd=1,nbdirs
 !   .. store contributions from BCs
@@ -463,9 +456,9 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !   ..initialise smq to 0
   arg1 = ncv*4*ns
   DO nd=1,nbdirsmax
-    dummyzerodiffd1(nd) = 0.D0
+    dummyzerodiffd0(nd) = 0.D0
   END DO
-  CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd1, st%sr%smq, std%sr%smq, 1&
+  CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd0, st%sr%smq, std%sr%smq, 1&
 &         , nbdirs)
 !   ..compute special contributions (boundaries and recycling)
   CALL B2STBR_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &

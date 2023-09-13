@@ -124,6 +124,8 @@ MODULE B2MOD_SWITCHES_DIFFV
 !
 ! Med
 !
+! Optimization
+!
 !
   TYPE, PUBLIC :: SWITCHES
       INTEGER :: get_residuals

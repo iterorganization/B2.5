@@ -5699,6 +5699,9 @@ CONTAINS
       stated%dv%fna_32(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%dv%fna_53(nd, :, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%dv%fna_he(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -5717,10 +5720,10 @@ CONTAINS
       stated%dv%fmo(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
-      stated%dv%fne(nd, :, :) = 0.D0
+      stated%dv%fne_he(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
-      stated%dv%fne_he(nd, :, :) = 0.D0
+      stated%dv%fne_53(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%dv%fhe(nd, :, :) = 0.D0
@@ -5754,6 +5757,15 @@ CONTAINS
     END DO
     DO nd=1,nbdirsmax
       stated%dv%fhm(nd, :, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%dv%fhp(nd, :, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%dv%fhj(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%dv%fht(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%dv%fkt(nd, :, :) = 0.D0
@@ -6640,6 +6652,8 @@ CONTAINS
     END IF
 !
 !   ..end loop
+    primal_iterations = itim
+    gradient_iterations = itim
     CALL SUBEND()
     RETURN
   END SUBROUTINE B2MNDR_1_DV
@@ -7306,6 +7320,7 @@ CONTAINS
     ELSE
 !
 !   ..end loop
+      primal_iterations = itim
       CALL SUBEND()
       RETURN
     END IF
