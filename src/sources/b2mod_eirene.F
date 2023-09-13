@@ -791,11 +791,6 @@ c Fixed by Kudrevatyh P.S. and Shirobokov A.A 17.09.2022
      &              na_feedback_actuator(is).eq.1) then
                   tflux(istrai)= tflux(istrai) + 
      .             conpar(eb2spcr(is+1),na_feedback_ib(is),1)
-            print *,"Lezgini Eirene "
-            print *,"Lezgini stratum ",istrai
-            print *,"Lezgini is ",is
-            print *,"Lezgini feedback_strata ",feedback_strata(is)
-            print *,"Lezgini tflux ",tflux(istrai)
 c  End fix
                 end if !}
               end if !}

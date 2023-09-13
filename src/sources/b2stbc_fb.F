@@ -1247,7 +1247,7 @@
                 endif
               enddo
 
-            case (12)   ! comment is needed here
+            case (12)   ! power flux density 
               
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -1705,34 +1705,8 @@
 #endif
                 if (na_feedback_option(ispecies).lt.4 .or.
      &               na_feedback_option(ispecies).gt.6) then
-!###!                if ( (abs(na_feedback_rescale-1.0_R8) .gt. 0.01_R8)
-!###!     &                        .or. (int_ntim(ispecies).eq.0) ) then
-!###!                  int_flux(ispecies) = int_flux(ispecies) +
-!###!     &                   saved_na_feedback_actuator(ispecies)
-!###!                  int_ntim(ispecies) = int_ntim(ispecies) + 1
                    saved_na_feedback_actuator(ispecies) = t0 *
      &                  na_feedback_rescale
-!###!                else
-!###!                  print *,"feedback_set_avg_flux"
-!###!                  saved_na_feedback_actuator(ispecies) = 
-!###!     &                int_flux(ispecies)/Real(int_ntim(ispecies))
-!###!                      ! if (int_ntim(ispecies).gt.1) then
-!###!    !                     int_flux(ispecies) = int_flux(ispecies)
-!###!    !  &                    /Real(int_ntim(ispecies))
-!###!    !                     saved_na_feedback_actuator(ispecies) = 
-!###!    !  &                  int_flux(ispecies)
-!###!    !                     int_ntim(ispecies) = 1
-!###!    !                   else
-!###!    !                     saved_na_feedback_actuator(ispecies) = 
-!###!    !  &                  int_flux(ispecies)
-!###!    !                   end if
-!###!                end if
-                 
-!###!                print *, "int_flux(",ispecies,")=",
-!###!     &                int_flux(ispecies)," ntims=",int_ntim(ispecies)
-!###!                print *, "avg_flux=",int_flux(ispecies)/
-!###!     &                  Real(int_ntim(ispecies))
-!###!                print *, "current_val=",na_feedback_const(ispecies)
                 else
                   saved_na_feedback_actuator(ispecies) =
      &                 na_feedback_rescale
@@ -1761,12 +1735,6 @@
 #ifdef B25_EIRENE
               endif
 #endif             
-              print *,"Lezgini b2stbc_fb"
-              print *,"Lezgini conpar ",conpar
-     &            (is_start, na_feedback_ib(ispecies), 1)
-              print *,"Lezgini is_start ", is_start
-              print *,"Lezgini na_feedback_ib ", 
-     &            na_feedback_ib(ispecies)
             
             case (2) ! rescale na
 
@@ -1895,11 +1863,6 @@
                 endif
               end do
               
-!              print *, "Lezgini puff flux", flxnp(ispecies+1)
-                
-!              int_ntim(ispecies) = int_ntim(ispecies) + 1
-!              print *,"itim",int_ntim(ispecies),eirene_mod
-
               if (mod(ncall,eirene_mod).eq.0 .and. ncall .gt. 0) then
                 t0 = 1.0_R8 / na_feedback_rescale *
      &    (flxnp(ispecies+1) + flxic(ispecies+1)) / sna_pump(ispecies+1)
@@ -2817,8 +2780,6 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
      &            eirpump(nnatmi+nnmoli+nnioni+ip)
       enddo
      
-      print *,"Lezgini sna_pump " ,ispecies,' ',
-     &        sna_pump(ispecies+1)
 c Flux from core impact
 
       flxic = 0.0_R8
@@ -2874,7 +2835,6 @@ c Flux from core impact
                 if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
                   flxic(ispecies+1) = flxic(ispecies+1) +
      .               bsign*fna(ixf,iyf,idir,is)
-                  print *, "Lezgini ion core flux", flxic(ispecies+1)
                 else
                   flxic(ispecies+1) = flxic(ispecies+1) +
      .               bsign*fna_mdf(ixf,iyf,idir,is)
@@ -2908,8 +2868,6 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
         end do
       end do
 c -------------------------------------------------------------------------------------
-      print *, "Lezgini ion core flux", flxic(ispecies+1)
-      print *, "Lezgini neut core flux", flxnc(ispecies+1)
       
       end subroutine calc_pump_and_flux
       
@@ -2929,8 +2887,6 @@ c ------------------------------------------------------------------------------
             if (recyct(ja,l) > 0.0 .and. recyct(ja,l) < 1.0) then   ! this condition is required to not disturb those surfaces where albedo is exactly 1.0
               t0 = 1.0 + factor * (recyct(ja,l) - 1.0)
               if (t0 > 0.0 .and. t0 < 1.0) recyct(ja,l) = t0        ! again, not to make albedo =1.0 for those surfaces where it was set less than 1.0
-        write(*,*) "latmscl(",ja,")=",latmscl(ja)," ,ispecies=",ispecies
-        write(*,*) ja, l, recyct(ja,l)
             endif
             do jm = 1,nnmoli                                        ! check whether this atom constitutes a part of the molecule and update the albedo for such molecule in the same manner
               if (mlcmp(ja,jm) .gt. 0) then
@@ -2938,7 +2894,6 @@ c ------------------------------------------------------------------------------
      &                    .and. recyct(jm+nnatmi,l) < 1.0) then
                   t0 = 1.0 + factor * (recyct(jm+nnatmi,l) - 1.0)
                   if (t0 > 0.0 .and. t0 < 1.0) recyct(jm+nnatmi,l) = t0
-        write(*,*) jm+nnatmi, l, recyct(jm+nnatmi,l)
                 endif
               endif
             enddo

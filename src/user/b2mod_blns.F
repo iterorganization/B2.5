@@ -714,23 +714,12 @@ c*** Puffing/seeding rate and recycling source
 
              do j = 1,nnatmi
 c             Fixed by Kudrevatyh P.S and Shirobokov A.A.          ! 17.09.22
-!               if(debug_flags(90).gt.0) then
-!                 print *,"Lezgini tracing "
-!                 print *,"Lezgini target ",na_feedback_target(ls-1)
-!                 print *,"Lezgini actuator ",na_feedback_actuator(ls-1)
-!                 print *,"Lezgini nspecies ",nspecies
-!                 print *,"Lezgini EB2SPCR ",EB2SPCR(ls)
-!               endif
-
                if (latmscl(j) .eq. ls .and. 
      &                  na_feedback_target(ls-1) .gt. 0.0_R8 .and. 
      &                  na_feedback_actuator(ls-1) .eq. 1) then
                  flxnp(ls) =  flxnp(ls) + 
      &               conpar(EB2SPCR(ls), na_feedback_ib(ls-1), 1) * 
      &               gpfc(j,ic) * recyctmp
-!                 if (debug_flags(90).gt.0) 
-!     &              print *,"Lezgini flux ",ls," ",flxnp(ls)
-
                else
                  if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
      &                 userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
