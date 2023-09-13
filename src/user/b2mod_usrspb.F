@@ -255,7 +255,7 @@ c------------------------------
       do ix=0,nx-1
         do iy=0,ny-1
           t0 = 0.0_R8
-          do is=0,ns
+          do is=0,ns-1
             t0 = t0 + rqbrm(ix,iy,is) + rqrad(ix,iy,is)
           enddo
 #ifdef B25_EIRENE
