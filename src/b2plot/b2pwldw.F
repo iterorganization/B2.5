@@ -17,6 +17,7 @@
 #else
       use b2mod_eirbra
 #endif
+      use b2mod_dimensions
 c
 c  version : 12.01.2002 01:19
 c
@@ -81,7 +82,6 @@ c***  Neutral flux total     |  for each species
 c***  Net particle flux     /
 c=======================================================================
       implicit none
-#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
@@ -275,7 +275,7 @@ c***  srfs_m    : list of possible wall materials
 c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible wall materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible wall materials
-c***  wllersf   : ratio of erosion to sputtering for different meterials
+c***  wllersf   : ratio of erosion to sputtering for different materials
       integer map_mtr(n_srfs_m)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
@@ -452,7 +452,7 @@ c carlis list of indices that tells the new ordering of wall materials in active
         n_sfpr_er=m
         do i=1,lppp+ny*ntrgts !{
 c carlis substitute indices of wall materials with the new ordering of ACTIVE list
-          i_ersmtr(i)=l_ersmtr(i_ersmtr(i))
+          i_ersmtr(i)=l_ersmtr(i)
         end do !}
         write(*,*) 'Number of wall materials: ',n_sfpr_er
         if(n_sfpr_er.gt.0) then !{

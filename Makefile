@@ -13,6 +13,8 @@ PYTHON  ?= python
 TAGSLIST =
 SOLPSINCLUDE ?=
 
+MAKETAGS ?= ctags -e -f
+
 MAKES = ${SRCB2}/Makefile
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 # Include global SOLPS compiler settings
@@ -373,9 +375,14 @@ VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
 MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f
 MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
-MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
+MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a
+DIMSDIR=${SRCDIR}/modules
+ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
+DIMSDIR=${SRCDIR}/modules.local
+endif
+DEFINES += -DDIMENSIONS_MODULE
 else
-# MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_infcop.o ${EIRMOD}/eirmod_mcarlo.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_refusr.o ${EIRDIR}/eirmod_solps.o
+# MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_infcop.o ${EIRMOD}/eirmod_mcarlo.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_openfile.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_refusr.o ${EIRDIR}/eirmod_sheath.o ${EIRDIR}/eirmod_solps.o
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
 endif
 ifdef LD_CATALYST
@@ -411,9 +418,6 @@ ${OBJDIR}/libgr_dummy.a:
 
 ${OBJDIR}/libeirene.a:
 	ln -sf ${EIRDIR}/libeirene.a ${OBJDIR}
-
-${OBJDIR}/ioflush.o:
-	ln -sf ${EIRDIR}/ioflush.o ${OBJDIR}
 
 ifneq (${MOD},o)
 ${OBJDIR}/eirmod_extrab25.${MOD}:
@@ -581,7 +585,7 @@ ${OBJDIR}/eirmod_eirbra.${MOD}:
 ${OBJDIR}/eirmod_eirdiag.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_eirdiag.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD} ${OBJDIR}/eirmod_refusr.${MOD}
+${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD} ${OBJDIR}/eirmod_openfile.${MOD} ${OBJDIR}/eirmod_refusr.${MOD}
 	ln -sf ${EIRDIR}/eirmod_infcop.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_mcarlo.${MOD}:
@@ -596,6 +600,9 @@ ${OBJDIR}/eirmod_mpi.${MOD}:
 ${OBJDIR}/eirmod_octree.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_octree.${MOD} ${OBJDIR}
 
+${OBJDIR}/eirmod_openfile.${MOD}:
+	ln -sf ${EIRDIR}/eirmod_openfile.${MOD} ${OBJDIR}
+
 ${OBJDIR}/eirmod_parmmod.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_parmmod.${MOD} ${OBJDIR}
 
@@ -604,6 +611,9 @@ ${OBJDIR}/eirmod_precision.${MOD}:
 
 ${OBJDIR}/eirmod_refusr.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_refusr.${MOD} ${OBJDIR}
+
+${OBJDIR}/eirmod_sheath.${MOD}:
+	ln -sf ${EIRDIR}/eirmod_sheath.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_solps.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_solps.${MOD} ${OBJDIR}
@@ -771,7 +781,7 @@ ${OBJDIR}/eirmod_czt1.o:
 ${OBJDIR}/eirmod_eirbra.o:
 	ln -sf ${EIRDIR}/eirmod_eirbra.o ${OBJDIR}
 
-${OBJDIR}/eirmod_infcop.o: ${OBJDIR}/eirmod_cplot.o ${OBJDIR}/eirmod_refusr.o
+${OBJDIR}/eirmod_infcop.o: ${OBJDIR}/eirmod_cplot.o ${OBJDIR}/eirmod_openfile.o ${OBJDIR}/eirmod_refusr.o
 	ln -sf ${EIRDIR}/eirmod_infcop.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_mcarlo.o:
@@ -786,6 +796,9 @@ ${OBJDIR}/eirmod_mpi.o:
 ${OBJDIR}/eirmod_octree.o:
 	ln -sf ${EIRDIR}/eirmod_octree.o ${OBJDIR}
 
+${OBJDIR}/eirmod_openfile.o:
+	ln -sf ${EIRDIR}/eirmod_openfile.o ${OBJDIR}
+
 ${OBJDIR}/eirmod_parmmod.o:
 	ln -sf ${EIRDIR}/eirmod_parmmod.o ${OBJDIR}
 
@@ -794,6 +807,9 @@ ${OBJDIR}/eirmod_precision.o:
 
 ${OBJDIR}/eirmod_refusr.o:
 	ln -sf ${EIRDIR}/eirmod_refusr.o ${OBJDIR}
+
+${OBJDIR}/eirmod_sheath.o:
+	ln -sf ${EIRDIR}/eirmod_sheath.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_solps.o:
 	ln -sf ${EIRDIR}/eirmod_solps.o ${OBJDIR}
@@ -866,6 +882,9 @@ ${OBJDIR}/eirmod_precision.${MOD}:
 
 ${OBJDIR}/eirmod_refusr.${MOD}:
 	touch ${OBJDIR}/eirmod_refusr.${MOD}
+
+${OBJDIR}/eirmod_sheath.${MOD}:
+	touch ${OBJDIR}/eirmod_sheath.${MOD}
 
 ${OBJDIR}/eirmod_solps.${MOD}:
 	touch ${OBJDIR}/eirmod_solps.${MOD}
@@ -1014,7 +1033,7 @@ else
 	$(warning NETCDF library not present!)
 endif
 
-${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBJDIR}/b2mod_math.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_types.o
+${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBJDIR}/b2mod_math.o ${OBJDIR}/b2mod_openmp.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_types.o
 ifdef LD_NETCDF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
@@ -1029,16 +1048,16 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} -DSOLPS_ITER ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} -DSOLPS_ITER ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
 endif
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 
 ${EIR4OBJS}: ${OBJDIR}/%.o: ${EIR4}/%.F
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${OBJDEST} -c $?
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} ${SOLPSINCLUDE} ${OBJDEST} -c $?
 
 ${EIR4MODS}: ${OBJDIR}/%.${MOD}: ${EIR4}/%.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
@@ -1046,9 +1065,9 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${SOLPS4INCLUDE} ${OBJDEST} ${OBJDIR}/$*.f
 	@touch ${OBJDIR}/$*.${MOD}
@@ -1130,7 +1149,7 @@ endif
 endif
 
 tags:
-	rm -f ${SRCB2}/TAGS ; ctags -e -f ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
+	rm -f ${SRCB2}/TAGS ; ${MAKETAGS} ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
 
 listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 ifdef USE_EIRENE

@@ -72,7 +72,7 @@
       use eirmod_comusr
      , ,only: eirene_alloc_comusr
       use eirmod_refusr
-     , ,only: write_conbe
+     , ,only: eirene_write_conbe
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
@@ -126,9 +126,9 @@
      ,        num_time_slices, num_batch_slices
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 *   ..common blocks
-#     include "DIMENSIONS.F"
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
@@ -1486,8 +1486,8 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
         NREAC=7
         IUNOUT=6
         CALL EIRENE_DEFAULTS_USR
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_INIT_CINIT
 #else
         call xerrab
@@ -2009,7 +2009,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call xertst (natmi.le.DEF_NATM,
-     .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
 cxpb initialize the data necessary for boundary conditions
       call get_boundary_namelist
       if (boundary_namelist.ge.1) then
@@ -2516,7 +2516,7 @@ c new CDF movie option
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
-            call write_conbe(savefile(13:16))
+            call eirene_write_conbe(savefile(13:16))
             filename=fort_lc//'13'
             inquire(file=filename,exist=found)
             if (found) then

@@ -22,6 +22,8 @@ c
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
+#else
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -59,6 +61,8 @@ c
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
+#else
+      use b2mod_dimensions
 #endif
       implicit none
 #ifndef B25_EIRENE

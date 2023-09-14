@@ -25,11 +25,13 @@ c======================================================================
       use eirmod_wneutrals
       use eirmod_ccona
       use eirmod_cinit
+      use eirmod_comusr
+     , , only : lkindp
 #else
       use b2mod_eirbra
 #endif
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)

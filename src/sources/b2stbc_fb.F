@@ -228,20 +228,23 @@
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use eirmod_braeir
-!      use eirmod_extrab25, only : eirene_sps_absr_update
 #endif
       use b2mod_subsys
       use b2mod_external
       use b2mod_plasma
      , ,only: na0, ne0, fna0, kinrgy0, ni0,
+!<<<<<<< HEAD
      ,        nap, nep, fnap, kinrgyp, fht
       use b2mod_driver
      , ,only : pbs, ua
       use b2mod_sources
      , ,only : rqrad, rqbrm
       use b2mod_b2plot_wall_loading
+!=======
+!     ,        nap, nep, fnap, kinrgyp
+      use b2mod_dimensions
+!>>>>>>> rc/3.0.9
       implicit none
-#include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
       real (kind=R8) :: BoRiS,
@@ -2744,6 +2747,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
       use b2mod_eirene
      ,   , only : eirpump
       use eirmod_braeir
+      use eirmod_comusr, only : lkindp
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_diag

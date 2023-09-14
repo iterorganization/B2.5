@@ -126,11 +126,10 @@ c-----------------------------------------------------------------------
 #else
       use b2mod_eirbra
 #endif
+      use b2mod_dimensions
       implicit none
 c
       integer nx, ny, ns, nregionv
-c
-#     include <DIMENSIONS.F>
 c
 c*** Global values
       real (kind=R8) ::

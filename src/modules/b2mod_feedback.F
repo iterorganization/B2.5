@@ -1,9 +1,9 @@
       module b2mod_feedback
       use b2mod_types
       use b2mod_b2cmpa
-
+      use b2mod_dimensions
+      implicit none
       integer, parameter :: nvac=4, nvacreg=4
-#     include "DIMENSIONS.F"
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
 
@@ -140,7 +140,7 @@
         filename = 'b2.feedback_save.parameters.'//edition
       endif
 cxpb We do the write explicitly to avoid array overflows when the problem
-cxpb size is changed in DIMENSIONS.F
+cxpb size is changed in b2mod_dimensions
       open(nwrite,file=trim(filename))
       write(nwrite,'(a9)') '&FEEDBACK'
       if (saved_cbshe_core.ne.0.0_R8)

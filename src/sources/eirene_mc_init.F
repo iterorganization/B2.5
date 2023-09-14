@@ -3,12 +3,15 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_eirbra
+      use eirmod_comusr
+     , , only : lkindm, lkindp, lkindi
       use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirbra
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
       integer nx, ny
 #ifndef B25_EIRENE

@@ -2733,7 +2733,7 @@ cdjm Update ion heat sources
       use b2mod_constants
      & , only : mp,ev
 #else
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)

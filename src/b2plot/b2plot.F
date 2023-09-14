@@ -76,8 +76,8 @@ c 2002-09-11: logic revised
 #endif
       use b2mod_interp
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include <DIMENSIONS.F>
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
@@ -302,8 +302,8 @@ c
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_INIT_CINIT
       endif
 #else
@@ -788,15 +788,15 @@ c
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
       call xertst(nbc.le.nbcd,
-     . 'increase size of DEF_NBC in DIMENSIONS.F')
+     . 'increase size of DEF_NBC in b2mod_dimensions')
       call xertst(nniso.le.nnisod,
-     . 'increase size in DEF_NISO in DIMENSIONS.F')
+     . 'increase size in DEF_NISO in b2mod_dimensions')
       call alloc_b2mod_neutrals
      . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid,
-     . 'Increase DEF_NSTRA in DIMENSIONS.F')
+     . 'Increase DEF_NSTRA in b2mod_dimensions')
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
       call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)

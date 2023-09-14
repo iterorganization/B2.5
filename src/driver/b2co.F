@@ -50,8 +50,8 @@
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -318,8 +318,8 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_INIT_CINIT
       endif
 #endif

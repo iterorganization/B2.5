@@ -7,6 +7,7 @@
 #ifndef NO_CDF
       use b2mod_movies
 #endif
+      use b2mod_dimensions
       use b2mod_constants
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -23,7 +24,7 @@
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      real (kind=R8) :: time(1), dummy(-1:nx, -1:ny), 
+      real (kind=R8) :: time(1), dummy(-1:nx, -1:ny),
      & dummy3(-1:nx, -1:ny, 1:ns)
       integer ix, iy, is
       integer ncall
@@ -132,7 +133,6 @@
       ncall = ncall+1
       call subend ()
 #else
-#     include <DIMENSIONS.F>
 *  ..procedures
       external xertst
 

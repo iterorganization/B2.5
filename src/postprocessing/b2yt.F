@@ -12,8 +12,8 @@
       use b2mod_version
       use b2mod_indirect
       use b2mod_xerset
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
