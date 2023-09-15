@@ -263,10 +263,11 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 !max heat flux density on desired FCs
         DO ifc=ic1,ic2
           DO nd=1,nbdirs
-            qqd(nd) = mpg%cffcor(ifc)*std%dv%fht(nd, ifc, 0)/geo%fcs(mpg&
-&             %cfreg(ifc))
+            qqd(nd) = mpg%cffcor(ifc)*std%dv%fht(nd, mpg%cfreg(ifc), 0)/&
+&             geo%fcs(mpg%cfreg(ifc))
           END DO
-          qq = st%dv%fht(ifc, 0)*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
+          qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
+&           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             DO nd=1,nbdirs
               max1d(nd) = qqd(nd)
@@ -713,7 +714,8 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       CASE (5) 
 !max heat flux density on desired FCs
         DO ifc=ic1,ic2
-          qq = st%dv%fht(ifc, 0)*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
+          qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
+&           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             max1 = qq
           ELSE

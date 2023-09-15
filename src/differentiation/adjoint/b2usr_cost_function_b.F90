@@ -218,7 +218,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         ad_from0 = ic1
 !max heat flux density on desired FCs
         DO ifc=ad_from0,ic2
-          qq = st%dv%fht(ifc, 0)*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
+          qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
+&           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             max1 = qq
             CALL PUSHCONTROL1B(0)
@@ -582,8 +583,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
                 jb(icf) = jb(icf) + max1b
                 qqb = 0.D0
               END IF
-              stb%dv%fht(ifc, 0) = stb%dv%fht(ifc, 0) + mpg%cffcor(ifc)*&
-&               qqb/geo%fcs(mpg%cfreg(ifc))
+              stb%dv%fht(mpg%cfreg(ifc), 0) = stb%dv%fht(mpg%cfreg(ifc)&
+&               , 0) + mpg%cffcor(ifc)*qqb/geo%fcs(mpg%cfreg(ifc))
             END DO
           ELSE
             jb(icf) = jb(icf)/ev
@@ -945,7 +946,8 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       CASE (5) 
 !max heat flux density on desired FCs
         DO ifc=ic1,ic2
-          qq = st%dv%fht(ifc, 0)*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
+          qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
+&           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             max1 = qq
           ELSE
