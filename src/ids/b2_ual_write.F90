@@ -14,7 +14,7 @@
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
-!!      @note   More on the b2_ual_writers is available in SOLPS-GUI
+!!      @note   More on the b2_ual writers is available in SOLPS-GUI
 !!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
 !!      @note   More information on this b2_ual_write is available in SOLPS-GUI
 !!              documentation \b HOWTOs under section <b> 4.6 Put IDS and Get

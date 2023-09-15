@@ -9,6 +9,11 @@ DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 
 
+FCOPTS  += -xHost -align array64byte
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -gt 17; echo $$?),0)
+FCOPTS  += -qopt-zmm-usage=high
+endif
+
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
