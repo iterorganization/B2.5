@@ -159,7 +159,7 @@
             J(icf) = J(icf)/ev
           case (5) !max heat flux density on desired FCs
             do iFc = ic1, ic2
-              qq = st%dv%fht(iFc,0)*mpg%cfFcOr(iFc)/
+              qq = st%dv%fht(mpg%cfReg(iFc),0)*mpg%cfFcOr(iFc)/
      &             geo%fcS(mpg%cfReg(iFc))
               J(icf) = max(J(icf),qq)*cfweight(icf)
             enddo
