@@ -42,6 +42,9 @@
 ! - sigma: stores the values of the prediction error standard deviation in the MAP cost function
 ! - mean: stores the values of the prediction error mean in the MAP cost function
 ! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
+! - shift_cf_data: integer flag to shift certain cf data
+! - shift_value: actual value of the shift [mm]
+! - shift: working array used to pass shift values for CF and optimization 
       integer, parameter :: mxnCf=1000
       integer cfstart(nncf),cfend(nncf),cftype(nncf)
       logical, save :: cfread(nncf) = .false.
@@ -60,6 +63,13 @@
       real (kind=r8), parameter :: inf_opt = 1.0e30
       integer, save :: nmean = 0
       real (kind=r8), save :: mean(nsigmx) = 0.0_R8
+      integer, save :: shift_cf_data(nsigmx) = 0
+      real (kind=r8), save :: shift_value(nsigmx) = 0.0_R8
+      real (kind=r8), save :: shift(nsigmx) = 0.0_R8
+      integer, save :: cf_to_shift(nsigmx) = 0
+      integer, save :: nshift = 0, shift_prior_type(nvmx)
+      real (kind=r8), save :: shift_prior_par(nvmx,2), 
+     & shift_prior_range(nvmx,2)
 ! VARIABLES RELATED TO OPTIMIZATION
 ! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
 ! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
@@ -70,6 +80,7 @@
 ! - sigma_opt: logical that tells the specific sigmas that are optimized. This differentiation is needed to
 !   correctly pass the optimization variables to the optimization libraries
 ! - nmean_opt, mean_opt, do the same as for sigma but for the error mean
+! - nshift_opt, shift_opt: same but for cost function shift
 ! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
 !        number of spatial points!)
 ! - xl/xu: lower/ipper bound of optimization parameters (one for each actual parameter, as x0)
@@ -78,6 +89,11 @@
 ! - nnjac: number of non-zeros in the jacobian of the nonlinear constraints (not used for now)
 ! - jcol/jrow: column/row indicex for each non-zero element of the jacobian
 ! - jj: value of the jacobian at jcol-jrow
+! - shift_L/U: lower/upper bound of the cf data shift [mm]
+! - shiftopt: has similar meaning as shift_opt but 'reduced' to the actual number of unique shifts (e.g.
+!             if some CF have the same shift value because they are the same diagnostic)
+! - shift/shiftLL/shiftUU: has similar meaning as shift_value/shift_L/shift_U but 'reduced' to the actual 
+!                          number of unique shifts
       integer, save :: npar_opt = 0
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
      &       par_opt_phys(:)
@@ -92,11 +108,16 @@
      &  hessian_approximation 
       real (kind=R8), save :: cpu_opt=0.0_R8, tol_opt=1.0e-7_R8
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0,
-     &                 nmean_opt = 0
+     &                 nmean_opt = 0, nshift_opt = 0
       integer, save :: paris(nvmx),parib(nvmx)
-      logical, save :: sigma_opt(nsigmx), mean_opt(nsigmx)
+      logical, save :: sigma_opt(nsigmx), mean_opt(nsigmx),
+     &                 shift_opt(nsigmx), shiftopt(nsigmx)
       logical, save :: spatial_dep(nvmx)
       integer, save :: spatial_points(nvmx) = 0
+      real (kind=R8), save :: shift_L(nsigmx) = -1000.0_R8, ![envisaged default max 1m shift]
+     &                        shift_U(nsigmx) = 1000.0_R8,
+     &                        shiftLL(nsigmx) = -1000.0_R8, !copy of the previous ones
+     &                        shiftUU(nsigmx) = 1000.0_R8
       integer :: idd
       logical :: file_ok
       real (kind=R8) :: rangeold(nvmx,2), parold(nvmx,2)
@@ -108,7 +129,9 @@
      & spatial_points, par_rescale, paris, parib, ncf,cfstart,cfend,
      & cftype, cfdef, cfweight,prior_type, prior_par, prior_range, 
      & scale_sigma, nsigma, sigma, cf_reg, cf_regP, mapToOMP, 
-     & read_sigma, nmean, mean, mean_opt
+     & read_sigma, nmean, mean, mean_opt, shift_cf_data, shift_value,
+     & shift_opt, shift_L, shift_U, shift_prior_type, shift_prior_par,
+     & shift_prior_range
 
       contains
 
@@ -123,9 +146,9 @@
       ! csc local variables
       integer :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff,
      &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
-     &           ifc1, ifc2, jj, imean
-      integer, allocatable :: cfReg(:)
-      logical done
+     &           ifc1, ifc2, jj, imean, curr_ind
+      integer, allocatable :: cfReg(:), shiftcfdata(:)
+      logical :: done, optimize
       character*1 str
       character*256 cffile, filename
 #ifndef F2003
@@ -151,10 +174,14 @@
       nmean = 0
       scale_sigma = .true.
       prior_type = -1
+      shift_prior_type = -1
       prior_par = -1.0_R8
+      shift_prior_par = -1.0_R8
 ! sc  Set prior range to (-inf,+inf)
       prior_range(:,1) = -inf_opt*10.0_R8
       prior_range(:,2) = inf_opt*10.0_R8
+      shift_prior_range(:,1) = -inf_opt*10.0_R8
+      shift_prior_range(:,2) = inf_opt*10.0_R8
       cf_reg = 0
       cf_regP = 0
       mapToOMP = .false.
@@ -208,6 +235,8 @@
         idb = newunit()
         open (unit=idb,file='debug_optimization.out')
 #endif
+        call xertst(any(shift_cf_data.ge.0),
+     &   'b2mod_par_opt: shift_cf_data must be >=0')
         incf = 0
         do icf = 1, ncf
           if (cftype(icf).gt.10) call xerrab ('cftype>10 not coded ')
@@ -229,6 +258,18 @@
           if (cftype(icf).eq.5) m%cfOnCv(icf) = .false.
           if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
      &      call xerrab('cftype 5 must be defined using faces!')
+          if (shift_cf_data(icf).gt.0 .and. .not.cfread(icf)) then
+            write(*,*) 'icf, shift_cf_data(icf), cfread(icf),'//
+     &        ' cftype(icf)'
+            write(*,*) icf, shift_cf_data(icf), cfread(icf), cftype(icf)
+            call xerrab('b2mod_par_opt: cannot shift a CF without data')
+          endif
+          if (shift_cf_data(icf).eq.0 .and. shift_opt(icf)) then
+            write(*,*) 'icf, shift_cf_data(icf), shift_opt(icf)'
+            write(*,*) icf, shift_cf_data(icf), shift_opt(icf)
+            call xerrab('b2mod_par_opt: shift_opt=true requires '//
+     &        'shift_cf_data>0')
+          endif
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
@@ -388,7 +429,39 @@
         end do !icf
         close(idb)
         if (allocated(cfReg)) deallocate(cfReg)
-      end if
+        !csc more testing and array preparation for shifting CF
+        nshift = 0
+        allocate(shiftcfdata(nsigmx)) !working array
+        shiftcfdata = shift_cf_data
+        curr_ind = 0
+        optimize = .false.
+        shiftopt = .false.
+        do icf=1, ncf
+          if (shiftcfdata(icf).eq.0) cycle
+          nshift = nshift + 1
+          curr_ind = shiftcfdata(icf)
+          shift(nshift) = shift_value(icf)
+          cf_to_shift(icf) = nshift
+          shiftLL(nshift) = shift_L(icf)
+          shiftUU(nshift) = shift_U(icf)
+          optimize = shift_opt(icf)
+          if (optimize) shiftopt(nshift) = .true.
+          ! search for all (next) CF that have same index
+          do icff = icf+1, ncf
+            if (shiftcfdata(icff).eq.curr_ind) then
+              ! a cost function has the same shift
+              cf_to_shift(icff) = nshift
+              shiftcfdata(icff) = 0 ! set to zero to avoid duplication
+              if (.not. (optimize .eqv. shift_opt(icff))) then
+                write(*,*) 'ERROR: shift_opt inconsistent for '//
+     &            'shift_cf_data=',curr_ind
+                call xerrab('b2mod_par_opt: shift_opt inconsistent')
+              endif
+            endif
+          end do
+        end do !ncf
+        if (allocated(shiftcfdata)) deallocate(shiftcfdata)
+      end if !if ncf>0
 
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
       if (any(cfread)) then
@@ -595,36 +668,10 @@
         end do
        endif
 
-!      Now do some tests on priors
-!      prior_type refers to the prior type for the design variables:
-!      0 - Uniform distribution.
-!      1 - Uninformative, proper, Gaussian prior.
-!      2 - Gamma distribution. (defined through mean and std)
-!      3 - Jeffrey's 1/sigma (only for sigma!!)
-       call xertst(any(prior_type(1:nnvar) .ge. 0).and.
-     &  any(prior_type(1:nnvar) .le. 3),
-     &  'b2mod_par_opt: prior_type<0 or prior_type>3')
-!      prior_par refers to the prior parameters:
-!      For prior_type = 1,2, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
-!      For prior_type = 3, not used?
-       do ii = 1, nnvar
-        if (prior_type(ii) .eq. 1) 
-     &   call xertst(prior_par(ii,2) .gt. 0.0_R8,
-     &    'b2mod_par_opt: sigma prior <=0')
-        if (prior_type(ii) .eq. 2) then
-         call xertst((prior_par(ii,1) .gt. 0.0_R8) .and. 
-     &               (prior_par(ii,2) .gt. 0.0_R8),
-     &    'b2mod_par_opt: mean and variance for gamma prior must be >0')
-         if (max(prior_range(ii,1),xl(ii)).le.0.0_R8) then
-           write(*,*) 'ii, prior_range(ii,1)',ii, prior_range(ii,1)
-           write(*,*) 'ii, xl(ii)',ii, xl(ii)
-           call xerrab('b2mod_par_opt: gamma distribution is '//
-     &     'intended for parameters on domain (0 +inf)')
-         endif
-        endif
-        call xertst(prior_range(ii,1).lt.prior_range(ii,2),
-     &   'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
-       end do
+!      Now do some tests on priors for physical parameters (including sigma and mean for now)
+       write(*,*) 'Testing priors for physical parameters, sigma, mean'
+       call test_priors(nnvar, prior_type(1:nnvar),
+     &  prior_par(1:nnvar,1:2), prior_range(1:nnvar,1:2), xl(1:nnvar))
       end if  !cftype(1).eq.6
 
       if (flag_optim) then
@@ -674,6 +721,27 @@
        npar_opt = npar_opt + 1
        idd = idd + 1 !next index
       enddo
+!     similarly add the optimization part for the shifting of cfdata, not included yet
+!     here X0 for shift is taken directly from the array shift, and same for lower/upper bounds
+! FIXME generalize in a smilar way for mean and sigma, without need to specify partype etc. for them
+      nshift_opt = 0
+      do ii = 1, nshift
+        if (shiftopt(ii)) then
+          nshift_opt = nshift_opt+1
+          npar_opt = npar_opt + 1
+          x0(npar_opt) = shift(ii)
+          xL(npar_opt) = shiftLL(ii)
+          xU(npar_opt) = shiftUU(ii)
+        endif
+      enddo
+      if (cftype(1).eq.6 .and. nshift_opt.gt.0) then
+        ! test priors for shift. sigma and mean will be added here later
+        write(*,*) 'Testing priors for shift_cf_data'
+        call test_priors(nshift_opt, shift_prior_type(1:nshift_opt), 
+     &   shift_prior_par(1:nshift_opt,1:2),
+     &   shift_prior_range(1:nshift_opt,1:2), 
+     &   xL(npar_opt-nshift_opt:npar_opt))
+      endif
       if (flag_optim .or. (cftype(1) .eq. 6)) then
         call xertst(any(x0(1:npar_opt) .lt. inf_opt*10.0_R8),
      &   'b2mod_par_opt: initial guess x0 MUST be specified for '//
@@ -686,7 +754,7 @@
          endif
         enddo
       endif
-      isigma = npar_opt - nsigma_opt  - nmean_opt + 1 ! position of first sigma in x0
+      isigma = npar_opt - nsigma_opt  - nmean_opt - nshift_opt + 1 ! position of first sigma in x0
       do ii = 1, nsigma
 !      only assign initial value from x0 if that sigma is being optimized or used in MAP
        if (sigma_opt(ii)) then
@@ -697,7 +765,7 @@
         isigma = isigma + 1 !next sigma in inital vector x0
        endif
       end do
-      imean = npar_opt - nmean_opt + 1 ! position of first mean in x0
+      imean = npar_opt - nmean_opt - nshift_opt + 1 ! position of first mean in x0
       do ii = 1, nmean
 !      only assign initial value from x0 if that mean is being optimized or used in MAP
        if (mean_opt(ii)) then
@@ -721,5 +789,42 @@
       if (allocated(b2data)) deallocate(b2data)
       if (allocated(b2dataOnCf)) deallocate(b2dataOnCf)
       end subroutine dealloc_b2mod_par_opt
+
+      subroutine test_priors(nn, pr_type, pr_par, pr_range, lowerB)
+      implicit none
+      integer, intent (IN) :: nn, pr_type(nn)
+      real(kind=r8), intent(in) :: pr_par(nn,2), pr_range(nn,2),
+     &  lowerB(nn)
+      integer :: ii
+!      prior_type refers to the prior type for the design variables:
+!      0 - Uniform distribution.
+!      1 - Uninformative, proper, Gaussian prior.
+!      2 - Gamma distribution. (defined through mean and std)
+!      3 - Jeffrey's 1/sigma (only for sigma!!)
+       call xertst(any(pr_type(1:nn) .ge. 0).and.
+     &  any(pr_type(1:nn) .le. 3),
+     &  'b2mod_par_opt: prior_type<0 or prior_type>3')
+!      prior_par refers to the prior parameters:
+!      For prior_type = 1,2, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!      For prior_type = 3, not used?
+       do ii = 1, nn
+        if (pr_type(ii) .eq. 1) 
+     &   call xertst(pr_par(ii,2) .gt. 0.0_R8,
+     &    'b2mod_par_opt: sigma prior <=0')
+        if (pr_type(ii) .eq. 2) then
+         call xertst((pr_par(ii,1) .gt. 0.0_R8) .and. 
+     &               (pr_par(ii,2) .gt. 0.0_R8),
+     &    'b2mod_par_opt: mean and variance for gamma prior must be >0')
+         if (max(pr_range(ii,1),lowerB(ii)).le.0.0_R8) then
+           write(*,*) 'ii, prior_range(ii,1)',ii, pr_range(ii,1)
+           write(*,*) 'ii, xl(ii)',ii, lowerB(ii)
+           call xerrab('b2mod_par_opt: gamma distribution is '//
+     &     'intended for parameters on domain (0 +inf)')
+         endif
+        endif
+        call xertst(pr_range(ii,1).lt.pr_range(ii,2),
+     &   'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
+       end do
+      end subroutine test_priors
 
       end module b2mod_par_opt
