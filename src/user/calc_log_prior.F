@@ -14,8 +14,8 @@
 ! sc  Initialize prior
       prior = 0.0_R8
       inrange = .true.
-! sc  Loop on number of plasma parameters (no sigma, no mean)
-      do ii = 1, npar_opt - nsigma_opt - nmean_opt
+! sc  Loop on number of plasma parameters (no sigma, no mean, no shift)
+      do ii = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt
         select case (prior_type(ii))
         case (0) !Uniform distribution
           prior = prior !(+=log(1.0))
@@ -42,7 +42,7 @@
       end do
 
 ! Now loop only on sigma vector
-      isigma = npar_opt - nsigma_opt - nmean_opt
+      isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt
       ind = 1 !index for prior vectors
       do ii = 1, nsigma
         if (.not.sigma_opt(ii)) cycle
@@ -73,7 +73,7 @@
       end do
 
 ! Now loop only on mean vector
-      imean = npar_opt - nmean_opt
+      imean = npar_opt - nmean_opt - nshift_opt
       ind = 1 !index for prior vectors
       do ii = 1, nmean
         if (.not.mean_opt(ii)) cycle
@@ -99,6 +99,35 @@
           prior = 1.0E+60_R8
           inrange = .false.
         endif
+      end do
+
+! Now do shift priors
+      ind = 1 !index for prior vectors
+      do ii = 1, nshift
+        if (.not.shiftopt(ii)) cycle
+        select case (shift_prior_type(ind))
+        case (0) !Uniform distribution
+          prior = prior
+        case (1) !Uninformative, proper, Gaussian prior.
+          prior = prior - log(shift_prior_par(ind,2)) -
+     &            0.5_R8*log(2.0_R8*pi) -
+     &            0.5_R8*((shift(ii)-shift_prior_par(ind,1))/
+     &            shift_prior_par(ind,2))**2
+        case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
+          aa = (shift_prior_par(ind,1)/shift_prior_par(ind,2))**2
+          bb = shift_prior_par(ind,1)/shift_prior_par(ind,2)**2
+          prior = prior + (aa-1)*log(shift(ii)) -
+     &            bb*shift(ii) + aa*log(bb) - log_gamma(aa)
+        case default
+          write(*,*) shift_prior_type(ind)
+          call xerrab ('prior_type out of bounds for shift')
+        end select
+        if (shift(ii).lt.shift_prior_range(ind,1) .or.
+     &      shift(ii).gt.shift_prior_range(ind,2)) then
+          prior = 1.0E+60_R8
+          inrange = .false.
+        endif
+        ind = ind + 1
       end do
       
      

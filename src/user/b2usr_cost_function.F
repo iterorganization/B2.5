@@ -31,7 +31,7 @@
      &           ifc, is, iicf
       logical, save :: first_call=.true.
       logical :: inrange
-      real (kind=R8) :: qq, prior, lll, lll_cum
+      real (kind=R8) :: qq, prior, lll, lll_cum, curr_shift
       real (kind=R8) :: gradr(nCv), funv(nVx), pz(nCv), rz(nCv), cs(nCv)
 #ifdef TEST_MAP
       integer, parameter :: nn=50
@@ -48,17 +48,6 @@
         call xertst(mpg%isClassicalGrid.eq.1,' Cost function CVs and '//
      &  'FCs ordering  and interpolation in case of unstructured grid'//
      &  ' needs to be revised')
-#ifdef TEST_MAP
-        ij = 1
-        do ii=1,5
-          do jj=1,10
-            xx(ij) = real(jj,kind=r8) 
-            ij = ij + 1
-          end do
-        end do
-#else
-        cfnorm = 0.0_R8
-        vold = 0.0_R8
         do icf = 1, ncf
           if (cfread(icf)) then
 ! WARNING! For now we assume that the data read from the cost function is only radially dependent
@@ -70,31 +59,55 @@
             n2 = ncfdata(icf)
             call calc_dist(mpg,geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
      &        b2rr(icf,1:n1))
-            b2data(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
-            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2volOnCf(icf,1:n2))
-            vold(icf) = sum(b2volOnCf(icf,1:n2))
-            do iCv = 1, n2
-              cfnorm(icf) = cfnorm(icf) + 
-     &                      b2volOnCf(icf,iCv)*cfdata(icf,2,iCv)
-            end do
-            if (mapToOMP(icf)) then
-            ! FIXME to be considerably improved!
-            !for now assume radial data rigidly moved at the OMP (like in ST code)
-            ! simply use as b2rr the OMP radial coordinates.
-              call xertst(mpg%isClassicalGrid.eq.1,
-     &         'Mapping to OMP need revision for extended grids')
-              ! check on, and then use, only internal Cvs in OMP list
-              call xertst(n1.eq.nomp-2,
-     &         'number of Cv in CF does not equal Cvs in OMP')
-              call calc_dist(mpg,geo,omp(2:nomp-1),n1,icsepomp-1,
-     &          b2rr(icf,1:n1))
-            endif
           endif
-        enddo 
+          if (mapToOMP(icf)) then
+          ! FIXME to be considerably improved!
+          !for now assume radial data rigidly moved at the OMP (like in ST code)
+          ! simply use as b2rr the OMP radial coordinates.
+            call xertst(mpg%isClassicalGrid.eq.1,
+     &       'Mapping to OMP need revision for extended grids')
+            ! check on, and then use, only internal Cvs in OMP list
+            call xertst(n1.eq.nomp-2,
+     &       'number of Cv in CF does not equal Cvs in OMP')
+            call calc_dist(mpg,geo,omp(2:nomp-1),n1,icsepomp-1,
+     &        b2rr(icf,1:n1))
+          endif
+        enddo
+#ifdef TEST_MAP
+        ij = 1
+        do ii=1,5
+          do jj=1,10
+            xx(ij) = real(jj,kind=r8) 
+            ij = ij + 1
+          end do
+        end do
 #endif
         first_call = .false.
       endif
+#ifndef TEST_MAP
+! cf normalization depends on shift now, as some points may eventualy be left out of the B2 domain
+      cfnorm = 0.0_R8
+      vold = 0.0_R8
+      do icf = 1, ncf
+        if (cfread(icf)) then
+          ic1 = mpg%cfRegP(icf,1)
+          ic2 = ic1 + mpg%cfRegP(icf,2) - 1
+          n1 = mpg%cfRegP(icf,2)
+          n2 = ncfdata(icf)
+          curr_shift = 0.0_R8
+          if (cf_to_shift(icf).gt.0)
+     &         curr_shift = shift(cf_to_shift(icf))/1.0e3_R8 !shift is in mm!
+          b2data(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
+          call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &      b2data(1:n1),b2volOnCf(icf,1:n2),curr_shift)
+          vold(icf) = sum(b2volOnCf(icf,1:n2))
+          do iCv = 1, n2
+            cfnorm(icf) = cfnorm(icf) + 
+     &                    b2volOnCf(icf,iCv)*cfdata(icf,2,iCv)
+          end do
+        endif
+      enddo 
+#endif
 
       J = 0.0_R8
 #ifdef TEST_MAP
@@ -120,12 +133,15 @@
           ic2 = ic1 + mpg%cfRegP(icf,2) - 1
           n1 = mpg%cfRegP(icf,2)
           n2 = ncfdata(icf)
+          curr_shift = 0.0_R8
+          if (cf_to_shift(icf).gt.0)
+     &         curr_shift = shift(cf_to_shift(icf))/1.0e3_R8 !shift is in mm!
           select case (cftype(icf))
           case (0) !sum of other cost function. It is skipped at this stage because it MUST be J(1) for optimization
           case (1) !electron density on desired CVs
             b2data(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))/1.0e19_R8
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -135,7 +151,7 @@
           case (2) !electron temperature on desired CVs
             b2data(1:n1) = st%pl%te(mpg%cfReg(ic1:ic2))/ev
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -145,7 +161,7 @@
           case (3) !ion temperature on desired CVs
             b2data(1:n1) = st%pl%ti(mpg%cfReg(ic1:ic2))/ev
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -174,6 +190,9 @@
               n2 = ncfdata(iicf)
               ic1 = mpg%cfRegP(iicf,1)
               ic2 = ic1 + n1 - 1
+              curr_shift = 0.0_R8
+              if (cf_to_shift(iicf).gt.0)
+     &          curr_shift = shift(cf_to_shift(iicf))/1.0e3_R8 !shift is in mm!
               select case (cftype(iicf))
               case (1) !electron density
                 b2data(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))/1.0e19_R8
@@ -207,7 +226,7 @@
                call xerrab ('cftype for sum out of bounds for cftype=6')
               end select
               call interp1d(n1,n2,b2rr(iicf,1:n1),cfdata(iicf,1,1:n2),
-     &          b2data(1:n1),b2dataOnCf(1:n2))
+     &          b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
               call calc_loglikelihood(n2, b2dataOnCf(1:n2), 
      &          cfdata(iicf,2,1:n2), cfdata(iicf,3,1:n2), lll, isigma,
      &          imean)
@@ -225,7 +244,7 @@
      &        funv, gradr)
             b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/1.0e19_R8
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -237,7 +256,7 @@
      &        funv, gradr)
             b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -249,7 +268,7 @@
      &        funv, gradr)
             b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -267,7 +286,7 @@
      &          cs(mpg%cfReg(ic1+icv-1))*eV/1.0e3_R8
             enddo
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        b2data(1:n1),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
