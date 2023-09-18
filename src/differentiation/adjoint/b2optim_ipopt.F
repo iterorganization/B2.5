@@ -270,12 +270,12 @@
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma, imean
+      integer IER, ipar, isigma, imean, ishift
       character*3 str
       save j
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
-        do ipar = 1, npar - nsigma_opt - nmean_opt
+        do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
@@ -283,7 +283,7 @@
      &     par_opt_phys(ipar)
         enddo
         if (cftype(1) .eq. 6) then
-          isigma = npar - nsigma_opt - nmean_opt + 1
+          isigma = npar - nsigma_opt - nmean_opt - nshift_opt + 1
           do ipar = 1, nsigma
             if (sigma_opt(ipar)) then
               sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
@@ -294,7 +294,7 @@
               isigma = isigma + 1
             endif
           enddo
-          imean= npar - nmean_opt + 1
+          imean= npar - nmean_opt - nshift_opt + 1
           do ipar = 1, nmean
             if (mean_opt(ipar)) then
               mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
@@ -306,6 +306,17 @@
             endif
           enddo
         endif
+        ishift = npar_opt - nshift_opt + 1
+        do ipar = 1, nshift
+          if (shiftopt(ipar)) then
+            shift(ipar) = real(XX(ishift),kind=r8) ! no rescale for shift for now
+            write(str,"(I1)") ishift
+            if (ishift.ge.10) write(str,"(I2)") ishift
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         shift(ipar)
+            ishift = ishift + 1
+          endif
+        end do
         call b2mn_step(switch, geo, mpg, state, state_ext, j)
       endif
       F = DBLE(j(1))
@@ -320,13 +331,13 @@
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma, imean
+      integer IER, ipar, isigma, imean, ishift
       character*3 str
       save jdiff
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
-        do ipar = 1, npar - nsigma_opt - nmean_opt
+        do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
@@ -334,7 +345,7 @@
      &     par_opt_phys(ipar)
         enddo
         if (cftype(1) .eq. 6) then
-          isigma = npar - nsigma_opt - nmean_opt + 1
+          isigma = npar - nsigma_opt - nmean_opt - nshift_opt + 1
           do ipar = 1, nsigma
             if (sigma_opt(ipar)) then
               sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
@@ -345,7 +356,7 @@
               isigma = isigma + 1
             endif
           enddo
-          imean = npar - nmean_opt + 1
+          imean = npar - nmean_opt + - nshift_opt 1
           do ipar = 1, nmean
             if (mean_opt(ipar)) then
               mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
@@ -357,6 +368,17 @@
             endif
           enddo
         endif
+        ishift = npar_opt - nshift_opt + 1
+        do ipar = 1, nshift
+          if (shiftopt(ipar)) then
+            shift(ipar) = real(XX(ishift),kind=r8) ! no rescale for shift for now
+            write(str,"(I1)") ishift
+            if (ishift.ge.10) write(str,"(I2)") ishift
+              write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &         shift(ipar)
+            ishift = ishift + 1
+          endif
+        end do
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions

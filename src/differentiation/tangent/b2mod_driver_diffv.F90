@@ -5108,9 +5108,9 @@ CONTAINS
 !                tdata j
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys mean parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
+!                parm_sig parm_dna tdata sigma shift *par_opt_phys
+!                mean switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -5364,12 +5364,6 @@ CONTAINS
     nvx = mpg%nvx
 !
     WRITE(*, *) 'b2mndr_1, start: nCv = ', ncv
-    DO nd=1,nbdirsmax
-      cfnormd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      voldd(nd, :) = 0.D0
-    END DO
     IF (ALLOCATED(b2voloncfd)) THEN
       DO nd=1,nbdirsmax
         b2voloncfd(nd, :, :) = 0.D0
@@ -6188,7 +6182,7 @@ CONTAINS
 !    ..call cost function
       CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &                           mpgd, state, stated, state_ext, state_extd, &
-&                           switch%boris, j, jd, nbdirs+nsigma_opt+nmean_opt)
+&                           switch%boris, j, jd, nbdirs+nsigma_opt+nmean_opt+nshift_opt)
       if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
       call print_tgt_gradient(jd,ncf)
       DO icf=1,ncf

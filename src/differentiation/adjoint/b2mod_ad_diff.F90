@@ -68,6 +68,7 @@ MODULE B2MOD_AD_DIFF
   LOGICAL, SAVE :: last_call_transp=.false.
 !
   REAL(kind=r8), SAVE :: cfnorm(nncf), vold(nncf)
+  REAL(kind=r8), SAVE :: cfnormb(nncf), voldb(nncf)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2data(:), b2dataoncf(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2datab(:), b2dataoncfb(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2rr(:, :), b2voloncf(:, :)

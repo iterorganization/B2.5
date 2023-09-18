@@ -3,7 +3,7 @@
 !
 !  Differentiation of calc_log_prior in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: prior
-!   with respect to varying inputs: sigma *par_opt_phys mean
+!   with respect to varying inputs: sigma shift *par_opt_phys mean
 !   Plus diff mem management of: par_opt_phys:in
 !
 !
@@ -47,8 +47,8 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
   DO nd=1,nbdirsmax
     priord(nd) = 0.D0
   END DO
-! sc  Loop on number of plasma parameters (no sigma, no mean)
-  DO ii=1,npar_opt-nsigma_opt-nmean_opt
+! sc  Loop on number of plasma parameters (no sigma, no mean, no shift)
+  DO ii=1,npar_opt-nsigma_opt-nmean_opt-nshift_opt
     SELECT CASE  (prior_type(ii)) 
     CASE (0) 
 !Uniform distribution
@@ -93,7 +93,7 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
   END DO
 !
 ! Now loop only on sigma vector
-  isigma = npar_opt - nsigma_opt - nmean_opt
+  isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt
 !index for prior vectors
   ind = 1
   DO ii=1,nsigma
@@ -145,7 +145,7 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
   END DO
 !
 ! Now loop only on mean vector
-  imean = npar_opt - nmean_opt
+  imean = npar_opt - nmean_opt - nshift_opt
 !index for prior vectors
   ind = 1
   DO ii=1,nmean
@@ -189,6 +189,51 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
       END IF
     END IF
   END DO
+!
+! Now do shift priors
+!index for prior vectors
+  ind = 1
+  DO ii=1,nshift
+    IF (shiftopt(ii)) THEN
+      SELECT CASE  (shift_prior_type(ind)) 
+      CASE (0) 
+!Uniform distribution
+        prior = prior
+      CASE (1) 
+!Uninformative, proper, Gaussian prior.
+        arg1 = 2.0_R8*pi
+        DO nd=1,nbdirs
+          priord(nd) = priord(nd) - 0.5_R8*2*(shift(ii)-shift_prior_par(&
+&           ind, 1))*shiftd(nd, ii)/shift_prior_par(ind, 2)**2
+        END DO
+        prior = prior - LOG(shift_prior_par(ind, 2)) - 0.5_R8*LOG(arg1) &
+&         - 0.5_R8*((shift(ii)-shift_prior_par(ind, 1))/shift_prior_par(&
+&         ind, 2))**2
+      CASE (2) 
+! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
+        aa = (shift_prior_par(ind, 1)/shift_prior_par(ind, 2))**2
+        bb = shift_prior_par(ind, 1)/shift_prior_par(ind, 2)**2
+        result1 = LOG_GAMMA(aa)
+        DO nd=1,nbdirs
+          priord(nd) = priord(nd) + ((aa-1)/shift(ii)-bb)*shiftd(nd, ii)
+        END DO
+        prior = prior + (aa-1)*LOG(shift(ii)) - bb*shift(ii) + aa*LOG(bb&
+&         ) - result1
+      CASE DEFAULT
+        WRITE(*, *) shift_prior_type(ind)
+        CALL XERRAB('prior_type out of bounds for shift')
+      END SELECT
+      IF (shift(ii) .LT. shift_prior_range(ind, 1) .OR. shift(ii) .GT. &
+&         shift_prior_range(ind, 2)) THEN
+        prior = 1.0e+60_R8
+        inrange = .false.
+        DO nd=1,nbdirsmax
+          priord(nd) = 0.D0
+        END DO
+      END IF
+      ind = ind + 1
+    END IF
+  END DO
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOG_PRIOR_DV
@@ -226,8 +271,8 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
 ! sc  Initialize prior
   prior = 0.0_R8
   inrange = .true.
-! sc  Loop on number of plasma parameters (no sigma, no mean)
-  DO ii=1,npar_opt-nsigma_opt-nmean_opt
+! sc  Loop on number of plasma parameters (no sigma, no mean, no shift)
+  DO ii=1,npar_opt-nsigma_opt-nmean_opt-nshift_opt
     SELECT CASE  (prior_type(ii)) 
     CASE (0) 
 !Uniform distribution
@@ -260,7 +305,7 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
   END DO
 !
 ! Now loop only on sigma vector
-  isigma = npar_opt - nsigma_opt - nmean_opt
+  isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt
 !index for prior vectors
   ind = 1
   DO ii=1,nsigma
@@ -298,7 +343,7 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
   END DO
 !
 ! Now loop only on mean vector
-  imean = npar_opt - nmean_opt
+  imean = npar_opt - nmean_opt - nshift_opt
 !index for prior vectors
   ind = 1
   DO ii=1,nmean
@@ -329,6 +374,41 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
         prior = 1.0e+60_R8
         inrange = .false.
       END IF
+    END IF
+  END DO
+!
+! Now do shift priors
+!index for prior vectors
+  ind = 1
+  DO ii=1,nshift
+    IF (shiftopt(ii)) THEN
+      SELECT CASE  (shift_prior_type(ind)) 
+      CASE (0) 
+!Uniform distribution
+        prior = prior
+      CASE (1) 
+!Uninformative, proper, Gaussian prior.
+        arg1 = 2.0_R8*pi
+        prior = prior - LOG(shift_prior_par(ind, 2)) - 0.5_R8*LOG(arg1) &
+&         - 0.5_R8*((shift(ii)-shift_prior_par(ind, 1))/shift_prior_par(&
+&         ind, 2))**2
+      CASE (2) 
+! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
+        aa = (shift_prior_par(ind, 1)/shift_prior_par(ind, 2))**2
+        bb = shift_prior_par(ind, 1)/shift_prior_par(ind, 2)**2
+        result1 = LOG_GAMMA(aa)
+        prior = prior + (aa-1)*LOG(shift(ii)) - bb*shift(ii) + aa*LOG(bb&
+&         ) - result1
+      CASE DEFAULT
+        WRITE(*, *) shift_prior_type(ind)
+        CALL XERRAB('prior_type out of bounds for shift')
+      END SELECT
+      IF (shift(ii) .LT. shift_prior_range(ind, 1) .OR. shift(ii) .GT. &
+&         shift_prior_range(ind, 2)) THEN
+        prior = 1.0e+60_R8
+        inrange = .false.
+      END IF
+      ind = ind + 1
     END IF
   END DO
   CALL SUBEND()
