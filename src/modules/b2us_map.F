@@ -556,7 +556,7 @@
       call cfwuin (nout, mpg%nFc,     mpg%ftFc,  'ftFc')
       call cfwuin (nout, mpg%nCv,     mpg%cvFt,  'cvFt')
       call cfwuin (nout, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
-      call cfwuin (nout, mpg%nFc,     mpg%fSFc,  'fsFc')
+      call cfwuin (nout, mpg%nFc,     mpg%fsFc,  'fsFc')
       call cfwuin (nout, mpg%nFc,     mpg%fcReg, 'fcReg')
       call cfwuin (nout, mpg%nCv,     mpg%cvReg, 'cvReg')
       call cfwuin (nout, mpg%nFt,     mpg%ftReg, 'ftReg')
@@ -593,8 +593,8 @@
       integer :: i, j, k, l
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, freg, inew
-      integer :: totalcount, regcount, Fscount, iactive, icount, fccount
-      integer, allocatable :: indCv(:), indFsVx(:), indXpt(:), ireg(:),
+      integer :: totalcount, Fscount, iactive, icount, fccount
+      integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:),
      *                        old_face_list(:), new_face_list(:)
       logical :: duplicate, match_found
@@ -653,7 +653,6 @@ cwdk  can be derived directly from data in that file
 !csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
       m%mxStencil = maxval(m%cvNvP(1:m%nCv,2))
 
-
       ! clean up
       deallocate (cvNvLoc)
       deallocate (indCv)
@@ -695,43 +694,35 @@ cwdk  can be derived directly from data in that file
       deallocate(indFsVx)
 
       allocate(indXpt(m%nVx))
-      allocate(ireg(maxval(m%vxCvP(:,2))))
       indXpt = 0
       m%nXpt = 0
-      m%nStr = 0
-      m%nTgc = 0
       iactive = 0
       do iVx = 1, m%nVx
-        ireg = 0
-        do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
-          iCv = m%vxCv(i)
-          ireg(i-m%vxCvP(iVx,1)+1) = m%cvReg(iCv)
-        end do
-        regcount = 0
-        do i = 1, m%vxCvP(iVx,2)
-          if (ireg(i).eq.0) cycle
-          if (i.eq.1) then
-            regcount = 1
-          else
-            duplicate = .false.
-            do j = 1, i-1
-              duplicate = duplicate .or. ireg(i).eq.ireg(j)
-            end do
-            if (.not.duplicate) regcount = regcount + 1
-          end if
-        end do
-        if (regcount.ge.3) then
-          m%nXpt = m%nXpt + 1
-          indXpt(m%nXpt) = iVx
-          if (iactive.eq.0) then
-            do i = 1, regcount
-              if (ireg(i).eq.1) iactive = m%nXpt
+        if (m%vxFcP(iVx,2).ge.4) then
+          fccount = 0
+          do i = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+            iFc = m%vxFc(i)
+            if (m%fcFs(iFc).eq.0) cycle
+            if (fccount.eq.0) then
+              iFs = m%fcFs(iFc)
+              fccount = 1
+            else
+              if (m%fcFs(iFc).eq.iFs) fccount = fccount + 1
+            end if
+          end do
+          if (fccount.eq.4) then
+            m%nXpt = m%nXpt + 1
+            indXpt(m%nXpt) = iVx
+            do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
+              iCv = m%vxCv(i)
+              if (m%cvReg(iCv).eq.1) iactive = m%nXpt
             end do
           end if
         end if
       end do
-      deallocate(ireg)
 
+      m%nStr = 0
+      m%nTgc = 0
       if (m%nXpt.gt.0) then
         allocate(m%Xpt(m%nXpt))
         m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
@@ -794,7 +785,7 @@ cwdk  can be derived directly from data in that file
           if (m%iFssep.eq.0) iFc = iFc + 1
         end do
         do i = m%fsFcP(m%iFssep,1),
-     &         m%fsFcp(m%iFssep,1) + m%fsFcp(m%iFssep,2) - 1
+     &         m%fsFcP(m%iFssep,1) + m%fsFcP(m%iFssep,2) - 1
           iFc = m%fsFc(i)
           do k = 1, 2
             iVx = m%fcVx(iFc,k)

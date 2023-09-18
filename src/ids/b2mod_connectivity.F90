@@ -606,7 +606,11 @@ contains
                 endif
             elseif(nncut.eq.2) then
                 if (ccut.eq.0) then
+#ifdef BUILDING_CARRE
+                   stop 'Found ccut = 0 : central cut for DN not specified.'
+#else
                    call xerrab ('Found ccut = 0 : central cut for DN not specified.')
+#endif
                 endif
                 do ix = -1, leftcut(1)-1
                     do iy = -1, ny
@@ -693,7 +697,13 @@ contains
             iyn=rightiy(ix,iy)
             if (isInDomain(nx,ny,ixn,iyn)) then
                 if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
-                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) call xerrab('Problem with region definition')
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) then
+#ifdef BUILDING_CARRE
+                      stop 'Problem with region definition'
+#else
+                      call xerrab('Problem with region definition')
+#endif
+                    end if
                     iregn=region(ixn,iyn,0)
                 endif
             endif
@@ -701,7 +711,13 @@ contains
             iyn=topiy(ix,iy)
             if (isInDomain(nx,ny,ixn,iyn)) then
                 if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
-                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) call xerrab('Problem with region definition')
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) then
+#ifdef BUILDING_CARRE
+                      stop 'Problem with region definition'
+#else
+                      call xerrab('Problem with region definition')
+#endif
+                    end if
                     iregn=region(ixn,iyn,0)
                 endif
             endif
@@ -709,7 +725,13 @@ contains
             iyn=bottomiy(ix,iy)
             if (isInDomain(nx,ny,ixn,iyn)) then
                 if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
-                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) call xerrab('Problem with region definition')
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) then
+#ifdef BUILDING_CARRE
+                      stop 'Problem with region definition'
+#else
+                      call xerrab('Problem with region definition')
+#endif
+                    end if
                     iregn=region(ixn,iyn,0)
                 endif
             endif
