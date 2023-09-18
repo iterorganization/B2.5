@@ -3,8 +3,9 @@
 !
 !  Differentiation of b2usr_cost_function in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: j
-!   with respect to varying inputs: sigma *par_opt_phys mean *(st.pl.na)
-!                *(st.pl.te) *(st.pl.ti) *(st.dv.fht) *(st.dv.ne)
+!   with respect to varying inputs: sigma shift *par_opt_phys mean
+!                *(st.pl.na) *(st.pl.te) *(st.pl.ti) *(st.dv.fht)
+!                *(st.dv.ne)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
 !                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
@@ -35,8 +36,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   USE B2MOD_B2CMPA_DIFF, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFF, ONLY : vold, cfnorm, nncf, b2rr, b2voloncf, &
-& b2voloncfb, b2data, b2datab, b2dataoncf, b2dataoncfb
+  USE B2MOD_AD_DIFF, ONLY : vold, voldb, cfnorm, cfnormb, nncf, b2rr, &
+& b2voloncf, b2voloncfb, b2data, b2datab, b2dataoncf, b2dataoncfb
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !
@@ -54,8 +55,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc, is, iicf
   LOGICAL, SAVE :: first_call=.true.
   LOGICAL :: inrange
-  REAL(kind=r8) :: qq, prior, lll, lll_cum
-  REAL(kind=r8) :: qqb, priorb, lllb, lll_cumb
+  REAL(kind=r8) :: qq, prior, lll, lll_cum, curr_shift
+  REAL(kind=r8) :: qqb, priorb, lllb, lll_cumb, curr_shiftb
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
   REAL(kind=r8) :: gradrb(ncv), funvb(nvx), pzb(ncv), rzb(ncv), csb(ncv)
   INTEGER :: isigma, imean
@@ -67,27 +68,29 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   REAL(kind=r8) :: max1b
   INTEGER :: arg1
   INTEGER :: branch
-  REAL(kind=r8), DIMENSION(ncv) :: tempb
+  REAL(kind=r8) :: temp
+  REAL(r8) :: temp0
+  REAL(kind=r8) :: tempb
+  REAL(kind=r8), DIMENSION(ncv) :: tempb0
   REAL(kind=r8) :: tmp
   REAL(kind=r8) :: tmpb
   INTEGER :: ad_to
   INTEGER :: ad_to0
   INTEGER :: ad_to1
-  INTEGER :: ad_from
   INTEGER :: ad_to2
-  INTEGER :: ad_from0
+  INTEGER :: ad_from
   INTEGER :: ad_to3
+  INTEGER :: ad_from0
   INTEGER :: ad_to4
   INTEGER :: ad_to5
   INTEGER :: ad_to6
   INTEGER :: ad_to7
   INTEGER :: ad_to8
   INTEGER :: ad_to9
+  INTEGER :: ad_to10
 !
 !
   IF (first_call .AND. ncf .GT. 0) THEN
-    cfnorm = 0.0_R8
-    vold = 0.0_R8
     DO icf=1,ncf
       IF (cfread(icf)) THEN
 ! WARNING! For now we assume that the data read from the cost function is only radially dependent
@@ -97,39 +100,71 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         ic2 = ic1 + mpg%cfregp(icf, 2) - 1
         CALL PUSHINTEGER4(n1)
         n1 = mpg%cfregp(icf, 2)
-        n2 = ncfdata(icf)
 !csc icsep-1 because non-internal cells have been excluded!
         arg1 = icsepomp - 1
         CALL CALC_DIST_NODIFF(mpg, geo, mpg%cfreg(ic1:ic2), n1, arg1, &
 &                       b2rr(icf, 1:n1))
-        b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
-        CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2voloncf(icf, 1:n2))
-        vold(icf) = SUM(b2voloncf(icf, 1:n2))
-        DO icv=1,n2
-          cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2&
-&           , icv)
-        END DO
-        IF (maptoomp(icf)) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (maptoomp(icf)) THEN
+        CALL PUSHCONTROL1B(1)
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
 ! simply use as b2rr the OMP radial coordinates.
 ! check on, and then use, only internal Cvs in OMP list
-          arg1 = icsepomp - 1
-          CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
-&                         icf, 1:n1))
-          CALL PUSHCONTROL2B(2)
-        ELSE
-          CALL PUSHCONTROL2B(1)
-        END IF
+        arg1 = icsepomp - 1
+        CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
+&                       icf, 1:n1))
       ELSE
-        CALL PUSHCONTROL2B(0)
+        CALL PUSHCONTROL1B(0)
       END IF
     END DO
     CALL PUSHCONTROL1B(0)
   ELSE
     CALL PUSHCONTROL1B(1)
   END IF
+! cf normalization depends on shift now, as some points may eventualy be left out of the B2 domain
+  cfnorm = 0.0_R8
+  vold = 0.0_R8
+  DO icf=1,ncf
+    IF (cfread(icf)) THEN
+      ic1 = mpg%cfregp(icf, 1)
+      ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+      CALL PUSHINTEGER4(n1)
+      n1 = mpg%cfregp(icf, 2)
+      CALL PUSHINTEGER4(n2)
+      n2 = ncfdata(icf)
+      CALL PUSHREAL8(curr_shift, r8/8)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) THEN
+        curr_shift = shift(cf_to_shift(icf))/1.0e3_R8
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (ALLOCATED(b2data)) THEN
+        CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+      b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
+&             b2data(1:n1), b2voloncf(icf, 1:n2), curr_shift)
+      vold(icf) = SUM(b2voloncf(icf, 1:n2))
+      DO icv=1,n2
+        cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2, &
+&         icv)
+      END DO
+      CALL PUSHINTEGER4(icv - 1)
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
+  END DO
 !
   j = 0.0_R8
   IF (ncf .GT. 0) THEN
@@ -139,13 +174,29 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
       ic2 = ic1 + mpg%cfregp(icf, 2) - 1
       CALL PUSHINTEGER4(n1)
       n1 = mpg%cfregp(icf, 2)
+      CALL PUSHINTEGER4(n2)
       n2 = ncfdata(icf)
+      CALL PUSHREAL8(curr_shift, r8/8)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) THEN
+        curr_shift = shift(cf_to_shift(icf))/1.0e3_R8
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
       SELECT CASE  (cftype(icf)) 
       CASE (0) 
         CALL PUSHCONTROL4B(12)
       CASE (1) 
 !sum of other cost function. It is skipped at this stage because it MUST be J(1) for optimization
 !electron density on desired CVs
+        IF (ALLOCATED(b2data)) THEN
+          CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
         b2data(1:n1) = st%dv%ne(mpg%cfreg(ic1:ic2))/1.0e19_R8
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -154,16 +205,24 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
         END DO
         CALL PUSHINTEGER4(icv - 1)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
         CALL PUSHCONTROL4B(11)
       CASE (2) 
 !electron temperature on desired CVs
+        IF (ALLOCATED(b2data)) THEN
+          CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
         b2data(1:n1) = st%pl%te(mpg%cfreg(ic1:ic2))/ev
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -172,16 +231,24 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
         END DO
         CALL PUSHINTEGER4(icv - 1)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
         CALL PUSHCONTROL4B(10)
       CASE (3) 
 !ion temperature on desired CVs
+        IF (ALLOCATED(b2data)) THEN
+          CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
         b2data(1:n1) = st%pl%ti(mpg%cfreg(ic1:ic2))/ev
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -190,12 +257,14 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
         END DO
         CALL PUSHINTEGER4(icv - 1)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
         CALL PUSHCONTROL4B(9)
       CASE (4) 
@@ -203,15 +272,18 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 !max electron temperature on desired CVs
         DO icv=ad_from,ic2
           IF (j(icf) .LT. st%pl%te(mpg%cfreg(icv))) THEN
+            CALL PUSHREAL8(j(icf), r8/8)
             j(icf) = st%pl%te(mpg%cfreg(icv))
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHCONTROL1B(1)
+            CALL PUSHREAL8(j(icf), r8/8)
             j(icf) = j(icf)
+            CALL PUSHCONTROL1B(1)
           END IF
         END DO
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHINTEGER4(ad_from)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)/ev
         CALL PUSHCONTROL4B(8)
       CASE (5) 
@@ -227,6 +299,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             max1 = j(icf)
             CALL PUSHCONTROL1B(1)
           END IF
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = max1*cfweight(icf)
         END DO
         CALL PUSHINTEGER4(ifc - 1)
@@ -245,35 +318,80 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHINTEGER4(ic1)
           ic1 = mpg%cfregp(iicf, 1)
           ic2 = ic1 + n1 - 1
+          CALL PUSHREAL8(curr_shift, r8/8)
+          curr_shift = 0.0_R8
+!shift is in mm!
+          IF (cf_to_shift(iicf) .GT. 0) THEN
+            curr_shift = shift(cf_to_shift(iicf))/1.0e3_R8
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
           SELECT CASE  (cftype(iicf)) 
           CASE (1) 
 !electron density
+            IF (ALLOCATED(b2data)) THEN
+              CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
             b2data(1:n1) = st%dv%ne(mpg%cfreg(ic1:ic2))/1.0e19_R8
             CALL PUSHCONTROL3B(0)
           CASE (2) 
 !electron temperature
+            IF (ALLOCATED(b2data)) THEN
+              CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
             b2data(1:n1) = st%pl%te(mpg%cfreg(ic1:ic2))/ev
             CALL PUSHCONTROL3B(1)
           CASE (3) 
 !ion temperature
+            IF (ALLOCATED(b2data)) THEN
+              CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
             b2data(1:n1) = st%pl%ti(mpg%cfreg(ic1:ic2))/ev
             CALL PUSHCONTROL3B(2)
           CASE (7) 
 !electron density radial gradient
             CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%dv%ne, &
 &                         funv, gradr)
+            IF (ALLOCATED(b2data)) THEN
+              CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
             b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
             CALL PUSHCONTROL3B(3)
           CASE (8) 
 !electron temperature radial gradient
             CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%te, &
 &                         funv, gradr)
+            IF (ALLOCATED(b2data)) THEN
+              CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
             b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
             CALL PUSHCONTROL3B(4)
           CASE (9) 
 !ion temperature radial gradient
             CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%ti, &
 &                         funv, gradr)
+            IF (ALLOCATED(b2data)) THEN
+              CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
             b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
             CALL PUSHCONTROL3B(5)
           CASE (10) 
@@ -286,6 +404,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             CALL PUSHREAL8ARRAY(cs, r8*ncv/8)
             cs = SQRT(pz/rz)
             DO icv=1,n1
+              CALL PUSHREAL8(b2data(icv), r8/8)
               b2data(icv) = st%dv%ne(mpg%cfreg(ic1+icv-1))*cs(mpg%cfreg(&
 &               ic1+icv-1))*ev/1.0e3_R8
             END DO
@@ -302,7 +421,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             CALL PUSHCONTROL1B(0)
           END IF
           CALL INTERP1D(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:n2)&
-&                 , b2data(1:n1), b2dataoncf(1:n2))
+&                 , b2data(1:n1), b2dataoncf(1:n2), curr_shift)
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
 &                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
 &                                  , lll, isigma, imean)
@@ -313,9 +432,11 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           imean = imean + 1
         END DO
         IF (inrange) THEN
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = -((prior+lll_cum)*cfweight(icf))
           CALL PUSHCONTROL4B(6)
         ELSE
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = inf_opt
           CALL PUSHCONTROL4B(5)
         END IF
@@ -323,6 +444,12 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 !electron density radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%dv%ne, funv, &
 &                     gradr)
+        IF (ALLOCATED(b2data)) THEN
+          CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -331,18 +458,26 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
         END DO
         CALL PUSHINTEGER4(icv - 1)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
         CALL PUSHCONTROL4B(4)
       CASE (8) 
 !electron temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%te, funv, &
 &                     gradr)
+        IF (ALLOCATED(b2data)) THEN
+          CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -351,18 +486,26 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
         END DO
         CALL PUSHINTEGER4(icv - 1)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
         CALL PUSHCONTROL4B(3)
       CASE (9) 
 !ion temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%ti, funv, &
 &                     gradr)
+        IF (ALLOCATED(b2data)) THEN
+          CALL PUSHREAL8ARRAY(b2data(1:n1), r8*n1/8)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -371,12 +514,14 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
         END DO
         CALL PUSHINTEGER4(icv - 1)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
         CALL PUSHCONTROL4B(2)
       CASE (10) 
@@ -390,6 +535,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHREAL8ARRAY(cs, r8*ncv/8)
         cs = SQRT(pz/rz)
         DO icv=1,n1
+          CALL PUSHREAL8(b2data(icv), r8/8)
           b2data(icv) = st%dv%ne(mpg%cfreg(ic1+icv-1))*cs(mpg%cfreg(ic1+&
 &           icv-1))*ev/1.0e3_R8
         END DO
@@ -401,17 +547,19 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
+          CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
         END DO
         CALL PUSHINTEGER4(icv - 1)
+        CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
         CALL PUSHCONTROL4B(1)
       CASE DEFAULT
-        CALL PUSHCONTROL4B(0)
         WRITE(*, *) cftype(icf)
+        CALL PUSHCONTROL4B(0)
       END SELECT
     END DO
 ! now sum of cost functions for cftype=0
@@ -422,9 +570,13 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         jb(icf) = jb(icf) + tmpb
       END DO
     END IF
+    cfnormb = 0.D0
+    voldb = 0.D0
+    IF (ALLOCATED(b2voloncfb)) b2voloncfb = 0.D0
     IF (ALLOCATED(b2datab)) b2datab = 0.D0
     IF (ALLOCATED(b2dataoncfb)) b2dataoncfb = 0.D0
     sigmab = 0.D0
+    shiftb = 0.D0
     IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
     meanb = 0.D0
     stb%pl%na = 0.D0
@@ -437,86 +589,115 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
       CALL POPCONTROL4B(branch)
       IF (branch .LT. 6) THEN
         IF (branch .LT. 3) THEN
-          IF (branch .NE. 0) THEN
-            IF (branch .EQ. 1) THEN
-              jb(icf) = cfweight(icf)*vold(icf)*jb(icf)/(cfnorm(icf)**2*&
-&               2.0_R8)
-              n2 = ncfdata(icf)
-              CALL POPINTEGER4(ad_to9)
-              DO icv=ad_to9,1,-1
-                b2dataoncfb(icv) = b2dataoncfb(icv) + 2*(b2dataoncf(icv)&
-&                 -cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
-              END DO
-              n1 = mpg%cfregp(icf, 2)
-              CALL POPCONTROL1B(branch)
-              IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8&
-&                                             *n2/8)
-              CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:&
-&                       n2), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:&
-&                       n2), b2dataoncfb(1:n2))
-              csb = 0.D0
-              CALL POPINTEGER4(ad_to8)
-              DO icv=ad_to8,1,-1
-                stb%dv%ne(mpg%cfreg(ic1+icv-1)) = stb%dv%ne(mpg%cfreg(&
-&                 ic1+icv-1)) + cs(mpg%cfreg(ic1+icv-1))*ev*b2datab(icv)&
-&                 /1.0e3_R8
-                csb(mpg%cfreg(ic1+icv-1)) = csb(mpg%cfreg(ic1+icv-1)) + &
-&                 st%dv%ne(mpg%cfreg(ic1+icv-1))*ev*b2datab(icv)/&
-&                 1.0e3_R8
-                b2datab(icv) = 0.D0
-              END DO
-              rzb = 0.D0
-              pzb = 0.D0
-              CALL POPREAL8ARRAY(cs, r8*ncv/8)
-              WHERE (pz/rz .EQ. 0.D0) 
-                tempb = 0.D0
-              ELSEWHERE
-                tempb = csb/(rz*2.0*SQRT(pz/rz))
-              END WHERE
-              pzb = tempb
-              rzb = -(pz*tempb/rz)
-              CALL POPREAL8ARRAY(pz, r8*ncv/8)
-              CALL B2XPPZ_B(ncv, ns, st%dv%ne, stb%dv%ne, st%pl%na, stb%&
-&                     pl%na, st%pl%te, stb%pl%te, st%pl%ti, stb%pl%ti, &
-&                     pz, pzb, st_ext)
-              CALL POPREAL8ARRAY(rz, r8*ncv/8)
-              CALL B2XPRZ_B(ncv, ns, mp, am, st%pl%na, stb%pl%na, rz, &
-&                     rzb, st_ext)
-            ELSE
-              jb(icf) = cfweight(icf)*vold(icf)*jb(icf)/(cfnorm(icf)**2*&
-&               2.0_R8)
-              n2 = ncfdata(icf)
-              CALL POPINTEGER4(ad_to7)
-              DO icv=ad_to7,1,-1
-                b2dataoncfb(icv) = b2dataoncfb(icv) + 2*(b2dataoncf(icv)&
-&                 -cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
-              END DO
-              n1 = mpg%cfregp(icf, 2)
-              CALL POPCONTROL1B(branch)
-              IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8&
-&                                             *n2/8)
-              CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:&
-&                       n2), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:&
-&                       n2), b2dataoncfb(1:n2))
-              ic1 = mpg%cfregp(icf, 1)
-              ic2 = ic1 + mpg%cfregp(icf, 2) - 1
-              gradrb = 0.D0
-              gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
-&               b2datab(1:n1)/ev
-              b2datab(1:n1) = 0.D0
-              CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%&
-&                      pl%ti, stb%pl%ti, funv, funvb, gradr, gradrb)
-            END IF
+          IF (branch .EQ. 0) THEN
+            curr_shiftb = 0.D0
+          ELSE IF (branch .EQ. 1) THEN
+            CALL POPREAL8(j(icf), r8/8)
+            temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+            tempb = cfweight(icf)*jb(icf)/temp0
+            jb(icf) = vold(icf)*tempb
+            voldb(icf) = voldb(icf) + j(icf)*tempb
+            cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*&
+&             vold(icf)*tempb/temp0
+            n2 = ncfdata(icf)
+            CALL POPINTEGER4(ad_to10)
+            DO icv=ad_to10,1,-1
+              CALL POPREAL8(j(icf), r8/8)
+              temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+              b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(&
+&               icf)
+              b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf&
+&               , icv)*jb(icf)
+            END DO
+            n1 = mpg%cfregp(icf, 2)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*&
+&                                           n2/8)
+            CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2&
+&                     ), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
+&                     b2dataoncfb(1:n2), curr_shift, curr_shiftb)
+            csb = 0.D0
+            CALL POPINTEGER4(ad_to9)
+            DO icv=ad_to9,1,-1
+              CALL POPREAL8(b2data(icv), r8/8)
+              stb%dv%ne(mpg%cfreg(ic1+icv-1)) = stb%dv%ne(mpg%cfreg(ic1+&
+&               icv-1)) + cs(mpg%cfreg(ic1+icv-1))*ev*b2datab(icv)/&
+&               1.0e3_R8
+              csb(mpg%cfreg(ic1+icv-1)) = csb(mpg%cfreg(ic1+icv-1)) + st&
+&               %dv%ne(mpg%cfreg(ic1+icv-1))*ev*b2datab(icv)/1.0e3_R8
+              b2datab(icv) = 0.D0
+            END DO
+            rzb = 0.D0
+            pzb = 0.D0
+            CALL POPREAL8ARRAY(cs, r8*ncv/8)
+            WHERE (pz/rz .EQ. 0.D0) 
+              tempb0 = 0.D0
+            ELSEWHERE
+              tempb0 = csb/(rz*2.0*SQRT(pz/rz))
+            END WHERE
+            pzb = tempb0
+            rzb = -(pz*tempb0/rz)
+            CALL POPREAL8ARRAY(pz, r8*ncv/8)
+            CALL B2XPPZ_B(ncv, ns, st%dv%ne, stb%dv%ne, st%pl%na, stb%pl&
+&                   %na, st%pl%te, stb%pl%te, st%pl%ti, stb%pl%ti, pz, &
+&                   pzb, st_ext)
+            CALL POPREAL8ARRAY(rz, r8*ncv/8)
+            CALL B2XPRZ_B(ncv, ns, mp, am, st%pl%na, stb%pl%na, rz, rzb&
+&                   , st_ext)
+          ELSE
+            CALL POPREAL8(j(icf), r8/8)
+            temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+            tempb = cfweight(icf)*jb(icf)/temp0
+            jb(icf) = vold(icf)*tempb
+            voldb(icf) = voldb(icf) + j(icf)*tempb
+            cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*&
+&             vold(icf)*tempb/temp0
+            n2 = ncfdata(icf)
+            CALL POPINTEGER4(ad_to8)
+            DO icv=ad_to8,1,-1
+              CALL POPREAL8(j(icf), r8/8)
+              temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+              b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(&
+&               icf)
+              b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf&
+&               , icv)*jb(icf)
+            END DO
+            n1 = mpg%cfregp(icf, 2)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*&
+&                                           n2/8)
+            CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2&
+&                     ), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
+&                     b2dataoncfb(1:n2), curr_shift, curr_shiftb)
+            ic1 = mpg%cfregp(icf, 1)
+            ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+            gradrb = 0.D0
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
+            gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
+&             b2datab(1:n1)/ev
+            b2datab(1:n1) = 0.D0
+            CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%pl&
+&                    %ti, stb%pl%ti, funv, funvb, gradr, gradrb)
           END IF
           GOTO 100
         ELSE IF (branch .EQ. 3) THEN
-          jb(icf) = cfweight(icf)*vold(icf)*jb(icf)/(cfnorm(icf)**2*&
-&           2.0_R8)
+          CALL POPREAL8(j(icf), r8/8)
+          temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+          tempb = cfweight(icf)*jb(icf)/temp0
+          jb(icf) = vold(icf)*tempb
+          voldb(icf) = voldb(icf) + j(icf)*tempb
+          cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*vold&
+&           (icf)*tempb/temp0
           n2 = ncfdata(icf)
-          CALL POPINTEGER4(ad_to6)
-          DO icv=ad_to6,1,-1
-            b2dataoncfb(icv) = b2dataoncfb(icv) + 2*(b2dataoncf(icv)-&
-&             cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
+          CALL POPINTEGER4(ad_to7)
+          DO icv=ad_to7,1,-1
+            CALL POPREAL8(j(icf), r8/8)
+            temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+            b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(icf&
+&             )
+            b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf, &
+&             icv)*jb(icf)
           END DO
           n1 = mpg%cfregp(icf, 2)
           CALL POPCONTROL1B(branch)
@@ -524,10 +705,12 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                                         8)
           CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2)&
 &                   , b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
-&                   b2dataoncfb(1:n2))
+&                   b2dataoncfb(1:n2), curr_shift, curr_shiftb)
           ic1 = mpg%cfregp(icf, 1)
           ic2 = ic1 + mpg%cfregp(icf, 2) - 1
           gradrb = 0.D0
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
           gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
 &           b2datab(1:n1)/ev
           b2datab(1:n1) = 0.D0
@@ -535,13 +718,22 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                  te, stb%pl%te, funv, funvb, gradr, gradrb)
           GOTO 100
         ELSE IF (branch .EQ. 4) THEN
-          jb(icf) = cfweight(icf)*vold(icf)*jb(icf)/(cfnorm(icf)**2*&
-&           2.0_R8)
+          CALL POPREAL8(j(icf), r8/8)
+          temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+          tempb = cfweight(icf)*jb(icf)/temp0
+          jb(icf) = vold(icf)*tempb
+          voldb(icf) = voldb(icf) + j(icf)*tempb
+          cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*vold&
+&           (icf)*tempb/temp0
           n2 = ncfdata(icf)
-          CALL POPINTEGER4(ad_to5)
-          DO icv=ad_to5,1,-1
-            b2dataoncfb(icv) = b2dataoncfb(icv) + 2*(b2dataoncf(icv)-&
-&             cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
+          CALL POPINTEGER4(ad_to6)
+          DO icv=ad_to6,1,-1
+            CALL POPREAL8(j(icf), r8/8)
+            temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+            b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(icf&
+&             )
+            b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf, &
+&             icv)*jb(icf)
           END DO
           n1 = mpg%cfregp(icf, 2)
           CALL POPCONTROL1B(branch)
@@ -549,10 +741,12 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                                         8)
           CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2)&
 &                   , b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
-&                   b2dataoncfb(1:n2))
+&                   b2dataoncfb(1:n2), curr_shift, curr_shiftb)
           ic1 = mpg%cfregp(icf, 1)
           ic2 = ic1 + mpg%cfregp(icf, 2) - 1
           gradrb = 0.D0
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
           gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
 &           b2datab(1:n1)/1.0e19_R8
           b2datab(1:n1) = 0.D0
@@ -560,20 +754,23 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                  ne, stb%dv%ne, funv, funvb, gradr, gradrb)
           GOTO 100
         ELSE
+          CALL POPREAL8(j(icf), r8/8)
           jb(icf) = 0.D0
           lll_cumb = 0.D0
           priorb = 0.D0
         END IF
       ELSE IF (branch .LT. 9) THEN
         IF (branch .EQ. 6) THEN
+          CALL POPREAL8(j(icf), r8/8)
           priorb = -(cfweight(icf)*jb(icf))
           lll_cumb = -(cfweight(icf)*jb(icf))
           jb(icf) = 0.D0
         ELSE
           IF (branch .EQ. 7) THEN
             CALL POPINTEGER4(ad_from0)
-            CALL POPINTEGER4(ad_to3)
-            DO ifc=ad_to3,ad_from0,-1
+            CALL POPINTEGER4(ad_to4)
+            DO ifc=ad_to4,ad_from0,-1
+              CALL POPREAL8(j(icf), r8/8)
               max1b = cfweight(icf)*jb(icf)
               jb(icf) = 0.D0
               CALL POPCONTROL1B(branch)
@@ -586,31 +783,46 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
               stb%dv%fht(mpg%cfreg(ifc), 0) = stb%dv%fht(mpg%cfreg(ifc)&
 &               , 0) + mpg%cffcor(ifc)*qqb/geo%fcs(mpg%cfreg(ifc))
             END DO
+            curr_shiftb = 0.D0
           ELSE
+            CALL POPREAL8(j(icf), r8/8)
             jb(icf) = jb(icf)/ev
             CALL POPINTEGER4(ad_from)
-            CALL POPINTEGER4(ad_to2)
-            DO icv=ad_to2,ad_from,-1
+            CALL POPINTEGER4(ad_to3)
+            DO icv=ad_to3,ad_from,-1
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 0) THEN
+                CALL POPREAL8(j(icf), r8/8)
                 stb%pl%te(mpg%cfreg(icv)) = stb%pl%te(mpg%cfreg(icv)) + &
 &                 jb(icf)
                 jb(icf) = 0.D0
+              ELSE
+                CALL POPREAL8(j(icf), r8/8)
               END IF
             END DO
+            curr_shiftb = 0.D0
           END IF
           GOTO 100
         END IF
       ELSE
         IF (branch .LT. 11) THEN
           IF (branch .EQ. 9) THEN
-            jb(icf) = cfweight(icf)*vold(icf)*jb(icf)/(cfnorm(icf)**2*&
-&             2.0_R8)
+            CALL POPREAL8(j(icf), r8/8)
+            temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+            tempb = cfweight(icf)*jb(icf)/temp0
+            jb(icf) = vold(icf)*tempb
+            voldb(icf) = voldb(icf) + j(icf)*tempb
+            cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*&
+&             vold(icf)*tempb/temp0
             n2 = ncfdata(icf)
-            CALL POPINTEGER4(ad_to1)
-            DO icv=ad_to1,1,-1
-              b2dataoncfb(icv) = b2dataoncfb(icv) + 2*(b2dataoncf(icv)-&
-&               cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
+            CALL POPINTEGER4(ad_to2)
+            DO icv=ad_to2,1,-1
+              CALL POPREAL8(j(icf), r8/8)
+              temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+              b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(&
+&               icf)
+              b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf&
+&               , icv)*jb(icf)
             END DO
             n1 = mpg%cfregp(icf, 2)
             CALL POPCONTROL1B(branch)
@@ -618,20 +830,31 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                                           n2/8)
             CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2&
 &                     ), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
-&                     b2dataoncfb(1:n2))
+&                     b2dataoncfb(1:n2), curr_shift, curr_shiftb)
             ic1 = mpg%cfregp(icf, 1)
             ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
             stb%pl%ti(mpg%cfreg(ic1:ic2)) = stb%pl%ti(mpg%cfreg(ic1:ic2)&
 &             ) + b2datab(1:n1)/ev
             b2datab(1:n1) = 0.D0
           ELSE
-            jb(icf) = cfweight(icf)*vold(icf)*jb(icf)/(cfnorm(icf)**2*&
-&             2.0_R8)
+            CALL POPREAL8(j(icf), r8/8)
+            temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+            tempb = cfweight(icf)*jb(icf)/temp0
+            jb(icf) = vold(icf)*tempb
+            voldb(icf) = voldb(icf) + j(icf)*tempb
+            cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*&
+&             vold(icf)*tempb/temp0
             n2 = ncfdata(icf)
-            CALL POPINTEGER4(ad_to0)
-            DO icv=ad_to0,1,-1
-              b2dataoncfb(icv) = b2dataoncfb(icv) + 2*(b2dataoncf(icv)-&
-&               cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
+            CALL POPINTEGER4(ad_to1)
+            DO icv=ad_to1,1,-1
+              CALL POPREAL8(j(icf), r8/8)
+              temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+              b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(&
+&               icf)
+              b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf&
+&               , icv)*jb(icf)
             END DO
             n1 = mpg%cfregp(icf, 2)
             CALL POPCONTROL1B(branch)
@@ -639,21 +862,32 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                                           n2/8)
             CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2&
 &                     ), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
-&                     b2dataoncfb(1:n2))
+&                     b2dataoncfb(1:n2), curr_shift, curr_shiftb)
             ic1 = mpg%cfregp(icf, 1)
             ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
             stb%pl%te(mpg%cfreg(ic1:ic2)) = stb%pl%te(mpg%cfreg(ic1:ic2)&
 &             ) + b2datab(1:n1)/ev
             b2datab(1:n1) = 0.D0
           END IF
         ELSE IF (branch .EQ. 11) THEN
-          jb(icf) = cfweight(icf)*vold(icf)*jb(icf)/(cfnorm(icf)**2*&
-&           2.0_R8)
+          CALL POPREAL8(j(icf), r8/8)
+          temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+          tempb = cfweight(icf)*jb(icf)/temp0
+          jb(icf) = vold(icf)*tempb
+          voldb(icf) = voldb(icf) + j(icf)*tempb
+          cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*vold&
+&           (icf)*tempb/temp0
           n2 = ncfdata(icf)
-          CALL POPINTEGER4(ad_to)
-          DO icv=ad_to,1,-1
-            b2dataoncfb(icv) = b2dataoncfb(icv) + 2*(b2dataoncf(icv)-&
-&             cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
+          CALL POPINTEGER4(ad_to0)
+          DO icv=ad_to0,1,-1
+            CALL POPREAL8(j(icf), r8/8)
+            temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+            b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(icf&
+&             )
+            b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf, &
+&             icv)*jb(icf)
           END DO
           n1 = mpg%cfregp(icf, 2)
           CALL POPCONTROL1B(branch)
@@ -661,12 +895,16 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                                         8)
           CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2)&
 &                   , b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
-&                   b2dataoncfb(1:n2))
+&                   b2dataoncfb(1:n2), curr_shift, curr_shiftb)
           ic1 = mpg%cfregp(icf, 1)
           ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
           stb%dv%ne(mpg%cfreg(ic1:ic2)) = stb%dv%ne(mpg%cfreg(ic1:ic2)) &
 &           + b2datab(1:n1)/1.0e19_R8
           b2datab(1:n1) = 0.D0
+        ELSE
+          curr_shiftb = 0.D0
         END IF
         GOTO 100
       END IF
@@ -683,19 +921,25 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
         CALL INTERP1D_B(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:n2)&
 &                 , b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
-&                 b2dataoncfb(1:n2))
+&                 b2dataoncfb(1:n2), curr_shift, curr_shiftb)
         CALL POPCONTROL3B(branch)
         IF (branch .LT. 4) THEN
           IF (branch .LT. 2) THEN
             IF (branch .EQ. 0) THEN
               ic1 = mpg%cfregp(iicf, 1)
               ic2 = ic1 + n1 - 1
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/&
+&                                             8)
               stb%dv%ne(mpg%cfreg(ic1:ic2)) = stb%dv%ne(mpg%cfreg(ic1:&
 &               ic2)) + b2datab(1:n1)/1.0e19_R8
               b2datab(1:n1) = 0.D0
             ELSE
               ic1 = mpg%cfregp(iicf, 1)
               ic2 = ic1 + n1 - 1
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/&
+&                                             8)
               stb%pl%te(mpg%cfreg(ic1:ic2)) = stb%pl%te(mpg%cfreg(ic1:&
 &               ic2)) + b2datab(1:n1)/ev
               b2datab(1:n1) = 0.D0
@@ -703,6 +947,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           ELSE IF (branch .EQ. 2) THEN
             ic1 = mpg%cfregp(iicf, 1)
             ic2 = ic1 + n1 - 1
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
             stb%pl%ti(mpg%cfreg(ic1:ic2)) = stb%pl%ti(mpg%cfreg(ic1:ic2)&
 &             ) + b2datab(1:n1)/ev
             b2datab(1:n1) = 0.D0
@@ -710,6 +956,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             ic1 = mpg%cfregp(iicf, 1)
             ic2 = ic1 + n1 - 1
             gradrb = 0.D0
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
             gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
 &             b2datab(1:n1)/1.0e19_R8
             b2datab(1:n1) = 0.D0
@@ -721,6 +969,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             ic1 = mpg%cfregp(iicf, 1)
             ic2 = ic1 + n1 - 1
             gradrb = 0.D0
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
             gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
 &             b2datab(1:n1)/ev
             b2datab(1:n1) = 0.D0
@@ -730,6 +980,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             ic1 = mpg%cfregp(iicf, 1)
             ic2 = ic1 + n1 - 1
             gradrb = 0.D0
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
             gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
 &             b2datab(1:n1)/ev
             b2datab(1:n1) = 0.D0
@@ -738,8 +990,9 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           END IF
         ELSE IF (branch .EQ. 6) THEN
           csb = 0.D0
-          CALL POPINTEGER4(ad_to4)
-          DO icv=ad_to4,1,-1
+          CALL POPINTEGER4(ad_to5)
+          DO icv=ad_to5,1,-1
+            CALL POPREAL8(b2data(icv), r8/8)
             stb%dv%ne(mpg%cfreg(ic1+icv-1)) = stb%dv%ne(mpg%cfreg(ic1+&
 &             icv-1)) + cs(mpg%cfreg(ic1+icv-1))*ev*b2datab(icv)/&
 &             1.0e3_R8
@@ -751,12 +1004,12 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           pzb = 0.D0
           CALL POPREAL8ARRAY(cs, r8*ncv/8)
           WHERE (pz/rz .EQ. 0.D0) 
-            tempb = 0.D0
+            tempb0 = 0.D0
           ELSEWHERE
-            tempb = csb/(rz*2.0*SQRT(pz/rz))
+            tempb0 = csb/(rz*2.0*SQRT(pz/rz))
           END WHERE
-          pzb = tempb
-          rzb = -(pz*tempb/rz)
+          pzb = tempb0
+          rzb = -(pz*tempb0/rz)
           CALL POPREAL8ARRAY(pz, r8*ncv/8)
           CALL B2XPPZ_B(ncv, ns, st%dv%ne, stb%dv%ne, st%pl%na, stb%pl%&
 &                 na, st%pl%te, stb%pl%te, st%pl%ti, stb%pl%ti, pz, pzb&
@@ -765,14 +1018,28 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL B2XPRZ_B(ncv, ns, mp, am, st%pl%na, stb%pl%na, rz, rzb, &
 &                 st_ext)
         END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) shiftb(cf_to_shift(iicf)) = shiftb(&
+&           cf_to_shift(iicf)) + curr_shiftb/1.0e3_R8
+        CALL POPREAL8(curr_shift, r8/8)
         CALL POPINTEGER4(ic1)
       END DO
       CALL CALC_LOG_PRIOR_B(prior, priorb, inrange)
- 100  CALL POPINTEGER4(n1)
+      curr_shiftb = 0.D0
+ 100  CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) shiftb(cf_to_shift(icf)) = shiftb(cf_to_shift(&
+&         icf)) + curr_shiftb/1.0e3_R8
+      CALL POPREAL8(curr_shift, r8/8)
+      CALL POPINTEGER4(n2)
+      CALL POPINTEGER4(n1)
       CALL POPINTEGER4(ic1)
     END DO
   ELSE
+    cfnormb = 0.D0
+    voldb = 0.D0
+    IF (ALLOCATED(b2voloncfb)) b2voloncfb = 0.D0
     sigmab = 0.D0
+    shiftb = 0.D0
     IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
     meanb = 0.D0
     stb%pl%na = 0.D0
@@ -781,13 +1048,37 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
     stb%dv%fht = 0.D0
     stb%dv%ne = 0.D0
   END IF
+  DO icf=ncf,1,-1
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) THEN
+      CALL POPINTEGER4(ad_to)
+      DO icv=ad_to,1,-1
+        b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + cfdata(icf, 2, icv&
+&         )*cfnormb(icf)
+      END DO
+      b2voloncfb(icf, 1:n2) = b2voloncfb(icf, 1:n2) + voldb(icf)
+      voldb(icf) = 0.D0
+      n1 = mpg%cfregp(icf, 2)
+      IF (ALLOCATED(b2datab)) b2datab = 0.D0
+      CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
+&               b2data(1:n1), b2datab(1:n1), b2voloncf(icf, 1:n2), &
+&               b2voloncfb(icf, 1:n2), curr_shift, curr_shiftb)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) shiftb(cf_to_shift(icf)) = shiftb(cf_to_shift(&
+&         icf)) + curr_shiftb/1.0e3_R8
+      CALL POPREAL8(curr_shift, r8/8)
+      CALL POPINTEGER4(n2)
+      CALL POPINTEGER4(n1)
+    END IF
+  END DO
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     DO icf=ncf,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .NE. 1) n1 = mpg%cfregp(icf, 2)
-        n2 = ncfdata(icf)
+      CALL POPCONTROL1B(branch)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
         ic1 = mpg%cfregp(icf, 1)
         ic2 = ic1 + mpg%cfregp(icf, 2) - 1
         CALL POPINTEGER4(n1)
@@ -834,7 +1125,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc, is, iicf
   LOGICAL, SAVE :: first_call=.true.
   LOGICAL :: inrange
-  REAL(kind=r8) :: qq, prior, lll, lll_cum
+  REAL(kind=r8) :: qq, prior, lll, lll_cum, curr_shift
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
   INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
@@ -851,8 +1142,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
     CALL XERTST(mpg%isclassicalgrid .EQ. 1, ' Cost function CVs and '//&
 &         'FCs ordering  and interpolation in case of unstructured grid'&
 &         //' needs to be revised')
-    cfnorm = 0.0_R8
-    vold = 0.0_R8
     DO icf=1,ncf
       IF (cfread(icf)) THEN
 ! WARNING! For now we assume that the data read from the cost function is only radially dependent
@@ -866,31 +1155,46 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         arg1 = icsepomp - 1
         CALL CALC_DIST_NODIFF(mpg, geo, mpg%cfreg(ic1:ic2), n1, arg1, &
 &                       b2rr(icf, 1:n1))
-        b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
-        CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2voloncf(icf, 1:n2))
-        vold(icf) = SUM(b2voloncf(icf, 1:n2))
-        DO icv=1,n2
-          cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2&
-&           , icv)
-        END DO
-        IF (maptoomp(icf)) THEN
+      END IF
+      IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
 ! simply use as b2rr the OMP radial coordinates.
-          CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
-&               'Mapping to OMP need revision for extended grids')
+        CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
+&             'Mapping to OMP need revision for extended grids')
 ! check on, and then use, only internal Cvs in OMP list
-          CALL XERTST(n1 .EQ. nomp - 2, &
-&               'number of Cv in CF does not equal Cvs in OMP')
-          arg1 = icsepomp - 1
-          CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
-&                         icf, 1:n1))
-        END IF
+        CALL XERTST(n1 .EQ. nomp - 2, &
+&             'number of Cv in CF does not equal Cvs in OMP')
+        arg1 = icsepomp - 1
+        CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
+&                       icf, 1:n1))
       END IF
     END DO
     first_call = .false.
   END IF
+! cf normalization depends on shift now, as some points may eventualy be left out of the B2 domain
+  cfnorm = 0.0_R8
+  vold = 0.0_R8
+  DO icf=1,ncf
+    IF (cfread(icf)) THEN
+      ic1 = mpg%cfregp(icf, 1)
+      ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+      n1 = mpg%cfregp(icf, 2)
+      n2 = ncfdata(icf)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) curr_shift = shift(cf_to_shift(icf))/&
+&         1.0e3_R8
+      b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
+&             b2data(1:n1), b2voloncf(icf, 1:n2), curr_shift)
+      vold(icf) = SUM(b2voloncf(icf, 1:n2))
+      DO icv=1,n2
+        cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2, &
+&         icv)
+      END DO
+    END IF
+  END DO
 !
   j = 0.0_R8
   IF (ncf .GT. 0) THEN
@@ -899,6 +1203,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       ic2 = ic1 + mpg%cfregp(icf, 2) - 1
       n1 = mpg%cfregp(icf, 2)
       n2 = ncfdata(icf)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) curr_shift = shift(cf_to_shift(icf))/&
+&         1.0e3_R8
       SELECT CASE  (cftype(icf)) 
       CASE (0) 
 
@@ -907,7 +1215,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron density on desired CVs
         b2data(1:n1) = st%dv%ne(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -917,7 +1225,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron temperature on desired CVs
         b2data(1:n1) = st%pl%te(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -927,7 +1235,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !ion temperature on desired CVs
         b2data(1:n1) = st%pl%ti(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -967,6 +1275,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           n2 = ncfdata(iicf)
           ic1 = mpg%cfregp(iicf, 1)
           ic2 = ic1 + n1 - 1
+          curr_shift = 0.0_R8
+!shift is in mm!
+          IF (cf_to_shift(iicf) .GT. 0) curr_shift = shift(cf_to_shift(&
+&             iicf))/1.0e3_R8
           SELECT CASE  (cftype(iicf)) 
           CASE (1) 
 !electron density
@@ -1007,7 +1319,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
             CALL XERRAB('cftype for sum out of bounds for cftype=6')
           END SELECT
           CALL INTERP1D(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:n2)&
-&                 , b2data(1:n1), b2dataoncf(1:n2))
+&                 , b2data(1:n1), b2dataoncf(1:n2), curr_shift)
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
 &                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
 &                                  , lll, isigma, imean)
@@ -1026,7 +1338,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                     gradr)
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -1038,7 +1350,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                     gradr)
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -1050,7 +1362,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                     gradr)
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -1068,7 +1380,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &           icv-1))*ev/1.0e3_R8
         END DO
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2

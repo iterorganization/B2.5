@@ -3,7 +3,7 @@
 !
 !  Differentiation of interp1d in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: fb
-!   with respect to varying inputs: fa fb
+!   with respect to varying inputs: fa fb shift
 !
 !
 !
@@ -15,7 +15,8 @@
 !
 !
 !
-SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, nbdirs)
+SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, shift, shiftd&
+& , nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -27,6 +28,8 @@ SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, nbdirs)
   REAL(kind=r8) :: fad(nbdirsmax, nn)
   REAL(kind=r8) :: xx(nn)
   REAL(kind=r8) :: xx1(nn1)
+  REAL(kind=r8) :: shift
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: shiftd
 !..   output arguments
   REAL(kind=r8) :: fb(nn1)
   REAL(kind=r8) :: fbd(nbdirsmax, nn1)
@@ -36,6 +39,8 @@ SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, nbdirs)
 !..   procedures
   EXTERNAL XERTST
   INTEGER :: nd
+  REAL(kind=r8) :: temp
+  REAL(kind=r8) :: temp0
   INTEGER :: nbdirs
 !
 !sc
@@ -46,29 +51,31 @@ SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, nbdirs)
   CALL XERTST(1 .LE. nn, 'faulty input nn')
   CALL XERTST(1 .LE. nn1, 'faulty input nn1')
   DO i=1,nn1
-    CALL XERTST(xx1(i) .GE. xx(1) .AND. xx1(i) .LE. xx(nn), &
-&         'interp1d not meant for X extrapolation!')
+    CALL XERTST(xx1(i) - shift .GE. xx(1) .AND. xx1(i) - shift .LE. xx(&
+&         nn), 'interp1d not meant for X extrapolation!')
     ib = 1
     it = nn
     DO WHILE (it - ib .GT. 1)
       ih = (ib+it)/2
-      IF (xx1(i) .EQ. xx(it)) THEN
+      IF (xx1(i) - shift .EQ. xx(it)) THEN
         ib = it - 1
-      ELSE IF (xx1(i) .LT. xx(ih)) THEN
+      ELSE IF (xx1(i) - shift .LT. xx(ih)) THEN
         it = ih
-      ELSE IF (xx1(i) .GT. xx(ih)) THEN
+      ELSE IF (xx1(i) - shift .GT. xx(ih)) THEN
         ib = ih
-      ELSE IF (xx1(i) .EQ. xx(ih)) THEN
+      ELSE IF (xx1(i) - shift .EQ. xx(ih)) THEN
         ib = ih
         it = ih + 1
       END IF
     END DO
     CALL XERTST(xx(it) .GT. xx(ib), 'XX array non-monotonic!')
+    temp = (fa(it)-fa(ib))/(xx(it)-xx(ib))
+    temp0 = xx1(i) - xx(ib) - shift
     DO nd=1,nbdirs
-      fbd(nd, i) = (xx1(i)-xx(ib))*(fad(nd, it)-fad(nd, ib))/(xx(it)-xx(&
-&       ib)) + fad(nd, ib)
+      fbd(nd, i) = temp0*(fad(nd, it)-fad(nd, ib))/(xx(it)-xx(ib)) - &
+&       temp*shiftd(nd) + fad(nd, ib)
     END DO
-    fb(i) = (xx1(i)-xx(ib))/(xx(it)-xx(ib))*(fa(it)-fa(ib)) + fa(ib)
+    fb(i) = temp0*temp + fa(ib)
   END DO
 !
   CALL SUBEND()

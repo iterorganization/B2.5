@@ -5,11 +5,11 @@
 *     print_adj_parameters is used in b2mn_b and b2optim_* to print which
 *     parameters are used for sensitivity calculation and optimization
 *-----------------------------------------------------------------------
-      integer :: icf, ii, ip, isigma, imean, ipar
+      integer :: icf, ii, ip, ipar
       character*3 ss1
       character*3 ss2
       character*70 key
-      do ip = 1, nnvar - nsigma_opt - nmean_opt
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt because it is not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -157,10 +157,9 @@
         endif
       end do !nbdirs-nsigma_opt-nmean_opt
 
-      ipar = nnvar - nmean_opt - nsigma_opt
+      ipar = nnvar - nmean_opt - nsigma_opt ! not subtracting nshift_opt because it is not part of nnvar!
 
       if (nsigma_opt.gt.0) then
-        isigma = npar_opt - nmean_opt - nsigma_opt + 1
         do ip = 1, nsigma
 !         only if sigma is being optimized!
           if (sigma_opt(ip)) then
@@ -181,7 +180,6 @@
       endif
 
       if (nmean_opt.gt.0) then
-        imean = npar_opt - nmean_opt + 1
         do ip = 1, nmean
 !         only if mean is being optimized!
           if (mean_opt(ip)) then
@@ -196,6 +194,18 @@
             endif
             write(ss2,"(I3)") ip
             write (key, *) "mean",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
+      if (nshift_opt.gt.0) then
+        do ip = 1, nshift
+!         only if shift is being optimized!
+          if (shiftopt(ip)) then
+            ipar = ipar + 1
+            write(ss2,"(I3)") ip
+            write (key, *) "shift",ss2
             write (*,*) '  Calculating gradient of',trim(key)
           endif
         end do

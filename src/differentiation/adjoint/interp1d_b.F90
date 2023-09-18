@@ -3,7 +3,7 @@
 !
 !  Differentiation of interp1d in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: fa fb
-!   with respect to varying inputs: fa fb
+!   with respect to varying inputs: fa fb shift
 !
 !
 !
@@ -15,7 +15,7 @@
 !
 !
 !
-SUBROUTINE INTERP1D_B(nn, nn1, xx, xx1, fa, fab, fb, fbb)
+SUBROUTINE INTERP1D_B(nn, nn1, xx, xx1, fa, fab, fb, fbb, shift, shiftb)
   USE B2MOD_TYPES
   USE B2MOD_SUBSYS
   IMPLICIT NONE
@@ -25,6 +25,8 @@ SUBROUTINE INTERP1D_B(nn, nn1, xx, xx1, fa, fab, fb, fbb)
   REAL(kind=r8) :: fab(nn)
   REAL(kind=r8) :: xx(nn)
   REAL(kind=r8) :: xx1(nn1)
+  REAL(kind=r8) :: shift
+  REAL(kind=r8) :: shiftb
 !..   output arguments
   REAL(kind=r8) :: fb(nn1)
   REAL(kind=r8) :: fbb(nn1)
@@ -50,16 +52,16 @@ SUBROUTINE INTERP1D_B(nn, nn1, xx, xx1, fa, fab, fb, fbb)
     ad_count = 0
     DO WHILE (it - ib .GT. 1)
       ih = (ib+it)/2
-      IF (xx1(i) .EQ. xx(it)) THEN
+      IF (xx1(i) - shift .EQ. xx(it)) THEN
         CALL PUSHCONTROL3B(4)
         ib = it - 1
-      ELSE IF (xx1(i) .LT. xx(ih)) THEN
+      ELSE IF (xx1(i) - shift .LT. xx(ih)) THEN
         CALL PUSHCONTROL3B(3)
         it = ih
-      ELSE IF (xx1(i) .GT. xx(ih)) THEN
+      ELSE IF (xx1(i) - shift .GT. xx(ih)) THEN
         CALL PUSHCONTROL3B(2)
         ib = ih
-      ELSE IF (xx1(i) .EQ. xx(ih)) THEN
+      ELSE IF (xx1(i) - shift .EQ. xx(ih)) THEN
         CALL PUSHCONTROL3B(1)
         ib = ih
         it = ih + 1
@@ -70,8 +72,10 @@ SUBROUTINE INTERP1D_B(nn, nn1, xx, xx1, fa, fab, fb, fbb)
     END DO
     CALL PUSHINTEGER4(ad_count)
   END DO
+  shiftb = 0.D0
   DO i=nn1,1,-1
-    tempb = (xx1(i)-xx(ib))*fbb(i)/(xx(it)-xx(ib))
+    shiftb = shiftb - (fa(it)-fa(ib))*fbb(i)/(xx(it)-xx(ib))
+    tempb = (xx1(i)-xx(ib)-shift)*fbb(i)/(xx(it)-xx(ib))
     fab(ib) = fab(ib) + fbb(i)
     fbb(i) = 0.D0
     fab(it) = fab(it) + tempb

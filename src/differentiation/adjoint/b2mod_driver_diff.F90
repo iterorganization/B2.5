@@ -5094,8 +5094,8 @@ CONTAINS
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
 !                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
-!                parm_sig parm_dna tdata sigma *par_opt_phys mean
-!                j switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                parm_sig parm_dna tdata sigma shift *par_opt_phys
+!                mean j switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -5105,14 +5105,15 @@ CONTAINS
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !   RW status of diff variables: *rtlsa:out *rtlcx:out *rtlqa:out
-!                *rtlra:out cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
-!                *b2dataoncf:(loc) enepar:out conpar:out enkpar:out
-!                potpar:out mompar:out enipar:out b2recyc:out userfluxparm:(loc)
-!                cfvla:(loc) cfvsa:(loc) cfalf:(loc) cfdpa:(loc)
-!                cfsig:(loc) cfdna:(loc) cfhce:(loc) cfhci:(loc)
-!                parm_hce:out parm_hci:out parm_vla:out parm_vsa:out
-!                parm_alf:out parm_dpa:out parm_sig:out parm_dna:out
-!                tdata:out sigma:out *par_opt_phys:out mean:out
+!                *rtlra:out cutlo:(loc) cfnorm:(loc) vold:(loc)
+!                *b2voloncf:(loc) *b2data:(loc) *b2dataoncf:(loc)
+!                enepar:out conpar:out enkpar:out potpar:out mompar:out
+!                enipar:out b2recyc:out userfluxparm:(loc) cfvla:(loc)
+!                cfvsa:(loc) cfalf:(loc) cfdpa:(loc) cfsig:(loc)
+!                cfdna:(loc) cfhce:(loc) cfhci:(loc) parm_hce:out
+!                parm_hci:out parm_vla:out parm_vsa:out parm_alf:out
+!                parm_dpa:out parm_sig:out parm_dna:out tdata:out
+!                sigma:out shift:out *par_opt_phys:out mean:out
 !                int4l:(loc) int1l:(loc) int2l:(loc) int3l:(loc)
 !                int0l:(loc) fb_target:(loc) fb_prev:(loc) fb_current:(loc)
 !                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
@@ -6386,6 +6387,9 @@ CONTAINS
     WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, ' TIME '&
 &   , tim, ' NTIM ', ntim, ' DTIM ', dtim
     WRITE(*, *) 'MAX RESIDUAL ', res_max
+      inquire(file='_quit',exist=quitexist_)
+      inquire(file='.quit',exist=quitexist)
+      quit = quitexist_.or.quitexist
 !   ..end loop
 !   ..call cost function
     IF (ALLOCATED(b2dataoncf)) THEN
@@ -6407,8 +6411,6 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
-    CALL PUSHREAL8ARRAY(vold, r8*nncf/8)
-    CALL PUSHREAL8ARRAY(cfnorm, r8*nncf/8)
     IF (ALLOCATED(b2rr)) THEN
       CALL PUSHREAL8ARRAY(b2rr, r8*SIZE(b2rr, 1)*SIZE(b2rr, 2)/8)
       CALL PUSHCONTROL1B(1)
@@ -6424,8 +6426,6 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2rr, r8*SIZE(b2rr, 1)*SIZE(&
 &                                   b2rr, 2)/8)
-    CALL POPREAL8ARRAY(cfnorm, r8*nncf/8)
-    CALL POPREAL8ARRAY(vold, r8*nncf/8)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2voloncf, r8*SIZE(b2voloncf, &
 &                                   1)*SIZE(b2voloncf, 2)/8)
@@ -7892,10 +7892,10 @@ CONTAINS
       ITERCOUNT = ITERCOUNT + 1
       write(*,*) 'GRADIENT ITERATION ',ITERCOUNT
       write(*,*) 'GRADIENT MAX RES ',cumul
-      call set_adj_gradient(npar_opt,dummygrad,switchb)
       inquire(file='_quit',exist=quitexist_)
       inquire(file='.quit',exist=quitexist)
       quit = quitexist.or.quitexist_
+      call set_adj_gradient(npar_opt,dummygrad,switchb)
       CALL ADSTACK_RESETREPEAT()
     END DO
     write(*,*) 'TOTAL ADJOINT GRADIENT ITERATIONS ',ITERCOUNT
@@ -9221,6 +9221,9 @@ CONTAINS
         END IF
       END IF
       WRITE(*, *) 'MAX RESIDUAL ', res_max
+      inquire(file='_quit',exist=quitexist_)
+      inquire(file='.quit',exist=quitexist)
+      quit = quitexist_.or.quitexist
     END DO
 !   ..end loop
     primal_iterations = itim

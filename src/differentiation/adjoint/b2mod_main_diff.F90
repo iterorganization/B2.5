@@ -634,7 +634,8 @@ CONTAINS
     USE B2MOD_INPUT_PROFILE_DIFF, ONLY : tdata, tdatab
     USE B2MOD_AD_DIFF, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFF, ONLY : par_opt_phys, par_opt_physb, npar_opt&
-&   , sigma, sigmab, nsigma, mean, meanb, nmean
+&   , sigma, sigmab, nsigma, mean, meanb, nmean, shift, shiftb, nshift, &
+&   nshift_opt
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES), INTENT(INOUT) :: switchb
@@ -706,7 +707,7 @@ CONTAINS
     USE B2MOD_INPUT_PROFILE_DIFF, ONLY : tdata
     USE B2MOD_AD_DIFF, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFF, ONLY : par_opt_phys, npar_opt, sigma, nsigma&
-&   , mean, nmean
+&   , mean, nmean, shift, nshift, nshift_opt
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg

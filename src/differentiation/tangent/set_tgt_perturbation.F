@@ -13,7 +13,7 @@
 *     to correctly set and pass the input perturbation to tangent AD
 *     coming from the optimization routines
 *-----------------------------------------------------------------------
-      integer :: idir, ii, ip, isigma, ipar, imean
+      integer :: idir, ii, ip, ipar
       character*3 ss1
       character*3 ss2
       character*70 key
@@ -58,7 +58,7 @@
       switchdiff%b2tfhi_fkt_hie = 0.0_R8
       switchdiff%b2tfhe_vis_kt = 0.0_R8
       idir = 1 !this indicates the different directions of multidirectional derivative mode
-      do ip = 1, nnvar - nsigma_opt - nmean_opt
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt because it is not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -247,11 +247,10 @@
         endif
       end do
 
-      ipar = nnvar - nmean_opt - nsigma_opt
+      ipar = nnvar - nmean_opt - nsigma_opt ! not subtracting nshift_opt because it is not part of nnvar!
 
       if (nsigma_opt.gt.0) then
         sigmad = 0.0_R8
-        isigma = npar_opt - nmean_opt - nsigma_opt + 1
         do ip = 1, nsigma
 !         only if sigma is being optimized!
           if (sigma_opt(ip)) then
@@ -264,8 +263,8 @@
               call xerrab('set_tgt_perturbation: inconsistency '//
      &         'between sigma '//trim(ss1)//'and partype '//trim(ss2))
             endif
-            sigmad(isigma,ip) = 1.0_R8
-            isigma = isigma + 1
+            sigmad(idir,ip) = 1.0_R8
+            idir = idir + 1
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
             write (*,*) '  Calculating gradient of',trim(key)
@@ -275,7 +274,6 @@
 
       if (nmean_opt.gt.0) then
         meand = 0.0_R8
-        imean = npar_opt - nmean_opt + 1
         do ip = 1, nmean
 !         only if mean is being optimized!
           if (mean_opt(ip)) then
@@ -288,10 +286,24 @@
               call xerrab('set_tgt_perturbation: inconsistency '//
      &         'between mean '//trim(ss1)//'and partype '//trim(ss2))
             endif
-            meand(imean,ip) = 1.0_R8
-            imean = imean + 1
+            meand(idir,ip) = 1.0_R8
+            idir = idir + 1
             write(ss2,"(I3)") ip
             write (key, *) "mean",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
+      if (nshift_opt.gt.0) then
+        shiftd = 0.0_R8
+        do ip = 1, nshift
+!         only if shift is being optimized!
+          if (shiftopt(ip)) then
+            shiftd(idir,ip) = 1.0_R8
+            idir = idir + 1
+            write(ss2,"(I3)") ip
+            write (key, *) "shift",ss2
             write (*,*) '  Calculating gradient of',trim(key)
           endif
         end do

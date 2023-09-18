@@ -15,13 +15,13 @@
 *     to correctly set and pass the gradient from adjoint AD to the
 *     optimization routines
 *-----------------------------------------------------------------------
-      integer :: idir, ii, ip, isigma, imean
+      integer :: idir, ii, ip, ipar
       character*3 ss1
       character*3 ss2
       character*70 key
       grad = 0.0_R8
       idir = 1 !this indicates the different directions of adjoint mode
-      do ip = 1, nnvar - nsigma_opt - nmean_opt
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt because it is not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -235,6 +235,20 @@
             grad(idir) = meanb(ip)
             write(ss2,"(I3)") ip
             write (key, *) "mean",ss2
+            write (*,*) '  Cost function gradient 1: ',
+     &        grad(idir),'wrt',trim(key)
+            idir = idir + 1
+          endif
+        end do
+      endif
+
+      if (nshift_opt.gt.0) then
+        do ip = 1, nshift
+!         only if shift is being optimized!
+          if (shiftopt(ip)) then
+            grad(idir) = shiftb(ip)
+            write(ss2,"(I3)") ip
+            write (key, *) "shift",ss2
             write (*,*) '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1
