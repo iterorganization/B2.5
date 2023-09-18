@@ -1130,24 +1130,24 @@
       endif
 
 ! for Fcx's and Fcy's
-      m%imapFcx= 0 ! 0 means not in use in unstructured
+      m%imapFcx = 0 ! 0 means not in use in unstructured
       ici = 0
       do iy = 0, ny
         do ix = 0, nx
-          if(ighostfcx(ix,iy)==0) then
+          if(ighostfcx(ix,iy) == 0) then
             ici = ici + 1
             m%imapFcx(ix,iy) = ici
-           endif
+          endif
         enddo
       enddo
 
-      m%imapFcy= 0 ! 0 means not in use in unstructured
+      m%imapFcy = 0 ! 0 means not in use in unstructured
       do ix = 0, nx
         do iy = 0, ny
-          if(ighostfcy(ix,iy)==0) then
+          if(ighostfcy(ix,iy) == 0) then
             ici = ici + 1
             m%imapFcy(ix,iy) = ici
-           endif
+          endif
         enddo
       enddo
 
@@ -1266,11 +1266,11 @@
         do ix = -1, nx
           ix2 = ix
           iy2 = iy
-          do while (ighostvx(ix2,iy2)==1)
+          do while (ighostvx(ix2,iy2) == 1)
             ix2o = ix2
             iy2o = iy2
-            ix2= ixmapghostvx(ix2o,iy2)
-            iy2= iymapghostvx(ix2o,iy2)
+            ix2 = ixmapghostvx(ix2o,iy2)
+            iy2 = iymapghostvx(ix2o,iy2)
             if ((ix2 == -2) .or. (ix2 == nx+1) .or.
      .          (iy2 == -2) .or. (iy2 == ny+1)) exit
           enddo
@@ -1603,7 +1603,6 @@
         end do
       end do
 
-
 ! listing for every face the two corresponding cells
 ! and the corresponding vertices
 ! x faces
@@ -1620,7 +1619,6 @@
            endif
          end do
        end do
-
 
 ! y faces
 
@@ -1704,7 +1702,6 @@
         endif
       enddo
 
-
 ! listing for every vertex the cell and face numbers
 ! and the starting points in the list
        allocate (indFc(2*m%nFc))
@@ -1714,7 +1711,6 @@
        allocate (fh(2*m%nFc))
        fh(1:m%nFc)         = m%fcVx(1:m%nFc,1)
        fh(m%nFc+1:2*m%nFc) = m%fcVx(1:m%nFc,2)
-
 
        allocate (indCv(m%nCmxVx))
        do ic = 1, m%nCv
@@ -1976,7 +1972,7 @@
                       else
                         ifcc = ifcc + 1
                         m%ftFc(ifcc) = iFc
-                        ftFcP(iFt,2) = ifcc - ftFcP(ift,1) + 1
+                        ftFcP(iFt,2) = ifcc - ftFcP(iFt,1) + 1
                       end if
                     endif
                     if (ifcy.ne.0) then
@@ -1989,7 +1985,7 @@
                       else
                         ifccy = ifccy + 1
                         m%fsFc(ifccy) = ifcy
-                        fsFcP(iFs,2) = ifccy - fsFcP(ifs,1) + 1
+                        fsFcP(iFs,2) = ifccy - fsFcP(iFs,1) + 1
                       end if
                     endif
                   end if
@@ -4498,7 +4494,8 @@
           enddo
         endif
         iyo = iy
-        write(*,*) ' Found OMP location at ix, iy = ' , n_omp, iyo
+        write(*,'(a,2i5)')
+     .   ' Found OMP location at ix, iy = ' , n_omp, iyo
 
 *   ..find the poloidal number of the inner midplane cell as the cell with max Bz
 
@@ -4529,7 +4526,8 @@
           enddo
         endif
         iyi = iy
-        write(*,*) ' Found IMP location at ix, iy = ' , n_imp, iyi
+        write(*,'(a,2i5)')
+     .   ' Found IMP location at ix, iy = ' , n_imp, iyi
 
         endif ! autodet
 
@@ -4543,7 +4541,8 @@
         do while (isRealCell(cflags(n_omp,iymin-1,CELLFLAG_TYPE)))
           iymin = iymin - 1
         end do
-        write(*,*) 'Inner and outermost flux tube at OMP at '//
+        write(*,'(a,2i5)')
+     &             'Inner and outermost flux tube at OMP at '//
      &             'iymin, iymax  = ',iymin, iymax
 
         
@@ -4584,7 +4583,8 @@
         do while (isRealCell(cflags(n_imp,iymin-1,CELLFLAG_TYPE)))
           iymin = iymin - 1
         end do
-        write(*,*) 'Inner and outermost flux tube at IMP at '//
+        write(*,'(a,2i5)')
+     &             'Inner and outermost flux tube at IMP at '//
      &             'iymin, iymax  = ', iymin, iymax
         if (nnreg(0).eq.1) then
         ! swap iymin and iymax for calculation below if we deal with slab or linear cases
