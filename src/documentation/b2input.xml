@@ -7286,6 +7286,46 @@
 				</description>
 			</switch>
 			<switch>
+				<name>SHIFT_CF_DATA</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					For each cost function where experimental data is read, specifies whether or not to shift the separatrix position in the experimental data spatial coordinate as follows: (r - r_{sep}) - SHIFT_VALUE$. Unique integers larger than zero for each cost function means that each has its specific shift value. Using the same integer for two (or more) cost functions makes to code use the same shift value for those cost functions (the first SHIFT_VALUE among the cost function with the same integer is adopted). Possible usage: Thomson scattering data of density and temperature which should be defined in two separate cost functions but come from the same source and thus have the same shift. NSHIFT is then the number of unique integers and is used to define other parameters below other parameters.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_VALUE</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Defines the value of the shift in millimeters for each cost function with SHIFT_CF_DATA .neq. 0. Tis is also used as initial guess in case of optimization.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_TYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NSHIFT)</type>
+				<description>
+					Same as PRIOR_TYPE but defined for each unique cost function shift.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_PAR</name>
+				<default>-1.0</default>
+				<type>real*8 array of size (NSHIFT,2)</type>
+				<description>
+					Same as PRIOR_PAR but defined for each unique cost function shift.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_RANGE</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NSHIFT,2)</type>
+				<description>
+					Same as PRIOR_RANGE but defined for each unique cost function shift.
+				</description>
+			</switch>
+			<switch>
 				<name>NNVAR</name>
 				<default>0</default>
 				<type>integer</type>
@@ -7359,6 +7399,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>SHIFT_OPT</name>
+				<default>.false.</default>
+				<type>logical array of size (NSHIFT)</type>
+				<description>
+					For each SHIFT_CF_VALUE, specifies whether its sensitivity is computed or not, and whether is optimized or fixed.
+				</description>
+			</switch>
+			<switch>
 				<name>SPATIAL_DEP</name>
 				<default>.false.</default>
 				<type>logical array of size (NNVAR)</type>
@@ -7421,6 +7469,22 @@
 				<type>real*8 array of size (NPAR_OPT)</type>
 				<description>
 					Upper bound for each optimization parameter.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_L</name>
+				<default>-1000.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Lower bound for SHIFT_CF_DATA parameter.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_U</name>
+				<default>1000.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Upper bound for SHIFT_CF_DATA parameter.
 				</description>
 			</switch>
 			<switch>
