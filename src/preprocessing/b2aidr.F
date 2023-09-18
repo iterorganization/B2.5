@@ -580,7 +580,7 @@
      &  te1(-1:nx,-1:ny), ti1(-1:nx,-1:ny), po1(-1:nx,-1:ny),
      &  fna1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  fhe1(-1:nx,-1:ny,0:1,0:1),
-     &  fhi1(-1:nx,-1:ny,0:1,0:1), fhn1(-1:nx,-1:ny,0:1,0:1), 
+     &  fhi1(-1:nx,-1:ny,0:1,0:1), fhn1(-1:nx,-1:ny,0:1,0:1),
      &  fch1(-1:nx,-1:ny,0:1,0:1),
      1  fch_321(-1:nx,-1:ny,0:1,0:1), fch_521(-1:nx,-1:ny,0:1,0:1),
      2  fch_p1(-1:nx,-1:ny,0:1,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1),
@@ -827,62 +827,63 @@
       open (unit=ninp_us,file='b2fgmtry',iostat=io)
 #endif
       if (io.eq.0) then
-      call cfopen (ninp_us,'b2fgmtry','old','un*formatted')
-      call cfverr (ninp_us, b2fgmtry_version)
-      call cfruin (ninp_us,7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp_us,5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp_us,1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp_us,3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
-      call cfruch (ninp_us, 120, lblgm, 'label')
-      call cfruin (ninp_us, 1, idum, 'isymm')
-      call alloc_mapping (mpg)
-      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nFt, mpg%nVmxCv)
-      call read_b2fgmtry (ninp_us, mpg, geo)
+        call cfopen (ninp_us,'b2fgmtry','old','un*formatted')
+        call cfverr (ninp_us, b2fgmtry_version)
+        call cfruin (ninp_us,7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+        mpg%nCi = idum(0)
+        mpg%nCg = idum(1)
+        mpg%nCv = idum(2)
+        mpg%nFc = idum(3)
+        mpg%nVx = idum(4)
+        mpg%nFs = idum(5)
+        mpg%nFt = idum(6)
+        call cfruin (ninp_us,5,idum,
+     .   'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+        mpg%nCmxVx = idum(0)
+        mpg%nCmxFc = idum(1)
+        mpg%nVmxCv = idum(2)
+        mpg%nVmxFc = idum(3)
+        mpg%nCmxNv = idum(4)
+        call cfruin (ninp_us,1,idum,'isClassicalGrid')
+        mpg%isClassicalGrid = idum(0)
+        call cfruin (ninp_us,3,idum,'nx,ny,nncut')
+        mpg%nx    = idum(0)
+        mpg%ny    = idum(1)
+        mpg%nncut = idum(2)
+        call cfruch (ninp_us, 120, lblgm, 'label')
+        call cfruin (ninp_us, 1, idum, 'isymm')
+        call alloc_mapping (mpg)
+        call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
+     .   mpg%nFt, mpg%nVmxCv)
+        call read_b2fgmtry (ninp_us, mpg, geo)
 
 *   ..convert plasma to unstructured format
-      call prep_state (nx, ny, ns, mpg%nCv, mpg%nFc, mpg, state)
-      write (*,*) 'State created'
-      call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
+        call prep_state (nx, ny, ns, mpg%nCv, mpg%nFc, mpg, state)
+        write (*,*) 'State created'
+        call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 
 *   ..write unstructured b2fstati
 #ifdef F2003
-      open (newunit=nout_us,file='b2fstati',iostat=io)
+        open (newunit=nout_us,file='b2fstati',iostat=io)
 #else
-      nout_us = newunit()
-      open (unit=nout_us,file='b2fstati',iostat=io)
+        nout_us = newunit()
+        open (unit=nout_us,file='b2fstati',iostat=io)
 #endif
-      idum(0) = mpg%nCv
-      idum(1) = mpg%nFc
-      idum(2) = ns
-      call cfverw (nout_us, newversion)
-      call cfwuin (nout_us, 3, idum, 'nCv,nFc,ns')
-      call cfwuch (nout_us, 120, lblps, 'label')
-      call b2wuzd (nout_us, newversion, ns, zamin, zamax, zn, am)
-      call write_b2fstate (nout_us, mpg%nCv, mpg%nFc, ns, state)
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = ns
+        call cfverw (nout_us, newversion)
+        call cfwuin (nout_us, 3, idum, 'nCv,nFc,ns')
+        call cfwuch (nout_us, 120, lblps, 'label')
+        call b2wuzd (nout_us, newversion, ns, zamin, zamax, zn, am)
+        call write_b2fstate (nout_us, mpg%nCv, mpg%nFc, ns, state)
 
 *   ..clean up
-      close (ninp_us)
-      close (nout_us)
-      call dealloc_geometry(geo)
-      call dealloc_mapping(mpg)
-      call destroyB2State(state)
+        close (ninp_us)
+        close (nout_us)
+        call dealloc_geometry(geo)
+        call dealloc_mapping(mpg)
+        call destroyB2State(state)
       else
         write(*,*) 'b2fgmtry not found. Not creating b2fstati.'
       endif
