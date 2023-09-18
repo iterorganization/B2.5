@@ -524,8 +524,8 @@ CONTAINS
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
 !                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
-!                parm_sig parm_dna tdata sigma *par_opt_phys mean
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                parm_sig parm_dna tdata sigma shift *par_opt_phys
+!                mean switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -543,14 +543,14 @@ CONTAINS
 !                cfhce:(loc) cfhci:(loc) parm_hce:in parm_hci:in
 !                parm_vla:in parm_vsa:in parm_alf:in parm_dpa:in
 !                parm_sig:in parm_dna:in tdata:in-out sigma:in
-!                *par_opt_phys:in mean:in int4l:(loc) int1l:(loc)
-!                int2l:(loc) int3l:(loc) int0l:(loc) fb_target:(loc)
-!                fb_prev:(loc) fb_current:(loc) fb_const:(loc)
-!                charge_frac:(loc) saved_fb_actuator:(loc) fb_rescale:(loc)
-!                j:out geo.cvbb:(loc) switch.keps_cd:in switch.keps_heat:in
-!                switch.keps_heat_i:in switch.keps_sig:in switch.keps_alf:in
-!                switch.keps_visc:in switch.keps_dkt:in switch.keps_dzt:in
-!                switch.keps_shear:in switch.b2sikt_fac_sheath:in
+!                shift:in *par_opt_phys:in mean:in int4l:(loc)
+!                int1l:(loc) int2l:(loc) int3l:(loc) int0l:(loc)
+!                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
+!                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
+!                fb_rescale:(loc) j:out geo.cvbb:(loc) switch.keps_cd:in
+!                switch.keps_heat:in switch.keps_heat_i:in switch.keps_sig:in
+!                switch.keps_alf:in switch.keps_visc:in switch.keps_dkt:in
+!                switch.keps_dzt:in switch.keps_shear:in switch.b2sikt_fac_sheath:in
 !                switch.b2sikt_fac_sheath_core:in switch.b2sikt_fac_diss:in
 !                switch.b2sikt_fac_diss_core:in switch.b2sikt_fac_vis_rs:in
 !                switch.b2tfhi_fflokt:in switch.b2tfhi_fconkt:in
@@ -875,7 +875,8 @@ CONTAINS
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata, tdatad
     USE B2MOD_AD_DIFFV, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, par_opt_physd, &
-&   npar_opt, sigma, sigmad, nsigma, mean, meand, nmean
+&   npar_opt, sigma, sigmad, nsigma, mean, meand, nmean, shift, shiftd, &
+&   nshift, nshift_opt
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -910,7 +911,7 @@ CONTAINS
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata
     USE B2MOD_AD_DIFFV, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, npar_opt, sigma, &
-&   nsigma, mean, nmean
+&   nsigma, mean, nmean, shift, nshift, nshift_opt
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch

@@ -2,11 +2,11 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2usr_cost_function in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfnorm vold *b2voloncf *b2data
-!                *b2dataoncf j
-!   with respect to varying inputs: cfnorm vold *b2voloncf *b2data
-!                *b2dataoncf sigma *par_opt_phys mean *(st.pl.na)
-!                *(st.pl.te) *(st.pl.ti) *(st.dv.fht) *(st.dv.ne)
+!   variations   of useful results: *b2voloncf *b2data *b2dataoncf
+!                j
+!   with respect to varying inputs: *b2voloncf *b2data *b2dataoncf
+!                sigma shift *par_opt_phys mean *(st.pl.na) *(st.pl.te)
+!                *(st.pl.ti) *(st.dv.fht) *(st.dv.ne)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
 !                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
@@ -58,8 +58,9 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc, is, iicf
   LOGICAL, SAVE :: first_call=.true.
   LOGICAL :: inrange
-  REAL(kind=r8) :: qq, prior, lll, lll_cum
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: qqd, priord, llld, lll_cumd
+  REAL(kind=r8) :: qq, prior, lll, lll_cum, curr_shift
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: qqd, priord, llld, lll_cumd, &
+& curr_shiftd
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
   REAL(kind=r8) :: gradrd(nbdirsmax, ncv), funvd(nbdirsmax, nvx), pzd(&
 & nbdirsmax, ncv), rzd(nbdirsmax, ncv), csd(nbdirsmax, ncv)
@@ -86,14 +87,6 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
     CALL XERTST(mpg%isclassicalgrid .EQ. 1, ' Cost function CVs and '//&
 &         'FCs ordering  and interpolation in case of unstructured grid'&
 &         //' needs to be revised')
-    cfnorm = 0.0_R8
-    vold = 0.0_R8
-    DO nd=1,nbdirsmax
-      cfnormd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      voldd(nd, :) = 0.D0
-    END DO
     DO icf=1,ncf
       IF (cfread(icf)) THEN
 ! WARNING! For now we assume that the data read from the cost function is only radially dependent
@@ -107,42 +100,72 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         arg1 = icsepomp - 1
         CALL CALC_DIST_NODIFF(mpg, geo, mpg%cfreg(ic1:ic2), n1, arg1, &
 &                       b2rr(icf, 1:n1))
-        DO nd=1,nbdirs
-          b2datad(nd, 1:n1) = 0.D0
-        END DO
-        b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
-        CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&                  b2data(1:n1), b2datad(:, 1:n1), b2voloncf(icf, 1:n2)&
-&                  , b2voloncfd(:, icf, 1:n2), nbdirs)
-        DO nd=1,nbdirs
-          voldd(nd, icf) = SUM(b2voloncfd(nd, icf, 1:n2))
-        END DO
-        vold(icf) = SUM(b2voloncf(icf, 1:n2))
-        DO icv=1,n2
-          DO nd=1,nbdirs
-            cfnormd(nd, icf) = cfnormd(nd, icf) + cfdata(icf, 2, icv)*&
-&             b2voloncfd(nd, icf, icv)
-          END DO
-          cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2&
-&           , icv)
-        END DO
-        IF (maptoomp(icf)) THEN
+      END IF
+      IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
 ! simply use as b2rr the OMP radial coordinates.
-          CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
-&               'Mapping to OMP need revision for extended grids')
+        CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
+&             'Mapping to OMP need revision for extended grids')
 ! check on, and then use, only internal Cvs in OMP list
-          CALL XERTST(n1 .EQ. nomp - 2, &
-&               'number of Cv in CF does not equal Cvs in OMP')
-          arg1 = icsepomp - 1
-          CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
-&                         icf, 1:n1))
-        END IF
+        CALL XERTST(n1 .EQ. nomp - 2, &
+&             'number of Cv in CF does not equal Cvs in OMP')
+        arg1 = icsepomp - 1
+        CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
+&                       icf, 1:n1))
       END IF
     END DO
     first_call = .false.
   END IF
+! cf normalization depends on shift now, as some points may eventualy be left out of the B2 domain
+  cfnorm = 0.0_R8
+  vold = 0.0_R8
+  DO nd=1,nbdirsmax
+    cfnormd(nd, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    voldd(nd, :) = 0.D0
+  END DO
+  DO icf=1,ncf
+    IF (cfread(icf)) THEN
+      ic1 = mpg%cfregp(icf, 1)
+      ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+      n1 = mpg%cfregp(icf, 2)
+      n2 = ncfdata(icf)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) THEN
+        DO nd=1,nbdirs
+          curr_shiftd(nd) = shiftd(nd, cf_to_shift(icf))/1.0e3_R8
+        END DO
+        curr_shift = shift(cf_to_shift(icf))/1.0e3_R8
+      ELSE
+        DO nd=1,nbdirsmax
+          curr_shiftd(nd) = 0.D0
+        END DO
+      END IF
+      DO nd=1,nbdirs
+        b2datad(nd, 1:n1) = 0.D0
+      END DO
+      b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
+&                b2data(1:n1), b2datad(:, 1:n1), b2voloncf(icf, 1:n2), &
+&                b2voloncfd(:, icf, 1:n2), curr_shift, curr_shiftd, &
+&                nbdirs)
+      DO nd=1,nbdirs
+        voldd(nd, icf) = SUM(b2voloncfd(nd, icf, 1:n2))
+      END DO
+      vold(icf) = SUM(b2voloncf(icf, 1:n2))
+      DO icv=1,n2
+        DO nd=1,nbdirs
+          cfnormd(nd, icf) = cfnormd(nd, icf) + cfdata(icf, 2, icv)*&
+&           b2voloncfd(nd, icf, icv)
+        END DO
+        cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2, &
+&         icv)
+      END DO
+    END IF
+  END DO
 !
   j = 0.0_R8
   IF (ncf .GT. 0) THEN
@@ -157,6 +180,18 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
       ic2 = ic1 + mpg%cfregp(icf, 2) - 1
       n1 = mpg%cfregp(icf, 2)
       n2 = ncfdata(icf)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) THEN
+        DO nd=1,nbdirs
+          curr_shiftd(nd) = shiftd(nd, cf_to_shift(icf))/1.0e3_R8
+        END DO
+        curr_shift = shift(cf_to_shift(icf))/1.0e3_R8
+      ELSE
+        DO nd=1,nbdirsmax
+          curr_shiftd(nd) = 0.D0
+        END DO
+      END IF
       SELECT CASE  (cftype(icf)) 
       CASE (0) 
 
@@ -170,7 +205,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         b2data(1:n1) = st%dv%ne(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
-&                  b2dataoncfd(:, 1:n2), nbdirs)
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -197,7 +233,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         b2data(1:n1) = st%pl%te(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
-&                  b2dataoncfd(:, 1:n2), nbdirs)
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -224,7 +261,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         b2data(1:n1) = st%pl%ti(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
-&                  b2dataoncfd(:, 1:n2), nbdirs)
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -299,6 +337,18 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
           n2 = ncfdata(iicf)
           ic1 = mpg%cfregp(iicf, 1)
           ic2 = ic1 + n1 - 1
+          curr_shift = 0.0_R8
+!shift is in mm!
+          IF (cf_to_shift(iicf) .GT. 0) THEN
+            DO nd=1,nbdirs
+              curr_shiftd(nd) = shiftd(nd, cf_to_shift(iicf))/1.0e3_R8
+            END DO
+            curr_shift = shift(cf_to_shift(iicf))/1.0e3_R8
+          ELSE
+            DO nd=1,nbdirsmax
+              curr_shiftd(nd) = 0.D0
+            END DO
+          END IF
           SELECT CASE  (cftype(iicf)) 
           CASE (1) 
 !electron density
@@ -380,7 +430,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
           END SELECT
           CALL INTERP1D_DV(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:&
 &                    n2), b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:&
-&                    n2), b2dataoncfd(:, 1:n2), nbdirs)
+&                    n2), b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd&
+&                    , nbdirs)
           CALL CALC_LOGLIKELIHOOD_DV(n2, b2dataoncf(1:n2), b2dataoncfd(:&
 &                              , 1:n2), cfdata(iicf, 2, 1:n2), cfdata(&
 &                              iicf, 3, 1:n2), lll, llld, isigma, imean&
@@ -413,7 +464,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
-&                  b2dataoncfd(:, 1:n2), nbdirs)
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -442,7 +494,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
-&                  b2dataoncfd(:, 1:n2), nbdirs)
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -471,7 +524,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
-&                  b2dataoncfd(:, 1:n2), nbdirs)
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -520,7 +574,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         END DO
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
-&                  b2dataoncfd(:, 1:n2), nbdirs)
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -601,7 +656,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc, is, iicf
   LOGICAL, SAVE :: first_call=.true.
   LOGICAL :: inrange
-  REAL(kind=r8) :: qq, prior, lll, lll_cum
+  REAL(kind=r8) :: qq, prior, lll, lll_cum, curr_shift
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
   INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
@@ -619,8 +674,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
     CALL XERTST(mpg%isclassicalgrid .EQ. 1, ' Cost function CVs and '//&
 &         'FCs ordering  and interpolation in case of unstructured grid'&
 &         //' needs to be revised')
-    cfnorm = 0.0_R8
-    vold = 0.0_R8
     DO icf=1,ncf
       IF (cfread(icf)) THEN
 ! WARNING! For now we assume that the data read from the cost function is only radially dependent
@@ -634,31 +687,46 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         arg1 = icsepomp - 1
         CALL CALC_DIST_NODIFF(mpg, geo, mpg%cfreg(ic1:ic2), n1, arg1, &
 &                       b2rr(icf, 1:n1))
-        b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
-        CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2voloncf(icf, 1:n2))
-        vold(icf) = SUM(b2voloncf(icf, 1:n2))
-        DO icv=1,n2
-          cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2&
-&           , icv)
-        END DO
-        IF (maptoomp(icf)) THEN
+      END IF
+      IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
 ! simply use as b2rr the OMP radial coordinates.
-          CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
-&               'Mapping to OMP need revision for extended grids')
+        CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
+&             'Mapping to OMP need revision for extended grids')
 ! check on, and then use, only internal Cvs in OMP list
-          CALL XERTST(n1 .EQ. nomp - 2, &
-&               'number of Cv in CF does not equal Cvs in OMP')
-          arg1 = icsepomp - 1
-          CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
-&                         icf, 1:n1))
-        END IF
+        CALL XERTST(n1 .EQ. nomp - 2, &
+&             'number of Cv in CF does not equal Cvs in OMP')
+        arg1 = icsepomp - 1
+        CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
+&                       icf, 1:n1))
       END IF
     END DO
     first_call = .false.
   END IF
+! cf normalization depends on shift now, as some points may eventualy be left out of the B2 domain
+  cfnorm = 0.0_R8
+  vold = 0.0_R8
+  DO icf=1,ncf
+    IF (cfread(icf)) THEN
+      ic1 = mpg%cfregp(icf, 1)
+      ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+      n1 = mpg%cfregp(icf, 2)
+      n2 = ncfdata(icf)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) curr_shift = shift(cf_to_shift(icf))/&
+&         1.0e3_R8
+      b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
+&             b2data(1:n1), b2voloncf(icf, 1:n2), curr_shift)
+      vold(icf) = SUM(b2voloncf(icf, 1:n2))
+      DO icv=1,n2
+        cfnorm(icf) = cfnorm(icf) + b2voloncf(icf, icv)*cfdata(icf, 2, &
+&         icv)
+      END DO
+    END IF
+  END DO
 !
   j = 0.0_R8
   IF (ncf .GT. 0) THEN
@@ -667,6 +735,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       ic2 = ic1 + mpg%cfregp(icf, 2) - 1
       n1 = mpg%cfregp(icf, 2)
       n2 = ncfdata(icf)
+      curr_shift = 0.0_R8
+!shift is in mm!
+      IF (cf_to_shift(icf) .GT. 0) curr_shift = shift(cf_to_shift(icf))/&
+&         1.0e3_R8
       SELECT CASE  (cftype(icf)) 
       CASE (0) 
 
@@ -675,7 +747,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron density on desired CVs
         b2data(1:n1) = st%dv%ne(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -685,7 +757,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron temperature on desired CVs
         b2data(1:n1) = st%pl%te(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -695,7 +767,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !ion temperature on desired CVs
         b2data(1:n1) = st%pl%ti(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -735,6 +807,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           n2 = ncfdata(iicf)
           ic1 = mpg%cfregp(iicf, 1)
           ic2 = ic1 + n1 - 1
+          curr_shift = 0.0_R8
+!shift is in mm!
+          IF (cf_to_shift(iicf) .GT. 0) curr_shift = shift(cf_to_shift(&
+&             iicf))/1.0e3_R8
           SELECT CASE  (cftype(iicf)) 
           CASE (1) 
 !electron density
@@ -776,7 +852,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
             CALL XERRAB('cftype for sum out of bounds for cftype=6')
           END SELECT
           CALL INTERP1D(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:n2)&
-&                 , b2data(1:n1), b2dataoncf(1:n2))
+&                 , b2data(1:n1), b2dataoncf(1:n2), curr_shift)
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
 &                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
 &                                  , lll, isigma, imean)
@@ -795,7 +871,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                     gradr)
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -807,7 +883,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                     gradr)
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -819,7 +895,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                     gradr)
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -838,7 +914,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &           icv-1))*ev/1.0e3_R8
         END DO
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               b2data(1:n1), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
