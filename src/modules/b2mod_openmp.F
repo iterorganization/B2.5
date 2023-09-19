@@ -10,12 +10,15 @@
       end function
 
       integer function get_num_threads()
+#ifdef _OPENMP
+      if(OMP_IN_PARALLEL()) then
+!$      get_num_threads = omp_get_num_threads()
+      else
+!$      get_num_threads = omp_get_max_threads()
+      end if
+#else
       get_num_threads = 1
-!$OMP parallel
-!$OMP single
-!$    get_num_threads = omp_get_num_threads()
-!$OMP end single
-!$OMP end parallel
+#endif
       end function
 
       integer function get_thread_num()

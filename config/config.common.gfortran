@@ -19,6 +19,9 @@ LINK_MOD =
 INCMOD = -I
 
 FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
+FCOPTS += -mprefer-vector-width=512
+endif
 ifdef SOLPS_DEBUG
 FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ffpe-trap=overflow -ftrapv
 else
