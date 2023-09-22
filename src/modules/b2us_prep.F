@@ -59,7 +59,7 @@
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, ifccy,
      .           nyreg, ixreg, iyreg, is, nxtl, nxtr,
      .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
-     .           istrtc, istrtfc, istrtfy, ilbl,
+     .           istrtt, istrts, ilbl, ctype, ctypen, gtype,
      .           nfaces, nverts, nvertwall, nvertpf
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:),
      .           icorner(:,:), ighostcv(:,:),
@@ -77,7 +77,8 @@
      .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:),
      .           verts(:), icornvx(:)
       real(R8) :: xco(4), yco(4), babs
-      logical lfound, swapped, classical, bound, cellError, lstart
+      logical lfound, swapped, classical, bound, cellError, lstart,
+     .        lgtube
       intrinsic pack
 
 !  assume a structured quadrilateral grid
@@ -1647,7 +1648,6 @@
        end do
 
       ! sanity check
-      !lerr=.false.
       do ic = 1,m%nCv
         do ifc = m%cvFcP(ic,1),m%cvFcP(ic,1)+m%cvFcP(ic,2)-1
           if(m%cvFc(ifc) == 0) then
@@ -1782,6 +1782,8 @@
       end do
 
       mxReg = maxval(m%cvReg(1:m%nCv))
+
+      write (*,*) 'Identify flux tubes and flux surfaces '
 
 ! identify the various flux tubes and surfaces
       m%ftCv = 0 ! init to 0
@@ -1919,87 +1921,259 @@
         endif
         do iyreg = 1, nyreg
           do iy = iystart(iyreg), iyend(iyreg)
-            ilbl = ilbl + 1
+            !wdk at the moment, simply take label equal to iy surface (with offset to have lbl > 0)
+            ilbl = iy + 2
             do ixreg = 1, nxreg(iyreg)
-              istrtc = -1
-              istrtfc = -1
-              istrtfy = -1
+              istrtt = -1
+              istrts = -1
+              lgtube = .false. ! default: not a flux tube consisting of only guard cells along plasma-interface
               do is = 1, nseg(ixreg,iyreg)
                 do ix = ixstart(ixreg,iyreg,is), ixend(ixreg,iyreg,is)
-                  if((m%imapCv(ix,iy)/=0)) then
-                    ic = m%imapCv(ix,iy)
-                    ifc = m%imapFcx(ix,iy)
-                    ifcy = m%imapFcy(ix,iy)
-                    if (istrtc.eq.-1) then
-                      ift = ift + 1
-                      icv = icv + 1
-                      m%ftCv(icv) = ic
-                      ftCvP(ift,1) = icv
-                      m%cvFt(ic) = ift
-                      ftReg(ift) = reg(ixreg,iyreg)
-                      ftLbl(ift) = ilbl
-                      istrtc = 1
-                    else
-                      icv = icv + 1
-                      m%ftCv(icv) = ic
-                      m%cvFt(ic) = ift
-                      ftCvP(ift,2) = icv - ftCvP(ift,1) + 1
-                    end if
-                    if (ifc.ne.0) then
-                      if (istrtfc.eq.-1) then
-                        ifcc = ifcc + 1
-                        m%ftFc(ifcc) = ifc
-                        ftFcP(ift,1) = ifcc
-                        istrtfc = 1
-                      else
-                        ifcc = ifcc + 1
-                        m%ftFc(ifcc) = ifc
-                        ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
-                      end if
+                  ! First: flux tube cells and flux tube faces
+                  ! flux tube faces = faces between the cells in the flux tube => not-aligned with the field
+                  ! We don't know whether the guard cell will be on same iy
+                  ! => treat guard cells separately
+                  ic = m%imapCv(ix,iy)
+                  ctype = cflags(ix,iy,CELLFLAG_TYPE)
+                  gtype = cellGeoType(crx(ix,iy,0:3),cry(ix,iy,0:3))
+                  if (isRealCell(ctype)) then
+                    if (lgtube) then
+                      ! we enter a real cell and were walking along a void boundary
+                      ! => reset to start next flux tube
+                      istrtt = -1
+                      lgtube = .false.
                     endif
-                    if (ifcy.ne.0) then
-                      if (istrtfy.eq.-1) then
+                    if (istrtt.eq.-1) then
+                     ift = ift + 1
+                     if (isBoundaryCell(ctype).and. 
+     .                   .not. on_closed_surface(ix,iy)) then
+                      ! Find the guard cell at start of flux tube
+                      lfound = .false.
+                      lix = leftix(ix,iy)
+                      liy = leftiy(ix,iy)
+                      if (lix.ne.-2) then
+                       ! If left neighbor exist and is guard => take as start
+                       if (.not.
+     .                     isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)))
+     .                 then
+                        write (*,*) 
+     .                    'ix, iy, lix, liy, cflag cflagl, ift = ',
+     .                    ix, iy, lix, liy, ctype, 
+     .                    cflags(lix,liy,CELLFLAG_TYPE), ift
+                        write (*,*) 'on_closed_surface ',
+     .                    on_closed_surface(ix,iy)
+                        call xerrab (
+     .                  'Expected guard cell to start new flux tube')
+                       endif
+                       icg = m%imapCv(lix,liy)
+                       ifc = m%imapFcx(ix,iy)
+                       lfound = .true.
+                      else
+                       ! Left face degenerate
+                       ! Top or bottom neighbor will be guard
+                       ! If both are guard (rare situation => should remove this cell with grid generator!),
+                       ! arbitrarily take bottom guard cell as start
+                       if (gtype.ne.CGEO_TRIA_NOLEFT) call xerrab (
+     .                   'Expected degenerate left face' )
+                       tix = topix(ix,iy)
+                       tiy = topiy(ix,iy)
+                       bix = bottomix(ix,iy)
+                       biy = bottomiy(ix,iy)
+                       if (tiy.ne.ny+1) then
+                         if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)))
+     .                   then
+                           icg = m%imapCv(tix,tiy)
+                           ifc = m%imapFcy(tix,tiy)
+                           lfound = .true.
+                         endif
+                       endif
+                       if (biy.ne.-2) then
+                         if (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)))
+     .                   then
+                           icg = m%imapCv(bix,biy)
+                           ifc = m%imapFcy(ix,iy)
+                           if (lfound) write (*,*)
+     .                       'Pathological cell ',ix, iy, ' => remove?'
+                           lfound = .true.
+                         endif
+                       endif
+                       if (.not.lfound) then
+                         write (*,*) 'ift, ix, iy: ', ift, ix, iy
+                         call xerrab ('Did not find start of flux tube')
+                       endif
+                      endif
+                      icv = icv + 2
+                      ifcc = ifcc + 1
+                      m%ftCv(icv-1) = icg
+                      m%cvFt(icg) = ift
+                      ftCvP(ift,1) = icv-1
+                      ftCvP(ift,2) = 2
+                     elseif (on_closed_surface(ix,iy)) then
+                      ifc = m%imapFcx(ix,iy)
+                      if (ifc.eq.0) call xerrab (
+     .                  'Problem with core flux tube face.')
+                      icv = icv + 1
+                      ifcc = ifcc + 1
+                      ftCvP(ift,1) = icv
+                      ftCvP(ift,2) = 1
+                     else
+                      call xerrab ('Unexpected start flux tube.')
+                     endif
+                     ! add the cell and face
+                     m%ftCv(icv) = ic
+                     m%cvFt(ic) = ift
+                     m%ftFc(ifcc) = ifc
+                     ftFcP(ift,1) = ifcc
+                     ftFcP(ift,2) = 1
+                     ftReg(ift) = reg(ixreg,iyreg)
+                     ftLbl(ift) = ilbl
+                     istrtt = 1
+                    else
+                     ifc = m%imapFcx(ix,iy)
+                     if (ifc.eq.0) call xerrab (
+     .                 'Problem with flux tube identification')
+                     icv = icv + 1
+                     ifcc = ifcc + 1
+                     m%ftCv(icv) = ic
+                     m%cvFt(ic) = ift
+                     ftCvP(ift,2) = ftCvP(ift,2) + 1
+                     m%ftFc(ifcc) = ifc
+                     ftFcP(ift,2) = ftFcP(ift,2) + 1
+                    end if
+                    ! Check for end of flux tube
+                    if (isBoundaryCell(ctype).and.
+     .                .not. on_closed_surface(ix,iy)) then
+                      lfound = .false.
+                      rix = rightix(ix,iy)
+                      riy = rightiy(ix,iy)
+                      if (rix.ne.nx+1) then
+                       ! If right neighbor exist and is guard => end of tube
+                       if (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE)))
+     .                 then
+                         icg = m%imapCv(rix,riy)
+                         ifc = m%imapFcx(rix,riy)
+                         lfound = .true.
+                       endif
+                      else
+                       ! Right face degenerate
+                       ! Top or bottom neighbor will be guard
+                       ! If both are guard (rare situation => should remove this cell with grid generator!),
+                       ! arbitrarily take bottom guard cell as end
+                       if (gtype.ne.CGEO_TRIA_NORIGHT) call xerrab (
+     .                   'Expected degenerate right face' )
+                       tix = topix(ix,iy)
+                       tiy = topiy(ix,iy)
+                       bix = bottomix(ix,iy)
+                       biy = bottomiy(ix,iy)
+                       if (tiy.ne.ny+1) then
+                         if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)))
+     .                   then
+                           icg = m%imapCv(tix,tiy)
+                           ifc = m%imapFcy(tix,tiy)
+                           lfound = .true.
+                         endif
+                       endif
+                       if (biy.ne.-2) then
+                         if (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)))
+     .                   then
+                           icg = m%imapCv(bix,biy)
+                           ifc = m%imapFcy(ix,iy)
+                           if (lfound) write (*,*)
+     .                       'Pathological cell ',ix, iy, ' => remove?'
+                           lfound = .true.
+                         endif
+                       endif
+                      endif
+                      if (lfound) then
+                        icv = icv + 1
+                        ifcc = ifcc + 1
+                        m%ftCv(icv) = icg
+                        ftCvP(ift,2) = ftCvP(ift,2) + 1
+                        m%cvFt(icg) = ift
+                        m%ftFc(ifcc) = ifc
+                        ftFcP(ift,2) = ftFcP(ift,2) + 1
+                        istrtt = -1
+                      endif
+                    endif
+                  elseif (isGhostCell(ctype) .and. ic.ne.0) then
+                    ! Special treatment to ensure guard cells along plasma-void interfaces
+                    ! also form a flux tube
+                    ! check based on negative fclbl
+                    tix = topix(ix,iy)
+                    tiy = topiy(ix,iy)
+                    bix = bottomix(ix,iy)
+                    biy = bottomiy(ix,iy)
+                    lfound = .false.
+                    if (tiy.ne.ny+1) then
+                      ctypen = cflags(tix,tiy,CELLFLAG_TYPE)
+                      ifc = m%imapFcy(tix,tiy)
+                      if (isBoundaryCell(ctypen)) then
+                        if (m%fcLbl(ifc).lt.0) lfound = .true.
+                      endif 
+                    endif
+                    if (biy.ne.-2) then
+                      ctypen = cflags(bix,biy,CELLFLAG_TYPE)
+                      ifc = m%imapFcy(ix,iy)
+                      if (isBoundaryCell(ctypen)) then
+                        if (m%fcLbl(ifc).lt.0) lfound = .true.
+                      endif
+                    endif
+                    if (lfound) then
+                      ! we are in guard cell flux tube
+                      lgtube = .true.
+                      if (istrtt==-1) then
+                        ift = ift + 1
+                        icv = icv + 1
+                        m%ftCv(icv) = ic
+                        m%cvFt(ic) = ift
+                        ftCvP(ift,1) = icv
+                        ftCvP(ift,2) = 1
+                        ftFcP(ift,1) = ifcc
+                        ftFcP(ift,2) = 0
+                        ftReg(ift) = reg(ixreg,iyreg)
+                        ftLbl(ift) = ilbl
+                        istrtt = 1
+                      else
+                        icv = icv + 1
+                        m%ftCv(icv) = ic
+                        m%cvFt(ic) = ift
+                        ftCvP(ift,2) = ftCvP(ift,2) + 1
+                      endif
+                    elseif (lgtube) then
+                      istrtt = -1
+                    endif
+                  end if
+                  ! flux surface faces = faces aligned with field;
+                  ! two flux tubes will be separated by a flux surface
+                  ifcy = m%imapFcy(ix,iy)
+                  if (ifcy.eq.0) istrts = -1
+                  if (ifcy.ne.0) then
+                    ! Only consider y-faces with non-positive fcLbl. Assumption:
+                    ! - if 0: 'regular', internal aligned face
+                    ! - if negative: a flux-aligned boundary (PF/Core/North)
+                    ! - if positive: a solid boundary => take out of flux surface (even if still field aligned by coincidence)
+                    if (m%fcLbl(ifcy).le.0) then
+                      if (istrts.eq.-1) then
                         ifs = ifs + 1
                         ifccy = ifccy + 1
                         m%fsFc(ifccy) = ifcy
                         fsFcP(ifs,1) = ifccy
-                        istrtfy = 1
+                        fsFcP(ifs,2) = 1
+                        istrts = 1
                       else
                         ifccy = ifccy + 1
                         m%fsFc(ifccy) = ifcy
-                        fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+                        fsFcP(ifs,2) = fsFcP(ifs,2) + 1
                       end if
-                    endif
-                  end if
+                    else
+                      istrts = -1
+                    end if
+                  endif
                 end do !ix
               end do !is
             end do !ixreg
           end do !iy
         end do !iyreg
-! csc last flux surface needs ny + 1
-        do ixreg = 1, nxreg(nyreg)
-          istrtfy = -1
-          do is = 1, nseg(ixreg,nyreg)
-            do ix = ixstart(ixreg,nyreg,is), ixend(ixreg,nyreg,is)
-              if((m%imapCv(ix,ny)/=0)) then
-                ifcy = m%imapFcy(ix,ny)
-                if (ifcy.ne.0) then
-                  if (istrtfy == -1) then
-                    ifs = ifs + 1
-                    ifccy = ifccy + 1
-                    m%fsFc(ifccy) = ifcy
-                    fsFcP(ifs,1) = ifccy
-                    istrtfy = 1
-                  else
-                    ifccy = ifccy + 1
-                    m%fsFc(ifccy) = ifcy
-                    fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
-                  endif
-                endif
-              endif
-            enddo !ix
-          enddo !is
-        enddo !ixreg
         m%nFt = ift
         m%nFs = ifs
 ! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
@@ -2009,9 +2183,9 @@
         allocate (m%fsFcP(m%nFs,2))
         allocate (m%ftReg(m%nFt))
         allocate (m%ftLbl(m%nFt))
-        m%ftFcP = ftFcP(1:m%nFt,:)
-        m%ftCvP = ftCvP(1:m%nFt,:)
-        m%fsFcP = fsFcP(1:m%nFs,:)
+        m%ftFcP = ftFcP(1:m%nFt,1:2)
+        m%ftCvP = ftCvP(1:m%nFt,1:2)
+        m%fsFcP = fsFcP(1:m%nFs,1:2)
         m%ftReg = ftReg(1:m%nFt)
         m%ftLbl = ftLbl(1:m%nFt)
         deallocate(ftFcP,ftCvP,fsFcP,ftReg,ftLbl)
