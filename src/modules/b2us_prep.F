@@ -60,7 +60,8 @@
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, ifccy,
      .           nyreg, ixreg, iyreg, is, nxtl, nxtr,
      .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
-     .           istrtc, istrtfc, istrtfy, ilbl
+     .           istrtt, istrts, ilbl, ctype, ctypen, gtype,
+     .           nfaces, nverts, nvertwall, nvertpf
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:),
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -74,9 +75,11 @@
      .           ixmapghostvx(:,:), iymapghostvx(:,:),
      .           ixvxe(:), iyvxe(:), ftFcP(:,:), ftCvP(:,:), fsFcP(:,:),
      .           ftReg(:), nxreg(:), reg(:,:), ixstart(:,:,:), ftLbl(:),
-     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:)
+     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:),
+     .           verts(:), icornvx(:)
       real(R8) :: xco(4), yco(4), babs
-      logical lfound, swapped, classical, bound, cellError
+      logical lfound, swapped, classical, bound, cellError, lstart,
+     .        lgtube
       intrinsic pack
 
 !  assume a structured quadrilateral grid
@@ -307,7 +310,7 @@
      .          isBoundaryCell(cflags(rix,riy,CELLFLAG_TYPE)) .and.
      .           points_match(crx(rix,riy,2), cry(rix,riy,2),
      .                        crx(rix,riy,3), cry(rix,riy,3))) then
-              ! Check whether an external vertex has already been created here
+              ! Check whether an external c has already been created here
               lfound = .false.
               ivxe   = 0
               do while (.not.lfound .and. ivxe.lt.nvxe)
@@ -368,8 +371,9 @@
                 loctopix(rix,riy)   = ixvxe(nvxe)
                 loctopiy(rix,riy)   = iyvxe(nvxe)
                 write (*,*)
-     .           '(1) Created vertex at ix, iy, crx, cry = ',
-     .            nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .           '(0) Created NE vertex for cell ix, iy = ', ix, iy,
+     .           '    at ix2, iy2, crx, cry = ',
+     .                ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
               else
                 ! adapt local connectivity arrays
                 locrightix(tix,tiy) = ixvxe(ivxe)
@@ -480,8 +484,10 @@
                     locrightiy(tix,tiy) = iyvxe(nvxe)
                   endif
                   write (*,*)
-     .             '(1) Created vertex at ix, iy, crx, cry = ',
-     .              nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .             '(1) Created  E vertex for cell ix, iy = ', ix, iy,
+     .             '    at ix2, iy2, crx, cry = ',
+     .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
+
                 else
                   ! adapt local connectivity arrays
                   locrightix(ix,iy) = ixvxe(ivxe)
@@ -590,8 +596,9 @@
                     loctopiy(rix,riy) = iyvxe(nvxe)
                   endif
                   write (*,*)
-     .             '(2) Created vertex at ix, iy, crx, cry = ',
-     .              nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .             '(2) Created N  vertex for cell ix, iy = ', ix, iy,
+     .           '    at ix2, iy2, crx, cry = ',
+     .                ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
                 else
                   ! adapt local connectivity arrays
                   loctopix(ix,iy) = ixvxe(ivxe)
@@ -617,6 +624,7 @@
                 loctopiy(ix,iy) = loctopiy(rix,riy)
               endif
             else
+              ! Boundary cell w/o degenerate face
               tix = topix(ix,iy)
               tiy = topiy(ix,iy)
               rix = rightix(ix,iy)
@@ -673,10 +681,10 @@
                       iyvxe(nvxe) = iy2
                       nunused = nunused - 1
                       ighostvx(ix2,iy2) = 0
-                      crx(ix2,iy2,0)    = crx(ix,iy,2)
-                      cry(ix2,iy2,0)    = cry(ix,iy,2)
-                      ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
-                      fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
+                      crx(ix2,iy2,0)    = crx(ix,iy,3)
+                      cry(ix2,iy2,0)    = cry(ix,iy,3)
+                      ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
+                      fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
 !WG_TODO need to recompute field at corner here;
 !WG_TODO tmp: assume isymm = 1 or 2 treatment... (see carre_b2ag.F90)
 !WG_TODO eventually: do this in separate routine later on?
@@ -696,8 +704,9 @@
                       loctopix(rix,riy)   = ixvxe(nvxe)
                       loctopiy(rix,riy)   = iyvxe(nvxe)
                       write (*,*)
-     .                 '(3) Created vertex at ix, iy, crx, cry = ',
-     .                  nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .                 '(3) Created NE vertex for cell ix, iy = ',
+     .                  ix, iy, ' at ix2, iy2, crx, cry = ',
+     .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
                     else
                       ! Adapt local connectivity arrays
                       locrightix(tix,tiy) = ixvxe(ivxe)
@@ -798,7 +807,7 @@
                     do while (.not.lfound .and. ivxe.lt.nvxe)
                       ivxe = ivxe + 1
                       lfound = lfound.or.
-     .                  points_match(crx(ix,iy,3), cry(ix,iy,3),
+     .                  points_match(crx(ix,iy,2), cry(ix,iy,2),
      .                               crx(ixvxe(ivxe),iyvxe(ivxe),0),
      .                               cry(ixvxe(ivxe),iyvxe(ivxe),0))
                     enddo
@@ -860,24 +869,45 @@
                       loctopix(ix,iy) = ixvxe(nvxe)
                       loctopiy(ix,iy) = iyvxe(nvxe)
                       write (*,*)
-     .                 '(4) Created vertex at ix, iy, crx, cry = ',
-     .                  nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .                 '(4) Created NE vertex for cell ix, iy = ',
+     .                  ix, iy, ' at ix2, iy2, crx, cry = ',
+     .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
                     endif
                   endif
                 endif
               endif
             else
-              ! For corners, only keep vertex of NE corners
-              ! Current assumption: CARRE2/b2ag will not create corners for extended cases
-              if ((leftix(ix,iy)   == -2)  .or.
-     .            (bottomiy(ix,iy) == -2)) then
-                ! (ix,iy) is not a NE corner cell; remove
-                icount = icount + 1
-                ighostvx(ix,iy)   = 1
-                ixghostvx(icount) = ix
-                iyghostvx(icount) = iy
-                ixmapghostvx(ix,iy) = -2
-                iymapghostvx(ix,iy) = -2
+              ! For corners, only keep vertex of NE corners:
+              ! check whether bottom(left) or left(bottom) exists 
+              lfound=.false.
+              if (leftix(ix,iy).ne.-2) then
+                if (bottomiy(leftix(ix,iy),leftiy(ix,iy)).ne.-2) then
+                  lfound=.true.
+                endif
+              endif
+              if (bottomiy(ix,iy).ne.-2) then
+                if (leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.-2) then
+                  lfound=.true.
+                endif
+              endif
+              if (.not.lfound) then
+                ! Check whether an external vertex has been created here
+                lfound = .false.
+                ivxe   = 0
+                do while (.not.lfound .and. ivxe.lt.nvxe)
+                  ivxe = ivxe + 1
+                  lfound = lfound.or.
+     .              (ix.eq.ixvxe(ivxe).and.iy.eq.iyvxe(ivxe))
+                enddo
+                if (.not.lfound) then
+                  ! (ix,iy) is not a NE corner cell; remove
+                  icount = icount + 1
+                  ighostvx(ix,iy)   = 1
+                  ixghostvx(icount) = ix
+                  iyghostvx(icount) = iy
+                  ixmapghostvx(ix,iy) = -2
+                  iymapghostvx(ix,iy) = -2
+                endif
               endif
             endif
           endif
@@ -995,7 +1025,6 @@
         enddo
       enddo
 
-
 ! Sanity check
       cellError=.false.
       do iy = -1, ny
@@ -1107,15 +1136,15 @@
       m%imapCv= 0 ! 0 means not in use in unstructured
       ici =0
       icg = m%nCi
-      do iy = 0, ny+1
-        ixloop: do ix = 0, nx+1
-          if(isRealCell(cflags(ix-1,iy-1,CELLFLAG_TYPE))) then
+      do iy = -1, ny
+        ixloop: do ix = -1, nx
+          if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
             ici = ici + 1
-            m%imapCv(ix-1,iy-1) = ici
-          elseif(isGhostCell(cflags(ix-1,iy-1,CELLFLAG_TYPE))) then
-            if (icorner(ix-1,iy-1)/=0) cycle ixloop
+            m%imapCv(ix,iy) = ici
+          elseif(isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            if (icorner(ix,iy)/=0) cycle ixloop
             icg = icg+1
-            m%imapCv(ix-1,iy-1) = icg
+            m%imapCv(ix,iy) = icg
           endif
         enddo ixloop
       enddo
@@ -1291,56 +1320,6 @@
 
       write (*,*) 'Merged vertices'
 
-! store indices of corner coordinates
-      m%icornVx = 0
-      if (ncorneri > 0) then
-!  sort corner points per ix position first
-        DO j = ncorneri-1, 1, -1
-          swapped = .FALSE.
-          DO i = 1, j
-            IF (ixcorner(i) > ixcorner(i+1)) THEN
-              itmpx = ixcorner(i)
-              itmpy = iycorner(i)
-              ixcorner(i) = ixcorner(i+1)
-              iycorner(i) = iycorner(i+1)
-              ixcorner(i+1) = itmpx
-              iycorner(i+1) = itmpy
-              swapped = .TRUE.
-            END IF
-          END DO
-          IF (.NOT. swapped) EXIT
-        END DO
-
-!  now sort corner points in iy position
-        do j=ncorneri-1, 1, -1
-          swapped = .FALSE.
-          do i = 1, j
-            if (ixcorner(i) /= ixcorner(i+1)) cycle
-            if (iycorner(i) > iycorner(i+1)) then
-              itmpx = ixcorner(i)
-              itmpy = iycorner(i)
-              ixcorner(i) = ixcorner(i+1)
-              iycorner(i) = iycorner(i+1)
-              ixcorner(i+1) = itmpx
-              iycorner(i+1) = itmpy
-              swapped = .TRUE.
-            end if
-          end do
-          IF (.NOT. swapped) EXIT
-        end do
-
-        icount = 0
-        do ic = 1, ncorneri
-          icount = icount + 1
-          ix = ixcorner(ic)
-          if (count(m%ictcntrl(1:m%nctcnt) ==ix) > 0) ix = ix + 1
-          ix = min(max(ix,0),nx)
-          iy = iycorner(ic)
-          iy = min(max(iy,0),ny)
-          m%icornVx(icount) = m%imapVx(ix,iy)
-        end do
-      end if
-
 #ifdef WG_DEBUG
       imapCv  = m%imapCv
       imapFcx = m%imapFcx
@@ -1380,13 +1359,13 @@
 
 ! list of cell faces and vertices for cells
 ! interpolation coefficients for interpolation to cell centers
-      do iy = 0, ny+1
-        do ix = 0, nx+1
-          if ((m%imapCv(ix-1,iy-1) /= 0).and.
-     .        (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
-            ic = m%imapCv(ix-1,iy-1)
-            xco = crx(ix-1,iy-1,0:3)
-            yco = cry(ix-1,iy-1,0:3)
+      do iy = -1, ny
+        do ix = -1, nx
+          if ((m%imapCv(ix,iy) /= 0).and.
+     .        (m%imapCv(ix,iy) .le. m%nCi)) then
+            ic = m%imapCv(ix,iy)
+            xco = crx(ix,iy,0:3)
+            yco = cry(ix,iy,0:3)
             select case
      .        ( cellGeoType(xco,yco) )
             case ( CGEO_QUAD )
@@ -1394,12 +1373,12 @@
               if2 = if1 + 1
               if3 = if2 + 1
               if4 = if3 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(ix-1,iy-1)
-              m%cvFc(if4) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if3) = m%imapFcy(ix,iy)
+              m%cvFc(if4) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
@@ -1408,144 +1387,144 @@
               m%intcellR(if2) = 0.0_R8
               m%intcellR(if3) = 1.0_R8
               m%intcellR(if4) = 1.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                               rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),
-     .                               topiy(ix-1,iy-1))
-              m%cvVx(if4) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)),
-     .                               locrightiy(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(rightix(ix,iy),
+     .                               rightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(topix(ix,iy),
+     .                               topiy(ix,iy))
+              m%cvVx(if4) = m%imapVx(locrightix(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)),
+     .                               locrightiy(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)))
            case ( CGEO_TRIA_NOLEFT )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if2) = m%imapFcy(ix-1,iy-1)
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if2) = m%imapFcy(ix,iy)
+              m%cvFc(if3) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,1,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,1,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
               m%intcellP(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,1,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,1,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
               m%intcellR(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                               rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)),
-     .                               locrightiy(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(rightix(ix,iy),
+     .                               rightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)),
+     .                               locrightiy(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)))
             case ( CGEO_TRIA_NOBOT )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if3) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(topix(ix-1,iy-1),
-     .                               topiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)),
-     .                               locrightiy(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(topix(ix,iy),
+     .                               topiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)),
+     .                               locrightiy(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)))
             case ( CGEO_TRIA_NORIGHT )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcy(ix-1,iy-1)
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcy(ix,iy)
+              m%cvFc(if3) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) =
-     .          abs(fpsi(ix-1,iy-1,0,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+     .          abs(fpsi(ix,iy,0,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
               m%intcellP(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) =
-     .          abs(fpsi(ix-1,iy-1,0,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+     .          abs(fpsi(ix,iy,0,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
               m%intcellR(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??ctb solved?
-     .                               locrightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(locrightix(ix,iy),!cwdk is this not the vertex that was thrown out??ctb solved?
+     .                               locrightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(loctopix(ix,iy),
+     .                               loctopiy(ix,iy))
             case ( CGEO_TRIA_NOTOP )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(ix-1,iy-1)
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if3) = m%imapFcy(ix,iy)
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
-     .                               locrightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))!cwdk is this not the vertex that was thrown out?? ctb solved?
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(locrightix(ix,iy),
+     .                               locrightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(loctopix(ix,iy),
+     .                               loctopiy(ix,iy))!cwdk is this not the vertex that was thrown out?? ctb solved?
             end select
-          elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
-     .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
+          elseif ((m%imapCv(ix,iy) /= 0).and.
+     .            (m%imapCv(ix,iy) .gt. m%nCi)) then
             bound = .false.
 
 !tb  the vertex numbering might not be consistent for fcVx, to be checked
             ! N guard cell
-            ixb = bottomix(ix-1,iy-1)
-            iyb = bottomiy(ix-1,iy-1)
+            ixb = bottomix(ix,iy)
+            iyb = bottomiy(ix,iy)
             if (iyb /= -2) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
-                m%cvFc(if1) = m%imapFcy(ix-1,iy-1)
+                m%cvFc(if1) = m%imapFcy(ix,iy)
                 m%intcellP(if1) = 1.0_R8
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
-                m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-                m%cvVx(if1+1) = m%imapVx(locrightix(ix-1,iy-1),
-     .                                   locrightiy(ix-1,iy-1))
+                m%cvVx(if1)   = m%imapVx(ix,iy)
+                m%cvVx(if1+1) = m%imapVx(locrightix(ix,iy),
+     .                                   locrightiy(ix,iy))
                 bound = .true.
               end if
             end if
 
             ! S guard cell
-            ixb = topix(ix-1,iy-1)
-            iyb = topiy(ix-1,iy-1)
+            ixb = topix(ix,iy)
+            iyb = topiy(ix,iy)
             if (iyb /= ny+1) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
                 m%cvFc(if1) = m%imapFcy(ixb,iyb)
                 m%intcellP(if1) = 1.0_R8
@@ -1559,31 +1538,31 @@
             end if
 
             ! E guard cell
-            ixb = leftix(ix-1,iy-1)
-            iyb = leftiy(ix-1,iy-1)
+            ixb = leftix(ix,iy)
+            iyb = leftiy(ix,iy)
             if (ixb /= -2) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
-                m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
+                m%cvFc(if1) = m%imapFcx(ix,iy)
                 m%intcellP(if1) = 1.0_R8
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
-                m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-                m%cvVx(if1+1) = m%imapVx(loctopix(ix-1,iy-1),
-     .                                   loctopiy(ix-1,iy-1))
+                m%cvVx(if1)   = m%imapVx(ix,iy)
+                m%cvVx(if1+1) = m%imapVx(loctopix(ix,iy),
+     .                                   loctopiy(ix,iy))
                 bound = .true.
               end if
             end if
 
             ! W guard cell
-            ixb = rightix(ix-1,iy-1)
-            iyb = rightiy(ix-1,iy-1)
+            ixb = rightix(ix,iy)
+            iyb = rightiy(ix,iy)
             if (ixb /= nx+1) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
                 m%cvFc(if1) = m%imapFcx(ixb,iyb)
                 m%intcellP(if1) = 1.0_R8
@@ -1606,32 +1585,32 @@
 ! listing for every face the two corresponding cells
 ! and the corresponding vertices
 ! x faces
-       do iy = 1, ny
-         do ix = 1, nx+1
-           if(m%imapFcx(ix-1,iy-1)/=0) then
-             iFc =m%imapFcx(ix-1,iy-1)
-             m%fcCv(iFc,1) = m%imapCv(leftix(ix-1,iy-1),
-     .                                leftiy(ix-1,iy-1))
-             m%fcCv(iFc,2) = m%imapCv(ix-1,iy-1)
-             m%fcVx(iFc,1) = m%imapVx(ix-1,iy-1)
-             m%fcVx(iFc,2) = m%imapVx(loctopix(ix-1,iy-1),
-     .                                loctopiy(ix-1,iy-1))
+       do iy = 0, ny-1
+         do ix = 0, nx
+           if(m%imapFcx(ix,iy)/=0) then
+             iFc =m%imapFcx(ix,iy)
+             m%fcCv(iFc,1) = m%imapCv(leftix(ix,iy),
+     .                                leftiy(ix,iy))
+             m%fcCv(iFc,2) = m%imapCv(ix,iy)
+             m%fcVx(iFc,1) = m%imapVx(ix,iy)
+             m%fcVx(iFc,2) = m%imapVx(loctopix(ix,iy),
+     .                                loctopiy(ix,iy))
            endif
          end do
        end do
 
 ! y faces
 
-       do ix = 1, nx
-         do iy = 1, ny+1
-           if(m%imapFcy(ix-1,iy-1)/=0) then
-             iFc =m%imapFcy(ix-1,iy-1)
-             m%fcCv(iFc,2) = m%imapCv(ix-1,iy-1)
-             m%fcCv(iFc,1) = m%imapCv(bottomix(ix-1,iy-1),
-     .                                bottomiy(ix-1,iy-1))
-             m%fcVx(iFc,2) = m%imapVx(ix-1,iy-1)
-             m%fcVx(iFc,1) = m%imapVx(locrightix(ix-1,iy-1),
-     .                                locrightiy(ix-1,iy-1))
+       do ix = 0, nx-1
+         do iy = 0, ny
+           if(m%imapFcy(ix,iy)/=0) then
+             iFc =m%imapFcy(ix,iy)
+             m%fcCv(iFc,2) = m%imapCv(ix,iy)
+             m%fcCv(iFc,1) = m%imapCv(bottomix(ix,iy),
+     .                                bottomiy(ix,iy))
+             m%fcVx(iFc,2) = m%imapVx(ix,iy)
+             m%fcVx(iFc,1) = m%imapVx(locrightix(ix,iy),
+     .                                locrightiy(ix,iy))
            endif
          end do
        end do
@@ -1801,6 +1780,8 @@
 
       mxReg = maxval(m%cvReg(1:m%nCv))
 
+      write (*,*) 'Identify flux tubes and flux surfaces '
+
 ! identify the various flux tubes and surfaces
       m%ftCv = 0 ! init to 0
       m%ftFc = 0 ! init to 0
@@ -1937,87 +1918,259 @@
         endif
         do iyreg = 1, nyreg
           do iy = iystart(iyreg), iyend(iyreg)
-            ilbl = ilbl + 1
+            !wdk at the moment, simply take label equal to iy surface (with offset to have lbl > 0)
+            ilbl = iy + 2
             do ixreg = 1, nxreg(iyreg)
-              istrtc = -1
-              istrtfc = -1
-              istrtfy = -1
+              istrtt = -1
+              istrts = -1
+              lgtube = .false. ! default: not a flux tube consisting of only guard cells along plasma-interface
               do is = 1, nseg(ixreg,iyreg)
                 do ix = ixstart(ixreg,iyreg,is), ixend(ixreg,iyreg,is)
-                  if((m%imapCv(ix,iy)/=0)) then
-                    ic = m%imapCv(ix,iy)
-                    iFc = m%imapFcx(ix,iy)
-                    ifcy = m%imapFcy(ix,iy)
-                    if (istrtc.eq.-1) then
-                      iFt = iFt + 1
-                      iCv = iCv + 1
-                      m%ftCv(iCv) = ic
-                      ftCvP(iFt,1) = iCv
-                      m%cvFt(ic) = iFt
-                      ftReg(iFt) = reg(ixreg,iyreg)
-                      ftLbl(iFt) = ilbl
-                      istrtc = 1
-                    else
-                      iCv = iCv + 1
-                      m%ftCv(iCv) = ic
-                      m%cvFt(ic) = iFt
-                      ftCvP(iFt,2) = iCv - ftCvP(iFt,1) + 1
-                    end if
-                    if (iFc.ne.0) then
-                      if (istrtfc.eq.-1) then
-                        ifcc = ifcc + 1
-                        m%ftFc(ifcc) = iFc
-                        ftFcP(iFt,1) = ifcc
-                        istrtfc = 1
-                      else
-                        ifcc = ifcc + 1
-                        m%ftFc(ifcc) = iFc
-                        ftFcP(iFt,2) = ifcc - ftFcP(iFt,1) + 1
-                      end if
+                  ! First: flux tube cells and flux tube faces
+                  ! flux tube faces = faces between the cells in the flux tube => not-aligned with the field
+                  ! We do not know whether the guard cell will be on same iy
+                  ! => treat guard cells separately
+                  ic = m%imapCv(ix,iy)
+                  ctype = cflags(ix,iy,CELLFLAG_TYPE)
+                  gtype = cellGeoType(crx(ix,iy,0:3),cry(ix,iy,0:3))
+                  if (isRealCell(ctype)) then
+                    if (lgtube) then
+                      ! we enter a real cell and were walking along a void boundary
+                      ! => reset to start next flux tube
+                      istrtt = -1
+                      lgtube = .false.
                     endif
-                    if (ifcy.ne.0) then
-                      if (istrtfy.eq.-1) then
-                        iFs = iFs + 1
-                        ifccy = ifccy + 1
-                        m%fsFc(ifccy) = ifcy
-                        fsFcP(iFs,1) = ifccy
-                        istrtfy = 1
+                    if (istrtt.eq.-1) then
+                     iFt = iFt + 1
+                     if (isBoundaryCell(ctype).and. 
+     .                   .not. on_closed_surface(ix,iy)) then
+                      ! Find the guard cell at start of flux tube
+                      lfound = .false.
+                      lix = leftix(ix,iy)
+                      liy = leftiy(ix,iy)
+                      if (lix.ne.-2) then
+                       ! If left neighbor exists and is guard => take as start
+                       if (.not.
+     .                     isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)))
+     .                 then
+                        write (*,*) 
+     .                    'ix, iy, lix, liy, cflag cflagl, iFt = ',
+     .                    ix, iy, lix, liy, ctype, 
+     .                    cflags(lix,liy,CELLFLAG_TYPE), iFt
+                        write (*,*) 'on_closed_surface ',
+     .                    on_closed_surface(ix,iy)
+                        call xerrab (
+     .                  'Expected guard cell to start new flux tube')
+                       endif
+                       iCg = m%imapCv(lix,liy)
+                       iFc = m%imapFcx(ix,iy)
+                       lfound = .true.
                       else
-                        ifccy = ifccy + 1
-                        m%fsFc(ifccy) = ifcy
-                        fsFcP(iFs,2) = ifccy - fsFcP(iFs,1) + 1
-                      end if
+                       ! Left face degenerate
+                       ! Top or bottom neighbor will be guard
+                       ! If both are guard (rare situation => should remove this cell with grid generator!),
+                       ! arbitrarily take bottom guard cell as start
+                       if (gtype.ne.CGEO_TRIA_NOLEFT) call xerrab (
+     .                   'Expected degenerate left face' )
+                       tix = topix(ix,iy)
+                       tiy = topiy(ix,iy)
+                       bix = bottomix(ix,iy)
+                       biy = bottomiy(ix,iy)
+                       if (tiy.ne.ny+1) then
+                         if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(tix,tiy)
+                           iFc = m%imapFcy(tix,tiy)
+                           lfound = .true.
+                         endif
+                       endif
+                       if (biy.ne.-2) then
+                         if (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(bix,biy)
+                           iFc = m%imapFcy(ix,iy)
+                           if (lfound) write (*,*)
+     .                       'Pathological cell ',ix, iy, ' => remove?'
+                           lfound = .true.
+                         endif
+                       endif
+                       if (.not.lfound) then
+                         write (*,*) 'iFt, ix, iy: ', iFt, ix, iy
+                         call xerrab ('Did not find start of flux tube')
+                       endif
+                      endif
+                      iCv = iCv + 2
+                      iFcc = iFcc + 1
+                      m%ftCv(iCv-1) = iCg
+                      m%cvFt(iCg) = iFt
+                      ftCvP(iFt,1) = iCv-1
+                      ftCvP(ift,2) = 2
+                     elseif (on_closed_surface(ix,iy)) then
+                      iFc = m%imapFcx(ix,iy)
+                      if (iFc.eq.0) call xerrab (
+     .                  'Problem with core flux tube face.')
+                      iCv = iCv + 1
+                      iFcc = iFcc + 1
+                      ftCvP(iFt,1) = iCv
+                      ftCvP(iFt,2) = 1
+                     else
+                      call xerrab ('Unexpected start flux tube.')
+                     endif
+                     ! add the cell and face
+                     m%ftCv(iCv) = ic
+                     m%cvFt(ic) = iFt
+                     m%ftFc(iFcc) = iFc
+                     ftFcP(iFt,1) = iFcc
+                     ftFcP(iFt,2) = 1
+                     ftReg(iFt) = reg(ixreg,iyreg)
+                     ftLbl(iFt) = ilbl
+                     istrtt = 1
+                    else
+                     iFc = m%imapFcx(ix,iy)
+                     if (iFc.eq.0) call xerrab (
+     .                 'Problem with flux tube identification')
+                     iCv = iCv + 1
+                     iFcc = iFcc + 1
+                     m%ftCv(iCv) = ic
+                     m%cvFt(ic) = iFt
+                     ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                     m%ftFc(iFcc) = ifc
+                     ftFcP(iFt,2) = ftFcP(iFt,2) + 1
+                    end if
+                    ! Check for end of flux tube
+                    if (isBoundaryCell(ctype).and.
+     .                .not. on_closed_surface(ix,iy)) then
+                      lfound = .false.
+                      rix = rightix(ix,iy)
+                      riy = rightiy(ix,iy)
+                      if (rix.ne.nx+1) then
+                       ! If right neighbor exist and is guard => end of tube
+                       if (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE)))
+     .                 then
+                         iCg = m%imapCv(rix,riy)
+                         iFc = m%imapFcx(rix,riy)
+                         lfound = .true.
+                       endif
+                      else
+                       ! Right face degenerate
+                       ! Top or bottom neighbor will be guard
+                       ! If both are guard (rare situation => should remove this cell with grid generator!),
+                       ! arbitrarily take bottom guard cell as end
+                       if (gtype.ne.CGEO_TRIA_NORIGHT) call xerrab (
+     .                   'Expected degenerate right face' )
+                       tix = topix(ix,iy)
+                       tiy = topiy(ix,iy)
+                       bix = bottomix(ix,iy)
+                       biy = bottomiy(ix,iy)
+                       if (tiy.ne.ny+1) then
+                         if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(tix,tiy)
+                           iFc = m%imapFcy(tix,tiy)
+                           lfound = .true.
+                         endif
+                       endif
+                       if (biy.ne.-2) then
+                         if (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(bix,biy)
+                           iFc = m%imapFcy(ix,iy)
+                           if (lfound) write (*,*)
+     .                       'Pathological cell ',ix, iy, ' => remove?'
+                           lfound = .true.
+                         endif
+                       endif
+                      endif
+                      if (lfound) then
+                        iCv = iCv + 1
+                        iFcc = iFcc + 1
+                        m%ftCv(iCv) = iCg
+                        ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                        m%cvFt(iCg) = iFt
+                        m%ftFc(iFcc) = iFc
+                        ftFcP(iFt,2) = ftFcP(iFt,2) + 1
+                        istrtt = -1
+                      endif
+                    endif
+                  elseif (isGhostCell(ctype) .and. ic.ne.0) then
+                    ! Special treatment to ensure guard cells along plasma-void interfaces
+                    ! also form a flux tube
+                    ! check based on negative fclbl
+                    tix = topix(ix,iy)
+                    tiy = topiy(ix,iy)
+                    bix = bottomix(ix,iy)
+                    biy = bottomiy(ix,iy)
+                    lfound = .false.
+                    if (tiy.ne.ny+1) then
+                      ctypen = cflags(tix,tiy,CELLFLAG_TYPE)
+                      iFc = m%imapFcy(tix,tiy)
+                      if (isBoundaryCell(ctypen)) then
+                        if (m%fcLbl(iFc).lt.0) lfound = .true.
+                      endif 
+                    endif
+                    if (biy.ne.-2) then
+                      ctypen = cflags(bix,biy,CELLFLAG_TYPE)
+                      iFc = m%imapFcy(ix,iy)
+                      if (isBoundaryCell(ctypen)) then
+                        if (m%fcLbl(iFc).lt.0) lfound = .true.
+                      endif
+                    endif
+                    if (lfound) then
+                      ! we are in guard cell flux tube
+                      lgtube = .true.
+                      if (istrtt==-1) then
+                        iFt = iFt + 1
+                        iCv = iCv + 1
+                        m%ftCv(iCv) = ic
+                        m%cvFt(ic) = iFt
+                        ftCvP(iFt,1) = iCv
+                        ftCvP(iFt,2) = 1
+                        ftFcP(iFt,1) = iFcc
+                        ftFcP(iFt,2) = 0
+                        ftReg(iFt) = reg(ixreg,iyreg)
+                        ftLbl(iFt) = ilbl
+                        istrtt = 1
+                      else
+                        iCv = iCv + 1
+                        m%ftCv(iCv) = ic
+                        m%cvFt(ic) = iFt
+                        ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                      endif
+                    elseif (lgtube) then
+                      istrtt = -1
                     endif
                   end if
+                  ! flux surface faces = faces aligned with field;
+                  ! two flux tubes will be separated by a flux surface
+                  iFcy = m%imapFcy(ix,iy)
+                  if (iFcy.eq.0) istrts = -1
+                  if (iFcy.ne.0) then
+                    ! Only consider y-faces with non-positive fcLbl. Assumption:
+                    ! - if 0: 'regular', internal aligned face
+                    ! - if negative: a flux-aligned boundary (PF/Core/North)
+                    ! - if positive: a solid boundary => take out of flux surface (even if still field aligned by coincidence)
+                    if (m%fcLbl(iFcy).le.0) then
+                      if (istrts.eq.-1) then
+                        iFs = iFs + 1
+                        iFccy = iFccy + 1
+                        m%fsFc(iFccy) = iFcy
+                        fsFcP(iFs,1) = iFccy
+                        fsFcP(iFs,2) = 1
+                        istrts = 1
+                      else
+                        iFccy = iFccy + 1
+                        m%fsFc(iFccy) = iFcy
+                        fsFcP(iFs,2) = fsFcP(iFs,2) + 1
+                      end if
+                    else
+                      istrts = -1
+                    end if
+                  endif
                 end do !ix
               end do !is
             end do !ixreg
           end do !iy
         end do !iyreg
-! csc last flux surface needs ny + 1
-        do ixreg = 1, nxreg(nyreg)
-          istrtfy = -1
-          do is = 1, nseg(ixreg,nyreg)
-            do ix = ixstart(ixreg,nyreg,is), ixend(ixreg,nyreg,is)
-              if((m%imapCv(ix,ny)/=0)) then
-                ifcy = m%imapFcy(ix,ny)
-                if (ifcy.ne.0) then
-                  if (istrtfy == -1) then
-                    iFs = iFs + 1
-                    ifccy = ifccy + 1
-                    m%fsFc(ifccy) = ifcy
-                    fsFcP(iFs,1) = ifccy
-                    istrtfy = 1
-                  else
-                    ifccy = ifccy + 1
-                    m%fsFc(ifccy) = ifcy
-                    fsFcP(iFs,2) = ifccy - fsFcP(ifs,1) + 1
-                  endif
-                endif
-              endif
-            enddo !ix
-          enddo !is
-        enddo !ixreg
         m%nFt = iFt
         m%nFs = iFs
 ! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
@@ -2027,9 +2180,9 @@
         allocate (m%fsFcP(m%nFs,2))
         allocate (m%ftReg(m%nFt))
         allocate (m%ftLbl(m%nFt))
-        m%ftFcP = ftFcP(1:m%nFt,:)
-        m%ftCvP = ftCvP(1:m%nFt,:)
-        m%fsFcP = fsFcP(1:m%nFs,:)
+        m%ftFcP = ftFcP(1:m%nFt,1:2)
+        m%ftCvP = ftCvP(1:m%nFt,1:2)
+        m%fsFcP = fsFcP(1:m%nFs,1:2)
         m%ftReg = ftReg(1:m%nFt)
         m%ftLbl = ftLbl(1:m%nFt)
         deallocate(ftFcP,ftCvP,fsFcP,ftReg,ftLbl)
@@ -2041,6 +2194,201 @@
 
 !     Create b2.user.parameters file with definition of outer/inner midplanes
       call conv_midplane(nx,ny)
+
+
+      ! Identify corner coordinates/vertices
+      icount = 0
+      allocate(icornvx(size(m%icornVx)))
+      icornvx = 0
+      m%icornVx = 0
+
+      ! for generalized carre2 cases (arbitrary nr. of surfaces per region, target mode,....),
+      ! we are no longer sure that 'corners' are actually on the corners of the nx,ny grid
+      ! => check number of 'corners' based on pre-defined surface labels instead!
+
+      ! Check for pf boundaries
+      iLbl = -23
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store first vertex => the corner
+        icornVx(icount) = verts(1)
+        deallocate (verts)
+      end if
+
+      iLbl = -24
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store last vertex => the corner
+        icornVx(icount) = verts(nverts)
+        deallocate (verts)
+      end if
+
+      iLbl = -27
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store first vertex => the corner
+        icornVx(icount) = verts(1)
+        deallocate (verts)
+      end if
+
+      iLbl = -28
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store last vertex => the corner
+        icornVx(icount) = verts(nverts)
+        deallocate (verts)
+      end if
+      nvertpf = icount
+
+      ! Check for 'north' boundaries
+      nfaces = count(m%fcLbl==-43) + 
+     .         count(m%fcLbl==-42) + 
+     .         count(m%fcLbl==-44)
+      if (nfaces.gt.0) then
+
+        lstart=.false.
+
+        icount = icount + 2
+
+        iLbl = -43
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! store last vertex as first  corner
+          icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -42
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -44
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+      end if
+
+      nfaces = count(m%fcLbl==-47) + 
+     .         count(m%fcLbl==-46) + 
+     .         count(m%fcLbl==-48)
+      if (nfaces.gt.0) then
+
+        lstart=.false.
+
+        icount = icount + 2
+
+        iLbl = -47
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! store last vertex as first  corner
+          icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -46
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -48
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+      end if
+      nvertwall = icount - nvertpf
+
+      if (nvertwall.eq.nvertpf) then
+        ! assume standard/target mode with voids, 'usual' SN/DN topology
+        ! => sort first according to 'ix', then according to 'iy'
+        m%icornVx(1:icount-1:2) = icornVx(1:nvertpf)
+        m%icornVx(2:icount  :2) = icornVx(nvertpf+1:icount)
+
+      else
+        ! just copy over => check consistency with conv_surface_models!
+        m%icornVx(1:icount) = icornvx(1:icount)
+      endif
+
+      deallocate(icornvx)
+
+      write (*,*) 'Found ', icount, ' points to be adapted in block 15:'
+      write (*,*) m%icornVx(1:icount)
 
       deallocate (icorner)
       deallocate (ighostcv)
