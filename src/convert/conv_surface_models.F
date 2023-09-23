@@ -364,7 +364,7 @@
 
       end subroutine conv_surface_models
 
-      subroutine find_nondef_surfaces (nout, mpg, gm,
+      subroutine find_nondef_surfaces (nout, mpg,
      .           elem, bndmdl, elem_cv,nelem, node_vert, nnode,
      .           neighbor)
 
