@@ -146,7 +146,7 @@
      .     bndmdl, trifc, elem_cv, nelem, node_vert, nnodes)
       else
         write (*,*) 'Identifying nondef. standard surfaces'
-        call find_nondef_surfaces (nout, mpg, gm,
+        call find_nondef_surfaces (nout, mpg,
      .     elem, bndmdl, elem_cv, nelem, node_vert, nnodes, neighbor)
       end if
 
