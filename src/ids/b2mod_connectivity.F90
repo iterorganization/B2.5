@@ -762,6 +762,10 @@ contains
     do iy=ny,-1,-1
         write(*,'(3276(10i1,1x))') (region(ix,iy,0),ix=-1,nx)
     enddo
+    write(*,*) 'cflag(:,:,0)'
+    do iy=ny,-1,-1
+        write(*,'(3276(10i1,1x))') (cflag(ix,iy,CELLFLAG_TYPE),ix=-1,nx)
+    enddo
 
     ! After we know the volumetric region numbers, we fix the boundary indices for
     ! non-structure boundaries. CARRE2 sets them to -1 for all boundary faces not

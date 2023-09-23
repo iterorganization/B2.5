@@ -88,9 +88,6 @@
       character filename*256
       character cnamip*80, cvalip*80, line*500, ligne*500
       character bcp_filename*260
-#ifdef B25_EIRENE
-      logical linq_33, linq_34, linq_35, lcheck
-#endif
       logical file_open, file_exists
 
       type(mapping), save :: mpg
@@ -100,9 +97,6 @@
       type(B2Average), save :: state_avg
       type(switches), save :: switch
       integer :: ntm, is, natm_loc
-#ifdef B25_EIRENE
-      integer :: ico, io_33, io_34, io_35, iel, iel2
-#endif
 *   ..procedures
       logical is_comment
       external is_comment
@@ -420,36 +414,9 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         end if
         call rc_to_struct(mpg)
       end if
-#ifdef B25_EIRENE
-      open (unit=33)
-      read (33,*,iostat=io_33) ico
-      linq_33 = (io_33 == 0)
-      close (33)
-      open (unit=34)
-      read (34,*,iostat=io_34) iel
-      linq_34 = (io_34 == 0)
-      close (34)
-      open (unit=35)
-      read (35,*,iostat=io_35) iel2
-      linq_35 = (io_35 == 0)
-      close (35)
-      lcheck = (ico > 0) .and. (iel > 0) .and. (iel2 > 0) .and.
-     .         (iel == iel2)
-      if (linq_33 .and. linq_34 .and. linq_35 .and. lcheck
-     .  .and. tria_mode.eq.0 ) then
-        write (*,*) ' files fort.33, fort.34 and fort.35 found '
-        write (*,*) ' convert files to represent unstructured mesh '
-        call conv_triangles(nout(0), mpg, gm, nx, ny)
-      else
-        write (*,*) ' no files fort.33, fort.34 and fort.35 available'
-        write (*,*) ' create files fort.33, fort.34 and fort.35 '
-        call write_triangles(nout(0), mpg, gm)
-      end if
-#else
-!      if (use_eirene.ne.0) then
-        call write_triangles(nout(0),mpg, gm)
-!      endif
-#endif
+
+      call prep_triangles(nout(0),mpg, gm, nx, ny, tria_mode)
+
 *   ..convert feedback schemes (if present!)
       filename='b2.feedback_control.parameters'
       call find_file(filename,file_exists)
