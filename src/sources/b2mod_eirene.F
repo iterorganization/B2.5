@@ -136,7 +136,7 @@ csw 19oct2012, added save attribute!!!
      1 nesepm_istra,
 #endif
       real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t0n,t1,t1n,rf0,dua,t2,t3,t4,f,
+     * recyc_hlp,vthe,t0,t0n,t1,rf0,dua,t2,t3,t4,f,
 #ifdef WG_RM
      * ndes, private_flux_puff, nesepm_sol,
      * nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,

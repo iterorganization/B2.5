@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2agbf (nx, ny, isymm, periodic_bc, nncut,
-     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, 
+     & crx, cry, fpsi, ffbz, vol,
      & bb, wbbl, wbbr, wbbv, region, leftix, leftiy,
      & bottomix, bottomiy, rightix, rightiy, topix, topiy, cflag)
       use b2mod_types
@@ -23,9 +23,7 @@
       real (kind=R8) ::
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
-     &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     &  bb(-1:nx,-1:ny,0:3)
+     &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3), 
@@ -53,7 +51,7 @@
 *     nx, ny - integer, input.
 *     See the calling routine for description.
 *
-*     vol, crx, cry, qz - real*8 array, input.
+*     vol, crx, cry - real*8 array, input.
 *     See the calling routine for description.
 *
 *     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array, input.

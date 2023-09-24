@@ -227,13 +227,10 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 
       write (*,*) 'Mapping created'
 
-      call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
-     .        mpg%nVmxCv, gm, mpg)
+      call prep_geometry (nx, ny, gm, mpg)
       write (*,*) 'Geometry created'
 
-      call prep_plasma (nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, mpg, state)
+      call prep_plasma (nx, ny, ns, mpg, state)
       write (*,*) 'State created'
 
       call prep_plasma_ext(nx, ny, ns, mpg%nCv, mpg%nFc, state_ext)
@@ -318,7 +315,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call read_b2faveri_st ( nx, ny, ns)
           call run_av_init ( 0, mpg%nCv, ns, .false., .false.,
      .                       state_avg)
-          call prep_average ( nx, ny, ns, mpg%nCv, mpg, state_avg)
+          call prep_average ( nx, ny, ns, mpg, state_avg)
           call run_av_save ('b2faveri_us', mpg%nCv, ns, .true., .true.,
      .                       state_avg)
           call run_av_fin( state_avg )

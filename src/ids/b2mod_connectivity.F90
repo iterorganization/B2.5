@@ -419,7 +419,7 @@ contains
     !
 
     integer ix,iy,inseliy,inselix1,inselix2,iyt,geoType,iFace,offset
-    integer ix1,ix2,ixn,iyn,iregn,ncount
+    integer ix1,ix2,ixn,iyn,iregn
     integer ixbreak
     integer lefttargetindex(2), righttargetindex(2)
     logical CellToTest
@@ -684,7 +684,6 @@ contains
             if (.not.isGhostCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
             if (region(ix,iy,0).ne.0) cycle
             ! check for presence of ghost neighbors
-            ncount=0
             iregn=0
             ixn=leftix(ix,iy)
             iyn=leftiy(ix,iy)

@@ -342,7 +342,7 @@
 
       call b2agbf (nx1, ny1, isymm, periodic_bc, nncut,
      & crx1, cry1, fpsi1, ffbz1,
-     & vol1, gs1, qz1, qc1, qs1, bb1, wbbl1, wbbr1, wbbv1, region1,
+     & vol1, bb1, wbbl1, wbbr1, wbbv1, region1,
      & leftix1, leftiy1, bottomix1, bottomiy1, rightix1, rightiy1,
      & topix1, topiy1, cflags1)
 
@@ -645,9 +645,7 @@ cdpc-debug
 !   ..conversion to new, unstructured data-types
       call calc_mapping (nx, ny, mpg)
       write (*,*) 'Mapping created'
-      call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
-     .        mpg%nVmxCv, gm, mpg)
+      call prep_geometry (nx, ny, gm, mpg)
       write (*,*) 'Geometry created'
 !     write unstructured b2fgmtry file
 #ifdef F2003

@@ -93,7 +93,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *.declarations
 
 *   ..local variables
-      integer i, k, is, is0, iCv, iFc, iFt, mode
+      integer k, is, is0, iCv, iFc, iFt, mode
       character(3) chns, chns0                                        !srv 17.06.08
 #ifdef ASTRA
       integer mintopcut                                               !lk 19.09.07

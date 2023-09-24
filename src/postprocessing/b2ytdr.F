@@ -340,6 +340,7 @@ c 2002-09-11: logic revised
       integer jatm, jmol, jion, jpls, jphot, kint, kmod
 #ifdef WG_TODO
       integer iside
+      integer iplsbeginrange, iplsendrange
 #endif
       integer isbegin, isend, is1begin, is1end
       integer NTL
@@ -350,7 +351,6 @@ c 2002-09-11: logic revised
       integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
-      integer iplsbeginrange, iplsendrange
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
       integer, allocatable :: IREAC1(:), IREAC2(:)
