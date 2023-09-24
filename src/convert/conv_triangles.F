@@ -29,8 +29,8 @@
       logical :: inserted
       integer :: nco_old, nelem_conv, ic, ico, ivx, iel, iel2,
      .           i1, i2, i3, idum, i, nel2, 
-     .           is, is1, is2, jdum, ifc, icv, icut, ixt, iyt,
-     .           iad, ix, iy, isig, iused, ineir,
+     .           is, is1, is2, ifc, icv, icut, ixt, iyt,
+     .           ix, iy, isig, iused, ineir,
      .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
      .           ixl, ixr, iv, icside
 
@@ -337,7 +337,6 @@
           else
 !  ixtri, iytri are in Eirene cell counting
 !  find cell number in B2.5 counting
-            iad = 0
             ixt = ix_eir_b25(ixtri(iel))
             iyt = iy_eir(iytri(iel))
             if (ixt == -2) then
@@ -381,7 +380,7 @@
                 ! For stitching void grid to plasma grid: check if there is a plasma triangle on other side
                 call find_plasma_neighbor (icv, ifc, iel2, is2, 
      .            elem(is, iel), elem(is1, iel), nnodes, node_vert,
-     .            npelem, nelem, elem, mpg, gm)
+     .            npelem, nelem, elem, mpg)
                 ! If yes, adapt neighbor information
                 if (icv > 0) then
                   neigh(is,1,iel) = iel2
@@ -624,7 +623,7 @@
       end subroutine find_face_number
 
       subroutine find_plasma_neighbor (icv, ifc, iel2, is2, in1, in2,
-     .  nnodes, node_vert, npelem, nelem, elem, mpg, gm)
+     .  nnodes, node_vert, npelem, nelem, elem, mpg)
 
       use b2mod_types
       use b2us_map
@@ -632,7 +631,6 @@
       implicit none 
 
       type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: gm
 
       integer :: icv, ifc, icv1, ifc1, iel, iel2, is, is1, is2,
      .  in1, in2, iv1, iv2, nnodes, npelem, nelem

@@ -56,7 +56,7 @@
      .           iVx, iVx1, iVx2, mxreg, iFt, iCv, iFs,
      .           ifcc, icount, n2, ix2o, iy2o,
      .           ncorneri, nghostfcxi, nghostfcyi, ifcy,
-     .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
+     .           nghostvxi, ici, icg, ict, lix, liy,
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, ifccy,
      .           nyreg, ixreg, iyreg, is, nxtl, nxtr,
      .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
@@ -78,8 +78,8 @@
      .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:),
      .           verts(:), icornvx(:)
       real(R8) :: xco(4), yco(4), babs
-      logical lfound, swapped, classical, bound, cellError, lstart,
-     .        lgtube
+      real(R8) :: Xvertices(0:3), Yvertices(0:3)
+      logical lfound, classical, bound, cellError, lstart, lgtube
       intrinsic pack
 
 !  assume a structured quadrilateral grid
@@ -1932,7 +1932,9 @@
                   ! => treat guard cells separately
                   ic = m%imapCv(ix,iy)
                   ctype = cflags(ix,iy,CELLFLAG_TYPE)
-                  gtype = cellGeoType(crx(ix,iy,0:3),cry(ix,iy,0:3))
+                  Xvertices(0:3) = crx(ix,iy,0:3)
+                  Yvertices(0:3) = cry(ix,iy,0:3)
+                  gType = cellGeoType(Xvertices, Yvertices)
                   if (isRealCell(ctype)) then
                     if (lgtube) then
                       ! we enter a real cell and were walking along a void boundary
@@ -2419,12 +2421,10 @@
 
 ***********************************************************************
 
-      subroutine prep_geometry(nx, ny, nCv, nFc, nVx, nFs, nFt,
-     .  nVmxCv, gm, mpg)
+      subroutine prep_geometry(nx, ny, gm, mpg)
 
       implicit none
-      integer, intent(in) :: nx, ny, nCv, nFc, nVx, nFs, nFt,
-     .                       nVmxCv
+      integer, intent(in) :: nx, ny
       integer :: ix, iy, ic, iFc, iVx, iFs
 #ifdef WG_TODO
       integer :: i, j, idb, iVx1, iVx2
@@ -2436,7 +2436,8 @@
       external newunit
 #endif
 
-      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
+      call alloc_geometry (gm,
+     &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
 
 ! cell volumes
       do iy = -1, ny
@@ -2612,7 +2613,7 @@
       deallocate(gm%fsPsi)
       allocate (gm%fsPsi(mpg%nFs))
       gm%fsPsi = 0.0_R8
-      do iFs = 1, nFs
+      do iFs = 1, mpg%nFs
         iFc = mpg%fsFc(mpg%fsFcP(iFs,1))
         gm%fsPsi(iFs) = gm%vxFpsi(mpg%fcVx(iFc,1))
       end do
@@ -2623,16 +2624,16 @@
 
 **********************************************************************
 
-      subroutine prep_plasma (nx, ny, ns, nCv, nCi, nFc, mpg, st)
+      subroutine prep_plasma (nx, ny, ns, mpg, st)
 
       implicit none
-      integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+      integer, intent(in) :: nx, ny, ns
       type(mapping), intent(in) :: mpg
       type(B2State), intent(inout) :: st
       integer :: ix, iy, ic, iFc!, nfx
 
-      call createB2State (nCv, nFc, ns, st)
-      call createB2Diagnostic( nCv, ns, nnreg, st % diag )
+      call createB2State ( mpg%nCv, mpg%nFc, ns, st)
+      call createB2Diagnostic( mpg%nCv, ns, nnreg, st % diag )
 
 !     nfx = (nx+1)*ny
 
@@ -2741,7 +2742,7 @@
 
 ! guard cells iy = -1 and iy = ny
       do ix = 0, nx-1
-!       ic = nCi + ix+1
+!       ic = mpg%nCi + ix+1
         iy = -1
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2836,7 +2837,7 @@
           st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
           st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
         endif
- !      ic = nCi + nx + ix+1
+ !      ic = mpg%nCi + nx + ix+1
         iy = ny
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2935,7 +2936,7 @@
 
 ! guard cells ix = -1 and ix = nx
       do iy = 0, ny-1
-!       ic = nCi + 2*nx + iy+1
+!       ic = mpg%nCi + 2*nx + iy+1
         ix = -1
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -3031,7 +3032,7 @@
           st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
         end if
 
-!       ic = nCi + 2*nx + ny + iy+1
+!       ic = mpg%nCi + 2*nx + ny + iy+1
         ix = nx
         if(mpg%imapCv(ix,iy)/=0) then
           ic = mpg%imapCv(ix,iy)
@@ -3428,17 +3429,17 @@
 
 **********************************************************************
 
-      subroutine prep_state (nx, ny, ns, nCv, nFc, mpg, st)
+      subroutine prep_state (nx, ny, ns, mpg, st)
       !! convert only a limited set of quantities as needed for the
       !! creation of the b2fstate file
       implicit none
-      integer, intent(in) :: nx, ny, ns, nCv, nFc
+      integer, intent(in) :: nx, ny, ns
       type(mapping), intent(in) :: mpg
       type(B2State), intent(inout) :: st
       integer :: ix, iy, ic, iFc!, nfx
 
-      call createB2Plasma( nCv, ns, st % pl )
-      call createB2Derivatives( nCv, nFc, ns, st % dv )
+      call createB2Plasma( mpg%nCv, ns, st % pl )
+      call createB2Derivatives( mpg%nCv, mpg%nFc, ns, st % dv )
 
 !     nfx = (nx+1)*ny
 
@@ -3653,10 +3654,10 @@
 
 **********************************************************************
 
-      subroutine prep_average ( nx, ny, ns, nCv, mpg, avg)
+      subroutine prep_average ( nx, ny, ns, mpg, avg)
 
       implicit none
-      integer, intent(in) :: nx, ny, ns, nCv
+      integer, intent(in) :: nx, ny, ns
       type(mapping), intent(in) :: mpg
       type(B2Average), intent(inout) :: avg
       integer :: ix, iy, ic
@@ -3693,6 +3694,7 @@
       end do
 
       end subroutine prep_average
+
 **********************************************************************
 
       subroutine to_struct_plasma (ns, mpg, st)

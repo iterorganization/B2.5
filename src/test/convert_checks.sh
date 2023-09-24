@@ -31,6 +31,7 @@ for f in $files1; do
      check_b2_output $1/$f $2/$f
    fi
 done  > compare_results.log
+different=$((different+`grep differ compare_results.log | wc -l`))
 for f in $files2; do
    if [ ! -f $1/$f ]; then
      echo "Error, file not found $1/$f";
