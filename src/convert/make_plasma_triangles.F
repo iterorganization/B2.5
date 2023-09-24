@@ -1,5 +1,4 @@
-      subroutine make_plasma_triangles (mpg, gm, nx, ny,
-     .  nmxnodes, nmxelem, nelem,
+      subroutine make_plasma_triangles (mpg, gm, nmxelem, nelem,
      .  vert_node, elem, elem_cv, trifc, neighbor)
 
       use b2mod_types
@@ -10,7 +9,7 @@
 
       implicit none
 
-      integer, intent(in) :: nx, ny, nmxnodes, nmxelem
+      integer, intent(in) :: nmxelem
       integer :: nelem
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
@@ -40,12 +39,11 @@
       ! local variables
       integer :: ic, i1, i2, i3, mxCvFc, ielem, is, ifc, i, jfc, 
      .           j, is1, js, js1, imin, imax, jmin, jmax, jelem, 
-     .           ifcmin, ifcmax, it, 
+     .           ifcmin, ifcmax,
      .           unused, ifc1, ifc2, ifc3,
      .           ileft, last(1), isig(3)
       integer, allocatable :: ifcused(:)
       logical, allocatable :: fcused(:)
-      logical :: ffound
       intrinsic pack
 
       nullify(qhead)

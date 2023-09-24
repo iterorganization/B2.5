@@ -118,8 +118,7 @@
       if (tria_mode.eq.1 .or. .not.lcheck) then
         ! Make triangles in the plasma domain
         write (*,*) 'Building triangles for plasma region'
-        call make_plasma_triangles(mpg, gm, nx, ny,
-     .    nmxnodes, nmxelem, nelem,
+        call make_plasma_triangles(mpg, gm, nmxelem, nelem,
      .    vert_node, elem, elem_cv, trifc, neighbor)
         npelem = nelem
       endif
@@ -142,7 +141,7 @@
       inquire (file='input.dat',exist=ex)
       if (ex) then
         write (*,*) 'Converting surface models from input.dat'
-        call conv_surface_models (nout, mpg, gm,
+        call conv_surface_models (mpg,
      .     bndmdl, trifc, elem_cv, nelem, node_vert, nnodes)
       else
         write (*,*) 'Identifying nondef. standard surfaces'

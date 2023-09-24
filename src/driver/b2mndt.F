@@ -373,7 +373,7 @@ ctmp.dpc
           endif                                                          !srv 26.02.18 }
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
-     &     call b2srst (nCv, ns, switch, mpg, st%pl%na, st%pl%ua,    !srv 01.07.08
+     &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,            !srv 01.07.08
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
      &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
 *       (smq is inherently stable.)

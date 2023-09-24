@@ -427,7 +427,7 @@ cxpb-end
       endif
 *  ..interpolate magnetic field to cell faces
       call b2agbf (nx, ny, isymm, periodic_bc, nncut,
-     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, bb, wbbl, wbbr, wbbv,
+     & crx, cry, fpsi, ffbz, vol, bb, wbbl, wbbr, wbbv,
      & region, leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
      & topix, topiy, cflags)
 *  ..init some arrays for classical grids

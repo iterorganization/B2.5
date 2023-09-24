@@ -183,7 +183,7 @@
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
-      integer :: ncon, nele_jac, istra
+      integer :: ncon, nele_jac
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer ncid
@@ -332,7 +332,7 @@
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer iCv, is, k, idum(0:9)
+      integer iCv, is, istra, k, idum(0:9)
 #ifdef WG_TODO
       integer ix, iy
 #endif

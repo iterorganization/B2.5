@@ -385,7 +385,7 @@ c   extra call at this place within internal iteration)
      &    st%dv%ni, st%dv%nn, st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr,
      &    .false.)                                                       !srv 23.07.21
 *     ..stabilise the source coefficients                                !xpb
-        call b2srst (nCv, ns, switch, mpg,
+        call b2srst (nCv, ns, switch,
      &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, !srv 01.07.08
      &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)    !srv 23.07.21
       endif
