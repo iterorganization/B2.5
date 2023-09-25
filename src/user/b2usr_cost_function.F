@@ -34,9 +34,9 @@
       real (kind=R8) :: qq, prior, lll, lll_cum, curr_shift
       real (kind=R8) :: gradr(nCv), funv(nVx), pz(nCv), rz(nCv), cs(nCv)
 #ifdef TEST_MAP
-      integer, parameter :: nn=50
-      real (kind=R8), save :: xx(nn), dd(nn), ff(nn)
-      integer :: ii, ij, jj
+      integer, parameter :: nn=51
+      real (kind=R8), save :: xx(nn), dd(nn), ff(nn), dx
+      integer :: ii, ij, kk
 #endif
       integer :: isigma, imean
       external calc_dist
@@ -44,6 +44,7 @@
       call subini('b2usr_cost_function')
 
       if (first_call .and. ncf .gt. 0) then
+#ifndef TEST_MAP
         call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')
         call xertst(mpg%isClassicalGrid.eq.1,' Cost function CVs and '//
      &  'FCs ordering  and interpolation in case of unstructured grid'//
@@ -73,13 +74,11 @@
      &        b2rr(icf,1:n1))
           endif
         enddo
-#ifdef TEST_MAP
-        ij = 1
-        do ii=1,5
-          do jj=1,10
-            xx(ij) = real(jj,kind=r8) 
-            ij = ij + 1
-          end do
+#else
+        dx = 10.0_R8/(nn-1)
+        xx = 0.0_R8
+        do ii=2,nn
+          xx(ii) = xx(ii-1) + dx
         end do
 #endif
         first_call = .false.
@@ -114,13 +113,14 @@
       isigma = 1
       imean = 1
       iicf = 2
+      n2 = ncfdata(iicf)
       do ii=1,nn
         ff(ii) = parm_dna(1)*(xx(ii)**1.5)
       end do
       call calc_log_prior(prior, inrange)
-      n1 = ncfdata(iicf)
-      call calc_loglikelihood(n1, ff, cfdata(iicf,2,1:n1),
-     & lll_cum, isigma, imean)
+      write(*,*) 'MAP log prior value:', prior
+      call calc_loglikelihood(n2, ff, cfdata(iicf,2,1:n2), 
+     & cfdata(iicf,3,1:n2), lll_cum, isigma, imean)
       if (inrange) then
         J(1) = -(prior + lll_cum)*cfweight(1)
       else
