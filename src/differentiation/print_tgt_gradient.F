@@ -17,7 +17,7 @@
        idir = 1 !this indicates the different directions of multidirectional derivative mode
        write (ss,'(I1)') icf
        if (icf.gt.9) write (ss,'(I2)') icf
-       do ip = 1, nnvar - nsigma_opt - nmean_opt
+       do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt because it is not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -167,7 +167,7 @@
      &      Jd(idir,icf),'wrt',trim(key)
           idir = idir + 1
         endif
-       end do !nbdirs-nsigma_opt
+       end do !nbdirs-nsigma_opt-nmean_opt
 
        if (nsigma_opt.gt.0) then
         do ip = 1, nsigma
@@ -188,6 +188,19 @@
           if (mean_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "mean",ss2
+            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+     &        Jd(idir,icf),'wrt',trim(key)
+            idir = idir + 1
+          endif
+        end do
+       endif
+
+       if (nshift_opt.gt.0) then
+        do ip = 1, nshift
+!         only if shift is being optimized!
+          if (shiftopt(ip)) then
+            write(ss2,"(I3)") ip
+            write (key, *) "shift",ss2
             write (*,*) '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             idir = idir + 1
