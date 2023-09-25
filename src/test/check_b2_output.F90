@@ -268,8 +268,8 @@ module b2_file_io
               read (nget) chfun(1:n1)
             endif
           endif
-     end select
-     return
+      end select
+      return
   end subroutine
 
 end module

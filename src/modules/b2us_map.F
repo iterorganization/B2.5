@@ -592,12 +592,12 @@
       type (mapping), intent (inout) :: m
       integer :: i, j, k, l
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
-     *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, freg, inew
+     *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
       integer :: totalcount, Fscount, iactive, icount, fccount
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
-     *                        indFc(:), cvNvLoc(:),
+     *                        indFc(:), cvNvLoc(:), freg(:),
      *                        old_face_list(:), new_face_list(:)
-      logical :: duplicate, match_found
+      logical :: duplicate, left_match_found, right_match_found
       external ipgeti
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -755,7 +755,9 @@ cwdk  can be derived directly from data in that file
         allocate(m%strVx(m%nStr))
         m%strVx(1:m%nStr) = indXpt(1:m%nStr)
         allocate(m%strDiv(m%nStr))
+        allocate(freg(m%nStr))
         m%strDiv = 0
+        freg = 0
         do i = 1, m%nStr
           iVx = m%strVx(i)
           do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
@@ -763,16 +765,29 @@ cwdk  can be derived directly from data in that file
             iFc = m%vxFc(j)
             if (m%fcReg(iFc).eq.1) then
               m%strDiv(i) = 1
+              freg(i) = 1
             else if (m%fcReg(iFc).eq.4) then
               m%strDiv(i) = 2
+              freg(i) = 4
             else if (m%fcReg(iFc).eq.5) then
-              m%strDiv(i) = 3
+              if (m%nXpt.eq.1) then
+                m%strDiv(i) = 1
+              else
+                m%strDiv(i) = 3
+              endif
+              freg(i) = 5
             else if (m%fcReg(iFc).eq.8) then
-              m%strDiv(i) = 4
+              if (m%nXpt.eq.1) then
+                m%strDiv(i) = 2
+              else
+                m%strDiv(i) = 4
+              endif
+              freg(i) = 8
             end if
           end do
         end do
       else if (m%nnreg(0).eq.2) then
+        allocate(freg(2))
         iFc = 1
         icount = 0
         do while (m%iFssep.eq.0.and.iFc.le.m%nFc)
@@ -810,8 +825,13 @@ cwdk  can be derived directly from data in that file
         allocate(m%strDiv(2))
         m%strDiv(1) = 1
         m%strDiv(2) = 2
+        freg(1) = 1
+        freg(2) = 2
       else if (m%nnreg(0).eq.1) then
         call ipgeti ('b2mwti_jsep', m%iFssep)
+        allocate(freg(2))
+        freg(1) = 1
+        freg(2) = 2
         if (m%iFssep.gt.0) then
           indXpt = 0
           icount = 0
@@ -868,22 +888,8 @@ cwdk  can be derived directly from data in that file
         m%divFcP(:,2) = 0
         do i = 1, maxval(m%strDiv)  ! first assemble all the faces
           if (i.gt.1) m%divFcP(i,1) = m%divFcP(i-1,1) + m%divFcP(i-1,2)
-          select case (i)
-          case (1)
-            freg = 1
-          case (2)
-            if (m%nnreg(0).gt.2) then
-              freg = 4
-            else
-              freg = 2
-            end if
-          case (3)
-            freg = 5
-          case (4)
-            freg = 8
-          end select
           do iFc = 1, m%nFc
-            if (m%fcReg(iFc).eq.freg) then
+            if (m%fcReg(iFc).eq.freg(i)) then
               icount = icount + 1
               m%divFcP(i,2) = m%divFcP(i,2) + 1
               indFc(icount) = iFc
@@ -906,18 +912,18 @@ cwdk  can be derived directly from data in that file
           iVb = m%fcVx(m%divFc(m%divFcP(i,1)),2)
           inew = 1
           do while (inew.lt.m%divFcP(i,2))
-            match_found = .false.
+            left_match_found = .false.
             do j = 1, m%divFcP(i,2)
-              if (match_found) cycle
+              if (left_match_found) cycle
               if (old_face_list(j).eq.0) cycle
               if (iVa.eq.m%fcVx(old_face_list(j),1)) then
-                match_found = .true.
+                left_match_found = .true.
                 iVa = m%fcVx(old_face_list(j),2)
               else if (iVa.eq.m%fcVx(old_face_list(j),2)) then
-                match_found = .true.
+                left_match_found = .true.
                 iVa = m%fcVx(old_face_list(j),1)
               end if
-              if (match_found) then
+              if (left_match_found) then
                 indFc(1:inew) = new_face_list(1:inew)
                 new_face_list(1) = old_face_list(j)
                 new_face_list(2:inew+1) = indFc(1:inew)
@@ -925,23 +931,42 @@ cwdk  can be derived directly from data in that file
                 inew = inew + 1
               end if
             end do
-            match_found = .false.
+            right_match_found = .false.
             do j = 1, m%divFcP(i,2)
-              if (match_found) cycle
+              if (right_match_found) cycle
               if (old_face_list(j).eq.0) cycle
               if (iVb.eq.m%fcVx(old_face_list(j),1)) then
-                match_found = .true.
+                right_match_found = .true.
                 iVb = m%fcVx(old_face_list(j),2)
               else if (iVb.eq.m%fcVx(old_face_list(j),2)) then
-                match_found = .true.
+                right_match_found = .true.
                 iVb = m%fcVx(old_face_list(j),1)
               end if
-              if (match_found) then
+              if (right_match_found) then
                 new_face_list(inew+1) = old_face_list(j)
                 old_face_list(j) = 0
                 inew = inew + 1
               end if
             end do
+            if (.not.(left_match_found.or.right_match_found).and.
+     &          inew.lt.m%divFcP(i,2)) then
+              do j = 1, inew
+                iFc = new_face_list(j)
+                iVa = m%fcVx(iFc,1)
+                iVb = m%fcVx(iFc,2)
+                write(6,'(a,4i6)')
+     &        'Chain of faces and vertices in new list ',j,iFc,iVa,iVb
+              end do
+              do j = 1, m%divFcP(i,2)
+                if (old_face_list(j).eq.0) cycle
+                iFc = m%divFc(m%divFcP(i,1)+j-1)
+                iVa = m%fcVx(iFc,1)
+                iVb = m%fcVx(iFc,2)
+                write(6,'(a,4i6)')
+     &        'Left over faces and vertices in old list',j,iFc,iVa,iVb
+              end do
+              call xerrab ('Broken face chain along target')
+            end if
           end do
           m%divFc(m%divFcP(i,1):m%divFcP(i,1)+m%divFcP(i,2)-1)=
      &     new_face_list(1:m%divFcP(i,2))
@@ -950,6 +975,7 @@ cwdk  can be derived directly from data in that file
         end do
         deallocate(indFc)
       end if
+      deallocate(freg)
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx
