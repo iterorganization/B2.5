@@ -8,9 +8,6 @@ endif
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
-endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
@@ -56,6 +53,7 @@ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 ifdef TAO
 include ${PETSC_DIR}/lib/petsc/conf/variables
 LIBOPT = ${PETSC_LIB}
+CPP    = /lib/cpp -traditional
 endif
 ifdef IPOPT
 LIBOPT = -L${IPOPTDIR}/lib/ -lipopt

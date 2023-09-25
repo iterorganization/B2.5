@@ -6184,7 +6184,7 @@ CONTAINS
 &                           mpgd, state, stated, state_ext, state_extd, &
 &                           switch%boris, j, jd, nbdirs+nsigma_opt+nmean_opt+nshift_opt)
       if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
-      call print_tgt_gradient(jd,ncf)
+      call print_tgt_gradient(jd)
       DO icf=1,ncf
         WRITE(ss, '(I1)') icf
         WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
