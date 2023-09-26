@@ -71,11 +71,11 @@ program b2_ual_write
      &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use b2mod_ual    &
      & , only : ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use b2mod_ual    &
      & , only : ids_divertors
 #endif
@@ -222,7 +222,7 @@ program b2_ual_write
         if ( status.ne.0 ) then
           write (0,*) 'Error opening old dataset_description IDS !'
         else if (associated(old_description%dd_version)) then
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           old_start_time = old_description%simulation%time_begin
           old_end_time = old_description%simulation%time_end
 #endif
@@ -251,7 +251,7 @@ program b2_ual_write
 !xpb Copy the IDS to a temporary location with the new DD and then bring it back
             tmp_run = run
             if (database.ne.'iter') tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                & 'idscp --setDatasetVersion'//                 &
                &       ' -si ',shot,' -ri ',run,               &
@@ -270,7 +270,7 @@ program b2_ual_write
             call system(systemarg)
 #endif
             if (database.ne.'iter') then
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                & 'idscp --setDatasetVersion'//                 &
                &       ' -si ',shot,' -ri ',tmp_run,           &
@@ -299,13 +299,13 @@ program b2_ual_write
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
              &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
              &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
              &  numerics, old_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
              &  divertors, &
 #endif
              &  tim, dteff, shot, run, database, version, new_eq_ggd, &
@@ -323,13 +323,13 @@ program b2_ual_write
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
          &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
          &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
          &  numerics, run_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
          &  divertors, &
 #endif
          &  tim, dteff, shot, run, database, version, new_eq_ggd )
@@ -339,27 +339,27 @@ program b2_ual_write
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   treename, shot, run, idx, username, database, version, &
         &   new_eq_ggd )
     call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   radiation )
     call dealloc_batch_edge( batch_profiles, batch_sources, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
         &   description )
