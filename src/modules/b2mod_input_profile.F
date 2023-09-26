@@ -19,6 +19,7 @@
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
       integer, parameter :: nkind_coeff=9
       integer, save :: csig_an_style=1
+      integer :: ixref_profile, iyref_profile
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable, save :: nsdata(:,:,:)
       integer, allocatable, save :: nxdata(:,:,:)
@@ -133,9 +134,11 @@
         sources_filename='b2.sources.profile'
         sources_time_mod=0.0_R8
         sources_time_switch=0.0_R8
+        ixref_profile=-2
+        iyref_profile=-2
 ! read profile
-        call read_source_profile
         new_files = .true.
+        call read_source_profile
       endif
 
       if(nc.eq.0) then
@@ -223,8 +226,8 @@
             f(i)=sdata(2,i,kind_source,spec)
             if (new_files) write(93,*) r(i),f(i)
           enddo
-!          write(*,*) 'vor region_profile'
-          call region_profile
+!          write(*,*) 'vor sources_profile'
+          call sources_profile
      .     (kind_data,ndat,r,ndim,pr,nx,ny,ifa,nanf)
 !          write (*,*) 'ifa=',ifa
           if (ifa.eq.1) goto 99
@@ -406,7 +409,7 @@ cdjm Jan2017 Keep linearised sources for balance
         if (maxval(nsdata).gt.0) close(93)
         if (maxval(nsdata).gt.0) close(94)
         if (maxval(nxdata).gt.0) close(95)
-        if (maxval(nsdata).gt.0) close(96)
+        if (maxval(nxdata).gt.0) close(96)
         new_files = .false.
       end if
 
@@ -420,6 +423,7 @@ cdjm Jan2017 Keep linearised sources for balance
       logical file_ok
 
       namelist/profile/nsdata,nxdata,sdata,xdata,divheat,
+     . ixref_profile,iyref_profile,
      . sources_time_mod,sources_time_switch,sources_filename
 
 !  read the profile data
@@ -449,6 +453,211 @@ cdjm Jan2017 Keep linearised sources for balance
 #endif
       end subroutine read_source_profile
 
+*-----------------------------------------------------------------------
+
+      subroutine sources_profile(kind_data,ndat,r,ndim,pr,nx,ny,ifa,
+     & nfitanf)
+
+      use b2mod_indirect
+      use b2mod_geo
+      use b2mod_mwti
+     & , only: output_ds
+      implicit none
+      integer:: i,nx,ny,ifa
+      integer:: nfitanf,nfitend,ndim,ndat,kind_data
+      real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
+      integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
+      integer ixref, iyref
+      character*256 filename
+      logical exist
+      external ipgetr
+      external get_jsep
+      save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
+      data ncall/0/
+
+      call subini('sources_profile')
+      if (ncall.eq.0) then
+        call ipgeti ('b2trno_csig_an_style', csig_an_style)
+        call get_jsep(nx,ny,jxi,jxa,jsep)
+        call xertst (-1.le.jsep.and.jsep.le.ny,
+     2   'faulty parameter jsep')
+        call ipgeti ('b2mwti_jxa',jxa)
+        call xertst (-1.le.jxa.and.jxa.le.nx,
+     2   'faulty internal parameter jxa')
+      end if
+      if (new_files) then
+        if (ixref_profile.ne.-2) then
+          ixref = ixref_profile
+        else
+          ixref = jxa
+          call ipgeti ('set_transport_ixref', ixref)
+        end if
+        if (iyref_profile.ne.-2) then
+          iyref = iyref_profile
+        else
+          iyref = jsep
+          call ipgeti ('set_transport_iyref', iyref)
+        end if
+        call xertst (-1.le.ixref.and.ixref.le.nx,
+     1   'faulty argument for sources profile ixref')
+        call xertst (-1.le.iyref.and.iyref.le.ny,
+     1   'faulty argument for sources profile iyref')
+        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
+      endif
+
+      filename='dsp'
+      call find_file(filename,exist)
+      if (exist) then
+        open(unit=91,file=filename)
+      else
+        ifa=1
+        call subend()
+        return
+      end if
+      i = 0
+      nya = 0
+   91 continue
+      i = i + 1
+      read (91,*,END=92,ERR=97) prtmp
+      prdsa(i) = prtmp
+      nya = i
+      if (i.lt.ny+2) goto 91
+   92 continue
+      nfitanf=1
+      IFA=0
+      do i=1,nya
+! input in metres from separatrix
+        if (kind_data.eq.1) pra(i)=prdsa(i)
+! input in poloidal rho
+        if (kind_data.eq.2) then
+          write(*,*) 'Input profile in poloidal rho not yet coded!'
+          goto 97
+        endif
+
+        if (pra(i).LT.r(1)) nfitanf=nfitanf+1
+        nfitend=i-1
+        if (pra(i).GT.r(ndat)) exit
+        nfitend=i
+      enddo
+
+      if (nfitend.LE.nfitanf) goto 97
+
+      ndim=nfitend+1-nfitanf
+!     allocate (pr(1:ndim))
+
+      do i=1,ndim
+        pr(i)=pra(nfitanf-1+i)
+      enddo
+      goto 108
+   97 ifa=1
+
+  108 continue
+      close (91)
+      ncall=ncall+1
+      call subend ()
+      return
+      end subroutine sources_profile
+
+*-----------------------------------------------------------------------
+
+      subroutine axial_profile(kind_data,ndat,x,ndim,pr,nx,ny,ifa,
+     & nfitanf,nfitend)
+
+      use b2mod_indirect
+      use b2mod_geo
+      implicit none
+      integer :: i,nx,ny,ifa
+      integer :: nfitanf,nfitend,ndim,ndat,kind_data
+      real(kind=R8) :: x(1:ndat),pr(-1:nxx-2)
+      real(kind=R8) :: l_conn(-1:nx), l_total, l_ref
+      integer jxi, jxa, jsep, ncall
+      integer ixref, iyref
+      integer ireg
+      external ipgetr
+      external get_jsep
+      save jxi, jxa, jsep, ixref, iyref, ncall
+      data ncall/0/
+
+      call subini('axial_profile')
+      if (ncall.eq.0) then
+        call get_jsep(nx,ny,jxi,jxa,jsep)
+        call ipgeti ('b2mwti_jxa',jxa)
+        call xertst (-1.le.jxa.and.jxa.le.nx,
+     2   'faulty internal parameter jxa')
+        ixref = jxa
+        iyref = jsep
+        call ipgeti ('set_transport_ixref', ixref)
+        call xertst (-1.le.ixref.and.ixref.le.nx,
+     1   'faulty argument set_transport_ixref')
+        call ipgeti ('set_transport_iyref', iyref)
+        call xertst (-1.le.iyref.and.iyref.le.ny,
+     1   'faulty argument set_transport_iyref')
+      endif
+
+      if (kind_data.eq.1) then
+! Establish relative profile in relative connection length
+! For closed field lines, zero point sits at ix = ixref
+! Reference connection length computed along iy = iyref
+        ireg = mod(region(ixref,iyref,0),4)
+        l_total = 0.0_R8
+        pr(-1) = 0.0_R8
+        l_conn(-1) = 0.0_R8
+        do i = 0, nx-1
+          l_conn(i) = hx(i,iyref)/
+     1         (sqrt(bb(i,iyref,0)**2+bb(i,iyref,1)**2)/bb(i,iyref,3))
+          pr(i) = pr(i-1) + 0.5_R8*(l_conn(i)+l_conn(i-1))
+          l_total = l_total + l_conn(i)
+        end do
+        pr(nx) = pr(nx-1) + 0.5_R8*l_conn(nx-1)
+        l_ref = pr(ixref)
+        if (l_total.le.0.0_R8) goto 97
+        if (ireg.eq.1 .and. nnreg(0).ge.4) then
+          do i = -1, nx
+            if (mod(region(i,iyref,0),4).eq.ireg) then
+              pr(i) = (pr(i) - l_ref) / l_total
+              if (pr(i).lt.0.0_R8) pr(i) = pr(i) + 1.0_R8
+            else
+              pr(i) = 0.0_R8
+            end if
+          end do
+        else
+          do i = -1, nx
+            pr(i) = pr(i) / l_total
+          end do
+        endif
+      else if (kind_data.eq.2) then
+! Establish profile in computational space
+        pr(-1) = 0.0_R8
+        do i = 0, nx-1
+          pr(i) = (i + 0.5_R8) / (real(nx))
+        end do
+        pr(nx) = 1.0_R8
+      endif
+      ifa = 0
+
+      nfitanf = -1
+      do i = 0, nx
+        if (pr(i).lt.x(1)) nfitanf = nfitanf+1
+        nfitend=i-1
+        if (pr(i).gt.x(ndat)) exit
+        nfitend=i
+      end do
+!     write (*,*) nfitanf,nfitend
+      if (nfitend.LE.nfitanf) goto 97
+
+      ndim=nfitend+1-nfitanf
+!     write (*,*) 'ndim=',ndim
+!     allocate (pr(1:ndim))
+
+      goto 108
+   97 ifa=1
+
+  108 continue
+      ncall=ncall+1
+      call subend ()
+      return
+      end subroutine axial_profile
+
       end subroutine source_input
 
 *-----------------------------------------------------------------------
@@ -477,7 +686,7 @@ cdjm Jan2017 Keep linearised sources for balance
      &    rza,dna0,dpa0,vsa0,na
       real(kind=R8), dimension(-1:nx,-1:ny) ::
      &    hci0,hce0,sig0,alf0,ne,te,ti
-       
+
       real(kind=R8), save :: scaling_width(nscale)
       real(kind=R8), save :: scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
@@ -614,13 +823,13 @@ cdjm Jan2017 Keep linearised sources for balance
 !             if (new_files) write(93,*) r(i),f(i),felm(i)
             enddo
 
-            call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
+            call transport_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
 !           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
 !           write (*,*) 'ifa=',ifa
             if (ifa.eq.1) goto 99
-        
+
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
 !           write(*,*) 'zwischen,ifail=',ifail
@@ -892,11 +1101,9 @@ c*** Clear data to forget previous profiles
 #endif
       end subroutine read_transport_input
 
-      end subroutine transport_input
-
 *-----------------------------------------------------------------------
 
-      subroutine region_profile(kind_data,ndat,r,ndim,pr,nx,ny,ifa,
+      subroutine transport_profile(kind_data,ndat,r,ndim,pr,nx,ny,ifa,
      & nfitanf)
 
       use b2mod_indirect
@@ -916,7 +1123,7 @@ c*** Clear data to forget previous profiles
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
 
-      call subini('region_profile')
+      call subini('transport_profile')
       if (ncall.eq.0) then
         call get_jsep(nx,ny,jxi,jxa,jsep)
         call xertst (-1.le.jsep.and.jsep.le.ny,
@@ -971,7 +1178,6 @@ c*** Clear data to forget previous profiles
         nfitend=i
       enddo
 
-
       if (nfitend.LE.nfitanf) goto 97
 
       ndim=nfitend+1-nfitanf
@@ -988,107 +1194,9 @@ c*** Clear data to forget previous profiles
       ncall=ncall+1
       call subend ()
       return
-      end subroutine region_profile
+      end subroutine transport_profile
 
-*-----------------------------------------------------------------------
-
-      subroutine axial_profile(kind_data,ndat,x,ndim,pr,nx,ny,ifa,
-     & nfitanf,nfitend)
-
-      use b2mod_indirect
-      use b2mod_geo
-      implicit none
-      integer :: i,nx,ny,ifa
-      integer :: nfitanf,nfitend,ndim,ndat,kind_data
-      real(kind=R8) :: x(1:ndat),pr(-1:nxx-2)
-      real(kind=R8) :: l_conn(-1:nx), l_total, l_ref
-      integer jxi, jxa, jsep, ncall
-      integer ixref, iyref
-      integer ireg
-      external ipgetr
-      external get_jsep
-      save jxi, jxa, jsep, ixref, iyref, ncall
-      data ncall/0/
-
-      call subini('axial_profile')
-      if (ncall.eq.0) then
-        call get_jsep(nx,ny,jxi,jxa,jsep)
-        call ipgeti ('b2mwti_jxa',jxa)
-        call xertst (-1.le.jxa.and.jxa.le.nx,
-     2   'faulty internal parameter jxa')
-        ixref = jxa
-        iyref = jsep
-        call ipgeti ('set_transport_ixref', ixref)
-        call xertst (-1.le.ixref.and.ixref.le.nx,
-     1   'faulty argument set_transport_ixref')
-        call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
-     1   'faulty argument set_transport_iyref')
-      endif
-
-      if (kind_data.eq.1) then
-! Establish relative profile in relative connection length
-! For closed field lines, zero point sits at ix = ixref
-! Reference connection length computed along iy = iyref
-        ireg = mod(region(ixref,iyref,0),4)
-        l_total = 0.0_R8
-        pr(-1) = 0.0_R8
-        l_conn(-1) = 0.0_R8
-        do i = 0, nx-1
-          l_conn(i) = hx(i,iyref)/
-     1         (sqrt(bb(i,iyref,0)**2+bb(i,iyref,1)**2)/bb(i,iyref,3))
-          pr(i) = pr(i-1) + 0.5_R8*(l_conn(i)+l_conn(i-1))
-          l_total = l_total + l_conn(i)
-        end do
-        pr(nx) = pr(nx-1) + 0.5_R8*l_conn(nx-1)
-        l_ref = pr(ixref)
-        if (l_total.le.0.0_R8) goto 97
-        if (ireg.eq.1 .and. nnreg(0).ge.4) then
-          do i = -1, nx
-            if (mod(region(i,iyref,0),4).eq.ireg) then
-              pr(i) = (pr(i) - l_ref) / l_total
-              if (pr(i).lt.0.0_R8) pr(i) = pr(i) + 1.0_R8
-            else
-              pr(i) = 0.0_R8
-            end if
-          end do
-        else
-          do i = -1, nx
-            pr(i) = pr(i) / l_total
-          end do
-        endif
-      else if (kind_data.eq.2) then
-! Establish profile in computational space
-        pr(-1) = 0.0_R8
-        do i = 0, nx-1
-          pr(i) = (i + 0.5_R8) / (real(nx))
-        end do
-        pr(nx) = 1.0_R8
-      endif
-      ifa = 0
-
-      nfitanf = -1
-      do i = 0, nx
-        if (pr(i).lt.x(1)) nfitanf = nfitanf+1
-        nfitend=i-1
-        if (pr(i).gt.x(ndat)) exit
-        nfitend=i
-      end do
-!     write (*,*) nfitanf,nfitend
-      if (nfitend.LE.nfitanf) goto 97
-
-      ndim=nfitend+1-nfitanf
-!     write (*,*) 'ndim=',ndim
-!     allocate (pr(1:ndim))
-
-      goto 108
-   97 ifa=1
-
-  108 continue
-      ncall=ncall+1
-      call subend ()
-      return
-      end subroutine axial_profile
+      end subroutine transport_input
 
       end module b2mod_input_profile
 

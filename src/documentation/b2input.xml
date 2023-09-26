@@ -6762,7 +6762,7 @@
 				<description>
 					Number of points over which the source profile of (kind_data,kind_source,is) is defined. Should not exceed NY+2.
 						If KIND_DATA=1, the data is expressed as a profile in physical distance from the separatrix (in metres) along the outer midplane.
-						The user can change this default reference location by use of the 'set_transport_i[xy]ref' switches.
+						The user can change this default reference location by use of the 'i[xy]ref_profile' switches.
 						If KIND_DATA=2, the data is expressed as a profile in flux distance from the separatrix (not yet available).
 				</description>
 			</switch>
@@ -6788,7 +6788,7 @@
 				<description>
 					Number of points over which the axial profile of (kind_data,kind_source,is) is defined. Should not exceed NX+2. Defaults to 0.
 					If KIND_DATA=1, the data is expressed as a profile in physical distance, here connection length, rescaled from 0.0 to 1.0.
-					For closed field lines, the reference location for the zero of distance is set by use of the 'set_transport_i[xy]ref' switches.
+					For closed field lines, the reference location for the zero of distance is set by use of the 'i[xy]ref_profile' switches.
 					If KIND_DATA=2, the data is expressed as a profile in (ix) cell index, again normalized from 0.0 to 1.0 to match the [0:nx-1] interval.
 				</description>
 			</switch>
@@ -6806,6 +6806,24 @@
 				<type>real*8</type>
 				<description>
 					Additional divertor ion heat source (in Watts/m3)
+				</description>
+			</switch>
+			<switch>
+				<name>IXREF_PROFILE</name>
+				<default>-2</default>
+				<type>integer</type>
+				<description>
+					Poloidal location along which the sources radial profile is measured.
+					If not provided, the value from 'set_transport_ixref' is used.
+				</description>
+			</switch>
+			<switch>
+				<name>IYREF_PROFILE</name>
+				<default>-2</default>
+				<type>integer</type>
+				<description>
+					Radial location along which the sources axial profile is measured.
+					If not provided, the value from 'set_transport_iyref' is used.
 				</description>
 			</switch>
 			<switch>
