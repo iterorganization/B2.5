@@ -112,7 +112,7 @@
            enddo
          case(3)   !  Wesson formula for electron-ion collisions
           do iCv = 1, nCv
-            lnlam(iCv)=max(-lambda,15.2-
+            lnlam(iCv)=max(-lambda,15.2_R8-
      &       log(ne(iCv)/1e20_R8)/2.0_R8+
      &       log(te(iCv)/ev/1000.0_R8))
            enddo

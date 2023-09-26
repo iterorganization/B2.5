@@ -1,11 +1,12 @@
 c**************************************************************************************
 c********************  NEW KU Leuven module for ECH/ECWC plasmas  *********************
 c**************************************************************************************
-!mb   06/07/2017
+! mb  01/08/23
+! main author: Anthony Piras
 c   This module is intended to simulate power depositions in Electron Cyclotron Heated
 c     plasmas. To turn on the model, the flag b2stbr_ech has to be set to '1'. This
-c     module computes an additional heating source due to EC heating injected at the
-c     cyclotron frequency
+c     module computes an additional heating source due to EC heating injected either
+c     at the cyclotron frequency or its harmonics
       module b2mod_ech
 *   ..other modules called 
       use b2mod_types
@@ -31,35 +32,63 @@ c     cyclotron frequency
       use b2us_map
       use b2us_plasma
 
-      logical, save :: recycle_initialised
-      data recycle_initialised /.false./
+      implicit none
+      save
 
-      real (kind=R8),save::uold=0.0_R8,told=0.0_R8,mold=0.0_R8
-      integer, save :: nm, nt, nshpottau,nx1,ny1,ns1
-
-c     Recycle_index and target_index refer for each species and boundary in which integer
-c     the corresponding recycling coefficients are stored.
-      integer, allocatable, save ::
-     *  recycle_index(:),target_index(:)
-c     Boolean to indicate whether trim data is present for species/material combination
-      logical, allocatable, save ::
-     *  trimrecyc_present(:,:)
-c      real (kind=R8), allocatable, save ::
-
-      real (kind=R8),save::int0l,int0r,
-     &    int1l,int1r,int2l,int2r,
-     &    int3l,int3r,int4l,int4r,
-     &    int5l,int5r,int6l,int6r
+      real (kind=R8), allocatable, save ::
+     &  sECH(:) 
 
       contains
 
-      subroutine alloc_b2mod_recycle(nFcd,nsd)
+c Alloc
+      subroutine alloc_b2mod_ech(nFcd)
       implicit none
-      integer,intent(in) :: nFcd,nsd
+      integer,intent(in) :: nFcd
 
-!      allocate()
+      allocate(sECH(nFcd))
+
+      sECH = 0.0_R8
 
       return
-      end subroutine alloc_b2mod_recycle
+      end subroutine alloc_b2mod_ech
+c End alloc
+
+c ECH power computation
+      subroutine CalcECH(iCv,nCi,iFc,
+     &           isn,istra,iwall,pl,geo,mpg,sECH)
+c     This routine calculates the ECH power
+      use b2mod_b2cmpa
+      use b2mod_neutrals_namelist , only:E_fc
+      use b2us_plasma
+      use b2us_geo
+      use b2us_map
+      use b2mod_subsys
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra
+c     Output variables
+      real (kind=R8),intent(out):: sECH
+
+c     Internal variables
+      real (kind=R8):: power
+      integer :: is
+
+      call subini ('CalcECH')
+      power = 1.0E+06 ! MW
+      call sfill(sECH, power)
+
+      end subroutine CalcECH
+
+c Dealloc
+      subroutine dealloc_b2mod_ech
+      implicit none
+
+      deallocate(sECH)
+
+      return
+      end subroutine dealloc_b2mod_ech
+c End dealloc
 
       end module b2mod_ech

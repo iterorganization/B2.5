@@ -574,6 +574,22 @@
 					<default>-2</default>
 					<type>integer</type>
 				</switch>
+                                <switch>
+				        <name>R0</name>
+				        <default>1.0</default>
+				        <type>real</type>
+				        <description>
+					       Major radius of the machine.
+				        </description>
+			        </switch>
+                                <switch>
+				        <name>a0</name>
+				        <default>0.5</default>
+				        <type>real</type>
+				        <description>
+					       Minor radius of the machine.
+				        </description>
+			        </switch>
 			</switchgroup>
 		</category>
 		<category name="Run">
@@ -2289,10 +2305,6 @@
 					Note: old option model.eq.3 removed, replaced with model.eq.1., but numerical treatment w.r.t. factor 4/3 according to old model.eq.3.
 				</description>
 			</switch>
-                        <switch>
-				</description>
-			</switch>
-
 			<switch>
 				<name>b2tqce_model</name>
 				<default>1</default>
@@ -2486,7 +2498,7 @@
 				<description>
 					Compute transport coefficients based on a Bohm-like diffusion model. 
 					If '0': transport coefficients not computed based on Bohm diffusion model.
-					If '1': transport coefficients computed using Bohm diffusion model. Warning: under development!
+        				If '1': transport coefficients computed using Bohm diffusion model. Warning: under development!
 				</description>
 			</switch>
                         <switch>
@@ -2495,6 +2507,38 @@
 				<type>real</type>
 				<description>
 					Sets the correction for energy transport since the energy confinement is poorer compared to the particle confinement.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2stbr_recycle_afn</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the AFN recycling model.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2stbr_AFN_out</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Output for the AFN model.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2stbr_ech</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the ECH model for power deposition.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2stbr_ECH_out</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Output for the ECH model.
 				</description>
 			</switch>
 			<switch>

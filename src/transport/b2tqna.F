@@ -588,11 +588,11 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
 c sc  implementation of Bohm-like diffusion coefficient 12.07.2023-?
       if(switch%transport_bohm.ne.0) then
 ! Maybe useless (see row 260)
-        dna0(:,:) = 0.00_R8
-        dpa0(:,:) = 0.00_R8
-        vla0(:,:,:) = 0.00_R8
+!        dna0(:,:) = 0.00_R8
+!        dpa0(:,:) = 0.00_R8
+!        vla0(:,:,:) = 0.00_R8
 !        vma0(:,:) = 0.00_R8
-        vsa0(:,:) = 0.00_R8
+!        vsa0(:,:) = 0.00_R8
 ! End Maybe useless
         call set_transport_bohm(nCv, nFc,
      &   nVx, ns, nscx, iscx, ismain, switch, geo, 
@@ -3995,51 +3995,150 @@ c*******************************************************************************
       real (kind=R8) ::
      *  dna_bohm(nCv,0:1,0:ns-1), vla_bohm(nCv,0:1,0:ns-1),
      &  vsa_bohm(nCv,0:1,0:ns-1)
-!     &  vma_bohm(nCv,0:1,0:ns-1)                                        !srv 15.12.05
 *   ..workspace arguments (unspecified on entry and on exit)
-      integer is, iCv
-      real (kind=R8) :: rholi(nCv), rhole(nCv)
+      integer is, iCv, is2
+      real (kind=R8) :: rholi(nCv), rhole(nCv), mass, vthi(nCv), vthe,
+     &  charge(nCv,0:ns-1), vthn(nCv), vtha(nCv,0:ns-1),
+     &  lnab(nCv), nuab(nCv,0:ns,0:ns), nua(nCv,0:ns)
       character chns*3
+c     conversion of constants to CGS units for the collision frequencies
+      real (kind=R8) :: erg, cm, gauss, gramm
+      parameter (erg=1.0E+7_R8, cm=1.0E+2_R8,
+     &          gauss=1.0E+4_R8, gramm=1.0E+3_R8)
+      real (kind=R8) :: eV_cgs, e_cgs, c_cgs
+      parameter (eV_cgs=ev*erg, e_cgs=qe*c*10.0_R8, c_cgs=c*cm)
 
 *   ..subprogram start-up calls
       call subini ('set_transport_bohm')
+
+      nua(:,:) = 0.0_R8
+      nuab(:,:,:) = 0.0_R8
+      vtha(:,:) = 0.0_R8
+!!!!!!!!!!!!!!!
+*   ..calculate collision frequency nuab of species a and b
+*      ion-ion collisions
+      do is=0,ns-1
+        vtha(:,is) = sqrt(2.0_R8*erg*pl%ti/(am(is)*mp*gramm))
+      enddo
+      vtha(:,ns) = sqrt(2.0_R8*erg*pl%te/(me*gramm))
+
+      do is=0,ns-1
+        if (.not. is_neutral(is)) then
+          do is2=0,ns-1
+            if (.not. is_neutral(is2)) then
+              call b2tlnl(nCv, switch, 1, pl%te, pl%ti, dv%ne, lnab)
+              do iCv = 1,nCv
+                nuab(iCv,is,is2)=16.0_R8*sqrt(pi)*pl%na(iCv,is2)/
+     &             1.0E+6*rt%rza(iCv,is)*rt%rza(iCv,is2)*e_cgs**4/
+     &             (3.0_R8*am(is)*mp*gramm)*lnab(iCv)*
+     &             (1.0_R8/(am(is)*mp*gramm)+1.0_R8/
+     &             (am(is2)*mp*gramm))/(vtha(iCv,is)**2
+     &             +vtha(iCv,is2)**2)**1.5_R8
+           enddo
+         endif
+        enddo
+       endif
+      enddo
+
+*      ion-electron collisions and electron-ion collisions
+      do is=0,ns-1
+        if (.not. is_neutral(is)) then
+          call b2tlnl(nCv, switch, 3, pl%te, pl%ti, dv%ne, lnab)
+          do iCv = 1,nCv
+            nuab(iCv,is,ns-1)=16.0_R8*sqrt(pi)*dv%ne(iCv)/
+     &        1.0E+6_R8*rt%rza(iCv,is)*
+     &        e_cgs**4/(3.0_R8*am(is)*mp*gramm)*lnab(iCv)*
+     &        (1.0_R8/(am(is)*mp*gramm)+1.0_R8/(me*gramm))/
+     &        (vtha(iCv,is)**2+vtha(iCv,ns-1)**2)**1.5_R8
+
+            nuab(iCv,ns-1,is)=16.0_R8*sqrt(pi)*pl%na(iCv,is)/
+     &        1.0E+6_R8*rt%rza(iCv,is)
+     &        *e_cgs**4/(3.0_R8*me*gramm)*lnab(iCv)*
+     &        (1.0_R8/(am(is)*mp*gramm)+1.0_R8/(me*gramm))/
+     &        (vtha(iCv,is)**2+vtha(iCv,ns-1)**2)**1.5_R8
+          enddo
+        endif
+      enddo
+
+*      electron-electron collisions
+      call b2tlnl(nCv, switch, 2, pl%te, pl%ti, dv%ne, lnab)
+      do iCv = 1,nCv
+        nuab(iCv,ns,ns)=16.0_R8*sqrt(pi)*dv%ne(iCv)/1.0E+6_R8
+     &    *e_cgs**4/(3.0_R8*me*gramm)*lnab(iCv)*(2.0_R8/(me*gramm))/
+     &    (2.0_R8*vtha(iCv,ns)**2)**1.5_R8
+      enddo
+
+*   ..calculate total collision frequency nua of species a
+      do is=0,ns
+       do is2=0,ns
+        do iCv = 1,nCv
+          nua(iCv,is)=nua(iCv,is)+nuab(iCv,is,is2)
+         enddo
+        enddo
+       enddo
+
+
+!!!!!!!!!!!!!!!
+
+
       do is = 0, ns-1
         if(.not.is_neutral(is)) then
+          mass = am(is)*mp
+          vthi = sqrt(2.0_R8*pl%ti/mass)
+          charge(:,is) = rt%rza(:,is)*qe
 *   ..compute local larmor radius
-          rholi(:) = am(is)*mp*sqrt(2.0_R8*pl%ti/(am(is)*mp))/
-     &         abs(rt%rza(:,is)*qe*geo%cvBb(:,3))
+          rholi(:) = mass*vthi/abs(charge(:,is)*geo%cvBb(:,3))
 *   ..compute dna_bohm (Bohm-like particle diffusion)
-          dna_bohm(:,0,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*
-     &              1.33E+05_R8*(rholi(:)+1.00E-02_R8*
-     &              geo%cvBb(:,0)/geo%cvBb(:,2))*1.00E-02_R8
-          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*1.00_R8/16.00_R8*
-     &              1.33E+05_R8*(rholi(:)+1.00E-02_R8*
-     &              geo%cvBb(:,1)/geo%cvBb(:,2))*1.00E-02_R8
+          dna_bohm(:,0,is) = 1.00_R8/3.00_R8*1/16*vthi*
+     &              (rholi(:)+ vthi/nua(:,is)*
+     &              geo%cvBb(:,0)/geo%cvBb(:,2)) ! generalise collision frequency as sum of ALL collision frequencies
+          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*1/16*vthi*
+     &              (rholi(:)+ vthi/nua(:,is)*
+     &              geo%cvBb(:,1)/geo%cvBb(:,2)) ! same as above
 *   ..compute vsa_bohm, hcib, vla_bohm (Bohm-like)
           vsa_bohm(:,1,is) = switch%bohm_gammaD*am(is)*mp*
      &                     pl%na(:,is)*dna_bohm(:,1,is)
           vsa_bohm(:,0,is) = switch%bohm_gammaD*am(is)*mp*
      &                     pl%na(:,is)*dna_bohm(:,0,is)
           hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
-          vla_bohm(:,0,is) = 2.0_R8*dna_bohm(:,0,is)/0.88_R8*6.5_R8 ! R=0.88 for TCV (Tom's paper) -> has to be generalised
-          vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/0.88_R8*6.5_R8
-        elseif(is_neutral(is).and.switch%use_eirene.eq.0) then
-          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*1.33E+05_R8*
-     &               1/(2.0_R8/0.25_R8 + 1.00E+02_R8)*1.00E-02_R8 ! a=0.25 for TCV -> generalised
+          if(switch%bohm_pureDiff.eq.1) then
+            vla_bohm(:,0,is) = 0.0_R8
+            vla_bohm(:,1,is) = 0.0_R8
+          else
+            vla_bohm(:,0,is) = 2.0_R8*dna_bohm(:,0,is)/switch%R0*6.5_R8 ! R0 major radius from switches
+            vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/switch%R0*6.5_R8
+          endif
+
+        elseif(is_neutral(is).and.switch%use_eirene.eq.0.and.
+     &                        switch%transport_afn.eq.0) then
+          if(switch%tn_style.eq.2) then
+            vthn = sqrt(2.0_R8*pl%tn/(am(is)*mp))
+          else
+            vthn = sqrt(2.0_R8*pl%ti/(am(is)*mp))
+          endif
+          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*vthn*
+     &               1/(2.0_R8/switch%a0 + nua(:,is)/vthn) ! a0 minor radius from switches
           dna_bohm(:,0,is) = dna_bohm(:,1,is) ! isotropic for neutrals
           vsa_bohm(:,1,is) = switch%bohm_gammaD*am(is)*mp*pl%na(:,is)*
      &                       dna_bohm(:,1,is)
+          vsa_bohm(:,0,is) = switch%bohm_gammaD*am(is)*mp*pl%na(:,is)*
+     &                       dna_bohm(:,0,is)
           hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
-          vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/0.88_R8*6.5_R8
+          if(switch%bohm_pureDiff.eq.1) then
+            vla_bohm(:,0,is) = 0.0_R8
+            vla_bohm(:,1,is) = 0.0_R8
+          else
+            vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/switch%a0*6.5_R8
+            vla_bohm(:,0,is) = vla_bohm(:,1,is)
+          endif
         endif
       enddo
 
 *   ..compute rhole, hce0 (Bohm-like)
       rhole(:) = me*sqrt(2.0_R8*pl%te/(me))/abs(qe*geo%cvBb(:,3))
       hce0(:) = switch%bohm_gammaD*dv%ne(:)*1.00_R8/3.00_R8*
-     &         1.00_R8/16.00_R8*1.33E+05_R8*(rhole(:)+1.00E-02_R8*
+     &         1.00_R8/16.00_R8*nua(:,ns)*(rhole(:)+1.00E-02_R8*
      &         geo%cvBb(:,1)/geo%cvBb(:,2))*1.00E-02_R8
-  
 
 *   ..recompute hci0, hcn0
       hci0 = 0.0_R8
@@ -4049,13 +4148,13 @@ c*******************************************************************************
         if (switch%tn_style.eq.0) then
           hci0 = hci0 + hcib(:,is)
         elseif (switch%tn_style.eq.1) then
-         if (.not.is_neutral(is))then
-          hci0 = hci0 + hcib(:,is)
-         endif
+          if (.not.is_neutral(is))then
+            hci0 = hci0 + hcib(:,is)
+          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1)then
-          hci0 = hci0 + hcib(:,is)
-         endif
+          if (.not.is_neutral(is).or.zn(is).ne.1)then
+            hci0 = hci0 + hcib(:,is)
+          endif
         endif
 *     ..compute hcn0
         if (is_neutral(is).and.zn(is).eq.1) then

@@ -247,10 +247,6 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-!        call my_out_us(70,nFc,1,cdna_Bohm(1,0,is),
-!     1 'cl_cdna_Bohm_th'//chns)
-!        call my_out_us(70,nFc,1,cdna_Bohm(1,1,is),
-!     2 'cl_cdna_Bohm_r'//chns)
         if (.not. is_neutral(is)) then
           call my_out_us(70,nFc,1,cvsahz(1,0,is),'b2trcl_cvsahzx'//
      &      chns)

@@ -309,6 +309,8 @@ c geometry
       integer :: use_9pt_stencil
       integer :: fcVol_style
       integer :: vxVol_style
+      real (kind=R8) :: R0
+      real (kind=R8) :: a0
 
 c Eirene coupling
       integer :: use_eirene
@@ -377,6 +379,7 @@ c k-enstrophy model
 c Bohm-like diffusion model
       integer :: transport_bohm
       real (kind=R8) :: bohm_gammaD
+      integer :: bohm_pureDiff
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -807,6 +810,8 @@ c geometry
       s % use_9pt_stencil = 1
       s % fcVol_style = 0
       s % vxVol_style = 2
+      s % R0 = 1.0
+      s % a0 = 0.5
 
 c eirene coupling
       s % use_eirene = 0
@@ -879,6 +884,7 @@ c k-enstrophy model
 c Bohm-like diffusion model
       s % transport_bohm = 0
       s % bohm_gammaD = 3.0_R8
+      s % bohm_pureDiff = 0
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -1326,6 +1332,8 @@ c geometry
       call ipgeti ('b2mndr_use_9pt_stencil',s % use_9pt_stencil)
       call ipgeti ('b2mndr_fcVol_style',s % fcVol_style)
       call ipgeti ('b2mndr_vxVol_style', s % vxVol_style)
+      call ipgetr ('R0', s % R0)
+      call ipgetr ('a0', s % a0)
 
 c Eirene coupling
       call ipgeti ('b2mndr_eirene', s % use_eirene)
@@ -1403,6 +1411,7 @@ c k-enstrophy model
 c Bohm-like diffusion model
         call ipgeti ('b2tqna_transport_bohm', s%transport_bohm)
         call ipgetr ('b2tqna_bohm_gammaD', s%bohm_gammaD)
+        call ipgeti ('b2tqna_bohm_diff', s%bohm_pureDiff)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1897,9 +1906,11 @@ c Bohm-like diffusion model
        call xertst (0.le.s%transport_bohm.le.1,
      1                          'b2tqna_transport_bohm value not coded')
        call xertst (0.0_R8.lt.s%bohm_gammaD,
-     1                                   'bohm_gammaD must be .gt. 0.0')
-
-
+     1                          'b2tqna_bohm_gammaD must be .gt. 0.0')
+       call xertst (0.0_R8.lt.s%R0, 'Major radius must be .gt. 0.0')
+       call xertst (0.0_R8.lt.s%a0, 'Minor radius must be .gt. 0.0')
+       call xertst (0.le.s%bohm_pureDiff.le.1,
+     1                          'b2tqna_bohm_diff value not coded')
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
@@ -2051,10 +2062,10 @@ c AFN neutral model
         call xerrab ('b2stbr_recycle_afn should be 1 when using '//
      &   'AFN transport coefficients')
       endif
-      if(s%transport_bohm.ne.0.and.s%recycle_afn.ne.0) then
-        call xerrab ('faulty inputs: cannot use both Bohm and ' //
-     &   'AFN model')
-      endif
+c      if(s%transport_bohm.ne.0.and.s%recycle_afn.ne.0) then
+c        call xerrab ('faulty inputs: cannot use both Bohm and ' //
+c     &   'AFN model')
+c      endif
 
 c ECH model
       if(s%ECH_out.ne.0.and.s%use_ech.eq.0) then
@@ -2062,7 +2073,7 @@ c ECH model
       endif
       if(s%ECH_out.ne.0.and.s%ECH_out.ne.1.and.s%ECH_out.ne.2) then
         call xerrab('b2stbr_ECH_out should be either 0 (no output),' //
-     &   '1 (standard output) or 2 (large output)')
+     &   '1 (standard output) or 2 (detailed output)')
       endif
 
 c spatially hybrid neutrals
