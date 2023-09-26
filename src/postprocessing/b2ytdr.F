@@ -173,6 +173,7 @@ c 2002-09-11: logic revised
       integer iy_nocoreExB, nrings, bc_type16_ref, bc_type20_ref
       integer pfrregno1, pfrregno2, solregno
       integer ixref1, iyref1, nrings1
+      integer ixref1_profile, iyref1_profile
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
@@ -3124,6 +3125,8 @@ cxpb We must ensure we have not already listed this additional species
       nxdata(:,:,:)=0
       xdata(:,:,:,:)=0.0_R8
       divheat=0.0_R8
+      ixref_profile=-2
+      iyref_profile=-2
       sources_filename='b2.sources.profile'
       sources_time_mod=0.0_R8
       sources_time_switch=0.0_R8
@@ -3633,6 +3636,28 @@ cxpb This will need to be checked !!!
         enddo
         if (divheat.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .   'DIVHEAT=',divheat,','
+        if (ixref_profile.ne.-2) then
+          if (iyref_profile.ne.-2) then
+            ixref1_profile = conformal_convert(non_commensurate,1,
+     .        ixref_profile,iyref_profile,nx,ny,nx1,ny1,4)
+          else
+            ixref1_profile = conformal_convert(non_commensurate,1,
+     .        ixref_profile,iyref,nx,ny,nx1,ny1,4)
+          end if
+          write(99,'(1x,a,i4,a)')
+     .      'IXREF_PROFILE=',ixref1_profile,','
+        end if
+        if (iyref_profile.ne.-2) then
+          if (ixref_profile.ne.-2) then
+            iyref1_profile = conformal_convert(non_commensurate,1,
+     .        ixref_profile,iyref_profile,nx,ny,nx1,ny1,4)
+          else
+            iyref1_profile = conformal_convert(non_commensurate,1,
+     .        ixref,iyref_profile,nx,ny,nx1,ny1,4)
+          end if
+          write(99,'(1x,a,i4,a)')
+     .      'IYREF_PROFILE=',iyref1_profile,','
+        end if
         if(sources_time_mod.gt.0.0_R8)
      .   write(99,'(1x,a,1p,1g10.3,a)')
      .     'SOURCES_TIME_MOD=',sources_time_mod,','
