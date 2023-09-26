@@ -22,19 +22,19 @@ module b2mod_ual_io_grid
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
-# if IMAS_MINOR_VERSION > 8
+# if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas  & ! IGNORE
      & , only : IDS_real
 # endif
 # if GGD_MAJOR_VERSION > 0
-#  if IMAS_MINOR_VERSION > 11
+#  if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 )
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
     use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_dynamic
-#   if IMAS_MINOR_VERSION > 14
+#   if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #   endif
@@ -529,7 +529,7 @@ contains
 
 #ifdef IMAS
 
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     !> Routine that fills in a grid description which is part of a IMAS IDS
     !! using the given grid data and prepared mappings
     subroutine b2_IMAS_Fill_Grid_Desc( gmap, grid_ggd, nx, ny, crx, cry,    &
@@ -539,7 +539,7 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         type(ids_generic_grid_dynamic), intent(out) :: grid_ggd !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -636,7 +636,7 @@ contains
 
         allocate( grid_ggd%space( SPACE_COUNT ) )
 
-#if IMAS_MINOR_VERSION > 19
+#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name(1) )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name = "Standard grid"
@@ -668,7 +668,7 @@ contains
         !! For SN: gmap%nVx = ( nx+1 )*( ny+1 ) - 1
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%object( gmap%nVx ) )
-#if IMAS_MINOR_VERSION > 33
+#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%name(1) )
@@ -692,7 +692,7 @@ contains
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   object( gmap%nFcx + gmap%nFcy ) )
-#if IMAS_MINOR_VERSION > 33
+#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%name(1) )
@@ -714,7 +714,7 @@ contains
         !! For SN: gmap%nCv = nx*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%object( gmap%nCv ) )
-#if IMAS_MINOR_VERSION > 33
+#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%name(1) )
@@ -1202,7 +1202,7 @@ contains
 
         !! If requested, add a second space for the toroidal angle
         if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
-#if IMAS_MINOR_VERSION > 19
+#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%index = 1
@@ -1217,7 +1217,7 @@ contains
                 &   ( ( width/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )     &
                 &   /),                                                       &
                 &   .false. ) !! periodic = .false.
-#if IMAS_MINOR_VERSION > 19
+#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name = "Z-direction"
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                 &   "Cylindrical symmetry"
@@ -1226,7 +1226,7 @@ contains
             grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description = &
                 &   "Length along cylindrical direction"
           else
-#if IMAS_MINOR_VERSION > 19
+#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name = "Toroidal direction"
 #endif
             grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name = "Toroidal angle"
@@ -1237,7 +1237,7 @@ contains
                   &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 ) &
                   &   /),                                                       &
                   &   .true. ) !! periodic = .true.
-#if IMAS_MINOR_VERSION > 19
+#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
               grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                   &   "Toroidally symmetric and periodic"
 #endif
@@ -1250,7 +1250,7 @@ contains
                   &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )   &
                   &   /),                                                       &
                   &   .false. ) !! periodic = .false.
-#if IMAS_MINOR_VERSION > 19
+#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
               grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                   &   "Toroidally symmetric"
 #endif
@@ -1258,7 +1258,7 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( IMAS_MINOR_VERSION > 33 && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) )
+#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
@@ -1290,7 +1290,7 @@ contains
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine set_Cells_Conn_Array_Nodes(grid_ggd)
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         type(ids_generic_grid_dynamic), intent(inout) :: grid_ggd !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -3013,7 +3013,7 @@ contains
 
     end subroutine find_Midplane_Cells
 
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     subroutine GGD_copy_AoS3Root_to_Dynamic( AoS3_grid, dynamic_grid )
     implicit none
     type(ids_generic_grid_aos3_root), intent(in) :: AoS3_grid
@@ -3105,7 +3105,7 @@ contains
            &      object(i3)%measure = &
            &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%measure
-#if IMAS_MINOR_VERSION > 35
+#if ( IMAS_MINOR_VERSION > 35 || IMAS_MAJOR_VERSION > 3 )
           if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%geometry_2d ) ) then
             i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
@@ -3121,7 +3121,7 @@ contains
           end if
 #endif
         end do
-#if IMAS_MINOR_VERSION > 33
+#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
            &      geometry_content%name(1) )
         dynamic_grid%space(i1)%objects_per_dimension(i2)% &
