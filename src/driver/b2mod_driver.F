@@ -110,19 +110,19 @@
       use ids_schemas   ! IGNORE
      , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
      ,        ids_radiation, ids_dataset_description, ids_equilibrium
-#if IMAS_MINOR_VERSION > 8
+#if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
      , ,only: ids_real, ids_real_invalid
 #endif
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
      , ,only: ids_summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34)
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
       use ids_schemas   ! IGNORE
      , ,only: ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
      , ,only: ids_divertors
 #endif
@@ -211,13 +211,13 @@
       type(ids_radiation) :: radiation
       type(ids_dataset_description) :: description
       type(ids_dataset_description) :: old_description
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       type(ids_summary) :: summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
       type(ids_numerics) :: numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       type(ids_divertors) :: divertors
 #endif
       integer :: time_slice_index, batch_index, tmp_run
@@ -2689,7 +2689,7 @@ c new CDF movie option
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
                 else if (associated(old_description%dd_version)) then
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
                   old_start_time = description%simulation%time_begin
                   old_end_time = description%simulation%time_end
 #endif
@@ -2720,7 +2720,7 @@ c new CDF movie option
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     tmp_run = run
                     if (database.ne.'iter') tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &                 'idscp --setDatasetVersion'//
      &                      ' -si ',shot,' -ri ',run,
@@ -2740,7 +2740,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     call system(systemarg)
 #endif
                     if (database.ne.'iter') then
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                       write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &                 'idscp --setDatasetVersion'//
      &                    ' -si ',shot,' -ri ',tmp_run,
@@ -2775,13 +2775,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               geo, mpg, state, state_ext, state_avg, switch,
      &               edge_profiles, edge_sources, edge_transport,
      &               radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &               numerics, old_start_time, run_end_time,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &               divertors,
 #endif
      &               tim, dtim, shot, run, database, version,
@@ -2807,13 +2807,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
      &           radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &          numerics, run_start_time, run_end_time,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
      &          tim, dtim, shot, run, database, version, new_eq_ggd )
@@ -2829,13 +2829,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
      &          radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &          numerics, old_start_time, run_end_time,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
      &          tim, dtim, shot, run, database, version, new_eq_ggd,
@@ -2846,13 +2846,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (write_ids)
      >       call new_ids_edge( edge_profiles, edge_sources,
      &        edge_transport, radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &        numerics,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &        divertors,
 #endif
      &        idx, new_eq_ggd )
@@ -2862,13 +2862,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (write_ids)
      >       call put_ids_edge( edge_profiles, edge_sources,
      &        edge_transport, radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &        numerics,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &        divertors,
 #endif
      &        treename, shot, run, idx, username, database, version,
@@ -3141,13 +3141,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
      &      radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &      numerics, old_start_time, run_end_time,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
      &      tim, dtim, shot, run, database, version, new_eq_ggd,
@@ -3202,7 +3202,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               if ( status.ne.0 ) then
                 write(*,*) 'Error opening old dataset_description IDS !'
               else if (associated(old_description%dd_version)) then
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
                 old_start_time = description%simulation%time_begin
                 old_end_time = description%simulation%time_end
 #endif
@@ -3234,7 +3234,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   tmp_run = run
                   if (database.ne.'iter') tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &               'idscp --setDatasetVersion'//
      &                    ' -si ',shot,' -ri ',run,
@@ -3254,7 +3254,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   call system(systemarg)
 #endif
                   if (database.ne.'iter') then
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &               'idscp --setDatasetVersion'//
      &                  ' -si ',shot,' -ri ',tmp_run,
@@ -3286,13 +3286,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &            geo, mpg, state, state_ext, state_avg, switch,
      &            edge_profiles, edge_sources, edge_transport,
      &            radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &            summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &            numerics, old_start_time, run_end_time,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &            divertors,
 #endif
      &            tim, dtim, shot, run, database, version, new_eq_ggd,
@@ -3322,13 +3322,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
      &      radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &      numerics, run_start_time, run_end_time,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
      &      tim, dtim, shot, run, database, version, new_eq_ggd )
@@ -3336,26 +3336,26 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (ids_replace) then
           call new_ids_edge( edge_profiles, edge_sources,
      &      edge_transport, radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &      numerics,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
      &      idx, new_eq_ggd )
         else
           call put_ids_edge( edge_profiles, edge_sources,
      &      edge_transport, radiation, description, equilibrium,
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &      numerics,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
      &      treename, shot, run, idx, username, database, version,
@@ -3363,10 +3363,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         end if
         call dealloc_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &      numerics,
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
      &      radiation )

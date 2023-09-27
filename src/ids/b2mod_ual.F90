@@ -20,15 +20,15 @@ module b2mod_ual
      &        ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io &
      & ,only: b25_process_ids
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & ,only: ids_summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
      & ,only: ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & ,only: ids_divertors
 #endif
@@ -49,13 +49,13 @@ module b2mod_ual
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
     &    ids_radiation, ids_dataset_description, ids_equilibrium
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
   public ids_summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
   public ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
   public ids_divertors
 #endif
 #endif
@@ -68,13 +68,13 @@ contains
     !! edge_transport IDSs.
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
             &   treename, shot, run, idx, username, database, version, &
@@ -98,15 +98,15 @@ contains
             !<  designed to store a description of the simulation
         type (ids_equilibrium), intent(inout) :: equilibrium !< IDS
             !< designed to store a description of the equilibrium
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store run data related to the divertor plates
 #endif
@@ -130,13 +130,13 @@ contains
 
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           &  "summary, "// &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           &  "numerics, "// &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           &  "divertors, "// &
 #endif
           &  "dataset_description, and radiation IDS"
@@ -158,15 +158,15 @@ contains
           call xertst( status.eq.0, 'Error putting radiation IDS !')
           call ids_put( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting dataset_description IDS !')
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_put( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           call ids_put( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           call ids_put( idx, "divertors", divertors, status )
           call xertst( status.eq.0, 'Error putting divertors IDS !')
 #endif
@@ -193,15 +193,15 @@ contains
           call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
           call ids_put_slice( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_put_slice( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting slice in summary IDS !')
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           call ids_put_slice( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting slice in numerics IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           call ids_put_slice( idx, "divertors", divertors, status )
           call xertst( status.eq.0, 'Error putting slice in divertors IDS !')
 #endif
@@ -213,10 +213,10 @@ contains
     end subroutine put_ids_edge
 
     subroutine dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
             &   radiation )
@@ -236,11 +236,11 @@ contains
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store run data related to the divertor plates
 #endif
@@ -249,10 +249,10 @@ contains
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
         call ids_deallocate( radiation )
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAs_MAJOR_VERSION == 3 )
         call ids_deallocate( numerics )
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call ids_deallocate( divertors )
 #endif
          return
@@ -261,7 +261,7 @@ contains
     subroutine put_batch_edge( &
             &   treename, shot, run, idx, username, database, version, &
             &   batch_profiles, batch_sources, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
             &   description, do_summary, new_eq_ggd )
@@ -277,7 +277,7 @@ contains
             !< IDS designed to store a description of the simulation
         type (ids_equilibrium), intent(inout) :: equilibrium
             !< IDS designed to store a description of the equilibrium
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
@@ -302,7 +302,7 @@ contains
         !! Set data to edge_profiles IDS
         if (do_summary) then
           write(*,'(1x,a)') "Writing batch_profiles, batch_sources, "// &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  "summary, "// &
 #endif
             &  "and dataset_description IDS"
@@ -324,7 +324,7 @@ contains
           if (do_summary) then
             call ids_put( idx, "dataset_description", description, status )
             call xertst( status.eq.0, 'Error putting dataset_description IDS !')
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             call ids_put( idx, "summary", summary, status )
             call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
@@ -347,7 +347,7 @@ contains
           if (do_summary) then
             call ids_put_slice( idx, "dataset_description", description, status )
             call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             call ids_put_slice( idx, "summary", summary, status )
             call xertst( status.eq.0, 'Error putting slice in summary IDS !')
 #endif
@@ -360,7 +360,7 @@ contains
     end subroutine put_batch_edge
 
     subroutine dealloc_batch_edge( batch_profiles, batch_sources, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
             &   description )
@@ -375,7 +375,7 @@ contains
             !< flux)
         type (ids_dataset_description), intent(inout) :: description
             !< IDS designed to store a description of the simulation
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
@@ -385,7 +385,7 @@ contains
         end if
         if (associated( description%ids_properties%comment ) ) then
           call ids_deallocate( description )
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_deallocate( summary )
 #endif
         end if
@@ -396,13 +396,13 @@ contains
     !! edge_transport IDSs.
     subroutine delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
             &   idx )
@@ -423,15 +423,15 @@ contains
             !< designed to store data about plasma radiation
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store data related to divertor plates
 #endif
@@ -446,13 +446,13 @@ contains
           call ids_delete( idx, "edge_transport", edge_transport)
           call ids_delete( idx, "radiation", radiation)
           call ids_delete( idx, "dataset_description", description)
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_delete( idx, "summary", summary)
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           call ids_delete( idx, "numerics", numerics)
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           call ids_delete( idx, "divertors", divertors)
 #endif
           write(*,*) "IDS delete finished"
@@ -465,13 +465,13 @@ contains
     !! edge_transport IDSs.
     subroutine new_ids_edge( edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
             &   idx, new_eq_ggd )
@@ -494,15 +494,15 @@ contains
             !< a description of the simulation
         type (ids_equilibrium) :: equilibrium !< IDS designed to store
             !< a description of the equilibrium
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store data related to the divertor plates
 #endif
@@ -516,13 +516,13 @@ contains
 
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           &  "summary, "// &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           &  "numerics, "// &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           &  "divertors, "// &
 #endif
           &  "dataset_description, and radiation IDS"
@@ -544,15 +544,15 @@ contains
         call xertst( status.eq.0, 'Error putting radiation IDS !')
         call ids_put( idx, "dataset_description", description, status )
         call xertst( status.eq.0, 'Error putting dataset_description IDS !')
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call ids_put( idx, "summary", summary, status )
         call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         call ids_put( idx, "numerics", numerics, status )
         call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call ids_put( idx, "divertors", divertors, status )
         call xertst( status.eq.0, 'Error putting divertors IDS !')
 #endif
@@ -564,7 +564,7 @@ contains
 
     subroutine new_batch_edge( idx, batch_profiles, batch_sources, &
             &   equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
             &   description, do_summary, new_eq_ggd )
@@ -580,7 +580,7 @@ contains
             !< designed to store a description of the simulation
         type (ids_equilibrium) :: equilibrium !< IDS
             !< designed to store a description of the equilibrium
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
@@ -595,7 +595,7 @@ contains
         !! Set data to edge_profiles IDS
         if (do_summary) then
           write(*,'(1x,a)') "Writing batch_profiles, batch_sources, "// &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  "summary, "// &
 #endif
             &  "and dataset_description IDS"
@@ -617,7 +617,7 @@ contains
         if (do_summary) then
           call ids_put( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting dataset_description IDS !')
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_put( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif

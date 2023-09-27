@@ -22,8 +22,8 @@ module b2mod_ual_io_data
 
     use b2us_map
 #ifdef IMAS
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #else
@@ -52,7 +52,7 @@ contains
     !> Transform data from B2 to IDS cell
     function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetInd, mpg,  &
             &   b2CellData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -73,7 +73,7 @@ contains
     !> Transform data from B2 to IDS face
     function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetInd, mpg,  &
             &   b2FaceData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -95,7 +95,7 @@ contains
     !> Transform data from B2 to IDS vertex
     function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetInd,   &
             &   mpg, b2VertexData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -120,7 +120,7 @@ contains
     !! routines b2_IMAS_Transform_Data_B2_To_IDS_[object type] instead.
     function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetInd,  &
             &   mpg, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
