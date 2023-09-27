@@ -55,6 +55,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     The output units are:
 *     nout(0): formatted; provides summary print output.
