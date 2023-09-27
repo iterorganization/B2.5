@@ -389,7 +389,7 @@
 *
 *  5. parameters (see also routine b2cdcv)
 *
-*     ninp - (0:5) integer array, input.
+*     ninp - (0:6) integer array, input.
 *     ninp specifies the input unit numbers, as follows.
 *     ninp(0): formatted; provides physics and numerics parameters.
 *     ninp(1): un*formatted; provides the geometry.
@@ -399,7 +399,7 @@
 *     ninp(5): un*formatted; provides source term data.
 *     ninp(6): un*formatted; provides the initial differentiated state.
 *
-*     nout - (0:5) integer array, input.
+*     nout - (0:11) integer array, input.
 *     nout specifies the output unit numbers, as follows.
 *     nout(0): formatted; provides summary print output.
 *     nout(1): un*formatted; provides actual physics parameters.
@@ -409,6 +409,7 @@
 *     nout(5): un*formatted; may provide detailed convergence data.
 *     nout(9): un*formatted; provides the final differentiated state.
 *     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
