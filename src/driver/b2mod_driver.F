@@ -107,7 +107,7 @@
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
-     *  na_min, na_new, dtim, stim, etim,
+     *  na_min, na_new, dtim, stim, etim, tol_conv,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, BoRiS, ne_wanted,
@@ -175,7 +175,7 @@
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal,
      3  natmi, neutral_rescale, tally,
-     4  BoRiS, density_rescale,
+     4  BoRiS, density_rescale, tol_conv,
      .  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, zt_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max,
@@ -189,7 +189,7 @@
       save min_areshe, min_areshi, min_aresco, res_quit, res_max
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
      1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/,
-     2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
+     2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, tol_conv/0.0_R8/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
@@ -931,6 +931,7 @@
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
+       call ipgetr ('b2mndr_tol_conv',tol_conv)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
      &   'faulty internal parameter ntim, dtim')
        call ipgeti ('b2mndr_inverse_ua', inverse_ua)                    !srv 11.01.13
@@ -1894,12 +1895,38 @@ cwdk  set some integers
 
       call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
+      
+      ! Determine maximal residual
+      res_max = 0.0_R8
+      if (switch%use_tol .eq. 1) then
+        do is = 0, ns-1
+           if (any(solveco(is,:)))
+     &       res_max = max(res_max,state%diag%aresco(is))
+           if (any(solvemo(is,:)))
+     &       res_max = max(res_max,state%diag%aresmo(is))
+        end do
+          if (any(solvepo))
+     &      res_max = max(res_max,state%diag%arespo)
+          if (any(solveee))
+     &      res_max = max(res_max,state%diag%areshe)
+          if (any(solveei))
+     &      res_max = max(res_max,state%diag%areshi)
+          if (any(solveen).and.switch%tn_style.eq.2)
+     &      res_max = max(res_max,state%diag%areshn)
+          if (any(solvekt).and.switch%solve_keps.ge.1)
+     &      res_max = max(res_max,state%diag%areskt)
+          if (any(solvezt).and.switch%solve_keps.eq.2)
+     &      res_max = max(res_max,state%diag%areszt)
+      else 
+           tol_conv = -1.0_R8  
+      endif 
 #ifndef FIXED_POINT
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
       if (first_time_step.or.
-     &    (.not.quit.and.itim.lt.ntim.and.ierr.eq.0.and.
-     &     (etim.gt.tim.or.etim.eq.0.0_R8))) then !{
+     &    (.not.quit.and.itim.lt.ntim
+     &     .and.ierr.eq.0.and.res_max.gt.tol_conv
+     &      .and.(etim.gt.tim.or.etim.eq.0.0_R8))) then !{
 #endif
 
 #ifdef WG_TODO
@@ -2363,7 +2390,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
 #ifdef FIXED_POINT
 *   ..loop test
-      if (quit .or. itim.ge.ntim .or. ierr.ne.0 .or.
+      if (quit .or. itim.ge.ntim .or. ierr.ne.0
+     &    .or. res_max.lt.tol_conv .or.
      &     (etim.le.tim .and. etim.gt.0.0_R8) ) then
         exit
       endif
