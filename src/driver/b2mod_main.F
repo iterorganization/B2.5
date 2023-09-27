@@ -327,10 +327,10 @@ csw
       call b2mndr_2 (nout, ns, switch, geo, mpg, state, state_ext)
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(10),'tran','new','unformatted')
+      call cfopen (nout(11),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(10))
-      close (nout(10))
+      call write_b2mod_ppout(nout(11))
+      close (nout(11))
 #endif
 *   ..close files
       do io=0,size(ninp)-1
