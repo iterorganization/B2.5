@@ -53,7 +53,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
+#ifdef JET
+      integer nout(0:11)
+#else
+      integer nout(0:10)
+#endif
+      integer nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0

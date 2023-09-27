@@ -2243,10 +2243,10 @@ csw 09oct2012 set default potential already at this point (BCs)
           if(tran_num.le.99) then
             write(tran_file_name,'(a4,i2)') 'tran',tran_num
             if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-            call cfopen (nout(9),tran_file_name,'new','unformatted')
+            call cfopen (nout(11),tran_file_name,'new','unformatted')
             call set_b2mod_ppout
-            call write_b2mod_ppout(nout(9))
-            close(nout(9))
+            call write_b2mod_ppout(nout(11))
+            close(nout(11))
             write(*,*) 'Saved ',tran_file_name
           else
             write(*,*) 'More than 99 tran files --- no more saved'
@@ -2680,10 +2680,10 @@ c new CDF movie option
         if(tran_num.le.99) then
           write(tran_file_name,'(a4,i2)') 'tran',tran_num
           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-          call cfopen (nout(10),tran_file_name,'new','unformatted')
+          call cfopen (nout(11),tran_file_name,'new','unformatted')
           call set_b2mod_ppout
-          call write_b2mod_ppout(nout(10))
-          close(nout(10))
+          call write_b2mod_ppout(nout(11))
+          close(nout(11))
           write(*,*) 'Saved ',tran_file_name
         else
           write(*,*) 'More than 99 tran files --- no more saved'
