@@ -584,7 +584,7 @@ cwdk  can be derived directly from data in that file
 
 *   ..set up connectivity information for the matrix stencil
 
-      allocate (indCv(4*4+4+1+10)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
+      allocate (indCv(8*4+4+1)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
       
       iNv = 1
       do iCv = 1, m%nCv

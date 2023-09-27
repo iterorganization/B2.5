@@ -51,6 +51,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: flux_limit_to_vsa
       integer :: csig_an_style 
       integer :: user_transport
+      integer :: use_tol
 
 
 c Advanced fluid neutral models
@@ -522,6 +523,7 @@ c Feedback
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
+      s % use_tol = 0
 
 
 c Advanced fluid neutral models
@@ -988,6 +990,7 @@ c b2siav
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)               !srv 15.06.08
       call ipgeti ('b2tqna_user_transport', s % user_transport)             !mb  11.10.17
+      call ipgeti ('b2mndr_use_tol', s % use_tol)
 
 
 c Advanced fluid neutral models
