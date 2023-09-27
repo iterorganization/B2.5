@@ -81,15 +81,15 @@ program b2_ual_rewrite
      & , only : new_ids_edge, delete_ids_edge
     use b2mod_ual_io &
      & , only : b25_process_ids
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_divertors
 #endif
@@ -267,7 +267,7 @@ program b2_ual_rewrite
         tmp_run = run
         if (new_run.eq.run .and. database.ne.'iter') then
           tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
           write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
      &     'idscp --setDatasetVersion'//                   &
      &        ' -si ',shot,' -ri ',run,                    &
@@ -287,7 +287,7 @@ program b2_ual_rewrite
 #endif
           if (database.eq.'iter') database = 'ITER'
         end if
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
         write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
      &   'idscp --setDatasetVersion'//                   &
      &        ' -si ',shot,' -ri ',tmp_run,              &
@@ -334,13 +334,13 @@ program b2_ual_rewrite
     call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
       &  edge_profiles, edge_sources, edge_transport, &
       &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
       &  numerics, run_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       &  divertors, &
 #endif
       &  tim, dtim, shot, new_run, database, version, new_eq_ggd )
@@ -348,13 +348,13 @@ program b2_ual_rewrite
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   idx, new_eq_ggd )
@@ -378,10 +378,10 @@ program b2_ual_rewrite
 #endif
     end if
     call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   radiation )
