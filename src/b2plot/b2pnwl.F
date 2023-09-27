@@ -237,8 +237,8 @@ c*** Calculate the net and gross erosion
               js=(ib-lppp)-(j-1)*nytg
               ias=0
               do iss=1,nsts
-                if (eirdiag_nds_typ(iss).ne.2) cycle
-                if (eirdiag_nds_srf(iss).ne.ltrgpos(j)+1) cycle
+                if (isrftype(nlim+iss).ne.1) cycle
+                if (iss.ne.ltns(j)) cycle
                 if (mod(j,2).eq.1) then
                   idir = -1
                 else

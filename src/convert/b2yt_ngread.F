@@ -1173,19 +1173,14 @@ cank
         if(jvft44 .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
-          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
-          call write_title(45,'eirdiag', 5*nstsi+1)
+          call write_title(45,'eirdiag', nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
-          WRITE(45,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
-          WRITE(45,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)
-          WRITE(45,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
-          WRITE(45,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
 
           NCL=eirdiag_nds_ind(nstsi+1)
           IF(NCL.GT.0) THEN
+            IF(.NOT.ALLOCATED(fnmti_b2)) ALLOCATE(fnmti_b2(NCL))
+            call read_title(44)
+            READ (44,'(12i6)') (fnmti_b2(i),i=1,NCL)
             IF(.NOT.ALLOCATED(wldna_res))
      >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
@@ -1273,6 +1268,8 @@ cank
                 end if
               end if
             end do
+            call write_title(45,'fnmti_b2',ncl)
+            WRITE(45,'(12i6)') (fnmti_b2(i),i=1,NCL)
             call write_title(45,'sarea_res',ncl)
             WRITE(45,'(6e15.7)') (sarea_res(i),i=1,NCL)
             call write_title(45,'wldna_res',ncl*natm1)
