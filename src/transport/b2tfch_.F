@@ -114,8 +114,8 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
       else
 *     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
         call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
-     &    dv%facdrift, dv%fac_ExB, ismain, ismain0, pl%te, pl%po,
-     &    pl%ti, pl%na, dv%fna, co%csigin, dv%fchin)                     !srv 11.05.09
+     &    dv%facdrift, dv%fac_ExB, ismain, ismain0, pl,
+     &    dv%fna, co%csigin, dv%fchin)                     !srv 11.05.09
 *     ..compute x,y-components of divergent part of diamagnetic current
         call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna, 
      &    dv%uadia, dv%facdrift, dv%fchdia)
