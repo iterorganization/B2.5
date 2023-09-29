@@ -1943,6 +1943,7 @@ c   --> better way doing this is necessary)
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
       enddo
+      call read_neutrals_namelist(ns, mpg, switch, .true.)
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
       if (any(cftype.eq.6)) call xertst(
      & flag_optim.or.(switch%b2optim_namelist .eq. 1),
@@ -1970,7 +1971,6 @@ cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
-      call read_neutrals_namelist(ns, mpg, switch, .true.)
       if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
         call init_feedback(nFc, ns, switch, mpg)
       endif
