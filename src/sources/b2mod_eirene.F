@@ -603,45 +603,45 @@ c first save the original NPTS provided by the Eirene input files.
             if(.not.is_neutral(is).and.(mol(istrai).ne.1)) then !{    !! plasma species
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
-                ifc = mpg%rcFc(ind)
+                iFc = mpg%rcFc(ind)
 !!                iCv = mpg%rcCv(mpg%rcCvP(
                 tflux(istrai)=tflux(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             (st%dv%fna(ifc,0,is)+st%dv%fna(ifc,1,is)))*
-     &              st%dv%kin_frac_hyb(ifc)
+     &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is)))*
+     &              st%dv%kin_frac_hyb(iFc)
                 tflux0(istrai)=tflux0(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             (st%dv%fna(ifc,0,is)+st%dv%fna(ifc,1,is)))
-                tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
+     &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is)))
+                tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             (st%dv%fna(ifc,0,is)+st%dv%fna(ifc,1,is)))*
-     &              st%dv%kin_frac_hyb(ifc)
+     &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is)))*
+     &              st%dv%kin_frac_hyb(iFc)
               end do !}
             elseif(is_neutral(is).and.lneustra.and.(mol(istrai).ne.1))
      &        then !{   !! fluid neutral species only if they are needed for hybrid fluid/kinetic models. In a standard Eirene run they are not used.
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
-                ifc = mpg%rcFc(ind)
+                iFc = mpg%rcFc(ind)
                 tflux(istrai)=tflux(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             st%dv%fnn_inc(iFc,is))*
-     &             st%dv%kin_frac_hyb(ifc)
+     &             st%dv%kin_frac_hyb(iFc)
                 tflux0(istrai)=tflux0(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &            st%dv%fnn_inc(iFc,is))
-                tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
+                tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             st%dv%fnn_inc(iFc,is))*
-     &             st%dv%kin_frac_hyb(ifc)
+     &             st%dv%kin_frac_hyb(iFc)
               end do !}
             elseif (lneustra.and.(mol(istrai).eq.1)) then  !nh 31.03.21 stratum of molecules
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
-                ifc = mpg%rcFc(ind)
-                tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(ifc,is)*
+                iFc = mpg%rcFc(ind)
+                tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(iFc,is)*
      &            st%dv%fluid_frac_hyb(iFc)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) +
-     &            2.0_R8*fna_mol(ifc,is)
+     &            2.0_R8*fna_mol(iFc,is)
               end do !}
               flux_scale(istrai) = 0.5_R8 ! Molecules consist of two atoms
             endif
