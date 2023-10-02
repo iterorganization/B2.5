@@ -91,7 +91,7 @@
         nc = m%ftCvP(iFt,2)
         cells(0:nc-1) = m%ftCv(sc:sc+nc-1)
 
-        ! Get faces
+        ! Get poloidal faces in the tube
         sf = m%ftFcP(iFt,1)
         nf = m%ftFcP(iFt,2)
         faces(0:nf-1) = m%ftFc(sf:sf+nf-1)
@@ -116,7 +116,7 @@
            g%fcPbs(iFc) = pol_flux / g%fcBb(iFc,3)
         enddo
 
-       ! HOW TO APPLY FOR CELLS BECAUSE vol = hx*hy*hz already enforced
+       ! HOW TO APPLY FOR CELLS BECAUSE vol = hx*hy*hz already enforced by hz = vol/cvsz
       enddo
 
 *   ..copying over modified data
