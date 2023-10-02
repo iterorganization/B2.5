@@ -760,6 +760,13 @@ cxpb  if just below the top corner, make the corner cell follow
         m%nncut = idum(2)
         endif
 
+        !read length of OMP and IMP arrays
+        call cfruin (nrid, 4, idum, 'ncvOMP,ncvIMP,nfcOMP,ncvOMP')
+        m%ncvOMP = idum(0)
+        m%ncvIMP = idum(1)
+        m%nfcOMP = idum(2)
+        m%nfcIMP = idum(3)
+
         !read vertex information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('Vx',id)) then
