@@ -414,6 +414,7 @@ c 2002-09-11: logic revised
      .                        ISCL2(:), ISCL3(:), ISCLB(:),
      .                        ISCLA(:)
       integer, allocatable :: NTGPR1(:)
+      integer :: NCOND
       real (kind=R8) :: rdum(0:17), DPP, R1MN, R1MX, R2MN, R2MX
       real (kind=R8) :: ALLOC, MPTS
       real (kind=R8) :: zmin1, zmin2, zmax1, zmax2
@@ -9483,15 +9484,18 @@ C  SKIP READING REST OF THIS BLOCK
           READ (IUNIN,'(A72)') ZEILE ! LSYMET,LBALAN,LCHKQUD
           WRITE(IUNOT,'(A72)') ZEILE
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
-          READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
-                                         ! ntrfrm,nfull,ibrad,ibpol,ibtor
+          READ (IUNIN,'(A72)') ZEILE
+          call fix_integer_input(zeile,11)
+          READ (ZEILE,6666) idum(0:9),NCOND  ! NFLA,
+                                             ! ntrfrm,nfull,ibrad,ibpol,ibtor,
+                                             ! dum7,dum8,dum9,dum10,NCOND
           idum(0) = ns1-nspecies1
-          if (idum(6).eq.0) idum(6)=1
-          if (idum(7).eq.0) idum(7)=1
-          if (idum(8).eq.0) idum(8)=1
-          if (invert_bpol.eq.1) idum(7)=-1
-          if (invert_btor.eq.1) idum(8)=-1
-          WRITE(IUNOT,'(9I6)') idum(0:8)
+          if (idum(3).eq.0) idum(3)=1
+          if (idum(4).eq.0) idum(4)=1
+          if (idum(5).eq.0) idum(5)=1
+          if (invert_bpol.eq.1) idum(4)=-1
+          if (invert_btor.eq.1) idum(5)=-1
+          WRITE(IUNOT,'(11I6)') idum(0:9),NCOND
           allocate(IFLB1(NPLSI1),FCTE1(NPLSI1),BMASS1(NPLSI1),
      .             LKINDP1(NPLSI1))
           DO I=1,NPLSI
@@ -9525,6 +9529,13 @@ C  SKIP READING REST OF THIS BLOCK
      .       I,IFLB1(I),FCTE1(I),BMASS1(I),LKINDP1(I)
           END DO
           deallocate(IFLB1,FCTE1,BMASS1,LKINDP1)
+C  INFO FOR KINETIC-FLUID CONDENSATION PROCESS
+          IF (NCOND.GT.0) THEN
+            DO I=1,NCOND
+              READ (IUNIN,'(2I6)') IDUM(0:1)
+              WRITE(IUNOT,'(2I6)') IDUM(0:1)
+            ENDDO
+          ENDIF        
           READ (IUNIN,'(2I6)') idum(0:1) ! NDXA,NDYA
           WRITE(IUNOT,'(2I6)') nx1+max(1,nncut*3)-1, ny1
 C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI

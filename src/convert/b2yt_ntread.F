@@ -520,6 +520,49 @@ C
 
       deallocate(field1)
       deallocate(pux,puy,pvx,pvy)
+
+* Atom condensation
+      call read_title(46)
+      read(46,'(6e15.7)') ((PGENA(i,j),j=1,ntrii),i=1,max(1,natmi))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = pgena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'pgena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'pgena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+      read(46,'(6e15.7)') ((VGENA(i,j),j=1,ntrii),i=1,max(1,natmi))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = vgena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vgena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vgena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+      read(46,'(6e15.7)') ((EGENA(i,j),j=1,ntrii),i=1,max(1,natmi))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = egena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'egena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'egena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+
    99 CONTINUE
 #endif
 
