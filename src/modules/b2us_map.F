@@ -17,7 +17,7 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
-     &             nCf, mxnCf
+     &             nCf, mxnCf, ncvOMP, ncvIMP, nfcOMP, nfcIMP
         integer :: nnreg(0:1)
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -84,6 +84,13 @@
         integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
+
+        integer, allocatable :: cvOMP(:)               ! grid cells that belong to the outer mid plane (OMP)
+        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
+        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
+        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
+
+
         end type mapping
 
       contains
@@ -161,6 +168,11 @@
       allocate (m%fcLbl(m%nFc))
       allocate (m%ftLbl(m%nFt))
       allocate (m%cvLbl(m%nCv))
+      
+      allocate (m%cvOMP(m%ncvOMP))
+      allocate (m%cvIMP(m%ncvIMP))
+      allocate (m%fcOMP(m%nfcOMP))
+      allocate (m%fcIMP(m%nfcIMP))
 
       call initialize_mapping (m)
 
@@ -233,6 +245,11 @@
       m%ftLbl = 0
       m%cvLbl = 0
 
+      m%cvOMP = 0
+      m%cvIMP = 0
+      m%fcOMP = 0
+      m%fcIMP = 0
+
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
       write (*,*) '=================================='
@@ -302,6 +319,11 @@
       deallocate (m%fcLbl)
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
+
+      deallocate (m%cvOMP)
+      deallocate (m%cvIMP)
+      deallocate (m%fcOMP)
+      deallocate (m%fcIMP)
       
       return
       end subroutine dealloc_mapping 
