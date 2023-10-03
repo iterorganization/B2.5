@@ -18,10 +18,10 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer :: nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) ::
-     & facdrift(nFc), fac_ExB(nFc), te(nCv), po(nCv), ti(nCv),
-     & na(nCv,0:ns-1), fna(nFc,0:1,0:ns-1),
+     & facdrift(nFc), fac_ExB(nFc),
+     & fna(nFc,0:1,0:ns-1),
      & csigin(nFc,0:1,0:ns-1,0:ns-1)
       type (B2Plasma), intent (in) :: pl
       type (switches), intent (in) :: switch
@@ -105,7 +105,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then
 *    ..test sign of te
-            call b2xvsg (nCv, te, 1, 'te', '.gt.')
+            call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
 *    ..test sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
@@ -134,7 +134,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
               na_fluid(:,is) = pl%na(:,is)
               if (is_neutral(is).and.switch%use_eirene.ne.0) then
                 na_kin(:,is) = (dab2(:,b2eatcr(is),1)+
-     &                          switch%b2mndr_na_min)  !! -> to prevent deviding by zero for the velocities below
+     &                          switch%b2mndr_na_min)  !! -> to prevent dividing by zero for the velocities below
               else
                 na_kin(:,is) = 0.0_R8
               endif
