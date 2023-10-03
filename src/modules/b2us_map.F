@@ -17,7 +17,7 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
-     &             nCf, mxnCf, ncvOMP, ncvIMP, nfcOMP, nfcIMP, nX
+     &             nCf, mxnCf, ncvOMP, ncvIMP, nfcOMP, nfcIMP, nXp
         integer :: nnreg(0:1)
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -176,7 +176,7 @@
       allocate (m%fcOMP(m%nfcOMP))
       allocate (m%fcIMP(m%nfcIMP))
 
-      allocate (m%Xpoint(m%nX))
+      allocate (m%Xpoint(m%nXp))
 
       call initialize_mapping (m)
 
