@@ -9485,17 +9485,41 @@ C  SKIP READING REST OF THIS BLOCK
           WRITE(IUNOT,'(A72)') ZEILE
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(A72)') ZEILE
-          call fix_integer_input(zeile,11)
-          READ (ZEILE,6666) idum(0:9),NCOND  ! NFLA,
-                                             ! ntrfrm,nfull,ibrad,ibpol,ibtor,
-                                             ! dum7,dum8,dum9,dum10,NCOND
+          IF (streql(ZEILE(55:66),' ') THEN    ! input.dat file comes from
+                                               ! a structured case
+            READ (ZEILE,6666) idum(0:8)        ! NFLA,NCUTB,NCUTL,IMF
+                                               ! ntfrm,nfull,ibrad,ibpol,ibtor
+            idum(1) = idum(4)
+            idum(2) = idum(5)
+            if (idum(6).eq.0) then
+              idum(3) = 1
+            else
+              idum(3) = idum(6)
+            end if
+            if (idum(7).eq.0) then
+              idum(4) = 1
+            else
+              idum(4) = idum(7)
+            end if
+            if (idum(8).eq.0) then
+              idum(5) = 1
+            else
+              idum(5) = idum(8)
+            end if
+            idum(6:9) = 0
+            NCOND = 0
+          ELSE
+            READ (ZEILE,6666) idum(0:9),NCOND  ! NFLA,
+                                               ! ntrfrm,nfull,ibrad,ibpol,ibtor,
+                                               ! dum7,dum8,dum9,dum10,NCOND
+            if (idum(3).eq.0) idum(3)=1
+            if (idum(4).eq.0) idum(4)=1
+            if (idum(5).eq.0) idum(5)=1
+          END IF
           idum(0) = ns1-nspecies1
-          if (idum(3).eq.0) idum(3)=1
-          if (idum(4).eq.0) idum(4)=1
-          if (idum(5).eq.0) idum(5)=1
           if (invert_bpol.eq.1) idum(4)=-1
           if (invert_btor.eq.1) idum(5)=-1
-          WRITE(IUNOT,'(11I6)') idum(0:9),NCOND
+          WRITE(IUNOT,6666) idum(0:9),NCOND
           allocate(IFLB1(NPLSI1),FCTE1(NPLSI1),BMASS1(NPLSI1),
      .             LKINDP1(NPLSI1))
           DO I=1,NPLSI
