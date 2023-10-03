@@ -753,21 +753,27 @@ cxpb  if just below the top corner, make the corner cell follow
         m%isClassicalGrid = idum(0)
         
         if (m%isClassicalGrid.eq.1) then
-        !read nx, ny, nncut
-        call cfruin (nrid, 3, idum, 'nx,ny,nncut')
-        m%nx = idum(0)
-        m%ny = idum(1)
-        m%nncut = idum(2)
+          !read nx, ny, nncut
+          call cfruin (nrid, 3, idum, 'nx,ny,nncut')
+          m%nx = idum(0)
+          m%ny = idum(1)
+          m%nncut = idum(2)
         endif
 
-        !read length of OMP and IMP arrays
+        ! read Xpoint information
+        call cfruin (nrid, 1, idum,'nX')
+        m%nX = idum(0)
+
+        call cfruin(nrid,m%nX,m%Xpoint,'Xpoint(s)')
+
+        ! read length of OMP and IMP arrays
         call cfruin (nrid, 4, idum, 'ncvOMP,ncvIMP,nfcOMP,ncvOMP')
         m%ncvOMP = idum(0)
         m%ncvIMP = idum(1)
         m%nfcOMP = idum(2)
         m%nfcIMP = idum(3)
 
-        !read vertex information
+        ! read vertex information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('Vx',id)) then
            do iVx = 1, nnVx
