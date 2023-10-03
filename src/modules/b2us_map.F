@@ -17,7 +17,7 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
-     &             nCf, mxnCf, ncvOMP, ncvIMP, nfcOMP, nfcIMP
+     &             nCf, mxnCf, ncvOMP, ncvIMP, nfcOMP, nfcIMP, nX
         integer :: nnreg(0:1)
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -89,6 +89,8 @@
         integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
         integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
         integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
+  
+        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
 
 
         end type mapping
@@ -174,6 +176,8 @@
       allocate (m%fcOMP(m%nfcOMP))
       allocate (m%fcIMP(m%nfcIMP))
 
+      allocate (m%Xpoint(m%nX))
+
       call initialize_mapping (m)
 
       write (*,*) '=================================='
@@ -250,6 +254,8 @@
       m%fcOMP = 0
       m%fcIMP = 0
 
+      m%Xpoint = 0 
+
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
       write (*,*) '=================================='
@@ -324,6 +330,8 @@
       deallocate (m%cvIMP)
       deallocate (m%fcOMP)
       deallocate (m%fcIMP)
+
+      deallocate (m%Xpoint)
       
       return
       end subroutine dealloc_mapping 
