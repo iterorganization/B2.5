@@ -9485,9 +9485,9 @@ C  SKIP READING REST OF THIS BLOCK
           WRITE(IUNOT,'(A72)') ZEILE
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(A72)') ZEILE
-          IF (streql(ZEILE(55:66),' ') THEN    ! input.dat file comes from
+          IF (streql(ZEILE(55:66),' ')) THEN   ! input.dat file comes from
                                                ! a structured case
-            READ (ZEILE,6666) idum(0:8)        ! NFLA,NCUTB,NCUTL,IMF
+            READ (ZEILE,6666) idum(0:8)        ! NFLA,NCUTB,NCUTL,IMF,
                                                ! ntfrm,nfull,ibrad,ibpol,ibtor
             idum(1) = idum(4)
             idum(2) = idum(5)
