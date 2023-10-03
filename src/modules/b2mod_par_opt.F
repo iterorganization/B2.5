@@ -151,6 +151,7 @@
       logical :: done, optimize
       character*1 str
       character*256 cffile, filename
+      real(kind=r8) :: dummy
 #ifndef F2003
       integer newunit
       external newunit
@@ -239,7 +240,7 @@
      &   'b2mod_par_opt: shift_cf_data must be >=0')
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.10) call xerrab ('cftype>10 not coded ')
+          if (cftype(icf).gt.11) call xerrab ('cftype>11 not coded ')
           if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
      &     'cftype(1)=0 but no other cost functions are defined')
           if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
@@ -255,9 +256,11 @@
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
      &        (cftype(icf).ge.7 .and. cftype(icf).le.10))
      >         cfread(icf) = .true.
-          if (cftype(icf).eq.5) m%cfOnCv(icf) = .false.
-          if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
-     &      call xerrab('cftype 5 must be defined using faces!')
+          if (cftype(icf).eq.5 .or. cftype(icf).eq.11) 
+     &     m%cfOnCv(icf) = .false. !heat flux CF needs faces
+          if ((cftype(icf).eq.5 .or. cftype(icf).eq.11) 
+     &         .and. cfdef(icf).eq.3)
+     &      call xerrab('cftype 5 and 11 must be defined using faces!')
           if (shift_cf_data(icf).gt.0 .and. .not.cfread(icf)) then
             write(*,*) 'icf, shift_cf_data(icf), cfread(icf),'//
      &        ' cftype(icf)'
@@ -270,6 +273,9 @@
             call xerrab('b2mod_par_opt: shift_opt=true requires '//
      &        'shift_cf_data>0')
           endif
+!csc reading files with CF data in it. From now on we assume data is stored as
+!    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
+!    This facilitates shifting the CF and covariance matrix caclulation 
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
@@ -298,6 +304,17 @@
               endif
             enddo
             close(99)
+! Check if strictly monotonically increasing (sorted)
+            dummy = cfdata(icf,1,1)
+            do i=2,ncfdata(icf)
+              if (.not.(cfdata(icf,1,i).gt.dummy)) then
+                write(*,*) 'icf=',icf, ' ii=',i,' cfdata(icf,1,ii-1)=',
+     &           dummy,' cfdata(icf,1,ii)=',cfdata(icf,1,i)
+                call xerrab('b2mod_par_opt: abscissa in cfdata not '//
+     &                      'stricly increasing!')
+              endif
+              dummy = cfdata(icf,1,i)
+            enddo
           endif
           if (cftype(icf).eq.0 .or. cftype(icf).eq.6) cycle !no need to specify domain here
           done  = .false.
