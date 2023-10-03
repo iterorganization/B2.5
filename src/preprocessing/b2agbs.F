@@ -4,15 +4,17 @@
       use b2mod_constants
       use b2us_map
       use b2us_geo
+      use b2us_cellhelper
       implicit none
 *   ..input arguments (unchanged on exit)
       type(mapping) :: m
 *   ..input/ouput arguments (defined on entry, changed upon exit)
       type(geometry) :: g
 *   ..local variables
-      integer :: iCv, sv, nv, verts(0:100), ref_ind_cv(m%nFt), iFt,
-     .  ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), faces(0;m%nFc), iFc,
-     .  i, omp_cells(0:m%nCv), imp_cells(0:m%nCv)
+      integer :: iCv, sv, nv, sf, nf verts(0:100), ref_ind_cv(m%nFt), 
+     .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), 
+     .  faces(0;m%nFc), iFc, i, cv
+      intrinsic round
       data width /1.0_R8/
       save width
 *     ------------------------------------------------------------------
@@ -60,26 +62,51 @@
 *   ..select reference location for each flux tube
 *   ..we use the outer midplane whenever possible, then the inner midplane,
 *   ..otherwise the cell to the right of the left end of the flux tube.
-      ! Get omp cells
-      omp_cells
-      ! Get imp cells
-      imp_cells
  
       do iFt = 1,m%nFt
         ! Get cells
         sc = m%ftCvP(iFt,1)
         nc = m%ftCvP(iFt,2)
         cells(0:nc-1) = m%ftCv(sc:sc+nc-1)
+        
+        ! Get faces
+        sf = m%ftFcP(iFt,1)
+        nf = m%ftFcP(iFt,2)
+        faces(0:nf-1) = m%ftFc(sf:sf+nf-1)
    
         ! If there is a common cell between omp cells and tube cells
-           ! Take that cell and one of its poloidal faces
+        do i = 0,nc-1
+           if isMember(cells(i),m%cvOMP,m%ncvOMP) then
+              ref_ind_cv(iFt) = cells(i)
+              exit
+           endif
+        enddo
         ! Elseif there is common cell between imp cells and tube cells
-           ! Take that cell and one of its poloidal faces
-        ! Else  do something else
+        if ref_ind_cv(iFt).eq.0 then
+          do i = 0,nc-1
+           if isMember(cells(i),m%cvIMP,m%ncvIMP) then
+              ref_ind_cv(iFt) = cells(i)
+              exit
+           endif   
+          enddo 
+        endif
+        ! Else  take the middle of the tube
+        if ref_ind_cv(iFt).eq.0 then
+             ref_ind_cv(iFt) = cells(round(0.5_R8*nc-1))
+        endif
+
+        ! Get the poloidal face of that cell
+        cv = ref_ind_cv(iFt);
         
-         ! dummy for the moment
-         ref_ind_fc(iFt) = 1
-         ref_ind_cv(iFt) = 1
+        ! Get a poloidal faces
+        do i = 1,m%cvFcP(cv,2)
+          iFc = m%cvFc(m%cvFcP(cv,1)+i-1)
+          if m%fcAligned(iFc).eq.0 then
+             ref_ind_fc(iFt) = iFc
+             exit
+          enddo
+        enddo
+      
       enddo
 
 *   ..correct fcPbs (pbsx), cvHx (hx), and cvHy (hy) to enforce:
