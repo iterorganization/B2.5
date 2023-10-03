@@ -7152,6 +7152,8 @@
 					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4}).
 					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
 					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
+					10 - Difference, on the desired CVs, of calculated ion saturation current (as ne*cs*eV) and values read from file, normalized with average experimental value (units must be kA/m^{2}).
+					11 - Heat flux peakedness on the desired FCs (output in W^{2}/m^{2}).
 				</description>
 			</switch>
 			<switch>
