@@ -11,10 +11,11 @@
 *   ..input/ouput arguments (defined on entry, changed upon exit)
       type(geometry) :: g
 *   ..local variables
-      integer :: iCv, sv, nv, sf, nf verts(0:100), ref_ind_cv(m%nFt), 
+      integer :: iCv, sv, nv, sf, nf, verts(0:100), ref_ind_cv(m%nFt), 
      .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), 
-     .  faces(0;m%nFc), iFc, i, cv
-      intrinsic round
+     .  faces(0:m%nFc), iFc, i, cv
+      real (kind=R8) :: pol_flux, width
+      intrinsic int
       data width /1.0_R8/
       save width
 *     ------------------------------------------------------------------
@@ -51,7 +52,7 @@
      &         ( nv * g%cvHz(iCv))
           enddo
           ! Toroidal field in face center
-          g%fcBb(:,2) = (g%vxFfbz(m%fcVx(:,1))+g%vxFfbz(m%fcVx(:,2))/
+          g%fcBb(:,2) = (g%vxFfbz(m%fcVx(:,1))+g%vxFfbz(m%fcVx(:,2)))/
      &        (2.0_R8 * g%fcHz(:))
         endif
       endif
@@ -62,7 +63,8 @@
 *   ..select reference location for each flux tube
 *   ..we use the outer midplane whenever possible, then the inner midplane,
 *   ..otherwise the cell to the right of the left end of the flux tube.
- 
+    
+      ref_ind_cv = 0
       do iFt = 1,m%nFt
         ! Get cells
         sc = m%ftCvP(iFt,1)
@@ -76,23 +78,23 @@
    
         ! If there is a common cell between omp cells and tube cells
         do i = 0,nc-1
-           if isMember(cells(i),m%cvOMP,m%ncvOMP) then
+           if (isMember(cells(i),m%cvOMP,m%ncvOMP)) then
               ref_ind_cv(iFt) = cells(i)
               exit
            endif
         enddo
         ! Elseif there is common cell between imp cells and tube cells
-        if ref_ind_cv(iFt).eq.0 then
+        if (ref_ind_cv(iFt).eq.0) then
           do i = 0,nc-1
-           if isMember(cells(i),m%cvIMP,m%ncvIMP) then
+           if (isMember(cells(i),m%cvIMP,m%ncvIMP)) then
               ref_ind_cv(iFt) = cells(i)
               exit
            endif   
           enddo 
         endif
         ! Else  take the middle of the tube
-        if ref_ind_cv(iFt).eq.0 then
-             ref_ind_cv(iFt) = cells(round(0.5_R8*nc-1))
+        if (ref_ind_cv(iFt).eq.0) then
+             ref_ind_cv(iFt) = cells(int(0.5_R8*nc-1))
         endif
 
         ! Get the poloidal face of that cell
@@ -101,10 +103,10 @@
         ! Get a poloidal faces
         do i = 1,m%cvFcP(cv,2)
           iFc = m%cvFc(m%cvFcP(cv,1)+i-1)
-          if m%fcAligned(iFc).eq.0 then
+          if (m%fcAligned(iFc).eq.0) then
              ref_ind_fc(iFt) = iFc
              exit
-          enddo
+          endif
         enddo
       
       enddo
