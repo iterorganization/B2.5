@@ -177,8 +177,9 @@
             do iFc = ic1, ic2
               qq = st%dv%fht(mpg%cfReg(iFc),0)*mpg%cfFcOr(iFc)/
      &             geo%fcS(mpg%cfReg(iFc))
-              J(icf) = max(J(icf),qq)*cfweight(icf)
+              J(icf) = max(J(icf),qq)
             enddo
+            J(icf) = J(icf)*cfweight(icf)
           case (6) !loglikelihood + log prior for Bayesian MAP estimate
             call calc_log_prior(prior, inrange)
             write(*,*) 'MAP log prior value:', prior
@@ -293,6 +294,13 @@
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
+          case (11) !heat flux peakedness on desired FCs Sum(q**2*ds
+            J(icf) = 0.0_R8
+            do iFc = ic1, ic2
+              J(icf) = J(icf) + (st%dv%fht(mpg%cfReg(iFc),0)*
+     &             mpg%cfFcOr(iFc))**2/geo%fcS(mpg%cfReg(iFc))
+            enddo
+            J(icf) = J(icf)*cfweight(icf)
           case default
             write(*,*) cftype(icf)
             call xerrab ('cftype out of bounds')
