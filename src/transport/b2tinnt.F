@@ -40,7 +40,7 @@
 *
 *  1. purpose
 *
-*     B2TINNT computes the ion-neutral current
+*     B2TINNT computes the ion-neutral current.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -100,7 +100,7 @@
         call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
         call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
         call ipgeti ('b2tfhe_no_current', no_current)
-        call ipgeti ('b2tqin_csigin_style', style)
+        call ipgeti ('b2tqin_csigin_style', csigin_style)
         call ipgetr ('b2sqcx_phm0', phm0)
         call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif

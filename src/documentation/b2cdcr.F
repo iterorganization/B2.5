@@ -384,6 +384,8 @@
 *     for each species and calculates the X and Y components of
 *     the total inertial current.
 *
+*     B2TINNT computes the ion-neutral current.
+*
 *     B2TIPSCH computes the Pfirsch-Schlueter all atom heat flux between
 *     neighboring cells, and the coefficients that specify its linearization.
 *
