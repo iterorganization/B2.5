@@ -7,7 +7,7 @@ c  version : 27.07.2000 22:52
      .	pfluxa(0:ndxp,0:ndyp,natm,1),  pfluxm(0:ndxp,0:ndyp,nmol,1),
      .	pefluxa(0:ndxp,0:ndyp,natm,1), pefluxm(0:ndxp,0:ndyp,nmol,1),
      .	emiss(0:ndxp,0:ndyp,1,1),      emissmol(0:ndxp,0:ndyp,1,1),
-     .	srcml(0:ndxp,0:ndyp,nmol,1),   
+     .	srcml(0:ndxp,0:ndyp,nmol,1),
      .  edissml(0:ndxp,0:ndyp,nmol,0:nstra),
      .	wldnek(nlimps,0:nstra),        wldnep(nlimps,0:nstra),
      .	wldna(nlimps,natm,0:nstra),    ewlda(nlimps,natm,0:nstra),
@@ -49,21 +49,21 @@ C
      .                                  eirdiag_nds_end(nsts)
 
 C Meaning of the arrays which are written to the fort.44 file
-C 
+C
 C  eirdiag_nds_typ    : type of the surface
 C                       1: poloidal surface (Y=CONST)
-C                       2: radial surface (X=CONST) 
+C                       2: radial surface (X=CONST)
 C  eirdiag_nds_srf    : index of the corresponding radial or poloidal SURFACE
-C                       on which the distribution is given 
-C  eirdiag_nds_start  : index of the first CELL on the surface '..._srf' 
+C                       on which the distribution is given
+C  eirdiag_nds_start  : index of the first CELL on the surface '..._srf'
 C  eirdiag_nds_end    : ... of the last CELL ...
-C 
-C  _sfr, _start and _end are given in B2 indexing. 
+C
+C  _srf, _start and _end are given in B2 indexing.
 C  '_srf' corresponds to the indexing of B2 arrays with fluxes (CELL-1 for outer wall and target).
 C
 C  eirdiag_nds_ind(IS) : is the index AFTER WHICH the data for surface IS is started in arrays '*_res'.
 C                        IF _ind(IS)<0 then this surface is skipped
-C      
+C
 C
       CHARACTER(8) :: eirtxt(nspz) !ak+vk
 

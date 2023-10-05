@@ -4838,6 +4838,14 @@
 					If enable.ne.0, then the sources for particle, parallel momentum, electron and ion heat are rescaled, for non-boundary cells, if the local timestep exceeds the physics timescale implied by those sources.
 				</description>
 			</switch>
+			<switch>
+				<name>b2tinnt_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Chooses the interpolation style used to compute the ion-neutral current.
+				</description>
+			</switch>
 		</category>
 		<category name="Atomic Physics">
 			<switch>
