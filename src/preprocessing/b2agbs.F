@@ -142,10 +142,9 @@
      &                     + g%fcBb(iFc,2)**2)
             
 	   ! Recompute fcPbs(:)
-           g%fcPbs(iFc) = pol_flux / g%fcBb(iFc,3)
+           g%fcPbs(iFc) = sign(1.0,g%fcPbs(iFc))*abs(pol_flux / g%fcBb(iFc,3))
         enddo
 
-       ! HOW TO APPLY FOR CELLS BECAUSE vol = hx*hy*hz already enforced by hz = vol/cvsz
       enddo
 
 *   ..copying over modified data
