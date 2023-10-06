@@ -52,7 +52,7 @@
 *     Here, ehx and ehy are the components of the ... modified electric
 *     field: ehx = -(d/dx)po - (1/(qe*ni))*(d/dx)(ni*ti)+B*hx*Vyn,
 *     ehy = -(d/dy)po - (1/(ni*te))*(d/dy)(ne*te)-B*hy*Vpn.
-*     See ... 
+*     See ...
 *
 *     The equations indicated above do not describe all the relevant
 *     transport properties of a plasma. The most significant omission
@@ -77,7 +77,7 @@
 *   ..initialisation
 
 *-----------------------------------------------------------------------
-*.documentation-internal 
+*.documentation-internal
 *
 *     Description of some local variables:
 *
@@ -99,7 +99,7 @@
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
       endif
-    
+
 * ..compute classical sigin
 *   ..compute sigin.
       call sfill (nCv*2*ns*nscx, 0.0_R8, sigin, 1)
@@ -123,22 +123,22 @@
             t0 = log(tav/(am(is0)*ev))
             rcx = switch%b2sqcx_phm0*
      &       expu(rt%rlcx(iCv,0,is,k)+rt%rlcx(iCv,1,is,k)*t0)
-! From 5.2: Using the diffusivity of room temperature hydrogen gas
-            if (switch%b2tqin_style.eq.0) then
+            if (switch%b2tqin_csigin_style.eq.0) then
+              ! From 5.0/5.1: Using the CX rate
+              if (switch%transport_afn.eq.0) then !! default
+                sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
+     &          *rcx*na0_tot(iCv)/(2.0_R8*geo%cvBb(iCv,3)**2)
+              else
+!! in case of advanced fluid neutrals, rcx = Kcxm and in that case the factor 1/2 should not be there
+!! ( see "Van Uytven, Wim, et al. "Effect of drifts and currents on the validity of a fluid model for the atoms in the plasma edge." Nuclear Materials and Energy 33 (2022): 101255.")
+                sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
+     &          *rcx*na0_tot(iCv)/(geo%cvBb(iCv,3)**2)
+              endif
+            else
+              ! From 5.2: Using the diffusivity of room temperature hydrogen gas
               sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)      !srv 01.07.99
      &         *(pl%na(iCv,is0)*3.2e-15_R8)
      &         *sqrt(pl%ti(iCv)/ev/0.026_R8)/(2.0_R8*geo%cvBb(iCv,3)**2)
-            else
-! From 5.0/5.1: Using the CX rate
-              if (switch%transport_afn.eq.0) then !! default
-                sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
-     &          *rcx*na0_tot(iCv)/(2.0_R8*geo%cvBb(iCv,3)**2)   
-              else                                
-!! in case of advanced fluid neutrals, rcx = Kcxm and in that case the factor 1/2 should not be there 
-!! ( see "Van Uytven, Wim, et al. "Effect of drifts and currents on the validity of a fluid model for the atoms in the plasma edge." Nuclear Materials and Energy 33 (2022): 101255.")
-                sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
-     &          *rcx*na0_tot(iCv)/(geo%cvBb(iCv,3)**2) 
-              endif
             endif
             sigin(iCv,1,is,k) = sigin(iCv,0,is,k)
           enddo
