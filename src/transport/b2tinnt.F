@@ -37,7 +37,7 @@
 *
 *  1. purpose
 *
-*     B2TINNT computes the ion-neutral current
+*     B2TINNT computes the ion-neutral current.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -91,13 +91,6 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
       facdriftm = maxval(facdrift)                                        !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
 
-      if (switch%use_eirene.ne.0.and.switch%b2tinnt_style.eq.0) then
-        call xerrab ('b2tinnt_style=0 not yet allowed with EIRENE')
-      endif
-      if (switch%use_eirene.ne.0.and.switch%b2tqin_style.eq.0) then
-        call xerrab ('b2tqin_style=0 not yet allowed with EIRENE')
-      endif
-
       if(switch%pot_eq.eq.1 .and.(facdriftm.gt.0.0_R8 .or.
      . fac_ExBm.gt.0.0_R8).and.switch%no_current.eq.0
      .            .and. switch%fch_ion_neutral .ne. 0.0e0_R8) then         !srv 26.07.06 01.07.99
@@ -116,6 +109,23 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
               enddo
             enddo
           endif
+
+
+*    ..assemble densities (for fluid, kinetic, or hybrid fluid-kinetic neutrals)
+          do is = 0, ns-1
+            na_fluid(:,is) = pl%na(:,is)
+            if (is_neutral(is).and.switch%use_eirene.ne.0) then
+              na_kin(:,is) = (dab2(:,b2eatcr(is),1)+
+     &                          switch%b2mndr_na_min)  !! -> to prevent dividing by zero for the velocities below
+            else
+              na_kin(:,is) = 0.0_R8
+            endif
+            na_tot(:,is) = na_kin(:,is) + na_fluid(:,is)
+*   ..interpolate na to cell faces
+            call intface(nCv, nFc, mpg%fcCv, geo%fcVol, na_tot(:,is),
+     &          naf(:,is))
+          enddo
+*    ..computation of gradients and interpolations
           if(switch%b2tinnt_style.eq.0) then
           !! b2tinnt_style = 0
 *   ..interpolate ti to cell faces
@@ -123,7 +133,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *   ..pre-computation of differences
             call diff(nCv, nFc, nVx, 0, geo, mpg, pl%po, wrkVx, dpo)
             do is = 0, ns-1
-              wrk = log(pl%na(:,is))                                      !srv 12.05.18
+              wrk = log(na_tot(:,is))                                      !srv 12.05.18
               call diff(nCv, nFc, nVx, 0, geo, mpg, wrk, wrkVx,
      &          wrk0(:,:,is))
             enddo
@@ -131,24 +141,15 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
           else
           !! b2tinnt_style = 1 (default)
             do is = 0, ns-1
-              na_fluid(:,is) = pl%na(:,is)
-              if (is_neutral(is).and.switch%use_eirene.ne.0) then
-                na_kin(:,is) = (dab2(:,b2eatcr(is),1)+
-     &                          switch%b2mndr_na_min)  !! -> to prevent dividing by zero for the velocities below
-              else
-                na_kin(:,is) = 0.0_R8
-              endif
-              na_tot(:,is) = na_kin(:,is) + na_fluid(:,is)
-*   ..interpolate na to cell faces
-              call intface(nCv, nFc, mpg%fcCv, geo%fcVol, na_tot(:,is),
-     &          naf(:,is))
 *   ..pre-computation of differences
               call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,is)*pl%ti,
      &          wrkVx, wrk0(:,:,is))
             enddo
             call diff(nCv, nFc, nVx, 0, geo, mpg, pl%po, wrkVx, dpo)
           endif
-*   ..calculate the contribution of ion-neutral current
+*   ..calculate neutral velocities
+!! Remark: when the perpendicular momentum sources are scored in EIRENE and available in B2.5, this routine should be rewritten. This would be more self-consistent, whereas now
+!! it is a mix of post-processed EIRENE perpendicular atom velocities and B2.5 CX rates.
           do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
 *      ..get fluxes divided by area
