@@ -582,7 +582,7 @@ c======================================================================
       
       integer nx, ny, nxtl, nxtr
       
-! Subroutine returns ix_pneut_beg(1:2) and ix_pneut_end91:2):
+! Subroutine returns ix_pneut_beg(1:2) and ix_pneut_end(1:2):
 ! poloidal cell number ranges over which neutral pressure will be averaged
 
 ! This subroutine is called either from b2usstri or b2stbc_fb_pre, so it is worth checking whether necessary arrays are allocated

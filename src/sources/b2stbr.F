@@ -791,11 +791,11 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
               if(crcstra(is).eq.'C') then
 c Fixed for feedback by Kudrevatyh P.S and Shirobokov A.A. Does not work with case natm!=nspecies | 18.09.22
                 if(gpfc(ia,is) .ne. 0.0_R8 
-     &           .and. na_feedback_target(ia-1).gt. 
-     &            0.0_R8 .and. na_feedback_actuator(ia-1).eq.1) then 
+     &                .and. na_feedback_target(ia-1).gt. 
+     &                0.0_R8 .and. na_feedback_actuator(ia-1).eq.1) then 
                   sna_puff(latmscl(ia)) =
-     &           conpar(EB2SPCR(ia), na_feedback_ib(ia-1), 1)*
-     &            gpfc(ia,is) !*recyctmp
+     &               conpar(EB2SPCR(ia), na_feedback_ib(ia-1), 1) * 
+     &               gpfc(ia,is) !*recyctmp
 c Endfix
               else 
                 if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) =

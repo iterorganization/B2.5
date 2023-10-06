@@ -233,17 +233,13 @@
       use b2mod_external
       use b2mod_plasma
      , ,only: na0, ne0, fna0, kinrgy0, ni0,
-!<<<<<<< HEAD
      ,        nap, nep, fnap, kinrgyp, fht
       use b2mod_driver
      , ,only : pbs, ua
       use b2mod_sources
      , ,only : rqrad, rqbrm
       use b2mod_b2plot_wall_loading
-!=======
-!     ,        nap, nep, fnap, kinrgyp
       use b2mod_dimensions
-!>>>>>>> rc/3.0.9
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
@@ -1001,7 +997,6 @@
 
             case (6) ! neutral particle flux through the core boundary
 
-!<<<<<<< HEAD
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
@@ -1009,17 +1004,6 @@
      &             ispecies+1
               endif
               na_feedback_current = na_feedback_const(ispecies)
-!=======
-!              if(ncall.eq.0) then
-!                 write(*,'(a,a,i3)')
-!     &             'b2stbc_fb_pre_choice: using ',
-!     &                    'neutral density '//
-!     &                    'for sequence ',
-!     &                    ispecies+1
-!              endif
-!              
-!              na_feedback_current = na_feedback_const(ispecies)
-!>>>>>>> 9e9da198... Changes to be committed:
 
 #ifdef B25_EIRENE
               do k=1,ncns !{
@@ -1716,13 +1700,13 @@
                 end if
 
                   
-                if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+                if(na_feedback_actuator_min(ispecies) .ge. 0.0_R8)
      &             saved_na_feedback_actuator(ispecies) =
-     &                 max(na_feedback_puff_min(ispecies),
+     &                 max(na_feedback_actuator_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
-                if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+                if(na_feedback_actuator_max(ispecies) .gt. 0.0_R8)
      &            saved_na_feedback_actuator(ispecies) =
-     &                 min(na_feedback_puff_max(ispecies),
+     &                 min(na_feedback_actuator_max(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
 
                 if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
@@ -1810,13 +1794,13 @@
      &             saved_na_feedback_actuator(ispecies) +
      &             na_feedback_rescale
 
-              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+              if(na_feedback_actuator_min(ispecies) .ge. 0.0_R8)
      &             saved_na_feedback_actuator(ispecies) =
-     &             max(na_feedback_puff_min(ispecies),
+     &             max(na_feedback_actuator_min(ispecies),
      &             saved_na_feedback_actuator(ispecies))
-              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+              if(na_feedback_actuator_max(ispecies) .gt. 0.0_R8)
      &             saved_na_feedback_actuator(ispecies) =
-     &             min(na_feedback_puff_max(ispecies),
+     &             min(na_feedback_actuator_max(ispecies),
      &             saved_na_feedback_actuator(ispecies))
 
               if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
@@ -1886,13 +1870,13 @@
 !!!! WAS IST DAS?
 !!!! DAS IST KAPUTT!
 !!!! DAS ZU TUN IST ZEHR NICH GUT...
-!              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+!              if(na_feedback_actuator_min(ispecies) .ge. 0.0_R8)
 !     &                 saved_na_feedback_actuator(ispecies) =
-!     &                 max(na_feedback_puff_min(ispecies),
+!     &                 max(na_feedback_actuator_min(ispecies),
 !     &                 saved_na_feedback_actuator(ispecies))
-!              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+!              if(na_feedback_actuator_max(ispecies) .gt. 0.0_R8)
 !     &                 saved_na_feedback_actuator(ispecies) =
-!     &                 min(na_feedback_puff_max(ispecies),
+!     &                 min(na_feedback_actuator_max(ispecies),
 !     &                 saved_na_feedback_actuator(ispecies))
 !!!! WAS IST DAS?
 !!!! DAS IST KAPUTT!
