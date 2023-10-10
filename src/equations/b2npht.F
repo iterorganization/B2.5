@@ -467,6 +467,7 @@ c residuals for separate neutral energy equation
       elseif (switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
+        call my_out_us(70,nCv,0,pl%tn,'b2npht_tn')
       end if
 
 * ..return
