@@ -513,6 +513,9 @@ cxpb Corrected for dimensionality
 c User transport options
       if (switch%user_transport.eq.0) then
         !! the default transport model calculated above is used. Nothing to do.
+      elseif(switch%user_transport.eq.6) then                                    !srv 13.06.08
+        call set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
+     &    vsa0, hce0)
       else
         call xerrab('transport model undefined or not yet converted')
       endif
@@ -537,11 +540,6 @@ c mw added transport
         call set_transport_mw(nx, ny, ns, ne, jsep, jxa,
      &   dna0, vla0, hci0, hcib, hce0)
 c mw end
-      elseif(user_transport.eq.6) then                                    !srv 13.06.08
-!! FIXME: Need to fix clash with ank blobby transport model
-        call set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, qz, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0,
-     &  alf0, wrk0)
 !! FIXME: in routines below, remove hvi0, hve0 ???
       elseif(user_transport.eq.7) then
         call set_transport_disruption(nx, ny, ns,
@@ -705,6 +703,130 @@ cdpc
 
       end subroutine b2tqna
 
+      subroutine modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
+     & inner_sol_loc,core_coef, bar_coef,inner_sol_coef,
+     & outer_sol_coef,iCv, dna0)
+
+        use b2mod_types
+        use b2us_map
+        implicit none
+        type (mapping), intent (in) :: mpg
+        real (kind=R8) :: dna0, core_coef, bar_coef,inner_sol_coef,
+     &     outer_sol_coef
+        integer flux_surf(2),iCv,sep_loc,inner_bar_loc,inner_sol_loc
+        flux_surf = findloc(mpg%imapCv,iCv)-2
+        if (mpg%cvOnClosedSurface(iCv)) then
+          if((flux_surf(2)>=inner_bar_loc).and.
+     &          (flux_surf(2)<=sep_loc)) then
+            dna0 = bar_coef*dna0
+          elseif(flux_surf(2)<inner_bar_loc) then
+            dna0 = core_coef*dna0
+          endif
+        elseif(flux_surf(2)<inner_sol_loc) then
+          dna0 = inner_sol_coef*dna0
+        else
+          dna0 = outer_sol_coef*dna0
+        endif
+      end subroutine modify_tram_coefs
+
+      subroutine set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
+     &  vsa0,hce0)
+
+        use b2mod_types
+        use b2us_map
+        use b2mod_switches
+        use b2us_geo
+        use b2mod_b2cmpa, only : is_neutral
+        implicit none
+        type (mapping), intent (in) :: mpg
+        type (switches), intent (inout) :: switch
+        type (geometry), intent (in) :: geo
+
+        integer omp_start,j,k,l,iVx,fcs,flux_surf(2),omp_loc(2), nCv,
+     &  size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc, ns,is, iCv
+        integer,  allocatable :: cvs(:)
+        real(kind=R8) :: Bmin,len_in
+        real (kind=R8) ::
+     *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
+     &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
+     &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1),
+     &  hce0(nCv)  
+      iVx=1
+      flux_surf = 0
+      do while((flux_surf(2).eq.0).and.(iVx<=mpg%nVx))
+        fcs = size(mpg%vxFc(mpg%vxFcP(iVx,1):sum(mpg%vxFcP(iVx,:))-1))
+        if (fcs.eq.8) then
+          ! print *, "X-point vertex",iVx
+          flux_surf = findloc(mpg%imapVx,iVx)-2
+        endif
+        iVx = iVx+1
+      enddo
+      size_arr = size(mpg%imapCv(:,flux_surf(2)-1));
+      allocate(cvs(-1:size_arr-2))
+      cvs = mpg%imapCv(:,flux_surf(2)-1)
+      Bmin = 0.0_R8
+      omp_start = 0
+      sep_loc = flux_surf(2)
+      ! print *, "flux_surf:", sep_loc
+      do l=-1,size_arr-2
+        ! print *, l,cvs(l)
+        if (cvs(l).ne.0) then
+          if(mpg%cvOnClosedSurface(cvs(l))) then
+            if (abs(Bmin) > 1e-6_R8) then
+              if(abs(geo%cvBb(cvs(l),3))<Bmin) then
+                Bmin = abs(geo%cvBb(cvs(l),3))
+                omp_start = cvs(l)
+              endif
+            else
+              Bmin = abs(geo%cvBb(cvs(l),3))
+              omp_start = cvs(l)
+            endif
+          endif
+        endif
+      enddo
+      ! print *, "omp_start", omp_start
+      deallocate(cvs)
+      len_in = 0.0_R8
+      omp_loc = findloc(mpg%imapCv,omp_start)-2
+      l = omp_loc(2)
+      do while (l>-1.and.len_in<switch%bar_length)
+          ! iCv = mpg%imapCv(omp_loc(1),l)
+          iFc = mpg%imapFcy(omp_loc(1),l);
+          len_in = len_in+sum(geo%fcHc(iFc,:))
+          l = l-1
+      enddo
+      inner_bar_loc = l
+      ! print *,"end_bar_y",inner_bar_loc
+      l = omp_loc(2)
+      len_in = 0.0_R8
+      size_arr = size(mpg%imapFcy,2)
+      do while (l<size_arr.and.len_in<switch%inner_sol_length)
+        ! iCv = mpg%imapCv(omp_loc(1),l)
+        iFc = mpg%imapFcy(omp_loc(1),l);
+        len_in = len_in+sum(geo%fcHc(iFc,:))
+        l = l+1
+      enddo
+      inner_sol_loc = l
+      ! print *,"end_inner_sol_y",inner_sol_loc
+      do iCv=1,nCv
+        do is=1,ns-1
+          if (.not.is_neutral(is)) then
+              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
+     &          inner_sol_loc,switch%na_alfa1, switch%na_alfa2,
+     &          switch%na_alfa3,switch%na_alfa4, iCv, dna0(iCv,is))
+              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
+     &          inner_sol_loc,switch%ti_alfa1, switch%ti_alfa2,
+     &          switch%ti_alfa3,switch%ti_alfa4, iCv, hcib(iCv,is))
+              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
+     &          inner_sol_loc,switch%vsa_alfa1, switch%vsa_alfa2,
+     &         switch%vsa_alfa3, switch%vsa_alfa4, iCv, vsa0(iCv,is))
+            endif
+        enddo
+        call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,inner_sol_loc
+     &    ,switch%te_alfa1, switch%te_alfa2,switch%te_alfa3,
+     &    switch%te_alfa4, iCv, hce0(iCv))
+      enddo
+      end subroutine
 #ifdef WG_TODO
       subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
      &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
@@ -919,10 +1041,10 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
        call ipgetr ('b2tqna_cdf', cdf)                            !srv 24.04.02
        call ipgetr ('b2tqna_alf', alf)                            !srv 05.11.03
        call ipgeti ('b2tqna_itype', itype)                        !srv 24.04.02
-       call ipgetr ('b2tqna_alfa1', alfa1)                        !srv 13.11.02 {
-       call xertst (0.le.alfa1,'faulty argument b2tqna_alfa1')
-       call ipgetr ('b2tqna_alfa2', alfa2)
-       call xertst (0.le.alfa2,'faulty argument b2tqna_alfa2')
+       call ipgetr ('b2tqswitch%na_alfa1', alfa1)                        !srv 13.11.02 {
+       call xertst (0.le.alfa1,'faulty argument b2tqswitch%na_alfa1')
+       call ipgetr ('b2tqswitch%na_alfa2', alfa2)
+       call xertst (0.le.alfa2,'faulty argument b2tqswitch%na_alfa2')
        call ipgetr ('b2tqna_alfa3', alfa3)                        !srv 13.03.07
        call xertst (0.le.alfa3,'faulty argument b2tqna_alfa3')    !srv 13.03.07
        alfa4 = alfa3                                              !IYS 29.11.2012
