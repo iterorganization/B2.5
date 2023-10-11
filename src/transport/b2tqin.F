@@ -17,6 +17,9 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
      & , only : dab2
+#else
+      use b2mod_eirdiag
+     & , only : dab2
 #endif
       use b2mod_neutrals_namelist
      &  , only : b2eatcr
@@ -29,7 +32,7 @@
       type (geometry), intent (in) :: geo
       type (B2Plasma), intent (in) :: pl
       type (B2Rates), intent (in) :: rt
-! *   ..output arguments (unspecified on entry)
+*   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sigin(nCv,0:1,0:ns-1,0:nscx-1)                                 !sv 01.07.99 !xpb
 *   ..common blocks
@@ -108,9 +111,7 @@
       do k = 0, nscx-1
         is0 = iscx(k)
         if (switch%use_eirene.ne.0) then
-#ifdef B25_EIRENE
           na0_kin = dab2(:,b2eatcr(is0),1)
-#endif
         else
           na0_kin = 0.0_R8
         endif
