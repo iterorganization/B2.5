@@ -224,6 +224,7 @@ PROGRAM B2MN_DV
 !     ninp(3): un*formatted; provides the initial state.
 !     ninp(4): un*formatted; provides atomic rate data.
 !     ninp(5): un*formatted; provides source term data.
+!     ninp(6): un*formatted; provides the initial differentiated state.
 !
 !     The output units are:
 !     nout(0): formatted; provides summary print output.
@@ -235,7 +236,9 @@ PROGRAM B2MN_DV
 !     nout(6): un*formatted; save file for restart
 !     nout(7): un*formatted; full plasma description with derived quantities
 !     nout(8): un*formatted; ASTRA coupling data file
-!     nout(9): formatted; postprocessor output. [JET]
+!     nout(9): un*formatted; provides the final differentiated state.
+!     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+!     nout(11): formatted; postprocessor output. [JET]
 !
 !     (See routine b2cdca for the meaning of 'un*formatted'.)
 !
@@ -477,6 +480,7 @@ SUBROUTINE B2MN_NODIFF()
 !     ninp(3): un*formatted; provides the initial state.
 !     ninp(4): un*formatted; provides atomic rate data.
 !     ninp(5): un*formatted; provides source term data.
+!     ninp(6): un*formatted; provides the initial differentiated state.
 !
 !     The output units are:
 !     nout(0): formatted; provides summary print output.
@@ -488,7 +492,9 @@ SUBROUTINE B2MN_NODIFF()
 !     nout(6): un*formatted; save file for restart
 !     nout(7): un*formatted; full plasma description with derived quantities
 !     nout(8): un*formatted; ASTRA coupling data file
-!     nout(9): formatted; postprocessor output. [JET]
+!     nout(9): un*formatted; provides the final differentiated state.
+!     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+!     nout(11): formatted; postprocessor output. [JET]
 !
 !     (See routine b2cdca for the meaning of 'un*formatted'.)
 !

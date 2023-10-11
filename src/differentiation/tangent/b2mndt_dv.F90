@@ -297,8 +297,9 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
 !.end b2mndt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: nout(0:10), ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
-& , nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
+  INTEGER :: nout(0:10)
+  INTEGER :: ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0, nscx, &
+& nscxmax, iscx(0:nscxmax-1), itim, ntim
   INTEGER, SAVE :: ntim_batch=500
   INTEGER, SAVE :: ibatch_av_all=0
   REAL(kind=r8) :: dtim
@@ -964,8 +965,9 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
 !.end b2mndt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: nout(0:10), ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
-& , nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
+  INTEGER :: nout(0:10)
+  INTEGER :: ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0, nscx, &
+& nscxmax, iscx(0:nscxmax-1), itim, ntim
   INTEGER, SAVE :: ntim_batch=500
   INTEGER, SAVE :: ibatch_av_all=0
   REAL(kind=r8) :: dtim

@@ -300,7 +300,7 @@
               J(icf) = J(icf) + (st%dv%fht(mpg%cfReg(iFc),0)*
      &             mpg%cfFcOr(iFc))**2/geo%fcS(mpg%cfReg(iFc))
             enddo
-            J(icf) = J(icf)*cfweight(icf)
+            J(icf) = 0.5_R8*J(icf)*cfweight(icf)
           case default
             write(*,*) cftype(icf)
             call xerrab ('cftype out of bounds')

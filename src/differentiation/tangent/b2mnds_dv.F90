@@ -42,8 +42,9 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 !.end b2mnds
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ninp(0:6), nout(0:10), ncv, nfc, ns, ns0
+  INTEGER :: ninp(0:6), ncv, nfc, ns, ns0
   INTEGER :: nsd(nbdirsmax)
+  INTEGER :: nout(0:10)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
 !   ..output arguments (unspecified on entry)
 !     (none)
@@ -381,7 +382,8 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !.end b2mnds
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ninp(0:6), nout(0:10), ncv, nfc, ns, ns0
+  INTEGER :: ninp(0:6), ncv, nfc, ns, ns0
+  INTEGER :: nout(0:10)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
 !   ..output arguments (unspecified on entry)
 !     (none)

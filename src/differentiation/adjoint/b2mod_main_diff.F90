@@ -342,6 +342,7 @@ CONTAINS
     CALL CFOPEN(nout(3), 'b2fmovie', 'new', 'un*formatted')
     CALL CFOPEN(nout(4), 'b2ftrace', 'new', 'un*formatted')
     CALL CFOPEN(nout(5), 'b2ftrack', 'new', 'un*formatted')
+    call cfopen(nout(9), 'b2fdiffe', 'new', 'un*formatted')
 !   ..mark output unit for error messages
     CALL XERSET(0)
 !   ..obtain version numbers                                             !xpb

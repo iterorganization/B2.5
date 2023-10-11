@@ -64,8 +64,6 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   INTRINSIC SUM
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  REAL(kind=r8) :: max1
-  REAL(kind=r8) :: max1b
   INTEGER :: arg1
   INTEGER :: branch
   REAL(kind=r8) :: temp
@@ -88,6 +86,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   INTEGER :: ad_to8
   INTEGER :: ad_to9
   INTEGER :: ad_to10
+  INTEGER :: ad_from1
+  INTEGER :: ad_to11
 !
 !
   IF (first_call .AND. ncf .GT. 0) THEN
@@ -187,7 +187,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
       END IF
       SELECT CASE  (cftype(icf)) 
       CASE (0) 
-        CALL PUSHCONTROL4B(12)
+        CALL PUSHCONTROL4B(13)
       CASE (1) 
 !sum of other cost function. It is skipped at this stage because it MUST be J(1) for optimization
 !electron density on desired CVs
@@ -214,7 +214,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
-        CALL PUSHCONTROL4B(11)
+        CALL PUSHCONTROL4B(12)
       CASE (2) 
 !electron temperature on desired CVs
         IF (ALLOCATED(b2data)) THEN
@@ -240,7 +240,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
-        CALL PUSHCONTROL4B(10)
+        CALL PUSHCONTROL4B(11)
       CASE (3) 
 !ion temperature on desired CVs
         IF (ALLOCATED(b2data)) THEN
@@ -266,7 +266,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
-        CALL PUSHCONTROL4B(9)
+        CALL PUSHCONTROL4B(10)
       CASE (4) 
         ad_from = ic1
 !max electron temperature on desired CVs
@@ -285,7 +285,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(ad_from)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)/ev
-        CALL PUSHCONTROL4B(8)
+        CALL PUSHCONTROL4B(9)
       CASE (5) 
         ad_from0 = ic1
 !max heat flux density on desired FCs
@@ -293,18 +293,20 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
 &           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
-            max1 = qq
+            CALL PUSHREAL8(j(icf), r8/8)
+            j(icf) = qq
             CALL PUSHCONTROL1B(0)
           ELSE
-            max1 = j(icf)
+            CALL PUSHREAL8(j(icf), r8/8)
+            j(icf) = j(icf)
             CALL PUSHCONTROL1B(1)
           END IF
-          CALL PUSHREAL8(j(icf), r8/8)
-          j(icf) = max1*cfweight(icf)
         END DO
         CALL PUSHINTEGER4(ifc - 1)
         CALL PUSHINTEGER4(ad_from0)
-        CALL PUSHCONTROL4B(7)
+        CALL PUSHREAL8(j(icf), r8/8)
+        j(icf) = j(icf)*cfweight(icf)
+        CALL PUSHCONTROL4B(8)
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL CALC_LOG_PRIOR_NODIFF(prior, inrange)
@@ -434,11 +436,11 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         IF (inrange) THEN
           CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = -((prior+lll_cum)*cfweight(icf))
-          CALL PUSHCONTROL4B(6)
+          CALL PUSHCONTROL4B(7)
         ELSE
           CALL PUSHREAL8(j(icf), r8/8)
           j(icf) = inf_opt
-          CALL PUSHCONTROL4B(5)
+          CALL PUSHCONTROL4B(6)
         END IF
       CASE (7) 
 !electron density radial gradient
@@ -467,7 +469,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
-        CALL PUSHCONTROL4B(4)
+        CALL PUSHCONTROL4B(5)
       CASE (8) 
 !electron temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%te, funv, &
@@ -495,7 +497,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
-        CALL PUSHCONTROL4B(3)
+        CALL PUSHCONTROL4B(4)
       CASE (9) 
 !ion temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%ti, funv, &
@@ -523,7 +525,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
-        CALL PUSHCONTROL4B(2)
+        CALL PUSHCONTROL4B(3)
       CASE (10) 
 !ion saturation current (kA/m**2)
         CALL PUSHREAL8ARRAY(rz, r8*ncv/8)
@@ -556,6 +558,21 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHINTEGER4(icv - 1)
         CALL PUSHREAL8(j(icf), r8/8)
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
+        CALL PUSHCONTROL4B(2)
+      CASE (11) 
+!heat flux peakedness on desired FCs Sum(q**2*ds
+        CALL PUSHREAL8(j(icf), r8/8)
+        j(icf) = 0.0_R8
+        ad_from1 = ic1
+        DO ifc=ad_from1,ic2
+          CALL PUSHREAL8(j(icf), r8/8)
+          j(icf) = j(icf) + (st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc&
+&           ))**2/geo%fcs(mpg%cfreg(ifc))
+        END DO
+        CALL PUSHINTEGER4(ifc - 1)
+        CALL PUSHINTEGER4(ad_from1)
+        CALL PUSHREAL8(j(icf), r8/8)
+        j(icf) = 0.5_R8*j(icf)*cfweight(icf)
         CALL PUSHCONTROL4B(1)
       CASE DEFAULT
         WRITE(*, *) cftype(icf)
@@ -587,11 +604,25 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
     funvb = 0.D0
     DO icf=ncf,1,-1
       CALL POPCONTROL4B(branch)
-      IF (branch .LT. 6) THEN
+      IF (branch .LT. 7) THEN
         IF (branch .LT. 3) THEN
           IF (branch .EQ. 0) THEN
             curr_shiftb = 0.D0
           ELSE IF (branch .EQ. 1) THEN
+            CALL POPREAL8(j(icf), r8/8)
+            jb(icf) = cfweight(icf)*0.5_R8*jb(icf)
+            CALL POPINTEGER4(ad_from1)
+            CALL POPINTEGER4(ad_to11)
+            DO ifc=ad_to11,ad_from1,-1
+              CALL POPREAL8(j(icf), r8/8)
+              stb%dv%fht(mpg%cfreg(ifc), 0) = stb%dv%fht(mpg%cfreg(ifc)&
+&               , 0) + 2*st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)**2&
+&               *jb(icf)/geo%fcs(mpg%cfreg(ifc))
+            END DO
+            CALL POPREAL8(j(icf), r8/8)
+            jb(icf) = 0.D0
+            curr_shiftb = 0.D0
+          ELSE
             CALL POPREAL8(j(icf), r8/8)
             temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
             tempb = cfweight(icf)*jb(icf)/temp0
@@ -644,7 +675,10 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             CALL POPREAL8ARRAY(rz, r8*ncv/8)
             CALL B2XPRZ_B(ncv, ns, mp, am, st%pl%na, stb%pl%na, rz, rzb&
 &                   , st_ext)
-          ELSE
+          END IF
+          GOTO 100
+        ELSE IF (branch .LT. 5) THEN
+          IF (branch .EQ. 3) THEN
             CALL POPREAL8(j(icf), r8/8)
             temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
             tempb = cfweight(icf)*jb(icf)/temp0
@@ -679,45 +713,44 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
             b2datab(1:n1) = 0.D0
             CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%pl&
 &                    %ti, stb%pl%ti, funv, funvb, gradr, gradrb)
+          ELSE
+            CALL POPREAL8(j(icf), r8/8)
+            temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+            tempb = cfweight(icf)*jb(icf)/temp0
+            jb(icf) = vold(icf)*tempb
+            voldb(icf) = voldb(icf) + j(icf)*tempb
+            cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*&
+&             vold(icf)*tempb/temp0
+            n2 = ncfdata(icf)
+            CALL POPINTEGER4(ad_to7)
+            DO icv=ad_to7,1,-1
+              CALL POPREAL8(j(icf), r8/8)
+              temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
+              b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(&
+&               icf)
+              b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf&
+&               , icv)*jb(icf)
+            END DO
+            n1 = mpg%cfregp(icf, 2)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*&
+&                                           n2/8)
+            CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2&
+&                     ), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
+&                     b2dataoncfb(1:n2), curr_shift, curr_shiftb)
+            ic1 = mpg%cfregp(icf, 1)
+            ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+            gradrb = 0.D0
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
+            gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
+&             b2datab(1:n1)/ev
+            b2datab(1:n1) = 0.D0
+            CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%pl&
+&                    %te, stb%pl%te, funv, funvb, gradr, gradrb)
           END IF
           GOTO 100
-        ELSE IF (branch .EQ. 3) THEN
-          CALL POPREAL8(j(icf), r8/8)
-          temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
-          tempb = cfweight(icf)*jb(icf)/temp0
-          jb(icf) = vold(icf)*tempb
-          voldb(icf) = voldb(icf) + j(icf)*tempb
-          cfnormb(icf) = cfnormb(icf) - 2*cfnorm(icf)*2.0_R8*j(icf)*vold&
-&           (icf)*tempb/temp0
-          n2 = ncfdata(icf)
-          CALL POPINTEGER4(ad_to7)
-          DO icv=ad_to7,1,-1
-            CALL POPREAL8(j(icf), r8/8)
-            temp = b2dataoncf(icv) - cfdata(icf, 2, icv)
-            b2voloncfb(icf, icv) = b2voloncfb(icf, icv) + temp**2*jb(icf&
-&             )
-            b2dataoncfb(icv) = b2dataoncfb(icv) + 2*temp*b2voloncf(icf, &
-&             icv)*jb(icf)
-          END DO
-          n1 = mpg%cfregp(icf, 2)
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*n2/&
-&                                         8)
-          CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2)&
-&                   , b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
-&                   b2dataoncfb(1:n2), curr_shift, curr_shiftb)
-          ic1 = mpg%cfregp(icf, 1)
-          ic2 = ic1 + mpg%cfregp(icf, 2) - 1
-          gradrb = 0.D0
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data(1:n1), r8*n1/8)
-          gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
-&           b2datab(1:n1)/ev
-          b2datab(1:n1) = 0.D0
-          CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%pl%&
-&                  te, stb%pl%te, funv, funvb, gradr, gradrb)
-          GOTO 100
-        ELSE IF (branch .EQ. 4) THEN
+        ELSE IF (branch .EQ. 5) THEN
           CALL POPREAL8(j(icf), r8/8)
           temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
           tempb = cfweight(icf)*jb(icf)/temp0
@@ -759,25 +792,26 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           lll_cumb = 0.D0
           priorb = 0.D0
         END IF
-      ELSE IF (branch .LT. 9) THEN
-        IF (branch .EQ. 6) THEN
+      ELSE IF (branch .LT. 10) THEN
+        IF (branch .EQ. 7) THEN
           CALL POPREAL8(j(icf), r8/8)
           priorb = -(cfweight(icf)*jb(icf))
           lll_cumb = -(cfweight(icf)*jb(icf))
           jb(icf) = 0.D0
         ELSE
-          IF (branch .EQ. 7) THEN
+          IF (branch .EQ. 8) THEN
+            CALL POPREAL8(j(icf), r8/8)
+            jb(icf) = cfweight(icf)*jb(icf)
             CALL POPINTEGER4(ad_from0)
             CALL POPINTEGER4(ad_to4)
             DO ifc=ad_to4,ad_from0,-1
-              CALL POPREAL8(j(icf), r8/8)
-              max1b = cfweight(icf)*jb(icf)
-              jb(icf) = 0.D0
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 0) THEN
-                qqb = max1b
+                CALL POPREAL8(j(icf), r8/8)
+                qqb = jb(icf)
+                jb(icf) = 0.D0
               ELSE
-                jb(icf) = jb(icf) + max1b
+                CALL POPREAL8(j(icf), r8/8)
                 qqb = 0.D0
               END IF
               stb%dv%fht(mpg%cfreg(ifc), 0) = stb%dv%fht(mpg%cfreg(ifc)&
@@ -805,8 +839,8 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           GOTO 100
         END IF
       ELSE
-        IF (branch .LT. 11) THEN
-          IF (branch .EQ. 9) THEN
+        IF (branch .LT. 12) THEN
+          IF (branch .EQ. 10) THEN
             CALL POPREAL8(j(icf), r8/8)
             temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
             tempb = cfweight(icf)*jb(icf)/temp0
@@ -871,7 +905,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &             ) + b2datab(1:n1)/ev
             b2datab(1:n1) = 0.D0
           END IF
-        ELSE IF (branch .EQ. 11) THEN
+        ELSE IF (branch .EQ. 12) THEN
           CALL POPREAL8(j(icf), r8/8)
           temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
           tempb = cfweight(icf)*jb(icf)/temp0
@@ -1132,7 +1166,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTRINSIC SUM
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  REAL(kind=r8) :: max1
   INTEGER :: arg1
 !
   CALL SUBINI('b2usr_cost_function')
@@ -1257,12 +1290,12 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
 &           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
-            max1 = qq
+            j(icf) = qq
           ELSE
-            max1 = j(icf)
+            j(icf) = j(icf)
           END IF
-          j(icf) = max1*cfweight(icf)
         END DO
+        j(icf) = j(icf)*cfweight(icf)
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL CALC_LOG_PRIOR_NODIFF(prior, inrange)
@@ -1386,6 +1419,14 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &           icf, 2, icv))**2
         END DO
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
+      CASE (11) 
+!heat flux peakedness on desired FCs Sum(q**2*ds
+        j(icf) = 0.0_R8
+        DO ifc=ic1,ic2
+          j(icf) = j(icf) + (st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc&
+&           ))**2/geo%fcs(mpg%cfreg(ifc))
+        END DO
+        j(icf) = 0.5_R8*j(icf)*cfweight(icf)
       CASE DEFAULT
         WRITE(*, *) cftype(icf)
         CALL XERRAB('cftype out of bounds')

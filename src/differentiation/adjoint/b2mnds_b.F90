@@ -40,8 +40,9 @@ SUBROUTINE B2MNDS_B(ninp, nout, ncv, nfc, ns, nsb, ns0, switch)
 !.end b2mnds
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ninp(0:6), nout(0:10), ncv, nfc, ns, ns0
+  INTEGER :: ninp(0:6), ncv, nfc, ns, ns0
   INTEGER :: nsb
+  INTEGER :: nout(0:10)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
 !   ..output arguments (unspecified on entry)
 !     (none)
@@ -297,6 +298,10 @@ SUBROUTINE B2MNDS_B(ninp, nout, ncv, nfc, ns, nsb, ns0, switch)
   CALL CFWUIN(nout(2), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(2), 120, lblmn, 'label')
   CALL B2WUZD_NODIFF(nout(2), newversion, ns, zamin, zamax, zn, am)
+  call cfverw(nout(9), newversion)
+  call cfwuin(nout(9), 3, idum, 'nCv,nFc,ns')
+  call cfwuch(nout(9), 120, lblmn, 'label')
+  call b2wuzd_nodiff(nout(9), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(3), newversion)
 !xpb
   CALL CFWUIN(nout(3), 3, idum, 'nCv,nFc,ns')
@@ -373,7 +378,8 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !.end b2mnds
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ninp(0:6), nout(0:10), ncv, nfc, ns, ns0
+  INTEGER :: ninp(0:6), ncv, nfc, ns, ns0
+  INTEGER :: nout(0:10)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
 !   ..output arguments (unspecified on entry)
 !     (none)

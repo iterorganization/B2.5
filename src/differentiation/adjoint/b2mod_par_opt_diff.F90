@@ -176,6 +176,7 @@ CONTAINS
     LOGICAL :: done, optimize
     CHARACTER(len=1) :: str
     CHARACTER(len=256) :: cffile, filename
+    REAL(kind=r8) :: dummy
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     EXTERNAL XERRAB
@@ -269,7 +270,7 @@ CONTAINS
 &           'b2mod_par_opt: shift_cf_data must be >=0')
       incf = 0
       DO 100 icf=1,ncf
-        IF (cftype(icf) .GT. 10) CALL XERRAB('cftype>10 not coded ')
+        IF (cftype(icf) .GT. 11) CALL XERRAB('cftype>11 not coded ')
         IF (cftype(1) .EQ. 0 .AND. ncf .EQ. 1) CALL XERRAB(&
 &                  'cftype(1)=0 but no other cost functions are defined'&
 &                                                   )
@@ -289,10 +290,13 @@ CONTAINS
 &                                                     )
         IF ((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
 &           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) cfread(icf) = .true.
-        IF (cftype(icf) .EQ. 5) m%cfoncv(icf) = .false.
-        IF (cftype(icf) .EQ. 5 .AND. cfdef(icf) .EQ. 3) CALL XERRAB(&
-&                                'cftype 5 must be defined using faces!'&
-&                                                            )
+!heat flux CF needs faces
+        IF (cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) m%cfoncv(icf)&
+&          = .false.
+        IF ((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .AND. cfdef(&
+&           icf) .EQ. 3) CALL XERRAB(&
+&                         'cftype 5 and 11 must be defined using faces!'&
+&                             )
         IF (shift_cf_data(icf) .GT. 0 .AND. (.NOT.cfread(icf))) THEN
           WRITE(*, *) 'icf, shift_cf_data(icf), cfread(icf),'//&
 &         ' cftype(icf)'
@@ -305,6 +309,9 @@ CONTAINS
           CALL XERRAB('b2mod_par_opt: shift_opt=true requires '//&
 &               'shift_cf_data>0')
         END IF
+!csc reading files with CF data in it. From now on we assume data is stored as
+!    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
+!    This facilitates shifting the CF and covariance matrix caclulation 
         IF (cfread(icf)) THEN
           WRITE(str, '(I1)') icf
           cffile = 'cf'//TRIM(str)//'.dat'
@@ -334,6 +341,17 @@ CONTAINS
             END IF
           END DO
           CLOSE(99) 
+! Check if strictly monotonically increasing (sorted)
+          dummy = cfdata(icf, 1, 1)
+          DO i=2,ncfdata(icf)
+            IF (.NOT.cfdata(icf, 1, i) .GT. dummy) THEN
+              WRITE(*, *) 'icf=', icf, ' ii=', i, ' cfdata(icf,1,ii-1)='&
+&             , dummy, ' cfdata(icf,1,ii)=', cfdata(icf, 1, i)
+              CALL XERRAB('b2mod_par_opt: abscissa in cfdata not '//&
+&                   'stricly increasing!')
+            END IF
+            dummy = cfdata(icf, 1, i)
+          END DO
         END IF
 !no need to specify domain here
         IF (.NOT.(cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6)) THEN
@@ -941,6 +959,7 @@ CONTAINS
     LOGICAL :: done, optimize
     CHARACTER(len=1) :: str
     CHARACTER(len=256) :: cffile, filename
+    REAL(kind=r8) :: dummy
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     EXTERNAL XERRAB
@@ -1030,7 +1049,7 @@ CONTAINS
 &           'b2mod_par_opt: shift_cf_data must be >=0')
       incf = 0
       DO 100 icf=1,ncf
-        IF (cftype(icf) .GT. 10) CALL XERRAB('cftype>10 not coded ')
+        IF (cftype(icf) .GT. 11) CALL XERRAB('cftype>11 not coded ')
         IF (cftype(1) .EQ. 0 .AND. ncf .EQ. 1) CALL XERRAB(&
 &                  'cftype(1)=0 but no other cost functions are defined'&
 &                                                   )
@@ -1050,10 +1069,13 @@ CONTAINS
 &                                                     )
         IF ((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
 &           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) cfread(icf) = .true.
-        IF (cftype(icf) .EQ. 5) m%cfoncv(icf) = .false.
-        IF (cftype(icf) .EQ. 5 .AND. cfdef(icf) .EQ. 3) CALL XERRAB(&
-&                                'cftype 5 must be defined using faces!'&
-&                                                            )
+!heat flux CF needs faces
+        IF (cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) m%cfoncv(icf)&
+&          = .false.
+        IF ((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .AND. cfdef(&
+&           icf) .EQ. 3) CALL XERRAB(&
+&                         'cftype 5 and 11 must be defined using faces!'&
+&                             )
         IF (shift_cf_data(icf) .GT. 0 .AND. (.NOT.cfread(icf))) THEN
           WRITE(*, *) 'icf, shift_cf_data(icf), cfread(icf),'//&
 &         ' cftype(icf)'
@@ -1066,6 +1088,9 @@ CONTAINS
           CALL XERRAB('b2mod_par_opt: shift_opt=true requires '//&
 &               'shift_cf_data>0')
         END IF
+!csc reading files with CF data in it. From now on we assume data is stored as
+!    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
+!    This facilitates shifting the CF and covariance matrix caclulation 
         IF (cfread(icf)) THEN
           WRITE(str, '(I1)') icf
           cffile = 'cf'//TRIM(str)//'.dat'
@@ -1095,6 +1120,17 @@ CONTAINS
             END IF
           END DO
           CLOSE(99) 
+! Check if strictly monotonically increasing (sorted)
+          dummy = cfdata(icf, 1, 1)
+          DO i=2,ncfdata(icf)
+            IF (.NOT.cfdata(icf, 1, i) .GT. dummy) THEN
+              WRITE(*, *) 'icf=', icf, ' ii=', i, ' cfdata(icf,1,ii-1)='&
+&             , dummy, ' cfdata(icf,1,ii)=', cfdata(icf, 1, i)
+              CALL XERRAB('b2mod_par_opt: abscissa in cfdata not '//&
+&                   'stricly increasing!')
+            END IF
+            dummy = cfdata(icf, 1, i)
+          END DO
         END IF
 !no need to specify domain here
         IF (.NOT.(cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6)) THEN
