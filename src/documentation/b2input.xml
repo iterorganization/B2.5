@@ -3629,6 +3629,7 @@
 					Minimal density maintained in all cells for all species.
 					It must be true that na_min is smaller than na_new, as well as any of the initial densities provided in b2ai.dat.
 					This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
+					It is also used to avoid division by 0 when calculating kinetic neutral velocities from the kinetic flux densities in b2tinnt.F.
 				</description>
 			</switch>
 			<switch>
