@@ -15,6 +15,10 @@
       use b2us_plasma
 #ifdef B25_EIRENE
       use eirmod_extrab25
+     & , only : dab2, rfluxa, pfluxa, tfluxa
+#else
+      use b2mod_eirdiag
+     & , only : dab2, rfluxa, pfluxa, tfluxa
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -149,7 +153,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
           endif
 *   ..calculate neutral velocities
 !! Remark: when the perpendicular momentum sources are scored in EIRENE and available in B2.5, this routine should be rewritten. This would be more self-consistent, whereas now
-!! it is a mix of post-processed EIRENE perpendicular atom velocities and B2.5 CX rates.
+!! it is a mix of post-processed EIRENE atom velocities and B2.5 CX rates.
           do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
 *      ..get fluxes divided by area
@@ -170,7 +174,6 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
               vntrc_fluid(:,0) =(vntrc_fluid(:,0)-pl%ua(:,is0)*pit)/pit2
 *        .. kinetic velocities
               if (switch%use_eirene.ne.0) then
-#ifdef B25_EIRENE
                 vntrc_kin(:,0) = pfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! poloidal
                 vntrc_kin(:,1) = rfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! radial
               !! correct from poloidal to diamagnetic
@@ -179,8 +182,6 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
                 vntrc_par = tfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! approximate parallel velocity as toroidal velocity/b_phi
      &                       /pit2
                 vntrc_kin(:,0) = (vntrc_kin(:,0)-vntrc_par*pit)/pit2
-
-#endif
               else
                 vntrc_kin(:,0) = 0.0_R8
                 vntrc_kin(:,1) = 0.0_R8
