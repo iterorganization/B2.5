@@ -69,8 +69,6 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   INTRINSIC SUM
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  REAL(kind=r8) :: max1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
   INTEGER :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg10
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg10d
@@ -308,20 +306,17 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             DO nd=1,nbdirs
-              max1d(nd) = qqd(nd)
+              jd(nd, icf) = qqd(nd)
             END DO
-            max1 = qq
+            j(icf) = qq
           ELSE
-            DO nd=1,nbdirs
-              max1d(nd) = jd(nd, icf)
-            END DO
-            max1 = j(icf)
+            j(icf) = j(icf)
           END IF
-          DO nd=1,nbdirs
-            jd(nd, icf) = cfweight(icf)*max1d(nd)
-          END DO
-          j(icf) = max1*cfweight(icf)
         END DO
+        DO nd=1,nbdirs
+          jd(nd, icf) = cfweight(icf)*jd(nd, icf)
+        END DO
+        j(icf) = j(icf)*cfweight(icf)
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
@@ -594,6 +589,25 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &           temp0
         END DO
         j(icf) = cfweight(icf)*temp
+      CASE (11) 
+!heat flux peakedness on desired FCs Sum(q**2*ds
+        DO nd=1,nbdirs
+          jd(nd, icf) = 0.D0
+        END DO
+        j(icf) = 0.0_R8
+        DO ifc=ic1,ic2
+          DO nd=1,nbdirs
+            jd(nd, icf) = jd(nd, icf) + mpg%cffcor(ifc)**2*2*st%dv%fht(&
+&             mpg%cfreg(ifc), 0)*std%dv%fht(nd, mpg%cfreg(ifc), 0)/geo%&
+&             fcs(mpg%cfreg(ifc))
+          END DO
+          j(icf) = j(icf) + (st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc&
+&           ))**2/geo%fcs(mpg%cfreg(ifc))
+        END DO
+        DO nd=1,nbdirs
+          jd(nd, icf) = 0.5_R8*cfweight(icf)*jd(nd, icf)
+        END DO
+        j(icf) = 0.5_R8*j(icf)*cfweight(icf)
       CASE DEFAULT
         WRITE(*, *) cftype(icf)
         CALL XERRAB('cftype out of bounds')
@@ -663,7 +677,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTRINSIC SUM
   INTRINSIC SQRT
   EXTERNAL XERRAB
-  REAL(kind=r8) :: max1
   INTEGER :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg10
 !
@@ -789,12 +802,12 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
 &           cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
-            max1 = qq
+            j(icf) = qq
           ELSE
-            max1 = j(icf)
+            j(icf) = j(icf)
           END IF
-          j(icf) = max1*cfweight(icf)
         END DO
+        j(icf) = j(icf)*cfweight(icf)
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL CALC_LOG_PRIOR_NODIFF(prior, inrange)
@@ -920,6 +933,14 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &           icf, 2, icv))**2
         END DO
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
+      CASE (11) 
+!heat flux peakedness on desired FCs Sum(q**2*ds
+        j(icf) = 0.0_R8
+        DO ifc=ic1,ic2
+          j(icf) = j(icf) + (st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc&
+&           ))**2/geo%fcs(mpg%cfreg(ifc))
+        END DO
+        j(icf) = 0.5_R8*j(icf)*cfweight(icf)
       CASE DEFAULT
         WRITE(*, *) cftype(icf)
         CALL XERRAB('cftype out of bounds')

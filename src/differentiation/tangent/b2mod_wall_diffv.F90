@@ -1192,6 +1192,11 @@ CONTAINS
     INTEGER :: nf_float
     INTEGER :: nf_real
     INTEGER :: nf_double
+    INTEGER :: nf_ubyte
+    INTEGER :: nf_ushort
+    INTEGER :: nf_uint
+    INTEGER :: nf_int64
+    INTEGER :: nf_uint64
     PARAMETER (nf_byte=1)
 !
     PARAMETER (nf_int1=nf_byte)
@@ -1202,6 +1207,11 @@ CONTAINS
     PARAMETER (nf_float=5)
     PARAMETER (nf_real=nf_float)
     PARAMETER (nf_double=6)
+    PARAMETER (nf_ubyte=7)
+    PARAMETER (nf_ushort=8)
+    PARAMETER (nf_uint=9)
+    PARAMETER (nf_int64=10)
+    PARAMETER (nf_uint64=11)
 !
 !
 ! default fill values:
@@ -1238,10 +1248,15 @@ CONTAINS
     INTEGER :: nf_lock
     INTEGER :: nf_share
     INTEGER :: nf_64bit_offset
+    INTEGER :: nf_64bit_data
+    INTEGER :: nf_cdf5
     INTEGER :: nf_sizehint_default
     INTEGER :: nf_align_chunk
     INTEGER :: nf_format_classic
     INTEGER :: nf_format_64bit
+    INTEGER :: nf_format_64bit_offset
+    INTEGER :: nf_format_64bit_data
+    INTEGER :: nf_format_cdf5
     INTEGER :: nf_diskless
     INTEGER :: nf_mmap
     PARAMETER (nf_nowrite=0)
@@ -1254,10 +1269,15 @@ CONTAINS
     PARAMETER (nf_lock=1024)
     PARAMETER (nf_share=2048)
     PARAMETER (nf_64bit_offset=512)
+    PARAMETER (nf_64bit_data=32)
+    PARAMETER (nf_cdf5=nf_64bit_data)
     PARAMETER (nf_sizehint_default=0)
     PARAMETER (nf_align_chunk=-1)
     PARAMETER (nf_format_classic=1)
     PARAMETER (nf_format_64bit=2)
+    PARAMETER (nf_format_64bit_offset=nf_format_64bit)
+    PARAMETER (nf_format_64bit_data=5)
+    PARAMETER (nf_format_cdf5=nf_format_64bit_data)
     PARAMETER (nf_diskless=8)
     PARAMETER (nf_mmap=16)
 !
@@ -1690,6 +1710,22 @@ CONTAINS
     EXTERNAL NF_GET_ATT_INT
 !
     INTEGER :: NF_GET_ATT_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_PUT_ATT_INT64
+!
+    INTEGER :: NF_PUT_ATT_INT64
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_GET_ATT_INT64
+!
+    INTEGER :: NF_GET_ATT_INT64
 !                         (integer             ncid,
 !                          integer             varid,
 !                          character(*)        name,
@@ -2293,6 +2329,28 @@ CONTAINS
     EXTERNAL NF_GET_VARM_DOUBLE
 !
     INTEGER :: NF_GET_VARM_DOUBLE
+    EXTERNAL NF_PUT_VAR1_INT64
+!
+!     64-bit int functions.
+    INTEGER :: NF_PUT_VAR1_INT64
+    EXTERNAL NF_PUT_VARA_INT64
+    INTEGER :: NF_PUT_VARA_INT64
+    EXTERNAL NF_PUT_VARS_INT64
+    INTEGER :: NF_PUT_VARS_INT64
+    EXTERNAL NF_PUT_VARM_INT64
+    INTEGER :: NF_PUT_VARM_INT64
+    EXTERNAL NF_PUT_VAR_INT64
+    INTEGER :: NF_PUT_VAR_INT64
+    EXTERNAL NF_GET_VAR1_INT64
+    INTEGER :: NF_GET_VAR1_INT64
+    EXTERNAL NF_GET_VARA_INT64
+    INTEGER :: NF_GET_VARA_INT64
+    EXTERNAL NF_GET_VARS_INT64
+    INTEGER :: NF_GET_VARS_INT64
+    EXTERNAL NF_GET_VARM_INT64
+    INTEGER :: NF_GET_VARM_INT64
+    EXTERNAL NF_GET_VAR_INT64
+    INTEGER :: NF_GET_VAR_INT64
 !
 !
 !     NetCDF-4.
@@ -2304,23 +2362,13 @@ CONTAINS
 !     $Id: netcdf4.inc,v 1.28 2010/05/25 13:53:02 ed Exp $
 !
 !     New netCDF-4 types.
-    INTEGER :: nf_ubyte
-    INTEGER :: nf_ushort
-    INTEGER :: nf_uint
-    INTEGER :: nf_int64
-    INTEGER :: nf_uint64
     INTEGER :: nf_string
     INTEGER :: nf_vlen
     INTEGER :: nf_opaque
     INTEGER :: nf_enum
     INTEGER :: nf_compound
-    PARAMETER (nf_ubyte=7)
-!
-    PARAMETER (nf_ushort=8)
-    PARAMETER (nf_uint=9)
-    PARAMETER (nf_int64=10)
-    PARAMETER (nf_uint64=11)
     PARAMETER (nf_string=12)
+!
     PARAMETER (nf_vlen=13)
     PARAMETER (nf_opaque=14)
     PARAMETER (nf_enum=15)
@@ -2367,6 +2415,8 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
+    INTEGER :: nf_compact
+    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -2535,6 +2585,12 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
+    EXTERNAL NF_DEF_VAR_SZIP
+!
+    INTEGER :: NF_DEF_VAR_SZIP
+    EXTERNAL NF_INQ_VAR_SZIP
+!
+    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -2559,6 +2615,12 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_ENDIAN
 !
     INTEGER :: NF_INQ_VAR_ENDIAN
+    EXTERNAL NF_DEF_VAR_FILTER
+!
+    INTEGER :: NF_DEF_VAR_FILTER
+    EXTERNAL NF_INQ_VAR_FILTER
+!
+    INTEGER :: NF_INQ_VAR_FILTER
     EXTERNAL NF_INQ_TYPEIDS
 !
 !     User defined types.
@@ -2674,28 +2736,6 @@ CONTAINS
     INTEGER :: NF_GET_VARA
     EXTERNAL NF_GET_VARS
     INTEGER :: NF_GET_VARS
-    EXTERNAL NF_PUT_VAR1_INT64
-!
-!     64-bit int functions.
-    INTEGER :: NF_PUT_VAR1_INT64
-    EXTERNAL NF_PUT_VARA_INT64
-    INTEGER :: NF_PUT_VARA_INT64
-    EXTERNAL NF_PUT_VARS_INT64
-    INTEGER :: NF_PUT_VARS_INT64
-    EXTERNAL NF_PUT_VARM_INT64
-    INTEGER :: NF_PUT_VARM_INT64
-    EXTERNAL NF_PUT_VAR_INT64
-    INTEGER :: NF_PUT_VAR_INT64
-    EXTERNAL NF_GET_VAR1_INT64
-    INTEGER :: NF_GET_VAR1_INT64
-    EXTERNAL NF_GET_VARA_INT64
-    INTEGER :: NF_GET_VARA_INT64
-    EXTERNAL NF_GET_VARS_INT64
-    INTEGER :: NF_GET_VARS_INT64
-    EXTERNAL NF_GET_VARM_INT64
-    INTEGER :: NF_GET_VARM_INT64
-    EXTERNAL NF_GET_VAR_INT64
-    INTEGER :: NF_GET_VAR_INT64
     EXTERNAL NF_GET_VLEN_ELEMENT
 !
 !     For helping F77 users with VLENs.
@@ -2941,6 +2981,10 @@ CONTAINS
     PARAMETER (fillong=-2147483647)
     PARAMETER (filfloat=9.9692099683868690e+36)
     PARAMETER (fildoub=9.9692099683868690e+36)
+    EXTERNAL NF_SET_LOG_LEVEL
+!
+!     This is to turn on netCDF internal logging.
+    INTEGER :: NF_SET_LOG_LEVEL
     INTEGER :: status, nwallid, ntrackid, ntwoid, tid
     INTEGER :: vdims(3)
     EXTERNAL CHECK_CDF_STATUS
