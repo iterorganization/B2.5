@@ -181,7 +181,8 @@ c     filling array and computing rate
       integer ir,i,j,ii,ix,iy,ifex
       real (kind=R8) ::
      1 rmin,rmax,tef,def,dnnn,tei,dej,fp1,fp2,fp3,
-     2 s01,s02,ds12,expo1,expo2,ccxm1,ccxm2,coumin,coumax
+     2 s01,s02,ds12,expo1,expo2,ccxm1,ccxm2,coumin,coumax,
+     3 demin,demax
       REAL (KIND=R8) :: SLREAC_EXTRAP
       EXTERNAL SLREAC_EXTRAP
 
@@ -216,6 +217,16 @@ c     filling array and computing rate
 
       rmin=1.0e30_R8
       rmax=1.0e-30_R8
+      if (RC2MN(IR).ne.-HUGE(1.0_R8)) then
+        demin=RC2MN(IR)+LOG(1.0e-8_R8)
+      else
+        demin=-huge(1.0_R8)
+      endif
+      if (RC2MX(IR).ne.HUGE(1.0_R8)) then
+        demax=RC2MX(IR)+LOG(1.0e-8_R8)
+      else
+        demax= huge(1.0_R8)
+      endif
       do iy=0,ny+1
         do ix=0,nx+1
           TEF=LOG(TE(ix,iy)/qe)
@@ -396,18 +407,18 @@ c     filling array and computing rate
                 DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
      .                             FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
               ENDIF
-            ELSEIF (DEF.LT.RC2MN(IR)) THEN
+            ELSEIF (DEF.LT.DEMIN) THEN
               IF (IF2MN(IR).LT.0) THEN
                 DO I = 0, 8
                   TEI=TEF**I
                   DO J = 0, 8
-                    DEJ=RC2MN(IR)**J
+                    DEJ=DEMIN**J
                     DNNN=DNNN+D11(I,J)*TEI*DEJ
                   ENDDO
                 ENDDO
               ELSEIF (IF2MN(IR).LT.0) THEN
-                S01=RC2MN(IR)
-                S02=LOG(1.25_R8)+RC2MN(IR)
+                S01=DEMIN
+                S02=LOG(1.25_R8)+DEMIN
                 DS12 = S02-S01
                 EXPO1 = 0.0_R8
                 EXPO2 = 0.0_R8
@@ -430,7 +441,7 @@ c     filling array and computing rate
                 DO I = 0, 8
                   TEI=TEF**I
                   DO J = 0, 8
-                    DEJ=RC2MN(IR)**J
+                    DEJ=DEMIN**J
                     COUMIN=COUMIN+D11(I,J)*TEI*DEJ
                   ENDDO
                 ENDDO
@@ -439,18 +450,18 @@ c     filling array and computing rate
                 DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,
      .                             FP2L(IR,1),FP2L(IR,2),FP2L(IR,3))
               ENDIF
-            ELSEIF (DEF.GT.RC2MX(IR)) THEN
+            ELSEIF (DEF.GT.DEMAX) THEN
               IF (IF2MX(IR).LT.0) THEN
                 DO I = 0, 8
                   TEI=TEF**I
                   DO J = 0, 8
-                    DEJ=RC2MX(IR)**J
+                    DEJ=DEMAX**J
                     DNNN=DNNN+D11(I,J)*TEI*DEJ
                   ENDDO
                 ENDDO
               ELSEIF (IF2MX(IR).LT.0) THEN
-                S01=RC2MX(IR)
-                S02=LOG(0.75_R8)+RC2MX(IR)
+                S01=DEMAX
+                S02=LOG(0.75_R8)+DEMAX
                 DS12 = S02-S01
                 EXPO1 = 0.0_R8
                 EXPO2 = 0.0_R8
@@ -473,7 +484,7 @@ c     filling array and computing rate
                 DO I = 0, 8
                   TEI=TEF**I
                   DO J = 0, 8
-                    DEJ=RC2MX(IR)**J
+                    DEJ=DEMAX**J
                     COUMAX=COUMAX+D11(I,J)*TEI*DEJ
                   ENDDO
                 ENDDO
@@ -494,6 +505,7 @@ c     filling array and computing rate
           ELSE
 c           write(*,*) 'Do not yet know about ',h123
           ENDIF
+          dnnn=dnnn+log(1.0e-6_R8)
           if(dnnn.gt.log(1.0e30_R8)) then
             dnnn=1.0e30_R8
           elseif(dnnn.lt.log(1.0e-30_R8)) then
@@ -589,13 +601,14 @@ C
 #     include <eir_reac.F>
       real(kind=R8) :: CONST, FPARM(3)
       REAL(kind=R8) :: R1MN, R1MX, R2MN, R2MX
-      integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IREAC,INDFF,IFLG
+      integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IANF,IREAC,INDFF,IFLG
       integer IFTFLG(0:5)
       CHARACTER*80 ZEILE, LAST_TEX, ULINE
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
       CHARACTER*1 BACK
       CHARACTER*8 SECTION
       CHARACTER*9 FITFLAG
+      CHARACTER*11 REACSTR
       CHARACTER*4 CHR, CHRA, BEND
       CHARACTER*3 CH1L, CH1R, CH2L, CH2R
       CHARACTER*7 C1L, C1R, C2L, C2R
@@ -620,10 +633,10 @@ C
       FITFLAG='fit-flag '
       IFTFLG=0
       EARRH(IR) = 0.0_R8
-      RC1MN(IR) = 0.0_R8
-      RC1MX(IR) = 0.0_R8
-      RC2MN(IR) = 0.0_R8
-      RC2MX(IR) = 0.0_R8
+      RC1MN(IR) =-HUGE(1.0_R8)
+      RC1MX(IR) = HUGE(1.0_R8)
+      RC2MN(IR) =-HUGE(1.0_R8)
+      RC2MX(IR) = HUGE(1.0_R8)
 C     Defaults: no asymptotics
       CH1L='ll0'
       CH1R='lr0'
@@ -670,8 +683,19 @@ C
         READ (H123(3:4),'(I2)') ISW
       ENDIF
 C
-      IREAC=INDEX(REAC,' ')-1
-      IF (IREAC.LT.0) IREAC=LEN(REAC)
+      REACSTR=REPEAT(' ',11)
+      IANF=VERIFY(REAC,' ')
+      IF (IANF > 0) THEN
+        IREAC=INDEX(REAC(IANF:),' ')-1
+        IF (IREAC.LT.0) IREAC=LEN(REAC(IANF:))
+        REACSTR(2:IREAC+1)=REAC(IANF:IREAC+IANF-1)
+C  ADD ONE MORE BLANK, IF POSSIBLE
+        IREAC=IREAC+2
+      ELSE
+        IF (.NOT.LCONST) THEN
+          call xerrab ('No reaction name specified')
+        END IF
+      END IF
 C
       IF (ISW.EQ.0) THEN
         CHR=' p0 '
@@ -858,7 +882,7 @@ C
         IF (INDEX(ZEILE,'H.').NE.0 .and.
      .      INDEX(ZEILE,'section').NE.0) GOTO 990
         IF (INDEX(ZEILE,'Reaction ').EQ.0.or.
-     .      INDEX(ZEILE,REAC(1:ireac)).EQ.0) GOTO 2
+     .      INDEX(ZEILE,REACSTR(1:ireac)).EQ.0) GOTO 2
       ENDIF
 C
 C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
