@@ -190,7 +190,7 @@ c======================================================================
 
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
-        print *,'=== Regions of the grid:'
+        write(*,*) '=== Regions of the grid:'
         l=ny+1
         n=mod(l-1,10)+1
         i=(nx+2)/10+1
@@ -274,20 +274,20 @@ c<<<
       hlpit_lp = 0.0_R8
 
       if(debug_flags(90).gt.0.and.use_eirene.ne.0) then
-        print *
-        print *,'%%% Eirene data in B2 %%%'
+        write(*,*)
+        write(*,*) '%%% Eirene data in B2 %%%'
         do k=debug_flags(92),debug_flags(93)
-          print *
-          print *,'wldpp:',k
+          write(*,*)
+          write(*,*) 'wldpp:',k
           write (hlp_prt,'(a,i3,a)') '(1p,i4,',nnplsi,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
             write(*,hlp_prt) j,(wldpp(j,i,k),i=1,nnplsi)
           end do
-          print *
+          write(*,*)
           if (nnmoli.gt.0) then
-            print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+            write(*,*) 'wldpeb, wldpa, wldpm, hlpit_pl:',k
           else
-            print *,'wldpeb, wldpa, hlpit_pl:',k
+            write(*,*) 'wldpeb, wldpa, hlpit_pl:',k
           end if
           write (hlp_prt,'(a,i3,a)')
      .     '(1p,i4,',1+nnatmi+nnmoli+nspecies,'e9.2)'
@@ -350,9 +350,9 @@ c**********************************
         kks=eb2spcr(ls)+1
 c<<<
         if(debug_flags(90).gt.0) then
-          print *,'%%# Species # ',ls
-          print *,'%%# eb2spcr(ls) = ',eb2spcr(ls)
-          print *,'%%# nfluids(ls) = ',nfluids(ls)
+          write(*,*) '%%# Species # ',ls
+          write(*,*) '%%# eb2spcr(ls) = ',eb2spcr(ls)
+          write(*,*) '%%# nfluids(ls) = ',nfluids(ls)
         end if
 c>>>
 
@@ -587,7 +587,6 @@ c**       lcns() - index of these 'non-default' surfaces
 c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
 
             do j = 1,nnatmi
-              print *, "latmscl(",j,")=",latmscl(j)," ,is=",is," ls=",ls
               if (latmscl(j) .eq. ls) then
                 flxnc(ls) = flxnc(ls)
      &               - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
@@ -714,18 +713,8 @@ c*** Puffing/seeding rate and recycling source
             if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
 
              do j = 1,nnatmi
-c             Fixed by Kudrevatyh P.S and Shirobokov A.A.          ! 17.09.22
-               if (latmscl(j) .eq. ls .and. 
-     &                  na_feedback_target(ls-1) .gt. 0.0_R8 .and. 
-     &                  na_feedback_actuator(ls-1) .eq. 1) then
-                 flxnp(ls) =  flxnp(ls) + 
-     &               conpar(EB2SPCR(ls), na_feedback_ib(ls-1), 1) * 
-     &               gpfc(j,ic) * recyctmp
-               else
-                 if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
-     &                 userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
-               endif
-c End fix
+               if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
+     &           userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
              end do
 
             elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2.5 outer boundaries except targets

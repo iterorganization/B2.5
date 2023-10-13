@@ -27,14 +27,11 @@
      & na_feedback_ix1(0:DEF_NATM-1), na_feedback_ix2(0:DEF_NATM-1), 
      & na_feedback_iy1(0:DEF_NATM-1), na_feedback_iy2(0:DEF_NATM-1), 
      & na_feedback_ib(0:DEF_NATM-1),
-     & na_feedback_use_pump(0:DEF_NATM-1)
-      real (kind=R8) :: int_flux(DEF_NATM),
      &  max_na_feedback_current(DEF_NATM)=0.0_R8
-      integer :: int_ntim(DEF_NATM)
       real (kind=R8), save ::
      * saved_cbshe_core, saved_cbshi_core, saved_cbsna_core,
      * saved_cbsch_core, saved_cbsna_pfr1, saved_cbsna_pfr2,
-     * saved_cbsna_sol, 
+     * saved_cbsna_sol,
      & vacuum_communication_alpha(0:nsdmax-1,nvac),
      & vacuum_communication_beta(0:nsdmax-1,nvac),
      & na_feedback_target(0:DEF_NATM-1), na_feedback_time(0:DEF_NATM-1),
@@ -60,7 +57,7 @@
      & na_feedback_iy1, na_feedback_iy2, 
      & na_feedback_ib,
      & na_feedback_puff_min, na_feedback_puff_max,
-     & na_feedback_overshoot, na_feedback_use_pump
+     & na_feedback_overshoot
       data 
      & feedback_namelist_used/.false./, feedback_read/.false./,
      & control_read/.false./,
@@ -74,14 +71,14 @@
      6 na_feedback_option/DEF_NATM*0/, na_feedback_actuator/DEF_NATM*0/,
      7 na_feedback_ix1/DEF_NATM*-2/, na_feedback_ix2/DEF_NATM*-2/,
      & na_feedback_iy1/DEF_NATM*-2/, na_feedback_iy2/DEF_NATM*-2/, 
-     & na_feedback_ib/DEF_NATM*-1/,
+     & na_feedback_ib/DEF_NATM*0/,
      8 na_feedback_alpha/DEF_NATM*0.001_R8/, 
      & na_feedback_beta/DEF_NATM*1.0_R8/,
      & na_feedback_const/DEF_NATM*0.0_R8/,
      & na_feedback_puff_min/DEF_NATM*0.0_R8/,
      & na_feedback_puff_max/DEF_NATM*0.0_R8/,
-     & na_feedback_overshoot/DEF_NATM*0.0_R8/,
-     & na_feedback_use_pump/DEF_NATM*0/
+     & na_feedback_overshoot/DEF_NATM*0.0_R8/
+
       contains
 
       subroutine read_b2mod_feedback(nread,edition,found)

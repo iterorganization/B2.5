@@ -373,6 +373,12 @@ c not sure this is the right place
         endif
         do is = 0, nspecies-1
           if (na_feedback_actuator(is).eq.1) then
+           if (na_feedback_ib(is).lt.0 .and.
+     .       crcstra(-na_feedback_ib(is)).eq.'C' .and.
+     .       species_start(-na_feedback_ib(is)).le.eb2spcr(is+1) .and.
+     .       species_end(-na_feedback_ib(is)).ge.eb2spcr(is+1)) then
+               feedback_strata(ispecies) = -na_feedback_ib(is)
+           else
             do istrai = 1, nstrat
               if (crcstra(istrai).eq.'C' .and.
      .          species_start(istrai).le.eb2spcr(is+1) .and.
@@ -781,19 +787,14 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
                 tflux(istrai)=gpdata(ih,2,istrai)
               endif
              endif
-           endif
+            endif
           else if (ncall.ge.ncallfeedback.and.
      &             feedback_stratum.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
-c Fixed by Kudrevatyh P.S. and Shirobokov A.A 17.09.2022
-              if (feedback_strata(is).eq.istrai) then !{
-                if (na_feedback_target(is).gt.0.0_R8.and.
-     &              na_feedback_actuator(is).eq.1) then
-                  tflux(istrai)= tflux(istrai) + 
-     .             conpar(eb2spcr(is+1),na_feedback_ib(is),1)
-c  End fix
-                end if !}
-              end if !}
+              if (feedback_strata(is).eq.istrai .and.
+     &            na_feedback_target(is).gt.0.0_R8 .and.
+     &            na_feedback_actuator(is).eq.1)
+     .          tflux(istrai)= tflux(istrai) + userfluxparm(istrai,1)
             end do !}
           else !}{
             tflux(istrai)=userfluxparm(istrai,1)
