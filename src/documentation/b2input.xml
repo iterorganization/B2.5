@@ -1045,6 +1045,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbc_fb_fchi_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Experimental switch controlling the feedback behavior for matching the outer target ion saturation current through e.g. fitting a gas puff or an impurity seeding rate. Consequently, it affects only the case NA_FEEDBACK_CHOICE=11, and is meaningful in this case only. 0 (Default) - INCREASE the NA_FEEDBACK_ACTUATOR (e.g. gas puff) to increase the ion saturation current (e.g. assuming that the rollover is not yet achieved); 1 - DECREASE the NA_FEEDBACK_ACTUATOR (e.g. gas puff) to increase the ion saturation current (e.g. assuming that target is already detached and further increase of gas puff would increase the degree of detachment and decrease the ion saturation current). 
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_first_flight</name>
 				<default>0</default>
 				<type>integer</type>
@@ -6556,9 +6564,9 @@
 						10: neutral pressure at PFR southern boundary (by A. Kukushkin).
 						11: ion saturation current at outer bottom target - experimental: due to rollover the behavior of actuator might need correction.
 						12: power flux density at outer bottom target - experimental
-						13: radiated power in Watts within the rectangle f cells[IX1:IX2,IY1:IY].
-						14: total radiated power in the whole B2 mesh in Watts
-						15: radiated power in Watts from the zone outside the separatrix
+						13: radiated power in Watts within the rectangle of cells[IX1:IX2,IY1:IY].
+						14: total radiated power over the whole B2 mesh in Watts
+						15: radiated power in Watts from the zone outside the separatrix, including the PFR
 				</description>
 			</switch>
 			<switch>
@@ -6578,7 +6586,7 @@
 						   S --&gt; max(0, min(X,S + D)), where D = F*((N - &lt;N&gt;)/dt + (&lt;N&gt;_prev - &lt;N&gt;)/dt_prev)
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
 						6: rescale slowed by na_feedback_alpha (SOLPS4 style)
-						7: combinations of cases 2 and 3: if difference between current and target value is within 1%, then pure resacling is applied, the slowing down by tanh(log) is applied otherwise. 
+						7: combinations of cases 2 and 3: if difference between current and target value is within 1%, then pure rescaling is applied, the slowing down by tanh(log) is applied otherwise. 
 				</description>
 			</switch>
 			<switch>
@@ -6591,7 +6599,7 @@
 					1: gas puff via boundary condition
 					2: rescale na [[Experimental!! Does not guarantee stable code runs]]
 					3: core boundary flux condition
-					4: absorbtion coefficient in Eirene (for coupled mode only)
+					4: absorption coefficient in Eirene (for coupled mode only)
 				</description>
 			</switch>
 			<switch>

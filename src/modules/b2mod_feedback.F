@@ -40,6 +40,8 @@
      & na_feedback_const(0:DEF_NATM-1),
      & na_feedback_puff_min(0:DEF_NATM-1),
      & na_feedback_puff_max(0:DEF_NATM-1),
+     & na_feedback_actuator_min(0:DEF_NATM-1),
+     & na_feedback_actuator_max(0:DEF_NATM-1),
      & na_feedback_overshoot(0:DEF_NATM-1)
       namelist /feedback/ saved_cbshe_core, saved_cbshi_core,
      1 saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1, 
@@ -57,6 +59,7 @@
      & na_feedback_iy1, na_feedback_iy2, 
      & na_feedback_ib,
      & na_feedback_puff_min, na_feedback_puff_max,
+     & na_feedback_actuator_min, na_feedback_actuator_max,
      & na_feedback_overshoot
       data 
      & feedback_namelist_used/.false./, feedback_read/.false./,
@@ -77,7 +80,9 @@
      & na_feedback_const/DEF_NATM*0.0_R8/,
      & na_feedback_puff_min/DEF_NATM*0.0_R8/,
      & na_feedback_puff_max/DEF_NATM*0.0_R8/,
-     & na_feedback_overshoot/DEF_NATM*0.0_R8/
+     & na_feedback_actuator_min/DEF_NATM*0.0_R8/,
+     & na_feedback_actuator_max/DEF_NATM*0.0_R8/,
+     & na_feedback_overshoot/DEF_NATM*0.0_R8/,
 
       contains
 
@@ -194,6 +199,28 @@ cxpb size is changed in b2mod_dimensions
 #endif
         write(6,*) 'Read ',trim(filename)
         close(nread)
+        
+        if (maxval(abs(na_feedback_puff_max)) .ne. 0.0_R8)  then
+          if (maxval(abs(na_feedback_actuator_max)) .ne. 0.0_R8) then
+            call xerrab ('Both NA_FEEDBACK_PUFF_MAX and ' //
+     &                 'NA_FEEDBACK_ACTUATOR_MAX are defined!')
+          else
+            na_feedback_actuator_max = na_feedback_puff_max
+            write(*,*) 'Warning! NA_FEEDBACK_PUFF_MAX is obsolete. ',
+     &             'Its value is written to NA_FEEDBACK_ACTUATOR_MAX.'
+          endif
+        endif
+        if (maxval(abs(na_feedback_puff_min)) .ne. 0.0_R8) then
+          if (maxval(abs(na_feedback_actuator_min)) .ne. 0.0_R8) then
+            call xerrab ('Both NA_FEEDBACK_PUFF_MIN and ' //
+     &                 'NA_FEEDBACK_ACTUATOR_MIN are defined!')
+          else
+            na_feedback_actuator_min = na_feedback_puff_min
+            write(*,*) 'Warning! NA_FEEDBACK_PUFF_MIN is obsolete. ',
+     &             'Its value is written to NA_FEEDBACK_ACTUATOR_MIN.'
+          endif
+        endif
+
         control_read = .true.
       else
         write(6,*) 'No ',trim(filename)

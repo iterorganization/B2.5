@@ -1502,19 +1502,19 @@
               end if
 #endif
 
-              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+              if(na_feedback_actuator_min(ispecies) .ge. 0.0_R8)
      &          saved_na_feedback_actuator(ispecies) =
-     &            max(na_feedback_puff_min(ispecies),
+     &            max(na_feedback_actuator_min(ispecies),
      &            saved_na_feedback_actuator(ispecies))
-              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+              if(na_feedback_actuator_max(ispecies) .gt. 0.0_R8)
      &          saved_na_feedback_actuator(ispecies) =
-     &            min(na_feedback_puff_max(ispecies),
+     &            min(na_feedback_actuator_max(ispecies),
      &            saved_na_feedback_actuator(ispecies))
 
               if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
      &           (na_feedback_current .gt.
-     &           (na_feedback_target(ispecies) *
-     &            na_feedback_overshoot(ispecies)))) 
+     &            na_feedback_target(ispecies) *
+     &            na_feedback_overshoot(ispecies))) 
      &          saved_na_feedback_actuator(ispecies) = 0.0_R8
 
 #ifdef B25_EIRENE
@@ -1600,13 +1600,13 @@
      &             saved_na_feedback_actuator(ispecies) +
      &             na_feedback_rescale
 
-              if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
+              if(na_feedback_actuator_min(ispecies) .ge. 0.0_R8)
      &             saved_na_feedback_actuator(ispecies) =
-     &             max(na_feedback_puff_min(ispecies),
+     &             max(na_feedback_actuator_min(ispecies),
      &             saved_na_feedback_actuator(ispecies))
-              if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
+              if(na_feedback_actuator_max(ispecies) .gt. 0.0_R8)
      &             saved_na_feedback_actuator(ispecies) =
-     &             min(na_feedback_puff_max(ispecies),
+     &             min(na_feedback_actuator_max(ispecies),
      &             saved_na_feedback_actuator(ispecies))
 
               if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
@@ -1627,7 +1627,7 @@
             case (4)  ! rescale absorption coefficient of surfaces that
                       ! belong to a special surface group = na_feedback_ib(ispecies)
                       ! in this case saved_na_feedback_actuator is a new
-                      ! absorption value (1 - recycl)
+                      ! absorption value (1 - recyct)
             
               if(ncall.eq.0) then
                   write(*,'(a,a,i3)')
