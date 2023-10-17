@@ -13,6 +13,8 @@ PYTHON  ?= python
 TAGSLIST =
 SOLPSINCLUDE ?=
 
+MAKETAGS ?= ctags -e -f
+
 MAKES = ${SRCB2}/Makefile
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 # Include global SOLPS compiler settings
@@ -117,8 +119,15 @@ ifdef SOLPSTOP
   NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
   NCXDIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
 endif
-ifdef USE_MPI
-  include ${OBJDIR}/mpiversion.mk # defines MPI_VERSION, which is the MPI version number
+
+# Defines MPI_VERSION, which is the MPI version number
+ifdef USE_IMPGYRO
+  USE_MPI ?= -DUSE_MPI
+  include ${OBJDIR}/mpiversion.mk
+else
+ ifdef USE_MPI
+  include ${OBJDIR}/mpiversion.mk
+ endif
 endif
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
@@ -1114,7 +1123,7 @@ else
 	$(warning NETCDF library not present!)
 endif
 
-${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBJDIR}/b2mod_math.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_types.o
+${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBJDIR}/b2mod_math.o ${OBJDIR}/b2mod_openmp.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_types.o
 ifdef LD_NETCDF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
@@ -1262,7 +1271,7 @@ endif
 
 
 tags:
-	rm -f ${SRCB2}/TAGS ; ctags -e -f ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
+	rm -f ${SRCB2}/TAGS ; ${MAKETAGS} ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
 
 listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 ifdef USE_EIRENE

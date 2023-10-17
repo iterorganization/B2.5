@@ -18,6 +18,7 @@
      &  rtqa(0:nt,0:nn,0:nz), rtcx(0:nt,0:nn,0:nz),
      &  rtrd(0:nt,0:nn,0:nz), rtbr(0:nt,0:nn,0:nz),
      &  rtqr(0:nt,0:nn,0:nz)
+      integer :: iend
 *-----------------------------------------------------------------------
 *.documentation
 *     TODO: provide warning when outside valid range of EIRENE data
@@ -158,12 +159,14 @@
       character(420) :: row
       character :: FILNAM*8,H123*4,REAC*9,CRC*3
       real (kind = R8) :: tmin, tmax, nmin, nmax, bremsf, depot
+      integer :: nreac, ireac, itok, ier
       parameter (bremsf=1.69e-38_R8/ev, depot=-13.5984340_R8)
 
 *   ..procedures
       logical streql
 *   ..initialisation
       data tmin/0.0_R8/, tmax/1E+30_R8/, nmin/0.0_R8/, nmax/1E+30_R8/
+      data nreac/0/
       external xertst, b2xvsg, streql, xerrab
 
 *-----------------------------------------------------------------------
@@ -176,6 +179,8 @@
       call ipgetr('b2ardr_t_max',tmax)
       call ipgetr('b2ardr_nn_min',nmin)
       call ipgetr('b2ardr_nn_max',nmax)
+*   ..Number of explicitly specified AMJUEL/HYDHEL reactions
+      call ipgeti('b2ardr_nreac',nreac)
 *   ..set n3
       n3 = (nz+1)*(nt+1)*(nn+1)
 *   ..test nz, nt, nn
@@ -194,74 +199,25 @@
       call b2xvsg (n3, rtrd, 1, 'rtrd', '.ge.')
       call b2xvsg (n3, rtbr, 1, 'rtbr', '.ge.')
 *   ..Format for reaction card reading
-6666  FORMAT (A8,A4,A9,A3)
+6666  FORMAT (A6,1X,A4,A9,A3)
 
-*   .. Get Amjuel/hydhel process options
-      found = .false.
-      do while (.not.found)
-        READ (nrid,'(A72)',end=99) row
-        if (INDEX(row,'Amjuel/Hydhel Hydrogen reaction cards')>0) then
-          found = .true.
-        end if
-      end do
-
-*   ..read heading for Hydrogen ionization
-      read (nrid,'(A32)') id
-      call xertst (streql(id,'*Ionization'),
-     &  'faulty input id instead of *Ionization, id='//id)
-
-*   ..read Ionization reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for ionization
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+*   .. Set up default reactions
+cnh ionization
+      call get_amjhyd_rates('AMJUEL  ','H.4 ','2.1.5    ','EI ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtsa(:,:,0) = rates
-
-*   ..read Ionization electron heat loss reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for ionization electron heat loss
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+      call get_amjhyd_rates('AMJUEL  ','H.10','2.1.5    ','EI ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtqa(:,:,0) = rates
-
-*   ..read heading for Hydrogen charge-exchange
-      read (nrid,'(A32)') id
-      call xertst (streql(id,'*Charge-exchange'),
-     &  'faulty input id instead of *Charge-exchange, id='//id)
-
-*   ..read Charge-exchange reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for charge-exchange
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+cnh charge exchange
+      call get_amjhyd_rates('HYDHEL  ','H.1 ','3.1.8    ','CX ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtcx(:,:,nz) = rates
-
-*   ..read heading for Hydrogen recombination
-      read (nrid,'(A32)') id
-      call xertst (streql(id,'*Recombination'),
-     &  'faulty input id instead of *Recombination, id='//id)
-
-*   ..read Recombination reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for recombination
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+cnh recombination
+      call get_amjhyd_rates('AMJUEL  ','H.4 ','2.1.8    ','RC ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       rtra(:,:,nz) = rates
-
-*   ..read Recombination electron heat loss reaction card
-      READ (nrid,'(A72)') row
-      read (row,6666) FILNAM,H123,REAC,CRC
-
-*   .. Extract Amjuel/hydhel data for recombination electron heat loss
-      call get_amjhyd_rates(filnam,h123,reac,crc,am,
+      call get_amjhyd_rates('AMJUEL  ','H.10','2.1.8    ','RC ',am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
 cmb   In fact, potential energy contribution should still be added like in commented code.
 c     This will, however lead to negative values in rtra which will give NaNs in the
@@ -282,7 +238,68 @@ c     Add Bremsstrahlung
           rtqa(i,j,nz) = rtqa(i,j,nz) + bremsf * sqrt(rtt(i))
         enddo
       enddo
-*    ..TODOs: Provide warning when outside validity range?
+
+*   .. Possibility to overwrite default reactions in b2ar.dat
+      if (nreac.gt.0) then
+        found = .false.
+        do while (.not.found)
+          READ (nrid,'(A5)',end=99) row
+          if (INDEX(row,'*reac')>0) then
+            found = .true.
+          endif
+        end do 
+      endif     
+      do ireac = 1, nreac
+        READ (nrid,'(A72)') row
+        call read_token(row,' ',filnam,itok, ier,.false.)
+        iend = itok
+        call read_token(row(iend:),' ',h123,itok, ier,.false.)
+        iend = iend + itok
+        call read_token(row(iend:),' ',reac,itok, ier,.false.)
+        iend = iend + itok
+        call read_token(row(iend:),' ',crc,itok, ier,.false.)
+        call get_amjhyd_rates(filnam,h123,reac,crc,am,
+     1    nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
+        select case (H123)
+          case ('H.1')
+            if (streql(crc,'CX')) then
+              rtcx(:,:,nz) = rates
+            else 
+              call xerrab('Not possible yet to specify a non-CX ' //
+     1          'reaction of H.1')
+            endif
+          case ('H.4')
+            if (streql(crc,'EI')) then
+              rtsa(:,:,0) = rates
+            elseif (streql(crc,'RC')) then
+              rtra(:,:,nz) = rates
+            elseif (streql(crc,'CX')) then
+              rtcx(:,:,nz) = rates
+            else
+              call xerrab('Wrong value for CRC')
+            endif
+          case ('H.10')
+            if (streql(crc,'EI')) then
+              rtqa(:,:,0) = rates
+            elseif (streql(crc,'RC')) then
+              if (fix_recomb.ne.0.and.nz.le.zmax_recomb) then
+                rtqr(:,:,nz) = rates
+              else
+                rtqr(:,:,nz) = rates +
+     1            depot*(am*(mp+me)/(me+am*mp))*rtra(:,:,nz)
+                call xertst(any(rtqr(:,:,nz)<0.0_R8),
+     1            'Negative rates present, try turning on ' //
+     2            'b2ardr_fix_recomb')
+              end if
+            else
+              call xerrab('Not allowed combination of H.10 and CRC')
+            endif
+          case default
+            write(*,*) 'Do not yet know about ',h123
+            call xerrab('H-number on reaction card not yet implemented')
+        end select
+      enddo
+      
 
 * ..return
       call subend ()

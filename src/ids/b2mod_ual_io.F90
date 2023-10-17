@@ -81,11 +81,9 @@ module b2mod_ual_io
     use b2mod_b2plot &
      & , only : triangle_vol, ix_e2b, wklng, alloc_b2mod_b2plot_eirene
 #endif
-#else
-#ifdef IMAS
+#elif defined(IMAS)
     use b2mod_b2plot &
      & , only : natmi
-#endif
 #endif
     use logging
 
@@ -184,18 +182,14 @@ module b2mod_ual_io
     use ids_utilities &   ! IGNORE
      & , only : ids_identifier_static
 #endif
-#if IMAS_MINOR_VERSION > 29
-#ifdef AMNS
+#if ( defined(AMNS) && IMAS_MINOR_VERSION > 29 )
     use amns_types  ! IGNORE
     use amns_module ! IGNORE
 #endif
-#endif
-#else
-#ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
     use euITM_schemas   ! IGNORE
     use euITM_routines  ! IGNORE
     use itm_grid_common ! IGNORE
-#endif
 #endif
 
   public b25_process_ids, b25_av_ids
@@ -794,7 +788,7 @@ contains
 #endif
 #else
         write(0,*) 'Code was compiled without a GGD module'
-        write(0,*) 'Most IDS output is diabled !'
+        write(0,*) 'Most IDS output is disabled !'
 #endif
 
         !! Allocate and set time slice value
@@ -1644,8 +1638,7 @@ contains
 #endif
         end if
 
-#if IMAS_MINOR_VERSION > 21
-#ifdef B25_EIRENE
+#if ( defined(B25_EIRENE) && IMAS_MINOR_VERSION > 21 )
         if (switch%use_eirene.ne.0) then
           allocate( radiation%process(3)%ggd( time_sind )%neutral( nneut ) )
           do is = 1, nneut
@@ -1810,7 +1803,6 @@ contains
           end do
 
         end if
-#endif
 #endif
 
 #ifdef B25_EIRENE
@@ -2151,8 +2143,7 @@ contains
     write(ggd_version,'(i1,a1,i2,a1,i1)') GGD_MAJOR_VERSION,'.', &
                                         & GGD_MINOR_VERSION,'.', &
                                         & GGD_MICRO_VERSION
-#else
-#ifdef USE_PXFGETENV
+#elif defined(USE_PXFGETENV)
     CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
     CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
 #else
@@ -2164,7 +2155,6 @@ contains
         &  status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('EBVERSIONMSCL', &
         &  value=mscl_version)
-#endif
 #endif
     if (.not.streql(mscl_version,'0.0.0')) nlibs = nlibs + 1
 
@@ -3447,8 +3437,7 @@ contains
 
     end subroutine write_sourced_value_root_parent_2
 
-#else
-# ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
 
   logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
@@ -3865,7 +3854,6 @@ contains
     unitV = v / sqrt( sum( v**2 ) )
   end function unitVector
 
-# endif
 #endif
 
 end module b2mod_ual_io

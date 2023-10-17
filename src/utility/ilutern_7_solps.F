@@ -58,11 +58,9 @@ c
 *  -- PROCEDURES --
       intrinsic cpu_time
       EXTERNAL XERRAB
-#ifdef _OPENMP
-#ifdef CRAY
+#if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
-#endif
 #endif
 
       integer ncall, nwrite

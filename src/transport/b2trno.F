@@ -224,7 +224,7 @@
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
       if (switch%transport_afn.eq.1) then 
        do is = 0, ns-1
-         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+         if (is_neutral(is).and.nint(zn(is)).eq.1) then
            wrkc =  co%dpa0(:,is)*(geo%cvbb(:,2)/geo%cvbb(:,3))**2
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &                 wrkc, co%cdpa(1:nFc,0,is))   
@@ -352,11 +352,11 @@ c the logic statements below could be simplfied but for now we go for readabilit
           co%chci = co%chci + co%chcb(:,:,is)
          endif
         else                                                       !! separate ion-neutral energy equation
-          if (.not.is_neutral(is).or.zn(is).ne.1) then
+          if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
             co%chci = co%chci + co%chcb(:,:,is)
           endif
         endif
-        if (is_neutral(is).and.zn(is).eq.1) then                   !! hcn for hydrogenic atoms
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then              !! hcn for hydrogenic atoms
          co%chcn = co%chcn + co%chcb(:,:,is)
         endif
       enddo 
