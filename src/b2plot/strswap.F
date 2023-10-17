@@ -7,4 +7,4 @@
       s1=s2
       s2=s3
       return
-      end
+      end subroutine strswap

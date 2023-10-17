@@ -575,6 +575,14 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>conv_triangles_old_co</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When converting a structured case with b2us and conv_triangles_old_co = 1, the coordinates of the nodes of the triangles from the original fort.33 file will be used in the unstructured format. Otherwise, the triangular mesh will be exactly matched to the B2.5 grid. 
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -1071,7 +1079,7 @@
 		<category name="Physics">
 			<switch>
 				<name>b2siav_addvis</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier to heat flux contribution to divergence of viscosity tensor in the momentum equation.
@@ -2068,7 +2076,7 @@
 				</description>
 				<switch>
 					<name>b2tlc0_alpha</name>
-					<default>0.0</default>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (otherwise)</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2089,7 +2097,7 @@
 				</description>
 				<switch>
 					<name>b2tlh0_alpha</name>
-					<default>0.0</default>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (otherwise)</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2100,6 +2108,26 @@
 				<switch>
 					<name>b2tlh0_flux_limit_min_ti</name>
 					<default>0.0</default>
+					<type>real</type>
+				</switch>
+			</switchgroup>
+			<switchgroup>
+				<name>b2tlv0_*</name>
+				<description>
+					Parameters for the flux limit to the viscosity of the neutrals. Alpha is a multiplier to the classical flux limit value.
+					The larger &alpha; is, the weaker the flux limit is.
+					&gamma; is the exponent used in the flux-limiting formula.
+					The smaller &gamma; is, the stronger the flux limit is.
+					If alpha.eq.0, no flux limit is applied.
+				</description>
+				<switch>
+					<name>b2tlv0_alpha</name>
+					<default>0.0 (if b2mn_afn = 0); 1.0 (otherwise)</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tlv0_gamma</name>
+					<default>2.0</default>
 					<type>real</type>
 				</switch>
 			</switchgroup>
@@ -2412,6 +2440,165 @@
 					avoid double transport, 0+4 for cross-checks only !
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndr_solve_keps</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Main switch controlling the use of the k(-eps)-model. In this model, anomalous transport coefficients are determined self-consistently through the solution of an additional transport equation for the turbulent kinetic energy k (variable "kt" in the code) and possibly the turbulent enstrophy zeta (variable "zt" in the code). Note that both the k and k-eps models are currently under active development/testing, and should be used with care. In particular, the k-eps model (option '2') is not suitable for routine testing yet.
+					If '0': k(-eps)-model not used.
+					If '1': one additional transport equation solved for k.
+					If '2': two additional transport equations solved for k and zeta. Warning: under development - expert use only!
+					Note: solutions to these equations are only used to compute the transport coefficients if the switch b2tqna_transport_keps is set.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_transport_keps</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Compute transport coefficients based on k(-eps)-model. 
+					If '0': transport coefficients not computed based on k(-eps)-model.
+					If '1': transport coefficients computed using k-model (i.e. based on kt).
+					If '2': transport coefficients computed using k-eps model (i.e. based on kt and zt). Warning: under development - expert use only!
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_cd</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Multiplier for the diffusion coefficient in the k(-eps) model. Recommended range: 0.1 ... 1.0
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_heat</name>
+				<default>2.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the electron heat conductivity (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_heat_i</name>
+				<default>2.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the ion heat conductivity (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_visc</name>
+				<default>0.2</default>
+				<type>real</type>
+				<description>
+					Multiplier for the ion viscosity (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_dkt</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Multiplier for the diffusivity in kt-equation (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfhi_fsigkt</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Multiplier for the parallel transport term of kt.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_diss_sol</name>
+				<default>10.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the dissipation term of kt in the SOL region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_diss_core</name>
+				<default>10.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the dissipation term of kt in the core region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mn_afn</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Main switch to turn on the AFN model for hydrogenic neutrals. If this switch is turned on, some default values are changed (see description of the corresponding switches).  
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_recycle_afn</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, the AFN recycling boundary conditions are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_recycle_afn, the switch is automatically set to 1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_afn_bcs_use_coarse</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1, the coarse representation of the integrated TRIM reflection coefficients is used for the AFN boundary conditions, which is expected to be sufficient. In case you want to use the original fine representation, use b2stbr_afn_bcs_use_coarse = 0. However, the fine representation is only present for D on Be, C and W. 
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_transport_afn</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_transport_afn, the switch is automatically set to 1. 
+				</description>
+			</switch>
+			<switch>
+				<name>b2mn_tn_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					0: solving the total energy equation for all ion + (fluid) neutral species together; 1: solving the total energy equation without the contributions from hydrogenic neutrals. It is still assumed that the hydrogenic neutrals have the same temperature as the ions, i.e. tn=ti. (not recommended to turn on); 2: separate energy equation for the hydrogenic neutrals (tn.ne.ti). For simulations with hydrogenic mixtures and b2mn_tn_style = 2, a total energy equation for all hydrogenic neutrals together will be solved assuming tn for each hydrogenic neutral species.  
+				</description>
+			</switch>
+			<switch>
+				<name>l_macro_afn</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Macroscopic length scale (in m) used to calculate the local Knudsen number. 
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_kn_b1</name>
+				<default>0.01</default>
+				<type>real</type>
+				<description>
+					Should be used in combination with MAXW in b2.neutrals.parameters (see description MAXW).
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_kn_b2</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Should be used in combination with MAXW in b2.neutrals.parameters (see description MAXW).
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_remove_fc_el</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values. 
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
@@ -2678,7 +2865,7 @@
 					If b2mndt_av_ntim_batch.gt.0, the file 'b2batch.nc' is created, which contains the batch averages of the tallies.
 					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf main calls]. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2wall.nc file, otherwise the file is overwritten.
 					If balance_netcdf.ne.0, the file 'balance.nc' is created, which contains all of the arrays required by the balance post-processing routines, in CDF format.
-					If balance_average.ne.0, the balance arrays are averaged over all b2mndr_ntim timesteps.
+					If balance_average.ne.0, the balance arrays are averaged over the number of completed timesteps (itim).
 				</description>
 				<switch>
 					<name>tallies_netcdf</name>
@@ -3680,6 +3867,15 @@
 					'b2tfnb_alpha' gives another form of flux limit which is applied to the whole particle flux.
 				</description>
 			</switch>
+			<switch>
+				<name>b2trno_flux_limit_to_vsa</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1', flux limit to neutrals contribution to vsa0 - the viscosity is applied in b2tlv0.F. It is recommended '1'.
+					b2tlv0.F has the flux limit parameters &alpha; and &gamma; which are given by 'b2tlv0_alpha' and 'b2tlv0_gamma'. 
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2mndr_*fb*</name>
 				<description>
@@ -4277,6 +4473,14 @@
 				  <type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2ardr_nreac</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of AMJUEL/HYDHEL reactions you explicitly specify in b2ar.dat, when b2ardr_amjhydhel = 1. A set of default reactions is taken but can be overwritten by the reactions you specify here.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2ardr_rtn.</name>
 				<description>
@@ -4496,6 +4700,39 @@
 					'V' - volume recombination source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored).
 					'C' - constant or feedback gas puff source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Gas puffs for B2.5 fluid neutrals are handled via b2.boundary.parameters. Unless specified otherwise by use of 'eirene_nesepm_istra', it is the first 'C' stratum that is used for feedback puff schemes. See b2cdci for details.
 					'T' - time-dependent source for Eirene (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Long-lived Eirene neutrals are stored in this stratum. See EIRENE_STEP_DT below.
+				</description>
+			</switch>
+			<switch>
+				<name>SURF_MAT</name>
+				<default>'C'</default>
+				<type>character*2 array of length (NSTRAT)</type>
+				<description>
+					Contains the surface material for surface strata, used for AFN neutrals. Possible options:
+					'Be' (beryllium), 'C' (carbon), 'Fe' (iron), 'Mo' (molybdenum) and 'W' (tungsten).       
+				</description>
+			</switch>
+			<switch>
+				<name>ACCEL_ION</name>
+				<default>0</default>
+				<type>integer array of length (NSTRAT)</type>
+				<description> 
+					If 1, adding sheath acceleration for the ions hitting the boundary. Used for AFN boundary conditions.  
+				</description>
+			</switch>
+			<switch>
+				<name>MAXW</name>
+				<default>1</default>
+				<type>integer array of length (NSTRAT)</type>
+				<description> 
+					Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.    
+				</description>
+			</switch>
+			<switch>
+				<name>E_FC</name>
+				<default>3.0</default>
+				<type>real*8</type>
+				<description> 
+					Franck-Condon energy assigned to the thermally released fraction of recycled hydrogen neutrals, used in the AFN boundary condition. It is assumed that thermally released molecules are dissociated immediately at the surface and get an energy E_FC (eV) and are emitted isotropically. 3.0 eV is the value typically used in the EIRENE input file.   
 				</description>
 			</switch>
 			<switch>
@@ -5504,7 +5741,7 @@
 						 7 : prescribe the given profile of density from the bv_na.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total particle flux with constant flux density, CONPAR(,,1) specifies the particle flux in s<sup>-1</sup>
 						 9 : prescribe the decay length for the density, CONPAR(,,1) specifies the gradient length in metres (should use type 15 instead when drifts are turned on)
-						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>
+						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>, CONPAR(,,2)>0 is the stabilizing factor which may be needed if drifts are activated.
 						11 : should not be used for feedbacks anymore, not converted to WG code.
 						12 : should not be used for feedbacks anymore, not converted to WG code.
 						13 : particle density to achieve specified total flux,
@@ -5647,6 +5884,9 @@
 							Still experimental, will not work for drift cases.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
 							POTPAR(,,1) specifies the desired potential in V.
+							POTPAR(,,2) is the strength of the feedback
+						23 : potential feedback on the total current for the South core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature.
+							POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes).
 							POTPAR(,,2) is the strength of the feedback
 				</description>
 			</switch>

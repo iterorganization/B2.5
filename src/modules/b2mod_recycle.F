@@ -34,6 +34,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
      &  M_dummy(:), T_dummy(:), shpottau_dummy(:),        !nh 21.02.2020
      &  fna_mol(:,:)                                    !nh 30.03.2021
+      real (kind=R8), allocatable, save :: recycle_zn(:)
 
       real (kind=R8),save::int0l,int0r,
      &    int1l,int1r,int2l,int2r,
@@ -53,13 +54,13 @@ c     Boolean to indicate whether trim data is present for species/material comb
       return
       end subroutine alloc_b2mod_recycle
 
-      subroutine read_recycle_fnn(nsd,nbnd_local)
+      subroutine read_recycle_fnn(nsd,nbnd_local,use_coarse)
       use b2mod_b2cmpa
       use b2mod_elements
       use b2mod_neutrals_namelist
       use b2mod_subsys
       implicit none
-      integer,intent(in):: nsd, nbnd_local
+      integer,intent(in):: nsd, nbnd_local, use_coarse
       character*256 filename
       integer istra, isp, is, il,it,itm,ndata
       integer idum(0:9)
@@ -78,6 +79,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       call subini ('read_recycle_fnn')
       ns1 = nsd
       allocate(recycle_index(0:nsd-1))
+      allocate(recycle_zn(0:nsd-1)) !! nuclear charge of recycling species
       allocate(target_index(0:nbnd_local-1))
 cmb   Check how many different recycled species there are
       recycle_index=-1
@@ -93,6 +95,7 @@ cmb   Check how many different recycled species there are
         isp=isp+1
         recycle_index(is)=isp
         recycle_code(isp)=is_codes(is)
+        recycle_zn(isp) = zn(is) 
     5   continue
         write(*,'(1x,i3,1x,i3,1x,a)') is,recycle_index(is),
      1   recycle_code(recycle_index(is))
@@ -125,15 +128,30 @@ cmb   Mixed materials not taken into account.
       trimrecyc_present = .false.
       do is=0,isp
         do it=0,itm
-          filename =
-     1     recycle_code(is)(1:len_trim(recycle_code(is)))//
-     2     target_code(it)(1:len_trim(target_code(it)))//
-     3     '.fnn'
+          if (use_coarse.eq.0) then
+cc the finer tables were used for the original AFN work, but are too large to add to git for each H, D ,T x wall material combination
+            filename =
+     1       recycle_code(is)(1:len_trim(recycle_code(is)))//
+     2       target_code(it)(1:len_trim(target_code(it)))//
+     3       '.fnn'
+          else
+cc therefore coarser tables were added for every [H D T] x [Be C Fe Mo W] combination. The difference with the finer tables should be only a few percent
+            filename =
+     1       recycle_code(is)(1:len_trim(recycle_code(is)))//
+     2       target_code(it)(1:len_trim(target_code(it)))//
+     3       '.fnn.coarse'
+          endif
           call lower_case(filename)
+cc first search if a new file has been made and stored locally by the user
+cc in the SOLPSTOP/data.local tree structure, then in refl.data.local (not tracked by git),
+cc then search in regular location (on git)
           if(open_file(96,filename,
      1      'data.local/trim.data/refl.data|' //
-     2      'modules/B2.5/Database/trim.data/refl.data')) then
+     2      'modules/B2.5/Database/trim.data/refl.data.local|' //
+     3      'modules/B2.5/Database/trim.data/refl.data')) then
             trimrecyc_present(is,it) = .true.
+          endif
+          if (trimrecyc_present(is,it)) then
             call cfverr (96,fnn_version)
             call cfruin (96, 3, idum, 'nm,nt,nshpottau')
 c           Check whether array has same dimensions as previous, otherwise give error
@@ -193,6 +211,8 @@ c    first lines in the .fnn file. They are allocated to dummy variables.
               call cfrure (96, nT+1, T_dummy, 'T')
               call cfrure (96, nshpottau+1, shpottau_dummy, 'shpottau')
 
+              deallocate(M_dummy,T_dummy,shpottau_dummy)
+
             endif
 
 c         Read preintegrated recycling coefficient contributions
@@ -214,9 +234,18 @@ c         Read preintegrated recycling coefficient contributions
           call cfrure (96,ndata,rp32(:,:,:,is,it),'rp32')
           close(96)
           else
-c         Use standard recycling model for this species/wall combination
-            write(*,*) 'No TRIM recycling data for ',
+c         Give error message or information if files are not found
+            write(*,*) 'No TRIM recycling data  for ',
      1       recycle_code(is),' onto ',target_code(it)
+            if (recycle_zn(is).eq.0.0_R8) then !! expected to use AFN BCs, so give error 
+              if (use_coarse.ne.1) then !! first suggest to go look for coarse files
+                write(*,*) 'Consider using b2stbr_afn_bcs_use_coarse'
+              endif
+              call xerrab ('Error using advanced fluid neutral BCs')
+            else !! currently, default neutral boundary conditions will automatically be used for non-hydrogenic species, so we should not give an error here
+              write(*,*) 'Default recycling model used for ',
+     1       recycle_code(is),' onto ',target_code(it) 
+            endif
           endif
         enddo
       enddo

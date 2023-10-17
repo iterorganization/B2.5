@@ -81,10 +81,8 @@
 #endif
 #endif
       integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
-#ifndef NAGF95
-#ifndef NAGFOR
+#if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
-#endif
 #endif
 #ifdef WG_TODO
       integer iflag

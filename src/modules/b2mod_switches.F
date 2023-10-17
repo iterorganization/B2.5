@@ -15,7 +15,8 @@ c consistency checks for combinations of different switches (check_consistency_s
       public :: alloc_switches, dealloc_switches,
      .          read_switches, set_defaults_switches,
      .          check_switches, check_values_switches,
-     .          check_consistency_switches
+     .          check_consistency_switches,
+     .          read_switch_afn
 
       type, public :: switches
 
@@ -54,6 +55,7 @@ c consistency checks for combinations of different switches (check_consistency_s
 
 c Advanced fluid neutral models
       integer :: tn_style
+      integer :: afn
       integer :: recycle_afn
       integer :: use_uy_uz_0
       integer :: use_uy_uz_1
@@ -63,6 +65,7 @@ c Advanced fluid neutral models
       integer :: diffusion_bc_safeguard
       integer :: do_volrec
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
+      integer :: afn_bcs_use_coarse
 
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02
@@ -553,7 +556,13 @@ c Med
 
 c Advanced fluid neutral models
       s % tn_style = 0
-      s % recycle_afn = 0
+      if (s%afn.ne.0) then
+        s % recycle_afn = 1
+        s % transport_afn = 1
+      else
+        s % recycle_afn = 0
+        s % transport_afn = 0
+      endif
       s % use_uy_uz_0 = 0
       s % use_uy_uz_1 = 0
       s % remove_FC_el = 0
@@ -561,7 +570,7 @@ c Advanced fluid neutral models
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
-      s % transport_afn = 0
+      s % afn_bcs_use_coarse = 1
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
@@ -603,11 +612,17 @@ c Advanced fluid neutral models
       s % radeldr = 1.0_R8
       s % poldidr = 1.0_R8
       s % raddidr = 1.0_R8
-      s % b2tlv0_alpha = 0.0_R8
+      if (s%afn.ne.0) then
+        s % b2tlv0_alpha = 1.0_R8
+        s % b2tlh0_alpha = 1.0_R8
+        s % b2tlc0_alpha = 1.0_R8
+      else 
+        s % b2tlv0_alpha = 0.0_R8
+        s % b2tlh0_alpha = 0.0_R8
+        s % b2tlc0_alpha = 0.0_R8
+      endif
       s % b2tlv0_gamma = 2.0_R8
-      s % b2tlh0_alpha = 0.0_R8
       s % b2tlh0_gamma = 2.0_R8
-      s % b2tlc0_alpha = 0.0_R8
       s % b2tlc0_gamma = 2.0_R8
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
@@ -778,7 +793,7 @@ c Advanced fluid neutral models
       s % b2npmo_diagno = 0
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
-      s % vlct_diagno = 1
+      s % vlct_diagno = 0
       s % b2tqna_diagno = 0
 
       s % set_na_numerical = 0
@@ -825,7 +840,7 @@ c k-enstrophy model
       s % solve_keps = 0
       s % keps_local = 1
       s % keps_iout = 0
-      s % keps_cd = 1.0_R8
+      s % keps_cd = 0.3_R8
       s % keps_heat = 2.0_R8
       s % keps_heat_i = 2.0_R8
       s % keps_sig = 1.0e-4_R8
@@ -839,7 +854,7 @@ c k-enstrophy model
       s % keps_dzt = 0.01_R8
       s % keps_inc = 1.0_R8
       s % keps_fac = 1.0_R8
-      s % keps_shear = 1.0e1_R8
+      s % keps_shear = 0.0e1_R8
       s % b2sikt_iout = 0
       s % b2sikt_style = 0
       s % b2sikt_model = 1
@@ -849,10 +864,10 @@ c k-enstrophy model
       s % b2sikt_min_source = 0
       s % b2sikt_kt_source_stab = 1
       s % b2sikt_fac_aniso = 1.0_R8
-      s % b2sikt_fac_sheath = 1.0_R8
+      s % b2sikt_fac_sheath = 0.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
-      s % b2sikt_fac_diss = 0.0_R8
-      s % b2sikt_fac_diss_core = 0.0_R8
+      s % b2sikt_fac_diss = 10.0_R8
+      s % b2sikt_fac_diss_core = 10.0_R8
       s % b2sikt_fac_vis_RS = 0.0_R8
       s % b2tfhi_fflokt = 0.0_R8
       s % b2tfhi_fconkt = 0.0_R8
@@ -961,7 +976,7 @@ c b2ag
 
 c b2siav
       s % b2siav_qstyle = 0
-      s % addvis = 0.0_R8
+      s % addvis = 1.0_R8
       s % addvis1 = 1.0_R8
       s % cqip1 = 0.5_R8
       s % cvsa_mltpl = 1.0_R8
@@ -1059,6 +1074,7 @@ c Advanced fluid neutral models
       call ipgeti ('b2mn_do_volrec', s % do_volrec)
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
+      call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)
@@ -1529,6 +1545,21 @@ c Med
 
       return
       end subroutine read_switches
+
+***********************************************************************
+
+      subroutine read_switch_afn (s)
+
+      implicit none
+      type (switches), intent (inout) :: s
+
+cnh   Default value
+      s % afn = 0
+
+      call ipgeti ('b2mn_afn', s % afn) !nh  24.05.23 main switch for AFN model
+
+      return
+      end subroutine read_switch_afn
 
 ***********************************************************************
 

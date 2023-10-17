@@ -161,12 +161,9 @@
       call b2rflb (ninp(0), lblmn(61:120))
 *   ..read header for geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
-#ifdef JET
+#if ( defined(JET) || defined(IMAS) )
       labgeo=lblgm
-#else
-#ifdef IMAS
       labgeo=lblgm
-#endif
 #endif
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
@@ -287,7 +284,8 @@ c Hence, they can be accessed in the classical way using ipgeti/ipgetr or in a n
 c The b2mod_switches is mainly intended for switches that are used in different functions/subroutines to reduce code duplication
 c and to centralize consistency checks on the switches.
 
-
+c read main switch afn to correctly set the corresponding default switches
+      call read_switch_afn(switch)
 c load default values of switches
       call set_defaults_switches(switch,ns)
 c overwrite with values provided in b2mn.dat
