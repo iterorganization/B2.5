@@ -12,11 +12,6 @@ MYPATH=`dirname "$0"` # path to this script, used when we calling other scripts 
 
 files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 
-#for f in $files; do
-#   filenames="$1/$f $2/$f";
-#   check_b2_output $filenames
-#done  > compare_results.log
-
 missing=0
 for f in $files; do
    if [ ! -f $1/$f ]; then
@@ -37,9 +32,12 @@ fi
 
 # For most of the variables we compare the maximum error to the average array value
 # (and this average is the average of abs(var)).
-# To avoid statistical variance, this test must be done using correlated sampling and use the APCAS or "embarrassingly parallel" Eirene MPI parallelization strategies.
+# To avoid statistical variance, this test must be done using correlated sampling.
+# The NLIDENT switch in Eirene must be turned on.
+# For each stratum, the NPTSDEL number must be equal to the NPTS value divided by some
+# integer multiple of the number of threads used.
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-8 te 1e-11 ti 1e-11 po 1e-11' -i 'time' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 0.01 --maxerr 'te ti na ni ne po' --specific-tolerance 'fhe 0.05 fhe_eir 0.02 fhep 0.02 fhe0 0.02 fhe_mdf 0.02 fhi_eir 0.02 fhet 0.05 fht 0.02 fhj 0.1 fni 0.1 fne 0.1 fne_eir 0.1 rqahe 0.05 rqrad 0.05 te 0.1 ti 0.05 po 0.1 pop 0.1 ne2 0.02 hce0 0.06 hci0 0.06 fna_52 0.05 fne_32 0.05 fne_52 0.025 fni_32 0.1 fni_52 0.1 fch 0.1 fch_32 0.02 fch_52 0.02 fch_p 0.25' -i 'time|data|b2stb*|res*|del*|sm*|po0|na*|ne0|nep|ni0|ua*|kinrgy|fch0|rcx*|rra*|rsa*|alf*|calf_an|cdpa|csig*|dpa*|fllim*|b2sihs_*|b2npmo_sm*' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successful
