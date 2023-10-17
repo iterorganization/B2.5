@@ -76,10 +76,8 @@
 #ifdef WINDOWS
       integer(2) :: iresult
       logical(4) :: lresult
-#else
-#ifdef NAGFOR
+#elif defined(NAGFOR)
       integer status, ierror
-#endif
 #endif
       logical(4) :: b2fstate_exist
       integer npoint

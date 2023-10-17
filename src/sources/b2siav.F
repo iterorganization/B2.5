@@ -49,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer ic, iCv, iFt, k
+      integer ic, iCv, iFc, iFt, k
       integer, save :: nsmooth = 2
       character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
@@ -99,11 +99,37 @@
              endif
             enddo
 
+            !to ensure that subsequent steps lead to well-defined value on separatrix:
+            !copy value of qip0 across separatrix
+            !wdk todo: rationalize this when separatrix-structure is introduced?
+            do iFc = 1, nFc
+              if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
+              endif
+              if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &                 mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,1)) = qip0(mpg%fcCv(iFc,2))
+              endif
+            enddo
+
             !smoothing: interpolate to faces and back to cell centers
             wght = 1.0_R8
             do k = 1, nsmooth
              call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
              call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
+             !copy value of qip0 across separatrix
+             !wdk todo: rationalize this when separatrix-structure is introduced?
+             do iFc = 1, nFc
+               if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &             .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                 qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
+               endif
+               if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &                  mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                 qip0(mpg%fcCv(iFc,1)) = qip0(mpg%fcCv(iFc,2))
+               endif
+             enddo
             enddo
 
           endif
@@ -120,6 +146,20 @@
      &           gti(iCv,1)
               enddo
              endif
+            enddo
+
+            !to ensure that subsequent steps lead to well-defined value on separatrix:
+            !copy value of qip0 across separatrix
+            !wdk todo: rationalize this when separatrix-structure is introduced?
+            do iFc = 1, nFc
+              if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
+              endif
+              if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &                 mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,1)) = qip0(mpg%fcCv(iFc,2))
+              endif
             enddo
 
           endif
@@ -161,6 +201,22 @@
             endif
           enddo
 
+          !to ensure that subsequent steps lead to well-defined value on separatrix:
+          !copy values of tauia1, nu1, alpha1 across separatrix
+          !wdk todo: rationalize this when separatrix-structure is introduced?
+          do iFc = 1, nFc
+            if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &          .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+              tauia1(mpg%fcCv(iFc,2)) = tauia1(mpg%fcCv(iFc,1))
+              alpha1(mpg%fcCv(iFc,2)) = alpha1(mpg%fcCv(iFc,1))
+            endif
+            if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &               mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+              tauia1(mpg%fcCv(iFc,1)) = tauia1(mpg%fcCv(iFc,2))
+              alpha1(mpg%fcCv(iFc,1)) = alpha1(mpg%fcCv(iFc,2))
+            endif
+          enddo
+
 *       ..compute qip1
           qip1 = switch%cqip1*ni*ti*sqrt(te+ti)/sqrt(am(isb)*mp)
 
@@ -176,6 +232,16 @@
 *       ..finally calculate the r.h.s. contribution to the parallel balance
 *         corresponding to parallel viscosity connected with heat flow
           call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
+
+          !zero out spurious contributions outside of separatrix
+          !wdk todo: rationalize this when separatrix-structure is introduced?
+          do iCv = 1, nCv
+            if (.not.mpg%cvOnClosedSurface(iCv)) then
+              wrk1(iCv) = 0.0_R8
+            endif
+          enddo
+
+          !calculate the actual source
           smbvh(:,0) = switch%addvis*geo%cvVol*geo%cvBb(:,0)*
      &      sqrt(geo%cvBb(:,3))*geo%cvHz*wrk1
 

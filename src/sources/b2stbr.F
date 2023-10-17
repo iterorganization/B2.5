@@ -163,6 +163,11 @@
       external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
+      intrinsic mod
+#if ( defined(_OPENMP) && defined(CRAY) )
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
 *   ..initialisation
       save sput_src,
 #ifdef WG_TODO
@@ -1290,7 +1295,9 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 #endif
 
 cmb  Load pre-evaluated integrals for advanced recyling mocdel based on TRIM data
-      if (switch%recycle_afn.eq.1) call read_recycle_fnn(ns,mpg%nCg)            !mb 12.07.17
+      if (switch%recycle_afn.eq.1) then
+        call read_recycle_fnn(ns,mpg%nCg,switch%afn_bcs_use_coarse)            !mb 12.07.17
+      endif
       call subend ()
       return
 

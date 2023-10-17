@@ -38,7 +38,7 @@
      .           ileft, last(1), isig(3)
       integer, allocatable :: ifcused(:), elem(:,:), elem_cv(:),
      .                        neighbor(:,:,:), bndmdl(:,:),
-     .                        trifc(:,:)
+     .                        trifc(:,:), node_vert(:)
       logical, allocatable :: fcused(:)
       logical :: ffound
       intrinsic pack
@@ -265,13 +265,17 @@
 
 !  set recycling boundary model indicators 
       inquire (file='input.dat',exist=ffound)
+      allocate (node_vert(mpg%nVx))
+      node_vert = [(i, i = 1, mpg%nVx)]
       if (ffound) then
         call conv_surface_models (nout, mpg, gm, 
-     .     bndmdl, trifc, elem_cv, nelem)
+     .     bndmdl, trifc, elem_cv, nelem, node_vert, mpg%nVx)
       else
-        call find_nondef_surfaces (nout, mpg, gm, 
-     .     elem, bndmdl, elem_cv, nelem)
+        call find_nondef_surfaces (nout, mpg, gm, elem, bndmdl,
+     .     elem_cv,  nelem, node_vert, mpg%nVx)
       end if
+      deallocate (node_vert)
+
 
 !  check for holes in the triangle mesh
       nopen = 0

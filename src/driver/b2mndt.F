@@ -224,11 +224,6 @@ cwdk    For unstructured solver, start with simple reading of start-values
         st%dv%facdrift = switch%facdrift_start
         st%dv%fac_vis  = switch%facvis_start
 
-c checks for use of new energy equations
-       if (switch%tn_style.ne.0) then
-         call xertst(ns.eq.2,
-     &        'new energy equations only for single species')
-       endif
 #ifdef WG_TODO
         call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
 #endif
@@ -485,8 +480,8 @@ ctmp.dpc
               call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is),
      &         st%pl%te, st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))         !srv 01.10.99
 *    ..compute particle flux
-              call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &         mpg, st%pl, st%dv, st%co, st%rt, .true.)
+              call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &         switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
             enddo                                                        !srv 01.10.99
 *      ..compute electron drift velocities
             call b2tfed (nCv, nFc, nVx, switch, geo, mpg,
