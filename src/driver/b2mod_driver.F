@@ -65,22 +65,31 @@
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
+     , , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl
       use eirmod_clogau
+     , , only : eirene_alloc_clogau
       use eirmod_ctrcei
+     , , only : eirene_alloc_ctrcei, eirene_dealloc_ctrcei
       use eirmod_comprt
-     , ,only: iunout, iunin
+     , , only : iunin, iunout
       use eirmod_comusr
-     , ,only: eirene_alloc_comusr
+     , , only : eirene_alloc_comusr
       use eirmod_refusr
-     , ,only: eirene_write_conbe
+     , , only : eirene_write_conbe
       use eirmod_braeir
+     , , only : eirene_alloc_braeir, eirene_dealloc_braeir
       use eirmod_eirbra
+     , , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
       use eirmod_infcop
+     , , only : eirene_dealloc_infcop
       use eirmod_mcarlo
+     , , only : eirene_mcarlo2
       use eirmod_wneutrals
+     , , only : eirene_wneutrals_init
       use b2mod_eirene
+     , , only : eirene_mc_final
       use b2mod_b2plot
-     , ,only: vxa, dealloc_b2mod_b2plot_eirene
+     , , only : vxa, dealloc_b2mod_b2plot_eirene
 #ifdef NAGFOR
       use f90_unix_proc ! IGNORE
 #endif
@@ -1453,7 +1462,17 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 #endif
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
+#ifdef USE_OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP PARALLEL
+#endif
+#endif
         IUNOUT=6+IFOFF
+#ifdef USE_OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP END PARALLEL
+#endif
+#endif
         CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
@@ -1484,7 +1503,17 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
         NREAC=7
+#ifdef _OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP PARALLEL
+#endif
+#endif
         IUNOUT=6
+#ifdef _OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP END PARALLEL
+#endif
+#endif
         CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_SET_PARMMOD(1)

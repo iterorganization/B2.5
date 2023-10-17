@@ -120,6 +120,7 @@
               smbcf(ix,iy,3) = 0.0e0_R8
               ctcf(ix,iy) = 0.0e0_R8                                    !srv 06.04.07
             endif                                                       !srv 26.11.02
+!$OMP ATOMIC WRITE
             smbcb(ix,iy) =  smbcf(ix,iy,0)
           enddo
         enddo
@@ -159,6 +160,7 @@
               smbcf(ix,iy,3) = 0.0e0_R8
               ctcf(ix,iy) = 0.0e0_R8                                    !srv 06.04.07
             endif
+!$OMP ATOMIC WRITE
             smbcb(ix,iy) =  smbcf(ix,iy,0)
           enddo
         enddo
