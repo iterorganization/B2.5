@@ -753,11 +753,11 @@ cxpb  if just below the top corner, make the corner cell follow
         m%isClassicalGrid = idum(0)
         
         if (m%isClassicalGrid.eq.1) then
-        !read nx, ny, nncut
-        call cfruin (nrid, 3, idum, 'nx,ny,nncut')
-        m%nx = idum(0)
-        m%ny = idum(1)
-        m%nncut = idum(2)
+          !read nx, ny, nncut
+          call cfruin (nrid, 3, idum, 'nx,ny,nncut')
+          m%nx = idum(0)
+          m%ny = idum(1)
+          m%nncut = idum(2)
         endif
 
         !read vertex information

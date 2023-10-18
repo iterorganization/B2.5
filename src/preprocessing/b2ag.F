@@ -7,8 +7,8 @@
       use b2mod_geo2
       use b2mod_indirect
       use b2ag_parameters
-	  use b2us_geo
-	  use b2us_map
+      use b2us_geo
+      use b2us_map
       implicit none
 
 *-----------------------------------------------------------------------
@@ -143,29 +143,29 @@
       read (ninp(0),*) id2
       if ( streql(id,'*format') .AND. streql(id2,'unstructured')) then
 *       run the unstructured version
-	  write (*,*) 'Unstructured b2ag used'
+        write (*,*) 'Unstructured b2ag used'
 *    ..obtain nCv, nVx, nFc
-	  call b2ag_read_parameters(ninp,nout,m)
+        call b2ag_read_parameters(ninp,nout,m)
 *    ..call principal driver routine
-	  call alloc_mapping(m)
-	  call alloc_geometry(g,m%nCv,m%nFc,m%nVx,m%nFs,m%nFt,m%nVmxCv)
-	  call b2agdr (ninp, nout,g,m)
+       call alloc_mapping(m)
+       call alloc_geometry(g,m%nCv,m%nFc,m%nVx,m%nFs,m%nFt,m%nVmxCv)
+       call b2agdr (ninp, nout,g,m)
 *    ..close graphics files
 *      (none)
 *    ..close other files
-	  do io=0,size(ninp)-1
-		inquire(unit=ninp(io),opened=file_open)
-		if (file_open) close(ninp(io))
-	  enddo
-	  do io=0,size(nout)-1
-		inquire(unit=nout(io),opened=file_open)
-		if (file_open) close(nout(io))
-	  enddo
+       do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+       enddo
+       do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+       enddo
 *    ..end of computation
       call dealloc_geometry(g)
-	  !call dealloc_b2mod_geo(g)
-	  call dealloc_mapping(m)
-	  !call dealloc_b2mod_indirect(m)
+      !call dealloc_b2mod_geo(g)
+      call dealloc_mapping(m)
+      !call dealloc_b2mod_indirect(m)
 
       else
 	  write (*,*) 'Structured b2ag used'

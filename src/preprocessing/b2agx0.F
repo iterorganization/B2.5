@@ -1,13 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agx0 (nrid, nC, nFc, nVx)
+      subroutine b2agx0 (nrid, nCi, nFc, nVx)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid
 *   ..output arguments (unspecified on entry)
-      integer nC, nFc, nVx
+      integer nCi, nFc, nVx
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -19,13 +19,13 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit nrid the mesh dimensions, nC, nFc and
+*     This routine reads from unit nrid the mesh dimensions, nCi, nFc and
 *     nVx.
 *     Unit nrid must be connected to a formatted file. The input file
 *     must be positioned properly: the first record must begin with the
 *     text '*format', followed by 'unstructured'. The next record 
 *     must begin with '*dimens ' or '*DIMENS ', and must contain the 
-*     values of nC, nFc and nVx in free format. Only those three
+*     values of nCi, nFc and nVx in free format. Only those three
 *     records are read.
 *
 *
@@ -34,8 +34,8 @@
 *     nrid - integer, input.
 *     nrid specifies a unit number for formatted input.
 *
-*     nC, nFc, nVx - integer, output.
-*     nC, nFc and nVx specify the number of interior cells, the 
+*     nCi, nFc, nVx - integer, output.
+*     nCi, nFc and nVx specify the number of interior cells, the 
 *     number of faces and the number of vertices respectively.   
 *
 *
@@ -59,10 +59,10 @@
       read (nrid,'(a8)',err=91) id
       call xertst (streql(id,'*dimens'),
      &  'faulty input id at *dimens, id='//id)
-*   ..read nC, nFc, nVx
-      read (nrid,*,err=92) nC, nFc, nVx
-      call xertst (1.le.nC.and.1.le.nFc.and.1.le.nVx,
-     &  'faulty input nC, nFc, nVx')
+*   ..read nCi, nFc, nVx
+      read (nrid,*,err=92) nCi, nFc, nVx
+      call xertst (1.le.nCi.and.1.le.nFc.and.1.le.nVx,
+     &  'faulty input nCi, nFc, nVx')
 
 * ..return
       call subend ()
