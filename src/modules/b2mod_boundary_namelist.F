@@ -2064,7 +2064,7 @@ cc BCPOT
           end do
         end do
       end if
-
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='bc.testout')
 #else
@@ -2083,7 +2083,7 @@ cc BCPOT
         write (iout,'(a,/(10f6.2))') 'bcCv(2) ',(m%bcFcOr(i),i=ian,ien)
       end do
       close (iout)
-
+#endif
       end subroutine bc_to_struct
 
       end module b2mod_boundary_namelist
