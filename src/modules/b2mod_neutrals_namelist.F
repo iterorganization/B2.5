@@ -2358,6 +2358,7 @@ cwdk also need to correct for degenerate faces?
           end if
         end do
       end do
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='rc.testout')
 #else
@@ -2378,6 +2379,7 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(a,/(10f6.2))') 'rcFcOr  ',(m%rcFcOr(i),i=ian,ien)
       end do
       close (iout)
+#endif
 
       end subroutine rc_to_struct
 
