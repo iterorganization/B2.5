@@ -45,7 +45,7 @@ contains
     !read(nrid)
    
     call read_cvFc(nrid,nCv,cvFc,nCmxFc0)
-    !count how many faces only appear once in cvFc, this are boundary faces (nBF)
+    !count how many faces only appear once in cvFc, these are boundary faces (nBF)
     nBF = 0
     do iFc = 1,nFc
       if (count (cvFc == iFc) .eq. 1) then
@@ -68,7 +68,8 @@ contains
     nVmxFc = nVmxFc0          ! no new faces created for ghost cells 
 
     ! Compute nCmxNv
-    nCmxNv = 15 * nCv          ! over-estimate for 9-point stencil
+    nCmxNv = 15 * nCv         ! over-estimate for 9-point stencil, and possible complexity for triangle meshes
+                              ! wdk to be considered: some exact recomputation of this number to write in b2fgmtry
 
 
     return
