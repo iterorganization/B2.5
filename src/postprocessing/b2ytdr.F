@@ -495,11 +495,7 @@ c 2002-09-11: logic revised
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
       character*500 line, ligne, cur_contr_comment
       character*500, allocatable :: add_comment(:)
-#if DEF_NATM > 1
-      character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff1
-#else
-      character*1 :: zh_tf_toff1
-#endif
+      character*1, allocatable :: zh_tf_toff1(:)
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
@@ -1493,8 +1489,14 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
-      zh_tf_toff = repeat('0',max(1,(DEF_NATM*(DEF_NATM+1))/2-DEF_NATM))
-      call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)
+      allocate(zh_tf_toff(max(1,(nspecies*(nspecies+1))/2-nspecies)))
+      zh_tf_toff(1:max(1,(nspecies*(nspecies+1))/2-nspecies)) = '0'
+      call ipgetc ('b2tral_zh_tf_toff', cvalip)
+      if (.not.streql(cvalip,' ')) then
+        do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+          zh_tf_toff(i) = cvalip(i:i)
+        end do
+      end if
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -2019,6 +2021,8 @@ c 2002-09-11: logic revised
           if (same_atoms) then
             todo = .false.
           else
+            allocate(zh_tf_toff1(max(1,
+     .                (nspecies1*(nspecies1+1))/2-nspecies1)))
             do i = 1, nspecies-1
               do j = i+1, nspecies
                 i1 = ispecies1(i)
@@ -2034,12 +2038,16 @@ c 2002-09-11: logic revised
                     ij1 = ij1 + (nspecies1-k)
                   end do
                   ij1 = ij1 + (max(i1,j1)-min(i1,j1))
-                  zh_tf_toff1(ij1:ij1) = zh_tf_toff(ij:ij)
+                  zh_tf_toff1(ij1) = zh_tf_toff(ij)
                 end if
               end do
             end do
-            if (nspecies1.eq.1) zh_tf_toff1='0'
-            cswitch = trim(zh_tf_toff1)
+            if (nspecies1.eq.1) zh_tf_toff1(1)='0'
+            write(hlp_frm,'(a,i3,a)')
+     .       '(',max(1,(nspecies1*(nspecies1+1))/2-nspecies1),'a1)'
+            write(cswitch,hlp_frm) (zh_tf_toff1(i),
+     .       i=1,max(1,(nspecies1*(nspecies1+1))/2-nspecies1))
+            deallocate(zh_tf_toff1)
           end if
         case default CSWITCHES
           todo = .false.
@@ -2088,6 +2096,7 @@ c 2002-09-11: logic revised
       end if
       if (ycur.ne.1.0_R8 .and. .not.ycur_done)
      >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
+      deallocate(zh_tf_toff)
 
 *  ..rewrite boundary namelist
       first_pass = .true.

@@ -187,7 +187,7 @@
           i=nspecies-1
           j=i-1
           do is = (nspecies*(nspecies+1))/2-nspecies, 1, -1
-            if (zh_tf_toff(is:is).eq.'1') then
+            if (zh_tf_toff(is).eq.'1') then
               tf_ton_mat(i,j)=0.0_R8
               tf_ton_mat(j,i)=0.0_R8
             else
