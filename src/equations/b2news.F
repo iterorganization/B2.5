@@ -874,7 +874,7 @@ cxpb
      &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
-     1         vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam,      !xpb
+     1         vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne, ne2, lnlam,  !xpb
      1         pz, ti, ni(-1,-1,1), na, fna, uadia, ua, fne_32, fne_52,  !xpb
      &         csig, csigin, csig_stoch, chce, chve, chci,               !srv 24.08.21
      &         calf, chvemx, cvsa_cl, cvsa_drho,                         !som 18.08.21
@@ -1132,7 +1132,7 @@ c     with diamagnetic drift part                                        !xpb
         call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
-     1   vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
+     1   vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne, ne2, lnlam, pz,    !xpb
      1   ti, ni(-1,-1,1), na, fna, uadia,                                !xpb
      &   ua, fne_32, fne_52, csig, csigin, csig_stoch,
      &   chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,             !srv 24.08.21 !som 18.08.21

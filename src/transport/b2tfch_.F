@@ -3,7 +3,7 @@
 
       subroutine b2tfch_ (nx, ny, ns, nscx, ismain, iscx,                !srv 09.01.20 {
      & facdrift, fac_ExB, fac_vis,
-     1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
+     1 vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
      1 ti, ni, na, fna, uadia, ua,
      1 csig, csigin, csig_stoch,                                         !srv 24.08.21
      & chci, calf, cvsa_cl, cvsa_drho,                                   !som 18.08.21
@@ -39,8 +39,8 @@
      &   chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                 !som 20.10.21
      &   cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 20.10.21
      &   cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 20.10.21
-     &   lnlam(-1:nx,-1:ny),                                             !srv 13.10.06 01.07.09
-     1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     &   lnlam(-1:nx,-1:ny), hx(-1:nx,-1:ny),                            !srv 13.10.06 01.07.09
+     1   hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2   ni(-1:nx,-1:ny), facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny)
@@ -160,7 +160,7 @@
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, qz, qc, bb,
+     &              vol, gs, hx, hy, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, bb,

@@ -3,7 +3,7 @@
 
       subroutine b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
-     1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !xpb
+     1  vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne, ne2, lnlam, pz,     !xpb
      1  ti, ni, na, fna, uadia,
      2  ua, fne_32, fne_52, csig, csigin, csig_stoch,                    !xpb !srv 24.08.21
      &  chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,
@@ -46,7 +46,7 @@
      & chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                   !som 20.10.21
      & cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 20.10.21
      & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny), BoRiS,
      3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
@@ -207,7 +207,7 @@ c Drift terms
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, qz, qc, bb,
+     &              vol, gs, hx, hy, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, bb,

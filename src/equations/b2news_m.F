@@ -843,7 +843,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 *   ..compute currents
         call b2tfch_ (nx, ny, ns, nscx, ismain, iscx,
      &    facdrift, fac_ExB, fac_vis,                                    !srv 09.01.20
-     &    vol, gs, hx, hy, qz, qc, bb, te, po, ne,
+     &    vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
      &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
@@ -879,7 +879,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
 *   ..recompute currents
           call b2tfch_ (nx, ny, ns, nscx, ismain, iscx,
      &      facdrift, fac_ExB, fac_vis,                                  !srv 09.01.20
-     &      vol, gs, hx, hy, qz, qc, bb, te, po, ne,
+     &      vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,    !som 18.08.21 !srv 24.08.21
      &      chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               !som 20.10.21
