@@ -63,16 +63,15 @@ cank }
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   RECYC(:,:), ERECYC(:,:), MRECYC(:,:), RCION(:,:), recyceir(:),
+     *   RECYC(:,:), ERECYC(:,:),
+     *   MRECYC(:,:), RCION(:,:), recyceir(:),
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
-     1   gpfc(:,:), gpdata(:,:,:)
-#ifndef NO_B2_CHEM_SPUT
-#ifndef SOLPS4_3
+     1   gpfc(:,:), gpdata(:,:,:), time_dep_puff_param(:,:)
+#if ( !defined(NO_B2_CHEM_SPUT) && !defined(SOLPS4_3) )
       real (kind=R8), allocatable, save ::
      *   chemical_sputter_yield(:)
-#endif
 #endif
       integer, allocatable, save ::
      *   RCPOS(:),
@@ -87,9 +86,9 @@ cank }
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), micmp(:,:),
      *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:)
+     2   ngpdata(:), time_dep_puff_case(:)
       logical, allocatable, save ::
-     *   CHEMSP(:), TIME_DEP_PUFF(:)
+     *   CHEMSP(:), TIME_DEP_PUFF(:), time_dep_puff_func(:)
       character*1, allocatable, save ::
      *   CRCSTRA(:)
       character*16, allocatable, save ::
@@ -108,15 +107,14 @@ cank }
       real (kind=R8), save :: chem_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: phys_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: gpdata(100,2,NSTRAID)
+      real (kind=R8), save :: time_dep_puff_param(10,NSTRAID)
       character*16, save ::
      *   textan(0:DEF_NATM-1),
      *   textmn(0:DEF_NMOL-1),
      *   textin(0:DEF_NION-1)
-#ifndef NO_B2_CHEM_SPUT
-#ifndef SOLPS4_3
+#if ( !defined(NO_B2_CHEM_SPUT) && !defined(SOLPS4_3) )
       real (kind=R8), save ::
      ,  chemical_sputter_yield(0:DEF_NLIM+DEF_NSTS)
-#endif
 #endif
       integer, save :: RCPOS(NSTRAID)
       integer, save :: RCSTART(NSTRAID)
@@ -127,6 +125,8 @@ cank }
       integer, save :: TARGSP(NSTRAID,ntrack)
       logical, save :: CHEMSP(NSTRAID)
       logical, save :: TIME_DEP_PUFF(NSTRAID)
+      logical, save :: time_dep_puff_func(NSTRAID)
+      integer, save :: time_dep_puff_case(NSTRAID)
       integer, save :: ngpdata(NSTRAID)
       integer, save :: species_start(NSTRAID), species_end(NSTRAID)
       integer, save :: b2eatcr(0:nsdmax-1)
@@ -178,7 +178,8 @@ csw 21feb2012
       private :: neutrals
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      1  rc_list_size, rc_list_x, rc_list_y,
-     4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
+     4  recyc, erecyc, mrecyc, rcion, recyceir,
+     .  userfluxparm, crcstra,
      .  rf_neut, phys_sput, chem_sput,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
@@ -201,7 +202,8 @@ csw 21feb2012
      6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf,
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
-     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN
+     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
+     .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case 
 
       contains
 
@@ -243,6 +245,9 @@ csw 21feb2012
       allocate(TARGSP(NSTRAID,ntrack))
       allocate(CHEMSP(NSTRAID))
       allocate(TIME_DEP_PUFF(NSTRAID))
+      allocate(time_dep_puff_func(NSTRAID))
+      allocate(time_dep_puff_case(NSTRAID))
+      allocate(time_dep_puff_param(10,NSTRAID))
       allocate(NGPDATA(NSTRAID))
       allocate(GPDATA(100,2,NSTRAID))
       allocate(CRCSTRA(NSTRAID))
@@ -297,6 +302,9 @@ csw 21feb2012
       TARGSP(:,1)=sput_dst
       CHEMSP=.false.
       TIME_DEP_PUFF=.false.
+      time_dep_puff_func=.false.
+      time_dep_puff_case=-1
+      time_dep_puff_param=0.0_R8
       N_SPCSRF=0
       L_SPCSRF=0
       I_SPCSRF=0
@@ -403,7 +411,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       do while (is0.lt.nsd)
         is = is0
         ispecies = ispecies + 1
-        do while (zn(is).eq.zn(is0).and.
+        do while (nint(zn(is)).eq.nint(zn(is0)).and.
      &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.nsd)
           is = is + 1
           if (is.eq.nsd) exit
@@ -462,6 +470,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(TARGSP)
       deallocate(CHEMSP)
       deallocate(TIME_DEP_PUFF)
+      deallocate(time_dep_puff_func)
+      deallocate(time_dep_puff_case)
+      deallocate(time_dep_puff_param)
       deallocate(NGPDATA)
       deallocate(GPDATA)
       deallocate(CRCSTRA)
@@ -633,6 +644,7 @@ c
      . 'faulty input neutrals_time_mod')
       call xertst (0.0_R8.le.neutrals_time_switch,
      . 'faulty input neutrals_time_switch')
+
       do istra = 1, nstrat
         if (crcstra(istra).eq.'N') then
           if (old_style(istra)) then
@@ -737,10 +749,10 @@ c
      .   'faulty inputs species_start > species_end')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
-          call xertst (0.0_R8.le.erecyc(is,istra),
-     .     'faulty input erecyc')
           call xertst (0.0_R8.le.mrecyc(is,istra),
      .     'faulty input mrecyc')
+          call xertst (0.0_R8.le.erecyc(is,istra),
+     .     'faulty input erecyc')
           call xertst (0.0_R8.le.rcion(is,istra), 'faulty input rcion')
           call xertst (0.0_R8.le.phys_sput(is,istra),
      .     'faulty input phys_sput')
@@ -765,6 +777,10 @@ c
             call xertst(gpdata(ix,2,istra).ge.0.0_R8,
      .       'Negative gas puff strength declared!')
           end do
+          if (time_dep_puff_func(istra)) then
+             call xertst(crcstra(istra).eq.'C',
+     .     'time_dep_puff_func set for a non-puff stratum')
+          endif
         endif
       enddo
       do is = 0, ns-1

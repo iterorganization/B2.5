@@ -109,7 +109,7 @@ c     local variables:
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
-          if(zn(i).ne.zn(i-1)) then
+          if(nint(zn(i)).ne.nint(zn(i-1))) then
             mm(nspec)=am(i-1)*mp
             nspec=nspec+1
             nz(nspec)=0
@@ -405,7 +405,7 @@ c       ( ix )
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
-          if(zn(i).ne.zn(i-1)) then
+          if(nint(zn(i)).ne.nint(zn(i-1))) then
             mm(nspec)=am(i-1)*mp
             nspec=nspec+1
             nz(nspec)=0
@@ -578,8 +578,7 @@ C       z2n:    Sum  n*Z**2 over Z
       real (kind=R8) ::
      *             inva(2*ns,2*ns), wk1(2*ns)
 #ifndef NO_NAG
-#ifndef NO_F01AAF
-#else
+#ifdef NO_F01AAF
       integer   IPIV(2*ns)
 #endif
 #else
@@ -831,8 +830,7 @@ C       gt:                                     temperature gradient
       real (kind=R8) ::
      *          inva(2*ns,2*ns), wk1(2*ns)
 #ifndef NO_NAG
-#ifndef NO_F01AAF
-#else
+#ifdef NO_F01AAF
       integer   IPIV(2*ns)
 #endif
 #else

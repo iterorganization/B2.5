@@ -200,7 +200,7 @@
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
-          if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then              !srv 02.12.10
+          if(fch_pTe.eq.1.0_R8.and.fke_Zhdanov.eq.1) then                !srv 02.12.10
            hce(ix,iy,0) = (te(ix,iy)/me)*fke_zh(z)*tnp
           else
            hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*fke(z)*tnp

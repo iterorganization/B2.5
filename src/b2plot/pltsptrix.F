@@ -20,7 +20,7 @@ c
         do iy = -1, ny-1
           ix1 = -1
           ix = 0
-          do while (ix.lt.nx)         
+          do while (ix.lt.nx)
             if(topiy(ix,iy).ne.ny+1 .and.
      &         rightix(ix,iy).ne.nx+1) then
               if(topix(rightix(ix,iy),rightiy(ix,iy)).ne.
@@ -36,7 +36,7 @@ c
                   ix1 = ix1-1
                   iniso = .false.
                   do iiso = 1, nniso
-                    iniso = iniso .or. 
+                    iniso = iniso .or.
      1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
      2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
                   end do
@@ -59,7 +59,7 @@ c
                   ix1=ix1+1
                   iniso = .false.
                   do iiso = 1, nniso
-                    iniso = iniso .or. 
+                    iniso = iniso .or.
      1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
      2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
                   end do
@@ -70,8 +70,8 @@ c
                     y2=iy +0.5_R8
                     call lined_d(x1,y1,x2,y2)
                   end if
-                end do                
-                ix1=-1                
+                end do
+                ix1=-1
               end if
             end if
             if (ix1.ne.-1 .and. rightix(ix1,iy).ne.nx+1) then
@@ -144,6 +144,13 @@ c
             call lined_d(x1,y1,x2,y2)
           endif
         endif
+        if (nnreg(0).eq.7) then
+          x1=rightcut(2)-0.5_R8
+          y1=jsep+0.5_R8
+          x2=nx+0.5_R8
+          y2=jsep+0.5_R8
+          call lined_d(x1,y1,x2,y2)
+        end if
       endif
       if(physical) then
         do iy = -1, ny-1
@@ -152,8 +159,7 @@ c
           do while (ix.lt.nx)
             if (topiy(ix,iy).ne.ny+1 .and.
      &          rightix(ix,iy).ne.nx+1) then
-              if(rightix(ix,iy).ne.nx+1 .and.
-     &           topix(rightix(ix,iy),rightiy(ix,iy)).ne.
+              if(topix(rightix(ix,iy),rightiy(ix,iy)).ne.
      &           rightix(topix(ix,iy),topiy(ix,iy))) then
                 ix1 = ix
                 call lined_d(crx(ix1,iy,3),cry(ix1,iy,3),
@@ -163,7 +169,7 @@ c
                   ix1 = ix1-1
                   iniso = .false.
                   do iiso = 1, nniso
-                    iniso = iniso .or. 
+                    iniso = iniso .or.
      1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
      2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
                   end do
@@ -172,23 +178,23 @@ c
      2                          crx(ix1,iy,2),cry(ix1,iy,2))
                 end do
                 ix1=ix+1
-                call lined_d(crx(ix1,iy,3),cry(ix1,iy,3),
-     1                       crx(ix1,iy,2),cry(ix1,iy,2))
+                call lined_d(crx(ix1,iy,2),cry(ix1,iy,2),
+     1                       crx(ix1,iy,3),cry(ix1,iy,3))
                 do while(rightix(ix1,iy).lt.nx+1 .and.
      &                   rightix(topix(ix1,iy),topiy(ix1,iy)).eq.ix1+1)
                   ix1=ix1+1
                   iniso = .false.
                   do iiso = 1, nniso
-                    iniso = iniso .or. 
+                    iniso = iniso .or.
      1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
      2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
                   end do
                   if(.not.iniso)
-     1             call lined_d(crx(ix1,iy,3),cry(ix1,iy,3),
-     2                          crx(ix1,iy,2),cry(ix1,iy,2))
-                end do                
-                ix1=-1 
-              end if               
+     1             call lined_d(crx(ix1,iy,2),cry(ix1,iy,2),
+     2                          crx(ix1,iy,3),cry(ix1,iy,3))
+                end do
+                ix1=-1
+              end if
             end if
             if (ix1.ne.-1 .and. rightix(ix1,iy).ne.nx+1) then
               ix=ix1+1
@@ -204,6 +210,12 @@ c
      1                     crx(ix,jsep,3),cry(ix,jsep,3))
             enddo
           endif
+        endif
+        if (nnreg(0).eq.7) then
+          do ix=rightcut(2),nx
+            call lined_d(crx(ix,jsep,2),cry(ix,jsep,2),
+     1                   crx(ix,jsep,3),cry(ix,jsep,3))
+          enddo
         endif
       endif
 #ifndef PLPLOT

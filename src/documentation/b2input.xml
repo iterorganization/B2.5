@@ -824,7 +824,7 @@
 				<default>3600.0</default>
 				<type>real</type>
 				<description>
-					CPU time interval after which save files plasmastate.xxxx are written.
+					If savecpu.gt.0.0, CPU time interval after which save files plasmastate.xxxx are written. Other additional options for writing of the checkpointing files are available by means of the b2mndt_ntim_save and/or b2mndr_plasmatim switches.
 					These can be used, in conjunction with the b2co.exe instruction, to recover a crashed run.
 				</description>
 			</switch>
@@ -920,7 +920,7 @@
 				<name>b2srdt_*_namelist</name>
 				<description>
 					Namelist file indicators. If xxx_namelist.eq.1, then the code looks for the file b2.xxx.parameters, in which it expects to find the xxx namelist.
-					In the case of boundary_namelist, defaults to 1 for double-null geometries, 0 otherwise.
+					In the case of boundary_namelist, defaults to 1 for double-null and snowflake geometries, 0 otherwise.
 				</description>
 				<switch>
 					<name>b2stbc_boundary_namelist</name>
@@ -957,7 +957,7 @@
 				<type>integer</type>
 				<description>
 					Profiles file indicator. If b2tqna_inputfile.eq.1, then the code looks for the file b2.transport.inputfile, in which it expects to find the transport namelist.
-					This namelist will contain profiles of sources transport parameters measured from the location (ixref,iyref) (default is outer midplane separatrix), which is set with the 'set_transport_i[xy]ref' switches.
+					This namelist will contain profiles of transport parameters measured from the location (ixref,iyref) (default is outer midplane separatrix), which is set with the 'set_transport_i[xy]ref' switches.
 				</description>
 			</switch>
 			<switch>
@@ -1750,7 +1750,7 @@
 				<description>
 					Sputtering model switches. See the code in b2stbr and the b2mod_sputter module for specific implementation details and references.
 					The default values represent the case of Graphite plates. Sput_src is the atomic number of the plasma species which causes chemical sputtering.
-					Sput_dst (when .ge.0) is the species index of the destination species produced by physical sputtering, chemical sputtering and/or RES. If either of the latter two processes are included, the production chemical sputtering and RES rate calculations provided in the code assume that sput_dst points to a Carbon species.
+					Sput_dst (when .ge.0) is the species index of the destination species produced by physical sputtering, chemical sputtering and/or RES. If either of the latter two processes are included, the chemical sputtering and RES production rate calculations provided in the code assume that sput_dst points to a Carbon species.
 					Sput_dst2 and sput_dst3 (when .ge.0) represent other species produced by wall interactions for mixed materials scenarios.
 					Sput_frac_flag is the switch to turn on mixed materials scenarios (when sput_frac_flag.eq.1).
 					Plate_model.eq.0 means the 0-D time-independent plate heating model while plate_model.eq.1 indicates the 1-D time-dependent plate heating treatment. Plate_model.eq.2 gives acces to a 2-D time-dependent model. Plate_option chooses the initialisation of the plate temperature profile. If plate_option.eq.1, the profile is set to the constant given in plate_temp. If plate_option.eq.2, the profile is computed to be the 0-D equilibrium profile. If plate_option.eq.3, the profile is read from results of the previous run.
@@ -2151,7 +2151,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to 1 the limitation of the diamagnatic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
+					When set to 1 the limitation of the diamagnetic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
 					Otherwise the limitation is not applied.
 				</description>
 			</switch>
@@ -2226,7 +2226,7 @@
 					If lambda is positive, the Coulomb logarithm is set to lambda.
 					If lambda is negative, then abs(lambda) is the lower bound to be used when computing the Coulomb logarithm according to the NRL formulae.
 					The computation of the Coulomb logarithm takes place in b2tlnl.
-					The default formula is to use the Braginskii formulation, which will give the same answer for electron-electron (ee), electron-ion (ei), and ion-ion (ii) collisions. Respectively, non-default values of '1', '2' and '3' for b2tlnl_ee, _ei, and _ii, respectively, make use of the calculation according to Wesson.
+					The default formula is to use the Braginskii formulation, which will give the same answer for electron-electron (ee), electron-ion (ei), and ion-ion (ii) collisions. Respectively, non-default values of '1', '2' and '3' for b2tlnl_ii, _ee, and _ei, respectively, make use of the calculation according to Wesson.
 				</description>
 				<switch>
 					<name>b2trcl_lambda</name>
@@ -2632,7 +2632,7 @@
 					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is modulated as per the poloidal density distribution of the ions, and neutrals come back as fully-stripped ions.
 					'eirene_ionizing_core' is an alias for this switch.
 					If the value = 1, then the flux is added by direct modification of the sources in the guard cells --- this will only work if a standard flux boundary condition is applied at that boundary.
-					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the type 13 boundary condition.
+					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the BCCON = 13 type boundary condition, for which a negative value for ionizing_core is required.
 					Cannot be used in conjunction with 'eirene_ank_mods'.
 					Use of this switch is not allowed if the core boundary condition is not of a flux type. Moreover, certain boundary conditions expressly include the flux of neutrals already (BCCON = 6, 19, 21, 23, 26, or 27), in which case use of this switch is redundant and should be avoided.
 				</description>
@@ -2750,7 +2750,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Give the real-time interval between movie frames.
+					Another option for movie output. Gives the real-time interval between movie frames. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
@@ -2758,7 +2758,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte Carlo averaging scheme.
+					Another option for plasma state file output. If greater than 0, gives the number of B2.5 full interations between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_plasmatim). Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte Carlo averaging scheme.
 				</description>
 			</switch>
 			<switch>
@@ -2807,7 +2807,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for plasma state file output. Give the real-time interval between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals.
+					Another option for plasma state file output. If greater than 0, gives the real-time interval between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_ntim_save). Must then be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
@@ -2827,6 +2827,7 @@
 			  <type>real</type>
 			  <description>
 				Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_av.
+				If non-zero, must be at least as large as the simulation timestep.
 				If used, an IDS time slice will be written at the end of run.
 				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
 			  </description>
@@ -2932,7 +2933,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Produces a numbered 'tran' file every trantim real-time seconds. An endstate file is written if it falls between scheduled write-up times. Only available within the -DJET environment.
+					Produces a numbered 'tran' file every trantim real-time seconds. An endstate file is written if it falls between scheduled write-up times. Only available within the -DJET environment. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
@@ -2977,7 +2978,7 @@
 					If b2mndt_av_ntim_batch.gt.0, the file 'b2batch.nc' is created, which contains the batch averages of the tallies.
 					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf main calls]. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2wall.nc file, otherwise the file is overwritten.
 					If balance_netcdf.ne.0, the file 'balance.nc' is created, which contains all of the arrays required by the balance post-processing routines, in CDF format.
-					If balance_average.ne.0, the balance arrays are averaged over all b2mndr_ntim timesteps.
+					If balance_average.ne.0, the balance arrays are averaged over the number of completed timesteps (itim).
 					The NetCDF files are written using the format selected by means of the b2mndr_cdf_default switch. The possible formats are:
 					0: local NetCDF library default
 					1: NetCDF classic format
@@ -3403,6 +3404,7 @@
 			  <default>0.0</default>
 			  <type>real</type>
 			  <description>
+			        Now obsolete. This speed-up scheme using artificial sources is now species-resolved, and its parameters are to be provided through the numerics namelist. Please refer to the corresponding part of the documentation.
 				Multiplier to the neutral source differential between puffing and pumping strata for code speed-up.
 				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details.
 			  </description>
@@ -3804,6 +3806,7 @@
 				<default>0.05</default>
 				<type>real</type>
 				<description>
+					Now obsolete. The speed-up scheme is now species-resolved, and its parameters are to be provided through the numerics namelist.
 					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.
 				</description>
 			</switch>
@@ -4355,7 +4358,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used.
+					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -5468,6 +5471,30 @@
 				<type>logical array of length (NSTRAT)</type>
 				<description>
 					Indicates whether a stratum is a time-dependent gas puff. Should only be .true. for strata defined as gas puffs.
+				</description>
+			</switch>
+			<switch>
+				<name>TIME_DEP_PUFF_FUNC</name>
+				<default>.false. for all strata</default>
+				<type>logical array of length (NSTRAT)</type>
+				<description>
+					Indicates whether a stratum is using a time-dependent gas puff function. Should only be .true. for strata defined as gas puffs. For use with TIME_DEP_PUFF_CASE and TIME_DEP_PUFF_PARAM.
+				</description>
+			</switch>
+			<switch>
+				<name>TIME_DEP_PUFF_CASE</name>
+				<default>-1 for all strata</default>
+				<type>integer array of length (NSTRAT)</type>
+				<description>
+					Used to select the functional form of the time-dependent gas puff function. For use with TIME_DEP_PUFF_FUNC and TIME_DEP_PUFF_PARAM.
+				</description>
+			</switch>
+			<switch>
+				<name>TIME_DEP_PUFF_PARAM</name>
+				<default>0 for all strata</default>
+				<type>real array of length (NSTRAT)</type>
+				<description>
+					Used to set the parameters for the functional form of the time-dependent gas puff function. For use with TIME_DEP_PUFF_FUNC and TIME_DEP_PUFF_CASE.
 				</description>
 			</switch>
 			<switch>
@@ -6980,6 +7007,46 @@
 				</description>
 			</switch>
 			<switch>
+				<name>DTCO_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1)</type>
+				<description>
+					Multiplier to the time used in solving the continuity equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>DTMO_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1,0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the parallel momentum equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEE_SOL</name>
+				<default>1.0</default>
+				<type>real*8</type>
+				<description>
+					Multiplier to the time used in solving the electron heat equation in the far SOL defined by iy >= iy_SOL_dtXX).
+				</description>
+			</switch>
+			<switch>
+				<name>DTEI_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the ion heat equation in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>IY_SOL_DTXX</name>
+				<default>-2</default>
+				<type>integer</type>
+				<description>
+					Defines the region of the SOL (iy >= iy_SOL_dtXX) where the time multipliers dt[XX]_SOL should be applied. If iy_SOL_dtXX.eq.-2 (default), no time multiplication is applied for any equation independently of dt[XX]_SOL values. If iy_SOL_dtXX points to a closed flux surface (i.e. if iy_SOL_dtXX.le.jsep), the code produces an error message and stops.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVECO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -7077,6 +7144,31 @@
 				<description>
 				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
+				</description>
+			</switch>
+			<switch>
+				<name>SNA_CORR</name>
+				<default>0.0</default>
+				<type>real*8 array of size (1:NSPECIES)</type>
+				<description>
+				Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
+				</description>
+			</switch>
+			<switch>
+				<name>TAUMAX</name>
+				<default>0.05</default>
+				<type>real*8 array of size (1:NSPECIES)</type>
+				<description>
+				Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
+				</description>
+			</switch>
+			<switch>
+				<name>DO_SNA_CORR_CORE</name>
+				<default>.true.</default>
+				<type>logical array of size (1:NSPECIES)</type>
+				<description>
+				Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
 				</description>
 			</switch>
 			<switch>
@@ -7492,7 +7584,7 @@
 				<namelist>USER</namelist>
 				<description>
 					Contains additional data for user-specific diagnostics. Always read if present.
-					This version provided by Andrei Kukushkin for ITER cases.
+					This version originally provided by Andrei Kukushkin for ITER cases, however, it may be used (at least partially) for arbitrary machine.
 				</description>
 			</introduction>
 			<switch>
@@ -7670,12 +7762,33 @@
 				</description>
 			</switch>
 			<switch>
+				<name>TE_DET_THRESHOLD</name>
+				<default>2.0</default>
+				<type>real*8</type>
+				<description>
+					Electron temperature at the target (in eV) which is used a threshold identifying the transition of the local magnetic flux tube to detachment. The width of the zone with Te less than TE_DET_THRESHOLD (counted from the strike point towards the SOL side) is outputted into user_SPb.trc. This distance monotonically increases with increasing of radiated power fraction or with decreasing of peak target energy loads, therefore it may be used as a measure of the degree of detachment.
+				</description>
+			</switch>
+			<switch>
 				<name>FILEDATA</name>
 				<default>.true.</default>
-				<type>logical array of size 10</type>
+				<type>logical array of size 12</type>
 				<description>
-					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order, starting with element 2 of the filedata array: test.trc, residuals.trc, sources.trc, blnn.trc, blne.trc, integral.trc, user.trc, blnm.trc, sepdata.trc.
-					If there is no b2.user.parameters file present, the flag for user.trc is set to .false..
+					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order:
+					   1:  ntrc_srt  :  tracing/intshrt.trc    :  integral data (short version)
+					   2:  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
+					   3:  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
+					   4:  ntrc_src  :  tracing/sources.trc    :  integral sources
+					   5:  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
+					   6:  ntrc_ble  :  tracing/blne.trc       :  energy balance
+					   7:  ntrc_int  :  tracing/integral.trc   :  additional integrals
+					   8:  ntrc_usr  :  tracing/user.trc       :  user-specific data
+					   9:  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
+					  10:  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
+					  11:  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
+					  12:  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data introduced by SPb group - contains alternative to user.trc set of data and is more straightforward in programming
+
+					If there is no b2.user.parameters file present, the flags for user.trc and user_SPb.trc are set to .false..
 					If the tracing files are to be appended but a reading error occurs when opening them, the corresponding filedata element is overwritten to .false..
 				</description>
 			</switch>

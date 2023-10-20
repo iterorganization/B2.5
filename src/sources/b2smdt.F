@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2smdt (nx, ny, ns, dtim, hz,   !srv 09.01.01 01.07.08
-     &  vol, na0, ua0, smodt, lout)              !srv 11.09.09
+     &  vol, na, uap, smodt, lout)               !srv 11.09.09 10.10.22
       use b2mod_types 
       use b2mod_indirect 
       use b2mod_numerics_namelist 
@@ -21,8 +21,8 @@
       logical(1) :: lout                                             !srv 16.07.10
       integer nx, ny, ns
       real (kind=R8) ::
-     *  dtim, vol(-1:nx,-1:ny), na0(-1:nx,-1:ny,0:ns-1),
-     &  ua0(-1:nx,-1:ny,0:ns-1), hz(-1:nx,-1:ny)                    !srv 09.01.01
+     *  dtim, vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),             !srv 10.10.22
+     &  uap(-1:nx,-1:ny,0:ns-1), hz(-1:nx,-1:ny)                    !srv 09.01.01 10.10.22
 *   ..input/output arguments
       real (kind=R8) ::
      *  smodt(-1:nx,-1:ny,0:3,0:ns-1)
@@ -77,7 +77,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test old state
-       call b2xvsg (n2*ns, na0, 1, 'na0', '.gt.')
+       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')                          !srv 10.10.22
       endif
     
 #ifdef WITH_FTIMINGS
@@ -91,7 +91,7 @@
 !$OMP& shared(leftix,rightix,bottomiy,topiy,region)
 !$OMP& shared(use_eirene,dtim,dtmo)
 !$OMP& shared(phm1)
-!$OMP& shared(vol,na0,ua0,hz,am)
+!$OMP& shared(vol,na,uap,hz,am)
 ! these are the result arrays:
 !$OMP& shared(smodt)
 #endif
@@ -110,7 +110,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
             ttim=dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
             t0 = (phm1/ttim)*vol(ix,iy)*hz(ix,iy)                        !srv 09.01.01
-            smodt(ix,iy,0,is) = t0*am(is)*mp*ua0(ix,iy,is)*na0(ix,iy,is) !srv 06.01.21 {
+            smodt(ix,iy,0,is) = t0*am(is)*mp*uap(ix,iy,is)*na(ix,iy,is)  !srv 06.01.21 { 10.10.22
             smodt(ix,iy,1,is) = 0.0_R8
             smodt(ix,iy,2,is) = 0.0_R8
             smodt(ix,iy,3,is) = -t0                                      !srv 06.01.21 }

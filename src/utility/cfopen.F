@@ -69,8 +69,27 @@
       endif
 *   ..open file
       open (ioun,iostat=ios,file=fname,status=fstat,form=fform)
-      call xertst (ios.eq.0, 'cfopen--open failure: file='//
+      call xertst (ios.eq.0,
+     & 'cfopen--open failure: file='//
      &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------
       end subroutine cfopen
+
+#ifndef F2003
+      integer function newunit ()
+      implicit none
+      logical used
+      external xertst
+
+      newunit = 99
+      used = .true.
+      do while (newunit.gt.0 .and. used)
+        inquire(unit=newunit,opened=used)
+        if (used) newunit = newunit - 1
+      end do
+      call xertst(.not.used,
+     . 'No available free unit numbers for output!')
+      return
+      end function newunit
+#endif

@@ -20,16 +20,13 @@ C ===================================================================
       character var*256,envvar*256,systemarg*256
       character*1 backslash
 #ifdef NAGFOR
-      integer status, ierror
+      integer status
 #endif
-#ifdef USE_PXFGETENV
-      integer lenval
-#ifndef NAGFOR
       integer ierror
-#endif
-#else
-#ifdef NAGFOR
+#ifndef NO_GETENV
       integer lenval
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -179,28 +176,23 @@ C ===================================================================
       elseif(var.eq.'sonnetfile'.or.var.eq.'SONNETFILE') then
         envvar=sonnetfile
       else
-#ifdef NO_GETENV
         envvar=' '
-#else
-#ifdef NAGFOR
-        call get_environment_variable(var, status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable(var,value=envvar)
-        elseif (ierror.eq.1) then
-          envvar=' '
-        endif
+#ifdef NO_GETENV
+        write(*,*) 'Environment variable ',var(1:lnblnk(var)),
+     1       ' cannot be retrieved. Code compiled with NO_GETENV!'
 #else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV (var, 0, envvar, lenval, ierror)
 #else
-        call getenv (var, envvar)
+        call get_environment_variable(var, status=ierror, length=lenval)
+        if (ierror.eq.0)
+     1   call get_environment_variable(var, value=envvar)
 #endif
-#endif
-#endif
-        if(envvar.eq.' ') then
+        if(streql(envvar,' ')) then
           write(*,*) 'Environment variable ',var(1:lnblnk(var)),
      1       ' does not exist'
         endif
+#endif
       endif
       tmp(jcpos:jcpos+lnblnk(envvar)-1)=envvar(1:lnblnk(envvar))
       jcpos=jcpos+lnblnk(envvar)

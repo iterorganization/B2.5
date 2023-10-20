@@ -109,6 +109,9 @@ c     conversion of constants to CGS units
       elseif(nnreg(0).eq.5) then
         ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
         iyref=2*topcut(1)/3
+      elseif(nnreg(0).eq.7) then
+        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        iyref=2*topcut(1)/3
       elseif(nnreg(0).eq.8) then
         ixref=(rightcut(1)+rightcut(2))/2
         iyref=2*min(topcut(1),topcut(2))/3
@@ -565,7 +568,7 @@ c     conversion of constants to CGS units
             if (b2plot_debug.ge.8) write(*,*) 'mustari: ',mustari
             bracket1=(0.66_R8*(1.0_R8+1.54_R8*alpha)+
      3               (1.88_R8*epsilon**0.5_R8-1.54_R8*epsilon)*
-     4               (1_R8+3.75_R8*alpha))/
+     4               (1.0_R8+3.75_R8*alpha))/
      5               (1.0_R8+1.03_R8*mustari**0.5_R8+0.31*mustari)
             bracket2=0.59_R8*mustari*epsilon/
      6         (1_R8+0.74_R8*mustari*epsilon**1.5_R8)*

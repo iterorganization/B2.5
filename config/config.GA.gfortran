@@ -11,8 +11,6 @@ LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/lib64 -lX11 -lm
 LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
 
-DEFINES += -DDOFLUSH
-
 CPP = /lib/cpp -traditional
 
 ifdef USE_MPI

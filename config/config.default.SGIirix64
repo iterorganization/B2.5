@@ -13,23 +13,15 @@ ifndef LD_NETCDF
 endif
 
 ifndef SOLPS_CPP
-ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
-DEFINES += -DCONSTANTS_PROVIDED
-ifdef AMNS_PREFIX
-  AMNS_VERSION = `pkg-config amns --modversion`
-  AMNS_MAJOR_VERSION = $(shell echo ${AMNS_VERSION} | cut -d '.' -f1 )
-  AMNS_MINOR_VERSION = $(shell echo ${AMNS_VERSION} | cut -d '.' -f2 )
-else
-  AMNS_MAJOR_VERSION = 0
-  AMNS_MINOR_VERSION = 0
-endif
-ifeq ($(shell test ${AMNS_MAJOR_VERSION} -le 1; echo $$?),0)
-  ifeq ($(shell test ${AMNS_MINOR_VERSION} -le 3; echo $$?),0)
+  ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+    DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    INCMODS += `pkg-config fundamental-constants --cflags`
+    IMAS_PKG_LIST = fundamental_constants
   endif
 endif
-endif
+
+ifdef IMAS_PKG_LIST
+  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
 ifdef USE_MPI
@@ -50,8 +42,7 @@ endif
   FCOPTS = -64 -O -r10000 -OPT:roundoff=2
  endif
  ifeq ($(realkind),8)
-  EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal \
-   -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+  EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
   FCOPTS = -64 -i4 -O -r10000 -OPT:roundoff=2
  endif
  FC = f77

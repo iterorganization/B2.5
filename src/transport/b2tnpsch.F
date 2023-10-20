@@ -93,7 +93,7 @@
 *   ..compute P.Sch x-flux                                               !srv 13.10.06 {
       if(PSch_style.eq.0) then                                           !srv 12.11.08
         nbti=nb*ti
-        call intcor(nx,ny,vol,nbti,nbtic)                                !srv 08.10.04
+        call intcor(nx, ny, vol, nbti, nbtic)                            !srv 08.10.04
         do iy = 0, ny-1
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or.
@@ -124,7 +124,7 @@
       else if(PSch_style.eq.1) then
         weight = 1.0e0_R8                                               !lk
         nbti=nb*ti
-        call intcor(nx,ny,weight,nbti,nbtic)                            !lk 12.12.07
+        call intcor(nx, ny, weight, nbti, nbtic)                        !lk 12.12.07
         call intcor(nx,ny,weight,nb,nbcor)                              !lk 09.06.11
         do iy = 0, ny-1
          do ix = -1, nx
@@ -152,7 +152,7 @@
       else                                                              !nn
         nbti=nb*ti
         weight = 1.0e0_R8
-        call intcor(nx,ny,weight,nbti,nbtic)
+        call intcor(nx, ny, weight, nbti, nbtic)
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or.
@@ -229,8 +229,8 @@
               fnbPSch(ix,iy,1)= 0.0e0_R8
             else
               fnbPSch(ix,iy,1) = -PSch*
-     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
-     &      bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
+     &         (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
+     &         bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
             endif
           enddo
         enddo

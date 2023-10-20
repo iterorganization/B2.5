@@ -67,8 +67,8 @@
 
 *   ..precompute differences
         wght = 1.0_R8
-        nete2=ne*te*te
-        call intcor(nx,ny,wght,nete2,nete2c)
+        nete2 = ne*te*te
+        call intcor(nx, ny, wght, nete2, nete2c)
 
 *   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
 !       do is = 0, ns-1                                                  !srv 12.05.11
@@ -118,8 +118,8 @@
                 cone(ix,iy,0,:) = 0.0e0_R8
               else
                 fhePSch(ix,iy,0) = -PSch*
-     &          (nete2c(topix(ix,iy),topiy(ix,iy))-nete2c(ix,iy))*
-     &          bzbl(ix,iy)*hzl(ix,iy)/qe
+     &           (nete2c(topix(ix,iy),topiy(ix,iy))-nete2c(ix,iy))*
+     &           bzbl(ix,iy)*hzl(ix,iy)/qe
                 cone(ix,iy,0,1) = -0.5e0_R8*PSch*cdde(ix,iy,1)*          ! 0.25*2  !srv 02.01.07 !som 03.11.21
      *                                         ne(ix,iy)*te(ix,iy)
                 cone(ix,iy,0,2) = -0.5e0_R8*PSch*cdde(ix,iy,1)*          ! 0.25*2  !srv 02.01.07 !som 03.11.21
@@ -184,8 +184,8 @@
              cone(ix,iy,1,:) = 0.0e0_R8
             else
               fhePSch(ix,iy,1) = PSch*
-     &        (nete2c(rightix(ix,iy),rightiy(ix,iy))-nete2c(ix,iy))*
-     &        bzbv(ix,iy)*hzb(ix,iy)/qe
+     &         (nete2c(rightix(ix,iy),rightiy(ix,iy))-nete2c(ix,iy))*
+     &         bzbv(ix,iy)*hzb(ix,iy)/qe
               cone(ix,iy,1,1) = -0.5e0_R8*PSch*cdde(ix,iy,0)*         ! 0.25*2 !som 03.11.21 !srv 02.01.07 {
      &                                           ne(ix,iy)*te(ix,iy)
               cone(ix,iy,1,2) = -0.5e0_R8*PSch*cdde(ix,iy,0)*         ! 0.25*2 !som 03.11.21

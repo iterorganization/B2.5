@@ -1,12 +1,3 @@
-      module b2mod_ilutern
-      implicit none
-
-      logical, save :: lfirst
-      !$OMP THREADPRIVATE (lfirst)
-      data lfirst /.true./
-
-      contains
-
       SUBROUTINE ILUTERN(N1, N2, N1D, ASO, AWE, ACP, AEA, ANO,
      .      RHS, SOL, NAME)                                          !srv 18.03.10
       use b2mod_types
@@ -158,7 +149,7 @@ c        IF (A1HN.EQ.0.0_R8) THEN
 
 csw 12oct2012 in case of b2swtest=T --> reinit solver
 c             (maybe necessary in case of multi-fluid?)
-      if(b2swtest.eq.1) lfirst=.true.
+      if(b2swtest.eq.1) lfirst_ilu=.true.
 
 !!FR The b2_matrix file will not write out correctly if code runs in parallel
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
@@ -222,28 +213,28 @@ cdpc
             !$OMP END MASTER
           else
             if (ncall.eq.0) then
-              write(*,*) 'Opening 69'
-              open(69,file='b2_matrix')
+              write(*,*) 'Opening 84'
+              open(84,file='b2_matrix')
             end if
-            write(*,*) 'Writing 69'
-            write(69,*) 'Called from '//trim(name)
-            write(69,*) n,' n'
-            write(69,*) 'ASO AWE ACP AEA ANO RHS'
+            write(*,*) 'Writing 84'
+            write(84,*) 'Called from '//trim(name)
+            write(84,*) n,' n'
+            write(84,*) 'ASO AWE ACP AEA ANO RHS'
             do i=1,n
               iy = (i-1)/n1+1
               ix = i-(iy-1)*n1
-              write(69,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
+              write(84,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
      .         aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy),
      .         ano(ix,iy), rhs(ix,iy)
             enddo
-            write(69,*) nz,' nz'
+            write(84,*) nz,' nz'
             do i=1,nz
-              write(69,'(4(i6,1x),1p,1e15.8)')
+              write(84,'(4(i6,1x),1p,1e15.8)')
      .         IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
             enddo
             if (ncall+1.eq.nwrite) then
-              write(*,*) 'Closing 69'
-              close(69)
+              write(*,*) 'Closing 84'
+              close(84)
             end if
           end if
         endif
@@ -255,7 +246,7 @@ cdpc
       else
         WRITE(6,*) 'ILUTERN'
       endif
-      if(lfirst) then
+      if(lfirst_ilu) then
         write(*,*) 'ilutern: nz = ',nz
         call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
         iflag=0
@@ -265,7 +256,7 @@ cdpc
         icnh_save(i)=icnh(i)
         a1h_save(i)=a1h(i)
       enddo
-      if(.not.lfirst) then
+      if(.not.lfirst_ilu) then
         call ma28bd
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
@@ -280,7 +271,7 @@ cdpc
           enddo
         endif
       endif
-      if(lfirst.or.(iflag.lt.0.and.iflag.ne.-14)) then   ! do not do this for duplicate elements
+      if(lfirst_ilu.or.(iflag.lt.0.and.iflag.ne.-14)) then   ! do not do this for duplicate elements
         call ma28ad
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
@@ -290,7 +281,7 @@ cdpc
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false.
+        lfirst_ilu=.false.
       endif
       call ma28id
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
@@ -342,15 +333,8 @@ cdpc
       ncall=ncall+1
       call subend ()
       RETURN
-      END SUBROUTINE ILUTERN
-
-      subroutine restart_ma28
-      lfirst=.true.
-      write(*,*) 'Restarting ma28'
-      return
-      end subroutine restart_ma28
-
 *=======================================================================
 *//END ILUTERN//
 
-      END MODULE B2MOD_ILUTERN
+      END SUBROUTINE ILUTERN
+

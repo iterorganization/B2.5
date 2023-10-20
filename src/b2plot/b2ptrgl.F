@@ -42,8 +42,9 @@ c======================================================================
       character*8 TEXTA(DEF_NATM)
 #endif
 c
-      integer i,j,jj,k,kk,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
+      integer i,j,jj,k,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is,ix,ik,ind,ims,ias,nclm_na,nclm_nm
+      integer kval, kflx
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
@@ -53,14 +54,15 @@ c*  wid_trg:  ideal power on the targets
 c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
       real (kind=R8) ::
      *  h,ha,hb,hc,t,u,a,b,d,p,wo,wt,mion,t1(2),
-     ,  z_hlp(ntrgsx),xtg_hlp(-1:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
+     ,  z_hlp(ntrgsx),xtg_hlp(-1:ny,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
      ,  xmc_hlp(0:ny-1,ntrgsx),s(0:ny-1,ntrgsx),wi(ntrgsx),
      ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),
      ,  xtrg(0:ny-1,ntrgsx),netrg(0:ny-1,ntrgsx),tetrg(0:ny-1,ntrgsx),
      ,  titrg(0:ny-1,ntrgsx),wpttrg(0:ny-1,ntrgsx),
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
      ,  wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM),wtttrg(0:ny-1,ntrgsx),
-     ,  wpk_tt(0:ntrgsx),wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
+     ,  wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
+!!!     wpk_tt(0:ntrgsx) now in module b2mod_b2plot_all_loading  iyv 11.04.22
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),wp_xpt(0:ny-1,ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  wid_par(0:ny-1,ntrgsx),wid_trg(0:ny-1,ntrgsx),
@@ -129,20 +131,21 @@ c***                     (PRFAML+PRFPML)*H_EDISS
      ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
      ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL),
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
-     ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
-     ,   sn_t,spt_out(2),mol_out(2*DEF_NMOL)
-      character*11 spt_str(2,ntrgsx),fpt_str(4*DEF_NATM)
+     ,   sjs_s(0:ntrgsx), sjs_t(ntrgsx), sjs_w(ntrgsx), sptmass,
+     ,   sn_t, spt_out(2), mol_out(2*DEF_NMOL)
+      character*11 spt_str(2,ntrgsx), fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
-      character*16 ssmol,ssion
+      character*16 ssmol, ssion
       real (kind=R8) ::
      *   ers_factor, nsecyr
-      parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
+      parameter (nsecyr=24.0_R8*3600.0_R8*365.2425_R8)
       parameter (ers_factor=nsecyr*1.0e-3_R8/avogr)
       real (kind=R8) ::
-     *   ss(ntrgsx),ersn_a(ntrgsx),ss_m,ersn_am,ersn_p(ntrgsx),ersn_pm,
-     *   ersn_l(ntrgsx)
+     *   ss(ntrgsx), ersn_a(ntrgsx),
+     *   ss_m, ersn_am, ersn_p(ntrgsx), ersn_pm, ersn_l(ntrgsx)
       logical ft44
       logical streql
+      integer, save :: ncall = 0   ! iyv 19.07.22
       external streql
       intrinsic sqrt
 c*** Data for erosion calculations
@@ -153,6 +156,7 @@ c***  srfs_a    : atomic weight of possible target materials
       integer n_srfs_m,spt_mat(ntrgsx),sptlis(ntrgsx)
       parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
+      real (kind=R8) :: tti, ptext, faext, uaext, taext
       character srfs_m(n_srfs_m)*4
       data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
       data srfs_a /  9.0_R8, 12.0_R8, 12.0_R8, 56.0_R8,
@@ -201,7 +205,8 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (ncall.eq.0)       ! iyv 19.07.22
+     , call ipgeti ('b2mndr_eirene', use_eirene)
       if (use_eirene.ne.0) then
         filename=fort_lc//'44'
         call find_file(filename,ft44)
@@ -212,7 +217,7 @@ c*** which are calculated in Eirene.
 c----------------------------------------------------------------------
 c*** Power loading:
 c*** Radiation load onto the targets
-c
+
       call b2ptrdl(wrdtrg)
 #ifdef DBG
       print '(2a,3i5,2(1x,l1))','After b2ptrdl: ',
@@ -242,6 +247,7 @@ c*** Target geometry
           z_hlp(i)=z_hlp(i)+0.5_R8*h
           xtg_hlp(iy,i)=z_hlp(i)
         end do !}
+        xtg_hlp(ny,i)=xtg_hlp(ny-1,i)+0.5_R8*h
       end do !}
 #ifdef DBG
       print *
@@ -249,7 +255,7 @@ c*** Target geometry
       do j=1,ntrgts !{
         k=itrg(j)
         print '(1x,i3,10(1x,f9.6)/(4x,10(1x,f9.6)))',lseppos(k)+1,
-     ,                                         (xtg_hlp(i,k),i=-1,ny-1)
+     ,                                         (xtg_hlp(i,k),i=-1,ny)
       end do !}
 #endif
 
@@ -384,40 +390,54 @@ c
       do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
         if (itrg(j).gt.0) then !{
           k=ltrgpos(itrg(j))
-          kk=k+l
+          kval=k+l
+          kflx=k+1-l
+          if( .not. from_b2plot) kflx=k+1
           do iy=lytg,ny-1 !{
             wo=0.0_R8
             wnutrg(iy,itrg(j))=0.0_R8
-            whtpl(iy,itrg(j))=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+
-     .                    fhi_ext(k+1-l,iy,0)
+            whtpl(iy,itrg(j))=fhe(kflx,iy,0)+fhi(kflx,iy,0)+
+     .                    fhi_ext(kflx,iy,0)
             do is=0,ns-1 !{
+              tti=ti(kval,iy)
+              if( .not. from_b2plot )
+     *            tti=0.5_R8*(ti(kflx,iy)+ti(k,iy))
               if (.not.is_neutral(is).or.ft44) then
-                wo=wo+fhp(k+1-l,iy,0,is)
+                wo=wo+fhp(kflx,iy,0,is)
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               else
                 wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+(1.0_R8-BoRiS)*
-     *           (fhm(k+1-l,iy,0,is)+fna(k+1-l,iy,0,is)*ti(kk,iy))
+     *           (fhm(kflx,iy,0,is)+fna(kflx,iy,0,is)*tti)
               endif
               whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+(1.0_R8-BoRiS)*
-     *         (fhm(k+1-l,iy,0,is)+fna(k+1-l,iy,0,is)*ti(kk,iy))
+     *         (fhm(kflx,iy,0,is)+fna(kflx,iy,0,is)*tti)
             end do !}
             do is=0,ns_ext-1 !{
+              ptext=pt_ext(kval,iy,is)
+              uaext=ua_ext(kval,iy,is)
+              faext=fa_ext(kflx,iy,0,is)
+              if( .not. from_b2plot) then
+                ptext=0.5_R8*(pt_ext(kflx,iy,is)+pt_ext(k,iy,is))
+                uaext=0.5_R8*(ua_ext(kflx,iy,is)+ua_ext(k,iy,is))
+                faext=0.5_R8*(fa_ext(kflx,iy,0,is)+fa_ext(k,iy,0,is))
+                taext=0.5_R8*(ta_ext(kflx,iy,is)+ta_ext(k,iy,is))
+              end if
               if (.not.is_ext_neutral(is).or.ft44) then
-                wo=wo+fa_ext(k+1-l,iy,0,is)*pt_ext(kk,iy,is)*ev
+                wo=wo+faext*ptext*ev
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
               else
                 wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+
-     .                 fa_ext(k+1-l,iy,0,is)
+     .                 faext
      .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .                 ua_ext(kk,iy,is)**2+ta_ext(kk,iy,is))
+     .                 uaext**2+taext)
               end if
               whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+
-     .               fa_ext(k+1-l,iy,0,is)
-     .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
-     .               am_ext(is)*mp*ua_ext(kk,iy,is)**2)
+     .               faext
+     .             *(1.0_R8-BoRiS)*(taext+0.5_R8*
+     .               am_ext(is)*mp*uaext**2)
             end do !}
-            whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+fne(k+1-l,iy,0)
-     .           *(1.0_R8-BoRiS)*te(kk,iy)
+            whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+fne(kflx,iy,0)
+     .           *(1.0_R8-BoRiS)*te(kval,iy)
 c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
 c           wo=-1.0e-6_R8*wo/s(iy,itrg(j))
             wptpl(iy,itrg(j))=wo/s(iy,itrg(j))*u
@@ -425,9 +445,9 @@ c           wo=-1.0e-6_R8*wo/s(iy,itrg(j))
             wpltrg(iy,itrg(j))=wptpl(iy,itrg(j))+whtpl(iy,itrg(j))
             if(.not.ft44) wnutrg(iy,itrg(j))=
      .                    wnutrg(iy,itrg(j))*u/s(iy,itrg(j))
-            netrg(iy,itrg(j))=ne(k+l,iy)
-            tetrg(iy,itrg(j))=te(k+l,iy)/ev
-            titrg(iy,itrg(j))=ti(k+l,iy)/ev
+            netrg(iy,itrg(j))=ne(kval,iy)
+            tetrg(iy,itrg(j))=te(kval,iy)/ev
+            titrg(iy,itrg(j))=ti(kval,iy)/ev
             if (ft44) then
               do iss=1,nsts !{
                 if (eirdiag_nds_typ(iss).ne.2) cycle
@@ -473,12 +493,12 @@ c             kinetic energy of recycled and sputtered neutrals
                   endif
                   imol=imol+1
                 enddo
-                t=tib2(k+l+1,iy+1,is,1)/ev
+                t=tib2(kval+1,iy+1,is,1)/ev
                 if (mion.gt.0.0_R8)
      >           wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+
-     .            s(iy,itrg(j))*dib2(k+l+1,iy+1,is,1)*
+     .            s(iy,itrg(j))*dib2(kval+1,iy+1,is,1)*
      *            sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .           (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
+     .           (2.0_R8*tib2(kval+1,iy+1,is,1)+EionH2*ev)
               enddo
             endif
 c carlis  21 feb 2017 added calculation of connection length from midplane to targets
@@ -595,6 +615,9 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
 #endif
       if(lrdlsp) nclm_ld=nclm_ld+nclm_na
       if(lrdlcr) nclm_ld=nclm_ld+1
+
+      if (from_b2plot) then    ! iyv 11.04.22
+
       do j=1,ntrgts !{
         jj=itrg(j)
         if(j.eq.ntrgts.and..not.(ntrgts.eq.1.and.itrg(1).eq.1))
@@ -707,6 +730,7 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
         end do !}
         close (lun)
       end do !}
+      end if                 ! iyv 11.04.22
 c----------------------------------------------------------------------
 c*** Calculate the peak power loads onto the targets and write them
 c*** down to the summary file
@@ -738,6 +762,9 @@ c
               wlc_tt(itrg(j))=xtrg(i,itrg(j))
               m_hlp(itrg(j))=i
             end if !}
+
+            if(from_b2plot) then           !iyv 11.04.22
+
             if(wrdtrg(i,itrg(j),0) .gt. wpk_rd(itrg(j))) then !{
               wpk_rd(itrg(j))=wrdtrg(i,itrg(j),0)
               wlc_rd(itrg(j))=xtrg(i,itrg(j))
@@ -750,10 +777,17 @@ c
               wpk_nu(itrg(j))=wnutrg(i,itrg(j))
               wlc_nu(itrg(j))=xtrg(i,itrg(j))
             end if !}
+            end if ! if(from_b2plot)   !iyv 11.04.22
           end do !}
         end if !}
         l=1-l
       end do !}
+
+
+      if ( .not. from_b2plot) then
+        ncall = ncall + 1
+        return       !iyv 11.04.22
+      endif
 
       write(fmt_peak,700) 24
   700 format('(1p,e12.5,',i3,'(a1,e12.5))')
@@ -772,6 +806,7 @@ c
           endif
           i3=i2-i1
           if (i3.eq.0 .and. ntrgts.eq.1) i3=1
+
           wpk_tt(0)=max(wpk_tt(i1),wpk_tt(i2))
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
@@ -896,8 +931,8 @@ c!###}
               else !}{
                 h=1.0_R8
               end if !}
-              b=xtg_hlp(i+1,itrg(j))*(1.0_R8-h)+xtg_hlp(i,itrg(j))*h
-              d=xmc_hlp(i+1,itrg(j))*(1.0_R8-h)+xmc_hlp(i,itrg(j))*h
+              b=xtg_hlp(i,itrg(j))*(1.0_R8-h)+xtg_hlp(i-1,itrg(j))*h
+              d=xmc_hlp(i,itrg(j))*(1.0_R8-h)+xmc_hlp(i-1,itrg(j))*h
               ib=i  !###
               hb=h  !###
               exit
@@ -1004,7 +1039,7 @@ c!###}
           print *,'m_hlp,wtttrg:',m_hlp(itrg(j))
           print '(1x,i3,1p,10e10.2/(4x,10e10.2))',lseppos(itrg(j))+1,
      ,                                     (wtttrg(i,itrg(j)),i=0,ny-1)
-          print '(5a4,a7,9a12)','j','imx','ia','ib','ic','a','b','d',
+          print '(5a4,a7,8a12)','j','imx','ia','ib','ic','a','b','d',
      ,      'wpk','pwr','p','ha','hb','hc'
           print '(5i4,1p,9e12.4)',itrg(j),m_hlp(itrg(j)),ia,ib,ic,a,b,d,
      ,      wpk_tt(itrg(j)),pwr_tt(itrg(j)),p,ha,hb,hc
@@ -1152,6 +1187,7 @@ c      print *,'Particle fluxes...' !###
         ersn_l(j)=0.0_R8
         sjs_w(j)=0.0_R8
         sjs_t(j)=0.0_R8
+        sjs_s(j)=0.0_R8
         do ia=1,nclm_na
           sja_w(j,ia)=0.0_R8
           sja_t(j,ia)=0.0_R8
@@ -1381,7 +1417,7 @@ c        Temporary solution for this routine is to use the bulk track_species
 
           if (sjs_t(itrg(j)).gt.0.0_R8) then
             do_sput(itrg(j))=.true.
-            do iy=lytg,ny-1!{
+            do iy=lytg,ny-1 !{
               sjs(iy,itrg(j))=sjs_t(itrg(j))*sjs(iy,itrg(j))
 c carlis The erosion of the wall is evaluated using the wall material and not the emitted atom/molecule
 c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/srfs_d[g/cm3]/s[m2]
@@ -1402,8 +1438,8 @@ c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/
 c carlis The emitted amount in g/y is evaluated using the sputtered atom or molecule
 c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/mol]
               sjs(iy,itrg(j))=sjs(iy,itrg(j))*sptmass*nsecyr/avogr
-              sjs_w(itrg(j))=sjs_w(itrg(j))+sjs(iy,itrg(j))
-            end do
+              sjs_s(itrg(j))=sjs_s(itrg(j))+sjs(iy,itrg(j))
+            end do !}
             if (sptlis(itrg(j)).le.natmi) then
               ssmol=texta(sptlis(itrg(j)))
             else
@@ -1419,7 +1455,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           else ! no sputtering
             print *,'b2ptrgl, zero sputtering flux for target j=',
      ,                                                   itrg(j)
-            sjs_w(itrg(j))=0.0_R8
+            sjs_s(itrg(j))=0.0_R8
           end if
         end do !loop on targets
       else
@@ -1556,7 +1592,7 @@ c
       do imol=1,nmoli
         sjm_w(0,imol)=0.0_R8
       end do
-      sjs_w(0)=0.0_R8
+      sjs_s(0)=0.0_R8
       do j=1,ntrgts
         do ia=1,nclm_na
           sja_w(0,ia)=sja_w(0,ia)+sja_w(itrg(j),ia)
@@ -1576,10 +1612,10 @@ c
       write(lun,'(2a)') 'Target erosion summary: ',trim(label)
       write(lun,*)
       if (LSN .and. itrg(1).eq.1) then
-        write(lun,'(12x,3(a1,a12))')
+        write(lun,'(12x,5(a1,a12))')
      -                   (tab,trg_label(i),i=1,ntrgsx,k),tab,'total   '
       else
-        write(lun,'(12x,3(a1,a12))')
+        write(lun,'(12x,5(a1,a12))')
      -                   (tab,trg_label(i),i=ntrgsx,1,-k),tab,'total   '
       endif
       write(fmt_peak,730) ntrgts+1
@@ -1614,15 +1650,15 @@ c
       if (ntargsp.gt.0.and.ft44) then
         k=0
         do j=1,ntrgts
-          sjs_w(0)=sjs_w(0)+sjs_w(itrg(j))
+          sjs_s(0)=sjs_s(0)+sjs_s(itrg(j))
           if(k.eq.0.and..not.streql(mtrtrgsg(itrg(j)),' ')) k=itrg(j)
         end do
         if (k.ne.0) then
           write(lun,*)
           write(lun,*) 'Total sputtering [g/y]'
           write(lun,fmt_peak) trim(mtrtrgsg(k)),
-     ,                       (tab,sjs_w(itrg(i)),i=1,ntrgts),
-     ,                        tab,sjs_w(0)
+     ,                       (tab,sjs_s(itrg(i)),i=1,ntrgts),
+     ,                        tab,sjs_s(0)
         end if
         write(lun,*)
         write(lun,*) 'Erosion [mm/y]'
@@ -1631,22 +1667,21 @@ c
         ss_m=0.0_R8
         do j=1,ntrgts !{
           if (do_sput(itrg(j))) then
+            sn_t=0.0_R8
             ss(itrg(j))=0.0_R8
             ersn_p(itrg(j))=0.0_R8
             do iy=lytg,ny-1 !{
-              sn_t=0.0_R8
               ss(itrg(j))=ss(itrg(j))+s(iy,itrg(j))
-              sn_t=sn_t+sje(iy,itrg(j))
-              if(sn_t .gt. ersn_p(itrg(j))) then !{
-                ersn_p(itrg(j))=sn_t
+              sn_t=sn_t+sje(iy,itrg(j))*s(iy,itrg(j))
+              if(sje(iy,itrg(j)) .gt. ersn_p(itrg(j))) then !{
+                ersn_p(itrg(j))=sje(iy,itrg(j))
                 ersn_l(itrg(j))=xtrg(iy,itrg(j))
               end if !}
             end do !}
-            ersn_a(itrg(j))=0.0_R8
-            ersn_a(itrg(j))=ersn_a(itrg(j))+sjs_w(itrg(j))/ss(itrg(j))
+            ersn_a(itrg(j))=sn_t/ss(itrg(j))
             ersn_pm=max(ersn_p(itrg(j)),ersn_pm)
             ss_m=ss_m+ss(itrg(j))
-            ersn_am=ersn_am+ersn_a(itrg(j))*ss(itrg(j))
+            ersn_am=ersn_am+sn_t
           else
             ersn_a(itrg(j))=0.0_R8
             ersn_p(itrg(j))=0.0_R8
@@ -1661,6 +1696,8 @@ c
         write(lun,fmt_peak) 'peak pos.',(tab,ersn_l(itrg(i)),i=1,ntrgts)
         close (lun)
       end if
+
+      ncall = ncall+1   !iyv 19.07.22
       return
 
 c======================================================================

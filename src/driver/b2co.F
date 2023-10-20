@@ -68,19 +68,16 @@
 *   ..common blocks
 
 *   ..local variables
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
       integer iflag
-#ifndef NAGF95
-#ifndef NAGFOR
+#if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
-#endif
 #endif
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
@@ -229,7 +226,7 @@ cxpb initialize the numerics data
         call ipgeti ('b2news_nsmax', nsmax)
         nsmin = max(0,min(nsmin,ns))
         nsmax = max(0,min(nsmax,ns))
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,.false.)
       endif
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)
@@ -355,6 +352,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       write_nml_user = .false.
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call init_wall(nx,ny)
+      first_time_step = .true.  ! IYS 21.06.2022
       if (use_eirene.eq.0) then
         nnatmi = 0
         nnmoli = 0
@@ -377,8 +375,8 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(nx,ny,ns,nnreg(0))
-        call b2trcc(nout(1),nx,nxtl,nxtr)
+        call b2trci(nx,ny,ns,nxtl,nxtr,jsep,nnreg(0))
+        call b2trccc(nout(1),nx,nxtl,nxtr)
         call b2filei(ns,nnreg(0))
         call b2filec
       end if
@@ -386,7 +384,10 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 #ifdef NO_GETENV
       todo=.true.
 #else
-#ifdef NAGFOR
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
+      if (ierror.ne.0) b2fstate_only='no'
+#else
       call get_environment_variable('B2FSTATE_ONLY',
      . status=ierror, length=lenval)
       if (ierror.eq.0) then
@@ -395,12 +396,6 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       elseif (ierror.eq.1) then
         b2fstate_only='no'
       endif
-#else
-#ifdef USE_PXFGETENV
-      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
-#else
-      call getenv ('B2FSTATE_ONLY', b2fstate_only)
-#endif
 #endif
       todo=.not.streql(b2fstate_only,'yes')
 #endif

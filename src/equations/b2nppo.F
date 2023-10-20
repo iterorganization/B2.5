@@ -100,7 +100,7 @@
 *   ..compute residual
       if((solving.and.any(solvereg(0:nregionv))).or.
      &                get_residuals.eq.1) then                      !srv 22.05.18
-       call b2ursd (nx, ny, ne, po, sch, fch, respo)
+        call b2ursd (nx, ny, ne, po, sch, fch, respo)
       endif                                                         !srv 22.05.18
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
 c-rfs      write(6,*) 'ix=20, iy=-1, sch ',
@@ -115,7 +115,7 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
       if(solving.and.any(solvereg(0:nregionv))) then                !srv 22.05.18
         call b2uspo (nx, ny, nregionv, solvereg, itcnt,
-     &    ne, te, conc, sch, respo, corpo, aa5, 'b2nppo')           !srv 18.03.10
+     &   ne, te, conc, sch, respo, corpo, aa5, 'b2nppo')            !srv 18.03.10
 *   ..apply correction
         call b2uppo (nx, ny, rxf, corpo, po)
       endif                                                         !srv 22.05.18

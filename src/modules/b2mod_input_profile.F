@@ -611,7 +611,7 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (new_files) write(93,*) r(i),f(i),felm(i)
             enddo
-              
+
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
@@ -659,12 +659,24 @@ cdjm Jan2017 Keep linearised sources for balance
      1               'ix,iy,region(ix,iy) ',ix,iiy,iir
                     iir=NNREGMAX
                   endif
-                  lpflux=mod(iir-1,4)+1.ge.3.and.
-     2             (((ix.lt.leftcut(1).or.ix.ge.rightcut(1)).and.
-     3               iiy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
-     4               ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
-     5               iiy.lt.topcut(2)))
+                  lpflux=iir.eq.3.and.iiy.le.topcut(1).and.nnreg(0).ge.4
+                  lpflux=lpflux.or.
+     &             (iir.eq.4.and.iiy.le.topcut(1).and.
+     &             (nnreg(0).eq.4.or.nnreg(0).eq.5.or.nnreg(0).eq.7))
+                  lpflux=lpflux.or.
+     &             (iir.eq.4.and.iiy.le.topcut(2).and.nnreg(0).eq.8)
+                  lpflux=lpflux.or.
+     &             (iir.eq.5.and.iiy.le.topcut(2).and.nnreg(0).eq.7)
+                  lpflux=lpflux.or.(iir.eq.6.and.nnreg(0).eq.7)
+                  lpflux=lpflux.or.(iir.eq.7.and.nnreg(0).eq.7.and.
+     &             (iiy.lt.min(topcut(1),topcut(2)).or.
+     &              iiy.ge.max(topcut(1),topcut(2))))
+                  lpflux=lpflux.or.
+     &             (iir.eq.7.and.iiy.le.topcut(2).and.nnreg(0).eq.8)
+                  lpflux=lpflux.or.(iir.eq.8.and.iiy.le.topcut(1))
                   ldiv=mod(iir-1,4)+1.ge.3
+                  ldiv=ldiv.or.
+     &             (nnreg(0).eq.7.and.(iir.eq.5.or.iir.eq.6))
                   poloidal_scale_factor = 1.0_R8
                   do isc=1,nscale
                     if (poloidal_scaling(isc) .and.
@@ -700,7 +712,7 @@ cdjm Jan2017 Keep linearised sources for balance
      1                 prof(iy)*poloidal_scale_factor/
      &                 (rza(ix,iiy,nsp(is))*te(ix,iiy)+ti(ix,iiy))
 
-                    elseif (kind_coeff.eq.3) then         
+                    elseif (kind_coeff.eq.3) then
                       hcib(ix,iiy,nsp(is))=poloidal_scale_factor*
      &                 prof(iy)*na(ix,iiy,nsp(is))
              
@@ -713,8 +725,8 @@ cdjm Jan2017 Keep linearised sources for balance
      1                 prof(iy)*poloidal_scale_factor
                 
                     elseif (kind_coeff.eq.6) then
-                     vla0(ix,iiy,1,nsp(is))=
-     1                prof(iy)*poloidal_scale_factor
+                      vla0(ix,iiy,1,nsp(is))=
+     1                 prof(iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.7) then
                       vsa0(ix,iiy,nsp(is))=poloidal_scale_factor*
@@ -817,7 +829,6 @@ cdjm Jan2017 Keep linearised sources for balance
           enddo
         enddo
       enddo
-       
        
       goto 100
    99 write (*,*) 'Error in reading the dsp file'

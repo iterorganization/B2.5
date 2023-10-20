@@ -69,7 +69,7 @@
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) ::  pr(-1:nxd,-1:nyd)
+      real (kind=R8) :: pr(-1:nxd,-1:nyd)
 
       integer ispecies(0:nsd_local-1)
 
@@ -107,11 +107,10 @@ c
       save ismain, refl_model, sput_phys_model,
      2     sput_phys_col, neutrals_namelist, use_eirene
 
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -125,11 +124,12 @@ c
 c Function to check the correct parameters!
 c
       call subini('b2mds')
+      call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
-      if (ex) then
+      if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
         rewind(45)
@@ -150,7 +150,7 @@ c
  6999 continue
       ex = .false.
  7000 continue
-      if (.not.ex) then
+      if (.not.ex.or.use_eirene.eq.0) then
         ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL
@@ -172,6 +172,9 @@ c
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
       endif
+#else
+      call xertst(use_eirene.eq.0,
+     &    'Compile code with B25_EIRENE option for coupled runs')
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
@@ -188,23 +191,15 @@ c
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
-#ifdef NO_GETENV
       solpstop=' '
-#else
-#ifdef NAGFOR
-      call get_environment_variable('SOLPSTOP',
-     .   status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('SOLPSTOP',value=solpstop)
-      elseif (ierror.eq.1) then
-        solpstop=' '
-      endif
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
-      call getenv ('SOLPSTOP', solpstop)
-#endif
+      call get_environment_variable('SOLPSTOP',
+     .   status=ierror, length=lenval)
+      if (ierror.eq.0) call get_environment_variable('SOLPSTOP',
+     .   value=solpstop)
 #endif
 #endif
 #ifdef MDSPLUS
@@ -302,7 +297,8 @@ c
       isp=0
       ispecies(0)=isp
       do is=1,ns-1
-        if(zn(is) .ne. zn(is-1) .or. am(is) .ne. am(is-1)) then
+        if(nint(zn(is)).ne.nint(zn(is-1)) .or.
+     &     nint(am(is)).ne.nint(am(is-1))) then
           isp=isp+1
         endif
         ispecies(is)=isp
@@ -390,7 +386,6 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
       call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
-      call ipgeti ('b2mndr_eirene', use_eirene)
       call alloc_b2mod_neutrals
      > (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
@@ -1304,8 +1299,6 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
      1   ny+2,natmi,tmp,'TEXTAN','')
       endif
-#endif
-#ifdef B25_EIRENE
       if(nmoli.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
      1   tmp(ix,iy,is)=dmb2(ix+1,iy+1,is+1,1)
@@ -1348,8 +1341,6 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:EMOLRAD','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
-#endif
-#ifdef B25_EIRENE
       if(nioni.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
      1   tmp(ix,iy,is)=dib2(ix+1,iy+1,is+1,1)

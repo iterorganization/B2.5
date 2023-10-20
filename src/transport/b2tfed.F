@@ -79,8 +79,8 @@
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
 
 c Drift terms
-      vedia=0.0_R8                                                       !xpb
-      veecrb=0.0_R8                                                      !xpb
+      vedia  = 0.0_R8                                                    !xpb
+      veecrb = 0.0_R8                                                    !xpb
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
 
         if(drift_style.eq.0) then ! 5.0 treatment
@@ -247,7 +247,7 @@ cxpb  Standard case
 
         else         ! drift_style                                       ! IYS 11.02.2020 {
 
-          write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
+          write(*,'(2(a20,i4))') 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
           call xerrab (
      &    'faulty definition of drift_style and redef_gmtry, ' //

@@ -52,18 +52,10 @@ endif
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
-ifdef IMAS_VERSION
+ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
 GGD_VERSION ?= `pkg-config ggd --modversion`
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-ifndef SOLPS_CPP
-EQUIVS    += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DNO_CDF
-endif
-LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
-INCMODS   += -I${IMAS_PREFIX}/include/ifort
-IMASLIBS   = ${LD_UAL} -lggd-ifort
+else
+GGD_VERSION ?= '0.0.0'
 endif
 
 

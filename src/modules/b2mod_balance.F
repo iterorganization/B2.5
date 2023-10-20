@@ -1306,11 +1306,11 @@ cdjm Jan2017 Flux arrays:
      &          (nxd,nyd,nsd,natmd,nmold,niond,nstrad)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_wneutrals
+      use eirmod_wneutrals ! IGNORE
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #else
-      use eirdiag ! IGNORE
+      use eirdiag          ! IGNORE
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #endif
@@ -2165,11 +2165,11 @@ cdjm Update ion heat sources
      & , only : rpt
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_wneutrals
+      use eirmod_wneutrals ! IGNORE
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #else
-      use eirdiag ! IGNORE
+      use eirdiag          ! IGNORE
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #endif
@@ -2178,7 +2178,7 @@ cdjm Update ion heat sources
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer itim,ntim
+      integer, intent(in) :: itim,ntim
 *   ..local variables
       real (kind=R8) :: avmlt, curmlt
 *   ..procedures
@@ -2370,9 +2370,16 @@ cdjm Update ion heat sources
         endif
       endif
 
+*     Average now accumulates total to be rescaled before write
+*     using ntim < 0
       if (balance_average.ne.0) then
-        avmlt = 1.0_R8
-        curmlt = rratio(1,ntim)
+        if (ntim < 0) then
+           avmlt = rratio(1,itim)
+           curmlt = 0._R8
+        else
+           avmlt = 1.0_R8
+           curmlt = 1.0_R8
+        endif
       else
         avmlt = 0.0_R8
         curmlt = 1.0_R8

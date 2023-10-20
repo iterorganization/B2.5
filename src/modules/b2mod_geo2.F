@@ -230,8 +230,8 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
             call xertst( d/abs(maxVal) <=   1.0e-15_R8,
      .       "Interpolated value bigger than maximum" )
           else
-            call xertst( d.le.minVal,
-     .       "Interpolated value bigger than minimum" )
+            call xertst( d.le.maxVal,
+     .       "Interpolated value bigger than maximum" )
           end if
         end do
       end do

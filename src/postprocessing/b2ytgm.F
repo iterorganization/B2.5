@@ -658,10 +658,10 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..test geometry
       call xertst(maxval(region1(-1:nx1,-1:ny1,1)).gt.0 .or.
      &            minval(region1(-1:nx1,-1:ny1,2)).lt.0,
-     $            'X-regions not set, re-run b2ag!')
+     &            'X-regions not set, re-run b2ag!')
       call xertst(maxval(region1(-1:nx1,-1:ny1,2)).gt.0 .or.
      &            minval(region1(-1:nx1,-1:ny1,1)).lt.0,
-     $            'Y-regions not set, re-run b2ag!')
+     &            'Y-regions not set, re-run b2ag!')
       call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qcb1, gs1, pbs1,
      . cell_width1, cell_height1, bottomiy1)
 *   ..create B2GridMap data structure

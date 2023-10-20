@@ -10,11 +10,24 @@ c
       return
       end function is_comment
 
+      logical function is_valid(cval)
+      character*(*), intent(in) :: cval
+      character*80 :: cvbl
+      logical streql, isadigit, isaletter, isplusorminus
+      external streql, isadigit, isaletter, isplusorminus
+
+      cvbl = cval
+      call strip_spaces(cvbl)
+      is_valid = .false.
+      if (.not.streql(cvbl,' '))
+     > is_valid = isadigit(cvbl(1:1)) .or. isaletter(cvbl(1:1)) .or.
+     &  (isplusorminus(cvbl(1:1)).and.isadigit(cvbl(2:2)))
+      return
+      end function is_valid
+
       logical function end_comment(line,ind)
       character*(*), intent(in) :: line
       integer, intent(out) :: ind
-      logical streql
-      external streql
       integer i, j, k, l
 
       i = index(line,'''')

@@ -32,7 +32,7 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
-      integer il,is,i,ii,ia,ib,k,ic,ias,ix,iy,iss
+      integer il,is,i,ii,ia,ib,idir,j,js,k,ic,ias,iss
       character*74 hlp_frm
       real (kind=R8) ::
      *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,wwy(4),
@@ -66,26 +66,56 @@ c*** ... and produce the output file
       do i=1,nmoli
         text_mn(i)=textmn(i-1)(2:8)
       end do
+c*** Check whether carbon atoms are present in the calculation
+      ic=0
+      do i=1,natmi
+        if(streql(text_an(i),'C')) ic=i
+      end do
+c
       open (lun,file='wlld.dat')
-      write (hlp_frm,'(a,i2,a)')
+      if (ic.eq.0) then
+        write (hlp_frm,'(a,i2,a)')
+     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
+     .      2*natmi+2*nmoli,
+     .      '(a4,a8))'
+      else
+        write (hlp_frm,'(a,i2,a)')
      .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
      .      '(a4,a8),2(1x,a8,3x))'
-      if (nmoli.gt.0) then
-        write(lun,hlp_frm)
+      end if
+      if (ic.eq.0) then
+        if (nmoli.gt.0) then
+          write(lun,hlp_frm)
+     -     'zone','DG#','EIR#',
+     ,     'R1','Z1','R2','Z2',' X','Xr',
+     ,     'area','Wtot','Wkin','Wpot',
+     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli)
+        else
+          write(lun,hlp_frm)
+     -     'zone','DG#','EIR#',
+     ,     'R1','Z1','R2','Z2',' X','Xr',
+     ,     'area','Wtot','Wkin','Wpot',
+     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi)
+        end if
+      else
+        if (nmoli.gt.0) then
+          write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
      ,      'net_ersn','grs_ersn'
-      else
-        write(lun,hlp_frm)
+        else
+          write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,      'net_ersn','grs_ersn'
+        end if
       end if
 #ifdef DBG
       print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
@@ -95,41 +125,20 @@ c*** ... and produce the output file
       end do
 #endif
 c
-c*** Check whether carbon atoms are present in the calculation
-c
-      ic=0
-      do i=1,natmi
-        if(streql(text_an(i),'C')) ic=i
-      end do
-c
-      do il=2,nwldprt
+      do il=1,nwldprt
         if(nwldlis(il) .gt. 0) then
           write(lun,*)
 c*** calculate the length of the target segment
-          hlpx=0.e0_R8
+          hlpx=0.0_R8
           do i=1,nwldlis(il)
-            ia=lwldlis(i,il)
-            is=leirlis(i,il)
-            if (is.gt.0.and.is.le.nlim) then
-              distance=sqrt((p1(1,is)-p2(1,is))**2+
-     .                      (p1(2,is)-p2(2,is))**2)
-              hlpx=hlpx+distance
-            else if (is.gt.nlim) then
-              ias=is-nlim
-              do iss=1,nsts !{
-                if (eirdiag_nds_typ(iss).ne.2) cycle
-                if (ias.lt.eirdiag_nds_ind(iss)) cycle
-                if (ias.gt.eirdiag_nds_ind(iss+1)) cycle
-                ix=eirdiag_nds_srf(iss)
-                iy=ias+(eirdiag_nds_start(iss)-1)-eirdiag_nds_ind(iss)
-                hlpx=hlpx+distc(ix,iy,0,ix,iy,2)
-              end do !}
-            end if
+            ib=iabs(lwldlis(i,il))
+            hlpx=hlpx+sqrt((pp1(1,ib)-pp2(1,ib))**2+
+     .                     (pp1(2,ib)-pp2(2,ib))**2)
           end do
 c
-          x=0.e0_R8
-          distance=0.e0_R8
-          hlpw=0.e0_R8
+          x=0.0_R8
+          distance=0.0_R8
+          hlpw=0.0_R8
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             ib=iabs(ia)
@@ -147,7 +156,7 @@ c
             aa=1.e-6_R8/a
             distance=0.5e0_R8*distance
             x=x+h+distance
-            if(is.gt.0 .and. is.le.nlim) then
+            if(is.gt.0 .and. is.le.nlimi) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
               wwp=wldnep(is,0)*aa
@@ -179,25 +188,43 @@ c*** Calculate the net and gross erosion
                 wwyn=flxctff
                 wwyg=flxctff
               end if
-            else if (is.gt.nlim) then
-              ias=is-nlim
+            else if (ib.gt.lppp) then
+              j=(ib-lppp-1)/nytg+1
+              js=(ib-lppp)-(j-1)*nytg
+              ias=0
+              do iss=1,nsts
+                if (eirdiag_nds_typ(iss).ne.2) cycle
+                if (eirdiag_nds_srf(iss).ne.ltrgpos(itrg(j))+1) cycle
+                if (mod(itrg(j),2).eq.1) then
+                  idir = -1
+                else
+                  idir = 1
+                end if
+                if (idir.eq.1) then
+                  ias=eirdiag_nds_ind(iss)+js
+                else
+                  ias=eirdiag_nds_ind(iss)+(nytg-js+1)
+                end if
+              end do
               wwk=0.0_R8
               wwp=0.0_R8
               k=0
               do ii=1,natmi
                 k=k+1
+                if (ias.eq.0) cycle
                 wwk=wwk+(ewlda_res(ii,ias)-ewldea_res(ii,ias))
                 wwj(k)=max(wldna_res(ii,ias),flxctff)/a
                 wwe(k)=max(ewlda_res(ii,ias),enrctff)
               end do
               do ii=1,nmoli
                 k=k+1
+                if (ias.eq.0) cycle
                 wwk=wwk+(ewldm_res(ii,ias)-ewldem_res(ii,ias))
                 wwp=wwp+ewldmr_res(ii,ias)
                 wwj(k)=max(wldnm_res(ii,ias),flxctff)/a
                 wwe(k)=max(ewldm_res(ii,ias),enrctff)
               end do
-              if(ic.gt.0) then
+              if(ic.gt.0.and.ias.gt.0) then
                 wwyg=wldspta_res(ic,ias)/a
                 wwyn=(wldspta_res(ic,ias)-wldna_res(ic,ias)-
      >                                    wlpump_res(ic,ias))/a
@@ -212,8 +239,8 @@ c*** Calculate the net and gross erosion
                 wwyg=flxctff
               end if
               hlpw=hlpw+wwk+wwp
-              wwk=wwk*aa
-              wwp=wwp*aa
+              wwk=max(wwk*aa,pwrctff)
+              wwp=max(wwp*aa,pwrctff)
               wwt=max(wwk+wwp,pwrctff)
             else
               wwyn=flxctff
@@ -229,10 +256,16 @@ c*** Calculate the net and gross erosion
             end if
             write (hlp_frm,'(a,i2,a)')
      ,                 '(1x,a8,2i5,1p,5f10.4,',2*k+12,'e12.4)'
-            write (lun,hlp_frm) pltzlbl(il),
+            if (ic.eq.0) then
+              write (lun,hlp_frm) pltzlbl(il),
+     ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
+     ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k)
+            else
+              write (lun,hlp_frm) pltzlbl(il),
      ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg
+            end if
           end do
           write(*,*) 'Neutral power to wall: ',pltzlbl(il),il,hlpw
         end if
@@ -398,7 +431,7 @@ c*** lwsrtwrk: a temporary array for sorting
 c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
-      logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
+      logical goup,placed(DEF_NLIM),found,direction_same
       integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol, d2etol
@@ -407,7 +440,7 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      if (nnreg(0).lt.8) then
+c      if (nnreg(0).lt.7) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -422,8 +455,6 @@ c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
 c        end do
 c      end do
 cc%%%
-      no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
-     &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
       iret=0
       do il=1,nwldprt
         is=lwldstrt(il)
@@ -519,14 +550,14 @@ c*** No connection found
               if (lskip(j)) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=0
-              else if (no_fort44) then
+              else if (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
      .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
      .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
      .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
-     .                 nnreg(0).eq.8)) then
+     .                 nnreg(0).ge.7)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)

@@ -5,6 +5,7 @@
      &  ismain, ismain0, dtim, rxf, ierr, ramp_call) !srv 23.11.10
       use b2mod_types
       use b2mod_geo
+      use b2mod_ma28
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -22,7 +23,6 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
-      use b2mod_ilutern
       use b2mod_illtern_7
       use b2mod_ilutern_7
       use b2mod_ilutern_9
@@ -524,7 +524,7 @@ csw 16oct2012 init ier0
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is)) then
               if(visper_all_ions.ne.0 .or. is.eq.ismain) then
-                 do ireg = 0, nnreg(0)
+                do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)
                 end do
@@ -1012,7 +1012,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        call my_out(70,nx,ny,fht(-1,-1,1),'b2news_m_fhty')
       endif
 *   ..add contribution from cdpa to floe, cone, floi, coni
-      call b2tfcc (nx, ny, ns, na, te, ti, cdpa,
+      call b2tfcc (nx, ny, ns, vol, na, te, ti, cdpa,
      &  floe, cone, floi, coni)
       if(ue_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {

@@ -242,11 +242,10 @@ c
      5     sput_frac_flag, use_eirene, ismain0, drift_style
 
 c
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -259,11 +258,12 @@ c
 c Function to check the correct parameters!
 c
       call subini ('b2plot')
+      call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
-      if (ex) then
+      if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
         rewind(45)
@@ -284,7 +284,7 @@ c
  6999 continue
       ex = .false.
  7000 continue
-      if (.not.ex) then
+      if (.not.ex.or.use_eirene.eq.0) then
         ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL
@@ -306,6 +306,9 @@ c
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
       endif
+#else
+      call xertst(use_eirene.eq.0,
+     &    'Compile code with B25_EIRENE option for coupled runs')
 #endif
       natmi = natm
       nmoli = nmol
@@ -327,23 +330,15 @@ c
      1 natm,nmol,nion,nlimps)
       allocate(mach(-1:nxd,-1:nyd,
      *     0:max(1,nsd_local,ns_ext,natm,nmol,nion)-1))
-#ifdef NO_GETENV
       solpstop=' '
-#else
-#ifdef NAGFOR
-      call get_environment_variable('SOLPSTOP',
-     . status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('SOLPSTOP',value=solpstop)
-      elseif (ierror.eq.1) then
-        solpstop=' '
-      endif
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
-      call getenv ('SOLPSTOP', solpstop)
-#endif
+      call get_environment_variable('SOLPSTOP',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) call get_environment_variable('SOLPSTOP',
+     . value=solpstop)
 #endif
 #endif
       textan=''
@@ -526,8 +521,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
        found = .false.
        is = ismain
        do while (is.ge.0 .and. .not.found)
-         if (is_neutral(is) .and. zn(is).eq.zn(ismain) .and.
-     &       am(is).eq.am(ismain)) then
+         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
+     &                      .and. nint(am(is)).eq.nint(am(ismain))) then
            ismain0 = is
            found = .true.
          end if
@@ -541,13 +536,13 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      .   'invalid main neutral species index ismain0')
       call get_boundary_namelist
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
-      call ipgeti ('b2mndr_eirene', use_eirene)
 
       call initialise_potentials(ns)
       isp=0
       ispecies(0)=isp
       do is=1,ns-1
-        if(zn(is) .ne. zn(is-1) .or. am(is) .ne. am(is-1)) then
+        if(nint(zn(is)) .ne. nint(zn(is-1)) .or.
+     &     nint(am(is)) .ne. nint(am(is-1))) then
           isp=isp+1
         endif
         ispecies(is)=isp
@@ -1741,7 +1736,7 @@ c
           nz=1
           call copy(div_fch,1.0_R8,nz,textbl)
         case('dfna')
-          description='\mtD\dfna (#/s)'
+          description='\mtD\dfna (particles/s)'
           nz=ns
           call copy(div_fna,1.0_R8,nz,textpl)
         case('dfmo')
@@ -2479,38 +2474,6 @@ c
           sumjxi=0.0_R8
           suml=0.0_R8
           sumr=0.0_R8
-          iy=0
-          ix=0
-          do while(rightix(ix,iy).eq.ix+1 .and. ix.lt.nx)
-            ix=ix+1
-          end do
-          ixl=ix+1
-          ix=ix+1
-          do while(rightix(ix,iy).eq.ix+1 .and. ix.lt.nx)
-            ix=ix+1
-          end do
-          ixr=ix
-          if(nnreg(0).eq.8) then
-            ix=nx
-            do while(leftix(ix,iy).eq.ix-1 .and. ix.gt.-1)
-              ix=ix-1
-            end do
-            ixl=ix-1
-            ix=ix-1
-            do while(leftix(ix,iy).eq.ix-1 .and. ix.gt.-1)
-              ix=ix-1
-            end do
-            ixr=ix
-            ix=0
-            do while(rightix(ix,iy).ne.nx+1 .and. ix.lt.nx)
-              ix=ix+1
-            end do
-            ixr=ix
-            do while(leftix(ix,iy).ne.-2 .and. ix.lt.nx)
-              ix=ix+1
-            end do
-            ixl=ix
-          endif
           ix=jxa
           do iy=jsep+1,ny
             sumjxa=sumjxa+mach(ix,iy,0)*
@@ -2527,31 +2490,51 @@ c
           endif
           do iy=-1,ny
             ix=0
-            suml(1)=suml(1)+mach(ix,iy,0)*
+            if (iy.ge.topcut(1)) suml(1)=suml(1)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
             ix=nx-1
-            sumr(1)=sumr(1)+mach(ix,iy,0)*
+            if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+              if (iy.ge.topcut(1).and.iy.lt.topcut(2))
+     .              sumr(1)=sumr(1)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
-            if(nnreg(0).eq.8) then
-              ix=ixl+1
-              suml(2)=suml(2)+mach(ix,iy,0)*
+            else if (nnreg(0).ne.7) then
+              if (iy.ge.topcut(1)) sumr(1)=sumr(1)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
-              ix=ixr-1
-              sumr(2)=sumr(2)+mach(ix,iy,0)*
+            end if
+            if(nncut.eq.2) then
+              ix=nxtr+1
+              if (iy.ge.topcut(2)) suml(2)=suml(2)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
+              ix=nxtl-1
+              if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+                if (iy.ge.topcut(2)) sumr(2)=sumr(2)+mach(ix,iy,0)*
+     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
+     2                hy1(ix,iy)
+              else
+                if (iy.ge.topcut(1)) sumr(2)=sumr(2)+mach(ix,iy,0)*
+     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
+     2                hy1(ix,iy)
+              endif
             endif
           end do
-          if(nnreg(0).le.5) then
+          if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+            write(*,*) 'Midplane pressure: ',sumjxa
+            write(*,*) 'Inner target:      ',suml(1)
+            write(*,*) 'Near SOL target:   ',sumr(1)
+            write(*,*) 'Far SOL target:    ',sumr(2)
+            write(*,*) 'Pressure drop (inner & outer): ',
+     1             suml(1)/sumjxa,sumr(1)+sumr(2)/sumjxa
+          else if (nnreg(0).le.7) then
             write(*,*) 'Midplane pressure: ',sumjxa
             write(*,*) 'Western target:    ',suml(1)
             write(*,*) 'Eastern target:    ',sumr(1)
             write(*,*) 'Pressure drop (inner & outer): ',
      1             suml(1)/sumjxa,sumr(1)/sumjxa
-          else if(nnreg(0).eq.8) then
+          else if (nnreg(0).eq.8) then
             write(*,*) 'Outer midplane pressure: ',sumjxa
             write(*,*) 'Outer top target:        ',suml(2)
             write(*,*) 'Outer bottom target:     ',sumr(1)
@@ -6458,11 +6441,11 @@ cdpc still in testing phase
      1                    work(ixx(ix,iy),iyy(ix,iy),is,iwrk)
               endif
             else
-              write(*,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
+              write(*,'(a,i3,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
      1                 textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is,
      1                 work(ixx(ix,iy),iyy(ix,iy),is,iwrk)
               if(writing_to_file) then
-                write(nwtf,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
+                write(nwtf,'(a,i3,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
      1                    textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is,
      1                    work(ixx(ix,iy),iyy(ix,iy),is,iwrk)
               endif
@@ -10771,7 +10754,7 @@ c
           call ipush(istack,iistack,nion)
         case('nxtl')     ! nxtl
           stack_name='integer'
-          if (nnreg(0).eq.8) then
+          if (nnreg(0).ge.7) then
             call ipush(istack,iistack,nxtl)
           else
             write(*,*) cval,
@@ -10779,7 +10762,7 @@ c
           endif
         case('nxtr')     ! nxtr
           stack_name='integer'
-          if (nnreg(0).eq.8) then
+          if (nnreg(0).ge.7) then
             call ipush(istack,iistack,nxtr)
           else
             write(*,*) cval,

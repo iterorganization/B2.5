@@ -22,7 +22,7 @@
      *   qcl, qfl, tfl
       intrinsic abs
       external xertst, ipgeti
-      external  b2xvsg
+      external b2xvsg
 *   ..initialisation
       data ncall/0/, area_fix/3/
 *     ------------------------------------------------------------------
@@ -73,7 +73,7 @@
 csw 18sep2014 TESTING only (SOLPS4 discr), i.e. switch off mom.flux
 c             limit
 c      else if(style.eq.2) then
-c       fl(ix,iy)=1.0d0
+c       fl(ix,iy) = 1.0_R8
       else                                                           !srv 30.05.08
        do iy = -1, ny
         do ix = -1, nx

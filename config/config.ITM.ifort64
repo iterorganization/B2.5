@@ -54,39 +54,20 @@ DEFINES += -DITM
 endif
 
 ifdef IMAS_VERSION
-GGD_VERSION ?= `pkg-config ggd --modversion`
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 15; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-LD_UAL  ?= `pkg-config imas-ifort ggd amns --libs`
-INCMODS += `pkg-config imas-ifort ggd amns --cflags`
+  ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
+    GGD_VERSION ?= `pkg-config ggd --modversion`
+  else
+    GGD_VERSION ?= '0.0.0'
+  endif
 else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-LD_UAL  ?= `pkg-config imas-ifort --libs` -lggd-ifort
-INCMODS += `pkg-config imas-ifort --cflags`
-else
-GGD_MINOR_VERSION ?= 0
-GGD_MICRO_VERSION ?= 0
-LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
-INCMODS += `pkg-config imas-lowlevel imas-ifort --cflags`
+  ifdef ITM_ENVIRONMENT_LOADED
+    DEFINES += -DGOT_AMNSPROTO
+    INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
+    IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
+  endif
 endif
-endif
-ifndef SOLPS_CPP
-DEFINES += -DIMAS -DAMNS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
-endif
-IMASLIBS = ${LD_UAL}
-else
-ifdef ITM_ENVIRONMENT_LOADED
-DEFINES += -DGOT_AMNSPROTO
-INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
-IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
-endif
-endif
+
+SOLPSINCLUDE += `pkg-config netcdf-fortran --cflags`
 
 LD_UAL += -lxml2 -lstdc++
 

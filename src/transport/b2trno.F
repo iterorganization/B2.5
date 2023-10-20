@@ -298,7 +298,7 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
         endif
       endif
 
-*   .. set csigx = 0 and calfx = 0
+*   ..set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
         call sfill (n2, 0.0e0_R8, csig(-1,-1,0), 1)
         call sfill (n2, 0.0e0_R8, calf(-1,-1,0), 1)
@@ -342,10 +342,10 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa
-        call b2tlc0 (nx, ny, ns, hx, vol, na, te, ti,
-     &    cdpa, flc)                                                      !srv 09.07.03 30.11.15
-        call b2tlc0 (nx, ny, ns, hx, hzvol, na, te, ti,                   !srv 30.11.15
-     &    cdpahz, flchz)
+        call b2tlc0 (nx, ny, ns, hx, vol,
+     &    na, te, ti, cdpa, flc)                                          !srv 09.07.03 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, hzvol,                               !srv 30.11.15
+     &    na, te, ti, cdpahz, flchz)
       endif                                                               !srv 15.06.08 }
 
       if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {

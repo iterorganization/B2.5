@@ -173,7 +173,7 @@
 *     (indices for neutral hydrogen species)
       nscx = 0
       do is = 0, ns-1
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
           call xertst (nscx.lt.nscxmax,
      1     'too many neutral hydrogen species')
           iscx(nscx) = is
@@ -226,7 +226,7 @@ cxpb initialize the numerics data
         call ipgeti ('b2news_nsmax', nsmax)
         nsmin = max(0,min(nsmin,ns))
         nsmax = max(0,min(nsmax,ns))
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,.false.)
       endif
 *   ..process
       call b2plot(nx,ny,ns)

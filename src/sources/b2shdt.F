@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2shdt (nx, ny, ns, dtim, BoRiS,                       !srv 07.07.21
-     &  vol, na0, tep, ti0, ne0, ni0, kinrgy0, shedt, shidt, lout)
+     &  vol, nap, tep, tip, nep, nip, kinrgyp, shedt, shidt, lout)      !srv 10.10.22
       use b2mod_types 
       use b2mod_indirect 
       use b2mod_numerics_namelist 
@@ -18,13 +18,13 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      logical(1) :: lout                                             !srv 16.07.10
+      logical(1) :: lout                                                !srv 16.07.10
       integer nx, ny, ns
       real (kind=R8) ::
-     *  dtim, BoRiS, vol(-1:nx,-1:ny), na0(-1:nx,-1:ny,0:ns-1),
-     &  tep(-1:nx,-1:ny), ti0(-1:nx,-1:ny),
-     &  ne0(-1:nx,-1:ny), ni0(-1:nx,-1:ny,0:1),
-     &  kinrgy0(-1:nx,-1:ny,0:ns-1)
+     *  dtim, BoRiS, vol(-1:nx,-1:ny), nap(-1:nx,-1:ny,0:ns-1),         !srv 10.10.22 {
+     &  tep(-1:nx,-1:ny), tip(-1:nx,-1:ny),   
+     &  nep(-1:nx,-1:ny), nip(-1:nx,-1:ny,0:1),
+     &  kinrgyp(-1:nx,-1:ny,0:ns-1)                                     !srv 10.10.22 }
 *   ..input/output arguments
       real (kind=R8) ::
      &  shedt(-1:nx,-1:ny,0:3), shidt(-1:nx,-1:ny,0:3)
@@ -81,12 +81,12 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test old state
-       call b2xvsg (n2*ns, na0, 1, 'na0', '.gt.')
+       call b2xvsg (n2*ns, nap, 1, 'nap', '.gt.')                        !srv 10.10.22 {
        call b2xvsg (n2, tep, 1, 'tep', '.gt.')
-       call b2xvsg (n2, ti0, 1, 'ti0', '.gt.')
-       call b2xvsg (n2, ne0, 1, 'ne0', '.gt.')
-       call b2xvsg (2*n2, ni0, 1, 'ni0', '.gt.')
-       call b2xvsg (n2*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
+       call b2xvsg (n2, tip, 1, 'tip', '.gt.') 
+       call b2xvsg (n2, nep, 1, 'nep', '.gt.')
+       call b2xvsg (2*n2, nip, 1, 'nip', '.gt.')
+       call b2xvsg (n2*ns, kinrgyp, 1, 'kinrgyp', '.ge.')                !srv 10.10.22 }
       endif
     
 #ifdef WITH_FTIMINGS
@@ -99,8 +99,8 @@
 !$OMP& shared(nx,ny,ns,iftimbound,is_neutral,time_factor)
 !$OMP& shared(leftix,rightix,bottomiy,topiy,region)
 !$OMP& shared(use_eirene,dtim,dtee,dtei)
-!$OMP& shared(phm3,BoRiS,kinrgy0)
-!$OMP& shared(vol,na0,ne0,ni0,ti0,tep,am)
+!$OMP& shared(phm3,BoRiS,kinrgyp)
+!$OMP& shared(vol,nap,nep,nip,tip,tep,am)
 ! these are the result arrays:
 !$OMP& shared(shedt,shidt)
 #endif
@@ -116,7 +116,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
-          shedt(ix,iy,0) = 1.5_R8*t0*ne0(ix,iy)*tep(ix,iy)               !srv 06.01.21 {
+          shedt(ix,iy,0) = 1.5_R8*t0*nep(ix,iy)*tep(ix,iy)               !srv 06.01.21 { 10.10.22
           shedt(ix,iy,1) = 0.0_R8
           shedt(ix,iy,2) = 0.0_R8
           shedt(ix,iy,3) = -1.5_R8*t0                                    !srv 06.01.21 }
@@ -134,17 +134,17 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
-          shidt(ix,iy,0) = 1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)             !srv 06.01.21 {
+          shidt(ix,iy,0) = 1.5_R8*t0*nip(ix,iy,0)*tip(ix,iy)             !srv 06.01.21 {  10.10.22
           shidt(ix,iy,1) = 0.0_R8
           shidt(ix,iy,2) = 0.0_R8
           shidt(ix,iy,3) = -1.5_R8*t0                                    !srv 06.01.21 }
           if (BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(ix,iy,0) = shidt(ix,iy,0)+t0*
-     &         (kinrgy0(ix,iy,is)+ti0(ix,iy))*na0(ix,iy,is)
+     &         (kinrgyp(ix,iy,is)+tip(ix,iy))*nap(ix,iy,is)             !srv 10.10.22 {
               shidt(ix,iy,2) = shidt(ix,iy,2)-t0*
-     &         (kinrgy0(ix,iy,is)+ti0(ix,iy))*na0(ix,iy,is)/
-     &         ni0(ix,iy,0)
+     &         (kinrgyp(ix,iy,is)+tip(ix,iy))*nap(ix,iy,is)/            
+     &         nip(ix,iy,0)                                             !srv 10.10.22 }
             enddo
           endif
        enddo

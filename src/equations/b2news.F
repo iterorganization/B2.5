@@ -6,6 +6,7 @@
      &  dtim, rxf, ierr, wrong_flow, ramp_call)
       use b2mod_types
       use b2mod_geo
+      use b2mod_ma28
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -24,7 +25,6 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
-      use b2mod_ilutern
       use b2mod_illtern_7
       use b2mod_ilutern_7
       use b2mod_ilutern_9
@@ -1159,7 +1159,7 @@ c     with diamagnetic drift part                                        !xpb
      1   ua, cvsa, rpt, te, ti,                                          !ajs 07.04.20
      2   po, BoRiS, fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
-        call b2tfcc (nx, ny, ns, na, te, ti, cdpa,
+        call b2tfcc (nx, ny, ns, vol, na, te, ti, cdpa,
      &    floe, cone, floi, coni)
 *    ..add contributions from the divergent total diamagnetic flux
         call b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx,

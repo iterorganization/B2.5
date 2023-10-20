@@ -1,4 +1,5 @@
-      module b2mod_average
+      module b2mod_running_average
+
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_version
@@ -30,6 +31,8 @@
      .                             e_sne(:,:),
      .                             e_sch(:,:)
 
+      character lble*120
+
       contains
 
       subroutine running_average (nx,ny,ns)
@@ -38,8 +41,9 @@
       use b2mod_plasma
       use b2mod_sources
       implicit none
-
+c input
       integer, intent(in) :: nx, ny, ns
+c local
       integer :: n2, itp
       external batch_average, batch_average_sq
 
@@ -72,7 +76,7 @@
       call batch_average_sq (n2,    ti, e_ti, itp, naver)
       call batch_average_sq (n2,    po, e_po, itp, naver)
       call batch_average_sq (n2*ns, ua, e_ua, itp, naver)
-      
+
       call batch_average_sq (n2*ns, sna0_eir_tot, e_sna, itp, naver)
       call batch_average_sq (n2,    sne0_eir_tot, e_sne, itp, naver)
       call batch_average_sq (n2,    she0_eir_tot, e_she, itp, naver)
@@ -86,14 +90,16 @@
       end subroutine running_average
 
       subroutine run_av_init (iav_cont, nx, ny, ns, lpr, ler)
-#ifdef B25_EIRENE
-      use eirmod_infcop
+#if ( defined(B25_EIRENE) && defined(SOLPS4_3) )
+      use b2_4to5          ! IGNORE
 #endif
       use b2mod_rates
       implicit none
+c input
       integer, intent(in) :: nx, ny, ns, iav_cont
       logical, intent(in) :: lpr, ler
-      integer io, is, iex, iun, n2, idum(0:2)
+c local variables
+      integer :: io, is, iex, iun, n2, idum(0:2)
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4), zero(-1:nx,-1:ny),
      *   swrk2(-1:nx,-1:ny,0:1), swrk2s(-1:nx,-1:ny,0:1,0:ns-1),
@@ -103,6 +109,10 @@
       character lbli*120
       external b2ruzd, b2xpne, b2xpni
       external cfruch, cfruin, cfrure
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call subini ('run_av_init')
 
@@ -167,13 +177,14 @@
          naver = 0
          ntotdt = 0
 
-#ifdef B25_EIRENE
-         iun = newunit()
+#ifdef F2003
+         open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
+     .        form='FORMATTED',status='OLD',iostat=iex)
 #else
-         iun = 99
-#endif
+         iun = newunit()
          open (unit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
+#endif
 
          io = iex
          read (iun,'(A10)',iostat=io) check
@@ -338,33 +349,36 @@
       end subroutine run_av_fin
 
       subroutine run_av_save (savefile, nx, ny, ns, lpr, ler)
-#ifdef B25_EIRENE
-      use eirmod_infcop
+#if ( defined(B25_EIRENE) && defined(SOLPS4_3) )
+      use b2_4to5          ! IGNORE
 #endif
       implicit none
       integer, intent(in) :: nx, ny, ns
       logical, intent(in) :: lpr, ler
       character(*) :: savefile
-      integer n2, iun, idum(0:2)
-      character lble*120
+c local variables
+      integer :: n2, idum(0:2), iun
       external cfwuch, cfwuin, cfwure
       external b2xxid, b2wuzd
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call subini ('run_av_save')
 
       n2 = (nx+2)*(ny+2)
 
-!      write (*,*) ' in run_av_save '
-
 *  write 2d averaged plasma profiles
 
-#ifdef B25_EIRENE
-      iun = newunit()
+#ifdef F2003
+      open (newunit=iun,file=savefile,access='SEQUENTIAL',
+     .          form='FORMATTED',status='REPLACE')
 #else
-      iun = 99
-#endif
+      iun = newunit()
       open (unit=iun,file=savefile,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
+#endif
 
 !     write (*,*) ' iun ',iun
 
@@ -391,9 +405,9 @@
          call cfwuin (iun, 1, idum, 'ntotdt')
 
          call cfwure (iun, n2*ns, na_mean, 'na_mean')
-         call cfwure (iun, n2, te_mean, 'te_mean')
-         call cfwure (iun, n2, ti_mean, 'ti_mean')
-         call cfwure (iun, n2, po_mean, 'po_mean')
+         call cfwure (iun, n2,    te_mean, 'te_mean')
+         call cfwure (iun, n2,    ti_mean, 'ti_mean')
+         call cfwure (iun, n2,    po_mean, 'po_mean')
          call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
 
          call cfwure (iun, n2*ns, sna_mean, 'sna_mean')
@@ -432,8 +446,8 @@
       return
       end subroutine run_av_save
 
-      subroutine run_av_get_plasma
-     &  (na_arg, te_arg, ti_arg, ua_arg, po_arg, nx, ny, ns)
+      subroutine run_av_get_plasma (na_arg, te_arg, ti_arg, ua_arg,
+     &                          po_arg, nx, ny, ns)
       implicit none
       integer, intent(in) :: nx, ny, ns
       real (kind=R8), intent(inout) ::
@@ -476,4 +490,4 @@
       return
       end subroutine run_av_get_sources
 
-      end module b2mod_average
+      end module b2mod_running_average

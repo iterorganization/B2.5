@@ -1440,15 +1440,27 @@
          endif
       enddo
       close(91)
-      open(91,file='separatrix_boundary.txt')
-      iy=minval(topcut(1:nncut))-1
-      write(*,*) 'sep = ',iy
-      do ix=-1,nx
-         if(mod(region(ix,iy,0),4).eq.1) then
-            write(91,*) crx(ix,iy,2),cry(ix,iy,2)
-         endif
-      enddo
-      close(91)
+      if (nncut > 0) then
+        open(91,file='separatrix_boundary.txt')
+        if (nnreg(0).eq.7) then
+          iy=topcut(1)-1
+          write(*,*) 'sep = ',iy
+          do ix=-1,nx
+            if(region(ix,iy,0).eq.1) then
+              write(91,*) crx(ix,iy,2),cry(ix,iy,2)
+            endif
+          enddo
+        else
+          iy=minval(topcut(1:nncut))-1
+          write(*,*) 'sep = ',iy
+          do ix=-1,nx
+            if(mod(region(ix,iy,0),4).eq.1) then
+              write(91,*) crx(ix,iy,2),cry(ix,iy,2)
+            endif
+          enddo
+        endif
+        close(91)
+      endif
 
 *   ..wrapping up
       write(nout(0),*) 'Recovered geometry from run number ',ishot

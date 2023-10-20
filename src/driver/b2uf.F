@@ -26,7 +26,7 @@
 *  1. purpose
 *
 *     B2UF reads in an unformatted b2fplasma file, and writes out a
-*     a formatted b2fplasma file.
+*     a formatted b2fplasma (b2fplasmf) file.
 *
 *
 *-----------------------------------------------------------------------

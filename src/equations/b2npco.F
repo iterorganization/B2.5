@@ -46,7 +46,6 @@
      *  rescb(-1:nx,-1:ny), corpb(-1:nx,-1:ny)
 *   ..common blocks
 
-
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -186,8 +185,7 @@
        call b2xvff (nx, ny, fnb, 'fnb')
       endif
 
-      nap(:,:,isb) = nb                                                 !srv 07.07.21 {
-      if(style_b2mndt.eq.2) then
+      if(style_b2mndt.eq.2) then                                        !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2scdt (nx, ny, isb, guard_flows, dtim,
      &   vol, nap(-1,-1,isb), snadt(-1,-1,0,isb), .false.)
@@ -207,6 +205,9 @@ cdjm Jan2017 update particle source components for balance
       if((solving.and.any(solvcreg(0:nnreg(0))))
      &            .or.get_residuals.eq.1) then                          !srv 22.05.18
         call b2ursc (nx, ny, nb, snb, fnb, rescb)
+        if(style_b2mndt.eq.2) then                                      !srv 10.10.22 {
+          rescb = rescb + (nb-nap(:,:,isb))*snadt(:,:,1,isb)
+        endif                                                           !srv 10.10.22 }
         if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then
          do iy = -1, ny, ny+1                                           !srv 27.06.08 {
@@ -320,6 +321,7 @@ csw 11dec2012, check for solv flags
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
+
 * ..return
       ncall = ncall+1
       call subend ()

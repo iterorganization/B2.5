@@ -134,13 +134,13 @@
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
 *      rtzmin, rtzmax, rtzn - (0:rtns-1) real*8 array.
-*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic 
+*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic
 *     charge range, and rtzn(is) specifies the nuclear charge
-*     of atomic species (is). 
+*     of atomic species (is).
 *     The izhi(inuc)-izlo(inuc)+1 charge states for each nuclear
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
-*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
+*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays
 *     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
@@ -171,7 +171,7 @@
 *     logu(rtrqa), where rtrqa is the electron heat loss rate
 *     coefficient at electron temperature rtt(i) and electron density
 *     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension ev*m**3/s.
+*     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient
@@ -181,22 +181,22 @@
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlza(i,j,k) specifies
 *     the effective charge state at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlza has dimension e. 
+*     superstage k. rtlza has dimension e.
 *      rtlz2 - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlz2(i,j,k) specifies
 *     the effective squared charge at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlz2 has dimension e**2. 
+*     superstage k. rtlz2 has dimension e**2.
 *      rtlpt - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpt(i,j,k) specifies
 *     the cumulative ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k. rtlpt has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k. rtlpt has dimension eV.
 *      rtlpi - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpi(i,j,k) specifies
 *     the effective ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k from superstage k-1. rtlpi has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k from superstage k-1. rtlpi has dimension eV.
 *
 *     Description of some local variables:
 *
@@ -352,7 +352,8 @@
 *    ..find range of this nuclear species
        is1 = is+1
    20  if (is1.ne.rtns) then
-         if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
+         if (nint(rtzn(is)).eq.nint(rtzn(is1)).and.
+     &       rtzmax(is).lt.rtzmin(is1)) then
          is1 = is1+1
          goto 20
         endif

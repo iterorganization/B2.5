@@ -15,18 +15,16 @@ ifndef SOLPS_CPP
 DEFINES += -DNO_NAG -DNO_21
 endif
 
-ifdef AMNS_PREFIX
-DEFINES += -DAMNS
-INCMODS += `pkg-config amns --cflags`
-LD_UAL  += `pkg-config amns --libs`
-endif
-
 LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
 
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 
+ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
 GGD_VERSION ?= `pkg-config ggd --modversion`
+else
+GGD_VERSION ?= '0.0.0'
+endif
 
 #!!!Local Variables:
 #!!! mode: Makefile

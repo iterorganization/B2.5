@@ -1,10 +1,10 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @section b2uw_ualio_data_desc Description
+!>      @section b2uw_ual_io_data_desc Description
 !!      Module providing routines to transform variables stored in the B2
 !!      data structure into the form expected by CPO/IDS data structure.
 !!
-!!      @subsection b2uw_ualio_data_syx     Exceptional syntax explanation
+!!      @subsection b2uw_ual_io_data_syx     Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code
@@ -22,7 +22,7 @@ module b2mod_ual_io_data
 
     use b2mod_grid_mapping
 #ifdef IMAS
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION > 14
     use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_aos3_root
@@ -83,7 +83,7 @@ contains
     function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetInd, gmap,  &
             &   b2FaceData ) result( idsdata )
 #if IMAS_MINOR_VERSION > 14
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
         type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
@@ -225,8 +225,7 @@ contains
     end function b2_IMAS_Transform_Data_B2_To_IDS_General
 
 #endif
-#else
-#ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
 
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
     use euITM_schemas ! IGNORE
@@ -349,7 +348,6 @@ contains
 
   end function b2ITMTransformDataB2ToCPOGeneral
 
-#endif
 #endif
 
 end module b2mod_ual_io_data

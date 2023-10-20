@@ -48,6 +48,9 @@
       use eirmod_wneutrals
       use eirmod_clgin
      ,   , only : iliin
+      use b2mod_b2plot
+     & , only : nx_b2plot => nx, ny_b2plot => ny, ns_b2plot => ns,
+     &          nxtl_b2plot => nxtl, nxtr_b2plot => nxtr
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -125,11 +128,11 @@
 
       contains
 
-      subroutine eirene_mc(nx, ny, ns, dtim, BoRiS,
+      subroutine eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,
      1 sna0, smo0, she0, shi0, main_call)
       use b2mod_subsys
       implicit none
-      integer nx,ny,ns
+      integer nx,ny,ns,ismain
       real (kind=R8) ::
      * dtim, BoRiS,
      * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -141,6 +144,9 @@ csw 19oct2012, added save attribute!!!
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, b2stbc_feedback
+#ifdef B25_EIRENE
+      integer iflag
+#endif
       logical feedback_stratum
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
@@ -239,6 +245,8 @@ csw 26feb2014
       integer, save :: ih_end
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
+      integer, save :: jxi, jxa, jsep
+      integer, save :: nxtl, nxtr   ! IYS 29.03.2022
 
 *   ..procedures
       real (kind=R8) :: rratio
@@ -447,6 +455,8 @@ csw 26feb2013
 
       if(ncall.eq.0) then
         call write_f30(nx, ny)
+        call get_nxt(nx, nxtl, nxtr)
+        call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         call copy_background(nx,ny,ns,BoRiS)
@@ -582,7 +592,7 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
       end do
 
       tfl=0.0_R8
-      tflux=0.0_R8
+      tflux=0.0_R8            !! the actual flux passed to EIRENE
       flux_scale=0.0_R8
       do istrai = 1, nstrat !{
         feedback_stratum=.false.
@@ -689,11 +699,64 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
             if(ncall.eq.ncallfeedback)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
           else if (time_dep_puff(istrai)) then !}{
-            if (tim.lt.gpdata(1,1,istrai)) then
+            if (time_dep_puff_func(istrai)) then
+             call xertst(time_dep_puff_case(istrai).ge.0
+     1               .and.time_dep_puff_case(istrai).le.5,
+     1         'bad value for time_dep_puff_case')
+             if (time_dep_puff_case(istrai) .eq. 0) then ! sinusoidal
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               +time_dep_puff_param(2,istrai)*(sin(2.d0*pi
+     &               *time_dep_puff_param(3,istrai)*tim
+     &               +time_dep_puff_param(4,istrai)))
+             elseif (time_dep_puff_case(istrai) .eq. 1) then  ! stair+ramp
+               if ((tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &            *2.*time_dep_puff_param(3,istrai)).ge.0. .and.
+     &             (tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &            *2.*time_dep_puff_param(3,istrai)).lt.
+     &             time_dep_puff_param(3,istrai)) then ! mod of tim/step size
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+               else
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *time_dep_pufF_param(2,istrai)
+     &                 +(tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *2.*time_dep_puff_param(3,istrai)
+     &                 -time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+     &                 /time_dep_puff_param(3,istrai)
+               endif
+             elseif (time_dep_puff_case(istrai) .eq. 2) then  ! stair+ramp
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               +tim*time_dep_puff_param(2,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 3) then  ! linear + sinusoidal
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               + time_dep_puff_param(2,istrai)*(sin(2.d0*3.14159
+     &               *time_dep_puff_param(3,istrai)*tim
+     &               +time_dep_puff_param(4,istrai)))
+     &               +tim*time_dep_puff_param(5,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 4) then  ! step function
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 5) then  ! triangle wave
+                 tflux(istrai) = (time_dep_puff_param(1,istrai)
+     &                 -time_dep_puff_param(2,istrai))
+     &                 +(4.d0*time_dep_puff_param(2,istrai)
+     &                 /time_dep_puff_param(3,istrai))
+     &                 * ((time_dep_puff_param(3,istrai)/2.d0)
+     &                 - abs(mod((tim+time_dep_puff_param(3,istrai)/4.d0
+     &                 +time_dep_puff_param(4,istrai))
+     &                  ,(2.d0*(time_dep_puff_param(3,istrai)/2.d0)))
+     &                 - time_dep_puff_param(3,istrai)/2.d0));
+             endif
+            else !if time_dep_puff_func
+             if (tim.lt.gpdata(1,1,istrai)) then
               tflux(istrai)=userfluxparm(istrai,1)
-            else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
+             else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
               tflux(istrai)=gpdata(ngpdata(istrai),2,istrai)
-            else
+             else
               ib=1
               it=ngpdata(istrai)
               do while (it-ib.gt.1)
@@ -716,7 +779,8 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
               else
                 tflux(istrai)=gpdata(ih,2,istrai)
               endif
-            end if
+             endif
+           endif
           else if (ncall.ge.ncallfeedback.and.
      &             feedback_stratum.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
@@ -793,15 +857,26 @@ csw 25jan2011 LTIME=.false. in eirsrt call
      1   eirene_step_cpu)
 #ifdef B25_EIRENE
         if(.not.ex) then
-          do is=1,nnatmi
-            if(streql(textan(is-1),' ')) textan(is-1) = texts(is+nsph)
-          end do
-          do is=1,nnmoli
-            if(streql(textmn(is-1),' ')) textmn(is-1) = texts(is+nspa)
-          end do
-          do is=1,nnioni
-            if(streql(textin(is-1),' ')) textin(is-1) = texts(is+nspam)
-          end do
+          if (ncall.eq.0.and.filedata(ntrc_uss)) then
+            nx_b2plot = nx
+            ny_b2plot = ny
+            ns_b2plot = ns
+            nxtr_b2plot = nxtr
+            nxtl_b2plot = nxtl
+            open(unit=44,file=filename)
+            call ngread(ismain,iflag)
+          else
+            do is=1,nnatmi
+              if(streql(textan(is-1),' ')) textan(is-1) = texts(is+nsph)
+            end do
+            do is=1,nnmoli
+              if(streql(textmn(is-1),' ')) textmn(is-1) = texts(is+nspa)
+            end do
+            do is=1,nnioni
+              if(streql(textin(is-1),' ')) textin(is-1) =
+     .                                                   texts(is+nspam)
+            end do
+          end if
           call map_ion_components
         end if
 #endif
@@ -819,7 +894,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         endif
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
-          call post_couple(nx,ny,ns,nstrat)
+          call post_couple(nx,ny,ns,nstrai)
           write(*,*) 'Called post_couple'
           write(*,*) 'Checking strata correspondence'
           call strata_check
@@ -835,29 +910,29 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
+      call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-        call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
+      call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-        call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
@@ -884,9 +959,13 @@ c           l_ddt=l_ddt+1
       end if !}
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
+      if (output_style.gt.1) then
+        write(*,*) 'in b2mod_eirene: ncall = ', ncall
+        write(*,*) 'in b2mod_eirene: main_call = ', main_call
+      end if
       if (ncall.eq.0) then
         call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-        if (main_call) call b2trci(nx,ny,ns,nnreg(0))
+        if (main_call) call b2trci(nx,ny,ns,nxtl,nxtr,jsep,nnreg(0))
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
@@ -1935,14 +2014,14 @@ csw 26feb2014 accumulate source terms for SOLPS4.3-like averaging procedure
 c             (this is new and similar to SOLPS4 style from Kotov,
 c              it is NOT IYSs style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
-        allocate(sni_av(0:(size(sni,1)-1), 0:(size(sni,2)-1),
-     .                    size(sni,3), size(sni,4)))
-        allocate(smo_av(0:(size(smo,1)-1), 0:(size(smo,2)-1),
-     .                    size(smo,3), size(smo,4)))
-        allocate(sei_av(0:(size(sei,1)-1), 0:(size(sei,2)-1),
-     .                    size(sei,3)))
-        allocate(see_av(0:(size(see,1)-1), 0:(size(see,2)-1),
-     .                    size(see,3)))
+        allocate(sni_av(0:(size(sni,1)-1),0:(size(sni,2)-1),
+     .                     size(sni,3),size(sni,4)))
+        allocate(smo_av(0:(size(smo,1)-1),0:(size(smo,2)-1),
+     .                     size(smo,3),size(smo,4)))
+        allocate(sei_av(0:(size(sei,1)-1),0:(size(sei,2)-1),
+     .                     size(sei,3)))
+        allocate(see_av(0:(size(see,1)-1),0:(size(see,2)-1),
+     .                     size(see,3)))
         sni_av=0.0_R8
         smo_av=0.0_R8
         see_av=0.0_R8
@@ -4352,6 +4431,7 @@ c!###}
       allocate(rfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
       allocate(dab2_h(0:ndxp,0:ndyp,natm,1,nhistd))
       call clear_hist_arrays
+      return
       end subroutine alloc_hist_arrays
 
       subroutine dealloc_hist_arrays
@@ -4435,6 +4515,7 @@ c!###}
         sei_h_eipl = 0.0_R8
         sei_h_eppl = 0.0_R8
       endif
+      return
       end subroutine clear_hist_arrays                            !IYS 28.03.12 }
 
       subroutine alloc_sum_arrays
@@ -4518,6 +4599,7 @@ c!###}
       allocate(rfluxm_s(0:ndxp,0:ndyp,nmol,1))
       allocate(dab2_s(0:ndxp,0:ndyp,natm,1))
       call clear_sum_arrays
+      return
       end subroutine alloc_sum_arrays
 
       subroutine dealloc_sum_arrays
@@ -4594,6 +4676,7 @@ c!###}
       rfluxa_s = 0.0_R8
       rfluxm_s = 0.0_R8
       dab2_s = 0.0_R8
+      return
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
 
 #ifdef B25_EIRENE

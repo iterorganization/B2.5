@@ -125,7 +125,7 @@
      *    '\mtD\dfhj (W)'/
       data descriptions(21:30) /
      1    '\mtD\dfch (A)',
-     2    '\mtD\dfna (#/s)',
+     2    '\mtD\dfna (particles/s)',
      3    '\mtD\dfmo (N.s)',
      4    '\mtD\dfhm (W)',
      5    '\mtD\dfhp (W)',

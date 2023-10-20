@@ -42,13 +42,14 @@ c
 *  -- LOCAL SCALARS --
       INTEGER IS, nplsi
 #ifdef B25_EIRENE
-      INTEGER NNX, NNY, IX, IY, jvft44, istra
+      INTEGER NNX, NNY, IX, IY, jvft44, istra, nstrai_in
       integer i, j, k, idum, ncl
       integer geometryType
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
       character*18 hlp_frm
+      character*72 zeile
       character*256 filename, message
       logical ex, target_east, target_west
 #endif
@@ -58,6 +59,10 @@ c
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
       external ipgeti, xertst
+#ifdef B25_EIRENE
+      logical streql
+      external streql
+#endif
 
 *=======================================================================
 *//COMPUTATION//
@@ -246,12 +251,13 @@ cank 960511
         end do
       end if
       if(jvft44 .ge. 960513) then
-        read(44,'(3i6)') nlimi,nstsi,nstrai
-        print '(1x,a,5i6)','nlimi,nstsi,nstrai,nlimps,nlmpgs:',
-     .                      nlimi,nstsi,nstrai,nlimps,nlmpgs
+        read(44,'(3i6)') nlimi,nstsi,nstrai_in
+        if (nstrai.eq.0) nstrai = nstrai_in
+        print '(1x,a,5i6)','nlimi,nstsi,nstrai_in,nlimps,nlmpgs:',
+     .                      nlimi,nstsi,nstrai_in,nlimps,nlmpgs
         call xertst(nlimi  .le. nlim , 'NGREAD:  NLIMI > NLIM ')
         call xertst(nstsi  .le. nsts , 'NGREAD:  NSTSI > NSTS ')
-        call xertst(nstrai .le. nstra, 'NGREAD: NSTRAI > NSTRA')
+        call xertst(nstrai_in .le. nstra, 'NGREAD: NSTRAI > NSTRA')
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)
@@ -272,8 +278,8 @@ cank-960727
         call rdneutrs(44,wldrm,nmoli)
       end if
       if(jvft44 .ge. 960727) then
-        if(nstrai .gt. 1) then
-          do istra=1,nstrai
+        if(nstrai_in .gt. 1) then
+          do istra=1,nstrai_in
             call rdneutrs(44,wldnek(1,istra),1)
             call rdneutrs(44,wldnep(1,istra),1)
             call rdneutrs(44,wldna(:,:,istra),natmi)
@@ -312,7 +318,7 @@ cank-960727
             wldrm(ix,is,0)=0.0_R8
             ewldm(ix,is,0)=0.0_R8
           end do
-          do istra=1,nstrai
+          do istra=1,nstrai_in
             if(use_recyceir.gt.0) then
               recyctmp=recyceir(istra)
             else
@@ -387,8 +393,8 @@ cank-960727
             eirsptm(j) = sum(wldsptm(:,j,0))
           enddo
         end if
-        if(nstrai .gt. 1) then
-          do istra=1,nstrai
+        if(nstrai_in .gt. 1) then
+          do istra=1,nstrai_in
             call rdneutrs(44,wldpp(:,:,istra),nplsi)
             call rdneutrs(44,wldpa(:,:,istra),natmi)
             call rdneutrs(44,wldpm(:,:,istra),nmoli)
@@ -658,35 +664,41 @@ cank
 
         if(jvft44 .ge. 20081111) then
           call read_title(44)
-          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,natmi),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,nmoli),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,nioni),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,natmi),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,nmoli),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
         end if
   999   continue
       else  ! NLWRMSH
@@ -751,7 +763,15 @@ cxpb
         if (aver_frac.lt.0.0_R8.or.aver_frac.gt.1.0_R8) then
           aver_frac = 0.99_R8
         else
-          read(48,'(i4)',END=98) idum
+          read(48,'(a72)',END=98) zeile
+          if (.not.streql(zeile,' ')) then
+            read(zeile,'(i4)',END=98) idum
+          else
+            idum = 0
+            do while(streql(zeile,' '))
+              read(48,'(a72)',END=98) zeile
+            end do
+          end if
           write(message,'(a)')
      .     'Mismatched number of plasma species between '//
      .      fort_lc//'44 and '//fort_lc//'44_aver files !'

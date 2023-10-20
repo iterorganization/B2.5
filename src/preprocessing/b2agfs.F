@@ -1041,17 +1041,14 @@ c
 
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
-#endif
-#endif
 #ifndef NO_GETENV
       character*12 device_env
       logical streql
       external streql
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
 #endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
@@ -1093,17 +1090,13 @@ c
 #endif
 #ifndef NO_GETENV
       device_env = ' '
-#ifdef NAGFOR
-      call get_environment_variable('DEVICE',
-     . status=ierror, length=lenval)
-      if (ierror.eq.0)
-     > call get_environment_variable('DEVICE',value=device_env)
-#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
 #else
-      call getenv ('DEVICE', device_env)
-#endif
+      call get_environment_variable('DEVICE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0)
+     > call get_environment_variable('DEVICE', value=device_env)
 #endif
       if (.not.streql(device_env,' ')) device = device_env
 #endif
@@ -1619,6 +1612,90 @@ c region 6 === right SOL
 c region 7 === right inboard divertor
 c region 8 === right outboard divertor
 c
+c                           +++++++++++++++++++++++++
+c
+c           X-point target/low field side snowflake geometry case
+c       (SF-minus, where the second X-point is on top of the primary)
+c
+c    +-------+-----------------------+-------+-------++-------+-------+
+c    |       :                       :       :       ||       :       |
+c    |       :           2           :       :       ||       :       |
+c    |       :                       :       +...5...||...6...+...7...|
+c    |       :                       :       |       ||       |       |
+c    |...3...+-----------------------+---4---+       ||       |       |
+c    |       |           1           |       |       ||       |       |
+c    |       |                       |       |       ||       |       |
+c    +-------+-----------------------+-------+-------++-------+-------+
+c
+c
+c    +-------+-----------------------+-------+-------++-------+-------+
+c    |       :                       :       :       ||       :       |
+c    |       2                       3       6       ||       7       |
+c    |       :                       :       +.......45.......+.......|
+c    |       :                       :       |       ||       |13     |
+c    1.......+-----------------------+-------+11     ||       +.......8
+c    |       |9                      |10     |       ||       |12     |
+c    |       |                       |       |       ||       |       |
+c    +-------+-----------------------+-------+-------++-------+-------+
+c
+c
+c    +---5---+-----------6-----------+---7---+--11---++--12---+---13--+
+c    |       :                       :       :       ||       :       |
+c    |       :                       :       :       ||       :       |
+c    |       :                       :       +.......||.......+.......|
+c    |       :                       :       |       ||       |       |
+c    |.......+-----------4-----------+-------+       ||       |       |
+c    |       |                       |       |       ||       |       |
+c    |       |                       |       |       ||       |       |
+c    +---1---+-----------2-----------+---3---+---8---++---9---+---10--+
+c
+c                           - - - - - - - - - - - - -
+c
+c           X-point target/low field side snowflake geometry case
+c         (SF-plus, where the second X-point is below the primary)
+c
+c    +-------+-----------------------+-------+-------++-------+-------+
+c    |       :           2           :       :       ||       :       |
+c    |       :                       :       :       ||       :       |
+c    |...3...+-----------------------+---4---+       ||       :       |
+c    |       |                       |       :       ||       :       |
+c    |       |           1           |       +...5...||...6...+...7...|
+c    |       |                       |       |       ||       |       |
+c    |       |                       |       |       ||       |       |
+c    +-------+-----------------------+-------+-------++-------+-------+
+c
+c
+c    +-------+-----------------------+-------+-------++-------+-------+
+c    |       :                       :       :       ||       :       |
+c    |       2                       3       6       ||       7       |
+c    1.......+-----------------------+-------+       ||       :       |
+c    |       |                       |       :       ||       :       |
+c    |       |9                      |10     +.......45.......+.......8
+c    |       |                       |       |11     ||       |12     |
+c    |       |                       |       |       ||       |       |
+c    +-------+-----------------------+-------+-------++-------+-------+
+c
+c
+c    +---5---+-----------6-----------+---7---+---11--++---12--+---13--+
+c    |       :                       :       :       ||       :       |
+c    |       :                       :       :       ||       :       |
+c    |.......+-----------4-----------+-------+       ||       :       |
+c    |       |                       |       :       ||       :       |
+c    |       |                       |       +.......||.......+.......|
+c    |       |                       |       |       ||       |       |
+c    |       |                       |       |       ||       |       |
+c    +---1---+-----------2-----------+---3---+---8---++----9--+---10--+
+c
+c
+c X-point target/low field side snowflake geometry case:
+c region 1 === core
+c region 2 === SOL
+c region 3 === inboard divertor
+c region 4 === outboard divertor entrance
+c region 5 === outboard divertor leg 1
+c region 6 === outboard divertor leg 2
+c region 7 === outboard divertor leg 3
+c
       integer ix,iy,inseliy,inselix,iyt
       real (kind=R8) :: geom_match_dist
       data geom_match_dist/1.0e-6_R8/
@@ -1746,7 +1823,7 @@ c volume component
             else
               nnreg(0)=4
             endif
-          elseif(nncut.eq.2) then
+          elseif(nncut.eq.2.and.leftcut(2).lt.rightcut(1)) then
             do ix = -1, leftcut(1)-1
               do iy = -1, ny
                 region(ix,iy,0)=3
@@ -1788,6 +1865,45 @@ c volume component
               enddo
             enddo
             nnreg(0)=8
+c specification for snowflake
+          elseif(nncut.eq.2.and.leftcut(2).gt.rightcut(1)) then
+            do ix = -1, leftcut(1)-1
+              do iy = -1, ny
+                region(ix,iy,0)=3
+              enddo
+            enddo
+            do ix = leftcut(1), rightcut(1)-1
+              do iy = max(bottomcut(1),bottomcut(2)), ny
+                if (iy.lt.topcut(1)) then
+                  region(ix,iy,0)=1
+                else
+                  region(ix,iy,0)=2
+                endif
+              enddo
+            enddo
+            do ix = rightcut(1), leftcut(2)-1
+              do iy = -1, ny
+                region(ix,iy,0)=4
+              enddo
+            enddo
+            do iy = -1, ny
+              ix = leftcut(2)
+              do while (leftix(ix,iy).ne.-2)
+                region(ix,iy,0)=5
+                ix=ix+1
+              enddo
+              ix = rightcut(2)-1
+              do while (rightix(ix,iy).ne.nx+1)
+                region(ix,iy,0)=6
+                ix=ix-1
+              enddo
+            enddo
+            do ix = rightcut(2), nx
+              do iy = -1, ny
+                region(ix,iy,0)=7
+              enddo
+            enddo
+            nnreg(0)=7
           endif
         endif
       endif
@@ -1849,7 +1965,7 @@ c x-flux component
         enddo
         do iy=topcut(1),iyt
           region(leftcut(1),iy,1)=2
-          if(nncut.eq.1) then
+          if(nncut.eq.1.or.nnreg(0).eq.7) then
             region(rightcut(1),iy,1)=3
           elseif(nncut.eq.2) then
             region(rightcut(1),iy,1)=7
@@ -1859,6 +1975,9 @@ c x-flux component
           if(nncut.eq.1) then
             region(leftcut(1),iy,1)=5
             region(rightcut(1),iy,1)=6
+          elseif(nnreg(0).eq.7) then
+            region(leftcut(1),iy,1)=9
+            region(rightcut(1),iy,1)=10
           elseif(nncut.eq.2) then
             if(iy.ge.bottomcut(2).and.iy.lt.topcut(2)) then
               region(leftcut(1),iy,1)=9
@@ -1868,7 +1987,20 @@ c x-flux component
             region(rightcut(1),iy,1)=12
           endif
         enddo
-        if(nncut.eq.2) then
+        if(nnreg(0).eq.7) then
+          do iy=bottomcut(2),min(topcut(1),topcut(2))-1
+            region(leftcut(2),iy,1)=11
+            region(rightcut(2),iy,1)=12
+          enddo
+          do iy=min(topcut(1),topcut(2)),max(topcut(1),topcut(2))-1
+            region(leftcut(2),iy,1)=11
+            region(rightcut(2),iy,1)=13
+          enddo
+          do iy=max(topcut(1),topcut(2)),iyt
+            region(leftcut(2),iy,1)=6
+            region(rightcut(2),iy,1)=7
+          enddo
+        elseif(nncut.eq.2) then
           do iy=bottomcut(2),topcut(2)-1
             region(leftcut(2),iy,1)=10
             if(iy.ge.bottomcut(1).and.iy.lt.topcut(1)) then
@@ -1891,6 +2023,8 @@ c x-flux component
           nnreg(1)=6
         elseif(nncut.eq.1.and.nnreg(0).eq.5) then    ! Stellarator island case
           nnreg(1)=7
+        elseif(nnreg(0).eq.7) then   ! Snowflake case
+          nnreg(1)=13
         elseif(nncut.eq.2.and.topcut(1).eq.topcut(2)) then   ! DNC case
           nnreg(1)=12
         elseif(nncut.eq.2.and.topcut(1).ne.topcut(2)) then   ! DND case
@@ -1925,6 +2059,32 @@ c y-flux component
             region(topix(ix,-1),topiy(ix,-1),2)=3
             region(ix,iyt,2)=7
           enddo
+        elseif(nnreg(0).eq.7) then
+          do ix=leftcut(1),rightcut(1)-1
+            region(topix(ix,-1),topiy(ix,-1),2)=2
+            region(ix,topcut(1),2)=4
+            region(ix,ny,2)=6
+          enddo
+          do ix = rightcut(1),leftcut(2)-1
+            region(topix(ix,-1),topiy(ix,-1),2)=3
+            region(ix,ny,2)=7
+          enddo
+          ix = leftcut(2)
+          do while (leftix(ix,topcut(1)).ne.-2)
+            region(topix(ix,-1),topiy(ix,-1),2)=8
+            region(ix,ny,2)=11
+            ix=ix+1
+          enddo
+          ix = rightcut(2)-1
+          do while (rightix(ix,topcut(1)).ne.nx+1)
+            region(topix(ix,-1),topiy(ix,-1),2)=9
+            region(ix,ny,2)=12
+            ix=ix-1
+          enddo
+          do ix = rightcut(2),nx
+            region(topix(ix,-1),topiy(ix,-1),2)=10
+            region(ix,ny,2)=13
+          enddo
         elseif(nncut.eq.2) then
           do ix=leftcut(1),leftcut(2)-1
             region(topix(ix,-1),topiy(ix,-1),2)=2
@@ -1957,6 +2117,8 @@ c y-flux component
           nnreg(2)=8
         elseif(nncut.lt.2) then
           nnreg(2)=7
+        elseif(nnreg(0).eq.7) then   ! Snowflake case
+          nnreg(2)=13
         elseif(nncut.eq.2) then
           nnreg(2)=14
         endif

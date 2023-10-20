@@ -351,8 +351,7 @@ c Create a format string for the column headers
      ,     na_tmp*nrg_tmp*nsp_tmp,'(1x,a8,i2.2,''_'',a2))'
 #ifdef DBG
 c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
-         print *,'hlp_frm:'
-         print *,trim(hlp_frm)
+         print *,'hlp_frm:',trim(hlp_frm)
 #endif
         endif
         if (nfl_tmp.gt.0) then
@@ -417,6 +416,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2wrsrt: cannot open file ',trim(f)
@@ -438,6 +438,11 @@ c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
       return
       end subroutine b2wrsrtf
 c=======================================================================

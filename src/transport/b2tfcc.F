@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nx, ny, ns, na, te, ti, cdpa,
+      subroutine b2tfcc (nx, ny, ns, vol, na, te, ti, cdpa,
      &  floe, cone, floi, coni)
       use b2mod_types
       use b2mod_rates
@@ -14,6 +14,7 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
+     &  vol(-1:nx,-1:ny),
      &  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -79,29 +80,29 @@
          if(leftix(ix,iy).ne.-2) then
           floe(ix,iy,0) = floe(ix,iy,0)-
      &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,0,is)*
-     &     ((rza(ix,iy,is)+1.0_R8)*rza(ix,iy,is)*na(ix,iy,is)-
-     &      (rza(leftix(ix,iy),leftiy(ix,iy),is)+1.0_R8)*
-     &       rza(leftix(ix,iy),leftiy(ix,iy),is)*
+     &     (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &      rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
+     &     (rza(ix,iy,is)*na(ix,iy,is)-
+     &      rza(leftix(ix,iy),leftiy(ix,iy),is)*
      &       na(leftix(ix,iy),leftiy(ix,iy),is))*
      &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
           cone(ix,iy,0,0) = cone(ix,iy,0,0)+                         !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,0,is)*
-     &     ((rza(ix,iy,is)+1.0_R8)*rza(ix,iy,is)*na(ix,iy,is)+
-     &      (rza(leftix(ix,iy),leftiy(ix,iy),is)+1.0_R8)*
-     &       rza(leftix(ix,iy),leftiy(ix,iy),is)*
+     &     (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &      rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
+     &     (rza(ix,iy,is)*na(ix,iy,is)+
+     &      rza(leftix(ix,iy),leftiy(ix,iy),is)*
      &       na(leftix(ix,iy),leftiy(ix,iy),is))*
-     &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
+     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
           floi(ix,iy,0) = floi(ix,iy,0)-
      &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,0,is)*
-     &     ((rza(ix,iy,is)+1.0_R8)*na(ix,iy,is)-
-     &      (rza(leftix(ix,iy),leftiy(ix,iy),is)+1.0_R8)*
-     &      na(leftix(ix,iy),leftiy(ix,iy),is))*
+     &     (na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
           coni(ix,iy,0,0) = coni(ix,iy,0,0)+                         !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,0,is)*
-     &     ((rza(leftix(ix,iy),leftiy(ix,iy),is)+1.0_R8)*
-     &       na(leftix(ix,iy),leftiy(ix,iy),is)+
-     &      (rza(ix,iy,is)+1.0_R8)*na(ix,iy,is))*
+     &     (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
          endif
         enddo
@@ -115,29 +116,29 @@
          if(bottomiy(ix,iy).ne.-2) then
           floe(ix,iy,1) = floe(ix,iy,1)-
      &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,1,is)*
-     &     ((rza(ix,iy,is)+1.0_R8)*rza(ix,iy,is)*na(ix,iy,is)-
-     &      (rza(bottomix(ix,iy),bottomiy(ix,iy),is)+1.0_R8)*
+     &     (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &      rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &     (rza(ix,iy,is)*na(ix,iy,is)-
      &      rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &      na(bottomix(ix,iy),bottomiy(ix,iy),is))*
+     &       na(bottomix(ix,iy),bottomiy(ix,iy),is))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
           cone(ix,iy,1,0) = cone(ix,iy,1,0)+                         !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,is)*
-     &     ((rza(bottomix(ix,iy),bottomiy(ix,iy),is)+1.0_R8)*
-     &      rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &      na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     &      (rza(ix,iy,is)+1.0_R8)*rza(ix,iy,is)*na(ix,iy,is))*
+     &     (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &      rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &     (rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     &       na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     &      rza(ix,iy,is)*na(ix,iy,is))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
           floi(ix,iy,1) = floi(ix,iy,1)-
      &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,1,is)*
-     &     ((rza(ix,iy,is)+1.0_R8)*na(ix,iy,is)-
-     &      (rza(bottomix(ix,iy),bottomiy(ix,iy),is)+1.0_R8)*
-     &      na(bottomix(ix,iy),bottomiy(ix,iy),is))*
+     &     (na(ix,iy,is)-na(bottomix(ix,iy),bottomiy(ix,iy),is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
           coni(ix,iy,1,0) = coni(ix,iy,1,0)+                         !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,is)*
-     &     ((rza(bottomix(ix,iy),bottomiy(ix,iy),is)+1.0_R8)*
-     &      na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     &      (rza(ix,iy,is)+1.0_R8)*na(ix,iy,is))*
+     &     (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
          endif
         enddo

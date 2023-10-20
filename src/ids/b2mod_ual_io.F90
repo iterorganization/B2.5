@@ -30,7 +30,7 @@ module b2mod_ual_io
     use b2mod_elements
     use b2mod_constants
     use b2mod_sources
-    use b2mod_average
+    use b2mod_running_average
     use b2mod_feedback
     use b2mod_transport
     use b2mod_transport_nspecies
@@ -42,7 +42,6 @@ module b2mod_ual_io
     use b2mod_external
     use b2mod_interp
     use b2mod_ipmain
-    use b2mod_b2cmrc
     use b2mod_b2cmfs
     use b2mod_b2cmpb
     use b2mod_version
@@ -79,11 +78,9 @@ module b2mod_ual_io
     use b2mod_b2plot &
      & , only : triangle_vol, ix_e2b, wklng, alloc_b2mod_b2plot_eirene
 #endif
-#else
-#ifdef IMAS
+#elif defined(IMAS)
     use b2mod_b2plot &
      & , only : natmi
-#endif
 #endif
     use logging
 
@@ -91,10 +88,11 @@ module b2mod_ual_io
     !! UAL Access
     use b2mod_ual_io_grid &
      & , only : INCLUDE_GHOST_CELLS
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
-     & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
+     & , only : b2_IMAS_Transform_Data_B2_To_IDS,       &
+     &          b2_IMAS_Transform_Data_B2_To_IDS_Face,  &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
     use b2mod_ual_io_grid &
      & , only : b2_IMAS_Fill_Grid_Desc
@@ -106,6 +104,13 @@ module b2mod_ual_io
         &   IDS_COORDTYPE_R => COORDTYPE_R,       &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
+#endif
+#if GGD_MAJOR_VERSION < 1
+    use b2mod_ual_io_grid &
+     & , only : VEC_ALIGN_RADIAL_ID,   &
+     &          VEC_ALIGN_POLOIDAL_ID, &
+     &          VEC_ALIGN_PARALLEL_ID, &
+     &          VEC_ALIGN_TOROIDAL_ID
 #endif
 #if GGD_MINOR_VERSION < 9
     use b2mod_ual_io_grid &
@@ -119,6 +124,7 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
+#if GGD_MAJOR_VERSION > 0
 #if GGD_MINOR_VERSION < 10
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -128,6 +134,17 @@ module b2mod_ual_io
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #endif
+#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+    use b2mod_ual_io_grid &
+     & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+     &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2, &
+     &          VEC_ALIGN_R_MAJOR_ID, VEC_ALIGN_Z_ID
+#endif
+#endif
+    use ids_schemas &     ! IGNORE
+     & , only : ids_string_length
 #if IMAS_MINOR_VERSION > 8
     use ids_schemas &     ! IGNORE
      & , only : ids_real, ids_real_invalid
@@ -162,18 +179,18 @@ module b2mod_ual_io
     use ids_utilities &   ! IGNORE
      & , only : ids_identifier_static
 #endif
-#if IMAS_MINOR_VERSION > 29
-#ifdef AMNS
+#if IMAS_MINOR_VERSION > 36
+    use ids_schemas &     ! IGNORE
+     & , only : ids_summary_rz1d_dynamic
+#endif
+#if ( defined(AMNS) && IMAS_MINOR_VERSION > 29 )
     use amns_types  ! IGNORE
     use amns_module ! IGNORE
 #endif
-#endif
-#else
-#ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
     use euITM_schemas   ! IGNORE
     use euITM_routines  ! IGNORE
     use itm_grid_common ! IGNORE
-#endif
 #endif
 
   public b25_process_ids, b25_av_ids
@@ -246,6 +263,7 @@ module b2mod_ual_io
   character(len=ids_string_length), save :: comment   !< IDS properties label
   character(len=ids_string_length), save :: create_date
   character(len=ids_string_length), save :: code_commit
+  character(len=ids_string_length), save :: code_description
   character(len=ids_string_length), save :: configuration
   character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
   character*8, save :: imas_version, ual_version, adas_version
@@ -256,11 +274,10 @@ module b2mod_ual_io
   character*32, save :: ADAS_git_version
   logical, save :: IDSmapInitialized = .false.
   logical, save :: eq_found
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
   integer lenval, ierror
-#else
-#ifdef NAGFOR
-  integer lenval, ierror
+#ifndef USE_PXFGETENV
+  intrinsic get_environment_variable
 #endif
 #endif
   type(B2GridMap), save :: IDSmap
@@ -284,19 +301,21 @@ contains
     if (IDS_initialized) return
     call ipgeti ('b2mndr_eirene', use_eirene)
     username = usrnam()
-#ifdef NAGFOR
+#ifdef NO_GETENV
+    write(imas_version,'(i1,a1,i2,a1,i1)')  IMAS_MAJOR_VERSION,'.', &
+                                      &     IMAS_MINOR_VERSION,'.', &
+                                      &     IMAS_MICRO_VERSION
+    write(ual_version,'(i1,a1,i2,a1,i1)') UAL_MAJOR_VERSION,'.', &
+                                      &   UAL_MINOR_VERSION,'.', &
+                                      &   UAL_MICRO_VERSION
+#elif defined(USE_PXFGETENV)
+    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
+    CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
+#else
     call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
     call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
-#else
-#ifdef USE_PXFGETENV
-    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
-    CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
-#else
-    call getenv ('IMAS_VERSION', imas_version)
-    call getenv ('UAL_VERSION', ual_version)
-#endif
 #endif
     call date_and_time (date, ctime, zone, tvalues)
     create_date = date//' '//ctime//' '//' '//zone
@@ -506,6 +525,27 @@ contains
             &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
             &               ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
             &                 wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
+      elseif (nnreg(0).eq.7) then
+        ixmid(1) = jxa
+        flux_expansion(1) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(0,jsep),topiy(0,jsep),0)/       &
+            &                 wbbc(topix(0,jsep),topiy(0,jsep),3) )
+        ixmid(2) = jxa
+        flux_expansion(2) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nxtl,jsep),topiy(nxtl,jsep),0)/ &
+            &                 wbbc(topix(nxtl,jsep),topiy(nxtl,jsep),3) )
+        ixmid(3) = jxa
+        flux_expansion(3) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nxtr,jsep),topiy(nxtr,jsep),0)/ &
+            &                 wbbc(topix(nxtr,jsep),topiy(nxtr,jsep),3) )
+        ixmid(4) = jxa
+        flux_expansion(4) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
+            &                 wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
       else
         if (topcut(1).lt.topcut(2)) then
           ixmid(1) = jxa
@@ -571,7 +611,8 @@ contains
     !!          checks for correct use of the routine.
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
-    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+    subroutine B25_process_ids( &
+            &   edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
@@ -717,7 +758,11 @@ contains
 #endif
 #endif
 
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        integer, parameter :: nsources = 13
+#else
         integer, parameter :: nsources = 12
+#endif
         integer, save :: ncall = 0
         integer, save :: style = 1
         integer, save :: ismain = 1
@@ -731,6 +776,7 @@ contains
         real(IDS_real), save :: BoRiS = 0.0_IDS_real
         character*132 radiation_commit
         character*256 filename
+        character*5 hlp_frm
         logical match_found, streql, exists, wrong_flow
 #ifdef B25_EIRENE
         character(len=132) :: mol_label !< Molecule species label (e.g. D2)
@@ -939,21 +985,28 @@ contains
 #endif
 
         !! 2. Set code and library data
+#ifdef B25_EIRENE
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (coupled SOLPS-ITER run)"
+#else
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (standalone B2.5 run)"
+#endif
         if (streql(b2frates_flag,'adas')) then
           radiation_commit = 'B25 : '//trim(B25_git_version)// &
                       &  ' + ADAS : '//trim(ADAS_git_version)
         else
           radiation_commit = B25_git_version
         endif
-        call write_ids_code( edge_profiles%code, code_commit )
-        call write_ids_code( edge_transport%code, code_commit )
-        call write_ids_code( edge_sources%code, code_commit )
-        call write_ids_code( radiation%code, radiation_commit )
+        call write_ids_code( edge_profiles%code, code_commit, code_description )
+        call write_ids_code( edge_transport%code, code_commit, code_description )
+        call write_ids_code( edge_sources%code, code_commit, code_description )
+        call write_ids_code( radiation%code, radiation_commit, code_description )
 #if IMAS_MINOR_VERSION > 21
-        call write_ids_code( summary%code, code_commit )
+        call write_ids_code( summary%code, code_commit, code_description )
 #endif
 #if IMAS_MINOR_VERSION > 30
-        call write_ids_code( divertors%code, code_commit )
+        call write_ids_code( divertors%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
         edge_transport%model(1)%identifier%index = 1
@@ -979,6 +1032,11 @@ contains
 #if IMAS_MINOR_VERSION > 29
         allocate( edge_transport%model(1)%code%name(1) )
         edge_transport%model(1)%code%name = source
+#if IMAS_MINOR_VERSION > 38
+        allocate( edge_transport%model(1)%code%description(1) )
+        edge_transport%model(1)%code%description = &
+            & "Snapshot IDS written by b2mod_ual_io routine"
+#endif
         allocate( edge_transport%model(1)%code%version(1) )
         edge_transport%model(1)%code%version = newversion
         allocate( edge_transport%model(1)%code%commit(1) )
@@ -1147,6 +1205,15 @@ contains
         allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+        !! Neutrals
+        edge_sources%source(13)%identifier%index = 701
+        allocate( edge_sources%source(13)%identifier%name(1) )
+        edge_sources%source(13)%identifier%name = "Neutrals"
+        allocate( edge_sources%source(13)%identifier%description(1) )
+        edge_sources%source(13)%identifier%description = &
+            & "Total source due to plasma-neutral interactions from "//trim(source)
+#endif
 
         call put_equilibrium_data ( equilibrium, &
 #if IMAS_MINOR_VERSION > 21
@@ -1184,8 +1251,11 @@ contains
 #endif
 
         i=index(B25_git_version,'-')
-        allocate( summary%tag%name(1) )
-        summary%tag%name = B25_git_version(1:i-1)
+        if (i.gt.0) then
+          allocate( summary%tag%name(1) )
+          write(hlp_frm,'(a,i2.2,a)') '(a',i-1,')'
+          write(summary%tag%name,hlp_frm) B25_git_version(1:i-1)
+        endif
 
 #if IMAS_MINOR_VERSION > 32
         call write_ids_midplane( divertors%midplane, midplane_id )
@@ -1199,7 +1269,8 @@ contains
         case ( GEOMETRY_CYLINDER, GEOMETRY_LIMITER, GEOMETRY_ANNULUS )
           icnt = 1
           isep(1) = 2
-        case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
+        case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND,  &
+        &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
           icnt = 1
           isep(1) = 4
         case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
@@ -1263,7 +1334,8 @@ contains
 #endif
         case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
             &  GEOMETRY_STELLARATORISLAND, GEOMETRY_ANNULUS , &
-            &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+            &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+            &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
           u = 0.0_IDS_real
           do ix = 0, nx-1
             do iy = 0, ny-1
@@ -1290,6 +1362,29 @@ contains
           end if
 #endif
         end select
+
+#if IMAS_MINOR_VERSION > 36
+        select case (GeometryType)
+        case ( GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
+            &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+          call write_sourced_rz( summary%boundary%x_point_main, &
+            &   crx(leftcut(1),topcut(1),0), cry(leftcut(1),topcut(1),0) )
+        case ( GEOMETRY_DDN_TOP )
+          call write_sourced_rz( summary%boundary%x_point_main, &
+            &   crx(leftcut(2),topcut(2),0), cry(leftcut(2),topcut(2),0) )
+        end select
+        select case (GeometryType)
+        case ( GEOMETRY_CDN )
+          call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, 0.0_IDS_real )
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+             & GEOMETRY_LFS_SNOWFLAKE_MINUS )
+          u = norm( (crx(nmdpl,topcut(2),0) + crx(nmdpl,topcut(2),1))/2.0_R8 - &
+            &       (crx(nmdpl,topcut(1),0) + crx(nmdpl,topcut(1),1))/2.0_R8, &
+            &       (cry(nmdpl,topcut(2),0) + cry(nmdpl,topcut(2),1))/2.0_R8 - &
+            &       (cry(nmdpl,topcut(1),0) + cry(nmdpl,topcut(1),1))/2.0_R8 )
+          call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, u )
+        end select
+#endif
 
         totFace=abs(fht)
         call divide_by_poloidal_areas(nx,ny,totFace,tmpFace)
@@ -1724,16 +1819,13 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, &
             &  recycled_flux(1) )
-        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+        &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
           allocate( divertors%divertor(2) )
           allocate( divertors%divertor(1)%name(1) )
           allocate( divertors%divertor(1)%identifier(1) )
           allocate( divertors%divertor(2)%name(1) )
           allocate( divertors%divertor(2)%identifier(1) )
-          divertors%divertor(1)%name = 'Lower divertor'
-          divertors%divertor(1)%identifier = 'LD'
-          divertors%divertor(2)%name = 'Upper divertor'
-          divertors%divertor(2)%identifier = 'UD'
           allocate( divertors%divertor(1)%target(2) )
           allocate( divertors%divertor(2)%target(2) )
           allocate( divertors%divertor(1)%target(1)%name(1) )
@@ -1744,6 +1836,34 @@ contains
           allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%name(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
+          if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+          &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Lower SF divertor'
+            divertors%divertor(2)%identifier = 'LSFD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Snowflake lower outer target"
+            divertors%divertor(2)%target(1)%identifier = "LSFOD"
+            divertors%divertor(2)%target(2)%name = "Snowflake lower inner target"
+            divertors%divertor(2)%target(2)%identifier = "LSFID"
+          else
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Upper divertor'
+            divertors%divertor(2)%identifier = 'UD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Upper inner target"
+            divertors%divertor(2)%target(1)%identifier = "UID"
+            divertors%divertor(2)%target(2)%name = "Upper outer target"
+            divertors%divertor(2)%target(2)%identifier = "UOD"
+          endif
 !! FIXME: Should represent the full extent of the physical divertor
           divertors%divertor(1)%target(1)%extension_r = extension_r(1)
           divertors%divertor(1)%target(1)%extension_z = extension_z(1)
@@ -1753,10 +1873,6 @@ contains
           divertors%divertor(2)%target(1)%extension_z = extension_z(2)
           divertors%divertor(2)%target(2)%extension_r = extension_r(3)
           divertors%divertor(2)%target(2)%extension_z = extension_z(3)
-          divertors%divertor(1)%target(1)%name = "Lower inner target"
-          divertors%divertor(1)%target(1)%identifier = "LID"
-          divertors%divertor(1)%target(2)%name = "Lower outer target"
-          divertors%divertor(1)%target(2)%identifier = "LOD"
           call write_timed_value( &
             &  divertors%divertor(1)%target(1)%power_flux_peak, &
             &  power_flux_peak(1) )
@@ -1867,10 +1983,6 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, &
             &  recycled_flux(1)+recycled_flux(4) )
-          divertors%divertor(2)%target(1)%name = "Upper inner target"
-          divertors%divertor(2)%target(1)%identifier = "UID"
-          divertors%divertor(2)%target(2)%name = "Upper outer target"
-          divertors%divertor(2)%target(2)%identifier = "UOD"
           call write_timed_value( &
             &  divertors%divertor(2)%target(1)%power_flux_peak, &
             &  power_flux_peak(2) )
@@ -1988,7 +2100,7 @@ contains
 #endif
 
         !! Write grid & grid subsets/subgrids
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   edge_profiles%ggd( time_sind )%grid,                        &
@@ -2038,6 +2150,9 @@ contains
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
 #endif
 #endif
+#else
+        write(0,*) 'Code was compiled without a GGD module'
+        write(0,*) 'Most IDS output is disabled !'
 #endif
 
         !! Allocate and set time slice value
@@ -2887,8 +3002,7 @@ contains
 #endif
         end if
 
-#if IMAS_MINOR_VERSION > 21
-#ifdef B25_EIRENE
+#if ( defined(B25_EIRENE) && IMAS_MINOR_VERSION > 21 )
         if (use_eirene.ne.0) then
           allocate( radiation%process(3)%ggd( time_sind )%neutral( nneut ) )
           do is = 1, nneut
@@ -3054,7 +3168,6 @@ contains
 
         end if
 #endif
-#endif
 
 #ifdef B25_EIRENE
 !! Obtain the neutral velocities
@@ -3131,7 +3244,7 @@ contains
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
             call logmsg( LOGDEBUG, &
             &   "b2mod_ual_io.B25_process_ids: writing plasma state" )
 
@@ -3271,6 +3384,15 @@ contains
                 &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = sne0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                         &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! na: Ion density
             do is = 1, nsion
@@ -3446,6 +3568,17 @@ contains
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:,:) = sna0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_scalar( sources_grid,                     &
+                      &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                  end do
+                end if
+#endif
               else
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
@@ -3798,6 +3931,19 @@ contains
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+                if (use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:,:) = smo0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                end if
+#endif
               end if
             end do
 
@@ -3917,6 +4063,15 @@ contains
                 &   scalar = edge_sources%source(12)%ggd( time_sind )%      &
                 &            electrons%energy,                              &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = she0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                         &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%energy,                              &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! pe: Electron pressure
             call b2xppe( nx, ny, ne, te, pe)
@@ -4017,6 +4172,15 @@ contains
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             end if
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = shi0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+#endif
             do is = 1, nsion
               if (is.le.nspecies) then
                 totCv(:,:) = 0.0_IDS_real
@@ -5367,6 +5531,15 @@ contains
                 &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 && defined(B25_EIRENE) )
+            if (use_eirene.ne.0) then
+              tmpCv(:,:) = sch0_eir_tot(:,:) / vol(:,:)
+              call write_cell_scalar( sources_grid,                     &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            end if
+#endif
             !! csig : Electric conductivity
             tmpFace(:,:,0) = csig(:,:,0)
             tmpFace(:,:,1) = IDS_REAL_INVALID
@@ -5480,7 +5653,7 @@ contains
                     if (imneut(is).eq.js) then
                       do ix = -1, nx
                         do iy = -1, ny
-                           tmpCv(ix,iy) = tmpCV(ix,iy)-emolrad(ix+1,iy+1,is,0)
+                           tmpCv(ix,iy) = tmpCv(ix,iy)-emolrad(ix+1,iy+1,is,0)
                         end do
                       end do
                     end if
@@ -6022,7 +6195,9 @@ contains
         do ix = 0, nx-1
           do iy = 0, ny-1
             if (geometryType.eq.GEOMETRY_LIMITER .or. &
-             &  geometryType.eq.GEOMETRY_SN) then
+             &  geometryType.eq.GEOMETRY_SN .or. &
+             &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+             &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
               if (region(ix,iy,0).ne.2) cycle
             else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
               if (region(ix,iy,0).ne.2 .and. region(ix,iy,0).ne.5) cycle
@@ -6065,7 +6240,8 @@ contains
           else
             ix = 0
           end if
-        case (GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM)
+        case (GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
+        &     GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
           if (LSN) then
             ix = rightcut(1)-1
           else
@@ -6161,23 +6337,6 @@ contains
 
         contains
 
-        integer function get_atom_number( compname )
-            implicit none
-            character*2 compname
-            integer is, iatm
-            logical streql
-            external streql
-
-            get_atom_number = 0
-            do iatm = 1, natmi
-               if ( get_atom_number > 0 ) cycle
-               is = eb2atcr(iatm)
-               if (streql( is_codes( is ), compname ) ) get_atom_number = iatm
-            end do
-            return
-
-        end function get_atom_number
-
         function separatrix_average( field, weight )
         ! This function is devoted to obtain the weighted average along the active separatrix
         ! of a plasma field quantity
@@ -6185,7 +6344,7 @@ contains
         ! The weighting automatically includes the areas of the cell faces
         implicit none
         real(kind=IDS_real) :: separatrix_average
-        real(kind=IDS_real), intent(in) :: field(nx,ny), weight(nx,ny)
+        real(kind=IDS_real), intent(in) :: field(-1:nx,-1:ny), weight(-1:nx,-1:ny)
         real(kind=IDS_real) :: sum, area_sum
 
         separatrix_average = IDS_REAL_INVALID
@@ -6295,6 +6454,7 @@ contains
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         character(len=13) :: spclabel         !< Species label
+        character(len=5) :: hlp_frm
  !< Type of IDS data structure, designed for handling grid geometry data
 #if IMAS_MINOR_VERSION < 15
         type(ids_generic_grid_dynamic) :: batch_grid, sources_grid
@@ -6352,11 +6512,12 @@ contains
         end if
 
         !! 2. Set code and library data
-        call write_ids_code( batch_profiles%code, code_commit )
-        call write_ids_code( batch_sources%code, code_commit )
+        code_description = "Batch-averaged IDS from b2mod_ual_io routine"
+        call write_ids_code( batch_profiles%code, code_commit, code_description )
+        call write_ids_code( batch_sources%code, code_commit, code_description )
 #if IMAS_MINOR_VERSION > 21
         if (do_description) &
-          &  call write_ids_code( summary%code, code_commit )
+          &  call write_ids_code( summary%code, code_commit, code_description )
 #endif
 
         !! 3. Allocate IDS.time and set it to desired values
@@ -6415,8 +6576,11 @@ contains
           description%simulation%workflow = source
 
           i=index(B25_git_version,'-')
-          allocate( summary%tag%name(1) )
-          summary%tag%name = B25_git_version(1:i-1)
+          if (i.gt.0) then
+            allocate( summary%tag%name(1) )
+            write(hlp_frm,'(a,i2.2,a)') '(a',i-1,')'
+            write(summary%tag%name,hlp_frm) B25_git_version(1:i-1)
+          end if
         end if
 #endif
 
@@ -6428,7 +6592,7 @@ contains
 #endif
 
         !! Write grid & grid subsets/subgrids
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_profiles%ggd( batch_index )%grid,                     &
@@ -6568,7 +6732,7 @@ contains
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
           call logmsg( LOGDEBUG, &
             &   "b2mod_ual_io.B25_av_ids: writing averaged plasma state" )
             !! Find grid subset base indices out of the available grid subset
@@ -6897,11 +7061,12 @@ contains
 
     end subroutine write_ids_properties
 
-    subroutine write_ids_code( code, commit )
+    subroutine write_ids_code( code, commit, description )
     implicit none
     type(ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
 #if IMAS_MINOR_VERSION > 29
     integer :: nlibs !< Number of declared libraries in IDS description
     character*8 ggd_version, mscl_version
@@ -6926,6 +7091,10 @@ contains
 
     allocate( code%name(1) )
     code%name = source
+#if IMAS_MINOR_VERSION > 38
+    allocate( code%description(1) )
+    code%description = description
+#endif
     allocate( code%version(1) )
     code%version = newversion
     allocate( code%commit(1) )
@@ -6960,7 +7129,14 @@ contains
       & nlibs = nlibs + 1
 
     mscl_version='0.0.0'
-#ifdef NAGFOR
+#ifdef NO_GETENV
+    write(ggd_version,'(i1,a1,i2,a1,i1)') GGD_MAJOR_VERSION,'.', &
+                                        & GGD_MINOR_VERSION,'.', &
+                                        & GGD_MICRO_VERSION
+#elif defined(USE_PXFGETENV)
+    CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
+    CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
+#else
     call get_environment_variable('GGD_VERSION', &
         &  status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('GGD_VERSION', &
@@ -6969,14 +7145,6 @@ contains
         &  status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('EBVERSIONMSCL', &
         &  value=mscl_version)
-#else
-#ifdef USE_PXFGETENV
-    CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
-    CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
-#else
-    call getenv ('GGD_VERSION', ggd_version)
-    call getenv ('EBVERSIONMSCL', mscl_version)
-#endif
 #endif
     if (.not.streql(mscl_version,'0.0.0')) nlibs = nlibs + 1
 
@@ -7078,7 +7246,7 @@ contains
 #endif
        &  edgeprof, database, time_slice_value, &
        &  do_summary_data, new_eq_ggd )
-#if IMAS_MINOR_VERSION > 14
+#if IMAS_MINOR_VERSION > 14 && GGD_MAJOR_VERSION > 0
     use b2mod_ual_io_grid &
        & , only: GGD_copy_AoS3Root_to_Dynamic
 #endif
@@ -7338,10 +7506,15 @@ contains
             summary%global_quantities%r0%source = eq_source
           end if
 #endif
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
           new_eq_ggd = .not.associated( equilibrium%grids_ggd )
           if ( .not.new_eq_ggd ) new_eq_ggd = &
             &  .not.associated( equilibrium%grids_ggd( slice_index )%grid )
+#else
+          new_eq_ggd = .false.
+#endif
           if ( new_eq_ggd ) then
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
             if (.not.associated( equilibrium%grids_ggd ) ) &
               &  allocate( equilibrium%grids_ggd( num_time_slices ) )
             allocate( equilibrium%grids_ggd( slice_index )%grid(1) )
@@ -7357,6 +7530,7 @@ contains
             equilibrium%grids_ggd( slice_index )%grid(1) = eq_grid
 #endif
             equilibrium%grids_ggd( slice_index )%time = time_slice_value
+#endif
 #if IMAS_MINOR_VERSION > 33
             if (.not.associated( equilibrium%ids_properties%provenance%node ) ) then
               inode = 0
@@ -7383,6 +7557,7 @@ contains
             & then
             allocate( equilibrium%time_slice( slice_index )%ggd(1) )
           end if
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
           if (.not.associated(                                                &
             &  equilibrium%time_slice( slice_index )%ggd(1)%r ) ) then
             do iy = -1, ny
@@ -7520,20 +7695,25 @@ contains
                 &         b_field_tor,                                        &
                 &   b2CellData = tmpCv )
           end if
+#endif
           if ( equilibrium%time( slice_index ).eq.0.0_IDS_real ) then
             equilibrium%time( slice_index ) = time_slice_value
           end if
         else if (isymm.ne.0) then
 #if IMAS_MINOR_VERSION > 21
-          if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, -b0 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, -b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0
           edgeprof%vacuum_toroidal_field%r0 = r0
         else
 #if IMAS_MINOR_VERSION > 21
-          if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, b0 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
           edgeprof%vacuum_toroidal_field%r0 = r0
@@ -7551,11 +7731,11 @@ contains
         z_eq = IDS_REAL_INVALID
       end if
       if ( z_eq.ne.IDS_REAL_INVALID .and. &
-         & (cry(jxa,jsep,2)-z_eq)*(cry(jxa,jsep,3)-z_eq).lt.0.0_R8 ) then
+         & (cry(jxa,jsep,2)-z_eq)*(cry(jxa,jsep,3)-z_eq).le.0.0_R8 ) then
         midplane_id = 1
       else if ( jxa .eq. nmdpl ) then
         midplane_id = 2
-      else if ( cry(jxa,jsep,2)*cry(jxa,jsep,3).lt.0.0_R8 ) then
+      else if ( cry(jxa,jsep,2)*cry(jxa,jsep,3).le.0.0_R8 ) then
         midplane_id = 3
       else
         midplane_id = 4
@@ -7601,6 +7781,9 @@ contains
       end if
     case( GEOMETRY_CDN , GEOMETRY_DDN_BOTTOM , GEOMETRY_DDN_TOP )
       call write_sourced_integer( summary%boundary%type, 13 )
+    case( GEOMETRY_LFS_SNOWFLAKE_MINUS , &
+        & GEOMETRY_LFS_SNOWFLAKE_PLUS )
+      call write_sourced_integer( summary%boundary%type, 14 )
     end select
     if (LSN) then
       call write_sourced_value( summary%boundary%strike_point_inner_r, crx(-1,topcut(1),1) )
@@ -7640,6 +7823,10 @@ contains
           at_mid = bcchar(ib).eq.'N'
           at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4)
           at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+        case (GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+          at_mid = bcchar(ib).eq.'N'
+          at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3 .or. ireg.eq.4 .or. &
+        &                                 ireg.eq.5 .or. ireg.eq.6 .or. ireg.eq.7)
         case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
           at_mid = bcchar(ib).eq.'N'
           at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.8)
@@ -7755,7 +7942,9 @@ contains
               else
                 if (pfrregno1.eq.0 .and. &
                  & (pfrregno2.eq.pfrregno1 .or. &
-                 & (pfrregno2.eq.2 .and. GeometryType.eq.GEOMETRY_SN) .or. &
+                 & (pfrregno2.eq.2 .and. (GeometryType.eq.GEOMETRY_SN .or. &
+                 &  GeometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+                 &  GeometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS)) .or. &
                  & (pfrregno2.eq.5 .and.(GeometryType.eq.GEOMETRY_CDN .or. &
                  &  GeometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
                  &  GeometryType.eq.GEOMETRY_DDN_TOP)))) then
@@ -7784,10 +7973,12 @@ contains
                 at_mid = bcchar(ib).eq.'N'.or.bcchar(ib).eq.'W'.or.bcchar(ib).eq.'E'
                 at_bot = bcchar(ib).eq.'S'.and.LSN
                 at_top = bcchar(ib).eq.'S'.and..not.LSN
-              case (GEOMETRY_SN)
+              case (GEOMETRY_SN, GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
                 at_mid = bcchar(ib).eq.'N'
-                at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4)
-                at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+                at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4.or. &
+        &                                               ireg.eq.5.or.ireg.eq.6.or.ireg.eq.7)
+                at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.  &
+        &                                  ireg.eq.4.or.ireg.eq.5.or.ireg.eq.6.or.ireg.eq.7)
               case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
                 at_mid = bcchar(ib).eq.'N'
                 at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.8)
@@ -7974,7 +8165,7 @@ contains
     end subroutine write_ids_midplane
 #endif
 
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
     !! IMAS IDS data tree node.
     subroutine write_quantity( basegrid, val, value )
@@ -8098,7 +8289,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8121,7 +8316,7 @@ contains
 #endif
         deallocate( idsdata )
       case ( 2 ) !< Grid subset consists of faces
-        idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                &
+        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
                      &   basegrid, iSubset, IDSmap, tmpFace )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
@@ -8221,7 +8416,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8252,10 +8451,12 @@ contains
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
+    !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine write_cell_vector_component( basegrid, &
        &  vectorComponent, b2CellData, vectorID )
     implicit none
@@ -8332,7 +8533,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8436,7 +8641,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8460,10 +8669,12 @@ contains
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
+    !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine write_face_vector_component( basegrid, &
        &   vectorComponent, b2FaceData, vectorID )
     implicit none
@@ -8541,7 +8752,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8637,7 +8852,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8815,6 +9034,7 @@ contains
     return
     end subroutine add_sourced_value
 
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !!$> TODO: add to GGD itself (ids_grid_data)!
     !> Write a scalar data field given as a scalar data representation to a
     !! generic grid vector component IDS data fields.
@@ -8824,10 +9044,12 @@ contains
     !!          necessary.
     !! @note Available IDS vector component data fields:
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
+    !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp, &
              &   grid_index, grid_subset_index, vectorID, data)
     implicit none
@@ -8866,11 +9088,11 @@ contains
       end if
       !! copy radial data field
       idsField_vcomp%radial = data
-    case( "diamagnetic" )
+    case( VEC_ALIGN_DIAMAGNETIC_ID )
       !! Writing diamagnetic quantity
       !! Make sure the data field is properly allocated
       if ( associated( idsField_vcomp%diamagnetic ) ) then
-        if ( .not. all( shape( idsField_vcomp%diamagnetic) ==   &
+        if ( .not. all( shape( idsField_vcomp%diamagnetic ) ==   &
                     &   shape(data) )) then
           deallocate( idsField_vcomp%diamagnetic )
         end if
@@ -8926,10 +9148,43 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
+#if IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 )
+    case( VEC_ALIGN_R_MAJOR_ID )
+      !! Writing major radius aligned quantity
+      !! Make sure the data field is properly allocated
+      if ( associated( idsField_vcomp%r ) ) then
+        if ( .not. all( shape( idsField_vcomp%r ) ==  &
+                    &   shape(data) )) then
+          deallocate( idsField_vcomp%r )
+        end if
+      end if
+      !! If required, allocate storage
+      if ( .not. associated( idsField_vcomp%r ) ) then
+        allocate(idsField_vcomp%r( size(data, 1) ))
+      end if
+      !! copy major radius aligned data field
+      idsField_vcomp%r = data
+    case( VEC_ALIGN_Z_ID )
+      !! Writing vertical quantity
+      !! Make sure the data field is properly allocated
+      if ( associated( idsField_vcomp%z ) ) then
+        if ( .not. all( shape( idsField_vcomp%z ) ==  &
+                    &   shape(data) )) then
+          deallocate( idsField_vcomp%z )
+        end if
+      end if
+      !! If required, allocate storage
+      if ( .not. associated( idsField_vcomp%z ) ) then
+        allocate(idsField_vcomp%z( size(data, 1) ))
+      end if
+      !! copy vertical data field
+      idsField_vcomp%z = data
+#endif
     end select
 
     return
     end subroutine B2grid_Write_Data_Vector_Components
+#endif
 
     !> From the B2 grid, compute the coordinate unit vectors
     !> (poloidal, radial, toroidal)
@@ -9076,6 +9331,23 @@ contains
     return
     end subroutine write_sourced_value_root
 
+#if IMAS_MINOR_VERSION > 36
+    subroutine write_sourced_rz( val, rvalue, zvalue )
+    implicit none
+    type(ids_summary_rz1d_dynamic) :: val
+        !< Type of IDS data structure, designed for sourced float data handling
+    real(IDS_real), intent(in) :: rvalue, zvalue
+
+    allocate( val%r( num_slices ), val%z( num_slices ) )
+    val%r( slice_index ) = rvalue
+    val%z( slice_index ) = zvalue
+    allocate( val%source(1) )
+    val%source = source
+
+    return
+    end subroutine write_sourced_rz
+#endif
+
     subroutine write_errored_value( val, value, error )
     implicit none
     type(ids_summary_dynamic_flt_1d_root) :: val
@@ -9107,8 +9379,7 @@ contains
 
     end subroutine write_sourced_value_root_parent_2
 
-#else
-# ifdef ITM_ENVIRONMENT_LOADED
+#elif defined(ITM_ENVIRONMENT_LOADED)
 
   logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
@@ -9446,7 +9717,8 @@ contains
                 iyn = leftiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find poloidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find poloidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if
@@ -9479,7 +9751,8 @@ contains
                 iyn = bottomiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find toroidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find toroidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if
@@ -9523,7 +9796,6 @@ contains
     unitV = v / sqrt( sum( v**2 ) )
   end function unitVector
 
-# endif
 #endif
 
 end module b2mod_ual_io

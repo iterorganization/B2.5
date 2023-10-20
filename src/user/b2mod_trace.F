@@ -9,11 +9,12 @@
       use b2mod_wrsep
       use b2mod_wrsrt
       use b2mod_usrtrc
+      use b2mod_usrspb
       implicit none
 
       private
 
-      public :: b2trace, b2trci, b2trcf, b2trcs, b2trcc
+      public :: b2trace, b2trci, b2trcf, b2trcs, b2trccc
 
       integer, save :: use_recyceir
       data use_recyceir /1/
@@ -143,13 +144,15 @@ c*** Separatrix data
       if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,BoRiS)
 c*** User-specific data
       if(filedata(ntrc_usr)) call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS)
+c*** User-specific data
+      if(filedata(ntrc_uss)) call b2usstrc(nx,ny,ns,BoRiS)       ! IYS 22.03.2022
 c
       return
       end subroutine b2trace
 c======================================================================
-      subroutine b2trci(nx,ny,ns,nregionv)
+      subroutine b2trci(nx,ny,ns,nxtl,nxtr,jsep,nregionv)
       implicit none
-      integer, intent(in) :: nx, ny, ns, nregionv
+      integer, intent(in) :: nx, ny, ns, nxtl, nxtr, jsep, nregionv
 c*** Initialisation call
       if (tracing_initialised) return
       call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
@@ -164,11 +167,12 @@ c*** Initialise tracing routines
       if(filedata(ntrc_srt)) call b2wrsrti(nregionv)
       if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns)
       if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns)
+      if(filedata(ntrc_uss)) call b2usstri(nx,ny,nxtl,nxtr,jsep) ! IYS 22.03.2022
       tracing_initialised = .true.
       return
       end subroutine b2trci
 c======================================================================
-      subroutine b2trcc(nput,nx,nxtl,nxtr)
+      subroutine b2trccc(nput,nx,nxtl,nxtr)
       implicit none
       integer, intent(in) :: nput, nx, nxtl, nxtr
       integer iline
@@ -213,8 +217,13 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
       end if
+      if(filedata(ntrc_uss)) then      ! IYS 22.03.2022
+        call b2usstrcc(iline)
+        if (iline.gt.0)
+     >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_uss)), iline
+      end if
       return
-      end subroutine b2trcc
+      end subroutine b2trccc
 c======================================================================
       subroutine b2trcs
       implicit none
@@ -228,6 +237,7 @@ c*** - to be called BEFORE each timestep
       if(filedata(ntrc_srt)) call b2wrsrts
       if(filedata(ntrc_sep)) call b2wrseps
       if(filedata(ntrc_usr)) call b2usrtrs
+      if(filedata(ntrc_uss)) call b2usstrs      ! IYS 22.03.2022
       return
       end subroutine b2trcs
 c======================================================================
@@ -245,6 +255,10 @@ c*** Finalization call
       if(filedata(ntrc_srt)) call b2wrsrtf
       if(filedata(ntrc_sep)) call b2wrsepf
       if(filedata(ntrc_usr)) call b2usrtrf
+      if(filedata(ntrc_uss)) call b2usstrf      ! IYS 22.03.2022
+      if(filedata(ntrc_tst)) close(ntrc(ntrc_tst))
+      if(filedata(ntrc_res)) close(ntrc(ntrc_res))
+      if(filedata(ntrc_src)) close(ntrc(ntrc_src))
       tracing_initialised = .false.
       return
       end subroutine b2trcf

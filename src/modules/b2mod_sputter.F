@@ -3,7 +3,7 @@
       use b2mod_constants
       use b2mod_wall
       use b2mod_layer
-
+      implicit none
       integer, save :: sput_dst, sput_dst2, sput_dst3
       integer, save :: target_intcode(3+6), target_index(92)
       integer, save :: zwall(6)
@@ -39,11 +39,118 @@
      *  sputter_yield(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2),
      *  sputter_yield2(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2)
 #endif
+      !$OMP THREADPRIVATE(sputter_yield, sputter_yield2)
       integer, save :: jagged_rates=0
 
       integer, save :: nx_sp, ny_sp, ns_sp
       namelist /sputter_save/ nx_sp, ny_sp, ns_sp,
      *   sputter_yield, sputter_yield2
+      real (kind=R8), save :: a1t(95), a2t(92), dd(92)
+c
+c  data table a1t : * * * * * * * * * * * * * * * * * * * * * * * * * *
+c
+      data a1t /
+c  z1 = 1 (for Hydrogen, Deuterium and Tritium)
+     . 1.0072766_R8,2.0135536_R8,3.1055011_R8,
+c  z1 = 2 (for Helium-3 and Helium-4)
+     . 3.0149325_R8,4.0015059_R8,
+c  z1 = 3-10
+     . 6.941_R8,9.01218_R8,10.811_R8,
+     . 12.011_R8,14.0067_R8,15.9994_R8,18.998403_R8,20.179_R8,
+c  z1 = 11 - 20
+     . 22.98977_R8,24.305_R8,26.98154_R8,28.0855_R8,30.97376_R8,
+     . 32.066_R8,35.453_R8,39.948_R8,39.0893_R8,40.078_R8,
+c  z1 = 21 - 30
+     . 44.95591_R8,47.88_R8,50.9415_R8,51.9961_R8,54.9380_R8,
+     . 55.847_R8,58.9332_R8,58.69_R8,63.546_R8,65.39_R8,
+c  z1 = 31 - 40
+     . 69.723_R8,72.59_R8,74.9216_R8,78.96_R8,79.904_R8,
+     . 83.80_R8,85.4678_R8,87.62_R8,88.9059_R8,91.224_R8,
+c  z1 = 41 - 50
+     . 92.9064_R8,95.94_R8,99.0_R8,101.07_R8,102.9055_R8,
+     . 106.42_R8,107.8682_R8,112.41_R8,114.82_R8,118.710_R8,
+c  z1 = 51 - 60
+     . 121.75_R8,127.60_R8,126.9045_R8,131.29_R8,132.9054_R8,
+     . 137.33_R8,138.9055_R8,140.12_R8,140.9077_R8,144.24_R8,
+c  z1 = 61 - 70
+     . 145.0_R8,150.36_R8,151.96_R8,157.25_R8,158.9254_R8,
+     . 162.50_R8,164.9304_R8,167.26_R8,168.9342_R8,173.04_R8,
+c  z1 = 71 - 80
+     . 174.967_R8,178.49_R8,180.9479_R8,183.85_R8,186.207_R8,
+     . 190.2_R8,192.22_R8,195.08_R8,196.9655_R8,200.59_R8,
+c  z1 = 81 - 90
+     . 204.383_R8,207.2_R8,208.9804_R8,210.0_R8,210.0_R8,
+     . 222.0_R8,223.0_R8,226.0_R8,227.0_R8,232.0_R8,
+c  z12 = 91 - 92
+     . 231.0_R8,238.0289_R8 /
+c
+c  data table a2t : * * * * * * * * * * * * * * * * * * * * * * * * * *
+c
+      data a2t /
+c  z2 = 1 - 10
+     . 1.00794_R8,4.002602_R8,6.941_R8,9.01218_R8,10.811_R8,
+     . 12.011_R8,14.0067_R8,15.9994_R8,18.998403_R8,20.179_R8,
+c  z2 = 11 - 20
+     . 22.98977_R8,24.305_R8,26.98154_R8,28.0855_R8,30.97376_R8,
+     . 32.066_R8,35.453_R8,39.948_R8,39.0893_R8,40.078_R8,
+c  z2 = 21 - 30
+     . 44.95591_R8,47.88_R8,50.9415_R8,51.9961_R8,54.9380_R8,
+     . 55.847_R8,58.9332_R8,58.69_R8,63.546_R8,65.39_R8,
+c  z2 = 31 - 40
+     . 69.723_R8,72.59_R8,74.9216_R8,78.96_R8,79.904_R8,
+     . 83.80_R8,85.4678_R8,87.62_R8,88.9059_R8,91.224_R8,
+c  z2 = 41 - 50
+     . 92.9064_R8,95.94_R8,99.0_R8,101.07_R8,102.9055_R8,
+     . 106.42_R8,107.8682_R8,112.41_R8,114.82_R8,118.710_R8,
+c  z2 = 51 - 60
+     . 121.75_R8,127.60_R8,126.9045_R8,131.29_R8,132.9054_R8,
+     . 137.33_R8,138.9055_R8,140.12_R8,140.9077_R8,144.24_R8,
+c  z2 = 61 - 70
+     . 145.0_R8,150.36_R8,151.96_R8,157.25_R8,158.9254_R8,
+     . 162.50_R8,164.9304_R8,167.26_R8,168.9342_R8,173.04_R8,
+c  z2 = 71 - 80
+     . 174.967_R8,178.49_R8,180.9479_R8,183.85_R8,186.207_R8,
+     . 190.2_R8,192.22_R8,195.08_R8,196.9655_R8,200.59_R8,
+c  z2 = 81 - 90
+     . 204.383_R8,207.2_R8,208.9804_R8,210.0_R8,210.0_R8,
+     . 222.0_R8,223.0_R8,226.0_R8,227.0_R8,232.0_R8,
+c  z2 = 91 - 92
+     . 231.0_R8,238.0289_R8 /
+c
+c  data table dd : * * * * * * * * * * * * * * * * * * * * * * * * * * 
+c
+      data dd / 
+c  z2 = 1 - 10
+     . 0.9341_R8,0.6693_R8,0.6654_R8,0.9712_R8,1.007_R8,
+     . 1.024_R8,1.111_R8,0.9699_R8,0.7357_R8,0.6842_R8,
+c  z2 = 11 - 20
+     . 0.8769_R8,1.290_R8,1.395_R8,1.378_R8,1.063_R8,
+     . 1.123_R8,1.632_R8,1.839_R8,1.642_R8,1.749_R8,
+c  z2 = 21 - 30
+     . 1.638_R8,1.523_R8,1.396_R8,1.236_R8,1.072_R8,
+     . 1.083_R8,0.9624_R8,1.085_R8,1.125_R8,1.277_R8,
+c  z2 = 31 - 40
+     . 1.525_R8,1.675_R8,1.601_R8,1.762_R8,1.679_R8,
+     . 1.914_R8,1.696_R8,1.884_R8,1.9_R8,1.993_R8,
+c  z2 = 41 - 50
+     . 2.039_R8,1.894_R8,2.001_R8,1.795_R8,1.738_R8,
+     . 1.534_R8,1.644_R8,1.698_R8,1.816_R8,1.866_R8,
+c  z2 = 51 - 60
+     . 2.181_R8,2.027_R8,2.240_R8,2.384_R8,2.108_R8,
+     . 2.283_R8,2.321_R8,2.159_R8,2.1_R8,2.042_R8,
+c  z2 = 61 - 70
+     . 1.986_R8,1.932_R8,1.879_R8,1.931_R8,1.779_R8,
+     . 1.578_R8,1.492_R8,1.448_R8,1.406_R8,1.365_R8,
+c  z2 = 71 - 80
+     . 1.394_R8,1.431_R8,1.348_R8,1.3_R8,1.477_R8,
+     . 1.439_R8,1.403_R8,1.269_R8,1.376_R8,1.22_R8,
+c  z2 = 81 - 90
+     . 1.336_R8,1.504_R8,1.683_R8,1.739_R8,1.751_R8,
+     . 1.744_R8,1.959_R8,2.115_R8,2.167_R8,2.170_R8,
+c  z2 = 91 - 92
+     . 2.084_R8,2.050_R8 /
+
+      private :: f
 
       contains
 
@@ -1269,7 +1376,7 @@ c  vappres  ->  Vapour Pressure of the target in Pascals.
 cxpb Contribution from bulk if species is part of bulk
       bulk = .false.
       do i = 1, nz
-        if (zn(is).eq.matsurf_nzconstituents(ibnd,i)) then
+        if (nint(zn(is)).eq.matsurf_nzconstituents(ibnd,i)) then
           A = matsurf_vapprs_A(ibnd)
           B = matsurf_vapprs_B(ibnd)
           am2 = atomic_mass(matsurf_nzconstituents(ibnd,i))
@@ -1452,12 +1559,11 @@ c  tables prepared
 c       a1t     = table of masses of projectiles
 c       a2t     = table of atomic weights of elemental targets
 c               IUPAC (1983), C12=12.
-c       d       = table of correction factors for the low energy
+c       dd       = table of correction factors for the low energy
 c               electronic stopping cross-section.
 c
       implicit none
-      real (kind=R8) :: energy, rnion, reion, theta
-      real (kind=R8), save :: a1t(95), a2t(92), d(92)
+      real (kind=R8) :: energy, rnion, theta
       integer ibnd, nz1, m1
 
       integer i, n
@@ -1467,121 +1573,177 @@ c
      *  zz, eps, sa, sb, w, fi0, tau, beta2, epsb, ch, redengy, psinum,
      *  psiden1, psiden2, psi, sklfact, r0heavy, feps
       intrinsic sqrt
-c
-c  data table a1t : * * * * * * * * * * * * * * * * * * * * * * * * * *
-c
-      data a1t /
-c  z1 = 1 (for Hydrogen, Deuterium and Tritium)
-     . 1.0072766_R8,2.0135536_R8,3.1055011_R8,
-c  z1 = 2 (for Helium-3 and Helium-4)
-     . 3.0149325_R8,4.0015059_R8,
-c  z1 = 3-10
-     . 6.941_R8,9.01218_R8,10.811_R8,
-     . 12.011_R8,14.0067_R8,15.9994_R8,18.998403_R8,20.179_R8,
-c  z1 = 11 - 20
-     . 22.98977_R8,24.305_R8,26.98154_R8,28.0855_R8,30.97376_R8,
-     . 32.066_R8,35.453_R8,39.948_R8,39.0893_R8,40.078_R8,
-c  z1 = 21 - 30
-     . 44.95591_R8,47.88_R8,50.9415_R8,51.9961_R8,54.9380_R8,
-     . 55.847_R8,58.9332_R8,58.69_R8,63.546_R8,65.39_R8,
-c  z1 = 31 - 40
-     . 69.723_R8,72.59_R8,74.9216_R8,78.96_R8,79.904_R8,
-     . 83.80_R8,85.4678_R8,87.62_R8,88.9059_R8,91.224_R8,
-c  z1 = 41 - 50
-     . 92.9064_R8,95.94_R8,99.0_R8,101.07_R8,102.9055_R8,
-     . 106.42_R8,107.8682_R8,112.41_R8,114.82_R8,118.710_R8,
-c  z1 = 51 - 60
-     . 121.75_R8,127.60_R8,126.9045_R8,131.29_R8,132.9054_R8,
-     . 137.33_R8,138.9055_R8,140.12_R8,140.9077_R8,144.24_R8,
-c  z1 = 61 - 70
-     . 145.0_R8,150.36_R8,151.96_R8,157.25_R8,158.9254_R8,
-     . 162.50_R8,164.9304_R8,167.26_R8,168.9342_R8,173.04_R8,
-c  z1 = 71 - 80
-     . 174.967_R8,178.49_R8,180.9479_R8,183.85_R8,186.207_R8,
-     . 190.2_R8,192.22_R8,195.08_R8,196.9655_R8,200.59_R8,
-c  z1 = 81 - 90
-     . 204.383_R8,207.2_R8,208.9804_R8,210.0_R8,210.0_R8,
-     . 222.0_R8,223.0_R8,226.0_R8,227.0_R8,232.0_R8,
-c  z12 = 91 - 92
-     . 231.0_R8,238.0289_R8 /
-c
-c  data table a2t : * * * * * * * * * * * * * * * * * * * * * * * * * *
-c
-      data a2t /
-c  z2 = 1 - 10
-     . 1.00794_R8,4.002602_R8,6.941_R8,9.01218_R8,10.811_R8,
-     . 12.011_R8,14.0067_R8,15.9994_R8,18.998403_R8,20.179_R8,
-c  z2 = 11 - 20
-     . 22.98977_R8,24.305_R8,26.98154_R8,28.0855_R8,30.97376_R8,
-     . 32.066_R8,35.453_R8,39.948_R8,39.0893_R8,40.078_R8,
-c  z2 = 21 - 30
-     . 44.95591_R8,47.88_R8,50.9415_R8,51.9961_R8,54.9380_R8,
-     . 55.847_R8,58.9332_R8,58.69_R8,63.546_R8,65.39_R8,
-c  z2 = 31 - 40
-     . 69.723_R8,72.59_R8,74.9216_R8,78.96_R8,79.904_R8,
-     . 83.80_R8,85.4678_R8,87.62_R8,88.9059_R8,91.224_R8,
-c  z2 = 41 - 50
-     . 92.9064_R8,95.94_R8,99.0_R8,101.07_R8,102.9055_R8,
-     . 106.42_R8,107.8682_R8,112.41_R8,114.82_R8,118.710_R8,
-c  z2 = 51 - 60
-     . 121.75_R8,127.60_R8,126.9045_R8,131.29_R8,132.9054_R8,
-     . 137.33_R8,138.9055_R8,140.12_R8,140.9077_R8,144.24_R8,
-c  z2 = 61 - 70
-     . 145.0_R8,150.36_R8,151.96_R8,157.25_R8,158.9254_R8,
-     . 162.50_R8,164.9304_R8,167.26_R8,168.9342_R8,173.04_R8,
-c  z2 = 71 - 80
-     . 174.967_R8,178.49_R8,180.9479_R8,183.85_R8,186.207_R8,
-     . 190.2_R8,192.22_R8,195.08_R8,196.9655_R8,200.59_R8,
-c  z2 = 81 - 90
-     . 204.383_R8,207.2_R8,208.9804_R8,210.0_R8,210.0_R8,
-     . 222.0_R8,223.0_R8,226.0_R8,227.0_R8,232.0_R8,
-c  z2 = 91 - 92
-     . 231.0_R8,238.0289_R8 /
-c
-c  data table d : * * * * * * * * * * * * * * * * * * * * * * * * * *
-c
-      data d /
-c  z2 = 1 - 10
-     . 0.9341_R8,0.6693_R8,0.6654_R8,0.9712_R8,1.007_R8,
-     . 1.024_R8,1.111_R8,0.9699_R8,0.7357_R8,0.6842_R8,
-c  z2 = 11 - 20
-     . 0.8769_R8,1.290_R8,1.395_R8,1.378_R8,1.063_R8,
-     . 1.123_R8,1.632_R8,1.839_R8,1.642_R8,1.749_R8,
-c  z2 = 21 - 30
-     . 1.638_R8,1.523_R8,1.396_R8,1.236_R8,1.072_R8,
-     . 1.083_R8,0.9624_R8,1.085_R8,1.125_R8,1.277_R8,
-c  z2 = 31 - 40
-     . 1.525_R8,1.675_R8,1.601_R8,1.762_R8,1.679_R8,
-     . 1.914_R8,1.696_R8,1.884_R8,1.9_R8,1.993_R8,
-c  z2 = 41 - 50
-     . 2.039_R8,1.894_R8,2.001_R8,1.795_R8,1.738_R8,
-     . 1.534_R8,1.644_R8,1.698_R8,1.816_R8,1.866_R8,
-c  z2 = 51 - 60
-     . 2.181_R8,2.027_R8,2.240_R8,2.384_R8,2.108_R8,
-     . 2.283_R8,2.321_R8,2.159_R8,2.1_R8,2.042_R8,
-c  z2 = 61 - 70
-     . 1.986_R8,1.932_R8,1.879_R8,1.931_R8,1.779_R8,
-     . 1.578_R8,1.492_R8,1.448_R8,1.406_R8,1.365_R8,
-c  z2 = 71 - 80
-     . 1.394_R8,1.431_R8,1.348_R8,1.3_R8,1.477_R8,
-     . 1.439_R8,1.403_R8,1.269_R8,1.376_R8,1.22_R8,
-c  z2 = 81 - 90
-     . 1.336_R8,1.504_R8,1.683_R8,1.739_R8,1.751_R8,
-     . 1.744_R8,1.959_R8,2.115_R8,2.167_R8,2.170_R8,
-c  z2 = 91 - 92
-     . 2.084_R8,2.050_R8 /
-
       data icount/0/
 
   600 format('  undefined projectile is called  ')
       n = 1
-      go to 1
-
-      entry reion(energy,nz1,m1,ibnd,theta)
 
 c  energy backscattering coefficient of light ions
-      n = 0
-    1 if (nz1.eq.1) go to 3
+      if (nz1.eq.1) go to 3
+      if (nz1.eq.2) go to 4
+      if (nz1.gt.2) go to 5
+    2 write(6,600)
+      rnion = 0.0_R8
+      return
+    3 if (m1.lt.1.or.m1.gt.3) go to 2
+      a1 = a1t(m1)
+      go to 6
+    4 if (m1.lt.3.or.m1.gt.4) go to 2
+      a1 = a1t( m1+1 )
+      go to 6
+    5 a1 = a1t( nz1+3 )
+c     write(*,*)'atomic # of projectile > 2'
+c  finding effective a2 :
+cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
+      a2eff = 0.0_R8
+      sum = 0.0_R8
+      do i = 1, layer_nconstituents(ibnd)
+        a2 = a2t(layer_nzconstituents(ibnd,i))
+        a2eff = a2eff + layer_relconstituents(ibnd,i) * a2
+        sum = sum + layer_relconstituents(ibnd,i)
+      enddo
+      a2 = a2eff / sum
+      delta = a1 / a2
+c     write(*,*)'delta = ',delta
+      if (delta.gt.4.5_R8 .and. icount.le.100) then
+        !$OMP ATOMIC
+        icount = icount + 1
+        write(*,'(a,f7.2,a)')
+     .   'delta projectile/target > 4.5', delta, '. Continuing...'
+      endif
+    6 z1 = nz1
+      z1p = z1 ** (2.0_R8/3.0_R8)
+      z2eff = 0.0_R8
+      a2eff = 0.0_R8
+      saeff = 0.0_R8
+      sbeff = 0.0_R8
+      sum = 0.0_R8
+
+      do 70 i = 1, layer_nconstituents(ibnd)
+        z2 = layer_nzconstituents(ibnd,i)
+        a2 = a2t(layer_nzconstituents(ibnd,i))
+        wi = layer_relconstituents(ibnd,i)
+        z2eff = z2eff + wi * z2
+        a2eff = a2eff + wi * a2
+        sum = sum + wi
+        fmu = a1/a2
+        aa = 1.0_R8 + fmu
+        z2p = z2 ** (2.0_R8/3.0_R8)
+        zz = sqrt ( 1.0_R8 + z1p/z2p )
+        eps = fneps(energy,z1,a1,z2,a2)
+        sa = 0.0793 * sqrt (eps) / fmu
+        w = z1 * zz * aa / z2p
+        wi = wi * z1 / w / a2
+        saeff = saeff + wi * sa
+        sl = dd(layer_nzconstituents(ibnd,i)) * z1p *
+     .   ( aa/zz ) ** 1.5_R8 * sa / sqrt(a1)
+        if ( z2 .le. 12.9_R8) then
+          fi0 = 12.0_R8 + 7.0_R8 / z2
+        else
+          fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
+        end if
+        tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
+        beta2 = tau * ( tau + 2.0_R8 ) / ( tau + 1.0_R8 ) ** 2
+        epsb = 1.022e6_R8 * beta2 / z2 / fi0
+        if ( z1 .le. 2.9_R8) then
+          ch = 100.0_R8 * z1 / z2
+        else
+          ch = 5.0_R8
+        endif
+        sb = 61.474_R8 / fmu * w *
+     .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 )
+     .   / fi0 / epsb
+        sb = 2.0_R8 * eps / rangen(eps) + sl * sb / (0.25_R8 * sl
+     .   + sb )
+        sbeff = sbeff + wi * sb
+   70 continue
+      z2 = z2eff / sum
+      a2 = a2eff / sum
+      sa = saeff
+      sb = sbeff
+      eps = fneps(energy,z1,a1,z2,a2)
+      if (delta.gt.0.5_R8) then
+        redengy = 1.0_R8 /
+     @   ( 1+(eps/0.104_R8)**0.577_R8 + (eps/0.73_R8)**1.5_R8 )
+        fmu = a1/a2
+        psinum = 1.0_R8+24.1_R8*fmu**(-3.995_R8)
+        psiden1 = fmu / ( (1+fmu) * (eps/1.84_R8+1.0_R8) )
+        psiden2 = (1.0_R8+fmu)**3 * eps / ( fmu**3 * (1.0_R8 -
+     @   3.0_R8/(2.0_R8*fmu) + 0.9_R8/fmu**2 +
+     @   1.0_R8/(2.0_R8*fmu**3) ) * (eps+13.3_R8) )
+        psi = psinum / ( psiden1 + psiden2 )
+
+c  sbeff/saeff corresponds to the rho_a/rho-t in the reference paper (of course
+c  sbeff is not equal to rho_a nor is saeff equal to rho_t).
+
+        sklfact = z1**(2.0_R8/3.0_R8) * sqrt(a1) * sb/sa *
+     @   fmu**2 / (1.0_R8+fmu)**2 / psi
+        r0heavy = redengy / sklfact
+        r = 1.0_R8 / ( 1.0_R8 + (eps/0.133_R8 ) ** 0.285_R8 ) + 0.530_R8
+     .   / ( 1.0_R8 + (85.0_R8/eps) **1.46_R8 )
+        th = theta * pi / 180.0_R8
+c       write(*,*) 'did heavy projectile calculation for delta > 0.5 '
+        if ( n.eq.1 ) go to 80
+      else
+        continue
+      endif
+
+c     write(*,*) 'did light projectile calculation delta < 0.5 '
+
+      feps = (2.0_R8 * eps - 3.0_R8 ) / ( eps + 1.0_R8 )
+      r0 = 0.705_R8 * sa / sb / ( 1.0_R8 + a1/a2 ) ** feps
+      r0 = r0 / (1.0_R8 + (eps/0.047_R8) ** 0.597_R8 +
+     . ( eps / 0.619_R8 ) ** 1.5_R8 )
+      th = theta * pi / 180.0_R8
+   80 r = 1.0_R8 / ( 1.0_R8 + (eps/0.133_R8 ) ** 0.285 ) + 0.530 /
+     . ( 1.0_R8 + (85.0_R8/eps) ** 1.46_R8 )
+      if (delta.gt.0.5_R8) then
+c       write(*,*) 'did heavy projectile calculation for rnion'
+        if (th.ne.0.0_R8) then
+c         write(*,*) 'did theta <> 0 calculation for rnion'
+          r0 = r0heavy
+          as1 = 7.38_R8 * eps ** 0.359_R8
+          as2 = 0.836_R8 /eps ** 0.087_R8
+          rnion = rne(r0, th, as1, as2)
+          return
+        else
+c         write(*,*) 'did theta = 0 calculation for rnion'
+          rnion = r0heavy
+c         write(*,*) r0heavy, rnion, r, reion
+          return
+        endif
+      else
+c       write(*,*) 'did light projectile calculation for rnion'
+        r0 = r0 / r
+        if (th.eq.0.0_R8) go to 88
+        as1 = 7.38_R8 * eps ** 0.359_R8
+        as2 = 0.836_R8/ eps ** 0.087_R8
+        rnion = rne(r0, th, as1, as2)
+        return
+   88   rnion = r0
+        return
+      endif
+
+      end function rnion
+
+      function reion(energy,nz1,m1,ibnd,theta)
+      implicit none
+      real(kind=R8) :: energy, reion, theta
+      integer ibnd, nz1, m1
+
+      integer i
+      integer, save :: icount
+      real (kind=R8) :: th, z1, z2, a1, a2, r, r0, as1, as2, sl,
+     *  a2eff, sum, delta, z1p, z2p, z2eff, saeff, sbeff, wi, fmu, aa,
+     *  zz, eps, sa, sb, w, fi0, tau, beta2, epsb, ch, redengy, psinum,
+     *  psiden1, psiden2, psi, sklfact, r0heavy, feps
+      intrinsic sqrt
+      data icount/0/
+  600 format('  undefined projectile is called  ')
+
+c  energy backscattering coefficient of light ions
+
+      if (nz1.eq.1) go to 3
       if (nz1.eq.2) go to 4
       if (nz1.gt.2) go to 5
     2 write(6,600)
@@ -1637,7 +1799,7 @@ c     write(*,*)'delta = ',delta
         w = z1 * zz * aa / z2p
         wi = wi * z1 / w / a2
         saeff = saeff + wi * sa
-        sl = d(layer_nzconstituents(ibnd,i)) * z1p *
+        sl = dd(layer_nzconstituents(ibnd,i)) * z1p *
      .   ( aa/zz ) ** 1.5_R8 * sa / sqrt(a1)
         if ( z2 .le. 12.9_R8) then
           fi0 = 12.0_R8 + 7.0_R8 / z2
@@ -1685,7 +1847,6 @@ c  sbeff is not equal to rho_a nor is saeff equal to rho_t).
      .   / ( 1.0_R8 + (85.0_R8/eps) **1.46_R8 )
         th = theta * pi / 180.0_R8
 c       write(*,*) 'did heavy projectile calculation for delta > 0.5 '
-        if ( n.eq.1 ) go to 80
         if (th.eq.0.0_R8) then
 c         write(*,*) 'did theta=0 calculation of reion'
           reion = r0heavy * r
@@ -1695,7 +1856,7 @@ c         write(*,*) 'did theta > 0 calculation for reion'
           r0 = r0heavy * r
           as1 = 17.9_R8 * eps ** 0.453_R8
           as2 = 0.771_R8 / eps ** 0.014_R8
-          reion = rne(th)
+          reion = rne(r0, th, as1, as2)
           go to 79
         endif
       else
@@ -1709,44 +1870,15 @@ c     write(*,*) 'did light projectile calculation delta < 0.5 '
       r0 = r0 / (1.0_R8 + (eps/0.047_R8) ** 0.597_R8 +
      . ( eps / 0.619_R8 ) ** 1.5_R8 )
       th = theta * pi / 180.0_R8
-      if (n.eq.1) go to 80
       if (th.eq.0.0_R8) go to 78
       as1 = 17.9_R8 * eps ** 0.453_R8
       as2 = 0.771_R8 / eps ** 0.014_R8
-      reion = rne(th)
+      reion = rne(r0, th, as1, as2)
       go to 79
    78 reion = r0
    79 return
-   80 r = 1.0_R8 / ( 1.0_R8 + (eps/0.133_R8 ) ** 0.285 ) + 0.530 /
-     . ( 1.0_R8 + (85.0_R8/eps) ** 1.46_R8 )
-      if (delta.gt.0.5_R8) then
-c       write(*,*) 'did heavy projectile calculation for rnion'
-        if (th.ne.0.0_R8) then
-c         write(*,*) 'did theta <> 0 calculation for rnion'
-          r0 = r0heavy
-          as1 = 7.38_R8 * eps ** 0.359_R8
-          as2 = 0.836_R8 /eps ** 0.087_R8
-          rnion = rne(th)
-          return
-        else
-c         write(*,*) 'did theta = 0 calculation for rnion'
-          rnion = r0heavy
-c         write(*,*) r0heavy, rnion, r, reion
-          return
-        endif
-      else
-c       write(*,*) 'did light projectile calculation for rnion'
-        r0 = r0 / r
-        if (th.eq.0.0_R8) go to 88
-        as1 = 7.38_R8 * eps ** 0.359_R8
-        as2 = 0.836_R8/ eps ** 0.087_R8
-        rnion = rne(th)
-        return
-   88   rnion = r0
-        return
-      endif
 
-      contains
+      end function reion
 
       function f(z1,z2)
       real(kind=R8) :: f, z1, z2
@@ -1761,15 +1893,14 @@ c       write(*,*) 'did light projectile calculation for rnion'
       return
       end function fneps
 
-      function rne(th)
-      real(kind=R8) :: rne, th
+      function rne(r0, th, as1, as2)
+      real(kind=R8) :: rne, r0, th, as1, as2
       intrinsic tan
       rne = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
      .  ( 2.0_R8 * as2 ) )
       return
       end function rne
 
-      end function rnion
 c
       function rangen(epsiln)
 c  reduced range of ions for nuclear stopping only

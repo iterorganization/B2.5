@@ -11,7 +11,7 @@ LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/lib64 -l
 LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
 GLI_HOME    ?= ${IRISLIB}/gli/src
 
-CPP      = /lib/cpp -C -traditional
+CPP      = /lib/cpp -traditional
 
 ifdef USE_MPI
 FC       = mpif90
@@ -23,23 +23,6 @@ FC       = ifort
 endif
 endif
 
-ifeq (${FC},mpif90)
-OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD   = -B
-GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
-DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
-FCOPTS = -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
-ifdef SOLPS_DEBUG
-FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
-else
-FCOPTS += -O2
-endif
-ifdef USE_OPENMP
-FCOPTS += -fopenmp
-LDOPTS += -fopenmp
-endif
-else
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 INCMOD   = -I
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
@@ -52,52 +35,7 @@ ifdef USE_OPENMP
 FCOPTS  += -qopenmp
 LDOPTS  += -qopenmp
 endif
-endif
 
-ifdef IMAS_VERSION
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifeq (${FC},mpif90)
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-LD_UAL  := `pkg-config imas-gfortran ggd --libs`
-else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-LD_UAL  := `pkg-config imas-gfortran --libs` -lggd-gfortran
-else
-GGD_MINOR_VERSION ?= 0
-GGD_MICRO_VERSION ?= 0
-LD_UAL  := `pkg-config imas-lowlevel imas-gfortran --libs`
-endif
-endif
-INCMODS += -I${IMAS_PREFIX}/include/gfortran
-else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-LD_UAL  ?= `pkg-config imas-ifort ggd --libs`
-else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-LD_UAL  ?= `pkg-config imas-ifort --libs` -lggd-ifort
-else
-GGD_MINOR_VERSION ?= 0
-GGD_MICRO_VERSION ?= 0
-LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
-endif
-endif
-INCMODS += -I${IMAS_PREFIX}/include/ifort
-endif
-ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
-endif
-IMASLIBS = ${LD_UAL}
-endif
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -3,7 +3,10 @@ module b2mod_mwti
   use b2mod_subsys
   implicit none
   private
-  public :: b2mwti, output_ds, dealloc_b2mod_mwti
+  public :: output_ds
+#ifndef SOLPS4_3
+  public :: b2mwti, dealloc_b2mod_mwti
+#endif
   real (kind=R8), allocatable, save, public :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
@@ -25,7 +28,9 @@ module b2mod_mwti
 
 #ifndef NO_CDF
 # include <netcdf.inc>
+#ifndef SOLPS4_3
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
+#endif
   character*(maxncnam), save :: timsav, batchsav
   integer, save :: ntsav, nasav
   data timsav /'!!!! INVALID NAME !!!!'/
@@ -33,6 +38,7 @@ module b2mod_mwti
 
 contains
 
+#ifndef SOLPS4_3
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
                      nx, ny, ns, ismain, ismain0, BoRiS, &
                      lwti, lwav, luav)
@@ -51,10 +57,8 @@ contains
     use b2mod_wall
     use b2mod_b2cmpa
     use b2mod_external
-#ifndef SOLPS4_3
 #ifdef B25_EIRENE
-    use eirmod_wneutrals
-#endif
+    use eirmod_wneutrals  ! IGNORE
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
@@ -118,7 +122,7 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, ixtl, ixtr, iatm, jsep
+    integer iy, ix, ic, ixtl, ixtr, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
@@ -131,7 +135,7 @@ contains
     integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
-    integer imap(maxvdims), iret
+    integer imap(maxvdims), iret, iatm
     integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8) :: &
@@ -185,7 +189,7 @@ contains
       call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
       call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
       call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.ixtl.lt.nx)
           ixtl=ixtl+1
@@ -218,7 +222,7 @@ contains
         if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)
       enddo
       close(99)
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         open(99,file='dsTL')
         do iy=iytlstrt,iytlend
           write(99,*) gs(ixtl,iy,0)
@@ -241,7 +245,7 @@ contains
         if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)*qc(nx,iy)
       enddo
       close(99)
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         open(99,file='dsTLP')
         do iy=iytlstrt,iytlend
           write(99,*) gs(ixtl,iy,0)*qc(ixtl,iy)
@@ -608,7 +612,7 @@ contains
     fniyip = 0.0_R8; feeyip = 0.0_R8; feiyip = 0.0_R8; fetyip = 0.0_R8; fchyip = 0.0_R8
     fniyap = 0.0_R8; feeyap = 0.0_R8; feiyap = 0.0_R8; fetyap = 0.0_R8; fchyap = 0.0_R8
 
-    if(nnreg(0).eq.4) then
+    if(nnreg(0).eq.4 .or. nnreg(0).eq.7) then
       do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
           iy = ny ! 9
@@ -619,7 +623,7 @@ contains
           fchyip(1) = fchyip(1) + fchtmp
           fetyip(1) = fetyip(1) + fettmp
         endif
-        if(region(ix,ny,0).eq.3.or.region(ix,ny,0).eq.4) then
+        if(region(ix,ny,0).ge.3) then
           iy = ny ! 10
           call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
@@ -628,7 +632,7 @@ contains
           fchyap(1) = fchyap(1) + fchtmp
           fetyap(1) = fetyap(1) + fettmp
         endif
-        if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
+        if(region(ix,-1,0).ge.3) then
           iy = -1 ! 11
           call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
@@ -896,6 +900,8 @@ contains
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and. bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 ) then
           if(on_closed_surface(ix,iy)) then
             tmhacore(1)=tmhacore(1)+(emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
+          elseif((region(ix,iy,0).eq.5 .or. region(ix,iy,0).eq.6) .and. nnreg(0).eq.7) then
+            tmhadiv(1)=tmhadiv(1) + (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
           elseif(mod(region(ix,iy,0),4).eq.3 .or.(mod(region(ix,iy,0),4).eq.0 .and. region(ix,iy,0).ne.0)) then
             tmhadiv(1)=tmhadiv(1) + (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
           elseif(mod(region(ix,iy,0),4).eq.2 .or. nnreg(0).eq.1) then
@@ -1104,7 +1110,7 @@ contains
       call rwcdf(rw,ncid,'fc3dr',imap,fch(nx,iyrstrt,0),iret)
       call rwcdf(rw,ncid,'fl3dr',imap,fne(nx,iyrstrt,0),iret)
       call rwcdf(rw,ncid,'fo3dr',imap,fni(nx,iyrstrt,0),iret)
-      if (nnreg(0).ge.8) then
+      if (nnreg(0).ge.7) then
         imap(1)=nx+2     ! tr
         imap(2)=1
         call rwcdf(rw,ncid,'ne3dtr',imap,ne(ixtr+target_offset,iytrstrt),iret)
@@ -1169,7 +1175,7 @@ contains
         enddo
       endif
       call rwcdf(rw,ncid,'an3dr',imap,slice(iyrstrt),iret)
-      if (nnreg(0).ge.8) then
+      if (nnreg(0).ge.7) then
         slice=0.0_R8
         if (ismain0.ne.ismain) then
           slice(iytlstrt:iytlend)= na(ixtl-target_offset,iytlstrt:iytlend,ismain0)
@@ -1199,7 +1205,7 @@ contains
         call rwcdf(rw,ncid,'mn3da',imap,slice,iret)
         slice(0:ny-1)=dmb2(nx,1:ny,1,1)
         call rwcdf(rw,ncid,'mn3dr',imap,slice,iret)
-        if (nnreg(0).ge.8) then
+        if (nnreg(0).ge.7) then
           slice(0:ny-1)=dmb2(ixtl,1:ny,1,1)
           call rwcdf(rw,ncid,'mn3dtl',imap,slice,iret)
           slice(0:ny-1)=dmb2(ixtr+1,1:ny,1,1)
@@ -1218,7 +1224,7 @@ contains
         call calc_fet(nx,iy,'R',1._R8,nx,ny,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dr',imap,slice(iyrstrt),iret)
-      if (nnreg(0).ge.8) then
+      if (nnreg(0).ge.7) then
         slice=0.0_R8
         do iy = iytlstrt, iytlend
           call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ismain,BoRiS,slice(iy))
@@ -1294,7 +1300,7 @@ contains
         slice(ny)=target_temp(xymap(nx,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dr',imap,slice,iret)
-      if (nnreg(0).ge.8) then
+      if (nnreg(0).ge.7) then
         slice=0.0_R8
         if(minval(xymap(ixtl,0:ny-1)).gt.0) then
           slice(-1)=target_temp(xymap(ixtl,0),1)
@@ -1317,7 +1323,7 @@ contains
 
       iret = nf_close(ncid)
       call check_cdf_status(iret)
-    endif
+    endif !lwti
 
 !wdk only write batch data if lwav is true
     if (lwav) then
@@ -1400,7 +1406,7 @@ contains
       call rwcdf(rw,ncid,'pomxap_std',imap,pomxap_std,iret)
       iret = nf_close(ncid)
       call check_cdf_status(iret)
-    endif
+    endif !lwav
 #endif
 
     ! ..return
@@ -1466,7 +1472,7 @@ contains
    nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
    ncid, batch_only, iret)
     use b2mod_constants
-#     include <netcdf.inc>
+#   include <netcdf.inc>
     integer nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, iret
     integer, intent(in) :: write_2d
     logical, intent(in) :: batch_only
@@ -2047,7 +2053,7 @@ contains
         iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
         call check_cdf_status(iret)
       endif
-    endif
+    endif !not.batch_only
 
     !wdk averages
     if (batch_only) then
@@ -2142,6 +2148,7 @@ contains
       iret  = nf_def_var(ncid, 'pomxap_std', NCDOUBLE, 2, dims, pomxap_stdid)
       call check_cdf_status(iret)
     endif
+
     ! assign attributes
     if (.not.batch_only) then
       iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
@@ -3162,6 +3169,7 @@ contains
     nasav=nastep
     return
   end subroutine rwcdf_setbatch
+#endif
 #endif
 !
   subroutine output_ds(ny,iref,target_offset,jsep,iystart,iyend,filename)

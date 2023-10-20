@@ -26,8 +26,13 @@ c
       integer lelmind(mskipel), lskipel(mskipel), lcspwll(mskipel),
      ,        lpspwll(mskipel), lpsptrg(ntrgsx), lcsptrg(ntrgsx),
      ,        ltrgedge(2,ntrgsx), mtrgedge(2,ntrgsx)
+      real (kind=R8) wpk_tt(0:ntrgsx) ! iyv 11.04.22
       logical lvdg20
-      logical l2rdldw, l2rdldt, l2pwinp, lrdlsp, lrdlcr,
+      logical, save :: l2pwinp = .false.
+      logical, save :: l2rdldw = .false., l2rdldt = .false.
+      logical, save :: shadow = .true.
+      logical, save :: from_b2plot = .true.
+      logical lrdlsp, lrdlcr,
      ,  lwlddir(nwldprtx), lskip(DEF_NLIM)
       real (kind=R4) :: ppp1(3,DEF_NLIM), ppp2(3,DEF_NLIM)
       real (kind=R8) :: addsrc_xy(2,nadsrcm), add_rad
@@ -114,6 +119,7 @@ c======================================================================
       implicit none
       integer nlim, nsgmx
 
+      if (allocated(indwll)) return
       allocate(indwll(nsgmx), lwldrad(nsgmx))
       allocate(lewrk(nsgmx), luwrk(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))

@@ -91,15 +91,12 @@ program b2_ual_rewrite
 #endif
     use b2mod_ipmain
     implicit none
-#ifdef USE_PXFGETENV
-    integer lenval, ierror
-#else
-#ifdef NAGFOR
-    integer lenval, ierror
-#endif
-#endif
 #ifndef NO_GETENV
     character(len=24) :: device_env
+    integer lenval, ierror
+#ifndef USE_PXFGETENV
+    intrinsic get_environment_variable
+#endif
 #endif
     logical streql
     external ipgeti, streql
@@ -152,21 +149,20 @@ program b2_ual_rewrite
     username = usrnam()
     call ipgetc('b2mndr_user', username )
     database = 'solps-iter'
-#ifndef NO_GETENV
-    device_env = ' '
-#ifdef NAGFOR
-    call get_environment_variable('DEVICE', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
-    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
+#ifdef NO_GETENV
+    write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.', &
+                                         & IMAS_MINOR_VERSION,'.', &
+                                         & IMAS_MICRO_VERSION
 #else
+    device_env = ' '
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
-    call getenv ('DEVICE', device_env)
-    call getenv ('IMAS_VERSION', imas_version)
-#endif
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
     if (.not.streql(device_env,' ')) database = device_env
     if (streql(database,'iter')) database = 'ITER'

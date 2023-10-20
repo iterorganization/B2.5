@@ -162,6 +162,7 @@ contains
         gd%mapCvixVx = B2_GRID_UNDEFINED
         gd%mapCviyVx = B2_GRID_UNDEFINED
 
+    return
     end subroutine allocateB2GridMap
 
     !> Deallocate B2GridMap
@@ -182,6 +183,7 @@ contains
 
         deallocate( gd%mapCvixVx, gd%mapCviyVx )
 
+    return
     end subroutine deallocateB2GridMap
 
     !> Create B2GridMap, containing grid geometry information
@@ -286,6 +288,8 @@ contains
         character(256) :: VERTEX_FILE_TEMP
         integer, parameter :: VERTEX_UNIT = 99
         logical :: vertexfileExists
+
+        !! procedures
         external xertst, find_file
 
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
@@ -845,6 +849,8 @@ contains
         end do
 
         index = GRID_UNDEFINED
+
+    return
     end subroutine find_Existing_Vertex_Index
 
     !> Test whether the vertex associated with the cell (ix, iy) is special,
@@ -928,6 +934,7 @@ contains
         !! do we end up where we left?
         is_Special_Vertex = .not. ( ( x == ix ) .and. ( y == iy ) )
 
+    return
     end function is_Special_Vertex
 
   end subroutine b2CreateMap
@@ -968,6 +975,7 @@ contains
         !        & .or. ( topiy( ix, iy ) == ( ny + 1 ) )
         !end if
 
+    return
     end function is_Unneeded_Cell
 
 
@@ -1004,6 +1012,8 @@ contains
             is_Cell_In_Domain = ( ix > -1 ) .and. (ix < nx) .and.   &
                 &   ( iy > -1 ) .and. ( iy < ny )
         end if
+
+    return
     end function is_Cell_In_Domain
 
 
@@ -1035,6 +1045,8 @@ contains
             is_Node_In_Domain = ( ix > -1 ) .and. (ix < nx + 1) .and.   &
                 &   ( iy > -1 ) .and. ( iy < ny + 1)
         end if
+
+    return
     end function is_Node_In_Domain
 
     !> extended neighbourhood mappings
@@ -1083,6 +1095,7 @@ contains
             nbiy = topiy(ix, iy)
         end select
 
+    return
     end subroutine get_Neighbour
 
 end module b2mod_grid_mapping

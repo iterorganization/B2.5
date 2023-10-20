@@ -20,7 +20,7 @@
       use b2mod_file
       use b2mod_batch
       use b2mod_b2cmpa
-      use b2mod_average
+      use b2mod_running_average
       use b2mod_external
       use b2mod_neoclassical
       use b2mod_user_namelist
@@ -483,8 +483,8 @@ ctmp.dpc
            endif
 *      ..maybe detailed monitor
            if (domoit) then
-             call b2mwit (nout(5), nx, ny, ns, itim, itcnt, resco,
-     &        resmo, resmt, reshe, reshi, respo,
+             call b2mwit (nout(5), nx, ny, ns, itim, itcnt,
+     &        resco, resmo, resmt, reshe, reshi, respo,
      &        corpa, corua, corut, corte, corti,
      &        corpo)
              flush(nout(5))
@@ -492,7 +492,6 @@ ctmp.dpc
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
              if (ncall.eq.0.and.istg(2).eq.0) then
-               call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
                call b2filei(ns,nnreg(0))
              end if
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
@@ -512,7 +511,7 @@ ctmp.dpc
              call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
      &                     cssb(-1,-1,1))
            else
-              cssb = 0.0_R8
+             cssb = 0.0_R8
            endif                                                         !iyv 06.02.14
            do is=0,ns-1
 *      ..compute partial pressure

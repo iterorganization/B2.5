@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2scdt (nx, ny, isb, guard_flows, dtim,      !srv 07.07.21
-     &  vol, na0, snadt, lout)
+     &  vol, nap, snadt, lout)                                !srv 10.10.22
       use b2mod_types 
       use b2mod_indirect 
       use b2mod_numerics_namelist 
@@ -18,10 +18,10 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      logical(1) :: lout                                             !srv 16.07.10
+      logical(1) :: lout                                              !srv 16.07.10
       integer nx, ny, isb, guard_flows                                !srv 01.07.08
       real (kind=R8) ::
-     *  dtim, vol(-1:nx,-1:ny), na0(-1:nx,-1:ny)
+     *  dtim, vol(-1:nx,-1:ny), nap(-1:nx,-1:ny)                      !srv 10.10.22
 *   ..input/output arguments
       real (kind=R8) ::
      *  snadt(-1:nx,-1:ny,0:1)
@@ -81,7 +81,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test old state
-       call b2xvsg (n2, na0, 1, 'na0', '.gt.')
+       call b2xvsg (n2, nap, 1, 'nap', '.gt.')                       !srv 10.10.22
       endif
     
 #ifdef WITH_FTIMINGS
@@ -95,7 +95,7 @@
 !$OMP& shared(leftix,rightix,bottomiy,topiy,region)
 !$OMP& shared(guard_flows,use_eirene,dtim,dtco)
 !$OMP& shared(phm0)
-!$OMP& shared(vol,na0)
+!$OMP& shared(vol,nap)
 ! these are the result arrays:
 !$OMP& shared(snadt)
 #endif
@@ -115,7 +115,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
            ttim=dtim*dtco(isb,region(ix,iy,0))*time_factor(ix,iy)
            t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
-           snadt(ix,iy,0) = t0*na0(ix,iy)                                !srv 06.01.21
+           snadt(ix,iy,0) = t0*nap(ix,iy)                                !srv 06.01.21 10.10.22
            snadt(ix,iy,1) =-t0                                           !srv 06.01.21
           enddo
         enddo

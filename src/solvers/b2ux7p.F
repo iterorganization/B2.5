@@ -68,8 +68,12 @@
       integer ncall, style, n2, itmax, iters, itpar, cpu
       integer, save :: nz                                      !srv 29.05.02
       parameter (itmax=100)
-      real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end
+#else
+      real (kind=R4) :: cpu_start, cpu_end
+#endif
+      real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8)
      *  , allocatable, save :: aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
@@ -77,6 +81,10 @@
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter
+#if ( defined(_OPENMP) && defined(CRAY) )
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
 *   ..initialisation
       save ncall, style, acpar, cpu
       !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
@@ -159,7 +167,11 @@
       endif
 
 *   ..solve the correction equation
+#ifdef _OPENMP
+      cpu_start = omp_get_wtime()
+#else
       call cpu_time(cpu_start)
+#endif
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -186,20 +198,40 @@
      2   aa7(-1,-1,1), aa7(-1,-1,2), aa7(-1,-1,3),                 !srv 11.01.00
      .   resfun, corfun, name)
        else if (style.eq.3) then                                   !srv 29.05.02 {
+!#ifdef _OPENMP
+!        cpu_start = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_start)
+!#endif
         call storage_7 (nx, ny, aa7, n_nz_sdrv, ia, ja, a, nz,
      *                 indexes, iasave, jasave)
+!#ifdef _OPENMP
+!        cpu_end = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_end)
+!#endif
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_7: nz = ',nz
         call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
 *    ..use sdrv from YSMP
+!#ifdef _OPENMP
+!        cpu_start = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_start)
+!#endif
         call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)       !srv 29.05.02 }
+!#ifdef _OPENMP
+!        cpu_end = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_end)
+!#endif
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
+#ifdef _OPENMP
+      cpu_end = omp_get_wtime()
+#else
       call cpu_time(cpu_end)
+#endif
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &                                  cpu_end-cpu_start
 

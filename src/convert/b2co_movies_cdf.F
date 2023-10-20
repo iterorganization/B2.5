@@ -9,11 +9,10 @@
       real (kind=R8) :: tim
 #ifndef NO_CDF
 #     include <netcdf.inc>
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
       integer :: status
@@ -30,8 +29,6 @@
       character*4 :: extension
       character*256 filename, plasmastate
       logical :: exists
-      integer :: lnblnk
-      external lnblnk
 #endif
       external ipgeti, ipgetr, xerrab, xertst
 
@@ -121,25 +118,18 @@ c find the time vector size
       end do
 
 c prepare the b2movies.nc.xxxx file
-#ifdef NO_GETENV
       extension='xxxx'
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
+      if (ierror.eq.0) extension=plasmastate(lenval-3:lenval)
 #else
-#ifdef NAGFOR
       call get_environment_variable('PLASMASTATE',
      . status=ierror, length=lenval)
       if (ierror.eq.0) then
-        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        call get_environment_variable('PLASMASTATE', value=plasmastate)
         extension=plasmastate(lenval-3:lenval)
-      elseif (ierror.eq.1) then
-        extension='xxxx'
       endif
-#else
-#ifdef USE_PXFGETENV
-      CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
-#else
-      call getenv ('PLASMASTATE', plasmastate)
-#endif
-      extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
 #endif
       filename='b2movies.nc.'//extension

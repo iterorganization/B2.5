@@ -1,5 +1,5 @@
-      subroutine b2tlhi (nx, ny, mp, cfl, gs, pbsx, qc, ni, nirm,
-     &  ti, chvimx)
+      subroutine b2tlhi (nx, ny, mp, cfl, gs, pbsx, qc,
+     &  ni, nirm, ti, chvimx)
       use b2mod_types
       use b2mod_indirect
       use b2mod_external

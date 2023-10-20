@@ -27,7 +27,7 @@ LD_MSCL ?= -L${MSCL_ROOT} -lmscl
 LD_NAG ?= -L${NAG_LIB} -lnag_nag -lnag_mkl
 LD_MPI ?= -L${MPDIR}/lib64 -lmpi -lmpigf
 
-DEFINES += -DDOFLUSH -DNO_OPT
+DEFINES += -DNO_OPT
 
 CPP = /lib/cpp -traditional
 
@@ -45,9 +45,14 @@ endif
 
 ifndef IMAS_VERSION
 UAL_MAJOR_VERSION = 0
+UAL_MINOR_VERSION = 0
+UAL_MICRO_VERSION = 0
+GGD_MAJOR_VERSION = 0
 GGD_MINOR_VERSION = 0
+GGD_MICRO_VERSION = 0
 IMAS_MAJOR_VERSION = 0
 IMAS_MINOR_VERSION = 0
+IMAS_MICRO_VERSION = 0
 ifdef ITM_ENVIRONMENT_LOADED
 INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_gfortran_6.1 -I${ITM_GGD_HOME}/include/amd64_gfortran_6.1 -I${UAL_INCLUDE}/amd64_gfortran -I${ITM_ITMCONSTANTS_DIR}/include/amd64_gfortran_6.1 -I${ITM_ITMASSERT_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_gfortran_6.1
 IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_gfortran

@@ -80,7 +80,6 @@ c*** Values by ion charge states
      *     equi_tmp(:,:)
       real (kind=R8), allocatable ::
      *     nisi_tmp(:), gisi_tmp(:)
-
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
@@ -245,6 +244,7 @@ c          v=vol(ix,iy)
       end do !}
 
       do i=2,nnreg(0) !{
+        if(nnreg(0).eq.8.and.(i.eq.5.or.i.eq.6)) cycle
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
       end do !}
 
@@ -601,6 +601,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2wrsep: cannot open file ',trim(f)
@@ -619,6 +620,13 @@ c======================================================================
       implicit none
 c----------------------------------------------------------------------
 c     Finalization step
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
+      if (.not.allocated(equs_tmp)) return
       deallocate(equs_tmp)
       deallocate(nisp_tmp)
       deallocate(zisp_tmp)

@@ -691,6 +691,7 @@ contains
   integer cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   real (kind=R8) :: face(-1:nx,-1:ny,0:1,0:1), slant
+  real (kind=R8) :: Xvertices(0:3), Yvertices(0:3)
   logical classical
   real (kind=R8) :: weight(-1:nx,-1:ny,TO_SELF:TO_TOP)
 
@@ -704,7 +705,9 @@ contains
   do ix = -1, nx
     do iy = -1, ny
       if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-      cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+      Xvertices(:) = crx(ix,iy,:)
+      Yvertices(:) = cry(ix,iy,:)
+      cgeo = cellGeoType(Xvertices, Yvertices)
       if (classical .or. cflags(ix,iy,CELLFLAG_LEFTFACE) == GRID_UNDEFINED) then
         slant = 0.0_R8
       elseif (cflags(ix,iy,CELLFLAG_BOTTOMFACE) == GRID_UNDEFINED .and. &
@@ -2140,11 +2143,9 @@ contains
   use b2mod_types
   use b2mod_geo
   use b2mod_indirect
-#ifdef IMAS
-#if IMAS_MINOR_VERSION > 8
+#if ( defined(IMAS) && IMAS_MINOR_VERSION > 8 )
   use ids_schemas  & ! IGNORE
      & , only : IDS_REAL_INVALID
-#endif
 #endif
   implicit none
   integer, intent(in) :: iclass, imode
@@ -2162,12 +2163,8 @@ contains
   integer ix1, ixl, ixr, iyl, iop
   real(kind=R8) :: t1, t2
 
-#ifdef IMAS
-#if IMAS_MINOR_VERSION > 8
+#if ( defined(IMAS) && IMAS_MINOR_VERSION > 8 )
   get_connection_length = IDS_REAL_INVALID
-#else
-  get_connection_length = 0.0_R8
-#endif
 #else
   get_connection_length = 0.0_R8
 #endif

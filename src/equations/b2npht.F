@@ -17,13 +17,13 @@
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
-      use b2mod_subsys
       use b2mod_sources
      & , only : shedt, shidt                                             !srv 31.01.21
       use b2mod_numerics_namelist
      & , only : dtee, dtei, time_factor
       use b2mod_plasma
      , , only : tep, tip, nep, nip, nap, kinrgyp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17
@@ -234,9 +234,7 @@
         enddo
       enddo
 * ..main computation
-      tep = te                                                           !srv 07.07.21 {
-      tip = ti
-      if(style_b2mndt.eq.2) then
+      if(style_b2mndt.eq.2) then                                         !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2shdt (nx, ny, ns, dtim, BoRiS,
      &    vol, nap, tep, tip, ne, ni, kinrgyp, shedt, shidt, .false.)
@@ -307,10 +305,16 @@ cdjm Jan2017 update particle source components for balance
       if ((solving(4).and.any(solvereg(0:nregionv))).or.
      &                    get_residuals.eq.1) then                      !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+        if(style_b2mndt.eq.2) then                                      !srv 10.10.22 {
+          reshe=reshe+(te-tep)*ne*shedt(:,:,3)
+        endif                                                           !srv 10.10.22 }
       endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
      &                   get_residuals.eq.1) then                       !srv 22.05.18
         call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+        if(style_b2mndt.eq.2) then                                      !srv 10.10.22 {
+          reshi=reshi+(ti-tip)*ni(:,:,0)*shidt(:,:,3)
+        endif                                                           !srv 10.10.22 }
       endif                                                             !srv 22.05.18
 *   ..compute heat source due to electron-ions collisions               !srv 18.09.09 30.01.10 {
       do iy = -1, ny

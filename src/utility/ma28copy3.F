@@ -762,7 +762,7 @@ c  find the first solution.
 c
       call ma28cdcopy3(n, a, licn, icn, ikeep, x, w, mtype)
 c
-c  stop the computations if   maxit=0.
+c  stop the computations if maxit=0.
 c
    20 if (maxit.eq.0) go to 160
 c
@@ -2200,7 +2200,7 @@ c innermost loop.
           do 40 jayjay=ipivj,jfin
             jay = icn(jayjay)
 #ifdef DBG
-            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
+            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)) .and.
      &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
@@ -3496,22 +3496,19 @@ c
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer ndrop, maxit, noiter, nsrch, istart
-      logical lblock, grow
-      logical abort1, abort2
-      logical lbig
+      logical lblock, grow, abort1, abort2, lbig
       common /ma28edc3/ lp, mp, lblock, grow
       common /ma28fdc3/ eps, rmin, resid, irncp, icncp, minirn, minicn,
      * irank, abort1, abort2
+c     common /ma28gdc3/ idisp(2)
       common /ma28hdc3/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
-c     common /ma28gdc3/ idisp(2)
       !$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28hdc3/)
-      data eps /1.0e-4_R8/
-      data tol /0.0e0_R8/, cgce /0.5e0_R8/
-      data lp /6/, mp /6/
-      data maxit /16/, nsrch /32768/, istart /0/, lbig /.false./
+      data eps /1.0e-4_R8/, tol /0.0e0_R8/, cgce /0.5e0_R8/
+      data maxit /16/
+      data lp /6/, mp /6/, nsrch /32768/, istart /0/
       data abort1 /.true./, abort2 /.true./
-      data lblock /.true./, grow /.true./
+      data lblock /.true./, grow /.true./, lbig /.false./
       end block data bd1copy3
       block data bd2copy3
       use b2mod_types

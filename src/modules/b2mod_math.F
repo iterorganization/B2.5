@@ -97,6 +97,15 @@ c     of cross-flows across surfaces, dif may be negative
       return
       end function ibase
 
+      integer function ibase1(n1,inc1x)
+      implicit none
+      integer n1, inc1x
+      intrinsic max
+      ibase1 = max(1,1+(1-n1)*inc1x)
+      return
+      end function ibase1
+
+! $AD NOCHECKPOINT
       function med(t0,t1,t2)
       implicit none
       real(kind=R8) :: med, t0, t1, t2

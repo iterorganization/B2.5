@@ -52,13 +52,13 @@
       use b2mod_trace
       use b2mod_ipmain
       use b2mod_openmp
-      use b2mod_average
+      use b2mod_running_average
       use b2mod_balance !djm Jan2017
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
       use b2mod_b2plot
-     , ,only: nlimi, wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     , , only : nlimi, wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -68,7 +68,7 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
-     , ,only: iunout
+     , ,only: iunout, iunin
       use eirmod_comusr
      , ,only: eirene_alloc_comusr
       use eirmod_refusr
@@ -76,6 +76,7 @@
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
+      use eirmod_mcarlo
       use eirmod_wneutrals
       use b2mod_eirene
       use b2mod_b2plot
@@ -146,9 +147,14 @@
       integer, save :: Zhdanov_closure = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
       integer, save :: iappend = 0
+#ifdef _OPENMP
+      real (kind=R8) :: cpuval, cpustart, cpuinit
+#else
+      real (kind=R4) :: cpuval, cpustart, cpuinit
+#endif
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
-     &  b2mndr_cpu, cpuval, cpustart, cpuinit,
+     &  b2mndr_cpu,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, BoRiS, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
@@ -172,11 +178,12 @@
       logical lwti, lwav, lrav, lrer, continued, ids_replace
       character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
-     *  cputarget, cpuincrement, neutral_rescale,
-     *  neutral_sources_rescale,
-     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
-     2  delta_min, dt_change_inc, delta_max, dt_change_dec,
-     3  dt_min, dt_max, max_delta
+     *  cputarget, cpuincrement,
+     *  neutral_rescale, neutral_sources_rescale,
+     1  na_eps, te_eps, ti_eps, po_eps, ua_eps,
+     2  sput_frc, sput_phys,
+     3  delta_min, dt_change_inc, delta_max, dt_change_dec,
+     4  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -324,15 +331,12 @@
       character*256 filename
       logical ex, found
 #ifdef IMAS
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
-#endif
-#endif
-#ifndef NO_GETENV
       character(len=24) :: device_env
+#ifndef NO_GETENV
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
 #endif
 #endif
 *   ..initialisation
@@ -730,7 +734,7 @@
 *     logu(rtrqa), where rtrqa is the electron heat loss rate
 *     coefficient at electron temperature rtt(i) and electron density
 *     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension ev*m**3/s.
+*     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient
@@ -906,7 +910,7 @@
 *     state of the plasma at the start of the present timestep.
 *
 *     nap, uap, tep, tip, pop, fnap, fhep, fhip, fchp - real*8 array.
-*     state of the plasma at the start of the previous timestep.
+*     state of the plasma in the previous timestep.                             !srv 10.10.22
 *
 *     ntim - integer.
 *     ntim specifies the number of timesteps to be performed.
@@ -1006,8 +1010,8 @@
        found = .false.
        is = ismain
        do while (is.ge.0 .and. .not.found)
-         if (is_neutral(is) .and. zn(is).eq.zn(ismain) .and.
-     &       am(is).eq.am(ismain)) then
+         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain)) .and.
+     &       nint(am(is)).eq.nint(am(ismain))) then
            ismain0 = is
            found = .true.
          end if
@@ -1080,20 +1084,32 @@
        call ipgetr ('b2mndr_trantim', delta_tran_time)
        if (delta_tran_time.gt.0.0_R8)
      >  write(*,*) 'Saving tran files every ',delta_tran_time,' seconds'
+       call xertst (delta_tran_time.eq.0.0_R8.or.
+     &              delta_tran_time.ge.dteff,
+     &  'b2mndr_trantim too short compared to timestep !')
 #endif
        call ipgetr ('b2mndr_cdfmovietim', delta_cdfmovie_time)
        if (delta_cdfmovie_time.gt.0.0_R8)
      >  write(*,*) 'Saving CDF movie files every ',
      1  delta_cdfmovie_time,' simulation seconds'
+       call xertst (delta_cdfmovie_time.eq.0.0_R8.or.
+     &              delta_cdfmovie_time.ge.dteff,
+     &  'b2mndr_cdfmovietim too short compared to timestep !')
        call ipgetr ('b2mndr_plasmatim', delta_plasma_time)
        if (delta_plasma_time.gt.0.0_R8)
      >  write(*,*) 'Saving plasma state files every ',
      1  delta_plasma_time,' simulation seconds'
+       call xertst (delta_plasma_time.eq.0.0_R8.or.
+     &              delta_plasma_time.ge.dteff,
+     &  'b2mndr_plasmatim too short compared to timestep !')
        call ipgetr ('b2mndr_ids_time', delta_ids_time)
        if (delta_ids_time.gt.0.0_R8)
 #ifdef IMAS
      >  write(*,*) 'Writing IDS every ',
      1  delta_ids_time,' simulation seconds'
+       call xertst (delta_ids_time.eq.0.0_R8.or.
+     &              delta_ids_time.ge.dteff,
+     &  'b2mndr_ids_time too short compared to timestep !')
 #else
      >  write(*,*)
      1   'Not compiled with IMAS option, IDS will not be written.'
@@ -1243,8 +1259,8 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(use_eirene.ne.0) then
          if (neutral_sources_rescale.ne.1.0_R8) then
-           write(*,*)
-     *      'Adding ',log(neutral_sources_rescale),' to relevant rtlra'
+           write(*,*) 'Adding ',log(neutral_sources_rescale),
+     *      ' to relevant rtlra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
@@ -1389,9 +1405,17 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          database = 'solps-iter'
          treename = 'ids'
          write(version,'(i1)') IMAS_MAJOR_VERSION
-#ifndef NO_GETENV
+#ifdef NO_GETENV
          device_env = ' '
-#ifdef NAGFOR
+         write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.',
+     .                                          IMAS_MINOR_VERSION,'.',
+     .                                          IMAS_MICRO_VERSION
+#else
+#ifdef USE_PXFGETENV
+         CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+         CALL PXFGETENV ('IMAS_VERSION', 0,
+     .                              imas_version, lenval, ierror)
+#else
          call get_environment_variable('DEVICE', status=ierror,
      .                                           length=lenval)
          if (ierror.eq.0) call get_environment_variable('DEVICE',
@@ -1400,15 +1424,6 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .                                           length=lenval)
          if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',
      .                                           value=imas_version)
-#else
-#ifdef USE_PXFGETENV
-         CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
-         CALL PXFGETENV ('IMAS_VERSION', 0,
-     .                              imas_version, lenval, ierror)
-#else
-         call getenv ('DEVICE', device_env)
-         call getenv ('IMAS_VERSION', imas_version)
-#endif
 #endif
          if (.not.streql(device_env,' ')) database = device_env
          if (streql(database,'iter')) database = 'ITER'
@@ -1487,7 +1502,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
 #else
-      call alloc_b2mod_braeir(nx,ny,ns-natm)
+      call alloc_b2mod_braeir(nx,ny,ns-nspecies)
       call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)
 #endif
 
@@ -1499,6 +1514,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       call alloc_b2mod_tallies(nnreg,ns)
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx, nxtl, nxtr)
+      write(*,*) 'In b2mod_driver: nxtl, nxtr = ', nxtl, nxtr
 ! can only be calculated after the indirect arrays have been read
       if (LSN) then
         ixfb=rratio(5*nx,8)
@@ -1728,7 +1744,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       do is = 0,ns-1                                                 !srv 25.01.16 {
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),na_min)
+            na(ix,iy,is) = max(na(ix,iy,is),na_min)
           enddo
         enddo
       enddo                                                          !srv 25.01.16 }
@@ -2018,9 +2034,11 @@ cxpb initialize the numerics data
         call ipgeti ('b2news_nsmax', nsmax)
         nsmin = max(0,min(nsmin,ns))
         nsmax = max(0,min(nsmax,ns))
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,.false.)
         call write_b2mod_numerics_namelist
       endif
+      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
+      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
       nlimi = 0
@@ -2030,7 +2048,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       CALL EIRENE_SETCON
       CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
-     &    delta_ids_time.gt.0.0_R8) then
+     &    delta_ids_time.gt.0.0_R8.or.filedata(ntrc_uss)) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
         if (use_eirene.ne.0.and.ex) then
@@ -2047,9 +2065,8 @@ cxpb for neutral fluxes used in b2stbc_phys
      .                         natm,nmol,nion,nlimps)
 #endif
       call b2stbr_init (nx, ny, ns, BoRiS)
-      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
 c new CDF movie option (1st frame at t=0)
-      if(tim.ge.save_cdfmovie_time.and.
+      if(tim.ge.(save_cdfmovie_time-dteff/2.0_R8).and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(use_eirene.eq.0) then
 #ifndef NO_CDF
@@ -2061,7 +2078,7 @@ c new CDF movie option (1st frame at t=0)
         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
       endif
       idx = 0
-      cpuval = 0.0_R8
+      cpuval = 0.0
       elapsedval = 0.0_R8
       stack_ptr = 0
       first_time_step=.true.
@@ -2104,6 +2121,10 @@ c new CDF movie option (1st frame at t=0)
       logical streql
       external streql
 #endif
+#if ( defined(CRAY) && defined(_OPENMP) )
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
 
       call subini ('b2mndr_1')
 *   ..no error so far
@@ -2115,7 +2136,11 @@ c new CDF movie option (1st frame at t=0)
       ntim = ntim + add_ntim
       continued = continued .and. ntim.gt.0
       ne_wanted_next_time=tim
+#ifdef _OPENMP
+      cpuinit = omp_get_wtime()
+#else
       call cpu_time(cpuinit)
+#endif
       elapsedinit=epoch_seconds()
 
     1 continue
@@ -2123,7 +2148,11 @@ c new CDF movie option (1st frame at t=0)
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dteff,ntim,stack_ptr,quit
 
+#ifdef _OPENMP
+      cpustart = omp_get_wtime()
+#else
       call cpu_time(cpustart)
+#endif
       elapsedstart=epoch_seconds()
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
@@ -2297,7 +2326,8 @@ csw 09oct2012 set default potential already at this point (BCs)
         end if
 
 #ifdef JET
-        if(tim.ge.save_tran_time.and.delta_tran_time.gt.0.0_R8) then
+        if(tim.ge.(save_tran_time-dteff/2.0_R8).and.
+     &     delta_tran_time.gt.0.0_R8) then
           tran_num=tran_num+1
           if(tran_num.le.99) then
             write(tran_file_name,'(a4,i2)') 'tran',tran_num
@@ -2314,7 +2344,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         endif
 #endif
 c new CDF movie option
-        if(tim.ge.save_cdfmovie_time.and.
+        if(tim.ge.(save_cdfmovie_time-dteff/2.0_R8).and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
           call cdfmovie(ncid,nx,ny,ns)
@@ -2361,7 +2391,7 @@ c new CDF movie option
         if (first_time_step) then
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-          call b2trci(nx,ny,ns,nnreg(0))
+          call b2trci(nx,ny,ns,nxtl,nxtr,jsep,nnreg(0))
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then
@@ -2375,14 +2405,18 @@ c new CDF movie option
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
+#ifdef _OPENMP
+        cpuval = omp_get_wtime()
+#else
         call cpu_time(cpuval)
+#endif
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
-     &            min((ntim-itim)*(cpuval-cpustart),
-     &      max(0.0_R8,b2mndr_cpu-(cpuval-cpuinit)))                     !srv 18.05.09
+     &            min((ntim-itim)*real(cpuval-cpustart,R8),
+     &      max(0.0_R8,b2mndr_cpu-real(cpuval-cpuinit,R8)))              !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
@@ -2411,11 +2445,18 @@ c new CDF movie option
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
      &       b2mndr_elapsed.gt.0.0_R8).or.
-     2      (etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8).or.
+     2      (etim.gt.stim.and.tim.ge.etim.and.
+     &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
+#ifdef _OPENMP
+        write_save=(cpuval-cpuinit).gt.cputarget.and.
+     &              cpuincrement.gt.0.0_R8
+#else
         write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
+#endif
         write_save=write_save.or.
-     .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
+     .   (tim.ge.(save_plasma_time-dteff/2.0_R8).and.
+     .    delta_plasma_time.gt.0.0_R8)
         if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.
      .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
@@ -2424,7 +2465,8 @@ c new CDF movie option
           edition=edition+1
           if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8)
      .     cputarget=cputarget+cpuincrement
-          if(tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
+          if(tim.ge.(save_plasma_time-dteff/2.0_R8).and.
+     .       delta_plasma_time.gt.0.0_R8)
      .     save_plasma_time=save_plasma_time+delta_plasma_time
           if(edition.gt.9999) then
             edition=0
@@ -2448,6 +2490,7 @@ c new CDF movie option
      &     fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+          close(nout(6))
 *       ..write additional save namelist data
           filename='b2.feedback_save.parameters'
           call find_file(filename,found)
@@ -2527,7 +2570,6 @@ c new CDF movie option
             endif
           endif
 #endif
-          close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
           if (iav_run > 0) then
             write (aver_name,'(a17,a4)')
@@ -2540,7 +2582,8 @@ c new CDF movie option
         write_ids = ids_save.gt.0 .and. ntim.gt.0
         if (write_ids) write_ids = mod(itim,ids_save).eq.0
         write_ids = write_ids .or.
-     .   (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
+     .   (tim.ge.(save_ids_time-dteff/2.0_R8).and.
+     .    delta_ids_time.gt.0.0_R8)
         process_ids = write_ids
         write_av = ids_av.gt.0 .and. ntim.gt.0 .and. ntim_batch.gt.0
         if (write_av) write_av = mod(itim,ids_av*ntim_batch).eq.0
@@ -2856,7 +2899,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           end if
 #endif
           if (.not.continued) continued = .true.
-          if (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
+          if (tim.ge.(save_ids_time-dteff/2.0_R8).and.
+     .        delta_ids_time.gt.0.0_R8)
      .     save_ids_time=save_ids_time+delta_ids_time
         end if
         first_time_step=.false.
@@ -2889,6 +2933,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
       character*256 filename
       logical found, ids_done
+#ifdef B25_EIRENE
+      logical op
+#endif
 #ifdef IMAS
       logical streql
       external streql
@@ -3016,6 +3063,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
+         if (balance_average .ne. 0) then
+           call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
+        endif
         call write_balance(nx,ny,ns)
 #else
         write(*,*)
@@ -3347,6 +3397,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_INFCOP
+      CALL EIRENE_MCARLO2
+      inquire(unit=IUNMEM,opened=op)
+      if(op) CLOSE(IUNMEM)
+      inquire(unit=IUNIN,opened=op)
+      if(op) CLOSE(IUNIN)
 #else
       if (ids_save.ne.0 .or. delta_ids_time.ne.0.0_R8)
      & call dealloc_b2mod_b2plot

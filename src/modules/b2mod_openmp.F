@@ -44,10 +44,10 @@
       subroutine print_openmp_info()
 #ifdef _OPENMP
       if (get_num_threads().gt.1) then
-        write(*,fmt='(A,I3,A)') 'B2.5 running in OpenMP mode using ',
+        write(*,'(A,I3,A)') 'B2.5 running in OpenMP mode using ',
      &   get_num_threads(),' threads.'
       else
-        write(*,fmt='(A,I3,A)') 'B2.5 running in OpenMP mode using ',
+        write(*,'(A,I3,A)') 'B2.5 running in OpenMP mode using ',
      &   get_num_threads(),' thread.'
       end if
 #if !defined GFORTRAN && !defined NAGFOR && !defined PGF90

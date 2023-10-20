@@ -98,6 +98,7 @@ c-----------------------------------------------------------------------
       integer, save :: ntgs(ntrgs_tmp)
       data ntgs / ntrgs_tmp*0 /
       integer, allocatable :: ltgs(:,:)
+      
 c*** Identification suffices:
       data hlp_trgs / 'il','ol','wl','  ','  ',
      ,                'il','iu','ou','ol','wl'/
@@ -318,12 +319,14 @@ c
      .         (pt_ext(ix,iy,is)*hx(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*
+              hlp_h=hlp_h+
+     .          fa_ext(ixf,iyf,0,is)*
      .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hx(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*
+              hlp_h=hlp_h+
+     .          fa_ext(ixf,iyf,0,is)*
      .         (ta_ext(ix,iy,is)*hx(ixr,iyr)+
      .          ta_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
@@ -802,6 +805,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c=======================================================================
   190 write(*,*) 'b2blne: cannot open file ',trim(f)
@@ -823,6 +827,12 @@ c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      logical file_open
+      
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+      
       deallocate(limp_tmp)
       deallocate(ltgs)
       deallocate(radim_tmp)

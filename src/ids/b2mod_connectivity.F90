@@ -20,7 +20,7 @@ module b2mod_connectivity
 
     !! Geometry/topology IDs (obtain using function geometryId(..:))
 
-    integer, parameter :: GEOMETRY_COUNT = 10
+    integer, parameter :: GEOMETRY_COUNT = 13
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
 
     !! The IDs, matching the IDS definitions of the GGD identifiers
@@ -34,6 +34,9 @@ module b2mod_connectivity
     integer, parameter :: GEOMETRY_DDN_TOP = 7
     integer, parameter :: GEOMETRY_ANNULUS = 8
     integer, parameter :: GEOMETRY_STELLARATORISLAND = 9
+    integer, parameter :: GEOMETRY_STRUCTURED_SPACES = 10
+    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_MINUS = 11
+    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_PLUS = 12
 
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
@@ -67,7 +70,10 @@ module b2mod_connectivity
         &       8, 13, 14,  & !! GEOMETRY_DDN_BOTTOM
         &       8, 13, 14,  & !! GEOMETRY_DDN_TOP
         &       1,  2,  2,  & !! GEOMETRY_ANNULUS
-        &       5,  7,  8   & !! GEOMETRY_STELLARATORISLAND
+        &       5,  7,  8,  & !! GEOMETRY_STELLARATORISLAND
+        &       1,  0,  0,  & !! GEOMETRY_STRUCTURED_SPACES
+        &       7, 13, 13,  & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
+        &       7, 13, 13   & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
         &    /),            &
         &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
 
@@ -82,7 +88,10 @@ module b2mod_connectivity
         &    'DDN_BOTTOM ', &
         &    'DDN_TOP    ', &
         &    'ANNULUS    ', &
-        &    'ISLAND     '  &
+        &    'ISLAND     ', &
+        &    'STRUCTURED ', &
+        &    'LFS_SF-    ', &
+        &    'LFS_SF+    '  &
         &   /)
 
     character(50), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryDescription = &
@@ -96,7 +105,10 @@ module b2mod_connectivity
         &    'Disconnected double null, bottom X-point is active', &
         &    'Disconnected double null, top X-point is active   ', &
         &    'Annular geometry, curved in the third direction   ', &
-        &    'Stellarator island geometry                       '  &
+        &    'Stellarator island geometry                       ', &
+        &    'Structured grid built with multiple 1-D spaces    ', &
+        &    'Low-field side Snowflake-minus geometry           ', &
+        &    'Low-field side Snowflake-plus geometry            '  &
         &   /)
 
     !! Region names
@@ -106,236 +118,213 @@ module b2mod_connectivity
 
     character(32), parameter, private :: UU = repeat(' ', 32) !< UnUsed string
 
-    character(32), dimension(REGION_COUNT_MAX, 0:REGIONTYPE_COUNT-1,    &
-        &   0:GEOMETRY_COUNT-1) :: regionNames =                        &
-        &   reshape( (/                                                 &
+    character(32), dimension(REGION_COUNT_MAX, 0:REGIONTYPE_COUNT-1,                &
+        &   0:GEOMETRY_COUNT-1) :: regionNames =                                    &
+        &   reshape( (/                                                             &
         & & ! GEOMETRY_UNSPECIFIED
-        &   'Plasma'//repeat(' ',26),                                   &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        &   'Plasma'//repeat(' ',26),                                               &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
-        &   'Left boundary                   ',                         &
-        &   'Right boundary                  ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        &   'Left boundary                   ', 'Right boundary                  ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & &
-        &   'Top boundary                    ',                         &
-        &   'Bottom boundary                 ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        &   'Top boundary                    ', 'Bottom boundary                 ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_LINEAR
-        &   'Plasma'//repeat(' ',26),                                   &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        &   'Plasma'//repeat(' ',26),                                               &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
-        &   'Anti-clockwise boundary         ',                         &
-        &   'Clockwise boundary              ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        &   'Anti-clockwise boundary         ', 'Clockwise boundary              ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & &
-        &   'Top boundary                    ',                         &
-        &   'Bottom boundary                 ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        &   'Top boundary                    ', 'Bottom boundary                 ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_CYLINDER
-        &   'Plasma'//repeat(' ',26),                                   &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        &   'Plasma'//repeat(' ',26),                                               &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
-        &   'Periodicity boundary            ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        &   'Periodicity boundary            ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
-        &   'Top boundary                    ',                         &
-        &   'Bottom boundary                 ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        &   'Top boundary                    ', 'Bottom boundary                 ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_LIMITER
-        &   'Core                            ',                         &
-        &   'SOL                             ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        &   'Core                            ', 'SOL                             ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & &
-        &   'Anti-clockwise target           ',                         &
-        &   'Clockwise target                ',                         &
-        &   'Core cut                        ',                         &
-        & UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                   &
+        &   'Anti-clockwise target           ', 'Clockwise target                ', &
+        &   'Core cut                        ',                                     &
+        & UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                               &
         & &
-        &   'Core boundary                   ',                         &
-        &   'Separatrix                      ',                         &
-        &   'Main chamber wall               ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                 &
+        &   'Core boundary                   ', 'Separatrix                      ', &
+        &   'Main chamber wall               ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                             &
         & & ! GEOMETRY_SN Single null
-        &   'Core                            ',                         &
-        &   'SOL                             ',                         &
-        &   'Western divertor                ',                         &
-        &   'Eastern divertor                ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
+        &   'Core                            ', 'SOL                             ', &
+        &   'Western divertor                ', 'Eastern divertor                ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                                 &
         & &
-        &   'Western target                  ',                         &
-        &   'Western throat                  ',                         &
-        &   'Eastern throat                  ',                         &
-        &   'Eastern target                  ',                         &
-        &   'Core cut                        ',                         &
-        &   'PFR cut                         ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU,                             &
+        &   'Western target                  ', 'Western throat                  ', &
+        &   'Eastern throat                  ', 'Eastern target                  ', &
+        &   'Core cut                        ', 'PFR cut                         ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU,                                         &
         & &
-        &   'Western PFR wall                ',                         &
-        &   'Core boundary                   ',                         &
-        &   'Eastern PFR wall                ',                         &
-        &   'Separatrix                      ',                         &
-        &   'Western baffle                  ',                         &
-        &   'Main chamber wall               ',                         &
-        &   'Eastern baffle                  ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU,                                 &
+        &   'Western PFR wall                ', 'Core boundary                   ', &
+        &   'Eastern PFR wall                ', 'Separatrix                      ', &
+        &   'Western baffle                  ', 'Main chamber wall               ', &
+        &   'Eastern baffle                  ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU,                                             &
         & & ! GEOMETRY_CDN Connected double null
-        &   'Inner core                      ',                         &
-        &   'Inner SOL                       ',                         &
-        &   'Lower inner divertor            ',                         &
-        &   'Upper inner divertor            ',                         &
-        &   'Outer core                      ',                         &
-        &   'Outer SOL                       ',                         &
-        &   'Upper outer divertor            ',                         &
-        &   'Lower outer divertor            ',                         &
-        &   UU, UU, UU, UU, UU, UU,                                     &
+        &   'Inner core                      ', 'Inner SOL                       ', &
+        &   'Lower inner divertor            ', 'Upper inner divertor            ', &
+        &   'Outer core                      ', 'Outer SOL                       ', &
+        &   'Upper outer divertor            ', 'Lower outer divertor            ', &
+        &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
-        &   'Lower inner target              ',                         &
-        &   'Lower inner throat              ',                         &
-        &   'Upper inner throat              ',                         &
-        &   'Upper inner target              ',                         &
-        &   'Upper outer target              ',                         &
-        &   'Upper outer throat              ',                         &
-        &   'Lower outer throat              ',                         &
-        &   'Lower outer target              ',                         &
-        &   'Lower core cut                  ',                         &
-        &   'Upper PFR cut                   ',                         &
-        &   'Upper core cut                  ',                         &
-        &   'Lower PFR cut                   ',                         &
-        &   UU, UU,                                                     &
+        &   'Lower inner target              ', 'Lower inner throat              ', &
+        &   'Upper inner throat              ', 'Upper inner target              ', &
+        &   'Upper outer target              ', 'Upper outer throat              ', &
+        &   'Lower outer throat              ', 'Lower outer target              ', &
+        &   'Lower core cut                  ', 'Upper PFR cut                   ', &
+        &   'Upper core cut                  ', 'Lower PFR cut                   ', &
+        &   UU, UU,                                                                 &
         & &
-        &   'Lower inner PFR wall            ',                         &
-        &   'Inner core boundary             ',                         &
-        &   'Upper inner PFR wall            ',                         &
-        &   'Inner separatrix                ',                         &
-        &   'Lower inner baffle              ',                         &
-        &   'Inner main chamber wall         ',                         &
-        &   'Upper inner baffle              ',                         &
-        &   'Upper outer PFR wall            ',                         &
-        &   'Outer core boundary             ',                         &
-        &   'Lower outer PFR wall            ',                         &
-        &   'Outer separatrix                ',                         &
-        &   'Upper outer baffle              ',                         &
-        &   'Outer main chamber wall         ',                         &
-        &   'Lower outer baffle              ',                         &
-        & &
-        & &
+        &   'Lower inner PFR wall            ', 'Inner core boundary             ', &
+        &   'Upper inner PFR wall            ', 'Inner separatrix                ', &
+        &   'Lower inner baffle              ', 'Inner main chamber wall         ', &
+        &   'Upper inner baffle              ', 'Upper outer PFR wall            ', &
+        &   'Outer core boundary             ', 'Lower outer PFR wall            ', &
+        &   'Outer separatrix                ', 'Upper outer baffle              ', &
+        &   'Outer main chamber wall         ', 'Lower outer baffle              ', &
         & & ! GEOMETRY_DDN_BOTTOM
-        &   'Inner core                      ',                         &
-        &   'Inner SOL                       ',                         &
-        &   'Lower inner divertor            ',                         &
-        &   'Upper inner divertor            ',                         &
-        &   'Outer core                      ',                         &
-        &   'Outer SOL                       ',                         &
-        &   'Upper outer divertor            ',                         &
-        &   'Lower outer divertor            ',                         &
-        &   UU, UU, UU, UU, UU, UU,                                     &
+        &   'Inner core                      ', 'Inner SOL                       ', &
+        &   'Lower inner divertor            ', 'Upper inner divertor            ', &
+        &   'Outer core                      ', 'Outer SOL                       ', &
+        &   'Upper outer divertor            ', 'Lower outer divertor            ', &
+        &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
-        &   'Lower inner target              ',                         &
-        &   'Lower inner throat              ',                         &
-        &   'Upper inner throat              ',                         &
-        &   'Upper inner target              ',                         &
-        &   'Upper outer target              ',                         &
-        &   'Upper outer throat              ',                         &
-        &   'Lower outer throat              ',                         &
-        &   'Lower outer target              ',                         &
-        &   'Lower core cut                  ',                         &
-        &   'Upper PFR cut                   ',                         &
-        &   'Upper core cut                  ',                         &
-        &   'Lower PFR cut                   ',                         &
-        &   'Between separatrices core cut   ',                         &
-        &   UU,                                                         &
+        &   'Lower inner target              ', 'Lower inner throat              ', &
+        &   'Upper inner throat              ', 'Upper inner target              ', &
+        &   'Upper outer target              ', 'Upper outer throat              ', &
+        &   'Lower outer throat              ', 'Lower outer target              ', &
+        &   'Lower core cut                  ', 'Upper PFR cut                   ', &
+        &   'Upper core cut                  ', 'Lower PFR cut                   ', &
+        &   'Between separatrices core cut   ',                                     &
+        &   UU,                                                                     &
         & &
-        &   'Lower inner PFR wall            ',                         &
-        &   'Inner core boundary             ',                         &
-        &   'Upper inner PFR wall            ',                         &
-        &   'Inner separatrix                ',                         &
-        &   'Lower inner baffle              ',                         &
-        &   'Inner main chamber wall         ',                         &
-        &   'Upper inner baffle              ',                         &
-        &   'Upper outer PFR wall            ',                         &
-        &   'Outer core boundary             ',                         &
-        &   'Lower outer PFR wall            ',                         &
-        &   'Outer separatrix                ',                         &
-        &   'Upper outer baffle              ',                         &
-        &   'Outer main chamber wall         ',                         &
-        &   'Lower outer baffle              ',                         &
-        & &
+        &   'Lower inner PFR wall            ', 'Inner core boundary             ', &
+        &   'Upper inner PFR wall            ', 'Inner separatrix                ', &
+        &   'Lower inner baffle              ', 'Inner main chamber wall         ', &
+        &   'Upper inner baffle              ', 'Upper outer PFR wall            ', &
+        &   'Outer core boundary             ', 'Lower outer PFR wall            ', &
+        &   'Outer separatrix                ', 'Upper outer baffle              ', &
+        &   'Outer main chamber wall         ', 'Lower outer baffle              ', &
         & & ! GEOMETRY_DDN_TOP
-        &   'Inner core                      ',                         &
-        &   'Inner SOL                       ',                         &
-        &   'Lower inner divertor            ',                         &
-        &   'Upper inner divertor            ',                         &
-        &   'Outer core                      ',                         &
-        &   'Outer SOL                       ',                         &
-        &   'Upper outer divertor            ',                         &
-        &   'Lower outer divertor            ',                         &
-        &   UU, UU, UU, UU, UU, UU,                                     &
+        &   'Inner core                      ', 'Inner SOL                       ', &
+        &   'Lower inner divertor            ', 'Upper inner divertor            ', &
+        &   'Outer core                      ', 'Outer SOL                       ', &
+        &   'Upper outer divertor            ', 'Lower outer divertor            ', &
+        &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
-        &   'Lower inner target              ',                         &
-        &   'Lower inner throat              ',                         &
-        &   'Upper inner throat              ',                         &
-        &   'Upper inner target              ',                         &
-        &   'Upper outer target              ',                         &
-        &   'Upper outer throat              ',                         &
-        &   'Lower outer throat              ',                         &
-        &   'Lower outer target              ',                         &
-        &   'Lower core cut                  ',                         &
-        &   'Upper PFR cut                   ',                         &
-        &   'Upper core cut                  ',                         &
-        &   'Lower PFR cut                   ',                         &
-        &   'Between separatrices core cut   ',                         &
-        &   UU,                                                         &
+        &   'Lower inner target              ', 'Lower inner throat              ', &
+        &   'Upper inner throat              ', 'Upper inner target              ', &
+        &   'Upper outer target              ', 'Upper outer throat              ', &
+        &   'Lower outer throat              ', 'Lower outer target              ', &
+        &   'Lower core cut                  ', 'Upper PFR cut                   ', &
+        &   'Upper core cut                  ', 'Lower PFR cut                   ', &
+        &   'Between separatrices core cut   ',                                     &
+        &   UU,                                                                     &
         & &
-        &   'Lower inner PFR wall            ',                         &
-        &   'Inner core boundary             ',                         &
-        &   'Upper inner PFR wall            ',                         &
-        &   'Inner separatrix                ',                         &
-        &   'Lower inner baffle              ',                         &
-        &   'Inner main chamber wall         ',                         &
-        &   'Upper inner baffle              ',                         &
-        &   'Upper outer PFR wall            ',                         &
-        &   'Outer core boundary             ',                         &
-        &   'Lower outer PFR wall            ',                         &
-        &   'Outer separatrix                ',                         &
-        &   'Upper outer baffle              ',                         &
-        &   'Outer main chamber wall         ',                         &
-        &   'Lower outer baffle              ',                         &
+        &   'Lower inner PFR wall            ', 'Inner core boundary             ', &
+        &   'Upper inner PFR wall            ', 'Inner separatrix                ', &
+        &   'Lower inner baffle              ', 'Inner main chamber wall         ', &
+        &   'Upper inner baffle              ', 'Upper outer PFR wall            ', &
+        &   'Outer core boundary             ', 'Lower outer PFR wall            ', &
+        &   'Outer separatrix                ', 'Upper outer baffle              ', &
+        &   'Outer main chamber wall         ', 'Lower outer baffle              ', &
         & & ! GEOMETRY_ANNULUS
-        &   'Plasma'//repeat(' ',26),                                   &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        &   'Plasma'//repeat(' ',26),                                               &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
-        &   'Periodicity boundary            ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        &   'Periodicity boundary            ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
-        &   'Top boundary                    ',                         &
-        &   'Bottom boundary                 ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        &   'Top boundary                    ', 'Bottom boundary                 ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_STELLARATORISLAND
-        &   'Core                            ',                         &
-        &   'SOL                             ',                         &
-        &   'Inner divertor                  ',                         &
-        &   'Outer divertor                  ',                         &
-        &   'Island                          ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
+        &   'Core                            ', 'SOL                             ', &
+        &   'Inner divertor                  ', 'Outer divertor                  ', &
+        &   'Island                          ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU,                                     &
         & &
-        &   'Inner target                    ',                         &
-        &   'Inner throat                    ',                         &
-        &   'Outer throat                    ',                         &
-        &   'Outer target                    ',                         &
-        &   'Core cut                        ',                         &
-        &   'PFR cut                         ',                         &
-        &   'Island cut                      ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU,                                 &
+        &   'Inner target                    ', 'Inner throat                    ', &
+        &   'Outer throat                    ', 'Outer target                    ', &
+        &   'Core cut                        ', 'PFR cut                         ', &
+        &   'Island cut                      ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU,                                             &
         & &
-        &   'Inner PFR wall                  ',                         &
-        &   'Core boundary                   ',                         &
-        &   'Outer PFR wall                  ',                         &
-        &   'Separatrix                      ',                         &
-        &   'Entrance to inner PFR           ',                         &
-        &   'Island center                   ',                         &
-        &   'Entrance to outer PFR           ',                         &
-        &   'Island boundary                 ',                         &
-        &   UU, UU, UU, UU, UU, UU                                      &
+        &   'Inner PFR wall                  ', 'Core boundary                   ', &
+        &   'Outer PFR wall                  ', 'Separatrix                      ', &
+        &   'Entrance to inner PFR           ', 'Island center                   ', &
+        &   'Entrance to outer PFR           ', 'Island boundary                 ', &
+        &   UU, UU, UU, UU, UU, UU,                                                 &
+        & & ! GEOMETRY_STRUCTURED_SPACES
+        &   'Plasma'//repeat(' ',26),                                               &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
+        & &
+        &   'Left boundary                   ', 'Right boundary                  ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
+        & &
+        &   'Top boundary                    ', 'Bottom boundary                 ', &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
+        & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
+        &   'Core                            ', 'SOL                             ', &
+        &   'Inner divertor                  ', 'Outer divertor entrance         ', &
+        &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
+        &   'Third outboard divertor leg     ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU,                                             &
+        & &
+        &   'Inner target                    ', 'Inner divertor entrance         ', &
+        &   'Outer divertor entrance         ', 'First outer divertor target     ', &
+        &   'Second outer divertor target    ', 'SOL connection to outer leg 1   ', &
+        &   'Connection of outer leg 2 and 3 ', 'Third outer divertor target     ', &
+        &   'Core cut                        ', 'PFR cut                         ', &
+        &   'Connection of outer leg 1 and 2 ', 'PFR connection to outer leg 3   ', &
+        &   'CFR connection to outer leg 3   ',                                     &
+        &   UU,                                                                     &
+        & &
+        &   'Inner PFR wall                  ', 'Core boundary                   ', &
+        &   'Outer entrance PFR wall         ', 'Separatrix                      ', &
+        &   'Inner baffle                    ', 'Main chamber wall               ', &
+        &   'Outer entrance baffle           ', 'First outer leg PFR wall        ', &
+        &   'Second outer leg PFR wall       ', 'Third outer leg PFR wall        ', &
+        &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
+        &   'Third outer leg baffle          ',                                     &
+        &   UU,                                                                     &
+        & & ! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &   'Core                            ', 'SOL                             ', &
+        &   'Inner divertor                  ', 'Outer divertor entrance         ', &
+        &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
+        &   'Third outboard divertor leg     ',                                     &
+        &   UU, UU, UU, UU, UU, UU, UU,                                             &
+        & &
+        &   'Inner target                    ', 'Inner divertor entrance         ', &
+        &   'Outer divertor entrance         ', 'First outer divertor target     ', &
+        &   'Second outer divertor target    ', 'SOL connection to outer leg 1   ', &
+        &   'Connection of outer leg 2 and 3 ', 'Third outer divertor target     ', &
+        &   'Core cut                        ', 'PFR cut                         ', &
+        &   'Connection of outer leg 1 and 2 ', 'PFR connection to outer leg 3   ', &
+        &   'CFR connection to outer leg 3   ',                                     &
+        &   UU,                                                                     &
+        & &
+        &   'Inner PFR wall                  ', 'Core boundary                   ', &
+        &   'Outer entrance PFR wall         ', 'Separatrix                      ', &
+        &   'Inner baffle                    ', 'Main chamber wall               ', &
+        &   'Outer entrance baffle           ', 'First outer leg PFR wall        ', &
+        &   'Second outer leg PFR wall       ', 'Third outer leg PFR wall        ', &
+        &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
+        &   'Third outer leg baffle          ',                                     &
+        &   UU                                                                      &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -443,6 +432,7 @@ contains
 
     if (error) stop "test_connectivity: error(s) found"
 
+  return
   end subroutine test_connectivity
 
 
@@ -505,6 +495,33 @@ contains
             first = .false.
         end if
         return
+    end if
+
+    if (nnreg(0) == 7) then
+        if (topcut(1) < topcut(2)) then
+            geometryId = GEOMETRY_LFS_SNOWFLAKE_MINUS
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_MINUS")
+                first = .false.
+            end if
+            return
+        end if
+        if (topcut(1) > topcut(2)) then
+            geometryId = GEOMETRY_LFS_SNOWFLAKE_PLUS
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_PLUS")
+                first = .false.
+            end if
+            return
+        end if
+        if (topcut(1) == topcut(2)) then
+            geometryId = GEOMETRY_UNSPECIFIED
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
+                first = .false.
+            end if
+            return
+        end if
     end if
 
     if (nnreg(0) == 8) then

@@ -20,7 +20,7 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
-      use b2mod_average
+      use b2mod_running_average
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne
@@ -124,8 +124,7 @@
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable, save :: t1(:)                        !iyv 07.03.18 }
-      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8,         !srv 12.04.08
-     *                        sna_corr = 0.0_R8                         !iyv 07.03.18
+      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8
       character chns*3, chk*1                                           !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
@@ -142,16 +141,21 @@
      1  sput_phys_alpha, in_dl, alpha, therm_evap, sput_res,
      3  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      4  sput_mixed_alpha, sput_mixed_beta, redep_alpha
+#ifdef _OPENMP
+      real (kind=R8) :: start_time, end_time
+#else
+      real (kind=R4) :: start_time, end_time
+#endif
       real (kind=R8) ::
-     *  start_time,end_time,pfrpuff,mainpuff,corepuff,
-     *  sum_start,sum_end,neutral_rescale,neutral_sources_rescale,
-     *  sum_strti,sum_ndi,sum_nde,core_sources_rescale,
+     *  pfrpuff, mainpuff, corepuff,
+     *  sum_start, sum_end, neutral_rescale, neutral_sources_rescale,
+     *  sum_strti, sum_ndi, sum_nde, core_sources_rescale,
      *  shi0_ff(-1:nx,-1:ny,0:nscx-1), wrk0(-1:nx,-1:ny),
      *  work(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny), wrk3(-1:nx,-1:ny),
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8         !iyv 07.03.18
+      real (kind=R8), save :: c_pumpavr=0.02_R8
       logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -169,6 +173,10 @@
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
+#if ( defined(_OPENMP) && defined(CRAY) )
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
@@ -214,7 +222,7 @@
         call get_jsep(nx,ny,jxi,jxa,jsep)
         call ipgeti ('b2stbr_output', output)
         call ipgeti ('b2mndr_eirene', use_eirene)
-        if (use_eirene.eq.1) out_tfiles=0
+        if (use_eirene.ne.0) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_iout', iout)                            !srv 11.09.09 {
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
@@ -228,11 +236,9 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
-        call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
-        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
-        if( sna_corr .gt. 0.0_R8 ) then
+        if( sum(sna_corr) .gt. 0.0_R8 ) then
            allocate(t1(1:nspecies))
            t1=0.0_R8
         endif                                                        !iyv 07.03.18 }
@@ -254,7 +260,11 @@
      *       in_no_of_start_points)
            call xertst (0.lt.in_no_of_start_points,
      *      'faulty input first_flight_no_of_start_points')
+#ifdef _OPENMP
+           start_time = omp_get_wtime()
+#else
            call cpu_time(start_time)
+#endif
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
      *          in_no_of_start_points,nx,ny,in_dl)
@@ -274,7 +284,11 @@
      >          call setup_b2mod_first_flight(ib,iy,nx,ny,'S',output)
              enddo
            enddo
+#ifdef _OPENMP
+           end_time = omp_get_wtime()
+#else
            call cpu_time(end_time)
+#endif
            write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
      *          'Used ',ptr_table,' out of ',size_of_table,
      *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
@@ -566,7 +580,11 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shetmp=she0
           shitmp=shi0
         endif
+#ifdef _OPENMP
+        start_time = omp_get_wtime()
+#else
         call cpu_time(start_time)
+#endif
         if (output.ge.1) then
           open(88,file='start')
           open(89,file='end')
@@ -667,7 +685,11 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           close(88)
           close(89)
         endif
+#ifdef _OPENMP
+        end_time = omp_get_wtime()
+#else
         call cpu_time(end_time)
+#endif
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
         if (balance_netcdf.ne.0) then
@@ -694,47 +716,50 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
-        call eirene_mc(nx, ny, ns, dtim, BoRiS,                     !srv 29.04.10 {
+        call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,             !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
 
 *   ..main part of implementation of method of effective sources (ES)
-        if (sna_corr .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
+        if (sum(sna_corr) .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
           if ( iout .ne. 0 )
      >      write(*,*) '******* sna_eir correction calculations *******'
           sna_core = 0.0_R8
           iy = 0
-          do ix = -1, nx
-            if(on_closed_surface(ix,iy)) then
-              do is = 0, ns-1
-                if ( is_neutral(is) ) cycle
-                k = b2espcr(is)
+          do is = 0, ns-1
+            k = b2espcr(is)
+            if ( is_neutral(is) .or. (.not. do_sna_corr_core(k))) cycle
+            do ix = -1, nx
+              if(on_closed_surface(ix,iy)) then
                 if (mdf_fnb.ne.0) then
                   sna_core(k) = sna_core(k) + fna_mdf(ix,iy,1,is)
                 else
                   sna_core(k) = sna_core(k) + fna(ix,iy,1,is)
                 end if
-              end do
-            end if
-          end do
+              end if
+            end do
 
-!  Add contribution from Eirene core boundary fluxes
-!          do k = 1, ncns
-!            ix = nnlimi + lcns(k)
-!            do ia = 1, nnatmi
-!           if (latmscl(ia).eq.b2espcr(is)) then
-!              sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
-!     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
-!              do im = 1, nnmoli
-!                if (mlcmp(ia,im).gt.0) then
-!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
-!     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
+!  Subtract contribution from Eirene core boundary fluxes
+!            if (is_neutral(is-1).and.lnext(is-1,is)) then ! to account this contribution only once
+!              do k = 1, ncns
+!                ix = nnlimi + lcns(k)
+!                do ia = 1, nnatmi
+!                  if (latmscl(ia).eq.b2espcr(is)) then
+!                    sna_core(latmscl(ia)) = sna_core(latmscl(ia)) +
+!     &               wldna(ix,ia,0) - wldra(ix,ia,0) - wldpa(ix,ia,0)
+!                    do im = 1, nnmoli
+!                      if (mlcmp(ia,im).gt.0) then
+!                      sna_core(latmscl(ia))= sna_core(latmscl(ia)) +
+!     &                 mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
 !     &                              - wldpm(ix,im,0))
-!                end if
+!                      end if
+!                    end do
+!                  end if
+!                end do
 !              end do
-!            end do
-!           end if
-!          end do
+!            end if
+
+          end do
 
           sna_eir= 0.0_R8
           ext_sna_tot= 0.0_R8
@@ -757,7 +782,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
               if(latmscl(ia).eq.0) cycle
               if(crcstra(is).eq.'C') then
                 if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) =
-     &           userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
+     &           sna_puff(latmscl(ia)) + userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
               end if
             end do
           enddo
@@ -799,7 +824,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 
           do k = 1, nspecies
             if (sna_eir(k).ne.0.0_R8) then
-              t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+              t01(k) =  sna_corr(k)*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
      &            sna_eir(k)
             else
@@ -809,18 +834,29 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
             t(k) = 1.0_R8 +
-     &              max( min( taumax,t1(k) ), -taumax )
+     &              max( min( taumax(k),t1(k) ), -taumax(k) )
             if ( iout .ne. 0 )
      &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
-            sna_eir(k) = sna_eir(k)*t(k)
+!            sna_eir(k) = sna_eir(k)*t(k)
           enddo
 
+          sna_eir = 0.0_R8
           do is = 0, ns-1
-            if( is_neutral(is) ) cycle
             k = b2espcr(is)
+            if( is_neutral(is) ) cycle
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
-            sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
-            sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
+            do ix = -1, nx
+             do iy = -1, ny
+              if (do_sna_corr_core(k) .or. 
+     &                (.not. on_closed_surface(ix,iy))) then
+                sna0_eir(ix,iy,0,is) = sna0_eir(ix,iy,0,is)*t(k)
+                sna0_eir(ix,iy,1,is) = sna0_eir(ix,iy,1,is)*t(k)
+              end if
+              sna_eir(k) = sna_eir(k) +
+     &           sna0_eir(ix,iy,0,is) +
+     &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
+             end do
+            end do
 
 ! { IYS 12.01.2018,
 !      sna_eir = 0.0_R8
@@ -838,7 +874,8 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 !!     &   'Source correction is not applied for sputtered particles k=',
 !!     &       k,  'is=', is, eirtxt(k)
 !          endif
-          enddo
+
+          end do
 
         end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
 
@@ -933,7 +970,7 @@ cwdk these are now put back into the constant part of the sources (0-component)
 ! IYS 27.01.2017
         enddo
 ! IYS 27.01.2017
-        do im = 1, nmol
+        do im = 1, nnmoli
 ! interpolate molecule fluxes to cell faces (for output only)
          flxtmp(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,im,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,
@@ -1309,6 +1346,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       integer ncall, use_eirene, ank_mods
       save ncall, use_eirene, ank_mods
       data ncall/0/, use_eirene/0/, ank_mods/0/
+
       call subini ('b2stbr_neutr_scl')
       if (ncall.eq.0) then
         call xertst(0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

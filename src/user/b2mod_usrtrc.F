@@ -1105,7 +1105,13 @@ c East target
           end do !}
         end if !}
       else !}{VK
+#ifdef DBG
+        write(*,*) 'In b2mod_usrtrc: nxtl, nxtr = ', nxtl, nxtr
+#endif
         call b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
+#ifdef DBG
+        write(*,*) 'b2usr_loads finished'
+#endif
         hlp_ppwi=wtarg_max(1)
 csw 02jan2017 corrected hlp_ppwo
 c       hlp_ppwo=wtarg_max(nncut)
@@ -1925,6 +1931,7 @@ c*** Limiter case
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
    92 write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
@@ -1949,8 +1956,16 @@ c=======================================================================
 c=======================================================================
       subroutine b2usrtrf
 c     Finalization step
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
+      if (.not.allocated(hlp_hdr)) return
       deallocate(hlp_hdr)
       deallocate(hlp_out)
+      
       return
       end subroutine b2usrtrf
 c=======================================================================

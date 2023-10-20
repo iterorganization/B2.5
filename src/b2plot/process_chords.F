@@ -135,10 +135,8 @@ c
       use b2mod_mwti
 #endif
       implicit none
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
 #     include <netcdf.inc>
-#endif
 #endif
 
       character*(*) filename
@@ -160,14 +158,12 @@ c
       integer indchd(maxchords+1),indix(maxcompile),indiy(maxcompile)
       real(kind=R8) ::
      * indscl(maxcompile)
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       character*5 rw
       integer ncid,imap(maxvdims),iret
       real (kind=R8) ::
      *   htime,dumarr(1),tstepn(1)
       integer itstep,ntstep
-#endif
 #endif
       integer inpts,is,i,lnblnk,nxcam,nycam
       external lnblnk
@@ -181,10 +177,8 @@ c
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
 
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       if(moviename .eq. ' ') then
-#endif
 #endif
         do is=0,ndim(3,iwrk)-1
           call calculate_zvalues(maxchords,maxcompile,
@@ -210,8 +204,7 @@ c
      2     linlog)
           call end_page
         enddo
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
+#if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       else
         rw='read'
         iret = nf_open(moviename,NCNOWRIT,ncid) 
@@ -249,7 +242,6 @@ c
         enddo
         iret = nf_close(ncid)
       endif
-#endif
 #endif
       return
       end subroutine process_camera

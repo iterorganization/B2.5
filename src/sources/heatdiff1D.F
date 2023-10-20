@@ -845,13 +845,13 @@ c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
-        !$OMP CRITICAL (heatdiff1D)
+        !$OMP CRITICAL (qevap_heatdiff1D)
         call ipgetr('b2stbr_therm_evap', therm_evap)
         call xertst(0.0_R8.le.therm_evap.and.
      &              1.0_R8.ge.therm_evap,
      .    'faulty parameter therm_evap')
         lfirst = .false.
-        !$OMP END CRITICAL (heatdiff1D)
+        !$OMP END CRITICAL (qevap_heatdiff1D)
       endif
 
       do is = 0, ns-1

@@ -760,7 +760,7 @@ c  find the first solution.
 c
       call ma28cd(n, a, licn, icn, ikeep, x, w, mtype)
 c
-c  stop the computations if   maxit=0.
+c  stop the computations if maxit=0.
 c
    20 if (maxit.eq.0) go to 160
 c
@@ -1653,7 +1653,7 @@ c innermost loop.
               pivrow = ijpos - iq(j)
 #ifdef DBG
               if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
-     &           (a(pivrow).ge.tiny(1.0_R8).or.
+     &           (a(pivrow).ge. tiny(1.0_R8).or.
      &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
                 if (product.ge.cutll) a(jj) = a(jj) + au*a(pivrow)
@@ -2336,13 +2336,13 @@ c
 c see block data for comments on variables in common.
       common /ma30hd/ resid
       !$OMP THREADPRIVATE(/ma30hd/)
-#ifdef DBG
-      real (kind=R8) :: product
-#endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
      * iend, iback, ifirst, ilast, iblock, iblend,
      * jpiv, jpivp1, lt, ltend, numblk
+#ifdef DBG
+      real (kind=R8) :: product
+#endif
 c
       data zero /0.0e0_R8/
 c

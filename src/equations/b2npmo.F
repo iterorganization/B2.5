@@ -9,6 +9,7 @@
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
       use b2mod_types
       use b2mod_math
+      use b2mod_ma28
       use b2mod_rates
       use b2mod_plasma
       use b2mod_indirect
@@ -25,7 +26,6 @@
       use b2mod_external
       use b2mod_openmp
       use b2mod_subsys
-      use b2mod_ilutern
       use b2mod_zhfrtf                                                 !som 13.08.21
      1 , only : rho_A_rel, avm_u
 #ifdef _OPENMP
@@ -64,7 +64,6 @@
      &         b2sigp_pstate_bal, b2sigp_pstate0to3,
      *         b2siav_smovh_bal, b2siav_smovh0to3,
      1         b2siav_smovv_bal, b2siav_smovv0to3,
-     x         b2siav_smovi_bal, b2siav_smovi0to3,                      !som 13.08.21
      2         b2sicf_smo_bal, b2sicf_smo0to3,
      3         b2sian_smo_bal, b2sian_smo0to3,
      4         b2nxdv_smo_bal, b2nxdv_smo0to3
@@ -322,8 +321,7 @@
         call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
-      uap = ua                                                         !srv 07.07.21 {
-      if(style_b2mndt.eq.2) then
+      if(style_b2mndt.eq.2) then                                       !srv 07.07.21 {
 *  .. calculate time-dependent source
        call b2smdt (nx, ny, ns, dtim, hz, vol, na, uap, smodt, .false.)
 *  .. add contribution from time-dependent source
@@ -470,22 +468,23 @@
 !$OMP& PRIVATE(wrkf, aa5, wrk1, smb, solvedum, ix, iy)
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
+!$OMP& PRIVATE(smbvi, smbvtemp)
 !$OMP& PRIVATE(chns, wrks, new_matrix)
 !$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
 !$OMP& REDUCTION(+: resmt, flct, cvct, smt, ctcft)
 !$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
-!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn)
-!$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, resmo)
-!$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
-!$OMP& SHARED(b2npmo_smav, fmo, solving, get_residuals, ro, solvemo)
-!$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, solvemt)
+!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn, uap)
+!$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, smodt, resmo)
+!$OMP& SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
+!$OMP& SHARED(b2npmo_smav, solving, get_residuals, solvemt, solvemo)
+!$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, style_b2mndt)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
-!$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
-!$OMP& SHARED(rz2, ne_ext)
+!$OMP& SHARED(cimp2, zeff, fmo, fna_fcor, iout, iout_b2wdat, rxg)
+!$OMP& SHARED(rz2, ne_ext, ro)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
 !$OMP& SHARED(bottomix, bottomiy, topix, topiy)
 !$OMP& SHARED(b2stbr_phys_smo_bal, b2stbr_phys_smo0to3)
@@ -524,9 +523,12 @@
 !$OMP& SHARED(b2sicf_smo_bal, b2sicf_smo0to3)
 !$OMP& SHARED(b2sian_smo_bal, b2sian_smo0to3)
 !$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
-!$OMP& SHARED(fmo_tot)
+!$OMP& SHARED(fmo_tot, fchanml_a)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi)
-!$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
+!$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim, smbvi_factor)
+!$OMP& SHARED(Zhdanov_closure, Zhdanov_test, Zhdanov_visu, Zhdanov_vish)
+!$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al, chci_a)
+!$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 #ifndef GFORTRAN
 #ifndef PGF90
 #ifndef CRAY
@@ -545,6 +547,7 @@
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..compute rob, pb
+       smb = 0.0_R8
        call b2scopy (n2, na(-1,-1,is), 1, rob, 1)
        call b2sscal (n2, am(is)*mp, rob, 1)
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
@@ -723,6 +726,10 @@ cdjm Jan2017 update momentum source components for balance
      &   ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
         fmo(:,:,:,is)=wrkf
+        if(style_b2mndt.eq.2) then                                     !srv 10.10.22 {
+          resmo(:,:,is)=resmo(:,:,is)+(ua(:,:,is)-uap(:,:,is))*
+     &       am(is)*mp*na(:,:,is)*smodt(:,:,3,is)
+        endif                                                          !srv 10.10.22 }
 
 cdjm Mar2019 output the total momentum flux and source for balance
         if (balance_netcdf.ne.0) then

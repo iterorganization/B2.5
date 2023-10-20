@@ -173,23 +173,25 @@
       end subroutine batch_av_all_fin
 
       subroutine batch_av_all_save (batch_name,nx,ny,ns)
-#ifdef B25_EIRENE
-      use eirmod_infcop
-#endif
       implicit none
       integer, intent(in) :: nx, ny, ns
       character(*), intent(in) :: batch_name
       integer iun, n2, idum(0:2)
       character lble*120
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       n2 = (nx+2)*(ny+2)
-#ifdef B25_EIRENE
-      iun = newunit()
+#ifdef F2003
+      open (newunit=iun,file=batch_name,access='SEQUENTIAL',
+     .          form='FORMATTED',status='REPLACE')
 #else
-      iun = 99
-#endif
+      iun = newunit()
       open (unit=iun,file=batch_name,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
+#endif
 
 *   ..get label
       call b2xxid ('b2mn', lble(1:60))

@@ -37,15 +37,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, is
-      save ncall
+      integer n2, is
 *   ..procedures
       real (kind=R8) ::
      *   samax
       external xertst, samax
       external b2xvfx
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -73,7 +71,6 @@
       acorpo = samax(n2,corpo,1)
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

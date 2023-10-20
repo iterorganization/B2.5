@@ -121,8 +121,8 @@
        close(70)
        go to 20
 *    ..folder does not exist: future output will be done in current folder
-   10   folder=''
-   20   continue
+   10  folder=''
+   20  continue
       endif
 * ..initialisation
       if (use_astra.ne.0) then
@@ -132,8 +132,13 @@
       endif
 
       mintopcut = ny                                              !srv 25.02.16
-      if(nncut > 0) mintopcut = minval(topcut(1:nncut))           !iyv 29.11.13 25.02.16
-
+      if(nncut > 0) then
+        if (nnreg(0).eq.7) then
+          mintopcut = topcut(1)
+        else
+          mintopcut = minval(topcut(1:nncut))                     !iyv 29.11.13 25.02.16
+        endif
+      endif
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xprz (nx, ny, ns, mp, am, na, rz)                    !srv 30.01.15 {
       cst = sqrt(pz/rz)
