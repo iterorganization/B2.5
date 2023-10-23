@@ -158,3 +158,255 @@
       call subend ()
       return
       end subroutine b2agbs
+
+*----------------------------------------------------------------------
+      
+      subroutine AdjustPitch(g,iFc,pol_flux_ref)
+      use b2mod_types
+      use b2us_geo
+
+*   ..input and output argument      
+      type(geometry) :: g
+*   ..input
+      integer :: iFc
+      real(kind=R8) :: pol_flux_ref
+      intrinsic sign, abs, sqrt
+
+      ! Adjust fcBb
+      g%fcBb(iFc,0) = sign(1.0_R8,g%fcBb(iFc,0)) 
+     &  * abs(pol_flux_ref/(g%fcS(iFc)*g%fcQalf(iFc,0)))
+
+      ! Recompute fcBb(:,3)
+      g%fcBb(iFc,3) = sqrt( g%fcBb(iFc,0)**2 + g%fcBb(iFc,1)**2
+     &  + g%fcBb(iFc,2)**2 ) 
+
+      ! Recompute pitch
+      g%fcPbs(iFc) = sign(1.0_R8,g%fcPbs(iFc)) 
+     &  * abs(pol_flux_ref/ g%fcBb(iFc,3))
+
+      end subroutine AdjustPitch
+
+*----------------------------------------------------------------------
+    
+      subroutine CompPolflux(g,iFc,pol_flux)
+      use b2mod_types
+      
+      end subroutine 
+
+*----------------------------------------------------------------------
+
+
+      subroutine propagate
+      &   (g,cells,indc,faces,indf,cv_done,fc_done,psif_max,nct,nft)
+      use b2mod_types
+      use b2us_geo
+      
+*   ..input and output arguments
+      type(geometry) :: g
+      integer :: ncpt, nfpt, indc, indf
+      logical :: cv_done(0:ncpt), fc_done(0:nfpt)
+      real(kind=R8) :: psif_max(0:nfpt)
+
+
+      ! Local variables
+      integer :: k, l, icv, nf, s, fcs_s(0:3), fcs_incl, i, fc
+      real(kind=R8) :: pol_flux_ref, pol_flux_ref_k2, pol_flux_ref_k1,
+     &                 pol_flux_ref_incl
+
+
+      ! Get right variable name
+      k = indc
+      l = indf
+      icv = cells(k)
+      nf = g%cvFcP(icv,2)
+
+      if ( nf .eq. 3 ) then
+
+        ! Just propagate forward or backward
+        if (k .eq. l ) then
+
+          ! Reference is faces(k+1)
+          pol_flux_ref = g%fcBb(faces(k+1),0)*g%fcS(faces(k+1))
+     &           g%fcQalf(faces(k+1),0)
+          call AdjustPitch(g,faces(k),pol_flux_ref) 
+    
+        elseif (k .lt. l ) then
+
+          ! Reference is faces(k)
+          pol_flux_ref = g%fcBb(faces(k),0)*g%fcS(faces(k))
+     &           g%fcQalf(faces(k),0)          
+          call AdjustPitch(g,faces(k),pol_flux_ref) 
+         
+        else
+
+          call xerrab('b2agbs: something wrong')
+
+        endif
+       
+        ! Indicate done faces and cells  
+        fc_done(l) = .true.
+        cv_done(k) = .true.
+
+      elseif (nf .eq. 4 ) then
+
+        ! Get inclined face
+        s = g%cvFcP(icv,1)
+        fcs_s = g%cvFc(s:s+nf-1)
+        fcs_incl = 0
+        do i = 0, nf-1
+          fc = fcs_s(i)
+          if ((fc .ne. faces(k)) .and. (fc .ne. faces(k+1))
+     &        .and. (g%fcQalf(fc,0) .ne. 0.0_R8)) then
+            fcs_incl = fc
+            if (fcs_incl .ne. 0 ) exit
+          endif 
+        enddo
+
+        if fcs_incl .eq. 0  then
+          ! Just propagate
+          if (k .eq. l ) then
+            pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
+     &        *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))
+            call AdjustPitch(g,faces(k),pol_flux_ref_k2)
+          elseif (l .eq. k + 1) then
+            pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+     &        *g%fcS(faces(k))*g%fcQalf(faces(k),0))
+            call AdjustPitch(g,faces(k+1),pol_flux_ref_k1)   
+          endif
+
+	  ! Indicate done faces and cells 
+          fc_done(l) = .true.
+          cv_done(k) = .true.          
+        
+        else 
+          ! Complex propagation
+          if (k .eq. l) then
+            ! Reference is faces(k+1) 
+            if ( fc_done(l) .eq. .true. ) then
+              ! Adjust the incline face
+              ! Compression or expansion
+                pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+     &           * g%fcS(faces(k)) * g%fcQalf(faces(k),0))
+                pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0) 
+     &           *g%fcS(faces(k+1)) * g%fcQalf(faces(k+1),0))
+
+              if ( psif_max(k+1) .gt. psif_max(k)) then
+
+                ! Compression
+                pol_flux_ref = abs(pol_flux_ref_k2 - 
+     &             pol_flux_ref_k1)
+                
+              
+              else
+                ! Expansion
+                 pol_flux_ref = abs(pol_flux_ref_k1 - pol_flux_ref_k2)
+                 
+              endif
+
+              ! Adjust the pitch
+              call AdjustPitch(g,fcs_incl,pol_flux_ref)
+
+            else
+
+	      ! Adjust fc_done(l)
+              ! compression or expansion
+              pol_flux_ref_incl = abs(g%fcBb(fcs_incl,0)
+     &          *g%fcS(fcs_incl)*g%fcQalf(fcs_incl,0))
+              pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
+     &          *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))
+
+              if (psif_max(k+1) .gt. psif_max(k)) then
+                ! Compression
+                pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+     &           * g%fcS(faces(k))*g%fcQalf(faces(k),0))
+
+                pol_flux_ref_incl = pol_flux_ref_k2 
+     &           *pol_flux_ref_incl
+     &             /(pol_flux_ref_k1 + pol_flux_ref_incl)
+                pol_flux_ref_k1 = pol_flux_ref_k2
+     &           *pol_flux_ref_k1
+     &            /(pol_flux_ref_k1 + pol_flux_ref_incl)
+
+                call AdjustPitch(g,faces(k),pol_flux_ref_k1)
+
+              else
+                ! Expansion
+                 pol_flux_ref_incl = abs(pol_flux_ref_k2 
+     &             pol_flux_ref_incl)
+
+              endif 
+              
+              call AdjustPitch(g,fcs_incl,pol_flux_ref_incl)
+              
+            endif
+
+          elseif ( l .eq. k + 1) then ! forward
+            ! Reference is faces(k)
+            if (fc_done(k+1) .eq. .true. ) then
+              ! Adjust inclined face
+              pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+     &         *g%fcS(faces(k))*g%fcQalf(faces(k),0))
+              pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
+     &         *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))
+
+              if ( psif_max(k) .gt. psif_max(k+1) ) then
+                ! compression - situation 3
+                pol_flux_ref_incl = abs(pol_flux_k1 - pol_flux_k2)
+              else 
+                ! expansion - situation 2
+                pol_flux_ref_incl = abs(pol_flux_ref_k2 
+     &            - pol_flux_ref_k1)
+              endif
+              
+              ! Adjust pitch
+              call AdjustPitch(g,fcs_incl,pol_flux_ref_incl)
+              
+            else
+              !  Adjust fc_done(k+1) and inclined face
+              pol_flux_ref_incl = = abs(g%fcBb(fcs_incl,0)
+     &          *g%fcS(fcs_incl)*g%fcQalf(fcs_incl,0))
+              pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+     &         *g%fcS(faces(k))*g%fcQalf(faces(k),0))
+
+              if (psif_max(k) .lt. psif_max(k+1)) then
+                ! expansion - situation 4
+                pol_flux_ref_k2 = abs(pol_flux_rel_inc 
+     &              + pol_flux_ref_k1)
+
+              else
+                ! compression - situation 1
+                pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
+     &          *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))   
+
+                pol_flux_ref_incl = pol_flux_ref_k1
+     &           *pol_flux_ref_incl
+     &           /(pol_flux_ref_k2 + pol_flux_ref_incl)
+
+                call AdjustPitch(g,fcs_incl,pol_flux_ref_incl)             
+ 	      endif
+             
+              call AdjustPitch(g,faces(k+1),pol_flux_ref_incl)
+
+            endif
+
+          else
+            call xerrab('b2agbs: something wrong in propagation')
+          endif
+
+          ! Update fc_done and cv_done
+          fc_done(l) = .true.
+          cv_done(k) = .true.
+
+	endif 
+
+      else 
+        call xerrab('b2agbs: pentagons or higher not supported')
+      endif 
+
+      
+      end subroutine propagate
+
+
+
+
+
