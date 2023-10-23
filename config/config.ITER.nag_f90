@@ -55,7 +55,7 @@ endif
 
 ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
-  IMASLIBS = ${LD_UAL}
+  IMASLIBS = ${LD_AL}
 endif
 
 LD = nagfor

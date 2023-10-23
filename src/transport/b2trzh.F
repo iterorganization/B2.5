@@ -21,6 +21,7 @@
      , , only: f_luc_ki, f_luc_et, alpha1
       use b2mod_transport_namelist
       use b2mod_indirect
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, znmax, mode
@@ -140,9 +141,11 @@
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
-
+      character*80 cvalip
+*   ..initialisation
       save ncall
       data ncall/0/
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -157,6 +160,11 @@
         if (zh_dist_fun.eq.1) then
           call alloc_b2mod_zhfrtf_df(nx, ny, ns)
         endif
+        cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
+        call ipgetc ('b2tral_zh_tf_toff', cvalip)                 !som 26.06.21
+        do is = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+          zh_tf_toff(is) = cvalip(is:is)
+        end do
 
 *   ..calculate the atom number and the atomic mass of each isonuclear sequence
         inucl=1

@@ -1479,13 +1479,11 @@ c 2002-09-11: logic revised
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
       allocate(zh_tf_toff(max(1,(nspecies*(nspecies+1))/2-nspecies)))
-      zh_tf_toff(1:max(1,(nspecies*(nspecies+1))/2-nspecies)) = '0'
+      cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
       call ipgetc ('b2tral_zh_tf_toff', cvalip)
-      if (.not.streql(cvalip,' ')) then
-        do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
-          zh_tf_toff(i) = cvalip(i:i)
-        end do
-      end if
+      do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+        zh_tf_toff(i) = cvalip(i:i)
+      end do
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
