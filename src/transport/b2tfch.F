@@ -3,7 +3,7 @@
 
       subroutine b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
-     1  vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne, ne2, lnlam, pz,     !xpb
+     1  vol, gs, hx, hy, hz, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !xpb
      1  ti, ni, na, fna, uadia,
      2  ua, fne_32, fne_52, csig, csigin, csig_stoch,                    !xpb !srv 24.08.21
      &  chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,
@@ -11,7 +11,8 @@
      &  fch, conc, fchstoch, fchdia,                                     !srv 17.12.13 16.10.17 som 18.08.21
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
      1  avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl,
-     &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)      !srv 08.09.21
+     &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,      !srv 08.09.21
+     &  fchin_a)                                                         !IYS 17.10.2023
       use b2mod_types
       use b2mod_math
       use b2mod_rates
@@ -59,6 +60,7 @@
      &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 08.09.21 }
+     &  fchin_a(-1:nx,-1:ny,0:1,0:ns-1),                                 !IYS 17.10.2023
      *  fch(-1:nx,-1:ny,0:1),
      &  conc(-1:nx,-1:ny,0:1),
      2  fchdia(-1:nx,-1:ny,0:1),
@@ -208,7 +210,7 @@ c Drift terms
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, hz, qz, qc, bb,
-     &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !srv 11.05.09, IYS 17.10.2023
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, bb,
      &            pz, fna, uadia, facdrift, fchdia)

@@ -344,6 +344,10 @@ ctmp.dpc
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
+            call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
+     &              vol, gs, hx, hy, hz, qz, qc, bb,                           
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18
@@ -373,11 +377,11 @@ ctmp.dpc
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &     fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,   !srv 08.09.21
-     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
+     &     fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, !srv 21.10.02, IYS 17.20.2023
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 18.08.21
      &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
-     &     cvla, chce, chve, chci, chvi, calf,                           !xpb
+     &     cvla, chce, chve, chci, chvi, calf, csigin,                   !xpb, IYS 17.20.2023
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, main_call)
@@ -531,7 +535,7 @@ ctmp.dpc
      &          cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
      &          fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),        !srv 08.09.21
      &          fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &          fchvisq_a(-1,-1,0,is),                                   !srv 20.09.06
+     &          fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),              !srv 20.09.06, IYS 17.10.2023
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),

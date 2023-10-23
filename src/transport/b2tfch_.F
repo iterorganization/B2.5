@@ -10,7 +10,7 @@
      & chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                    !som 20.10.21
      & conc, avisper_a, bvisper_a, cvisper_a,
      & fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,       !srv 08.09.21
-     & fch, fch_p, fchdia, fchin,
+     & fchin_a, fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -49,6 +49,7 @@
       real (kind=R8) ::
      &   fchanml_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 08.09.21 {
      &   fchinert_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &   fchin_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 08.09.21 }
@@ -161,7 +162,7 @@
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, hz, qz, qc, bb,
-     &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !srv 11.05.09, IYS 17.10.2023
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
@@ -410,6 +411,10 @@
      &                      'b2tfch__fchvisq_ax'//chns)
         call my_out(70,nx,ny,fchvisq_a(-1,-1,1,is),
      &                      'b2tfch__fchvisq_ay'//chns)
+        call my_out(70,nx,ny,fchin_a(-1,-1,0,is),
+     &                      'b2tfch__fchin_ax'//chns)                    !IYS 17.10.2023
+        call my_out(70,nx,ny,fchin_a(-1,-1,1,is),
+     &                      'b2tfch__fchin_ay'//chns)                    !IYS 17.10.2023
         enddo
        endif                                                             !srv 08.09.21 }
 

@@ -4,7 +4,7 @@
       subroutine b2tinnt (nx, ny, ns, nscx, iscx,
      &       facdrift, fac_ExB,
      &       vol, gs, hx, hy, hz, qz, qc, bb,                           !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
-     &       te, po, ti, na, fna, csigin, fchin)                        !srv 08.03.99 16.06.09
+     &       te, po, ti, na, fna, csigin, fchin_a, fchin)               !srv 08.03.99 16.06.09, IYS 17.10.2023
       use b2mod_types
       use b2mod_indirect
       use b2mod_rates
@@ -112,7 +112,7 @@
 #else
          call xerrab ('b2tinnt not compiled with the B25_EIRENE option')
 #endif
-         if (style.eq.0) call xerrab ('b2tinnt_style =0 is obsolette '//
+         if (style.eq.0) call xerrab ('b2tinnt_style =0 is obsolete '//
      &      'and not compatible with b2tinnt_kinetic = 1')
         endif
       endif
