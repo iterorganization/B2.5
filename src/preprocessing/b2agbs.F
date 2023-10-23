@@ -135,14 +135,16 @@
            iFc = faces(i)
 
            ! Adjust fcBb(:,0)
-           g%fcBb(iFc,0) = pol_flux / ( g%fcS(iFc) * g%fcQalf(iFc,0))
+           g%fcBb(iFc,0) = sign(1.0,g%fcBb(iFc,0))
+     &        * abs(pol_flux / ( g%fcS(iFc) * g%fcQalf(iFc,0)))
 
            ! Recompute fcBb(:,3)
            g%fcBb(iFc,3) = sqrt(g%fcBb(iFc,0)**2 + g%fcBb(iFc,1)**2 
      &                     + g%fcBb(iFc,2)**2)
             
 	   ! Recompute fcPbs(:)
-           g%fcPbs(iFc) = sign(1.0,g%fcPbs(iFc))*abs(pol_flux / g%fcBb(iFc,3))
+           g%fcPbs(iFc) = sign(1.0,g%fcPbs(iFc))
+     &       * abs(pol_flux / g%fcBb(iFc,3))
         enddo
 
       enddo
