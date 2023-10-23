@@ -68,7 +68,7 @@ contains
     nVmxFc = nVmxFc0          ! no new faces created for ghost cells 
 
     ! Compute nCmxNv
-    nCmxNv = 15 * nCv          ! over-estimate for 9-point stencil
+    nCmxNv = 20 * nCv          ! over-estimate for 9-point stencil
 
 
     return
