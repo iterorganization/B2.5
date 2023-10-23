@@ -12,9 +12,15 @@
       type(geometry) :: g
 *   ..local variables
       integer :: iCv, sv, nv, sf, nf, verts(0:100), ref_ind_cv(m%nFt), 
-     .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), 
-     .  faces(0:m%nFc), iFc, i, cv
-      real (kind=R8) :: pol_flux, width
+     .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), typef 
+     .  faces(0:m%nFc), iFc, i, cv, v1, v2, psif(m%nFc), sv, nv,
+     .  scf, ncf, fcs(0:100), c_al, j, ref_fc(m%nFt), ref_cv(m%nFt),
+     .  wrkf(0:m%nFc), counter, pfaces(0:100), ref_face, ind,
+     .  face1, face2, nf2
+      real (kind=R8) :: pol_flux, width, vpsi(0:100), psi_max(0:m%nCv),
+     .  psif_max(0:m%nFc), psi_ref, pol_flux_ref, cutoff_width ,
+     .  pol_flux_ref1, pol_flux_ref2, pol_flux1, pol_flux2
+      logical :: cv_aligned(0:m%nCv)
       intrinsic int
       data width /1.0_R8/
       save width
@@ -75,6 +81,8 @@
         sf = m%ftFcP(iFt,1)
         nf = m%ftFcP(iFt,2)
         faces(0:nf-1) = m%ftFc(sf:sf+nf-1)
+
+        wrkf(0:nf-1) = (/ (i, i=0,nf-1) /)
    
         ! If there is a common cell between omp cells and tube cells
         do i = 0,nc-1
@@ -94,7 +102,8 @@
         endif
         ! Else  take the middle of the tube
         if (ref_ind_cv(iFt).eq.0) then
-             ref_ind_cv(iFt) = cells(int(0.5_R8*nc-1))
+             ref_cv(iFt) = cells(int(0.5_R8*nc-1))
+             ref_ind_cv(iFt) = int(0.5_R8*nc-1)
         endif
 
         ! Get the poloidal face of that cell
@@ -104,7 +113,8 @@
         do i = 1,m%cvFcP(cv,2)
           iFc = m%cvFc(m%cvFcP(cv,1)+i-1)
           if (m%fcAligned(iFc).eq.0) then
-             ref_ind_fc(iFt) = iFc
+             ref_ind_fc(iFt) = pack( wrkf , faces == iFc )
+             ref_fc(iFt) = iFc
              exit
           endif
         enddo
@@ -114,8 +124,19 @@
 *   ..correct fcPbs (pbsx), cvHx (hx), and cvHy (hy) to enforce:
 *   ..B_{pol}*hy1*hz constant (on western cell faces and at cell centers)
 *   ..vol = hy1*hx*hz - (already determined by cvHz = cvVol/cvSz?)
+
+      ! Compute psi width of faces
+      do iFc = 1,g%nFc
+        v1 = g%fcVx(iFc,1)
+        v2 = g%fcVx(iFc,2)
+
+        psif(iFc) = abs(g%vxFpsi(v1) - g%vxFpsi(v2))
+      enddo
+
+      
       do iFt = 1,m%nFt
         ! Get cells
+        cells = 0
         sc = m%ftCvP(iFt,1)
         nc = m%ftCvP(iFt,2)
         cells(0:nc-1) = m%ftCv(sc:sc+nc-1)
@@ -125,27 +146,222 @@
         nf = m%ftFcP(iFt,2)
         faces(0:nf-1) = m%ftFc(sf:sf+nf-1)
 
-        ! Get reference
-        pol_flux = g%fcBb(ref_ind_fc(iFt),0) 
-     &           * g%fcS(ref_ind_fc(iFt)) 
-     &           * g%fcQalf(ref_ind_fc(iFt),0)
+        ! Determine type of tube
+        if ( nc .eq. nf ) then
+          typef = 1 ! closed
+        else
+          typef = 2 ! open
+        endif
 
-        ! Apply on the tube - faces
-        do i = 0,nf-1
-           iFc = faces(i)
+        psi_max = 0.0_R8
+        do i = 0,nc-1
+          ! Get cell
+          iCv = cells(i)
 
-           ! Adjust fcBb(:,0)
-           g%fcBb(iFc,0) = sign(1.0,g%fcBb(iFc,0))
-     &        * abs(pol_flux / ( g%fcS(iFc) * g%fcQalf(iFc,0)))
+          ! Psi max
+          verts = 0
+	  vpsi = 0
+          sv = g%cvVxP(iCv,1)
+          nv = g%cvVxP(iCv,2)
+          verts(0:nv-1) = g%cvVx(sv:sv+nv-1)
+          vpsi(0:nv-1) = gmtry.vxFpsi(verts)
+          psi_max(i) = abs(maxval(vpsi) - minval(vpsi))
 
-           ! Recompute fcBb(:,3)
-           g%fcBb(iFc,3) = sqrt(g%fcBb(iFc,0)**2 + g%fcBb(iFc,1)**2 
-     &                     + g%fcBb(iFc,2)**2)
-            
-	   ! Recompute fcPbs(:)
-           g%fcPbs(iFc) = sign(1.0,g%fcPbs(iFc))
-     &       * abs(pol_flux / g%fcBb(iFc,3))
+          ! Determine aligned
+          fcs = 0 
+          scf = g%cvFcP(iCv,1)
+          ncf = g%cvFcP(iCv,2)
+          fcs(0:ncf-1) = g%cvFc(scf:scf+ncf-1)
+
+          c_al = 0
+          do j = 0,ncf-1
+            if (g%fcQalf(fcs(j),0) .eq. 0.0_R8) then
+              c_al = c_al + 1
+            endif
+          enddo
+
+          if  ((( ncf .eq. 4 ) .and. ( c_al .eq. 2 )) .or.
+     &     ( ( ncf .eq. 3 ) .and. ( c_al .eq. 1)  )) then
+            cv_aligned(i) = .true.
+          elseif ( ncf .gt. 4 ) then
+            call xerrab('b2agbs: Pentagons or higher not supported')
+          endif
+
         enddo
+  
+        ! Get psi width of face in the tube
+        psif_max(0:nf-1) = psif(faces)
+
+        ! Do the adjustement for the cells with proper width and alignment
+        ! Loop over cells with aligned properties
+        ! Get refernce of psi width and pol_flux
+        psi_ref = psi_max(ref_inc_cv(iFt))
+        pol_flux_ref = g%fcBb(ref_fc(iFt),0)*g%fcS(ref_fc(iFt))
+     &    *g%fcQalf(ref_fc(iFt),0)
+        cutoff_width = 0.05_R8
+
+        ! Check if reference cell is aligned
+        if ( cv_aligned(ref_ind_cv(iFt)) .eq. .true. ) then
+
+          ! Loop over cells
+          do k = 0,nc-1
+            if ( cv_aligned(k) .eq. .true. ) then
+               if ((( g%cflags(cells(k)) .eq. 1) 
+     &          .and. (g%cvFcP(cells(k),2) .eq. 4))
+     &          .or. ( abs( (psi_ref - psi_max(k))/psi_ref) 
+     &          .lt. cutoff_width )) then
+                cv_done(k) = .true.
+
+                ! Adjust pitch of faces(k) and next face
+                call AdjustPitch(g,faces(k),pol_flux_ref)
+		fc_done(k) = .true.                
+                if ( typef .eq. 1 )  then
+                  ! Closed tube
+                  if ( k .ne. nc ) then
+                    
+                    call AdjustPitch(g,faces(k+1),pol_flux_ref)
+                    fc_done(k+1) = .true.
+
+                  else 
+
+                    call AdjustPitch(g,faces(1),pol_flux_ref)
+                    fc_done(1) = .true.
+
+                  endif 
+                elseif ( typef .eq. 2 ) then
+                  ! Open tube
+                  call AdjustPitch(g,faces(k+1),pol_flux_ref)
+                  fc_done(k+1) = .true.
+
+                else
+                  call xerrab('b2agbs: type not defined')
+                endif
+            endif
+
+          enddo
+
+        else 
+
+          ! Get reference cell
+          cv = ref_cv(iFt)
+          sf = g%cvFcP(cv,1)
+          nf2 = g%cvFcP(cv,2)
+          fcs = 0
+          fcs(0:nf2-1) = g%cvFc(sf:sf+nf2-1)
+
+          ! Not aligned to a quad
+          if ( nf2 .ne. 4 ) then
+            call xerrab('b2agbs: Something wrong')
+          endif
+
+          ! Excluded the aligned face
+          counter = 0
+          pfaces = 0
+          do i = 0,nf2-1
+            if (g%fcQalf(fcs(i),0) .ne. 0.0_R8) then
+              pfaces(counter) = fcs(i)
+              counter = counter + 1
+            endif
+          enddo
+
+          if ( counter .ne. 3 )  then
+            call xerrab('b2agbs: not supported')
+          else
+            ! Get face with max psi
+            ind = maxloc(psif(pfaces(0:counter-1))
+            ref_face = pfaces(ind)
+
+            pol_flux_ref = abs(g%fcBb(ref_face,0)*g%fcS(ref_face)
+     &       g%fcQalf(ref_face,0))
+
+            ! Two other faces need to the sum of the reference
+            do i = 0,2
+              if ( pfaces(i) .ne. ref_face ) then  
+                face1 = pfaces(i)
+              endif        
+            enddo
+
+            do i = 0,2
+              if (( pfaces(i).ne. ref_face) 
+     &           .and. (pfaces(i) .ne. face1 )) then
+                face2 = pfaces(i)
+            enddo
+          endif 
+
+          pol_flux1 = abs(g%fcBb(face1,0)*g%fcS(face1)
+     &       g%fcQalf(face1,0))
+          pol_flux2 = abs(g%fcBb(face2,0)*g%fcS(face2)
+     &       g%fcQalf(face2,0))
+
+
+          pol_flux_ref1 = pol_flux_ref * pol_flux1
+     &      /(pol_flux1 + pol_flux2)
+          pol_flux_ref2 = pol_flux_ref * pol_flux2
+     &      /(pol_flux1 + pol_flux2)  
+
+          call AdjustPitch(g,face1,pol_flux_ref1)
+          call AdjustPitch(g,face2,pol_flux_ref2)
+          
+          ! Update fc_done and cv_done
+          cv_done(ref_ind_cv(iFt)) = .true.
+          fc_done(ref_ind_fc(iFt)) = .true.
+          fc_done(ref_ind_cv(iFt)+1) = .true. 
+
+        endif 
+
+        ! Complete cells which are not of full width
+        ! Forward propagation
+        do k = 1,nc-1 ! Starting from second cell
+          if (( cv_done(k) .ne. .true ) 
+     &     .and. ( cv_done(k-1) .eq. .true. )) then
+             if ( fc_done(k) .eq. .true.) then
+                call propagate
+     &    (g,cells,k,faces,k+1,cv_done,fc_done,psif_max,nc,nf)
+             else
+               call xerrab('b2agbs: Something wrong')
+             endif 
+
+          endif
+
+        enddo
+
+
+        ! Backward propagation
+        do  k = 1,nc-1
+           l = nc + 1 - k
+           if  (( cv_done(l) .ne. .true. )
+     &        .and. ( cv_done(l+1) .eq. .true. ) ) then
+             if ( fc_done(l+1) .eq. .true. ) then
+                call propagate
+     &     (g,cells,l,faces,l,cv_done,fc_done,psif_max,nc,nf)
+             else
+               call xerrab('b2agbs: Something wrong')
+             endif
+           endif
+        enddo 
+    
+
+!        ! Get reference
+!        pol_flux = g%fcBb(ref_ind_fc(iFt),0) 
+!     &           * g%fcS(ref_ind_fc(iFt)) 
+!     &           * g%fcQalf(ref_ind_fc(iFt),0)
+!
+!        ! Apply on the tube - faces
+!        do i = 0,nf-1
+!           iFc = faces(i)
+!
+!          ! Adjust fcBb(:,0)
+!          g%fcBb(iFc,0) = sign(1.0,g%fcBb(iFc,0))
+!    &        * abs(pol_flux / ( g%fcS(iFc) * g%fcQalf(iFc,0)))
+
+!           ! Recompute fcBb(:,3)
+!           g%fcBb(iFc,3) = sqrt(g%fcBb(iFc,0)**2 + g%fcBb(iFc,1)**2 
+!     &                     + g%fcBb(iFc,2)**2)
+!            
+	   ! Recompute fcPbs(:)
+!           g%fcPbs(iFc) = sign(1.0,g%fcPbs(iFc))
+!     &       * abs(pol_flux / g%fcBb(iFc,3))
+!        enddo
 
       enddo
 
@@ -186,12 +402,6 @@
 
       end subroutine AdjustPitch
 
-*----------------------------------------------------------------------
-    
-      subroutine CompPolflux(g,iFc,pol_flux)
-      use b2mod_types
-      
-      end subroutine 
 
 *----------------------------------------------------------------------
 
