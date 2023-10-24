@@ -483,12 +483,12 @@
        do ispecies = 0, nspecies-1
          consistent = consistent .and.
      &    ((na_feedback_choice(ispecies) .eq. 0 .or.
-     &      na_feedback_actuator(ispecies) .eq. 0 .or.
+     &      na_feedback_option(ispecies) .eq. 0 .or.
      &      na_feedback_actuator(ispecies) .eq. 0) .or.
      &      ((na_feedback_actuator(ispecies).ne.1 .and.
      &       (na_feedback_option(ispecies).ne.4 .and.
      &        na_feedback_option(ispecies).ne.5 .and.
-     &        na_feedback_choice(ispecies).ne.12)) .or.
+     &        na_feedback_option(ispecies).ne.8)) .or.
      &       na_feedback_actuator(ispecies).eq.1))
        end do
        do ispecies = 0, nspecies-1
@@ -1274,52 +1274,6 @@
                 end if !}
               end do !}
 #endif
-              
-            case (12)  ! (pumping - core source - external source) for isonuclear sequence
-                       ! intended to be used with na_feedback_actuator=1 (gas puff)
-                       ! currently only working in EIRENE coupled runs 
-            
-              if(ncall.eq.0) then
-                write(*,'(a,a,a,i3)')
-     &                    'b2stbc_fb_pre_choice: using ',
-     &                    'pumping-core-external flux balance ',
-     &                    'for sequence ',
-     &                    ispecies+1
-#ifdef B25_EIRENE
-                if (use_eirene.eq.0) then
-#endif
-                  write(message,'(a,i3,a)')
-     &              'Feedback choice ',na_feedback_choice(ispecies),
-     &              ' cannot be applied to standalone B25 runs'
-                  call xerrab( trim(message) )
-#ifdef B25_EIRENE
-                endif
-#endif
-              endif
-
-#ifdef B25_EIRENE
-              call calc_pump_and_flux(nx, ny, ispecies,
-     &              mdf_fnb, style_b2mndt, use_eirene, sna_pump,
-     &              flxnp, flxic, flxnc, flxex, flxsp)
-              if (flxsp.gt.0.0_R8) then
-                write(message,'(a,i3,a,i3,a)')
-     &            'Sputtering detected for sequence ',ispecies+1,
-     &            ', feedback option ',na_feedback_option(ispecies),
-     &            'cannot be applied.'
-                call xertst(flxsp.gt.0.0_R8, trim(message) )
-              else
-                na_feedback_current = sna_pump - flxnc - flxic - flxex
-              endif
-#endif
-              
-              is_start=-1
-              is_end=-1
-              do is = 0, ns-1
-                if(b2espcr(is).eq.ispecies+1) then
-                  if(is_start.eq.-1) is_start=is
-                  is_end=is
-                endif
-              enddo
                
             case default
                   
@@ -1488,9 +1442,58 @@ c           Safeguard for multiplicative rescale schemes:
      .           na_feedback_beta(ispecies))*
      .           log(na_feedback_alpha(ispecies))/log(2.0_R8))
 
-            case default
-              write(*,*) 'na feedback_option not coded ',
-     &                     na_feedback_option(ispecies)
+            case (8)   ! Same as (7) but scaled with the
+                       ! (pumping - core source - external source)
+                       ! intended to be used with na_feedback_actuator=1
+                       ! currently only working in EIRENE coupled runs 
+            
+              if(ncall.eq.0) then
+                write(*,'(a,a,a,a,i3)')
+     &             'b2stbc_fb_pre_option: using ',
+     &             'combined pure rescale and tanh_log_rescale, ',
+     &             'scaled with pumping and seeding balance ',
+     &             'for sequence ',
+     &              ispecies+1
+                if((na_feedback_alpha(ispecies).lt.0.0_R8) .or.
+     &             (na_feedback_alpha(ispecies).gt.1.0_R8))
+     .            na_feedback_alpha = 0.01_R8
+#ifdef B25_EIRENE
+                if (use_eirene.eq.0) then
+#endif
+                  write(message,'(a,i3,a)')
+     &              'Feedback option ',na_feedback_choice(ispecies),
+     &              ' cannot be applied to standalone B25 runs'
+                  call xerrab( trim(message) )
+#ifdef B25_EIRENE
+                endif
+#endif
+              endif
+
+#ifdef B25_EIRENE
+              na_feedback_rescale =
+     &          (na_feedback_target(ispecies) /
+     &          na_feedback_current)
+              if(abs(na_feedback_rescale-1.0_R8).lt.
+     &           na_feedback_alpha(ispecies))
+     .          na_feedback_rescale = 2.0_R8 **
+     .           (tanh(log(na_feedback_rescale)/
+     .           na_feedback_beta(ispecies))*
+     .           log(na_feedback_alpha(ispecies))/log(2.0_R8))
+
+              call calc_pump_and_flux(nx, ny, ispecies,
+     &              mdf_fnb, style_b2mndt, use_eirene, sna_pump,
+     &              flxnp, flxic, flxnc, flxex, flxsp)
+              if (flxsp.gt.0.0_R8) then
+                write(message,'(a,i3,a,i3,a)')
+     &            'Sputtering detected for sequence ',ispecies+1,
+     &            ', feedback option ',na_feedback_option(ispecies),
+     &            'cannot be applied.'
+                call xertst(flxsp.gt.0.0_R8, trim(message) )
+              else
+                na_feedback_rescale = max(0.0_R8,(sna_pump - flxnc 
+     .                        - flxic - flxex) * na_feedback_rescale)
+              endif
+#endif
 
             end select
                
@@ -1552,6 +1555,9 @@ c           Safeguard for multiplicative rescale schemes:
                   saved_na_feedback_actuator(ispecies) =
      .                 saved_na_feedback_actuator(ispecies) +
      .                 na_feedback_rescale
+                elseif (na_feedback_option(ispecies).eq.8) then
+                  saved_na_feedback_actuator(ispecies) = 
+     .                                     na_feedback_rescale
                 else
                   saved_na_feedback_actuator(ispecies) =
      &                 saved_na_feedback_actuator(ispecies) *
