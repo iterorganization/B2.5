@@ -267,7 +267,7 @@ c 2002-09-11: logic revised
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      5 na_feedback_actuator_min1(:), na_feedback_actuator_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
-     7 na_feedback_time1(:), na_feedback_use_pump1(:), gpdata1(:,:,:),
+     7 na_feedback_time1(:), gpdata1(:,:,:),
      8 sna_corr1(:), taumax1(:)
       real (kind=R8) ::
      & cbsna1(0:7,0:ns-1,0:cbnrmx-1),
@@ -11776,7 +11776,6 @@ cxpb as they no longer necessarily point to the same species
         allocate(na_feedback_actuator_min1(0:nspecies1-1))
         allocate(na_feedback_actuator_max1(0:nspecies1-1))
         allocate(na_feedback_overshoot1(0:nspecies1-1))
-        allocate(na_feedback_use_pump1(0:nspecies1-1))
         call read_b2mod_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)
@@ -11886,24 +11885,18 @@ cxpb as they no longer necessarily point to the same species
      .       na_feedback_beta(is-1)
             na_feedback_const1(ispecies1(is)-1) =
      .       na_feedback_const(is-1)
-            if (maxval(na_feedback_actuator_max) .eq. 0.0_R8 .and. 
-     &         minval(na_feedback_actuator_max) .eq. 0.0_R8) then
-              if (maxval(na_feedback_puff_max) .ne. 0.0_R8 .or. 
-     &         minval(na_feedback_puff_max) .ne. 0.0_R8) then
-                na_feedback_actuator_max1(ispecies1(is)-1) =
+            if (maxval(abs(na_feedback_actuator_max)) .eq. 0.0_R8) then
+              if (maxval(abs(na_feedback_puff_max)) .ne. 0.0_R8)
+     .          na_feedback_actuator_max1(ispecies1(is)-1) =
      .            na_feedback_puff_max(is-1)
-              endif
             else
               na_feedback_actuator_max1(ispecies1(is)-1) =
      .          na_feedback_actuator_max(is-1)              
             endif
-            if (maxval(na_feedback_actuator_min) .eq. 0.0_R8 .and. 
-     &         minval(na_feedback_actuator_min) .eq. 0.0_R8) then
-              if (maxval(na_feedback_puff_min) .ne. 0.0_R8 .or. 
-     &         minval(na_feedback_puff_min) .ne. 0.0_R8) then
-                na_feedback_actuator_min1(ispecies1(is)-1) =
+            if (maxval(abs(na_feedback_actuator_min)) .eq. 0.0_R8) then
+              if (maxval(abs(na_feedback_puff_min)) .ne. 0.0_R8)
+     .          na_feedback_actuator_min1(ispecies1(is)-1) =
      .            na_feedback_puff_min(is-1)
-              endif
             else
               na_feedback_actuator_min1(ispecies1(is)-1) =
      .          na_feedback_actuator_min(is-1)              
@@ -11912,8 +11905,6 @@ cxpb as they no longer necessarily point to the same species
      .       na_feedback_overshoot(is-1)
             na_feedback_time1(ispecies1(is)-1) =
      .       na_feedback_time(is-1)
-            na_feedback_use_pump1(ispecies1(is)-1) =
-     .       na_feedback_use_pump(is-1)
           end if
         end do
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i2,'',''))'
@@ -11973,9 +11964,6 @@ cxpb as they no longer necessarily point to the same species
         if (maxval(na_feedback_time1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_TIME=',na_feedback_time1(0:nspecies1-1)
-        if (maxval(na_feedback_use_pump1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_USE_PUMP=',na_feedback_use_pump1(0:nspecies1-1)
         write(99,'(a1)') '/'
         close(99)
         deallocate(na_feedback_target1)
@@ -11994,7 +11982,6 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_puff_max1)
         deallocate(na_feedback_overshoot1)
         deallocate(na_feedback_time1)
-        deallocate(na_feedback_use_pump1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in b2.feedback_control.parameters'

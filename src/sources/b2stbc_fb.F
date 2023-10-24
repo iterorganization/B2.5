@@ -281,7 +281,7 @@
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
      &                 isfeedback, nesepm_istra, use_eirene,
-     &                 nxtl, nxtr, puff_strata(0:nspecies-1)
+     &                 nxtl, nxtr, puff_strata(0:DEF_NATM-1)
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
@@ -298,14 +298,15 @@
      4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
      4  volrec_curr,
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
-     6  cbsnafac, cbsnainc,
+     6  cbsnafac, cbsnainc, eps,
+#ifdef B25_EIRENE
+     &  flxic, flxnc, flxex, flxsp, flxnp, sna_pump, absr, 
+     &  absr_save(0:DEF_NATM-1),
+#endif
      7  private_flux_puff, private_flux_area,
      8  neutral_sources_rescale,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
-     9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot,
-#ifdef B25_EIRENE
-     &  flxic, flxnp, flxex, flxsp, flxnp, sna_pump, absr 
-#endif
+     9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
       real (kind=R8), allocatable :: charge_frac(:)
       integer, save :: jsep, jxa, jxi, iyped
       integer, save :: b2sral_style = 2
@@ -323,6 +324,9 @@
      4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
      5  ndes, ndes_sol, den, rcbsna,
      6  cbsnafac, 
+#ifdef B25_EIRENE
+     &  absr_save,
+#endif
      7  private_flux_puff, private_flux_area, flux_old,
      8  neutral_sources_rescale,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
@@ -351,6 +355,9 @@
      4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
      5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
      6  cbsnafac/0.01_R8/,
+#ifdef B25_EIRENE
+     &  absr_save/DEF_NATM*0.0_R8/,
+#endif
      7  private_flux_puff/0.0_R8/,
      8  neutral_sources_rescale/1.0_R8/,
      9  save_core_flux_while_overshot/0.0_R8/,
@@ -359,7 +366,7 @@
      9  save_pfr2_puff_while_overshot/0.0_R8/,
      i  coreregn2/4/, solregno/3/,
      i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/,
-     l  zeroslope/.false./, puff_strata/0/
+     l  zeroslope/.false./, puff_strata/DEF_NATM*0/, eps/1.0E-30_R8/
 #ifdef COMPLICATED
 #ifndef B25_EIRENE
       integer i
@@ -387,13 +394,17 @@
        do ispecies = 0, nspecies-1
          if (na_feedback_actuator(ispecies).eq.1) then
            if (na_feedback_ib(ispecies).lt.0) then
-             puff_strata(ispecies) = -na_feedback_ib(ispecies)
+             istrai = -na_feedback_ib(ispecies)
+             if ((crcstra(istrai).eq.'C') .and.
+     &           (species_start(istrai).le.eb2spcr(ispecies+1)) .and.
+     &           (species_end(istrai).ge.eb2spcr(ispecies+1)))
+     .         puff_strata(ispecies) = istrai
            else
              do istrai = 1, nstrat
                if ((crcstra(istrai).eq.'C') .and.
-     .             (species_start(istrai).le.eb2spcr(is+1)) .and.
-     .             (species_end(istrai).ge.eb2spcr(is+1)) then
-                 puff_strata(ispecies) = istrai
+     &             (species_start(istrai).le.eb2spcr(ispecies+1)) .and.
+     &             (species_end(istrai).ge.eb2spcr(ispecies+1)))
+     .           puff_strata(ispecies) = istrai
              end do
            end if
          end if
@@ -405,11 +416,11 @@
          is_start = eb2spcr(ispecies+1)+1
          is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)
          consistent = consistent .and.
-     &    ((na_feedback_target(ispecies) .eq. 0.0_R8 .or.
-     &      na_feedback_choice(ispecies) .eq. 0 .or.
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
      &      na_feedback_option(ispecies) .eq. 0 .or.
      &      na_feedback_actuator(ispecies) .eq. 0) .or.
      &      na_feedback_actuator(ispecies) .eq. 2 .or.
+     &      na_feedback_actuator(ispecies) .eq. 4 .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
      &      bccon(is0,na_feedback_ib(ispecies)) .eq. 11) .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
@@ -424,53 +435,77 @@
      &  boundary_namelist.lt.1
        do ispecies = 0, nspecies-1
          consistent = consistent .and.
-     &      .not.(na_feedback_actuator(ispecies).eq.4) .or.
-     .      (na_feedback_actuator(ispecies).eq.4 .and.
-     .       na_feedback_ib(ispecies).gt.0 .and.
-     .       na_feedback_ib(ispecies).le.n_spcsrf .and.
-     .       i_spcsrf(na_feedback_ib(ispecies)) .le.
-     .       j_spcsrf(na_feedback_ib(ispecies)))
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &      na_feedback_option(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0) .or.
+     &      (.not.(na_feedback_actuator(ispecies).eq.4) .or.
+     &       (na_feedback_actuator(ispecies).eq.4 .and.
+     &        na_feedback_ib(ispecies).gt.0 .and.
+     &        na_feedback_ib(ispecies).le.n_spcsrf .and.
+     &        i_spcsrf(na_feedback_ib(ispecies)) .le.
+     &        j_spcsrf(na_feedback_ib(ispecies)))))
        end do
        do ispecies = 0, nspecies-1
          if (na_feedback_ib(ispecies).ge.0) cycle
          consistent = consistent .and.
-     &     .not.(na_feedback_actuator(ispecies).eq.3) .and.
-     &     .not.(na_feedback_option(ispecies).eq.4) .and.
-     &     (.not.(na_feedback_actuator(ispecies).eq.1) .or.
-     .      ((na_feedback_actuator(ispecies).eq.1) .and.
-     .       (crcstra(puff_strata(ispecies)).eq.'C') .and.
-     .       (species_start(-na_feedback_ib(ispecies)).le.
-     .        eb2spcr(ispecies+1)) .and.
-     .       (species_end(-na_feedback_ib(ispecies)).ge.
-     .        eb2spcr(ispecies+1))))
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &      na_feedback_option(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0) .or.
+     &     (.not.(na_feedback_actuator(ispecies).eq.3) .and.
+     &      (.not.(na_feedback_actuator(ispecies).eq.1) .or.
+     &       puff_strata(ispecies).ne.0)))
+       end do
+       do ispecies = 0, nspecies-1
+         if (na_feedback_ib(ispecies).ne.0) cycle
+         consistent = consistent .and.
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &      na_feedback_option(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0) .or.
+     &     (na_feedback_actuator(ispecies).eq.2))
        end do
        do ispecies = 0, nspecies-1
          if (na_feedback_actuator(ispecies).ne.2) cycle
          do is = is_start, is_end
            do ib = 1, nbc
              consistent = consistent .and.
-     &        (bccon(is,ib).eq.0 .or. bccon(is,ib).eq.2 .or.
-     &         bccon(is,ib).eq.3 .or. bccon(is,ib).eq.4 .or.
-     &         bccon(is,ib).eq.9 .or. bccon(is,ib).eq.10.or.
-     &         bccon(is,ib).eq.14.or. bccon(is,ib).eq.15.or.
-     &        (bccon(is,ib).eq.5 .and.conpar(is,ib,1).eq.0.0_R8).or.
-     &        (bccon(is,ib).eq.8 .and.conpar(is,ib,1).eq.0.0_R8))
+     &        ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &          na_feedback_option(ispecies) .eq. 0 .or.
+     &          na_feedback_actuator(ispecies) .eq. 0) .or.
+     &         (bccon(is,ib).eq.0 .or. bccon(is,ib).eq.2 .or.
+     &          bccon(is,ib).eq.3 .or. bccon(is,ib).eq.4 .or.
+     &          bccon(is,ib).eq.9 .or. bccon(is,ib).eq.10.or.
+     &          bccon(is,ib).eq.14.or. bccon(is,ib).eq.15.or.
+     &         (bccon(is,ib).eq.5 .and.conpar(is,ib,1).eq.0.0_R8).or.
+     &         (bccon(is,ib).eq.8 .and.conpar(is,ib,1).eq.0.0_R8)))
            end do
          end do
-      do ispecies = 0, nspecies-1
+       end do
+       do ispecies = 0, nspecies-1
          consistent = consistent .and.
-     .       (((na_feedback_option(ispecies).eq.4 .or.
-     .        na_feedback_option(ispecies).eq.5) .and.
-     .        na_feedback_actuator(ispecies).eq.1) .or.
-     .        ((na_feedback_option(ispecies).ne.4) .or.
-               (na_feedback_option(ispecies).ne.5))
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0) .or.
+     &      ((na_feedback_actuator(ispecies).ne.1 .and.
+     &       (na_feedback_option(ispecies).ne.4 .and.
+     &        na_feedback_option(ispecies).ne.5 .and.
+     &        na_feedback_choice(ispecies).ne.12)) .or.
+     &       na_feedback_actuator(ispecies).eq.1))
+       end do
+       do ispecies = 0, nspecies-1
+         consistent = consistent .and.
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0) .or.
+     &      (na_feedback_actuator_max(ispecies).le.0.0_R8 .or.
+     &       (na_feedback_actuator_max(ispecies) .gt.
+     &        na_feedback_actuator_min(ispecies))))
        end do
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
 *   ..test if neutral pressure can be computed if it is required
        do ispecies = 0, nspecies-1
          if (na_feedback_choice(ispecies).ne.10) cycle
-     &   call xertst (lpfrs_pmp.ne.0,
+         call xertst (lpfrs_pmp.ne.0,
      &     'Neutral pressure cannot be computed and used for feedback')
        end do
 *  ..now read data for other feedback schemes given directly in b2mn.dat
@@ -1166,7 +1201,7 @@
      &                    'neutral pressure for sequence ',
      &                    ispecies+1
                 call get_nxt(nx, nxtl, nxtr)
-                
+                call calc_pneut_init(nx, ny, nxtl, nxtr)
               endif
               
               call calc_pneut(ns, ny)
@@ -1250,26 +1285,30 @@
      &                    'pumping-core-external flux balance ',
      &                    'for sequence ',
      &                    ispecies+1
-#ifndef B25_EIRENE
-                write(message,'(a,i3,a)')
-     &            'Feedback option ',na_feedback_option(ispecies),
-     &            ' cannot be applied to standalone B25 runs'
-                call xerrab( trim(message) )
+#ifdef B25_EIRENE
+                if (use_eirene.eq.0) then
+#endif
+                  write(message,'(a,i3,a)')
+     &              'Feedback choice ',na_feedback_choice(ispecies),
+     &              ' cannot be applied to standalone B25 runs'
+                  call xerrab( trim(message) )
+#ifdef B25_EIRENE
+                endif
 #endif
               endif
 
 #ifdef B25_EIRENE
-              call  calc_pump_and_flux(mdf_fnb, style_b2mndt,
-     &                      use_eirene, ispecies, sna_pump, 
-     &                      flxnp, flxic, flxnc, flxex, flxsp)
+              call calc_pump_and_flux(nx, ny, ispecies,
+     &              mdf_fnb, style_b2mndt, use_eirene, sna_pump,
+     &              flxnp, flxic, flxnc, flxex, flxsp)
               if (flxsp.gt.0.0_R8) then
                 write(message,'(a,i3,a,i3,a)')
-     &            'Sputtering detected for sequence: ',ispecies+1,
-     &            ', feedback option ',na_feedbcak_option(ispecies),
+     &            'Sputtering detected for sequence ',ispecies+1,
+     &            ', feedback option ',na_feedback_option(ispecies),
      &            'cannot be applied.'
                 call xertst(flxsp.gt.0.0_R8, trim(message) )
               else
-                na_feedback_current = sna_pump - flxic + flxnc - flxex
+                na_feedback_current = sna_pump - flxnc - flxic - flxex
               endif
 #endif
               
@@ -1290,6 +1329,20 @@
             end select
 ! phase 2:
 
+c           Safeguard for multiplicative rescale schemes:
+            if (na_feedback_option(ispecies).ne.4 .and.
+     &          na_feedback_option(ispecies).ne.5) then
+              if (na_feedback_current.lt.eps) then
+                write(*,'(a,a,i3,a,i3,a,es9.1,a,es9.1)') 
+     .            'b2stbc_fb_pre: Warning!   ',
+     .            'na_feedback_current for sequence ',ispecies+1,
+     .            ' using multiplicative rescale na_feedback_option',
+     .            na_feedback_option(ispecies),' is below ',eps,
+     .            ' and will be set to ',eps
+                na_feedback_current = eps
+              endif
+            endif
+
             select case(na_feedback_option(ispecies))
 
             case (0) ! no action
@@ -1304,10 +1357,10 @@
               endif
 
               na_feedback_rescale =
-     &             (1.0_R8 + na_feedback_alpha(ispecies) *
-     &              na_feedback_target(ispecies) /
-     &              na_feedback_current) /
-     &             (1.0_R8 + na_feedback_alpha(ispecies))
+     &           (1.0_R8 + na_feedback_alpha(ispecies) *
+     &            na_feedback_target(ispecies) /
+     &            na_feedback_current) /
+     &           (1.0_R8 + na_feedback_alpha(ispecies))
 
             case (2) ! pure rescale
 
@@ -1319,7 +1372,7 @@
               endif
 
               na_feedback_rescale = na_feedback_target(ispecies) /
-     &             na_feedback_current
+     &           na_feedback_current
 
             case (3) ! rescale slowed by tanh_log
                      ! 2**(tanh(log(x)/b)*log(a)/log(2))
@@ -1332,20 +1385,24 @@
               endif
 
               na_feedback_rescale = 2.0_R8 **
-     &             (tanh(log(na_feedback_target(ispecies) /
-     &              na_feedback_current)/
-     &              na_feedback_beta(ispecies))*
-     &              log(na_feedback_alpha(ispecies))/log(2.0_R8))
+     &           (tanh(log(na_feedback_target(ispecies) /
+     &            na_feedback_current)/
+     &            na_feedback_beta(ispecies))*
+     &            log(na_feedback_alpha(ispecies))/log(2.0_R8))
 
             case (4) ! rescale done according to SOLPS4 formula:
+                     ! Feedback target changes as:
                      ! N = A + B*(time-T)
+                     ! The actuator (should be gas puff only) changes as
+                     ! S --> S + D, where
+                     ! D = A((N_tar - N_cur)/dt + (N_prev - N_cur))/dt_prev
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_option: using ',
      &           'SOLPS4 linear increase for sequence ',
      &            ispecies+1
-                if (na_feedback_const(ispecies).lt.0.0_R8)
+                if (na_feedback_const(ispecies).le.0.0_R8)
      &            na_feedback_const(ispecies) =
      &                        na_feedback_target(ispecies)
                 na_feedback_prev(ispecies) = na_feedback_current
@@ -1364,14 +1421,18 @@
               na_feedback_save(ispecies) = na_feedback_current
 
             case (5) ! rescale done according to SOLPS4 formula:
+                     ! Feedback target changes as:
                      ! Nt = A*exp((time-T)*B)
+                     ! The actuator (should be gas puff only) changes as
+                     ! S --> S + D, where
+                     ! D = A((N_tar - N_cur)/dt + (N_prev - N_cur))/dt_prev
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_option: using ',
      &           'SOLPS4 exponential decay for sequence ',
      &            ispecies+1
-                if (na_feedback_const(ispecies).lt.0.0_R8)
+                if (na_feedback_const(ispecies).le.0.0_R8)
      &            na_feedback_const(ispecies) =
      &                        na_feedback_target(ispecies)
                 na_feedback_prev(ispecies) = na_feedback_current
@@ -1391,36 +1452,43 @@
 
             case (6) ! rescale slowed by na_feedback_alpha (SOLPS4 style)
 
-                  na_feedback_rescale =
-     &               na_feedback_alpha(ispecies) * 
-     .               na_feedback_target(ispecies) / na_feedback_current
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &            'b2stbc_fb_pre_option: using ',
+     &            'linear rescale for sequence ',
+     &             ispecies+1
+              endif
+
+              na_feedback_rescale =
+     &           na_feedback_alpha(ispecies) * 
+     .           na_feedback_target(ispecies) / na_feedback_current
 
             case (7) ! combination of pure rescaling and rescaling slowed by tanh(log(x))
-                     ! linear rescaling if abs(na_rescale - 1.) > na_feedback_alpha
+                     ! linear rescaling if |na_feedback_rescale - 1.| >= na_feedback_alpha
                      ! otherwise tanh slowing is applied {2**(tanh(log(x)/b)*log(a)/log(2))}
                       
-                if(ncall.eq.0) then
-                  write(*,'(a,a,a,i3)')
+              if(ncall.eq.0) then
+                write(*,'(a,a,a,i3)')
      &             'b2stbc_fb_pre_option: using ',
      &             'combined pure rescale and tanh_log_rescale ',
      &             'for sequence ',
      &              ispecies+1
-                  if((na_feedback_alpha(ispecies).lt.0.0_R8) .or.
-     &               (na_feedback_alpha(ispecies).gt.1.0_R8)
-     &               na_feedback_alpha = 0.01_R8
-                endif
+                if((na_feedback_alpha(ispecies).lt.0.0_R8) .or.
+     &             (na_feedback_alpha(ispecies).gt.1.0_R8))
+     .            na_feedback_alpha = 0.01_R8
+              endif
 
-                na_feedback_rescale =
-     &            (na_feedback_target(ispecies) /
-     &            na_feedback_current)
-                if(abs(na_feedback_rescale-1.0_R8).gt.
-     &             na_feedback_alpha(ispecies))
-     &            na_feedback_rescale = 2.0_R8 **
-     &             (tanh(log(na_feedback_rescale)/
-     &             na_feedback_beta(ispecies))*
-     &             log(na_feedback_alpha(ispecies))/log(2.0_R8))
-                endif
+              na_feedback_rescale =
+     &          (na_feedback_target(ispecies) /
+     &          na_feedback_current)
+              if(abs(na_feedback_rescale-1.0_R8).lt.
+     &           na_feedback_alpha(ispecies))
+     .          na_feedback_rescale = 2.0_R8 **
+     .           (tanh(log(na_feedback_rescale)/
+     .           na_feedback_beta(ispecies))*
+     .           log(na_feedback_alpha(ispecies))/log(2.0_R8))
 
+            case default
               write(*,*) 'na feedback_option not coded ',
      &                     na_feedback_option(ispecies)
 
@@ -1450,55 +1518,46 @@
      &           ispecies+1
               endif
 
-              if((feedback_namelist_used .and. ncall .eq. 0) .and.
-     &            saved_na_feedback_actuator(ispecies) .eq. 0.0_R8) then
+              if(ncall.eq.0 .and. 
+     &           saved_na_feedback_actuator(ispecies).eq.0.0_R8 .and.
+     &           .not.(feedback_namelist_used .and. 
+     &                 (na_feedback_option(ispecies).eq.4 .or.
+     &                  na_feedback_option(ispecies).eq.5))) then
                 if(na_feedback_ib(ispecies).gt.0) then
                   write(message,'(a,i3,a,i2,a)')
      .              'Initial gas puff strength.le.0, set by CONPAR(',
      .              is_start,',',na_feedback_ib(ispecies),',1) !'
                   call xertst(
      .              conpar(is_start, na_feedback_ib(ispecies), 1)
-     .              .gt.0.0_R8, trim(message) )
+     .                .gt.0.0_R8, trim(message) )
                   saved_na_feedback_actuator(ispecies) =
-     &             conpar(is_start, na_feedback_ib(ispecies), 1)
-                elseif(na_feedback_ib(ispecies).lt.0) then
-                  write(message,'(2a,i3,a,i2,a)')
-     .              'Initial gas puff strength.le.0, set by ', 
-     .               'USERFLUXPARM(',
-     .              is_start,',',-na_feedback_ib(ispecies),',1) !'
+     .             conpar(is_start, na_feedback_ib(ispecies), 1)
+                else  ! (na_feedback_ib(ispecies).lt.0 at this point) 
+                  write(message,'(2a,i3,a)')
+     .              'Initial gas puff strength.le.0, set by ',
+     .               'USERFLUXPARM(',-na_feedback_ib(ispecies),',1) !'
                   call xertst(
      .              userfluxparm(-na_feedback_ib(ispecies), 1)
-     .              .gt.0.0_R8, trim(message) )
+     .                .gt.0.0_R8, trim(message) )
                   saved_na_feedback_actuator(ispecies) =
-     &             userfluxparm(is_start,-na_feedback_ib(ispecies),1)
-                else
-                  saved_na_feedback_actuator(ispecies) = 0.0_R8
+     .             userfluxparm(-na_feedback_ib(ispecies),1)
                 end if
               end if
-             
+
 #ifdef B25_EIRENE
-              if (mod(ncall,eirene_mod) .eq. 0) then 
-                if((na_feedback_option(ispecies).eq.4) .or.
-     &             (na_feedback_option(ispecies).eq.5)) then
+              if (mod(ncall,eirene_mod) .eq. 0) then
+#endif
+                if ((na_feedback_option(ispecies).eq.4) .or.
+     &              (na_feedback_option(ispecies).eq.5)) then
                   saved_na_feedback_actuator(ispecies) =
-     .                   saved_na_feedback_actuator(ispecies) +
-     .                   na_feedback_rescale
-                else
-                  saved_na_feedback_actuator(ispecies) =
-     &                  saved_na_feedback_actuator(ispecies) *
-     &                  na_feedback_rescale
-                end if
-              end if
-#else 
-              if((na_feedback_option(ispecies).eq.4) .or.
-     &           (na_feedback_option(ispecies).eq.5)) then
-                saved_na_feedback_actuator(ispecies) =
      .                 saved_na_feedback_actuator(ispecies) +
      .                 na_feedback_rescale
-              else
-                saved_na_feedback_actuator(ispecies) =
-     &                saved_na_feedback_actuator(ispecies) *
-     &                na_feedback_rescale
+                else
+                  saved_na_feedback_actuator(ispecies) =
+     &                 saved_na_feedback_actuator(ispecies) *
+     &                 na_feedback_rescale
+                end if
+#ifdef B25_EIRENE
               end if
 #endif
 
@@ -1634,55 +1693,75 @@
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'specie absorption for sequence',
      &                    ispecies+1
-#ifndef B25_EIRENE
-                write(message,'(a,i3,a)')
-     &            'Feedback actuator ',na_feedback_actuator(ispecies),
-     &            ' cannot be applied to standalone B25 runs'
-                call xerrab( trim(message) )
-#else
+#ifdef B25_EIRENE
+                if (use_eirene.eq.0) then
+#endif
+                  write(message,'(a,i3,a)')
+     &              'Feedback actuator ',na_feedback_actuator(ispecies),
+     &              ' cannot be applied to standalone B25 runs'
+                  call xerrab( trim(message) )
+#ifdef B25_EIRENE
+                endif
+#endif
+#ifdef B25_EIRENE
                 if (saved_na_feedback_actuator(ispecies).le.0.0_R8 .or.
      &             saved_na_feedback_actuator(ispecies).gt.1.0_R8) then
                   write(*,'(a,a,a,i3,a)')
-     &             'Warning!  ',
-     &             'Saved_na_feedback_actuator has to be .ge.0  ',
-     &             'and .le.1 for na_feedback_actuator = ',
-     &             na_feedback_atcuator(ispecies),
-     &             ', default value will be used instead' 
-                  if(sps_absr(na_feedback_ib(ispecies).gt.0.0_R8 .and.
-     &              sps_absr(na_feedback_ib(ispecies).le.1.0_R8)) then
+     .             'Warning!  ',
+     .             'Saved_na_feedback_actuator has to be .ge.0  ',
+     .             'and .le.1 for na_feedback_actuator = ',
+     .             na_feedback_actuator(ispecies),
+     .             ', default value will be used instead' 
+                  if(sps_absr(na_feedback_ib(ispecies)).gt.0.0_R8 .and.
+     &              sps_absr(na_feedback_ib(ispecies)).le.1.0_R8) then
                     saved_na_feedback_actuator(ispecies) =
      .                             sps_absr(na_feedback_ib(ispecies))
                   else
-                    saved_na_feedback_actuator(ispecies) = 0.5_R8      
+                    saved_na_feedback_actuator(ispecies) = 0.5_R8
                   endif
                 endif
+                absr_save(ispecies) =
+     .                    saved_na_feedback_actuator(ispecies)
 #endif
               endif
-              
+
 #ifdef B25_EIRENE
-              call  calc_pump_and_flux(mdf_fnb, style_b2mndt,
-     &                   use_eirene, ispecies, sna_pump, flxnp, flxic, 
-     &                   flxnc, flxex, flxsp)
+              call calc_pump_and_flux(nx, ny, ispecies,
+     &              mdf_fnb, style_b2mndt, use_eirene, sna_pump,
+     &              flxnp, flxic, flxnc, flxex, flxsp)
               if (flxsp.ne.0.0_R8) then
                 write(message,'(a,i3,a,i3,a)')
      &            'Sputtering detected for sequence: ',ispecies+1,
-     &            ', feedback actuator ',na_feedbcak_actuator(ispecies),
+     &            ', feedback actuator ',na_feedback_actuator(ispecies),
      &            ' cannot be applied.'
                 call xertst(flxsp.gt.0.0_R8, trim(message) )
               else
                 if (mod(ncall,eirene_mod).eq.0 .and. ncall .gt. 0) then
-                  na_feedback_rescale = 1.0_R8 / na_feedback_rescale *
-     &                   (flxnp + flxic + flxex) / (sna_pump + flxnc)
+                  if(abs(na_feedback_rescale*(sna_pump - flxnc)).gt.eps)
+     &            then
+                    na_feedback_rescale = (flxnp + flxic + flxex) / 
+     .                         (sna_pump - flxnc) / na_feedback_rescale
+                  else
+                    na_feedback_rescale = (flxnp + flxic + flxex) / eps
+                  endif
                   absr = saved_na_feedback_actuator(ispecies) *
      .                   na_feedback_rescale
-                  if (absr.ge.1.0_R8) then
-                    saved_na_feedback_atuator(ispecies) = 1.0_R8
-                  else if (absr.le.0.0_R8) then
-                    saved_na_feedback_actuator(ispecies) = 1.e-5
+                  if (absr.le.0.0_R8) then
+                    if (saved_na_feedback_actuator(ispecies).gt.0.0_R8)
+     .                absr_save(ispecies) = 
+     .                          saved_na_feedback_actuator(ispecies)
+                    if (na_feedback_rescale.gt.1.0_R8) then
+                      saved_na_feedback_actuator(ispecies) = 
+     .                                           absr_save(ispecies)
+                    else
+                      saved_na_feedback_actuator(ispecies) = 0.0_R8
+                    end if
+                  else if (absr.ge.1.0_R8) then
+                    saved_na_feedback_actuator(ispecies) = 1.0_R8
                   else
                     saved_na_feedback_actuator(ispecies) = absr
                   end if
-                call eirene_recyct_update(ispecies+1),
+                  call eirene_recyct_update(ispecies+1,
      &                           saved_na_feedback_actuator(ispecies),
      &                           na_feedback_ib(ispecies))
                 endif
@@ -2520,38 +2599,49 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 
 #ifdef B25_EIRENE
 
-*.flux balance computation routine
-      subroutine calc_pump_and_flux(mdf_fnb,style_b2mndt,
-     &      use_eirene, ispecies, sna_pump, flxnp, flxic, 
-     &      flxnc, flxex, flxsp)
+*.flux balance computation routine 
+c    !! NOT GENERALAISED YET !!
+c    Relays on the EIRENE data, cannot be used in standalone B25 runs
+      subroutine calc_pump_and_flux(nx, ny, ispecies,
+     &     mdf_fnb, style_b2mndt, use_eirene, sna_pump,
+     &     flxnp, flxic, flxnc, flxex, flxsp)
       use b2mod_types
       use eirmod_wneutrals
       use b2mod_eirene
-     ,   , only : eirpump
+     ,   , only : eirpump, eirspta, eirsptm
       use eirmod_braeir
-      use eirmod_comusr, only : lkindp
+      use eirmod_comusr
+     ,   , only : lkindp
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_diag
-      use b2mod_b2cmpa , only : is_neutral
-      use b2mod_plasma, only : fna_mdf, fna
+      use b2mod_b2cmpa
+     ,   , only : is_neutral
+      use b2mod_plasma
+     ,   , only : fna_mdf, fna
+      use b2mod_geo
+     ,   , only : gs
+      use b2mod_sources
+     ,   , only : ext_sna
        
       implicit none
        
-      real (kind=R8) :: flxnp, flxic, flxnc, flxex, flxsp 
-     &    sna_pump, bsign, flxsp
       integer ::  j, k, is, ispecies, ic, idir, ia, im, ip,
-     &    ix, ixf, iyf, use_eirene, mdf_fnb, style_b2mndt, js
+     &    ix, ixf, iy, iyf, use_eirene, mdf_fnb, style_b2mndt,
+     &    js, nx, ny
+      real (kind=R8) :: flxnp, flxic, flxnc, flxex, flxsp,
+     &    sna_pump, bsign
         
-      sna_pump = 0.0_R8  ! pumping 
+      sna_pump = 0.0_R8  ! pumping
       flxic = 0.0_R8     ! ion through the core
       flxnc = 0.0_R8     ! neutral through the core
       flxnp = 0.0_R8     ! puffing
       flxex = 0.0_R8     ! external source
       flxsp = 0.0_R8     ! sputtering flux
-      
+!     flx.. - positive if source particles into the system
+!     sna_pump - positive if pump particles out of the system
 
-c Gather eirene pumping data
+c Gather eirene pumping data (at this point includes neutral to the core)
 
       do ia = 1, nnatmi
         if (latmscl(ia).ne.ispecies+1) cycle
@@ -2571,7 +2661,7 @@ c Gather eirene pumping data
      &            eirpump(nnatmi+nnmoli+nnioni+ip)
       enddo
      
-c Gather B2 fluxes
+c  Calculate ion flux through the core
       do is = EB2SPCR(ispecies+1), EB2SPCR(ispecies+1) + ! Loop over the isonuclear sequence 
      &       NFLUIDS(ispecies+1)
 
@@ -2609,12 +2699,8 @@ c Gather B2 fluxes
               iyf = BC_LIST_Y(ix,ic)
             end if
 
-!             Check whether this is part of the core boundary
-            if (core_boundary(ic)) then
-!               Count fluid neutrals if not coupled to Eirene
-              if (is_neutral(is).and.use_eirene.eq.0) then
-                flxnc = flxnc + bsign*fna(ixf,iyf,idir,is)
-              else if (.not.is_neutral(is)) then ! not neutral
+            if (core_boundary(ic)) then ! Check whether this is part of the core boundary
+              if (.not.is_neutral(is)) then
                 if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
                   flxic = flxic + bsign*fna(ixf,iyf,idir,is)
                 else
@@ -2623,43 +2709,24 @@ c Gather B2 fluxes
               end if
             end if  
 
-!             Deal with fluid neutrals first
-            if (is_neutral(is) .and. use_eirene.eq.0) then
-!               Compute the puffing rate
-              if ((BCCON(is,ic).eq.8  .or.
-     &             BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
-     &             CONPAR(is,ic,1) .gt. 0.0_R8) then
-                flxnp = flxnp + CONPAR(is,ic,1)
-              else if (BCCON(is,ic) .eq. 5) then
-     &          flxnp = flxnp + CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
-!               Compute pumping 
-              else
-                sna_pump = sna_pump + sna_stbc_neut(is,ic)
-              end if
-!               Compute sputtering
-              flxsp = flxsp + sna_stbr_sput(is,ic)
-            endif
           end do ! End Loop over poloidal coordinate along the boundary
         end do ! End loop over B2 boundaries 
 
-!       Calculate the external source
+c  Calculate the external source
         do iy=0,ny-1
           do ix=0,nx-1
             j=region(ix,iy,0)
             if ((j.ne.0) .and. (leftix(ix,iy).ne.-2) .and.
      &           (rightix(ix,iy).ne.nx+1) .and. 
-     &            (is.eq.EB2SPCR(ispecies+1))
-     &             flxex = flxex + ext_sna(ix,iy,is) ! External source
+     &            (is.eq.EB2SPCR(ispecies+1)))
+     .             flxex = flxex + ext_sna(ix,iy,is)
           end do
         end do
       end do ! End of the loop over species within given isonuclear sequence (is)
 
-c  Gather remaining Eirene fluxes    
+c  Calculate neutral flux to the core   
       do is = 1,ncns  ! Loop over segments of Eirene core boundary
-c**       ntns - Number of 'non-default' Eirene surfaces which are part of the target boundaries
-c**       ltns() - index of these 'non-default' surfaces
         js = lcns(is) + nnlimi
-c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
         do j = 1,nnatmi
           if (latmscl(j) .eq. ispecies+1) then
             flxnc = flxnc - wldna(js,j,0) + wldra(js,j,0) 
@@ -2673,16 +2740,19 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
         end do
       end do ! End loop over segments of Eirene core boundary
 
+c  Calculate seeding
       do ic = 1,nstrat ! Loop over strata to gather Eirene seeding
         if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
           do ia = 1,nnatmi
             if (latmscl(ia).ne.ispecies+1) cycle
-              flxnp = flxnp +
-     &                    userfluxparm(ic,1) * gpfc(ia,ic)
-            endif
+            flxnp = flxnp +
+     &                 userfluxparm(ic,1) * gpfc(ia,ic)
           end do
-        endif
+        end if
       end do ! End loop over strata
+
+c  substract neutral flux to the core from pumping 
+      sna_pump = sna_pump + flxnc
 *-----------------------------------------------------------------------
 *.end of flux balance calculation routine
       
@@ -2698,19 +2768,19 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
         integer, intent(in) :: spcsrf_id   ! index of special surface group where recyct will be updated
         integer ja, l, jm, k
         
-      do l=i_spcsrf(spcsrf_id), j_spcsrf(spcsrf_id)  ! loop over the indicated surface group
+      do l=i_spcsrf(spcsrf_id), j_spcsrf(spcsrf_id)  ! Loop over required surface group
         k = l_spcsrf(l)
         do ja = 1,nnatmi
           if (latmscl(ja) .eq. ispecies) then ! Eirene atom corresponds to B2.5 isonuclear sequence
             recyct(ja,k) = 1.0_R8 - absr
             do jm = 1,nnmoli                  
-              if (mlcmp(ja,jm) .gt. 0) then   ! Eirene molecue contains atom of B2.5 isonuclear sequence
+              if (mlcmp(ja,jm) .gt. 0) then ! Eirene molecule contains atom of B2.5 isonuclear sequence
                 recyct(jm+nnatmi,k) = 1.0_R8 - absr
               endif
             enddo
           endif
         enddo
-      enddo
+      enddo  ! End loop over required surface group
           
       end subroutine eirene_recyct_update
 *-----------------------------------------------------------------------

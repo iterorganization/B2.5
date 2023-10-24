@@ -373,19 +373,19 @@ c not sure this is the right place
         endif
         do is = 0, nspecies-1
           if (na_feedback_actuator(is).eq.1) then
-           if (na_feedback_ib(is).lt.0 .and.
-     .       crcstra(-na_feedback_ib(is)).eq.'C' .and.
-     .       species_start(-na_feedback_ib(is)).le.eb2spcr(is+1) .and.
-     .       species_end(-na_feedback_ib(is)).ge.eb2spcr(is+1)) then
-               feedback_strata(ispecies) = -na_feedback_ib(is)
-           else
-            do istrai = 1, nstrat
-              if (crcstra(istrai).eq.'C' .and.
-     .          species_start(istrai).le.eb2spcr(is+1) .and.
-     .          species_end(istrai).ge.eb2spcr(is+1)) then
-                  feedback_strata(is) = istrai
-              end if
-            end do
+            if (na_feedback_ib(is).lt.0 .and.
+     .        crcstra(-na_feedback_ib(is)).eq.'C' .and.
+     .        species_start(-na_feedback_ib(is)).le.eb2spcr(is+1) .and.
+     .        species_end(-na_feedback_ib(is)).ge.eb2spcr(is+1)) then
+                feedback_strata(is) = -na_feedback_ib(is)
+            else
+              do istrai = 1, nstrat
+                if (crcstra(istrai).eq.'C' .and.
+     .            species_start(istrai).le.eb2spcr(is+1) .and.
+     .            species_end(istrai).ge.eb2spcr(is+1))
+     &              feedback_strata(is) = istrai
+              end do
+            end if
           end if
         end do
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
