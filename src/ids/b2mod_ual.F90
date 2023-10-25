@@ -731,7 +731,7 @@ contains
         if( lDoCreate ) then
 #ifdef IMAS
             if( lUseHdf5 ) then
-# if ( AL_MAJOR_VERSION > 4 || ( AL_MAJOR_VERSOIN == 4 && AL_MINOR_VERSION > 8 ) )
+# if ( AL_MAJOR_VERSION > 4 || ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION > 8 ) )
                 call imas_create_env(lTreename, lShot, lRun, lRefshot,   &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion, &
                         &   lStatus)
