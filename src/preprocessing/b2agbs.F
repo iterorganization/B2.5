@@ -12,16 +12,16 @@
       type(geometry) :: g
 *   ..local variables
       integer :: iCv, sv, nv, sf, nf, verts(0:100), ref_ind_cv(m%nFt), 
-     .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), typef 
-     .  faces(0:m%nFc), iFc, i, cv, v1, v2, psif(m%nFc), sv, nv,
+     .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), typef, 
+     .  faces(0:m%nFc), iFc, i, cv, v1, v2, psif(m%nFc),
      .  scf, ncf, fcs(0:100), c_al, j, ref_fc(m%nFt), ref_cv(m%nFt),
      .  wrkf(0:m%nFc), counter, pfaces(0:100), ref_face, ind,
-     .  face1, face2, nf2
+     .  face1, face2, nf2, k, l
       real (kind=R8) :: pol_flux, width, vpsi(0:100), psi_max(0:m%nCv),
      .  psif_max(0:m%nFc), psi_ref, pol_flux_ref, cutoff_width ,
      .  pol_flux_ref1, pol_flux_ref2, pol_flux1, pol_flux2
-      logical :: cv_aligned(0:m%nCv)
-      intrinsic int
+      logical :: fc_done(0:m%nFc), cv_done(0:m%nCv), cv_aligned(0:m%nCv)
+      intrinsic int, pack, maxval, maxloc
       data width /1.0_R8/
       save width
 *     ------------------------------------------------------------------
@@ -113,7 +113,14 @@
         do i = 1,m%cvFcP(cv,2)
           iFc = m%cvFc(m%cvFcP(cv,1)+i-1)
           if (m%fcAligned(iFc).eq.0) then
-             ref_ind_fc(iFt) = pack( wrkf , faces == iFc )
+             ! Get index of reference 
+             !ind = pack( wrkf , faces == iFc )
+             do j = 0,nf-1
+                 if ( faces(j) .eq. iFc ) then
+                    ind = j
+                 endif
+             enddo
+             ref_ind_fc(iFt) = ind
              ref_fc(iFt) = iFc
              exit
           endif
@@ -126,9 +133,9 @@
 *   ..vol = hy1*hx*hz - (already determined by cvHz = cvVol/cvSz?)
 
       ! Compute psi width of faces
-      do iFc = 1,g%nFc
-        v1 = g%fcVx(iFc,1)
-        v2 = g%fcVx(iFc,2)
+      do iFc = 1,m%nFc
+        v1 = m%fcVx(iFc,1)
+        v2 = m%fcVx(iFc,2)
 
         psif(iFc) = abs(g%vxFpsi(v1) - g%vxFpsi(v2))
       enddo
@@ -161,17 +168,17 @@
           ! Psi max
           verts = 0
 	  vpsi = 0
-          sv = g%cvVxP(iCv,1)
-          nv = g%cvVxP(iCv,2)
-          verts(0:nv-1) = g%cvVx(sv:sv+nv-1)
-          vpsi(0:nv-1) = gmtry.vxFpsi(verts)
+          sv = m%cvVxP(iCv,1)
+          nv = m%cvVxP(iCv,2)
+          verts(0:nv-1) = m%cvVx(sv:sv+nv-1)
+          vpsi(0:nv-1) = g%vxFpsi(verts)
           psi_max(i) = abs(maxval(vpsi) - minval(vpsi))
 
           ! Determine aligned
           fcs = 0 
-          scf = g%cvFcP(iCv,1)
-          ncf = g%cvFcP(iCv,2)
-          fcs(0:ncf-1) = g%cvFc(scf:scf+ncf-1)
+          scf = m%cvFcP(iCv,1)
+          ncf = m%cvFcP(iCv,2)
+          fcs(0:ncf-1) = m%cvFc(scf:scf+ncf-1)
 
           c_al = 0
           do j = 0,ncf-1
@@ -195,7 +202,7 @@
         ! Do the adjustement for the cells with proper width and alignment
         ! Loop over cells with aligned properties
         ! Get refernce of psi width and pol_flux
-        psi_ref = psi_max(ref_inc_cv(iFt))
+        psi_ref = psi_max(ref_ind_cv(iFt))
         pol_flux_ref = g%fcBb(ref_fc(iFt),0)*g%fcS(ref_fc(iFt))
      &    *g%fcQalf(ref_fc(iFt),0)
         cutoff_width = 0.05_R8
@@ -206,36 +213,39 @@
           ! Loop over cells
           do k = 0,nc-1
             if ( cv_aligned(k) .eq. .true. ) then
-               if ((( g%cflags(cells(k)) .eq. 1) 
-     &          .and. (g%cvFcP(cells(k),2) .eq. 4))
+               if ((( m%cvLbl(cells(k)) .eq. 1) 
+     &          .and. (m%cvFcP(cells(k),2) .eq. 4))
      &          .or. ( abs( (psi_ref - psi_max(k))/psi_ref) 
      &          .lt. cutoff_width )) then
                 cv_done(k) = .true.
 
-                ! Adjust pitch of faces(k) and next face
-                call AdjustPitch(g,faces(k),pol_flux_ref)
-		fc_done(k) = .true.                
-                if ( typef .eq. 1 )  then
-                  ! Closed tube
-                  if ( k .ne. nc ) then
+                 ! Adjust pitch of faces(k) and next face
+                 call AdjustPitch(g,faces(k),pol_flux_ref)
+		 fc_done(k) = .true.                
+                 if ( typef .eq. 1 )  then
+                   ! Closed tube
+                   if ( k .ne. nc ) then
                     
-                    call AdjustPitch(g,faces(k+1),pol_flux_ref)
-                    fc_done(k+1) = .true.
+                     call AdjustPitch(g,faces(k+1),pol_flux_ref)
+                     fc_done(k+1) = .true.
 
-                  else 
+                   else 
 
-                    call AdjustPitch(g,faces(1),pol_flux_ref)
-                    fc_done(1) = .true.
+                     call AdjustPitch(g,faces(1),pol_flux_ref)
+                     fc_done(1) = .true.
+ 
+                   endif 
+                 elseif ( typef .eq. 2 ) then
+                   ! Open tube
+                   call AdjustPitch(g,faces(k+1),pol_flux_ref)
+                   fc_done(k+1) = .true.
 
-                  endif 
-                elseif ( typef .eq. 2 ) then
-                  ! Open tube
-                  call AdjustPitch(g,faces(k+1),pol_flux_ref)
-                  fc_done(k+1) = .true.
+                 else
 
-                else
-                  call xerrab('b2agbs: type not defined')
-                endif
+                   call xerrab('b2agbs: type not defined')
+
+                 endif
+               endif 
             endif
 
           enddo
@@ -244,10 +254,10 @@
 
           ! Get reference cell
           cv = ref_cv(iFt)
-          sf = g%cvFcP(cv,1)
-          nf2 = g%cvFcP(cv,2)
+          sf = m%cvFcP(cv,1)
+          nf2 = m%cvFcP(cv,2)
           fcs = 0
-          fcs(0:nf2-1) = g%cvFc(sf:sf+nf2-1)
+          fcs(0:nf2-1) = m%cvFc(sf:sf+nf2-1)
 
           ! Not aligned to a quad
           if ( nf2 .ne. 4 ) then
@@ -268,11 +278,11 @@
             call xerrab('b2agbs: not supported')
           else
             ! Get face with max psi
-            ind = maxloc(psif(pfaces(0:counter-1))
+            ind = maxloc(psif(pfaces(0:counter-1)),1)
             ref_face = pfaces(ind)
 
             pol_flux_ref = abs(g%fcBb(ref_face,0)*g%fcS(ref_face)
-     &       g%fcQalf(ref_face,0))
+     &       *g%fcQalf(ref_face,0))
 
             ! Two other faces need to the sum of the reference
             do i = 0,2
@@ -285,13 +295,14 @@
               if (( pfaces(i).ne. ref_face) 
      &           .and. (pfaces(i) .ne. face1 )) then
                 face2 = pfaces(i)
+              endif
             enddo
           endif 
 
           pol_flux1 = abs(g%fcBb(face1,0)*g%fcS(face1)
-     &       g%fcQalf(face1,0))
+     &       *g%fcQalf(face1,0))
           pol_flux2 = abs(g%fcBb(face2,0)*g%fcS(face2)
-     &       g%fcQalf(face2,0))
+     &       *g%fcQalf(face2,0))
 
 
           pol_flux_ref1 = pol_flux_ref * pol_flux1
@@ -311,14 +322,18 @@
 
         ! Complete cells which are not of full width
         ! Forward propagation
-        do k = 1,nc-1 ! Starting from second cell
-          if (( cv_done(k) .ne. .true ) 
-     &     .and. ( cv_done(k-1) .eq. .true. )) then
-             if ( fc_done(k) .eq. .true.) then
-                call propagate
-     &    (g,cells,k,faces,k+1,cv_done,fc_done,psif_max,nc,nf)
+        do j = 1,nc-1 ! Starting from second cell
+          if (( cv_done(j) .ne. .true. ) 
+     &     .and. ( cv_done(j-1) .eq. .true. )) then
+
+             if ( fc_done(j) .eq. .true.) then
+
+                call propagate(g,m,cells,j,faces,
+     &       j+1,cv_done,fc_done,psif_max,nc,nf)
              else
+
                call xerrab('b2agbs: Something wrong')
+
              endif 
 
           endif
@@ -327,15 +342,20 @@
 
 
         ! Backward propagation
-        do  k = 1,nc-1
-           l = nc + 1 - k
+        do  j = 1,nc-1
+           l = nc + 1 - j
            if  (( cv_done(l) .ne. .true. )
      &        .and. ( cv_done(l+1) .eq. .true. ) ) then
+
              if ( fc_done(l+1) .eq. .true. ) then
-                call propagate
-     &     (g,cells,l,faces,l,cv_done,fc_done,psif_max,nc,nf)
+
+                call propagate(g,m,cells,l,faces,
+     &     l,cv_done,fc_done,psif_max,nc,nf)
+
              else
+
                call xerrab('b2agbs: Something wrong')
+
              endif
            endif
         enddo 
@@ -363,7 +383,7 @@
 !     &       * abs(pol_flux / g%fcBb(iFc,3))
 !        enddo
 
-      enddo
+      enddo ! Loop over tubes
 
 *   ..copying over modified data
        
@@ -380,6 +400,7 @@
       subroutine AdjustPitch(g,iFc,pol_flux_ref)
       use b2mod_types
       use b2us_geo
+      implicit none
 
 *   ..input and output argument      
       type(geometry) :: g
@@ -406,14 +427,17 @@
 *----------------------------------------------------------------------
 
 
-      subroutine propagate
-      &   (g,cells,indc,faces,indf,cv_done,fc_done,psif_max,nct,nft)
+      subroutine propagate(g,m,cells,indc,faces,
+     &   indf,cv_done,fc_done,psif_max,ncpt,nfpt)
       use b2mod_types
       use b2us_geo
+      use b2us_map
+      implicit none
       
 *   ..input and output arguments
       type(geometry) :: g
-      integer :: ncpt, nfpt, indc, indf
+      type(mapping) :: m
+      integer :: ncpt, nfpt, indc, indf, cells(0:m%nCv), faces(0:m%nFc)
       logical :: cv_done(0:ncpt), fc_done(0:nfpt)
       real(kind=R8) :: psif_max(0:nfpt)
 
@@ -422,13 +446,14 @@
       integer :: k, l, icv, nf, s, fcs_s(0:3), fcs_incl, i, fc
       real(kind=R8) :: pol_flux_ref, pol_flux_ref_k2, pol_flux_ref_k1,
      &                 pol_flux_ref_incl
+      intrinsic abs, sign
 
 
       ! Get right variable name
       k = indc
       l = indf
       icv = cells(k)
-      nf = g%cvFcP(icv,2)
+      nf = m%cvFcP(icv,2)
 
       if ( nf .eq. 3 ) then
 
@@ -437,14 +462,14 @@
 
           ! Reference is faces(k+1)
           pol_flux_ref = g%fcBb(faces(k+1),0)*g%fcS(faces(k+1))
-     &           g%fcQalf(faces(k+1),0)
+     &           *g%fcQalf(faces(k+1),0)
           call AdjustPitch(g,faces(k),pol_flux_ref) 
     
         elseif (k .lt. l ) then
 
           ! Reference is faces(k)
           pol_flux_ref = g%fcBb(faces(k),0)*g%fcS(faces(k))
-     &           g%fcQalf(faces(k),0)          
+     &           *g%fcQalf(faces(k),0)          
           call AdjustPitch(g,faces(k),pol_flux_ref) 
          
         else
@@ -460,8 +485,8 @@
       elseif (nf .eq. 4 ) then
 
         ! Get inclined face
-        s = g%cvFcP(icv,1)
-        fcs_s = g%cvFc(s:s+nf-1)
+        s = m%cvFcP(icv,1)
+        fcs_s = m%cvFc(s:s+nf-1)
         fcs_incl = 0
         do i = 0, nf-1
           fc = fcs_s(i)
@@ -472,7 +497,7 @@
           endif 
         enddo
 
-        if fcs_incl .eq. 0  then
+        if ( fcs_incl .eq. 0 )  then
           ! Just propagate
           if (k .eq. l ) then
             pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
@@ -542,7 +567,7 @@
               else
                 ! Expansion
                  pol_flux_ref_incl = abs(pol_flux_ref_k2 
-     &             pol_flux_ref_incl)
+     &             - pol_flux_ref_incl)
 
               endif 
               
@@ -561,7 +586,8 @@
 
               if ( psif_max(k) .gt. psif_max(k+1) ) then
                 ! compression - situation 3
-                pol_flux_ref_incl = abs(pol_flux_k1 - pol_flux_k2)
+                pol_flux_ref_incl = abs(pol_flux_ref_k1 
+     &            - pol_flux_ref_k2)
               else 
                 ! expansion - situation 2
                 pol_flux_ref_incl = abs(pol_flux_ref_k2 
@@ -573,14 +599,14 @@
               
             else
               !  Adjust fc_done(k+1) and inclined face
-              pol_flux_ref_incl = = abs(g%fcBb(fcs_incl,0)
+              pol_flux_ref_incl = abs(g%fcBb(fcs_incl,0)
      &          *g%fcS(fcs_incl)*g%fcQalf(fcs_incl,0))
               pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
      &         *g%fcS(faces(k))*g%fcQalf(faces(k),0))
 
               if (psif_max(k) .lt. psif_max(k+1)) then
                 ! expansion - situation 4
-                pol_flux_ref_k2 = abs(pol_flux_rel_inc 
+                pol_flux_ref_k2 = abs(pol_flux_ref_incl 
      &              + pol_flux_ref_k1)
 
               else
