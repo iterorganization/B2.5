@@ -26,15 +26,15 @@ endif
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef SOLPS_DEBUG
+FCOPTS   = -g -C -traceback
 ifdef USE_MPI
-FCOPTS   = -g -C -traceback -fpe0
+FCOPTS  += -fpe0
 else
+FCOPTS  += -debug all -fPIC -assume no2underscore
 ifdef USE_IMPGYRO
-FCOPTS   = -g -C -debug all -traceback -fPIC -assume no2underscore ${MPI_CPP}
+FCOPTS  += ${MPI_CPP}
 else
-FCOPTS   = -g -C -debug all -traceback -check all -fpe0
-FCOPTS   = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
-FCOPTS   = -g -C -debug all -traceback -fPIC -assume no2underscore -check all -fpe0
+FCOPTS  += -check all -fpe0
 endif
 endif
 else
