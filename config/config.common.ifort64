@@ -38,15 +38,19 @@ ifndef SOLPS_CPP
       IMAS_PKG_LIST += amns
     endif
     ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
-      ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+      ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
         IMAS_PKG_LIST += ggd
       else
-        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-          ifndef COMPILER_REDEF
-            LD_GGD ?= -lggd-ifort
-          endif
+        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+          IMAS_PKG_LIST += ggd
         else
-          IMAS_PKG_LIST += imas-lowlevel
+          ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+            ifndef COMPILER_REDEF
+              LD_GGD ?= -lggd-ifort
+            endif
+          else
+            IMAS_PKG_LIST += imas-lowlevel
+          endif
         endif
       endif
     endif

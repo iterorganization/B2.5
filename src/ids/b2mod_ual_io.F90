@@ -266,7 +266,7 @@ module b2mod_ual_io
   character(len=ids_string_length), save :: code_description
   character(len=ids_string_length), save :: configuration
   character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
-  character*8, save :: imas_version, ual_version, adas_version
+  character*8, save :: imas_version, adas_version
   character*8, save :: date
   character*10, save :: ctime
   character*5, save :: zone
@@ -305,17 +305,11 @@ contains
     write(imas_version,'(i1,a1,i2,a1,i1)')  IMAS_MAJOR_VERSION,'.', &
                                       &     IMAS_MINOR_VERSION,'.', &
                                       &     IMAS_MICRO_VERSION
-    write(ual_version,'(i1,a1,i2,a1,i1)') UAL_MAJOR_VERSION,'.', &
-                                      &   UAL_MINOR_VERSION,'.', &
-                                      &   UAL_MICRO_VERSION
 #elif defined(USE_PXFGETENV)
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
-    CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
 #else
     call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
-    call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
-    if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
 #endif
     call date_and_time (date, ctime, zone, tvalues)
     create_date = date//' '//ctime//' '//' '//zone
@@ -7143,14 +7137,6 @@ contains
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     allocate( properties%provider(1) )
     properties%provider = username
-#endif
-#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-    allocate( properties%version_put%data_dictionary(1) )
-    properties%version_put%data_dictionary = imas_version
-    allocate( properties%version_put%access_layer(1) )
-    properties%version_put%access_layer = ual_version
-    allocate( properties%version_put%access_layer_language(1) )
-    properties%version_put%access_layer_language = 'FORTRAN'
 #endif
     return
 
