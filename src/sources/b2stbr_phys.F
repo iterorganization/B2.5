@@ -894,10 +894,10 @@ c   Nuclear Fusion 57.11 (2017): 116043.
 
 
 !! end of preliminary calculations
-           if(erecyc(is,istra)>0.0_R8.or.
-     2      mrecyc(is,istra)>0.0_R8)
-     3     write(*,*)'recycle_afn incompatible with user-defined '//
-     4     'momentum and energy recycling coefficients > 0'
+!           if(erecyc(is,istra)>0.0_R8.or.
+!     2      mrecyc(is,istra)>0.0_R8)
+!     3     write(*,*)'recycle_afn incompatible with user-defined '//
+!     4     'momentum and energy recycling coefficients > 0'
 
            if (is.ne.is0) then !! ion species, recycling
 
