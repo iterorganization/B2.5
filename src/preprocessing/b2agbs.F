@@ -13,14 +13,15 @@
 *   ..local variables
       integer :: iCv, sv, nv, sf, nf, verts(0:100), ref_ind_cv(m%nFt), 
      .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), typef, 
-     .  faces(0:m%nFc), iFc, i, cv, v1, v2, psif(m%nFc),
+     .  faces(0:m%nFc), iFc, i, cv, v1, v2, 
      .  scf, ncf, fcs(0:100), c_al, j, ref_fc(m%nFt), ref_cv(m%nFt),
      .  wrkf(0:m%nFc), counter, pfaces(0:100), ref_face, ind,
      .  face1, face2, nf2, k, l
       real (kind=R8) :: pol_flux, width, vpsi(0:100), psi_max(0:m%nCv),
      .  psif_max(0:m%nFc), psi_ref, pol_flux_ref, cutoff_width ,
-     .  pol_flux_ref1, pol_flux_ref2, pol_flux1, pol_flux2
-      logical :: fc_done(0:m%nFc), cv_done(0:m%nCv), cv_aligned(0:m%nCv)
+     .  pol_flux_ref1, pol_flux_ref2, pol_flux1, pol_flux2, psif(m%nFc)
+      logical :: fc_done(0:m%nFc), cv_done(0:m%nCv), 
+     .  cv_aligned(0:m%nCv)
       intrinsic int, pack, maxval, maxloc
       data width /1.0_R8/
       save width
@@ -75,11 +76,13 @@
         ! Get cells
         sc = m%ftCvP(iFt,1)
         nc = m%ftCvP(iFt,2)
+        cells = 0
         cells(0:nc-1) = m%ftCv(sc:sc+nc-1)
         
         ! Get faces
         sf = m%ftFcP(iFt,1)
         nf = m%ftFcP(iFt,2)
+        faces = 0
         faces(0:nf-1) = m%ftFc(sf:sf+nf-1)
 
         wrkf(0:nf-1) = (/ (i, i=0,nf-1) /)
@@ -87,7 +90,7 @@
         ! If there is a common cell between omp cells and tube cells
         do i = 0,nc-1
            if (isMember(cells(i),m%cvOMP,m%ncvOMP)) then
-              ref_ind_cv(iFt) = cells(i)
+              ref_ind_cv(iFt) = i
               exit
            endif
         enddo
@@ -95,21 +98,23 @@
         if (ref_ind_cv(iFt).eq.0) then
           do i = 0,nc-1
            if (isMember(cells(i),m%cvIMP,m%ncvIMP)) then
-              ref_ind_cv(iFt) = cells(i)
+              ref_ind_cv(iFt) = i
               exit
            endif   
           enddo 
         endif
         ! Else  take the middle of the tube
         if (ref_ind_cv(iFt).eq.0) then
-             ref_cv(iFt) = cells(int(0.5_R8*nc-1))
              ref_ind_cv(iFt) = int(0.5_R8*nc-1)
         endif
 
+        ref_cv(iFt) = cells(ref_ind_cv(iFt))
+
         ! Get the poloidal face of that cell
-        cv = ref_ind_cv(iFt);
+        cv = ref_cv(iFt);
         
         ! Get a poloidal faces
+        ind = -1
         do i = 1,m%cvFcP(cv,2)
           iFc = m%cvFc(m%cvFcP(cv,1)+i-1)
           if (m%fcAligned(iFc).eq.0) then
@@ -118,13 +123,19 @@
              do j = 0,nf-1
                  if ( faces(j) .eq. iFc ) then
                     ind = j
+                    ref_ind_fc(iFt) = ind
+                    ref_fc(iFt) = iFc
+                    exit
                  endif
              enddo
-             ref_ind_fc(iFt) = ind
-             ref_fc(iFt) = iFc
-             exit
+             if (ind .ne. -1 ) exit
           endif
         enddo
+        
+        ! Check if face is assigned
+        if ( ind .eq. -1 ) then
+          call xerrab('b2agbs: no reference face assigned')
+        endif
       
       enddo
 
@@ -146,11 +157,13 @@
         cells = 0
         sc = m%ftCvP(iFt,1)
         nc = m%ftCvP(iFt,2)
+        cells = 0
         cells(0:nc-1) = m%ftCv(sc:sc+nc-1)
 
         ! Get poloidal faces in the tube
         sf = m%ftFcP(iFt,1)
         nf = m%ftFcP(iFt,2)
+        faces  = 0
         faces(0:nf-1) = m%ftFc(sf:sf+nf-1)
 
         ! Determine type of tube
@@ -161,6 +174,9 @@
         endif
 
         psi_max = 0.0_R8
+        cv_aligned = .false.
+        cv_done = .false.
+        fc_done = .false.
         do i = 0,nc-1
           ! Get cell
           iCv = cells(i)
@@ -171,8 +187,9 @@
           sv = m%cvVxP(iCv,1)
           nv = m%cvVxP(iCv,2)
           verts(0:nv-1) = m%cvVx(sv:sv+nv-1)
-          vpsi(0:nv-1) = g%vxFpsi(verts)
-          psi_max(i) = abs(maxval(vpsi) - minval(vpsi))
+          vpsi(0:nv-1) = g%vxFpsi(verts(0:nv-1))
+          psi_max(i) = abs(maxval(vpsi(0:nv-1)) 
+     &       - minval(vpsi(0:nv-1)))
 
           ! Determine aligned
           fcs = 0 
@@ -197,7 +214,10 @@
         enddo
   
         ! Get psi width of face in the tube
-        psif_max(0:nf-1) = psif(faces)
+        psif_max = 0
+        do j = 0,nf-1
+          psif_max(j) = psif(faces(j))
+        enddo
 
         ! Do the adjustement for the cells with proper width and alignment
         ! Loop over cells with aligned properties
@@ -224,15 +244,15 @@
 		 fc_done(k) = .true.                
                  if ( typef .eq. 1 )  then
                    ! Closed tube
-                   if ( k .ne. nc ) then
+                   if ( k .ne. nc-1 ) then
                     
                      call AdjustPitch(g,faces(k+1),pol_flux_ref)
                      fc_done(k+1) = .true.
 
                    else 
 
-                     call AdjustPitch(g,faces(1),pol_flux_ref)
-                     fc_done(1) = .true.
+                     call AdjustPitch(g,faces(0),pol_flux_ref)
+                     fc_done(0) = .true.
  
                    endif 
                  elseif ( typef .eq. 2 ) then
@@ -278,7 +298,7 @@
             call xerrab('b2agbs: not supported')
           else
             ! Get face with max psi
-            ind = maxloc(psif(pfaces(0:counter-1)),1)
+            ind = maxloc(psif(pfaces(0:counter-1)),1) - 1
             ref_face = pfaces(ind)
 
             pol_flux_ref = abs(g%fcBb(ref_face,0)*g%fcS(ref_face)
@@ -315,7 +335,7 @@
           
           ! Update fc_done and cv_done
           cv_done(ref_ind_cv(iFt)) = .true.
-          fc_done(ref_ind_fc(iFt)) = .true.
+          fc_done(ref_ind_cv(iFt)) = .true.
           fc_done(ref_ind_cv(iFt)+1) = .true. 
 
         endif 
@@ -328,11 +348,13 @@
 
              if ( fc_done(j) .eq. .true.) then
 
-                call propagate(g,m,cells,j,faces,
-     &       j+1,cv_done,fc_done,psif_max,nc,nf)
+                call propagate(g,m,cells(0:nc-1),j,faces(0:nf-1),
+     &       j+1,cv_done(0:nc-1),fc_done(0:nf-1),psif_max(0:nf-1),
+     &        nc,nf)
              else
 
-               call xerrab('b2agbs: Something wrong')
+               call xerrab
+     &    ('b2agbs: forward prop: fc_done of cv_done cells not done')
 
              endif 
 
@@ -343,18 +365,19 @@
 
         ! Backward propagation
         do  j = 1,nc-1
-           l = nc + 1 - j
+           l = nc - 1 - j
            if  (( cv_done(l) .ne. .true. )
      &        .and. ( cv_done(l+1) .eq. .true. ) ) then
 
              if ( fc_done(l+1) .eq. .true. ) then
 
-                call propagate(g,m,cells,l,faces,
-     &     l,cv_done,fc_done,psif_max,nc,nf)
+                call propagate(g,m,cells(0:nc-1),l,faces(0:nf-1),
+     &     l,cv_done(0:nc-1),fc_done(0:nf-1),psif_max(0:nf-1),nc,nf)
 
              else
 
-               call xerrab('b2agbs: Something wrong')
+               call xerrab
+     &    ('b2agbs: backward prop: fc_done of cv_done cells not done')
 
              endif
            endif
@@ -437,15 +460,18 @@
 *   ..input and output arguments
       type(geometry) :: g
       type(mapping) :: m
-      integer :: ncpt, nfpt, indc, indf, cells(0:m%nCv), faces(0:m%nFc)
-      logical :: cv_done(0:ncpt), fc_done(0:nfpt)
-      real(kind=R8) :: psif_max(0:nfpt)
+      integer :: ncpt, nfpt, indc, indf, cells(0:ncpt-1), 
+     &     faces(0:nfpt-1)
+      logical :: cv_done(0:ncpt-1), fc_done(0:nfpt-1)
+      real(kind=R8) :: psif_max(0:nfpt-1)
 
 
       ! Local variables
-      integer :: k, l, icv, nf, s, fcs_s(0:3), fcs_incl, i, fc
+      integer :: k, l, icv, nf, s, fcs_s(0:3), fcs_incl, i, fc,
+     &         fcs_incl_a(0:100), n_incl
       real(kind=R8) :: pol_flux_ref, pol_flux_ref_k2, pol_flux_ref_k1,
-     &                 pol_flux_ref_incl
+     &                 pol_flux_ref_incl, pol_flux_k1, pol_flux_k2,
+     &                 pol_flux_incl
       intrinsic abs, sign
 
 
@@ -461,20 +487,20 @@
         if (k .eq. l ) then
 
           ! Reference is faces(k+1)
-          pol_flux_ref = g%fcBb(faces(k+1),0)*g%fcS(faces(k+1))
-     &           *g%fcQalf(faces(k+1),0)
+          pol_flux_ref = abs(g%fcBb(faces(k+1),0)*g%fcS(faces(k+1))
+     &           *g%fcQalf(faces(k+1),0))
           call AdjustPitch(g,faces(k),pol_flux_ref) 
     
         elseif (k .lt. l ) then
 
           ! Reference is faces(k)
-          pol_flux_ref = g%fcBb(faces(k),0)*g%fcS(faces(k))
-     &           *g%fcQalf(faces(k),0)          
-          call AdjustPitch(g,faces(k),pol_flux_ref) 
+          pol_flux_ref = abs(g%fcBb(faces(k),0)*g%fcS(faces(k))
+     &           *g%fcQalf(faces(k),0))          
+          call AdjustPitch(g,faces(k+1),pol_flux_ref) 
          
         else
 
-          call xerrab('b2agbs: something wrong')
+          call xerrab('b2agbs: k and l indices not conform')
 
         endif
        
@@ -488,53 +514,63 @@
         s = m%cvFcP(icv,1)
         fcs_s = m%cvFc(s:s+nf-1)
         fcs_incl = 0
+        fcs_incl_a = 0
+        n_incl = 0
         do i = 0, nf-1
           fc = fcs_s(i)
           if ((fc .ne. faces(k)) .and. (fc .ne. faces(k+1))
      &        .and. (g%fcQalf(fc,0) .ne. 0.0_R8)) then
-            fcs_incl = fc
-            if (fcs_incl .ne. 0 ) exit
+            fcs_incl_a(n_incl) = fc
+            n_incl = n_incl + 1
+            !if (fcs_incl .ne. 0 ) exit
           endif 
         enddo
 
-        if ( fcs_incl .eq. 0 )  then
+        if ( n_incl .eq. 0 )  then
           ! Just propagate
           if (k .eq. l ) then
+
             pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
      &        *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))
             call AdjustPitch(g,faces(k),pol_flux_ref_k2)
+
           elseif (l .eq. k + 1) then
+
             pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
      &        *g%fcS(faces(k))*g%fcQalf(faces(k),0))
-            call AdjustPitch(g,faces(k+1),pol_flux_ref_k1)   
+            call AdjustPitch(g,faces(k+1),pol_flux_ref_k1) 
+  
           endif
 
 	  ! Indicate done faces and cells 
           fc_done(l) = .true.
           cv_done(k) = .true.          
         
-        else 
+        elseif ( n_incl .eq. 1 ) then
+          ! Get inclined face
+          fcs_incl = fcs_incl_a(0)
+
           ! Complex propagation
           if (k .eq. l) then
             ! Reference is faces(k+1) 
             if ( fc_done(l) .eq. .true. ) then
               ! Adjust the incline face
               ! Compression or expansion
-                pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+                pol_flux_k1 = abs(g%fcBb(faces(k),0)
      &           * g%fcS(faces(k)) * g%fcQalf(faces(k),0))
-                pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0) 
+                pol_flux_k2 = abs(g%fcBb(faces(k+1),0) 
      &           *g%fcS(faces(k+1)) * g%fcQalf(faces(k+1),0))
 
               if ( psif_max(k+1) .gt. psif_max(k)) then
 
                 ! Compression
-                pol_flux_ref = abs(pol_flux_ref_k2 - 
-     &             pol_flux_ref_k1)
+                pol_flux_ref = abs(pol_flux_k2 - 
+     &             pol_flux_k1)
                 
               
               else
                 ! Expansion
-                 pol_flux_ref = abs(pol_flux_ref_k1 - pol_flux_ref_k2)
+                 pol_flux_ref = abs(pol_flux_k1 - pol_flux_k2)
                  
               endif
 
@@ -545,33 +581,35 @@
 
 	      ! Adjust fc_done(l)
               ! compression or expansion
-              pol_flux_ref_incl = abs(g%fcBb(fcs_incl,0)
+              pol_flux_incl = abs(g%fcBb(fcs_incl,0)
      &          *g%fcS(fcs_incl)*g%fcQalf(fcs_incl,0))
-              pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
+              pol_flux_k2 = abs(g%fcBb(faces(k+1),0)
      &          *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))
 
               if (psif_max(k+1) .gt. psif_max(k)) then
                 ! Compression
-                pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+                pol_flux_k1 = abs(g%fcBb(faces(k),0)
      &           * g%fcS(faces(k))*g%fcQalf(faces(k),0))
 
-                pol_flux_ref_incl = pol_flux_ref_k2 
-     &           *pol_flux_ref_incl
-     &             /(pol_flux_ref_k1 + pol_flux_ref_incl)
-                pol_flux_ref_k1 = pol_flux_ref_k2
-     &           *pol_flux_ref_k1
-     &            /(pol_flux_ref_k1 + pol_flux_ref_incl)
+                pol_flux_ref_incl = pol_flux_k2 
+     &           *pol_flux_incl
+     &             /(pol_flux_k1 + pol_flux_incl)
+                pol_flux_ref_k1 = pol_flux_k2
+     &           *pol_flux_k1
+     &            /(pol_flux_k1 + pol_flux_incl)
 
                 call AdjustPitch(g,faces(k),pol_flux_ref_k1)
+                call AdjustPitch(g,fcs_incl,pol_flux_ref_incl)
 
               else
                 ! Expansion
-                 pol_flux_ref_incl = abs(pol_flux_ref_k2 
-     &             - pol_flux_ref_incl)
+                 pol_flux_ref_k1 = abs(pol_flux_k2 
+     &             + pol_flux_incl)
+		call AdjustPitch(g,faces(k),pol_flux_ref_k1)
 
               endif 
               
-              call AdjustPitch(g,fcs_incl,pol_flux_ref_incl)
+              
               
             endif
 
@@ -579,19 +617,19 @@
             ! Reference is faces(k)
             if (fc_done(k+1) .eq. .true. ) then
               ! Adjust inclined face
-              pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+              pol_flux_k1 = abs(g%fcBb(faces(k),0)
      &         *g%fcS(faces(k))*g%fcQalf(faces(k),0))
-              pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
+              pol_flux_k2 = abs(g%fcBb(faces(k+1),0)
      &         *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))
 
               if ( psif_max(k) .gt. psif_max(k+1) ) then
                 ! compression - situation 3
-                pol_flux_ref_incl = abs(pol_flux_ref_k1 
-     &            - pol_flux_ref_k2)
+                pol_flux_ref_incl = abs(pol_flux_k1 
+     &            - pol_flux_k2)
               else 
                 ! expansion - situation 2
-                pol_flux_ref_incl = abs(pol_flux_ref_k2 
-     &            - pol_flux_ref_k1)
+                pol_flux_ref_incl = abs(pol_flux_k2 
+     &            - pol_flux_k1)
               endif
               
               ! Adjust pitch
@@ -599,44 +637,50 @@
               
             else
               !  Adjust fc_done(k+1) and inclined face
-              pol_flux_ref_incl = abs(g%fcBb(fcs_incl,0)
+              pol_flux_incl = abs(g%fcBb(fcs_incl,0)
      &          *g%fcS(fcs_incl)*g%fcQalf(fcs_incl,0))
-              pol_flux_ref_k1 = abs(g%fcBb(faces(k),0)
+              pol_flux_k1 = abs(g%fcBb(faces(k),0)
      &         *g%fcS(faces(k))*g%fcQalf(faces(k),0))
 
               if (psif_max(k) .lt. psif_max(k+1)) then
                 ! expansion - situation 4
-                pol_flux_ref_k2 = abs(pol_flux_ref_incl 
-     &              + pol_flux_ref_k1)
+                pol_flux_ref_k2 = abs(pol_flux_incl 
+     &              + pol_flux_k1)
 
               else
                 ! compression - situation 1
-                pol_flux_ref_k2 = abs(g%fcBb(faces(k+1),0)
+                pol_flux_k2 = abs(g%fcBb(faces(k+1),0)
      &          *g%fcS(faces(k+1))*g%fcQalf(faces(k+1),0))   
 
-                pol_flux_ref_incl = pol_flux_ref_k1
-     &           *pol_flux_ref_incl
-     &           /(pol_flux_ref_k2 + pol_flux_ref_incl)
+                pol_flux_ref_incl = pol_flux_k1
+     &           *pol_flux_incl
+     &           /(pol_flux_k2 + pol_flux_incl)
+                pol_flux_ref_k2 = pol_flux_k1 * pol_flux_k2
+     &           /(pol_flux_k2 + pol_flux_incl)
 
                 call AdjustPitch(g,fcs_incl,pol_flux_ref_incl)             
  	      endif
              
-              call AdjustPitch(g,faces(k+1),pol_flux_ref_incl)
+              call AdjustPitch(g,faces(k+1),pol_flux_ref_k2)
 
             endif
 
           else
-            call xerrab('b2agbs: something wrong in propagation')
+            call xerrab
+     &   ('b2agbs: propagate: something wrong in forward propagation')
           endif
 
           ! Update fc_done and cv_done
           fc_done(l) = .true.
           cv_done(k) = .true.
-
+        elseif ( n_incl .gt. 1 ) then
+           write(*,*)'Warning: b2agbs: cells without aligned faces '//
+     &     'are not yet supported'
 	endif 
 
       else 
-        call xerrab('b2agbs: pentagons or higher not supported')
+        call xerrab
+     &   ('b2agbs: propagate: pentagons or higher not supported')
       endif 
 
       
