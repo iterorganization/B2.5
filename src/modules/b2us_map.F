@@ -11,7 +11,7 @@
      .          alloc_mapping_cf, dealloc_mapping_cf,
      .          read_mapping, write_mapping,
      .          init_mapping, get_version
-
+      
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
@@ -40,7 +40,9 @@
         integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces
         integer, allocatable :: cvReg(:)               ! Region numbers of the cells
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
+        integer, allocatable :: fcAligned(:)           ! Integer to indicate whether a face is aligned with the magnetic field
         logical, allocatable :: cvOnClosedSurface(:)   ! Logical to indicate whether a cell is on a closed flux surface
+        
 
         integer, allocatable :: bcCvP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcCv list, and its number of guard cells
         integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
@@ -133,6 +135,7 @@
       allocate (m%fcReg(m%nFc))
       allocate (m%cvReg(m%nCv))
       allocate (m%ftReg(m%nFt))
+      allocate (m%fcAligned(m%nFc))      
       allocate (m%cvOnClosedSurface(m%nCv))
 
 !      allocate (m%intfaceV(m%nFc,2))
@@ -214,9 +217,13 @@
       m%ftFc = 0
       m%ftFcP = 0
       m%cvFt = 0
+      m%fsFc = 0
+      m%fsFcP = 0
+      m%fcFs = 0
       m%fcReg = 0
       m%cvReg = 0
       m%ftReg = 0
+      m%fcAligned = 0      
       m%cvOnClosedSurface = .false.
 
 !      m%intfaceV = 0._R8
@@ -288,9 +295,13 @@
       deallocate (m%ftFc)
       deallocate (m%ftFcP)
       deallocate (m%cvFt)
+      deallocate (m%fsFc)
+      deallocate (m%fsFcP)
+      deallocate (m%fcFs)
       deallocate (m%fcReg)
       deallocate (m%cvReg)
       deallocate (m%ftReg)
+      deallocate (m%fcAligned)      
       deallocate (m%cvOnClosedSurface)
 
 !      deallocate (m%intfaceV)
@@ -1003,5 +1014,110 @@ cwdk  can be derived directly from data in that file
         call xerrab ('No '//trim(filename))
       endif
       end subroutine get_version
+
+
+**********************************************************************
+
+!> Computes additional connectivity data based
+!! on the connectivity data of the traduitoutb2us file
+      subroutine calc_add_connectivity(m)
+      implicit none
+
+      !!.. arguments
+      type(mapping) :: m
+
+      !!.. local variables
+      integer :: i, ic, ivx, ifc, n, vxFc_end, vxCv_end
+      integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), fch(:),
+     .                    indcvfc(:)
+      intrinsic pack, count
+
+      !!Read out fcVx, cvFc, cvFcP, cvVx and cvVxP
+      !!Construct vxCv, vxCvP, vxFcP, fcCv !(because of ghostcell, every face has two cells)
+  
+
+      !Construct vxFcP
+      allocate (indFc(2*m%nFc))
+      indFc(1:m%nFc)          = (/ (i, i=1,m%nFc) /)
+      indFc(m%nFc+1:2*m%nFc)    = (/ (i, i=1,m%nFc) /)
+
+      allocate (fh(2*m%nFc))
+      fh(1:m%nFc)             = m%fcVx(1:m%nFc,1)
+      fh(m%nFc+1:2*m%nFc)     = m%fcVx(1:m%nFc,2)
+
+      allocate (indCv(m%nCmxVx))
+      do ic = 1,m%nCv
+         indCv(m%cvVxP(ic,1):m%cvVxP(ic,1)+m%cvVxP(ic,2)-1) = ic
+      enddo
+
+      allocate (ch(m%nCmxVx))
+      ch(1:m%nCmxVx) = m%cvVx(1:m%nCmxVx)
+
+      m%vxFcP(1,1) = 1
+      m%vxCvP(1,1) = 1
+      do ivx = 1, m%nVx-1
+         m%vxFcP(ivx,2) = count (fh == ivx)
+         m%vxFcP(ivx+1,1) = m%vxFcP(ivx,1) + m%vxFcP(ivx,2)
+         if (m%vxFcP(ivx,2) > 0) then
+             m%vxFc(m%vxFcP(ivx,1):m%vxFcP(ivx+1,1)-1) =
+     .        pack(indFc,fh == ivx)
+         endif
+
+         m%vxCvP(ivx,2) = count(ch == ivx)
+         m%vxCvP(ivx+1,1) = m%vxCvP(ivx,1) + m%vxCvP(ivx,2)
+         if (m%vxCvP(ivx,2) > 0 ) then
+            m%vxCv(m%vxCvP(ivx,1):m%vxCvP(ivx+1,1)-1) =
+     .         pack( indCv, ch == ivx ) 
+         endif
+      enddo
+
+      ivx = m%nVx
+      m%vxFcP(ivx,2) = count(fh == ivx)
+      vxFc_end = m%vxFcP(ivx,1) + m%vxFcP(ivx,2) -1
+      if (m%vxFcP(ivx,2) > 0) then
+          m%vxFc(m%vxFcP(ivx,1):vxFc_end) =
+     .      pack( indFc, fh == ivx )
+      end if
+      m%vxCvP(ivx,2) = count(ch == ivx)
+      vxCv_end = m%vxCvP(ivx,1) + m%vxCvP(ivx,2) - 1
+      if (m%vxCvP(ivx,2) > 0) then
+         m%vxCv(m%vxCvP(ivx,1):vxCv_end) =
+     .     pack( indCv, ch == ivx )
+      endif
+
+      !Try analog for fcCv(nFc,2), similar to vxCv - check this in debugger
+
+      allocate (indcvfc(m%nCmxFc))
+      do ic = 1,m%nCv
+         indcvfc(m%cvFcP(ic,1):m%cvFcP(ic,1)+m%cvFcP(ic,2)-1) = ic
+      enddo
+
+      allocate (fch(m%nCmxFc))
+      fch(1:m%nCmxFc) = m%cvFc(1:m%nCmxFc)
+
+      !hier loop over de faces
+
+      do ifc = 1,m%nFc
+           n = count(fch == ifc)
+           if (n .eq. 2) then
+             m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
+           else
+             call xerrab 
+     .         ('calc_add_connectivity: Wrong # of cell per face')
+           endif
+      enddo
+
+
+      deallocate (indFc)
+      deallocate (indCv)
+      deallocate (indcvfc)
+      deallocate (fh)
+      deallocate (ch)
+      deallocate (fch)
+
+
+      end subroutine calc_add_connectivity
+
+**********************************************************************
 
       end module b2us_map

@@ -35,6 +35,7 @@
 
       contains
 
+*----------------------------------------------------------------------
       subroutine alloc_b2mod_indirect(nxd,nyd,nncutmax)
       implicit none
       integer nxd,nyd,nncutmax
@@ -70,10 +71,11 @@
       return
       end subroutine alloc_b2mod_indirect
 
+
       subroutine dealloc_b2mod_indirect
       implicit none
 
-      if(b2mod_indirect_allocated) then
+      if (b2mod_indirect_allocated) then
         deallocate(leftix)
         deallocate(leftiy)
         deallocate(rightix)
@@ -96,6 +98,7 @@
       return
       end subroutine dealloc_b2mod_indirect
 
+*----------------------------------------------------------------------
 ! For the ghost cell at position (ix,iy), get the face index
 ! on which the neighbour internal cell is connected
       integer function ghostGetBndFace(nx, ny, ix, iy)
@@ -397,7 +400,7 @@
       end function triangleArea
 
   !> Area of quadrangle given by vertex coordinates
-  !> The vertices must be in sequence!
+  !> The vertices must be in sequence! (=> structured)
       function quadArea( x0, y0, x1, y1, x2, y2, x3, y3 )
       implicit none
       real (kind=R8) :: quadArea
@@ -407,7 +410,7 @@
      .           TriangleArea(x2, y2, x3, y3, x0, y0)
 
       end function quadArea
-
+   
   !> Coordinates of centroid of a triangle given by vertex coordinates
       function triangleCentroid( x0, y0, x1, y1, x2, y2 )
       implicit none
@@ -458,5 +461,6 @@
  
       return
       end function averageVertex
+
 
       end module b2mod_indirect

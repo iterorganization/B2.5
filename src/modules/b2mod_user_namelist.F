@@ -407,3 +407,4 @@ c*** Set default values according to current species list
       end subroutine write_b2mod_user_namelist
 
       end module b2mod_user_namelist
+

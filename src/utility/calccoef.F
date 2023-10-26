@@ -116,6 +116,7 @@
         con0(iFc,0) = t0 + 0.5_R8*abs(flo(iFc,0)) + 
      &                t1 + 0.5_R8*abs(flo(iFc,1))
         con0(iFc,1) = t0*t01 + t1*t11
+
        enddo
 
       elseif (meth .eq. 3) then ! SOLPS4 continuity scheme
