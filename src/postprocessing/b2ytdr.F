@@ -10578,7 +10578,7 @@ cxpb as they no longer necessarily point to the same species
         write(99,'(1x,a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','
         if (n_spcsrf.gt.0) then
           write(99,'(1x,a,i2,a)') 'N_SPCSRF=',n_spcsrf,','
-          ii=minloc(l_spcsrf)
+          ii=minloc(abs(l_spcsrf))
           if (ii(1).eq.1) then
             is = 0
           else if (l_spcsrf(ii(1)).eq.0) then

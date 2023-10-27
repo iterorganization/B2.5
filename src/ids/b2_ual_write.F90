@@ -14,7 +14,7 @@
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
-!!      @note   More on the b2_ual_writers is available in SOLPS-GUI
+!!      @note   More on the b2_ual writers is available in SOLPS-GUI
 !!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
 !!      @note   More information on this b2_ual_write is available in SOLPS-GUI
 !!              documentation \b HOWTOs under section <b> 4.6 Put IDS and Get
@@ -266,7 +266,7 @@ program b2_ual_write
 !xpb Copy the IDS to a temporary location with the new DD and then bring it back
             tmp_run = run
             if (database.ne.'iter') tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                & 'idscp --setDatasetVersion'//                 &
                &       ' -si ',shot,' -ri ',run,               &

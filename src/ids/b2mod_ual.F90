@@ -655,7 +655,10 @@ contains
         logical, intent(in), optional :: doCreate
         logical, intent(in), optional :: useHdf5
         character(*), intent(in), optional :: nmlFile
-
+#ifdef IMAS
+        integer len_of_digits
+        external len_of_digits
+#endif
         !! Internal variables
 
         character(*), parameter :: NAMELIST_FILE = "ual.namelist"
@@ -665,6 +668,8 @@ contains
 #ifdef IMAS
         integer :: lStatus = 0
         character(32) :: lTreename = "ids"
+        character(13) :: hlp_frm
+        character(80) :: message
 #elif defined(ITM_ENVIRONMENT_LOADED)
         character(32) :: lTreename = "euitm"
 #else
@@ -723,17 +728,24 @@ contains
         end if
 
         !! establish UAL access
-        if( lDoCreate) then
+        if( lDoCreate ) then
 #ifdef IMAS
-            if( lUseHdf5) then
-# if UAL_MAJOR_VERSION < 4
-                call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, &
-                        &   lRefrun, idx)
+            if( lUseHdf5 ) then
+# if ( UAL_MAJOR_VERSION > 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 ) )
+                call imas_create_env(lTreename, lShot, lRun, lRefshot,   &
+                        &   lRefrun, idx, lUser, lTokamak, lDataversion, &
+                        &   lStatus)
+                call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
 # else
-                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+                write(hlp_frm,'(a,i1,a)') &
+                   &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
+                write(message,hlp_frm) &
+                   &  'HDF5 backend not supported with AL v', &
+                   &   AL_MAJOR_VERSION,'.',AL_MINOR_VERSION,'!'
+                call xerrab (message)
 # endif
             else
-                if( openEnv) then
+                if( openEnv ) then
                     call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion,    &
                         &   lStatus)
@@ -748,32 +760,38 @@ contains
                 end if
             end if
         else
-            if( lUseHdf5) then
-# if UAL_MAJOR_VERSION < 4
-                call imas_open_hdf5(lTreename, lShot, lRun, idx)
+            if( lUseHdf5 ) then
+# if ( UAL_MAJOR_VERSION > 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 ) )
+                call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
+                        &   lTokamak, lDataversion, lStatus)
+                call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
 # else
-                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+                write(hlp_frm,'(a,i1,a)') &
+                   &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
+                write(message,hlp_frm) &
+                   &  'HDF5 backend not supported with AL v', &
+                   &   AL_MAJOR_VERSION,'.',AL_MINOR_VERSION,'!'
+                call xerrab (message)
 # endif
             else
-                if( openEnv) then
+                if( openEnv ) then
                     call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
                         &   lTokamak, lDataversion, lStatus)
                     call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
                 else
 # if UAL_MAJOR_VERSION < 4
-                    call imas_open(lTreename, lShot, lRun, lRefshot, &
-                        &   lRefrun, idx)
+                    call imas_open(lTreename, lShot, lRun, idx)
 # else
                     call xerrab ('Must define username!')
 # endif
                 end if
             end if
 #elif defined(ITM_ENVIRONMENT_LOADED)
-            if( lUseHdf5) then
+            if( lUseHdf5 ) then
                 call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
             else
-                if( openEnv) then
+                if( openEnv ) then
                     call euITM_create_env(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion)
                 else
@@ -782,7 +800,7 @@ contains
                 end if
             end if
         else
-            if( lUseHdf5) then
+            if( lUseHdf5 ) then
                 call euITM_open_hdf5(lTreename, lShot, lRun, idx)
             else
                 if( openEnv) then
