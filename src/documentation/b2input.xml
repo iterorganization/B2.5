@@ -2476,7 +2476,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Compute transport coefficients based on k(-eps)-model. 
+					Compute transport coefficients based on k(-eps)-model.
 					If '0': transport coefficients not computed based on k(-eps)-model.
 					If '1': transport coefficients computed using k-model (i.e. based on kt).
 					If '2': transport coefficients computed using k-eps model (i.e. based on kt and zt). Warning: under development - expert use only!
@@ -2551,7 +2551,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Main switch to turn on the AFN model for hydrogenic neutrals. If this switch is turned on, some default values are changed (see description of the corresponding switches).  
+					Main switch to turn on the AFN model for hydrogenic neutrals. If this switch is turned on, some default values are changed (see description of the corresponding switches).
 				</description>
 			</switch>
 			<switch>
@@ -2575,7 +2575,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to 1, the coarse representation of the integrated TRIM reflection coefficients is used for the AFN boundary conditions, which is expected to be sufficient. In case you want to use the original fine representation, use b2stbr_afn_bcs_use_coarse = 0. However, the fine representation is only present for D on Be, C and W. 
+					When set to 1, the coarse representation of the integrated TRIM reflection coefficients is used for the AFN boundary conditions, which is expected to be sufficient. In case you want to use the original fine representation, use b2stbr_afn_bcs_use_coarse = 0. However, the fine representation is only present for D on Be, C and W.
 				</description>
 			</switch>
 			<switch>
@@ -2583,7 +2583,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_transport_afn, the switch is automatically set to 1. 
+					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_transport_afn, the switch is automatically set to 1.
 				</description>
 			</switch>
 			<switch>
@@ -2591,7 +2591,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					0: solving the total energy equation for all ion + (fluid) neutral species together; 1: solving the total energy equation without the contributions from hydrogenic neutrals. It is still assumed that the hydrogenic neutrals have the same temperature as the ions, i.e. tn=ti. (not recommended to turn on); 2: separate energy equation for the hydrogenic neutrals (tn.ne.ti). For simulations with hydrogenic mixtures and b2mn_tn_style = 2, a total energy equation for all hydrogenic neutrals together will be solved assuming tn for each hydrogenic neutral species.  
+					0: solving the total energy equation for all ion + (fluid) neutral species together; 1: solving the total energy equation without the contributions from hydrogenic neutrals. It is still assumed that the hydrogenic neutrals have the same temperature as the ions, i.e. tn=ti. (not recommended to turn on); 2: separate energy equation for the hydrogenic neutrals (tn.ne.ti). For simulations with hydrogenic mixtures and b2mn_tn_style = 2, a total energy equation for all hydrogenic neutrals together will be solved assuming tn for each hydrogenic neutral species.
 				</description>
 			</switch>
 			<switch>
@@ -2611,7 +2611,7 @@
 				<default>0.1</default>
 				<type>real</type>
 				<description>
-					Macroscopic length scale (in m) used to calculate the local Knudsen number. 
+					Macroscopic length scale (in m) used to calculate the local Knudsen number.
 				</description>
 			</switch>
 			<switch>
@@ -2651,7 +2651,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values. 
+					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values.
 				</description>
 			</switch>
 		</category>
@@ -3827,7 +3827,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Prohibited switch as of v3.2.0. Model now corresponds to b2mndt_style=1 option (SOLPS5.2).
+					Since v3.2.0, the physics model always corresponds to b2mndt_style=1 option (SOLPS5.2). Hence b2mndt_style=0 is no longer allowed.
+					If b2mndt_style=2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode.
+          B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also Tn and k-epsilon equations).
 				</description>
 			</switch>
 			<switch>
@@ -3968,7 +3970,7 @@
 				<type>integer</type>
 				<description>
 					If '1', flux limit to neutrals contribution to vsa0 - the viscosity is applied in b2tlv0.F. It is recommended '1'.
-					b2tlv0.F has the flux limit parameters &alpha; and &gamma; which are given by 'b2tlv0_alpha' and 'b2tlv0_gamma'. 
+					b2tlv0.F has the flux limit parameters &alpha; and &gamma; which are given by 'b2tlv0_alpha' and 'b2tlv0_gamma'.
 				</description>
 			</switch>
 			<switchgroup>
@@ -4051,6 +4053,7 @@
 				<name>b2npco_pcm.</name>
 				<description>
 					pcm0 specifies an additional under-relaxation factor that is applied to the velocity correction. It is required that 0.le.pcm0.and.0.le.pcm1.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 				<switch>
 					<name>b2npco_pcm0</name>
@@ -4069,6 +4072,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -4076,6 +4080,7 @@
 				<description>
 					pcm0 specifies an additional under-relaxation factor that is applied to the temperature correction.
 					It is required that 0.le.pcm0.and.0.le.pcm1.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 				<switch>
 					<name>b2npht_pcm0</name>
@@ -4094,6 +4099,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -4742,7 +4748,7 @@
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their isonuclear sequence.
 					Applies to B2.5 neutral fluid species.
-					If B2RECYC is not explicitly specified, the values from RECYC will be taken. 
+					If B2RECYC is not explicitly specified, the values from RECYC will be taken.
 				</description>
 			</switch>
 			<switch>
@@ -4809,8 +4815,8 @@
 				<name>STRASCLFL</name>
 				<default>1.0</default>
 				<type>real*8 array of length (NSTRAT)</type>
-				<description> 
-					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.     
+				<description>
+					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.
 				</description>
 			</switch>
 			<switch>
@@ -4819,38 +4825,38 @@
 				<type>character*2 array of length (NSTRAT)</type>
 				<description>
 					Contains the surface material for surface strata, used for AFN neutrals. Possible options:
-					'Be' (beryllium), 'C' (carbon), 'Fe' (iron), 'Mo' (molybdenum) and 'W' (tungsten).       
+					'Be' (beryllium), 'C' (carbon), 'Fe' (iron), 'Mo' (molybdenum) and 'W' (tungsten).
 				</description>
 			</switch>
 			<switch>
 				<name>ACCEL_ION</name>
 				<default>0</default>
 				<type>integer array of length (NSTRAT)</type>
-				<description> 
-					If 1, adding sheath acceleration for the ions hitting the boundary. Used for AFN boundary conditions.  
+				<description>
+					If 1, adding sheath acceleration for the ions hitting the boundary. Used for AFN boundary conditions.
 				</description>
 			</switch>
 			<switch>
 				<name>MAXW</name>
 				<default>1</default>
 				<type>integer array of length (NSTRAT)</type>
-				<description> 
-					Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.    
+				<description>
+					Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.
 				</description>
 			</switch>
 			<switch>
 				<name>MOL</name>
 				<default>0</default>
 				<type>integer array of length (NSTRAT)</type>
-				<description> 
-					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.    
+				<description>
+					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.
 				</description>
 			</switch>
 			<switch>
 				<name>HYB_TYPE</name>
 				<default>'M'</default>
 				<type>character*1 array of length (NSTRAT)</type>
-				<description> 
+				<description>
 					When HYB_TYPE='A', possibility to have automatic switching between fluid and kinetic recycling for the stratum for the advanced hybrid model. See description of use_auto_spatial_hyb. HYB_TYPE should be 'M' for all strata for multispecies simulations (ns &gt; 1).
 				</description>
 			</switch>
@@ -4858,8 +4864,8 @@
 				<name>E_FC</name>
 				<default>3.0</default>
 				<type>real*8</type>
-				<description> 
-					Franck-Condon energy assigned to the thermally released fraction of recycled hydrogen neutrals, used in the AFN boundary condition. It is assumed that thermally released molecules are dissociated immediately at the surface and get an energy E_FC (eV) and are emitted isotropically. 3.0 eV is the value typically used in the EIRENE input file.   
+				<description>
+					Franck-Condon energy assigned to the thermally released fraction of recycled hydrogen neutrals, used in the AFN boundary condition. It is assumed that thermally released molecules are dissociated immediately at the surface and get an energy E_FC (eV) and are emitted isotropically. 3.0 eV is the value typically used in the EIRENE input file.
 				</description>
 			</switch>
 			<switch>
@@ -4939,7 +4945,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model. 
+					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
 					If not specified, B2SPECIES_START = SPECIES_START.
 				</description>
 			</switch>
