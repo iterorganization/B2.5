@@ -420,8 +420,9 @@ c b2npmo with rxf = 0 and recompute fluxes.
       if (ncall_b2news_.eq.0) then
         call b2npmo (nCv, nFc, nVx, ns, ismain,
      &    switch, geo, mpg,
-     &    ncall_b2news_, b2news_solving(1), 0.0_R8,
-     &    st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
+     &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
+     &    st%pl, st%dv, st%rt, st%co, st%sr, st%psnc, st%psnl,
+     &    st_ext, ier0)
         do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -433,8 +434,9 @@ c b2npmo with rxf = 0 and recompute fluxes.
       endif
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
-     &  ncall_b2news_, b2news_solving(1), rxf1,
-     &  st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
+     &  ncall_b2news_, b2news_solving(1), rxf1, dtim,
+     &  st%pl, st%dv, st%rt, st%co, st%sr, st%psnc, st%psnl,
+     &  st_ext, ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo')
 *   ..set nep
 *     (= ne before continuity update)
@@ -483,8 +485,8 @@ csw 16oct2012 init ier0
           if(new_matrix.or..true.) call restart_ma28_for_us
           call b2npco (nCv, nFc, nVx, mpg%nnreg(0),                       !srv 22.05.18
      &      b2news_solving(2), solvedum, b2news_solving(1), solvedm2,
-     &      ncall_b2news_, is, rxf0, switch, geo, mpg,
-     &      st%pl, st%dv, st%sr, ier0)
+     &      ncall_b2news_, is, rxf0, dtim, switch, geo, mpg,
+     &      st%pl, st%dv, st%sr, st%psnc, st%psnl, ier0)
           call xertst (ier0.eq.0, 'error return from b2npco')
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 !        endif                                                            !srv 13.10.06 } 22.05.18
@@ -696,7 +698,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,st%dv%ue)
       do is=0,ns-1
-        st%dv%ue = st%dv%ue + 
+        st%dv%ue = st%dv%ue +
      &           st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
       enddo
       st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
@@ -707,7 +709,8 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ncall_b2news_, ismain, b2news_solving, solveee, solveei,         !srv 22.05.18
      &  solveen, solveet, solvepo, solvemo, solvekt, solvezt, rxf3,
-     &  st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)
+     &  dtim, st%pl, st%dv, st%co, st%rt, st%sr, st%srw,
+     &  st%psnc, st%psnl, st_ext, ier0)
 csw 16aug2011 init potential
       if(switch%pot_eq.eq.0) st%pl%po=0.0_R8                             !srv 13.07.05
       if(switch%pot_eq.eq.2) st%pl%po=3.1_R8*st%pl%te/qe
@@ -738,8 +741,8 @@ c   recompute particle fluxes
         if(new_matrix) call restart_ma28_for_us
         call b2npco (nCv, nFc, nVx, mpg%nnreg(0),                     !srv 22.05.18
      &    b2news_solving(2), solvedum, b2news_solving(1), solvedm2,
-     &    ncall_b2news_, is, rxf0, switch, geo, mpg,
-     &    st%pl, st%dv, st%sr, ier0)
+     &    ncall_b2news_, is, rxf0, dtim, switch, geo, mpg,
+     &    st%pl, st%dv, st%sr, st%psnc, st%psnl, ier0)
         last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
         call xertst (ier0.eq.0, 'error return from b2npco')
        enddo

@@ -2,23 +2,23 @@
 *.specification
 
       subroutine b2npco (nCv, nFc, nVx, nregionv, solving,               !srv 22.05.18
-     &  solvcreg, ua_solve, solvmreg, itcnt, isb, rxf, switch, 
-     &  geo, mpg, pl, dv, sr, ierr)
+     &  solvcreg, ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch,
+     &  geo, mpg, pl, dv, sr, psnc, psnl, ierr)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_numerics_namelist                                     !srv 07.07.21 {
+     & , only : dtco, time_factor                                     !srv 07.07.21 }
 !WG_TODO      use b2mod_balance
 !WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
-      use b2mod_ad
-     & , only : ncall_b2npco
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2upco, ncall_b2usco, my_out_folder,
+     & , only : ncall_b2npco, ncall_b2upco, ncall_b2usco, my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                               !srv 27.06.21
 #endif
@@ -31,9 +31,10 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2Source), intent (in) :: sr
+      type (B2Source), intent (inout) :: sr
+      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       real (kind=R8) ::
-     *  rxf
+     *  rxf, dtim
       logical solving, solvcreg(0:nregionv), ua_solve,                   !srv 22.05.18
      *  solvmreg(0:nregionv)
 *   ..input/output arguments
@@ -71,6 +72,10 @@
       character chns*3                                             !srv 04.07.08
       real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv)
+      real (kind=R8), save ::
+     *   rxg
+      logical warning
+      integer :: iCv
 *   ..procedures
       external xertst, ipgetr
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
@@ -99,6 +104,31 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2npco')
+*   ..set internal parameters on first call
+      if (ncall_b2npco.eq.0) then
+        if(switch%b2mndt_style.eq.2) then
+          rxg = huge(1.0_R8)
+          if (switch%b2npco_pcm0.gt.0.0_R8) then
+            call xerrab('b2npco_pcm0 must be 0 for time-dependent mode')
+          endif
+          if (switch%b2npco_pcm1.gt.0.0_R8) then
+            call xerrab('b2npco_pcm1 must be 0 for time-dependent mode')
+          endif
+          warning = .false.
+          do iCv=1, nCv
+            warning = warning .or.
+     &        rxf*dtco(isb,mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+          enddo
+          if (warning) then
+            write(6,'(a,i3,a)')
+     &        'rxf*dtco*time_factor for species ',isb,' should be 1 !'
+            write(6,*) 'Time derivative terms may be inacurrate !'
+          end if
+        else
+          rxg = switch%b2npco_rxg
+        endif
+      endif
+
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
@@ -122,6 +152,16 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_particles(nx,ny,isb,nb)
       endif
 #endif
+
+      if(switch%b2mndt_style.eq.2) then                                 !srv 07.07.21 {
+*  .. calculate time-dependent source
+        call b2scdt (nCv, isb, dtim,
+     &   geo%cvVol, psnl%na(:,isb), switch, mpg, sr%snadt(1,0,isb))
+*  .. add contribution from time-dependent source
+        sr%sna(:,:,isb) = sr%sna(:,:,isb) + sr%snadt(:,:,isb)
+      endif                                                             !srv 07.07.21 }
+
+
 * ..particle balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
@@ -133,18 +173,22 @@ cdjm Jan2017 update particle source components for balance
         call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
        endif
+       if(switch%b2mndt_style.eq.2) then
+         dv%resco(:,isb) = dv%resco(:,isb) +
+     &     (pl%na(:,isb)-psnl%na(:,isb))*sr%snadt(:,1,isb)
+       endif
       endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
         call b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,    !srv 13.10.06 26.09.12
-     &   solvcreg, itcnt, switch%b2npco_rxg, pl%na(:,isb), dv%pa(:,isb),
+     &   solvcreg, itcnt, rxg, pl%na(:,isb), dv%pa(:,isb),
      &   sr%sna(:,1,isb), dv%flob, dv%conb,
      &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
-        call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv, 
+        call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
      &   ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
-     &   dv%pcca(:,0,isb), 
+     &   dv%pcca(:,0,isb),
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb)
       endif                                                             !srv 22.05.18
       if (switch%b2npco_iout.ne.0) then                                 !srv 12.07.02 {
@@ -175,7 +219,7 @@ cdjm Jan2017 update particle source components for balance
      .    'b2npco_fna_mdf_th'//chns)
         call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      .    'b2npco_fna_mdf_r'//chns)
-      endif                                                          
+      endif
 
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
