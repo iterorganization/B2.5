@@ -161,7 +161,8 @@
       if (ncall_b2sral.eq.0) then                                              !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,ns,
-     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .      switch%b2mndt_style)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -180,7 +181,8 @@
         do while(catch_up)
           write(*,*) 'b2sral: catching up ...'
           call read_b2mod_numerics_namelist(nCv,ns,
-     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .      switch%b2mndt_style)
           call write_b2mod_numerics_namelist
           if(numerics_time_mod.gt.0.0_R8) then
             catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
@@ -213,7 +215,8 @@
           if(numerics_time_mod.gt.0.0_R8)
      >     b2sral_elm_count=int(tim/numerics_time_mod)
           call read_b2mod_numerics_namelist(nCv,ns,
-     .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .     switch%b2mndt_style)
           call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb
