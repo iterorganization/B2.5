@@ -19,6 +19,9 @@ LINK_MOD =
 INCMOD = -I
 
 FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
+FCOPTS += -mprefer-vector-width=512
+endif
 ifdef SOLPS_DEBUG
 FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ffpe-trap=overflow -ftrapv
 else
@@ -79,13 +82,17 @@ ifndef SOLPS_CPP
       IMAS_PKG_LIST += amns
     endif
     ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
-      ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+      ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
         IMAS_PKG_LIST += ggd
       else
-        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-          LD_GGD ?= -lggd-gfortran
+        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+          IMAS_PKG_LIST += ggd
         else
-          IMAS_PKG_LIST += imas-lowlevel
+          ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+            LD_GGD ?= -lggd-gfortran
+          else
+            IMAS_PKG_LIST += imas-lowlevel
+          endif
         endif
       endif
     endif
