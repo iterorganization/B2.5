@@ -1418,7 +1418,7 @@ c           Safeguard for multiplicative rescale schemes:
      .           na_feedback_target(ispecies) / na_feedback_current
 
             case (7) ! combination of pure rescaling and rescaling slowed by tanh(log(x))
-                     ! linear rescaling if |na_feedback_rescale - 1.| >= na_feedback_alpha
+                     ! linear rescaling if |na_feedback_rescale - 1.| >= na_feedback_gamma
                      ! otherwise tanh slowing is applied {2**(tanh(log(x)/b)*log(a)/log(2))}
                       
               if(ncall.eq.0) then
@@ -1427,16 +1427,16 @@ c           Safeguard for multiplicative rescale schemes:
      &             'combined pure rescale and tanh_log_rescale ',
      &             'for sequence ',
      &              ispecies+1
-                if((na_feedback_alpha(ispecies).lt.0.0_R8) .or.
-     &             (na_feedback_alpha(ispecies).gt.1.0_R8))
-     .            na_feedback_alpha = 0.01_R8
+                if((na_feedback_gamma(ispecies).lt.0.0_R8) .or.
+     &             (na_feedback_gamma(ispecies).gt.1.0_R8))
+     .            na_feedback_gamma = 0.01_R8
               endif
 
               na_feedback_rescale =
      &          (na_feedback_target(ispecies) /
      &          na_feedback_current)
               if(abs(na_feedback_rescale-1.0_R8).lt.
-     &           na_feedback_alpha(ispecies))
+     &           na_feedback_gamma(ispecies))
      .          na_feedback_rescale = 2.0_R8 **
      .           (tanh(log(na_feedback_rescale)/
      .           na_feedback_beta(ispecies))*
@@ -1454,9 +1454,9 @@ c           Safeguard for multiplicative rescale schemes:
      &             'scaled with pumping and seeding balance ',
      &             'for sequence ',
      &              ispecies+1
-                if((na_feedback_alpha(ispecies).lt.0.0_R8) .or.
-     &             (na_feedback_alpha(ispecies).gt.1.0_R8))
-     .            na_feedback_alpha = 0.01_R8
+                if((na_feedback_gamma(ispecies).lt.0.0_R8) .or.
+     &             (na_feedback_gamma(ispecies).gt.1.0_R8))
+     .            na_feedback_gamma = 0.01_R8
 #ifdef B25_EIRENE
                 if (use_eirene.eq.0) then
 #endif
@@ -1474,7 +1474,7 @@ c           Safeguard for multiplicative rescale schemes:
      &          (na_feedback_target(ispecies) /
      &          na_feedback_current)
               if(abs(na_feedback_rescale-1.0_R8).lt.
-     &           na_feedback_alpha(ispecies))
+     &           na_feedback_gamma(ispecies))
      .          na_feedback_rescale = 2.0_R8 **
      .           (tanh(log(na_feedback_rescale)/
      .           na_feedback_beta(ispecies))*
