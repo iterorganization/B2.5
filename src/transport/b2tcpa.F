@@ -11,10 +11,14 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2tcpa
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tcpa, ncall_b2xehx
+     & , only : ncall_b2xehx
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -79,7 +83,7 @@
      &                               calf(:,0)*dtep)*switch%prl_cur
         if(switch%b2sigp_style.eq.2) then
           call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)
-          call b2xpic (nCv, ns, mpg, qe, rza, geo%cvBb, na, ua, zeff, 
+          call b2xpic (nCv, ns, qe, rza, geo%cvBb, na, ua, zeff,
      &      st_ext, fch_pi_c)
           call b2xpif (nCv, nFc, switch, geo, mpg, fch_pi_c, fch_pi_f)
         else

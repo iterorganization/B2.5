@@ -25,6 +25,7 @@ c     File names will be appended with "*_st.dat".
       integer ic
       integer, save :: ncall = 0
       integer, save :: iappend = 0, ndigits = 6
+      external ipgeti, xertst
 
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)

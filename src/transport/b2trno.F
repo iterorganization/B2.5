@@ -13,6 +13,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2trno
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_transport_namelist
@@ -28,10 +31,11 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2trno, ncall_b2tqna,
+     &          ncall_b2tqna,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -356,7 +360,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
             co%chci = co%chci + co%chcb(:,:,is)
           endif
         endif
-        if (is_neutral(is).and.nint(zn(is)).eq.1) then              !! hcn for hydrogenic atoms
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then             !! hcn for hydrogenic atoms
          co%chcn = co%chcn + co%chcb(:,:,is)
         endif
       enddo 
@@ -434,21 +438,21 @@ c the logic statements below could be simplfied but for now we go for readabilit
      &                           'b2trno_dnahz_th'//chns)
         call my_out_us(70,nFc,1,co%cdnahz(1,1,is),
      &                           'b2trno_dnahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cdpahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cdpahz(1,0,is),
      &                           'b2trno_cdpahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cdpahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cdpahz(1,1,is),
      &                           'b2trno_cdpahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvlahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvlahz(1,0,is),
      &                           'b2trno_cvlahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvlahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvlahz(1,1,is),
      &                           'b2trno_cvlahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvsahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),
      &                           'b2trno_cvsahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvsahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),
      &                           'b2trno_cvsahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvmahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvmahz(1,0,is),
      &                           'b2trno_cvmahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvmahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvmahz(1,1,is),
      &                           'b2trno_cvmahz_r'//chns)
         if (flux_limit_style.eq.2) then                                 !srv 07.12.15 {
          call my_out_us(70,nFc,1,co%chcb(1,0,is),

@@ -1,7 +1,7 @@
       module b2mod_astra_to_b2                                !srv 28.07.11 {
        use b2mod_types
        implicit none
-       
+
        integer, save :: ny_astra = 0                          ! number data points from ASTRA
        real (kind=R8), save :: Ratb   = 0.0_R8                ! ASTRA transport barrier        [m]
        real (kind=R8), save :: RTOR                           ! ASTRA                          [m]
@@ -18,8 +18,8 @@
        real (kind=R8), allocatable, save :: Rmajc_astra(:)    ! major radius                        [m]
        real (kind=R8), allocatable, save :: a_astra(:)        ! major radius                        [m]
        real (kind=R8), allocatable, save :: rho_astra(:)      ! major radius                        [m]
-       real (kind=R8), allocatable, save :: PsiN_astra(:)     ! major radius                         
-       real (kind=R8), allocatable, save :: sqrtPsiN_astra(:) ! major radius                         
+       real (kind=R8), allocatable, save :: PsiN_astra(:)     ! major radius
+       real (kind=R8), allocatable, save :: sqrtPsiN_astra(:) ! major radius
        real (kind=R8), allocatable, save :: vol_astra(:)      ! volume                              [m**3]
        real (kind=R8), allocatable, save :: ne_astra(:)       ! electron density                    [1/m**3]
        real (kind=R8), allocatable, save :: te_astra(:)       ! electron temperature                [keV]
@@ -41,7 +41,7 @@
        real (kind=R8), allocatable, save :: PiNB_astra(:)     ! ion NB source                       [MW/m^3]
        real (kind=R8), allocatable, save :: inv_hi_astra(:)   ! inverse Kaveeva ions heat conduct.  [s/m**2]
 
-       real (kind=R8), allocatable, save :: bbaverage2(:)     ! 
+       real (kind=R8), allocatable, save :: bbaverage2(:)     !
        real (kind=R8), allocatable, save :: sheNB_astra(:,:,:)
        real (kind=R8), allocatable, save :: shiNB_astra(:,:,:)
 
@@ -109,7 +109,7 @@
        inv_hi_astra = 0.0_R8
        write (*,*) 'Allocated space for b2mod_astra_to_b2'
        end subroutine alloc_b2mod_astra_to_b2
-       
+
        subroutine dealloc_b2mod_astra_to_b2
 
        deallocate(Rmaj_astra)
@@ -174,12 +174,12 @@
      &   SeNBI_astra(iy), Pe_astra(iy), Pi_astra(iy), D_astra(iy),
      &   chi_e_astra(iy), chi_i_astra(iy), chi_N_astra(iy),
      &   qi_neo_astra(iy), Vcovv_astra(iy), PeNB_astra(iy),
-     &   PiNB_astra(iy) 
+     &   PiNB_astra(iy)
          ny_astra = ny_astra +1
        enddo
 
   100  write(*,*) ny_astra,' lines from astra_to_b2 have been read'
-*   ..the simplest linear interpolation   
+*   ..the simplest linear interpolation
        do iy = 1, ny_astra-1
         b(iy)=(Rmaj_astra(iy)-Rmaj_astra(iy-1))/
      &           (a_astra(iy)-a_astra(iy-1))
@@ -187,7 +187,7 @@
        b(ny_astra) = b(ny_astra-1)
        c = 0.0e0_R8
        d = 0.0e0_R8
-!       do i = -1, n 
+!       do i = -1, n
 !        fun(i) = dseval(ny_astra, coord(i), a_astra, Rmaj_astra, b, c, d)
 !        write(*,*) coord(i), fun(i)
 !       enddo
@@ -273,7 +273,7 @@ c   20   format(117x,e13.5,130x,2e13.5)
      &   SeNBI_astra(iy), Pe_astra(iy), Pi_astra(iy), D_astra(iy),
      &   chi_e_astra(iy), chi_i_astra(iy), chi_N_astra(iy),
      &   qi_neo_astra(iy), Vcovv_astra(iy), PeNB_astra(iy),
-     &   PeNB_astra(iy), iy=-1,ny_astra-1) 
+     &   PeNB_astra(iy), iy=-1,ny_astra-1)
 
        write(nwrite,30) 'RTOR =',RTOR
        write(nwrite,30) 'ZRD45=',ZRD45

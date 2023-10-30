@@ -12,25 +12,29 @@
       use b2us_plasma
 !WG_TODO      use b2mod_balance
 !WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+      use b2mod_ad
+     & , only : ncall_b2npco
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2npco, ncall_b2upco, ncall_b2usco, my_out_folder,
+     & , only : ncall_b2upco, ncall_b2usco, my_out_folder,
 #ifdef WG_DEBUG
-     &          my_out_sf,                                                   !srv 27.06.21
+     &          my_out_sf,                                               !srv 27.06.21
 #endif
      &          ncall_b2ursc
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, nregionv, itcnt, isb                            !srv 05.07.08
+      integer nCv, nFc, nVx, nregionv, itcnt, isb                        !srv 05.07.08
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Source), intent (in) :: sr
       real (kind=R8) ::
      *  rxf
-      logical solving, solvcreg(0:nregionv), ua_solve,                       !srv 22.05.18
+      logical solving, solvcreg(0:nregionv), ua_solve,                   !srv 22.05.18
      *  solvmreg(0:nregionv)
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
@@ -123,10 +127,10 @@ cdjm Jan2017 update particle source components for balance
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
        if (switch%mdf_fnb.eq.0) then
-        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb),
+        call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna(:,:,isb), dv%resco(:,isb))
        else
-        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb),
+        call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
        endif
       endif                                                             !srv 22.05.18

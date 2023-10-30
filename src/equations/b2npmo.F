@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
+      subroutine b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
       use b2mod_types
@@ -23,20 +23,24 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+      use b2mod_ad
+     & , only : b2npmo_solvedum, ncall_b2npmo
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : b2npmo_solvedum, ncall_b2npmo, ncall_b2usmo,
+     & , only : ncall_b2usmo,
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
      &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
 #ifdef WG_DEBUG
      &          my_out_sf,                                             !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0, itcnt                !srv 13.01.17
+      integer nCv, nFc, nVx, ns, ismain, itcnt                         !srv 13.01.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -398,7 +402,7 @@ c    ..compare matrices
 *    ..compute correction
          pb1 = pb !csc to avoid aliasing in Tapenade
          rob1 = rob !csc to avoid aliasing in Tapenade
-         call b2usmo (nCv, nFc, nVx, is, switch, geo, mpg, mpg%nnreg(0),
+         call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &     b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, rob1, pb,
      &     pb1, pl%ua(:,is), smb,
      &     flcb, cvcb, dv%resmo(:,is),  ctcfb, dv%corua(:,is),
@@ -456,7 +460,7 @@ c     ..compare 9-pt stencil matrices
         end do
         if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
-        call b2usmo (nCv, nFc, nVx, ns, switch, geo, mpg, mpg%nnreg(0),
+        call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &    solvemt, itcnt, switch%b2npmo_rxg, ro, rz, pr, pz, wrk0,
      &    smt, flct, cvct,
      &    dv%resmt, ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')
@@ -496,8 +500,7 @@ c     ..compare 9-pt stencil matrices
         do is = 0, ns-1
           do iCv = 1, nCv
             if (.not.is_neutral(is).or.switch%tn_style.le.1.or.
-     .         (switch%tn_style.eq.2.and.
-     .         (nint(zn(is)).ne.1.or.is.ne.ismain0))) then
+     .         (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
               cst=sqrt(pz(iCv)/rz(iCv))                                 !iyv 03.02.14
             else
               cst=sqrt(pl%tn(iCv)/(mp*am(is)))

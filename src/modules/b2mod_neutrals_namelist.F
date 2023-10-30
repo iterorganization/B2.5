@@ -40,16 +40,17 @@ cank }
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_parmmod
-     &    , only : nlim, nsts, nlimps
+     & , only : nlim, nsts, nlimps
 #else
       use parmmod        ! IGNORE
-     &    , only : nfl, natm, nmol, nion, nlim, nsts, nlimps
+     & , only : nfl, natm, nmol, nion, nlim, nsts, nlimps
       use braeir         ! IGNORE
-     &    , only : itsput_chemical, issput_chemical, igass_chemical,
-     &             chemical_sputter_yield, fchar_chemical
+     & , only : itsput_chemical, issput_chemical, igass_chemical,
+     &          chemical_sputter_yield, fchar_chemical
       use eirdiag        ! IGNORE
-     &    , only : nnatmi, nnmoli, nnioni, nnstsi
+     & , only : nnatmi, nnmoli, nnioni, nnstsi
       use ceirsrt        ! IGNORE
 #endif
       use eirmod_solps
@@ -77,7 +78,7 @@ cank }
      *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
      1   gpfc(:,:), gpdata(:,:,:), time_dep_puff_param(:,:),
-     2   RC_FACE_ORI(:,:)
+     2   RC_FACE_ORI(:,:), STRASCLFL(:)
 #if ( !defined(NO_B2_CHEM_SPUT) && !defined(SOLPS4_3) )
       real (kind=R8), allocatable, save ::
      *   chemical_sputter_yield(:)
@@ -136,6 +137,7 @@ cank }
       real (kind=R8), save :: gpdata(100,2,NSTRAID)
       real (kind=R8), save :: time_dep_puff_param(10,NSTRAID)
       real (kind=R8), save :: RC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NSTRAID)
+      real (kind=R8), save :: STRASCLFL(NSTRAID)
       character*16, save ::
      *   textan(0:DEF_NATM-1),
      *   textmn(0:DEF_NMOL-1),
@@ -248,7 +250,8 @@ csw 21feb2012
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
      .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case,
      .  e_fc,      !mb Franck-Condon energy contribution
-     . accel_ion   !mb flag for ion acceleration through sheath potential
+     .  accel_ion, !mb flag for ion acceleration through sheath potential
+     .  strasclfl
 
       interface read_neutrals_namelist
         module procedure read_neutrals_namelist_st
@@ -260,7 +263,7 @@ csw 21feb2012
       subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
      &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_b2cmpa
       implicit none
       integer, intent(in) :: nxd, nyd, nsd,
@@ -339,6 +342,7 @@ csw 21feb2012
       allocate(msns(2,nstra_in))
       allocate(accel_ion(NSTRAID))
       allocate(textan(0:natm_in-1))
+      allocate(STRASCLFL(NSTRAID))
       if (nmol_in.gt.0) allocate(textmn(0:nmol_in-1))
       if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
@@ -348,8 +352,8 @@ csw 21feb2012
 #ifdef WG_TODO
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
-      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
 #endif
+      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write (*,*) ' natm_id,natmid ',natm_in, natmid
       call xertst (natm_in.le.NATMID, 'faulty parameter natm_in')
       call xertst (nmol_in.le.NMOLID, 'faulty parameter nmol_in')
@@ -500,7 +504,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       do while (is0.lt.nsd)
         is = is0
         ispecies = ispecies + 1
-        do while (zn(is).eq.zn(is0).and.
+        do while (nint(zn(is)).eq.nint(zn(is0)).and.
      &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.nsd)
           is = is + 1
           if (is.eq.nsd) exit
@@ -514,6 +518,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         latmscl(ispecies)=ispecies
         is0 = is
       enddo
+      strasclfl = 1.0_R8
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i4)'
       write(*,hlp_frm) 'b2espcr : ',b2espcr(0:nsd-1)
       write(*,hlp_frm) 'b2eatcr : ',b2eatcr(0:nsd-1)
@@ -602,6 +607,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(ksns)
       deallocate(msns)
       deallocate(textan)
+      deallocate(strasclfl)
       if (allocated(textmn)) deallocate(textmn)
       if (allocated(textin)) deallocate(textin)
 #ifndef NO_B2_CHEM_SPUT
@@ -920,6 +926,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
      .     'time_dep_puff_func set for a non-puff stratum')
           endif
         endif
+        call xertst (0.0_R8.le.strasclfl(istra), 'faulty input strascl')
       enddo
       do is = 0, ns-1
         call xertst(1.le.b2espcr(is).and.b2espcr(is).le.nspecies,
@@ -1253,10 +1260,10 @@ c.. Test consistency with physical edges within the computational domain
 
       subroutine read_neutrals_namelist_us(ns, m, switch, dotest)
       use b2mod_wall
-     & ,only : track_index, ntrack, track_species
+     & , only : track_index, ntrack, track_species
       use b2mod_indirect
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
       use b2us_map
@@ -1328,7 +1335,12 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
 cwdk    for multispecies or spatially hybrid cases,
 cwdk    could have multiple recycling strata per boundary;
 cwdk    conservative estimate: assume that there might be one stratum per fluid
-        m%mxnRc = ns*count(m%fcLbl /= 0)
+cwvu    for (advanced) spatially hybrid, might need even more.
+        if (switch%spatial_hybrid.eq.0) then !! default, no spatial hybrid
+          m%mxnRc = ns*count(m%fcLbl /= 0)
+        else 				     !! in case of spatially hybrid neutrals, some neutral strata may be defined twice 
+          m%mxnRc = 3*ns*count(m%fcLbl /= 0)
+        endif
         call alloc_mapping_rc (m)
         m%rcFcP = 0
 
@@ -1399,14 +1411,14 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
 c
       if(chemical_erosion_redep_fac.ne.1.0_R8)
      * write(*,*)
-     1 'Note: chemical_erosion_redep_fac = ',
-     2 chemical_erosion_redep_fac
+     1  'Note: chemical_erosion_redep_fac = ',
+     2   chemical_erosion_redep_fac
       if(chemical_erosion_be_fac)
      1 write(*,*) 'Note: suppression of chemical sputtering by Be ',
-     2 'is active with parameters ',
-     3 chemical_erosion_be_fac_a,
-     4 chemical_erosion_be_fac_b,
-     5 chemical_erosion_be_fac_c
+     2  'is active with parameters ',
+     3   chemical_erosion_be_fac_a,
+     4   chemical_erosion_be_fac_b,
+     5   chemical_erosion_be_fac_c
 c
       do istra = 1, nstrat
         do is = 1, nnatmi
@@ -1426,10 +1438,10 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
 !   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
         if (b2species_start(ist).eq.-100) then
-        b2species_start(ist) = species_start(ist)
+          b2species_start(ist) = species_start(ist)
         endif
         if (b2species_end(ist).eq.-100) then
-        b2species_end(ist) = species_end(ist)
+          b2species_end(ist) = species_end(ist)
         endif
         do is = 0, ns-1
           if (b2recyc(is,ist).lt.0.0_R8) then
@@ -1542,10 +1554,9 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
             end do
           end if
         endif
-        if (old_style(istra))
-     .   call xertst (rcstart(istra).le.rcend(istra),
-     .   'faulty inputs rcstart > rcend')
 #endif
+        call xertst (rcstart(istra).le.rcend(istra),
+     .   'faulty inputs rcstart > rcend')
         call xertst (maxval(targsp(istra,:)).lt.ns,
      .   'faulty inputs targsp > ns')
         call xertst (targsp(istra,1).ge.-1,
@@ -2123,16 +2134,15 @@ c.. Test consistency with physical edges within the computational domain
 
 ***********************************************************************
 
-      subroutine conv_rcparms (nx, ny, ns, m, g)
+      subroutine conv_rcparms (m)
       use b2mod_indirect
       implicit none
-      integer :: nx, ny, ns, istra, istrac, instra,
+      integer :: istra, istrac, instra,
      .           noss, iss, indss, idb
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       integer :: minlbl(nstrat), maxlbl(nstrat)
       character(1) :: lchar(nstrat)
       type (mapping), intent (inout) :: m
-      type (geometry), intent (inout) :: g
 #ifndef F2003
       integer newunit
       external newunit
@@ -2372,18 +2382,17 @@ cwdk also need to correct for degenerate faces?
 
       end subroutine rc_to_struct
 
-
-
 ***********************************************************************
 
       subroutine write_rcparms (ns, m)
       use b2mod_b2cmpa
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: istra, iout, is, i
+      integer :: ii(1)
       character(1) :: ap =''''
-      character(10) :: new_neutrals_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -2396,7 +2405,7 @@ cwdk also need to correct for degenerate faces?
       open(unit=iout,file='b2us.neutrals.parameters')
 #endif
 
-      call cfverw(iout,new_neutrals_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&NEUTRALS'
       write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_CPU = ',eirene_step_cpu
@@ -2468,6 +2477,9 @@ cwdk also need to correct for degenerate faces?
      .   'accel_ion= ',(accel_ion(is),',',is =1,nstrai)
 
       write (iout,'(1x,a,f10.7,a1)') 'e_fc=',e_fc,','
+
+      write (iout,'(1x,a,(1x,T12,10(f6.2,a1,1x)))')
+     .   'strasclfl= ',(strasclfl(is),',',is =1,nstrai)
 
       write (iout,'(1x,a,(10(i5,a1,1x)))')
      .    'b2espcr= ',(b2espcr(is),',',is=0,ns-1)
@@ -2591,8 +2603,16 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        write (iout,'(1x,a,(10(i5,a1,1x)))')
-     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,n_spcsrf)
+        ii=minloc(abs(l_spcsrf))
+        if (ii(1).eq.1) then
+          is = 0
+        else if (l_spcsrf(ii(1)).eq.0) then
+          is = ii(1)-1
+        else
+          is = size(l_spcsrf)
+        end if
+        if (is.gt.0) write (iout,'(1x,a,(10(i5,a1,1x)))')
+     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,is)
         write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))')
      .    'sps_id= ',(ap,sps_id(i),ap,',',i=1,n_spcsrf)
         write (iout,'(1x,a,(10(i5,a1,1x)))')

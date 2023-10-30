@@ -12,7 +12,7 @@ c
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
       real (kind=R8) ::
-     *   lmin,lmax,x1,x2,dsep,xmin,xmax,
+     *   lmin,lmax,dsep,xmin,xmax,
      1   y_transform
       integer ix,ixl,ixr,iy,is,iiso,lnblnk
       integer ysep,ysepl,ysepr,iystart,iyend

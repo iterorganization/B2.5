@@ -97,7 +97,7 @@
       call prgini ('b2ah')
 *   ..open files
       call cfopen (ninp(0),'b2ah.dat','old','formatted')
-      call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
+      call cfopen (ninp(1),'b2fgmtry_st','old','un*formatted')
       call cfopen (nout(0),'b2ah.prt','new','formatted')
       call cfopen (nout(1),'b2fpardf','new','un*formatted')
 *   ..mark output unit for error messages

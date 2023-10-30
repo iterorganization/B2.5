@@ -11,7 +11,6 @@
       !! m               : mapping
       use b2mod_types
       use b2us_map
-      use b2us_geo
       implicit none
       integer, intent (in)        :: nFcList, nFcLbl, iLbl
       integer, intent (inout)     :: fcList(nFcList), fcLbl(nFcLbl)
@@ -57,8 +56,14 @@
         nullify(face%next)
         face%fcno = fcss(istart)
         lout(istart) =.true.
+        ! orientation such that right-hand normal points
+        ! outwards in case of boundary faces
         face%vx1 = m%fcVx(face%fcno,1)
         face%vx2 = m%fcVx(face%fcno,2)
+        if (m%fcCv(face%fcno,1).gt.m%nCi) then
+          face%vx1 = m%fcVx(face%fcno,2)
+          face%vx2 = m%fcVx(face%fcno,1)
+        end if
         head => face
         tail => face
 

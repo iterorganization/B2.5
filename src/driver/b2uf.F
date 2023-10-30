@@ -13,9 +13,6 @@
       use b2us_io
       use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -23,7 +20,7 @@
 *  1. purpose
 *
 *     B2UF reads in an unformatted b2fplasma file, and writes out a
-*     a formatted b2fplasma (b2fplasmf) ile.
+*     a formatted b2fplasma (b2fplasmf) file.
 *
 *
 *-----------------------------------------------------------------------

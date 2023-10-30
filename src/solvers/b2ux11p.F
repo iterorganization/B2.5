@@ -193,7 +193,7 @@
 !        call cpu_time(c_start)
 !#endif
         call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
-     *                   indexes, iasave, jasave, name)
+     *                   indexes, iasave, jasave)
 !#ifdef _OPENMP
 !        c_end = real(omp_get_wtime(),R4)
 !#else
@@ -235,14 +235,13 @@
       end subroutine b2ux11p                                           !srv 02.04.18 }
 
       subroutine storage_11 (nx, ny, aa11, nnz, ip, ja, a, k,          !srv 29.05.02
-     *                       indexes, ipsave, jasave, name)
+     *                       indexes, ipsave, jasave)
       use b2mod_types
       use b2mod_indirect
       implicit none
 *  ..input
       integer nx, ny, nnz
       real (kind=R8) :: aa11(-1:nx,-1:ny,-3:3)
-      character*(*) name
 *  ..output
       integer ip((nx+2)*(ny+2)+1), ja(nnz), k,
      *        indexes(1:3,nnz), ipsave((nx+2)*(ny+2)+1), jasave(nnz)

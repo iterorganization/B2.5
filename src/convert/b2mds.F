@@ -37,6 +37,7 @@
       use b2us_geo
       use b2us_plasma
       use b2us_prep
+      use b2mod_switches
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -75,6 +76,11 @@
 #ifdef B25_EIRENE
       character*72 zeile
 #endif
+      type(mapping) :: mpg
+      type(geometry) :: gm
+      type(switches) :: switch
+      type(B2Plasma) :: pl
+      type(B2Derivatives) :: dv
 c
 c  version : 27.07.96 20:37
 c
@@ -198,7 +204,7 @@ c
       call alloc_b2mod_braeir(nCv,nFc,nsd_local,nstra)
       call alloc_b2mod_eirbra(nCv,nsd_local,natm,npls,nstra)
 #endif
-      call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       solpstop=' '
 #ifndef NO_GETENV
@@ -287,17 +293,16 @@ cxpb  quantities before their mapping to cell centers
      1   'copy_background not called because NX>NXDD or NY>NYDD',
      1   nx,nxdd,ny,nydd
       else
-#ifdef WG_TODO
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv, kin_frac_hyb, fnn_inc)
-#endif
+     &                       pl, dv)
       endif
 c
       call initialise_potentials(ns)
       isp=0
       ispecies(0)=isp
       do is=1,ns-1
-        if(zn(is) .ne. zn(is-1) .or. am(is) .ne. am(is-1)) then
+        if(nint(zn(is)).ne.nint(zn(is-1)) .or.
+     &     nint(am(is)).ne.nint(am(is-1))) then
           isp=isp+1
         endif
         ispecies(is)=isp
@@ -423,7 +428,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         nlimi=0
       else
         open(unit=44,file=filename)
-        call ngread(ismain,iflag)
+        call ngread(mpg,switch,ismain,iflag)
         if (natmi.gt.0)
      .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         if (nmoli.gt.0)

@@ -103,7 +103,7 @@
 
 * ..main computation
 *   ..compute residual
-#ifdef WG_TODOs
+#ifdef WG_TODO
       call b2ursd (nx, ny, ne, po, sch, fch, respo)
 #endif
 *   ..compute correction

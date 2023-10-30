@@ -74,7 +74,7 @@
             ic2 = ic1 + mpg%cfRegP(icf,2) - 1
             n1 = mpg%cfRegP(icf,2)
             n2 = ncfdata(icf)
-            call calc_dist(mpg,geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
+            call calc_dist(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
      &        b2rr(icf,1:n1))
             b2data(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
@@ -93,7 +93,7 @@
               ! check on, and then use, only internal Cvs in OMP list
               call xertst(n1.eq.nomp-2,
      &         'number of Cv in CF does not equal Cvs in OMP')
-              call calc_dist(mpg,geo,omp(2:nomp-1),n1,icsepomp-1,
+              call calc_dist(geo,omp(2:nomp-1),n1,icsepomp-1,
      &          b2rr(icf,1:n1))
             endif
           endif

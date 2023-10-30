@@ -43,7 +43,7 @@
       close (igeo)
       close (ielm)
 
-      call out_quantities(ns, mpg, gm, st)
+      call out_quantities(ns, mpg, st)
 
       return
       end subroutine out_for_plot
@@ -197,11 +197,10 @@
 
       end subroutine out_geometry
 
-      subroutine out_quantities(ns, mpg, gm, st)
+      subroutine out_quantities(ns, mpg, st)
       use b2mod_types
       use b2mod_constants
       use b2us_map
-      use b2us_geo
       use b2us_plasma
       use b2mod_diag
 
@@ -209,7 +208,6 @@
 
       integer, intent(in) :: ns
       type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: gm
       type(B2state), intent(in) :: st
 
       character(50) :: txtspc(0:ns-1)

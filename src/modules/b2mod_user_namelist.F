@@ -18,16 +18,17 @@
 #endif
 ! VARIABLES RELATED TO DEFINITION OF MIDPLANES AND SEPARATRIX
 ! - [oi]mp: list of CVs belonging to the [OI]MP, defined through the segment rz[oi]mp
-!           it should be built as an ordered list from core to SOL. 
+!           it should be built as an ordered list from core to SOL.
 ! - nromp: pre-defined maximum size for these lists
 ! - icsep[oi]mp: location of the separatrix position in the [oi]mp list
+! - ifsep[oi]mp: the face index of the separatrix intersection with the [oi]mp
 ! - n[oi]mp: number of CVs in the [oi]mp list
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
-!             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates 
+!             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
       integer, parameter :: nromp=DEF_NYD*4
-      integer, save :: omp(nromp), icsepomp, nomp, ifssep, imp(nromp),
-     ,  icsepimp, nimp
+      integer, save :: omp(nromp), icsepomp, ifsepomp, nomp,
+     ,                 imp(nromp), icsepimp, ifsepimp, nimp
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
@@ -50,7 +51,7 @@
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
-     ,  filedata,user_filename, rzomp, rzimp
+     ,  filedata,user_filename,rzomp,rzimp
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -84,16 +85,15 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol,ntns)
+      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol)
       implicit none
-      integer, intent(in) :: ns, nlim, nmol, ntns
+      integer, intent(in) :: ns, nlim, nmol
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
 
       call xertst(1.le.ns, 'faulty argument ns')
       call xertst(0.le.nlim, 'faulty argument nlim')
       call xertst(0.le.nmol, 'faulty argument nmol')
-      call xertst(0.le.ntns, 'faulty argument ntns')
       if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
@@ -130,7 +130,7 @@ c***  Standard set-up:
       rzomp = 0.0_R8
       rzimp = 0.0_R8
       user_filename='b2.user.parameters'
-      call read_b2mod_user_namelist(ns,ntns,geo,m)
+      call read_b2mod_user_namelist(ns,geo,m)
       user_initialised = .true.
 
       return
@@ -146,27 +146,23 @@ c***  Standard set-up:
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(ns,ntns,geo,m)
+      subroutine read_b2mod_user_namelist(ns,geo,m)
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
-      integer, intent(in) :: ns,ntns
+      integer, intent(in) :: ns
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
-      integer ic, ic1, ic2, ifc, ifcc, ifc1, ifc2, ifs,
-     >        ii, ifc11, ifc22, jj
+      integer ic, iFc
 
       logical :: file_ok
       character*260 filename
-      character*1 str
       integer i
       logical done, ifail, found
       integer, save :: use_eirene, neutrals_namelist
-#ifdef WG_TODO
       integer j, k, is, im
       logical old_style
       logical, save :: hydrogen, helium, neon
-#endif
       external ipgeti, find_file, xertst
 #ifndef F2003
       integer newunit
@@ -200,7 +196,7 @@ c***  Standard set-up:
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
-      call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
+      call cv_intersections (geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
@@ -211,23 +207,27 @@ c***  Standard set-up:
       call xertst(m%isClassicalGrid.eq.1,
      & ' OMP list need to be revised for fully unstructured grids')
       do ic=2,nomp
-        if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
-     & call xerrab('OMP LIST NOT SORTED')
+        if (geo%cvX(omp(ic)).lt.geo%cvX(omp(ic-1)))
+     &   call xerrab('OMP LIST NOT SORTED')
       end do
-*   ..Definition of separatrix position in OMP list (to be improved for DN)
+*   ..Definition of separatrix position in OMP list
 ! Separatrix is defined by checking when cvReg changes value inside the OMP list
       icsepomp = 0
       ic = 1
       found = .false.
       do while (ic.le.nomp .and..not.found)
-        if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
-          found = .true.
-          icsepomp = ic+1
-        endif
-      ic = ic + 1
+        do i = m%cvFcP(omp(ic),1),
+     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+          iFc = m%cvFc(i)
+          if (m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0) then
+            icsepomp = ic + 1
+            ifsepomp = iFc
+            found = .true.
+          end if
+        end do
+        ic = ic + 1
       end do
 
-#ifdef WG_TODO
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
       old_style = maxval(j_h_at).eq.0
       if (j_h_at(1).ne.0.and.j_h_at(2).eq.0.and.j_h_at(3).eq.0) then
@@ -282,10 +282,12 @@ c*** Set default values according to current species list
      . 'faulty input Spmp_nom')
       call xertst(0.0_R8.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
+#ifdef WG_TODO
       call xertst (abs(lpfrb_i).le.nx, 'faulty input lpfrb_i')
       call xertst (abs(lpfrb_o).le.nx, 'faulty input lpfrb_o')
       call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')
       call xertst (abs(lpfrt_o).le.nx, 'faulty input lpfrt_o')
+#endif
       call xertst (0.le.npfrgrp, 'faulty input npfrgrp')
       do i = 1, npfrgrp
         call xertst(1.le.ipfrgrp(i).and.ipfrgrp(i).le.jpfrgrp(i),
@@ -352,69 +354,41 @@ c*** Set default values according to current species list
      . 'faulty input j_he_at')
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
-#endif
+
 *   ..Create list of IMP control volumes
 ! Same logic as OMP list, find CVs intersected by rzimp segment
       nimp = 0
       imp = 0
-      call cv_intersections (m%nCv, geo, m, rzimp, imp, nimp, nromp,
+      call cv_intersections (geo, m, rzimp, imp, nimp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nimp
         if (geo%cVx(imp(ic)).lt.geo%cVx(imp(ic-1)))
-     & call xerrab('IMP LIST NOT SORTED')
+     &   call xerrab('IMP LIST NOT SORTED')
       end do
 ! Find position of separatrix in IMP list (same as for OMP)
       icsepimp = 0
       ic = 1
       found = .false.
       do while (ic.le.nimp .and..not.found)
-        if (m%cvReg(imp(ic)).ne.m%cvReg(imp(ic+1))) then
-          found = .true.
-          icsepimp = ic+1
-        endif
-      ic = ic + 1
+        do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+          iFc = m%cvFc(i)
+          if (m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0) then
+            icsepimp = ic + 1
+            ifsepimp = iFc
+            found = .true.
+          end if
+        end do
+        ic = ic + 1
       end do
-      if (.not.found) then 
-       write(*,*) 'Warning: did not find separatrix in IMP definition'
-       write(*,*) 'check specification of RZIMP in b2.user.parameters'
-       write(*,*) 'if IMP is needed.'
-      endif
-      ifssep = 1 !flux surface of separatrix
-      found = .false.
-      ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
-      ic2 = omp(icsepomp) !cv of flux tube just outside sep
-      ifc1 = m%cvFcP(ic1,1)
-      ifc2 = ifc1 + m%cvFcP(ic1,2) - 1
-      ifc11 = m%cvFcP(ic2,1)
-      ifc22 = ifc11 + m%cvFcP(ic2,2) - 1
-      ! find face belonging to both ic1 and ic2
-      do ii = ifc1, ifc2
-        ifc = m%cvFc(ii)
-        do jj = ifc11, ifc22
-          ifcc = m%cvFc(jj)
-          if (ifc.eq.ifcc) exit
-        enddo
-      end do
-      ! find this face in fsFc --> ii
-      do ii = 1, size(m%fsFc,1)
-        if (ifc.eq.m%fsFc(ii)) exit
-      end do
-      ! find ii in fsFcP(ifs,1):fsFcP(ifs,1)+fsFcP(ifs,2)
-      do ifs = 1, size(m%fsFcP,1)
-        ifc1 = m%fsFcP(ifs,1)
-        ifc2 = ifc1 + m%fsFcP(ifs,2) - 1
-        if (ii.ge.ifc1 .and. ii.le.ifc2) then
-          found = .true.
-          exit
-        endif
-      enddo
-      if (.not. found) 
-     &  call xerrab('No flux surface found for separatrix!')
-      ifssep = ifs
-      if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(ifssep,2).gt.0,
+      if (.not.found) write(*,'(a/a/a)')
+     &  'Warning: did not find separatrix location in IMP definition,',
+     &  '         check specification of RZIMP in b2.user.parameters',
+     &  '         if IMP is needed.'
+      if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')
-      write(*,*) 'SEPARATRIX FLUX SURFACE AT ifs=',ifssep
+      write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
 
       call subend ()
       return

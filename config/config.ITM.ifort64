@@ -26,10 +26,11 @@ endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
+FCOPTS   = -fPIC -assume no2underscore
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
+FCOPTS  += -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model precise
+FCOPTS  += -O2 -fp-model=precise
 endif
 
 ifdef USE_OPENMP

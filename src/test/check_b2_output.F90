@@ -268,8 +268,8 @@ module b2_file_io
               read (nget) chfun(1:n1)
             endif
           endif
-     end select
-     return
+      end select
+      return
   end subroutine
 
 end module
@@ -309,22 +309,27 @@ program test_b2output
       write(*,*) 'Error, variable name or type differ'
       write(*,*) trim(vname1), ' ', idtyp1
       write(*,*) trim(vname2), ' ', idtyp2
+      n_errors = n_errors + 1
+    else if (size_n1 /= size_n2) then
+      write(*,*) 'Error, variable sizes differ'
+      write(*,*) trim(vname1), ' ', size_n1
+      write(*,*) trim(vname2), ' ', size_n2
+      n_errors = n_errors + 1
     else
-
-        select case(idtyp1)
-          case ('real')
-            write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
-            n_errors = n_errors + check_variable(r1, r2, vname1)
-          case ('int')
-             write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
-            n_errors = n_errors + check_variable(i1, i2, vname1)
-          case ('char')
-             write(*,'(a16,a12,a6,i8)') 'Skipping string ', vname1, 'size: ', size_n1
-             ! might contain time when the simulation was started
-            !n_errors = n_errors + check_variable(ch1, ch2, vname1)
-          case default
-            write(*,*) 'unknown type', idtyp1, ' for variable ', vname1
-        end select
+      select case(idtyp1)
+        case ('real')
+          write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
+          n_errors = n_errors + check_variable(r1, r2, vname1)
+        case ('int')
+          write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
+          n_errors = n_errors + check_variable(i1, i2, vname1)
+        case ('char')
+          write(*,'(a16,a12,a6,i8)') 'Skipping string ', vname1, 'size: ', size_n1
+          ! might contain time when the simulation was started
+          !n_errors = n_errors + check_variable(ch1, ch2, vname1)
+        case default
+          write(*,*) 'unknown type', idtyp1, ' for variable ', vname1
+      end select
     endif
     call read_unknown_type (u1, size_n1, r1, i1, ch1, vname1, idtyp1)
     call read_unknown_type (u2, size_n2, r2, i2, ch2, vname2, idtyp2)

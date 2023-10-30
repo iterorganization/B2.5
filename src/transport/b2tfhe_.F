@@ -17,10 +17,14 @@
 !WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
 !WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_ad
+     & , only : ncall_b2tfhe
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
+     & , only : ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -221,8 +225,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 
 *   ..compute floe, cone
       call calccoef(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
-     &  geo,mpg,floe0_mdf,co%chce,
-     &  floe0,cone0)
+     &  geo,floe0_mdf,co%chce,floe0,cone0)
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
       dv%floe        = dv%floe + floe0

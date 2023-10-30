@@ -1,13 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
+      subroutine b2mndt (nout, nCv, nFc, nVx, ns,
      . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch,
-     . geo, mpg, st, st_ext, ierr)
+     . geo, mpg, st, st_ext, st_avg, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_diag
-     &   , only : nnatmi, alloc_b2mod_diag
+     &   , only : nnatmi, nnmoli, alloc_b2mod_diag
       use b2mod_time
       use b2mod_file
       use b2mod_b2cmpa
@@ -23,6 +23,7 @@
       use b2mod_batch_average
      & , only : batch_av_all
       use b2mod_switches
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_transport_namelist
@@ -49,22 +50,24 @@
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+#endif
       use b2mod_ad
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
+      integer nout(0:10), nCv, nFc, nVx, ns, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
       real (kind=R8) ::
      *  dtim
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
       type (switches), intent (inout) :: switch
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
+      type (B2Average), intent (inout) :: st_avg
 *   ..output arguments (unspecified on entry)
       integer ierr
 *   ..common blocks
@@ -328,9 +331,9 @@ ctmp.dpc
 *     ..compute source linearisation
           wrong_flow = .false.
           main_call = ntim.ne.0
-          call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
+          call b2sral (nCv, nFc, nVx, ns,
      &     nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &     switch, geo, mpg, st, st_ext, wrong_flow, main_call)
+     &     switch, geo, mpg, st, st_ext, st_avg, wrong_flow, main_call)
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -370,7 +373,7 @@ ctmp.dpc
           endif                                                          !srv 26.02.18 }
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
-     &     call b2srst (nCv, ns, switch, mpg, st%pl%na, st%pl%ua,    !srv 01.07.08
+     &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,            !srv 01.07.08
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
      &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
 *       (smq is inherently stable.)
@@ -381,9 +384,9 @@ ctmp.dpc
 #ifdef WG_TODO
             ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
 #endif
-            call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
+            call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &       nscxmax, ismain, ismain0, dtim, switch,
-     &       geo, mpg, st, st_ext, ier0)
+     &       geo, mpg, st, st_ext, st_avg, ier0)
             flush(6)
 #ifdef WG_TODO
 ! ier0 seems not appearing anymore in b2news. Additionally, irreducible loops should be avoided for Adjoint AD
@@ -408,7 +411,7 @@ ctmp.dpc
      &       st%dv%resmt, st%dv%reshe, st%dv%reshi, st%dv%reshn,
      &       st%dv%respo, st%dv%reskt, st%dv%reszt)
 *      ..compute norms of the residuals
-            call b2mxar (nCv, ns, nnreg(0), switch%BoRiS, switch,
+            call b2mxar (nCv, ns, switch,
      &       geo, mpg, st%pl, st%dv, st%diag)
             quit_residual=test_residual .and.
      &       ((st%diag%areshe*switch%nstg_areshe).le.
@@ -437,7 +440,7 @@ ctmp.dpc
             if (domoqt) then
               if (mod(ncall_b2mndt,ntim_step_out) .eq. 0) then             !srv 31.01.07
                 call b2mwqt (nout(4), nCv, ns, itim, b2mndt_itcnt,
-     &           switch%BoRiS, switch, geo, st%pl, st%dv, st%diag)
+     &           switch, geo, st%pl, st%dv, st%diag)
                 flush(nout(4))
               endif
             endif
@@ -450,16 +453,16 @@ ctmp.dpc
      &         corpo)
               flush(nout(5))
             endif
+#endif
 *      ..write the tracing data
             if (ank_tracing.ne.0) then
               if (ncall_b2mndt.eq.0.and.istg(2).eq.0) then
-                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-                call b2filei(ns,nnreg,switch)
+                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli)
+                call b2filei(ns,mpg%nnreg(0),switch)
               end if
               if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >         call b2filew(istg(2),nnreg)
+     >         call b2filew(istg(2),mpg%nnreg(0))
             endif
-#endif
 *      ..update iteration counter
             b2mndt_itcnt = b2mndt_itcnt+1
 *      ..end inner iteration
@@ -480,7 +483,7 @@ ctmp.dpc
               call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is),
      &         st%pl%te, st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))         !srv 01.10.99
 *    ..compute particle flux
-              call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+              call b2tfnb (nCv, nFc, nVx, is, ismain,
      &         switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
             enddo                                                        !srv 01.10.99
 *      ..compute electron drift velocities
@@ -507,7 +510,7 @@ ctmp.dpc
      .                     st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
               enddo
               st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
-              st%dv%ue = st%dv%ue/st%dv%ne                                !srv 05.03.11
+              st%dv%ue = st%dv%ue/st%dv%ne                               !srv 05.03.11
             endif
 *   ..compute ceqp                                                       !srv 03.07.03 {
             call b2xpnm (nCv, ns, st%rt%rz2, am, st%pl%na, wrk0)
@@ -521,7 +524,7 @@ ctmp.dpc
      &       ncall_b2news_, ismain, solving, solveee, solveei,           !srv 22.05.18
      &       solveen, solveet, solvepo, solvemo, solvekt, solvezt,
      &       switch%b2mndt_rxf,
-     &       st%pl, st%dv, st%co, st%rt, st%sr, st_ext, ier0)
+     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)
           endif
 *     ..end intermediate iteration
           istg(1) = istg(1)+1
@@ -532,6 +535,8 @@ ctmp.dpc
         goto 1
       endif
 
+      if (switch%iav_run > 0)
+     . call running_average(nCv,ns,st%pl,st%srw,st_avg)
       if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nCv,ns)
 
 * ..return

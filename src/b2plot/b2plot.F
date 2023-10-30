@@ -4,7 +4,7 @@ c Unfortunately the Juelich compiler complains with error message
 c    (E) The STRICT/NOSTRICT option may only be specified for OPT(3).  STRICT is assumed.
 c so this optimisation is disabled by default.
 c 2002-09-11: logic revised
-      subroutine b2plot(nxd,nyd,nsd_local)
+      subroutine b2plot(nxd,nyd,nCv,nFc,nsd_local)
 #ifdef NO_OPT
 #ifdef CRAY
 !DIR$ OPTIMIZE (-O0 -hfp0)
@@ -45,11 +45,14 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpb
       use b2mod_ranges
       use b2mod_external
+      use b2us_plasma
+      use b2mod_switches
 #ifdef NAGF95
       use f90_unix       ! IGNORE
 #endif
 #ifdef B25_EIRENE
       use eirmod_parmmod
+     , , ncv_eir => ncv
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_ctrig
@@ -79,7 +82,12 @@ c 2002-09-11: logic revised
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nxd,nyd,nsd_local
+      integer nxd,nyd,nCv,nFc,nsd_local
+      type (mapping) :: mpg
+      type (geometry) :: gm
+      type (B2State) :: state
+      type (B2StateExt) :: st_ext
+      type (switches) :: switch
 c
 c  version : 27.07.96 20:37
 c
@@ -326,7 +334,7 @@ c
 !pb  quick and dirty, to be cleaned up 
       call alloc_b2mod_eirbra(nxd*nyd,nsd_local,natm,npls,nstra)
 #endif
-      call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       allocate(mach(-1:nxd,-1:nyd,
      *     0:max(1,nsd_local,ns_ext,natm,nmol,nion)-1))
@@ -421,9 +429,7 @@ cxpb  This call is moved up from 'f31' so that we used the original cell-faced
 cxpb  quantities before their mapping to cell centers
       call ipgeti ('b2tfnb_drift_style', drift_style)
       call ipgetr ('b2news_BoRiS', BoRiS)
-#ifdef WG_TODO
-      call b2xpni (nx, ny, ns, na, ni)
-#endif
+      call b2xpni ((nx+2)*(ny+2), ns, na, ni)
       nflai=0
       do is=0,ns-1
         if(is_neutral(is)) nflai=nflai+1
@@ -436,10 +442,8 @@ cxpb  quantities before their mapping to cell centers
      1   'copy_background not called because NX>NXDD or NY>NYDD',
      1   nx,nxdd,ny,nydd
       else
-#ifdef WG_TODO
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv, kin_frac_hyb, fnn_inc)
-#endif
+     &                       state%pl, state%dv)
       endif
 c
       call ipgetr ('b2trcl_lambda', lambda)
@@ -513,8 +517,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
        found = .false.
        is = ismain
        do while (is.ge.0 .and. .not.found)
-         if (is_neutral(is) .and. zn(is).eq.zn(ismain) .and.
-     &       am(is).eq.am(ismain)) then
+         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain)) .and.
+     &       nint(am(is)).eq.nint(am(ismain))) then
            ismain0 = is
            found = .true.
          end if
@@ -533,7 +537,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       isp=0
       ispecies(0)=isp
       do is=1,ns-1
-        if(zn(is) .ne. zn(is-1) .or. am(is) .ne. am(is-1)) then
+        if(nint(zn(is)) .ne. nint(zn(is-1)) .or.
+     &     nint(am(is)) .ne. nint(am(is-1))) then
           isp=isp+1
         endif
         ispecies(is)=isp
@@ -794,8 +799,8 @@ c
 #ifdef WG_TODO
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
 #endif
+      call alloc_b2mod_user(gm,mpg,ns,nlim,nmol)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
@@ -1039,7 +1044,7 @@ c
         p2=0.0_R8
       else
         open(unit=44,file=filename)
-        call ngread(ismain,iflag)
+        call ngread(mpg,switch,ismain,iflag)
         if (natmi.gt.0)
      .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         if (nmoli.gt.0)
@@ -1148,15 +1153,13 @@ c
           endif
         enddo
         if(is_neutral(is) .and. nint(zn(is)).eq.1) then
-          nh(-1:nx,-1:ny)=nh(-1:nx,-1:ny)+na(-1:nx,-1:ny,is)
+          nh(1:nCv,1)=nh(1:nCv,1)+state%pl%na(1:nCv,is)
           do iss=1,natmi
             stmp2=trim(textan(iss-1))//'0'
             call lower_case(stmp2)
-#ifdef WG_TODO
             if(streql(stmp1,stmp2)) then
-              nh(-1:nx,-1:ny)=nh(-1:nx,-1:ny)+dab2(0:nx+1,0:ny+1,iss,1)
+              nh(1:nCv,1)=nh(1:nCv,1)+dab2(1:nCv,iss,1)
             endif
-#endif
           enddo
         endif
       enddo
@@ -1185,11 +1188,9 @@ c
         targety(i,2) = real(i)
         targety(i,1) = real(i)-0.5_R8
       end do
-#ifdef WG_TODO
-      call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
-      call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
-      call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
-#endif
+      call b2xppr_st(nx,ny,ns,ne,na,te,ti,pr)
+      call b2xppz_st(nx,ny,ns,ne,na,te,ti,pz)
+      call b2xzef_st(nx,ny,ns,rz2,na,ne,zeff)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)
       icell=0
@@ -1498,7 +1499,7 @@ c
      1     .and.lucdf.eq.lu) then
             rewind(lu)
             istepcdf=istepcdf+1
-            call get_from_movie_cdf(ncidcdf,istepcdf)
+            call get_from_movie_cdf(ncidcdf,istepcdf,nCv,ns,state)
             rewind(lu)
           elseif(ntstepcdf.gt.0.and.istepcdf.eq.ntstepcdf
      1     .and.lucdf.eq.lu) then
@@ -2233,7 +2234,7 @@ c
           if (natmi.gt.0) then
             nz=natmi
 #ifdef WG_TODO
-            mach(:,:,0:nz-1)=tab2(0:nx+1,0:ny+1,1:nz,1)
+            mach(:,:,0:nz-1)=tab2(1:nCv,1:nz,1)
 #endif
             call copy(mach,1.0_R8/ev,nz,textan)
           else
@@ -6112,7 +6113,7 @@ c
             write(*,*) ntstepcdf,' slices'
             istepcdf=1
             if(istepcdf.le.ntstepcdf) then
-              call get_from_movie_cdf(ncidcdf,istepcdf)
+              call get_from_movie_cdf(ncidcdf,istepcdf,nCv,ns,state)
               write(*,*) 'reading from lu ',lu,' for step ',istepcdf
               call readline(textline,lu,ipos)
             else
@@ -6624,7 +6625,7 @@ cdpc still in testing phase
           graphlabel(iwrk)=' '
           do is=max(istart,1),min(iend,itmp)
             call get_cdf(filename, ncidcdf, is, movietime(1),
-     1       varname, mach, nx, ny)
+     1       varname, mach, nCv)
             write(*,*) 'MOVIE: ',movietime(1)
             write(stmp,'(f13.9,2x,i5,''/'',i5)') movietime(1), is, itmp
             description=trim(filename) // ' ' // trim(varname) //
@@ -6660,7 +6661,7 @@ cdpc still in testing phase
           graphlabel(iwrk)=' '
           do is=max(istart,1),min(iend,itmp)
             call get_cdf(filename, ncidcdf, is, movietime(1),
-     1       varname, mach, nx, ny)
+     1       varname, mach, nCv)
             write(*,*) 'MOVIE: ',movietime(1)
             write(stmp,'(f13.9,2x,i5,''/'',i5)') movietime(1), is, itmp
             description=trim(filename) // ' ' // trim(varname) //
@@ -9502,8 +9503,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),ismain,ismain0,boundary_namelist,
-     .                BoRiS)
+          call b2pwld(istack(iistack),boundary_namelist,BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff
@@ -10795,9 +10795,9 @@ c
 
       cflag=.true.
       FLVALUE: select case(cval)
-        case('f30')      ! write fort.30
-          call write_f30
 #ifdef WG_TODO
+        case('f30')      ! write fort.30
+          call write_f30(gm, mpg)
         case('f31')      ! write fort.31
           call write_f31(nx, ny)
 #endif
@@ -11338,7 +11338,7 @@ c     <delta wavelength in A> nspe
         case('user')     ! call a user function "b2paux"
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2paux(istack(iistack))
+          call b2paux(mpg,gm,state,st_ext,istack(iistack))
           call pop_stack(stack_req)
         case('writ','write')    ! set writing to file
           if(.not.writing_to_file) then

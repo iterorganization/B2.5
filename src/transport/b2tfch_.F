@@ -12,14 +12,18 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2tfch
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : my_out_folder, ncall_b2tfch, ncall_b2xehx, ncall_b2tcpa, 
+     & , only : my_out_folder, ncall_b2xehx, ncall_b2tcpa,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2tiner, ncall_b2ttia
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -176,7 +180,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
           wrk(:,1) = wrk(:,1) + csig_stoch
         endif                                                            !lk 31.01.08 }
 #endif
-        call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,wrk,dumm1,dv%conc)
+        call calccoef(nCv,nFc,nVx,0,geo,dumm0,wrk,dumm1,dv%conc)
 
       endif !no_current
 

@@ -1169,13 +1169,11 @@ c.. Make a list of core boundaries
 #endif
           endif
         enddo
-#ifdef WG_TODO
-        if (ny.gt.1) then
-          if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
+        if (maxval(m%fsVxP(:,2)).gt.2) then
+          if (m%nnreg(0).gt.1 .or. m%periodic_bc.eq.1) then
             call xertst(1.le.ncbs, 'faulty parameters ncbs')
           end if
         end if
-#endif
         do ib = 1, ncbs
           call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
      .     'faulty parameter lcbs')
@@ -1204,8 +1202,8 @@ c.. Make a list of core boundaries
       do is = 0, ns-1
         call xertst (0.0_R8.lt.niiso(is), 'faulty input niiso')
       enddo
-#ifdef WG_TODO
       do ib = 1, nbc
+#ifdef WG_TODO
         if (bcchar(ib).eq.'N') then
           if(old_style(ib)) then
             call xertst (1.le.bcpos(ib).and.bcpos(ib).le.ny+1,
@@ -1315,7 +1313,8 @@ c.. Make a list of core boundaries
             end do
           endif
         endif
-        if (old_style(ib)) call xertst (bcstart(ib).le.bcend(ib),
+#endif
+        call xertst (bcstart(ib).le.bcend(ib),
      .   'faulty inputs bcstart > bcend')
         do is = 0, ns-1
           call xertst (0.le.bccon(is,ib), 'faulty input bccon')
@@ -1327,7 +1326,6 @@ c.. Make a list of core boundaries
         call xertst (0.le.bcenk(ib), 'faulty input bcenk')
         call xertst (0.le.bcenz(ib), 'faulty input bcenz')
       enddo
-#endif
 #ifdef WG_OUT
       do ib = 1, nniso
         call xertst (-1.le.nxiso1(ib).and.nxiso1(ib).le.nx,
@@ -1640,11 +1638,10 @@ c.. Test consistency with region boundaries
 
 ***********************************************************************
 
-      subroutine conv_bcparms (nx, ny, ns, m, g)
+      subroutine conv_bcparms (ns, m)
       implicit none
-      integer, intent(in) :: nx, ny, ns
+      integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
-      type (geometry), intent (inout) :: g
       integer :: ib, ibc, is, inbc, noss, iss, indss,
      .           i, iFc, iCv, idb
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
@@ -1797,8 +1794,8 @@ cwdk also need to correct for degenerate faces?
         ifchit = 0
 ! for all guard cells mark face to plasma cell
         do i = 1, m%nCg
-          icv = m%nCi + i
-          iFc = m%cvFc(m%cvFcP(icv,1))
+          iCv = m%nCi + i
+          iFc = m%cvFc(m%cvFcP(iCv,1))
           ifchit(iFc) = ifchit(iFc) + 1
         end do
 ! remove mark from boundary faces
@@ -1812,7 +1809,7 @@ cwdk also need to correct for degenerate faces?
           write (*,*) 'suspicious faces '
           do i = 1, m%nFc
             if (ifchit(i) /= 0) then
-              write (*,*) 'ifc ',i,ifchit(i)
+              write (*,*) 'iFc ',i,ifchit(i)
               write (*,*) 'fcCv ',m%fcCv(i,1),m%fcCv(i,2)
             end if
           end do
@@ -1838,12 +1835,12 @@ cwdk also need to correct for degenerate faces?
 ***********************************************************************
 
       subroutine write_bcparms (ns, m)
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: ib, iout, is
       character(1) :: ap =''''
-      character(10) :: new_boundary_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -1855,7 +1852,7 @@ cwdk also need to correct for degenerate faces?
       iout = newunit()
       open(unit=iout,file='b2us.boundary.parameters')
 #endif
-      call cfverw(iout,new_boundary_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&boundary'
       write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
@@ -2021,8 +2018,8 @@ cc BCPOT
 
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
-      integer :: ib, inbc, ibc, ifc, ic1, ic2
-      integer :: iout, ian, ien, i
+      integer :: ib, inbc, ibc, iFc, ic1, ic2
+      integer :: iout, ian, ien, i, j, k
 #ifndef F2003
       integer newunit
       external newunit
@@ -2036,17 +2033,17 @@ cc BCPOT
       call alloc_mapping_bc(m)
 
       inbc = 0 ! index in bcCv
-      do ib = 1,m%nBc
+      do ib = 1, m%nBc
         m%bcCvP(ib,1) = inbc + 1
 !pb     m%bcCvP(ib,2) = nbcfaces(ib)
         m%bcCvP(ib,2) = m%bcFcP(ib,2)
 !pb     do ibc = 1, nbcfaces(ib)
         do ibc = 1, m%bcFcP(ib,2)
           inbc = inbc + 1
-!pb       ifc = bc_faces(ibc,ib)
-          ifc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
-          ic1 = min(m%fcCv(ifc,1), m%fcCv(ifc,2))
-          ic2 = max(m%fcCv(ifc,1), m%fcCv(ifc,2))
+!pb       iFc = bc_faces(ibc,ib)
+          iFc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
+          ic1 = min(m%fcCv(iFc,1), m%fcCv(iFc,2))
+          ic2 = max(m%fcCv(iFc,1), m%fcCv(iFc,2))
           if ((ic1 <= m%nCi) .and. (ic2 >m%nCi)) then
             m%bcCv(inbc,1) = ic2
             m%bcCv(inbc,2) = ic1
@@ -2056,6 +2053,17 @@ cc BCPOT
           end if
         end do
       end do
+
+      if (allocated(m%strDiv)) then
+        do i = 1, maxval(m%strDiv)
+          do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
+            iFc = m%divFc(j)
+            do k = 1, size(m%bcFc)
+              if (m%bcFc(k).eq.iFc) m%divFcOr(j) = m%bcFcOr(k)
+            end do
+          end do
+        end do
+      end if
 
 #ifdef F2003
       open (newunit=iout,file='bc.testout')

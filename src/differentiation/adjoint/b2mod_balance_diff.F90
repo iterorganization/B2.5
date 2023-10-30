@@ -3064,76 +3064,76 @@ CONTAINS
     PARAMETER (nf_collective=1)
 !
 !     New error codes.
-! Error at HDF5 layer. 
+! Error at HDF5 layer.
     INTEGER :: nf_ehdferr
     PARAMETER (nf_ehdferr=-101)
-! Can't read. 
+! Can't read.
     INTEGER :: nf_ecantread
     PARAMETER (nf_ecantread=-102)
-! Can't write. 
+! Can't write.
     INTEGER :: nf_ecantwrite
     PARAMETER (nf_ecantwrite=-103)
-! Can't create. 
+! Can't create.
     INTEGER :: nf_ecantcreate
     PARAMETER (nf_ecantcreate=-104)
-! Problem with file metadata. 
+! Problem with file metadata.
     INTEGER :: nf_efilemeta
     PARAMETER (nf_efilemeta=-105)
-! Problem with dimension metadata. 
+! Problem with dimension metadata.
     INTEGER :: nf_edimmeta
     PARAMETER (nf_edimmeta=-106)
-! Problem with attribute metadata. 
+! Problem with attribute metadata.
     INTEGER :: nf_eattmeta
     PARAMETER (nf_eattmeta=-107)
-! Problem with variable metadata. 
+! Problem with variable metadata.
     INTEGER :: nf_evarmeta
     PARAMETER (nf_evarmeta=-108)
-! Not a compound type. 
+! Not a compound type.
     INTEGER :: nf_enocompound
     PARAMETER (nf_enocompound=-109)
-! Attribute already exists. 
+! Attribute already exists.
     INTEGER :: nf_eattexists
     PARAMETER (nf_eattexists=-110)
-! Attempting netcdf-4 operation on netcdf-3 file.   
+! Attempting netcdf-4 operation on netcdf-3 file.
     INTEGER :: nf_enotnc4
     PARAMETER (nf_enotnc4=-111)
-! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.   
+! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.
     INTEGER :: nf_estrictnc3
     PARAMETER (nf_estrictnc3=-112)
-! Attempting netcdf-3 operation on netcdf-4 file.   
+! Attempting netcdf-3 operation on netcdf-4 file.
     INTEGER :: nf_enotnc3
     PARAMETER (nf_enotnc3=-113)
-! Parallel operation on file opened for non-parallel access.   
+! Parallel operation on file opened for non-parallel access.
     INTEGER :: nf_enopar
     PARAMETER (nf_enopar=-114)
-! Error initializing for parallel access.   
+! Error initializing for parallel access.
     INTEGER :: nf_eparinit
     PARAMETER (nf_eparinit=-115)
-! Bad group ID.   
+! Bad group ID.
     INTEGER :: nf_ebadgrpid
     PARAMETER (nf_ebadgrpid=-116)
-! Bad type ID.   
+! Bad type ID.
     INTEGER :: nf_ebadtypid
     PARAMETER (nf_ebadtypid=-117)
-! Type has already been defined and may not be edited. 
+! Type has already been defined and may not be edited.
     INTEGER :: nf_etypdefined
     PARAMETER (nf_etypdefined=-118)
-! Bad field ID.   
+! Bad field ID.
     INTEGER :: nf_ebadfield
     PARAMETER (nf_ebadfield=-119)
-! Bad class.   
+! Bad class.
     INTEGER :: nf_ebadclass
     PARAMETER (nf_ebadclass=-120)
-! Mapped access for atomic types only.   
+! Mapped access for atomic types only.
     INTEGER :: nf_emaptype
     PARAMETER (nf_emaptype=-121)
-! Attempt to define fill value when data already exists. 
+! Attempt to define fill value when data already exists.
     INTEGER :: nf_elatefill
     PARAMETER (nf_elatefill=-122)
-! Attempt to define var properties, like deflate, after enddef. 
+! Attempt to define var properties, like deflate, after enddef.
     INTEGER :: nf_elatedef
     PARAMETER (nf_elatedef=-123)
-! Probem with HDF5 dimscales. 
+! Probem with HDF5 dimscales.
     INTEGER :: nf_edimscale
     PARAMETER (nf_edimscale=-124)
 ! No group found.
@@ -3385,7 +3385,7 @@ CONTAINS
 ! begin netcdf 2.4 backward compatibility:
 !
 !
-!      
+!
 ! functions in the fortran interface
 !
     INTEGER :: NCCRE
@@ -3473,18 +3473,18 @@ CONTAINS
     PARAMETER (ncdouble=6)
     PARAMETER (ncrdwr=1)
 !
-!     
+!
 !     masks for the struct nc flag field; passed in as 'mode' arg to
 !     nccreate and ncopen.
-!     
 !
-!     read/write, 0 => readonly 
+!
+!     read/write, 0 => readonly
     PARAMETER (nccreat=2)
-!     in create phase, cleared by ncendef 
+!     in create phase, cleared by ncendef
     PARAMETER (ncexcl=4)
-!     on create destroy existing file 
+!     on create destroy existing file
     PARAMETER (ncindef=8)
-!     in define mode, cleared by ncendef 
+!     in define mode, cleared by ncendef
     PARAMETER (ncnsync=16)
 !     synchronise numrecs on change (x'10')
     PARAMETER (nchsync=32)
@@ -3501,91 +3501,91 @@ CONTAINS
 !     isa link (x'8000')
     PARAMETER (ncnowrit=0)
 !
-!     
+!
 !     'mode' arguments for nccreate and ncopen
-!     
+!
     PARAMETER (ncwrite=ncrdwr)
     PARAMETER (ncclob=nf_clobber)
     PARAMETER (ncnoclob=nf_noclobber)
 !
-!     
+!
 !     'size' argument to ncdimdef for an unlimited dimension
-!     
+!
     INTEGER :: ncunlim
     PARAMETER (ncunlim=0)
     PARAMETER (ncglobal=0)
 !
-!     
+!
 !     attribute id to put/get a global attribute
-!     
+!
     PARAMETER (maxncop=64)
 !
-!     
+!
 !     advisory maximums:
-!     
+!
     PARAMETER (maxncdim=1024)
     PARAMETER (maxncatt=8192)
     PARAMETER (maxncvar=8192)
     PARAMETER (maxncnam=256)
-!     not enforced 
+!     not enforced
     PARAMETER (maxvdims=maxncdim)
     PARAMETER (ncnoerr=nf_noerr)
 !
-!     
+!
 !     global netcdf error status variable
 !     initialized in error.c
-!     
 !
-!     no error 
+!
+!     no error
     PARAMETER (ncebadid=nf_ebadid)
-!     not a netcdf id 
+!     not a netcdf id
     PARAMETER (ncenfile=-31)
-!     too many netcdfs open 
+!     too many netcdfs open
     PARAMETER (nceexist=nf_eexist)
 ! nc_syserr
 !     netcdf file exists && ncnoclob
     PARAMETER (nceinval=nf_einval)
-!     invalid argument 
+!     invalid argument
     PARAMETER (nceperm=nf_eperm)
-!     write to read only 
+!     write to read only
     PARAMETER (ncenotin=nf_enotindefine)
-!     operation not allowed in data mode 
+!     operation not allowed in data mode
     PARAMETER (nceindef=nf_eindefine)
-!     operation not allowed in define mode 
+!     operation not allowed in define mode
     PARAMETER (ncecoord=nf_einvalcoords)
-!     coordinates out of domain 
+!     coordinates out of domain
     PARAMETER (ncemaxds=nf_emaxdims)
-!     maxncdims exceeded 
+!     maxncdims exceeded
     PARAMETER (ncename=nf_enameinuse)
-!     string match to name in use 
+!     string match to name in use
     PARAMETER (ncenoatt=nf_enotatt)
-!     attribute not found 
+!     attribute not found
     PARAMETER (ncemaxat=nf_emaxatts)
-!     maxncattrs exceeded 
+!     maxncattrs exceeded
     PARAMETER (ncebadty=nf_ebadtype)
-!     not a netcdf data type 
+!     not a netcdf data type
     PARAMETER (ncebadd=nf_ebaddim)
-!     invalid dimension id 
+!     invalid dimension id
     PARAMETER (nceunlim=nf_eunlimpos)
-!     ncunlimited in the wrong index 
+!     ncunlimited in the wrong index
     PARAMETER (ncemaxvs=nf_emaxvars)
-!     maxncvars exceeded 
+!     maxncvars exceeded
     PARAMETER (ncenotvr=nf_enotvar)
-!     variable not found 
+!     variable not found
     PARAMETER (nceglob=nf_eglobal)
-!     action prohibited on ncglobal varid 
+!     action prohibited on ncglobal varid
     PARAMETER (ncenotnc=nf_enotnc)
-!     not a netcdf file 
+!     not a netcdf file
     PARAMETER (ncests=nf_ests)
     PARAMETER (ncentool=nf_emaxname)
     PARAMETER (ncfoobar=32)
     PARAMETER (ncsyserr=-31)
     PARAMETER (ncfatal=1)
 !
-!     
+!
 !     global options variable. used to determine behavior of error handler.
 !     initialized in lerror.c
-!     
+!
     PARAMETER (ncverbos=2)
 !
 !
@@ -4858,76 +4858,76 @@ CONTAINS
     PARAMETER (nf_collective=1)
 !
 !     New error codes.
-! Error at HDF5 layer. 
+! Error at HDF5 layer.
     INTEGER :: nf_ehdferr
     PARAMETER (nf_ehdferr=-101)
-! Can't read. 
+! Can't read.
     INTEGER :: nf_ecantread
     PARAMETER (nf_ecantread=-102)
-! Can't write. 
+! Can't write.
     INTEGER :: nf_ecantwrite
     PARAMETER (nf_ecantwrite=-103)
-! Can't create. 
+! Can't create.
     INTEGER :: nf_ecantcreate
     PARAMETER (nf_ecantcreate=-104)
-! Problem with file metadata. 
+! Problem with file metadata.
     INTEGER :: nf_efilemeta
     PARAMETER (nf_efilemeta=-105)
-! Problem with dimension metadata. 
+! Problem with dimension metadata.
     INTEGER :: nf_edimmeta
     PARAMETER (nf_edimmeta=-106)
-! Problem with attribute metadata. 
+! Problem with attribute metadata.
     INTEGER :: nf_eattmeta
     PARAMETER (nf_eattmeta=-107)
-! Problem with variable metadata. 
+! Problem with variable metadata.
     INTEGER :: nf_evarmeta
     PARAMETER (nf_evarmeta=-108)
-! Not a compound type. 
+! Not a compound type.
     INTEGER :: nf_enocompound
     PARAMETER (nf_enocompound=-109)
-! Attribute already exists. 
+! Attribute already exists.
     INTEGER :: nf_eattexists
     PARAMETER (nf_eattexists=-110)
-! Attempting netcdf-4 operation on netcdf-3 file.   
+! Attempting netcdf-4 operation on netcdf-3 file.
     INTEGER :: nf_enotnc4
     PARAMETER (nf_enotnc4=-111)
-! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.   
+! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.
     INTEGER :: nf_estrictnc3
     PARAMETER (nf_estrictnc3=-112)
-! Attempting netcdf-3 operation on netcdf-4 file.   
+! Attempting netcdf-3 operation on netcdf-4 file.
     INTEGER :: nf_enotnc3
     PARAMETER (nf_enotnc3=-113)
-! Parallel operation on file opened for non-parallel access.   
+! Parallel operation on file opened for non-parallel access.
     INTEGER :: nf_enopar
     PARAMETER (nf_enopar=-114)
-! Error initializing for parallel access.   
+! Error initializing for parallel access.
     INTEGER :: nf_eparinit
     PARAMETER (nf_eparinit=-115)
-! Bad group ID.   
+! Bad group ID.
     INTEGER :: nf_ebadgrpid
     PARAMETER (nf_ebadgrpid=-116)
-! Bad type ID.   
+! Bad type ID.
     INTEGER :: nf_ebadtypid
     PARAMETER (nf_ebadtypid=-117)
-! Type has already been defined and may not be edited. 
+! Type has already been defined and may not be edited.
     INTEGER :: nf_etypdefined
     PARAMETER (nf_etypdefined=-118)
-! Bad field ID.   
+! Bad field ID.
     INTEGER :: nf_ebadfield
     PARAMETER (nf_ebadfield=-119)
-! Bad class.   
+! Bad class.
     INTEGER :: nf_ebadclass
     PARAMETER (nf_ebadclass=-120)
-! Mapped access for atomic types only.   
+! Mapped access for atomic types only.
     INTEGER :: nf_emaptype
     PARAMETER (nf_emaptype=-121)
-! Attempt to define fill value when data already exists. 
+! Attempt to define fill value when data already exists.
     INTEGER :: nf_elatefill
     PARAMETER (nf_elatefill=-122)
-! Attempt to define var properties, like deflate, after enddef. 
+! Attempt to define var properties, like deflate, after enddef.
     INTEGER :: nf_elatedef
     PARAMETER (nf_elatedef=-123)
-! Probem with HDF5 dimscales. 
+! Probem with HDF5 dimscales.
     INTEGER :: nf_edimscale
     PARAMETER (nf_edimscale=-124)
 ! No group found.
@@ -5179,7 +5179,7 @@ CONTAINS
 ! begin netcdf 2.4 backward compatibility:
 !
 !
-!      
+!
 ! functions in the fortran interface
 !
     INTEGER :: NCCRE
@@ -5267,18 +5267,18 @@ CONTAINS
     PARAMETER (ncdouble=6)
     PARAMETER (ncrdwr=1)
 !
-!     
+!
 !     masks for the struct nc flag field; passed in as 'mode' arg to
 !     nccreate and ncopen.
-!     
 !
-!     read/write, 0 => readonly 
+!
+!     read/write, 0 => readonly
     PARAMETER (nccreat=2)
-!     in create phase, cleared by ncendef 
+!     in create phase, cleared by ncendef
     PARAMETER (ncexcl=4)
-!     on create destroy existing file 
+!     on create destroy existing file
     PARAMETER (ncindef=8)
-!     in define mode, cleared by ncendef 
+!     in define mode, cleared by ncendef
     PARAMETER (ncnsync=16)
 !     synchronise numrecs on change (x'10')
     PARAMETER (nchsync=32)
@@ -5295,91 +5295,91 @@ CONTAINS
 !     isa link (x'8000')
     PARAMETER (ncnowrit=0)
 !
-!     
+!
 !     'mode' arguments for nccreate and ncopen
-!     
+!
     PARAMETER (ncwrite=ncrdwr)
     PARAMETER (ncclob=nf_clobber)
     PARAMETER (ncnoclob=nf_noclobber)
 !
-!     
+!
 !     'size' argument to ncdimdef for an unlimited dimension
-!     
+!
     INTEGER :: ncunlim
     PARAMETER (ncunlim=0)
     PARAMETER (ncglobal=0)
 !
-!     
+!
 !     attribute id to put/get a global attribute
-!     
+!
     PARAMETER (maxncop=64)
 !
-!     
+!
 !     advisory maximums:
-!     
+!
     PARAMETER (maxncdim=1024)
     PARAMETER (maxncatt=8192)
     PARAMETER (maxncvar=8192)
     PARAMETER (maxncnam=256)
-!     not enforced 
+!     not enforced
     PARAMETER (maxvdims=maxncdim)
     PARAMETER (ncnoerr=nf_noerr)
 !
-!     
+!
 !     global netcdf error status variable
 !     initialized in error.c
-!     
 !
-!     no error 
+!
+!     no error
     PARAMETER (ncebadid=nf_ebadid)
-!     not a netcdf id 
+!     not a netcdf id
     PARAMETER (ncenfile=-31)
-!     too many netcdfs open 
+!     too many netcdfs open
     PARAMETER (nceexist=nf_eexist)
 ! nc_syserr
 !     netcdf file exists && ncnoclob
     PARAMETER (nceinval=nf_einval)
-!     invalid argument 
+!     invalid argument
     PARAMETER (nceperm=nf_eperm)
-!     write to read only 
+!     write to read only
     PARAMETER (ncenotin=nf_enotindefine)
-!     operation not allowed in data mode 
+!     operation not allowed in data mode
     PARAMETER (nceindef=nf_eindefine)
-!     operation not allowed in define mode 
+!     operation not allowed in define mode
     PARAMETER (ncecoord=nf_einvalcoords)
-!     coordinates out of domain 
+!     coordinates out of domain
     PARAMETER (ncemaxds=nf_emaxdims)
-!     maxncdims exceeded 
+!     maxncdims exceeded
     PARAMETER (ncename=nf_enameinuse)
-!     string match to name in use 
+!     string match to name in use
     PARAMETER (ncenoatt=nf_enotatt)
-!     attribute not found 
+!     attribute not found
     PARAMETER (ncemaxat=nf_emaxatts)
-!     maxncattrs exceeded 
+!     maxncattrs exceeded
     PARAMETER (ncebadty=nf_ebadtype)
-!     not a netcdf data type 
+!     not a netcdf data type
     PARAMETER (ncebadd=nf_ebaddim)
-!     invalid dimension id 
+!     invalid dimension id
     PARAMETER (nceunlim=nf_eunlimpos)
-!     ncunlimited in the wrong index 
+!     ncunlimited in the wrong index
     PARAMETER (ncemaxvs=nf_emaxvars)
-!     maxncvars exceeded 
+!     maxncvars exceeded
     PARAMETER (ncenotvr=nf_enotvar)
-!     variable not found 
+!     variable not found
     PARAMETER (nceglob=nf_eglobal)
-!     action prohibited on ncglobal varid 
+!     action prohibited on ncglobal varid
     PARAMETER (ncenotnc=nf_enotnc)
-!     not a netcdf file 
+!     not a netcdf file
     PARAMETER (ncests=nf_ests)
     PARAMETER (ncentool=nf_emaxname)
     PARAMETER (ncfoobar=32)
     PARAMETER (ncsyserr=-31)
     PARAMETER (ncfatal=1)
 !
-!     
+!
 !     global options variable. used to determine behavior of error handler.
 !     initialized in lerror.c
-!     
+!
     PARAMETER (ncverbos=2)
 !
 !
@@ -6653,76 +6653,76 @@ CONTAINS
     PARAMETER (nf_collective=1)
 !
 !     New error codes.
-! Error at HDF5 layer. 
+! Error at HDF5 layer.
     INTEGER :: nf_ehdferr
     PARAMETER (nf_ehdferr=-101)
-! Can't read. 
+! Can't read.
     INTEGER :: nf_ecantread
     PARAMETER (nf_ecantread=-102)
-! Can't write. 
+! Can't write.
     INTEGER :: nf_ecantwrite
     PARAMETER (nf_ecantwrite=-103)
-! Can't create. 
+! Can't create.
     INTEGER :: nf_ecantcreate
     PARAMETER (nf_ecantcreate=-104)
-! Problem with file metadata. 
+! Problem with file metadata.
     INTEGER :: nf_efilemeta
     PARAMETER (nf_efilemeta=-105)
-! Problem with dimension metadata. 
+! Problem with dimension metadata.
     INTEGER :: nf_edimmeta
     PARAMETER (nf_edimmeta=-106)
-! Problem with attribute metadata. 
+! Problem with attribute metadata.
     INTEGER :: nf_eattmeta
     PARAMETER (nf_eattmeta=-107)
-! Problem with variable metadata. 
+! Problem with variable metadata.
     INTEGER :: nf_evarmeta
     PARAMETER (nf_evarmeta=-108)
-! Not a compound type. 
+! Not a compound type.
     INTEGER :: nf_enocompound
     PARAMETER (nf_enocompound=-109)
-! Attribute already exists. 
+! Attribute already exists.
     INTEGER :: nf_eattexists
     PARAMETER (nf_eattexists=-110)
-! Attempting netcdf-4 operation on netcdf-3 file.   
+! Attempting netcdf-4 operation on netcdf-3 file.
     INTEGER :: nf_enotnc4
     PARAMETER (nf_enotnc4=-111)
-! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.   
+! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.
     INTEGER :: nf_estrictnc3
     PARAMETER (nf_estrictnc3=-112)
-! Attempting netcdf-3 operation on netcdf-4 file.   
+! Attempting netcdf-3 operation on netcdf-4 file.
     INTEGER :: nf_enotnc3
     PARAMETER (nf_enotnc3=-113)
-! Parallel operation on file opened for non-parallel access.   
+! Parallel operation on file opened for non-parallel access.
     INTEGER :: nf_enopar
     PARAMETER (nf_enopar=-114)
-! Error initializing for parallel access.   
+! Error initializing for parallel access.
     INTEGER :: nf_eparinit
     PARAMETER (nf_eparinit=-115)
-! Bad group ID.   
+! Bad group ID.
     INTEGER :: nf_ebadgrpid
     PARAMETER (nf_ebadgrpid=-116)
-! Bad type ID.   
+! Bad type ID.
     INTEGER :: nf_ebadtypid
     PARAMETER (nf_ebadtypid=-117)
-! Type has already been defined and may not be edited. 
+! Type has already been defined and may not be edited.
     INTEGER :: nf_etypdefined
     PARAMETER (nf_etypdefined=-118)
-! Bad field ID.   
+! Bad field ID.
     INTEGER :: nf_ebadfield
     PARAMETER (nf_ebadfield=-119)
-! Bad class.   
+! Bad class.
     INTEGER :: nf_ebadclass
     PARAMETER (nf_ebadclass=-120)
-! Mapped access for atomic types only.   
+! Mapped access for atomic types only.
     INTEGER :: nf_emaptype
     PARAMETER (nf_emaptype=-121)
-! Attempt to define fill value when data already exists. 
+! Attempt to define fill value when data already exists.
     INTEGER :: nf_elatefill
     PARAMETER (nf_elatefill=-122)
-! Attempt to define var properties, like deflate, after enddef. 
+! Attempt to define var properties, like deflate, after enddef.
     INTEGER :: nf_elatedef
     PARAMETER (nf_elatedef=-123)
-! Probem with HDF5 dimscales. 
+! Probem with HDF5 dimscales.
     INTEGER :: nf_edimscale
     PARAMETER (nf_edimscale=-124)
 ! No group found.
@@ -6974,7 +6974,7 @@ CONTAINS
 ! begin netcdf 2.4 backward compatibility:
 !
 !
-!      
+!
 ! functions in the fortran interface
 !
     INTEGER :: NCCRE
@@ -7062,18 +7062,18 @@ CONTAINS
     PARAMETER (ncdouble=6)
     PARAMETER (ncrdwr=1)
 !
-!     
+!
 !     masks for the struct nc flag field; passed in as 'mode' arg to
 !     nccreate and ncopen.
-!     
 !
-!     read/write, 0 => readonly 
+!
+!     read/write, 0 => readonly
     PARAMETER (nccreat=2)
-!     in create phase, cleared by ncendef 
+!     in create phase, cleared by ncendef
     PARAMETER (ncexcl=4)
-!     on create destroy existing file 
+!     on create destroy existing file
     PARAMETER (ncindef=8)
-!     in define mode, cleared by ncendef 
+!     in define mode, cleared by ncendef
     PARAMETER (ncnsync=16)
 !     synchronise numrecs on change (x'10')
     PARAMETER (nchsync=32)
@@ -7090,91 +7090,91 @@ CONTAINS
 !     isa link (x'8000')
     PARAMETER (ncnowrit=0)
 !
-!     
+!
 !     'mode' arguments for nccreate and ncopen
-!     
+!
     PARAMETER (ncwrite=ncrdwr)
     PARAMETER (ncclob=nf_clobber)
     PARAMETER (ncnoclob=nf_noclobber)
 !
-!     
+!
 !     'size' argument to ncdimdef for an unlimited dimension
-!     
+!
     INTEGER :: ncunlim
     PARAMETER (ncunlim=0)
     PARAMETER (ncglobal=0)
 !
-!     
+!
 !     attribute id to put/get a global attribute
-!     
+!
     PARAMETER (maxncop=64)
 !
-!     
+!
 !     advisory maximums:
-!     
+!
     PARAMETER (maxncdim=1024)
     PARAMETER (maxncatt=8192)
     PARAMETER (maxncvar=8192)
     PARAMETER (maxncnam=256)
-!     not enforced 
+!     not enforced
     PARAMETER (maxvdims=maxncdim)
     PARAMETER (ncnoerr=nf_noerr)
 !
-!     
+!
 !     global netcdf error status variable
 !     initialized in error.c
-!     
 !
-!     no error 
+!
+!     no error
     PARAMETER (ncebadid=nf_ebadid)
-!     not a netcdf id 
+!     not a netcdf id
     PARAMETER (ncenfile=-31)
-!     too many netcdfs open 
+!     too many netcdfs open
     PARAMETER (nceexist=nf_eexist)
 ! nc_syserr
 !     netcdf file exists && ncnoclob
     PARAMETER (nceinval=nf_einval)
-!     invalid argument 
+!     invalid argument
     PARAMETER (nceperm=nf_eperm)
-!     write to read only 
+!     write to read only
     PARAMETER (ncenotin=nf_enotindefine)
-!     operation not allowed in data mode 
+!     operation not allowed in data mode
     PARAMETER (nceindef=nf_eindefine)
-!     operation not allowed in define mode 
+!     operation not allowed in define mode
     PARAMETER (ncecoord=nf_einvalcoords)
-!     coordinates out of domain 
+!     coordinates out of domain
     PARAMETER (ncemaxds=nf_emaxdims)
-!     maxncdims exceeded 
+!     maxncdims exceeded
     PARAMETER (ncename=nf_enameinuse)
-!     string match to name in use 
+!     string match to name in use
     PARAMETER (ncenoatt=nf_enotatt)
-!     attribute not found 
+!     attribute not found
     PARAMETER (ncemaxat=nf_emaxatts)
-!     maxncattrs exceeded 
+!     maxncattrs exceeded
     PARAMETER (ncebadty=nf_ebadtype)
-!     not a netcdf data type 
+!     not a netcdf data type
     PARAMETER (ncebadd=nf_ebaddim)
-!     invalid dimension id 
+!     invalid dimension id
     PARAMETER (nceunlim=nf_eunlimpos)
-!     ncunlimited in the wrong index 
+!     ncunlimited in the wrong index
     PARAMETER (ncemaxvs=nf_emaxvars)
-!     maxncvars exceeded 
+!     maxncvars exceeded
     PARAMETER (ncenotvr=nf_enotvar)
-!     variable not found 
+!     variable not found
     PARAMETER (nceglob=nf_eglobal)
-!     action prohibited on ncglobal varid 
+!     action prohibited on ncglobal varid
     PARAMETER (ncenotnc=nf_enotnc)
-!     not a netcdf file 
+!     not a netcdf file
     PARAMETER (ncests=nf_ests)
     PARAMETER (ncentool=nf_emaxname)
     PARAMETER (ncfoobar=32)
     PARAMETER (ncsyserr=-31)
     PARAMETER (ncfatal=1)
 !
-!     
+!
 !     global options variable. used to determine behavior of error handler.
 !     initialized in lerror.c
-!     
+!
     PARAMETER (ncverbos=2)
 !
 !
@@ -8447,76 +8447,76 @@ CONTAINS
     PARAMETER (nf_collective=1)
 !
 !     New error codes.
-! Error at HDF5 layer. 
+! Error at HDF5 layer.
     INTEGER :: nf_ehdferr
     PARAMETER (nf_ehdferr=-101)
-! Can't read. 
+! Can't read.
     INTEGER :: nf_ecantread
     PARAMETER (nf_ecantread=-102)
-! Can't write. 
+! Can't write.
     INTEGER :: nf_ecantwrite
     PARAMETER (nf_ecantwrite=-103)
-! Can't create. 
+! Can't create.
     INTEGER :: nf_ecantcreate
     PARAMETER (nf_ecantcreate=-104)
-! Problem with file metadata. 
+! Problem with file metadata.
     INTEGER :: nf_efilemeta
     PARAMETER (nf_efilemeta=-105)
-! Problem with dimension metadata. 
+! Problem with dimension metadata.
     INTEGER :: nf_edimmeta
     PARAMETER (nf_edimmeta=-106)
-! Problem with attribute metadata. 
+! Problem with attribute metadata.
     INTEGER :: nf_eattmeta
     PARAMETER (nf_eattmeta=-107)
-! Problem with variable metadata. 
+! Problem with variable metadata.
     INTEGER :: nf_evarmeta
     PARAMETER (nf_evarmeta=-108)
-! Not a compound type. 
+! Not a compound type.
     INTEGER :: nf_enocompound
     PARAMETER (nf_enocompound=-109)
-! Attribute already exists. 
+! Attribute already exists.
     INTEGER :: nf_eattexists
     PARAMETER (nf_eattexists=-110)
-! Attempting netcdf-4 operation on netcdf-3 file.   
+! Attempting netcdf-4 operation on netcdf-3 file.
     INTEGER :: nf_enotnc4
     PARAMETER (nf_enotnc4=-111)
-! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.   
+! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.
     INTEGER :: nf_estrictnc3
     PARAMETER (nf_estrictnc3=-112)
-! Attempting netcdf-3 operation on netcdf-4 file.   
+! Attempting netcdf-3 operation on netcdf-4 file.
     INTEGER :: nf_enotnc3
     PARAMETER (nf_enotnc3=-113)
-! Parallel operation on file opened for non-parallel access.   
+! Parallel operation on file opened for non-parallel access.
     INTEGER :: nf_enopar
     PARAMETER (nf_enopar=-114)
-! Error initializing for parallel access.   
+! Error initializing for parallel access.
     INTEGER :: nf_eparinit
     PARAMETER (nf_eparinit=-115)
-! Bad group ID.   
+! Bad group ID.
     INTEGER :: nf_ebadgrpid
     PARAMETER (nf_ebadgrpid=-116)
-! Bad type ID.   
+! Bad type ID.
     INTEGER :: nf_ebadtypid
     PARAMETER (nf_ebadtypid=-117)
-! Type has already been defined and may not be edited. 
+! Type has already been defined and may not be edited.
     INTEGER :: nf_etypdefined
     PARAMETER (nf_etypdefined=-118)
-! Bad field ID.   
+! Bad field ID.
     INTEGER :: nf_ebadfield
     PARAMETER (nf_ebadfield=-119)
-! Bad class.   
+! Bad class.
     INTEGER :: nf_ebadclass
     PARAMETER (nf_ebadclass=-120)
-! Mapped access for atomic types only.   
+! Mapped access for atomic types only.
     INTEGER :: nf_emaptype
     PARAMETER (nf_emaptype=-121)
-! Attempt to define fill value when data already exists. 
+! Attempt to define fill value when data already exists.
     INTEGER :: nf_elatefill
     PARAMETER (nf_elatefill=-122)
-! Attempt to define var properties, like deflate, after enddef. 
+! Attempt to define var properties, like deflate, after enddef.
     INTEGER :: nf_elatedef
     PARAMETER (nf_elatedef=-123)
-! Probem with HDF5 dimscales. 
+! Probem with HDF5 dimscales.
     INTEGER :: nf_edimscale
     PARAMETER (nf_edimscale=-124)
 ! No group found.
@@ -8768,7 +8768,7 @@ CONTAINS
 ! begin netcdf 2.4 backward compatibility:
 !
 !
-!      
+!
 ! functions in the fortran interface
 !
     INTEGER :: NCCRE
@@ -8856,18 +8856,18 @@ CONTAINS
     PARAMETER (ncdouble=6)
     PARAMETER (ncrdwr=1)
 !
-!     
+!
 !     masks for the struct nc flag field; passed in as 'mode' arg to
 !     nccreate and ncopen.
-!     
 !
-!     read/write, 0 => readonly 
+!
+!     read/write, 0 => readonly
     PARAMETER (nccreat=2)
-!     in create phase, cleared by ncendef 
+!     in create phase, cleared by ncendef
     PARAMETER (ncexcl=4)
-!     on create destroy existing file 
+!     on create destroy existing file
     PARAMETER (ncindef=8)
-!     in define mode, cleared by ncendef 
+!     in define mode, cleared by ncendef
     PARAMETER (ncnsync=16)
 !     synchronise numrecs on change (x'10')
     PARAMETER (nchsync=32)
@@ -8884,91 +8884,91 @@ CONTAINS
 !     isa link (x'8000')
     PARAMETER (ncnowrit=0)
 !
-!     
+!
 !     'mode' arguments for nccreate and ncopen
-!     
+!
     PARAMETER (ncwrite=ncrdwr)
     PARAMETER (ncclob=nf_clobber)
     PARAMETER (ncnoclob=nf_noclobber)
 !
-!     
+!
 !     'size' argument to ncdimdef for an unlimited dimension
-!     
+!
     INTEGER :: ncunlim
     PARAMETER (ncunlim=0)
     PARAMETER (ncglobal=0)
 !
-!     
+!
 !     attribute id to put/get a global attribute
-!     
+!
     PARAMETER (maxncop=64)
 !
-!     
+!
 !     advisory maximums:
-!     
+!
     PARAMETER (maxncdim=1024)
     PARAMETER (maxncatt=8192)
     PARAMETER (maxncvar=8192)
     PARAMETER (maxncnam=256)
-!     not enforced 
+!     not enforced
     PARAMETER (maxvdims=maxncdim)
     PARAMETER (ncnoerr=nf_noerr)
 !
-!     
+!
 !     global netcdf error status variable
 !     initialized in error.c
-!     
 !
-!     no error 
+!
+!     no error
     PARAMETER (ncebadid=nf_ebadid)
-!     not a netcdf id 
+!     not a netcdf id
     PARAMETER (ncenfile=-31)
-!     too many netcdfs open 
+!     too many netcdfs open
     PARAMETER (nceexist=nf_eexist)
 ! nc_syserr
 !     netcdf file exists && ncnoclob
     PARAMETER (nceinval=nf_einval)
-!     invalid argument 
+!     invalid argument
     PARAMETER (nceperm=nf_eperm)
-!     write to read only 
+!     write to read only
     PARAMETER (ncenotin=nf_enotindefine)
-!     operation not allowed in data mode 
+!     operation not allowed in data mode
     PARAMETER (nceindef=nf_eindefine)
-!     operation not allowed in define mode 
+!     operation not allowed in define mode
     PARAMETER (ncecoord=nf_einvalcoords)
-!     coordinates out of domain 
+!     coordinates out of domain
     PARAMETER (ncemaxds=nf_emaxdims)
-!     maxncdims exceeded 
+!     maxncdims exceeded
     PARAMETER (ncename=nf_enameinuse)
-!     string match to name in use 
+!     string match to name in use
     PARAMETER (ncenoatt=nf_enotatt)
-!     attribute not found 
+!     attribute not found
     PARAMETER (ncemaxat=nf_emaxatts)
-!     maxncattrs exceeded 
+!     maxncattrs exceeded
     PARAMETER (ncebadty=nf_ebadtype)
-!     not a netcdf data type 
+!     not a netcdf data type
     PARAMETER (ncebadd=nf_ebaddim)
-!     invalid dimension id 
+!     invalid dimension id
     PARAMETER (nceunlim=nf_eunlimpos)
-!     ncunlimited in the wrong index 
+!     ncunlimited in the wrong index
     PARAMETER (ncemaxvs=nf_emaxvars)
-!     maxncvars exceeded 
+!     maxncvars exceeded
     PARAMETER (ncenotvr=nf_enotvar)
-!     variable not found 
+!     variable not found
     PARAMETER (nceglob=nf_eglobal)
-!     action prohibited on ncglobal varid 
+!     action prohibited on ncglobal varid
     PARAMETER (ncenotnc=nf_enotnc)
-!     not a netcdf file 
+!     not a netcdf file
     PARAMETER (ncests=nf_ests)
     PARAMETER (ncentool=nf_emaxname)
     PARAMETER (ncfoobar=32)
     PARAMETER (ncsyserr=-31)
     PARAMETER (ncfatal=1)
 !
-!     
+!
 !     global options variable. used to determine behavior of error handler.
 !     initialized in lerror.c
-!     
+!
     PARAMETER (ncverbos=2)
 !
 !
@@ -10241,76 +10241,76 @@ CONTAINS
     PARAMETER (nf_collective=1)
 !
 !     New error codes.
-! Error at HDF5 layer. 
+! Error at HDF5 layer.
     INTEGER :: nf_ehdferr
     PARAMETER (nf_ehdferr=-101)
-! Can't read. 
+! Can't read.
     INTEGER :: nf_ecantread
     PARAMETER (nf_ecantread=-102)
-! Can't write. 
+! Can't write.
     INTEGER :: nf_ecantwrite
     PARAMETER (nf_ecantwrite=-103)
-! Can't create. 
+! Can't create.
     INTEGER :: nf_ecantcreate
     PARAMETER (nf_ecantcreate=-104)
-! Problem with file metadata. 
+! Problem with file metadata.
     INTEGER :: nf_efilemeta
     PARAMETER (nf_efilemeta=-105)
-! Problem with dimension metadata. 
+! Problem with dimension metadata.
     INTEGER :: nf_edimmeta
     PARAMETER (nf_edimmeta=-106)
-! Problem with attribute metadata. 
+! Problem with attribute metadata.
     INTEGER :: nf_eattmeta
     PARAMETER (nf_eattmeta=-107)
-! Problem with variable metadata. 
+! Problem with variable metadata.
     INTEGER :: nf_evarmeta
     PARAMETER (nf_evarmeta=-108)
-! Not a compound type. 
+! Not a compound type.
     INTEGER :: nf_enocompound
     PARAMETER (nf_enocompound=-109)
-! Attribute already exists. 
+! Attribute already exists.
     INTEGER :: nf_eattexists
     PARAMETER (nf_eattexists=-110)
-! Attempting netcdf-4 operation on netcdf-3 file.   
+! Attempting netcdf-4 operation on netcdf-3 file.
     INTEGER :: nf_enotnc4
     PARAMETER (nf_enotnc4=-111)
-! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.   
+! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.
     INTEGER :: nf_estrictnc3
     PARAMETER (nf_estrictnc3=-112)
-! Attempting netcdf-3 operation on netcdf-4 file.   
+! Attempting netcdf-3 operation on netcdf-4 file.
     INTEGER :: nf_enotnc3
     PARAMETER (nf_enotnc3=-113)
-! Parallel operation on file opened for non-parallel access.   
+! Parallel operation on file opened for non-parallel access.
     INTEGER :: nf_enopar
     PARAMETER (nf_enopar=-114)
-! Error initializing for parallel access.   
+! Error initializing for parallel access.
     INTEGER :: nf_eparinit
     PARAMETER (nf_eparinit=-115)
-! Bad group ID.   
+! Bad group ID.
     INTEGER :: nf_ebadgrpid
     PARAMETER (nf_ebadgrpid=-116)
-! Bad type ID.   
+! Bad type ID.
     INTEGER :: nf_ebadtypid
     PARAMETER (nf_ebadtypid=-117)
-! Type has already been defined and may not be edited. 
+! Type has already been defined and may not be edited.
     INTEGER :: nf_etypdefined
     PARAMETER (nf_etypdefined=-118)
-! Bad field ID.   
+! Bad field ID.
     INTEGER :: nf_ebadfield
     PARAMETER (nf_ebadfield=-119)
-! Bad class.   
+! Bad class.
     INTEGER :: nf_ebadclass
     PARAMETER (nf_ebadclass=-120)
-! Mapped access for atomic types only.   
+! Mapped access for atomic types only.
     INTEGER :: nf_emaptype
     PARAMETER (nf_emaptype=-121)
-! Attempt to define fill value when data already exists. 
+! Attempt to define fill value when data already exists.
     INTEGER :: nf_elatefill
     PARAMETER (nf_elatefill=-122)
-! Attempt to define var properties, like deflate, after enddef. 
+! Attempt to define var properties, like deflate, after enddef.
     INTEGER :: nf_elatedef
     PARAMETER (nf_elatedef=-123)
-! Probem with HDF5 dimscales. 
+! Probem with HDF5 dimscales.
     INTEGER :: nf_edimscale
     PARAMETER (nf_edimscale=-124)
 ! No group found.
@@ -10562,7 +10562,7 @@ CONTAINS
 ! begin netcdf 2.4 backward compatibility:
 !
 !
-!      
+!
 ! functions in the fortran interface
 !
     INTEGER :: NCCRE
@@ -10650,18 +10650,18 @@ CONTAINS
     PARAMETER (ncdouble=6)
     PARAMETER (ncrdwr=1)
 !
-!     
+!
 !     masks for the struct nc flag field; passed in as 'mode' arg to
 !     nccreate and ncopen.
-!     
 !
-!     read/write, 0 => readonly 
+!
+!     read/write, 0 => readonly
     PARAMETER (nccreat=2)
-!     in create phase, cleared by ncendef 
+!     in create phase, cleared by ncendef
     PARAMETER (ncexcl=4)
-!     on create destroy existing file 
+!     on create destroy existing file
     PARAMETER (ncindef=8)
-!     in define mode, cleared by ncendef 
+!     in define mode, cleared by ncendef
     PARAMETER (ncnsync=16)
 !     synchronise numrecs on change (x'10')
     PARAMETER (nchsync=32)
@@ -10678,91 +10678,91 @@ CONTAINS
 !     isa link (x'8000')
     PARAMETER (ncnowrit=0)
 !
-!     
+!
 !     'mode' arguments for nccreate and ncopen
-!     
+!
     PARAMETER (ncwrite=ncrdwr)
     PARAMETER (ncclob=nf_clobber)
     PARAMETER (ncnoclob=nf_noclobber)
 !
-!     
+!
 !     'size' argument to ncdimdef for an unlimited dimension
-!     
+!
     INTEGER :: ncunlim
     PARAMETER (ncunlim=0)
     PARAMETER (ncglobal=0)
 !
-!     
+!
 !     attribute id to put/get a global attribute
-!     
+!
     PARAMETER (maxncop=64)
 !
-!     
+!
 !     advisory maximums:
-!     
+!
     PARAMETER (maxncdim=1024)
     PARAMETER (maxncatt=8192)
     PARAMETER (maxncvar=8192)
     PARAMETER (maxncnam=256)
-!     not enforced 
+!     not enforced
     PARAMETER (maxvdims=maxncdim)
     PARAMETER (ncnoerr=nf_noerr)
 !
-!     
+!
 !     global netcdf error status variable
 !     initialized in error.c
-!     
 !
-!     no error 
+!
+!     no error
     PARAMETER (ncebadid=nf_ebadid)
-!     not a netcdf id 
+!     not a netcdf id
     PARAMETER (ncenfile=-31)
-!     too many netcdfs open 
+!     too many netcdfs open
     PARAMETER (nceexist=nf_eexist)
 ! nc_syserr
 !     netcdf file exists && ncnoclob
     PARAMETER (nceinval=nf_einval)
-!     invalid argument 
+!     invalid argument
     PARAMETER (nceperm=nf_eperm)
-!     write to read only 
+!     write to read only
     PARAMETER (ncenotin=nf_enotindefine)
-!     operation not allowed in data mode 
+!     operation not allowed in data mode
     PARAMETER (nceindef=nf_eindefine)
-!     operation not allowed in define mode 
+!     operation not allowed in define mode
     PARAMETER (ncecoord=nf_einvalcoords)
-!     coordinates out of domain 
+!     coordinates out of domain
     PARAMETER (ncemaxds=nf_emaxdims)
-!     maxncdims exceeded 
+!     maxncdims exceeded
     PARAMETER (ncename=nf_enameinuse)
-!     string match to name in use 
+!     string match to name in use
     PARAMETER (ncenoatt=nf_enotatt)
-!     attribute not found 
+!     attribute not found
     PARAMETER (ncemaxat=nf_emaxatts)
-!     maxncattrs exceeded 
+!     maxncattrs exceeded
     PARAMETER (ncebadty=nf_ebadtype)
-!     not a netcdf data type 
+!     not a netcdf data type
     PARAMETER (ncebadd=nf_ebaddim)
-!     invalid dimension id 
+!     invalid dimension id
     PARAMETER (nceunlim=nf_eunlimpos)
-!     ncunlimited in the wrong index 
+!     ncunlimited in the wrong index
     PARAMETER (ncemaxvs=nf_emaxvars)
-!     maxncvars exceeded 
+!     maxncvars exceeded
     PARAMETER (ncenotvr=nf_enotvar)
-!     variable not found 
+!     variable not found
     PARAMETER (nceglob=nf_eglobal)
-!     action prohibited on ncglobal varid 
+!     action prohibited on ncglobal varid
     PARAMETER (ncenotnc=nf_enotnc)
-!     not a netcdf file 
+!     not a netcdf file
     PARAMETER (ncests=nf_ests)
     PARAMETER (ncentool=nf_emaxname)
     PARAMETER (ncfoobar=32)
     PARAMETER (ncsyserr=-31)
     PARAMETER (ncfatal=1)
 !
-!     
+!
 !     global options variable. used to determine behavior of error handler.
 !     initialized in lerror.c
-!     
+!
     PARAMETER (ncverbos=2)
 !
 !

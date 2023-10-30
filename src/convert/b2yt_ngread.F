@@ -34,7 +34,10 @@ c
       use b2mod_subsys
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     *   , only : ndx, ndy, nion, nstra, natm, nmol, npls
+     *   , only : nion, natm, nmol, npls
+#ifdef WG_TODO
+     *   ,        ndx, ndy, nstra
+#endif
       use eirmod_extrab25
       use eirmod_clogau
       use eirmod_cinit
@@ -99,13 +102,18 @@ c
       character*3 stnum
 #endif
       character*256 filename
+#ifdef WG_TODO
       logical ex
+#endif
 
 *  -- PROCEDURES --
+#ifdef WG_TODO
       character*32 :: get_Eir_hash
       logical streql
+      external streql, get_Eir_hash
+#endif
       EXTERNAL GFSUB2
-      external ipgeti, streql, get_Eir_hash
+      external ipgeti
 #endif
 
 *=======================================================================
@@ -157,9 +165,7 @@ C
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
       call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
-#ifdef WG_TODO
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
-#endif
       n2 = nx1*ny1
       filename='input.dat'
       call find_file(filename,ex)
@@ -1167,19 +1173,14 @@ cank
         if(jvft44 .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
-          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
-          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
-          call write_title(45,'eirdiag', 5*nstsi+1)
+          call write_title(45,'eirdiag', nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
-          WRITE(45,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
-          WRITE(45,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)
-          WRITE(45,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
-          WRITE(45,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
 
           NCL=eirdiag_nds_ind(nstsi+1)
           IF(NCL.GT.0) THEN
+            IF(.NOT.ALLOCATED(fnmti_b2)) ALLOCATE(fnmti_b2(NCL))
+            call read_title(44)
+            READ (44,'(12i6)') (fnmti_b2(i),i=1,NCL)
             IF(.NOT.ALLOCATED(wldna_res))
      >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
@@ -1267,6 +1268,8 @@ cank
                 end if
               end if
             end do
+            call write_title(45,'fnmti_b2',ncl)
+            WRITE(45,'(12i6)') (fnmti_b2(i),i=1,NCL)
             call write_title(45,'sarea_res',ncl)
             WRITE(45,'(6e15.7)') (sarea_res(i),i=1,NCL)
             call write_title(45,'wldna_res',ncl*natm1)

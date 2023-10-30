@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agdr (ninp, nout, nx, ny, nx1, ny1)
+      subroutine b2agdr (ninp, nout, nx, ny, nx1, ny1, ccut1)
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
@@ -22,7 +22,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, nout_us, io
+      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, ccut1, nout_us, io
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -316,9 +316,9 @@
 *!!   be generated with dimensions (nx1,ny1).
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
-     1 cflags1,lblgm(61:120),periodic_bc,nncut,nncutmax)
+     1 cflags1,lblgm(61:120),periodic_bc,nncut,ccut1)
       call init_region(nx1,ny1,nncut,nncutmax,
-     1 leftcut1,rightcut1,topcut1,bottomcut1,
+     1 leftcut1,rightcut1,topcut1,bottomcut1,ccut1,
      2 leftix1,leftiy1,rightix1,rightiy1,
      3 topix1,topiy1,bottomix1,bottomiy1,
      4 region1,nnreg,resignore1,crx1,cry1,periodic_bc,cflags1)
@@ -338,12 +338,11 @@
       call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
      & hxx, hyy, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
      & cell_width1, cell_height1,
-     & leftix1, leftiy1, bottomix1, bottomiy1, 
-     & rightix1, rightiy1, topix1, topiy1, cflags1)
+     & leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
 
       call b2agbf (nx1, ny1, isymm, periodic_bc, nncut,
      & crx1, cry1, fpsi1, ffbz1,
-     & vol1, gs1, qz1, qc1, qs1, bb1, wbbl1, wbbr1, wbbv1, region1,
+     & vol1, bb1, wbbl1, wbbr1, wbbv1, region1,
      & leftix1, leftiy1, bottomix1, bottomiy1, rightix1, rightiy1,
      & topix1, topiy1, cflags1)
 
@@ -372,7 +371,7 @@
      & cell_width, cell_height,
      & leftix1, leftiy1, rightix1, rightiy1,
      & topix1, topiy1, bottomix1, bottomiy1,
-     & leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
+     & leftcut1, rightcut1, bottomcut1, topcut1, ccut1, cflags1)
 *   ..correct pbsx on the proper mesh
       if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
@@ -453,6 +452,20 @@
      >     topiy(ix,nyiso2) = nyiso1
         end do
       endif
+*   ..determine on_closed_surface-array for conversion to unstructured format
+      do iy = -1, ny
+        do ix = -1, nx
+          if (nnreg(0).eq.1) then
+            on_closed_surface(ix,iy) = periodic_bc.eq.1
+          else if (nnreg(0).eq.2 .or. nnreg(0).eq.4) then
+            on_closed_surface(ix,iy) = region(ix,iy,0).eq.1
+          else if (nnreg(0).eq.5 .or. nnreg(0).eq.8) then
+            on_closed_surface(ix,iy) = mod(region(ix,iy,0),4).eq.1
+          else
+            call xerrab ('Unknown number of regions!')
+          end if
+        end do
+      end do
 cdpc-debug
       if(nx1.eq.nx.and.ny1.eq.ny) then
         write(*,*) 'b2agdr sanity check: vol ',
@@ -628,23 +641,18 @@ cdpc-debug
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
-*   ..in 5.1, and SOLPS-ITER we need a fort.30 file early to build triangular grids
-      !wdk fort.30 no longer written/used in unstructured code
-      !call write_f30
 
 !   ..conversion to new, unstructured data-types
       call calc_mapping (nx, ny, mpg)
       write (*,*) 'Mapping created'
-      call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
-     .        mpg%nVmxCv, gm, mpg)
+      call prep_geometry (nx, ny, gm, mpg)
       write (*,*) 'Geometry created'
 !     write unstructured b2fgmtry file
 #ifdef F2003
-      open (newunit=nout_us,file='b2fgmtry_us',iostat=io)
+      open (newunit=nout_us,file='b2fgmtry',iostat=io)
 #else
       nout_us = newunit()
-      open (unit=nout_us,file='b2fgmtry_us',iostat=io)
+      open (unit=nout_us,file='b2fgmtry',iostat=io)
 #endif
 
 !   ..write headers for output files
@@ -681,6 +689,10 @@ cdpc-debug
       call cfwuin (nout_us, 1, idum, 'isymm')
 *   ..write geometry
       call write_b2fgmtry (nout_us, mpg, gm)
+
+*   ..write fort.30 file to build triangular grids
+      call write_f30(gm, mpg)
+
 *   ..clean-up
       close (nout_us)
       call dealloc_geometry(gm)

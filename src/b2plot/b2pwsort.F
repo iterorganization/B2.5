@@ -55,6 +55,7 @@ c        end do
 c      end do
 cc%%%
       do il=1,nwldprt
+        if (il.eq.1.and..not.shadow) cycle
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
           write (*,*) 'Starting segment outside the limits',is,il
@@ -211,9 +212,13 @@ c*** No connection found
                       k = k + 1
                     end if
                   end do
-                  if (.not.found) write(*,'(a,i4,a)')
+                  if (.not.found) then
+                    write(*,'(a,i4,a)')
      .             'Found no correspondence (1B) between DG wall # ', j,
      .             ' and Eirene wall list'
+                    lwldlis(ii,il)=j
+                    leirlis(ii,il)=lelmind(j)
+                  end if
                 else
                   k = 1
                   found = .false.
@@ -232,9 +237,13 @@ c*** No connection found
                     end if
                     k = k + 1
                   end do
-                  if (.not.found) write(*,'(a,i4,a)')
+                  if (.not.found) then
+                    write(*,'(a,i4,a)')
      .             'Found no correspondence (2B) between DG wall # ', j,
      .             ' and Eirene wall list'
+                    lwldlis(ii,il)=j
+                    leirlis(ii,il)=lelmind(j)
+                  end if
                 end if
               end if
             end do

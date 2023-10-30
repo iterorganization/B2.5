@@ -24,11 +24,11 @@ contains
   !> nx, ny: dimensions for the B2 data structures (which are then
   !>         of size (-1:nx, -1:ny)
   !> nx1, ny1: size of input grid which is to be downscaled to nx, ny  
-  subroutine b2ag_read_parameters(ninp, nout, nx, ny, nx1, ny1)
+  subroutine b2ag_read_parameters(ninp, nout, nx, ny, nx1, ny1, ccut1)
     use b2mod_ipmain
     implicit none
     integer, intent(in) :: ninp(0:1), nout(0:1)
-    integer, intent(out) :: nx, ny, nx1, ny1
+    integer, intent(out) :: nx, ny, nx1, ny1, ccut1
 
     ! internal
     character :: id*8, cnamip*80, cvalip*80
@@ -68,6 +68,7 @@ contains
     ! open geometry file and get nx, ny,... from there
     nnx = 0
     nny = 0
+    ccut1 = 0
     doGhostCells = .false.
 
     call ipgetc ('b2agfs_geometry', local_sonnet)
@@ -78,8 +79,10 @@ contains
             if (grid_version.lt."01.001.028") then
                 read(lun,*) nnx,nny
                 niso = 0
+                nxiso = 0
             else
                 read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
+                if (niso.eq.1) ccut1 = nxiso(1)
                 doGhostCells = .true.
             end if
         end if

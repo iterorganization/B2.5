@@ -274,10 +274,11 @@ c   ..collect non-dominant species
          if( is_neutral(is) .and. is.ne.ism0 ) then
              nzs         = nzs + 1
              izs2is(nzs) = is
-             izch(nzs)   = int(zn(is))
+             izch(nzs)   = nint(zn(is))
              zmass(nzs)  = am(is)
          endif
-         if( .not.is_neutral(is) .and. zn(is).ne.zn(ism) ) then
+         if( .not.is_neutral(is) .and.
+    &         nint(zn(is)).ne.nint(zn(ism)) ) then
              do ix = -1 , nxpp
                 do iy = -1 , nypp
                    sqezrad(ix,iy,nzs) = sqezrad(ix,iy,nzs)
@@ -1507,7 +1508,8 @@ c   ..neutral impurities
       if( nz.gt.0 ) then
           i = 0
           do is = 0 , nspp-1
-             if( is_neutral(is) .and. zn(is).ne.zn(ism) ) then
+             if( is_neutral(is) .and.
+     &           nint(zn(is)).ne.nint(zn(ism)) ) then
                  i = i + 1
                  cbuf2 = is_codes(is)
                  call chcase(1,cbuf2)
@@ -1536,7 +1538,8 @@ c   ..impurity charged states
       if( nz.gt.0 ) then
           i = 0
           do is = 0 , nspp-1
-             if( .not.is_neutral(is) .and. zn(is).ne.zn(ism) ) then
+             if( .not.is_neutral(is) .and.
+     *            nint(zn(is)).ne.nint(zn(ism)) ) then
                  i = i + 1
                  write(cbuf6,1010) 'IMP ' , i
 

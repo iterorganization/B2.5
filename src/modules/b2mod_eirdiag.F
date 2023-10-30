@@ -41,28 +41,11 @@ C surface elements, controlled by array 'eirdiag_nds_ind'
 C
 
 ! See WNEUTRAL_FLUXES for the description
-      INTEGER, allocatable ::
-     .                                  eirdiag_nds_ind(:),
-     .                                  eirdiag_nds_typ(:),
-     .                                  eirdiag_nds_srf(:),
-     .                                  eirdiag_nds_start(:),
-     .                                  eirdiag_nds_end(:)
+      INTEGER, allocatable :: eirdiag_nds_ind(:), fnmti_b2(:)
 
-C Meaning of the arrays which are written to the fort.44 file
-C 
-C  eirdiag_nds_typ    : type of the surface
-C                       1: poloidal surface (Y=CONST)
-C                       2: radial surface (X=CONST) 
-C  eirdiag_nds_srf    : index of the corresponding radial or poloidal SURFACE
-C                       on which the distribution is given 
-C  eirdiag_nds_start  : index of the first CELL on the surface '..._srf' 
-C  eirdiag_nds_end    : ... of the last CELL ...
-C 
-C  _sfr, _start and _end are given in B2 indexing. 
-C  '_srf' corresponds to the indexing of B2 arrays with fluxes (CELL-1 for outer wall and target).
-C
 C  eirdiag_nds_ind(IS) : is the index AFTER WHICH the data for surface IS is started in arrays '*_res'.
 C                        IF _ind(IS)<0 then this surface is skipped
+C  fnmti_b2            : the list of the triangle faces making up the non-standard surfaces
 C      
 C
       CHARACTER(8), allocatable :: eirtxt(:)
@@ -151,10 +134,7 @@ c
       allocate(wlpump_res(natmd+nmold+niond+nplsd,nsgmx))
       allocate(sarea_res(nsgmx))
       allocate(eirdiag_nds_ind(nstsd+1))
-      allocate(eirdiag_nds_typ(nstsd))
-      allocate(eirdiag_nds_srf(nstsd))
-      allocate(eirdiag_nds_start(nstsd))
-      allocate(eirdiag_nds_end(nstsd))
+      allocate(fnmti_b2(nstsd+1))
       allocate(isrftype(nlimps))
       allocate(lkindp(nplsd))
       allocate(lkindm(max(1,nmold)))
@@ -217,10 +197,7 @@ c
       deallocate(wlpump_res)
       deallocate(sarea_res)
       deallocate(eirdiag_nds_ind)
-      deallocate(eirdiag_nds_typ)
-      deallocate(eirdiag_nds_srf)
-      deallocate(eirdiag_nds_start)
-      deallocate(eirdiag_nds_end)
+      deallocate(fnmti_b2)
       deallocate(isrftype)
       deallocate(lkindp)
       deallocate(lkindm)

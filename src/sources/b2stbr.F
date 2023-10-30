@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr,
+      subroutine b2stbr (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, dtim,
-     &  switch, geo, mpg, st, st_ext, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, main_call)
       use b2mod_types
 !WG_TODO      use b2mod_wall
       use b2mod_diag
@@ -14,9 +14,6 @@
 !WG_TODO      use b2mod_first_flight
       use b2mod_constants
 !WG_TODO      use b2mod_neutrals_namelist
-!WG_TODO      use b2mod_sources
-!     1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
-!     2          b2stbr_sne
 !      use b2mod_balance !djm Jan2017
 !     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
 !     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
@@ -30,11 +27,11 @@
       use b2mod_eirene
      ,  , only : eirene_mc
       use eirmod_wneutrals
+      use b2mod_running_average
+     & , only : run_av_get_sources
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
-      use b2mod_running_average
-     & , only : running_average, run_av_get_sources
 #ifndef NO_CDF
       use b2mod_tallies
 #endif
@@ -49,6 +46,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2stbr, old_deposition, old_erosion
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_recycle
@@ -57,36 +57,34 @@
       use b2mod_boundary_namelist
      & , only : nbcd, potpar
       use b2mod_ad
-     & , only : ntstep_b2wall, old_deposition, old_erosion,
+     & , only : ntstep_b2wall,
      &          my_out_folder, filename_b2w,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2stbr,
      &          ncall_b2stbr_phys
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+#endif
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, ns, nxtl, nxtr
+      integer nCv, nFc, nVx, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (in) :: st_ext
+      type (B2Average), intent(in) :: st_avg
       logical main_call
 *   ..local variables
-      real (kind=R8) ::
 #ifdef WG_TODO
-     &                  snatmp(nCv,0:1,0:ns-1), !djm Mar2017
+      real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
      &                  smotmp(nCv,0:3,0:ns-1),
      &                  shetmp(nCv,0:3),
-     &                  shitmp(nCv,0:3),
+     &                  shitmp(nCv,0:3)
 #endif
-     &                  fluid_frac_hyb(nFc),
-     &                  kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -125,7 +123,7 @@
       real (kind=R8) ::                                              !srv 29.04.10 {
      &  sna0_eir(nCv,0:1,0:ns-1),
      &  smo0_eir(nCv,0:3,0:ns-1),
-     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3)
+     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3)
 #ifdef B25_EIRENE
      &, fatm_eir(nFc,0:1,nnatmi),                                    !srv 29.04.10 }
      &  fmol_eir(nFc,0:1,nnmoli),                                    !IYS 27.01.17
@@ -163,7 +161,9 @@
       external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
+#ifdef WG_TODO
       intrinsic mod
+#endif
 #if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
@@ -345,6 +345,7 @@
       call sfill (nCv*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (nCv*4, 0.0_R8, she0_eir, 1)
       call sfill (nCv*4, 0.0_R8, shi0_eir, 1)
+      call sfill (nCv*4, 0.0_R8, shn0_eir, 1)
 #ifdef B25_EIRENE
       fatm_eir = 0.0_R8
 #endif
@@ -408,25 +409,12 @@ c   --> better solution wanted here..
         endif
 #endif
         call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, switch, geo, mpg,
-     &  st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
-     &  tchem, tchee, tphys, tphye,
-     &  thevp, thvpe, trese, tresn, trfln, trfle,
-     &  switch%b2stbc_boundary_namelist,
-     &  switch%neutral_sources_rescale,
-     &  switch%b2stbr_core_sources_rescale,
-     &  sput_src, switch%b2stbr_sput_chem_alpha, switch%sput_phys_alpha,
-     &  switch%b2stbr_alpha, sput_chem_model, switch%b2stbr_therm_evap,
-     &  switch%b2stbr_sput_res, reflection_on, sputter_energy_on,
-     &  main_call, switch%b2stbr_output, switch%b2stbr_sput_frac_flag,
-     &  switch%b2stbr_sput_chem_cutoff_alpha,
-     &  switch%b2stbr_sput_chem_cutoff_beta,
-     1  switch%b2stbr_sput_mixed_alpha, switch%b2stbr_sput_mixed_beta,
-     2  new_sputter_namelist, shi0_ff, f_redep,
-     3  switch%b2stbr_temperature_at_guard_cell,
-     4  switch%b2stbr_potential_at_guard_cell,
-     5  switch%recycled_neutrals_contr,fluid_frac_hyb,kin_frac_hyb,
-     &  fnn_inc)
+     &   dtim, switch, geo, mpg,
+     &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
+     &   tchem, tchee, tphys, tphye,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
+     &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
+     &   main_call, new_sputter_namelist, shi0_ff, f_redep)
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
@@ -618,9 +606,8 @@ c   --> better solution wanted here..
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
-     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
-     &                 main_call, switch, geo, mpg, st,
-     &                 kin_frac_hyb,fnn_inc)
+     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
+     &                 main_call, switch, geo, mpg, st)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
@@ -635,24 +622,69 @@ c   --> better solution wanted here..
          enddo
         endif
 
-*   add eirene sources to running average when averaging
-        if (switch%iav_run > 0) call running_average (nCv, ns,
-     &      st%pl, st%dv, sna0_eir, smo0_eir, she0_eir, shi0_eir)
+*       compute total Eirene sources for averaging
+cwdk only total Eirene source are averaged!
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
+cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk       down in this routine
+        do is = 0, ns-1
+          st%srw%sna0_eir_tot(:,is) = sna0_eir(:,0,is) +
+     &      sna0_eir(:,1,is)*st%pl%na(:,is)
+          st%srw%smo0_eir_tot(:,is) = smo0_eir(:,0,is) +
+     &      smo0_eir(:,1,is)*st%pl%ua(:,is) +
+     &      smo0_eir(:,2,is)*am(is)*mp*st%pl%na(:,is) +
+     &      smo0_eir(:,3,is)*am(is)*mp*st%pl%na(:,is)*st%pl%ua(:,is)
+        enddo
+        st%srw%she0_eir_tot = she0_eir(:,0) + she0_eir(:,1)*st%pl%te +
+     &    she0_eir(:,2)*st%dv%ne + she0_eir(:,3)*st%dv%ne*st%pl%te
+        st%srw%shi0_eir_tot = shi0_eir(:,0) + shi0_eir(:,1)*st%pl%ti +
+     &    shi0_eir(:,2)*st%dv%ni(:,0) +
+     &    shi0_eir(:,3)*st%dv%ni(:,0)*st%pl%ti
+        st%srw%shn0_eir_tot = shn0_eir(:,0) + shn0_eir(:,1)*st%pl%tn +
+     1    shn0_eir(:,2)*st%dv%nn + 
+     1    shn0_eir(:,3)*st%pl%tn*st%dv%nn
 
-*   get averaged sources
+*       get averaged sources
         if (switch%ird_aver > 0) then
-          call run_av_get_sources(sna0_eir, smo0_eir,
-     &                            she0_eir, shi0_eir,
-     &                            nCv, ns)
 
+cwdk if ird_aver > 0, all sources computed by Eirene are overwritten (!!!),
+cwdk i.e. fully replaced by the averaged values from b2faveri
+          sna0_eir = 0.0_R8
+          smo0_eir = 0.0_R8
+          she0_eir = 0.0_R8
+          shi0_eir = 0.0_R8
+
+cwdk get the averaged sources
+          call run_av_get_sources(
+     &     st%srw%sna0_eir_tot, st%srw%smo0_eir_tot,
+     &     st%srw%she0_eir_tot, st%srw%shi0_eir_tot,
+     &     st%srw%shn0_eir_tot,
+     &     nCv, ns, st_avg)
+
+cwdk note: only total Eirene source are averaged!
+cwdk these are now put back into the constant part of the sources (0-component)
+          do is = 0, ns-1
+            sna0_eir(:,0,is) = st%srw%sna0_eir_tot(:,is)
+            smo0_eir(:,0,is) = st%srw%smo0_eir_tot(:,is)
+          enddo
+          she0_eir(:,0) = st%srw%she0_eir_tot
+          shi0_eir(:,0) = st%srw%shi0_eir_tot
+          shn0_eir(:,0) = st%srw%shn0_eir_tot
         endif
 
         st%srw%sna0 = st%srw%sna0 + sna0_eir
         st%srw%smo0 = st%srw%smo0 + smo0_eir
         st%srw%she0 = st%srw%she0 + she0_eir
         st%srw%shi0 = st%srw%shi0 + shi0_eir
-
-
+        if (switch%tn_style.eq.0) then     !! default, combined ion-neutral energy equation
+          st%srw%shi0 = st%srw%shi0 + shn0_eir 
+        elseif (switch%tn_style.eq.1) then !! pure ion energy equation
+          !! combination of condensation reactions (leading to non-zero shn from eirene) and tn_style = 1 is not allowed.
+          call xertst (SUM(shn0_eir).eq.0,
+     &     'shn_eir.ne.0 is not allowed for tn_style = 1')
+        else                               !! separate neutral energy equation
+          st%srw%shn0 = st%srw%shn0 + shn0_eir 
+        endif
 
 #ifdef ASTRA
         if (use_astra.ne.0) then
@@ -705,37 +737,51 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
       endif
 
 * ..sources
-#ifdef WG_TODO
-      b2stbr_sna(nCv,0:ns-1)=
-     1 sna0(nCv,0,0:ns-1)+
-     2 sna0(nCv,1,0:ns-1)*na(nCv,0:ns-1)
+      st%srw%b2stbr_sna(:,0:ns-1)=
+     1 st%srw%sna0(:,0,0:ns-1)+
+     2 st%srw%sna0(:,1,0:ns-1)*st%pl%na(:,0:ns-1)
       do is=0,ns-1
-        b2stbr_smo(nCv,is)=
-     1   smo0(nCv,0,is)+
-     2   smo0(nCv,1,is)*ua(nCv,is)+
-     3   smo0(nCv,2,is)*am(is)*mp*na(nCv,is)+
-     4   smo0(nCv,3,is)*am(is)*mp*na(nCv,is)*
-     5   ua(nCv,is)
+        st%srw%b2stbr_smo(:,is)=
+     1   st%srw%smo0(:,0,is)+
+     2   st%srw%smo0(:,1,is)*st%pl%ua(:,is)+
+     3   st%srw%smo0(:,2,is)*am(is)*mp*st%pl%na(:,is)+
+     4   st%srw%smo0(:,3,is)*am(is)*mp*st%pl%na(:,is)*st%pl%ua(:,is)
       enddo
-      b2stbr_she(nCv)=
-     1 she0(nCv,0)+
-     2 she0(nCv,1)*te(nCv)+
-     3 she0(nCv,2)*ne(nCv)+
-     4 she0(nCv,3)*ne(nCv)*te(nCv)
-      b2stbr_shi(nCv)=
-     1 shi0(nCv,0)+
-     2 shi0(nCv,1)*ti(nCv)+
-     3 shi0(nCv,2)*ni(nCv,0)+
-     4 shi0(nCv,3)*ni(nCv,0)*ti(nCv)
-      b2stbr_sch(nCv)=
-     1 sch0(nCv,0)+
-     2 sch0(nCv,1)*po(nCv)+
-     3 sch0(nCv,2)*ne(nCv)+
-     4 sch0(nCv,3)*ne(nCv)*po(nCv)
-      b2stbr_sne(nCv)=
-     1 sne0(nCv,0)+
-     2 sne0(nCv,1)*ne(nCv)
+      st%srw%b2stbr_she(:)=
+     1 st%srw%she0(:,0)+
+     2 st%srw%she0(:,1)*st%pl%te(:)+
+     3 st%srw%she0(:,2)*st%dv%ne(:)+
+     4 st%srw%she0(:,3)*st%dv%ne(:)*st%pl%te(:)
+      st%srw%b2stbr_shi(:)=
+     1 st%srw%shi0(:,0)+
+     2 st%srw%shi0(:,1)*st%pl%ti(:)+
+     3 st%srw%shi0(:,2)*st%dv%ni(:,0)+
+     4 st%srw%shi0(:,3)*st%dv%ni(:,0)*st%pl%ti(:)
+      st%srw%b2stbr_shn(:)=
+     1 st%srw%shn0(:,0)+
+     2 st%srw%shn0(:,1)*st%pl%ti(:)+
+     3 st%srw%shn0(:,2)*st%dv%nn(:)+
+     4 st%srw%shn0(:,3)*st%dv%nn(:)*st%pl%tn(:)
+      st%srw%b2stbr_sch(:)=
+     1 st%srw%sch0(:,0)+
+     2 st%srw%sch0(:,1)*st%pl%po(:)+
+     3 st%srw%sch0(:,2)*st%dv%ne(:)+
+     4 st%srw%sch0(:,3)*st%dv%ne(:)*st%pl%po(:)
+      st%srw%b2stbr_skt(:)=
+     1 st%srw%skt0(:,0)+
+     2 st%srw%skt0(:,1)*st%pl%kt(:)+
+     3 st%srw%skt0(:,2)*st%dv%ni(:,1)+
+     4 st%srw%skt0(:,3)*st%dv%ni(:,1)*st%pl%kt(:)
+      st%srw%b2stbr_szt(:)=
+     1 st%srw%szt0(:,0)+
+     2 st%srw%szt0(:,1)*st%pl%zt(:)+
+     3 st%srw%szt0(:,2)*st%dv%ni(:,1)+
+     4 st%srw%szt0(:,3)*st%dv%ni(:,1)*st%pl%zt(:)
+      st%srw%b2stbr_sne(:)=
+     1 st%srw%sne0(:,0)+
+     2 st%srw%sne0(:,1)*st%dv%ne(:)
 
+#ifdef WG_TODO
       if(main_call) then
         do ibnd = 1, nbnd
           over_erosion = .false.
@@ -915,7 +961,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
 !        enddo
-!WG_TODO         call my_out_us(70,nCv,0,b2stbr_smo(1,is),'b2stbr_smo'//chns)
+         call my_out_us(70,nCv,0,st%srw%b2stbr_smo(1,is),
+     &                  'b2stbr_smo'//chns)
         endif
 !       call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
@@ -943,7 +990,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
 !        enddo
-!WG_TODO         call my_out_us(70,nCv,0,b2stbr_sna(1,is),'b2stbr_sna'//chns)
+         call my_out_us(70,nCv,0,st%srw%b2stbr_sna(1,is),
+     *                  'b2stbr_sna'//chns)
         endif
        enddo                                                          !srv 29.04.10
 #ifdef B25_EIRENE
@@ -991,6 +1039,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           write (chk,'(i1)') k
           call my_out_us(70,nCv,0,she0_eir(1,k),'b2stbr_she_eir'//chk)
           call my_out_us(70,nCv,0,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
+          call my_out_us(70,nCv,0,shn0_eir(1,k),'b2stbr_shn_eir'//chk)
          enddo
         endif
         wrk0=she0_eir(:,0)+she0_eir(:,1)*st%pl%te+
@@ -1000,14 +1049,22 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      &       shi0_eir(:,2)*st%dv%ni(:,0)+
      &       shi0_eir(:,3)*st%pl%ti*st%dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_shi_eir')
+        wrk0=shn0_eir(:,0)+shn0_eir(:,1)*st%pl%tn+
+     &       shn0_eir(:,2)*(st%dv%ni(:,0)-st%dv%ni(:,1))+
+     &       shn0_eir(:,3)*st%pl%tn*(st%dv%ni(:,0)-st%dv%ni(:,1))
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_shn_eir')
+
        endif
 !      do k=0,3
 !       write (chk,'(i1)') k
 !       call my_out_us(70,nCv,0,she0(-1,-1,k),'b2stbr_she'//chk)
 !       call my_out_us(70,nCv,0,shi0(-1,-1,k),'b2stbr_shi'//chk)
 !      enddo
-!WG_TODO       call my_out_us(70,nCv,0,b2stbr_she,'b2stbr_she')
-!WG_TODO       call my_out_us(70,nCv,0,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_she,'b2stbr_she')
+       call my_out_us(70,nCv,0,st%srw%b2stbr_shi,'b2stbr_shi')        !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_shn,'b2stbr_shn')        !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_skt,'b2stbr_skt')        !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_szt,'b2stbr_szt')        !srv 29.04.10
       endif
       if (switch%b2stbr_iout.eq.1 .or.
      &  (switch%b2npp7_iout.eq.1 .or. switch%b2nppo_iout.eq.1)
@@ -1017,7 +1074,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !          write (chk,'(i1)') k
 !          call my_out_us(70,nCv,0,sch0(-1,-1,k),'b2stbr_sch'//chk)
 !       enddo
-!WG_TODO        call my_out_us(70,nCv,0,b2stbr_sch,'b2stbr_sch')
+        call my_out_us(70,nCv,0,st%srw%b2stbr_sch,'b2stbr_sch')
        endif
       endif                                                           !srv 11.09.09 }
 
@@ -1094,7 +1151,7 @@ c        write(*,*) 'Called neutr_scl'
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: ns
-      type (switches), intent (in) :: switch
+      type (switches), intent(in) :: switch
       type (mapping), intent(inout) :: mpg
 *-----------------------------------------------------------------------
 *.documentation

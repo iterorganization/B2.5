@@ -4,7 +4,7 @@
       subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,           !srv 05.07.17
      &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf,
-     &  pl, dv, co, rt, sr, st_ext, ierr)
+     &  pl, dv, co, rt, sr, srw, st_ext, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -15,6 +15,9 @@
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     & , only : b2npht_shei_bal, update_balance_sources_heat,
 !WG_TODO     &          balance_netcdf
+      use b2mod_ad
+     & , only : ncall_b2npht
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_numerics_namelist
@@ -24,9 +27,10 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2npht, ncall_b2sikt,  ncall_b2sifrtf,
+     &          ncall_b2sikt, ncall_b2sifrtf,
      &          ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht,
      &          ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -45,6 +49,7 @@
       type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co
       type (B2Source), intent (inout) :: sr
+      type (B2SourceWork), intent (inout) :: srw
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
@@ -164,7 +169,7 @@ c make sure fhn is zero when not solving a separate neutral energy equation
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn,
      &  pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne, dv%fch,
      &  co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%alfx_c, co%sigx_c,
-     &  rt%rza, rt%rz2, st_ext, she0, shi0, shn0)
+     &  rt%rza, rt%rz2, st_ext, she0, shi0, shn0, srw)
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
@@ -199,47 +204,45 @@ cdjm Jan2017 update particle source components for balance
       if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then                              !srv 22.05.18
         if (switch%mdf_fhe.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe,
+          call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0, dv%fhe,
      &     dv%reshe)
         else
-          call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0,
+          call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0,
      &     dv%fhe_mdf, dv%reshe)
         endif
       endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then    !srv 22.05.18
         if (switch%mdf_fhi.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,0), pl%ti, shi0,
+          call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
      &     dv%fhi, dv%reshi)
         else
-          call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,0), pl%ti, shi0,
+          call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
       if ((switch%solve_keps.gt.0.and.any(solvkreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0,
+        call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%kt, skt0,
      &   dv%fkt, dv%reskt)
       endif
       if ((switch%solve_keps.gt.1.and.any(solvzreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%zt, szt0,
+        call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%zt, szt0,
      &   dv%fzt, dv%reszt)
       endif
 
-
 c residuals for separate neutral energy equation
       if (switch % tn_style.eq.2) then   !! separate neutral energy equation
-       if (any(solvnreg(0:mpg%nnreg(0))).or.
-     &     switch%get_residuals.eq.1) then
+        if (any(solvnreg(0:mpg%nnreg(0))).or.
+     &      switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
-          call b2ursd (nCv, nFc, geo, mpg, dv%nn, pl%tn, shn0, dv%fhn,
+          call b2ursd (nCv, nFc, mpg, dv%nn, pl%tn, shn0, dv%fhn,
      &     dv%reshn)
-       endif
+        endif
       else
         dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
       endif
-
 
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
