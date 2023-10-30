@@ -629,7 +629,7 @@ c     Convert energy flux densities in net energy flux contributions
       end subroutine CalcIncidentFluxesMaxwellian
 
       subroutine CalcRecycledFluxes(iCv,nCi,iFc,
-     &             isign,
+     &            isign,
      &            isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tef,pof,nif,nef,
@@ -764,7 +764,6 @@ c     treated kinetically.
       fnnrec = max(0.0_R8,(recyc0*t0 - 2.0_R8*fna_mol_rec)*
      1  fluid_frac_hyb)
 
-
 c     Recycled momentum flux densities
       fmox = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)*
      1  fluid_frac_hyb
@@ -789,7 +788,6 @@ c       product of density and toroidal velocity
 c     recycled total energy flux density of neutrals
       fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)*fluid_frac_hyb
       fenec = fenec + 0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
-
 
 c     Calculate recycled poloidal momentum flux of neutrals
       fmomrecp = -isign*(fmoz*cosa + fmoy*sina)*
@@ -886,6 +884,7 @@ c     Calculate rate coefficients at boundary
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
+
 
 c     Calculate incident particle flux density
       fnni = vcx/vtot*(-i1l*nnf+(dnndz*i2l+dnndy*uy*i1l)/vtot)
@@ -1041,7 +1040,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
       if (fnni.lt.0.0_R8 .and. safeguard.eq.1) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
-     &            pl,tnf, geo, mpg,cosa, sina,
+     &            pl,tnf,geo,mpg,cosa,sina,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       endif
 
@@ -1050,7 +1049,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
       end subroutine CalcReflectedFluxesDiffusion
 
       subroutine CalcReflectedFluxesKn(Kn_b1,Kn_b2,
-     &             iCv,iCn,nCi,iFc,
+     &            iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,
@@ -1600,9 +1599,10 @@ c     Calculate rate coefficients at boundary
       recycle_initialised=.false.
       return
       end subroutine dealloc_recycle_fnn
+      
 
       subroutine precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
-     &  pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
+     &  pl, dv, co, rt, dnn)
       use b2mod_types
       use b2mod_neutrals_namelist
       use b2us_geo
@@ -1615,12 +1615,10 @@ c     Calculate rate coefficients at boundary
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (in) :: dv
+      type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co
       type (B2Rates), intent (in) :: rt
       real (kind=R8), intent(inout) :: dnn(nFc,0:1)
-      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc),
-     &                                  kin_frac_hyb(nFc)
 c     local variables
       integer :: istra, i, iRc1, isn, iFc
       integer, save :: ncall = 0, style_visc = 0
@@ -1673,20 +1671,20 @@ cc compute fluid/kinetic fraction
           if (switch%use_auto_spatial_hyb.eq.1.and.
      &                                HYB_TYPE(istra).eq.'A') then !! 'A' = automatic
             if (Kn.le.switch%auto_spatial_hyb_Kn_1) then !! fluid treatment
-              fluid_frac_hyb(iFc) = 1.0_R8
-              kin_frac_hyb(iFc) = 0.0_R8
+              dv%fluid_frac_hyb(iFc) = 1.0_R8
+              dv%kin_frac_hyb(iFc) = 0.0_R8
             elseif (Kn.ge.switch%auto_spatial_hyb_Kn_2) then  !! kinetic treatment
-              fluid_frac_hyb(iFc) = 0.0_R8
-              kin_frac_hyb(iFc) = 1.0_R8
+              dv%fluid_frac_hyb(iFc) = 0.0_R8
+              dv%kin_frac_hyb(iFc) = 1.0_R8
             else
 !! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_Kn_1 and auto_Kn_2
-              kin_frac_hyb(iFc) = (Kn-switch%auto_spatial_hyb_Kn_1)/
+              dv%kin_frac_hyb(iFc) = (Kn-switch%auto_spatial_hyb_Kn_1)/
      &     (switch%auto_spatial_hyb_Kn_2-switch%auto_spatial_hyb_Kn_1)
-              fluid_frac_hyb(iFc) = 1.0_R8 - kin_frac_hyb(iFc)
+              dv%fluid_frac_hyb(iFc) = 1.0_R8 - dv%kin_frac_hyb(iFc)
             endif
           else !! keep scaling factors both equal to 1.
-            fluid_frac_hyb(iFc) = 1.0_R8
-            kin_frac_hyb(iFc) = 1.0_R8
+            dv%fluid_frac_hyb(iFc) = 1.0_R8
+            dv%kin_frac_hyb(iFc) = 1.0_R8
           endif
         enddo
 

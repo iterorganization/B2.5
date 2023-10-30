@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
-     &  main_call)
+     &  geo, mpg, pl, dv, st_ext, sr, srw, main_call)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -19,8 +18,11 @@
      2          b2stbm_sne
 #endif
       use b2mod_balance !djm Jan2017
-     1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
-     2          b2stbm_shi0to3, balance_netcdf
+     1 , only : balance_netcdf
+#ifdef WG_TODO
+     2        , b2stbm_sna0to1, b2stbm_smo0to3, b2stbm_she0to3,
+     3          b2stbm_shi0to3
+#endif
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
@@ -41,9 +43,6 @@
       type (B2StateExt), intent (inout) :: st_ext
 *   ..input/output arguments 
       type (B2Derivatives), intent (inout) :: dv
-      type (B2Rates), intent (inout) :: rt
-      type (B2RatesWork), intent (inout) :: rtw
-      type (B2Coeff), intent (inout) :: co
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
 *   ..common blocks

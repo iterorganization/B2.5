@@ -66,14 +66,13 @@
        return
        end subroutine set_exact_solution
 
-       subroutine calc_err(nCv, ns, pl, dv)
+       subroutine calc_err(nCv, ns, pl)
        use b2mod_types
        use b2mod_constants
        use b2us_plasma
        implicit none
        integer nCv, ns
        type (B2Plasma), intent (in) :: pl
-       type (B2Derivatives), intent (in) :: dv
 
        integer is, iCv, ind                                             !srv 09.07.18
        real (kind=R8) ::

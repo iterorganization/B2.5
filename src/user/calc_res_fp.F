@@ -1,13 +1,13 @@
-      subroutine calc_res_fp(nCv, ns, state, state0, res)
+      subroutine calc_res_fp(ns, state, state0, res)
       use b2mod_types
       use b2us_plasma
       implicit none
-      integer, intent (in) :: nCv, ns
+      integer, intent (in) :: ns
       type(b2state), intent(in) :: state
       type(b2state), intent(in) :: state0
       real(kind=r8), intent (inout) :: res
 *-----------------------------------------------------------------------
-*     calc_res_fp calculates a maximum residual for the fixed point 
+*     calc_res_fp calculates a maximum residual for the fixed point
 *     form of the B2.5 time iteration scheme (while-loop instad of
 *     for-loop). This is evaluated as the maximum among value of
 *     t0 = sqrt(sum((q-q0)**2))/sqrt(sum(q**2)), where q is a plasma
@@ -17,7 +17,7 @@
       integer :: is
 
       res = 0.0_R8
-      
+
       do is = 0, ns-1
         t0 = sqrt(sum((state%pl%na(:,is)**2)))
         if (t0 .gt. 0.0_R8) res = max(res,

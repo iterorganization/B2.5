@@ -16,7 +16,7 @@
       use b2us_map
       use b2us_plasma
       use b2mod_user_namelist
-     & , only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+     & , only : nomp, omp, icsepomp, nimp, imp, icsepimp
 #ifdef B25_EIRENE
       use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
@@ -222,13 +222,11 @@ cxpb size is changed in DIMENSIONS.F
       control_read = .false.
       end subroutine write_b2us_feedback_control
 
-      subroutine init_feedback(nCv, nFc, nVx, ns, natmi, switch, geo,
-     & mpg)
+      subroutine init_feedback(nFc, ns, switch, mpg)
       implicit none
       type (switches), intent (in) :: switch
-      type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      integer :: nCv, nFc, nVx, ns, natmi
+      integer :: nFc, ns
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
       logical consistent, done
@@ -361,21 +359,13 @@ cxpb size is changed in DIMENSIONS.F
       if(nepedm_sol.gt.0.0_R8) then
         call ipgeti ('b2stbc_iyped', iyped)
         icped = iyped+2
-#ifdef WG_RM
-        call xertst (iyped.gt.-2 .and. iyped.le.mpg%ny 
-     &   .and. iyped.le.nomp, 'faulty input iyped')
-#endif
+        call xertst (icped.ge.1.and.icped.le.nomp, 'faulty input iyped')
         call xertst (mpg%cvOnClosedSurface(omp(icped)),
      .   'location of top of pedestal outside core region!')
       endif
       call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
       call ipgetr ('b2stbc_ndes', ndes)
       call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
-#ifdef WG_RM
-      call ipgetr ('b2stbc_cbsnafac', cbsnafac)
-      call xertst (0.0_R8.lt.cbsnafac,
-     1  'faulty internal parameter cbsnafac')
-#endif
       call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
       call xertst (0.0_R8.le.private_flux_puff,
      1 'faulty internal parameter private_flux_puff')
@@ -917,12 +907,11 @@ cxpb size is changed in DIMENSIONS.F
       return
       end subroutine init_feedback
 
-      subroutine compute_feedback(nCv, nFc, nVx, ns, ismain,
-     &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call,
-     &  diagno)
+      subroutine compute_feedback(nCv, nFc, ns, ismain,
+     &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, diagno
+      integer nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -931,8 +920,6 @@ cxpb size is changed in DIMENSIONS.F
       type (B2Rates), intent (in) :: rt
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call
-*   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
       integer :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start,
      & is_end, iss
@@ -1179,8 +1166,8 @@ cxpb size is changed in DIMENSIONS.F
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                  ifc1 = mpg%fsFcP(ifssep,1)
-                  ifc2 = ifc1 + mpg%fsFcP(ifssep,2) - 1
+                  ifc1 = mpg%fsFcP(mpg%iFssep,1)
+                  ifc2 = ifc1 + mpg%fsFcP(mpg%iFssep,2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
                   do iFc = ifc1, ifc2
@@ -1978,10 +1965,9 @@ cxpb size is changed in DIMENSIONS.F
 
 ***********************************************************************
 
-      subroutine conv_fbparms (nx, ny, ns, m)
+      subroutine conv_fbparms (m)
       use b2mod_feedback
       implicit none
-      integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
       integer :: is, ix, iy, icv, iss, ifbreg
       logical :: done
@@ -2039,10 +2025,9 @@ cxpb size is changed in DIMENSIONS.F
 
 ***********************************************************************
 
-      subroutine write_fbparms (ns)
+      subroutine write_fbparms
       use b2mod_version
       implicit none
-      integer, intent(in) :: ns
       integer :: ifb, iout
 #ifndef F2003
       integer newunit

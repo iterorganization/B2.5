@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, switch,
+      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, switch,
      &  geo, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
@@ -13,7 +13,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nCv, ns, itim, itcnt
-      real (kind=R8) :: BoRiS
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (B2Plasma), intent (in) :: pl
@@ -303,7 +302,7 @@
          tv = 0.0_R8
          do iy = iy0(iiy), iy0(iiy+1)-1
           do ix = ix0(iix), ix0(iix+1)-1
-           t0 = t0+(1.5_R8+BoRiS)*ne(ix,iy)*te(ix,iy)*vol(ix,iy)
+           t0 = t0+(1.5_R8+switch%BoRiS)*ne(ix,iy)*te(ix,iy)*vol(ix,iy)
            tv = tv+vol(ix,iy)
           enddo
          enddo
@@ -317,7 +316,7 @@
          tv = 0.0_R8
          do iy = iy0(iiy), iy0(iiy+1)-1
           do ix = ix0(iix), ix0(iix+1)-1
-           t0 = t0+(1.5_R8+BoRiS)*ni(ix,iy,0)*ti(ix,iy)*vol(ix,iy)
+           t0 = t0+(1.5_R8+switch%BoRiS)*ni(ix,iy,0)*ti(ix,iy)*vol(ix,iy)
            tv = tv+vol(ix,iy)
           enddo
          enddo

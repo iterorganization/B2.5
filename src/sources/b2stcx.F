@@ -2,7 +2,8 @@
 *.specification
 
       subroutine b2stcx (nCv, nFc, ns, is0, ismain, switch, geo,     !srv 09.01.01
-     &  mpg, na, ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)        !srv 07.07.09
+     &  mpg, na, ua, ti, tn, ni,
+     &  rcx, sna0, smq0, shi0, shn0, rcxna, rcxmo, rcxhi)
       use b2mod_types
       use b2mod_constants
 !      use b2mod_tallies
@@ -34,7 +35,8 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(nCv,0:1,0:ns-1), smq0(nCv,0:3,0:ns-1), shi0(nCv,0:3),
-     *  shn0(nCv,0:3)
+     *  shn0(nCv,0:3),
+     *  rcxna(nCv,0:ns-1), rcxmo(nCv,0:ns-1), rcxhi(nCv,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -70,6 +72,8 @@
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     &  'faulty argument ismain')
 *   ..test is0
       call xertst (0.le.is0.and.is0.lt.ns-1, 'faulty argument is0')
       call xertst (lnext(is0,is0+1),
@@ -126,10 +130,10 @@ ctmp.dpc
      &       t0*na(iCv,is0)
             sna0(iCv,1,is0) = sna0(iCv,1,is0)-
      &       t0*na(iCv,is)
-!WG_TODO            rcxna(iCv,is)=rcxna(iCv,is)+
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
-!WG_TODO            rcxna(iCv,is0)=rcxna(iCv,is0)-
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
+            rcxna(iCv,is)=rcxna(iCv,is)+
+     1       t0*na(iCv,is0)*na(iCv,is)
+            rcxna(iCv,is0)=rcxna(iCv,is0)-
+     1       t0*na(iCv,is0)*na(iCv,is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is0)=
@@ -162,7 +166,7 @@ ctmp.dpc
      &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
                t1 = t0*na(iCv,is0)*na(iCv,is)*(tkin + 1.5_R8*tn(iCv))
              endif
-             shi0(iCv,0) = shi0(iCv,0)+t1 
+             shi0(iCv,0) = shi0(iCv,0)+t1
            else !tn_style=2
              if (nint(zn(is)).eq.1.and.nint(zn(is0)).eq.1) then ! CX between hydrogenic species
                tkin = (mp/2.0_R8)*
@@ -199,7 +203,7 @@ ctmp.dpc
              shi0(iCv,0) = shi0(iCv,0)+t1
              shn0(iCv,0) = shn0(iCv,0)+t1n
            endif
-!WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
+           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
 !WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
           endif
         enddo
@@ -286,8 +290,8 @@ ctmp.dpc
               smq0(iCv,1,is0) = smq0(iCv,1,is0)-
      &         (1.0_R8+rg0)*t2
             endif
-!WG_TODO            rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
-!WG_TODO            rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
+            rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
+            rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is0)=

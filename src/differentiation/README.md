@@ -25,11 +25,11 @@ The code will automatically print in run.log the value of the cost function(s) a
 b2mod_diffsizes.F acts similarly to DIMENSIONS.F and stores the maximum number of directions (nbdirsmax) allowed, i.e. the maximum number of indpendent variables with respect to which one can calculate the derivative of the cost function. Increase nbdirsmax and recompile if needed.
 
 Current parameters for which derivative calculation is possible (default parameters):
- - Transport coefficients: parm_dna parm_hce parm_hci parm_vsa parm_sig parm_alf 
+ - Transport coefficients: parm_dna parm_hce parm_hci parm_vsa parm_sig parm_alf
  - Radially-varying and ballooned transport coefficients: tdata b2tqna_ballooning b2tqna_ballooning_rescale
- - Boundary conditions: enepar enipar conpar mompar potpar enkpar 
- - Recycling coefficients: b2recyc 
- - k-model switches: keps_cd b2sikt_fac_sheath b2sikt_fac_sheath_core b2sikt_fac_diss b2sikt_fac_diss_core b2tfhi_fsigkt keps_heat keps_heat_i keps_sig keps_alf keps_visc keps_dkt keps_dzt keps_shear b2sikt_fac_vis_RS b2tfhi_fflokt b2tfhi_fconkt b2tfhi_fflozt b2tfhi_fconzt b2tfhi_fkt_hie b2tfhe_vis_kt 
+ - Boundary conditions: enepar enipar conpar mompar potpar enkpar
+ - Recycling coefficients: b2recyc
+ - k-model switches: keps_cd b2sikt_fac_sheath b2sikt_fac_sheath_core b2sikt_fac_diss b2sikt_fac_diss_core b2tfhi_fsigkt keps_heat keps_heat_i keps_sig keps_alf keps_visc keps_dkt keps_dzt keps_shear b2sikt_fac_vis_RS b2tfhi_fflokt b2tfhi_fconkt b2tfhi_fflozt b2tfhi_fconzt b2tfhi_fkt_hie b2tfhe_vis_kt
  - Reaction rates: rtlsa rtlra rtlcx rtlqa
  - Optimization parameters: sigma par_opt_phys
 

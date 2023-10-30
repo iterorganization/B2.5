@@ -273,7 +273,7 @@ SUBROUTINE B2MNDS_B(ninp, nout, ncv, nfc, ns, nsb, ns0, switch)
  91 CALL XERRAB('error trying to read internal parameters')
   GOTO 100
  2 WRITE(nout(0), '(2x,a)') '(end of list of internal parameters)'
-  WRITE(nout(0), '()') 
+  WRITE(nout(0), '()')
 !   ..check for prohibited switches
   CALL IPPRHP()
 !   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
@@ -598,7 +598,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
   END IF
   GOTO 1
  2 WRITE(nout(0), '(2x,a)') '(end of list of internal parameters)'
-  WRITE(nout(0), '()') 
+  WRITE(nout(0), '()')
 !   ..check for prohibited switches
   CALL IPPRHP()
 !   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/

@@ -13,16 +13,8 @@
 *!!   The text of this routine is case-sensitive.
 *     ------------------------------------------------------------------
       integer len0, len1, i, k
-      character chwc, ch0, ch1
-      parameter (chwc='.')
       intrinsic len, ichar
       external xertst
-      logical upcase, cmatch
-      upcase(ch0,ch1) =
-     &  ichar('a').le.ichar(ch0).and.ichar(ch0).le.ichar('z').and.
-     &  ichar(ch1)-ichar(ch0).eq.ichar('A')-ichar('a')
-      cmatch(ch0,ch1) = ch0.eq.ch1.or.ch0.eq.chwc.or.ch1.eq.chwc.or.
-     &  upcase(ch0,ch1).or.upcase(ch1,ch0)
 *     ------------------------------------------------------------------
 *   ..test installation
 *     (protection against errors of case conversion.)
@@ -50,4 +42,27 @@
       strmas = k.eq.len1
       return
 *     ------------------------------------------------------------------
+
+      contains
+
+      logical function upcase(ch0,ch1)
+      implicit none
+      character ch0, ch1
+      intrinsic ichar
+      upcase =
+     &  ichar('a').le.ichar(ch0).and.ichar(ch0).le.ichar('z').and.
+     &  ichar(ch1)-ichar(ch0).eq.ichar('A')-ichar('a')
+      return
+      end function upcase
+
+      logical function cmatch(ch0,ch1)
+      implicit none
+      character chwc, ch0, ch1
+      parameter (chwc='.')
+
+      cmatch = ch0.eq.ch1.or.ch0.eq.chwc.or.ch1.eq.chwc.or.
+     &  upcase(ch0,ch1).or.upcase(ch1,ch0)
+      return
+      end function cmatch
+
       end function strmas

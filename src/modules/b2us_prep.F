@@ -22,6 +22,7 @@
       use b2us_plasma
       use b2mod_b2cmfs
       use b2mod_connectivity
+      use b2mod_running_average
       use carre_constants
 
       implicit none
@@ -30,7 +31,7 @@
 
       public :: calc_mapping,
      .          prep_geometry,
-     .          prep_plasma, prep_plasma_ext, prep_state,
+     .          prep_plasma, prep_plasma_ext, prep_state, prep_average,
      .          to_struct_plasma,
      .          conv_regions, conv_midplane                             !srv 16.11.22
 
@@ -50,16 +51,17 @@
       implicit none
       type (mapping), intent (inout) :: m
       integer, intent(in) :: nx, ny
-      integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc,
+      integer :: ix, iy, i, if1, if2, if3, if4, ic, iFc,
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
-     .           ivx, ivx1, ivx2, mxreg, ift, icv, ifs,
+     .           iVx, iVx1, iVx2, mxreg, iFt, iCv, iFs,
      .           ifcc, icount, n2, ix2o, iy2o,
      .           ncorneri, nghostfcxi, nghostfcyi, ifcy,
-     .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
+     .           nghostvxi, ici, icg, ict, lix, liy,
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, ifccy,
      .           nyreg, ixreg, iyreg, is, nxtl, nxtr,
      .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
-     .           istrtc, istrtfc, istrtfy, ilbl
+     .           istrtt, istrts, ilbl, ctype, ctypen, gtype,
+     .           nfaces, nverts, nvertwall, nvertpf
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:),
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -73,9 +75,11 @@
      .           ixmapghostvx(:,:), iymapghostvx(:,:),
      .           ixvxe(:), iyvxe(:), ftFcP(:,:), ftCvP(:,:), fsFcP(:,:),
      .           ftReg(:), nxreg(:), reg(:,:), ixstart(:,:,:), ftLbl(:),
-     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:)
+     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:),
+     .           verts(:), icornvx(:)
       real(R8) :: xco(4), yco(4), babs
-      logical lfound, swapped, classical, bound, cellError
+      real(R8) :: Xvertices(0:3), Yvertices(0:3)
+      logical lfound, classical, bound, cellError, lstart, lgtube
       intrinsic pack
 
 !  assume a structured quadrilateral grid
@@ -306,7 +310,7 @@
      .          isBoundaryCell(cflags(rix,riy,CELLFLAG_TYPE)) .and.
      .           points_match(crx(rix,riy,2), cry(rix,riy,2),
      .                        crx(rix,riy,3), cry(rix,riy,3))) then
-              ! Check whether an external vertex has already been created here
+              ! Check whether an external c has already been created here
               lfound = .false.
               ivxe   = 0
               do while (.not.lfound .and. ivxe.lt.nvxe)
@@ -367,8 +371,9 @@
                 loctopix(rix,riy)   = ixvxe(nvxe)
                 loctopiy(rix,riy)   = iyvxe(nvxe)
                 write (*,*)
-     .           '(1) Created vertex at ix, iy, crx, cry = ',
-     .            nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .           '(0) Created NE vertex for cell ix, iy = ', ix, iy,
+     .           '    at ix2, iy2, crx, cry = ',
+     .                ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
               else
                 ! adapt local connectivity arrays
                 locrightix(tix,tiy) = ixvxe(ivxe)
@@ -479,8 +484,10 @@
                     locrightiy(tix,tiy) = iyvxe(nvxe)
                   endif
                   write (*,*)
-     .             '(1) Created vertex at ix, iy, crx, cry = ',
-     .              nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .             '(1) Created  E vertex for cell ix, iy = ', ix, iy,
+     .             '    at ix2, iy2, crx, cry = ',
+     .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
+
                 else
                   ! adapt local connectivity arrays
                   locrightix(ix,iy) = ixvxe(ivxe)
@@ -589,8 +596,9 @@
                     loctopiy(rix,riy) = iyvxe(nvxe)
                   endif
                   write (*,*)
-     .             '(2) Created vertex at ix, iy, crx, cry = ',
-     .              nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .             '(2) Created N  vertex for cell ix, iy = ', ix, iy,
+     .           '    at ix2, iy2, crx, cry = ',
+     .                ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
                 else
                   ! adapt local connectivity arrays
                   loctopix(ix,iy) = ixvxe(ivxe)
@@ -616,6 +624,7 @@
                 loctopiy(ix,iy) = loctopiy(rix,riy)
               endif
             else
+              ! Boundary cell w/o degenerate face
               tix = topix(ix,iy)
               tiy = topiy(ix,iy)
               rix = rightix(ix,iy)
@@ -672,10 +681,10 @@
                       iyvxe(nvxe) = iy2
                       nunused = nunused - 1
                       ighostvx(ix2,iy2) = 0
-                      crx(ix2,iy2,0)    = crx(ix,iy,2)
-                      cry(ix2,iy2,0)    = cry(ix,iy,2)
-                      ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
-                      fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
+                      crx(ix2,iy2,0)    = crx(ix,iy,3)
+                      cry(ix2,iy2,0)    = cry(ix,iy,3)
+                      ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
+                      fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
 !WG_TODO need to recompute field at corner here;
 !WG_TODO tmp: assume isymm = 1 or 2 treatment... (see carre_b2ag.F90)
 !WG_TODO eventually: do this in separate routine later on?
@@ -695,8 +704,9 @@
                       loctopix(rix,riy)   = ixvxe(nvxe)
                       loctopiy(rix,riy)   = iyvxe(nvxe)
                       write (*,*)
-     .                 '(3) Created vertex at ix, iy, crx, cry = ',
-     .                  nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .                 '(3) Created NE vertex for cell ix, iy = ',
+     .                  ix, iy, ' at ix2, iy2, crx, cry = ',
+     .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
                     else
                       ! Adapt local connectivity arrays
                       locrightix(tix,tiy) = ixvxe(ivxe)
@@ -797,7 +807,7 @@
                     do while (.not.lfound .and. ivxe.lt.nvxe)
                       ivxe = ivxe + 1
                       lfound = lfound.or.
-     .                  points_match(crx(ix,iy,3), cry(ix,iy,3),
+     .                  points_match(crx(ix,iy,2), cry(ix,iy,2),
      .                               crx(ixvxe(ivxe),iyvxe(ivxe),0),
      .                               cry(ixvxe(ivxe),iyvxe(ivxe),0))
                     enddo
@@ -859,24 +869,45 @@
                       loctopix(ix,iy) = ixvxe(nvxe)
                       loctopiy(ix,iy) = iyvxe(nvxe)
                       write (*,*)
-     .                 '(4) Created vertex at ix, iy, crx, cry = ',
-     .                  nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+     .                 '(4) Created NE vertex for cell ix, iy = ',
+     .                  ix, iy, ' at ix2, iy2, crx, cry = ',
+     .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
                     endif
                   endif
                 endif
               endif
             else
-              ! For corners, only keep vertex of NE corners
-              ! Current assumption: CARRE2/b2ag will not create corners for extended cases
-              if ((leftix(ix,iy)   == -2)  .or.
-     .            (bottomiy(ix,iy) == -2)) then
-                ! (ix,iy) is not a NE corner cell; remove
-                icount = icount + 1
-                ighostvx(ix,iy)   = 1
-                ixghostvx(icount) = ix
-                iyghostvx(icount) = iy
-                ixmapghostvx(ix,iy) = -2
-                iymapghostvx(ix,iy) = -2
+              ! For corners, only keep vertex of NE corners:
+              ! check whether bottom(left) or left(bottom) exists 
+              lfound=.false.
+              if (leftix(ix,iy).ne.-2) then
+                if (bottomiy(leftix(ix,iy),leftiy(ix,iy)).ne.-2) then
+                  lfound=.true.
+                endif
+              endif
+              if (bottomiy(ix,iy).ne.-2) then
+                if (leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.-2) then
+                  lfound=.true.
+                endif
+              endif
+              if (.not.lfound) then
+                ! Check whether an external vertex has been created here
+                lfound = .false.
+                ivxe   = 0
+                do while (.not.lfound .and. ivxe.lt.nvxe)
+                  ivxe = ivxe + 1
+                  lfound = lfound.or.
+     .              (ix.eq.ixvxe(ivxe).and.iy.eq.iyvxe(ivxe))
+                enddo
+                if (.not.lfound) then
+                  ! (ix,iy) is not a NE corner cell; remove
+                  icount = icount + 1
+                  ighostvx(ix,iy)   = 1
+                  ixghostvx(icount) = ix
+                  iyghostvx(icount) = iy
+                  ixmapghostvx(ix,iy) = -2
+                  iymapghostvx(ix,iy) = -2
+                endif
               endif
             endif
           endif
@@ -994,7 +1025,6 @@
         enddo
       enddo
 
-
 ! Sanity check
       cellError=.false.
       do iy = -1, ny
@@ -1106,15 +1136,15 @@
       m%imapCv= 0 ! 0 means not in use in unstructured
       ici =0
       icg = m%nCi
-      do iy = 0, ny+1
-        ixloop: do ix = 0, nx+1
-          if(isRealCell(cflags(ix-1,iy-1,CELLFLAG_TYPE))) then
+      do iy = -1, ny
+        ixloop: do ix = -1, nx
+          if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
             ici = ici + 1
-            m%imapCv(ix-1,iy-1) = ici
-          elseif(isGhostCell(cflags(ix-1,iy-1,CELLFLAG_TYPE))) then
-            if (icorner(ix-1,iy-1)/=0) cycle ixloop
+            m%imapCv(ix,iy) = ici
+          elseif(isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            if (icorner(ix,iy)/=0) cycle ixloop
             icg = icg+1
-            m%imapCv(ix-1,iy-1) = icg
+            m%imapCv(ix,iy) = icg
           endif
         enddo ixloop
       enddo
@@ -1129,24 +1159,24 @@
       endif
 
 ! for Fcx's and Fcy's
-      m%imapFcx= 0 ! 0 means not in use in unstructured
+      m%imapFcx = 0 ! 0 means not in use in unstructured
       ici = 0
       do iy = 0, ny
         do ix = 0, nx
-          if(ighostfcx(ix,iy)==0) then
+          if(ighostfcx(ix,iy) == 0) then
             ici = ici + 1
             m%imapFcx(ix,iy) = ici
-           endif
+          endif
         enddo
       enddo
 
-      m%imapFcy= 0 ! 0 means not in use in unstructured
+      m%imapFcy = 0 ! 0 means not in use in unstructured
       do ix = 0, nx
         do iy = 0, ny
-          if(ighostfcy(ix,iy)==0) then
+          if(ighostfcy(ix,iy) == 0) then
             ici = ici + 1
             m%imapFcy(ix,iy) = ici
-           endif
+          endif
         enddo
       enddo
 
@@ -1265,11 +1295,11 @@
         do ix = -1, nx
           ix2 = ix
           iy2 = iy
-          do while (ighostvx(ix2,iy2)==1)
+          do while (ighostvx(ix2,iy2) == 1)
             ix2o = ix2
             iy2o = iy2
-            ix2= ixmapghostvx(ix2o,iy2)
-            iy2= iymapghostvx(ix2o,iy2)
+            ix2 = ixmapghostvx(ix2o,iy2)
+            iy2 = iymapghostvx(ix2o,iy2)
             if ((ix2 == -2) .or. (ix2 == nx+1) .or.
      .          (iy2 == -2) .or. (iy2 == ny+1)) exit
           enddo
@@ -1289,56 +1319,6 @@
       enddo
 
       write (*,*) 'Merged vertices'
-
-! store indices of corner coordinates
-      m%icornVx = 0
-      if (ncorneri > 0) then
-!  sort corner points per ix position first
-        DO j = ncorneri-1, 1, -1
-          swapped = .FALSE.
-          DO i = 1, j
-            IF (ixcorner(i) > ixcorner(i+1)) THEN
-              itmpx = ixcorner(i)
-              itmpy = iycorner(i)
-              ixcorner(i) = ixcorner(i+1)
-              iycorner(i) = iycorner(i+1)
-              ixcorner(i+1) = itmpx
-              iycorner(i+1) = itmpy
-              swapped = .TRUE.
-            END IF
-          END DO
-          IF (.NOT. swapped) EXIT
-        END DO
-
-!  now sort corner points in iy position
-        do j=ncorneri-1, 1, -1
-          swapped = .FALSE.
-          do i = 1, j
-            if (ixcorner(i) /= ixcorner(i+1)) cycle
-            if (iycorner(i) > iycorner(i+1)) then
-              itmpx = ixcorner(i)
-              itmpy = iycorner(i)
-              ixcorner(i) = ixcorner(i+1)
-              iycorner(i) = iycorner(i+1)
-              ixcorner(i+1) = itmpx
-              iycorner(i+1) = itmpy
-              swapped = .TRUE.
-            end if
-          end do
-          IF (.NOT. swapped) EXIT
-        end do
-
-        icount = 0
-        do ic = 1, ncorneri
-          icount = icount + 1
-          ix = ixcorner(ic)
-          if (count(m%ictcntrl(1:m%nctcnt) ==ix) > 0) ix = ix + 1
-          ix = min(max(ix,0),nx)
-          iy = iycorner(ic)
-          iy = min(max(iy,0),ny)
-          m%icornVx(icount) = m%imapVx(ix,iy)
-        end do
-      end if
 
 #ifdef WG_DEBUG
       imapCv  = m%imapCv
@@ -1379,13 +1359,13 @@
 
 ! list of cell faces and vertices for cells
 ! interpolation coefficients for interpolation to cell centers
-      do iy = 0, ny+1
-        do ix = 0, nx+1
-          if ((m%imapCv(ix-1,iy-1) /= 0).and.
-     .        (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
-            ic = m%imapCv(ix-1,iy-1)
-            xco = crx(ix-1,iy-1,0:3)
-            yco = cry(ix-1,iy-1,0:3)
+      do iy = -1, ny
+        do ix = -1, nx
+          if ((m%imapCv(ix,iy) /= 0).and.
+     .        (m%imapCv(ix,iy) .le. m%nCi)) then
+            ic = m%imapCv(ix,iy)
+            xco = crx(ix,iy,0:3)
+            yco = cry(ix,iy,0:3)
             select case
      .        ( cellGeoType(xco,yco) )
             case ( CGEO_QUAD )
@@ -1393,12 +1373,12 @@
               if2 = if1 + 1
               if3 = if2 + 1
               if4 = if3 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(ix-1,iy-1)
-              m%cvFc(if4) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if3) = m%imapFcy(ix,iy)
+              m%cvFc(if4) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
@@ -1407,144 +1387,144 @@
               m%intcellR(if2) = 0.0_R8
               m%intcellR(if3) = 1.0_R8
               m%intcellR(if4) = 1.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                               rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),
-     .                               topiy(ix-1,iy-1))
-              m%cvVx(if4) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)),
-     .                               locrightiy(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(rightix(ix,iy),
+     .                               rightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(topix(ix,iy),
+     .                               topiy(ix,iy))
+              m%cvVx(if4) = m%imapVx(locrightix(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)),
+     .                               locrightiy(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)))
            case ( CGEO_TRIA_NOLEFT )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if2) = m%imapFcy(ix-1,iy-1)
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if2) = m%imapFcy(ix,iy)
+              m%cvFc(if3) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,1,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,1,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
               m%intcellP(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,1,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,1,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
               m%intcellR(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                               rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)),
-     .                               locrightiy(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(rightix(ix,iy),
+     .                               rightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)),
+     .                               locrightiy(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)))
             case ( CGEO_TRIA_NOBOT )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if3) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(topix(ix-1,iy-1),
-     .                               topiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)),
-     .                               locrightiy(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(topix(ix,iy),
+     .                               topiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)),
+     .                               locrightiy(loctopix(ix,iy),
+     .                                          loctopiy(ix,iy)))
             case ( CGEO_TRIA_NORIGHT )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcy(ix-1,iy-1)
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
-     .                                topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcy(ix,iy)
+              m%cvFc(if3) = m%imapFcy(topix(ix,iy),
+     .                                topiy(ix,iy))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) =
-     .          abs(fpsi(ix-1,iy-1,0,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+     .          abs(fpsi(ix,iy,0,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
               m%intcellP(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) =
-     .          abs(fpsi(ix-1,iy-1,0,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+     .          abs(fpsi(ix,iy,0,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
               m%intcellR(if3) =
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
-     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??ctb solved?
-     .                               locrightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,3,0))/
+     .          abs(fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(locrightix(ix,iy),!cwdk is this not the vertex that was thrown out??ctb solved?
+     .                               locrightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(loctopix(ix,iy),
+     .                               loctopiy(ix,iy))
             case ( CGEO_TRIA_NOTOP )
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(ix-1,iy-1)
+              m%cvFc(if1) = m%imapFcx(ix,iy)
+              m%cvFc(if2) = m%imapFcx(rightix(ix,iy),
+     .                                rightiy(ix,iy))
+              m%cvFc(if3) = m%imapFcy(ix,iy)
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
-     .                               locrightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))!cwdk is this not the vertex that was thrown out?? ctb solved?
+              m%cvVx(if1) = m%imapVx(ix,iy)
+              m%cvVx(if2) = m%imapVx(locrightix(ix,iy),
+     .                               locrightiy(ix,iy))
+              m%cvVx(if3) = m%imapVx(loctopix(ix,iy),
+     .                               loctopiy(ix,iy))!cwdk is this not the vertex that was thrown out?? ctb solved?
             end select
-          elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
-     .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
+          elseif ((m%imapCv(ix,iy) /= 0).and.
+     .            (m%imapCv(ix,iy) .gt. m%nCi)) then
             bound = .false.
 
 !tb  the vertex numbering might not be consistent for fcVx, to be checked
             ! N guard cell
-            ixb = bottomix(ix-1,iy-1)
-            iyb = bottomiy(ix-1,iy-1)
+            ixb = bottomix(ix,iy)
+            iyb = bottomiy(ix,iy)
             if (iyb /= -2) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
-                m%cvFc(if1) = m%imapFcy(ix-1,iy-1)
+                m%cvFc(if1) = m%imapFcy(ix,iy)
                 m%intcellP(if1) = 1.0_R8
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
-                m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-                m%cvVx(if1+1) = m%imapVx(locrightix(ix-1,iy-1),
-     .                                   locrightiy(ix-1,iy-1))
+                m%cvVx(if1)   = m%imapVx(ix,iy)
+                m%cvVx(if1+1) = m%imapVx(locrightix(ix,iy),
+     .                                   locrightiy(ix,iy))
                 bound = .true.
               end if
             end if
 
             ! S guard cell
-            ixb = topix(ix-1,iy-1)
-            iyb = topiy(ix-1,iy-1)
+            ixb = topix(ix,iy)
+            iyb = topiy(ix,iy)
             if (iyb /= ny+1) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
                 m%cvFc(if1) = m%imapFcy(ixb,iyb)
                 m%intcellP(if1) = 1.0_R8
@@ -1558,31 +1538,31 @@
             end if
 
             ! E guard cell
-            ixb = leftix(ix-1,iy-1)
-            iyb = leftiy(ix-1,iy-1)
+            ixb = leftix(ix,iy)
+            iyb = leftiy(ix,iy)
             if (ixb /= -2) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
-                m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
+                m%cvFc(if1) = m%imapFcx(ix,iy)
                 m%intcellP(if1) = 1.0_R8
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
-                m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-                m%cvVx(if1+1) = m%imapVx(loctopix(ix-1,iy-1),
-     .                                   loctopiy(ix-1,iy-1))
+                m%cvVx(if1)   = m%imapVx(ix,iy)
+                m%cvVx(if1+1) = m%imapVx(loctopix(ix,iy),
+     .                                   loctopiy(ix,iy))
                 bound = .true.
               end if
             end if
 
             ! W guard cell
-            ixb = rightix(ix-1,iy-1)
-            iyb = rightiy(ix-1,iy-1)
+            ixb = rightix(ix,iy)
+            iyb = rightiy(ix,iy)
             if (ixb /= nx+1) then
               if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
-                ic = m%imapCv(ix-1,iy-1)
+                ic = m%imapCv(ix,iy)
                 if1 = m%cvFcP(ic,1)
                 m%cvFc(if1) = m%imapFcx(ixb,iyb)
                 m%intcellP(if1) = 1.0_R8
@@ -1602,37 +1582,35 @@
         end do
       end do
 
-
 ! listing for every face the two corresponding cells
 ! and the corresponding vertices
 ! x faces
-       do iy = 1, ny
-         do ix = 1, nx+1
-           if(m%imapFcx(ix-1,iy-1)/=0) then
-             ifc =m%imapFcx(ix-1,iy-1)
-             m%fcCv(ifc,1) = m%imapCv(leftix(ix-1,iy-1),
-     .                                leftiy(ix-1,iy-1))
-             m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
-             m%fcVx(ifc,1) = m%imapVx(ix-1,iy-1)
-             m%fcVx(ifc,2) = m%imapVx(loctopix(ix-1,iy-1),
-     .                                loctopiy(ix-1,iy-1))
+       do iy = 0, ny-1
+         do ix = 0, nx
+           if(m%imapFcx(ix,iy)/=0) then
+             iFc =m%imapFcx(ix,iy)
+             m%fcCv(iFc,1) = m%imapCv(leftix(ix,iy),
+     .                                leftiy(ix,iy))
+             m%fcCv(iFc,2) = m%imapCv(ix,iy)
+             m%fcVx(iFc,1) = m%imapVx(ix,iy)
+             m%fcVx(iFc,2) = m%imapVx(loctopix(ix,iy),
+     .                                loctopiy(ix,iy))
            endif
          end do
        end do
 
-
 ! y faces
 
-       do ix = 1, nx
-         do iy = 1, ny+1
-           if(m%imapFcy(ix-1,iy-1)/=0) then
-             ifc =m%imapFcy(ix-1,iy-1)
-             m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
-             m%fcCv(ifc,1) = m%imapCv(bottomix(ix-1,iy-1),
-     .                                bottomiy(ix-1,iy-1))
-             m%fcVx(ifc,2) = m%imapVx(ix-1,iy-1)
-             m%fcVx(ifc,1) = m%imapVx(locrightix(ix-1,iy-1),
-     .                                locrightiy(ix-1,iy-1))
+       do ix = 0, nx-1
+         do iy = 0, ny
+           if(m%imapFcy(ix,iy)/=0) then
+             iFc =m%imapFcy(ix,iy)
+             m%fcCv(iFc,2) = m%imapCv(ix,iy)
+             m%fcCv(iFc,1) = m%imapCv(bottomix(ix,iy),
+     .                                bottomiy(ix,iy))
+             m%fcVx(iFc,2) = m%imapVx(ix,iy)
+             m%fcVx(iFc,1) = m%imapVx(locrightix(ix,iy),
+     .                                locrightiy(ix,iy))
            endif
          end do
        end do
@@ -1670,39 +1648,38 @@
 
       ! sanity check
       do ic = 1,m%nCv
-        do ifc = m%cvFcP(ic,1),m%cvFcP(ic,1)+m%cvFcP(ic,2)-1
-          if(m%cvFc(ifc) == 0) then
-            write (*,*) 'ic, ifc = ', ic, ifc
+        do iFc = m%cvFcP(ic,1),m%cvFcP(ic,1)+m%cvFcP(ic,2)-1
+          if(m%cvFc(iFc) == 0) then
+            write (*,*) 'ic, iFc = ', ic, iFc
             call xerrab ('Problem with mapping: undefined face')
            endif
         enddo
-        do ivx = m%cvVxP(ic,1),m%cvVxP(ic,1)+m%cvVxP(ic,2)-1
-          if(m%cvVx(ivx) == 0) then
-            write (*,*) 'ic, ivx = ', ic, ivx
+        do iVx = m%cvVxP(ic,1),m%cvVxP(ic,1)+m%cvVxP(ic,2)-1
+          if(m%cvVx(iVx) == 0) then
+            write (*,*) 'ic, iVx = ', ic, iVx
             call xerrab ('Problem with mapping: undefined vertex')
            endif
         enddo
       enddo
 
-      do ifc = 1,m%nFc
-        if(m%fcCv(ifc,1) == 0) then
-          write (*,*) 'ifc = ', ifc
+      do iFc = 1,m%nFc
+        if(m%fcCv(iFc,1) == 0) then
+          write (*,*) 'iFc = ', iFc
           call xerrab ('Problem with mapping: undefined cv1')
         endif
-        if(m%fcCv(ifc,2) == 0) then
-          write (*,*) 'ifc = ', ifc
+        if(m%fcCv(iFc,2) == 0) then
+          write (*,*) 'iFc = ', iFc
           call xerrab ('Problem with mapping: undefined cv2')
         endif
-        if(m%fcVx(ifc,1) == 0) then
-          write (*,*) 'ifc = ', ifc
+        if(m%fcVx(iFc,1) == 0) then
+          write (*,*) 'iFc = ', iFc
           call xerrab ('Problem with mapping: undefined vx1')
         endif
-        if(m%fcVx(ifc,2) == 0) then
-          write (*,*) 'ifc = ', ifc
+        if(m%fcVx(iFc,2) == 0) then
+          write (*,*) 'iFc = ', iFc
           call xerrab ('Problem with mapping: undefined vx2')
         endif
       enddo
-
 
 ! listing for every vertex the cell and face numbers
 ! and the starting points in the list
@@ -1713,7 +1690,6 @@
        allocate (fh(2*m%nFc))
        fh(1:m%nFc)         = m%fcVx(1:m%nFc,1)
        fh(m%nFc+1:2*m%nFc) = m%fcVx(1:m%nFc,2)
-
 
        allocate (indCv(m%nCmxVx))
        do ic = 1, m%nCv
@@ -1776,12 +1752,12 @@
        do iy = 0, ny-1
          do ix = 0, nx
            if(m%imapFcx(ix,iy)/=0) then
-             ifc = m%imapFcx(ix,iy)
+             iFc = m%imapFcx(ix,iy)
              if (region(ix,iy,1) .gt. 0) then
-               m%fcReg(ifc) = region(ix,iy,1)
+               m%fcReg(iFc) = region(ix,iy,1)
              elseif (region(ix,iy,1) .lt. 0) then
                ! actually a y-face region!
-               m%fcReg(ifc) = abs(region(ix,iy,1)) + nfcxReg
+               m%fcReg(iFc) = abs(region(ix,iy,1)) + nfcxReg
              endif
            endif
          end do
@@ -1791,18 +1767,20 @@
        do ix = 0, nx-1
          do iy = 0, ny
            if(m%imapFcy(ix,iy)/=0) then
-             ifc = m%imapFcy(ix,iy)
+             iFc = m%imapFcy(ix,iy)
              if (region(ix,iy,2) .gt. 0) then
-               m%fcReg(ifc) = region(ix,iy,2) + nfcxReg
+               m%fcReg(iFc) = region(ix,iy,2) + nfcxReg
              elseif (region(ix,iy,2) .lt. 0) then
                ! actually a x-face region!
-               m%fcReg(ifc) = abs(region(ix,iy,2))
+               m%fcReg(iFc) = abs(region(ix,iy,2))
              endif
            end if
          end do
       end do
 
       mxReg = maxval(m%cvReg(1:m%nCv))
+
+      write (*,*) 'Identify flux tubes and flux surfaces '
 
 ! identify the various flux tubes and surfaces
       m%ftCv = 0 ! init to 0
@@ -1827,9 +1805,9 @@
         fsFcP = 0
         ftReg = 0
         ftLbl = 0
-        ift = 0
-        ifs = 0
-        icv = 0
+        iFt = 0
+        iFs = 0
+        iCv = 0
         ifcc = 0
         ifccy = 0
         ilbl = 0
@@ -1940,89 +1918,263 @@
         endif
         do iyreg = 1, nyreg
           do iy = iystart(iyreg), iyend(iyreg)
-            ilbl = ilbl + 1
+            !wdk at the moment, simply take label equal to iy surface (with offset to have lbl > 0)
+            ilbl = iy + 2
             do ixreg = 1, nxreg(iyreg)
-              istrtc = -1
-              istrtfc = -1
-              istrtfy = -1
+              istrtt = -1
+              istrts = -1
+              lgtube = .false. ! default: not a flux tube consisting of only guard cells along plasma-interface
               do is = 1, nseg(ixreg,iyreg)
                 do ix = ixstart(ixreg,iyreg,is), ixend(ixreg,iyreg,is)
-                  if((m%imapCv(ix,iy)/=0)) then
-                    ic = m%imapCv(ix,iy)
-                    ifc = m%imapFcx(ix,iy)
-                    ifcy = m%imapFcy(ix,iy)
-                    if (istrtc.eq.-1) then
-                      ift = ift + 1
-                      icv = icv + 1
-                      m%ftCv(icv) = ic
-                      ftCvP(ift,1) = icv
-                      m%cvFt(ic) = ift
-                      ftReg(ift) = reg(ixreg,iyreg)
-                      ftLbl(ift) = ilbl
-                      istrtc = 1
-                    else
-                      icv = icv + 1
-                      m%ftCv(icv) = ic
-                      m%cvFt(ic) = ift
-                      ftCvP(ift,2) = icv - ftCvP(ift,1) + 1
-                    end if
-                    if (ifc.ne.0) then
-                      if (istrtfc.eq.-1) then
-                        ifcc = ifcc + 1
-                        m%ftFc(ifcc) = ifc
-                        ftFcP(ift,1) = ifcc
-                        istrtfc = 1
-                      else
-                        ifcc = ifcc + 1
-                        m%ftFc(ifcc) = ifc
-                        ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
-                      end if
+                  ! First: flux tube cells and flux tube faces
+                  ! flux tube faces = faces between the cells in the flux tube => not-aligned with the field
+                  ! We do not know whether the guard cell will be on same iy
+                  ! => treat guard cells separately
+                  ic = m%imapCv(ix,iy)
+                  ctype = cflags(ix,iy,CELLFLAG_TYPE)
+                  Xvertices(0:3) = crx(ix,iy,0:3)
+                  Yvertices(0:3) = cry(ix,iy,0:3)
+                  gType = cellGeoType(Xvertices, Yvertices)
+                  if (isRealCell(ctype)) then
+                    if (lgtube) then
+                      ! we enter a real cell and were walking along a void boundary
+                      ! => reset to start next flux tube
+                      istrtt = -1
+                      lgtube = .false.
                     endif
-                    if (ifcy.ne.0) then
-                      if (istrtfy.eq.-1) then
-                        ifs = ifs + 1
-                        ifccy = ifccy + 1
-                        m%fsFc(ifccy) = ifcy
-                        fsFcP(ifs,1) = ifccy
-                        istrtfy = 1
+                    if (istrtt.eq.-1) then
+                     iFt = iFt + 1
+                     if (isBoundaryCell(ctype).and. 
+     .                   .not. on_closed_surface(ix,iy)) then
+                      ! Find the guard cell at start of flux tube
+                      lfound = .false.
+                      lix = leftix(ix,iy)
+                      liy = leftiy(ix,iy)
+                      if (lix.ne.-2) then
+                       ! If left neighbor exists and is guard => take as start
+                       if (.not.
+     .                     isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)))
+     .                 then
+                        write (*,*) 
+     .                    'ix, iy, lix, liy, cflag cflagl, iFt = ',
+     .                    ix, iy, lix, liy, ctype, 
+     .                    cflags(lix,liy,CELLFLAG_TYPE), iFt
+                        write (*,*) 'on_closed_surface ',
+     .                    on_closed_surface(ix,iy)
+                        call xerrab (
+     .                  'Expected guard cell to start new flux tube')
+                       endif
+                       iCg = m%imapCv(lix,liy)
+                       iFc = m%imapFcx(ix,iy)
+                       lfound = .true.
                       else
-                        ifccy = ifccy + 1
-                        m%fsFc(ifccy) = ifcy
-                        fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
-                      end if
+                       ! Left face degenerate
+                       ! Top or bottom neighbor will be guard
+                       ! If both are guard (rare situation => should remove this cell with grid generator!),
+                       ! arbitrarily take bottom guard cell as start
+                       if (gtype.ne.CGEO_TRIA_NOLEFT) call xerrab (
+     .                   'Expected degenerate left face' )
+                       tix = topix(ix,iy)
+                       tiy = topiy(ix,iy)
+                       bix = bottomix(ix,iy)
+                       biy = bottomiy(ix,iy)
+                       if (tiy.ne.ny+1) then
+                         if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(tix,tiy)
+                           iFc = m%imapFcy(tix,tiy)
+                           lfound = .true.
+                         endif
+                       endif
+                       if (biy.ne.-2) then
+                         if (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(bix,biy)
+                           iFc = m%imapFcy(ix,iy)
+                           if (lfound) write (*,*)
+     .                       'Pathological cell ',ix, iy, ' => remove?'
+                           lfound = .true.
+                         endif
+                       endif
+                       if (.not.lfound) then
+                         write (*,*) 'iFt, ix, iy: ', iFt, ix, iy
+                         call xerrab ('Did not find start of flux tube')
+                       endif
+                      endif
+                      iCv = iCv + 2
+                      iFcc = iFcc + 1
+                      m%ftCv(iCv-1) = iCg
+                      m%cvFt(iCg) = iFt
+                      ftCvP(iFt,1) = iCv-1
+                      ftCvP(ift,2) = 2
+                     elseif (on_closed_surface(ix,iy)) then
+                      iFc = m%imapFcx(ix,iy)
+                      if (iFc.eq.0) call xerrab (
+     .                  'Problem with core flux tube face.')
+                      iCv = iCv + 1
+                      iFcc = iFcc + 1
+                      ftCvP(iFt,1) = iCv
+                      ftCvP(iFt,2) = 1
+                     else
+                      call xerrab ('Unexpected start flux tube.')
+                     endif
+                     ! add the cell and face
+                     m%ftCv(iCv) = ic
+                     m%cvFt(ic) = iFt
+                     m%ftFc(iFcc) = iFc
+                     ftFcP(iFt,1) = iFcc
+                     ftFcP(iFt,2) = 1
+                     ftReg(iFt) = reg(ixreg,iyreg)
+                     ftLbl(iFt) = ilbl
+                     istrtt = 1
+                    else
+                     iFc = m%imapFcx(ix,iy)
+                     if (iFc.eq.0) call xerrab (
+     .                 'Problem with flux tube identification')
+                     iCv = iCv + 1
+                     iFcc = iFcc + 1
+                     m%ftCv(iCv) = ic
+                     m%cvFt(ic) = iFt
+                     ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                     m%ftFc(iFcc) = ifc
+                     ftFcP(iFt,2) = ftFcP(iFt,2) + 1
+                    end if
+                    ! Check for end of flux tube
+                    if (isBoundaryCell(ctype).and.
+     .                .not. on_closed_surface(ix,iy)) then
+                      lfound = .false.
+                      rix = rightix(ix,iy)
+                      riy = rightiy(ix,iy)
+                      if (rix.ne.nx+1) then
+                       ! If right neighbor exist and is guard => end of tube
+                       if (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE)))
+     .                 then
+                         iCg = m%imapCv(rix,riy)
+                         iFc = m%imapFcx(rix,riy)
+                         lfound = .true.
+                       endif
+                      else
+                       ! Right face degenerate
+                       ! Top or bottom neighbor will be guard
+                       ! If both are guard (rare situation => should remove this cell with grid generator!),
+                       ! arbitrarily take bottom guard cell as end
+                       if (gtype.ne.CGEO_TRIA_NORIGHT) call xerrab (
+     .                   'Expected degenerate right face' )
+                       tix = topix(ix,iy)
+                       tiy = topiy(ix,iy)
+                       bix = bottomix(ix,iy)
+                       biy = bottomiy(ix,iy)
+                       if (tiy.ne.ny+1) then
+                         if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(tix,tiy)
+                           iFc = m%imapFcy(tix,tiy)
+                           lfound = .true.
+                         endif
+                       endif
+                       if (biy.ne.-2) then
+                         if (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)))
+     .                   then
+                           iCg = m%imapCv(bix,biy)
+                           iFc = m%imapFcy(ix,iy)
+                           if (lfound) write (*,*)
+     .                       'Pathological cell ',ix, iy, ' => remove?'
+                           lfound = .true.
+                         endif
+                       endif
+                      endif
+                      if (lfound) then
+                        iCv = iCv + 1
+                        iFcc = iFcc + 1
+                        m%ftCv(iCv) = iCg
+                        ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                        m%cvFt(iCg) = iFt
+                        m%ftFc(iFcc) = iFc
+                        ftFcP(iFt,2) = ftFcP(iFt,2) + 1
+                        istrtt = -1
+                      endif
+                    endif
+                  elseif (isGhostCell(ctype) .and. ic.ne.0) then
+                    ! Special treatment to ensure guard cells along plasma-void interfaces
+                    ! also form a flux tube
+                    ! check based on negative fclbl
+                    tix = topix(ix,iy)
+                    tiy = topiy(ix,iy)
+                    bix = bottomix(ix,iy)
+                    biy = bottomiy(ix,iy)
+                    lfound = .false.
+                    if (tiy.ne.ny+1) then
+                      ctypen = cflags(tix,tiy,CELLFLAG_TYPE)
+                      iFc = m%imapFcy(tix,tiy)
+                      if (isBoundaryCell(ctypen)) then
+                        if (m%fcLbl(iFc).lt.0) lfound = .true.
+                      endif 
+                    endif
+                    if (biy.ne.-2) then
+                      ctypen = cflags(bix,biy,CELLFLAG_TYPE)
+                      iFc = m%imapFcy(ix,iy)
+                      if (isBoundaryCell(ctypen)) then
+                        if (m%fcLbl(iFc).lt.0) lfound = .true.
+                      endif
+                    endif
+                    if (lfound) then
+                      ! we are in guard cell flux tube
+                      lgtube = .true.
+                      if (istrtt==-1) then
+                        iFt = iFt + 1
+                        iCv = iCv + 1
+                        m%ftCv(iCv) = ic
+                        m%cvFt(ic) = iFt
+                        ftCvP(iFt,1) = iCv
+                        ftCvP(iFt,2) = 1
+                        ftFcP(iFt,1) = iFcc
+                        ftFcP(iFt,2) = 0
+                        ftReg(iFt) = reg(ixreg,iyreg)
+                        ftLbl(iFt) = ilbl
+                        istrtt = 1
+                      else
+                        iCv = iCv + 1
+                        m%ftCv(iCv) = ic
+                        m%cvFt(ic) = iFt
+                        ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                      endif
+                    elseif (lgtube) then
+                      istrtt = -1
                     endif
                   end if
+                  ! flux surface faces = faces aligned with field;
+                  ! two flux tubes will be separated by a flux surface
+                  iFcy = m%imapFcy(ix,iy)
+                  if (iFcy.eq.0) istrts = -1
+                  if (iFcy.ne.0) then
+                    ! Only consider y-faces with non-positive fcLbl. Assumption:
+                    ! - if 0: 'regular', internal aligned face
+                    ! - if negative: a flux-aligned boundary (PF/Core/North)
+                    ! - if positive: a solid boundary => take out of flux surface (even if still field aligned by coincidence)
+                    if (m%fcLbl(iFcy).le.0) then
+                      if (istrts.eq.-1) then
+                        iFs = iFs + 1
+                        iFccy = iFccy + 1
+                        m%fsFc(iFccy) = iFcy
+                        fsFcP(iFs,1) = iFccy
+                        fsFcP(iFs,2) = 1
+                        istrts = 1
+                      else
+                        iFccy = iFccy + 1
+                        m%fsFc(iFccy) = iFcy
+                        fsFcP(iFs,2) = fsFcP(iFs,2) + 1
+                      end if
+                    else
+                      istrts = -1
+                    end if
+                  endif
                 end do !ix
               end do !is
             end do !ixreg
           end do !iy
         end do !iyreg
-! csc last flux surface needs ny + 1
-        do ixreg = 1, nxreg(nyreg)
-          istrtfy = -1
-          do is = 1, nseg(ixreg,nyreg)
-            do ix = ixstart(ixreg,nyreg,is), ixend(ixreg,nyreg,is)
-              if((m%imapCv(ix,ny)/=0)) then
-                ifcy = m%imapFcy(ix,ny)
-                if (ifcy.ne.0) then
-                  if (istrtfy == -1) then
-                    ifs = ifs + 1
-                    ifccy = ifccy + 1
-                    m%fsFc(ifccy) = ifcy
-                    fsFcP(ifs,1) = ifccy
-                    istrtfy = 1
-                  else
-                    ifccy = ifccy + 1
-                    m%fsFc(ifccy) = ifcy
-                    fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
-                  endif
-                endif
-              endif
-            enddo !ix
-          enddo !is
-        enddo !ixreg
-        m%nFt = ift
-        m%nFs = ifs
+        m%nFt = iFt
+        m%nFs = iFs
 ! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
         deallocate(m%ftFcP,m%ftCvP,m%fsFcP,m%ftReg,m%ftLbl)
         allocate (m%ftFcP(m%nFt,2))
@@ -2030,9 +2182,9 @@
         allocate (m%fsFcP(m%nFs,2))
         allocate (m%ftReg(m%nFt))
         allocate (m%ftLbl(m%nFt))
-        m%ftFcP = ftFcP(1:m%nFt,:)
-        m%ftCvP = ftCvP(1:m%nFt,:)
-        m%fsFcP = fsFcP(1:m%nFs,:)
+        m%ftFcP = ftFcP(1:m%nFt,1:2)
+        m%ftCvP = ftCvP(1:m%nFt,1:2)
+        m%fsFcP = fsFcP(1:m%nFs,1:2)
         m%ftReg = ftReg(1:m%nFt)
         m%ftLbl = ftLbl(1:m%nFt)
         deallocate(ftFcP,ftCvP,fsFcP,ftReg,ftLbl)
@@ -2044,6 +2196,201 @@
 
 !     Create b2.user.parameters file with definition of outer/inner midplanes
       call conv_midplane(nx,ny)
+
+
+      ! Identify corner coordinates/vertices
+      icount = 0
+      allocate(icornvx(size(m%icornVx)))
+      icornvx = 0
+      m%icornVx = 0
+
+      ! for generalized carre2 cases (arbitrary nr. of surfaces per region, target mode,....),
+      ! we are no longer sure that 'corners' are actually on the corners of the nx,ny grid
+      ! => check number of 'corners' based on pre-defined surface labels instead!
+
+      ! Check for pf boundaries
+      iLbl = -23
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store first vertex => the corner
+        icornVx(icount) = verts(1)
+        deallocate (verts)
+      end if
+
+      iLbl = -24
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store last vertex => the corner
+        icornVx(icount) = verts(nverts)
+        deallocate (verts)
+      end if
+
+      iLbl = -27
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store first vertex => the corner
+        icornVx(icount) = verts(1)
+        deallocate (verts)
+      end if
+
+      iLbl = -28
+      nfaces = count(m%fcLbl==iLbl)
+      if (nfaces.gt.0) then
+        icount = icount + 1
+        ! sort vertices of the boundary faces into a polygon
+        nverts = nfaces + 1
+        allocate (verts(nverts))
+        call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+        ! store last vertex => the corner
+        icornVx(icount) = verts(nverts)
+        deallocate (verts)
+      end if
+      nvertpf = icount
+
+      ! Check for 'north' boundaries
+      nfaces = count(m%fcLbl==-43) + 
+     .         count(m%fcLbl==-42) + 
+     .         count(m%fcLbl==-44)
+      if (nfaces.gt.0) then
+
+        lstart=.false.
+
+        icount = icount + 2
+
+        iLbl = -43
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! store last vertex as first  corner
+          icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -42
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -44
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+      end if
+
+      nfaces = count(m%fcLbl==-47) + 
+     .         count(m%fcLbl==-46) + 
+     .         count(m%fcLbl==-48)
+      if (nfaces.gt.0) then
+
+        lstart=.false.
+
+        icount = icount + 2
+
+        iLbl = -47
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! store last vertex as first  corner
+          icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -46
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! tentatively store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+        iLbl = -48
+        nfaces = count(m%fcLbl==iLbl)
+        if (nfaces.gt.0) then
+          ! sort vertices of the boundary faces into a polygon
+          nverts = nfaces + 1
+          allocate (verts(nverts))
+          call sort_vertices(nverts,verts,m%nFc,m%fcLbl,iLbl,m)
+          ! if no -43 surface => store last vertex as first corner
+          if (.not.lstart) icornVx(icount-1) = verts(nverts)
+          ! store first vertex as second corner
+          icornVx(icount) = verts(1)
+          deallocate (verts)
+          lstart = .true.
+        end if
+
+      end if
+      nvertwall = icount - nvertpf
+
+      if (nvertwall.eq.nvertpf) then
+        ! assume standard/target mode with voids, 'usual' SN/DN topology
+        ! => sort first according to 'ix', then according to 'iy'
+        m%icornVx(1:icount-1:2) = icornVx(1:nvertpf)
+        m%icornVx(2:icount  :2) = icornVx(nvertpf+1:icount)
+
+      else
+        ! just copy over => check consistency with conv_surface_models!
+        m%icornVx(1:icount) = icornvx(1:icount)
+      endif
+
+      deallocate(icornvx)
+
+      write (*,*) 'Found ', icount, ' points to be adapted in block 15:'
+      write (*,*) m%icornVx(1:icount)
 
       deallocate (icorner)
       deallocate (ighostcv)
@@ -2074,15 +2421,13 @@
 
 ***********************************************************************
 
-      subroutine prep_geometry(nx, ny, nCv, nCi, nFc, nVx, nFs, nFt,
-     .  nVmxCv, gm, mpg)
+      subroutine prep_geometry(nx, ny, gm, mpg)
 
       implicit none
-      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nFt,
-     .                       nVmxCv
-      integer :: ix, iy, ic, ifc, ivx, ift
+      integer, intent(in) :: nx, ny
+      integer :: ix, iy, ic, iFc, iVx, iFs
 #ifdef WG_TODO
-      integer :: i, j, idb, ivx1, ivx2
+      integer :: i, j, idb, iVx1, iVx2
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
@@ -2091,7 +2436,8 @@
       external newunit
 #endif
 
-      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
+      call alloc_geometry (gm,
+     &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
 
 ! cell volumes
       do iy = -1, ny
@@ -2121,30 +2467,30 @@
       do iy = 0, ny
         do ix = 0, nx
           if(mpg%imapFcx(ix,iy)/=0) then
-            ifc = mpg%imapFcx(ix,iy)
+            iFc = mpg%imapFcx(ix,iy)
             ! wdk sign of field now included in angles
-            gm%fcBb(ifc,0:3) = abs(wbbl(ix,iy,0:3))
-            gm%fcS(ifc) = gs(ix,iy,0)
-            gm%fcHc(ifc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
-            gm%fcHc(ifc,2) = hc(ix,iy,0)
-            gm%fcHt(ifc)   = ht(ix,iy,0)
-            gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
-            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-            gm%fcQgam(ifc,0) = qc(ix,iy,0)
-            gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-            gm%fcQalf(ifc,0) = qac(ix,iy,0)
-            gm%fcQalf(ifc,1) = qas(ix,iy,0)
-            gm%fcQbet(ifc,0) = gm%fcQgam(ifc,0)*gm%fcQalf(ifc,0) +
-     .                         gm%fcQgam(ifc,1)*gm%fcQalf(ifc,1)
-            gm%fcQbet(ifc,1) = gm%fcQgam(ifc,1)*gm%fcQalf(ifc,0) -
-     .                         gm%fcQgam(ifc,0)*gm%fcQalf(ifc,1)
+            gm%fcBb(iFc,0:3) = abs(wbbl(ix,iy,0:3))
+            gm%fcS(iFc) = gs(ix,iy,0)
+            gm%fcHc(iFc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
+            gm%fcHc(iFc,2) = hc(ix,iy,0)
+            gm%fcHt(iFc)   = ht(ix,iy,0)
+            gm%fcVol(iFc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+            gm%fcVol(iFc,2) = 0.5_R8*vol(ix,iy)
+            gm%fcQgam(iFc,0) = qc(ix,iy,0)
+            gm%fcQgam(iFc,1) = -qs(ix,iy,0)
+            gm%fcQalf(iFc,0) = qac(ix,iy,0)
+            gm%fcQalf(iFc,1) = qas(ix,iy,0)
+            gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
+     .                         gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
+            gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
+     .                         gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
             ! wdk account for negative toroidal field through sign of angles
-            gm%fcQalf(ifc,1) = gm%fcQalf(ifc,1)*
+            gm%fcQalf(iFc,1) = gm%fcQalf(iFc,1)*
      .        sign(1.0_R8,wbbl(ix,iy,2))
-            gm%fcQbet(ifc,0) = gm%fcQbet(ifc,0)*
+            gm%fcQbet(iFc,0) = gm%fcQbet(iFc,0)*
      .        sign(1.0_R8,wbbl(ix,iy,2))
-            gm%fcPbs(ifc) = pbs(ix,iy,0)
-            gm%fcPbshz(ifc) = pbshz(ix,iy,0)
+            gm%fcPbs(iFc) = pbs(ix,iy,0)
+            gm%fcPbshz(iFc) = pbshz(ix,iy,0)
           end if
         end do
       end do
@@ -2153,31 +2499,31 @@
       do ix = 0, nx
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
-            ifc = mpg%imapFcy(ix,iy)
+            iFc = mpg%imapFcy(ix,iy)
             ! wdk sign of field now included in angles
-            gm%fcBb(ifc,0:3) = abs(wbbv(ix,iy,0:3))
-            gm%fcS(ifc) = gs(ix,iy,1)
-            gm%fcHc(ifc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
-            gm%fcHc(ifc,2) = hc(ix,iy,1)
-            gm%fcHt(ifc)   = ht(ix,iy,1)
-            gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),
+            gm%fcBb(iFc,0:3) = abs(wbbv(ix,iy,0:3))
+            gm%fcS(iFc) = gs(ix,iy,1)
+            gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
+            gm%fcHc(iFc,2) = hc(ix,iy,1)
+            gm%fcHt(iFc)   = ht(ix,iy,1)
+            gm%fcVol(iFc,1) = 0.5_R8*vol(bottomix(ix,iy),
      .                                    bottomiy(ix,iy))
-            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-            gm%fcQgam(ifc,0) = qc(ix,iy,1)
-            gm%fcQgam(ifc,1) = qs(ix,iy,1)
-            gm%fcQalf(ifc,0) = qac(ix,iy,1)
-            gm%fcQalf(ifc,1) = qas(ix,iy,1)
-            gm%fcQbet(ifc,0) = gm%fcQgam(ifc,0)*gm%fcQalf(ifc,0) +
-     .                         gm%fcQgam(ifc,1)*gm%fcQalf(ifc,1)
-            gm%fcQbet(ifc,1) = gm%fcQgam(ifc,1)*gm%fcQalf(ifc,0) -
-     .                         gm%fcQgam(ifc,0)*gm%fcQalf(ifc,1)
+            gm%fcVol(iFc,2) = 0.5_R8*vol(ix,iy)
+            gm%fcQgam(iFc,0) = qc(ix,iy,1)
+            gm%fcQgam(iFc,1) = qs(ix,iy,1)
+            gm%fcQalf(iFc,0) = qac(ix,iy,1)
+            gm%fcQalf(iFc,1) = qas(ix,iy,1)
+            gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
+     .                         gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
+            gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
+     .                         gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
             ! wdk account for negative toroidal field through sign of angles
-            gm%fcQalf(ifc,1) = gm%fcQalf(ifc,1)*
+            gm%fcQalf(iFc,1) = gm%fcQalf(iFc,1)*
      .        sign(1.0_R8,wbbv(ix,iy,2))
-            gm%fcQbet(ifc,0) = gm%fcQbet(ifc,0)*
+            gm%fcQbet(iFc,0) = gm%fcQbet(iFc,0)*
      .        sign(1.0_R8,wbbv(ix,iy,2))
-            gm%fcPbs(ifc) = pbs(ix,iy,1)
-            gm%fcPbshz(ifc) = pbshz(ix,iy,1)
+            gm%fcPbs(iFc) = pbs(ix,iy,1)
+            gm%fcPbshz(iFc) = pbshz(ix,iy,1)
           end if
         end do
       end do
@@ -2188,12 +2534,12 @@
       do iy = 0, ny
         do ix = 0, nx
           if(mpg%imapVx(ix,iy)/=0) then
-            ivx = mpg%imapVx(ix,iy)
-            gm%vxBb(ivx,0:3) = abs(wbbc(ix,iy,0:3))
-            gm%vxX(ivx) = crx(ix,iy,0)
-            gm%vxY(ivx) = cry(ix,iy,0)
-            gm%vxFfbz(ivx) = ffbz(ix,iy,0)
-            gm%vxFpsi(ivx) = fpsi(ix,iy,0,0)
+            iVx = mpg%imapVx(ix,iy)
+            gm%vxBb(iVx,0:3) = abs(wbbc(ix,iy,0:3))
+            gm%vxX(iVx) = crx(ix,iy,0)
+            gm%vxY(iVx) = cry(ix,iy,0)
+            gm%vxFfbz(iVx) = ffbz(ix,iy,0)
+            gm%vxFpsi(iVx) = fpsi(ix,iy,0,0)
           end if
         end do
       end do
@@ -2225,12 +2571,12 @@
           if (ic == 0) cycle
           write (idb,*) 'faces '
           do i = 1,mpg%cvFcP(ic,2)
-            ifc=mpg%cvFc(mpg%cvFcP(ic,1)+i-1)
-            ivx1 = mpg%fcVx(ifc,1)
-            ivx2 = mpg%fcVx(ifc,2)
-            write (idb,'(3i6,4es16.7)') ifc, ivx1, ivx2,
-     .        gm%vxX(ivx1), gm%vxY(ivx1),
-     .        gm%vxX(ivx2), gm%vxY(ivx2)
+            iFc=mpg%cvFc(mpg%cvFcP(ic,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            write (idb,'(3i6,4es16.7)') iFc, iVx1, iVx2,
+     .        gm%vxX(iVx1), gm%vxY(iVx1),
+     .        gm%vxX(iVx2), gm%vxY(iVx2)
           end do
           do i = 1, 7
             write (idb,*)
@@ -2244,12 +2590,12 @@
       do ic = 1, nCv
         write (idb,'(a,3i6)') 'ic ',ic
         do i = 1, mpg%cvVxP(ic,2)
-          ivx = mpg%cvVx(mpg%cvVxP(ic,1)+i-1)
-          if (ivx == 0) then
-            write (idb,'(i6)') ivx
+          iVx = mpg%cvVx(mpg%cvVxP(ic,1)+i-1)
+          if (iVx == 0) then
+            write (idb,'(i6)') iVx
             cycle
           end if
-          write (idb,'(i6,2es16.7)') ivx, gm%vxX(ivx),gm%vxY(ivx)
+          write (idb,'(i6,2es16.7)') iVx, gm%vxX(iVx),gm%vxY(iVx)
         end do
         write (idb,*)
       end do
@@ -2267,9 +2613,9 @@
       deallocate(gm%fsPsi)
       allocate (gm%fsPsi(mpg%nFs))
       gm%fsPsi = 0.0_R8
-      do ift = 1, nFs
-        ifc = mpg%fsFc(mpg%fsFcP(ift,1))
-        gm%fsPsi(ift) = gm%vxFpsi(mpg%fcVx(ifc,1))
+      do iFs = 1, mpg%nFs
+        iFc = mpg%fsFc(mpg%fsFcP(iFs,1))
+        gm%fsPsi(iFs) = gm%vxFpsi(mpg%fcVx(iFc,1))
       end do
 ! calculate connection length
       call calc_conn(mpg, gm)
@@ -2278,18 +2624,18 @@
 
 **********************************************************************
 
-      subroutine prep_plasma (nx, ny, ns, nCv, nCi, nFc, mpg, st)
+      subroutine prep_plasma (nx, ny, ns, mpg, st)
 
       implicit none
-      integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+      integer, intent(in) :: nx, ny, ns
       type(mapping), intent(in) :: mpg
       type(B2State), intent(inout) :: st
-      integer :: ix, iy, ic, ifc!, nfx
+      integer :: ix, iy, ic, iFc!, nfx
 
-      call createB2State (nCv, nFc, ns, st)
-      call createB2Diagnostic( nCv, ns, nnreg, st % diag )
+      call createB2State ( mpg%nCv, mpg%nFc, ns, st)
+      call createB2Diagnostic( mpg%nCv, ns, nnreg, st % diag )
 
-!      nfx = (nx+1)*ny
+!     nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -2298,8 +2644,8 @@
       do iy = 0, ny-1
         do ix = 0, nx-1
           if(mpg%imapCv(ix,iy)/=0) then
-            ic =  mpg%imapCv(ix,iy)
-!          ic = (ix+1) + iy*nx
+            ic = mpg%imapCv(ix,iy)
+!           ic = (ix+1) + iy*nx
 ! B2plasma
             st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
             st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
@@ -2338,7 +2684,7 @@
             st % dv % ne(ic) = ne(ix,iy)
             st % dv % ne2(ic) = ne2(ix,iy)
             st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!          st % dv % ue(ic) = ue(ix,iy)
+!           st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
             st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2346,7 +2692,7 @@
             st % dv % respo(ic) = respo(ix,iy)
             st % dv % reshe(ic) = reshe(ix,iy)
             st % dv % reshi(ic) = reshi(ix,iy)
-!          st % dv % resht(ic) = resht(ix,iy)
+!           st % dv % resht(ic) = resht(ix,iy)
             st % dv % resmt(ic) = resmt(ix,iy)
             st % dv % reskt(ic) = reskt(ix,iy)
             st % dv % reszt(ic) = reszt(ix,iy)
@@ -2356,7 +2702,7 @@
             st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
             st % dv % corut(ic) = corut(ix,iy)
             st % dv % corpo(ic) = corpo(ix,iy)
-!          st % dv % cortt(ic) = cortt(ix,iy)
+!           st % dv % cortt(ic) = cortt(ix,iy)
             st % dv % corte(ic) = corte(ix,iy)
             st % dv % corti(ic) = corti(ix,iy)
 
@@ -2367,12 +2713,12 @@
             st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!          st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!          st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!          st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!          st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!          st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!          st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!           st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!           st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!           st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!           st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!           st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!           st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
             st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2389,13 +2735,14 @@
             st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
             st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
             st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+
           end if
         end do
       end do
 
 ! guard cells iy = -1 and iy = ny
       do ix = 0, nx-1
-!        ic = nCi + ix+1
+!       ic = mpg%nCi + ix+1
         iy = -1
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2437,7 +2784,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2445,7 +2792,7 @@
           st % dv % respo(ic) = respo(ix,iy)
           st % dv % reshe(ic) = reshe(ix,iy)
           st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
+!         st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
           st % dv % reskt(ic) = reskt(ix,iy)
           st % dv % reszt(ic) = reszt(ix,iy)
@@ -2455,7 +2802,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2466,12 +2813,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2490,7 +2837,7 @@
           st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
           st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
         endif
- !       ic = nCi + nx + ix+1
+ !      ic = mpg%nCi + nx + ix+1
         iy = ny
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2532,7 +2879,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2550,7 +2897,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2561,12 +2908,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2589,7 +2936,7 @@
 
 ! guard cells ix = -1 and ix = nx
       do iy = 0, ny-1
-!        ic = nCi + 2*nx + iy+1
+!       ic = mpg%nCi + 2*nx + iy+1
         ix = -1
         if(mpg%imapCv(ix,iy)/=0) then
           ic=mpg%imapCv(ix,iy)
@@ -2631,7 +2978,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2639,7 +2986,7 @@
           st % dv % respo(ic) = respo(ix,iy)
           st % dv % reshe(ic) = reshe(ix,iy)
           st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
+!         st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
           st % dv % reskt(ic) = reskt(ix,iy)
           st % dv % reszt(ic) = reszt(ix,iy)
@@ -2649,7 +2996,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2660,12 +3007,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2685,7 +3032,7 @@
           st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
         end if
 
-!        ic = nCi + 2*nx + ny + iy+1
+!       ic = mpg%nCi + 2*nx + ny + iy+1
         ix = nx
         if(mpg%imapCv(ix,iy)/=0) then
           ic = mpg%imapCv(ix,iy)
@@ -2727,7 +3074,7 @@
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
+!         st % dv % ue(ic) = ue(ix,iy)
 
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
@@ -2735,7 +3082,7 @@
           st % dv % respo(ic) = respo(ix,iy)
           st % dv % reshe(ic) = reshe(ix,iy)
           st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
+!         st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
           st % dv % reskt(ic) = reskt(ix,iy)
           st % dv % reszt(ic) = reszt(ix,iy)
@@ -2745,7 +3092,7 @@
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
+!         st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
 
@@ -2756,12 +3103,12 @@
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!         st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!         st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!         st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!         st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!         st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!         st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -2785,140 +3132,141 @@
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
-!          ifc = ix+1 + iy*(nx+1)
+!         iFc = ix+1 + iy*(nx+1)
           if(mpg%imapFcx(ix,iy)/=0) then
-            ifc = mpg%imapFcx(ix,iy)
+            iFc = mpg%imapFcx(ix,iy)
 ! B2coeff
-            st % co % csig_an(ifc,0:1) = csig_an(ix,iy,0,0:1)
-            st % co % calf(ifc,0:1) = calf(ix,iy,0,0:1)
-            st % co % cdkt(ifc,0:1) = cdkt(ix,iy,0,0:1)
-            st % co % cdzt(ifc,0:1) = cdzt(ix,iy,0,0:1)
+            st % co % csig_an(iFc,0:1) = csig_an(ix,iy,0,0:1)
+            st % co % calf(iFc,0:1) = calf(ix,iy,0,0:1)
+            st % co % cdkt(iFc,0:1) = cdkt(ix,iy,0,0:1)
+            st % co % cdzt(iFc,0:1) = cdzt(ix,iy,0,0:1)
 
-            st % co % csig(ifc,0:1) = csig(ix,iy,0,0:1)
-            st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) =
+            st % co % csig(iFc,0:1) = csig(ix,iy,0,0:1)
+            st % co % csigin(iFc,0:1,0:ns-1,0:ns-1) =
      .              csigin(ix,iy,0,0:1,0:ns-1,0:ns-1)
 
-            st % co % chve(ifc,0:1) = chve(ix,iy,0,0:1)
-            st % co % chce(ifc,0:1) = chce(ix,iy,0,0:1)
-            st % co % chvemx(ifc) = chvemx(ix,iy)
+            st % co % chve(iFc,0:1) = chve(ix,iy,0,0:1)
+            st % co % chce(iFc,0:1) = chce(ix,iy,0,0:1)
+            st % co % chvemx(iFc) = chvemx(ix,iy)
 
-            st % co % chvi(ifc,0:1) = chvi(ix,iy,0,0:1)
-            st % co % chci(ifc,0:1) = chci(ix,iy,0,0:1)
-            st % co % chvimx(ifc) = chvimx(ix,iy)
+            st % co % chvi(iFc,0:1) = chvi(ix,iy,0,0:1)
+            st % co % chci(iFc,0:1) = chci(ix,iy,0,0:1)
+            st % co % chvimx(iFc) = chvimx(ix,iy)
 
-            st % co % cvla(ifc,0:1,0:ns-1) = cvla(ix,iy,0,0:1,0:ns-1)
-            st % co % cdna(ifc,0:1,0:ns-1) = cdna(ix,iy,0,0:1,0:ns-1)
-            st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,0,0:1,0:ns-1)
+            st % co % cvla(iFc,0:1,0:ns-1) = cvla(ix,iy,0,0:1,0:ns-1)
+            st % co % cdna(iFc,0:1,0:ns-1) = cdna(ix,iy,0,0:1,0:ns-1)
+            st % co % cdpa(iFc,0:1,0:ns-1) = cdpa(ix,iy,0,0:1,0:ns-1)
 
-            st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,0,0:1,0:ns-1)
-            st % co % cvsa_cl(ifc,0:1,0:ns-1) =
+            st % co % cvsa(iFc,0:1,0:ns-1) = cvsa(ix,iy,0,0:1,0:ns-1)
+            st % co % cvsa_cl(iFc,0:1,0:ns-1) =
      .                                 cvsa_cl(ix,iy,0,0:1,0:ns-1)
 
-            st % co % cddi(ifc,0:1,0:ns-1) = cddi(ix,iy,0,0:1,0:ns-1)
+            st % co % cddi(iFc,0:1,0:ns-1) = cddi(ix,iy,0,0:1,0:ns-1)
 
-            st % co % fllim0fna(ifc,0:1,0:ns-1) =
+            st % co % fllim0fna(iFc,0:1,0:ns-1) =
      &              fllim0fna(ix,iy,0,0:1,0:ns-1)
-            st % co % fllim0fhi(ifc,0:1,0:ns-1) =
+            st % co % fllim0fhi(iFc,0:1,0:ns-1) =
      &              fllim0fhi(ix,iy,0,0:1,0:ns-1)
-            st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
+            st % co % fllimvisc(iFc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
 
 ! fluxes
-            st % dv % fch(ifc,0:1) = fch(ix,iy,0,0:1)
-            st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,0,0:1)
-            st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,0,0:1)
-            st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,0,0:1)
-            st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,0,0:1)
-            st % dv % fchin(ifc,0:1) = fchin(ix,iy,0,0:1)
-            st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,0,0:1)
-            st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,0,0:1)
-            st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,0,0:1)
-            st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,0,0:1)
-            st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,0,0:1)
-            st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,0,0:1)
+            st % dv % fch(iFc,0:1) = fch(ix,iy,0,0:1)
+            st % dv % fch_32(iFc,0:1) = fch_32(ix,iy,0,0:1)
+            st % dv % fch_52(iFc,0:1) = fch_52(ix,iy,0,0:1)
+            st % dv % fch_p(iFc,0:1) = fch_p(ix,iy,0,0:1)
+            st % dv % fchdia(iFc,0:1) = fchdia(ix,iy,0,0:1)
+            st % dv % fchin(iFc,0:1) = fchin(ix,iy,0,0:1)
+            st % dv % fchvispar(iFc,0:1) = fchvispar(ix,iy,0,0:1)
+            st % dv % fchvisper(iFc,0:1) = fchvisper(ix,iy,0,0:1)
+            st % dv % fchvisq(iFc,0:1) = fchvisq(ix,iy,0,0:1)
+            st % dv % fchviskt(iFc,0:1) = fchviskt(ix,iy,0,0:1)
+            st % dv % fchinert(iFc,0:1) = fchinert(ix,iy,0,0:1)
+            st % dv % fchanml(iFc,0:1) = fchanml(ix,iy,0,0:1)
 
-            st % dv % fne(ifc,0:1) = fne(ix,iy,0,0:1)
-            st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,0,0:1)
-            st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,0,0:1)
+            st % dv % fne(iFc,0:1) = fne(ix,iy,0,0:1)
+            st % dv % fne_32(iFc,0:1) = fne_32(ix,iy,0,0:1)
+            st % dv % fne_52(iFc,0:1) = fne_52(ix,iy,0,0:1)
 
-            st % dv % fni(ifc,0:1) = fni(ix,iy,0,0:1)
-            st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,0,0:1)
-            st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,0,0:1)
+            st % dv % fni(iFc,0:1) = fni(ix,iy,0,0:1)
+            st % dv % fni_32(iFc,0:1) = fni_32(ix,iy,0,0:1)
+            st % dv % fni_52(iFc,0:1) = fni_52(ix,iy,0,0:1)
 
-            st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_mdf(ifc,0:1,0:ns-1) =
+            st % dv % fna(iFc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_mdf(iFc,0:1,0:ns-1) =
      .              fna_mdf(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_he(ifc,0:1,0:ns-1)=fna_he(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_fcor(ifc,0:1,0:ns-1) =
+            st % dv % fna_he(iFc,0:1,0:ns-1)=fna_he(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_fcor(iFc,0:1,0:ns-1) =
      .              fna_fcor(ix,iy,0,0:1,0:ns-1)
-            st % dv % fnaPSch(ifc,0:1,0:ns-1) =
+            st % dv % fnaPSch(iFc,0:1,0:ns-1) =
      .              fnaPSch(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_32(ifc,0:1,0:ns-1)=fna_32(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_52(ifc,0:1,0:ns-1)=fna_52(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_32nd(ifc,0:1,0:ns-1) =
+            st % dv % fna_32(iFc,0:1,0:ns-1)=fna_32(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_52(iFc,0:1,0:ns-1)=fna_52(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_32nd(iFc,0:1,0:ns-1) =
      .              fna_32nd(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_52nd(ifc,0:1,0:ns-1) =
+            st % dv % fna_52nd(iFc,0:1,0:ns-1) =
      .              fna_52nd(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_eir(ifc,0:1,0:ns-1) =
+            st % dv % fna_eir(iFc,0:1,0:ns-1) =
      .              fna_eir(ix,iy,0,0:1,0:ns-1)
-            st % dv % fne_eir(ifc,0:1) =
+            st % dv % fne_eir(iFc,0:1) =
      .              fne_eir(ix,iy,0,0:1)
-           st % dv % fna_nodrift(ifc,0:1,0:ns-1) =
+            st % dv % fna_nodrift(iFc,0:1,0:ns-1) =
      .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
-            st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
-            st % dv % fkt(ifc,0:1) = fkt(ix,iy,0,0:1)
-            st % dv % fzt(ifc,0:1) = fzt(ix,iy,0,0:1)
-            st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
-            st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,0,0:1)
-            st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
-            st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,0,0:1)
-            st % dv % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
-            st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,0,0:1)
-            st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,0,0:1)
-            st % dv % fhit(ifc,0:1) = fhit(ix,iy,0,0:1)
-            st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,0,0:1)
+            st % dv % fhe(iFc,0:1) = fhe(ix,iy,0,0:1)
+            st % dv % fkt(iFc,0:1) = fkt(ix,iy,0,0:1)
+            st % dv % fzt(iFc,0:1) = fzt(ix,iy,0,0:1)
+            st % dv % fhe_mdf(iFc,0:1) = fhe_mdf(ix,iy,0,0:1)
+            st % dv % fhePSch(iFc,0:1) = fhePSch(ix,iy,0,0:1)
+            st % dv % fhet(iFc,0:1) = fhet(ix,iy,0,0:1)
+            st % dv % fhe_eir(iFc,0:1) = fhe_eir(ix,iy,0,0:1)
+            st % dv % fhi(iFc,0:1) = fhi(ix,iy,0,0:1)
+            st % dv % fhi_mdf(iFc,0:1) = fhi_mdf(ix,iy,0,0:1)
+            st % dv % fhiPSch(iFc,0:1) = fhiPSch(ix,iy,0,0:1)
+            st % dv % fhit(iFc,0:1) = fhit(ix,iy,0,0:1)
+            st % dv % fhi_eir(iFc,0:1) = fhi_eir(ix,iy,0,0:1)
 
 ! derived quantities
-            st % dv % uadia(ifc,0:1,0:ns-1) =
+            st % dv % uadia(iFc,0:1,0:ns-1) =
      .              uadia(ix,iy,0,0:1,0:ns-1)
-            st % dv % vadia(ifc,0:1,0:ns-1) =
+            st % dv % vadia(iFc,0:1,0:ns-1) =
      .               vadia(ix,iy,0,0:1,0:ns-1)
-            st % dv % wadia(ifc,0:1,0:ns-1) =
+            st % dv % wadia(iFc,0:1,0:ns-1) =
      .               wadia(ix,iy,0,0:1,0:ns-1)
-            st % dv % vaecrb(ifc,0:1,0:ns-1) =
+            st % dv % vaecrb(iFc,0:1,0:ns-1) =
      .              vaecrb(ix,iy,0,0:1,0:ns-1)
-            st % dv % wedia(ifc,0:1) =
+            st % dv % wedia(iFc,0:1) =
      .              wedia(ix,iy,0,0:1)
-            st % dv % vedia(ifc,0:1) =
+            st % dv % vedia(iFc,0:1) =
      .              vedia(ix,iy,0,0:1)
-            st % dv % veecrb(ifc,0:1) =
+            st % dv % veecrb(iFc,0:1) =
      .              veecrb(ix,iy,0,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
 ! but actually used as face quantities in case of drift_flows = 1
-            st % dv % facdrift(ifc) = facdrift(ix,iy)
-            st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
-            st % dv % fac_vis(ifc) = fac_vis(ix,iy)
+            st % dv % facdrift(iFc) = facdrift(ix,iy)
+            st % dv % fac_ExB(iFc) = fac_ExB(ix,iy)
+            st % dv % fac_vis(iFc) = fac_vis(ix,iy)
 
 ! numerical coefficients
-            st % dv % conc(ifc,0:1) = conc(ix,iy,0,0:1)
-            st % dv % fllime(ifc) = fllime(ix,iy)
-            st % dv % floe(ifc,0:1) = floe(ix,iy,0,0:1)
-            st % dv % cone(ifc,0:1,:) = cone(ix,iy,0,0:1,:)
-            st % dv % fllimi(ifc) = fllimi(ix,iy)
-            st % dv % floi(ifc,0:1) = floi(ix,iy,0,0:1)
-            st % dv % coni(ifc,0:1,:) = coni(ix,iy,0,0:1,:)
-            st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,0,0:1)
-            st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,0,0:1)
+            st % dv % conc(iFc,0:1) = conc(ix,iy,0,0:1)
+            st % dv % fllime(iFc) = fllime(ix,iy)
+            st % dv % floe(iFc,0:1) = floe(ix,iy,0,0:1)
+            st % dv % cone(iFc,0:1,:) = cone(ix,iy,0,0:1,:)
+            st % dv % fllimi(iFc) = fllimi(ix,iy)
+            st % dv % floi(iFc,0:1) = floi(ix,iy,0,0:1)
+            st % dv % coni(iFc,0:1,:) = coni(ix,iy,0,0:1,:)
+            st % dv % floe_noc(iFc,0:1) = floe_noc(ix,iy,0,0:1)
+            st % dv % floi_noc(iFc,0:1) = floi_noc(ix,iy,0,0:1)
 
 !B2PlasmaSnapshot
-!          st % psnl % fch(ifc,0:1) = fch(ix,iy,0,0:1)
-!          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
-!          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
-!          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
-!          st % psnc % fch(ifc,0:1) = fch(ix,iy,0,0:1)
-!          st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
-!          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
-!          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
+!          st % psnl % fch(iFc,0:1) = fch(ix,iy,0,0:1)
+!          st % psnl % fna(iFc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+!          st % psnl % fhe(iFc,0:1) = fhe(ix,iy,0,0:1)
+!          st % psnl % fhi(iFc,0:1) = fhi(ix,iy,0,0:1)
+!          st % psnc % fch(iFc,0:1) = fch(ix,iy,0,0:1)
+!          st % psnc % fna(iFc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+!          st % psnc % fhe(iFc,0:1) = fhe(ix,iy,0,0:1)
+!          st % psnc % fhi(iFc,0:1) = fhi(ix,iy,0,0:1)
+
           end if
         end do
       end do
@@ -2926,139 +3274,140 @@
 ! y faces
       do ix = 0, nx-1
         do iy = 0, ny
-!          ifc = nfx + iy+1 + ix*(ny+1)
+!          iFc = nfx + iy+1 + ix*(ny+1)
           if(mpg%imapFcy(ix,iy)/=0) then
-            ifc = mpg%imapFcy(ix,iy)
+            iFc = mpg%imapFcy(ix,iy)
 
 ! B2coeff
-          st % co % csig_an(ifc,0:1) = csig_an(ix,iy,1,0:1)
-          st % co % calf(ifc,0:1) = calf(ix,iy,1,0:1)
-          st % co % cdkt(ifc,0:1) = cdkt(ix,iy,1,0:1)
-          st % co % cdzt(ifc,0:1) = cdzt(ix,iy,1,0:1)
+          st % co % csig_an(iFc,0:1) = csig_an(ix,iy,1,0:1)
+          st % co % calf(iFc,0:1) = calf(ix,iy,1,0:1)
+          st % co % cdkt(iFc,0:1) = cdkt(ix,iy,1,0:1)
+          st % co % cdzt(iFc,0:1) = cdzt(ix,iy,1,0:1)
 
-          st % co % csig(ifc,0:1) = csig(ix,iy,1,0:1)
-          st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) =
+          st % co % csig(iFc,0:1) = csig(ix,iy,1,0:1)
+          st % co % csigin(iFc,0:1,0:ns-1,0:ns-1) =
      .              csigin(ix,iy,1,0:1,0:ns-1,0:ns-1)
 
-          st % co % chve(ifc,0:1) = chve(ix,iy,1,0:1)
-          st % co % chce(ifc,0:1) = chce(ix,iy,1,0:1)
-          st % co % chvemx(ifc) = chvemx(ix,iy)
+          st % co % chve(iFc,0:1) = chve(ix,iy,1,0:1)
+          st % co % chce(iFc,0:1) = chce(ix,iy,1,0:1)
+          st % co % chvemx(iFc) = chvemx(ix,iy)
 
-          st % co % chvi(ifc,0:1) = chvi(ix,iy,1,0:1)
-          st % co % chci(ifc,0:1) = chci(ix,iy,1,0:1)
-          st % co % chvimx(ifc) = chvimx(ix,iy)
+          st % co % chvi(iFc,0:1) = chvi(ix,iy,1,0:1)
+          st % co % chci(iFc,0:1) = chci(ix,iy,1,0:1)
+          st % co % chvimx(iFc) = chvimx(ix,iy)
 
-          st % co % cvla(ifc,0:1,0:ns-1) = cvla(ix,iy,1,0:1,0:ns-1)
-          st % co % cdna(ifc,0:1,0:ns-1) = cdna(ix,iy,1,0:1,0:ns-1)
-          st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,1,0:1,0:ns-1)
+          st % co % cvla(iFc,0:1,0:ns-1) = cvla(ix,iy,1,0:1,0:ns-1)
+          st % co % cdna(iFc,0:1,0:ns-1) = cdna(ix,iy,1,0:1,0:ns-1)
+          st % co % cdpa(iFc,0:1,0:ns-1) = cdpa(ix,iy,1,0:1,0:ns-1)
 
-          st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,1,0:1,0:ns-1)
-          st % co % cvsa_cl(ifc,0:1,0:ns-1) =
+          st % co % cvsa(iFc,0:1,0:ns-1) = cvsa(ix,iy,1,0:1,0:ns-1)
+          st % co % cvsa_cl(iFc,0:1,0:ns-1) =
      .              cvsa_cl(ix,iy,1,0:1,0:ns-1)
 
-          st % co % cddi(ifc,0:1,0:ns-1) = cddi(ix,iy,1,0:1,0:ns-1)
+          st % co % cddi(iFc,0:1,0:ns-1) = cddi(ix,iy,1,0:1,0:ns-1)
 
-          st % co % fllim0fhi(ifc,0:1,0:ns-1) =
+          st % co % fllim0fhi(iFc,0:1,0:ns-1) =
      &              fllim0fhi(ix,iy,1,0:1,0:ns-1)
-          st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
+          st % co % fllimvisc(iFc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
 
 ! fluxes
-          st % dv % fch(ifc,0:1) = fch(ix,iy,1,0:1)
-          st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,1,0:1)
-          st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,1,0:1)
-          st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,1,0:1)
-          st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,1,0:1)
-          st % dv % fchin(ifc,0:1) = fchin(ix,iy,1,0:1)
-          st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,1,0:1)
-          st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,1,0:1)
-          st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,1,0:1)
-          st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,1,0:1)
-          st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,1,0:1)
-          st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,1,0:1)
+          st % dv % fch(iFc,0:1) = fch(ix,iy,1,0:1)
+          st % dv % fch_32(iFc,0:1) = fch_32(ix,iy,1,0:1)
+          st % dv % fch_52(iFc,0:1) = fch_52(ix,iy,1,0:1)
+          st % dv % fch_p(iFc,0:1) = fch_p(ix,iy,1,0:1)
+          st % dv % fchdia(iFc,0:1) = fchdia(ix,iy,1,0:1)
+          st % dv % fchin(iFc,0:1) = fchin(ix,iy,1,0:1)
+          st % dv % fchvispar(iFc,0:1) = fchvispar(ix,iy,1,0:1)
+          st % dv % fchvisper(iFc,0:1) = fchvisper(ix,iy,1,0:1)
+          st % dv % fchvisq(iFc,0:1) = fchvisq(ix,iy,1,0:1)
+          st % dv % fchviskt(iFc,0:1) = fchviskt(ix,iy,1,0:1)
+          st % dv % fchinert(iFc,0:1) = fchinert(ix,iy,1,0:1)
+          st % dv % fchanml(iFc,0:1) = fchanml(ix,iy,1,0:1)
 
-          st % dv % fne(ifc,0:1) = fne(ix,iy,1,0:1)
-          st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,1,0:1)
-          st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,1,0:1)
+          st % dv % fne(iFc,0:1) = fne(ix,iy,1,0:1)
+          st % dv % fne_32(iFc,0:1) = fne_32(ix,iy,1,0:1)
+          st % dv % fne_52(iFc,0:1) = fne_52(ix,iy,1,0:1)
 
-          st % dv % fni(ifc,0:1) = fni(ix,iy,1,0:1)
-          st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,1,0:1)
-          st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,1,0:1)
+          st % dv % fni(iFc,0:1) = fni(ix,iy,1,0:1)
+          st % dv % fni_32(iFc,0:1) = fni_32(ix,iy,1,0:1)
+          st % dv % fni_52(iFc,0:1) = fni_52(ix,iy,1,0:1)
 
-          st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_mdf(ifc,0:1,0:ns-1) =
+          st % dv % fna(iFc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_mdf(iFc,0:1,0:ns-1) =
      .              fna_mdf(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_he(ifc,0:1,0:ns-1) = fna_he(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_fcor(ifc,0:1,0:ns-1) =
+          st % dv % fna_he(iFc,0:1,0:ns-1) = fna_he(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_fcor(iFc,0:1,0:ns-1) =
      .              fna_fcor(ix,iy,1,0:1,0:ns-1)
-          st % dv % fnaPSch(ifc,0:1,0:ns-1) =
+          st % dv % fnaPSch(iFc,0:1,0:ns-1) =
      .              fnaPSch(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_32(ifc,0:1,0:ns-1) = fna_32(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_52(ifc,0:1,0:ns-1) = fna_52(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_32nd(ifc,0:1,0:ns-1) =
+          st % dv % fna_32(iFc,0:1,0:ns-1) = fna_32(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_52(iFc,0:1,0:ns-1) = fna_52(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_32nd(iFc,0:1,0:ns-1) =
      .              fna_32nd(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_52nd(ifc,0:1,0:ns-1) =
+          st % dv % fna_52nd(iFc,0:1,0:ns-1) =
      .              fna_52nd(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_eir(ifc,0:1,0:ns-1) =
+          st % dv % fna_eir(iFc,0:1,0:ns-1) =
      .              fna_eir(ix,iy,1,0:1,0:ns-1)
-          st % dv % fne_eir(ifc,0:1) =
+          st % dv % fne_eir(iFc,0:1) =
      .              fne_eir(ix,iy,1,0:1)
-          st % dv % fna_nodrift(ifc,0:1,0:ns-1) =
+          st % dv % fna_nodrift(iFc,0:1,0:ns-1) =
      .              fna_nodrift(ix,iy,1,0:1,0:ns-1)
 
-          st % dv % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
-          st % dv % fkt(ifc,0:1) = fkt(ix,iy,1,0:1)
-          st % dv % fzt(ifc,0:1) = fzt(ix,iy,1,0:1)
-          st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,1,0:1)
-          st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,1,0:1)
-          st % dv % fhet(ifc,0:1) = fhet(ix,iy,1,0:1)
-          st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,1,0:1)
-          st % dv % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
-          st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,1,0:1)
-          st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,1,0:1)
-          st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
-          st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
+          st % dv % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
+          st % dv % fkt(iFc,0:1) = fkt(ix,iy,1,0:1)
+          st % dv % fzt(iFc,0:1) = fzt(ix,iy,1,0:1)
+          st % dv % fhe_mdf(iFc,0:1) = fhe_mdf(ix,iy,1,0:1)
+          st % dv % fhePSch(iFc,0:1) = fhePSch(ix,iy,1,0:1)
+          st % dv % fhet(iFc,0:1) = fhet(ix,iy,1,0:1)
+          st % dv % fhe_eir(iFc,0:1) = fhe_eir(ix,iy,1,0:1)
+          st % dv % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
+          st % dv % fhi_mdf(iFc,0:1) = fhi_mdf(ix,iy,1,0:1)
+          st % dv % fhiPSch(iFc,0:1) = fhiPSch(ix,iy,1,0:1)
+          st % dv % fhit(iFc,0:1) = fhit(ix,iy,1,0:1)
+          st % dv % fhi_eir(iFc,0:1) = fhi_eir(ix,iy,1,0:1)
 
 ! derived quantities
-          st % dv % uadia(ifc,0:1,0:ns-1) =
+          st % dv % uadia(iFc,0:1,0:ns-1) =
      .              uadia(ix,iy,1,0:1,0:ns-1)
-          st % dv % vadia(ifc,0:1,0:ns-1) =
+          st % dv % vadia(iFc,0:1,0:ns-1) =
      .              vadia(ix,iy,1,0:1,0:ns-1)
-          st % dv % wadia(ifc,0:1,0:ns-1) =
+          st % dv % wadia(iFc,0:1,0:ns-1) =
      .              wadia(ix,iy,1,0:1,0:ns-1)
-          st % dv % vaecrb(ifc,0:1,0:ns-1) =
+          st % dv % vaecrb(iFc,0:1,0:ns-1) =
      .              vaecrb(ix,iy,1,0:1,0:ns-1)
-          st % dv % wedia(ifc,0:1) =
+          st % dv % wedia(iFc,0:1) =
      .              wedia(ix,iy,1,0:1)
-          st % dv % vedia(ifc,0:1) =
+          st % dv % vedia(iFc,0:1) =
      .              vedia(ix,iy,1,0:1)
-          st % dv % veecrb(ifc,0:1) =
+          st % dv % veecrb(iFc,0:1) =
      .              veecrb(ix,iy,1,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
 ! but actually used as face quantities in case of drift_flows = 1
-          st % dv % facdrift(ifc) = facdrift(ix,iy)
-          st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
-          st % dv % fac_vis(ifc) = fac_vis(ix,iy)
+          st % dv % facdrift(iFc) = facdrift(ix,iy)
+          st % dv % fac_ExB(iFc) = fac_ExB(ix,iy)
+          st % dv % fac_vis(iFc) = fac_vis(ix,iy)
 
 ! numerical coefficients
-          st % dv % conc(ifc,0:1) = conc(ix,iy,1,0:1)
-          st % dv % fllime(ifc) = fllime(ix,iy)
-          st % dv % floe(ifc,0:1) = floe(ix,iy,1,0:1)
-          st % dv % cone(ifc,0:1,:) = cone(ix,iy,1,0:1,:)
-          st % dv % fllimi(ifc) = fllimi(ix,iy)
-          st % dv % floi(ifc,0:1) = floi(ix,iy,1,0:1)
-          st % dv % coni(ifc,0:1,:) = coni(ix,iy,1,0:1,:)
-          st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
-          st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
+          st % dv % conc(iFc,0:1) = conc(ix,iy,1,0:1)
+          st % dv % fllime(iFc) = fllime(ix,iy)
+          st % dv % floe(iFc,0:1) = floe(ix,iy,1,0:1)
+          st % dv % cone(iFc,0:1,:) = cone(ix,iy,1,0:1,:)
+          st % dv % fllimi(iFc) = fllimi(ix,iy)
+          st % dv % floi(iFc,0:1) = floi(ix,iy,1,0:1)
+          st % dv % coni(iFc,0:1,:) = coni(ix,iy,1,0:1,:)
+          st % dv % floe_noc(iFc,0:1) = floe_noc(ix,iy,1,0:1)
+          st % dv % floi_noc(iFc,0:1) = floi_noc(ix,iy,1,0:1)
 
 ! B2PlasmaSnapshot
-!          st % psnl % fch(ifc,0:1) = fch(ix,iy,1,0:1)
-!          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-!          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
-!          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
-!          st % psnc % fch(ifc,0:1) = fch(ix,iy,1,0:1)
-!         st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-!          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
-!          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
+!         st % psnl % fch(iFc,0:1) = fch(ix,iy,1,0:1)
+!         st % psnl % fna(iFc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+!         st % psnl % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
+!         st % psnl % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
+!         st % psnc % fch(iFc,0:1) = fch(ix,iy,1,0:1)
+!         st % psnc % fna(iFc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+!         st % psnc % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
+!         st % psnc % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
+
           end if
         end do
       end do
@@ -3066,33 +3415,33 @@
       st % diag % aresco(0:ns-1) = aresco(0:ns-1)
       st % diag % aresmo(0:ns-1) = aresmo(0:ns-1)
 
-!      st % diag % acorpa(0:ns-1) = acorpa(0:ns-1)
-!      st % diag % acorua(0:ns-1) = acorua(0:ns-1)
+!     st % diag % acorpa(0:ns-1) = acorpa(0:ns-1)
+!     st % diag % acorua(0:ns-1) = acorua(0:ns-1)
 
-!      st % diag % rescoreg(0:nnreg(0),0:ns-1) =
-!     .            rescoreg(0:nnreg(0),0:ns-1)
-!      st % diag % resmoreg(0:nnreg(0),0:ns-1) =
-!     .            resmoreg(0:nnreg(0),0:ns-1)
-!      st % diag % reshereg(0:nnreg(0)) = reshereg(0:nnreg(0))
-!      st % diag % reshireg(0:nnreg(0)) = reshireg(0:nnreg(0))
+!     st % diag % rescoreg(0:nnreg(0),0:ns-1) =
+!    .            rescoreg(0:nnreg(0),0:ns-1)
+!     st % diag % resmoreg(0:nnreg(0),0:ns-1) =
+!    .            resmoreg(0:nnreg(0),0:ns-1)
+!     st % diag % reshereg(0:nnreg(0)) = reshereg(0:nnreg(0))
+!     st % diag % reshireg(0:nnreg(0)) = reshireg(0:nnreg(0))
 
       end subroutine prep_plasma
 
 **********************************************************************
 
-      subroutine prep_state (nx, ny, ns, nCv, nCi, nFc, mpg, st)
+      subroutine prep_state (nx, ny, ns, mpg, st)
       !! convert only a limited set of quantities as needed for the
       !! creation of the b2fstate file
       implicit none
-      integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+      integer, intent(in) :: nx, ny, ns
       type(mapping), intent(in) :: mpg
       type(B2State), intent(inout) :: st
-      integer :: ix, iy, ic, ifc!, nfx
+      integer :: ix, iy, ic, iFc!, nfx
 
-      call createB2Plasma( nCv, ns, st % pl )
-      call createB2Derivatives( nCv, nFc, ns, st % dv )
+      call createB2Plasma( mpg%nCv, ns, st % pl )
+      call createB2Derivatives( mpg%nCv, mpg%nFc, ns, st % dv )
 
-!      nfx = (nx+1)*ny
+!     nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -3123,87 +3472,87 @@
       do iy = 0, ny-1
         do ix = 0, nx
           if(mpg%imapFcx(ix,iy)/=0) then
-            ifc = mpg%imapFcx(ix,iy)
+            iFc = mpg%imapFcx(ix,iy)
 ! fluxes
-            st % dv % fch(ifc,0:1) = fch(ix,iy,0,0:1)
-            st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,0,0:1)
-            st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,0,0:1)
-            st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,0,0:1)
-            st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,0,0:1)
-            st % dv % fchin(ifc,0:1) = fchin(ix,iy,0,0:1)
-            st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,0,0:1)
-            st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,0,0:1)
-            st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,0,0:1)
-            st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,0,0:1)
-            st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,0,0:1)
-            st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,0,0:1)
+            st % dv % fch(iFc,0:1) = fch(ix,iy,0,0:1)
+            st % dv % fch_32(iFc,0:1) = fch_32(ix,iy,0,0:1)
+            st % dv % fch_52(iFc,0:1) = fch_52(ix,iy,0,0:1)
+            st % dv % fch_p(iFc,0:1) = fch_p(ix,iy,0,0:1)
+            st % dv % fchdia(iFc,0:1) = fchdia(ix,iy,0,0:1)
+            st % dv % fchin(iFc,0:1) = fchin(ix,iy,0,0:1)
+            st % dv % fchvispar(iFc,0:1) = fchvispar(ix,iy,0,0:1)
+            st % dv % fchvisper(iFc,0:1) = fchvisper(ix,iy,0,0:1)
+            st % dv % fchvisq(iFc,0:1) = fchvisq(ix,iy,0,0:1)
+            st % dv % fchviskt(iFc,0:1) = fchviskt(ix,iy,0,0:1)
+            st % dv % fchinert(iFc,0:1) = fchinert(ix,iy,0,0:1)
+            st % dv % fchanml(iFc,0:1) = fchanml(ix,iy,0,0:1)
 
-            st % dv % fne(ifc,0:1) = fne(ix,iy,0,0:1)
-            st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,0,0:1)
-            st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,0,0:1)
+            st % dv % fne(iFc,0:1) = fne(ix,iy,0,0:1)
+            st % dv % fne_32(iFc,0:1) = fne_32(ix,iy,0,0:1)
+            st % dv % fne_52(iFc,0:1) = fne_52(ix,iy,0,0:1)
 
-            st % dv % fni(ifc,0:1) = fni(ix,iy,0,0:1)
-            st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,0,0:1)
-            st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,0,0:1)
+            st % dv % fni(iFc,0:1) = fni(ix,iy,0,0:1)
+            st % dv % fni_32(iFc,0:1) = fni_32(ix,iy,0,0:1)
+            st % dv % fni_52(iFc,0:1) = fni_52(ix,iy,0,0:1)
 
-            st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_mdf(ifc,0:1,0:ns-1) =
+            st % dv % fna(iFc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_mdf(iFc,0:1,0:ns-1) =
      .              fna_mdf(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_he(ifc,0:1,0:ns-1)=fna_he(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_fcor(ifc,0:1,0:ns-1) =
+            st % dv % fna_he(iFc,0:1,0:ns-1)=fna_he(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_fcor(iFc,0:1,0:ns-1) =
      .              fna_fcor(ix,iy,0,0:1,0:ns-1)
-            st % dv % fnaPSch(ifc,0:1,0:ns-1) =
+            st % dv % fnaPSch(iFc,0:1,0:ns-1) =
      .              fnaPSch(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_32(ifc,0:1,0:ns-1)=fna_32(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_52(ifc,0:1,0:ns-1)=fna_52(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_32nd(ifc,0:1,0:ns-1) =
+            st % dv % fna_32(iFc,0:1,0:ns-1)=fna_32(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_52(iFc,0:1,0:ns-1)=fna_52(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_32nd(iFc,0:1,0:ns-1) =
      .              fna_32nd(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_52nd(ifc,0:1,0:ns-1) =
+            st % dv % fna_52nd(iFc,0:1,0:ns-1) =
      .              fna_52nd(ix,iy,0,0:1,0:ns-1)
-            st % dv % fna_eir(ifc,0:1,0:ns-1) =
+            st % dv % fna_eir(iFc,0:1,0:ns-1) =
      .              fna_eir(ix,iy,0,0:1,0:ns-1)
-            st % dv % fne_eir(ifc,0:1) =
+            st % dv % fne_eir(iFc,0:1) =
      .              fne_eir(ix,iy,0,0:1)
-            st % dv % fna_nodrift(ifc,0:1,0:ns-1) =
+            st % dv % fna_nodrift(iFc,0:1,0:ns-1) =
      .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
-            st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
-            st % dv % fkt(ifc,0:1) = fkt(ix,iy,0,0:1)
-            st % dv % fzt(ifc,0:1) = fzt(ix,iy,0,0:1)
-            st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
-            st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,0,0:1)
-            st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
-            st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,0,0:1)
-            st % dv % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
-            st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,0,0:1)
-            st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,0,0:1)
-            st % dv % fhit(ifc,0:1) = fhit(ix,iy,0,0:1)
-            st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,0,0:1)
+            st % dv % fhe(iFc,0:1) = fhe(ix,iy,0,0:1)
+            st % dv % fkt(iFc,0:1) = fkt(ix,iy,0,0:1)
+            st % dv % fzt(iFc,0:1) = fzt(ix,iy,0,0:1)
+            st % dv % fhe_mdf(iFc,0:1) = fhe_mdf(ix,iy,0,0:1)
+            st % dv % fhePSch(iFc,0:1) = fhePSch(ix,iy,0,0:1)
+            st % dv % fhet(iFc,0:1) = fhet(ix,iy,0,0:1)
+            st % dv % fhe_eir(iFc,0:1) = fhe_eir(ix,iy,0,0:1)
+            st % dv % fhi(iFc,0:1) = fhi(ix,iy,0,0:1)
+            st % dv % fhi_mdf(iFc,0:1) = fhi_mdf(ix,iy,0,0:1)
+            st % dv % fhiPSch(iFc,0:1) = fhiPSch(ix,iy,0,0:1)
+            st % dv % fhit(iFc,0:1) = fhit(ix,iy,0,0:1)
+            st % dv % fhi_eir(iFc,0:1) = fhi_eir(ix,iy,0,0:1)
 
 ! derived quantities
-            st % dv % uadia(ifc,0:1,0:ns-1) =
+            st % dv % uadia(iFc,0:1,0:ns-1) =
      .              uadia(ix,iy,0,0:1,0:ns-1)
-            st % dv % vadia(ifc,0:1,0:ns-1) =
+            st % dv % vadia(iFc,0:1,0:ns-1) =
      .               vadia(ix,iy,0,0:1,0:ns-1)
-            st % dv % wadia(ifc,0:1,0:ns-1) =
+            st % dv % wadia(iFc,0:1,0:ns-1) =
      .               wadia(ix,iy,0,0:1,0:ns-1)
-            st % dv % vaecrb(ifc,0:1,0:ns-1) =
+            st % dv % vaecrb(iFc,0:1,0:ns-1) =
      .              vaecrb(ix,iy,0,0:1,0:ns-1)
-            st % dv % wedia(ifc,0:1) =
+            st % dv % wedia(iFc,0:1) =
      .              wedia(ix,iy,0,0:1)
-            st % dv % vedia(ifc,0:1) =
+            st % dv % vedia(iFc,0:1) =
      .              vedia(ix,iy,0,0:1)
-            st % dv % veecrb(ifc,0:1) =
+            st % dv % veecrb(iFc,0:1) =
      .              veecrb(ix,iy,0,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
 ! but actually used as face quantities in case of drift_flows = 1
-            st % dv % facdrift(ifc) = facdrift(ix,iy)
-            st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
-            st % dv % fac_vis(ifc) = fac_vis(ix,iy)
+            st % dv % facdrift(iFc) = facdrift(ix,iy)
+            st % dv % fac_ExB(iFc) = fac_ExB(ix,iy)
+            st % dv % fac_vis(iFc) = fac_vis(ix,iy)
 
 ! numerical coefficients
-            st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,0,0:1)
-            st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,0,0:1)
+            st % dv % floe_noc(iFc,0:1) = floe_noc(ix,iy,0,0:1)
+            st % dv % floi_noc(iFc,0:1) = floi_noc(ix,iy,0,0:1)
 
           end if
         end do
@@ -3212,91 +3561,90 @@
 ! y faces
       do ix = 0, nx-1
         do iy = 0, ny
-!          ifc = nfx + iy+1 + ix*(ny+1)
+!         iFc = nfx + iy+1 + ix*(ny+1)
           if(mpg%imapFcy(ix,iy)/=0) then
-            ifc = mpg%imapFcy(ix,iy)
-
+            iFc = mpg%imapFcy(ix,iy)
 
 ! fluxes
-          st % dv % fch(ifc,0:1) = fch(ix,iy,1,0:1)
-          st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,1,0:1)
-          st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,1,0:1)
-          st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,1,0:1)
-          st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,1,0:1)
-          st % dv % fchin(ifc,0:1) = fchin(ix,iy,1,0:1)
-          st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,1,0:1)
-          st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,1,0:1)
-          st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,1,0:1)
-          st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,1,0:1)
-          st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,1,0:1)
-          st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,1,0:1)
+          st % dv % fch(iFc,0:1) = fch(ix,iy,1,0:1)
+          st % dv % fch_32(iFc,0:1) = fch_32(ix,iy,1,0:1)
+          st % dv % fch_52(iFc,0:1) = fch_52(ix,iy,1,0:1)
+          st % dv % fch_p(iFc,0:1) = fch_p(ix,iy,1,0:1)
+          st % dv % fchdia(iFc,0:1) = fchdia(ix,iy,1,0:1)
+          st % dv % fchin(iFc,0:1) = fchin(ix,iy,1,0:1)
+          st % dv % fchvispar(iFc,0:1) = fchvispar(ix,iy,1,0:1)
+          st % dv % fchvisper(iFc,0:1) = fchvisper(ix,iy,1,0:1)
+          st % dv % fchvisq(iFc,0:1) = fchvisq(ix,iy,1,0:1)
+          st % dv % fchviskt(iFc,0:1) = fchviskt(ix,iy,1,0:1)
+          st % dv % fchinert(iFc,0:1) = fchinert(ix,iy,1,0:1)
+          st % dv % fchanml(iFc,0:1) = fchanml(ix,iy,1,0:1)
 
-          st % dv % fne(ifc,0:1) = fne(ix,iy,1,0:1)
-          st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,1,0:1)
-          st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,1,0:1)
+          st % dv % fne(iFc,0:1) = fne(ix,iy,1,0:1)
+          st % dv % fne_32(iFc,0:1) = fne_32(ix,iy,1,0:1)
+          st % dv % fne_52(iFc,0:1) = fne_52(ix,iy,1,0:1)
 
-          st % dv % fni(ifc,0:1) = fni(ix,iy,1,0:1)
-          st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,1,0:1)
-          st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,1,0:1)
+          st % dv % fni(iFc,0:1) = fni(ix,iy,1,0:1)
+          st % dv % fni_32(iFc,0:1) = fni_32(ix,iy,1,0:1)
+          st % dv % fni_52(iFc,0:1) = fni_52(ix,iy,1,0:1)
 
-          st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_mdf(ifc,0:1,0:ns-1) =
+          st % dv % fna(iFc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_mdf(iFc,0:1,0:ns-1) =
      .              fna_mdf(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_he(ifc,0:1,0:ns-1) = fna_he(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_fcor(ifc,0:1,0:ns-1) =
+          st % dv % fna_he(iFc,0:1,0:ns-1) = fna_he(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_fcor(iFc,0:1,0:ns-1) =
      .              fna_fcor(ix,iy,1,0:1,0:ns-1)
-          st % dv % fnaPSch(ifc,0:1,0:ns-1) =
+          st % dv % fnaPSch(iFc,0:1,0:ns-1) =
      .              fnaPSch(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_32(ifc,0:1,0:ns-1) = fna_32(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_52(ifc,0:1,0:ns-1) = fna_52(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_32nd(ifc,0:1,0:ns-1) =
+          st % dv % fna_32(iFc,0:1,0:ns-1) = fna_32(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_52(iFc,0:1,0:ns-1) = fna_52(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_32nd(iFc,0:1,0:ns-1) =
      .              fna_32nd(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_52nd(ifc,0:1,0:ns-1) =
+          st % dv % fna_52nd(iFc,0:1,0:ns-1) =
      .              fna_52nd(ix,iy,1,0:1,0:ns-1)
-          st % dv % fna_eir(ifc,0:1,0:ns-1) =
+          st % dv % fna_eir(iFc,0:1,0:ns-1) =
      .              fna_eir(ix,iy,1,0:1,0:ns-1)
-          st % dv % fne_eir(ifc,0:1) =
+          st % dv % fne_eir(iFc,0:1) =
      .              fne_eir(ix,iy,1,0:1)
-          st % dv % fna_nodrift(ifc,0:1,0:ns-1) =
+          st % dv % fna_nodrift(iFc,0:1,0:ns-1) =
      .              fna_nodrift(ix,iy,1,0:1,0:ns-1)
 
-          st % dv % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
-          st % dv % fkt(ifc,0:1) = fkt(ix,iy,1,0:1)
-          st % dv % fzt(ifc,0:1) = fzt(ix,iy,1,0:1)
-          st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,1,0:1)
-          st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,1,0:1)
-          st % dv % fhet(ifc,0:1) = fhet(ix,iy,1,0:1)
-          st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,1,0:1)
-          st % dv % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
-          st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,1,0:1)
-          st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,1,0:1)
-          st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
-          st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
+          st % dv % fhe(iFc,0:1) = fhe(ix,iy,1,0:1)
+          st % dv % fkt(iFc,0:1) = fkt(ix,iy,1,0:1)
+          st % dv % fzt(iFc,0:1) = fzt(ix,iy,1,0:1)
+          st % dv % fhe_mdf(iFc,0:1) = fhe_mdf(ix,iy,1,0:1)
+          st % dv % fhePSch(iFc,0:1) = fhePSch(ix,iy,1,0:1)
+          st % dv % fhet(iFc,0:1) = fhet(ix,iy,1,0:1)
+          st % dv % fhe_eir(iFc,0:1) = fhe_eir(ix,iy,1,0:1)
+          st % dv % fhi(iFc,0:1) = fhi(ix,iy,1,0:1)
+          st % dv % fhi_mdf(iFc,0:1) = fhi_mdf(ix,iy,1,0:1)
+          st % dv % fhiPSch(iFc,0:1) = fhiPSch(ix,iy,1,0:1)
+          st % dv % fhit(iFc,0:1) = fhit(ix,iy,1,0:1)
+          st % dv % fhi_eir(iFc,0:1) = fhi_eir(ix,iy,1,0:1)
 
 ! derived quantities
-          st % dv % uadia(ifc,0:1,0:ns-1) =
+          st % dv % uadia(iFc,0:1,0:ns-1) =
      .              uadia(ix,iy,1,0:1,0:ns-1)
-          st % dv % vadia(ifc,0:1,0:ns-1) =
+          st % dv % vadia(iFc,0:1,0:ns-1) =
      .              vadia(ix,iy,1,0:1,0:ns-1)
-          st % dv % wadia(ifc,0:1,0:ns-1) =
+          st % dv % wadia(iFc,0:1,0:ns-1) =
      .              wadia(ix,iy,1,0:1,0:ns-1)
-          st % dv % vaecrb(ifc,0:1,0:ns-1) =
+          st % dv % vaecrb(iFc,0:1,0:ns-1) =
      .              vaecrb(ix,iy,1,0:1,0:ns-1)
-          st % dv % wedia(ifc,0:1) =
+          st % dv % wedia(iFc,0:1) =
      .              wedia(ix,iy,1,0:1)
-          st % dv % vedia(ifc,0:1) =
+          st % dv % vedia(iFc,0:1) =
      .              vedia(ix,iy,1,0:1)
-          st % dv % veecrb(ifc,0:1) =
+          st % dv % veecrb(iFc,0:1) =
      .              veecrb(ix,iy,1,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
 ! but actually used as face quantities in case of drift_flows = 1
-          st % dv % facdrift(ifc) = facdrift(ix,iy)
-          st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
-          st % dv % fac_vis(ifc) = fac_vis(ix,iy)
+          st % dv % facdrift(iFc) = facdrift(ix,iy)
+          st % dv % fac_ExB(iFc) = fac_ExB(ix,iy)
+          st % dv % fac_vis(iFc) = fac_vis(ix,iy)
 
 ! numerical coefficients
-          st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
-          st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
+          st % dv % floe_noc(iFc,0:1) = floe_noc(ix,iy,1,0:1)
+          st % dv % floi_noc(iFc,0:1) = floi_noc(ix,iy,1,0:1)
 
           end if
         end do
@@ -3306,24 +3654,63 @@
 
 **********************************************************************
 
+      subroutine prep_average ( nx, ny, ns, mpg, avg)
+
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      type(mapping), intent(in) :: mpg
+      type(B2Average), intent(inout) :: avg
+      integer :: ix, iy, ic
+
+      do iy = 0, ny-1
+        do ix = 0, nx-1
+          if (mpg%imapCv(ix,iy).ne.0) then
+            ic = mpg%imapCv(ix,iy)
+
+            avg % na_mean(ic,0:ns-1) = na_mean(ix,iy,0:ns-1)
+            avg % te_mean(ic) = te_mean(ix,iy)
+            avg % ti_mean(ic) = ti_mean(ix,iy)
+            avg % po_mean(ic) = po_mean(ix,iy)
+            avg % ua_mean(ic,0:ns-1) = ua_mean(ix,iy,0:ns-1)
+
+            avg % sna_mean(ic,0:ns-1) = sna_mean(ix,iy,0:ns-1)
+            avg % she_mean(ic) = she_mean(ix,iy)
+            avg % shi_mean(ic) = shi_mean(ix,iy)
+            avg % smo_mean(ic,0:ns-1) = smo_mean(ix,iy,0:ns-1)
+
+            avg % e_na(ic,0:ns-1) = e_na(ix,iy,0:ns-1)
+            avg % e_te(ic) = e_te(ix,iy)
+            avg % e_ti(ic) = e_ti(ix,iy)
+            avg % e_po(ic) = e_po(ix,iy)
+            avg % e_ua(ic,0:ns-1) = e_ua(ix,iy,0:ns-1)
+
+            avg % e_sna(ic,0:ns-1) = e_sna(ix,iy,0:ns-1)
+            avg % e_she(ic) = e_she(ix,iy)
+            avg % e_shi(ic) = e_shi(ix,iy)
+            avg % e_smo(ic,0:ns-1) = e_smo(ix,iy,0:ns-1)
+
+          end if
+        end do
+      end do
+
+      end subroutine prep_average
+
+**********************************************************************
+
       subroutine to_struct_plasma (ns, mpg, st)
 
       implicit none
       integer, intent(in) :: ns
       type(mapping), intent(in) :: mpg
       type(B2State), intent(in) :: st
-      integer :: nx, ny, nCi, nCv, nFc
-      integer :: ix, iy, ic, ifc
+      integer :: nx, ny
+      integer :: ix, iy, ic, iFc
       integer :: nout_st, io, idum(0:9)
       character lblst*120, lblps*120
 #ifndef F2003
       integer newunit
       external newunit
 #endif
-
-      nCv = mpg%nCv
-      nCi = mpg%nCi
-      nFc = mpg%nFc
 
       if (mpg%isClassicalGrid == 1) then
         nx = mpg%nx
@@ -3347,6 +3734,114 @@
         do ix = 0, nx-1
           if(mpg%imapCv(ix,iy)/=0) then
             ic =  mpg%imapCv(ix,iy)
+! B2plasma
+            na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
+            ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
+            po(ix,iy)        = st % pl % po(ic)
+            te(ix,iy)        = st % pl % te(ic)
+            ti(ix,iy)        = st % pl % ti(ic)
+            tn(ix,iy)        = st % pl % tn(ic)
+            kt(ix,iy)        = st % pl % kt(ic)
+            zt(ix,iy)        = st % pl % zt(ic)
+
+! B2coeff
+            ceqp(ix,iy) = st % co % ceqp(ic)
+
+! from b2coeffwork
+            dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
+            dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
+            vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
+            vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
+            hci0(ix,iy)            = st % co % hci0(ic)
+            hcn0(ix,iy)            = st % co % hcn0(ic)
+            hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
+            hce0(ix,iy)            = st % co % hce0(ic)
+            sig0(ix,iy)            = st % co % sig0(ic)
+            alf0(ix,iy)            = st % co % alf0(ic)
+            dkt0(ix,iy)            = st % co % dkt0(ic)
+            dzt0(ix,iy)            = st % co % dzt0(ic)
+            dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
+            hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
+            hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+            cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+            cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
+
+! kinetic energy
+            kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
+
+! derived state quantities
+            ne(ix,iy)     = st % dv % ne(ic)
+            ne2(ix,iy)    = st % dv % ne2(ic)
+            ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
+!           ue(ix,iy)     = st % dv % ue(ic)
+
+! residuals
+            resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
+            resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
+            respo(ix,iy)        = st % dv % respo(ic)
+            reshe(ix,iy)        = st % dv % reshe(ic)
+            reshi(ix,iy)        = st % dv % reshi(ic)
+            reshn(ix,iy)        = st % dv % reshn(ic)
+!           resht(ix,iy)        = st % dv % resht(ic)
+            resmt(ix,iy)        = st % dv % resmt(ic)
+            reskt(ix,iy)        = st % dv % reskt(ic)
+            reszt(ix,iy)        = st % dv % reszt(ic)
+
+! corrections
+            corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
+            corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
+            corut(ix,iy)        = st % dv % corut(ic)
+            corpo(ix,iy)        = st % dv % corpo(ic)
+!           cortt(ix,iy)        = st % dv % cortt(ic)
+            corte(ix,iy)        = st % dv % corte(ic)
+            corti(ix,iy)        = st % dv % corti(ic)
+            cortn(ix,iy)        = st % dv % cortn(ic)
+
+! coupling coefficients
+            pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
+            pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
+            pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
+            pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
+
+! B2Source
+            sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+            she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+            shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+            shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+            skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+            skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+            skt_diss(ix,iy)       = st % sr % skt_diss(ic)
+            szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
+            smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+            smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+            sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
+
+! B2rates
+            rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+            rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+            rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+            rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+            rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+            rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+            rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+            rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+            rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+            rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+
+            rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+            rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+            rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+            rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          endif
+        end do
+      end do
+
+! gueard cells iy = -1 and iy = ny
+      do ix = 0, nx-1
+        iy = -1
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic =  mpg%imapCv(ix,iy)
+
 ! B2plasma
           na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
           ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
@@ -3378,7 +3873,6 @@
           hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
           cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
           cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
-
 
 ! kinetic energy
           kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3417,7 +3911,7 @@
           pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
           pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
-! B2Source
+! B2SourceWork
           sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
           she(ix,iy,0:3)        = st % sr % she(ic,0:3)
           shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
@@ -3446,114 +3940,6 @@
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
-          endif
-        end do
-      end do
-
-! gueard cells iy = -1 and iy = ny
-      do ix = 0, nx-1
-        iy = -1
-        if(mpg%imapCv(ix,iy)/=0) then
-          ic =  mpg%imapCv(ix,iy)
-
-! B2plasma
-        na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
-        ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
-        po(ix,iy)        = st % pl % po(ic)
-        te(ix,iy)        = st % pl % te(ic)
-        ti(ix,iy)        = st % pl % ti(ic)
-        tn(ix,iy)        = st % pl % tn(ic)
-        kt(ix,iy)        = st % pl % kt(ic)
-        zt(ix,iy)        = st % pl % zt(ic)
-
-! B2coeff
-        ceqp(ix,iy) = st % co % ceqp(ic)
-
-! from b2coeffwork
-        dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
-        dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
-        vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
-        vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
-        hci0(ix,iy)            = st % co % hci0(ic)
-        hcn0(ix,iy)            = st % co % hcn0(ic)
-        hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
-        hce0(ix,iy)            = st % co % hce0(ic)
-        sig0(ix,iy)            = st % co % sig0(ic)
-        alf0(ix,iy)            = st % co % alf0(ic)
-        dkt0(ix,iy)            = st % co % dkt0(ic)
-        dzt0(ix,iy)            = st % co % dzt0(ic)
-        dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
-        hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
-        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
-        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
-        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
-
-! kinetic energy
-        kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
-
-! derived state quantities
-        ne(ix,iy)     = st % dv % ne(ic)
-        ne2(ix,iy)    = st % dv % ne2(ic)
-        ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!       ue(ix,iy)     = st % dv % ue(ic)
-
-! residuals
-        resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
-        resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
-        respo(ix,iy)        = st % dv % respo(ic)
-        reshe(ix,iy)        = st % dv % reshe(ic)
-        reshi(ix,iy)        = st % dv % reshi(ic)
-        reshn(ix,iy)        = st % dv % reshn(ic)
-!       resht(ix,iy)        = st % dv % resht(ic)
-        resmt(ix,iy)        = st % dv % resmt(ic)
-        reskt(ix,iy)        = st % dv % reskt(ic)
-        reszt(ix,iy)        = st % dv % reszt(ic)
-
-! corrections
-        corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
-        corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
-        corut(ix,iy)        = st % dv % corut(ic)
-        corpo(ix,iy)        = st % dv % corpo(ic)
-!       cortt(ix,iy)        = st % dv % cortt(ic)
-        corte(ix,iy)        = st % dv % corte(ic)
-        corti(ix,iy)        = st % dv % corti(ic)
-        cortn(ix,iy)        = st % dv % cortn(ic)
-
-! coupling coefficients
-        pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
-        pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
-        pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
-        pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
-
-! B2SourceWork
-        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
-        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
-        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
-        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
-        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
-        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
-        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
-        szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
-        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
-        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
-        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
-
-! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
-
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
 
         iy = ny
@@ -3561,103 +3947,103 @@
           ic =  mpg%imapCv(ix,iy)
 
 ! B2plasma
-        na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
-        ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
-        po(ix,iy)        = st % pl % po(ic)
-        te(ix,iy)        = st % pl % te(ic)
-        ti(ix,iy)        = st % pl % ti(ic)
-        tn(ix,iy)        = st % pl % tn(ic)
-        kt(ix,iy)        = st % pl % kt(ic)
-        zt(ix,iy)        = st % pl % zt(ic)
+          na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
+          ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
+          po(ix,iy)        = st % pl % po(ic)
+          te(ix,iy)        = st % pl % te(ic)
+          ti(ix,iy)        = st % pl % ti(ic)
+          tn(ix,iy)        = st % pl % tn(ic)
+          kt(ix,iy)        = st % pl % kt(ic)
+          zt(ix,iy)        = st % pl % zt(ic)
 
 ! B2coeff
-        ceqp(ix,iy) = st % co % ceqp(ic)
+          ceqp(ix,iy) = st % co % ceqp(ic)
 
 ! from b2coeffwork
-        dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
-        dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
-        vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
-        vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
-        hci0(ix,iy)            = st % co % hci0(ic)
-        hcn0(ix,iy)            = st % co % hcn0(ic)
-        hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
-        hce0(ix,iy)            = st % co % hce0(ic)
-        sig0(ix,iy)            = st % co % sig0(ic)
-        alf0(ix,iy)            = st % co % alf0(ic)
-        dkt0(ix,iy)            = st % co % dkt0(ic)
-        dzt0(ix,iy)            = st % co % dzt0(ic)
-        dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
-        hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
-        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
-        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
-        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
+          dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
+          dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
+          vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
+          vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
+          hci0(ix,iy)            = st % co % hci0(ic)
+          hcn0(ix,iy)            = st % co % hcn0(ic)
+          hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
+          hce0(ix,iy)            = st % co % hce0(ic)
+          sig0(ix,iy)            = st % co % sig0(ic)
+          alf0(ix,iy)            = st % co % alf0(ic)
+          dkt0(ix,iy)            = st % co % dkt0(ic)
+          dzt0(ix,iy)            = st % co % dzt0(ic)
+          dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
+          hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
+          hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+          cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+          cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
 
 ! kinetic energy
-        kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
+          kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
 
 ! derived state quantities
-        ne(ix,iy)     = st % dv % ne(ic)
-        ne2(ix,iy)    = st % dv % ne2(ic)
-        ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!       ue(ix,iy)     = st % dv % ue(ic)
+          ne(ix,iy)     = st % dv % ne(ic)
+          ne2(ix,iy)    = st % dv % ne2(ic)
+          ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
+!         ue(ix,iy)     = st % dv % ue(ic)
 
 ! residuals
-        resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
-        resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
-        respo(ix,iy)        = st % dv % respo(ic)
-        reshe(ix,iy)        = st % dv % reshe(ic)
-        reshi(ix,iy)        = st % dv % reshi(ic)
-        reshn(ix,iy)        = st % dv % reshn(ic)
-!       resht(ix,iy)        = st % dv % resht(ic)
-        resmt(ix,iy)        = st % dv % resmt(ic)
-        reskt(ix,iy)        = st % dv % reskt(ic)
-        reszt(ix,iy)        = st % dv % reszt(ic)
+          resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
+          resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
+          respo(ix,iy)        = st % dv % respo(ic)
+          reshe(ix,iy)        = st % dv % reshe(ic)
+          reshi(ix,iy)        = st % dv % reshi(ic)
+          reshn(ix,iy)        = st % dv % reshn(ic)
+!         resht(ix,iy)        = st % dv % resht(ic)
+          resmt(ix,iy)        = st % dv % resmt(ic)
+          reskt(ix,iy)        = st % dv % reskt(ic)
+          reszt(ix,iy)        = st % dv % reszt(ic)
 
 ! corrections
-        corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
-        corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
-        corut(ix,iy)        = st % dv % corut(ic)
-        corpo(ix,iy)        = st % dv % corpo(ic)
-!       cortt(ix,iy)        = st % dv % cortt(ic)
-        corte(ix,iy)        = st % dv % corte(ic)
-        corti(ix,iy)        = st % dv % corti(ic)
-        cortn(ix,iy)        = st % dv % cortn(ic)
+          corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
+          corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
+          corut(ix,iy)        = st % dv % corut(ic)
+          corpo(ix,iy)        = st % dv % corpo(ic)
+!         cortt(ix,iy)        = st % dv % cortt(ic)
+          corte(ix,iy)        = st % dv % corte(ic)
+          corti(ix,iy)        = st % dv % corti(ic)
+          cortn(ix,iy)        = st % dv % cortn(ic)
 
 ! coupling coefficients
-        pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
-        pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
-        pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
-        pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
+          pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
+          pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
+          pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
+          pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
 ! B2SourceWork
-        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
-        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
-        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
-        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
-        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
-        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
-        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
-        szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
-        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
-        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
-        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
+          sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+          she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+          shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+          shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+          skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+          skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+          skt_diss(ix,iy)       = st % sr % skt_diss(ic)
+          szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
+          smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+          smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+          sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
       end do
 
@@ -3668,103 +4054,103 @@
           ic =  mpg%imapCv(ix,iy)
 
 ! B2plasma
-        na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
-        ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
-        po(ix,iy)        = st % pl % po(ic)
-        te(ix,iy)        = st % pl % te(ic)
-        ti(ix,iy)        = st % pl % ti(ic)
-        tn(ix,iy)        = st % pl % tn(ic)
-        kt(ix,iy)        = st % pl % kt(ic)
-        zt(ix,iy)        = st % pl % zt(ic)
+          na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
+          ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
+          po(ix,iy)        = st % pl % po(ic)
+          te(ix,iy)        = st % pl % te(ic)
+          ti(ix,iy)        = st % pl % ti(ic)
+          tn(ix,iy)        = st % pl % tn(ic)
+          kt(ix,iy)        = st % pl % kt(ic)
+          zt(ix,iy)        = st % pl % zt(ic)
 
 ! B2coeff
-        ceqp(ix,iy) = st % co % ceqp(ic)
+          ceqp(ix,iy) = st % co % ceqp(ic)
 
 ! from b2coeffwork
-        dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
-        dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
-        vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
-        vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
-        hci0(ix,iy)            = st % co % hci0(ic)
-        hcn0(ix,iy)            = st % co % hcn0(ic)
-        hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
-        hce0(ix,iy)            = st % co % hce0(ic)
-        sig0(ix,iy)            = st % co % sig0(ic)
-        alf0(ix,iy)            = st % co % alf0(ic)
-        dkt0(ix,iy)            = st % co % dkt0(ic)
-        dzt0(ix,iy)            = st % co % dzt0(ic)
-        dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
-        hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
-        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
-        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
-        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
+          dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
+          dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
+          vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
+          vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
+          hci0(ix,iy)            = st % co % hci0(ic)
+          hcn0(ix,iy)            = st % co % hcn0(ic)
+          hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
+          hce0(ix,iy)            = st % co % hce0(ic)
+          sig0(ix,iy)            = st % co % sig0(ic)
+          alf0(ix,iy)            = st % co % alf0(ic)
+          dkt0(ix,iy)            = st % co % dkt0(ic)
+          dzt0(ix,iy)            = st % co % dzt0(ic)
+          dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
+          hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
+          hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+          cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+          cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
 
 ! kinetic energy
-        kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
+          kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
 
 ! derived state quantities
-        ne(ix,iy)     = st % dv % ne(ic)
-        ne2(ix,iy)    = st % dv % ne2(ic)
-        ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!       ue(ix,iy)     = st % dv % ue(ic)
+          ne(ix,iy)     = st % dv % ne(ic)
+          ne2(ix,iy)    = st % dv % ne2(ic)
+          ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
+!         ue(ix,iy)     = st % dv % ue(ic)
 
 ! residuals
-        resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
-        resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
-        respo(ix,iy)        = st % dv % respo(ic)
-        reshe(ix,iy)        = st % dv % reshe(ic)
-        reshi(ix,iy)        = st % dv % reshi(ic)
-        reshn(ix,iy)        = st % dv % reshn(ic)
-!       resht(ix,iy)        = st % dv % resht(ic)
-        resmt(ix,iy)        = st % dv % resmt(ic)
-        reskt(ix,iy)        = st % dv % reskt(ic)
-        reszt(ix,iy)        = st % dv % reszt(ic)
+          resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
+          resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
+          respo(ix,iy)        = st % dv % respo(ic)
+          reshe(ix,iy)        = st % dv % reshe(ic)
+          reshi(ix,iy)        = st % dv % reshi(ic)
+          reshn(ix,iy)        = st % dv % reshn(ic)
+!         resht(ix,iy)        = st % dv % resht(ic)
+          resmt(ix,iy)        = st % dv % resmt(ic)
+          reskt(ix,iy)        = st % dv % reskt(ic)
+          reszt(ix,iy)        = st % dv % reszt(ic)
 
 ! corrections
-        corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
-        corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
-        corut(ix,iy)        = st % dv % corut(ic)
-        corpo(ix,iy)        = st % dv % corpo(ic)
-!       cortt(ix,iy)        = st % dv % cortt(ic)
-        corte(ix,iy)        = st % dv % corte(ic)
-        corti(ix,iy)        = st % dv % corti(ic)
-        cortn(ix,iy)        = st % dv % cortn(ic)
+          corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
+          corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
+          corut(ix,iy)        = st % dv % corut(ic)
+          corpo(ix,iy)        = st % dv % corpo(ic)
+!         cortt(ix,iy)        = st % dv % cortt(ic)
+          corte(ix,iy)        = st % dv % corte(ic)
+          corti(ix,iy)        = st % dv % corti(ic)
+          cortn(ix,iy)        = st % dv % cortn(ic)
 
 ! coupling coefficients
-        pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
-        pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
-        pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
-        pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
+          pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
+          pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
+          pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
+          pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
 ! B2SourceWork
-        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
-        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
-        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
-        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
-        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
-        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
-        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
-        szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
-        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
-        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
-        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
+          sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+          she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+          shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+          shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+          skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+          skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+          skt_diss(ix,iy)       = st % sr % skt_diss(ic)
+          szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
+          smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+          smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+          sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
 
         ix = nx
@@ -3772,110 +4158,110 @@
           ic =  mpg%imapCv(ix,iy)
 
 ! B2plasma
-        na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
-        ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
-        po(ix,iy)        = st % pl % po(ic)
-        te(ix,iy)        = st % pl % te(ic)
-        ti(ix,iy)        = st % pl % ti(ic)
-        tn(ix,iy)        = st % pl % tn(ic)
-        kt(ix,iy)        = st % pl % kt(ic)
-        zt(ix,iy)        = st % pl % zt(ic)
+          na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
+          ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
+          po(ix,iy)        = st % pl % po(ic)
+          te(ix,iy)        = st % pl % te(ic)
+          ti(ix,iy)        = st % pl % ti(ic)
+          tn(ix,iy)        = st % pl % tn(ic)
+          kt(ix,iy)        = st % pl % kt(ic)
+          zt(ix,iy)        = st % pl % zt(ic)
 
 ! B2coeff
-        ceqp(ix,iy) = st % co % ceqp(ic)
+          ceqp(ix,iy) = st % co % ceqp(ic)
 
 ! from b2coeffwork
-        dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
-        dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
-        vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
-        vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
-        hci0(ix,iy)            = st % co % hci0(ic)
-        hcn0(ix,iy)            = st % co % hcn0(ic)
-        hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
-        hce0(ix,iy)            = st % co % hce0(ic)
-        sig0(ix,iy)            = st % co % sig0(ic)
-        alf0(ix,iy)            = st % co % alf0(ic)
-        dkt0(ix,iy)            = st % co % dkt0(ic)
-        dzt0(ix,iy)            = st % co % dzt0(ic)
-        dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
-        hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
-        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
-        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
-        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
+          dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
+          dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
+          vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
+          vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
+          hci0(ix,iy)            = st % co % hci0(ic)
+          hcn0(ix,iy)            = st % co % hcn0(ic)
+          hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
+          hce0(ix,iy)            = st % co % hce0(ic)
+          sig0(ix,iy)            = st % co % sig0(ic)
+          alf0(ix,iy)            = st % co % alf0(ic)
+          dkt0(ix,iy)            = st % co % dkt0(ic)
+          dzt0(ix,iy)            = st % co % dzt0(ic)
+          dna_ExB(ix,iy)         = st % co % dna_ExB(ic)
+          hce_ExB(ix,iy)         = st % co % hce_ExB(ic)
+          hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+          cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+          cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
 
 ! kinetic energy
-        kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
+          kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
 
 ! derived state quantities
-        ne(ix,iy)     = st % dv % ne(ic)
-        ne2(ix,iy)    = st % dv % ne2(ic)
-        ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!       ue(ix,iy)     = st % dv % ue(ic)
+          ne(ix,iy)     = st % dv % ne(ic)
+          ne2(ix,iy)    = st % dv % ne2(ic)
+          ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
+!         ue(ix,iy)     = st % dv % ue(ic)
 
 ! residuals
-        resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
-        resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
-        respo(ix,iy)        = st % dv % respo(ic)
-        reshe(ix,iy)        = st % dv % reshe(ic)
-        reshi(ix,iy)        = st % dv % reshi(ic)
-        reshn(ix,iy)        = st % dv % reshn(ic)
-!       resht(ix,iy)        = st % dv % resht(ic)
-        resmt(ix,iy)        = st % dv % resmt(ic)
-        reskt(ix,iy)        = st % dv % reskt(ic)
-        reszt(ix,iy)        = st % dv % reszt(ic)
+          resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
+          resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
+          respo(ix,iy)        = st % dv % respo(ic)
+          reshe(ix,iy)        = st % dv % reshe(ic)
+          reshi(ix,iy)        = st % dv % reshi(ic)
+          reshn(ix,iy)        = st % dv % reshn(ic)
+!         resht(ix,iy)        = st % dv % resht(ic)
+          resmt(ix,iy)        = st % dv % resmt(ic)
+          reskt(ix,iy)        = st % dv % reskt(ic)
+          reszt(ix,iy)        = st % dv % reszt(ic)
 
 ! corrections
-        corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
-        corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
-        corut(ix,iy)        = st % dv % corut(ic)
-        corpo(ix,iy)        = st % dv % corpo(ic)
-!       cortt(ix,iy)        = st % dv % cortt(ic)
-        corte(ix,iy)        = st % dv % corte(ic)
-        corti(ix,iy)        = st % dv % corti(ic)
-        cortn(ix,iy)        = st % dv % cortn(ic)
+          corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
+          corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
+          corut(ix,iy)        = st % dv % corut(ic)
+          corpo(ix,iy)        = st % dv % corpo(ic)
+!         cortt(ix,iy)        = st % dv % cortt(ic)
+          corte(ix,iy)        = st % dv % corte(ic)
+          corti(ix,iy)        = st % dv % corti(ic)
+          cortn(ix,iy)        = st % dv % cortn(ic)
 
 ! coupling coefficients
-        pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
-        pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
-        pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
-        pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
+          pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
+          pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
+          pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
+          pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
 ! B2SourceWork
-        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
-        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
-        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
-        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
-        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
-        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
-        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
-        szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
-        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
-        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
-        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
+          sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+          she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+          shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+          shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+          skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+          skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+          skt_diss(ix,iy)       = st % sr % skt_diss(ic)
+          szt(ix,iy,0:3)        = st % sr % szt(ic,0:3)
+          smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+          smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+          sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
       end do
 
 #ifdef WG_TODO
 ! Cannot do this anymore => b2mod_indirect not available in general
 ! Need a back-transformation to_struct_geometry first !?!
-! Corner cells: add-hoc interpolation
+! Corner cells: ad hoc interpolation
 
 !!!! CTB: I think this needs still to be adapted for Double null?
 
@@ -3999,132 +4385,135 @@
       do iy = 0, ny-1
         do ix = 0, nx
           if(mpg%imapFcx(ix,iy)/=0) then
-            ifc = mpg%imapFcx(ix,iy)
+            iFc = mpg%imapFcx(ix,iy)
 
 ! B2coeff
-          csig_an(ix,iy,0,0:1) = st % co % csig_an(ifc,0:1)
-          calf(ix,iy,0,0:1)    = st % co % calf(ifc,0:1)
-          cdkt(ix,iy,0,0:1)    = st % co % cdkt(ifc,0:1)
-          cdzt(ix,iy,0,0:1)    = st % co % cdzt(ifc,0:1)
+            csig_an(ix,iy,0,0:1) = st % co % csig_an(iFc,0:1)
+            calf(ix,iy,0,0:1)    = st % co % calf(iFc,0:1)
+            cdkt(ix,iy,0,0:1)    = st % co % cdkt(iFc,0:1)
+            cdzt(ix,iy,0,0:1)    = st % co % cdzt(iFc,0:1)
 
-          csig(ix,iy,0,0:1) = st % co % csig(ifc,0:1)
-          csigin(ix,iy,0,0:1,0:ns-1,0:ns-1) =
-     .           st % co % csigin(ifc,0:1,0:ns-1,0:ns-1)
+            csig(ix,iy,0,0:1) = st % co % csig(iFc,0:1)
+            csigin(ix,iy,0,0:1,0:ns-1,0:ns-1) =
+     .           st % co % csigin(iFc,0:1,0:ns-1,0:ns-1)
 
-          chve(ix,iy,0,0:1) = st % co % chve(ifc,0:1)
-          chce(ix,iy,0,0:1) = st % co % chce(ifc,0:1)
-          chvemx(ix,iy)     = st % co % chvemx(ifc)
+            chve(ix,iy,0,0:1) = st % co % chve(iFc,0:1)
+            chce(ix,iy,0,0:1) = st % co % chce(iFc,0:1)
+            chvemx(ix,iy)     = st % co % chvemx(iFc)
 
-          chvi(ix,iy,0,0:1) = st % co % chvi(ifc,0:1)
-          chci(ix,iy,0,0:1) = st % co % chci(ifc,0:1)
-          chvimx(ix,iy)     = st % co % chvimx(ifc)
+            chvi(ix,iy,0,0:1) = st % co % chvi(iFc,0:1)
+            chci(ix,iy,0,0:1) = st % co % chci(iFc,0:1)
+            chvimx(ix,iy)     = st % co % chvimx(iFc)
 
-          cvla(ix,iy,0,0:1,0:ns-1) = st % co % cvla(ifc,0:1,0:ns-1)
-          cdna(ix,iy,0,0:1,0:ns-1) = st % co % cdna(ifc,0:1,0:ns-1)
-          cdpa(ix,iy,0,0:1,0:ns-1) = st % co % cdpa(ifc,0:1,0:ns-1)
+            cvla(ix,iy,0,0:1,0:ns-1) = st % co % cvla(iFc,0:1,0:ns-1)
+            cdna(ix,iy,0,0:1,0:ns-1) = st % co % cdna(iFc,0:1,0:ns-1)
+            cdpa(ix,iy,0,0:1,0:ns-1) = st % co % cdpa(iFc,0:1,0:ns-1)
 
-          cvsa(ix,iy,0,0:1,0:ns-1) = st % co % cvsa(ifc,0:1,0:ns-1)
-          cvsa_cl(ix,iy,0,0:1,0:ns-1) =
-     .            st % co % cvsa_cl(ifc,0:1,0:ns-1)
+            cvsa(ix,iy,0,0:1,0:ns-1) = st % co % cvsa(iFc,0:1,0:ns-1)
+            cvsa_cl(ix,iy,0,0:1,0:ns-1) =
+     .            st % co % cvsa_cl(iFc,0:1,0:ns-1)
 
-          cddi(ix,iy,0,0:1,0:ns-1) = st % co % cddi(ifc,0:1,0:ns-1)
+            cddi(ix,iy,0,0:1,0:ns-1) = st % co % cddi(iFc,0:1,0:ns-1)
 
-          fllim0fna(ix,iy,0,0:1,0:ns-1) =
-     .              st % co % fllim0fna(ifc,0:1,0:ns-1)
-          fllim0fhi(ix,iy,0,0:1,0:ns-1) =
-     .              st % co % fllim0fhi(ifc,0:1,0:ns-1)
-          fllimvisc(ix,iy,0:ns-1) = st % co % fllimvisc(ifc,0:ns-1)
+            fllim0fna(ix,iy,0,0:1,0:ns-1) =
+     .              st % co % fllim0fna(iFc,0:1,0:ns-1)
+            fllim0fhi(ix,iy,0,0:1,0:ns-1) =
+     .              st % co % fllim0fhi(iFc,0:1,0:ns-1)
+            fllimvisc(ix,iy,0:ns-1) = st % co % fllimvisc(iFc,0:ns-1)
 
 ! fluxes
-          fch(ix,iy,0,0:1)       = st % dv % fch(ifc,0:1)
-          fch_32(ix,iy,0,0:1)    = st % dv % fch_32(ifc,0:1)
-          fch_52(ix,iy,0,0:1)    = st % dv % fch_52(ifc,0:1)
-          fch_p(ix,iy,0,0:1)     = st % dv % fch_p(ifc,0:1)
-          fchdia(ix,iy,0,0:1)    = st % dv % fchdia(ifc,0:1)
-          fchin(ix,iy,0,0:1)     = st % dv % fchin(ifc,0:1)
-          fchvispar(ix,iy,0,0:1) = st % dv % fchvispar(ifc,0:1)
-          fchvisper(ix,iy,0,0:1) = st % dv % fchvisper(ifc,0:1)
-          fchvisq(ix,iy,0,0:1)   = st % dv % fchvisq(ifc,0:1)
-          fchviskt(ix,iy,0,0:1)  = st % dv % fchviskt(ifc,0:1)
-          fchinert(ix,iy,0,0:1)  = st % dv % fchinert(ifc,0:1)
-          fchanml(ix,iy,0,0:1)   = st % dv % fchanml(ifc,0:1)
+            fch(ix,iy,0,0:1)       = st % dv % fch(iFc,0:1)
+            fch_32(ix,iy,0,0:1)    = st % dv % fch_32(iFc,0:1)
+            fch_52(ix,iy,0,0:1)    = st % dv % fch_52(iFc,0:1)
+            fch_p(ix,iy,0,0:1)     = st % dv % fch_p(iFc,0:1)
+            fchdia(ix,iy,0,0:1)    = st % dv % fchdia(iFc,0:1)
+            fchin(ix,iy,0,0:1)     = st % dv % fchin(iFc,0:1)
+            fchvispar(ix,iy,0,0:1) = st % dv % fchvispar(iFc,0:1)
+            fchvisper(ix,iy,0,0:1) = st % dv % fchvisper(iFc,0:1)
+            fchvisq(ix,iy,0,0:1)   = st % dv % fchvisq(iFc,0:1)
+            fchviskt(ix,iy,0,0:1)  = st % dv % fchviskt(iFc,0:1)
+            fchinert(ix,iy,0,0:1)  = st % dv % fchinert(iFc,0:1)
+            fchanml(ix,iy,0,0:1)   = st % dv % fchanml(iFc,0:1)
 
-          fne(ix,iy,0,0:1)    = st % dv % fne(ifc,0:1)
-          fne_32(ix,iy,0,0:1) = st % dv % fne_32(ifc,0:1)
-          fne_52(ix,iy,0,0:1) = st % dv % fne_52(ifc,0:1)
+            fne(ix,iy,0,0:1)    = st % dv % fne(iFc,0:1)
+            fne_32(ix,iy,0,0:1) = st % dv % fne_32(iFc,0:1)
+            fne_52(ix,iy,0,0:1) = st % dv % fne_52(iFc,0:1)
 
-          fni(ix,iy,0,0:1)    = st % dv % fni(ifc,0:1)
-          fni_32(ix,iy,0,0:1) = st % dv % fni_32(ifc,0:1)
-          fni_52(ix,iy,0,0:1) = st % dv % fni_52(ifc,0:1)
+            fni(ix,iy,0,0:1)    = st % dv % fni(iFc,0:1)
+            fni_32(ix,iy,0,0:1) = st % dv % fni_32(iFc,0:1)
+            fni_52(ix,iy,0,0:1) = st % dv % fni_52(iFc,0:1)
 
-          fna(ix,iy,0,0:1,0:ns-1)     = st % dv % fna(ifc,0:1,0:ns-1)
-          fna_mdf(ix,iy,0,0:1,0:ns-1) =
-     .            st % dv % fna_mdf(ifc,0:1,0:ns-1)
-          fna_he(ix,iy,0,0:1,0:ns-1)  = st % dv % fna_he(ifc,0:1,0:ns-1)
-          fna_fcor(ix,iy,0,0:1,0:ns-1) =
-     .            st % dv % fna_fcor(ifc,0:1,0:ns-1)
-          fnaPSch(ix,iy,0,0:1,0:ns-1) =
-     .            st % dv % fnaPSch(ifc,0:1,0:ns-1)
-          fna_32(ix,iy,0,0:1,0:ns-1)  = st % dv % fna_32(ifc,0:1,0:ns-1)
-          fna_52(ix,iy,0,0:1,0:ns-1)  = st % dv % fna_52(ifc,0:1,0:ns-1)
-          fna_32nd(ix,iy,0,0:1,0:ns-1) =
-     .           st % dv % fna_32nd(ifc,0:1,0:ns-1)
-          fna_52nd(ix,iy,0,0:1,0:ns-1) =
-     .           st % dv % fna_52nd(ifc,0:1,0:ns-1)
-          fna_eir(ix,iy,0,0:1,0:ns-1) =
-     .            st % dv % fna_eir(ifc,0:1,0:ns-1)
-          fne_eir(ix,iy,0,0:1) =
-     .            st % dv % fne_eir(ifc,0:1)
-          fna_nodrift(ix,iy,0,0:1,0:ns-1) =
-     .           st % dv % fna_nodrift(ifc,0:1,0:ns-1)
+            fna(ix,iy,0,0:1,0:ns-1)     = st % dv % fna(iFc,0:1,0:ns-1)
+            fna_mdf(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_mdf(iFc,0:1,0:ns-1)
+            fna_he(ix,iy,0,0:1,0:ns-1)  =
+     .            st % dv % fna_he(iFc,0:1,0:ns-1)
+            fna_fcor(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_fcor(iFc,0:1,0:ns-1)
+            fnaPSch(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fnaPSch(iFc,0:1,0:ns-1)
+            fna_32(ix,iy,0,0:1,0:ns-1)  =
+     .            st % dv % fna_32(iFc,0:1,0:ns-1)
+            fna_52(ix,iy,0,0:1,0:ns-1)  =
+     .            st % dv % fna_52(iFc,0:1,0:ns-1)
+            fna_32nd(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_32nd(iFc,0:1,0:ns-1)
+            fna_52nd(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_52nd(iFc,0:1,0:ns-1)
+            fna_eir(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_eir(iFc,0:1,0:ns-1)
+            fne_eir(ix,iy,0,0:1) =
+     .            st % dv % fne_eir(iFc,0:1)
+            fna_nodrift(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_nodrift(iFc,0:1,0:ns-1)
 
-          fmo(ix,iy,0,0:1,0:ns-1)     = st % dv % fmo(ifc,0:1,0:ns-1)
+            fmo(ix,iy,0,0:1,0:ns-1)     = st % dv % fmo(iFc,0:1,0:ns-1)
 
-          fhe(ix,iy,0,0:1)     = st % dv % fhe(ifc,0:1)
-          fkt(ix,iy,0,0:1)     = st % dv % fkt(ifc,0:1)
-          fzt(ix,iy,0,0:1)     = st % dv % fzt(ifc,0:1)
-          fhe_mdf(ix,iy,0,0:1) = st % dv % fhe_mdf(ifc,0:1)
-          fhePSch(ix,iy,0,0:1) = st % dv % fhePSch(ifc,0:1)
-          fhet(ix,iy,0,0:1)    = st % dv % fhet(ifc,0:1)
-          fhe_eir(ix,iy,0,0:1) = st % dv % fhe_eir(ifc,0:1)
-          fhi(ix,iy,0,0:1)     = st % dv % fhi(ifc,0:1)
-          fhn(ix,iy,0,0:1)     = st % dv % fhn(ifc,0:1)
-          fhi_mdf(ix,iy,0,0:1) = st % dv % fhi_mdf(ifc,0:1)
-          fhiPSch(ix,iy,0,0:1) = st % dv % fhiPSch(ifc,0:1)
-          fhit(ix,iy,0,0:1)    = st % dv % fhit(ifc,0:1)
-          fhi_eir(ix,iy,0,0:1) = st % dv % fhi_eir(ifc,0:1)
+            fhe(ix,iy,0,0:1)     = st % dv % fhe(iFc,0:1)
+            fkt(ix,iy,0,0:1)     = st % dv % fkt(iFc,0:1)
+            fzt(ix,iy,0,0:1)     = st % dv % fzt(iFc,0:1)
+            fhe_mdf(ix,iy,0,0:1) = st % dv % fhe_mdf(iFc,0:1)
+            fhePSch(ix,iy,0,0:1) = st % dv % fhePSch(iFc,0:1)
+            fhet(ix,iy,0,0:1)    = st % dv % fhet(iFc,0:1)
+            fhe_eir(ix,iy,0,0:1) = st % dv % fhe_eir(iFc,0:1)
+            fhi(ix,iy,0,0:1)     = st % dv % fhi(iFc,0:1)
+            fhn(ix,iy,0,0:1)     = st % dv % fhn(iFc,0:1)
+            fhi_mdf(ix,iy,0,0:1) = st % dv % fhi_mdf(iFc,0:1)
+            fhiPSch(ix,iy,0,0:1) = st % dv % fhiPSch(iFc,0:1)
+            fhit(ix,iy,0,0:1)    = st % dv % fhit(iFc,0:1)
+            fhi_eir(ix,iy,0,0:1) = st % dv % fhi_eir(iFc,0:1)
 
 ! derived quantities
-          uadia(ix,iy,0,0:1,0:ns-1) =
-     .          st % dv % uadia(ifc,0:1,0:ns-1)
-          vadia(ix,iy,0,0:1,0:ns-1) =
-     .          st % dv % vadia(ifc,0:1,0:ns-1)
-          wadia(ix,iy,0,0:1,0:ns-1) =
-     .          st % dv % wadia(ifc,0:1,0:ns-1)
-          vaecrb(ix,iy,0,0:1,0:ns-1) =
-     .          st % dv % vaecrb(ifc,0:1,0:ns-1)
-          wedia(ix,iy,0,0:1) =
-     .          st % dv % wedia(ifc,0:1)
-          vedia(ix,iy,0,0:1) =
-     .          st % dv % vedia(ifc,0:1)
-          veecrb(ix,iy,0,0:1) =
-     .          st % dv % veecrb(ifc,0:1)
+            uadia(ix,iy,0,0:1,0:ns-1) =
+     .          st % dv % uadia(iFc,0:1,0:ns-1)
+            vadia(ix,iy,0,0:1,0:ns-1) =
+     .          st % dv % vadia(iFc,0:1,0:ns-1)
+            wadia(ix,iy,0,0:1,0:ns-1) =
+     .          st % dv % wadia(iFc,0:1,0:ns-1)
+            vaecrb(ix,iy,0,0:1,0:ns-1) =
+     .          st % dv % vaecrb(iFc,0:1,0:ns-1)
+            wedia(ix,iy,0,0:1) =
+     .          st % dv % wedia(iFc,0:1)
+            vedia(ix,iy,0,0:1) =
+     .          st % dv % vedia(iFc,0:1)
+            veecrb(ix,iy,0,0:1) =
+     .          st % dv % veecrb(iFc,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
 ! but actually used as face quantities in case of drift_flows = 1
-          facdrift(ix,iy) = st % dv % facdrift(ifc)
-          fac_ExB(ix,iy)  = st % dv % fac_ExB(ifc)
-          fac_vis(ix,iy)  = st % dv % fac_vis(ifc)
+            facdrift(ix,iy) = st % dv % facdrift(iFc)
+            fac_ExB(ix,iy)  = st % dv % fac_ExB(iFc)
+            fac_vis(ix,iy)  = st % dv % fac_vis(iFc)
 
 ! numerical coefficients
-          conc(ix,iy,0,0:1)   = st % dv % conc(ifc,0:1)
-          fllime(ix,iy)       = st % dv % fllime(ifc)
-          floe(ix,iy,0,0:1)   = st % dv % floe(ifc,0:1)
-          cone(ix,iy,0,0:1,:) = st % dv % cone(ifc,0:1,:)
-          fllimi(ix,iy)       = st % dv % fllimi(ifc)
-          floi(ix,iy,0,0:1)   = st % dv % floi(ifc,0:1)
-          coni(ix,iy,0,0:1,:) = st % dv % coni(ifc,0:1,:)
-          floe_noc(ix,iy,0,0:1) = st % dv % floe_noc(ifc,0:1)
-          floi_noc(ix,iy,0,0:1) = st % dv % floi_noc(ifc,0:1)
+            conc(ix,iy,0,0:1)   = st % dv % conc(iFc,0:1)
+            fllime(ix,iy)       = st % dv % fllime(iFc)
+            floe(ix,iy,0,0:1)   = st % dv % floe(iFc,0:1)
+            cone(ix,iy,0,0:1,:) = st % dv % cone(iFc,0:1,:)
+            fllimi(ix,iy)       = st % dv % fllimi(iFc)
+            floi(ix,iy,0,0:1)   = st % dv % floi(iFc,0:1)
+            coni(ix,iy,0,0:1,:) = st % dv % coni(iFc,0:1,:)
+            floe_noc(ix,iy,0,0:1) = st % dv % floe_noc(iFc,0:1)
+            floi_noc(ix,iy,0,0:1) = st % dv % floi_noc(iFc,0:1)
           endif
         end do
       end do
@@ -4133,130 +4522,133 @@
       do ix = 0, nx-1
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
-            ifc = mpg%imapFcy(ix,iy)
+            iFc = mpg%imapFcy(ix,iy)
 
 ! B2coeff
-          csig_an(ix,iy,1,0:1) = st % co % csig_an(ifc,0:1)
-          calf(ix,iy,1,0:1)    = st % co % calf(ifc,0:1)
-          cdkt(ix,iy,1,0:1)    = st % co % cdkt(ifc,0:1)
-          cdzt(ix,iy,1,0:1)    = st % co % cdzt(ifc,0:1)
+            csig_an(ix,iy,1,0:1) = st % co % csig_an(iFc,0:1)
+            calf(ix,iy,1,0:1)    = st % co % calf(iFc,0:1)
+            cdkt(ix,iy,1,0:1)    = st % co % cdkt(iFc,0:1)
+            cdzt(ix,iy,1,0:1)    = st % co % cdzt(iFc,0:1)
 
-          csig(ix,iy,1,0:1) = st % co % csig(ifc,0:1)
-          csigin(ix,iy,1,0:1,0:ns-1,0:ns-1) =
-     .           st % co % csigin(ifc,0:1,0:ns-1,0:ns-1)
+            csig(ix,iy,1,0:1) = st % co % csig(iFc,0:1)
+            csigin(ix,iy,1,0:1,0:ns-1,0:ns-1) =
+     .           st % co % csigin(iFc,0:1,0:ns-1,0:ns-1)
 
-          chve(ix,iy,1,0:1) = st % co % chve(ifc,0:1)
-          chce(ix,iy,1,0:1) = st % co % chce(ifc,0:1)
-          chvemx(ix,iy)     = st % co % chvemx(ifc)
+            chve(ix,iy,1,0:1) = st % co % chve(iFc,0:1)
+            chce(ix,iy,1,0:1) = st % co % chce(iFc,0:1)
+            chvemx(ix,iy)     = st % co % chvemx(iFc)
 
-          chvi(ix,iy,1,0:1) = st % co % chvi(ifc,0:1)
-          chci(ix,iy,1,0:1) = st % co % chci(ifc,0:1)
-          chvimx(ix,iy)     = st % co % chvimx(ifc)
+            chvi(ix,iy,1,0:1) = st % co % chvi(iFc,0:1)
+            chci(ix,iy,1,0:1) = st % co % chci(iFc,0:1)
+            chvimx(ix,iy)     = st % co % chvimx(iFc)
 
-          cvla(ix,iy,1,0:1,0:ns-1) = st % co % cvla(ifc,0:1,0:ns-1)
-          cdna(ix,iy,1,0:1,0:ns-1) = st % co % cdna(ifc,0:1,0:ns-1)
-          cdpa(ix,iy,1,0:1,0:ns-1) = st % co % cdpa(ifc,0:1,0:ns-1)
+            cvla(ix,iy,1,0:1,0:ns-1) = st % co % cvla(iFc,0:1,0:ns-1)
+            cdna(ix,iy,1,0:1,0:ns-1) = st % co % cdna(iFc,0:1,0:ns-1)
+            cdpa(ix,iy,1,0:1,0:ns-1) = st % co % cdpa(iFc,0:1,0:ns-1)
 
-          cvsa(ix,iy,1,0:1,0:ns-1)    = st % co % cvsa(ifc,0:1,0:ns-1)
-          cvsa_cl(ix,iy,1,0:1,0:ns-1) =
-     .            st % co % cvsa_cl(ifc,0:1,0:ns-1)
+            cvsa(ix,iy,1,0:1,0:ns-1)    = st % co % cvsa(iFc,0:1,0:ns-1)
+            cvsa_cl(ix,iy,1,0:1,0:ns-1) =
+     .            st % co % cvsa_cl(iFc,0:1,0:ns-1)
 
-          cddi(ix,iy,1,0:1,0:ns-1) = st % co % cddi(ifc,0:1,0:ns-1)
+            cddi(ix,iy,1,0:1,0:ns-1) = st % co % cddi(iFc,0:1,0:ns-1)
 
-          fllim0fhi(ix,iy,1,0:1,0:ns-1) =
-     .              st % co % fllim0fhi(ifc,0:1,0:ns-1)
-          fllimvisc(ix,iy,0:ns-1) = st % co % fllimvisc(ifc,0:ns-1)
+            fllim0fhi(ix,iy,1,0:1,0:ns-1) =
+     .              st % co % fllim0fhi(iFc,0:1,0:ns-1)
+            fllimvisc(ix,iy,0:ns-1) = st % co % fllimvisc(iFc,0:ns-1)
 
 ! fluxes
-          fch(ix,iy,1,0:1)       = st % dv % fch(ifc,0:1)
-          fch_32(ix,iy,1,0:1)    = st % dv % fch_32(ifc,0:1)
-          fch_52(ix,iy,1,0:1)    = st % dv % fch_52(ifc,0:1)
-          fch_p(ix,iy,1,0:1)     = st % dv % fch_p(ifc,0:1)
-          fchdia(ix,iy,1,0:1)    = st % dv % fchdia(ifc,0:1)
-          fchin(ix,iy,1,0:1)     = st % dv % fchin(ifc,0:1)
-          fchvispar(ix,iy,1,0:1) = st % dv % fchvispar(ifc,0:1)
-          fchvisper(ix,iy,1,0:1) = st % dv % fchvisper(ifc,0:1)
-          fchvisq(ix,iy,1,0:1)   = st % dv % fchvisq(ifc,0:1)
-          fchviskt(ix,iy,1,0:1)  = st % dv % fchviskt(ifc,0:1)
-          fchinert(ix,iy,1,0:1)  = st % dv % fchinert(ifc,0:1)
-          fchanml(ix,iy,1,0:1)   = st % dv % fchanml(ifc,0:1)
+            fch(ix,iy,1,0:1)       = st % dv % fch(iFc,0:1)
+            fch_32(ix,iy,1,0:1)    = st % dv % fch_32(iFc,0:1)
+            fch_52(ix,iy,1,0:1)    = st % dv % fch_52(iFc,0:1)
+            fch_p(ix,iy,1,0:1)     = st % dv % fch_p(iFc,0:1)
+            fchdia(ix,iy,1,0:1)    = st % dv % fchdia(iFc,0:1)
+            fchin(ix,iy,1,0:1)     = st % dv % fchin(iFc,0:1)
+            fchvispar(ix,iy,1,0:1) = st % dv % fchvispar(iFc,0:1)
+            fchvisper(ix,iy,1,0:1) = st % dv % fchvisper(iFc,0:1)
+            fchvisq(ix,iy,1,0:1)   = st % dv % fchvisq(iFc,0:1)
+            fchviskt(ix,iy,1,0:1)  = st % dv % fchviskt(iFc,0:1)
+            fchinert(ix,iy,1,0:1)  = st % dv % fchinert(iFc,0:1)
+            fchanml(ix,iy,1,0:1)   = st % dv % fchanml(iFc,0:1)
 
-          fne(ix,iy,1,0:1)    = st % dv % fne(ifc,0:1)
-          fne_32(ix,iy,1,0:1) = st % dv % fne_32(ifc,0:1)
-          fne_52(ix,iy,1,0:1) = st % dv % fne_52(ifc,0:1)
+            fne(ix,iy,1,0:1)    = st % dv % fne(iFc,0:1)
+            fne_32(ix,iy,1,0:1) = st % dv % fne_32(iFc,0:1)
+            fne_52(ix,iy,1,0:1) = st % dv % fne_52(iFc,0:1)
 
-          fni(ix,iy,1,0:1)    = st % dv % fni(ifc,0:1)
-          fni_32(ix,iy,1,0:1) = st % dv % fni_32(ifc,0:1)
-          fni_52(ix,iy,1,0:1) = st % dv % fni_52(ifc,0:1)
+            fni(ix,iy,1,0:1)    = st % dv % fni(iFc,0:1)
+            fni_32(ix,iy,1,0:1) = st % dv % fni_32(iFc,0:1)
+            fni_52(ix,iy,1,0:1) = st % dv % fni_52(iFc,0:1)
 
-          fna(ix,iy,1,0:1,0:ns-1) = st % dv % fna(ifc,0:1,0:ns-1)
-          fna_mdf(ix,iy,1,0:1,0:ns-1) =
-     .            st % dv % fna_mdf(ifc,0:1,0:ns-1)
-          fna_he(ix,iy,1,0:1,0:ns-1) = st % dv % fna_he(ifc,0:1,0:ns-1)
-          fna_fcor(ix,iy,1,0:1,0:ns-1) =
-     .            st % dv % fna_fcor(ifc,0:1,0:ns-1)
-          fnaPSch(ix,iy,1,0:1,0:ns-1) =
-     .            st % dv % fnaPSch(ifc,0:1,0:ns-1)
-          fna_32(ix,iy,1,0:1,0:ns-1) = st % dv % fna_32(ifc,0:1,0:ns-1)
-          fna_52(ix,iy,1,0:1,0:ns-1) = st % dv % fna_52(ifc,0:1,0:ns-1)
-          fna_32nd(ix,iy,1,0:1,0:ns-1) =
-     .            st % dv % fna_32nd(ifc,0:1,0:ns-1)
-          fna_52nd(ix,iy,1,0:1,0:ns-1) =
-     .            st % dv % fna_52nd(ifc,0:1,0:ns-1)
-          fna_eir(ix,iy,1,0:1,0:ns-1) =
-     .            st % dv % fna_eir(ifc,0:1,0:ns-1)
-          fne_eir(ix,iy,1,0:1) =
-     .            st % dv % fne_eir(ifc,0:1)
-          fna_nodrift(ix,iy,1,0:1,0:ns-1) =
-     .            st % dv % fna_nodrift(ifc,0:1,0:ns-1)
+            fna(ix,iy,1,0:1,0:ns-1) = st % dv % fna(iFc,0:1,0:ns-1)
+            fna_mdf(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_mdf(iFc,0:1,0:ns-1)
+            fna_he(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_he(iFc,0:1,0:ns-1)
+            fna_fcor(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_fcor(iFc,0:1,0:ns-1)
+            fnaPSch(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fnaPSch(iFc,0:1,0:ns-1)
+            fna_32(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_32(iFc,0:1,0:ns-1)
+            fna_52(ix,iy,1,0:1,0:ns-1) = 
+     .            st % dv % fna_52(iFc,0:1,0:ns-1)
+            fna_32nd(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_32nd(iFc,0:1,0:ns-1)
+            fna_52nd(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_52nd(iFc,0:1,0:ns-1)
+            fna_eir(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_eir(iFc,0:1,0:ns-1)
+            fne_eir(ix,iy,1,0:1) =
+     .            st % dv % fne_eir(iFc,0:1)
+            fna_nodrift(ix,iy,1,0:1,0:ns-1) =
+     .            st % dv % fna_nodrift(iFc,0:1,0:ns-1)
 
-          fmo(ix,iy,1,0:1,0:ns-1) = st % dv % fmo(ifc,0:1,0:ns-1)
+            fmo(ix,iy,1,0:1,0:ns-1) = st % dv % fmo(iFc,0:1,0:ns-1)
 
-          fhe(ix,iy,1,0:1)     = st % dv % fhe(ifc,0:1)
-          fkt(ix,iy,1,0:1)     = st % dv % fkt(ifc,0:1)
-          fzt(ix,iy,1,0:1)     = st % dv % fzt(ifc,0:1)
-          fhe_mdf(ix,iy,1,0:1) = st % dv % fhe_mdf(ifc,0:1)
-          fhePSch(ix,iy,1,0:1) = st % dv % fhePSch(ifc,0:1)
-          fhet(ix,iy,1,0:1)    = st % dv % fhet(ifc,0:1)
-          fhe_eir(ix,iy,1,0:1) = st % dv % fhe_eir(ifc,0:1)
-          fhi(ix,iy,1,0:1)     = st % dv % fhi(ifc,0:1)
-          fhn(ix,iy,1,0:1)     = st % dv % fhn(ifc,0:1)
-          fhi_mdf(ix,iy,1,0:1) = st % dv % fhi_mdf(ifc,0:1)
-          fhiPSch(ix,iy,1,0:1) = st % dv % fhiPSch(ifc,0:1)
-          fhit(ix,iy,1,0:1)    = st % dv % fhit(ifc,0:1)
-          fhi_eir(ix,iy,1,0:1) = st % dv % fhi_eir(ifc,0:1)
+            fhe(ix,iy,1,0:1)     = st % dv % fhe(iFc,0:1)
+            fkt(ix,iy,1,0:1)     = st % dv % fkt(iFc,0:1)
+            fzt(ix,iy,1,0:1)     = st % dv % fzt(iFc,0:1)
+            fhe_mdf(ix,iy,1,0:1) = st % dv % fhe_mdf(iFc,0:1)
+            fhePSch(ix,iy,1,0:1) = st % dv % fhePSch(iFc,0:1)
+            fhet(ix,iy,1,0:1)    = st % dv % fhet(iFc,0:1)
+            fhe_eir(ix,iy,1,0:1) = st % dv % fhe_eir(iFc,0:1)
+            fhi(ix,iy,1,0:1)     = st % dv % fhi(iFc,0:1)
+            fhn(ix,iy,1,0:1)     = st % dv % fhn(iFc,0:1)
+            fhi_mdf(ix,iy,1,0:1) = st % dv % fhi_mdf(iFc,0:1)
+            fhiPSch(ix,iy,1,0:1) = st % dv % fhiPSch(iFc,0:1)
+            fhit(ix,iy,1,0:1)    = st % dv % fhit(iFc,0:1)
+            fhi_eir(ix,iy,1,0:1) = st % dv % fhi_eir(iFc,0:1)
 
 ! derived quantities
-          uadia(ix,iy,1,0:1,0:ns-1) =
-     .          st % dv % uadia(ifc,0:1,0:ns-1)
-          vadia(ix,iy,1,0:1,0:ns-1) =
-     .          st % dv % vadia(ifc,0:1,0:ns-1)
-          wadia(ix,iy,1,0:1,0:ns-1) =
-     .          st % dv % wadia(ifc,0:1,0:ns-1)
-          vaecrb(ix,iy,1,0:1,0:ns-1) =
-     .          st % dv % vaecrb(ifc,0:1,0:ns-1)
-          wedia(ix,iy,1,0:1) =
-     .          st % dv % wedia(ifc,0:1)
-          vedia(ix,iy,1,0:1) =
-     .          st % dv % vedia(ifc,0:1)
-          veecrb(ix,iy,1,0:1) =
-     .          st % dv % veecrb(ifc,0:1)
+            uadia(ix,iy,1,0:1,0:ns-1) =
+     .          st % dv % uadia(iFc,0:1,0:ns-1)
+            vadia(ix,iy,1,0:1,0:ns-1) =
+     .          st % dv % vadia(iFc,0:1,0:ns-1)
+            wadia(ix,iy,1,0:1,0:ns-1) =
+     .          st % dv % wadia(iFc,0:1,0:ns-1)
+            vaecrb(ix,iy,1,0:1,0:ns-1) =
+     .          st % dv % vaecrb(iFc,0:1,0:ns-1)
+            wedia(ix,iy,1,0:1) =
+     .          st % dv % wedia(iFc,0:1)
+            vedia(ix,iy,1,0:1) =
+     .          st % dv % vedia(iFc,0:1)
+            veecrb(ix,iy,1,0:1) =
+     .          st % dv % veecrb(iFc,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
 ! but actually used as face quantities in case of drift_flows = 1
-          facdrift(ix,iy) = st % dv % facdrift(ifc)
-          fac_ExB(ix,iy)  = st % dv % fac_ExB(ifc)
-          fac_vis(ix,iy)  = st % dv % fac_vis(ifc)
+            facdrift(ix,iy) = st % dv % facdrift(iFc)
+            fac_ExB(ix,iy)  = st % dv % fac_ExB(iFc)
+            fac_vis(ix,iy)  = st % dv % fac_vis(iFc)
 
 ! numerical coefficients
-          conc(ix,iy,1,0:1)   = st % dv % conc(ifc,0:1)
-          fllime(ix,iy)       = st % dv % fllime(ifc)
-          floe(ix,iy,1,0:1)   = st % dv % floe(ifc,0:1)
-          cone(ix,iy,1,0:1,:) = st % dv % cone(ifc,0:1,:)
-          fllimi(ix,iy)       = st % dv % fllimi(ifc)
-          floi(ix,iy,1,0:1)   = st % dv % floi(ifc,0:1)
-          coni(ix,iy,1,0:1,:) = st % dv % coni(ifc,0:1,:)
-          floe_noc(ix,iy,1,0:1) = st % dv % floe_noc(ifc,0:1)
-          floi_noc(ix,iy,1,0:1) = st % dv % floi_noc(ifc,0:1)
+            conc(ix,iy,1,0:1)   = st % dv % conc(iFc,0:1)
+            fllime(ix,iy)       = st % dv % fllime(iFc)
+            floe(ix,iy,1,0:1)   = st % dv % floe(iFc,0:1)
+            cone(ix,iy,1,0:1,:) = st % dv % cone(iFc,0:1,:)
+            fllimi(ix,iy)       = st % dv % fllimi(iFc)
+            floi(ix,iy,1,0:1)   = st % dv % floi(iFc,0:1)
+            coni(ix,iy,1,0:1,:) = st % dv % coni(iFc,0:1,:)
+            floe_noc(ix,iy,1,0:1) = st % dv % floe_noc(iFc,0:1)
+            floi_noc(ix,iy,1,0:1) = st % dv % floi_noc(iFc,0:1)
           endif
         end do
       end do
@@ -4280,7 +4672,7 @@
 #endif
       if (io /= 0) then
         write (*,*) ' File b2fstate_st not writable'
-        call xerrab ('to_struct_plasma -- no state file ')
+        call xerrab ('to_struct_plasma -- no state file')
       end if
       lblst = 'Plasma state in structured format'
 
@@ -4314,7 +4706,7 @@
 #endif
       if (io /= 0) then
         write (*,*) ' File b2fplasmf_st not writable'
-        call xerrab ('to_struct_plasma -- no plasma file ')
+        call xerrab ('to_struct_plasma -- no plasma file')
       end if
       lblps = 'Plasma state in structured format'
 
@@ -4343,10 +4735,10 @@
 
 ******************************************************************************
 
-      subroutine prep_plasma_ext (nx, ny, ns, nCv, nCi, nFc, st_ext)
+      subroutine prep_plasma_ext (nx, ny, ns, nCv, nFc, st_ext)
 
         implicit none
-        integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+        integer, intent(in) :: nx, ny, ns, nCv, nFc
         type(B2StateExt), intent(inout) :: st_ext
 
         ! For now, only create a dummy external state.
@@ -4397,11 +4789,17 @@
         integer :: nx, ny
         real (kind=R8) :: ro(2), zo(2), rzomp(2,2)
         real (kind=R8) :: ri(2), zi(2), rzimp(2,2)
-        integer :: ix, iy, iout, n_omp, n_imp
+        integer :: ix, iy, iyi, iyo, iymin, iymax, iout,
+     .             n_omp, n_imp, n_sep
+        integer :: autodet = 1
 #ifndef F2003
         integer newunit
         external newunit
 #endif
+
+        call ipgeti ('b2us_auto_midplane_det',autodet)
+        call xertst (0.le.autodet.and.autodet.le.1,
+     .  'faulty parameter b2us_auto_midplane_det')
 
         ! This subroutine calculates arrays rzomp and rzimp with the R-Z coordinates
         ! of two points laying on the straight line going through all
@@ -4409,6 +4807,16 @@
         ! Writes the coordinates into b2.user.parameters
 
 *   ..find the poloidal number of outer midplane cell as the cell with min Bz
+        
+        if (autodet.eq.0) then
+
+          call get_jsep(nx,ny,n_imp,n_omp,n_sep)
+          iyi = n_sep
+          iyo = n_sep
+
+        else
+
+        write (*,*) 'Attempting automatic detection of OMP and IMP'
 
         if(nnreg(0).eq.8) then
           n_omp = rightcut(2)
@@ -4421,6 +4829,7 @@
           n_omp = leftcut(1)
           iy = topcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
             if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
@@ -4429,34 +4838,14 @@
           n_omp = (nx+2)/2
           iy = ny/2
           do ix = -1, nx
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
             if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
         endif
-        write(*,*) ' Found OMP location at ix = ' , n_omp
-        do while (isRealCell(cflags(n_omp,iy+1,CELLFLAG_TYPE)))
-          iy = iy + 1
-        end do
-        ro(1)=0.25_R8*(crx(n_omp,-1,0)+crx(n_omp,-1,1)+ ! R-coordinate of center of [n_omp,-1] cell
-     &                 crx(n_omp,-1,2)+crx(n_omp,-1,3))
-        zo(1)=0.25_R8*(cry(n_omp,-1,0)+cry(n_omp,-1,1)+ ! Z-coordinate of center of [n_omp,-1] cell
-     &                 cry(n_omp,-1,2)+cry(n_omp,-1,3))
-        ro(2)=0.25_R8*(crx(n_omp,iy,0)+crx(n_omp,iy,1)+ ! R-coordinate of center of [n_omp,ny] cell
-     &                 crx(n_omp,iy,2)+crx(n_omp,iy,3))
-        zo(2)=0.25_R8*(cry(n_omp,iy,0)+cry(n_omp,iy,1)+ ! Z-coordinate of center of [n_omp,ny] cell
-     &                 cry(n_omp,iy,2)+cry(n_omp,iy,3))
-        if(ro(2).gt.ro(1)) then
-          rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
-          rzomp(2,1)=zo(1)+                                               ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
-     &              (rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
-          rzomp(1,2)=ro(2)*1.1_R8                                         ! take a coordinate to the right of ro(2)
-          rzomp(2,2)=zo(1)+                                               ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
-     &              (rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
-        else
-          write(*,*) ' ro(1:2) :', ro(1), ro(2)
-          write(*,*) ' zo(1:2) :', zo(1), zo(2)
-          call xerrab('conv_midplane: unexpected coordinates for rzomp')
-        endif
+        iyo = iy
+        write(*,'(a,2i5)')
+     .   ' Found OMP location at ix, iy = ' , n_omp, iyo
 
 *   ..find the poloidal number of the inner midplane cell as the cell with max Bz
 
@@ -4464,6 +4853,7 @@
           n_imp = leftcut(2)
           iy = min(topcut(1),topcut(2))
           do ix = leftcut(1)+1, leftcut(2)-1
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
@@ -4471,6 +4861,7 @@
           n_imp = leftcut(1)
           iy = topcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
@@ -4479,36 +4870,107 @@
           n_imp = (nx+2)/4
           iy = ny/2
           do ix = -1, nx
+            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
             if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
         endif
-        write(*,*) ' Found IMP location at ix = ' , n_imp
-        do while (isRealCell(cflags(n_imp,iy+1,CELLFLAG_TYPE)))
-          iy = iy + 1
-        end do
+        iyi = iy
+        write(*,'(a,2i5)')
+     .   ' Found IMP location at ix, iy = ' , n_imp, iyi
 
-        ri(1)=0.25_R8*(crx(n_imp,iy,0)+crx(n_imp,iy,1)+ ! R-coordinate of center of [n_imp,ny] cell
-     &                 crx(n_imp,iy,2)+crx(n_imp,iy,3))
-        zi(1)=0.25_R8*(cry(n_imp,iy,0)+cry(n_imp,iy,1)+ ! Z-coordinate of center of [n_imp,ny] cell
-     &                 cry(n_imp,iy,2)+cry(n_imp,iy,3))
-        ri(2)=0.25_R8*(crx(n_imp,-1,0)+crx(n_imp,-1,1)+ ! R-coordinate of center of [n_imp,-1] cell
-     &                 crx(n_imp,-1,2)+crx(n_imp,-1,3))
-        zi(2)=0.25_R8*(cry(n_imp,-1,0)+cry(n_imp,-1,1)+ ! Z-coordinate of center of [n_imp,-1] cell
-     &                 cry(n_imp,-1,2)+cry(n_imp,-1,3))
+        endif ! autodet
+
+
+        ! Computing coordinates at OMP
+        iymax = iyo
+        do while (isRealCell(cflags(n_omp,iymax+1,CELLFLAG_TYPE)))
+          iymax = iymax + 1
+        end do
+        iymin = iyo
+        do while (isRealCell(cflags(n_omp,iymin-1,CELLFLAG_TYPE)))
+          iymin = iymin - 1
+        end do
+        write(*,'(a,2i5)')
+     &             'Inner and outermost flux tube at OMP at '//
+     &             'iymin, iymax  = ',iymin, iymax
+
+        
+
+        ro(1)=0.25_R8*(crx(n_omp,iymin,0)+crx(n_omp,iymin,1)+ ! R-coordinate of center of [n_omp,-1] cell
+     &                 crx(n_omp,iymin,2)+crx(n_omp,iymin,3))
+        zo(1)=0.25_R8*(cry(n_omp,iymin,0)+cry(n_omp,iymin,1)+ ! Z-coordinate of center of [n_omp,-1] cell
+     &                 cry(n_omp,iymin,2)+cry(n_omp,iymin,3))
+        ro(2)=0.25_R8*(crx(n_omp,iymax,0)+crx(n_omp,iymax,1)+ ! R-coordinate of center of [n_omp,ny] cell
+     &                 crx(n_omp,iymax,2)+crx(n_omp,iymax,3))
+        zo(2)=0.25_R8*(cry(n_omp,iymax,0)+cry(n_omp,iymax,1)+ ! Z-coordinate of center of [n_omp,ny] cell
+     &                 cry(n_omp,iymax,2)+cry(n_omp,iymax,3))
+        if(ro(2).gt.ro(1)) then
+          rzomp(1,1)=ro(1)*0.9_R8                                        ! take a coordinate to the left of ro(1)
+          rzomp(2,1)=zo(1)+                                              ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
+     &              (rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))       ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+          rzomp(1,2)=ro(2)*1.1_R8                                        ! take a coordinate to the right of ro(2)
+          rzomp(2,2)=zo(1)+                                              ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
+     &              (rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+        else
+          write(*,*) ' ro(1:2) :', ro(1), ro(2)
+          write(*,*) ' zo(1:2) :', zo(1), zo(2)
+          if (autodet.eq.1) then
+            write (*,*) 'Automatic detection OMP failed. Consider '//
+     .                  'setting b2us_auto_midplane_det to 0, and '
+            write (*,*) 'specifying OMP/IMP through b2mwti_jxa, '//
+     .                  'b2mwti_jxi, and b2mwti_jsep'
+          endif
+          call xerrab('conv_midplane: unexpected coordinates for rzomp')
+        endif
+
+        ! Computing coordinates at IMP
+        iymax = iyi
+        do while (isRealCell(cflags(n_imp,iymax+1,CELLFLAG_TYPE)))
+          iymax = iymax + 1
+        end do
+        iymin = iyi
+        do while (isRealCell(cflags(n_imp,iymin-1,CELLFLAG_TYPE)))
+          iymin = iymin - 1
+        end do
+        write(*,'(a,2i5)')
+     &             'Inner and outermost flux tube at IMP at '//
+     &             'iymin, iymax  = ', iymin, iymax
+        if (nnreg(0).eq.1) then
+        ! swap iymin and iymax for calculation below if we deal with slab or linear cases
+          iyi = iymin
+          iymin = iymax
+          iymax = iyi
+        end if
+        ri(1)=0.25_R8*(crx(n_imp,iymax,0)+crx(n_imp,iymax,1)+ ! R-coordinate of center of [n_imp,ny] cell
+     &                 crx(n_imp,iymax,2)+crx(n_imp,iymax,3))
+        zi(1)=0.25_R8*(cry(n_imp,iymax,0)+cry(n_imp,iymax,1)+ ! Z-coordinate of center of [n_imp,ny] cell
+     &                 cry(n_imp,iymax,2)+cry(n_imp,iymax,3))
+        ri(2)=0.25_R8*(crx(n_imp,iymin,0)+crx(n_imp,iymin,1)+ ! R-coordinate of center of [n_imp,-1] cell
+     &                 crx(n_imp,iymin,2)+crx(n_imp,iymin,3))
+        zi(2)=0.25_R8*(cry(n_imp,iymin,0)+cry(n_imp,iymin,1)+ ! Z-coordinate of center of [n_imp,-1] cell
+     &                 cry(n_imp,iymin,2)+cry(n_imp,iymin,3))
 
         if(ri(2).gt.ri(1)) then
-          rzimp(1,1)=ri(1)*0.9_R8                                         ! take a coordinate to the left of ri(1)
-          rzimp(2,1)=zi(1)+                                               ! calculate, corresponding to rzimp(1,1), Z-coordinate of point
-     &              (rzimp(1,1)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))        ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
-          rzimp(1,2)=ri(2)*1.1_R8                                         ! take a coordinate to the right of ri(2)
-          rzimp(2,2)=zi(1)+                                               ! calculate, corresponding to rzimp(1,2), Z-coordinate of point
-     &              (rzimp(1,2)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))        ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+          rzimp(1,1)=ri(1)*0.9_R8                                        ! take a coordinate to the left of ri(1)
+          rzimp(2,1)=zi(1)+                                              ! calculate, corresponding to rzimp(1,1), Z-coordinate of point
+     &              (rzimp(1,1)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))       ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+          rzimp(1,2)=ri(2)*1.1_R8                                        ! take a coordinate to the right of ri(2)
+          rzimp(2,2)=zi(1)+                                              ! calculate, corresponding to rzimp(1,2), Z-coordinate of point
+     &              (rzimp(1,2)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))       ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
         else
           write(*,*) ' ri(1:2) :', ri(1), ri(2)
           write(*,*) ' zi(1:2) :', zi(1), zi(2)
+          if (autodet.eq.1) then
+            write (*,*) 'Automatic detection OMP failed. Consider '//
+     .                  'setting b2us_auto_midplane_det to 0, and '
+            write (*,*) 'specifying OMP/IMP through b2mwti_jxa, '//
+     .                  'b2mwti_jxi, and b2mwti_jsep'
+          endif
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
+
+
 
 #ifdef F2003
         open(newunit=iout,file='info.dat')

@@ -159,14 +159,14 @@ c     -------------------------------------------------------------------------
       call getsa(ns,rcsa,rcra,T)
       isstart=-1
       do is = 0, ns-1
-        if (isstart.eq.-1.and.zn(is).eq.zn(i).and.
+        if (isstart.eq.-1.and.nint(zn(is)).eq.nint(zn(i)).and.
      &      abs(am(is)-am(i)).lt.1.0e-3_R8) then
           isstart=is
         endif
       enddo
       isend=-1
       do is = ns-1, isstart, -1
-        if (isend.eq.-1.and.zn(is).eq.zn(i).and.
+        if (isend.eq.-1.and.nint(zn(is)).eq.nint(zn(i)).and.
      &      abs(am(is)-am(i)).lt.1.0e-3_R8) then
           isend=is
         endif
@@ -226,10 +226,10 @@ c     -------------------------------------------------------------------------
 
       real (kind=R8) ::
      *   ssum,gsum
-      real (kind=R8) ::
-     *   neco(-1:nx,-1:ny)
 #ifdef WG_TODO
-     * , rcra(-1:nx,-1:ny,0:ns-1),
+      real (kind=R8) ::
+     *   neco(-1:nx,-1:ny),
+     *   rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -246,9 +246,9 @@ c     -------------------------------------------------------------------------
       external b2spel, b2sqel
 
       call subini('corora')
+#ifdef WG_TODO
       neco(-1:nx,-1:ny) = 1.0e16_R8
 *    ..compute log-log electron rate coefficients
-#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, neco, rclsa, rclra,
      &     rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
@@ -315,10 +315,10 @@ c     -------------------------------------------------------------------------
 *   ..common blocks
 
       integer ix,iy,is
-      real (kind=R8) ::
-     *   neco(-1:nx,-1:ny)
 #ifdef WG_TODO
-     * , rcra(-1:nx,-1:ny,0:ns-1),
+      real (kind=R8) ::
+     *   neco(-1:nx,-1:ny),
+     *   rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -343,9 +343,9 @@ c     -------------------------------------------------------------------------
       external b2spel, b2sqel
 
       call subini('coroni')
+#ifdef WG_TODO
       neco(-1:nx,-1:ny) = 1.0e16_R8
 *    ..compute log-log electron rate coefficients
-#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, neco, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
@@ -376,7 +376,7 @@ c     initialise array on stack for coronal radiation
       do while (is0.lt.ns)
         is = is0
         ntot(-1:nx,-1:ny,is0) = 0.0_R8
-        do while (zn(is).eq.zn(is0).and.
+        do while (nint(zn(is)).eq.nint(zn(is0)).and.
      &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.ns)
           ntot(-1:nx,-1:ny,is0) = 
      .     ntot(-1:nx,-1:ny,is0) + na(-1:nx,-1:ny,is)

@@ -9,10 +9,14 @@
       use b2mod_switches
       use b2us_geo
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2tqca
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tqca, ncall_b2tlnl
+     & , only : ncall_b2tlnl
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

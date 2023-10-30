@@ -138,18 +138,22 @@ cank
 
       contains
 
-      subroutine alloc_b2mod_b2plot(nxd,nyd,nsd,ns_ext,wklngd,
+      subroutine alloc_b2mod_b2plot(nCv,nFc,nsd,ns_ext,wklngd,
      1 natmd,nmold,niond,nlim)
       implicit none
-      integer nxd,nyd,nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
+      integer nCv,nFc
+      integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
+#ifdef WG_TODO
       external get_jsep, get_nxt, ipgeti, xertst
+#endif
 
-      nx=nxd
-      ny=nyd
+      nx=nCv
+      ny=1
       ns=nsd
       nsw=max(nsd+3,(nsd+1)*(nsd+1)-1,ns_ext)
 
+#ifdef WG_TODO
       call get_jsep(nx,ny,jxi,jxa,jsep)
       ixref=jxa
       iyref=jsep
@@ -160,21 +164,22 @@ cank
       call xertst (-1.le.iyref.and.iyref.le.nyd,
      1   'faulty argument set_transport_iyref')
       call get_nxt(nx,nxtl,nxtr)
+#endif
 
-      allocate(work(-1:nxd,-1:nyd,0:nsw,1:wklngd))
-      allocate(wrk(-1:nxd+nyd+1))
-      allocate(wrk_hlp(1:nxd*nyd))
-      allocate(ind_hlp(1:nxd*nyd))
-      allocate(arrowx(-1:nxd,-1:nyd,0:nsw))
-      allocate(arrowy(-1:nxd,-1:nyd,0:nsw))
+      allocate(work(1:nCv,1,0:nsw,1:wklngd))
+      allocate(wrk(1:nFc))
+      allocate(wrk_hlp(1:nCv))
+      allocate(ind_hlp(1:nCv))
+      allocate(arrowx(1:nCv,1,0:nsw))
+      allocate(arrowy(1:nCv,1,0:nsw))
       allocate(p1(2,nlim))
       allocate(p2(2,nlim))
-      allocate(xx(-1:nx,2))
-      allocate(yy(-1:ny,2))     
-      allocate(nh(-1:nxd,-1:nyd))
-      allocate(zeff(-1:nxd,-1:nyd))
-      allocate(uutraj(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(vvtraj(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(xx(1:nCv,2))
+      allocate(yy(1:nCv,2))
+      allocate(nh(1:nCv,1))
+      allocate(zeff(1:nCv,1))
+      allocate(uutraj(1:nCv,1,0:nsd-1))
+      allocate(vvtraj(1:nCv,1,0:nsd-1))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
       allocate(textplel(0:nsd))

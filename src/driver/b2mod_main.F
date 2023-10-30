@@ -166,13 +166,15 @@
 
       contains
 
-      subroutine b2mn_init (switch, geo, mpg, state, state_ext)
+      subroutine b2mn_init (switch, geo, mpg,
+     .                      state, state_ext, state_avg)
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2Average), intent (inout)  :: state_avg
       integer idum(0:9)
 
 *   ..program start-up calls
@@ -283,46 +285,54 @@ csw
 !WG_TODO      call alloc_b2mod_b2_to_astra(nx, ny, ns)
 
       call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg, 
-     &               state, state_ext)
+     &               state, state_ext, state_avg)
 
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step(switch, geo, mpg, state, state_ext, J)
+      subroutine b2mn_step(switch, geo, mpg,
+     &                     state, state_ext, state_avg, J)
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+#ifndef NAGFOR
       use b2mod_input_profile
      , , only : tdata
       use b2mod_ad
      , , only: nncf
       use b2mod_par_opt
      & , only : par_opt_phys, npar_opt, sigma, nsigma
+#endif
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2average), intent (inout)  :: state_avg
       real(kind=R8) :: J(nncf)
 
-      call b2mndr_1 (nout, ns, switch, geo, mpg, state, state_ext, J)
+      call b2mndr_1 (nout, ns,
+     .               switch, geo, mpg, state, state_ext, state_avg, J)
 
       return
       end subroutine b2mn_step
 
-      subroutine b2mn_fin (switch, geo, mpg, state, state_ext)
+      subroutine b2mn_fin (switch, geo, mpg,
+     .                     state, state_ext, state_avg)
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2Average), intent (inout)  :: state_avg
       integer io
 
-      call b2mndr_2 (nout, ns, switch, geo, mpg, state, state_ext)
+      call b2mndr_2 (nout, ns, switch, geo, mpg,
+     .               state, state_ext, state_avg)
 #ifdef JET
 *   ..set and write ppout
       call cfopen (nout(10),'tran','new','unformatted')
