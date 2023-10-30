@@ -20,33 +20,19 @@ module b2mod_ual_io
 
     use b2mod_types
     use b2mod_b2cmpa
-    use b2mod_b2cmrc
-    use b2mod_geo
-    use b2mod_work
-    use b2mod_diag
-    use b2mod_mwti
-    use b2mod_rates
     use b2us_map
+    use b2us_geo
     use b2us_plasma
     use b2mod_elements
     use b2mod_constants
-    use b2mod_sources
-    use b2mod_feedback
-    use b2mod_transport
-    use b2mod_anomalous_transport
-    use b2mod_boundary_namelist
+!    use b2mod_feedback
+!    use b2mod_boundary_namelist
     use b2mod_neutrals_namelist
     use b2mod_user_namelist
-    use b2mod_indirect
-    use b2mod_external
-    use b2mod_interp
     use b2mod_ipmain
-    use b2mod_b2cmrc
     use b2mod_b2cmfs
-    use b2mod_b2cmpb
     use b2mod_version
     use b2mod_switches
-    use b2mod_grid_mapping
 #ifdef IMAS
 #ifdef WG_TODO
     use b2mod_balance &
@@ -64,14 +50,15 @@ module b2mod_ual_io
      &          b2stel_she_rec_bal, b2stel_shi_rec_bal, &
      &          read_balance
 #endif
+    use b2mod_diag &
+     & , only : nfluids, species_list, label
     use b2mod_b2plot &
-     & , only : nxtl, nxtr, jxi, jxa, jsep
+     & , only : nxtl, nxtr
 #endif
-    use b2mod_b2plot_wall_loading
+!    use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
-    use eirmod_ctrig
-    use eirmod_cestim
-    use eirmod_wneutrals
+!    use eirmod_ctrig
+!    use eirmod_cestim
 #ifdef IMAS
     use eirmod_cinit &
      & , only : fort_lc
@@ -90,12 +77,21 @@ module b2mod_ual_io
 #ifdef IMAS
     !! UAL Access
     use b2mod_ual_io_grid &
-     & , only : INCLUDE_GHOST_CELLS
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
+     & , only : INCLUDE_GHOST_CELLS, US_GRID_UNDEFINED,  &
+     &          REGIONTYPE_EDGE,                         &
+     &          GEOMETRY_LINEAR, GEOMETRY_CYLINDER,      &
+     &          GEOMETRY_ANNULUS, GEOMETRY_LIMITER,      &
+     &          GEOMETRY_SN, GEOMETRY_STELLARATORISLAND, &
+     &          GEOMETRY_CDN,                            &
+     &          GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP,   &
+     &          GEOMETRY_LFS_SNOWFLAKE_PLUS,             &
+     &          GEOMETRY_LFS_SNOWFLAKE_MINUS,            &
+     &          geometryId, geometryName, regionNumbers
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
-     & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
-     &          b2_IMAS_Transform_Data_B2_To_IDS_Face, &
+     & , only : b2_IMAS_Transform_Data_B2_To_IDS_Cell,  &
+     &          b2_IMAS_Transform_Data_B2_To_IDS_Face,  &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
     use b2mod_ual_io_grid &
      & , only : b2_IMAS_Fill_Grid_Desc
@@ -148,7 +144,7 @@ module b2mod_ual_io
 #endif
     use ids_schemas &     ! IGNORE
      & , only : ids_string_length
-#if IMAS_MINOR_VERSION > 8
+#if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_real, ids_real_invalid
 #endif
@@ -159,30 +155,35 @@ module b2mod_ual_io
      &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,              &
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
      &          ids_generic_grid_dynamic
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_generic_grid_AoS3_root
 #endif
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_summary,                                                        &
      &          ids_summary_constant_flt_0d, ids_summary_constant_int_0d,           &
      &          ids_summary_dynamic_int_1d_root, ids_summary_dynamic_flt_1d_root,   &
      &          ids_summary_dynamic_flt_1d_root_parent_2, ids_summary_static_str_0d
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
 #endif
-#if IMAS_MINOR_VERSION > 32
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     use ids_utilities &   ! IGNORE
      & , only : ids_identifier_static
 #endif
-#if ( defined(AMNS) && IMAS_MINOR_VERSION > 29 )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+    use b2mod_math
+    use ids_schemas &     ! IGNORE
+     & , only : ids_summary_rz1d_dynamic
+#endif
+#if ( defined(AMNS) && ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 ) )
     use amns_types  ! IGNORE
     use amns_module ! IGNORE
 #endif
@@ -200,7 +201,7 @@ module b2mod_ual_io
 
 #ifdef IMAS
 
-#if IMAS_MINOR_VERSION < 9
+#if ( IMAS_MINOR_VERSION < 9 && IMAS_MAJOR_VERSION < 4 )
   integer, parameter :: IDS_REAL = R8
   real(kind=R8), parameter :: IDS_REAL_INVALID = -9.0E40_R8
 #endif
@@ -240,24 +241,136 @@ module b2mod_ual_io
             !< subset base index, later found by findGridSubsetByName() routine
   logical, parameter :: B2_WRITE_DATA = .true.
   real(IDS_real) :: time  !< Generic time
+  real(IDS_real), save :: b0, r0, b0r0
+  real(IDS_real), save, allocatable :: flux_expansion(:), &
+      &  extension_r(:), extension_z(:), wetted_area(:)
   character(len=ids_string_length), save :: username  !< IDS user name
   character(len=ids_string_length), save :: source    !< Code source
   character(len=ids_string_length), save :: comment   !< IDS properties label
   character(len=ids_string_length), save :: create_date
   character(len=ids_string_length), save :: code_commit
+  character(len=ids_string_length), save :: code_description
   character(len=ids_string_length), save :: configuration
-  character*8, save :: imas_version, ual_version, adas_version
+  character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
+  character*8, save :: imas_version, adas_version
+  character*8, save :: date
+  character*10, save :: ctime
+  character*5, save :: zone
   character*32, save :: B25_git_version
-  logical, save :: IDSmapInitialized = .false.
+  logical, save :: eq_found
 #ifndef NO_GETENV
   integer lenval, ierror
 #ifndef USE_PXFGETENV
   intrinsic get_environment_variable
 #endif
 #endif
-  type(B2GridMap), save :: IDSmap
 
 contains
+
+    subroutine IDS_init( mpg, geo )
+    implicit none
+    type( mapping ), intent(in) :: mpg
+    type( geometry ), intent(in) :: geo
+    integer tvalues(8)
+    integer i, iCv, iFc
+    real(kind=R8) :: r_min, r_max, z_min, z_max
+    logical, save :: IDS_initialized = .false.
+    character*16 usrnam
+    character*32 get_B25_hash
+    external usrnam
+    external get_B25_hash
+
+    if (IDS_initialized) return
+    username = usrnam()
+#ifdef NO_GETENV
+    write(imas_version,'(i1,a1,i2,a1,i1)')  IMAS_MAJOR_VERSION,'.', &
+                                      &     IMAS_MINOR_VERSION,'.', &
+                                      &     IMAS_MICRO_VERSION
+#elif defined(USE_PXFGETENV)
+    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
+#else
+    call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
+#endif
+    call date_and_time (date, ctime, zone, tvalues)
+    create_date = date//' '//ctime//' '//' '//zone
+    B25_git_version = get_B25_hash()
+    code_commit = B25_git_version
+
+    geometryType = geometryId( mpg, geo )
+    configuration = geometryName( geometryType )
+    select case ( geometryType )
+    case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+      plate_name(1) = 'W'
+      plate_name(2) = 'E'
+    case ( GEOMETRY_LIMITER, GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
+      if (geo%LSN) then
+        plate_name(1) = 'W'
+        plate_name(2) = 'E'
+      else
+        plate_name(1) = 'E'
+        plate_name(2) = 'W'
+      end if
+    case ( GEOMETRY_CDN, GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
+      plate_name(1) = 'LI'
+      plate_name(2) = 'UI'
+      plate_name(3) = 'UO'
+      plate_name(4) = 'LO'
+    case ( GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS )
+      plate_name(1) = 'E'
+      plate_name(2) = 'W1'
+      plate_name(3) = 'W2'
+      plate_name(4) = 'W3'
+    end select
+    if (maxval(mpg%strDiv).gt.0) then
+      allocate(wetted_area( maxval(mpg%strDiv) ) )
+      allocate(extension_r( maxval(mpg%strDiv) ) )
+      allocate(extension_z( maxval(mpg%strDiv) ) )
+      allocate(flux_expansion( maxval(mpg%strDiv) ) )
+    end if
+    do i = 1, maxval(mpg%strDiv)
+      r_min = huge(1.0_R8)
+      r_max = 0.0_R8
+      z_min = huge(1.0_R8)
+      z_max =-huge(1.0_R8)
+      wetted_area(i) = 0.0_IDS_real
+      do iFc = 1, mpg%nFc
+        if (mpg%fcReg(iFc).eq. &
+          & regionNumbers(i,REGIONTYPE_EDGE,geometryType)) then
+          if (mpg%fcCv(iFc,1).le.mpg%nCi) then
+            iCv = mpg%fcCv(iFc,1)
+          else
+            iCv = mpg%fcCv(iFc,2)
+          end if
+          r_min = min( r_min, geo%vxX(mpg%fcVx(iFc,1)), &
+               &              geo%vxX(mpg%fcVx(iFc,2)) )
+          r_max = max( r_max, geo%vxX(mpg%fcVx(iFc,1)), &
+               &              geo%vxX(mpg%fcVx(iFc,2)) )
+          z_min = min( z_min, geo%vxY(mpg%fcVx(iFc,1)), &
+               &              geo%vxY(mpg%fcVx(iFc,2)) )
+          z_max = max( z_max, geo%vxY(mpg%fcVx(iFc,1)), &
+               &              geo%vxY(mpg%fcVx(iFc,2)) )
+          wetted_area(i) = wetted_area(i) + geo%fcS(iFc)
+        end if
+      end do
+      extension_r(i) = r_max - r_min
+      extension_z(i) = z_max - z_min
+      if ( mpg%nnreg(0).eq.8 .and. (i.eq.1 .or. i.eq.2) ) then
+        iFc = ifsepimp
+      else
+        iFc = ifsepomp
+      end if
+      if (mpg%nStr.gt.0) flux_expansion(i) = &
+          & ( geo%fcBb(iFc,0)/geo%fcBb(iFc,3) ) / &
+          & ( geo%vxBb(mpg%ivdiv(i),0)/geo%vxBb(mpg%ivdiv(i),3) )
+    end do
+    if (mpg%nStr.eq.0 .and. mpg%nTgc.ge.1 ) flux_expansion(1) = &
+          & ( geo%fcBb(ifsepomp,0)/geo%fcBb(ifsepomp,3) ) / &
+          & ( geo%fcBb(mpg%tgVx(1),0)/geo%fcBb(mpg%tgVx(1),3) )
+
+    IDS_initialized = .true.
+    return
+    end subroutine IDS_init
 
     !> Process B2.5 data and set it to IMAS IDS.
     !! @note    The \b B25_process_ids routine enables to store data for
@@ -268,16 +381,16 @@ contains
     !!          checks for correct use of the routine.
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
-    subroutine B25_process_ids( geo, mpg, state, switch, &
+    subroutine B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
             &   edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, run_start_time_IN, run_end_time_IN, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
             &   time_IN, time_step_IN, shot, run, database, version, &
@@ -289,9 +402,11 @@ contains
         implicit none
 #include <DIMENSIONS.F>
         type (geometry), intent(in) :: geo
-        type (mapping), intent(in) :: mpg
-        type (B2state), intent(in) :: state
-        type (switches), intent(in) :: switch
+        type (mapping), intent(inout) :: mpg
+        type (B2state), intent(inout) :: state
+        type (B2stateExt), intent(inout) :: state_ext
+        type (B2Average), intent(in) :: state_avg
+        type (switches), intent(inout) :: switch
         type (ids_equilibrium) :: equilibrium !< IDS designed to
             !< store equilibrium data
         type (ids_edge_profiles) :: edge_profiles !< IDS designed to
@@ -309,16 +424,16 @@ contains
             !< data on radiation emitted by the plasma species
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics) :: numerics !< IDS designed to store
             !< run numerics data
         real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         type (ids_divertors) :: divertors !< IDS designed to store
             !< data related to the divertor plates
 #endif
@@ -332,7 +447,7 @@ contains
             !< Total number of time steps. It is required to beforehand allocate
             !< required ggd(:) array of nodes structure and for additional
             !< checks for correct use of the routine.
-        logical :: new_eq_ggd
+        logical, intent(out) :: new_eq_ggd
 
         !! Internal variables
         character(len=13)  :: spclabel   !< Species label
@@ -347,8 +462,11 @@ contains
         integer :: i      !< Iterator
         integer :: j      !< Iterator
         integer :: k      !< Iterator
-        integer :: ix     !< Iterator
-        integer :: iy     !< Iterator
+        integer :: iFc    !< Iterator on faces
+        integer :: iCv    !< Iterator on control volumes
+        integer :: iCv1, iCv2 !< Indices of the two CVs of both sides
+                              !< of the OMP separatrix
+        integer :: iVx    !< Iterator on vertices
         integer :: istrai !< Stratum iterator
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
@@ -378,48 +496,72 @@ contains
                                           !< from Eirene molecular ions to IDS ion sequences
         integer :: ixx, iyy
 #endif
-        integer :: nscx, iscx(0:nscxmax-1)
-        real(IDS_real) :: flxFace( mpG%nFc, 0:1)
-        real(IDS_real) :: tmpFace( mpg%nFc, 0:1)
-        real(IDS_real) :: totFace( mpg%nFc, 0:1)
-        real(IDS_real) :: tmpVx( mpg%nVx )
+        real(IDS_real) :: flxFace( mpg%nFc, 0:1 )
+        real(IDS_real) :: totflux( mpg%nFc, 0:1 )
+        real(IDS_real) :: tmpFace( mpg%nFc )
         real(IDS_real) :: tmpCv( mpg%nCv )
         real(IDS_real) :: totCv( mpg%nCv )
+        real(IDS_real) :: tmpVx( mpg%nVx )
+        real(IDS_real) :: pe( mpg%nCv )
+        real(IDS_real) :: zeff( mpg%nCv )
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
+        real(IDS_real) :: frac, u, v, psi_average,                     &
+            &             vtor, nisep, nasum
+        real(IDS_real), allocatable :: power_convected(:),             &
+            &             power_conducted(:),                          &
+            &             power_recombination_plasma(:),               &
+            &             power_currents(:),                           &
+            &             current_incident(:)
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+        integer :: iFs, iactive, inactive
+        real(IDS_real) :: xi, yi, xo, yo
+        logical :: found
+#endif
 #ifdef B25_EIRENE
 #ifdef WG_TODO
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
 #endif
 #endif
  !< Type of IDS data structure, designed for handling grid geometry data
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         type(ids_generic_grid_dynamic) :: edge_grid, transport_grid, &
             &  sources_grid
 #else
         type(ids_generic_grid_aos3_root) :: edge_grid, transport_grid, &
             &  sources_grid
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root) :: radiation_grid
 #endif
 #endif
 
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+        integer, parameter :: nsources = 13
+#else
         integer, parameter :: nsources = 12
+#endif
         integer, save :: ncall = 0
         integer, save :: style = 1
         integer, save :: ismain = 1
         integer, save :: ismain0 = 0
         integer, save :: ids_from_43 = 0
         integer, save :: balance_netcdf = 0
+        real(IDS_real), save :: dtim = 1.0_IDS_real
         character*132 radiation_commit
         character*256 filename
-        logical match_found, streql, exists
+        character*5 hlp_frm
+        logical match_found, streql, exists, wrong_flow
 #ifdef B25_EIRENE
         character(len=132) :: mol_label !< Molecule species label (e.g. D2)
         character(len=132) :: ion_label !< Ion species label (e.g. D+1)
         logical, allocatable :: in_species(:)
 #endif
-        external streql
+        real (kind=R8) :: intvertex_s
+        external b2xpne, b2xpni, b2xppb, b2xppe, b2xppz, b2xzef
+        external b2sral, b2tral, b2trql, b2tanml
+        external b2xpnn, b2tiner, b2tvspa
+        external ipgetr, ipgeti, species, streql, xerrab, xertst
+        external find_file, intvertex_s
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -427,6 +569,7 @@ contains
           call ipgeti ('b2mndt_style', style)
           call ipgeti ('b2mndr_ismain', ismain)
           call ipgeti ('ids_from_43', ids_from_43)
+          call ipgetr ('b2mndr_dtim', dtim)
           call ipgeti ('balance_netcdf', balance_netcdf)
           if (balance_netcdf.ne.0) then
             filename='balance.nc'
@@ -439,8 +582,8 @@ contains
           match_found = .false.
           is = ismain
           do while (is.ge.0 .and. .not.match_found)
-            if (is_neutral(is) .and. zn(is).eq.zn(ismain) &
-                             & .and. am(is).eq.am(ismain)) then
+            if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain)) &
+                             & .and. nint(am(is)).eq.nint(am(ismain))) then
               ismain0 = is
               match_found = .true.
             end if
@@ -451,19 +594,72 @@ contains
         end if
 #ifdef B25_EIRENE
         if (ids_from_43.eq.0) then
-          source = "SOLPS-ITER"
+          source = "SOLPS-ITER_WG"
         else
           source = "SOLPS4.3"
         end if
 #else
         if (ids_from_43.eq.0) then
-          source = "B2.5"
+          source = "B2.5_WG"
         else
           source = "B2"
         end if
 #endif
 
+        call IDS_init( mpg, geo )
         ns = size( state%pl%na, 2 )
+        do is = 0, ns-1
+          call b2xppb( mpg%nCv, state%rt%rza(:,is),                 &
+            &          state%pl%na(:,is), state%pl%te, state%pl%ti, &
+            &          state%pl%tn, is, state%dv%pa(:,is) )
+        end do
+        call b2xpne( mpg%nCv, ns, state%rt%rza, state%pl%na,        &
+            &        state_ext%ne, state%dv%ne)
+        call b2xzef( mpg%nCv, ns, state%rt%rz2, state%pl%na,        &
+            &        state%dv%ne, zeff, state_ext)
+        call b2xppz( mpg%nCv, ns, state%dv%ne, state%pl%na,         &
+            &        state%pl%te, state%pl%ti, state%dv%pz, state_ext)
+        call b2tanml(mpg%nCv, mpg%nFc, ns, switch, geo, mpg,        &
+            &        state%co%csig_an, state%pl%po, state%dv%fchanml)
+        call b2tvspa(mpg%nCv, mpg%nFc, mpg%nVx, ns,                 &
+            &        switch, geo, mpg, state%pl%ua,                 &
+            &        state%co%vsaf_cl, state%dv%fac_vis, state%dv%fchvispar)
+        call b2tiner(mpg%nCv, mpg%nFc, mpg%nVx, ns,                 &
+            &        switch, geo, mpg, state%pl%na, state%pl%ua,    &
+            &        state%dv%facdrift, state%dv%fchinert)
+
+!   ..find nscx, iscx
+!     (indices for neutral hydrogen species)
+        state%rt%nscx = 0
+        do is = 0, ns-1
+          if (is_neutral(is).and.nint(zn(is)).eq.1) then
+            call xertst (state%rt%nscx.lt.state%rt%nscxmax, &
+                & 'too many neutral hydrogen species')
+            state%rt%iscx(state%rt%nscx) = is
+            state%rt%nscx = state%rt%nscx+1
+          endif
+        enddo
+        do k = state%rt%nscx, state%rt%nscxmax-1
+          state%rt%iscx(k) = -1
+        enddo
+        call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
+        call b2xpnn (mpg%nCv, ns, state%pl%na, state%dv%nn)
+        call b2xpne (mpg%nCv, ns, state%rt%rz2, state%pl%na, &
+            &        state_ext%ne2, state%dv%ne2)
+!   ..compute flux limit coefficients
+        call b2trql (mpg%nCv, mpg%nFc, ns, switch, geo, mpg, &
+            &        state%pl, state%dv, state_ext,          &
+            &        state%co%chvemx, state%co%chvimx)
+        call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,          &
+            &        state%rt%nscx, state%rt%nscxmax,        &
+            &        state%rt%iscx, ismain,                  &
+            &        switch, geo, mpg, state%pl, state%dv,   &
+            &        state%rt, state_ext, state%co)
+!   ..compute sources
+        call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns,         &
+     &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx,     &
+     &   ismain, ismain0, dtim,                              &
+     &   switch, geo, mpg, state, state_ext, state_avg, wrong_flow, .false.)
 
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory
@@ -517,30 +713,37 @@ contains
           &  homogeneous_time )
         call write_ids_properties( description%ids_properties, &
           &  homogeneous_time )
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_properties( summary%ids_properties, &
           &  homogeneous_time )
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         call write_ids_properties( numerics%ids_properties, &
           &  homogeneous_time )
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_properties( divertors%ids_properties, &
           &  homogeneous_time )
 #endif
 
         !! 2. Set code and library data
-        radiation_commit = B25_git_version
-        call write_ids_code( switch, edge_profiles%code, code_commit )
-        call write_ids_code( switch, edge_transport%code, code_commit )
-        call write_ids_code( switch, edge_sources%code, code_commit )
-        call write_ids_code( switch, radiation%code, radiation_commit )
-#if IMAS_MINOR_VERSION > 21
-        call write_ids_code( switch, summary%code, code_commit )
+#ifdef B25_EIRENE
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (coupled SOLPS-ITER run)"
+#else
+        code_description = &
+         & "Snapshot IDS from b2mod_ual_io routine (standalone B2.5 run)"
 #endif
-#if IMAS_MINOR_VERSION > 30
-        call write_ids_code( switch, divertors%code, code_commit )
+        radiation_commit = B25_git_version
+        call write_ids_code( switch, edge_profiles%code, code_commit, code_description )
+        call write_ids_code( switch, edge_transport%code, code_commit, code_description )
+        call write_ids_code( switch, edge_sources%code, code_commit, code_description )
+        call write_ids_code( switch, radiation%code, radiation_commit, code_description )
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+        call write_ids_code( switch, summary%code, code_commit, code_description )
+#endif
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+        call write_ids_code( switch, divertors%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
         edge_transport%model(1)%identifier%index = 1
@@ -563,9 +766,14 @@ contains
           edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
         end if
-#if IMAS_MINOR_VERSION > 29
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
         allocate( edge_transport%model(1)%code%name(1) )
         edge_transport%model(1)%code%name = source
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+        allocate( edge_transport%model(1)%code%description(1) )
+        edge_transport%model(1)%code%description = &
+            & "Snapshot IDS written by b2mod_ual_io routine"
+#endif
         allocate( edge_transport%model(1)%code%version(1) )
         edge_transport%model(1)%code%version = newversion
         allocate( edge_transport%model(1)%code%commit(1) )
@@ -584,11 +792,11 @@ contains
         edge_sources%time(time_sind) = time
         allocate( description%time(num_time_slices) )
         description%time(time_sind) = time
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( summary%time(num_time_slices) )
         summary%time(time_sind) = time
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         !! Allocate numerics.time and set it to desired values
         allocate( numerics%time(num_time_slices) )
         numerics%time(time_sind) = time
@@ -599,7 +807,7 @@ contains
         allocate( numerics%time_end(num_time_slices) )
         numerics%time_end(time_sind) = run_end_time_IN
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         allocate( divertors%time(num_time_slices) )
         divertors%time(time_sind) = time
 #endif
@@ -638,11 +846,11 @@ contains
 
         !! Allocate ggd for number of different time steps
         allocate( edge_profiles%ggd( num_time_slices ) )
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         allocate( edge_profiles%grid_ggd( num_time_slices ) )
         allocate( edge_transport%grid_ggd( num_time_slices ) )
         allocate( edge_sources%grid_ggd( num_time_slices ) )
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( radiation%grid_ggd( num_time_slices ) )
 #endif
 #endif
@@ -734,56 +942,562 @@ contains
         allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+        !! Neutrals
+        edge_sources%source(13)%identifier%index = 701
+        allocate( edge_sources%source(13)%identifier%name(1) )
+        edge_sources%source(13)%identifier%name = "Neutrals"
+        allocate( edge_sources%source(13)%identifier%description(1) )
+        edge_sources%source(13)%identifier%description = &
+            & "Total source due to plasma-neutral interactions from "//trim(source)
+#endif
+
+        call put_equilibrium_data ( mpg, geo, equilibrium, &
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            &  summary, &
+#endif
+            &  edge_profiles, database, time_slice_value, &
+            &  .true., new_eq_ggd )
+        allocate( radiation%vacuum_toroidal_field%b0( num_time_slices ) )
+        radiation%vacuum_toroidal_field%b0( time_sind ) = &
+            &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
+        radiation%vacuum_toroidal_field%r0 = &
+            &  edge_profiles%vacuum_toroidal_field%r0
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+        allocate( description%data_entry%user(1) )
+        description%data_entry%user = username
+        allocate( description%data_entry%machine(1) )
+        description%data_entry%machine = database
+        allocate( description%data_entry%pulse_type(1) )
+        description%data_entry%pulse_type = "simulation"
+        description%data_entry%pulse = shot
+        description%data_entry%run = run
+        allocate( description%imas_version(1) )
+        description%imas_version = version
+        allocate( description%dd_version(1) )
+        description%dd_version = imas_version
+        if ( present( time_step_IN ) ) &
+          &  description%simulation%time_step = time_step_IN
+        if ( present ( time_IN ) ) &
+          &  description%simulation%time_current = time_IN
+        allocate( description%simulation%workflow(1) )
+        description%simulation%workflow = source
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+        description%simulation%time_begin = run_start_time_IN
+        description%simulation%time_end = run_end_time_IN
+#endif
+
+        i=index(B25_git_version,'-')
+        if (i.gt.0) then
+          allocate( summary%tag%name(1) )
+          write(hlp_frm,'(a,i2.2,a)') '(a',i-1,')'
+          write(summary%tag%name,hlp_frm) B25_git_version(1:i-1)
+        endif
+
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+        call write_ids_midplane( divertors%midplane, midplane_id )
+        call write_ids_midplane( edge_profiles%midplane, midplane_id )
+        call write_ids_midplane( edge_sources%midplane, midplane_id )
+        call write_ids_midplane( edge_transport%midplane, midplane_id )
+        call write_ids_midplane( summary%midplane, midplane_id )
+#endif
+
+        if (mpg%iFssep.ne.US_GRID_UNDEFINED) then
+          u = 0.0_IDS_real
+          do i = mpg%fsFcP(mpg%iFssep,1), &
+               & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+            iCv1 = mpg%fcCv(mpg%fsFc(i),1)
+            iCv2 = mpg%fcCv(mpg%fsFc(i),2)
+            if (mpg%cvOnClosedSurface(iCv1).neqv. &
+              & mpg%cvOnClosedSurface(iCv2)) u = u + state%dv%fht(mpg%fsFc(i),1)
+          end do
+          if (u.ne.0.0_IDS_real) then
+#if ( IMAS_MINOR_VERSION > 28 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%global_quantities%power_loss, u )
+#endif
+          end if
+        end if
+
+        select case (GeometryType)
+        case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+          u = 0.0_IDS_real
+          frac = 0.0_IDS_real
+          do iCv = 1, mpg%nCi
+            if (mpg%iFssep.ne.US_GRID_UNDEFINED) then
+              psi_average = 0.0_R8
+              do i = mpg%cvVxP(iCv,1), mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
+                iVx = mpg%cvVx(i)
+                psi_average = psi_average + geo%vxFpsi(iVx)
+              end do
+              psi_average = psi_average / real(mpg%cvVxP(iCv,2))
+              match_found = &
+                & (geo%psi_increasing.and.psi_average.lt.geo%fsPsi(mpg%iFssep)).or. &
+                & (.not.geo%psi_increasing.and.psi_average.gt.geo%fsPsi(mpg%iFssep))
+            else
+              match_found = .false.
+            end if
+            do is = 0, ns-1
+              u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+              if (match_found) frac = frac + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+            end do
+#ifdef B25_EIRENE
+            do is = 1, natmi
+              u = u - eneutrad(iCv,is,0)
+              if (match_found) frac = frac - eneutrad(iCv,is,0)
+            end do
+#endif
+          end do
+          if (u.ne.0.0_IDS_real) then
+            call write_sourced_value( summary%global_quantities%power_radiated, u )
+          end if
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+          if (frac.ne.0.0_IDS_real) then
+            call write_sourced_value( summary%global_quantities%power_radiated_inside_lcfs, frac )
+            call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, &
+              &  u - frac )
+          end if
+#endif
+        case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
+            &  GEOMETRY_STELLARATORISLAND, GEOMETRY_ANNULUS , &
+            &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+            &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+          u = 0.0_IDS_real
+          do iCv = 1, mpg%nCi
+            if (mpg%cvOnClosedSurface(iCv).and.mpg%nnreg(0).ne.5) cycle
+            if (mpg%nnreg(0).eq.5.and.mpg%cvReg(iCv).eq.1) cycle
+            do is = 0, ns-1
+              u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+            end do
+#ifdef B25_EIRENE
+            do is = 1, natmi
+              u = u - eneutrad(iCv,is,0)
+            end do
+#endif
+          end do
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+          if (u.ne.0.0_IDS_real) then
+            call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, u )
+          end if
+#endif
+        end select
+
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+        iactive = 0
+        do i = 1, mpg%nXpt
+          if (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep) then
+            if (iactive.eq.0) then
+              iactive = i
+            else if (geo%vxY(mpg%Xpt(iactive)).lt.geo%vxY(mpg%Xpt(i))) then
+              iactive = i
+            end if
+          end if
+        end do
+        if (iactive.gt.0) &
+            &  call write_sourced_rz( summary%boundary%x_point_main, &
+            &   geo%vxX(mpg%Xpt(iactive)), geo%vxY(mpg%Xpt(iactive)) )
+        select case (GeometryType)
+        case ( GEOMETRY_CDN )
+          call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, 0.0_IDS_real )
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+               GEOMETRY_LFS_SNOWFLAKE_MINUS )
+          if (nomp.gt.0) then
+            inactive = 0
+            do i = 1, mpg%nXpt
+              if (i.eq.iactive) cycle
+              if (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep) cycle
+              iFs = mpg%vxFs(mpg%Xpt(i))
+              if (iFs.gt.0) then
+                if (inactive.eq.0) then
+                  inactive = i
+                else if (iFs.lt.mpg%vxFs(mpg%Xpt(inactive))) then
+                  inactive = i
+                end if
+              end if
+            end do
+            if (inactive.gt.0) then
+              do i = mpg%cvFcP(omp(icsepomp),1), &
+                   & mpg%cvFcP(omp(icsepomp),1) + mpg%cvFcP(omp(icsepomp),2) - 1
+                iFs = mpg%fcFs(mpg%cvFc(i))
+                if (iFs.eq.mpg%iFssep) then
+                  xi = (geo%vxX(mpg%fcVx(mpg%cvFc(i),1)) + &
+                     &  geo%vxX(mpg%fcVx(mpg%cvFc(i),2)))/2.0_R8
+                  yi = (geo%vxY(mpg%fcVx(mpg%cvFc(i),1)) + &
+                     &  geo%vxY(mpg%fcVx(mpg%cvFc(i),2)))/2.0_R8
+                end if
+              end do
+              found = .false.
+              do i = icsepomp, nomp
+                if (found) cycle
+                do j = mpg%cvFcP(omp(i),1), &
+                     & mpg%cvFcP(omp(i),1) + mpg%cvFcP(omp(i),2) - 1
+                  iFs = mpg%fcFs(mpg%cvFc(j))
+                  if (iFs.eq.mpg%vxFs(mpg%Xpt(inactive))) then
+                    found = .true.
+                    xo = (geo%vxX(mpg%fcVx(mpg%cvFc(j),1)) + &
+                       &  geo%vxX(mpg%fcVx(mpg%cvFc(j),2)))/2.0_R8
+                    yo = (geo%vxY(mpg%fcVx(mpg%cvFc(j),1)) + &
+                       &  geo%vxY(mpg%fcVx(mpg%cvFc(j),2)))/2.0_R8
+                  end if
+                end do
+              end do
+              if (found) then
+                u = norm ( xo-xi, yo-yi )
+                call write_sourced_value( &
+                  &  summary%boundary%distance_inner_outer_separatrices, u )
+              end if
+            end if
+          end if
+        end select
+#endif
+
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+        if ( mpg%nStr.gt.0 ) then
+          allocate( power_currents( maxval(mpg%strDiv) ) )
+          allocate( power_convected( maxval(mpg%strDiv) ) )
+          allocate( power_conducted( maxval(mpg%strDiv) ) )
+          allocate( power_recombination_plasma( maxval(mpg%strDiv) ) )
+          allocate( current_incident( maxval(mpg%strDiv) ) )
+          do i = 1, maxval(mpg%strDiv)
+            power_conducted(i) = 0.0_IDS_real
+            power_convected(i) = 0.0_IDS_real
+            power_recombination_plasma(i) = 0.0_IDS_real
+            power_currents(i) = 0.0_IDS_real
+            current_incident(i) = 0.0_IDS_real
+            do j = mpg%divFcP(i,1), mpg%divFcP(i,1) + mpg%divFcP(i,2) - 1
+              iFc = mpg%divFc(j)
+              u = 0.0_R8
+              do is = 0, ns-1
+                if (is_neutral(is).and.nint(zn(is)).eq.1) then
+                  u = u + mpg%divFcOr(j)*state%pl%tn(iCv)* &
+                    & (1.5_R8*(state%dv%fna_32(iFc,0,is) + &
+                    &          state%dv%fna_32(iFc,1,is) ) + &
+                    &  2.5_R8*(state%dv%fna_52(iFc,0,is) + &
+                    &          state%dv%fna_52(iFc,1,is) ) )
+                else
+                  u = u + mpg%divFcOr(j)*  &
+                    & (state%pl%ti(iCv) + &
+                    &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
+                    & (1.5_R8*(state%dv%fna_32(iFc,0,is) + &
+                    &          state%dv%fna_32(iFc,1,is) ) + &
+                    &  2.5_R8*(state%dv%fna_52(iFc,0,is) + &
+                    &          state%dv%fna_52(iFc,1,is) ) )
+                  power_recombination_plasma(i) = &
+                    &  power_recombination_plasma(i) + mpg%divFcOr(j)* &
+                    & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) )
+                end if
+              end do
+              power_convected(i) = power_convected(i) + u
+              power_conducted(i) = power_conducted(i) - u + mpg%divFcOr(j) *  &
+                  & ( state%dv%fht(iFc,0) - state%dv%fhj(iFc,0) +  &
+                  &   state%dv%fht(iFc,1) - state%dv%fhj(iFc,1) )
+              power_currents(i) = power_currents(i) + mpg%divFcOr(j) * &
+                  & ( state%dv%fhj(iFc,0) + state%dv%fhj(iFc,1) )
+              current_incident(i) = current_incident(i) + mpg%divFcOr(j) * &
+                  & ( state%dv%fch(iFc,0) + state%dv%fch(iFc,1) )
+            end do
+          end do
+        end if
+        select case ( GeometryType )
+        case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+          if (mpg%nStr.gt.0) then
+            allocate( divertors%divertor( mpg%nStr ) )
+            do j = 1, mpg%nStr
+              i = mpg%strDiv(j)
+              allocate( divertors%divertor(i)%name(1) )
+              allocate( divertors%divertor(i)%identifier(1) )
+              allocate( divertors%divertor(i)%target(1) )
+              allocate( divertors%divertor(i)%target(1)%name(1) )
+              allocate( divertors%divertor(i)%target(1)%identifier(1) )
+              if (streql(plate_name(i),'W')) then
+                divertors%divertor(i)%name = 'Western divertor'
+                divertors%divertor(i)%target(1)%name = 'Western target'
+              else if (streql(plate_name(i),'E')) then
+                divertors%divertor(i)%name = 'Eastern divertor'
+                divertors%divertor(i)%target(1)%name = 'Eastern target'
+              else
+                divertors%divertor(i)%name = 'Divertor '//int2str(i)
+                divertors%divertor(i)%target(1)%name = 'Target '//int2str(i)
+              end if
+              divertors%divertor(i)%identifier = plate_name(i)
+              divertors%divertor(i)%target(1)%identifier = plate_name(i)
+              divertors%divertor(i)%target(1)%extension_r = extension_r(i)
+              divertors%divertor(i)%target(1)%extension_z = extension_z(i)
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%flux_expansion, &
+                &  flux_expansion(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%wetted_area, &
+                &  wetted_area(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%wetted_area, &
+                &  wetted_area(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%power_incident_fraction, &
+                &  1.0_IDS_real )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_conducted, &
+                & power_conducted(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_conducted, &
+                & power_conducted(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_convected, &
+                & power_convected(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_convected, &
+                & power_convected(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_recombination_plasma, &
+                & power_recombination_plasma(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_recombination_plasma, &
+                & power_recombination_plasma(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_currents, &
+                & power_currents(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_currents, &
+                & power_currents(i) )
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%current_incident, &
+                & current_incident(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%current_incident, &
+                & current_incident(i) )
+#endif
+            end do
+          end if
+        case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
+          allocate( divertors%divertor(1) )
+          allocate( divertors%divertor(1)%name(1) )
+          allocate( divertors%divertor(1)%identifier(1) )
+          if (geo%LSN) then
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LSN'
+          else
+            divertors%divertor(1)%name = 'Upper divertor'
+            divertors%divertor(1)%identifier = 'USN'
+          end if
+          allocate( divertors%divertor(1)%target(2) )
+          allocate( divertors%divertor(1)%target(1)%name(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2)%name(1) )
+          allocate( divertors%divertor(1)%target(2)%identifier(1) )
+          divertors%divertor(1)%target(1)%extension_r = extension_r(1)
+          divertors%divertor(1)%target(1)%extension_z = extension_z(1)
+          divertors%divertor(1)%target(2)%extension_r = extension_r(2)
+          divertors%divertor(1)%target(2)%extension_z = extension_z(2)
+          if (geo%LSN) then
+            divertors%divertor(1)%target(1)%name = "Inner target"
+            divertors%divertor(1)%target(1)%identifier = "ID"
+            divertors%divertor(1)%target(2)%name = "Outer target"
+            divertors%divertor(1)%target(2)%identifier = "OD"
+          else
+            divertors%divertor(1)%target(1)%name = "Outer target"
+            divertors%divertor(1)%target(1)%identifier = "OD"
+            divertors%divertor(1)%target(2)%name = "Inner target"
+            divertors%divertor(1)%target(2)%identifier = "ID"
+          end if
+          do i = 1, maxval(mpg%strDiv)
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%flux_expansion, &
+              &  flux_expansion(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%wetted_area, &
+              &  wetted_area(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_conducted, &
+              &  power_conducted(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_convected, &
+              &  power_convected(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_recombination_plasma, &
+              &  power_recombination_plasma(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_currents, &
+              &  power_currents(i) )
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%current_incident, &
+              &  current_incident(i) )
+#endif
+          end do
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, &
+            &  power_recombination_plasma(1)+power_recombination_plasma(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, &
+            &  power_currents(1)+power_currents(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  power_currents(1)+power_currents(2) )
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  current_incident(1)+current_incident(2) )
+#endif
+        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+        &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+          allocate( divertors%divertor(2) )
+          allocate( divertors%divertor(1)%name(1) )
+          allocate( divertors%divertor(1)%identifier(1) )
+          allocate( divertors%divertor(2)%name(1) )
+          allocate( divertors%divertor(2)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2) )
+          allocate( divertors%divertor(2)%target(2) )
+          allocate( divertors%divertor(1)%target(1)%name(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2)%name(1) )
+          allocate( divertors%divertor(1)%target(2)%identifier(1) )
+          allocate( divertors%divertor(2)%target(1)%name(1) )
+          allocate( divertors%divertor(2)%target(1)%identifier(1) )
+          allocate( divertors%divertor(2)%target(2)%name(1) )
+          allocate( divertors%divertor(2)%target(2)%identifier(1) )
+          if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+          &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Lower SF divertor'
+            divertors%divertor(2)%identifier = 'LSFD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Snowflake lower outer target"
+            divertors%divertor(2)%target(1)%identifier = "LSFOD"
+            divertors%divertor(2)%target(2)%name = "Snowflake lower inner target"
+            divertors%divertor(2)%target(2)%identifier = "LSFID"
+          else
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Upper divertor'
+            divertors%divertor(2)%identifier = 'UD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Upper inner target"
+            divertors%divertor(2)%target(1)%identifier = "UID"
+            divertors%divertor(2)%target(2)%name = "Upper outer target"
+            divertors%divertor(2)%target(2)%identifier = "UOD"
+          endif
+          do i = 1, maxval(mpg%strDiv)
+            if (i.eq.1.or.i.eq.4) then
+              k = 1
+            else
+              k = 2
+            end if
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%flux_expansion, &
+              &  flux_expansion(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%wetted_area, &
+              &  wetted_area(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_conducted, &
+              &  power_conducted(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_convected, &
+              &  power_convected(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_recombination_plasma, &
+              &  power_recombination_plasma(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_currents, &
+              &  power_currents(i) )
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%current_incident, &
+              &  current_incident(i) )
+#endif
+          end do
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, &
+            &  power_recombination_plasma(1)+power_recombination_plasma(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, &
+            &  power_currents(1)+power_currents(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  power_currents(1)+power_currents(4) )
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  current_incident(1)+current_incident(4) )
+#endif
+          call write_timed_value( &
+            &  divertors%divertor(2)%wetted_area, &
+            &  wetted_area(2)+wetted_area(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_conducted, &
+            &  power_conducted(2)+power_conducted(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_convected, &
+            &  power_convected(2)+power_convected(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_recombination_plasma, &
+            &  power_recombination_plasma(2)+power_recombination_plasma(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_currents, &
+            &  power_currents(2)+power_currents(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%current_incident, &
+            &  power_currents(2)+power_currents(3) )
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+          call write_timed_value( &
+            &  divertors%divertor(2)%current_incident, &
+            &  current_incident(2)+current_incident(3) )
+#endif
+        end select
+        deallocate( power_currents )
+        deallocate( power_convected )
+        deallocate( power_conducted )
+        deallocate( power_recombination_plasma )
+        deallocate( current_incident )
+#endif
+#endif
 
         !! Write grid & grid subsets/subgrids
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
-#if IMAS_MINOR_VERSION < 15
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_profiles%ggd( time_sind )%grid,                        &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_transport%model(1)%ggd( time_sind )%grid,              &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_profiles%ggd( time_sind )%grid )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_transport%model(1)%ggd( time_sind )%grid )
         do is = 1, nsources
-            call b2_IMAS_Fill_Grid_Desc( IDSmap,                              &
-                &   edge_sources%source(is)%ggd( time_sind )%grid,            &
-                &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),      &
-                &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, &
-                &   bottomiy, nnreg, topcut, region, cflags,                  &
-                &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            call b2_IMAS_Fill_Grid_Desc( mpg, geo,                          &
+                &   edge_sources%source(is)%ggd( time_sind )%grid )
         end do
 #else
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_profiles%grid_ggd( time_sind ),                        &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_transport%grid_ggd( time_sind ),                       &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_sources%grid_ggd( time_sind ),                         &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-#if IMAS_MINOR_VERSION > 21
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   radiation%grid_ggd( time_sind ),                            &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_profiles%grid_ggd( time_sind ) )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_transport%grid_ggd( time_sind ) )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_sources%grid_ggd( time_sind ) )
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   radiation%grid_ggd( time_sind ) )
 #endif
 #endif
 #else
@@ -792,11 +1506,11 @@ contains
 #endif
 
         !! Allocate and set time slice value
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         radiation%grid_ggd( time_sind )%time = time_slice_value
 #endif
 #endif
@@ -805,7 +1519,7 @@ contains
         do is = 1, nsources
           edge_sources%source(is)%ggd( time_sind )%time = time_slice_value
         end do
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         do j = 1, n_process
           allocate( radiation%process(j)%ggd( num_time_slices ) )
           radiation%process(j)%ggd( time_sind )%time = time_slice_value
@@ -887,7 +1601,7 @@ contains
         end if
 #endif
         allocate( edge_profiles%ggd( time_sind )%ion( nsion ) )
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( radiation%process(1)%ggd( time_sind )%ion( nsion ) )
         allocate( radiation%process(2)%ggd( time_sind )%ion( nsion ) )
 #endif
@@ -917,7 +1631,7 @@ contains
           end do
           allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1) )
 
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           allocate( radiation%process(1)%ggd( time_sind )%ion( js )%label(1) )
           allocate( radiation%process(1)%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
           do is = 1, nfluids(js)
@@ -940,7 +1654,7 @@ contains
               edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             end do
             edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
 #endif
@@ -963,11 +1677,16 @@ contains
           edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%a = am( is )
 
           ! Put nuclear charge
+#if IMAS_MAJOR_VERSION < 4
           edge_profiles%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
           edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
+#else
+          edge_profiles%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
+          edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
+#endif
 
           ! Put number of atoms
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
           edge_profiles%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
           edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
 #else
@@ -1011,10 +1730,14 @@ contains
             edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%a = am( is )
 
             ! Put nuclear charge
+#if IMAS_MAJOR_VERSION < 4
             edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
+#else
+            edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
+#endif
 
             ! Put number of atoms
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
             edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
 #else
             edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
@@ -1040,7 +1763,7 @@ contains
             end do
           end do
 
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           ! Put ion label identifying the species
           radiation%process(1)%ggd( time_sind )%ion( js )%label = species_list( js )
           radiation%process(2)%ggd( time_sind )%ion( js )%label = species_list( js )
@@ -1058,8 +1781,13 @@ contains
           radiation%process(2)%ggd( time_sind )%ion( js )%element(1)%a = am( is )
 
           ! Put nuclear charge
+#if IMAS_MAJOR_VERSION < 4
           radiation%process(1)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
           radiation%process(2)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
+#else
+          radiation%process(1)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
+          radiation%process(2)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
+#endif
 
           ! Put number of atoms
           radiation%process(1)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
@@ -1128,16 +1856,24 @@ contains
                 if ( micmp( k, is ) > 0 ) then
                   i = i + 1
                   edge_profiles%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
+#if IMAS_MAJOR_VERSION < 4
+                  edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
+#else
                   edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-#if IMAS_MINOR_VERSION < 15
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                   edge_profiles%ggd( time_sind )%ion( js )%element( i )%multiplicity = micmp(k,is)
 #else
                   edge_profiles%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
 #endif
                   do ii = 1, nsources
                     edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
+#if IMAS_MAJOR_VERSION < 4
+                    edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
+#else
                     edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-#if IMAS_MINOR_VERSION < 15
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                     edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%multiplicity = &
                         &   micmp(k,is)
 #else
@@ -1146,8 +1882,12 @@ contains
 #endif
                   end do
                   edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
+#if IMAS_MAJOR_VERSION < 4
+                  edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
+#else
                   edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-#if IMAS_MINOR_VERSION < 15
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                   edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%multiplicity = micmp(k,is)
 #else
                   edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
@@ -1288,8 +2028,12 @@ contains
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%element(1) )
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
-#if IMAS_MINOR_VERSION < 15
+#else
+             edge_profiles%ggd( time_sind )%neutral( js )%element(1)%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
 #else
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
@@ -1300,8 +2044,12 @@ contains
                 allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1) )
                 allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%label(1) )
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
-#if IMAS_MINOR_VERSION < 15
+#else
+                edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
 #else
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
@@ -1312,8 +2060,12 @@ contains
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1) )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
-#if IMAS_MINOR_VERSION < 15
+#else
+             edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
 #else
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
@@ -1423,9 +2175,14 @@ contains
                   if (mlcmp( k, j ) > 0 ) then
                       i = i + 1
                       edge_profiles%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
+#if IMAS_MAJOR_VERSION < 4
+                      edge_profiles%ggd( time_sind )%neutral( js )%element(i)%z_n = &
+                         &   real(nchara(k),IDS_real)
+#else
                       edge_profiles%ggd( time_sind )%neutral( js )%element(i)%z_n = &
                          &   nchara( k )
-#if IMAS_MINOR_VERSION < 15
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                       edge_profiles%ggd( time_sind )%neutral( js )%element(i)%multiplicity = &
                          &   mlcmp(k,j)
 #else
@@ -1435,15 +2192,25 @@ contains
                       do icnt = 1, nsources
                          edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%a = &
                             &   nmassa( k )
+#if IMAS_MAJOR_VERSION < 4
+                         edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
+                            &   real(nchara(k),IDS_real)
+#else
                          edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
                             &   nchara( k )
+#endif
                          edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
                             &   mlcmp(k,j)
                       end do
                       edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
+#if IMAS_MAJOR_VERSION < 4
+                      edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
+                         &   real(nchara(k),IDS_real)
+#else
                       edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
                          &   nchara( k )
-#if IMAS_MINOR_VERSION < 15
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                       edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%multiplicity = &
                          &   mlcmp(k,j)
 #else
@@ -1532,8 +2299,12 @@ contains
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label(1) )
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
-#if IMAS_MINOR_VERSION < 15
+#else
+               edge_profiles%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1
 #else
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
@@ -1558,9 +2329,14 @@ contains
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
                      &   zn( is )
-#if IMAS_MINOR_VERSION < 15
+#else
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
+                     &   nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1.0_IDS_real
 #else
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
@@ -1585,8 +2361,12 @@ contains
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
-#if IMAS_MINOR_VERSION < 15
+#else
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1
 #else
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
@@ -1606,7 +2386,7 @@ contains
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     "Fluid neutral species from B2.5"
             end do
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             allocate( radiation%process(1)%ggd( time_sind )%neutral( nneut ) )
             j = 0
             do js = 1, nspecies
@@ -1618,7 +2398,11 @@ contains
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%a = am(is)
+#if IMAS_MAJOR_VERSION < 4
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn(is)
+#else
+               radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
+#endif
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
                radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list(js)
                radiation%process(1)%ggd( time_sind )%neutral( j )%ion_index = js
@@ -1638,7 +2422,7 @@ contains
 #endif
         end if
 
-#if ( defined(B25_EIRENE) && IMAS_MINOR_VERSION > 21 )
+#if ( defined(B25_EIRENE) && ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 ) )
         if (switch%use_eirene.ne.0) then
           allocate( radiation%process(3)%ggd( time_sind )%neutral( nneut ) )
           do is = 1, nneut
@@ -1654,7 +2438,11 @@ contains
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%a = nmassa( is )
+#if IMAS_MAJOR_VERSION < 4
+            radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = real(nchara(is),IDS_real)
+#else
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = nchara( is )
+#endif
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
             radiation%process(3)%ggd( time_sind )%neutral( js )%label = &
                 &    species_list(js)
@@ -1687,7 +2475,11 @@ contains
               if (mlcmp( k, j ) > 0 ) then
                 i = i + 1
                 radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
+#if IMAS_MAJOR_VERSION < 4
+                radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%z_n = real(nchara(k),IDS_real)
+#else
                 radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%z_n = nchara( k )
+#endif
                 radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
                     &   mlcmp(k,j)
               end if
@@ -1740,7 +2532,11 @@ contains
               if ( micmp( k, is ) > 0 ) then
                 i = i + 1
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
+#if IMAS_MAJOR_VERSION < 4
+                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
+#else
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
+#endif
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
               end if
             end do
@@ -1876,20 +2672,20 @@ contains
         end if
 #endif
 #endif
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_sourced_string( summary%configuration, configuration )
 #endif
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
             call logmsg( LOGDEBUG, &
             &   "b2mod_ual_io.B25_process_ids: writing plasma state" )
 
             !! Find grid subset base indices out of the available grid subset
             !! data stored in the IDS. That is done using IMAS GGD routine
             !! findGridSubsetByName().
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
             iGsCoreBoundary = findGridSubsetByName(         &
                 &   edge_profiles%ggd( time_sind )%grid,    &
                 &   "Core boundary" )
@@ -1901,10 +2697,17 @@ contains
                 &   ggd( time_sind )%grid, "Core" )
             iGsSOL = findGridSubsetByName( edge_profiles%       &
                 &   ggd( time_sind )%grid, "SOL" )
-            iGsIDivertor = findGridSubsetByName( edge_profiles% &
+            if (geo%LSN) then
+              iGsIDivertor = findGridSubsetByName( edge_profiles% &
                 &   ggd( time_sind )%grid, "Western divertor" )
-            iGsODivertor = findGridSubsetByName( edge_profiles% &
+              iGsODivertor = findGridSubsetByName( edge_profiles% &
                 &   ggd( time_sind )%grid, "Eastern divertor" )
+            else
+              iGsIDivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( time_sind )%grid, "Eastern divertor" )
+              iGsODivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( time_sind )%grid, "Western divertor" )
+            end if
 #else
             iGsCoreBoundary = findGridSubsetByName(   &
                 &   edge_profiles%grid_ggd( time_sind ), "Core boundary" )
@@ -1916,12 +2719,19 @@ contains
                 &   edge_profiles%grid_ggd( time_sind ), "Core" )
             iGsSOL = findGridSubsetByName(            &
                 &   edge_profiles%grid_ggd( time_sind ), "SOL" )
-            iGsIDivertor = findGridSubsetByName(      &
+            if (geo%LSN) then
+              iGsIDivertor = findGridSubsetByName(      &
                 &   edge_profiles%grid_ggd( time_sind ), "Western divertor" )
-            iGsODivertor = findGridSubsetByName(      &
+              iGsODivertor = findGridSubsetByName(      &
                 &   edge_profiles%grid_ggd( time_sind ), "Eastern divertor" )
+            else
+              iGsIDivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Eastern divertor" )
+              iGsODivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Western divertor" )
+            end if
 #endif
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
             edge_grid = edge_profiles%ggd( time_sind )%grid
             transport_grid = edge_transport%ggd( time_sind )%grid
             sources_grid = edge_sources%ggd( time_sind )%grid
@@ -1929,24 +2739,88 @@ contains
             edge_grid = edge_profiles%grid_ggd( time_sind )
             transport_grid = edge_transport%grid_ggd( time_sind )
             sources_grid = edge_sources%grid_ggd( time_sind )
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            radiation_grid = radiation%grid_ggd( time_sind )
+#endif
 #endif
             !! ne: Electron density
             call write_IDS_quantity( edge_grid, mpg, geo,                   &
                 &   val = edge_profiles%ggd( time_sind )%electrons%density, &
                 &   value = state%dv%ne )
             !! fne: Electron particle flux
-            totFace(:,0) = state%dv%fne(:,0)/geo%fcS(:)
-            totFace(:,1) = state%dv%fne(:,1)/geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fne, flxFace)
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+            call write_face_scalar( transport_grid, mpg,                    &
+                &   val = edge_transport%model(1)%ggd( time_sind )%         &
+                &         electrons%particles%flux_pol,                     &
+                &   value = flxFace(:,0) )
+            call write_face_scalar( transport_grid, mpg,                    &
+                &   val = edge_transport%model(1)%ggd( time_sind )%         &
+                &         electrons%particles%flux_radial,                  &
+                &   value = flxFace(:,1) )
+#else
+            call split_face_flux( mpg, geo, flxFace, tmpFace )
             call write_face_scalar( transport_grid, mpg,                    &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
-                &   value = totFace )
+                &   value = tmpFace )
+#endif
             !! sne: Electron particle sources
             tmpCv(:) = ( state%sr%sne(:,0) + state%sr%sne(:,1) * state%dv%ne(:) ) / geo%cvVol(:)
             call write_cell_scalar( sources_grid, mpg,                      &
                 &   scalar = edge_sources%source(1)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
+            tmpCv(:) = state_ext%sne(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                      &
+                &   scalar = edge_sources%source(2)%ggd( time_sind )%       &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%srw%b2stbc_sne(:) + state%srw%b2stbm_sne(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                      &
+                &   scalar = edge_sources%source(3)%ggd( time_sind )%       &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%sr%snedt(:,0) +                              &
+                &        state%sr%snedt(:,1) * state%dv%ne(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                      &
+                &   scalar = edge_sources%source(4)%ggd( time_sind )%       &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            if (switch%use_eirene.eq.0) then
+                tmpCv(:) = state%srw%b2stbr_sne(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%particles,                       &
+                    &   b2CellData = tmpCv )
+            end if
+            tmpCv = 0.0_IDS_real
+            do is = 0, ns-1
+              tmpCv(:) = tmpCv(:) + state%srw%rsana(:,is)
+            end do
+            tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                      &
+                &   scalar = edge_sources%source(7)%ggd( time_sind )%       &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            tmpCv = 0.0_IDS_real
+            do is = 0, ns-1
+              tmpCv(:) = tmpCv(:) + state%srw%rrana(:,is)
+            end do
+            tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                      &
+                &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%sne0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                    &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%particles,                           &
+                &   b2CellData = tmpCv )
+            end if
+#endif
 
             !! na: Ion density
             do is = 1, nsion
@@ -1963,6 +2837,189 @@ contains
                     &   val = edge_profiles%ggd( time_sind )%               &
                     &         ion(is)%density,                              &
                     &   value = tmpCv )
+            !! fna: Ion particle flux
+                totflux(:,0:1) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,ispion(is,js)), flxFace)
+                  totflux(:,:) = totflux(:,:) + flxFace(:,:)
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%flux_pol,    &
+                      &   value = flxFace(:,0) )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%flux_radial, &
+                      &   value = flxFace(:,1) )
+#else
+                  call split_face_flux( mpg, geo, flxFace, tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%flux,        &
+                      &   value = tmpFace )
+#endif
+                end do
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+                call write_face_scalar( transport_grid, mpg,                 &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%      &
+                    &         ion( is )%particles%flux_pol,                  &
+                    &   value = totflux(:,0) )
+                call write_face_scalar( transport_grid, mpg,                 &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%      &
+                    &         ion( is )%particles%flux_radial,               &
+                    &   value = totflux(:,1) )
+#else
+                call split_face_flux( mpg, geo, totflux, tmpFace )
+                call write_face_scalar( transport_grid, mpg,                 &
+                    &   val = edge_transport%model(1)%ggd( time_sind )%      &
+                    &         ion( is )%particles%flux,                      &
+                    &   value = tmpFace )
+#endif
+            !! cdna: Ion diffusivity
+                do js = 1, istion(is)
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%d_pol,       &
+                      &   value = state%co%cdna(:,0,ispion(is,js)) )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%d_radial,    &
+                      &   value = state%co%cdna(:,1,ispion(is,js)) )
+            !! cvla: Ion diffusivity
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%v_pol,       &
+                      &   value = state%co%cvla(:,0,ispion(is,js)) )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%v_radial,    &
+                      &   value = state%co%cvla(:,1,ispion(is,js)) )
+#else
+                  call split_face_flux( mpg, geo,                            &
+                      &   state%co%cdna(:,:,ispion(is,js)), tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%d,           &
+                      &   value = tmpFace )
+                  call split_face_flux( mpg, geo,                            &
+                      &   state%co%cvla(:,:,ispion(is,js)), tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%particles%v,           &
+                      &   value = tmpFace )
+#endif
+            !! fllim0fna: Ion flux limiter
+                  call split_face_flux( mpg, geo,                            &
+                      &   state%co%fllim0fna(:,:,ispion(is,js)), tmpFace )
+                  call write_face_scalar( transport_grid, mpg,               &
+                      &   val = edge_transport%model(1)%ggd( time_sind )%    &
+                      &         ion( is )%state( js )%                       &
+                      &         particles%flux_limiter,                      &
+                      &   value = tmpFace )
+                end do
+            !! sna: Ion particle sources
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = ( state%sr%sna(:,0,ispion(is,js)) +            &
+                      &        state%sr%sna(:,1,ispion(is,js)) *            &
+                      &        state%pl%na(:,ispion(is,js)) ) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_scalar( sources_grid, mpg,                &
+                      &   scalar = edge_sources%source(1)%                  &
+                      &   ggd( time_sind )%ion( is )%state( js )%particles, &
+                      &   b2CellData = tmpCv )
+                end do
+                call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(1)%                  &
+                      &   ggd( time_sind )%ion( is )%particles,             &
+                      &   b2CellData = totCv )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = state_ext%sna(:,ispion(is,js)) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_scalar( sources_grid, mpg,                &
+                      &   scalar = edge_sources%source(2)%ggd( time_sind )% &
+                      &            ion( is )%state( js )%particles,         &
+                      &   b2CellData = tmpCv )
+                end do
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
+                    &            ion( is )%particles,                       &
+                    &   b2CellData = totCv )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = ( state%srw%b2stbc_sna(:,ispion(is,js)) +      &
+                     &         state%srw%b2stbm_sna(:,ispion(is,js)) ) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_scalar( sources_grid, mpg,                &
+                      &   scalar = edge_sources%source(3)%ggd( time_sind )% &
+                      &            ion( is )%state( js )%particles,         &
+                      &   b2CellData = tmpCv )
+                end do
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
+                    &            ion( is )%particles,                       &
+                    &   b2CellData = totCv )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = ( state%sr%snadt(:,0,ispion(is,js)) +          &
+                        &      state%sr%snadt(:,1,ispion(is,js)) *          &
+                        &      state%pl%na(:,ispion(is,js)) ) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_scalar( sources_grid, mpg,                &
+                      &   scalar = edge_sources%source(4)%ggd( time_sind )% &
+                      &            ion( is )%state( js )%particles,         &
+                      &   b2CellData = tmpCv )
+                end do
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
+                    &            ion( is )%particles,                       &
+                    &   b2CellData = totCv )
+                if (switch%use_eirene.eq.0) then
+                  totCv(:) = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv(:) = state%srw%b2stbr_sna(:,ispion(is,js)) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            ion( is )%state( js )%particles,         &
+                        &   b2CellData = tmpCv )
+                  end do
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            ion( is )%particles,                     &
+                        &   b2CellData = totCv )
+                end if
+                do js = 1, istion(is)
+                  tmpCv(:) = state%srw%rsana(:,ispion(is,js)) / geo%cvVol(:)
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                  tmpCv(:) = state%srw%rrana(:,ispion(is,js)) / geo%cvVol(:)
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                  tmpCv(:) = state%srw%rcxna(:,ispion(is,js)) / geo%cvVol(:)
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(9)%ggd( time_sind )%   &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                end do
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+                if (switch%use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:) = state%srw%sna0_eir_tot(:,ispion(is,js)) /      &
+                      &   geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                      &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                      &            ion( is )%state( js )%particles,           &
+                      &   b2CellData = tmpCv )
+                  end do
+                end if
+#endif
               else
                 totCv(:) = 0.0_IDS_real
                 do js = 1, istion(is)
@@ -1996,7 +3053,212 @@ contains
                       &                     ion( is )%state( js )%velocity, &
                       &   b2CellData = state%pl%ua(:,ispion(is,js)),        &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                !! wadia: Diamagnetic ion velocity
+                  call write_face_vector_component( edge_grid, mpg,           &
+                      &   vectorComponent = edge_profiles%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%velocity_diamagnetic,   &
+                      &   b2FaceData = state%dv%wadia(:,0,ispion(is,js)),     &
+                      &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                  call write_face_vector_component( edge_grid, mpg,           &
+                      &   vectorComponent = edge_profiles%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%velocity_diamagnetic,   &
+                      &   b2FaceData = state%dv%wadia(:,1,ispion(is,js)),     &
+                      &   vectorID = VEC_ALIGN_RADIAL_ID )
+                !! vaecrb: ExB ion velocity
+                  call write_face_vector_component( edge_grid, mpg,           &
+                      &   vectorComponent = edge_profiles%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%velocity_exb,           &
+                      &   b2FaceData = state%dv%vaecrb(:,0,ispion(is,js)),    &
+                      &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                  call write_face_vector_component( edge_grid, mpg,           &
+                      &   vectorComponent = edge_profiles%ggd( time_sind )%   &
+                      &         ion( is )%state( js )%velocity_exb,           &
+                      &   b2FaceData = state%dv%vaecrb(:,1,ispion(is,js)),    &
+                      &   vectorID = VEC_ALIGN_RADIAL_ID )
+                !! cvsa: Ion diffusivity
+                  call write_face_vector_component( transport_grid, mpg,      &
+                      &   vectorComponent = edge_transport%model(1)%          &
+                      &         ggd( time_sind )%ion( is )%state( js )%       &
+                      &         momentum%d,                                   &
+                      &   b2FaceData = state%co%cvsa(:,0,ispion(is,js)),      &
+                      &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                  call write_face_vector_component( transport_grid, mpg,      &
+                      &   vectorComponent = edge_transport%model(1)%          &
+                      &         ggd( time_sind )%ion( is )%state( js )%       &
+                      &         momentum%d,                                   &
+                      &   b2FaceData = state%co%cvsa(:,0,ispion(is,js)),      &
+                      &   vectorID = VEC_ALIGN_RADIAL_ID )
                 end do
+                !! fmo: Ion momentum flux
+                totflux(:,:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  call divide_by_area( mpg%nFc, geo, state%dv%fmo(1,0,ispion(is,js)), flxFace)
+                  call write_face_vector_component( transport_grid, mpg,      &
+                      &   vectorComponent = edge_transport%model(1)%          &
+                      &                     ggd( time_sind )%ion( is )%       &
+                      &                     state( js )%momentum%flux,        &
+                      &   b2FaceData = flxFace,                               &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  totflux(:,0) = totflux(:,0) + flxFace(:,0)
+                  totflux(:,1) = totflux(:,1) + flxFace(:,1)
+                end do
+                call write_face_vector_component( transport_grid, mpg,        &
+                    &   vectorComponent = edge_transport%model(1)%            &
+                    &                     ggd( time_sind )%ion( is )%         &
+                    &                     momentum%flux,                      &
+                    &   b2FaceData = totflux,                                 &
+                    &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                !! fllimvisc: Ion parallel momentum transport flux limit
+                do js = 1, istion(is)
+                  call write_face_vector_component( transport_grid, mpg,      &
+                      &   vectorComponent = edge_transport%model(1)%          &
+                      &                     ggd( time_sind )%ion( is )%       &
+                      &                     state( js )%momentum%flux_limiter,&
+                      &   b2FaceData = state%co%fllimvisc(:,ispion(is,js)),   &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                end do
+                !! smo: Ion parallel momentum sources
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  do iCv = 1, mpg%nCv
+                    tmpCv(iCv) = ( state%sr%smo(iCv,0,ispion(is,js)) +        &
+                      &            state%sr%smo(iCv,1,ispion(is,js)) *        &
+                      &            state%pl%ua(iCv,ispion(is,js)) +           &
+                      &            state%sr%smo(iCv,2,ispion(is,js)) *        &
+                      &                    roxa(iCv,ispion(is,js)) +          &
+                      &            state%sr%smo(iCv,3,ispion(is,js)) *        &
+                      &                    roxa(iCv,ispion(is,js)) *          &
+                      &            state%pl%ua(iCv,ispion(is,js)) ) / geo%cvVol(iCv)
+                  end do
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(1)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                end do
+                call write_cell_vector_component( sources_grid, mpg,           &
+                    &   vectorComponent = edge_sources%source(1)%              &
+                    &                     ggd( time_sind )%ion( is )%momentum, &
+                    &   b2CellData = totCv,                                    &
+                    &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = state_ext%smo(:,ispion(is,js)) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(2)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                end do
+                call write_cell_vector_component( sources_grid, mpg,    &
+                      &   vectorComponent = edge_sources%source(2)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     momentum,                   &
+                      &   b2CellData = totCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = ( state%srw%b2stbc_smo(:,ispion(is,js)) +  &
+                      &        state%srw%b2stbm_smo(:,ispion(is,js)) ) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(3)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                end do
+                call write_cell_vector_component( sources_grid, mpg,    &
+                      &   vectorComponent = edge_sources%source(3)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     momentum,                   &
+                      &   b2CellData = totCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  do iCv = 1, mpg%nCv
+                    tmpCv(iCv) = ( state%sr%smodt(iCv,0,ispion(is,js)) + &
+                      &            state%sr%smodt(iCv,1,ispion(is,js)) * &
+                      &            state%pl%ua(iCv,ispion(is,js)) +      &
+                      &            state%sr%smodt(iCv,2,ispion(is,js)) * &
+                      &                     roxa(iCv,ispion(is,js)) +    &
+                      &            state%sr%smodt(iCv,3,ispion(is,js)) * &
+                      &                    roxa(iCv,ispion(is,js)) *     &
+                      &            state%pl%ua(iCv,ispion(is,js)) ) / geo%cvVol(iCv)
+                  end do
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(4)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                end do
+                call write_cell_vector_component( sources_grid, mpg,    &
+                      &   vectorComponent = edge_sources%source(4)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     momentum,                   &
+                      &   b2CellData = totCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                if (switch%use_eirene.eq.0) then
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv(:) = state%srw%b2stbr_smo(:,ispion(is,js)) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_vector_component( sources_grid, mpg,&
+                        &   vectorComponent = edge_sources%source(5)%   &
+                        &            ggd( time_sind )%ion( is )%        &
+                        &            state( js )%momentum,              &
+                        &   b2CellData = tmpCv,                         &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                  call write_cell_vector_component( sources_grid, mpg,    &
+                        &   vectorComponent = edge_sources%source(5)%     &
+                        &            ggd( time_sind )%ion( is )%momentum, &
+                        &   b2CellData = totCv,                           &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                end if
+                do js = 1, istion(is)
+                  tmpCv(:) = state%srw%rsamo(:,ispion(is,js)) / geo%cvVol(:)
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(7)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  tmpCv(:) = state%srw%rramo(:,ispion(is,js)) / geo%cvVol(:)
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(8)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  tmpCv(:) = state%srw%rcxmo(:,ispion(is,js)) / geo%cvVol(:)
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(9)%     &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                end do
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+                if (switch%use_eirene.ne.0) then
+                  do js = 1, istion(is)
+                    tmpCv(:) = state%srw%smo0_eir_tot(:,ispion(is,js)) / &
+                      &   geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg, &
+                      &   vectorComponent = edge_sources%source(13)%     &
+                      &                     ggd( time_sind )%ion( is )%  &
+                      &                     state( js )%momentum,        &
+                      &   b2CellData = tmpCv,                            &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                end if
+#endif
               end if
             end do
 
@@ -2006,27 +3268,1746 @@ contains
                 &   val = edge_profiles%ggd( time_sind )%electrons%     &
                 &         temperature,                                  &
                 &   value = tmpCv )
+            tmpCv(:) = state%co%hce0(:)/state%dv%ne(:)
+            call write_IDS_quantity( transport_grid, mpg, geo,          &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%d,                           &
+                &   value = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%v_pol,                       &
+                &   value = state%co%chve(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%v_radial,                    &
+                &   value = state%co%chve(:,1) )
+#else
+            call split_face_flux( mpg, geo, state%co%chve, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%v,                           &
+                &   value = tmpFace )
+#endif
+            call divide_by_area( mpg%nFc, geo, state%dv%fhe, flxFace)
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux_pol,                    &
+                &   value = flxFace(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux_radial,                 &
+                &   value = flxFace(:,1) )
+#else
+            call split_face_flux( mpg, geo, flxFace, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux,                        &
+                &   value = tmpFace )
+#endif
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         electrons%energy%flux_limiter,                &
+                &   value = state%dv%fllime )
+            tmpCv(:) = ( state%sr%she(:,0) +                            &
+                &        state%sr%she(:,1) * state%pl%te(:) +           &
+                &        state%sr%she(:,2) * state%dv%ne(:) +           &
+                &        state%sr%she(:,3) * state%pl%te(:) *           &
+                &                            state%dv%ne(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
+                &            electrons%energy,                          &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = state_ext%she(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
+                &            electrons%energy,                          &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%srw%b2stbc_she(:) + state%srw%b2stbm_she(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
+                &            electrons%energy,                          &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%sr%shedt(:,0) +                          &
+                &        state%sr%shedt(:,1) * state%pl%te(:) +         &
+                &        state%sr%shedt(:,2) * state%dv%ne(:) +         &
+                &        state%sr%shedt(:,3) * state%pl%te(:) *         &
+                &                              state%dv%ne(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
+                &            electrons%energy,                          &
+                &   b2CellData = tmpCv )
+            if (switch%use_eirene.eq.0) then
+                tmpCv(:) = state%srw%b2stbr_she(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+            end if
+            tmpCv(:) = state%srw%b2sihs_joule(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                      &
+                &   scalar = edge_sources%source(11)%ggd( time_sind )%      &
+                &            electrons%energy,                              &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = 0.0_IDS_real
+            do is = 0, ns-1
+              tmpCv(:) = tmpCv(:) + state%srw%rqrad(:,is)
+            end do
+#ifdef B25_EIRENE
+            do is = 1, natmi
+              tmpCv(:) = tmpCv(:) - eneutrad(:,is,0)
+            end do
+#endif
+            tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                      &
+                &   scalar = edge_sources%source(12)%ggd( time_sind )%      &
+                &            electrons%energy,                              &
+                &   b2CellData = tmpCv )
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%she0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                    &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
+                &            electrons%energy,                              &
+                &   b2CellData = tmpCv )
+            end if
+#endif
+
+            !! pe: Electron pressure
+            call b2xppe( mpg%nCv, state%dv%ne, state%pl%te, pe)
+            call write_IDS_quantity( edge_grid, mpg, geo,               &
+                &   val = edge_profiles%ggd( time_sind )%electrons%     &
+                &         pressure,                                     &
+                &   value = pe )
 
             !! ti: (Common) Ion Temperature
             tmpCv(:) = state%pl%ti(:)/qe
             call write_IDS_quantity( edge_grid, mpg, geo,               &
                 &   val = edge_profiles%ggd( time_sind )%t_i_average,   &
                 &   value = tmpCv )
+            if (switch%tn_style.eq.0) then
+              tmpCv(:) = state%co%hci0(:)/state%dv%ni(:,0)
+            else if (switch%tn_style.eq.1) then
+              tmpCv(:) = state%co%hci0(:)/state%dv%ni(:,1)
+            else if (switch%tn_style.eq.2) then
+              tmpCv(:) = state%co%hci0(:)/(state%dv%ni(:,0)-state%dv%nn(:))
+            end if
+            call write_IDS_quantity( transport_grid, mpg, geo,          &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%d,                           &
+                &   value = tmpCv )
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%v_pol,                       &
+                &   value = state%co%chvi(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%v_radial,                    &
+                &   value = state%co%chvi(:,1) )
+#else
+            call split_face_flux( mpg, geo, state%co%chvi, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%v,                           &
+                &   value = tmpFace )
+#endif
+            !! fhi : Ion heat flux
+            call divide_by_area( mpg%nFc, geo, state%dv%fhi, flxFace)
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux_pol,                    &
+                &   value = flxFace(:,0) )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux_radial,                 &
+                &   value = flxFace(:,1) )
+#else
+            call split_face_flux( mpg, geo, flxFace, tmpFace )
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux,                        &
+                &   value = tmpFace )
+#endif
+            call write_face_scalar( transport_grid, mpg,                &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux_limiter,                &
+                &   value = state%dv%fllimi )
+            !! Ion energy sources
+            tmpCv(:) = ( state%sr%shi(:,0) +                            &
+                &        state%sr%shi(:,1) * state%pl%ti(:) +           &
+                &        state%sr%shi(:,2) * state%dv%ni(:,0) +         &
+                &        state%sr%shi(:,3) * state%dv%ni(:,0) *         &
+                &        state%pl%ti(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
+                &            total_ion_energy,                          &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = state_ext%shi(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
+                &            total_ion_energy,                          &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%srw%b2stbc_shi(:) + state%srw%b2stbm_shi(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
+                &            total_ion_energy,                          &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%sr%shidt(:,0) +                          &
+                &          state%sr%shidt(:,1) * state%pl%ti(:) +       &
+                &          state%sr%shidt(:,2) * state%dv%ni(:,0) +     &
+                &          state%sr%shidt(:,3) * state%dv%ni(:,0) *     &
+                &          state%pl%ti(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
+                &            total_ion_energy,                          &
+                &   b2CellData = tmpCv )
+            if (switch%use_eirene.eq.0) then
+              tmpCv(:) = state%srw%b2stbr_shi(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%shi0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+#endif
+            do is = 1, nsion
+              if (is.le.nspecies) then
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+            !! Ion energy sources resolved by species
+                  tmpCv(:) = state%srw%rsahi(:,ispion(is,js)) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                      &            ion( is )%state( js )%energy,              &
+                      &   b2CellData = tmpCv )
+                end do
+                call write_cell_scalar( sources_grid, mpg,                    &
+                      &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                      &            ion( is )%energy,                          &
+                      &   b2CellData = totCv )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = state%srw%rrahi(:,ispion(is,js)) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                      &            ion( is )%state( js )%energy,              &
+                      &   b2CellData = tmpCv )
+                end do
+                call write_cell_scalar( sources_grid, mpg,                    &
+                    &   scalar = edge_sources%source(8)%ggd( time_sind )%     &
+                    &            ion( is )%energy,                            &
+                        &   b2CellData = totCv )
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = state%srw%rcxhi(:,ispion(is,js)) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(9)%ggd( time_sind )%   &
+                      &            ion( is )%state( js )%energy,              &
+                      &   b2CellData = tmpCv )
+                end do
+                call write_cell_scalar( sources_grid, mpg,                    &
+                    &   scalar = edge_sources%source(9)%ggd( time_sind )%     &
+                    &            ion( is )%energy,                            &
+                    &   b2CellData = totCv )
+              else
+#ifdef B25_EIRENE
+                do js = 1, istion(is)
+            !! Test ion temperature
+                  tmpCv(:) = tib2(:,ispion(is,js),1)/qe
+                  call write_IDS_quantity( edge_grid, mpg, geo,               &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
+                      &         state( js )%temperature,                      &
+                      &   value = tmpCv )
+                end do
+#endif
+              end if
+            end do
+
+            do is = 1, nsion
+              if (is.le.nspecies) then
+                !! pb : Ion pressure
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  totCv(:) = totCv(:) + state%dv%pa(:,ispion(is,js))
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%pressure,                       &
+                      &   value = state%dv%pa(:,ispion(is,js)) )
+                end do
+                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                    &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
+                    &         pressure,                                     &
+                    &   value = totCv )
+                !! Kinetic energy density
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  totCv(:) = totCv(:) + state%dv%kinrgy(:,ispion(is,js))
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%energy_density_kinetic,         &
+                      &   value = state%dv%kinrgy(:,ispion(is,js)) )
+                end do
+                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                    &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
+                    &         energy_density_kinetic,                       &
+                    &   value = totCv )
+                do js = 1, istion(is)
+                !! Average charge
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%z_average,                      &
+                      &   value = state%rt%rza(:,ispion(is,js)) )
+                !! Average square charge
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%z_square_average,               &
+                      &   value = state%rt%rz2(:,ispion(is,js)) )
+                !! Ionisation potential
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%ionisation_potential,           &
+                      &   value = state%rt%rpt(:,ispion(is,js)) )
+                end do
+              else
+#ifdef B25_EIRENE
+                !! Test ion pressure
+                totCv(:) = 0.0_IDS_real
+                do js = 1, istion(is)
+                  tmpCv(:) = dib2(:,ispion(is,js),1)                        &
+                      &     *tib2(:,ispion(is,js),1)
+                  totCv(:) = totCv(:) + tmpCv(:)
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%pressure,                       &
+                      &   value = tmpCv )
+                end do
+                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                    &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
+                    &         pressure,                                     &
+                    &   value = totCv )
+                !! Average charge
+                do js = 1, istion(is)
+                  tmpCv(:) = nchrgi( ispion(is,js) )
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%z_average,                      &
+                      &   value = tmpCv )
+                !! Average square charge
+                  tmpCv(:) = nchrgi( js )**2
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%z_square_average,               &
+                      &   value = tmpCv )
+                end do
+#endif
+              end if
+            end do
+
+            !! ni/ne: Total ion density over electron density
+            tmpCv(:) = state%dv%ni(:,1)/state%dv%ne(:)
+            call write_IDS_quantity( edge_grid, mpg, geo,                    &
+                &   val = edge_profiles%ggd( time_sind )%n_i_total_over_n_e, &
+                &   value = tmpCv )
+
+            !! Zeff
+            call write_IDS_quantity( edge_grid, mpg, geo,                    &
+                &   val = edge_profiles%ggd( time_sind )%zeff,               &
+                &   value = zeff )
+
+            !! pz: Thermal plasma pressure (electrons+ions)
+            call write_IDS_quantity( edge_grid, mpg, geo,                    &
+                &   val = edge_profiles%ggd( time_sind )%pressure_thermal,   &
+                &   value = state%dv%pz )
+
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+            !! fch: Total current
+            call divide_by_area( mpg%nFc, geo, state%dv%fch, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_total,                               &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_total,                               &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fch_p: Parallel current
+            call divide_by_area( mpg%nFc, geo, state%dv%fch_p, flxFace )
+            call write_face_scalar( edge_grid, mpg,                          &
+                &   val = edge_profiles%ggd( time_sind )%j_parallel,         &
+                &   value = flxFace(:,0) )
+#endif
+
+            !! fchanml: Anomalous current
+            call divide_by_area( mpg%nFc, geo, state%dv%fchanml, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_anomalous,                           &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_anomalous,                           &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fchinert: Inertial current
+            call divide_by_area( mpg%nFc, geo, state%dv%fchinert, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_inertial,                            &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_inertial,                            &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fchin: Ion-neutral friction current
+            call divide_by_area( mpg%nFc, geo, state%dv%fchin, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_ion_neutral_friction,                &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_ion_neutral_friction,                &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fchvispar: Parallel viscosity current
+            call divide_by_area( mpg%nFc, geo, state%dv%fchvispar, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_parallel_viscosity,                  &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_parallel_viscosity,                  &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fchvisper: Perpendicular viscosity current
+            call divide_by_area( mpg%nFc, geo, state%dv%fchvisper, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_perpendicular_viscosity,             &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_perpendicular_viscosity,             &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fchvisq: Heat viscosity current
+            call divide_by_area( mpg%nFc, geo, state%dv%fchvisq, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_heat_viscosity,                      &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_heat_viscosity,                      &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fchdia: Diamagnetic current
+            call divide_by_area( mpg%nFc, geo, state%dv%fchdia, flxFace )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_diamagnetic,                         &
+                &   b2FaceData = flxFace(:,0),                               &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( edge_grid, mpg,                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_diamagnetic,                         &
+                &   b2FaceData = flxFace(:,1),                               &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            if (switch%use_eirene.ne.0) then
+#ifdef B25_EIRENE
+                do is = 1, nspecies
+                   tmpCv(:) = 0.0_IDS_real
+                   totCv(:) = 0.0_IDS_real
+                   do iss = 1, natmi
+                      if (latmscl(iss).eq.is) then
+                        tmpCv(:) = tmpCv(:) + dab2(:,iss,1)*tab2(:,iss,1)
+                        totCv(:) = totCv(:) + dab2(:,iss,1)
+                      end if
+                   end do
+                !! Neutral pressure
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( is )%pressure,                     &
+                       &   value = tmpCv )
+                !! Neutral density
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( is )%density,                      &
+                       &   value = totCv )
+                !! Neutral radiation
+                   tmpCv(:) = 0.0_IDS_real
+                   do iss = 1, natmi
+                      if (latmscl(iss).eq.is) then
+                         tmpCv(:) = tmpCv(:) + eneutrad(:,iss,0)
+                      end if
+                   end do
+                   tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                   call write_cell_scalar( sources_grid, mpg,                &
+                       &   scalar = edge_sources%source(12)%ggd( time_sind )%&
+                       &            neutral( is )%particles,                 &
+                       &   b2CellData = tmpCv )
+                end do
+                do is = 1, natmi
+                   js = latmscl(is)
+                   ks = isstat(is)
+                   tmpCv(:) = tab2(:,is,1)/qe
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%state( ks )%temperature,      &
+                       &   value = tmpCv )
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%state( ks )%density,          &
+                       &   value = dab2(:,is,1) )
+                   tmpCv(:) = dab2(:,is,1)*tab2(:,is,1)
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%state( ks )%pressure,         &
+                       &   value = tmpCv )
+                   flxFace = 0.0_IDS_real
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_diamagnetic,           &
+                       &   b2FaceData = flxFace(:,0),                        &
+                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_diamagnetic,           &
+                       &   b2FaceData = flxFace(:,1),                        &
+                       &   vectorID = VEC_ALIGN_RADIAL_ID )
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_exb,                   &
+                       &   b2FaceData = flxFace(:,0),                        &
+                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_exb,                   &
+                       &   b2FaceData = flxFace(:,1),                        &
+                       &   vectorID = VEC_ALIGN_RADIAL_ID )
+                   tmpCv(:) = eneutrad(:,is,0)/ geo%cvVol(:)
+                   call write_cell_scalar( sources_grid, mpg,                &
+                       &   scalar = edge_sources%source(12)%                 &
+                       &            ggd( time_sind )%neutral( js )%          &
+                       &            state( ks )%particles,                   &
+                       &   b2CellData = tmpCv )
+                end do
+
+                !! Molecular quantities
+                do js = nspecies+1, nneut
+                   tmpCv(:) = 0.0_IDS_real
+                   totCv(:) = 0.0_IDS_real
+                   do is = 1, nmoli
+                      if (imneut(is).eq.js) then
+                        tmpCv(:) = tmpCv(:) + dmb2(:,is,1)*tmb2(:,is,1)
+                        totCv(:) = totCv(:) + dmb2(:,is,1)
+                      end if
+                   end do
+                 !! Molecular pressure
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%pressure,                     &
+                       &   value = tmpCv )
+                 !! Molecular density
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%density,                      &
+                       &   value = totCv )
+                end do
+
+                js = nspecies
+                do is = 1, nmoli
+                   ks = isstat(natmi+is)
+                   if (ks.eq.1) js = js + 1
+                   tmpCv(:) = tmb2(:,is,1)/qe
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%state( ks )%temperature,      &
+                       &   value = tmpCv )
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%state( ks )%density,          &
+                       &   value = dmb2(:,is,1) )
+                   tmpCv(:) = dmb2(:,is,1)*tmb2(:,is,1)
+                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%state( ks )%pressure,         &
+                       &   value = tmpCv )
+                   tmpFace = 0.0_IDS_real
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_diamagnetic,           &
+                       &   b2FaceData = tmpFace,                             &
+                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_diamagnetic,           &
+                       &   b2FaceData = tmpFace,                             &
+                       &   vectorID = VEC_ALIGN_RADIAL_ID )
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_exb,                   &
+                       &   b2FaceData = tmpFace,                             &
+                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                   call write_face_vector_component( edge_grid, mpg,         &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%state( ks )%      &
+                       &                     velocity_exb,                   &
+                       &   b2FaceData = tmpFace,                             &
+                       &   vectorID = VEC_ALIGN_RADIAL_ID )
+                end do
+#endif
+            else
+                j = 0
+                do is = 1, nspecies
+                    js = eb2spcr(is)
+                    if (.not.is_neutral(js)) cycle
+                    j = j + 1
+                !! na : Fluid neutral density
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%density,                       &
+                        &   value = state%pl%na(:,js) )
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%state(1)%density,              &
+                        &   value = state%pl%na(:,js) )
+                !! ua: Parallel fluid neutral velocity
+                    call write_cell_vector_component( edge_grid, mpg,         &
+                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                        &                     neutral( j )%velocity,          &
+                        &   b2CellData = state%pl%ua(:,js),                   &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( edge_grid, mpg,         &
+                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                        &                     neutral( j )%state(1)%velocity, &
+                        &   b2CellData = state%pl%ua(:,js),                   &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                !! wadia: Diamagnetic fluid neutral velocity
+                    flxFace(:,0) = state%dv%wadia(:,0,js)
+                    flxFace(:,1) = state%dv%wadia(:,1,js)
+                    call write_face_vector_component( edge_grid, mpg,         &
+                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                        &         neutral( j )%state(1)%velocity_diamagnetic, &
+                        &   b2FaceData = flxFace(:,0),                        &
+                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                    call write_face_vector_component( edge_grid, mpg,         &
+                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                        &         neutral( j )%state(1)%velocity_diamagnetic, &
+                        &   b2FaceData = flxFace(:,1),                        &
+                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                !! vaecrb: ExB fluid neutral velocity
+                    flxFace(:,0) = state%dv%vaecrb(:,0,js)
+                    flxFace(:,1) = state%dv%vaecrb(:,1,js)
+                    call write_face_vector_component( edge_grid, mpg,         &
+                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                        &         neutral( j )%state(1)%velocity_exb,         &
+                        &   b2FaceData = flxFace(:,0),                        &
+                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                    call write_face_vector_component( edge_grid, mpg,         &
+                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                        &         neutral( j )%state(1)%velocity_exb,         &
+                        &   b2FaceData = flxFace(:,1),                        &
+                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                !! fna: Fluid neutral particle flux
+                    call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,js),  &
+                        &   flxFace)
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux_pol,            &
+                        &   value = flxFace(:,0) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux_radial,         &
+                        &   value = flxFace(:,1) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%flux_pol,   &
+                        &   value = flxFace(:,0) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%flux_radial,&
+                        &   value = flxFace(:,1) )
+#else
+                    call split_face_flux( mpg, geo, flxFace, tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux,                &
+                        &   value = tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%flux,       &
+                        &   value = tmpFace )
+#endif
+                !! pb : Fluid neutral pressure
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%pressure,                      &
+                        &   value = state%dv%pa(:,js) )
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%state(1)%pressure,             &
+                        &   value = state%dv%pa(:,js) )
+                !! cdpa: Fluid neutral diffusivity
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%d_pol,               &
+                        &   value = state%co%cdpa(:,0,js) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%d_pol,               &
+                        &   value = state%co%cdpa(:,1,js) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%d_pol,      &
+                        &   value = state%co%cdpa(:,0,js) )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%d_radial,   &
+                        &   value = state%co%cdpa(:,1,js) )
+#else
+                    call split_face_flux( mpg, geo, state%co%cdpa(:,:,js),    &
+                        &   tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%d,                   &
+                        &   value = tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%particles%d,          &
+                        &   value = tmpFace )
+#endif
+                !! Fluid neutral kinetic energy density
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%energy_density_kinetic,        &
+                        &   value = state%dv%kinrgy(:,js) )
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%state(1)%                      &
+                        &         energy_density_kinetic,                     &
+                        &   value =state%dv%kinrgy(:,js) )
+                !! cvsa: Ion diffusivity
+                    call write_face_vector_component( transport_grid, mpg,    &
+                        &   vectorComponent = edge_transport%model(1)%        &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum%d,                     &
+                        &   b2FaceData = state%co%cvsa(:,0,js),               &
+                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                    call write_face_vector_component( transport_grid, mpg,    &
+                        &   vectorComponent = edge_transport%model(1)%        &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum%d,            &
+                        &   b2FaceData = state%co%cvsa(:,0,js),               &
+                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+                    call write_face_vector_component( transport_grid, mpg,    &
+                        &   vectorComponent = edge_transport%model(1)%        &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum%d,                     &
+                        &   b2FaceData = state%co%cvsa(:,1,js),               &
+                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                    call write_face_vector_component( transport_grid, mpg,    &
+                        &   vectorComponent = edge_transport%model(1)%        &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum%d,            &
+                        &   b2FaceData = state%co%cvsa(:,1,js),               &
+                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                !! fllim0fna: Fluid neutral flux limiter
+                    call split_face_flux( mpg, geo,                           &
+                        &   state%co%fllim0fna(:,:,js), tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%particles%flux_limiter,        &
+                        &   value = tmpFace )
+                    call write_face_scalar( transport_grid, mpg,              &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%                      &
+                        &         particles%flux_limiter,                     &
+                        &   value = tmpFace )
+                !! fllimvisc: Fluid neutral momentum transport flux limit
+                    call write_face_vector_component( transport_grid, mpg,    &
+                        &   vectorComponent = edge_transport%model(1)%        &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum%flux_limiter,          &
+                        &   b2FaceData = state%co%fllimvisc(:,js),            &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_face_vector_component( transport_grid, mpg,    &
+                        &   vectorComponent = edge_transport%model(1)%        &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum%flux_limiter, &
+                        &   b2FaceData = state%co%fllimvisc(:,js),            &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                !! sna: Fluid neutral particle sources
+                    tmpCv(:) = ( state%sr%sna(:,0,js) +                       &
+                        &        state%sr%sna(:,1,js) * state%pl%na(:,js) ) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(1)%                  &
+                        &   ggd( time_sind )%neutral( j )%particles,          &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(1)%                  &
+                        &   ggd( time_sind )%neutral( j )%state(1)%particles, &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state_ext%sna(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(2)%ggd( time_sind )% &
+                        &            neutral( j )%particles,                  &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(2)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%particles,         &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = ( state%srw%b2stbc_sna(:,js) +                 &
+                        &        state%srw%b2stbm_sna(:,js) ) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(3)%ggd( time_sind )% &
+                        &            neutral( j )%particles,                  &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(3)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%particles,         &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = ( state%sr%snadt(:,0,js) +                     &
+                        &        state%sr%snadt(:,1,js) * state%pl%na(:,js) ) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(4)%ggd( time_sind )% &
+                        &            neutral( j )%particles,                  &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(4)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%particles,         &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%b2stbr_sna(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            neutral( j )%particles,                  &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%particles,         &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rsana(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(7)%ggd( time_sind )% &
+                        &            neutral( j )%particles,                  &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(7)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%particles,         &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rrana(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                    &
+                        &   scalar = edge_sources%source(8)%ggd( time_sind )% &
+                        &            neutral( j )%particles,                  &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                    &
+                        &   scalar = edge_sources%source(8)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%particles,         &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rcxna(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(9)%ggd( time_sind )% &
+                        &            neutral( j )%particles,                  &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(9)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%particles,         &
+                        &   b2CellData = tmpCv )
+                !! smo: Neutral parallel momentum sources
+                    do iCv = 1, mpg%nCv
+                      tmpCv(iCv) = ( state%sr%smo(iCv,0,js) +                       &
+                        &            state%sr%smo(iCv,1,js) * state%pl%ua(iCv,js) + &
+                        &            state%sr%smo(iCv,2,js) * roxa(iCv,js) +        &
+                        &            state%sr%smo(iCv,3,js) * roxa(iCv,js) *        &
+                        &            state%pl%ua(iCv,js) ) / geo%cvVol(iCv)
+                    end do
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(1)%         &
+                        &                     ggd( time_sind )%               &
+                        &                     neutral( j )%momentum,          &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(1)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum,              &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = state_ext%smo(:,js) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(2)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum,                       &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(2)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum,              &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = ( state%srw%b2stbc_smo(:,js) +                 &
+                        &        state%srw%b2stbm_smo(:,js) ) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(3)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum,                       &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(3)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum,              &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    do iCv = 1, mpg%nCv
+                      tmpCv(iCv) = ( state%sr%smodt(iCv,0,js) +                       &
+                        &            state%sr%smodt(iCv,1,js) * state%pl%ua(iCv,js) + &
+                        &            state%sr%smodt(iCv,2,js) * roxa(iCv,js) +        &
+                        &            state%sr%smodt(iCv,3,js) * roxa(iCv,js) *        &
+                        &            state%pl%ua(iCv,js) ) / geo%cvVol(iCv)
+                    end do
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(4)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum,                       &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(4)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum,              &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = state%srw%b2stbr_smo(:,js) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(5)%         &
+                        &            ggd( time_sind )%neutral( j )%momentum,  &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(5)%         &
+                        &            ggd( time_sind )%neutral( j )%           &
+                        &            state(1)%momentum,                       &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = state%srw%rsamo(:,js) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(7)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum,                       &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(7)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum,              &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = state%srw%rramo(:,js) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(8)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum,                       &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(8)%         &
+                        &                     ggd( time_sind )%neutral( is )% &
+                        &                     state(1)%momentum,              &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = state%srw%rcxmo(:,js) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(9)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     momentum,                       &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    call write_cell_vector_component( sources_grid, mpg,      &
+                        &   vectorComponent = edge_sources%source(9)%         &
+                        &                     ggd( time_sind )%neutral( j )%  &
+                        &                     state(1)%momentum,              &
+                        &   b2CellData = tmpCv,                               &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                !! tn: Fluid Neutral Temperature
+                    if (nint(zn(js)).eq.1) then
+                      tmpCv(:) = state%pl%tn(:)/qe
+                    else
+                      tmpCv(:) = state%pl%ti(:)/qe
+                    end if
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%temperature,                   &
+                        &   value = tmpCv )
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%state(1)%temperature,          &
+                        &   value = tmpCv )
+                    if (nint(zn(js)).eq.1) then
+                      tmpCv(:) = state%co%hcn0(:)/state%dv%nn(:)
+                      call write_IDS_quantity( transport_grid, mpg, geo,      &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%d,                      &
+                        &   value = tmpCv )
+                      call write_IDS_quantity( transport_grid, mpg, geo,      &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%d,             &
+                        &   value = tmpCv )
+                !! fhn : Fluid neutral heat flux
+                      call divide_by_area( mpg%nFc, geo, state%dv%fhn, flxFace)
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%flux_pol,               &
+                        &   value = flxFace(:,0) )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%flux_radial,            &
+                        &   value = flxFace(:,1) )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%flux_pol,      &
+                        &   value = flxFace(:,0) )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%flux_radial,   &
+                        &   value = flxFace(:,1) )
+#else
+                      call split_face_flux( mpg, geo, flxFace, tmpFace )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%flux,                   &
+                        &   value = tmpFace )
+                      call write_face_scalar( transport_grid, mpg,            &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%flux,          &
+                        &   value = tmpFace )
+#endif
+                !! Fluid neutral energy sources
+                      tmpCv(:) = ( state%sr%shn(:,0) +                        &
+                        &          state%sr%shn(:,1) * state%pl%tn(:) +       &
+                        &          state%sr%shn(:,2) * state%dv%nn(:) +       &
+                        &          state%sr%shn(:,3) * state%dv%nn(:) *       &
+                        &          state%pl%tn(:) ) / geo%cvVol(:)
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                      tmpCv(:) = state%srw%b2stbc_shn(:) / geo%cvVol(:)
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(3)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(3)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                      tmpCv(:) = ( state%sr%shndt(:,0) +                      &
+                        &        state%sr%shndt(:,1) * state%pl%tn(:) +       &
+                        &        state%sr%shndt(:,2) * state%dv%nn(:) +       &
+                        &        state%sr%shndt(:,3) * state%dv%nn(:) *       &
+                        &       state%pl%tn(:) ) / geo%cvVol(:)
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(4)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(4)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                      tmpCv(:) = state%srw%b2stbr_shn(:) / geo%cvVol(:)
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                      call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    end if
+                    tmpCv(:) = state%srw%rsahi(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(7)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,              &
+                        &   scalar = edge_sources%source(7)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rrahi(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(8)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(8)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rcxhi(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(9)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(9)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                end do
+            end if
 
             !! po: Electric potential
             call write_IDS_quantity( edge_grid, mpg, geo,               &
                 &   val = edge_profiles%ggd( time_sind )%phi_potential, &
                 &   value = state%pl%po )
+            !! Current sources
+            tmpCv(:) = ( state%sr%sch(:,0) +                            &
+                &        state%sr%sch(:,1) * state%pl%po(:) +           &
+                &        state%sr%sch(:,2) * state%dv%ne(:) +           &
+                &        state%sr%sch(:,3) * state%dv%ne(:) *           &
+                &        state%pl%po(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = state_ext%sch(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%srw%b2stbc_sch(:) + state%srw%b2stbm_sch(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = ( state%sr%schdt(:,0) +                          &
+                &        state%sr%schdt(:,1) * state%pl%po(:) +         &
+                &        state%sr%schdt(:,2) * state%dv%ne(:) +         &
+                &        state%sr%schdt(:,3) * state%dv%ne(:) *         &
+                &        state%pl%po(:) ) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            tmpCv(:) = state%srw%b2stbr_sch(:) / geo%cvVol(:)
+            call write_cell_scalar( sources_grid, mpg,                  &
+                &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+            if (switch%use_eirene.ne.0) then
+              tmpCv(:) = state%srw%sch0_eir_tot(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                &
+                &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
+                &            current,                                   &
+                &   b2CellData = tmpCv )
+            end if
+#endif
+            !! csig : Electric conductivity
+            call write_face_vector_component( transport_grid, mpg,      &
+                &   vectorComponent = edge_transport%model(1)%          &
+                &         ggd( time_sind )%conductivity,                &
+                &   b2FaceData = state%co%csig(:,0),                    &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            call write_face_vector_component( transport_grid, mpg,      &
+                &   vectorComponent = edge_transport%model(1)%          &
+                &         ggd( time_sind )%conductivity,                &
+                &   b2FaceData =state%co%csig(:,1),                     &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
 
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            !! write the emissivity data
+            !! Process 1. Line and recombination radiation from B2.5 ions
+            j = 0
+            do is = 1, nspecies
+              js = eb2spcr(is)
+              if (is_neutral(js) .and. switch%use_eirene.eq.0) then
+                j = j + 1
+                tmpCv(:) = state%srw%rqrad(:,js) / geo%cvVol(:)
+                call write_cell_scalar( radiation_grid, mpg,               &
+                    &   scalar = radiation%process(1)%                     &
+                    &   ggd( time_sind )%neutral( j )%emissivity,          &
+                    &   b2CellData = tmpCv )
+#if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
+                call write_cell_scalar( radiation_grid, mpg,               &
+                    &   scalar = radiation%process(1)%                     &
+                    &   ggd( time_sind )%neutral( j )%                     &
+                    &   state(1)%emissivity,                               &
+                    &   b2CellData = tmpCv )
+#endif
+              end if
+              totCv(:) = 0.0_IDS_real
+              do js = 1, istion(is)
+                tmpCv(:) = state%srw%rqrad(:,ispion(is,js)) / geo%cvVol(:)
+                totCv(:) = totCv(:) + tmpCv(:)
+#if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
+                call write_cell_scalar( radiation_grid, mpg,               &
+                    &   scalar = radiation%process(1)%                     &
+                    &   ggd( time_sind )%ion( is )%state( js )%emissivity, &
+                    &   b2CellData = tmpCv )
+#endif
+              end do
+              call write_cell_scalar( radiation_grid, mpg,                 &
+                    &   scalar = radiation%process(1)%                     &
+                    &   ggd( time_sind )%ion( is )%emissivity,             &
+                    &   b2CellData = totCv )
+            end do
+            !! Process 2. Bremsstrahlung from B2.5 ions
+            totCv(:) = 0.0_IDS_real
+            do is = 1, nspecies
+              do js = 1, istion(is)
+                tmpCv(:) = state%srw%rqbrm(:,ispion(is,js)) / geo%cvVol(:)
+                totCv(:) = totCv(:) + tmpCv(:)
+#if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
+                call write_cell_scalar( radiation_grid, mpg,               &
+                    &   scalar = radiation%process(2)%                     &
+                    &   ggd( time_sind )%ion( is )%state( js )%emissivity, &
+                    &   b2CellData = tmpCv )
+#endif
+              end do
+              call write_cell_scalar( radiation_grid, mpg,                 &
+                  &   scalar = radiation%process(2)%                       &
+                  &   ggd( time_sind )%ion( is )%emissivity,               &
+                  &   b2CellData = totCv )
+            end do
+#ifdef B25_EIRENE
+            if (switch%use_eirene.ne.0) then
+              !! Process 3. Eirene neutrals (atoms and molecules)
+              do js = 1, nspecies
+                tmpCv(:) = 0.0_IDS_real
+                do is = 1, natmi
+                  if (latmscl(is).eq.js) then
+                    tmpCv(:) = tmpCv(:)-eneutrad(:,is,0)
+                  end if
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( radiation_grid, mpg,               &
+                    &   scalar = radiation%process(3)%                     &
+                    &   ggd( time_sind )%neutral( js )%emissivity,         &
+                    &   b2CellData = tmpCv )
+              end do
+              do is = 1, natmi
+                js = latmscl(is)
+                ks = isstat(is)
+                tmpCv(:)=-eneutrad(:,is,0) / geo%cvVol(:)
+#if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
+                call write_cell_scalar( radiation_grid, mpg,               &
+                    &   scalar = radiation%process(3)%ggd( time_sind )%    &
+                    &   neutral( js )%state( ks )%emissivity,              &
+                    &   b2CellData = tmpCv )
+#endif
+              end do
+              !! Process 4. Eirene molecular ions
+            end if
+#endif
+#endif
+#else
+            call logmsg( LOGINFO, &
+            &   "b2mod_ual_io.B25_process_ids: GGD not available, no plasma state writing" )
 #endif
         end if
 
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+! Summary separatrix data
+        allocate( summary%local%separatrix%position%psi( num_time_slices ) )
+        summary%local%separatrix%position%psi( time_sind ) = geo%fsPsi(mpg%iFssep)
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+        allocate( summary%local%separatrix_average%position%psi( num_time_slices ) )
+        summary%local%separatrix_average%position%psi( time_sind ) = geo%fsPsi(mpg%iFssep)
+#endif
+        iCv1 = mpg%fcCv(ifsepomp,1)
+        iCv2 = mpg%fcCv(ifsepomp,2)
+        call write_sourced_value( summary%local%separatrix%t_e, &
+           &  0.5_R8 * (state%pl%te(iCv1) + state%pl%te(iCv2))/ev )
+        call write_sourced_value( summary%local%separatrix%t_i_average, &
+           &  0.5_R8 * (state%pl%ti(iCv1) + state%pl%ti(iCv2))/ev )
+        call write_sourced_value( summary%local%separatrix%n_e, &
+           &  0.5_R8 * (state%dv%ne(iCv1) + state%dv%ne(iCv2)) )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+        tmpFace = 1.0_IDS_real
+        u = separatrix_average( mpg, geo, state%pl%te, tmpFace )
+        call write_sourced_value( summary%local%separatrix_average%t_e, u/ev )
+        u = separatrix_average( mpg, geo, state%pl%ti, tmpFace )
+        call write_sourced_value( summary%local%separatrix_average%t_i_average, u/ev )
+        u = separatrix_average( mpg, geo, state%dv%ne, tmpFace )
+        call write_sourced_value( summary%local%separatrix_average%n_e, u )
+#endif
+        do is = 1, nspecies
+          is1 = eb2spcr(is)
+          if (nint(zamax(is1)).eq.0) is1 = is1 + 1
+          is2 = is1 + nfluids(is) - 1
+          nisep = 0.0_R8
+          nasum = 0.0_R8
+          vtor = 0.0_R8
+          do i = is1, is2
+            nisep = nisep + &
+              &  0.5_R8 * (state%pl%na(iCv1,i) + state%pl%na(iCv2,i))
+            nasum = nasum + &
+              &  0.5_R8 * (state%pl%na(iCv1,i) + state%pl%na(iCv2,i))
+            vtor = vtor + state%pl%ua(omp(icsepomp-1),i)*                        &
+              &    abs(geo%cvBb(omp(icsepomp-1),2)/geo%cvBb(omp(icsepomp-1),3))* &
+              &    state%pl%na(omp(icsepomp-1),i)
+          end do
+          if (nasum.gt.0.0_R8) vtor = vtor / nasum
+          totCv = 0.0_IDS_real
+          tmpCv = 0.0_IDS_real
+          do i = is1, is2
+            tmpCv(:) = tmpCv(:) + state%pl%na(:,i)
+            totCv(:) = totCv(:) + state%pl%ua(:,i)*state%pl%na(:,i)* &
+                &                 abs(geo%cvBb(:,2)/geo%cvBb(:,3))
+          end do
+          if (nasum.gt.0.0_R8) totCv(:) = totCv(:)/tmpCv(:)
+          u = separatrix_average( mpg, geo, tmpCv, tmpFace )
+          v = separatrix_average( mpg, geo, totCv, tmpFace )
+          select case (is_codes(eb2spcr(is)))
+          case ('H')
+            call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%hydrogen, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%hydrogen, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%hydrogen, v )
+#endif
+          case ('D')
+            call write_sourced_value( summary%local%separatrix%n_i%deuterium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%deuterium, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%deuterium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%deuterium, v )
+#endif
+          case ('T')
+            call write_sourced_value( summary%local%separatrix%n_i%tritium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%tritium, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%tritium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, v )
+#endif
+          case ('He')
+            if (nint(am(eb2spcr(is))).eq.3) then
+              call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
+              call write_sourced_value( summary%local%separatrix%velocity_tor%helium_3, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+              call write_sourced_value( summary%local%separatrix_average%n_i%helium_3, u )
+              call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_3, v )
+#endif
+            else if (nint(am(eb2spcr(is))).eq.4) then
+              call write_sourced_value( summary%local%separatrix%n_i%helium_4, nisep )
+              call write_sourced_value( summary%local%separatrix%velocity_tor%helium_4, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%helium_4, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_4, v )
+#endif
+            end if
+          case ('Li')
+            call write_sourced_value( summary%local%separatrix%n_i%lithium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%lithium, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%lithium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%lithium, v )
+#endif
+          case ('Be')
+            call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%beryllium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, v )
+#endif
+          case ('C')
+            call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%carbon, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%carbon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%carbon, v )
+#endif
+          case ('N')
+            call write_sourced_value( summary%local%separatrix%n_i%nitrogen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%nitrogen, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%nitrogen, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%nitrogen, v )
+#endif
+          case ('O')
+            call write_sourced_value( summary%local%separatrix%n_i%oxygen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%oxygen, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%oxygen, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%oxygen, v )
+#endif
+          case ('Ne')
+            call write_sourced_value( summary%local%separatrix%n_i%neon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%neon, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%neon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%neon, v )
+#endif
+          case ('Ar')
+            call write_sourced_value( summary%local%separatrix%n_i%argon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%argon, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%argon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%argon, v )
+#endif
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+          case ('Fe')
+            call write_sourced_value( summary%local%separatrix%n_i%iron, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%iron, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%iron, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%iron, v )
+#endif
+          case ('Kr')
+            call write_sourced_value( summary%local%separatrix%n_i%krypton, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%krypton, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%krypton, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%krypton, v )
+#endif
+#endif
+          case ('Xe')
+            call write_sourced_value( summary%local%separatrix%n_i%xenon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%xenon, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%xenon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%xenon, v )
+#endif
+          case ('W')
+            call write_sourced_value( summary%local%separatrix%n_i%tungsten, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%tungsten, vtor )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%n_i%tungsten, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tungsten, v )
+#endif
+          end select
+        end do
+        call write_sourced_value( summary%local%separatrix%n_i_total, &
+          & 0.5_R8 * (state%dv%ni(iCv1,1) + state%dv%ni(iCv2,1)) )
+        u = separatrix_average( mpg, geo, state%dv%ni(:,1), tmpFace )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+        call write_sourced_value( summary%local%separatrix_average%n_i_total, u )
+#endif
+        call write_sourced_value( summary%local%separatrix%zeff, &
+          & 0.5_R8 * (zeff(iCv1) + zeff(iCv2)) )
+        u = separatrix_average( mpg, geo, zeff, tmpFace )
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+        call write_sourced_value( summary%local%separatrix_average%zeff, u )
+#endif
+
+! Data at limiter tangency point
+        if (geometryType.eq.GEOMETRY_LIMITER) then
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
+          call write_sourced_value( summary%local%limiter%t_e, u )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
+          call write_sourced_value( summary%local%limiter%t_i_average, u )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne )
+          call write_sourced_value( summary%local%limiter%n_e, u )
+          do is = 1, nspecies
+            is1 = eb2spcr(is)
+            if (nint(zamax(is1)).eq.0) is1 = is1 + 1
+            is2 = is1 + nfluids(is) - 1
+            nisep = 0.0_R8
+            do i = is1, is2
+              u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,i) )
+              nisep = nisep + u
+            end do
+            select case (is_codes(eb2spcr(is)))
+            case ('H')
+              call write_sourced_value( summary%local%limiter%n_i%hydrogen, nisep )
+            case ('D')
+              call write_sourced_value( summary%local%limiter%n_i%deuterium, nisep )
+            case ('T')
+              call write_sourced_value( summary%local%limiter%n_i%tritium, nisep )
+            case ('He')
+              if (nint(am(eb2spcr(is))).eq.3) then
+                call write_sourced_value( summary%local%limiter%n_i%helium_3, nisep )
+              else if (nint(am(eb2spcr(is))).eq.4) then
+                call write_sourced_value( summary%local%limiter%n_i%helium_4, nisep )
+              end if
+            case ('Li')
+              call write_sourced_value( summary%local%limiter%n_i%lithium, nisep )
+            case ('Be')
+              call write_sourced_value( summary%local%limiter%n_i%beryllium, nisep )
+            case ('C')
+              call write_sourced_value( summary%local%limiter%n_i%carbon, nisep )
+            case ('N')
+              call write_sourced_value( summary%local%limiter%n_i%nitrogen, nisep )
+            case ('O')
+              call write_sourced_value( summary%local%limiter%n_i%oxygen, nisep )
+            case ('Ne')
+              call write_sourced_value( summary%local%limiter%n_i%neon, nisep )
+            case ('Ar')
+              call write_sourced_value( summary%local%limiter%n_i%argon, nisep )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+            case ('Fe')
+              call write_sourced_value( summary%local%limiter%n_i%iron, nisep )
+            case ('Kr')
+              call write_sourced_value( summary%local%limiter%n_i%krypton, nisep )
+#endif
+            case ('Xe')
+              call write_sourced_value( summary%local%limiter%n_i%xenon, nisep )
+            case ('W')
+              call write_sourced_value( summary%local%limiter%n_i%tungsten, nisep )
+            end select
+          end do
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1) )
+          call write_sourced_value( summary%local%limiter%n_i_total, u )
+          u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff )
+          call write_sourced_value( summary%local%limiter%zeff, u )
+          call write_sourced_value( summary%local%limiter%flux_expansion, flux_expansion(mpg%strDiv(1)) )
+        end if
+
+! Summary divertor plate data
+        if (maxval(mpg%strDiv).gt.0) then
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+          allocate ( summary%local%divertor_target( maxval(mpg%strDiv) ) )
+#else
+          allocate ( summary%local%divertor_plate( maxval(mpg%strDiv) ) )
+#endif
+          do i = 1, maxval(mpg%strDiv)
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_string( summary%local%divertor_target(i)%name, plate_name(i) )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
+            call write_sourced_value( summary%local%divertor_target(i)%t_e, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
+            call write_sourced_value( summary%local%divertor_target(i)%t_i_average, &
+              &  u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne )
+            call write_sourced_value( summary%local%divertor_target(i)%n_e, u )
+#else
+            call write_sourced_string( summary%local%divertor_plate(i)%name, plate_name(i) )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
+            call write_sourced_value( summary%local%divertor_plate(i)%t_e, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
+            call write_sourced_value( summary%local%divertor_plate(i)%t_i_average, &
+              &   )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne )
+            call write_sourced_value( summary%local%divertor_plate(i)%n_e, u )
+#endif
+            do is = 1, nspecies
+              is1 = eb2spcr(is)
+              if (nint(zamax(is1)).eq.0) is1 = is1+1
+              is2 = is1 + nfluids(is) - 1
+              nisep = 0.0_R8
+              do j = is1, is2
+                u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,j) )
+                nisep = nisep + u
+              end do
+              select case (is_codes(eb2spcr(is)))
+              case ('H')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%hydrogen, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%hydrogen, nisep )
+#endif
+              case ('D')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%deuterium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%deuterium, nisep )
+#endif
+              case ('T')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%tritium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%tritium, nisep )
+#endif
+              case ('He')
+                if (nint(am(eb2spcr(is))).eq.3) then
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                  call write_sourced_value( summary%local%divertor_target(i)%n_i%helium_3, nisep )
+#else
+                  call write_sourced_value( summary%local%divertor_plate(i)%n_i%helium_3, nisep )
+#endif
+                else if (nint(am(eb2spcr(is))).eq.4) then
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                  call write_sourced_value( summary%local%divertor_target(i)%n_i%helium_4, nisep )
+#else
+                  call write_sourced_value( summary%local%divertor_plate(i)%n_i%helium_4, nisep )
+#endif
+                end if
+              case ('Li')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%lithium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%lithium, nisep )
+#endif
+              case ('Be')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%beryllium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%beryllium, nisep )
+#endif
+              case ('C')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%carbon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%carbon, nisep )
+#endif
+              case ('N')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%nitrogen, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%nitrogen, nisep )
+#endif
+              case ('O')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%oxygen, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%oxygen, nisep )
+#endif
+              case ('Ne')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%neon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%neon, nisep )
+#endif
+              case ('Ar')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%argon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%argon, nisep )
+#endif
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+              case ('Fe')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%iron, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%iron, nisep )
+#endif
+              case ('Kr')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%krypton, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%krypton, nisep )
+#endif
+#endif
+              case ('Xe')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%xenon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%xenon, nisep )
+#endif
+              case ('W')
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%tungsten, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%tungsten, nisep )
+#endif
+              end select
+            end do
+#if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1) )
+            call write_sourced_value( summary%local%divertor_target(i)%n_i_total, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff )
+            call write_sourced_value( summary%local%divertor_target(i)%zeff, u )
+            call write_sourced_value( summary%local%divertor_target(i)%flux_expansion, &
+              & flux_expansion(i) )
+#else
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1) )
+            call write_sourced_value( summary%local%divertor_plate(i)%n_i_total, u )
+            u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff )
+            call write_sourced_value( summary%local%divertor_plate(i)%zeff, u )
+            call write_sourced_value( summary%local%divertor_plate(i)%flux_expansion, &
+              & flux_expansion(i) )
+#endif
+          end do
+        end if
+
+        call fill_summary_data( geo, summary )
+        u = 0.0_IDS_real
+        do iCv = 1, mpg%nCi
+          if (geometryType.eq.GEOMETRY_LIMITER .or. &
+           &  geometryType.eq.GEOMETRY_SN .or. &
+           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+            if (mpg%cvReg(iCv).ne.2) cycle
+          else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
+            if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.5) cycle
+          else if (geometryType.eq.GEOMETRY_CDN .or. &
+               &  geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
+               &  geometryType.eq.GEOMETRY_DDN_TOP) then
+            if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.6) cycle
+          else
+            cycle
+          end if
+          do is = 0, ns-1
+            u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+          end do
+#ifdef B25_EIRENE
+          do is = 1, natmi
+            u = u - eneutrad(iCv,is,0)
+          end do
+#endif
+        end do
+        if (u.ne.0.0_IDS_real) then
+          call write_sourced_value( summary%scrape_off_layer%power_radiated, u )
+        end if
+#endif
+
+        deallocate(ionstt,istion,ispion)
+#ifdef B25_EIRENE
+        if (switch%use_eirene.ne.0) then
+          deallocate(isstat,imneut,imiion)
+          deallocate(in_species)
+        end if
+#endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
         ncall = ncall + 1
 
         contains
 
-#if IMAS_MINOR_VERSION > 29
+        function roxa(iCv, is)
+        implicit none
+        integer, intent(in) :: iCv, is
+        real(kind=R8) :: roxa
+
+        roxa = am(is)*mp*state%pl%na(iCv,is)
+        return
+        end function roxa
+
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
         subroutine write_timed_integer( ival, ivalue )
             type(ids_signal_int_1d), intent(inout) :: ival
                 !< Type of IDS data structure, designed for integer data handling
@@ -2042,7 +5023,57 @@ contains
         end subroutine write_timed_integer
 #endif
 
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+        subroutine write_timed_value( val, value )
+            type(ids_signal_flt_1d), intent(inout) :: val
+                !< Type of IDS data structure, designed for scalar data handling
+            real(IDS_real), intent(in) :: value
+
+            allocate( val%data( num_slices ) )
+            val%data( slice_index ) = value
+            allocate( val%time( num_slices ) )
+            val%time( slice_index ) = time_slice_value
+
+            return
+
+        end subroutine write_timed_value
+#endif
+
     end subroutine B25_process_ids
+
+    function separatrix_average( mpg, geo, field, weight )
+    ! This function is devoted to obtain the weighted average along the active separatrix
+    ! of a plasma field quantity
+    ! The average is made using face-centered quantities on the cell faces forming the separatrix
+    ! The weighting automatically includes the areas of the cell faces
+    implicit none
+    type( mapping ), intent(in) :: mpg
+    type( geometry ), intent(in) :: geo
+    real(kind=IDS_real) :: separatrix_average
+    real(kind=IDS_real), intent(in) :: field(mpg%nCv), weight(mpg%nFc)
+    integer :: i, iFc, iCv1, iCv2
+    real(kind=IDS_real) :: sum, area_sum
+
+    separatrix_average = IDS_REAL_INVALID
+    sum = 0.0_IDS_real
+    area_sum = 0.0_IDS_real
+    do i = mpg%fsFcP(mpg%iFssep,1), &
+       &   mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+      iFc = mpg%fsFc(i)
+      iCv1 = mpg%fcCv(iFc,1)
+      iCv2 = mpg%fcCv(iFc,2)
+      if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
+        & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
+        & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+        sum = sum + geo%fcS(iFc) * weight(iFc) * &
+            & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
+        area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
+      end if
+    end do
+    if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
+
+    return
+    end function separatrix_average
 
     subroutine write_ids_properties( properties, homo )
     implicit none
@@ -2053,7 +5084,7 @@ contains
     properties%homogeneous_time = homo
     allocate( properties%comment(1) )
     properties%comment = comment
-#if IMAS_MINOR_VERSION > 33
+#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
     allocate( properties%provenance%node(1) )
     allocate( properties%provenance%node(1)%sources(1) )
     properties%provenance%node(1)%sources(1) = source
@@ -2063,29 +5094,22 @@ contains
 #endif
     allocate( properties%creation_date(1) )
     properties%creation_date = create_date
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     allocate( properties%provider(1) )
     properties%provider = username
-#endif
-#if IMAS_MINOR_VERSION > 21
-    allocate( properties%version_put%data_dictionary(1) )
-    properties%version_put%data_dictionary = imas_version
-    allocate( properties%version_put%access_layer(1) )
-    properties%version_put%access_layer = ual_version
-    allocate( properties%version_put%access_layer_language(1) )
-    properties%version_put%access_layer_language = 'FORTRAN'
 #endif
     return
 
     end subroutine write_ids_properties
 
-    subroutine write_ids_code( switch, code, commit )
+    subroutine write_ids_code( switch, code, commit, description )
     implicit none
     type (switches), intent(in) :: switch
     type(ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
-#if IMAS_MINOR_VERSION > 29
+    character(len=ids_string_length), intent(in) :: description
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
     integer :: nlibs !< Number of declared libraries in IDS description
     character*8 ggd_version, mscl_version
     character*32 SOLPS_git_version
@@ -2109,6 +5133,10 @@ contains
 
     allocate( code%name(1) )
     code%name = source
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+    allocate( code%description(1) )
+    code%description = description
+#endif
     allocate( code%version(1) )
     code%version = newversion
     allocate( code%commit(1) )
@@ -2118,7 +5146,7 @@ contains
     allocate( code%output_flag( num_slices ) )
     code%output_flag( slice_index ) = 0
 
-#if IMAS_MINOR_VERSION > 29
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
     nlibs = 1
 #ifdef B25_EIRENE
     if (switch%use_eirene.ne.0) then
@@ -2210,7 +5238,550 @@ contains
     return
 
     end subroutine write_ids_code
-#if IMAS_MINOR_VERSION > 32
+
+    subroutine put_equilibrium_data ( mpg, geo, equilibrium, &
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+       &  summary, &
+#endif
+       &  edgeprof, database, time_slice_value, &
+       &  do_summary_data, new_eq_ggd )
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
+    use b2mod_ual_io_grid &
+       & , only: GGD_copy_AoS3Root_to_Dynamic
+#endif
+    implicit none
+    type (mapping) :: mpg !< The grid mapping
+    type (geometry) :: geo !< The grid geometry
+    type (ids_equilibrium) :: equilibrium !< IDS designed to store
+            !< equilibrium data
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+    type (ids_summary) :: summary !< IDS designed to store
+            !< run summary data
+#endif
+    type (ids_edge_profiles) :: edgeprof !< IDS designed to store
+            !< edge profiles data
+    character(len=24), intent(in) :: database
+    real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
+    logical, intent(in) :: do_summary_data
+    logical, intent(out) :: new_eq_ggd
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    type(ids_generic_grid_dynamic) :: eq_grid !< Type of IDS
+        !< data structure, designed for handling equilibrium grid geometry data
+#else
+    type(ids_generic_grid_aos3_root) :: eq_grid !< Type of IDS
+        !< data structure, designed for handling equilibrium grid geometry data
+#endif
+    integer :: i, ic, iCv, iCv1, iCv2, iFc, iFt, iVx, inode, icrmax
+    integer :: idum(0:3)
+    integer, save :: ncall = 0
+    real(IDS_real) :: parg(0:99)
+    real(IDS_real), save :: pit_rescale = 1.0_IDS_real
+    real(IDS_real) :: b0r0_ref, z_eq, z_min, z_max, r_max, rFc
+    real(IDS_real) :: tmpVx( mpg%nVx )
+    real(IDS_real) :: tmpFace( mpg%nFc )
+    real(IDS_real) :: tmpCv( mpg%nCv )
+    character*8 id
+    character*80 cnamip, cvalip
+    character*132 eq_source
+    character*256 filename
+    character*500 line, ligne
+    logical exists
+    logical is_comment, streql
+    external is_comment, streql
+
+    eq_found = .false.
+    new_eq_ggd = .false.
+    eq_source = "ITER Baseline q95=3 equilibrium"
+    if ( associated( equilibrium%time_slice ) ) then
+      if ( size( equilibrium%time_slice ).ge.slice_index ) then
+        eq_found = .true.
+        if ( associated( equilibrium%ids_properties%source ) ) &
+           & eq_source = equilibrium%ids_properties%source(1)
+        r0 = equilibrium%vacuum_toroidal_field%r0
+        b0 = equilibrium%vacuum_toroidal_field%b0( slice_index )
+        b0r0 = b0 * r0
+      end if
+    end if
+    if (.not.eq_found) then
+      r0 = 0.0_R8
+      i = 1
+      do while ( i.le.mpg%nCi .and. .not.mpg%cvOnClosedSurface(i) )
+        i = i + 1
+      end do
+      if ( i.le.mpg%nCi ) then
+        iFt = mpg%cvFt(i)
+        do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          iCv = mpg%ftCv(ic)
+          if (isymm.eq.1.or.isymm.eq.2) then
+            r0 = r0 + geo%cvX(iCv)
+          else if (isymm.eq.3.or.isymm.eq.4) then
+            r0 = r0 + geo%cvY(iCv)
+          end if
+        end do
+        r0 = r0 / float(mpg%ftCvP(iFt,2))
+      end if
+      if (r0.gt.0.0_R8) then
+        if ( geo%vxFfbz(1).ne.0.0_R8) then
+          if (isymm.eq.0) then
+            b0r0 = geo%vxFfbz(1)
+          else
+            b0r0 = geo%vxFfbz(1)/(2.0_R8 * pi)
+          end if
+          b0 = b0r0 / r0
+        else if (isymm.eq.0) then
+          b0 = geo%cvBb(1,2)
+          b0r0 = b0*r0
+        else if (isymm.eq.1 .or. isymm.eq.2) then
+          b0r0 = geo%cvBb(1,2)*geo%cvX(1)
+          b0 = b0r0 / r0
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+          b0r0 = geo%cvBb(1,2)*geo%cvY(1)
+          b0 = b0r0 / r0
+        end if
+      else
+        b0 = geo%cvBb(1,2)
+        if (isymm.eq.1 .or. isymm.eq.2) then
+          b0r0 = geo%cvBb(1,2)*geo%cvX(1)
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+          b0r0 = geo%cvBb(1,2)*geo%cvY(1)
+        end if
+        if (b0.ne.0.0_R8) then
+          r0 = b0r0 / b0
+        else
+          r0 = IDS_REAL_INVALID
+        end if
+      end if
+    end if
+
+    if (ncall.eq.0) then
+      call ipgetr ('b2agfs_pit_rescale', pit_rescale)
+      if (pit_rescale.eq.1.0_R8) then
+        filename='b2ag.dat'
+        call find_file(filename,exists)
+        if (exists) then
+          open(99,file=filename)
+          call b2agx0 (99, idum(0), idum(1), idum(2), idum(3))
+          read (99,'(a8)',err=2) id
+          read (99,*,err=2) parg
+    1     continue
+          read (99,'(a)',end=2,err=2) line
+          if (.not.is_comment(line)) then
+            ligne = line
+            call strip_spaces(ligne)
+            if (ligne(1:1).eq.'''') then
+              read (line,*) cnamip, cvalip
+              call ipsetc (cnamip, cvalip)
+            endif
+          endif
+          goto 1
+    2     continue
+          close(99)
+          call ipgetr ('b2agfs_pit_rescale', pit_rescale)
+        end if
+      end if
+    end if
+
+    !> Careful: Sign convention for magnetic field in IDS
+    !>          is OPPOSITE to that in SOLPS toroidal geometries
+    if ( b0.ne.0.0_IDS_real ) then
+      if (streql(database,'ITER').and..not.eq_found) then
+        b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
+        allocate( edgeprof%vacuum_toroidal_field%b0( num_slices ) )
+        if ( abs(pit_rescale).eq.1.0_IDS_real ) then
+          i = nint(b0r0_ref/b0r0)
+          select case (i)
+          case (1)
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            if (do_summary_data) then
+              call write_sourced_value( summary%global_quantities%ip, &
+                  & -15.0e6_IDS_real )
+              call write_sourced_value( summary%global_quantities%b0, &
+                  & -5.3_IDS_real )
+            endif
+#endif
+            edgeprof%vacuum_toroidal_field%b0( slice_index ) = -5.3_IDS_real
+          case (2)
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            if (do_summary_data) then
+              call write_sourced_value( summary%global_quantities%ip, &
+                  & -7.5e6_IDS_real )
+              call write_sourced_value( summary%global_quantities%b0, &
+                  & -2.65_IDS_real )
+            end if
+#endif
+            edgeprof%vacuum_toroidal_field%b0( slice_index ) = -2.65_IDS_real
+          case (3)
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            if (do_summary_data) then
+              call write_sourced_value( summary%global_quantities%ip, &
+                  & -5.0e6_IDS_real )
+              call write_sourced_value( summary%global_quantities%b0, &
+                  & -1.8_IDS_real )
+            endif
+#endif
+            edgeprof%vacuum_toroidal_field%b0( slice_index ) = -1.8_IDS_real
+          case default
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            if (do_summary_data) then
+              call write_sourced_value( summary%global_quantities%ip, &
+                  & -15.0e6_IDS_real/nint(b0r0_ref/b0r0) )
+              call write_sourced_value( summary%global_quantities%b0, &
+                  & -b0r0 / 6.2e6_IDS_real )
+            endif
+#endif
+            edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0r0 / 6.2_IDS_real
+          end select
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+          if (do_summary_data) then
+            summary%global_quantities%b0%source = &
+                  & "ITER Baseline q95=3 equilibrium"
+            summary%global_quantities%ip%source = &
+                  & "ITER Baseline q95=3 equilibrium"
+            call write_sourced_value( summary%global_quantities%q_95, &
+                  & 3.0_IDS_real )
+            summary%global_quantities%q_95%source = &
+                  & "ITER Baseline q95=3 equilibrium"
+          endif
+#endif
+        else
+          edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0r0 / 6.2_IDS_real
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, &
+                  & -b0r0 / 6.2_IDS_real )
+            write(eq_source, '(a,1pe12.5,a)' ) &
+                  & "ITER Baseline q95=3 equilibrium"// &
+                  &  " (current rescaled by ",abs(pit_rescale),")"
+            summary%global_quantities%b0%source = eq_source
+            call write_sourced_value( summary%global_quantities%ip, &
+                  &  -15.0e6_IDS_real*abs(pit_rescale) )
+            summary%global_quantities%ip%source = eq_source
+            call write_sourced_value( summary%global_quantities%q_95, &
+                  &   3.0_IDS_real/abs(pit_rescale) )
+            summary%global_quantities%q_95%source = eq_source
+          endif
+#endif
+        end if
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+        if (do_summary_data) then
+          call write_sourced_constant( summary%global_quantities%r0, &
+                  & 6.2_IDS_real )
+          summary%global_quantities%r0%source = &
+                  & "ITER Baseline q95=3 equilibrium"
+        end if
+#endif
+        edgeprof%vacuum_toroidal_field%r0 = 6.2_IDS_real
+      else
+        allocate( edgeprof%vacuum_toroidal_field%b0( num_slices ) )
+        if (eq_found) then
+          edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
+          edgeprof%vacuum_toroidal_field%r0 = r0
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, b0 )
+            summary%global_quantities%b0%source = eq_source
+            if ( equilibrium%time_slice( slice_index )%global_quantities%  &
+               & ip .ne. IDS_REAL_INVALID ) then
+              call write_sourced_value( summary%global_quantities%ip,    &
+                &  equilibrium%time_slice( slice_index )%global_quantities%ip )
+              summary%global_quantities%ip%source = eq_source
+            end if
+            if ( equilibrium%time_slice( slice_index )%global_quantities%  &
+               & q_95 .ne. IDS_REAL_INVALID ) then
+              call write_sourced_value( summary%global_quantities%q_95,  &
+                &  equilibrium%time_slice( slice_index )%global_quantities%q_95 )
+              summary%global_quantities%q_95%source = eq_source
+            else if (streql(eq_source,"ITER Baseline q95=3 equilibrium")) then
+              call write_sourced_value( summary%global_quantities%q_95,  &
+                &  3.0_IDS_real )
+              summary%global_quantities%q_95%source = eq_source
+            end if
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+            summary%global_quantities%r0%source = eq_source
+          end if
+#endif
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
+          new_eq_ggd = .not.associated( equilibrium%grids_ggd )
+          if ( .not.new_eq_ggd ) new_eq_ggd = &
+            &  .not.associated( equilibrium%grids_ggd( slice_index )%grid )
+#else
+          new_eq_ggd = .false.
+#endif
+          if ( new_eq_ggd ) then
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
+            if (.not.associated( equilibrium%grids_ggd ) ) &
+              &  allocate( equilibrium%grids_ggd( num_time_slices ) )
+            allocate( equilibrium%grids_ggd( slice_index )%grid(1) )
+            call b2_IMAS_Fill_Grid_Desc( mpg, geo, eq_grid )
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
+            call GGD_copy_AoS3Root_to_Dynamic( eq_grid, &
+              &   equilibrium%grids_ggd( slice_index )%grid(1) )
+#else
+            equilibrium%grids_ggd( slice_index )%grid(1) = eq_grid
+#endif
+            equilibrium%grids_ggd( slice_index )%time = time_slice_value
+#endif
+#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+            if (.not.associated( equilibrium%ids_properties%provenance%node ) ) then
+              inode = 0
+            else
+              inode = size( equilibrium%ids_properties%provenance%node )
+            endif
+            allocate( equilibrium%ids_properties%provenance%node(inode + 1) )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%path(1) )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%sources(1))
+            equilibrium%ids_properties%provenance%node(inode+1)%path =        &
+               & "grids_ggd"
+            equilibrium%ids_properties%provenance%node(inode+1)%sources(1) =  &
+               &  source
+#endif
+          end if
+          if (.not.associated( equilibrium%time_slice )) then
+            allocate( equilibrium%time_slice( num_time_slices ) )
+          end if
+          if ( equilibrium%time_slice( slice_index )%time.eq.IDS_REAL_INVALID ) &
+            &  equilibrium%time_slice( slice_index )%time = time_slice_value
+          if (.not.associated( equilibrium%time_slice( slice_index )%ggd ) )  &
+            & then
+            allocate( equilibrium%time_slice( slice_index )%ggd(1) )
+          end if
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%r ) ) then
+            call write_vertex_scalar( eq_grid, mpg,                           &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%r,  &
+                &   b2VertexData = geo%vxX )
+            tmpFace(:) = ( geo%vxX(mpg%fcVx(:,1)) + geo%vxX(mpg%fcVx(:,2)) )/2.0_IDS_real
+            call write_face_scalar( eq_grid, mpg,                             &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%r,     &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid, mpg,                             &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%r,  &
+                &   b2CellData = geo%cvX )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%z ) ) then
+            call write_vertex_scalar( eq_grid, mpg,                           &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%z,  &
+                &   b2VertexData = geo%vxY )
+            tmpFace(:) = ( geo%vxY(mpg%fcVx(:,1)) + geo%vxY(mpg%fcVx(:,2)) )/2.0_IDS_real
+            call write_face_scalar( eq_grid, mpg,                             &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%z,     &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid, mpg,                             &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%z,  &
+                &   b2CellData = geo%cvY )
+          end if
+          if (maxval(abs(geo%vxFpsi)).ne.0.0_IDS_real .and. .not.associated(        &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%psi ) ) then
+            call write_vertex_scalar( eq_grid, mpg,                           &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            psi,                                             &
+                &   b2VertexData = geo%vxFpsi )
+            tmpFace(:) = ( geo%vxFpsi(mpg%fcVx(:,1)) + geo%vxFpsi(mpg%fcVx(:,2)) )/2.0_IDS_real
+            call write_face_scalar( eq_grid, mpg,                             &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%psi,   &
+                &   value = tmpFace )
+#ifdef WG_TODO
+            tmpCv(:,:) = (fpsi(:,:,0) + fpsi(:,:,1) +                         &
+                &         fpsi(:,:,2) + fpsi(:,:,3) )/4.0_IDS_real
+            call write_cell_scalar( eq_grid, mpg,                             &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            psi,   &
+                &   b2CellData = tmpCv )
+#endif
+          end if
+          if (maxval(abs(geo%vxFfbz)).ne.0.0_IDS_real .and. .not.associated(        &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%phi ) ) then
+            tmpFace(:) = ( geo%vxFfbz(mpg%fcVx(:,1)) + geo%vxFfbz(mpg%fcVx(:,2)) )/2.0_IDS_real
+            tmpCv = 0.0_IDS_real
+            do iCv = 1, mpg%nCv
+              do i = mpg%cvVxP(iCv,1), mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1
+                iVx = mpg%cvVx(iCv)
+                tmpCv(iCv) = tmpCv(iCv) + geo%vxFFbz(iVx)
+              end do
+              tmpCv(iCv) = tmpCv(iCv) / float( mpg%cvVxP(iCv,2) )
+            end do
+            call write_vertex_scalar( eq_grid, mpg,                           &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            phi,                                             &
+                &   b2VertexData = geo%vxFfbz )
+            call write_face_scalar( eq_grid, mpg,                             &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%phi,   &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid, mpg,                             &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            phi,                                             &
+                &   b2CellData = tmpCv )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_r ) ) then
+            tmpVx(:) = geo%vxBb(:,0)*geo%vxEb(:,0)
+            tmpFace(:) = geo%fcBb(:,0)*geo%fcEb(:,0)
+            tmpCv(:) = geo%cvBb(:,0)*geo%cvEb(:,0)
+            call write_vertex_scalar( eq_grid, mpg,                           &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_r,                                          &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid, mpg,                             &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
+                &         b_field_r,                                          &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid, mpg,                             &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_r,                                          &
+                &   b2CellData = tmpCv )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_z ) ) then
+            tmpVx(:) = geo%vxBb(:,0)*geo%vxEb(:,1)
+            tmpFace(:) = geo%fcBb(:,0)*geo%fcEb(:,1)
+            tmpCv(:) = geo%cvBb(:,0)*geo%cvEb(:,1)
+            call write_vertex_scalar( eq_grid, mpg,                           &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_z,                                          &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid, mpg,                             &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
+                &         b_field_z,                                          &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid, mpg,                             &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_z,                                          &
+                &   b2CellData = tmpCv )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_tor ) ) then
+            tmpVx(:) = geo%vxBb(:,2)
+            tmpFace(:) = geo%fcBb(:,2)
+            tmpCv(:) = geo%cvBb(:,2)
+            call write_vertex_scalar( eq_grid, mpg,                           &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_tor,                                        &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid, mpg,                             &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
+                &         b_field_tor,                                        &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid, mpg,                             &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_tor,                                        &
+                &   b2CellData = tmpCv )
+          end if
+#endif
+          if ( equilibrium%time( slice_index ).eq.0.0_IDS_real ) then
+            equilibrium%time( slice_index ) = time_slice_value
+          end if
+        else if (isymm.ne.0) then
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, -b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
+#endif
+          edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0
+          edgeprof%vacuum_toroidal_field%r0 = r0
+        else
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
+#endif
+          edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
+          edgeprof%vacuum_toroidal_field%r0 = r0
+        end if
+      end if
+    end if
+
+    if (GeometryType .eq. GEOMETRY_LINEAR) then
+      midplane_id = 4
+    else
+      if ( eq_found ) then
+        z_eq = equilibrium%time_slice( slice_index )%global_quantities%  &
+             &   magnetic_axis%z
+      else
+        z_eq = IDS_REAL_INVALID
+      end if
+      iVx = mpg%cvVx(mpg%cvVxP(omp(icsepomp-1),1))
+      z_min = geo%vxY(iVx)
+      z_max = geo%vxY(iVx)
+      do i = mpg%cvVxP(omp(icsepomp-1),1) + 1, &
+     &       mpg%cvVxP(omp(icsepomp-1),1) + mpg%cvVxP(omp(icsepomp-1),2) - 1
+        iVx = mpg%cvVx(i)
+        z_min = min(z_min,geo%vxY(iVx))
+        z_max = max(z_max,geo%vxY(iVx))
+      end do
+      iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep,1))
+      r_max = ( geo%vxX(mpg%fcVx(iFc,1)) + geo%vxX(mpg%fcVx(iFc,2)) ) / 2.0_R8
+      do i = mpg%fsFcP(mpg%iFssep,1) + 1, &
+     &       mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+        iFc = mpg%fsFc(i)
+        rFc = ( geo%vxX(mpg%fcVx(iFc,1)) + geo%vxX(mpg%fcVx(iFc,2)) ) / 2.0_R8
+        iCv1 = mpg%fcCv(iFc,1)
+        iCv2 = mpg%fcCv(iFc,2)
+        iCv = 0
+        if ( mpg%cvReg(iCv1).eq.1 .or. &
+     &     ( mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv1
+        if ( mpg%cvReg(iCv2).eq.1 .or. &
+     &     ( mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv2
+        if ( iCv.eq.0 ) cycle ! skip the divertor legs
+        if ( rFc .gt. r_max) then
+          r_max = rFc
+          icrmax = iCv
+        end if
+      end do
+      if ( z_eq.ne.IDS_REAL_INVALID .and. &
+         & z_min.le.z_eq .and. z_max.ge.z_eq ) then
+        midplane_id = 1
+      else if ( omp(icsepomp-1) .eq. icrmax ) then
+        midplane_id = 2
+      else if ( z_min*z_max .le. 0.0_R8 ) then
+        midplane_id = 3
+      else
+        midplane_id = 4
+      end if
+    end if
+
+    ncall = ncall + 1
+    return
+    end subroutine put_equilibrium_data
+
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+    subroutine fill_summary_data( geo, summary )
+    implicit none
+    type (geometry), intent(in) :: geo
+    type (ids_summary), intent(inout) :: summary
+
+    select case (GeometryType)
+    case( GEOMETRY_LIMITER )
+      call write_sourced_integer( summary%boundary%type, 0 )
+    case( GEOMETRY_SN )
+      if ( isymm.ne.0 ) then
+        if ( geo%LSN ) then
+          call write_sourced_integer( summary%boundary%type, 11 )
+        else
+          call write_sourced_integer( summary%boundary%type, 12 )
+        end if
+      else
+        call write_sourced_integer( summary%boundary%type, 1 )
+      end if
+    case( GEOMETRY_CDN , GEOMETRY_DDN_BOTTOM , GEOMETRY_DDN_TOP )
+      call write_sourced_integer( summary%boundary%type, 13 )
+    case( GEOMETRY_LFS_SNOWFLAKE_MINUS , &
+        & GEOMETRY_LFS_SNOWFLAKE_PLUS )
+      call write_sourced_integer( summary%boundary%type, 14 )
+    end select
+
+    call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real )
+
+    return
+    end subroutine fill_summary_data
+#endif
+
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     subroutine write_ids_midplane( midplane, midplane_id )
     implicit none
     type(ids_identifier_static) :: midplane
@@ -2239,13 +5810,13 @@ contains
     end subroutine write_ids_midplane
 #endif
 
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
     !! IMAS IDS data tree node.
     subroutine write_IDS_quantity( basegrid, mpg, geo, val, value )
     use b2mod_interp
     implicit none
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
@@ -2270,7 +5841,7 @@ contains
     external xerrab
 
     ggdId = basegrid%identifier%index
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     !! Assign 5+4 grid subsets
     nSubsets = 9
 #else
@@ -2290,7 +5861,7 @@ contains
     end if
 
     do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
       select case (iSubset)
       case (1)
         iSubsetID = GRID_SUBSET_CELLS
@@ -2346,8 +5917,6 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, &
-            & GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -2368,6 +5937,7 @@ contains
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -2379,7 +5949,7 @@ contains
       select case (ndim)
       case ( 1 ) !< Grid subset consists of nodes
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
-                     &   basegrid, iSubset, IDSmap, tmpVx )
+                     &   basegrid, iSubset, mpg, tmpVx )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2388,7 +5958,7 @@ contains
         deallocate( idsdata )
       case ( 2 ) !< Grid subset consists of faces
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
-                     &   basegrid, iSubset, IDSmap, tmpFace )
+                     &   basegrid, iSubset, mpg, tmpFace )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2396,8 +5966,8 @@ contains
 #endif
         deallocate( idsdata )
       case ( 3 ) !< Grid subset consists of cells
-        idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                 &
-                      &  basegrid, iSubset, IDSmap, value )
+        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(          &
+                      &  basegrid, iSubset, mpg, value )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2416,7 +5986,7 @@ contains
     !> Write a scalar B2 cell quantity to ids_generic_grid_scalar
     subroutine write_cell_scalar( basegrid, mpg, scalar, b2CellData )
     implicit none
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
@@ -2436,7 +6006,7 @@ contains
     integer :: ggdID     !< Grid identifier index
 
     ggdId = basegrid%identifier%index
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     nSubsets = 1
 #else
     nSubsets = size(basegrid%grid_subset)
@@ -2448,7 +6018,7 @@ contains
     end if
 
     do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
        ndim = 3
        iSubsetID = GRID_SUBSET_CELLS
 #else
@@ -2474,8 +6044,6 @@ contains
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
              & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, &
-             & GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -2496,6 +6064,7 @@ contains
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -2506,8 +6075,8 @@ contains
        end if
        if (ndim.ne.3) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
-          &   basegrid, iSubset, IDSmap, b2CellData )
+       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(  &
+          &   basegrid, iSubset, mpg, b2CellData )
 #if GGD_MINOR_VERSION > 8
        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2532,7 +6101,7 @@ contains
     subroutine write_cell_vector_component( basegrid, mpg, &
        &  vectorComponent, b2CellData, vectorID )
     implicit none
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
@@ -2555,7 +6124,7 @@ contains
     integer :: ggdID     !< Grid identifier index
 
     ggdId = basegrid%identifier%index
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     nSubsets = 1
 #else
     nSubsets = size(basegrid%grid_subset)
@@ -2567,7 +6136,7 @@ contains
     end if
 
     do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
       ndim = 3
       iSubsetID = GRID_SUBSET_CELLS
 #else
@@ -2593,7 +6162,6 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -2614,6 +6182,7 @@ contains
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -2623,8 +6192,8 @@ contains
         end select
       end if
       if (ndim.ne.3) cycle
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(           &
-                   &   basegrid, iSubset, IDSmap, b2CellData )
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(       &
+                   &   basegrid, iSubset, mpg, b2CellData )
       call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
           &   ggdID, iSubsetID, vectorID, idsdata )
       deallocate(idsdata)
@@ -2636,7 +6205,7 @@ contains
     !> Write a scalar B2 face quantity to ids_generic_grid_scalar
     subroutine write_face_scalar( basegrid, mpg, val, value )
     implicit none
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type (ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
@@ -2647,7 +6216,7 @@ contains
     type (ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
         !< Type of IDS data structure, designed for scalar data handling
         !< (in this case scalars residing on grid faces)
-    real(IDS_real), intent(in) :: value( mpg%nFc, 0:1 )
+    real(IDS_real), intent(in) :: value( mpg%nFc )
     integer :: nSubsets  !< number of grid subsets to fill
     integer :: iSubset   !< Grid subset iterator
     integer :: iSubsetID !< Grid subset identifier index
@@ -2655,7 +6224,7 @@ contains
     integer :: ndim      !< Grid subset dimension
 
     ggdId = basegrid%identifier%index
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     nSubsets = 2
 #else
     nSubsets = size(basegrid%grid_subset)
@@ -2667,7 +6236,7 @@ contains
     end if
 
     do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
       select case (iSubset)
       case (1)
         iSubsetID = GRID_SUBSET_X_ALIGNED_EDGES
@@ -2702,7 +6271,6 @@ contains
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
              & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -2723,6 +6291,7 @@ contains
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -2752,7 +6321,7 @@ contains
     subroutine write_face_vector_component( basegrid, mpg, &
        &   vectorComponent, b2FaceData, vectorID )
     implicit none
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
@@ -2763,7 +6332,7 @@ contains
     type(ids_generic_grid_vector_components), intent(inout),    &
        &   pointer :: vectorComponent(:) !< Type of IDS data structure,
                                          !> designed for vector data handling
-    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc, 0:1)
+    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc )
     real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                                          !< handling data field values
     character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
@@ -2775,7 +6344,7 @@ contains
     integer :: ggdID     !< Grid identifier index
 
     ggdId = basegrid%identifier%index
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     nSubsets = 1
 #else
     nSubsets = size(basegrid%grid_subset)
@@ -2787,7 +6356,7 @@ contains
     end if
 
     do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
       ndim = 2
       iSubsetID = GRID_SUBSET_FACES
 #else
@@ -2813,7 +6382,6 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -2834,6 +6402,7 @@ contains
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -2843,8 +6412,8 @@ contains
         end select
       end if
       if (ndim.ne.2) cycle
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS( &
-                   &   basegrid, iSubset, IDSmap, b2FaceData )
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face( &
+                   &   basegrid, iSubset, mpg, b2FaceData )
       call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
                    &   ggdID, iSubsetID, vectorID, idsdata )
       deallocate(idsdata)
@@ -2856,7 +6425,7 @@ contains
     !> Write a scalar B2 vertex quantity to ids_generic_grid_scalar
     subroutine write_vertex_scalar( basegrid, mpg, scalar, b2VertexData )
     implicit none
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
@@ -2876,7 +6445,7 @@ contains
     integer :: ggdID     !< Grid identifier index
 
     ggdId = basegrid%identifier%index
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     nSubsets = 1
 #else
     nSubsets = size(basegrid%grid_subset)
@@ -2888,7 +6457,7 @@ contains
     end if
 
     do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
        ndim = 3
        iSubsetID = GRID_SUBSET_CELLS
 #else
@@ -2914,7 +6483,6 @@ contains
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
              & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -2935,6 +6503,7 @@ contains
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -2946,7 +6515,7 @@ contains
        if (ndim.ne.1) cycle
 
        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
-          &   basegrid, iSubset, IDSmap, b2VertexData )
+          &   basegrid, iSubset, mpg, b2VertexData )
 #if GGD_MINOR_VERSION > 8
        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2989,7 +6558,7 @@ contains
     subroutine write_face_vector( basegrid, mpg, vector, b2FaceData, &
        &   gridID, gridSubsetID, gridSubsetInd )
     implicit none
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
@@ -3000,7 +6569,7 @@ contains
     type(ids_generic_grid_scalar), intent(inout) :: vector
         !< Type of IDS data structure, designed for scalar data handling
         !< (in this case 1D vector)
-    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc, 0:1)
+    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc, 0:1 )
     integer, intent(in) :: gridID                    !< Grid identifier index
     integer, intent(in), optional :: gridSubsetID    !< Grid subset identifier index
     integer, intent(in), optional :: gridSubsetInd   !< Base grid subset index
@@ -3009,16 +6578,16 @@ contains
 
     if ( .not. present(gridSubsetInd) ) then
       !! Fill in vector component data
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-               &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, IDSmap, b2FaceData)
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
+               &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, mpg, b2FaceData)
 #if GGD_MINOR_VERSION > 8
       call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
       call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #endif
       deallocate(idsdata)
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-               &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, IDSmap, b2FaceData)
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
+               &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, mpg, b2FaceData)
 #if GGD_MINOR_VERSION > 8
       call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
@@ -3026,8 +6595,8 @@ contains
 #endif
       deallocate(idsdata)
     else
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-               &   basegrid, gridSubsetInd, IDSmap, b2FaceData)
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
+               &   basegrid, gridSubsetInd, mpg, b2FaceData)
 #if GGD_MINOR_VERSION > 8
       call gridWriteData( vector, gridId, gridSubsetID, idsdata )
 #else
@@ -3109,7 +6678,7 @@ contains
     return
     end subroutine add_sourced_value
 
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     !!$> TODO: add to GGD itself (ids_grid_data)!
     !> Write a scalar data field given as a scalar data representation to a
     !! generic grid vector component IDS data fields.
@@ -3223,7 +6792,7 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
-#if IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 )
+#if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
     case( VEC_ALIGN_R_MAJOR_ID )
       !! Writing major radius aligned quantity
       !! Make sure the data field is properly allocated
@@ -3261,127 +6830,6 @@ contains
     end subroutine B2grid_Write_Data_Vector_Components
 #endif
 
-    !> From the B2 grid, compute the coordinate unit vectors
-    !> (poloidal, radial, toroidal)
-    subroutine compute_Coordinate_Unit_Vectors( crx, cry, e1, e2, e3 )
-    implicit none
-    real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: crx    !< Horizontal
-        !< coordinates of the four corners of the (ix, iy) cell
-    real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: cry    !< Vertical
-        !< coordinates of the four corners of the (ix, iy) cell
-    real(IDS_real), intent(out),    &
-        &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1
-        !< First set of coordinates
-    real(IDS_real), intent(out),    &
-        &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e2
-        !< Second set of coordinates
-    real(IDS_real), intent(out),    &
-        &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e3
-        !< Third set of coordinates
-
-    !! internal
-    integer :: ix, iy, ixn, iyn, nx, ny
-    real(IDS_real), dimension(0:1) :: cC, cN
-    real(IDS_real) :: dir
-
-    e1 = 0.0_IDS_real
-    e2 = 0.0_IDS_real
-    e3 = 0.0_IDS_real
-
-    !! poloidal vectors
-    nx = ubound(crx,1)
-    ny = ubound(crx,2)
-    do ix = -1, nx
-      do iy = -1, ny
-
-        cC = quadCentroid( &
-           & crx(ix, iy, 0), cry(ix, iy, 0), &
-           & crx(ix, iy, 1), cry(ix, iy, 1), &
-           & crx(ix, iy, 2), cry(ix, iy, 2), &
-           & crx(ix, iy, 3), cry(ix, iy, 3) )
-
-        !! poloidal direction
-        !! Try to find right neighbour
-        dir = 1.0_IDS_real
-        ixn = rightix( ix, iy )
-        iyn = rightiy( ix, iy )
-
-        if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          !! If not found, try to find left neighbour
-          !! ...and note to invert vector direction
-          dir = -1.0_IDS_real
-          ixn = leftix( ix, iy )
-          iyn = leftiy( ix, iy )
-        end if
-        if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          ! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
-          ! & "not able to find poloidal neighbour for cell" )
-          !! skip cell
-          cycle
-        end if
-
-        cN = quadCentroid( &
-           & crx(ixn, iyn, 0), cry(ixn, iyn, 0), &
-           & crx(ixn, iyn, 1), cry(ixn, iyn, 1), &
-           & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
-           & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
-
-        !! compute vector from one centroid to the other
-        e1(ix,iy,1) = cN(0) - cC(0)   !! R
-        e1(ix,iy,2) = 0.0_IDS_real    !! phi
-        e1(ix,iy,3) = cN(1) - cC(1)   !! Z
-
-        e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
-
-        !! radial direction
-        !! Try to find top neighbour
-        dir = 1.0_IDS_real
-        ixn = topix( ix, iy )
-        iyn = topiy( ix, iy )
-
-        if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          !! If not found, try to find bottom neighbour
-          !! ...and note to invert vector direction
-          dir = -1.0_IDS_real
-          ixn = bottomix( ix, iy )
-          iyn = bottomiy( ix, iy )
-        end if
-        if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          ! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
-          ! &  "not able to find toroidal neighbour for cell" )
-          !! skip cell
-          cycle
-        end if
-
-        cN = quadCentroid( &
-           & crx(ixn, iyn, 0), cry(ixn, iyn, 0), &
-           & crx(ixn, iyn, 1), cry(ixn, iyn, 1), &
-           & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
-           & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
-
-        !! compute vector from one centroid to the other
-        e2(ix,iy,1) = cN(0) - cC(0)   !! R
-        e2(ix,iy,2) = 0.0_IDS_real    !! phi
-        e2(ix,iy,3) = cN(1) - cC(1)   !! Z
-
-        e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
-
-        !! toroidal direction
-        e3(ix,iy,1) = 0.0_IDS_real   !! R
-        e3(ix,iy,2) = 1.0_IDS_real   !! phi
-        e3(ix,iy,3) = 0.0_IDS_real   !! Z
-
-        !! make unit vectors
-        e1(ix,iy,:) = unitVector(e1(ix,iy,:))
-        e2(ix,iy,:) = unitVector(e2(ix,iy,:))
-        e3(ix,iy,:) = unitVector(e3(ix,iy,:))
-
-      end do
-    end do
-
-    return
-    end subroutine compute_Coordinate_Unit_Vectors
-
     !> Return unit vector along direction of given vector
     function unitVector(v) result(unitV)
     implicit none
@@ -3405,6 +6853,21 @@ contains
 
     return
     end subroutine write_sourced_value_root
+
+    subroutine write_sourced_rz( val, rvalue, zvalue )
+    implicit none
+    type(ids_summary_rz1d_dynamic) :: val
+        !< Type of IDS data structure, designed for sourced float data handling
+    real(IDS_real), intent(in) :: rvalue, zvalue
+
+    allocate( val%r( num_slices ), val%z( num_slices ) )
+    val%r( slice_index ) = rvalue
+    val%z( slice_index ) = zvalue
+    allocate( val%source(1) )
+    val%source = source
+
+    return
+    end subroutine write_sourced_rz
 
     subroutine write_errored_value( val, value, error )
     implicit none
@@ -3496,7 +6959,7 @@ contains
         & topix,topiy,bottomix,bottomiy, &
         & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
-    call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN,   &
+    call xertst( geometryId( mpg, geo ) == GEOMETRY_SN,   &
         &   "write_cpo: can only do single null" )
 
     !! Write plasma state

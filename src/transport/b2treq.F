@@ -8,10 +8,14 @@
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_switches
+      use b2mod_ad
+     & , only : ncall_b2treq
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2treq, ncall_b2tlnl
+     & , only : ncall_b2tlnl
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

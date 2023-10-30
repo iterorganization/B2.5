@@ -8,14 +8,15 @@ c calculating the index shift in the Eirene flux arrays.
 c to be used in interface subroutines to Eirene flux data
 c
 c typ    : is the type of the surface which has to match
-c          (for targets 2: radial surface)
-c ind    : index of the radial surface which has to match
+c          (for targets 1: radial surface)
+c ind    : index of the non-standard surface which has to match
 c istart,: starting and ending indices on this surface which have to match
 c   iend :
 c shift  : resulting shift which has to be used in accessing the arrays
 c
       subroutine b2neut_ind(typ,ind,istart,iend,shift)
       use b2mod_types
+      use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_wneutrals
@@ -23,20 +24,16 @@ c
       use b2mod_eirdiag
 #endif
       implicit none
-#ifndef B25_EIRENE
-#     include "COUPLE/KOPPLDIM.F"
-#endif
       integer,intent(in) :: typ,ind,istart,iend
       integer,intent(out) :: shift
       integer :: is
 
       do is=1,nnstsi
-        if(typ.eq.eirdiag_nds_typ(is).and.
-     f     ind.eq.eirdiag_nds_srf(is)) then
-         if(istart.ge.eirdiag_nds_start(is).and.
-     f      iend.le.eirdiag_nds_end(is)) then
+        if(typ.eq.isrftype(nlim+is).and.ltns(ind).eq.is) then
+         if((iend-istart+1).eq.
+     .      (eirdiag_nds_ind(is+1)-eirdiag_nds_ind(is)+1)) then
 c the surface has been found
-           shift=eirdiag_nds_ind(is)+istart-eirdiag_nds_start(is)
+           shift=eirdiag_nds_ind(is)+istart
            goto 20
          end if
         end if

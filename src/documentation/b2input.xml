@@ -278,11 +278,7 @@
 				<default>See description (integer)</default>
 				<type>integer</type>
 				<description>
-					Cell index, on the basis mesh, of the last poloidal ring before the separatrix. Can only be provided for slab geometries, otherwise calculated from geometry:
-					Single-null : jsep=topcut(1)-1
-					Stellarator : jsep=topcut(1)-1
-					Double-null : jsep=min(topcut(1),topcut(2))-1
-					Default for straight geometries : jsep=ny/2
+					Flux surface index, on the basis mesh, of the active separatrix. Can only be provided for slab geometries, otherwise deduced from geometry.
 				</description>
 			</switch>
 			<switch>
@@ -576,11 +572,35 @@
 				</switch>
 			</switchgroup>
 			<switch>
+				<name>b2us_write_b2fgmtry_us</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, unstructured b2fgmtry_us file is written by b2us. When set to 0, it is not.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_write_b2fstati_us</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, unstructured b2fstati_us file is written by b2us. When set to 0, it is not.
+				</description>
+			</switch>
+			<switch>
 				<name>conv_triangles_old_co</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					When converting a structured case with b2us and conv_triangles_old_co = 1, the coordinates of the nodes of the triangles from the original fort.33 file will be used in the unstructured format. Otherwise, the triangular mesh will be exactly matched to the B2.5 grid. 
+					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When converting a structured case with b2us and conv_triangles_old_co = 1, the coordinates of the nodes of the triangles from the original fort.33 file will be used in the unstructured format. Otherwise, the triangular mesh will be exactly matched to the B2.5 grid.  Setting the switch to 1 may be required when converting triangle grids that include extreme slender/skewed triangles (typically manifested through FOLNEUT errors at runtime after case conversion).
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_auto_midplane_det</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, b2us will automatically try to reconstruct outer and inner midplane from the geometry (magnetic field and cell coordinates), and write the corresponding coordinates in b2.user.parameters. When set to 0, the IMP and OMP definition will be based on the values of b2mwti_jxi, b2mwti_jxa, b2mwti_jsep.
 				</description>
 			</switch>
 		</category>
@@ -939,7 +959,7 @@
 				<default>0</default>
 				<description>
 					Profiles file indicator. If b2sral_inputfile.eq.1, then the code looks for the file b2.sources.profile in which it expects to find the 'profile' namelist.
-					This namelist will contain profiles of sources measured from the location (ixref,iyref) (default is outer midplane separatrix), which is set with the 'set_transport_i[xy]ref' switches.
+					This namelist will contain profiles of sources measured from the outer midplane separatrix location, which is set with the [RZ]OMP variables in b2.user.parameters.
 				</description>
 			</switch>
 			<switch>
@@ -948,7 +968,7 @@
 				<type>integer</type>
 				<description>
 					Profiles file indicator. If b2tqna_inputfile.eq.1, then the code looks for the file b2.transport.inputfile, in which it expects to find the transport namelist.
-					This namelist will contain profiles of sources transport parameters measured from the location (ixref,iyref) (default is outer midplane separatrix), which is set with the 'set_transport_i[xy]ref' switches.
+					This namelist will contain profiles of transport parameters measured from the outer midplane separatrix location, which is set with the [RZ]OMP variables in b2.user.parameters.
 				</description>
 			</switch>
 			<switch>
@@ -1816,7 +1836,6 @@
 					The transport_eta switches are activated when user_transport.eq.3 and allow modifications of the electron heat conductivity according to a constant eta (Grad Te / Grad Ne) model. See routine set_transport_eta code for details.
 					A model for disruption transport coefficients is available with user_transport.eq.7. See routine set_transport_disruption code for details.
 					The value user_transport.eq.8 activates the neoclassical model for computation of the transport coefficients in the core. See routine set_transport_neo and subroutines called for details. Implemented from the NEOART package.
-					The location given by ixref and iyref can also serve as the anchor point for the transport and/or sources profiles provided by the user in the b2.transport.inputfile and b2.sources.profile files.
 				</description>
 				<switch>
 					<name>b2tqna_user_transport</name>
@@ -1992,7 +2011,7 @@
 					If lambda is positive, the Coulomb logarithm is set to lambda.
 					If lambda is negative, then abs(lambda) is the lower bound to be used when computing the Coulomb logarithm according to the NRL formulae.
 					The computation of the Coulomb logarithm takes place in b2tlnl.
-					The default formula is to use the Braginskii formulation, which will give the same answer for electron-electron (ee), electron-ion (ei), and ion-ion (ii) collisions. Respectively, non-default values of '1', '2' and '3' for b2tlnl_ee, _ei, and _ii, respectively, make use of the calculation according to Wesson.
+					The default formula is to use the Braginskii formulation, which will give the same answer for electron-electron (ee), electron-ion (ei), and ion-ion (ii) collisions. Respectively, non-default values of '1', '2' and '3' for b2tlnl_ii, _ee, and _ei, respectively, make use of the calculation according to Wesson.
 				</description>
 				<switch>
 					<name>b2trcl_lambda</name>
@@ -2269,7 +2288,7 @@
 			</switch>
 			<switch>
 				<name>b2stel_phm0</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier of the sources due to atomic physics.
@@ -2393,7 +2412,7 @@
 					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is modulated as per the poloidal density distribution of the ions, and neutrals come back as fully-stripped ions.
 					'eirene_ionizing_core' is an alias for this switch.
 					If the value = 1, then the flux is added by direct modification of the sources in the guard cells --- this will only work if a standard flux boundary condition is applied at that boundary.
-					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the type 13 boundary condition.
+					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the BCCON = 13 type boundary condition, for which a negative value for ionizing_core is required.
 					Cannot be used in conjunction with 'eirene_ank_mods'.
 					Use of this switch is not allowed if the core boundary condition is not of a flux type. Moreover, certain boundary conditions expressly include the flux of neutrals already (BCCON = 6, 19, 21, 23, 26, or 27), in which case use of this switch is redundant and should be avoided.
 				</description>
@@ -2536,6 +2555,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mn_spatial_hybrid</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Switch to turn on the spatially hybrid fluid-kinetic neutral model. For multispecies simulations, the hybrid approach can only be used for the hydrogenic neutrals. For other species, you can use either a fully kinetic or purely fluid approach.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_recycle_afn</name>
 				<default>0</default>
 				<type>integer</type>
@@ -2568,6 +2595,18 @@
 				</description>
 			</switch>
 			<switch>
+				<name>use_auto_spatial_hyb</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Advanced hybrid option. Forbidden to use for multispecies simulations (ns &gt; 1) and only in use for the strata with HYB_TYPE='A'.
+					The local charge-exchange Knudsen number Kn is calculated at the boundary.
+					If (Kn &lt; auto_spatial_hyb_Kn_1) then the recycled atom is treated as a fluid.
+					If (Kn &gt; auto_spatial_hyb_Kn_2) then the recycled atom is treated kinetically.
+					(otherwise) linear combination between fluid and kinetic.
+				</description>
+			</switch>
+			<switch>
 				<name>l_macro_afn</name>
 				<default>0.1</default>
 				<type>real</type>
@@ -2589,6 +2628,22 @@
 				<type>real</type>
 				<description>
 					Should be used in combination with MAXW in b2.neutrals.parameters (see description MAXW).
+				</description>
+			</switch>
+			<switch>
+				<name>auto_spatial_hyb_Kn_1</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Should be used in combination with use_auto_spatial_hyb (see description use_auto_spatial_hyb).
+				</description>
+			</switch>
+			<switch>
+				<name>auto_spatial_hyb_Kn_2</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Should be used in combination with use_auto_spatial_hyb (see description use_auto_spatial_hyb).
 				</description>
 			</switch>
 			<switch>
@@ -2670,7 +2725,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Gives the real-time interval between movie frames.
+					Another option for movie output. Gives the real-time interval between movie frames. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
@@ -2726,7 +2781,38 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for plasma state file output. If greater than 0, gives the real-time interval between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_ntim_save).
+					Another option for plasma state file output. If greater than 0, gives the real-time interval between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_ntim_save). Must then be at least as large as the simulation timestep.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_ids_save</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time and b2mndr_ids_av.
+					If used, an IDS time slice will be written at the end of run.
+					If negative, a single IDS will be written at the end of the run.
+					Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_ids_time</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_av.
+					If non-zero, must be at least as large as the simulation timestep.
+					If used, an IDS time slice will be written at the end of run.
+					Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_ids_av</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Frequency, in number of batch averages, at which an IDS is saved containing the averaged plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_time.
+					The averaged plasma state is saved as a separate occurrence of the edge_profiles and edge_sources IDSs.
 				</description>
 			</switch>
 			<switch>
@@ -2820,7 +2906,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Produces a numbered 'tran' file every trantim real-time seconds. An endstate file is written if it falls between scheduled write-up times. Only available within the -DJET environment.
+					Produces a numbered 'tran' file every trantim real-time seconds. An endstate file is written if it falls between scheduled write-up times. Only available within the -DJET environment. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
@@ -3066,6 +3152,15 @@
 					'5.1' for a fort.44 file produced from SOLPS5.1 runs
 					'5.2' for a fort.44 file produced from SOLPS5.2 runs
 					'iter' for input files from SOLPS-ITER runs (no conversion necessary)
+				</description>
+			</switch>
+			<switch>
+				<name>ids_from_43</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch is to be used when running the b2_ual_write utility program to obtain an IDS from the SOLPS run results.
+					If set to 1, the IDS will indicate that the results come from a converted SOLPS4.3 run with no additional calculation. By default, the IDS will indicate a SOLPS-ITER run.
 				</description>
 			</switch>
 		</category>
@@ -4331,7 +4426,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '0', drift velocities are calculated in cell centers. When set to '1', drift velocities are calculated in cell faces.
+					When set to '0', drift velocities are calculated in cell centers (NO LONGER SUPPORTED IN WG CODE). When set to '1', drift velocities are calculated in cell faces.
 					 It is recommended '1'.
 				</description>
 			</switch>
@@ -4642,12 +4737,20 @@
 				</description>
 			</switch>
 			<switch>
-				<name>RECYC</name>
+				<name>B2RECYC</name>
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their isonuclear sequence.
 					Applies to B2.5 neutral fluid species.
-					Also multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set to 0 (see b2cdci for details).
+					If B2RECYC is not explicitly specified, the values from RECYC will be taken. 
+				</description>
+			</switch>
+			<switch>
+				<name>RECYC</name>
+				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<description>
+					Multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set to 0 (see b2cdci for details).
+					If B2RECYC is not specified, RECYC will also be applied to B2.5 neutral fluid species.
 				</description>
 			</switch>
 			<switch>
@@ -4703,6 +4806,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>STRASCLFL</name>
+				<default>1.0</default>
+				<type>real*8 array of length (NSTRAT)</type>
+				<description> 
+					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.     
+				</description>
+			</switch>
+			<switch>
 				<name>SURF_MAT</name>
 				<default>'C'</default>
 				<type>character*2 array of length (NSTRAT)</type>
@@ -4725,6 +4836,22 @@
 				<type>integer array of length (NSTRAT)</type>
 				<description> 
 					Determines the approximation of the particle-velocity distribution of the incident atoms for the AFN boundary condition. MAXW=0: a diffusion approach is used; MAXW=1: a truncated drifting Maxwellian is used. For some cases, MAXW=0 slightly reduces the discrepancy between the fluid and kinetic solution due to an intrinsic correction for lower collisionality. The diffusion and Maxwellian approach are combined when using MAXW=2, for which the Maxwellian approach is used when the local Knudsen number (Kn) is smaller than b2stbr_kn_b1, the diffusion approach is used for Kn &gt; b2stbr_kn_b2 and a linear interpolation between the two approaches for b2stbr_kn_b1 &lt; Kn &lt; b2stbr_kn_b2. The macroscopic length scale to determine the local Knudsen number is defined by the parameter l_macro_afn.    
+				</description>
+			</switch>
+			<switch>
+				<name>MOL</name>
+				<default>0</default>
+				<type>integer array of length (NSTRAT)</type>
+				<description> 
+					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.    
+				</description>
+			</switch>
+			<switch>
+				<name>HYB_TYPE</name>
+				<default>'M'</default>
+				<type>character*1 array of length (NSTRAT)</type>
+				<description> 
+					When HYB_TYPE='A', possibility to have automatic switching between fluid and kinetic recycling for the stratum for the advanced hybrid model. See description of use_auto_spatial_hyb. HYB_TYPE should be 'M' for all strata for multispecies simulations (ns &gt; 1).
 				</description>
 			</switch>
 			<switch>
@@ -4808,11 +4935,30 @@
 				</description>
 			</switch>
 			<switch>
+				<name>B2SPECIES_START</name>
+				<default>0</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model. 
+					If not specified, B2SPECIES_START = SPECIES_START.
+				</description>
+			</switch>
+			<switch>
+				<name>B2SPECIES_END</name>
+				<default>ns-1</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the last B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
+					If not specified, B2SPECIES_END = SPECIES_END.
+				</description>
+			</switch>
+			<switch>
 				<name>SPECIES_START</name>
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2.5 species involved in stratum (istra).
+					Specifies the index of the first B2.5 species involved in stratum (istra) for EIRENE.
+					SPECIES_START is also used for the B2.5 fluid neutral model, if B2SPECIES_START is not specified.
 				</description>
 			</switch>
 			<switch>
@@ -4820,7 +4966,8 @@
 				<default>ns-1</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the last B2.5 species involved in stratum (istra).
+					Specifies the index of the last B2.5 species involved in stratum (istra) for EIRENE.
+					SPECIES_END is also used for the B2.5 fluid neutral model, if B2SPECIES_END is not specified.
 				</description>
 			</switch>
 			<switch>
@@ -6023,6 +6170,7 @@
 			</switch>
 			<switch>
 				<name>LCBS</name>
+				<default>0</default>
 				<type>integer array of size (NBC)</type>
 				<description>
 					List of core boundary segments, according to their numbering in the current /BOUNDARY/ namelist.

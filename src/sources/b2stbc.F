@@ -2,14 +2,11 @@
 *.specification
 
       subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &  psnc, psnl, wrong_flow, main_call)
       use b2mod_types
 !      use b2mod_geo_corner
       use b2mod_constants
-!      use b2mod_sources
-!     1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
-!     2          b2stbc_sne
 !      use b2mod_balance !djm Jan 2017
 !     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
 !     2          b2stbc_shi0to3,balance_netcdf
@@ -20,6 +17,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2stbc
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_boundary_namelist
@@ -30,10 +30,10 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2stbc,
      &          ncall_b2stbc_phys, nsdmax
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -44,7 +44,6 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
@@ -67,12 +66,12 @@
 
 *   ..local variables
       integer is
-      real (kind=R8) :: praverage(2), testqe, testqi
+      real (kind=R8) :: praverage(2)
       real (kind=R8) :: wrk(nFc)
 #ifdef WG_TODO
       integer regcnt, ixx
       real (kind=R8) ::
-     *   t0,
+     *   t0, testqe, testqi,
      &   prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2),
      1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
@@ -332,17 +331,17 @@
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
       endif
-      if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
+      if (ncall_b2stbc.eq.0) lbndusr=.false.                             !xpb
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-     &    call compute_feedback(nCv, nFc, nVx, ns, ismain,
-     &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, 
-     &     main_call, switch%b2stbc_diagno)
+     &    call compute_feedback(nCv, nFc, ns, ismain,
+     &     switch, geo, mpg, pl, dv, rt, psnc, psnl,
+     &     main_call)
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0,
-     &   switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &   switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &   wrong_flow, main_call, praverage)
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
@@ -377,8 +376,8 @@
       endif
 
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain,
-!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
+!WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
+!WG_RM     &    switch, geo, pl, dv, srw, main_call)
 
 * ..compute conditions on the cuts
 *     (no flow)
@@ -394,12 +393,12 @@
 !WG_TODO       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
 !WG_TODO      enddo
 
+#ifdef WG_TODO
 c added 2001.11.26 dpc/xpb
 c to fix problems with the core energy boundary condition arising
 c from diamagnetic drifts
       testqe=0.0_R8
       testqi=0.0_R8
-#ifdef WG_TODO
       if(maxval(facdrift).ne.0.0_R8) then
         do ix=-1,nx
           iy=0                                        ! south side
@@ -575,43 +574,59 @@ c if we want the integral current to be 0
      1     iy,te(nx,iy)/ev,ne(nx,iy),(she0(nx,iy,is),is=0,3)
         enddo
       endif
+#endif
 c      write(*,*) 'Copying sna0 to b2stbc_sna'
-      b2stbc_sna(-1:nx,-1:ny,0:ns-1)=
-     1 sna0(-1:nx,-1:ny,0,0:ns-1)+
-     2 sna0(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
+      srw%b2stbc_sna(:,0:ns-1)=
+     1 srw%sna0(:,0,0:ns-1)+
+     2 srw%sna0(:,1,0:ns-1)*pl%na(:,0:ns-1)
 c      write(*,*) 'Copying smo0 to b2stbc_smo'
       do is=0,ns-1
-        b2stbc_smo(-1:nx,-1:ny,is)=
-     1   smo0(-1:nx,-1:ny,0,is)+
-     2   smo0(-1:nx,-1:ny,1,is)*ua(-1:nx,-1:ny,is)+
-     3   smo0(-1:nx,-1:ny,2,is)*am(is)*mp*na(-1:nx,-1:ny,is)+
-     4   smo0(-1:nx,-1:ny,3,is)*am(is)*mp*na(-1:nx,-1:ny,is)*
-     5   ua(-1:nx,-1:ny,is)
+        srw%b2stbc_smo(:,is)=
+     1   srw%smo0(:,0,is)+
+     2   srw%smo0(:,1,is)*pl%ua(:,is)+
+     3   srw%smo0(:,2,is)*am(is)*mp*pl%na(:,is)+
+     4   srw%smo0(:,3,is)*am(is)*mp*pl%na(:,is)*pl%ua(:,is)
       enddo
 c      write(*,*) 'Copying she0 to b2stbc_she'
-      b2stbc_she(-1:nx,-1:ny)=
-     1 she0(-1:nx,-1:ny,0)+
-     2 she0(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3 she0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4 she0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
+      srw%b2stbc_she(:)=
+     1 srw%she0(:,0)+
+     2 srw%she0(:,1)*pl%te(:)+
+     3 srw%she0(:,2)*dv%ne(:)+
+     4 srw%she0(:,3)*dv%ne(:)*pl%te(:)
 c      write(*,*) 'Copying shi0 to b2stbc_shi'
-      b2stbc_shi(-1:nx,-1:ny)=
-     1 shi0(-1:nx,-1:ny,0)+
-     2 shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3 shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4 shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
+      srw%b2stbc_shi(:)=
+     1 srw%shi0(:,0)+
+     2 srw%shi0(:,1)*pl%ti(:)+
+     3 srw%shi0(:,2)*dv%ni(:,0)+
+     4 srw%shi0(:,3)*dv%ni(:,0)*pl%ti(:)
+      srw%b2stbc_shn(:)=
+     1 srw%shn0(:,0)+
+     2 srw%shn0(:,1)*pl%tn(:)+
+     3 srw%shn0(:,2)*dv%nn(:)+
+     4 srw%shn0(:,3)*dv%nn(:)*pl%tn(:)
 c      write(*,*) 'Copying sch0 to b2stbc_sch'
-      b2stbc_sch(-1:nx,-1:ny)=
-     1 sch0(-1:nx,-1:ny,0)+
-     2 sch0(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
-     3 sch0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4 sch0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
+      srw%b2stbc_sch(:)=
+     1 srw%sch0(:,0)+
+     2 srw%sch0(:,1)*pl%po(:)+
+     3 srw%sch0(:,2)*dv%ne(:)+
+     4 srw%sch0(:,3)*dv%ne(:)*pl%po(:)
+      srw%b2stbc_skt(:)=
+     1 srw%skt0(:,0)+
+     2 srw%skt0(:,1)*pl%kt(:)+
+     3 srw%skt0(:,2)*dv%ni(:,1)+
+     4 srw%skt0(:,3)*dv%ni(:,1)*pl%kt(:)
+      srw%b2stbc_szt(:)=
+     1 srw%szt0(:,0)+
+     2 srw%szt0(:,1)*pl%zt(:)+
+     3 srw%szt0(:,2)*dv%ni(:,1)+
+     4 srw%szt0(:,3)*dv%ni(:,1)*pl%zt(:)
 c      write(*,*) 'Copying sne0 to b2stbc_sne'
-      b2stbc_sne(-1:nx,-1:ny)=
-     1 sne0(-1:nx,-1:ny,0)+
-     2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
+      srw%b2stbc_sne(:)=
+     1 srw%sne0(:,0)+
+     2 srw%sne0(:,1)*dv%ne(:)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
 
+#ifdef WG_TODO
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stbc_sna0to1 = sna0

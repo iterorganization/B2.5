@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &  wrong_flow, main_call, praverage)
       use b2mod_types
       use b2mod_math
@@ -25,13 +25,17 @@
       use eirmod_braeir
 #endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
+      use b2mod_ad
+     & , only : ncall_b2stbc_phys,
+     &          UBIG, VBIG, PBIG, UP00, EPSLON, NE00, US
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2stbc_phys, senepar, senipar, sconpar, scurpar,
+     & , only : senepar, senipar, sconpar, scurpar,
      &  prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16,
-     &  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS
+     *  NUEOUT, FS, VS, NAS, TES, TIS, NIVS, FFAC, DFS, POS, S2
+#endif
       use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
@@ -44,7 +48,6 @@
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
       logical main_call                                              !xpb
@@ -6279,8 +6282,8 @@ cxpb code segment analog to b2tfhi
      &        enipar(ib,1)*sy
           endif
           do is = 0, ns-1
-            if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0 .or.
-     &         (switch%tn_style.eq.2.and.zn(is).ne.1)) then
+            if(.not.is_neutral(is) .or. switch%tn_style.eq.0 .or.
+     &         (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
@@ -8460,11 +8463,11 @@ c              fchi=0.0_R8
           srw%sch0(iCv1,1) = srw%sch0(iCv1,1) - t0
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-            if (switch%eirene_sheath_pot.eq.1) then
-              ! B2 indexing for delta_sheathxb
-              delta_sheathb(ifc) =
+          if (switch%eirene_sheath_pot.eq.1) then
+            ! B2 indexing for delta_sheathxb
+            delta_sheathb(iFc) =
      &          qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
-            endif
+          endif
 #endif
 cwdk Todo: seecmodel
           wrong_flow = .false.

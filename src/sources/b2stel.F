@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stel (nCv, nFc, nVx, ns, ismain,
+      subroutine b2stel (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
 !      use b2mod_diag
@@ -32,7 +32,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -140,9 +140,9 @@
       rsanareg=0.0_R8
       rsahireg=0.0_R8
       rsamoreg=0.0_R8
-!WG_TODO      rsana=0.0_R8
-!WG_TODO      rsahi=0.0_R8
-!WG_TODO      rsamo=0.0_R8
+      srw%rsana=0.0_R8
+      srw%rsahi=0.0_R8
+      srw%rsamo=0.0_R8
       do is = 0, ns-2
        if (lnext(is,is+1)) then
 *     ..particle source and heat source
@@ -162,14 +162,14 @@
      &      rf0*t0*pl%na(iCv,is)
            sna0_ion(iCv,1,is) = sna0_ion(iCv,1,is)-
      &      (1.0_R8+rf0)*t0  !srv 11.09.09 }
-!WG_TODO           rsana(iCv,is) = t0*pl%na(iCv,is)
+           srw%rsana(iCv,is) = t0*pl%na(iCv,is)
            rsanareg(mpg%cvReg(iCv),is)=rsanareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
            t1 = t0*pl%na(iCv,is)*(1.0_R8-switch%BoRiS)*
      &        ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
      &        ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
-           if (switch%tn_style.eq.0.or.zn(is).ne.1
+           if (switch%tn_style.eq.0.or.nint(zn(is)).ne.1
      &                             .or..not.is_neutral(is)) then        !! combined ion-neutral, and/or non-hydrogenic (default)
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
@@ -194,7 +194,7 @@
      &                         rf0*t1n/(dv%nn(iCv)*pl%tn(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
            endif
-!WG_TODO           rsahi(iCv,is) = t1
+           srw%rsahi(iCv,is) = t1
           endif
         enddo
 *     ..parallel momentum source
@@ -247,25 +247,27 @@
                smq0_ion(iCv,1,is) = smq0_ion(iCv,1,is)-
      &         (1.0_R8+rf0)*t1
              endif
-!WG_TODO             rsamo(iCv,is) = rsamo(iCv,is)+t1*pl%ua(iCv,is)
+             srw%rsamo(iCv,is) = srw%rsamo(iCv,is)+t1*pl%ua(iCv,is)
              rsamoreg(mpg%cvReg(iCv),is) =
      &        rsamoreg(mpg%cvReg(iCv),is)+t1*pl%ua(iCv,is)
-!WG_TODO             rsamo(iCv,is+1) = rsamo(iCv,is+1)-t1*pl%ua(iCv,is)
+             srw%rsamo(iCv,is+1) = srw%rsamo(iCv,is+1)-t1*pl%ua(iCv,is)
              rsamoreg(mpg%cvReg(iCv),is+1) =
      &        rsamoreg(mpg%cvReg(iCv),is+1)-t1*pl%ua(iCv,is)
           endif
         enddo
        endif
       enddo
+
 *   ..compute sources due to recombination
       rranareg=0.0_R8
       rrahireg=0.0_R8
       rramoreg=0.0_R8
       rqahereg=0.0_R8
-!WG_TODO      rrana=0.0_R8
-!WG_TODO      rrahi=0.0_R8
-!WG_TODO      rramo=0.0_R8
-!WG_TODO      rqahe=0.0_R8
+      srw%rrana=0.0_R8
+      srw%rrahi=0.0_R8
+      srw%rramo=0.0_R8
+      srw%rqahe=0.0_R8
+
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source and heat source
@@ -284,11 +286,11 @@
      &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
            sna0_rec(iCv,1,is-1) = sna0_rec(iCv,1,is-1)-                 !srv 11.09.09 {
      &      rf0*t0*pl%na(iCv,is)/pl%na(iCv,is-1)
-!WG_TODO           rrana(iCv,is) = t0*pl%na(iCv,is)
+           srw%rrana(iCv,is) = t0*pl%na(iCv,is)
            rranareg(mpg%cvReg(iCv),is)=rranareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           if (switch%tn_style.eq.0.or.zn(is).ne.1
+           if (switch%tn_style.eq.0.or.nint(zn(is)).ne.1
      &                             .or..not.is_neutral(is-1)) then      !! combined ion-neutral, and/or non-hydrogenic (default)
              t1 = t0*pl%na(iCv,is)*(1.0_R8-switch%BoRiS)*
      &         ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
@@ -317,8 +319,8 @@
      *                         rf0*t1n/((dv%ni(iCv,0)-dv%ni(iCv,1))*
      *                         pl%tn(iCv))
            endif
-!WG_TODO           rrahi(iCv,is) = t1
-           rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
+           srw%rrahi(iCv,is) = t1
+           rrahireg(mpg%cvReg(iCv),is) = rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb.ne.0.and.nint(zn(is)).le.zmax_recomb) then
 c the default treatment is to have the entire ionisation potential
@@ -328,12 +330,12 @@ c this treatment changes this --- the ionisation potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)
-             srw%she0(iCv,0)=srw%she0(iCv,0)+(1.0_R8+rf0)*
+             srw%she0(iCv,0) = srw%she0(iCv,0)+(1.0_R8+rf0)*
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
-             srw%she0(iCv,3)=srw%she0(iCv,3)-rf0*
+             srw%she0(iCv,3) = srw%she0(iCv,3)-rf0*
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)/(dv%ne(iCv)*pl%te(iCv))
-!WG_TODO             rqahe(iCv,is) = rqahe(iCv,is) -
-!WG_TODO     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+             srw%rqahe(iCv,is) = srw%rqahe(iCv,is) -
+     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
              rqahereg(mpg%cvReg(iCv),is) =
      &        rqahereg(mpg%cvReg(iCv),is) -
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
@@ -358,23 +360,25 @@ c accounted for)
            smq0_rec(iCv,0,is-1) = smq0_rec(iCv,0,is-1)+
      &      t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is-1))
            smq0_rec(iCv,1,is-1) = smq0_rec(iCv,1,is-1)-rf0*t1
-!WG_TODO           rramo(iCv,is) = rramo(iCv,is)+t1*pl%ua(iCv,is)
+           srw%rramo(iCv,is) = srw%rramo(iCv,is)+t1*pl%ua(iCv,is)
            rramoreg(mpg%cvReg(iCv),is) =
      &      rramoreg(mpg%cvReg(iCv),is)+t1*pl%ua(iCv,is)
-!WG_TODO           rramo(iCv,is-1) = rramo(iCv,is-1)+t1*pl%ua(iCv,is)
+           srw%rramo(iCv,is-1) = srw%rramo(iCv,is-1)+t1*pl%ua(iCv,is)
            rramoreg(mpg%cvReg(iCv),is-1) =
      &      rramoreg(mpg%cvReg(iCv),is-1)+t1*pl%ua(iCv,is)
          endif
         enddo
        endif
       enddo
+
+
 *   ..compute source terms for electron heat loss and radiation
 !WG_TODO      b2rad=0.0_R8
       b2radreg=0.0_R8
       b2bremreg=0.0_R8
       rqradreg=0.0_R8
       rqbrmreg=0.0_R8
-!WG_TODO      rqrad=0.0_R8
+      srw%rqrad=0.0_R8
 !WG_TODO      b2brem=0.0_R8
 !WG_TODO      rad_imp=0.0_R8
       do is = 0, ns-1
@@ -391,14 +395,14 @@ c accounted for)
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
           srw%she0(iCv,3) = srw%she0(iCv,3)-
      &     (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
-!WG_TODO          rqahe(iCv,is) = rqahe(iCv,is) + t0
+          srw%rqahe(iCv,is) = srw%rqahe(iCv,is) + t0
           rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
           t0 = switch%b2stel_phm0*
      &         rtw%rrd(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
      &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute line radiation
-!WG_TODO          rqrad(iCv,is) = t0
+          srw%rqrad(iCv,is) = t0
           rqradreg(mpg%cvReg(iCv),is)=rqradreg(mpg%cvReg(iCv),is)+t0
           b2radreg(mpg%cvReg(iCv))=b2radreg(mpg%cvReg(iCv))-t0
 !WG_TODO          b2rad=b2rad-t0
@@ -411,7 +415,7 @@ c accounted for)
      &         rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
      &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute bremsstrahlung radiation
-!WG_TODO          rqbrm(iCv,is) = t0
+          srw%rqbrm(iCv,is) = t0
           rqbrmreg(mpg%cvReg(iCv),is)=rqbrmreg(mpg%cvReg(iCv),is)+t0
           b2bremreg(mpg%cvReg(iCv))=b2bremreg(mpg%cvReg(iCv))-t0
 !WG_TODO          b2brem=b2brem-t0
@@ -512,11 +516,11 @@ c accounted for)
      &       shi0_rec(:,3)*pl%ti*dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
 
-!WG_TODO        do is=0,ns-1                                                 !srv 03.02.12 {
-!WG_TODO          write(chns,'(i3.3)') is
-!WG_TODO          call my_out_us(70,nCv,0,rqrad(1,is),'b2stel_rqrad'//chns)
-!WG_TODO          call my_out_us(70,nCv,0,rqbrm(1,is),'b2stel_rqbrm'//chns)
-!WG_TODO        enddo                                                        !srv 03.02.12 }
+        do is=0,ns-1                                                 !srv 03.02.12 {
+          write(chns,'(i3.3)') is
+          call my_out_us(70,nCv,0,srw%rqrad(1,is),'b2stel_rqrad'//chns)
+          call my_out_us(70,nCv,0,srw%rqbrm(1,is),'b2stel_rqbrm'//chns)
+        enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
 
 cdjm Jan2017 Keep linearised sources for balance

@@ -30,7 +30,7 @@
 ! - prior_par: parameters related to the type of prior (e.g. standard deviation for Gaussian prior)
 ! - prior_range: range of validity of the prior, outside this interval the MAP cost function returns NaN
 ! - scale_sigma: tells of the sigma in the MAP cost function is intended as relative (true) or absolute (false)
-! - mapToOMP: according to cftype, decide if cost function data is to be re-mapped to the OMP 
+! - mapToOMP: according to cftype, decide if cost function data is to be re-mapped to the OMP
 ! - read_sigma: tells to read or not the experimental data uncertainty
 ! - sigma: stores the values of the standard deviation in the MAP cost function
 ! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
@@ -78,9 +78,9 @@
       integer :: jcol(nvmx*nvmx), jrow(nvmx*nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
       character*256, save :: limited_memory_update_type,
-     &  hessian_approximation 
+     &  hessian_approximation
       real (kind=R8), save :: cpu_opt=0.0_R8, tol_opt=1.0e-7_R8
-      integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0 
+      integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0
       integer, save :: paris(nvmx),parib(nvmx)
       logical, save :: sigma_opt(nsigmx)
       logical, save :: spatial_dep(nvmx)
@@ -90,11 +90,11 @@
       real (kind=R8) :: rangeold(nvmx,2), parold(nvmx,2)
       integer :: typeold(nvmx)
       private optimization
-      namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
+      namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu,
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
      & limited_memory_update_type, partype, sigma_opt, spatial_dep,
      & spatial_points, par_rescale, paris, parib, ncf,cfstart,cfend,
-     & cftype, cfdef, cfweight,prior_type, prior_par, prior_range, 
+     & cftype, cfdef, cfweight,prior_type, prior_par, prior_range,
      & scale_sigma, nsigma, sigma, cf_reg, cf_regP, mapToOMP, read_sigma
 
       contains
@@ -107,8 +107,7 @@
       integer, intent (in) :: ns
       ! csc local variables
       integer :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff,
-     &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
-     &           ifc1, ifc2, jj
+     &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc
       integer, allocatable :: cfReg(:)
       logical done
       character*1 str
@@ -152,7 +151,6 @@
       nnjac = 0
       jcol = 0
       jrow = 0
-      jj = 0.0
       partype = -1
       sigma_opt = .true.
       spatial_dep = .false.
@@ -300,7 +298,7 @@
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, incf, ncffc,
      >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
-            end do              ! iss	
+            end do              ! iss
             m%cfRegP(icf,2) = ncffc
 ! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
             if (m%cfOnCv(icf)) then
@@ -439,9 +437,9 @@
 !     16 - b2recyc(paris(ipar),parib(ipar)), with paris(ipar) identifies species, parib(ipar) identifies stratum
 !     17 - b2tqna_ballooning
 !     18 - b2tqna_ballooning_rescale
-!     19 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k) 
-!     20 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB 
-!     21 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB 
+!     19 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k)
+!     20 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB
+!     21 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB
 !     22 - keps_sig
 !     23 - keps_alf
 !     24 - keps_visc
@@ -468,7 +466,7 @@
        call xertst(sum(spatial_points(1:nnvar)) .le. nvmx,
      &   'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
        do ii=1,nnvar
-        if (spatial_dep(ii) .and. 
+        if (spatial_dep(ii) .and.
      &      (partype(ii).lt.1 .or. partype(ii).gt.9)) !only parm_XXX can be spatially dependent
      >  call xerrab('b2mod_par_opt: spatial_points optimization '//
      &              'is available only for partype 1-9')
@@ -482,7 +480,7 @@
         if (partype(ii) .eq. 1 .or. partype(ii) .eq. 2 .or.
      &      partype(ii) .eq. 3 .or. partype(ii) .eq. 5 .or.
      &       partype(ii) .eq. 7 .or. partype(ii) .eq. 12 .or.
-     &      partype(ii) .eq. 13 .or. partype(ii) .eq. 16) 
+     &      partype(ii) .eq. 13 .or. partype(ii) .eq. 16)
      >   call xertst((paris(ii) .ge. 0) .and. (paris(ii) .le. ns-1),
      &   'b2mod_par_opt: paris<0 or >ns-1')
         if (partype(ii) .ge. 10 .and. partype(ii) .le. 16)
@@ -516,7 +514,7 @@
 !      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
 !      For prior_type = 2, not used?
        do ii = 1, nnvar
-        if (prior_type(ii) .eq. 1) 
+        if (prior_type(ii) .eq. 1)
      &   call xertst(prior_par(ii,2) .gt. 0.0_R8,
      &    'b2mod_par_opt: sigma prior <=0')
         call xertst(prior_range(ii,1).lt.prior_range(ii,2),
@@ -554,14 +552,14 @@
         prior_par(idd:idd+spatial_points(ipp)-1,2) = parold(ipp,2)
         prior_range(idd:idd+spatial_points(ipp)-1,1) = rangeold(ipp,1)
         prior_range(idd:idd+spatial_points(ipp)-1,2) = rangeold(ipp,2)
-        npar_opt = npar_opt + spatial_points(ipp) - 1 
+        npar_opt = npar_opt + spatial_points(ipp) - 1
         idd = idd + spatial_points(ipp) - 1 !next index
        end if
        npar_opt = npar_opt + 1
        idd = idd + 1 !next index
       enddo
       npar_opt = npar_opt - (nsigma - nsigma_opt)
-      if (flag_optim .or. (cftype(1) .eq. 6)) 
+      if (flag_optim .or. (cftype(1) .eq. 6))
      >  call xertst(any(x0(1:npar_opt) .lt. inf_opt*10.0_R8),
      &   'b2mod_par_opt: initial guess x0 MUST be specified for '//
      &   'all variables if optimizing or using a MAP cost function')

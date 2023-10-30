@@ -14,7 +14,7 @@
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
-!!      @note   More on the b2_ual_writers is available in SOLPS-GUI
+!!      @note   More on the b2_ual writers is available in SOLPS-GUI
 !!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
 !!
 !!      @note   A short video tutorial on the use of the B2.5 writer is
@@ -263,20 +263,20 @@ program b2_ual_write_b2mod
      &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io &
      & , only : b25_process_ids
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_divertors
 #endif
     use b2mod_grid_mapping
-#if IMAS_MINOR_VERSION < 15 && IMAS_MINOR_VERSION > 11
+#if ( IMAS_MINOR_VERSION > 11 && IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION == 3 )
     use ids_grid_examples       ! IGNORE
 #endif
     use b2mod_ad &
@@ -297,6 +297,7 @@ program b2_ual_write_b2mod
     type(geometry)   :: geo
     type(B2State)    :: state
     type(B2StateExt) :: state_ext
+    type(B2Average)  :: state_avg
     integer :: num_step !< Number of steps
     integer :: narg     !< Total Number of input arguments (shot, run etc.)
     integer :: cptArg
@@ -404,7 +405,7 @@ program b2_ual_write_b2mod
 
     !! Run main B2 routine to process and read the B2 data
     write(0,*) "Running b2mn_init"
-    call b2mn_init (switch, geo, mpg, state, state_ext)
+    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
     write(0,*) "b2mn_init completed"
 
     !! If steps were defined then run the b2mn_step routine for the number of
@@ -412,7 +413,7 @@ program b2_ual_write_b2mod
     if( num_step .gt. -1 ) then
         write(0,*) "Running b2mn_step(", num_step, ")"
         write(0,*) "num_step: ", num_step
-        call b2mn_step( switch, geo, mpg, state, state_ext, J )
+        call b2mn_step( switch, geo, mpg, state, state_ext, state_avg, J )
         write(0,*) "b2mn_step() completed"
     end if
 
@@ -462,7 +463,7 @@ program b2_ual_write_b2mod
         if ( status.ne.0 ) then
           write (0,*) 'Error opening old dataset_description IDS !'
         else if (associated(old_description%dd_version)) then
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           old_start_time = description%simulation%time_begin
           old_end_time = description%simulation%time_end
 #endif
@@ -491,7 +492,7 @@ program b2_ual_write_b2mod
             tmp_run = run
             if (database.ne.'iter') then
               tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                 & 'idscp --setDatasetVersion'//                &
                 &       ' -si ',shot,' -ri ',run,              &
@@ -509,7 +510,7 @@ program b2_ual_write_b2mod
               call system(systemarg)
 #endif
             end if
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
              & 'idscp --setDatasetVersion'//                 &
              &       ' -si ',shot,' -ri ',tmp_run,           &
@@ -536,16 +537,16 @@ program b2_ual_write_b2mod
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( geo, mpg, state, switch, &
+          call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
              &  edge_profiles, edge_sources, edge_transport, &
              &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
              &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
              &  numerics, old_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
              &  divertors, &
 #endif
              &  tim, dtim, shot, run, database, version, new_eq_ggd, &
@@ -561,16 +562,16 @@ program b2_ual_write_b2mod
       if (database.eq.'iter') database = 'ITER'
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( geo, mpg, state, switch, &
+      call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
          &  edge_profiles, edge_sources, edge_transport, &
          &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
          &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
          &  numerics, run_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
          &  divertors, &
 #endif
          &  tim, dtim, shot, run, database, version, new_eq_ggd )
@@ -580,30 +581,25 @@ program b2_ual_write_b2mod
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   treename, shot, run, idx, username, database, version, &
         &   new_eq_ggd )
     call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
-#if IMAS_MINOR_VERSION > 21
-        &   summary, &
-#endif
-        &   description )
     call close_ual(idx)
     idx = 0
 
@@ -665,7 +661,7 @@ contains
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
             &   grid_subset(gridSubset_index)%identifier%name
         write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &

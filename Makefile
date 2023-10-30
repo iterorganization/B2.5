@@ -234,7 +234,9 @@ endif
 ifdef USE_MPI
 DEFINES += ${USE_MPI}
 else
+ifeq ($(shell [ -d ${SOLPSTOP}/modules/solps4-5/src/Eirene_commons ] && echo yes || echo no ),yes)
 SOLPS4INCLUDE += -I${SOLPSTOP}/modules/solps4-5/src/Eirene_commons
+endif
 endif
 ifdef USE_OPENMP
 DEFINES += ${USE_OPENMP}
@@ -392,7 +394,7 @@ OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
-ADEXTRA = 
+ADEXTRA =
 ifdef DIFF_D
 ADEXTRA += ${CONTEXTAD}
 endif
@@ -1239,7 +1241,6 @@ ifdef MODLISTF90
 endif
 endif
 
-
 else
 
 depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90}
@@ -1267,8 +1268,6 @@ endif
 endif
 
 endif
-
-
 
 tags:
 	rm -f ${SRCB2}/TAGS ; ${MAKETAGS} ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
@@ -1348,6 +1347,9 @@ endif
 	${MAKE} depend
 
 include ${OBJDIR}/dependencies
+ifeq ($(shell [ -e ${SRCB2}/config/dependencies.local ] && echo yes || echo no ),yes)
+include ${SRCB2}/config/dependencies.local
+endif
 
 ifeq ($(COMPILER),g77)
 ${OBJDIR}/b2stbc.o : b2stbc.F

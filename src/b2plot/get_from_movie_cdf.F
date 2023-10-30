@@ -1,25 +1,29 @@
-      subroutine get_from_movie_cdf(ncidcdf,istep)
+      subroutine get_from_movie_cdf(ncidcdf,istep,nCv,ns,state)
       use b2mod_types
-      use b2mod_b2plot
       use b2mod_movies
-      use b2mod_plasma
+      use b2us_plasma
+#ifndef NO_CDF
+      use b2mod_constants
 #ifdef B25_EIRENE
       use eirmod_parmmod
+     ,   , ncv_eir => ncv
       use eirmod_wneutrals
+      use eirmod_extrab25
 #else
       use b2mod_eirdiag
 #endif
+#endif
       use b2mod_subsys
       implicit none
+      integer ncidcdf,istep,nCv,ns
+      type (B2State) :: state
+#ifndef NO_CDF
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer ncidcdf,istep
-#ifndef NO_CDF
 #     include <netcdf.inc>
-      integer :: iret, start(4), count(4), varid
+      integer :: iret, start(3), count(3), varid
       real (kind=R8) :: time(1)
-      real (kind=R8), allocatable :: dummy(:,:,:)
 #endif
       external xertst
 
@@ -37,62 +41,52 @@
       write(*,*) 'time = ',time(1)
       call reset_time(time(1))
       start(1)=1
-      start(2)=1
-      start(3)=istep
-      count(1)=nx+2
-      count(2)=ny+2
-      count(3)=1
+      start(2)=istep
+      count(1)=nCv
+      count(2)=1
       write(*,*) 'Getting te for slice ',istep
       iret=nf_inq_varid(ncidcdf,'te',varid)
       call check_cdf_status(iret)
-      iret=nf_get_vara_double(ncidcdf,varid,start,count,te)
+      iret=nf_get_vara_double(ncidcdf,varid,start,count,state%pl%te)
       call check_cdf_status(iret)
-      te=te*qe
+      state%pl%te=state%pl%te*qe
       write(*,*) 'Getting ti for slice ',istep
       iret=nf_inq_varid(ncidcdf,'ti',varid)
       call check_cdf_status(iret)
-      iret=nf_get_vara_double(ncidcdf,varid,start,count,ti)
+      iret=nf_get_vara_double(ncidcdf,varid,start,count,state%pl%ti)
       call check_cdf_status(iret)
-      ti=ti*qe
+      state%pl%ti=state%pl%ti*qe
       write(*,*) 'Getting ne for slice ',istep
       iret=nf_inq_varid(ncidcdf,'ne',varid)
       call check_cdf_status(iret)
-      iret=nf_get_vara_double(ncidcdf,varid,start,count,ne)
+      iret=nf_get_vara_double(ncidcdf,varid,start,count,state%dv%ne)
       call check_cdf_status(iret)
       start(1)=1
       start(2)=1
-      start(3)=1
-      start(4)=istep
-      count(1)=nx+2
-      count(2)=ny+2
-      count(3)=ns
-      count(4)=1
+      start(3)=istep
+      count(1)=nCv
+      count(2)=ns
+      count(3)=1
       write(*,*) 'Getting na for slice ',istep
       iret=nf_inq_varid(ncidcdf,'na',varid)
       call check_cdf_status(iret)
-      iret=nf_get_vara_double(ncidcdf,varid,start,count,na)
+      iret=nf_get_vara_double(ncidcdf,varid,start,count,state%pl%na)
       call check_cdf_status(iret)
-      if(natmi.gt.0) then
-        allocate(dummy(0:nx+1,0:ny+1,1:natmi))
-        count(3)=natmi
+      if(nnatmi.gt.0) then
+        count(2)=nnatmi
         write(*,*) 'Getting dab2 for slice ',istep
         iret=nf_inq_varid(ncidcdf,'dab2',varid)
         call check_cdf_status(iret)
         iret=nf_get_vara_double(ncidcdf,varid,start,count,dab2)
         call check_cdf_status(iret)
-!WG_TODOdab2(0:nx+1,0:ny+1,1:natmi,1)=dummy(0:nx+1,0:ny+1,1:natmi)
-        deallocate(dummy)
       endif
-      if(nmoli.gt.0) then
-        allocate(dummy(0:nx+1,0:ny+1,1:nmoli))
-        count(3)=nmoli
+      if(nnmoli.gt.0) then
+        count(2)=nnmoli
         write(*,*) 'Getting dmb2 for slice ',istep
         iret=nf_inq_varid(ncidcdf,'dmb2',varid)
         call check_cdf_status(iret)
-        iret=nf_get_vara_double(ncidcdf,varid,start,count,dummy)
+        iret=nf_get_vara_double(ncidcdf,varid,start,count,dmb2)
         call check_cdf_status(iret)
-!WG_TODOdmb2(0:nx+1,0:ny+1,1:nmoli,1)=dummy(0:nx+1,0:ny+1,1:nmoli)
-        deallocate(dummy)
       endif
 #endif
       call subend ()

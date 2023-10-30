@@ -21,6 +21,7 @@
       use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
+      use b2mod_running_average
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
@@ -43,8 +44,6 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
-      use eirmod_cinit
-     , , only: eirene_init_cinit
       use eirmod_eirbra
      & , smo_eir => smo
 #else
@@ -80,27 +79,24 @@
       integer :: ismain = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: boundary_namelist=0, neutrals_namelist = 0
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
+      integer :: write_b2fgmtry_us=1, write_b2fstati_us=1
+      integer :: tria_mode=0
+      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) :: hzconst                                      !srv 30.01.10
       real (kind=R8) :: zpdum(0:nsdecl-1,4)
       character lblgm*120, lblmn*120, lblcp*120, lblps*120
       character filename*256
       character cnamip*80, cvalip*80, line*500, ligne*500
       character bcp_filename*260
-#ifdef B25_EIRENE
-      logical linq_33, linq_34, linq_35, lcheck
-#endif
       logical file_open, file_exists
 
       type(mapping), save :: mpg
       type(geometry), save :: gm
       type(B2State), save :: state
       type(B2StateExt), save :: state_ext
+      type(B2Average), save :: state_avg
       type(switches), save :: switch
       integer :: ntm, is, natm_loc
-#ifdef B25_EIRENE
-      integer :: ico, io_33, io_34, io_35, iel, iel2
-#endif
 *   ..procedures
       logical is_comment
       external is_comment
@@ -231,17 +227,13 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 
       write (*,*) 'Mapping created'
 
-      call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
-     .        mpg%nVmxCv, gm, mpg)
+      call prep_geometry (nx, ny, gm, mpg)
       write (*,*) 'Geometry created'
 
-      call prep_plasma (nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, mpg, state)
+      call prep_plasma (nx, ny, ns, mpg, state)
       write (*,*) 'State created'
 
-      call prep_plasma_ext(nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, state_ext)
+      call prep_plasma_ext(nx, ny, ns, mpg%nCv, mpg%nFc, state_ext)
       write (*,*) 'State_ext created'
 
 *   ..test plasma state and fluxes
@@ -249,53 +241,94 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 !     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 
-*   ..write headers for output files
-      call cfverw (nout(1), newversion)
-      idum(0) = mpg%nCi
-      idum(1) = mpg%nCg
-      idum(2) = mpg%nCv
-      idum(3) = mpg%nFc
-      idum(4) = mpg%nVx
-      idum(5) = mpg%nFs
-      idum(6) = mpg%nFt
-      call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      idum(0) = mpg%nCmxVx
-      idum(1) = mpg%nCmxFc
-      idum(2) = mpg%nVmxCv
-      idum(3) = mpg%nVmxFc
-      idum(4) = mpg%nCmxNv
-      call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      idum(0) = mpg%isClassicalGrid
-      call cfwuin (nout(1),1,idum,'isClassicalGrid')
-      if (mpg%isClassicalGrid == 1) then
-        idum(0) = mpg%nx
-        idum(1) = mpg%ny
-        idum(2) = mpg%nncut
-      else
-        ! dummy values for unstructured grid
-        idum(0) = -1
-        idum(1) = -1
-        idum(2) = -1
-      endif
-      call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
-      call cfwuch (nout(1), 120, lblgm, 'label')
-      idum(0) = isymm
-      call cfwuin (nout(1), 1, idum, 'isymm')
-      idum(0) = mpg%nCv
-      idum(1) = mpg%nFc
-      idum(2) = ns
-      call cfverw (nout(2), newversion)
-      call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
-      call cfwuch (nout(2), 120, lblps, 'label')
-      call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
+*   ..write unstructured geometry
 
-*   ..write state and geometry
-      call write_b2fgmtry (nout(1), mpg, gm)
-      call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+      call ipgeti('b2us_write_b2fgmtry_us', write_b2fgmtry_us)
+
+      if (write_b2fgmtry_us.eq.1) then
+
+*   ..write header for gmtry file
+
+        call cfverw (nout(1), newversion)
+        idum(0) = mpg%nCi
+        idum(1) = mpg%nCg
+        idum(2) = mpg%nCv
+        idum(3) = mpg%nFc
+        idum(4) = mpg%nVx
+        idum(5) = mpg%nFs
+        idum(6) = mpg%nFt
+        call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+        idum(0) = mpg%nCmxVx
+        idum(1) = mpg%nCmxFc
+        idum(2) = mpg%nVmxCv
+        idum(3) = mpg%nVmxFc
+        idum(4) = mpg%nCmxNv
+        call cfwuin (nout(1),5,idum,
+     .               'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+        idum(0) = mpg%isClassicalGrid
+        call cfwuin (nout(1),1,idum,'isClassicalGrid')
+        if (mpg%isClassicalGrid == 1) then
+          idum(0) = mpg%nx
+          idum(1) = mpg%ny
+          idum(2) = mpg%nncut
+        else
+          ! dummy values for unstructured grid
+          idum(0) = -1
+          idum(1) = -1
+          idum(2) = -1
+        endif
+        call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
+        call cfwuch (nout(1), 120, lblgm, 'label')
+        idum(0) = isymm
+        call cfwuin (nout(1), 1, idum, 'isymm')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = ns
+
+*   ..write actual geometry info
+
+        call write_b2fgmtry (nout(1), mpg, gm)
+
+      endif
+
+*   ..write unstructured state
+
+      call ipgeti('b2us_write_b2fstati_us', write_b2fstati_us)
+
+      if (write_b2fstati_us.eq.1) then
+
+*   ..write header for stati file
+
+        call cfverw (nout(2), newversion)
+        call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
+        call cfwuch (nout(2), 120, lblps, 'label')
+        call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
+
+*   ..write actual state info
+
+        call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+
+*   ..also handle the averaged source file
+
+        call find_file('b2faveri', file_exists)
+        if (file_exists) then
+          call read_b2faveri_st ( nx, ny, ns)
+          call run_av_init ( 0, mpg%nCv, ns, .false., .false.,
+     .                       state_avg)
+          call prep_average ( nx, ny, ns, mpg, state_avg)
+          call run_av_save ('b2faveri_us', mpg%nCv, ns, .true., .true.,
+     .                       state_avg)
+          call run_av_fin( state_avg )
+          call dealloc_avg_st
+        end if
+
+      endif
 
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call alloc_b2mod_elements(ns,zn,am)
+
+      call ipgeti ('b2us_tria_mode', tria_mode)
 
       if (boundary_namelist.eq.1) then
         bcp_filename=repeat(' ',260)
@@ -306,9 +339,9 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
      &                'format. '
           call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-          call conv_bcparms (nx, ny, ns, mpg, gm)
-          call replace_outdated_bcparms(ns,mpg)
-          call write_bcparms(ns,mpg)
+          call conv_bcparms (ns, mpg)
+          call replace_outdated_bcparms(ns, mpg)
+          call write_bcparms(ns, mpg)
         else
           write (*,*) 'Found b2.boundary.parameters in unstructured '//
      &                'format. '
@@ -369,7 +402,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call alloc_b2mod_neutrals
      .     (nx, ny, ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
-          call conv_rcparms (nx, ny, ns, mpg, gm)
+          call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
         else
           call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns,
@@ -378,42 +411,16 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         end if
         call rc_to_struct(mpg)
       end if
-#ifdef B25_EIRENE
-      open (unit=33)
-      read (33,*,iostat=io_33) ico
-      linq_33 = (io_33 == 0)
-      close (33)
-      open (unit=34)
-      read (34,*,iostat=io_34) iel
-      linq_34 = (io_34 == 0)
-      close (34)
-      open (unit=35)
-      read (35,*,iostat=io_35) iel2
-      linq_35 = (io_35 == 0)
-      close (35)
-      lcheck = (ico > 0) .and. (iel > 0) .and. (iel2 > 0) .and.
-     .         (iel == iel2)
-      if (linq_33 .and. linq_34 .and. linq_35 .and. lcheck) then
-        write (*,*) ' files fort.33, fort.34 and fort.35 found '
-        write (*,*) ' convert files to represent unstructured mesh '
-        call conv_triangles(nout(0), mpg, gm, nx, ny)
-      else
-        write (*,*) ' no files fort.33, fort.34 and fort.35 available'
-        write (*,*) ' create files fort.33, fort.34 and fort.35 '
-        call write_triangles(nout(0), mpg, gm, nx, ny)
-      end if
-#else
-!      if (use_eirene.ne.0) then
-        call write_triangles(nout(0),mpg, gm, nx, ny)
-!      endif
-#endif
+
+      call prep_triangles(nout(0),mpg, gm, nx, ny, tria_mode)
+
 *   ..convert feedback schemes (if present!)
       filename='b2.feedback_control.parameters'
       call find_file(filename,file_exists)
       if (file_exists) then
         call read_b2mod_feedback_control(99)
-        call conv_fbparms (nx, ny, ns, mpg)
-        call write_fbparms(ns)
+        call conv_fbparms (mpg)
+        call write_fbparms
       endif
       call ipgetr ('b2stbc_fnaycore', fnaycore)
       call ipgetr ('b2stbc_fheycore', fheycore)

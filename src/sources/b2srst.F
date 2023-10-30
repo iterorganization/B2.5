@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2srst (nCv, ns, switch, mpg, na, ua, te, ti, tn, po,   !srv 01.07.08
+      subroutine b2srst (nCv, ns, switch, na, ua, te, ti, tn, po,       !srv 01.07.08
      &  ne, ni, nn, kt, zt, sr)
       use b2mod_types
       use b2mod_constants
@@ -21,7 +21,6 @@
 *   ..input arguments (unchanged on exit)
       integer nCv, ns                                  !srv 01.07.08
       type (switches), intent (in) :: switch
-      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &  te(nCv), ti(nCv), tn(nCv), po(nCv),
