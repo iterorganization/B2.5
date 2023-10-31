@@ -18,12 +18,13 @@
      &  wldpp(:,:,:), wldpa(:,:,:),
      &  wldpm(:,:,:), wldpeb(:,:),
      &  wldspt(:,:), wldspta(:,:,:), wldsptm(:,:,:),
-     &  eneutrad(:,:,:),
+     &  eneutrad(:,:,:), emolrad(:,:,:), eionrad(:,:,:),
      &  wlarea(:), wlabsrp(:,:),
      &  wldna_res(:,:),     !incident atom flux
      &  wldnm_res(:,:),     !incident molecule flux
      &  ewlda_res(:,:),     !incident energy flux of atoms
      &  ewldm_res(:,:),     !incident energy flux of molecules
+     &  ewldt_res(:),       !total energy wall load from Eirene particles
      &  ewldea_res(:,:),    !emitted energy flux of atoms
      &  ewldem_res(:,:),    !net incident energy flux due of molecules
      &  ewldrp_res(:),      !kinetic energy of reflected neutrals originated from ions
@@ -73,6 +74,8 @@ c***	wldpeb	:   power carried away by these atoms and molecules
 c***	wldspt	:   flux of sputtered wall material
 c***	isrftype:   surface type (iliin in Eirene)
 c***    eneutrad:   power radiated due to neutrals (only atoms at the moment)
+c***    emolrad :   power radiated due to molecules
+c***    eionrad :   power radiated due to molecular ions
 c
 
       contains
@@ -117,12 +120,15 @@ c
       allocate(wldspta(nlimps,max(1,natmd),0:nstrad))
       allocate(wldsptm(nlimps,max(1,nmold),0:nstrad))
       allocate(eneutrad(nCv,max(1,natmd),0:nstrad))
+      allocate(emolrad(nCv,max(1,nmold),0:nstrad))
+      allocate(eionrad(nCv,max(1,niond),0:nstrad))
       allocate(wlarea(nlimps))
       allocate(wlabsrp(natmd+nmold+niond+nplsd,nlimps))
       allocate(wldna_res(max(1,natmd),nsgmx))
       allocate(wldnm_res(max(1,nmold),nsgmx))
       allocate(ewlda_res(max(1,natmd),nsgmx))
       allocate(ewldm_res(max(1,nmold),nsgmx))
+      allocate(ewldt_res(nsgmx))
       allocate(ewldea_res(max(1,natmd),nsgmx))
       allocate(ewldem_res(max(1,nmold),nsgmx))
       allocate(ewldrp_res(nsgmx))
@@ -180,12 +186,15 @@ c
       deallocate(wldspta)
       deallocate(wldsptm)
       deallocate(eneutrad)
+      deallocate(emolrad)
+      deallocate(eionrad)
       deallocate(wlarea)
       deallocate(wlabsrp)
       deallocate(wldna_res)
       deallocate(wldnm_res)
       deallocate(ewlda_res)
       deallocate(ewldm_res)
+      deallocate(ewldt_res)
       deallocate(ewldea_res)
       deallocate(ewldem_res)
       deallocate(ewldrp_res)

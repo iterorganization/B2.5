@@ -17,7 +17,8 @@ c  version : 27.07.2000 22:52
      .	wldpm(nlimps,nmol,0:nstra),    wldpeb(nlimps,0:nstra),
      .	wldspt(nlimps,0:nstra),
      .  wldspta(nlimps,natm,0:nstra),  wldsptm(nlimps,nmol,0:nstra),
-     .  eneutrad(0:ndxp,0:ndyp,natm,0:nstra),
+     .  eneutrad(0:ndxp,0:ndyp,natm,0:nstra),emolrad(0:ndxp,0:ndyp,nmol,0:nstra),
+     .  eionrad(0:ndxp,0:ndyp,nion,0:nstra),
      .  wlarea(nlimps),                wlabsrp(nspz,nlimps),
      .  wldna_res(natm,nsgmx),     !incident atom flux
      .  wldnm_res(nmol,nsgmx),     !incident molecule flux
@@ -57,7 +58,7 @@ c
       common /eirdiag/ dab2,dmb2,dib2,tab2,tmb2,tib2,
      1 rfluxa,rfluxm,refluxa,refluxm,
      2 pfluxa,pfluxm,pefluxa,pefluxm,
-     3 emiss,emissmol,eneutrad,
+     3 emiss,emissmol,eneutrad,emolrad,eionrad,
      4 srcml,edissml,wldnek,wldnep,wldna,ewlda,wldnm,ewldm,wldra,wldrm,
      5 wldpp,wldpa,wldpm,wldpeb,wldspt,wldspta,wldsptm,
      6 wlarea, wlabsrp, wlpump,
@@ -92,3 +93,5 @@ c***	wldpeb	:   power carried away by these atoms and molecules
 c***	wldspt	:   flux of sputtered wall material
 c***	isrftype:   surface type (iliin in Eirene)
 c***    eneutrad:   power radiated due to neutrals (only atoms at the moment)
+c***    emolrad :   power radiated due to molecules
+c***    eionrad :   power radiated due to molecular ions

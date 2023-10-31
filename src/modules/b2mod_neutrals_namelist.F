@@ -683,6 +683,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrat=nstrai
 #endif
         endif
+
         allocate(old_style(nstrat))
         do is = 1, nstrat
           if (rc_list_size(is).eq.0) then

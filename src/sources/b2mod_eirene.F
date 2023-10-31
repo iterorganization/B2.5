@@ -893,7 +893,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
               nplsh = nplsh + 1
             end if
           end do
-          call post_couple(nCv,nFc,ns,nstrat,nplsh)
+          call post_couple(nCv,nFc,ns,nstrai,nplsh)
           write(*,*) 'Called post_couple'
         endif
       elseif(.not.main_call) then !}{
