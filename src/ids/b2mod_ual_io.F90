@@ -1045,6 +1045,14 @@ contains
               u = u - eneutrad(iCv,is,0)
               if (match_found) frac = frac - eneutrad(iCv,is,0)
             end do
+            do is = 1, nmoli
+              u = u - emolrad(iCv,is,0)
+              if (match_found) frac = frac - emolrad(iCv,is,0)
+            end do
+            do is = 1, nioni
+              u = u - eionrad(iCv,is,0)
+              if (match_found) frac = frac - eionrad(iCv,is,0)
+            end do
 #endif
           end do
           if (u.ne.0.0_IDS_real) then
@@ -1071,6 +1079,12 @@ contains
 #ifdef B25_EIRENE
             do is = 1, natmi
               u = u - eneutrad(iCv,is,0)
+            end do
+            do is = 1, nmoli
+              u = u - emolrad(iCv,is,0)
+            end do
+            do is = 1, nioni
+              u = u - eionrad(iCv,is,0)
             end do
 #endif
           end do
@@ -3357,6 +3371,12 @@ contains
 #ifdef B25_EIRENE
             do is = 1, natmi
               tmpCv(:) = tmpCv(:) - eneutrad(:,is,0)
+            end do
+            do is = 1, nmoli
+              tmpCv(:) = tmpCv(:) - emolrad(:,is,0)
+            end do
+            do is = 1, nioni
+              tmpCv(:) = tmpCv(:) - eionrad(:,is,0)
             end do
 #endif
             tmpCv(:) = tmpCv(:) / geo%cvVol(:)
