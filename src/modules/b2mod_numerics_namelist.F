@@ -205,13 +205,13 @@
         do ireg = 0, nnreg(0)                                     !srv 22.05.18 {
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
-          if (solveet(ireg).eq..true.) then
+          if (solveet(ireg).eq..true..and.b2mndt_style.eq.2) then
             call xerrab('time-dependent mode requires solveet=false')
           endif
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
-          if (solvemt(ireg).eq..true.) then
+          if (solvemt(ireg).eq..true..and.b2mndt_style.eq.2) then
             call xerrab('time-dependent mode requires solvemt=false')
           endif
         end do                                                    !srv 22.05.18 }
