@@ -209,7 +209,7 @@ c time-dependent treatment
 c time-dependent treatment                                            !srv 07.07.21 {
       if(switch%b2mndt_style.eq.2) then
 *  .. calculate time-dependent source
-       call b2smdt (nCv, ns, dtim, geo%cvHz, geo%cvVol,
+       call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &               pl%na, psnl%ua, switch, mpg, sr%smodt)
 *  .. add contribution from time-dependent source
        sr%smo = sr%smo + sr%smodt
