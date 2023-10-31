@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2smdt (nCv, nCi, ns, dtim, hz,          !srv 09.01.01 01.07.08
-     &  cvVol, na0, ua0, switch, mpg, smodt)              !srv 11.09.09
+     &  cvVol, na, uap, switch, mpg, smodt)              !srv 11.09.09
       use b2mod_types
       use b2mod_indirect
       use b2mod_numerics_namelist
@@ -19,8 +19,8 @@
       type (mapping), intent (in) :: mpg
       integer nCv, nCi, ns
       real (kind=R8), intent(in) ::
-     *  dtim, cvVol(nCv), na0(nCv,0:ns-1),
-     &  ua0(nCv,0:ns-1), hz(nCv)                                     !srv 09.01.01
+     *  dtim, cvVol(nCv), na(nCv,0:ns-1),
+     &  uap(nCv,0:ns-1), hz(nCv)                                     !srv 09.01.01
 *   ..input/output arguments
       real (kind=R8) ::
      *  smodt(nCv,0:3,0:ns-1)
@@ -59,7 +59,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test old state
-       call b2xvsg (nCv*ns, na0, 1, 'na0', '.gt.')
+       call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
       endif
 
 * ..include the contributions from dtim
@@ -69,7 +69,7 @@
         do iCv = 1, nCi !only internal cells
             ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
             t0 = (switch%b2srdt_phm1/ttim)*cvVol(iCv)*hz(iCv)                        !srv 09.01.01
-            smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is) !srv 06.01.21 {
+            smodt(iCv,0,is) = t0*am(is)*mp*uap(iCv,is)*na(iCv,is) !srv 06.01.21 {
             smodt(iCv,1,is) = 0.0_R8
             smodt(iCv,2,is) = 0.0_R8
             smodt(iCv,3,is) = -t0                                      !srv 06.01.21 }
