@@ -194,7 +194,7 @@ c make sure fhn is zero when not solving a separate neutral energy equation
 c time-dependent treatment                                              !srv 07.07.21 {
       if(switch%b2mndt_style.eq.2) then
 *  .. calculate time-dependent source
-        call b2shdt (nCv, ns, dtim,
+        call b2shdt (nCv, mpg%nCi, ns, dtim,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
      &    dv%ne, dv%ni, dv%nn,
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt)

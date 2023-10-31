@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2scdt (nCv, isb, dtim,      !srv 07.07.21
+      subroutine b2scdt (nCv, nCi, isb, dtim,      !srv 07.07.21
      &  cvVol, na0, switch, mpg, snadt)
       use b2mod_types
       use b2mod_indirect
@@ -18,7 +18,7 @@
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       logical(1) :: lout                                             !srv 16.07.10
-      integer nCv, isb                                               !srv 01.07.08
+      integer nCv, nCi, isb                                          !srv 01.07.08
       real (kind=R8) ::
      *  dtim, cvVol(nCv), na0(nCv)
 *   ..input/output arguments
@@ -68,7 +68,7 @@
 * ..include the contributions from dtim
 !! TODO_B2MNDT exclude guard cells or not? probably yes, add later
 *   ..modify snadt
-      do iCv = 1, nCv
+      do iCv = 1, nCi !only internal cells
         ttim=dtim*dtco(isb,mpg%cvReg(iCv))*time_factor(iCv)
         t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)                                     !srv 06.01.21
         snadt(iCv,0) = t0*na0(iCv)                                  !srv 06.01.21

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2shdt (nCv, ns, dtim,                       !srv 07.07.21
+      subroutine b2shdt (nCv, nCi, ns, dtim,                       !srv 07.07.21
      &  cvVol, na0, tep, ti0, tn0, ne0, ni0, nn0, kinrgy0,
      &  switch, mpg, shedt, shidt, shndt)
       use b2mod_types
@@ -18,7 +18,7 @@
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      integer nCv, ns
+      integer nCv, nCi, ns
       real (kind=R8) ::
      *  dtim, cvVol(nCv), na0(nCv,0:ns-1),
      &  tep(nCv), ti0(nCv), tn0(nCv),
@@ -73,7 +73,7 @@
 
 *   ..modify shedt, shidt, shndt
 
-      do iCv = 1, nCv
+      do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
         shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*tep(iCv)               !srv 06.01.21 {
@@ -83,7 +83,7 @@
       enddo
 
 ! TODO energy equations !! tn_style !!
-      do iCv = 1, nCv
+      do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
         shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)             !srv 06.01.21 {
@@ -92,7 +92,7 @@
         shidt(iCv,3) = -1.5_R8*t0                                    !srv 06.01.21 }
       enddo
 
-      do iCv = 1, nCv
+      do iCv = 1, nCi ! only internal cells
         ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
         shndt(iCv,0) = 1.5_R8*t0*nn0(iCv)*tn0(iCv)             !srv 06.01.21 {
