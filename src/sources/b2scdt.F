@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2scdt (nCv, nCi, isb, dtim,      !srv 07.07.21
-     &  cvVol, na0, switch, mpg, snadt)
+     &  cvVol, nap, switch, mpg, snadt)
       use b2mod_types
       use b2mod_indirect
       use b2mod_numerics_namelist
@@ -20,7 +20,7 @@
       logical(1) :: lout                                             !srv 16.07.10
       integer nCv, nCi, isb                                          !srv 01.07.08
       real (kind=R8) ::
-     *  dtim, cvVol(nCv), na0(nCv)
+     *  dtim, cvVol(nCv), nap(nCv)
 *   ..input/output arguments
       real (kind=R8) ::
      *  snadt(nCv,0:1)
@@ -62,16 +62,15 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test old state
-       call b2xvsg (nCv, na0, 1, 'na0', '.gt.')
+       call b2xvsg (nCv, nap, 1, 'nap', '.gt.')
       endif
 
 * ..include the contributions from dtim
-!! TODO_B2MNDT exclude guard cells or not? probably yes, add later
 *   ..modify snadt
       do iCv = 1, nCi !only internal cells
         ttim=dtim*dtco(isb,mpg%cvReg(iCv))*time_factor(iCv)
         t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)                                     !srv 06.01.21
-        snadt(iCv,0) = t0*na0(iCv)                                  !srv 06.01.21
+        snadt(iCv,0) = t0*nap(iCv)                                  !srv 06.01.21
         snadt(iCv,1) =-t0                                           !srv 06.01.21
       enddo
 
