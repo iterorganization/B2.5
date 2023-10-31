@@ -24,6 +24,7 @@ c  version : 27.07.2000 22:52
      .  wldnm_res(nmol,nsgmx),     !incident molecule flux
      .  ewlda_res(natm,nsgmx),     !incident energy flux of atoms
      .  ewldm_res(nmol,nsgmx),     !incident energy flux of molecules
+     .  ewldt_res(nsgmx),          !total energy wall load from Eirene particles
      .  ewldea_res(natm,nsgmx),    !emitted energy flux of atoms
      .  ewldem_res(nmol,nsgmx),    !net incident energy flux due of molecules
      .  ewldrp_res(nsgmx),         !kinetic energy of reflected neutrals originated from ions
@@ -62,9 +63,9 @@ c
      4 srcml,edissml,wldnek,wldnep,wldna,ewlda,wldnm,ewldm,wldra,wldrm,
      5 wldpp,wldpa,wldpm,wldpeb,wldspt,wldspta,wldsptm,
      6 wlarea, wlabsrp, wlpump,
-     7 wldna_res, wldnm_res, ewlda_res, ewldm_res, wldspt_res,
-     8 ewldea_res, ewldem_res, ewldrp_res, ewldmr_res, sarea_res,
-     9 wldspta_res, wldsptm_res, wlpump_res,
+     7 wldna_res, wldnm_res, ewlda_res, ewldm_res, ewldt_res, 
+     8 wldspt_res, ewldea_res, ewldem_res, ewldrp_res, ewldmr_res, 
+     9 sarea_res, wldspta_res, wldsptm_res, wlpump_res,
      i nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype,
      2 lkindp,lkindm,lkindi,
      3 eirdiag_nds_ind,fnmti_b2,
