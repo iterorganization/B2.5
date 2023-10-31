@@ -1300,7 +1300,7 @@ c and hence the reaction rates have to be rescaled here.
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
-                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18     
+                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18
                 write(*,'(i3,1p,2e16.8)')
      *             is,zamax(is),rtlqr(0,0,is+1)
              endif
@@ -2114,7 +2114,7 @@ cwdk  set some integers
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are 
+! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
       state0 = state
 ! $AD FP-LOOP "state"
@@ -2165,38 +2165,41 @@ cwdk  set some integers
 !!!
 #endif
 
-*    ..guess the next state
-        state%psnl%na = state%psnc%na
+*    ..set snapshot values. The behaviour is made to be backward compatible with ua0, uap etc in 3.0.9
+c      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
+c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
+c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
+        state%psnl%na = state%pl%na
         state%psnc%na = state%pl%na
-        state%psnl%ua = state%psnc%ua
+        state%psnl%ua = state%pl%ua
         state%psnc%ua = state%pl%ua
-        state%psnl%ne = state%psnc%ne
+        state%psnl%ne = state%dv%ne
         state%psnc%ne = state%dv%ne
-        state%psnl%te = state%psnc%te
+        state%psnl%te = state%pl%te
         state%psnc%te = state%pl%te
-        state%psnl%ti = state%psnc%ti
+        state%psnl%ti = state%pl%ti
         state%psnc%ti = state%pl%ti
-        state%psnl%tn = state%psnc%tn
+        state%psnl%tn = state%pl%tn
         state%psnc%tn = state%pl%tn
-        state%psnl%kinrgy = state%psnc%kinrgy
+        state%psnl%kinrgy = state%dv%kinrgy
         state%psnc%kinrgy = state%dv%kinrgy
-        state%psnl%po = state%psnc%po
+        state%psnl%po = state%pl%po
         state%psnc%po = state%pl%po
-        state%psnl%kt = state%psnc%kt
+        state%psnl%kt = state%pl%kt
         state%psnc%kt = state%pl%kt
-        state%psnl%zt = state%psnc%zt
+        state%psnl%zt = state%pl%zt
         state%psnc%zt = state%pl%zt
-        state%psnl%fna = state%psnc%fna
+        state%psnl%fna = state%dv%fna
         state%psnc%fna = state%dv%fna
-        state%psnl%fhe = state%psnc%fhe
+        state%psnl%fhe = state%dv%fhe
         state%psnc%fhe = state%dv%fhe
-        state%psnl%fhi = state%psnc%fhi
+        state%psnl%fhi = state%dv%fhi
         state%psnc%fhi = state%dv%fhi
-        state%psnl%fch = state%psnc%fch
+        state%psnl%fch = state%dv%fch
         state%psnc%fch = state%dv%fch
-        state%psnl%fkt = state%psnc%fkt
+        state%psnl%fkt = state%dv%fkt
         state%psnc%fkt = state%dv%fkt
-        state%psnl%fzt = state%psnc%fzt
+        state%psnl%fzt = state%dv%fzt
         state%psnc%fzt = state%dv%fzt
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
