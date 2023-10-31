@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2shdt (nCv, nCi, ns, dtim,                       !srv 07.07.21
-     &  cvVol, na0, tep, ti0, tn0, ne0, ni0, nn0, kinrgy0,
+      subroutine b2shdt (nCv, nCi, ns, dtim, BoRiS,                    !srv 07.07.21
+     &  cvVol, nap, tep, tip, tnp, ne, ni, nn, kinrgyp,
      &  switch, mpg, shedt, shidt, shndt)
       use b2mod_types
       use b2mod_indirect
@@ -18,12 +18,12 @@
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      integer nCv, nCi, ns
+      integer nCv, nCi, ns, BoRiS
       real (kind=R8) ::
-     *  dtim, cvVol(nCv), na0(nCv,0:ns-1),
-     &  tep(nCv), ti0(nCv), tn0(nCv),
-     &  ne0(nCv), ni0(nCv,0:1), nn0(nCv),
-     &  kinrgy0(nCv,0:ns-1)
+     *  dtim, cvVol(nCv), nap(nCv,0:ns-1),
+     &  tep(nCv), tip(nCv), tnp(nCv),
+     &  ne(nCv), ni(nCv,0:1), nn(nCv),
+     &  kinrgyp(nCv,0:ns-1)
 *   ..input/output arguments
       real (kind=R8) ::
      &  shedt(nCv,0:3), shidt(nCv,0:3), shndt(nCv,0:3)
@@ -63,12 +63,13 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test old state
-       call b2xvsg (nCv*ns, na0, 1, 'na0', '.gt.')
+       call b2xvsg (nCv*ns, nap, 1, 'nap', '.gt.')
        call b2xvsg (nCv, tep, 1, 'tep', '.gt.')
-       call b2xvsg (nCv, ti0, 1, 'ti0', '.gt.')
-       call b2xvsg (nCv, ne0, 1, 'ne0', '.gt.')
-       call b2xvsg (2*nCv, ni0, 1, 'ni0', '.gt.')
-       call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
+       call b2xvsg (nCv, tip, 1, 'tip', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+       call b2xvsg (2*nCv, ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, nn, 1, 'nn', '.gt.')
+       call b2xvsg (nCv*ns, kinrgyp, 1, 'kinrgyp', '.ge.')
       endif
 
 *   ..modify shedt, shidt, shndt
@@ -76,31 +77,32 @@
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
-        shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*tep(iCv)               !srv 06.01.21 {
+        shedt(iCv,0) = 1.5_R8*t0*ne(iCv)*tep(iCv)               !srv 06.01.21 {
         shedt(iCv,1) = 0.0_R8
         shedt(iCv,2) = 0.0_R8
         shedt(iCv,3) = -1.5_R8*t0                                    !srv 06.01.21 }
       enddo
 
-! TODO energy equations !! tn_style !!
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
-        shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)             !srv 06.01.21 {
+        shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)             !srv 06.01.21 {
         shidt(iCv,1) = 0.0_R8
         shidt(iCv,2) = 0.0_R8
         shidt(iCv,3) = -1.5_R8*t0                                    !srv 06.01.21 }
       enddo
 
+      ! TODO B2MNDT energy equations !! tn_style !!
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
-        shndt(iCv,0) = 1.5_R8*t0*nn0(iCv)*tn0(iCv)             !srv 06.01.21 {
+        shndt(iCv,0) = 1.5_R8*t0*nn(iCv)*tnp(iCv)             !srv 06.01.21 {
         shndt(iCv,1) = 0.0_R8
         shndt(iCv,2) = 0.0_R8
         shndt(iCv,3) = -1.5_R8*t0                                 !srv 06.01.21 }
       enddo
 
+  !! TODO_B2MNDT Tn source scaling?
   !! TODO_B2MNDT keep BORIS ??? otherwise remove kinrgy
 
 cdjm Store the total change in linearised sources for balance
