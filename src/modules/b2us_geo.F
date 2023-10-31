@@ -667,16 +667,20 @@
         end if
       end if
       if (iXpt.ne.0) then
+       match_found = .false.
        do i = mpg%vxCvP(mpg%Xpt(iXpt),1), mpg%vxCvP(mpg%Xpt(iXpt),1) +
      &                                    mpg%vxCvP(mpg%Xpt(iXpt),2) - 1
+        if (match_found) cycle
         iCv = mpg%vxCv(i)
         if (mpg%cvReg(iCv).eq.1) then
           do j = mpg%cvVxP(iCv,1),
      &           mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
+            if (match_found) cycle
             if (mpg%vxFs(mpg%cvVx(j)).eq.mpg%vxFs(mpg%Xpt(iXpt))) cycle
             gm%psi_increasing = gm%fsPsi(mpg%vxFs(mpg%cvVx(j))).lt.
      &                          gm%fsPsi(mpg%vxFs(mpg%Xpt(iXpt))).or.
      &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
+            match_found = .true.
           end do
         end if
        end do
@@ -709,13 +713,11 @@
           do k = 1, mpg%nXpt
             do l = mpg%strVxP(k,1), mpg%strVxP(k,1)+mpg%strVxP(k,2)-1
               if (iVx1.eq.mpg%strVx(l).and.
-     &      gm%fsPsi(mpg%vxFs(iVx1)).eq.gm%fsPsi(mpg%vxFs(mpg%Xpt(k))))
-     &         then
+     &            mpg%vxFs(iVx1).eq.mpg%vxFs(mpg%Xpt(k))) then
                 if((gm%psi_increasing .and.
-     &           gm%fsPsi(mpg%vxFs(iVx1)).le.gm%fsPsi(mpg%vxFs(iVx2)))
-     &             .or.(.not.gm%psi_increasing .and.
-     &           gm%fsPsi(mpg%vxFs(iVx1)).gt.gm%fsPsi(mpg%vxFs(iVx2))))
-     &           then
+     &              gm%vxFpsi(iVx1).le.gm%vxFpsi(iVx2)).or.
+     &             (.not.gm%psi_increasing .and.
+     &              gm%vxFpsi(iVx1).gt.gm%vxFpsi(iVx2))) then
                   if (mpg%ifdiv(i).eq.0) then
                     match_found = .true.
                     mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
@@ -729,17 +731,15 @@
                   end if
                 end if
               else if (iVx2.eq.mpg%strVx(l).and.
-     &      gm%fsPsi(mpg%vxFs(iVx2)).eq.gm%fsPsi(mpg%vxFs(mpg%Xpt(k))))
-     &         then
+     &                 mpg%vxFs(iVx2).eq.mpg%vxFs(mpg%Xpt(k))) then
                 if((gm%psi_increasing .and.
-     &           gm%fsPsi(mpg%vxFs(iVx2)).le.gm%fsPsi(mpg%vxFs(iVx1)))
-     &             .or.(.not.gm%psi_increasing .and.
-     &           gm%fsPsi(mpg%vxFs(iVx2)).gt.gm%fsPsi(mpg%vxFs(iVx1))))
-     &           then
+     &              gm%vxFpsi(iVx2).le.gm%vxFpsi(iVx1)).or.
+     &             (.not.gm%psi_increasing .and.
+     &              gm%vxFpsi(iVx2).gt.gm%vxFpsi(iVx1))) then
                   if (mpg%ifdiv(i).eq.0) then
                     match_found = .true.
                     mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
-                    mpg%ifdiv(i) = iVx2
+                    mpg%ivdiv(i) = iVx2
                   else ! Two strike points on the same target
                        ! We label the active one only
                     if (mpg%vxFs(iVx2).eq.mpg%iFssep) then
