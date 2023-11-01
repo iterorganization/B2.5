@@ -655,10 +655,7 @@ contains
         logical, intent(in), optional :: doCreate
         logical, intent(in), optional :: useHdf5
         character(*), intent(in), optional :: nmlFile
-#ifdef IMAS
-        integer len_of_digits
-        external len_of_digits
-#endif
+
         !! Internal variables
 
         character(*), parameter :: NAMELIST_FILE = "ual.namelist"
@@ -668,8 +665,12 @@ contains
 #ifdef IMAS
         integer :: lStatus = 0
         character(32) :: lTreename = "ids"
+#if ( UAL_MAJOR_VERSION < 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION < 9 ) )
         character(13) :: hlp_frm
         character(80) :: message
+        integer len_of_digits
+        external len_of_digits
+#endif
 #elif defined(ITM_ENVIRONMENT_LOADED)
         character(32) :: lTreename = "euitm"
 #else

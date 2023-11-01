@@ -159,13 +159,11 @@
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
-      character*80 cvalip
       logical solving(4), catch_up
       save ncall, pol_anom_scale, pot_eq, no_solve, solving,
      .  fch_anomalous, no_current, style, elm_count
 *   ..procedures
-      logical streql
-      external xertst, ipgeti, ipgetr, streql, b2saxpy
+      external xertst, ipgeti, ipgetr, b2saxpy
       external b2trcl, b2trql, b2trno
 *   ..initialisation
       data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,
