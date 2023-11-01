@@ -649,9 +649,9 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFF), INTENT(INOUT) :: state_extb
     REAL(kind=r8) :: j(nncf)
-    integer :: ii
+    integer :: ii, is
     integer, save :: ncall = 0
-    character *64 filename, ss
+    character *64 filename, ss, s1
     character(len=7), save :: my_out_folder
     REAL(kind=r8) :: jb(nncf)
 !
@@ -693,6 +693,170 @@ CONTAINS
       write(99,*) stateb%co%hci0save(ii)   
     end do  
     close(99)
+    ! csc writing in output the calculated sensitivities
+    do is = 0, ns - 1
+      write(s1,"(I0)") is
+      filename = trim(my_out_folder)//'conparb_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii=1,mpg%nBc  
+        write(99,*) conparb(is,ii,1)   
+      end do  
+      close(99)
+      filename = trim(my_out_folder)//'momparb_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii=1,mpg%nBc  
+        write(99,*) momparb(is,ii,1)   
+      end do  
+      close(99)
+      filename = trim(my_out_folder)//'b2recycb_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii=1,nstrai  
+        write(99,*) b2recycb(is,ii)   
+      end do  
+      close(99)
+    enddo
+    filename = trim(my_out_folder)//'eneparb_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii=1,mpg%nBc  
+      write(99,*) eneparb(ii,1)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'eniparb_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii=1,mpg%nBc  
+      write(99,*) eniparb(ii,1)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'potparb_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii=1,mpg%nBc  
+      write(99,*) potparb(ii,1)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'enkparb_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii=1,mpg%nBc  
+      write(99,*) enkparb(ii,1)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'parm_dnab_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do is=0,ns-1 
+      write(99,*) parm_dnab(is)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'parm_dpab_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do is=0,ns-1
+      write(99,*) parm_dpab(is)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'parm_hceb_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    write(99,*) parm_hceb
+    close(99)
+    filename = trim(my_out_folder)//'parm_hcib_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do is=0,ns-1  
+      write(99,*) parm_hcib(is)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'parm_vlab_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do is=0,ns-1
+      write(99,*) parm_vlab(is)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'parm_vsab_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do is=0,ns-1
+      write(99,*) parm_vsab(is)   
+    end do  
+    close(99)
+    filename = trim(my_out_folder)//'parm_sigb_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    write(99,*) parm_sigb   
+    close(99)
+    filename = trim(my_out_folder)//'parm_alfb_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    write(99,*) parm_alfb  
+    close(99)
+    filename = trim(my_out_folder)//'b2tqna_ballooning_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    write(99,*) switchb%b2tqna_ballooning  
+    close(99)
+    filename = trim(my_out_folder)//'b2tqna_ballooning_rescale_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    write(99,*) switchb%b2tqna_ballooning_rescale  
+    close(99)
+
+    do is = 0, ns -1
+      write(s1,"(I0)") is
+      filename = trim(my_out_folder)//'tdatab_dna_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,1,is)
+        write(99,*) tdatab(1,ii,1,is), tdatab(2,ii,1,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_dpa_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,2,is)
+        write(99,*) tdatab(1,ii,2,is), tdatab(2,ii,2,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_hci_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,3,is)
+        write(99,*) tdatab(1,ii,3,is), tdatab(2,ii,3,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_hce_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,4,is)
+        write(99,*) tdatab(1,ii,4,is), tdatab(2,ii,4,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_vlax_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,5,is)
+        write(99,*) tdatab(1,ii,5,is), tdatab(2,ii,5,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_vlay_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,6,is)
+        write(99,*) tdatab(1,ii,6,is), tdatab(2,ii,6,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_vsa_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,7,is)
+        write(99,*) tdatab(1,ii,7,is), tdatab(2,ii,7,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_sig_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,8,is)
+        write(99,*) tdatab(1,ii,8,is), tdatab(2,ii,8,is)
+      enddo
+      close(99)
+      filename = trim(my_out_folder)//'tdatab_alf_is'//trim(s1)//'_'//trim(ss)//'.dat'
+      open(99, file = filename, status = 'new')  
+      do ii = 1, ndata(1,9,is)
+        write(99,*) tdatab(1,ii,9,is), tdatab(2,ii,9,is)
+      enddo
+      close(99)
+    enddo
+
+    ! csc writing in output the cost functions
+    filename = trim(my_out_folder)//'cost_function_'//trim(ss)//'.dat'
+    open(99, file = filename, status = 'new')  
+    do ii = 1, ncf
+      write(99,*) J(ii)
+    enddo
+    close(99)
+
+
     ncall = ncall + 1
 !
     RETURN

@@ -5474,6 +5474,8 @@ CONTAINS
 !srv 13.04.11
 !jwk
     res_max = 10.0_R8*res_quit
+    elapsedval = 0.0_R8
+    elapsedinit=epoch_seconds()
 !wdk  set some integers
     ncv = mpg%ncv
     nfc = mpg%nfc
@@ -5486,7 +5488,7 @@ CONTAINS
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
 ! Note that when compiling the 1 version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim)
+    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim .AND. (.NOT.QUIT))
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &     'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr&
 &     , quit
@@ -5611,9 +5613,12 @@ CONTAINS
         END IF
       END IF
       WRITE(*, *) 'MAX RESIDUAL ', res_max
+      elapsedval=epoch_seconds()
       inquire(file='_quit',exist=quitexist_)
       inquire(file='.quit',exist=quitexist)
       quit = quitexist_.or.quitexist
+      quit = quit .or. (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.&
+     &                b2mndr_elapsed.gt.0.0_R8)
     END DO
     primal_iterations = itim
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
@@ -7938,9 +7943,12 @@ CONTAINS
       ITERCOUNT = ITERCOUNT + 1
       write(*,*) 'GRADIENT ITERATION ',ITERCOUNT
       write(*,*) 'GRADIENT MAX RES ',cumul
+      elapsedval=epoch_seconds()
       inquire(file='_quit',exist=quitexist_)
       inquire(file='.quit',exist=quitexist)
-      quit = quitexist.or.quitexist_
+      quit = quitexist_.or.quitexist
+      quit = quit .or. (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.&
+     &                b2mndr_elapsed.gt.0.0_R8)
       call set_adj_gradient(npar_opt,dummygrad,switchb)
       CALL ADSTACK_RESETREPEAT()
     END DO
