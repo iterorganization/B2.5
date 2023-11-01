@@ -739,10 +739,10 @@ contains
                 call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
 # else
                 write(hlp_frm,'(a,i1,a)') &
-                   &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
+                   &  '(a,i1,a,i',len_of_digits(UAL_MINOR_VERSION),',a)'
                 write(message,hlp_frm) &
                    &  'HDF5 backend not supported with AL v', &
-                   &   AL_MAJOR_VERSION,'.',AL_MINOR_VERSION,'!'
+                   &   UAL_MAJOR_VERSION,'.',UAL_MINOR_VERSION,'!'
                 call xerrab (message)
 # endif
             else
@@ -768,10 +768,10 @@ contains
                 call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
 # else
                 write(hlp_frm,'(a,i1,a)') &
-                   &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
+                   &  '(a,i1,a,i',len_of_digits(UAL_MINOR_VERSION),',a)'
                 write(message,hlp_frm) &
                    &  'HDF5 backend not supported with AL v', &
-                   &   AL_MAJOR_VERSION,'.',AL_MINOR_VERSION,'!'
+                   &   UAL_MAJOR_VERSION,'.',UAL_MINOR_VERSION,'!'
                 call xerrab (message)
 # endif
             else
