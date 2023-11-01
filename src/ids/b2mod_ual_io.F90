@@ -800,8 +800,8 @@ contains
           match_found = .false.
           is = ismain
           do while (is.ge.0 .and. .not.match_found)
-            if (is_neutral(is) .and. zn(is).eq.zn(ismain) &
-                             & .and. am(is).eq.am(ismain)) then
+            if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain)) &
+                             & .and. nint(am(is)).eq.nint(am(ismain))) then
               ismain0 = is
               match_found = .true.
             end if
