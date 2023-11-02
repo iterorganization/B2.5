@@ -44,7 +44,10 @@
 ! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
 ! - shift_cf_data: integer flag to shift certain cf data
 ! - shift_value: actual value of the shift [mm]
-! - shift: working array used to pass shift values for CF and optimization 
+! - shift: working array used to pass shift values for CF and optimization
+! - corr_model: type of correlation model used in the covariance of each CF used in MAP
+! - corr_length: value of the correlation length for each covariance matrix [mm]
+! - corr_cutoff: percentage caut-off of the covariance matrix. values below this wrt to the diagonal are set to zero
       integer, parameter :: mxnCf=1000
       integer cfstart(nncf),cfend(nncf),cftype(nncf)
       logical, save :: cfread(nncf) = .false.
@@ -67,9 +70,14 @@
       real (kind=r8), save :: shift_value(nsigmx) = 0.0_R8
       real (kind=r8), save :: shift(nsigmx) = 0.0_R8
       integer, save :: cf_to_shift(nsigmx) = 0
-      integer, save :: nshift = 0, shift_prior_type(nvmx)
-      real (kind=r8), save :: shift_prior_par(nvmx,2), 
-     & shift_prior_range(nvmx,2)
+      integer, save :: nshift = 0, shift_prior_type(nsigmx)
+      real (kind=r8), save :: shift_prior_par(nsigmx,2), 
+     & shift_prior_range(nsigmx,2)
+      integer, save :: corr_model(nncf) = 0
+      real (kind=r8), save :: corr_length(nncf) = 0.0_R8
+      integer, save :: ncorr = 0, corr_prior_type(nncf)
+      real (kind=r8), save :: corr_prior_par(nncf,2), 
+     & corr_prior_range(nncf,2), corr_cutoff = 0.01
 ! VARIABLES RELATED TO OPTIMIZATION
 ! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
 ! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
@@ -81,6 +89,7 @@
 !   correctly pass the optimization variables to the optimization libraries
 ! - nmean_opt, mean_opt, do the same as for sigma but for the error mean
 ! - nshift_opt, shift_opt: same but for cost function shift
+! - ncorr_opt, corr_opt: same but for cost function shift
 ! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
 !        number of spatial points!)
 ! - xl/xu: lower/ipper bound of optimization parameters (one for each actual parameter, as x0)
@@ -94,6 +103,7 @@
 !             if some CF have the same shift value because they are the same diagnostic)
 ! - shift/shiftLL/shiftUU: has similar meaning as shift_value/shift_L/shift_U but 'reduced' to the actual 
 !                          number of unique shifts
+! - corr_L/U: lower/upper bound of the correlation parameter
       integer, save :: npar_opt = 0
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
      &       par_opt_phys(:)
@@ -108,16 +118,20 @@
      &  hessian_approximation 
       real (kind=R8), save :: cpu_opt=0.0_R8, tol_opt=1.0e-7_R8
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0,
-     &                 nmean_opt = 0, nshift_opt = 0
+     &                 nmean_opt = 0, nshift_opt = 0, ncorr_opt = 0
       integer, save :: paris(nvmx),parib(nvmx)
       logical, save :: sigma_opt(nsigmx), mean_opt(nsigmx),
-     &                 shift_opt(nsigmx), shiftopt(nsigmx)
+     &                 shift_opt(nsigmx), shiftopt(nsigmx),
+     &                 corr_opt(nncf)
       logical, save :: spatial_dep(nvmx)
       integer, save :: spatial_points(nvmx) = 0
       real (kind=R8), save :: shift_L(nsigmx) = -1000.0_R8, ![envisaged default max 1m shift]
      &                        shift_U(nsigmx) = 1000.0_R8,
      &                        shiftLL(nsigmx) = -1000.0_R8, !copy of the previous ones
-     &                        shiftUU(nsigmx) = 1000.0_R8
+     &                        shiftUU(nsigmx) = 1000.0_R8,
+     &                        corr_L(nncf) = -inf_opt*10._R8,
+     &                        corr_U(nncf) = inf_opt*10._R8,
+     &                        corr_rescale(nncf) = 1.0_R8
       integer :: idd
       logical :: file_ok
       real (kind=R8) :: rangeold(nvmx,2), parold(nvmx,2)
@@ -131,7 +145,9 @@
      & scale_sigma, nsigma, sigma, cf_reg, cf_regP, mapToOMP, 
      & read_sigma, nmean, mean, mean_opt, shift_cf_data, shift_value,
      & shift_opt, shift_L, shift_U, shift_prior_type, shift_prior_par,
-     & shift_prior_range
+     & shift_prior_range, corr_model, corr_length, corr_prior_type,
+     & corr_prior_range, corr_prior_par, corr_opt, corr_L, corr_U,
+     & corr_cutoff, corr_rescale
 
       contains
 
@@ -176,13 +192,17 @@
       scale_sigma = .true.
       prior_type = -1
       shift_prior_type = -1
+      corr_prior_type = -1
       prior_par = -1.0_R8
       shift_prior_par = -1.0_R8
+      corr_prior_par = -1.0_R8
 ! sc  Set prior range to (-inf,+inf)
       prior_range(:,1) = -inf_opt*10.0_R8
       prior_range(:,2) = inf_opt*10.0_R8
       shift_prior_range(:,1) = -inf_opt*10.0_R8
       shift_prior_range(:,2) = inf_opt*10.0_R8
+      corr_prior_range(:,1) = -inf_opt*10.0_R8
+      corr_prior_range(:,2) = inf_opt*10.0_R8
       cf_reg = 0
       cf_regP = 0
       mapToOMP = .false.
@@ -272,6 +292,21 @@
             write(*,*) icf, shift_cf_data(icf), shift_opt(icf)
             call xerrab('b2mod_par_opt: shift_opt=true requires '//
      &        'shift_cf_data>0')
+          endif
+          call xertst(corr_model(icf).ge.0 .and. corr_model(icf).le.1,
+     &      'b2mod_par_opt: corr_model can only be 0 or 1')
+          if (corr_model(icf).gt.0 .and. .not.cfread(icf)) then
+            write(*,*) 'icf, corr_model(icf), cfread(icf),'//
+     &        ' cftype(icf)'
+            write(*,*) icf, corr_model(icf), cfread(icf), cftype(icf)
+            call xerrab('b2mod_par_opt: cannot use a corr_model in CF'//
+     &       ' without data')
+          endif
+          if (corr_model(icf).eq.0 .and. corr_opt(icf)) then
+            write(*,*) 'icf, corr_model(icf), corr_opt(icf)'
+            write(*,*) icf, corr_model(icf), corr_opt(icf)
+            call xerrab('b2mod_par_opt: corr_opt=true requires '//
+     &        'corr_model>0')
           endif
 !csc reading files with CF data in it. From now on we assume data is stored as
 !    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
@@ -447,6 +482,9 @@
         close(idb)
         if (allocated(cfReg)) deallocate(cfReg)
         !csc more testing and array preparation for shifting CF
+        if (cftype(1).eq.6 .or. cftype(1).eq.0) call xertst(
+     &    shift_cf_data(1).eq.0,'b2mod_par_opt: cftype 0 and 6 '//
+     &    'cannot have a shift')
         nshift = 0
         allocate(shiftcfdata(nsigmx)) !working array
         shiftcfdata = shift_cf_data
@@ -478,6 +516,16 @@
           end do
         end do !ncf
         if (allocated(shiftcfdata)) deallocate(shiftcfdata)
+        ! csc some tests on corr_model
+        ncorr = 0
+        call xertst(corr_model(1).eq.0,'b2mod_par_opt: first cost '//
+     &    'function cannot have a correlation model')
+        do icf = 1, ncf
+          if (corr_model(icf).gt.0) ncorr = ncorr+1
+          if (corr_model(icf).eq.1)
+     &      call xertst(corr_length(icf) .gt. 0.0_R8,
+     &      'b2mod_par_opt: corr_length must be > 0.0 for corr_model=1')
+        end do
       end if !if ncf>0
 
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
@@ -501,10 +549,8 @@
       call xertst(nnjac.le.nvmx,'b2mod_par_opt: increase size of nvmx')
       call xertst(nncon.ge.0,'b2mod_par_opt: nncon<0')
       call xertst(nnjac.ge.0,'b2mod_par_opt: nnjac<0')
-      call xertst(all(par_rescale.gt.0.D0),
+      call xertst(all(par_rescale.gt.0.0_R8),
      & 'b2mod_par_opt: par_rescale<=0')
-      if (flag_optim) call xertst(nnvar.gt.0,
-     & 'b2mod_par_opt: cannot optimize if nnvar=0!')
       if (nnvar .gt. 0) then
 !     partype refers to the type of design variable:
 !    -1  - mean, bias/mean of the prediction error for Bayesian inference. They must be the last parameters in the vector!
@@ -686,9 +732,11 @@
        endif
 
 !      Now do some tests on priors for physical parameters (including sigma and mean for now)
-       write(*,*) 'Testing priors for physical parameters, sigma, mean'
-       call test_priors(nnvar, prior_type(1:nnvar),
-     &  prior_par(1:nnvar,1:2), prior_range(1:nnvar,1:2), xl(1:nnvar))
+       if (nnvar.gt.0) then
+         write(*,*) 'Testing priors for physical parameters,sigma,mean'
+         call test_priors(nnvar, prior_type(1:nnvar),
+     &    prior_par(1:nnvar,1:2), prior_range(1:nnvar,1:2), xl(1:nnvar))
+       endif
       end if  !cftype(1).eq.6
 
       if (flag_optim) then
@@ -745,10 +793,13 @@
       do ii = 1, nshift
         if (shiftopt(ii)) then
           nshift_opt = nshift_opt+1
+          call xertst(npar_opt.le.nvmx,
+     &     'b2mod_par_opt: increase size of nvmx')
           npar_opt = npar_opt + 1
           x0(npar_opt) = shift(ii)
           xL(npar_opt) = shiftLL(ii)
           xU(npar_opt) = shiftUU(ii)
+          par_rescale(npar_opt) = 1.0_R8 !fixed rescaling for shift, not expecting huge values
         endif
       enddo
       if (cftype(1).eq.6 .and. nshift_opt.gt.0) then
@@ -757,8 +808,38 @@
         call test_priors(nshift_opt, shift_prior_type(1:nshift_opt), 
      &   shift_prior_par(1:nshift_opt,1:2),
      &   shift_prior_range(1:nshift_opt,1:2), 
-     &   xL(npar_opt-nshift_opt:npar_opt))
+     &   xL(npar_opt-nshift_opt+1:npar_opt))
       endif
+!     as above, add the contribution to sensitivity/optimization variables of the corr_model
+      ncorr_opt = 0
+      call xertst(.not.corr_opt(1),'b2mod_par_opt: corr_opt cannot '//
+     & 'be .true. for icf=1')
+      do ii=1, ncf
+        if (corr_opt(ii)) then
+          ncorr_opt = ncorr_opt+1
+          call xertst(npar_opt.le.nvmx,
+     &     'b2mod_par_opt: increase size of nvmx')
+          npar_opt = npar_opt + 1
+          x0(npar_opt) = corr_length(ii)
+          if (.not. (corr_L(ii).gt.0.0_r8)) then
+             write(*,*) 'icf=',icf,', corr_L(icf)=',corr_L(icf)
+            call xerrab('b2mod_par_opt: corr_L must be >0.0')
+          endif
+          xL(npar_opt) = corr_L(ii)
+          xU(npar_opt) = corr_U(ii)
+          par_rescale(npar_opt) = corr_rescale(ii)
+        endif
+      enddo
+      if (cftype(1).eq.6 .and. ncorr_opt.gt.0) then
+        ! test priors for corr
+        write(*,*) 'Testing priors for corr_length'
+        call test_priors(ncorr_opt, corr_prior_type(1:ncorr_opt), 
+     &   corr_prior_par(1:ncorr_opt,1:2),
+     &   corr_prior_range(1:ncorr_opt,1:2), 
+     &   xL(npar_opt-ncorr_opt+1:npar_opt))
+      endif
+      if (flag_optim) call xertst(npar_opt.gt.0,
+     & 'b2mod_par_opt: cannot optimize if npar_opt=0!')
       if (flag_optim .or. (cftype(1) .eq. 6)) then
         call xertst(any(x0(1:npar_opt) .lt. inf_opt*10.0_R8),
      &   'b2mod_par_opt: initial guess x0 MUST be specified for '//
@@ -771,7 +852,8 @@
          endif
         enddo
       endif
-      isigma = npar_opt - nsigma_opt  - nmean_opt - nshift_opt + 1 ! position of first sigma in x0
+      isigma = npar_opt - nsigma_opt  - nmean_opt - nshift_opt - 
+     &         ncorr_opt + 1 ! position of first sigma in x0
       do ii = 1, nsigma
 !      only assign initial value from x0 if that sigma is being optimized or used in MAP
        if (sigma_opt(ii)) then
@@ -782,7 +864,7 @@
         isigma = isigma + 1 !next sigma in inital vector x0
        endif
       end do
-      imean = npar_opt - nmean_opt - nshift_opt + 1 ! position of first mean in x0
+      imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1 ! position of first mean in x0
       do ii = 1, nmean
 !      only assign initial value from x0 if that mean is being optimized or used in MAP
        if (mean_opt(ii)) then

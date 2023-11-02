@@ -34,8 +34,8 @@
       real (kind=R8) :: qq, prior, lll, lll_cum, curr_shift
       real (kind=R8) :: gradr(nCv), funv(nVx), pz(nCv), rz(nCv), cs(nCv)
 #ifdef TEST_MAP
-      integer, parameter :: nn=51
-      real (kind=R8), save :: xx(nn), dd(nn), ff(nn), dx
+      integer, parameter :: nn=4
+      real (kind=R8) :: xx(nn), ff(nn), dx
       integer :: ii, ij, kk
 #endif
       integer :: isigma, imean
@@ -43,8 +43,8 @@
 
       call subini('b2usr_cost_function')
 
-      if (first_call .and. ncf .gt. 0) then
 #ifndef TEST_MAP
+      if (first_call .and. ncf .gt. 0) then
         call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')
         call xertst(mpg%isClassicalGrid.eq.1,' Cost function CVs and '//
      &  'FCs ordering  and interpolation in case of unstructured grid'//
@@ -74,15 +74,9 @@
      &        b2rr(icf,1:n1))
           endif
         enddo
-#else
-        dx = 10.0_R8/(nn-1)
-        xx = 0.0_R8
-        do ii=2,nn
-          xx(ii) = xx(ii-1) + dx
-        end do
-#endif
         first_call = .false.
       endif
+#endif
 #ifndef TEST_MAP
 ! cf normalization depends on shift now, as some points may eventualy be left out of the B2 domain
       cfnorm = 0.0_R8
@@ -110,6 +104,15 @@
 
       J = 0.0_R8
 #ifdef TEST_MAP
+!      dx = 10.0_R8/(nn-1)
+!      xx = 0.0_R8
+!      do ii=2,nn
+!        xx(ii) = xx(ii-1) + dx
+!      end do
+      xx(1) = 1.0_R8
+      xx(2) = 2.0_R8
+      xx(3) = 3.0_R8
+      xx(4) = 4.0_R8
       isigma = 1
       imean = 1
       iicf = 2
@@ -119,8 +122,9 @@
       end do
       call calc_log_prior(prior, inrange)
       write(*,*) 'MAP log prior value:', prior
-      call calc_loglikelihood(n2, ff, cfdata(iicf,2,1:n2), 
-     & cfdata(iicf,3,1:n2), lll_cum, isigma, imean)
+      call calc_loglikelihood(n2, ff, cfdata(iicf,1,1:n2),
+     & cfdata(iicf,2,1:n2), cfdata(iicf,3,1:n2), lll_cum, isigma, 
+     & imean, iicf)
       if (inrange) then
         J(1) = -(prior + lll_cum)*cfweight(1)
       else
@@ -229,8 +233,8 @@
               call interp1d(n1,n2,b2rr(iicf,1:n1),cfdata(iicf,1,1:n2),
      &          b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
               call calc_loglikelihood(n2, b2dataOnCf(1:n2), 
-     &          cfdata(iicf,2,1:n2), cfdata(iicf,3,1:n2), lll, isigma,
-     &          imean)
+     &          cfdata(iicf,1,1:n2), cfdata(iicf,2,1:n2), 
+     &          cfdata(iicf,3,1:n2), lll, isigma, imean, iicf)
               lll_cum = lll_cum + lll
               isigma = isigma + 1
               imean = imean + 1
