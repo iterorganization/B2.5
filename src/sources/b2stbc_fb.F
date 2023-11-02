@@ -340,7 +340,9 @@
       external xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
+#ifdef B25_EIRENE
       parameter (npump_list=DEF_NATM*(DEF_NLIM+DEF_NSTS))
+#endif
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
      &  n_flux_zero/0/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/, use_eirene/0/,
