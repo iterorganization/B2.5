@@ -657,8 +657,6 @@ c***              3 - in upper PFR, 4 - on the inner wall
 c======================================================================
 
       subroutine calc_pneut(ns,ny)
-!      use b2mod_driver
-!     ,    , only : use_eirene
       use b2mod_plasma
      ,    , only : na, ti
 #ifdef B25_EIRENE
@@ -666,10 +664,13 @@ c======================================================================
 #endif
       implicit none
       
-      integer ix,iy,iyp,it, ns,ny, k, is
+      integer ix,iy,iyp,it, ns,ny, k, is, use_eirene
+      data use_eirene / 0 /
 
 ! neutral pressure in PFR
 ! Q_pneut - mean, Q_pneut_trg(1) - inner PFR, Q_pneut_trg(2) - outer PFR
+
+      call ipgeti ('b2mndr_eirene', use_eirene)
 
       iy=0
       iyp=1
@@ -686,7 +687,7 @@ c======================================================================
           Area_pneut_trg(it) = Area_pneut_trg(it) + gs(ix,iy,1)
 
 #ifdef B25_EIRENE
-!          if(use_eirene.ne.0) then
+          if(use_eirene.ne.0) then
             do k=1,nnatmi
               Q_pneut_trg(it) = Q_pneut_trg(it) +
      &         dab2(ix+1,iyp,k,1)*tab2(ix+1,iyp,k,1) * gs(ix,iy,1)
@@ -695,14 +696,17 @@ c======================================================================
               Q_pneut_trg(it) = Q_pneut_trg(it) +
      &         dmb2(ix+1,iyp,k,1)*tmb2(ix+1,iyp,k,1) * gs(ix,iy,1)
             enddo
-!          endif
-#else
-!          if(use_eirene.eq.0) then
+          else
             do is=0,ns-1
               if (is_neutral(is)) Q_pneut_trg(it) = Q_pneut_trg(it) +
      &          na(ix,iy,is)*ti(ix,iy) * gs(ix,iy,1)
             enddo
-!          endif
+          endif
+#else
+          do is=0,ns-1
+            if (is_neutral(is)) Q_pneut_trg(it) = Q_pneut_trg(it) +
+     &        na(ix,iy,is)*ti(ix,iy) * gs(ix,iy,1)
+          enddo
 #endif
         enddo
 
