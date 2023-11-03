@@ -21,7 +21,7 @@
       character*70 key
       grad = 0.0_R8
       idir = 1 !this indicates the different directions of adjoint mode
-      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt because it is not part of nnvar!
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -249,6 +249,20 @@
             grad(idir) = shiftb(ip)
             write(ss2,"(I3)") ip
             write (key, *) "shift",ss2
+            write (*,*) '  Cost function gradient 1: ',
+     &        grad(idir),'wrt',trim(key)
+            idir = idir + 1
+          endif
+        end do
+      endif
+
+      if (ncorr_opt.gt.0) then
+        do ip = 1, ncf
+!         only if corr is being optimized!
+          if (corr_opt(ip)) then
+            grad(idir) = corr_lengthb(ip)
+            write(ss2,"(I3)") ip
+            write (key, *) "corr_length",ss2
             write (*,*) '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1

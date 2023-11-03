@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2usr_cost_function in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: j
-!   with respect to varying inputs: sigma shift *par_opt_phys mean
-!                *(st.pl.na) *(st.pl.te) *(st.pl.ti) *(st.dv.fht)
+!   with respect to varying inputs: corr_length sigma shift *par_opt_phys
+!                mean *(st.pl.na) *(st.pl.te) *(st.pl.ti) *(st.dv.fht)
 !                *(st.dv.ne)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
@@ -425,8 +425,9 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL INTERP1D(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:n2)&
 &                 , b2data(1:n1), b2dataoncf(1:n2), curr_shift)
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
-&                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
-&                                  , lll, isigma, imean)
+&                                  iicf, 1, 1:n2), cfdata(iicf, 2, 1:n2)&
+&                                  , cfdata(iicf, 3, 1:n2), lll, isigma&
+&                                  , imean, iicf)
           lll_cum = lll_cum + lll
           CALL PUSHINTEGER4(isigma)
           isigma = isigma + 1
@@ -592,6 +593,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
     IF (ALLOCATED(b2voloncfb)) b2voloncfb = 0.D0
     IF (ALLOCATED(b2datab)) b2datab = 0.D0
     IF (ALLOCATED(b2dataoncfb)) b2dataoncfb = 0.D0
+    corr_lengthb = 0.D0
     sigmab = 0.D0
     shiftb = 0.D0
     IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
@@ -948,8 +950,9 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         lllb = lll_cumb
         n2 = ncfdata(iicf)
         CALL CALC_LOGLIKELIHOOD_B(n2, b2dataoncf(1:n2), b2dataoncfb(1:n2&
-&                           ), cfdata(iicf, 2, 1:n2), cfdata(iicf, 3, 1:&
-&                           n2), lll, lllb, isigma, imean)
+&                           ), cfdata(iicf, 1, 1:n2), cfdata(iicf, 2, 1:&
+&                           n2), cfdata(iicf, 3, 1:n2), lll, lllb, &
+&                           isigma, imean, iicf)
         n1 = mpg%cfregp(iicf, 2)
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -1072,6 +1075,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
     cfnormb = 0.D0
     voldb = 0.D0
     IF (ALLOCATED(b2voloncfb)) b2voloncfb = 0.D0
+    corr_lengthb = 0.D0
     sigmab = 0.D0
     shiftb = 0.D0
     IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
@@ -1354,8 +1358,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           CALL INTERP1D(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:n2)&
 &                 , b2data(1:n1), b2dataoncf(1:n2), curr_shift)
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
-&                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
-&                                  , lll, isigma, imean)
+&                                  iicf, 1, 1:n2), cfdata(iicf, 2, 1:n2)&
+&                                  , cfdata(iicf, 3, 1:n2), lll, isigma&
+&                                  , imean, iicf)
           lll_cum = lll_cum + lll
           isigma = isigma + 1
           imean = imean + 1

@@ -56,7 +56,10 @@ MODULE B2MOD_PAR_OPT_DIFF
 ! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
 ! - shift_cf_data: integer flag to shift certain cf data
 ! - shift_value: actual value of the shift [mm]
-! - shift: working array used to pass shift values for CF and optimization 
+! - shift: working array used to pass shift values for CF and optimization
+! - corr_model: type of correlation model used in the covariance of each CF used in MAP
+! - corr_length: value of the correlation length for each covariance matrix [mm]
+! - corr_cutoff: percentage caut-off of the covariance matrix. values below this wrt to the diagonal are set to zero
   INTEGER, PARAMETER :: mxncf=1000
   INTEGER :: cfstart(nncf), cfend(nncf), cftype(nncf)
   LOGICAL, SAVE :: cfread(nncf)=.false.
@@ -83,9 +86,16 @@ MODULE B2MOD_PAR_OPT_DIFF
   REAL(kind=r8), SAVE :: shift(nsigmx)=0.0_R8
   REAL(kind=r8), SAVE :: shiftb(nsigmx)=0.D0
   INTEGER, SAVE :: cf_to_shift(nsigmx)=0
-  INTEGER, SAVE :: nshift=0, shift_prior_type(nvmx)
-  REAL(kind=r8), SAVE :: shift_prior_par(nvmx, 2), shift_prior_range(&
-& nvmx, 2)
+  INTEGER, SAVE :: nshift=0, shift_prior_type(nsigmx)
+  REAL(kind=r8), SAVE :: shift_prior_par(nsigmx, 2), shift_prior_range(&
+& nsigmx, 2)
+  INTEGER, SAVE :: corr_model(nncf)=0
+  REAL(kind=r8), SAVE :: corr_length(nncf)=0.0_R8
+  REAL(kind=r8), SAVE :: corr_lengthb(nncf)=0.D0
+  INTEGER, SAVE :: ncorr=0, corr_prior_type(nncf)
+  REAL(kind=r8), SAVE :: corr_prior_par(nncf, 2), corr_prior_range(nncf&
+& , 2)
+  REAL(kind=r8), SAVE :: corr_cutoff=0.01
 ! VARIABLES RELATED TO OPTIMIZATION
 ! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
 ! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
@@ -97,6 +107,7 @@ MODULE B2MOD_PAR_OPT_DIFF
 !   correctly pass the optimization variables to the optimization libraries
 ! - nmean_opt, mean_opt, do the same as for sigma but for the error mean
 ! - nshift_opt, shift_opt: same but for cost function shift
+! - ncorr_opt, corr_opt: same but for cost function shift
 ! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
 !        number of spatial points!)
 ! - xl/xu: lower/ipper bound of optimization parameters (one for each actual parameter, as x0)
@@ -110,6 +121,7 @@ MODULE B2MOD_PAR_OPT_DIFF
 !             if some CF have the same shift value because they are the same diagnostic)
 ! - shift/shiftLL/shiftUU: has similar meaning as shift_value/shift_L/shift_U but 'reduced' to the actual 
 !                          number of unique shifts
+! - corr_L/U: lower/upper bound of the correlation parameter
   INTEGER, SAVE :: npar_opt=0
   REAL(kind=r8), ALLOCATABLE, SAVE :: par_opt0(:), par_opt(:), &
 & par_opt_phys(:)
@@ -129,15 +141,18 @@ MODULE B2MOD_PAR_OPT_DIFF
   INTEGER, SAVE :: nsigma_opt=0
   INTEGER, SAVE :: nmean_opt=0
   INTEGER, SAVE :: nshift_opt=0
+  INTEGER, SAVE :: ncorr_opt=0
   INTEGER, SAVE :: paris(nvmx), parib(nvmx)
   LOGICAL, SAVE :: sigma_opt(nsigmx), mean_opt(nsigmx), shift_opt(nsigmx&
-& ), shiftopt(nsigmx)
+& ), shiftopt(nsigmx), corr_opt(nncf)
   LOGICAL, SAVE :: spatial_dep(nvmx)
   INTEGER, SAVE :: spatial_points(nvmx)=0
 ![envisaged default max 1m shift]
 !copy of the previous ones
   REAL(kind=r8), SAVE :: shift_l(nsigmx)=-1000.0_R8, shift_u(nsigmx)=&
-&   1000.0_R8, shiftll(nsigmx)=-1000.0_R8, shiftuu(nsigmx)=1000.0_R8
+&   1000.0_R8, shiftll(nsigmx)=-1000.0_R8, shiftuu(nsigmx)=1000.0_R8, &
+& corr_l(nncf)=-(inf_opt*10._R8), corr_u(nncf)=inf_opt*10._R8, &
+& corr_rescale(nncf)=1.0_R8
   INTEGER :: idd
   LOGICAL :: file_ok
   REAL(kind=r8) :: rangeold(nvmx, 2), parold(nvmx, 2)
@@ -151,7 +166,9 @@ MODULE B2MOD_PAR_OPT_DIFF
 &     scale_sigma, nsigma, sigma, cf_reg, cf_regp, maptoomp, read_sigma&
 &     , nmean, mean, mean_opt, shift_cf_data, shift_value, shift_opt, &
 &     shift_l, shift_u, shift_prior_type, shift_prior_par, &
-&     shift_prior_range
+&     shift_prior_range, corr_model, corr_length, corr_prior_type, &
+&     corr_prior_range, corr_prior_par, corr_opt, corr_l, corr_u, &
+&     corr_cutoff, corr_rescale
 
 CONTAINS
 !  Differentiation of read_b2mod_par_opt as a context to call adjoint code (with options context noISIZE r8):
@@ -214,13 +231,17 @@ CONTAINS
     scale_sigma = .true.
     prior_type = -1
     shift_prior_type = -1
+    corr_prior_type = -1
     prior_par = -1.0_R8
     shift_prior_par = -1.0_R8
+    corr_prior_par = -1.0_R8
 ! sc  Set prior range to (-inf,+inf)
     prior_range(:, 1) = -(inf_opt*10.0_R8)
     prior_range(:, 2) = inf_opt*10.0_R8
     shift_prior_range(:, 1) = -(inf_opt*10.0_R8)
     shift_prior_range(:, 2) = inf_opt*10.0_R8
+    corr_prior_range(:, 1) = -(inf_opt*10.0_R8)
+    corr_prior_range(:, 2) = inf_opt*10.0_R8
     cf_reg = 0
     cf_regp = 0
     maptoomp = .false.
@@ -309,6 +330,21 @@ CONTAINS
           CALL XERRAB('b2mod_par_opt: shift_opt=true requires '//&
 &               'shift_cf_data>0')
         END IF
+        CALL XERTST(corr_model(icf) .GE. 0 .AND. corr_model(icf) .LE. 1&
+&             , 'b2mod_par_opt: corr_model can only be 0 or 1')
+        IF (corr_model(icf) .GT. 0 .AND. (.NOT.cfread(icf))) THEN
+          WRITE(*, *) 'icf, corr_model(icf), cfread(icf),'//&
+&         ' cftype(icf)'
+          WRITE(*, *) icf, corr_model(icf), cfread(icf), cftype(icf)
+          CALL XERRAB('b2mod_par_opt: cannot use a corr_model in CF'//&
+&               ' without data')
+        END IF
+        IF (corr_model(icf) .EQ. 0 .AND. corr_opt(icf)) THEN
+          WRITE(*, *) 'icf, corr_model(icf), corr_opt(icf)'
+          WRITE(*, *) icf, corr_model(icf), corr_opt(icf)
+          CALL XERRAB('b2mod_par_opt: corr_opt=true requires '//&
+&               'corr_model>0')
+        END IF
 !csc reading files with CF data in it. From now on we assume data is stored as
 !    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
 !    This facilitates shifting the CF and covariance matrix caclulation 
@@ -511,6 +547,13 @@ CONTAINS
         DEALLOCATE(cfreg)
       END IF
 !csc more testing and array preparation for shifting CF
+      IF (cftype(1) .EQ. 6 .OR. cftype(1) .EQ. 0) CALL XERTST(&
+&                                                       shift_cf_data(1)&
+&                                                       .EQ. 0, &
+&                                       'b2mod_par_opt: cftype 0 and 6 '&
+&                                                       //&
+&                                                  'cannot have a shift'&
+&                                                      )
       nshift = 0
       ALLOCATE(shiftcfdata(nsigmx))
 !working array
@@ -548,6 +591,17 @@ CONTAINS
       IF (ALLOCATED(shiftcfdata)) THEN
         DEALLOCATE(shiftcfdata)
       END IF
+! csc some tests on corr_model
+      ncorr = 0
+      CALL XERTST(corr_model(1) .EQ. 0, 'b2mod_par_opt: first cost '//&
+&           'function cannot have a correlation model')
+      DO icf=1,ncf
+        IF (corr_model(icf) .GT. 0) ncorr = ncorr + 1
+        IF (corr_model(icf) .EQ. 1) CALL XERTST(corr_length(icf) .GT. &
+&                                         0.0_R8, &
+&            'b2mod_par_opt: corr_length must be > 0.0 for corr_model=1'&
+&                                        )
+      END DO
     END IF
 !
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
@@ -582,10 +636,8 @@ CONTAINS
     CALL XERTST(nnjac .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
     CALL XERTST(nncon .GE. 0, 'b2mod_par_opt: nncon<0')
     CALL XERTST(nnjac .GE. 0, 'b2mod_par_opt: nnjac<0')
-    CALL XERTST(ALL(par_rescale .GT. 0.d0), &
+    CALL XERTST(ALL(par_rescale .GT. 0.0_R8), &
 &         'b2mod_par_opt: par_rescale<=0')
-    IF (flag_optim) CALL XERTST(nnvar .GT. 0, &
-&                         'b2mod_par_opt: cannot optimize if nnvar=0!')
 !nnvar>0
     IF (nnvar .GT. 0) THEN
 !     partype refers to the type of design variable:
@@ -823,9 +875,11 @@ CONTAINS
       END IF
 !
 !      Now do some tests on priors for physical parameters (including sigma and mean for now)
-      WRITE(*, *) 'Testing priors for physical parameters, sigma, mean'
-      CALL TEST_PRIORS(nnvar, prior_type(1:nnvar), prior_par(1:nnvar, 1:&
-&                2), prior_range(1:nnvar, 1:2), xl(1:nnvar))
+      IF (nnvar .GT. 0) THEN
+        WRITE(*, *) 'Testing priors for physical parameters,sigma,mean'
+        CALL TEST_PRIORS(nnvar, prior_type(1:nnvar), prior_par(1:nnvar, &
+&                  1:2), prior_range(1:nnvar, 1:2), xl(1:nnvar))
+      END IF
     END IF
 !
     IF (flag_optim) THEN
@@ -884,10 +938,14 @@ CONTAINS
     DO ii=1,nshift
       IF (shiftopt(ii)) THEN
         nshift_opt = nshift_opt + 1
+        CALL XERTST(npar_opt .LE. nvmx, &
+&             'b2mod_par_opt: increase size of nvmx')
         npar_opt = npar_opt + 1
         x0(npar_opt) = shift(ii)
         xl(npar_opt) = shiftll(ii)
         xu(npar_opt) = shiftuu(ii)
+!fixed rescaling for shift, not expecting huge values
+        par_rescale(npar_opt) = 1.0_R8
       END IF
     END DO
     IF (cftype(1) .EQ. 6 .AND. nshift_opt .GT. 0) THEN
@@ -895,8 +953,38 @@ CONTAINS
       WRITE(*, *) 'Testing priors for shift_cf_data'
       CALL TEST_PRIORS(nshift_opt, shift_prior_type(1:nshift_opt), &
 &                shift_prior_par(1:nshift_opt, 1:2), shift_prior_range(1&
-&                :nshift_opt, 1:2), xl(npar_opt-nshift_opt:npar_opt))
+&                :nshift_opt, 1:2), xl(npar_opt-nshift_opt+1:npar_opt))
     END IF
+!     as above, add the contribution to sensitivity/optimization variables of the corr_model
+    ncorr_opt = 0
+    CALL XERTST(.NOT.corr_opt(1), 'b2mod_par_opt: corr_opt cannot '//&
+&         'be .true. for icf=1')
+    DO ii=1,ncf
+      IF (corr_opt(ii)) THEN
+        ncorr_opt = ncorr_opt + 1
+        CALL XERTST(npar_opt .LE. nvmx, &
+&             'b2mod_par_opt: increase size of nvmx')
+        npar_opt = npar_opt + 1
+        x0(npar_opt) = corr_length(ii)
+        IF (.NOT.corr_l(ii) .GT. 0.0_r8) THEN
+          WRITE(*, *) 'icf=', icf, ', corr_L(icf)=', corr_l(icf)
+          CALL XERRAB('b2mod_par_opt: corr_L must be >0.0')
+        END IF
+        xl(npar_opt) = corr_l(ii)
+        xu(npar_opt) = corr_u(ii)
+        par_rescale(npar_opt) = corr_rescale(ii)
+      END IF
+    END DO
+    IF (cftype(1) .EQ. 6 .AND. ncorr_opt .GT. 0) THEN
+! test priors for corr
+      WRITE(*, *) 'Testing priors for corr_length'
+      CALL TEST_PRIORS(ncorr_opt, corr_prior_type(1:ncorr_opt), &
+&                corr_prior_par(1:ncorr_opt, 1:2), corr_prior_range(1:&
+&                ncorr_opt, 1:2), xl(npar_opt-ncorr_opt+1:npar_opt))
+    END IF
+    IF (flag_optim) CALL XERTST(npar_opt .GT. 0, &
+&                        'b2mod_par_opt: cannot optimize if npar_opt=0!'&
+&                        )
     IF (flag_optim .OR. cftype(1) .EQ. 6) THEN
       CALL XERTST(ANY(x0(1:npar_opt) .LT. inf_opt*10.0_R8), &
 &           'b2mod_par_opt: initial guess x0 MUST be specified for '//&
@@ -910,7 +998,8 @@ CONTAINS
       END DO
     END IF
 ! position of first sigma in x0
-    isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt + 1
+    isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt &
+&     + 1
     DO ii=1,nsigma
 !      only assign initial value from x0 if that sigma is being optimized or used in MAP
       IF (sigma_opt(ii)) THEN
@@ -923,7 +1012,7 @@ CONTAINS
       END IF
     END DO
 ! position of first mean in x0
-    imean = npar_opt - nmean_opt - nshift_opt + 1
+    imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
     DO ii=1,nmean
 !      only assign initial value from x0 if that mean is being optimized or used in MAP
       IF (mean_opt(ii)) THEN
@@ -993,13 +1082,17 @@ CONTAINS
     scale_sigma = .true.
     prior_type = -1
     shift_prior_type = -1
+    corr_prior_type = -1
     prior_par = -1.0_R8
     shift_prior_par = -1.0_R8
+    corr_prior_par = -1.0_R8
 ! sc  Set prior range to (-inf,+inf)
     prior_range(:, 1) = -(inf_opt*10.0_R8)
     prior_range(:, 2) = inf_opt*10.0_R8
     shift_prior_range(:, 1) = -(inf_opt*10.0_R8)
     shift_prior_range(:, 2) = inf_opt*10.0_R8
+    corr_prior_range(:, 1) = -(inf_opt*10.0_R8)
+    corr_prior_range(:, 2) = inf_opt*10.0_R8
     cf_reg = 0
     cf_regp = 0
     maptoomp = .false.
@@ -1088,6 +1181,21 @@ CONTAINS
           CALL XERRAB('b2mod_par_opt: shift_opt=true requires '//&
 &               'shift_cf_data>0')
         END IF
+        CALL XERTST(corr_model(icf) .GE. 0 .AND. corr_model(icf) .LE. 1&
+&             , 'b2mod_par_opt: corr_model can only be 0 or 1')
+        IF (corr_model(icf) .GT. 0 .AND. (.NOT.cfread(icf))) THEN
+          WRITE(*, *) 'icf, corr_model(icf), cfread(icf),'//&
+&         ' cftype(icf)'
+          WRITE(*, *) icf, corr_model(icf), cfread(icf), cftype(icf)
+          CALL XERRAB('b2mod_par_opt: cannot use a corr_model in CF'//&
+&               ' without data')
+        END IF
+        IF (corr_model(icf) .EQ. 0 .AND. corr_opt(icf)) THEN
+          WRITE(*, *) 'icf, corr_model(icf), corr_opt(icf)'
+          WRITE(*, *) icf, corr_model(icf), corr_opt(icf)
+          CALL XERRAB('b2mod_par_opt: corr_opt=true requires '//&
+&               'corr_model>0')
+        END IF
 !csc reading files with CF data in it. From now on we assume data is stored as
 !    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
 !    This facilitates shifting the CF and covariance matrix caclulation 
@@ -1290,6 +1398,13 @@ CONTAINS
         DEALLOCATE(cfreg)
       END IF
 !csc more testing and array preparation for shifting CF
+      IF (cftype(1) .EQ. 6 .OR. cftype(1) .EQ. 0) CALL XERTST(&
+&                                                       shift_cf_data(1)&
+&                                                       .EQ. 0, &
+&                                       'b2mod_par_opt: cftype 0 and 6 '&
+&                                                       //&
+&                                                  'cannot have a shift'&
+&                                                      )
       nshift = 0
       ALLOCATE(shiftcfdata(nsigmx))
 !working array
@@ -1327,6 +1442,17 @@ CONTAINS
       IF (ALLOCATED(shiftcfdata)) THEN
         DEALLOCATE(shiftcfdata)
       END IF
+! csc some tests on corr_model
+      ncorr = 0
+      CALL XERTST(corr_model(1) .EQ. 0, 'b2mod_par_opt: first cost '//&
+&           'function cannot have a correlation model')
+      DO icf=1,ncf
+        IF (corr_model(icf) .GT. 0) ncorr = ncorr + 1
+        IF (corr_model(icf) .EQ. 1) CALL XERTST(corr_length(icf) .GT. &
+&                                         0.0_R8, &
+&            'b2mod_par_opt: corr_length must be > 0.0 for corr_model=1'&
+&                                        )
+      END DO
     END IF
 !
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
@@ -1355,10 +1481,8 @@ CONTAINS
     CALL XERTST(nnjac .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
     CALL XERTST(nncon .GE. 0, 'b2mod_par_opt: nncon<0')
     CALL XERTST(nnjac .GE. 0, 'b2mod_par_opt: nnjac<0')
-    CALL XERTST(ALL(par_rescale .GT. 0.d0), &
+    CALL XERTST(ALL(par_rescale .GT. 0.0_R8), &
 &         'b2mod_par_opt: par_rescale<=0')
-    IF (flag_optim) CALL XERTST(nnvar .GT. 0, &
-&                         'b2mod_par_opt: cannot optimize if nnvar=0!')
 !nnvar>0
     IF (nnvar .GT. 0) THEN
 !     partype refers to the type of design variable:
@@ -1596,9 +1720,11 @@ CONTAINS
       END IF
 !
 !      Now do some tests on priors for physical parameters (including sigma and mean for now)
-      WRITE(*, *) 'Testing priors for physical parameters, sigma, mean'
-      CALL TEST_PRIORS(nnvar, prior_type(1:nnvar), prior_par(1:nnvar, 1:&
-&                2), prior_range(1:nnvar, 1:2), xl(1:nnvar))
+      IF (nnvar .GT. 0) THEN
+        WRITE(*, *) 'Testing priors for physical parameters,sigma,mean'
+        CALL TEST_PRIORS(nnvar, prior_type(1:nnvar), prior_par(1:nnvar, &
+&                  1:2), prior_range(1:nnvar, 1:2), xl(1:nnvar))
+      END IF
     END IF
 !
     IF (flag_optim) THEN
@@ -1657,10 +1783,14 @@ CONTAINS
     DO ii=1,nshift
       IF (shiftopt(ii)) THEN
         nshift_opt = nshift_opt + 1
+        CALL XERTST(npar_opt .LE. nvmx, &
+&             'b2mod_par_opt: increase size of nvmx')
         npar_opt = npar_opt + 1
         x0(npar_opt) = shift(ii)
         xl(npar_opt) = shiftll(ii)
         xu(npar_opt) = shiftuu(ii)
+!fixed rescaling for shift, not expecting huge values
+        par_rescale(npar_opt) = 1.0_R8
       END IF
     END DO
     IF (cftype(1) .EQ. 6 .AND. nshift_opt .GT. 0) THEN
@@ -1668,8 +1798,38 @@ CONTAINS
       WRITE(*, *) 'Testing priors for shift_cf_data'
       CALL TEST_PRIORS(nshift_opt, shift_prior_type(1:nshift_opt), &
 &                shift_prior_par(1:nshift_opt, 1:2), shift_prior_range(1&
-&                :nshift_opt, 1:2), xl(npar_opt-nshift_opt:npar_opt))
+&                :nshift_opt, 1:2), xl(npar_opt-nshift_opt+1:npar_opt))
     END IF
+!     as above, add the contribution to sensitivity/optimization variables of the corr_model
+    ncorr_opt = 0
+    CALL XERTST(.NOT.corr_opt(1), 'b2mod_par_opt: corr_opt cannot '//&
+&         'be .true. for icf=1')
+    DO ii=1,ncf
+      IF (corr_opt(ii)) THEN
+        ncorr_opt = ncorr_opt + 1
+        CALL XERTST(npar_opt .LE. nvmx, &
+&             'b2mod_par_opt: increase size of nvmx')
+        npar_opt = npar_opt + 1
+        x0(npar_opt) = corr_length(ii)
+        IF (.NOT.corr_l(ii) .GT. 0.0_r8) THEN
+          WRITE(*, *) 'icf=', icf, ', corr_L(icf)=', corr_l(icf)
+          CALL XERRAB('b2mod_par_opt: corr_L must be >0.0')
+        END IF
+        xl(npar_opt) = corr_l(ii)
+        xu(npar_opt) = corr_u(ii)
+        par_rescale(npar_opt) = corr_rescale(ii)
+      END IF
+    END DO
+    IF (cftype(1) .EQ. 6 .AND. ncorr_opt .GT. 0) THEN
+! test priors for corr
+      WRITE(*, *) 'Testing priors for corr_length'
+      CALL TEST_PRIORS(ncorr_opt, corr_prior_type(1:ncorr_opt), &
+&                corr_prior_par(1:ncorr_opt, 1:2), corr_prior_range(1:&
+&                ncorr_opt, 1:2), xl(npar_opt-ncorr_opt+1:npar_opt))
+    END IF
+    IF (flag_optim) CALL XERTST(npar_opt .GT. 0, &
+&                        'b2mod_par_opt: cannot optimize if npar_opt=0!'&
+&                        )
     IF (flag_optim .OR. cftype(1) .EQ. 6) THEN
       CALL XERTST(ANY(x0(1:npar_opt) .LT. inf_opt*10.0_R8), &
 &           'b2mod_par_opt: initial guess x0 MUST be specified for '//&
@@ -1683,7 +1843,8 @@ CONTAINS
       END DO
     END IF
 ! position of first sigma in x0
-    isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt + 1
+    isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt &
+&     + 1
     DO ii=1,nsigma
 !      only assign initial value from x0 if that sigma is being optimized or used in MAP
       IF (sigma_opt(ii)) THEN
@@ -1696,7 +1857,7 @@ CONTAINS
       END IF
     END DO
 ! position of first mean in x0
-    imean = npar_opt - nmean_opt - nshift_opt + 1
+    imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
     DO ii=1,nmean
 !      only assign initial value from x0 if that mean is being optimized or used in MAP
       IF (mean_opt(ii)) THEN
