@@ -511,12 +511,16 @@
      &    ((na_feedback_choice(ispecies) .eq. 0 .or.
      &      na_feedback_actuator(ispecies) .eq. 0 .or.
      &      na_feedback_actuator(ispecies) .eq. 0) .or.
-     &      (na_feedback_actuator_max(ispecies).le.0.0_R8 .or.
-     &       (na_feedback_actuator_max(ispecies) .gt.
+     &     (na_feedback_actuator_max(ispecies).eq.0.0_R8 .and.
+     &      na_feedback_actuator_min(ispecies).ge.0.0_R8) .or.
+     &     (na_feedback_actuator_max(ispecies).gt.0.0_R8 .and.
+     &      na_feedback_actuator_min(ispecies).ge.0.0_R8 .and.
+     &      (na_feedback_actuator_max(ispecies) .gt.
      &        na_feedback_actuator_min(ispecies))))
        end do
        call xertst (consistent,
-     .  'feedback actuator maximum <= minimum')
+     .  'feedback actuator maximum or minimum below zero or ' //
+     .  'maximum < minimum')
 *   ..test if neutral pressure can be computed if it is required
        do ispecies = 0, nspecies-1
          if (na_feedback_choice(ispecies).ne.10) cycle
