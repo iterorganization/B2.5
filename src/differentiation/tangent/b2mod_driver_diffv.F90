@@ -5152,14 +5152,14 @@ CONTAINS
 !  Differentiation of b2mndr_1 in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
 !                tdata j
-!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
-!                enepar conpar enkpar potpar mompar enipar b2recyc
-!                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
-!                parm_sig parm_dna tdata sigma shift *par_opt_phys
-!                mean switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!   with respect to varying inputs: enepar conpar enkpar potpar
+!                mompar enipar b2recyc *rtlsa *rtlcx *rtlqa *rtlra
+!                tdata parm_hce parm_hci parm_vla parm_vsa parm_alf
+!                parm_dpa parm_sig parm_dna corr_length sigma shift
+!                *par_opt_phys mean switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
@@ -6228,7 +6228,7 @@ CONTAINS
 !    ..call cost function
       CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &                           mpgd, state, stated, state_ext, state_extd, &
-&                           switch%boris, j, jd, nbdirs+nsigma_opt+nmean_opt+nshift_opt)
+&                           switch%boris, j, jd, nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt)
       if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
       call print_tgt_gradient(jd)
       DO icf=1,ncf

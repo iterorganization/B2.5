@@ -229,7 +229,7 @@
      , only : primal_iterations, gradient_iterations
       implicit none
       real(kind=r8) j(nncf), jdiff(nbdirsmax,nncf), gradd(npar_opt)
-      integer ipar, isigma, idum(0:2), imean, ishift
+      integer ipar, isigma, idum(0:2), imean, ishift, icorr
       character*3 str
       character(22) :: opt_state_name
       character*120 label
@@ -246,14 +246,14 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
       if (cftype(1) .eq. 6) then
-        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt + 1
+        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
             sigma(ipar) = x_v(isigma)*par_rescale(isigma)
@@ -263,7 +263,7 @@
             isigma = isigma + 1
           endif
         end do
-        imean = npar_opt - nmean_opt - nshift_opt + 1
+        imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
         do ipar = 1, nmean
           if (mean_opt(ipar)) then
             mean(ipar) = x_v(imean)*par_rescale(imean)
@@ -274,21 +274,33 @@
           endif
         end do
       endif
-      ishift = npar_opt - nshift_opt + 1
+      ishift = npar_opt - nshift_opt - ncorr_opt + 1
       do ipar = 1, nshift
         if (shiftopt(ipar)) then
-          shift(ipar) = x_v(ishift) ! no rescale for shift for now
+          shift(ipar) = x_v(ishift)*par_rescale(ishift)
           write(str,"(I1)") ishift
           if (ishift.ge.10) write(str,"(I2)") ishift
           write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
           ishift = ishift + 1
         endif
       end do
+      if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+        icorr = npar_opt - ncorr_opt + 1
+        do ipar = 1, ncf
+          if (corr_opt(ipar)) then
+            corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
+            write(str,"(I1)") icorr
+            if (icorr.ge.10) write(str,"(I2)") icorr
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            icorr = icorr + 1
+          endif
+        end do
+      endif
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
       call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
-     &   stated, state_ext, state_extd, j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt)
+     &   stated, state_ext, state_extd, j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
@@ -342,7 +354,7 @@
      , only : primal_iterations
       implicit none
       real(kind=r8) j(nncf)
-      integer ipar, isigma, imean, ishift
+      integer ipar, isigma, imean, ishift, icorr
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
@@ -354,14 +366,14 @@
       call VecGetArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
       if (cftype(1) .eq. 6)  then
-        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt + 1
+        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
             sigma(ipar) = x_v(isigma)*par_rescale(isigma)
@@ -371,7 +383,7 @@
             isigma = isigma + 1
           endif
         end do
-        imean = npar_opt - nmean_opt - nshift_opt + 1
+        imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
         do ipar = 1, nmean
           if (mean_opt(ipar)) then
             mean(ipar) = x_v(imean)*par_rescale(imean)
@@ -382,16 +394,28 @@
           endif
         end do
       endif
-      ishift = npar_opt - nshift_opt + 1
+      ishift = npar_opt - nshift_opt - ncorr_opt + 1
       do ipar = 1, nshift
         if (shiftopt(ipar)) then
-          shift(ipar) = x_v(ishift) ! no rescale for shift for now
+          shift(ipar) = x_v(ishift)*par_rescale(ishift)
           write(str,"(I1)") ishift
           if (ishift.ge.10) write(str,"(I2)") ishift
           write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
           ishift = ishift + 1
         endif
       end do
+      if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+        icorr = npar_opt - ncorr_opt + 1
+        do ipar = 1, ncf
+          if (corr_opt(ipar)) then
+            corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
+            write(str,"(I1)") icorr
+            if (icorr.ge.10) write(str,"(I2)") icorr
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            icorr = icorr + 1
+          endif
+        end do
+      endif
       call b2mn_step(switch, geo, mpg, state, state_ext, j)
       F = j(1)
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
@@ -413,7 +437,7 @@
      , only : primal_iterations, gradient_iterations
       implicit none
       real(kind=r8) j(nncf), jdiff(nbdirsmax,nncf), gradd(npar_opt)
-      integer ipar, isigma, idum(0:2), imean, ishift
+      integer ipar, isigma, idum(0:2), imean, ishift, icorr
       character*3 str
       character(22) :: opt_state_name
       character*120 label
@@ -430,14 +454,14 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
       if (cftype(1) .eq. 6) then
-        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt + 1
+        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
             sigma(ipar) = x_v(isigma)*par_rescale(isigma)
@@ -447,7 +471,7 @@
             isigma = isigma + 1
           endif
         end do
-        imean = npar_opt - nmean_opt - nshift_opt + 1
+        imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
         do ipar = 1, nmean
           if (mean_opt(ipar)) then
             mean(ipar) = x_v(imean)*par_rescale(imean)
@@ -458,21 +482,33 @@
           endif
         end do
       endif
-      ishift = npar_opt - nshift_opt + 1
+      ishift = npar_opt - nshift_opt - ncorr_opt + 1
       do ipar = 1, nshift
         if (shiftopt(ipar)) then
-          shift(ipar) = x_v(ishift) ! no rescale for shift for now
+          shift(ipar) = x_v(ishift)*par_rescale(ishift)
           write(str,"(I1)") ishift
           if (ishift.ge.10) write(str,"(I2)") ishift
           write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
           ishift = ishift + 1
         endif
       end do
+      if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+        icorr = npar_opt - ncorr_opt + 1
+        do ipar = 1, ncf
+          if (corr_opt(ipar)) then
+            corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
+            write(str,"(I1)") icorr
+            if (icorr.ge.10) write(str,"(I2)") icorr
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            icorr = icorr + 1
+          endif
+        end do
+      endif
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
       call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
-     &   stated, state_ext, state_extd, j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt)
+     &   stated, state_ext, state_extd, j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(ipar,1)*par_rescale(ipar) ! rescale par to get order unity

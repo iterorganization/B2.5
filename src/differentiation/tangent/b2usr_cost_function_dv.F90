@@ -5,8 +5,8 @@
 !   variations   of useful results: *b2voloncf *b2data *b2dataoncf
 !                j
 !   with respect to varying inputs: *b2voloncf *b2data *b2dataoncf
-!                sigma shift *par_opt_phys mean *(st.pl.na) *(st.pl.te)
-!                *(st.pl.ti) *(st.dv.fht) *(st.dv.ne)
+!                corr_length sigma shift *par_opt_phys mean *(st.pl.na)
+!                *(st.pl.te) *(st.pl.ti) *(st.dv.fht) *(st.dv.ne)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
 !                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
@@ -428,9 +428,9 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &                    n2), b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd&
 &                    , nbdirs)
           CALL CALC_LOGLIKELIHOOD_DV(n2, b2dataoncf(1:n2), b2dataoncfd(:&
-&                              , 1:n2), cfdata(iicf, 2, 1:n2), cfdata(&
-&                              iicf, 3, 1:n2), lll, llld, isigma, imean&
-&                              , nbdirs)
+&                              , 1:n2), cfdata(iicf, 1, 1:n2), cfdata(&
+&                              iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2), &
+&                              lll, llld, isigma, imean, iicf, nbdirs)
           DO nd=1,nbdirs
             lll_cumd(nd) = lll_cumd(nd) + llld(nd)
           END DO
@@ -605,7 +605,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &           ))**2/geo%fcs(mpg%cfreg(ifc))
         END DO
         DO nd=1,nbdirs
-          jd(nd, icf) = 0.5_R8*cfweight(icf)*jd(nd, icf)
+          jd(nd, icf) = cfweight(icf)*0.5_R8*jd(nd, icf)
         END DO
         j(icf) = 0.5_R8*j(icf)*cfweight(icf)
       CASE DEFAULT
@@ -867,8 +867,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           CALL INTERP1D(n1, n2, b2rr(iicf, 1:n1), cfdata(iicf, 1, 1:n2)&
 &                 , b2data(1:n1), b2dataoncf(1:n2), curr_shift)
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
-&                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
-&                                  , lll, isigma, imean)
+&                                  iicf, 1, 1:n2), cfdata(iicf, 2, 1:n2)&
+&                                  , cfdata(iicf, 3, 1:n2), lll, isigma&
+&                                  , imean, iicf)
           lll_cum = lll_cum + lll
           isigma = isigma + 1
           imean = imean + 1

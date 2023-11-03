@@ -58,7 +58,7 @@
       switchdiff%b2tfhi_fkt_hie = 0.0_R8
       switchdiff%b2tfhe_vis_kt = 0.0_R8
       idir = 1 !this indicates the different directions of multidirectional derivative mode
-      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt because it is not part of nnvar!
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -247,7 +247,7 @@
         endif
       end do
 
-      ipar = nnvar - nmean_opt - nsigma_opt ! not subtracting nshift_opt because it is not part of nnvar!
+      ipar = nnvar - nmean_opt - nsigma_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
 
       if (nsigma_opt.gt.0) then
         sigmad = 0.0_R8
@@ -304,6 +304,21 @@
             idir = idir + 1
             write(ss2,"(I3)") ip
             write (key, *) "shift",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
+      ! corr_length is one for each cost function
+      if (ncorr_opt.gt.0) then
+        corr_lengthd = 0.0_R8
+        do ip = 1, ncf
+!         only if corr is being optimized!
+          if (corr_opt(ip)) then
+            corr_lengthd(idir,ip) = 1.0_R8
+            idir = idir + 1
+            write(ss2,"(I3)") ip
+            write (key, *) "corr_length",ss2
             write (*,*) '  Calculating gradient of',trim(key)
           endif
         end do

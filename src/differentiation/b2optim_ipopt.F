@@ -270,7 +270,7 @@
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma, imean, ishift
+      integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save j
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
@@ -309,7 +309,7 @@
         ishift = npar_opt - nshift_opt + 1
         do ipar = 1, nshift
           if (shiftopt(ipar)) then
-            shift(ipar) = real(XX(ishift),kind=r8) ! no rescale for shift for now
+            shift(ipar) = real(XX(ishift),kind=r8)*par_rescale(ishift)
             write(str,"(I1)") ishift
             if (ishift.ge.10) write(str,"(I2)") ishift
               write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
@@ -317,6 +317,20 @@
             ishift = ishift + 1
           endif
         end do
+        if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+          icorr = npar_opt - ncorr_opt + 1
+          do ipar = 1, ncf
+            if (corr_opt(ipar)) then
+              corr_length(ipar) = real(XX(icorr),kind=r8)*
+     &                            par_rescale(icorr)
+              write(str,"(I1)") icorr
+              if (icorr.ge.10) write(str,"(I2)") icorr
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         corr_length(ipar)
+              icorr = icorr + 1
+            endif
+          end do
+        endif
         call b2mn_step(switch, geo, mpg, state, state_ext, j)
       endif
       F = DBLE(j(1))
@@ -331,7 +345,7 @@
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma, imean, ishift
+      integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save jdiff
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
@@ -371,7 +385,7 @@
         ishift = npar_opt - nshift_opt + 1
         do ipar = 1, nshift
           if (shiftopt(ipar)) then
-            shift(ipar) = real(XX(ishift),kind=r8) ! no rescale for shift for now
+            shift(ipar) = real(XX(ishift),kind=r8)*par_rescale(ishift)
             write(str,"(I1)") ishift
             if (ishift.ge.10) write(str,"(I2)") ishift
               write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
@@ -379,6 +393,20 @@
             ishift = ishift + 1
           endif
         end do
+        if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+          icorr = npar_opt - ncorr_opt + 1
+          do ipar = 1, ncf
+            if (corr_opt(ipar)) then
+              corr_length(ipar) = real(XX(icorr),kind=r8)*
+     &                            par_rescale(icorr)
+              write(str,"(I1)") icorr
+              if (icorr.ge.10) write(str,"(I2)") icorr
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         corr_length(ipar)
+              icorr = icorr + 1
+            endif
+          end do
+        endif
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions

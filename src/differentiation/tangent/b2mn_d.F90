@@ -400,7 +400,7 @@ PROGRAM B2MN_DV
 !  potpard(18,6,1) = 1.0_R8
 
   CALL B2MN_STEP_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
-&             , state_ext, state_extd, j, jd, npar_opt-nsigma_opt-nmean_opt-nshift_opt)
+&             , state_ext, state_extd, j, jd, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
   CALL B2MN_FIN_DV(switch, geo, geod, mpg, mpgd, state, stated, &
 &            state_ext, state_extd, npar_opt)
 !
