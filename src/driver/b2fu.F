@@ -24,7 +24,7 @@
 *
 *  1. purpose
 *
-*     B2FU reads in a formatted b2fplasma file, and writes out a
+*     B2FU reads in a formatted b2fplasmf file, and writes out a
 *     an unformatted b2fplasma file.
 *
 *
