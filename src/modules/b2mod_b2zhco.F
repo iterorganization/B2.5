@@ -59,7 +59,6 @@
       allocate(tf_ton_mat(0:nnucl-1,0:nnucl-1))
       allocate(zh_tf_toff(max(1,(nnucl*(nnucl+1))/2-nnucl)))
       tf_ton_mat=1.0_R8
-      zh_tf_toff(1:max(1,(nnucl*(nnucl+1))/2-nnucl))='0'
 
       return
       end subroutine alloc_b2mod_zhco

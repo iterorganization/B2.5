@@ -1490,13 +1490,11 @@ c 2002-09-11: logic revised
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
       allocate(zh_tf_toff(max(1,(nspecies*(nspecies+1))/2-nspecies)))
-      zh_tf_toff(1:max(1,(nspecies*(nspecies+1))/2-nspecies)) = '0'
+      cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
       call ipgetc ('b2tral_zh_tf_toff', cvalip)
-      if (.not.streql(cvalip,' ')) then
-        do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
-          zh_tf_toff(i) = cvalip(i:i)
-        end do
-      end if
+      do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+        zh_tf_toff(i) = cvalip(i:i)
+      end do
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -11503,7 +11501,7 @@ cxpb as they no longer necessarily point to the same species
         write(99,'(1x,a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','
         if (n_spcsrf.gt.0) then
           write(99,'(1x,a,i2,a)') 'N_SPCSRF=',n_spcsrf,','
-          ii=minloc(l_spcsrf)
+          ii=minloc(abs(l_spcsrf))
           if (ii(1).eq.1) then
             is = 0
           else if (l_spcsrf(ii(1)).eq.0) then
