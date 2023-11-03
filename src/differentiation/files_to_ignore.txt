@@ -42,6 +42,7 @@
   b2ux9p
   b2ux11p
   b2uxus
+  solve_covariance
   illtern_7_solps  
   iluter       
   ilutern_9_solps 

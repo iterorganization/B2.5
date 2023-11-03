@@ -521,29 +521,29 @@ CONTAINS
 !  Differentiation of b2mn_step in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
 !                tdata j
-!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
-!                enepar conpar enkpar potpar mompar enipar b2recyc
-!                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
-!                parm_sig parm_dna tdata sigma shift *par_opt_phys
-!                mean switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!   with respect to varying inputs: enepar conpar enkpar potpar
+!                mompar enipar b2recyc *rtlsa *rtlcx *rtlqa *rtlra
+!                tdata parm_hce parm_hci parm_vla parm_vsa parm_alf
+!                parm_dpa parm_sig parm_dna corr_length sigma shift
+!                *par_opt_phys mean switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   RW status of diff variables: *rtlsa:in *rtlcx:in *rtlqa:in
-!                *rtlra:in cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
+!   RW status of diff variables: *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:in-out conpar:in-out
 !                enkpar:in potpar:in-out mompar:in enipar:in-out
-!                b2recyc:in userfluxparm:(loc) cfvla:(loc) cfvsa:(loc)
-!                cfalf:(loc) cfdpa:(loc) cfsig:(loc) cfdna:(loc)
-!                cfhce:(loc) cfhci:(loc) parm_hce:in parm_hci:in
-!                parm_vla:in parm_vsa:in parm_alf:in parm_dpa:in
-!                parm_sig:in parm_dna:in tdata:in-out sigma:in
-!                shift:in *par_opt_phys:in mean:in int4l:(loc)
+!                b2recyc:in userfluxparm:(loc) cutlo:(loc) *rtlsa:in
+!                *rtlcx:in *rtlqa:in *rtlra:in tdata:in-out cfvla:(loc)
+!                cfvsa:(loc) cfalf:(loc) cfdpa:(loc) cfsig:(loc)
+!                cfdna:(loc) cfhce:(loc) cfhci:(loc) parm_hce:in
+!                parm_hci:in parm_vla:in parm_vsa:in parm_alf:in
+!                parm_dpa:in parm_sig:in parm_dna:in corr_length:in
+!                sigma:in shift:in *par_opt_phys:in mean:in int4l:(loc)
 !                int1l:(loc) int2l:(loc) int3l:(loc) int0l:(loc)
 !                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
 !                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
