@@ -9,7 +9,7 @@
       character*3 ss1
       character*3 ss2
       character*70 key
-      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt because it is not part of nnvar!
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -157,7 +157,7 @@
         endif
       end do !nbdirs-nsigma_opt-nmean_opt
 
-      ipar = nnvar - nmean_opt - nsigma_opt ! not subtracting nshift_opt because it is not part of nnvar!
+      ipar = nnvar - nmean_opt - nsigma_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
 
       if (nsigma_opt.gt.0) then
         do ip = 1, nsigma
@@ -206,6 +206,18 @@
             ipar = ipar + 1
             write(ss2,"(I3)") ip
             write (key, *) "shift",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
+      if (ncorr_opt.gt.0) then
+        do ip = 1, ncf
+!         only if shift is being optimized!
+          if (corr_opt(ip)) then
+            ipar = ipar + 1
+            write(ss2,"(I3)") ip
+            write (key, *) "corr_length",ss2
             write (*,*) '  Calculating gradient of',trim(key)
           endif
         end do
