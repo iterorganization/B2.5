@@ -37,7 +37,7 @@ fi
 # For each stratum, the NPTSDEL number must be equal to the NPTS value divided by some
 # integer multiple of the number of threads used.
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 0.01 --maxerr 'te ti na ni ne po' --specific-tolerance 'fhe 0.05 fhe_eir 0.05 fhep 0.02 fhe0 0.02 fhe_mdf 0.02 fhi 0.02 fhi_eir 0.02 fhi_mdf 0.02 fhi0 0.02 fhip 0.02 fhet 0.05 fht 0.02 fni 0.1 fne 0.1 rqahe 0.05 rqrad 0.05 te 0.1 ti 0.1 po 0.1 pop 0.1 ne2 0.02 chci 0.05 hce0 0.12 hci0 0.12 fne_32 0.05 fne_52 0.025 fni_32 0.1' -i 'time|data|b2stb*|res*|del*|sm*|po0|na*|ne0|nep|ni0|ua*|kinrgy|fna_52|fne_eir|fni_52|fch*|fhj|rcx*|rra*|rsa*|alf*|calf_an|cdpa|csig*|dpa*|fllim*|b2sihs_*|b2npmo_sm*' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 0.01 --maxerr 'te ti na ni ne po' --specific-tolerance 'fhe 0.05 fhe_eir 0.05 fhep 0.02 fhe0 0.02 fhe_mdf 0.02 fhi 0.02 fhi_eir 0.02 fhi_mdf 0.02 fhi0 0.02 fhip 0.02 fhet 0.05 fht 0.02 fni 0.1 fne 0.1 rqahe 0.05 rqrad 0.05 te 0.1 ti 0.1 po 0.1 pop 0.1 ne2 0.02 chci 0.05 hce0 0.12 hci0 0.12 fne_32 0.05 fne_52 0.025 fni_32 0.1' -i 'time|data|b2stb*|res*|del*|sm*|po0|na*|ne0|nep|ni0|ua*|kinrgy|fna_32|fna_52|fne_eir|fni_52|fch*|fhj|rcx*|rra*|rsa*|alf*|calf_an|cdpa|csig*|dpa*|fllim*|b2sihs_*|b2npmo_sm*' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successful

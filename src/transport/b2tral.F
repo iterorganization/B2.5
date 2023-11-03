@@ -535,8 +535,8 @@
          enddo
         enddo
        enddo                                                           !IYS 15.09.22 }
-       
-      endif                                                                       
+
+      endif
 
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {
