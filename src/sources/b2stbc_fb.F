@@ -1255,10 +1255,16 @@
                   if(is_start.eq.-1) is_start=is
                     do iy = 0,ny-1 !{
                       do ix = 0,nx-1 !{
-                        if(.not.ON_CLOSED_SURFACE(ix,iy))!{
-     &                    na_feedback_current =
-     &                     na_feedback_current +
-     &                     na(ix,iy,is) * vol(ix, iy) !}
+                        if(.not.ON_CLOSED_SURFACE(ix,iy) .and.
+     &                     region(ix,iy,0).ne.0 .and.
+     &                     leftix(ix,iy).ne.-2 .and.
+     &                     rightix(ix,iy).ne.nx+1 .and.
+     &                     bottomiy(ix,iy).ne.-2 .and.
+     &                     topiy(ix,iy).ne.ny+1) then !{
+                          na_feedback_current =
+     .                     na_feedback_current +
+     .                     na(ix,iy,is) * vol(ix, iy) !}
+                         endif
                       enddo !}
                     enddo !}
                   is_end=is
@@ -1269,7 +1275,12 @@
                 if (latmscl(j).eq.ispecies+1) then !{
                   do iy = 0,ny-1 !{
                     do ix = 0,nx-1 !{
-                      if(.not.ON_CLOSED_SURFACE(ix,iy)) then !{
+                      if(.not.ON_CLOSED_SURFACE(ix,iy) .and.
+     &                   region(ix,iy,0).ne.0 .and.
+     &                   leftix(ix,iy).ne.-2 .and.
+     &                   rightix(ix,iy).ne.nx+1 .and.
+     &                   bottomiy(ix,iy).ne.-2 .and.
+     &                   topiy(ix,iy).ne.ny+1) then !{
                         na_feedback_current = na_feedback_current +
      &                   dab2(ix+1,iy+1,j,1) * vol(ix,iy)
                         do k=1,nnmoli !{
@@ -1306,7 +1317,8 @@
      &                    na_feedback_iy2(ispecies)
                 do ix = na_feedback_ix1(ispecies),
      &                      na_feedback_ix2(ispecies)
-                  if (leftix(ix,iy).ne.-2 .and.
+                  if (region(ix,iy,0).ne.0 .and.
+     &                leftix(ix,iy).ne.-2 .and.
      &                rightix(ix,iy).ne.nx+1 .and.
      &                bottomiy(ix,iy).ne.-2 .and.
      &                topiy(ix,iy).ne.ny+1) then
@@ -1344,7 +1356,12 @@
 
               do iy = 0, ny-1
                 do ix = 0, nx-1
-                  if (.not. ON_CLOSED_SURFACE(ix,iy)) then
+                  if (.not.ON_CLOSED_SURFACE(ix,iy) .and.
+     &                region(ix,iy,0).ne.0 .and.
+     &                leftix(ix,iy).ne.-2 .and.
+     &                rightix(ix,iy).ne.nx+1 .and.
+     &                bottomiy(ix,iy).ne.-2 .and.
+     &                topiy(ix,iy).ne.ny+1) then
                     na_feedback_current = na_feedback_current +
      .               sum(rqbrm(ix,iy,0:ns-1)) + sum(rqrad(ix,iy,0:ns-1))
 #ifdef B25_EIRENE
@@ -1518,9 +1535,8 @@ c           Safeguard for na_feedback_options with multiplicative rescaling:
      &             'combined pure rescale and tanh_log_rescale ',
      &             'for sequence ',
      &              ispecies+1
-                if((na_feedback_gamma(ispecies).lt.0.0_R8) .or.
-     &             (na_feedback_gamma(ispecies).gt.1.0_R8))
-     .            na_feedback_gamma = 0.01_R8
+                if(na_feedback_gamma(ispecies).lt.0.0_R8)
+     &            na_feedback_gamma = 0.01_R8
               endif
 
               na_feedback_rescale =
@@ -1545,9 +1561,8 @@ c           Safeguard for na_feedback_options with multiplicative rescaling:
      &             'scaled with pumping and seeding balance ',
      &             'for sequence ',
      &              ispecies+1
-                if((na_feedback_gamma(ispecies).lt.0.0_R8) .or.
-     &             (na_feedback_gamma(ispecies).gt.1.0_R8))
-     .            na_feedback_gamma = 0.01_R8
+                if(na_feedback_gamma(ispecies).lt.0.0_R8)
+     &            na_feedback_gamma = 0.01_R8
                 if (use_eirene.eq.0) then
                   write(message,'(a,i3,a)')
      &              'Feedback option ',na_feedback_choice(ispecies),
