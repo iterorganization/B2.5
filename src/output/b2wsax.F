@@ -265,4 +265,12 @@
       return
       end function uaz
 
+      function pit(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: pit
+      pit = sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
+      return
+      end function pit
+
       end subroutine b2wsax

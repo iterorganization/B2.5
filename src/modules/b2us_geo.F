@@ -7,7 +7,7 @@
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
      .          init_geometry, calc_conn, check_geometry,
-     .          divide_by_area, split_face_flux
+     .          divide_by_area, split_face_flux, pitch
 
       type, public :: geometry
 
@@ -1174,6 +1174,16 @@ cxpb  and the radial value to 'radial' faces.
 
       return
       end subroutine split_face_flux
+
 ***********************************************************************
+
+      function pitch(g,iCv)
+      implicit none
+      integer, intent(in) :: iCv
+      type(geometry), intent(in) :: g
+      real(kind=R8) :: pitch
+      pitch = sqrt(g%cvBb(iCv,0)**2+g%cvBb(iCv,1)**2)/g%cvBb(iCv,3)
+      return
+      end function pitch
 
       end module b2us_geo
