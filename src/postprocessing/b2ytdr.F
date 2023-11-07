@@ -170,7 +170,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: idum(:)
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
-      integer nCv, nFc
+      integer nCv, nFc, nVx
       integer boundary_namelist, neutrals_namelist, use_eirene
       integer numerics_namelist
       integer sources_inputfile, b2stbc_feedback
@@ -1002,7 +1002,7 @@ c 2002-09-11: logic revised
      1  b2fstate_version)
       if (invert_bpol .eq. 1) ua = -ua
 *   ..prepare conversion arrays
-      call alloc_b2mod_b2plot(nCv,nFc,ns,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
       nxm=max(nx,nx1)

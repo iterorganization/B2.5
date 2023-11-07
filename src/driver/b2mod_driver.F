@@ -317,7 +317,7 @@
 #else
       integer ninp(0:6), nout(0:10)
 #endif
-      integer nCv, nFc, ns, ns0
+      integer nCv, nFc, nVx, ns, ns0
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
@@ -1001,6 +1001,7 @@
 *     (done in b2mnds)
       nCv = mpg%nCv
       nFc = mpg%nFc
+      nVx = mpg%nVx
 *   ..initialise files and common
       call b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
 *   ..set internal parameters on first (and only) call
@@ -1982,7 +1983,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
       if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
-        call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
+        call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
@@ -1991,7 +1992,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       endif
 #else
       if (ids_save.ne.0.or.delta_ids_time.gt.0.0_R8)
-     > call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
+     > call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                         natm,nmol,nion,nlimps)
 #endif
 c new CDF movie option (1st frame at t=0)
@@ -2429,7 +2430,7 @@ c new CDF movie option
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
-     .                  geo,mpg,state,switch)
+     .                  geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11

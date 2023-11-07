@@ -14,7 +14,9 @@ module b2mod_ual
 #ifdef IMAS
     use ids_routines &  ! IGNORE
      & ,only: imas_open_env, imas_create_env, imas_close, &
-     &        ids_deallocate, ids_get, ids_put, ids_delete, ids_put_slice
+     &        ids_deallocate, ids_get, ids_put, ids_delete, ids_put_slice, &
+     &        ual_begin_pulse_action, ual_open_pulse, &
+     &        HDF5_BACKEND, FORCE_CREATE_PULSE
     use ids_schemas &   ! IGNORE
      & ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &        ids_radiation, ids_dataset_description, ids_equilibrium
@@ -143,30 +145,46 @@ contains
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
-          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-             & database, version, status )
-          call xertst( status.eq.0, 'Error opening IMAS database !')
+!!$          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+!!$             & database, version, status )
+          call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+             & database, version, idx )
+          call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', status )
+          if (status.ne.0) then
+            write(0,*) 'Opening IMAS database failed !'
+            write(0,*) 'Make sure it exists or create it with the command:'
+            write(0,*) 'imasdb '//trim(database)
+            call xerrab( 'Error opening IMAS database !')
+          endif
 
         !! Put data to IDS
+          write(*,*) 'Putting edge_profiles IDS'
           call ids_put( idx, "edge_profiles", edge_profiles, status )
           call xertst( status.eq.0, 'Error putting edge_profiles IDS !')
+          write(*,*) 'Putting egde_sources IDS'
           call ids_put( idx, "edge_sources", edge_sources, status )
           call xertst( status.eq.0, 'Error putting edge_sources IDS !')
+          write(*,*) 'Putting edge_transport IDS'
           call ids_put( idx, "edge_transport", edge_transport, status )
           call xertst( status.eq.0, 'Error putting edge_transport IDS !')
+          write(*,*) 'Putting radiation IDS'
           call ids_put( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting radiation IDS !')
+          write(*,*) 'Putting dataset_description IDS'
           call ids_put( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting dataset_description IDS !')
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+          write(*,*) 'Putting summary IDS'
           call ids_put( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+          write(*,*) 'Putting numerics IDS'
           call ids_put( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+          write(*,*) 'Putting divertors IDS'
           call ids_put( idx, "divertors", divertors, status )
           call xertst( status.eq.0, 'Error putting divertors IDS !')
 #endif
@@ -183,25 +201,33 @@ contains
           end if
 
         !! Put data to IDS
+          write(*,*) 'Putting edge_profiles IDS slice'
           call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
           call xertst( status.eq.0, 'Error putting slice in edge_profiles IDS !')
+          write(*,*) 'Putting edge_sources IDS slice'
           call ids_put_slice( idx, "edge_sources", edge_sources, status )
           call xertst( status.eq.0, 'Error putting slice in edge_sources IDS !')
+          write(*,*) 'Putting edge_transport IDS slice'
           call ids_put_slice( idx, "edge_transport", edge_transport, status )
           call xertst( status.eq.0, 'Error putting slice in edge_transport IDS !')
+          write(*,*) 'Putting radiation IDS slice'
           call ids_put_slice( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
+          write(*,*) 'Putting dataset_description IDS slice'
           call ids_put_slice( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+          write(*,*) 'Putting summary IDS slice'
           call ids_put_slice( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting slice in summary IDS !')
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+          write(*,*) 'Putting numerics IDS slice'
           call ids_put_slice( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting slice in numerics IDS !')
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+          write(*,*) 'Putting divertors IDS slice'
           call ids_put_slice( idx, "divertors", divertors, status )
           call xertst( status.eq.0, 'Error putting slice in divertors IDS !')
 #endif
@@ -312,9 +338,17 @@ contains
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
-          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-             & database, version, status )
-          call xertst( status.eq.0, 'Error opening IMAS database !')
+!!$          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+!!$             & database, version, status )
+          call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+             & database, version, idx )
+          call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', status )
+          if (status.ne.0) then
+            write(0,*) 'Opening IMAS database failed !'
+            write(0,*) 'Make sure it exists or create it with the command:'
+            write(0,*) 'imasdb '//trim(database)
+            call xerrab( 'Error opening IMAS database !')
+          endif
 
         !! Put data to IDS
           call ids_put( idx, "edge_profiles/1", batch_profiles, status )

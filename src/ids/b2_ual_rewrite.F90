@@ -61,13 +61,9 @@
 
 program b2_ual_rewrite
 
-    use b2mod_geo
     use b2mod_main
     use b2mod_driver
-    use b2mod_plasma
-    use b2mod_sources
     use b2mod_switches
-    use b2mod_transport
     use b2mod_grid_mapping
     use b2us_geo
     use b2us_map
@@ -122,7 +118,7 @@ program b2_ual_rewrite
     character(len=24) :: new_run_string
     character(len=24) :: argName
     integer narg, cptArg, new_run
-    integer nx, ny
+    integer idum(0:2)
     character*16 usrnam
     logical same_run_number
     data new_run / 0 /
@@ -143,11 +139,12 @@ program b2_ual_rewrite
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
     call cfverr(56, b2fplasma_version)
-    call read_b2mod_geo(nx, ny, 56)
-    call read_b2mod_plasma(nx, ny, ns, 56)
-    call read_b2mod_residuals(56)
-    call read_b2mod_sources(56)
-    call read_b2mod_transport(nx, ny, ns, 56)
+    ! obtain parameters from b2fplasma file
+    call cfruin (56,3,idum,'nCv,nFc,ns')
+    call xertst (idum(0).eq.mpg%nCv.and.idum(1).eq.mpg%nFc.and. &
+     &           idum(2).eq.state%pl%ns, &
+     &          'faulty input nCv, nFc, ns from b2fplasma file')
+    call read_b2fplasma(56, mpg%nCv, mpg%nFc, ns, state)
 
     call ipgeti('b2mndr_shot_number', shot )
     if (shot.gt.0) then
