@@ -30,7 +30,7 @@
       contains
 
       subroutine b2trace(ns, nxtl, nxtr, ismain, dtim,
-     .                   geo, mpg, st, switch)
+     .                   geo, mpg, st, switch, st_ext)
 #ifdef B25_EIRENE
 #ifdef WG_TODO
       use eirmod_parmmod
@@ -51,6 +51,7 @@ c----------------------------------------------------------------------
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: geo
       type(B2state), intent(in) :: st
+      type(B2StateExt), intent(in) :: st_ext
       type(switches), intent(in) :: switch
       integer ns, nxtl, nxtr, ismain
       real (kind=R8) :: dtim
@@ -145,7 +146,7 @@ c*** Particle balance in old style by Andrei Kukushkin
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,switch%BoRiS)
 c*** Parallel momentum balance
-      if(filedata(ntrc_blm)) call b2blnm(nx,ny,ns)
+      if(filedata(ntrc_blm)) call b2blnm(mpg,ns,st,st_ext)
 c*** Additional integrals
       if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0))
       if(filedata(ntrc_srt)) call b2wrsrt(nx,ny,ns)

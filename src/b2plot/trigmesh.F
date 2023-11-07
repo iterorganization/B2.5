@@ -1,7 +1,7 @@
 c
       subroutine trigmesh
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
@@ -40,7 +40,7 @@ c
       endif
       call data_copy(0)
       call pltvessel
-      call additional_elements(nx,ny,.true.)
+      call additional_elements(mpg%nCv,.true.)
       call end_page
 #endif
       return

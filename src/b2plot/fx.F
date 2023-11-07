@@ -20,6 +20,7 @@ c     the line format common
       intrinsic min,max,mod,sqrt
       external xertst,lnblnk,len_of_digits
 
+#ifdef WG_TODO
       ixstart=-1
       do while (region(ixstart,iy,0).eq.0 .and. ixstart.le.nx)
         ixstart=ixstart+1
@@ -31,7 +32,7 @@ c     the line format common
       enddo
       call xertst(ixstart.le.ixend, 'faulty parameter ixend')
       write(hlp_frm,'(a,i1,a)') '(a,i',len_of_digits(iy),',a)'
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         tmpstring1=textwk(is,iwrk)
         lmin=work(ixstart,iy,is,iwrk)
         lmax=work(ixstart,iy,is,iwrk)
@@ -250,5 +251,6 @@ cxpb : new default behaviour : zero of distance set at ixref
           call end_page
         endif
       enddo
+#endif
       return
       end subroutine fx
