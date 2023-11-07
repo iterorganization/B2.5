@@ -100,11 +100,6 @@
       endif
 *   ..set cutll, cutlo
       if (.not.b2mod_math_initialised) call b2mod_math_init
-      if ((art_rad.ne.0.0_R8) .and. (ncall.eq.0)) then
-          art_rad=abs(art_rad)
-          write(*,*)
-     1     'Artificial radiation model active, art_rad = ',art_rad
-      endif
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif

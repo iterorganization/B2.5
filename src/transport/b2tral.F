@@ -24,7 +24,7 @@
       use b2mod_b2zhco
      & , only: zhflcorr, zhcscorr, zhcscorr_vq,                         !som 21.03.21
      &         zh_imp_analyt, zh_analyt_mdf,
-     &         zhflcorrh, zh_dist_fun, zh_tf_toff
+     &         zhflcorrh, zh_dist_fun
       use b2mod_zhfrtf
      & , only: avm_u, w_out, hTdp_out, hwdp_out,
      &         rTdpgamma_out, rwdpgamma_out
@@ -228,7 +228,6 @@
         call ipgeti ('b2tral_zh_imp_analyt', zh_imp_analyt)       !som 21.03.21
         call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.21
         call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 10.06.21
-        call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)             !som 26.06.21
         call ipgeti ('b2tral_zh_vis_type', zh_vis_type)           !som 13.01.22
         call ipgeti ('b2tral_mode', mode)                         !som 15.03.21
         if(transport_namelist.eq.1) then
@@ -536,8 +535,8 @@
          enddo
         enddo
        enddo                                                           !IYS 15.09.22 }
-       
-      endif                                                                       
+
+      endif
 
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {

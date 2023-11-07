@@ -26,7 +26,7 @@ endif
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2)
 
 ifndef SOLPS_DEBUG
-FCOPTS  += -O2 
+FCOPTS  += -O2  -xHost
 else
 FCOPTS  += -g -C -traceback -debug all -check all
 endif
