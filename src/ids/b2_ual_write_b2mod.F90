@@ -121,7 +121,7 @@
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
 !!          --shot <shot> --run <run> --username <username> --database <database>
-!!          --version <version> --step <step>
+!!          --version <version> --step
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
@@ -135,7 +135,7 @@
 !!      Example of the command:
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
-!!          --shot 1512 --run 6 --username penkod --database solps-iter --version 3 --step 250
+!!          --shot 1512 --run 6 --username penkod --database solps-iter --version 3 --step
 !!      @endverbatim
 !!
 !!      \b References:
@@ -298,16 +298,15 @@ program b2_ual_write_b2mod
     type(B2State)    :: state
     type(B2StateExt) :: state_ext
     type(B2Average)  :: state_avg
-    integer :: num_step !< Number of steps
     integer :: narg     !< Total Number of input arguments (shot, run etc.)
     integer :: cptArg
 
     !! Dummy variables
     character(len=24) :: shot_string
     character(len=24) :: run_string
-    character(len=24) :: num_step_string
     character(len=24) :: argName
     real(kind=r8) :: J(nncf)
+    logical :: new_run
 
     !! Procedures
     character*16 usrnam
@@ -321,9 +320,10 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2fmovie" )
     call checkFileAndDelete( "b2ftrace" )
     call checkFileAndDelete( "b2ftrack" )
+    call checkFileAndDelete( "b2fplasma" )
 
-    !! Set default value for IMAS major version and number of steps
-    num_step = -1
+    !! Set default value for IMAS major version
+    new_run = .false.
     status = 0
     write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
@@ -356,24 +356,22 @@ program b2_ual_write_b2mod
         do cptArg = 1, narg
             call get_command_argument( cptArg, argName )
             select case( adjustl( argName ) )
-                case("--shot")
+                case("--shot","-s")
                     call get_command_argument( cptArg + 1, shot_string )
                     !! Transform dummy string variable to integer
                     read( shot_string, *) shot
-                case("--run")
+                case("--run","-r")
                     call get_command_argument( cptArg + 1, run_string )
                     !! Transform dummy string variable to integer
                     read( run_string, *) run
-                case("--username")
+                case("--username","-u")
                     call get_command_argument( cptArg + 1, username )
-                case("--device","--database")
+                case("--device","--database","-d")
                     call get_command_argument( cptArg + 1, database )
-                case("--version")
+                case("--version","-v")
                     call get_command_argument( cptArg + 1, version )
-                case("--step")
-                    call get_command_argument( cptArg + 1, num_step_string )
-                    !! Transform dummy string variable to integer
-                    read( num_step_string, *) num_step
+                case("--step","-S")
+                    new_run = .true.
             end select
         end do
     !! If not at least shot, run, username, and database were defined, display
@@ -408,11 +406,9 @@ program b2_ual_write_b2mod
     call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
     write(0,*) "b2mn_init completed"
 
-    !! If steps were defined then run the b2mn_step routine for the number of
-    !! steps
-    if( num_step .gt. -1 ) then
-        write(0,*) "Running b2mn_step(", num_step, ")"
-        write(0,*) "num_step: ", num_step
+    !! If step was defined then run the b2mn_step routine
+    if( new_run ) then
+        write(0,*) "Running b2mn_step()"
         call b2mn_step( switch, geo, mpg, state, state_ext, state_avg, J )
         write(0,*) "b2mn_step() completed"
     end if
@@ -420,22 +416,31 @@ program b2_ual_write_b2mod
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
-    call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-       &     database, version, status )
+!!$    call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+!!$       &     database, version, status )
+    call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+        & database, version, idx )
+    call ual_open_pulse( idx, OPEN_PULSE, '', status )
     if (status.ne.0) then
       if (database.eq.'ITER') then
         write(*,*) "Did not find ITER database IDS file."
         write(*,*) "Checking if old ''iter'' case exists."
-        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-       &     'iter', version, status )
+!!$        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+!!$       &     'iter', version, status )
+        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+            & 'iter', version, idx )
+        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         if (status.eq.0) then
           database = 'iter'
           write(*,*) "Old database case found."
           write(*,*) "Will be rewritten in new location."
         end if
       else if (database.eq.'iter') then
-        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-       &     'ITER', version, status )
+!!$        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+!!$       &     'ITER', version, status )
+        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+            & 'ITER', version, idx )
+        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         database = 'ITER'
       end if
     end if
@@ -603,9 +608,9 @@ program b2_ual_write_b2mod
     call close_ual(idx)
     idx = 0
 
-    ! write(0,*) " Running b2mn_fin"
-    ! call b2mn_fin
-    ! write(0,*) "b2mn_fin completed"
+    write(0,*) " Running b2mn_fin"
+    call b2mn_fin( switch, geo, mpg, state, state_ext, state_avg )
+    write(0,*) "b2mn_fin completed"
 
 contains
 
@@ -631,7 +636,8 @@ contains
     !! with Fortran90
     subroutine read_ids( treename, shot, run, idx, username, database, version )
         use ids_routines &  ! IGNORE
-         & , only : imas_close
+         & , only : ual_close_pulse, &
+         &          HDF5_BACKEND, OPEN_PULSE, CLOSE_PULSE
         implicit none
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
@@ -653,9 +659,12 @@ contains
         !! Open input datafile from local database
         write (0,*) "Started reading input IMAS data-entry", idx, shot, run
 
-        call imas_open_env(treename, shot, run, idx, username, &
-            &   database, version, status )
-        call xertst ( status.eq.0, 'Error opening IMAS database !')
+!!$        call imas_open_env(treename, shot, run, idx, username, &
+!!$            &   database, version, status )
+        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+            & database, version, idx )
+        call ual_open_pulse( idx, OPEN_PULSE, '', status )
+        call xertst ( status.eq.0, 'Error opening IMAS data entry !')
         call ids_get(idx, "edge_profiles", edge_profiles, status)
         call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
 
@@ -674,7 +683,7 @@ contains
 #endif
         ! write(0,*) "Time = ", edge_profiles%time(1)
         call ids_deallocate( edge_profiles )
-        call imas_close( idx, status )
+        call ual_close_pulse( idx, CLOSE_PULSE, '', status )
         call xertst ( status.eq.0, 'Error closing IMAS database !')
         write (0,*) "Finished reading input IMAS data-entry"
 
