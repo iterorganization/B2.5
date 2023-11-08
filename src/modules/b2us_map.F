@@ -10,7 +10,8 @@
      .          alloc_mapping_rc, dealloc_mapping_rc,
      .          alloc_mapping_cf, dealloc_mapping_cf,
      .          read_mapping, write_mapping,
-     .          init_mapping, get_version
+     .          init_mapping, get_version,
+     .          calc_add_connectivity
       
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
