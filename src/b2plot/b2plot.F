@@ -164,7 +164,7 @@ c
       character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
-      integer iCv, is, iss, isp, is2
+      integer iCv, iVx, is, iss, isp, is2
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -201,7 +201,7 @@ c
 #endif
 c
       real (kind=R8) ::
-     * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time
+     * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time,minpsi,maxpsi
       real (kind=R8) ::
      1 lambda, lnlam, hh, hhn, phi_app
       integer i,j,icell,il,imi,
@@ -1610,12 +1610,20 @@ c
           nz=1
           mach(:,0)=geo%cvBb(:,2)*geo%cvX(:)
           call copy(mach,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case('psi')
           description='Poloidal magnetic flux function (Wb)'
           nz=1
-          call copy(psi,1.0_R8,nz,textbl)
-#endif
+          do iCv = 1, mpg%nCv
+            minpsi = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1)))
+            maxpsi = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1)))
+            do i = 2, mpg%cvVxP(iCv,2)
+              iVx = mpg%cvVx(mpg%cvVxp(iCv,1)+i-1)
+              minpsi = min(minpsi,geo%vxFpsi(iVx))
+              maxpsi = max(maxpsi,geo%vxFpsi(iVx))
+            end do
+            mach(iCv,0) = (minpsi+maxpsi)/2.0_R8
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case('na')
           description='Ion density (m^{-3})'
           nz=ns
@@ -6018,7 +6026,7 @@ c          write(*,*) 'Read a new geometry'
           write(99,'(3x,a/)') 'Element output:'
           if(values(19).eq.0.0_R8 .or. values(22).eq.0.0_R8) then
             write(*,*) 'Using default values for B0 and R0 !'
-            b0r0=abs(cr(-1,-1)*bb(-1,-1,2))
+            b0r0=abs(geo%cvX(1)*geo%cvBb(1,2))
           else
             b0r0=values(22)*values(19)
           endif

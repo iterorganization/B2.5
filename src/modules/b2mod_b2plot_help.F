@@ -569,7 +569,7 @@
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      2/
       data dimensions(351:355) /
-     1    1,      1,      0,      1,      1/
+     1    1,      1,      1,      1,      1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
