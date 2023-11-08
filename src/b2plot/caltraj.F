@@ -136,8 +136,9 @@ c                                       !number of particles per cell
 #endif
 
       oocol=-1
-      allocate(warr(mpg%nCv,0:ns-1),lwarr(mpg%nCv,0:ns-1))
+      allocate(warr(mpg%nCv,0:ns-1))
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
+      allocate(lwarr(mpg%nCv,0:ns-1))
       if(moviename .eq. ' ') then
 #endif
 c     Getting the values for globaltime and deltat
@@ -515,8 +516,9 @@ c     close Plot-Screen
 
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       iret = nf_close(ncid)
+      deallocate(lwarr)
 #endif
-      deallocate(warr,lwarr)
+      deallocate(warr)
       return
       end subroutine caltraj
 
