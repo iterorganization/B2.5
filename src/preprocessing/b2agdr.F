@@ -555,9 +555,10 @@
       call cfwuin (nout(1), 1, idum, 'isymm')
       
 *   ..write summary of geometry
-        call write_b2fgmtry (nout(1), m, g)
+      call write_b2fgmtry (nout(1), m, g)
 
-      call write_f30
+*   ..write fort.30 
+      call write_f30 (g, m)
 
 * ..return
       call subend ()
