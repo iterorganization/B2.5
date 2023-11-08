@@ -68,7 +68,7 @@ contains
     nVmxFc = nVmxFc0          ! no new faces created for ghost cells 
 
     ! Compute nCmxNv
-    nCmxNv = 15 * nCv         ! over-estimate for 9-point stencil, and possible complexity for triangle meshes
+    nCmxNv = 20 * nCv         ! over-estimate for 9-point stencil, and possible complexity for triangle meshes
                               ! wdk to be considered: some exact recomputation of this number to write in b2fgmtry
 
 
