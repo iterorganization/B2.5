@@ -1,24 +1,23 @@
-      subroutine b2xddr (ninp, nout, nx, ny, ns)
+      subroutine b2xddr (ninp, nout, ns, mpg, geo, state)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_work
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_indirect
-      use b2mod_constants
-      use b2mod_geo_corner
       use b2mod_b2cmgs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmwg
       use b2mod_subsys
+      use b2mod_version
+      use b2us_io
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:4), nout(0:2), nx, ny, ns
+      integer ninp(0:4), nout(0:2), ns
+*   ..main data structures
+      type(mapping)  :: mpg
+      type(geometry) :: geo
+      type(B2State)  :: state
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -39,7 +38,8 @@
      &             1.le.nout(2),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.mpg%nCv.and.0.le.mpg%nFc,
+     &  'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
@@ -47,9 +47,7 @@
 *   ..read geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
-#ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, isymm)
-#endif
+      call read_b2fgmtry (ninp(1), mpg, geo)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, ns)
@@ -62,25 +60,17 @@
         za(is) = (zamin(is) + zamax(is))/2.0_R8
       end do
 *   ..read plasma state
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,  !xpb
-     &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, 
-     &  kinrgy, fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, 
-     &  fna_he, fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, 
-     &  fhi_eir, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     &  b2fstate_version)
+      call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
 *   ..test plasma state and fluxes
-#ifdef WG_TODO
-      call b2xvps (nx, ny, ns,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-#endif
+      call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 *   ..process
+#ifdef WG_TODO
       call process(nx,ny,ns,
      1  crx,cry,bb,vol,hx,hy,qz,gs,
      2  za,zn,am,na,ua,uadia,te,ti,po,fna,fhe,fhi,fch,fchdia,
      3  resco,reshe,reshi,resmo,resmt,respo,
      4  nncut,leftcut,rightcut,topcut,bottomcut)
+#endif
 
 * ..return
       call subend ()

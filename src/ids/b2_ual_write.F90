@@ -113,8 +113,8 @@ program b2_ual_write
     character(len=24) :: shot_string
     character(len=24) :: run_string
     character(len=24) :: argName
-    integer nx, ny
     integer narg, cptArg
+    integer idum(0:2)
     character*16 usrnam
     external usrnam
 
@@ -132,11 +132,12 @@ program b2_ual_write
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
     call cfverr(56, b2fplasma_version)
-    call read_b2mod_geo(nx, ny, 56)
-    call read_b2mod_plasma(nx, ny, ns, 56)
-    call read_b2mod_residuals(56)
-    call read_b2mod_sources(56)
-    call read_b2mod_transport(nx, ny, ns, 56)
+    ! obtain parameters from b2fplasma file
+    call cfruin (56,3,idum,'nCv,nFc,ns')
+    call xertst (idum(0).eq.mpg%nCv.and.idum(1).eq.mpg%nFc.and. &
+     &           idum(2).eq.state%pl%ns, &
+     &          'faulty input nCv, nFc, ns from b2fplasma file')
+    call read_b2fplasma(56, mpg%nCv, mpg%nFc, state%pl%ns, state)
 
     call ipgeti('b2mndr_shot_number', shot )
     call ipgeti('b2mndr_run_number', run )

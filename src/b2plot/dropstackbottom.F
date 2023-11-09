@@ -2,44 +2,21 @@
       use b2mod_types
       use b2mod_b2plot
       implicit none
-      integer i, ix, iy, is
+      integer i, is
 
       write(*,*) 'Too many data values on work stack'
       write(*,*) 'Dropping the bottom element!'
       do i = 2,iwrk
         ndim(1,i-1) = ndim(1,i)
         ndim(2,i-1) = ndim(2,i)
-        ndim(3,i-1) = ndim(3,i)
-        do is = 0,ndim(3,i)-1
-          do iy = -1,ndim(2,i)
-            do ix = -1,ndim(1,i)
-              work(ixx(ix,iy),iyy(ix,iy),is,i-1) = 
-     .         work(ixx(ix,iy),iyy(ix,iy),is,i) 
-            end do
-          end do
+        do is = 0,ndim(2,i)-1
+          work(:,is,i-1)=work(:,is,i)
           textwk(is,i-1) = textwk(is,i)
         end do
         graphlabel(i-1) = graphlabel(i)
       end do
       iwrk = iwrk-1
       return
-
-      contains
-
-      integer function ixx(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      ixx = mod(ix+1,nx+2)-1
-      return
-      end function ixx
-
-      integer function iyy(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      iyy = iy+(ix+1)/(nx+2)
-      return
-      end function iyy
-
       end subroutine dropstackbottom
 
       subroutine dropeirenestackbottom()

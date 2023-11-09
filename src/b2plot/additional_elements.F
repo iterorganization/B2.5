@@ -1,9 +1,9 @@
 c
-      subroutine additional_elements(nx,ny,physical)
+      subroutine additional_elements(nCv,physical)
       use b2mod_types
       implicit none
 #include "graphics_vars.h"
-      integer nx, ny
+      integer nCv
       logical physical
 
       if(grid) then
@@ -19,10 +19,10 @@ c
         call pltoutline(physical)
       endif
 #ifdef WOS
-      call flux_add(nx,ny)
+      call flux_add(nCv)
 #endif
       if(wall) then
-        call pltwall(nx,ny,physical,.false.)
+        call pltwall(nCv,physical,.false.)
       endif
       if(target.and.physical) then
         call plttarget
