@@ -15,6 +15,7 @@
       integer, allocatable, save :: feedback_strata(:)
 
 *   ..namelists
+      logical, save :: na_feedback_inverse(0:DEF_NATM-1)
       integer, save :: vacuum_communication,
      & vacuum_communication_nreg(nvac), 
      & vacuum_communication_method(nvac),
@@ -26,7 +27,7 @@
      & na_feedback_actuator(0:DEF_NATM-1),
      & na_feedback_ix1(0:DEF_NATM-1), na_feedback_ix2(0:DEF_NATM-1), 
      & na_feedback_iy1(0:DEF_NATM-1), na_feedback_iy2(0:DEF_NATM-1), 
-     & na_feedback_ib(0:DEF_NATM-1),
+     & na_feedback_ib(0:DEF_NATM-1), na_feedback_it(0:DEF_NATM-1),
      &  max_na_feedback_current(DEF_NATM)=0.0_R8
       real (kind=R8), save ::
      * saved_cbshe_core, saved_cbshi_core, saved_cbsna_core,
@@ -59,10 +60,10 @@
      & na_feedback_const, na_feedback_time,
      & na_feedback_ix1, na_feedback_ix2,
      & na_feedback_iy1, na_feedback_iy2, 
-     & na_feedback_ib,
+     & na_feedback_ib, na_feedback_it,
      & na_feedback_puff_min, na_feedback_puff_max,
      & na_feedback_actuator_min, na_feedback_actuator_max,
-     & na_feedback_overshoot
+     & na_feedback_overshoot, na_feedback_inverse
       data 
      & feedback_namelist_used/.false./, feedback_read/.false./,
      & control_read/.false./,
@@ -76,7 +77,7 @@
      6 na_feedback_option/DEF_NATM*0/, na_feedback_actuator/DEF_NATM*0/,
      7 na_feedback_ix1/DEF_NATM*-2/, na_feedback_ix2/DEF_NATM*-2/,
      & na_feedback_iy1/DEF_NATM*-2/, na_feedback_iy2/DEF_NATM*-2/, 
-     & na_feedback_ib/DEF_NATM*0/,
+     & na_feedback_ib/DEF_NATM*0/, na_feedback_it/DEF_NATM*0/,
      8 na_feedback_alpha/DEF_NATM*0.001_R8/, 
      & na_feedback_beta/DEF_NATM*1.0_R8/,
      8 na_feedback_gamma/DEF_NATM*0.01_R8/, 
@@ -85,7 +86,8 @@
      & na_feedback_puff_max/DEF_NATM*0.0_R8/,
      & na_feedback_actuator_min/DEF_NATM*0.0_R8/,
      & na_feedback_actuator_max/DEF_NATM*0.0_R8/,
-     & na_feedback_overshoot/DEF_NATM*0.0_R8/
+     & na_feedback_overshoot/DEF_NATM*0.0_R8/,
+     & na_feedback_inverse/DEF_NATM*.false./
 
       contains
 

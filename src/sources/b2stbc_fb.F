@@ -230,6 +230,7 @@
      ,        nap, nep, fnap, kinrgyp, fht
       use b2mod_sources
      ,   , only : rqrad, rqbrm
+      use b2mod_b2plot_wall_loading
       use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -272,7 +273,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, ispecies, is0, 
-     & mdf_fnb, style_b2mndt, 
+     & mdf_fnb, style_b2mndt, lit,
 #ifdef B25_EIRENE
      &        i, j, k, l, npump_list,
      &        pump_list(DEF_NLIM+DEF_NSTS,0:DEF_NATM-1),
@@ -283,8 +284,8 @@
       integer, save :: fhiycore_kinetic_energy, ncallfeedback
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra, use_eirene,
-     &                 nxtl, nxtr, puff_strata(0:DEF_NATM-1)
+     &                 isfeedback, nesepm_istra, use_eirene
+      integer, save :: nxtl, nxtr, puff_strata(0:DEF_NATM-1)
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
@@ -301,10 +302,10 @@
      4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
      4  volrec_curr,
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
-     6  cbsnafac, cbsnainc, eps,
+     6  cbsnafac, cbsnainc, eps, hlp,
 #ifdef B25_EIRENE
      &  flxic, flxnc, flxex, flxsp, flxnp, sna_pump, absr, 
-     &  absr_save(0:DEF_NATM-1),
+     &  absr_min,
 #endif
      7  private_flux_puff, private_flux_area,
      8  neutral_sources_rescale,
@@ -328,7 +329,7 @@
      5  ndes, ndes_sol, den, rcbsna,
      6  cbsnafac, 
 #ifdef B25_EIRENE
-     &  absr_save, pump_list,
+     &  pump_list,
 #endif
      7  private_flux_puff, private_flux_area, flux_old,
      8  neutral_sources_rescale,
@@ -342,6 +343,7 @@
 *   ..initialisation
 #ifdef B25_EIRENE
       parameter (npump_list=DEF_NATM*(DEF_NLIM+DEF_NSTS))
+      parameter (absr_min=1.0e-10_R8)
 #endif
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
      &  n_flux_zero/0/, na_feedback_save/DEF_NATM*0.0_R8/,
@@ -362,7 +364,7 @@
      5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
      6  cbsnafac/0.01_R8/,
 #ifdef B25_EIRENE
-     &  absr_save/DEF_NATM*0.0_R8/, pump_list/NPUMP_LIST*0/,
+     &  pump_list/NPUMP_LIST*0/,
 #endif
      7  private_flux_puff/0.0_R8/,
      8  neutral_sources_rescale/1.0_R8/,
@@ -509,7 +511,7 @@
        do ispecies = 0, nspecies-1
          consistent = consistent .and.
      &    ((na_feedback_choice(ispecies) .eq. 0 .or.
-     &      na_feedback_actuator(ispecies) .eq. 0 .or.
+     &      na_feedback_option(ispecies) .eq. 0 .or.
      &      na_feedback_actuator(ispecies) .eq. 0) .or.
      &     (na_feedback_actuator_max(ispecies).eq.0.0_R8 .and.
      &      na_feedback_actuator_min(ispecies).ge.0.0_R8) .or.
@@ -521,11 +523,39 @@
        call xertst (consistent,
      .  'feedback actuator maximum or minimum below zero or ' //
      .  'maximum < minimum')
+*   ..test if the target required by feedback exists
+       do ispecies = 0, nspecies-1
+         if (na_feedback_it(ispecies).le.0) cycle
+         consistent = consistent .and.
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &      na_feedback_option(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0) .or.
+     &     (na_feedback_it(ispecies).le.(2*max(1,nncut))))
+         call xertst (consistent,
+     &     'Index of target required by feedback scheme is greater ' //
+     &     'then maximum possible for given configuration')
+       end do
 *   ..test if neutral pressure can be computed if it is required
        do ispecies = 0, nspecies-1
          if (na_feedback_choice(ispecies).ne.10) cycle
          call xertst (lpfrs_pmp.ne.0,
      &     'Neutral pressure cannot be computed and used for feedback')
+       end do
+*   ..test if target and actuator inversion is compatible and apply it
+       do ispecies = 0, nspecies-1
+         if (.not.na_feedback_inverse(ispecies)) cycle
+         consistent = consistent .and.
+     &    ((na_feedback_choice(ispecies) .eq. 0 .or.
+     &      na_feedback_option(ispecies) .eq. 0 .or.
+     &      na_feedback_actuator(ispecies) .eq. 0) .or.
+     &     (na_feedback_option(ispecies).ne.4 .and.
+     &      na_feedback_option(ispecies).ne.5 .and.
+     &      na_feedback_target(ispecies).gt.0.0_R8))
+         call xertst (consistent,
+     &     'Feedback actuator inversion cannot apply to additive ' //
+     &     'feedback options and feedback target should be > 0')
+         na_feedback_target(ispecies) = 1.0_R8 /
+     .                                    na_feedback_target(ispecies)
        end do
 *  ..now read data for other feedback schemes given directly in b2mn.dat
        call ipgetr ('b2stbc_fnaycore', fnaycore)
@@ -1387,14 +1417,162 @@
                 endif
               enddo
               
+            case (14)   ! peak power flux at the target
+              
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &            'b2stbc_fb_pre_choice: using ',
+     &            'power flux density at the target for sequence ',
+     &            ispecies+1
+                if(na_feedback_it(ispecies).le.0) then
+                  na_feedback_it(ispecies) = 2*max(1,nncut)
+                  write(*,'(a,a,a,i3)')
+     &              'b2stbc_fb_pre_choice: Warning! ',
+     &              'No target index has been provided, feedback ',
+     &              'will be applied to default target index ',
+     &              na_feedback_it(ispecies)
+                endif
+                call alloc_b2plot_wall_loading(nlim,nsgmx)
+              endif
+              
+              if (ncall.eq.1 .and. 
+     &            itrg(na_feedback_it(ispecies)).eq.0) then
+                write(message,'(a,i3,a,i3)')
+     &            'Target index requested ',na_feedback_it(ispecies),
+     &            ' does not exist. Maximum target index is ',
+     &            maxval(itrg)
+                call xerrab( trim(message) )
+              endif
+
+              if (ncall.gt.0) then
+                call b2ptrgl(BoRiS)
+                na_feedback_current = wpk_tt(na_feedback_it(ispecies))
+              else
+                na_feedback_current = na_feedback_target(ispecies)
+              endif
+        
+              is_start=-1
+              is_end=-1
+        
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start = is
+                  is_end = is
+                endif
+              enddo
+
+            case (15) ! total ion saturation current at the target
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &                'b2stbc_fb_pre_choice: using ',
+     &                'total ion satuarion current for sequence ',
+     &                ispecies+1
+                if(na_feedback_it(ispecies).le.0) then
+                  na_feedback_it(ispecies) = 2*max(1,nncut)
+                  write(*,'(a,a,a,i3)')
+     &              'b2stbc_fb_pre_choice: Warning! ',
+     &              'No target index have been provided, feedback ',
+     &              'will be applied to default target index ',
+     &              na_feedback_it(ispecies)
+                endif
+              endif
+
+              if (ncall.eq.1 .and. 
+     &            itrg(na_feedback_it(ispecies)).eq.0) then
+                write(message,'(a,i3,a,i3)')
+     &            'Target index requested ',na_feedback_it(ispecies),
+     &            ' does not exist. Maximum target index is ',
+     &            maxval(itrg)
+                call xerrab( trim(message) )
+              endif
+
+              if (ncall.gt.0) then
+                lit = ltrgpos(na_feedback_it(ispecies)) + 1 -
+     .                            mod(na_feedback_it(ispecies),2)
+                na_feedback_current = 0.0_R8
+                do iy= 0, ny-1
+                  do is = 0, ns-1
+                    na_feedback_current = na_feedback_current +
+     .                rza(lit,iy,is) * fna(lit,iy,0,is)
+                  enddo
+                enddo
+                na_feedback_current = abs(qe*na_feedback_current)
+              else
+                na_feedback_current = na_feedback_target(ispecies)
+              endif
+
+              is_start=-1
+              is_end=-1
+
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
+
+            case (16) ! peak ion saturation current at the target
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &                'b2stbc_fb_pre_choice: using ',
+     &                'peak ion satuarion current for sequence ',
+     &                ispecies+1
+                if(na_feedback_it(ispecies).le.0) then
+                  na_feedback_it(ispecies) = 2*max(1,nncut)
+                  write(*,'(a,a,a,i3)')
+     &              'b2stbc_fb_pre_choice: Warning! ',
+     &              'No target index have been provided, feedback ',
+     &              'will be applied to default target ',
+     &              na_feedback_it(ispecies)
+                endif
+              endif
+
+              if (ncall.eq.1 .and. 
+     &            itrg(na_feedback_it(ispecies)).eq.0) then
+                write(message,'(a,i3,a,i3)')
+     &            'Target index requested ',na_feedback_it(ispecies),
+     &            ' does not exist. Maximum target index is ',
+     &            maxval(itrg)
+                call xerrab( trim(message) )
+              endif
+
+              if (ncall.gt.0) then
+                lit = ltrgpos(na_feedback_it(ispecies)) + 1 -
+     .                            mod(na_feedback_it(ispecies),2)
+                na_feedback_current = 0.0_R8
+                do iy= 0, ny-1
+                  hlp = 0.0_R8
+                  do is = 0, ns-1
+                    hlp = hlp +
+     .                rza(lit,iy,is) * fna(lit,iy,0,is) / gs(lit,iy,0)
+                  enddo
+                  if (abs(qe*hlp).gt.na_feedback_current) then
+                    na_feedback_current = abs(qe*hlp)
+                  endif
+                enddo
+              else
+                na_feedback_current = na_feedback_target(ispecies)
+              endif
+
+              is_start=-1
+              is_end=-1
+
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
+
             case default
                   
               write(*,*) 'na feedback_choice not coded ',
      &                 na_feedback_choice(ispecies)
 
             end select
-! phase 2:
-
+            
 c           Safeguard for na_feedback_options with multiplicative rescaling:
             if (na_feedback_option(ispecies).ne.4 .and.
      &          na_feedback_option(ispecies).ne.5) then
@@ -1408,6 +1586,12 @@ c           Safeguard for na_feedback_options with multiplicative rescaling:
                 na_feedback_current = eps
               endif
             endif
+
+c           Inverse the actuator if necessary
+            if (na_feedback_inverse(ispecies))
+     &        na_feedback_current = 1.0_R8 / na_feedback_current
+
+! phase 2:
 
             select case(na_feedback_option(ispecies))
 
@@ -1569,8 +1753,9 @@ c           Safeguard for na_feedback_options with multiplicative rescaling:
      &            na_feedback_gamma = 0.01_R8
                 if (use_eirene.eq.0) then
                   write(message,'(a,i3,a)')
-     &              'Feedback option ',na_feedback_choice(ispecies),
-     &              ' cannot be applied to standalone B25 runs'
+     &              'Cannot apply feedback option ',
+     &              na_feedback_choice(ispecies),
+     &              ' to standalone B25 runs'
                   call xerrab( trim(message) )
                 endif
               endif
@@ -1586,23 +1771,28 @@ c           Safeguard for na_feedback_options with multiplicative rescaling:
      .           na_feedback_beta(ispecies))*
      .           log(na_feedback_alpha(ispecies))/log(2.0_R8))
 
-              if (mod(ncall,eirene_mod) .eq. 0) then
+              if(ncall.eq.1) then
                 call calc_pump_and_flux(nx, ny, ispecies,
      &                mdf_fnb, style_b2mndt, sna_pump,
      &                flxnp, flxic, flxnc, flxex, flxsp)
                 if (flxsp.gt.0.0_R8) then
-                  write(message,'(a,i3,a,i3,a)')
+                  write(message,'(a,i3,a,i3)')
      &              'Sputtering detected for sequence ',ispecies+1,
-     &              ', feedback option ',na_feedback_option(ispecies),
-     &              'cannot be applied.'
+     &              ', cannot apply feedback option ',
+     &              na_feedback_option(ispecies)
                   call xertst(flxsp.gt.0.0_R8, trim(message) )
-                else
-                  na_feedback_rescale = (sna_pump - flxnc - flxic - 
-     .                                   flxex) * na_feedback_rescale
                 endif
+              endif
+
+              if (mod(ncall,eirene_mod) .eq. 0 .and. ncall.gt.0) then
+                call calc_pump_and_flux(nx, ny, ispecies,
+     &                mdf_fnb, style_b2mndt, sna_pump,
+     &                flxnp, flxic, flxnc, flxex, flxsp)
+                na_feedback_rescale = (sna_pump - flxnc - flxic - 
+     .                                   flxex) * na_feedback_rescale
               else
                 na_feedback_rescale =
-     .            saved_na_feedback_actuator(ispecies)
+     .                      saved_na_feedback_actuator(ispecies)
               endif
 #endif
 
@@ -1803,29 +1993,29 @@ c           Safeguard for na_feedback_options with multiplicative rescaling:
      &                    ispecies+1
                 if (use_eirene.eq.0) then
                   write(message,'(a,i3,a)')
-     &              'Feedback actuator ',na_feedback_actuator(ispecies),
-     &              ' cannot be applied to standalone B25 runs'
+     &              'Cannot apply feedback actuator ',
+     &              na_feedback_actuator(ispecies),
+     &              ' to standalone B25 runs'
                   call xerrab( trim(message) )
                 endif
 #ifdef B25_EIRENE
-                if (saved_na_feedback_actuator(ispecies).le.0.0_R8 .or.
-     &             saved_na_feedback_actuator(ispecies).gt.1.0_R8) then
-                  write(*,'(a,a,a,i3,a)')
-     .             'Warning!  ',
-     .             'Saved_na_feedback_actuator has to be .ge.0  ',
-     .             'and .le.1 for na_feedback_actuator = ',
-     .             na_feedback_actuator(ispecies),
-     .             ', default value will be used instead' 
-                  if(sps_absr(na_feedback_ib(ispecies)).gt.0.0_R8 .and.
-     &              sps_absr(na_feedback_ib(ispecies)).le.1.0_R8) then
-                    saved_na_feedback_actuator(ispecies) =
-     .                             sps_absr(na_feedback_ib(ispecies))
-                  else
-                    saved_na_feedback_actuator(ispecies) = 0.5_R8
-                  endif
+                if (na_feedback_actuator_min(ispecies).le.0.0_R8)
+     &              na_feedback_actuator_min(ispecies) = absr_min
+                if (na_feedback_actuator_max(ispecies).gt.1.0_R8 .or.
+     &              na_feedback_actuator_max(ispecies).le.0.0_R8)
+     &              na_feedback_actuator_max(ispecies) = 1.0_R8
+                if (saved_na_feedback_actuator(ispecies).le.
+     &              na_feedback_actuator_min(ispecies) .or.
+     &              saved_na_feedback_actuator(ispecies).gt.1.0_R8) then
+                  saved_na_feedback_actuator(ispecies) =
+     .                                na_feedback_actuator_min(ispecies)
+                  write(*,'(a,a,es9.1,a,es9.1)')
+     &             'Warning!  ',
+     &             'Saved_na_feedback_actuator has to be >= ',
+     &             na_feedback_actuator_min(ispecies),             
+     &             ' and  <=1. Value reset to ',
+     &             saved_na_feedback_actuator(ispecies)
                 endif
-                absr_save(ispecies) =
-     .                    saved_na_feedback_actuator(ispecies)
 #endif
               endif
 
@@ -1833,46 +2023,43 @@ c           Safeguard for na_feedback_options with multiplicative rescaling:
               if (ncall.eq.1) then
                 call get_pump_list(ispecies+1, na_feedback_ib(ispecies),
      .                      pump_list(1:size(pump_list,DIM=1),ispecies))
-              endif
-              call calc_pump_and_flux(nx, ny, ispecies,
-     &              mdf_fnb, style_b2mndt, sna_pump,
-     &              flxnp, flxic, flxnc, flxex, flxsp)
-              if (flxsp.ne.0.0_R8) then
-                write(message,'(a,i3,a,i3,a)')
-     &            'Sputtering detected for sequence: ',ispecies+1,
-     &            ', feedback actuator ',na_feedback_actuator(ispecies),
-     &            ' cannot be applied.'
-                call xertst(flxsp.gt.0.0_R8, trim(message) )
-              else
-                if (mod(ncall,eirene_mod).eq.0 .and. ncall .gt. 0) then
-                  if(abs(na_feedback_rescale*(sna_pump - flxnc)).gt.eps)
-     &            then
-                    na_feedback_rescale = (flxnp + flxic + flxex) / 
-     .                         (sna_pump - flxnc) / na_feedback_rescale
-                  else
-                    na_feedback_rescale = (flxnp + flxic + flxex) / eps
-                  endif
-                  absr = saved_na_feedback_actuator(ispecies) *
-     .                   na_feedback_rescale
-                  if (absr.le.0.0_R8) then
-                    if (saved_na_feedback_actuator(ispecies).gt.0.0_R8)
-     .                absr_save(ispecies) = 
-     .                          saved_na_feedback_actuator(ispecies)
-                    if (na_feedback_rescale.gt.1.0_R8) then
-                      saved_na_feedback_actuator(ispecies) = 
-     .                                           absr_save(ispecies)
-                    else
-                      saved_na_feedback_actuator(ispecies) = 0.0_R8
-                    end if
-                  else if (absr.ge.1.0_R8) then
-                    saved_na_feedback_actuator(ispecies) = 1.0_R8
-                  else
-                    saved_na_feedback_actuator(ispecies) = absr
-                  end if
-                  call eirene_recyct_update(ispecies+1,
-     &                  saved_na_feedback_actuator(ispecies),
-     &                  pump_list(1:size(pump_list,DIM=1),ispecies))
+                call calc_pump_and_flux(nx, ny, ispecies,
+     &                mdf_fnb, style_b2mndt, sna_pump,
+     &                flxnp, flxic, flxnc, flxex, flxsp)
+                if (flxsp.ne.0.0_R8) then
+                  write(message,'(a,i3,a,i3)')
+     &              'Sputtering detected for sequence: ',ispecies+1,
+     &              ', cannot apply feedback actuator ',
+     &              na_feedback_actuator(ispecies)
+                  call xertst(flxsp.gt.0.0_R8, trim(message) )
                 endif
+              endif
+
+              if (mod(ncall,eirene_mod).eq.0 .and. ncall.gt.0) then
+                call calc_pump_and_flux(nx, ny, ispecies,
+     &                mdf_fnb, style_b2mndt, sna_pump,
+     &                flxnp, flxic, flxnc, flxex, flxsp)
+                if (abs(na_feedback_rescale*(sna_pump - flxnc)).gt.eps)
+     &          then
+                  na_feedback_rescale = (flxnp + flxic + flxex) / 
+     .                         (sna_pump - flxnc) / na_feedback_rescale
+                else
+                  na_feedback_rescale = (flxnp + flxic + flxex) / eps
+                endif
+                absr = saved_na_feedback_actuator(ispecies) *
+     .                                              na_feedback_rescale
+                if (absr.le.na_feedback_actuator_min(ispecies)) then
+                  saved_na_feedback_actuator(ispecies) =
+     .                               na_feedback_actuator_min(ispecies)
+                elseif (absr.ge.na_feedback_actuator_max(ispecies)) then
+                  saved_na_feedback_actuator(ispecies) =
+     .                               na_feedback_actuator_max(ispecies)
+                else
+                  saved_na_feedback_actuator(ispecies) = absr
+                endif
+                call eirene_recyct_update(ispecies+1,
+     &                 saved_na_feedback_actuator(ispecies),
+     &                 pump_list(1:size(pump_list,DIM=1),ispecies))
               endif
 #endif
             case default
