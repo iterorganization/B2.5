@@ -39,4 +39,4 @@ c
       enddo
 
       return
-      end
+      end subroutine intcell

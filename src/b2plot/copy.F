@@ -2,27 +2,25 @@ c
 
       subroutine copy(src,scale,nz,texttmp)
       use b2mod_types
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
       integer nz
       real (kind=R8) ::
-     *   src(-1:nx,-1:ny,0:nz-1),scale
+     *   src(mpg%nCv,0:nz-1),scale
       character*(*) texttmp(0:nz-1)
-c      write(*,*) 'Copying array: nx, ny, nz = ',nx,ny,nz
-c      write(*,*) 'nxd, nyd = ',nxd,nyd
+c      write(*,*) 'Copying array: nCv, nz = ',mpg%nCv,nz
 c      write(*,*) nncut
       if(iwrk .eq. wklng) call dropstackbottom()
       iwrk=iwrk+1
-      work(:,:,0:nz-1,iwrk)=src(:,:,0:nz-1)*scale
-      values(9)=minval(work(:,:,0:nz-1,iwrk))
-      values(10)=maxval(work(:,:,0:nz-1,iwrk))
+      work(:,0:nz-1,iwrk)=src(:,0:nz-1)*scale
+      values(9)=minval(work(:,0:nz-1,iwrk))
+      values(10)=maxval(work(:,0:nz-1,iwrk))
       textwk(0:nz-1,iwrk)=texttmp(0:nz-1)
-      ndim(1,iwrk)=nx
-      ndim(2,iwrk)=ny
-      ndim(3,iwrk)=nz
-c      write(*,*) src(0,0,0)*scale,work(0,0,0,iwrk),
-c     1 src(nx+1,ny+1,0)*scale,work(nx+1,ny+1,0,iwrk)
+      ndim(1,iwrk)=mpg%nCv
+      ndim(2,iwrk)=nz
+c      write(*,*) src(1,0)*scale,work(1,0,iwrk)
       return
       end subroutine copy
 
