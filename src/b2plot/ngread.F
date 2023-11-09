@@ -74,7 +74,11 @@ C
 
       nplsi = 0
       do is = 0, ns-1
-        if (.not.is_neutral(is)) nplsi = nplsi + 1
+        if (.not.is_neutral(is)) then
+          nplsi = nplsi + 1
+        elseif (switch%spatial_hybrid.ne.0) then
+          if (nint(zn(is)).eq.1) nplsi = nplsi + 1
+        endif
       end do
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'faulty argument ismain')
