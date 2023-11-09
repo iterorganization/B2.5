@@ -135,7 +135,6 @@
       call cfopen (nout(0),'b2co.prt','new','formatted')
       call cfopen (nout(1),'b2co.files','new','formatted')
       call cfopen (nout(2),'b2fstate','new','un*formatted')
-c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers                                           !xpb
@@ -241,17 +240,11 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
+*   ..write plasma state
       call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+      write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..close graphics files
 *     (none)
-*   ..write plasma state
-c      call cfverw(nout(7), plasmastate_version)
-c      idum(0) = nCv
-c      idum(1) = nFc
-c      idum(2) = ns
-c      call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
-c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
-      write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..truncate tracing files
       call ipgeti ('ank_tracing', ank_tracing)
       call ipgeti ('b2mndr_ismain', ismain)
@@ -327,7 +320,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
 #ifdef WG_TODO
-      call alloc_b2mod_b2plot(nCv,nFc,ns,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
 #endif
       call alloc_b2mod_boundary(1, 1, ns, nbcd, nnisod)

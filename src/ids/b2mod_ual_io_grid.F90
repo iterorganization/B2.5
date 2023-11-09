@@ -755,7 +755,8 @@ contains
             do i = 1, 2
                 !! Allocate neighbours
                 nn = mpg%vxFcP(mpg%fcVx(iFc,i),2) - 1
-                allocate(grid_ggd%space( SPACE_POLOIDALPLANE )%   &
+                if (nn.gt.0)                                      &
+                  allocate(grid_ggd%space( SPACE_POLOIDALPLANE )% &
                     &   objects_per_dimension( IDS_CLASS_EDGE )%  &
                     &   object( iFc )%boundary(i)%neighbours(nn))
             end do
@@ -892,7 +893,7 @@ contains
           do iy = 0, mpg%ny-1
             do ix = 0, mpg%nx-1
               iCv = mpg%imapCv(ix,iy)
-              if (iCv.gt.mpg%nCi) cycle
+              if (iCv.eq.0.or.iCv.gt.mpg%nCi) cycle
               grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
                   &   objects_per_dimension( IDS_CLASS_CELL )%       &
                   &   object( iCv )%geometry(1) = ix
@@ -1024,11 +1025,11 @@ contains
 
         !! Re-order here
         i = 1
-        new_node_list(i) = old_node_list(i)
         new_edge_list(i) = old_edge_list(i)
         new_nghb_list(i) = old_nghb_list(i)
         old_edge_list(i) = US_GRID_UNDEFINED
-        do while (i.lt.num_nodes_2D)
+        new_node_list(i) = mpg%fcVx(new_edge_list(i),1)
+        do while (i.lt.num_boundary_2D)
           iFc = new_edge_list(i)
           j = 1
           match_found = .false.

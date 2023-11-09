@@ -22,7 +22,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
      *   arrowl,earrowl,arroww,sepwidth,lwidth,wwidth,owidth,
      *   ewidth,vwidth,zwidth
       integer dimensions(nlabels),nidim,linlog,wlinlog
-      integer ndim(3,wklng),typeofplot,iwrk,movie_skip,average
+      integer ndim(2,wklng),typeofplot,iwrk,movie_skip,average
 cank 960511
       integer nlimi,nstsi,natmi,nmoli,nioni
 cank
