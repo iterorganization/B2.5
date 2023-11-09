@@ -234,11 +234,11 @@ program b2_ual_rewrite
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IMAS data-entry already exists : ", trim(database), shot, run
-!!$    call imas_open_env(treename, shot, run, idx, &
-!!$      &                username, database, version, status)
-    call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, database, &
-        &  version, idx )
-    call ual_open_pulse( idx, OPEN_PULSE, '', status )
+    call imas_open_env(treename, shot, run, idx, &
+      &                username, database, version, status)
+!!$    call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, database, &
+!!$        &  version, idx )
+!!$    call ual_open_pulse( idx, OPEN_PULSE, '', status )
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status )
@@ -307,20 +307,20 @@ program b2_ual_rewrite
         call system(systemarg)
 #endif
         if (database.eq.'iter') database = 'ITER'
-!!$        call imas_open_env(treename, shot, new_run, idx, &
-!!$          &                username, database, version, status )
-        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
-            & database, version, idx )
-        call ual_open_pulse( idx, OPEN_PULSE, '', status )
+        call imas_open_env(treename, shot, new_run, idx, &
+          &                username, database, version, status )
+!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
+!!$            & database, version, idx )
+!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
       else if (.not.same_run_number) then
         call close_ual(idx)
         idx = 0
-!!$        call imas_open_env(treename, shot, new_run, idx, &
-!!$          &                username, database, version, status)
-        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
-            & database, version, idx )
-        call ual_open_pulse( idx, OPEN_PULSE, '', status )
+        call imas_open_env(treename, shot, new_run, idx, &
+          &                username, database, version, status)
+!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
+!!$            & database, version, idx )
+!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         if ( status.ne.0 .or. idx.eq.0 .or. database.eq.'iter') then ! New run IDS must be created
           idx = 0
           if (database.eq.'iter') database = 'ITER'
@@ -336,11 +336,11 @@ program b2_ual_rewrite
       write (0,*) "No previous IMAS data-entry found, a new one will be created"
       idx = 0
       if (database.eq.'iter') database = 'ITER'
-!!$      call imas_create_env(treename, shot, run, 0, 0, idx, &
-!!$        &                  username, database, version, status )
-      call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
-          & database, version, idx )
-      call ual_open_pulse( idx, CREATE_PULSE, '', status )
+      call imas_create_env(treename, shot, run, 0, 0, idx, &
+        &                  username, database, version, status )
+!!$      call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
+!!$          & database, version, idx )
+!!$      call ual_open_pulse( idx, CREATE_PULSE, '', status )
       call xertst( status.eq.0, 'Error creating new IDS !')
     end if
     !! Create/Write the set data to IDSs
