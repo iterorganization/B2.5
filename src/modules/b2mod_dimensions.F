@@ -12,7 +12,8 @@
 !
 
       integer, parameter :: DEF_NSD = 42
-      integer, parameter :: DEF_NCUT = 4 !DEF_NCUT is common to Eirene as well but needs to be defined here first
+! DEF_NCUT is common to Eirene as well but needs to be defined here first
+      integer, parameter :: DEF_NCUT = 4
       integer, parameter :: DEF_NBC = 6*(DEF_NCUT/2+1)
       integer, parameter :: DEF_NISO = 10
 

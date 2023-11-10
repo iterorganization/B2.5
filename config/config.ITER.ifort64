@@ -59,7 +59,7 @@ FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
 FCOPTS    += -g -C -debug all -traceback -check all
 else
-FCOPTS    += -O2 -fp-model precise
+FCOPTS    += -O2 -march=sandybridge -fp-model=precise
 endif
 ifdef USE_MPI
 FCOPTS    += ${MPI_CPP}
@@ -106,4 +106,3 @@ endif
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

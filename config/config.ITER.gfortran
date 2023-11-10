@@ -39,8 +39,13 @@ FC = gfortran
 endif
 endif
 
-FCOPTS  = -fPIC
-LDOPTS  = -fPIC
+ifdef USE_OPENMP
+ifndef USE_EIRENE
+FCOPTS += -fPIC
+LDOPTS += -fPIC
+endif
+endif
+
 ifdef SOLPS_DEBUG
 FCOPTS += -gdwarf-2
 endif
@@ -62,4 +67,3 @@ endif
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

@@ -262,20 +262,20 @@ program b2_ual_write_b2mod
      & , only : new_ids_edge
     use b2mod_ual_io &
      & , only : b25_process_ids
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_divertors
 #endif
     use b2mod_grid_mapping
-#if IMAS_MINOR_VERSION < 15 && IMAS_MINOR_VERSION > 11
+#if ( IMAS_MINOR_VERSION > 11 && IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION == 3 )
     use ids_grid_examples       ! IGNORE
 #endif
 
@@ -453,7 +453,7 @@ program b2_ual_write_b2mod
         if ( status.ne.0 ) then
           write (0,*) 'Error opening old dataset_description IDS !'
         else if (associated(old_description%dd_version)) then
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
           old_start_time = description%simulation%time_begin
           old_end_time = description%simulation%time_end
 #endif
@@ -482,7 +482,7 @@ program b2_ual_write_b2mod
             tmp_run = run
             if (database.ne.'iter') then
               tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                 & 'idscp --setDatasetVersion'//                &
                 &       ' -si ',shot,' -ri ',run,              &
@@ -500,7 +500,7 @@ program b2_ual_write_b2mod
               call system(systemarg)
 #endif
             end if
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
              & 'idscp --setDatasetVersion'//                 &
              &       ' -si ',shot,' -ri ',tmp_run,           &
@@ -529,13 +529,13 @@ program b2_ual_write_b2mod
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
              &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
              &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
              &  numerics, old_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
              &  divertors, &
 #endif
              &  tim, dteff, shot, run, database, version, new_eq_ggd, &
@@ -553,13 +553,13 @@ program b2_ual_write_b2mod
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
          &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
          &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
          &  numerics, run_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
          &  divertors, &
 #endif
          &  tim, dteff, shot, run, database, version, new_eq_ggd )
@@ -569,27 +569,27 @@ program b2_ual_write_b2mod
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   treename, shot, run, idx, username, database, version, &
         &   new_eq_ggd )
     call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   radiation )
     call dealloc_batch_edge( batch_profiles, batch_sources, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
         &   description )
@@ -654,7 +654,7 @@ contains
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
-#if IMAS_MINOR_VERSION < 15
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
             &   grid_subset(gridSubset_index)%identifier%name
         write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &

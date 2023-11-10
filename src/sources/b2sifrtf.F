@@ -235,7 +235,6 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction_1)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -251,7 +250,6 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction_1)
             endif
            enddo
           enddo
@@ -281,7 +279,6 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction_2)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -297,7 +294,6 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction_2)
             endif
            enddo
           enddo

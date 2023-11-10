@@ -584,19 +584,9 @@ cxpb
 !$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
 !$OMP& PRIVATE(ireg)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
-#ifndef GFORTRAN
-#ifndef PGF90
-#ifndef CRAY
+#if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
 !$OMP& COPYIN(last_solve_5, last_solve_9)
 !$OMP& COPYIN(last_solve_7, last_solve_11)
-#else
-!$OMP& PRIVATE(last_solve_5, last_solve_7)
-!$OMP& PRIVATE(last_solve_9, last_solve_11)
-#endif
-#else
-!$OMP& PRIVATE(last_solve_5, last_solve_7)
-!$OMP& PRIVATE(last_solve_9, last_solve_11)
-#endif
 #else
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)
