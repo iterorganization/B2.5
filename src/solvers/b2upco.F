@@ -2,11 +2,13 @@
 *.specification
 
       subroutine b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
-     &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb)
+     &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb,
+     &   psnl)
       use b2mod_types
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_map
+      use b2us_plasma
       use b2mod_switches
       use b2mod_numerics_namelist
      , , only : corr_core_dn
@@ -21,6 +23,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (switches), intent (in) :: switch
+      type (B2PlasmaSnapshot), intent (inout) :: psnl
       real (kind=R8) ::
      *  rxf, pcm0, corpb(nCv), pccb0(nCv)
       logical ua_solve, solvereg(0:nregionv)
@@ -145,6 +148,10 @@
       endif                                          !srv 25.07.17 }                                           !srv 25.07.17
 *   ..compute new ub
       if (ua_solve) then
+       if(pcm0*rxf.ne.0.0_R8 .and. all(pccb0.ne.0.0_R8).and.
+     &     switch%b2mndt2_backward_comp.eq.1) then
+          psnl%ua(:,isb) = ub
+       endif
        do iCv = 1, mpg%nCi ! internal cells only
 *       (note the further damping on the velocity correction)
          ireg = mpg%cvReg(iCv)
