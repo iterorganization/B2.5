@@ -189,7 +189,7 @@ cdjm Jan2017 update particle source components for balance
         call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
      &   ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
      &   dv%pcca(:,0,isb),
-     &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb)
+     &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb, psnl)
       endif                                                             !srv 22.05.18
       if (switch%b2npco_iout.ne.0) then                                 !srv 12.07.02 {
         write (chns,'(i3.3)') isb
