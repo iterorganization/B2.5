@@ -205,9 +205,11 @@ c time-dependent treatment                                              !srv 07.
         sr%shi = sr%shi+sr%shidt
         sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol
-        sr%shn = sr%shn+sr%shndt
-        sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
+        if (switch%tn_style.eq.2) then
+          sr%shn = sr%shn+sr%shndt
+          sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
      &                                    psnl%tn/dtim*geo%cvVol
+        endif
       endif                                                              !srv 207.07.21 }
 
 *   ..compute final heat sources
