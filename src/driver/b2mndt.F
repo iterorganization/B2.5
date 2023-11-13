@@ -394,18 +394,19 @@ ctmp.dpc
 *       (smq is inherently stable.)                                      !srv 07.07.21 }
 *     ..include contributions due to timestep
 *     .. contributions due to timestep when style.eq.2 will be done in corresponding subroutines
-          if(style.ne.2)                                                 !srv 07.07.21
-     &    call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
-     &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)            !srv 11.09.09
+          if(style.ne.2) then                                            !srv 07.07.21
+           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,        !srv 09.01.01 01.07.08
+     &      vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
+     &      na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
+     &      snadt, smodt, shedt, shidt, schdt, snedt, .false.)           !srv 11.09.09
 *   ..add to previous contributions
-          call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
-          call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
-          call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
-          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
-          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
-          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
+           call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+           call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+           call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
+           call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+           call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                 !srv 11.09.09 }
+          endif
 *     ..stabilise the source coefficients
           if(style.ne.2 .and. use_b2srst.eq.1)                           !srv 07.07.21
      &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
