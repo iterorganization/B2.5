@@ -101,7 +101,7 @@ module b2mod_ual_io
     use ids_grid_subgrid  &     ! IGNORE
      & , only : findGridSubsetByName
     use ids_grid_structured &   ! IGNORE
-     & , only : GridWriteData
+     & , only : gridWriteData
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,       &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
@@ -716,9 +716,9 @@ contains
         integer :: nscx, iscx(0:nscxmax-1)
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
-        real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
-        real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
-        real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+        real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
+        real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
+        real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
         real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
@@ -1601,76 +1601,76 @@ contains
               &  recycled_flux(1) )
             if (ntrgts.eq.2) then
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_flux_peak, &
-                & power_flux_peak(2) )
+                &  divertors%divertor(2)%target(1)%power_flux_peak, &
+                &  power_flux_peak(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%flux_expansion, &
-                & flux_expansion(2) )
+                &  divertors%divertor(2)%target(1)%flux_expansion, &
+                &  flux_expansion(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%wetted_area, &
-                & wetted_area(2) )
+                &  divertors%divertor(2)%target(1)%wetted_area, &
+                &  wetted_area(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%wetted_area, &
-                & wetted_area(2) )
+                &  divertors%divertor(2)%wetted_area, &
+                &  wetted_area(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_incident_fraction, &
-                & 1.0_IDS_real )
+                &  divertors%divertor(2)%target(1)%power_incident_fraction, &
+                &  1.0_IDS_real )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_incident, &
-                & power_incident(2) )
+                &  divertors%divertor(2)%target(1)%power_incident, &
+                &  power_incident(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_incident, &
-                & power_incident(2) )
+                &  divertors%divertor(2)%power_incident, &
+                &  power_incident(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_conducted, &
-                & power_conducted(2) )
+                &  divertors%divertor(2)%target(1)%power_conducted, &
+                &  power_conducted(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_conducted, &
-                & power_conducted(2) )
+                &  divertors%divertor(2)%power_conducted, &
+                &  power_conducted(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_convected, &
-                & power_convected(2) )
+                &  divertors%divertor(2)%target(1)%power_convected, &
+                &  power_convected(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_convected, &
-                & power_convected(2) )
+                &  divertors%divertor(2)%power_convected, &
+                &  power_convected(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_radiated, &
-                & power_radiated(2) )
+                &  divertors%divertor(2)%target(1)%power_radiated, &
+                &  power_radiated(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_radiated, &
-                & power_radiated(2) )
+                &  divertors%divertor(2)%power_radiated, &
+                &  power_radiated(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_neutrals, &
-                & power_neutrals(2) )
+                &  divertors%divertor(2)%target(1)%power_neutrals, &
+                &  power_neutrals(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_neutrals, &
-                & power_neutrals(2) )
+                &  divertors%divertor(2)%power_neutrals, &
+                &  power_neutrals(2) )
               u = idir(2)*sum(fhp(ifpos(2),:,0,:))
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_recombination_plasma, u )
+                &  divertors%divertor(2)%target(1)%power_recombination_plasma, u )
               call write_timed_value( &
-                & divertors%divertor(2)%power_recombination_plasma, u )
+                &  divertors%divertor(2)%power_recombination_plasma, u )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_recombination_neutrals, &
-                & power_recomb_neutrals(2) )
+                &  divertors%divertor(2)%target(1)%power_recombination_neutrals, &
+                &  power_recomb_neutrals(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_recombination_neutrals, &
-                & power_recomb_neutrals(2) )
+                &  divertors%divertor(2)%power_recombination_neutrals, &
+                &  power_recomb_neutrals(2) )
               u = idir(2)*sum(fhj(ifpos(2),:,0))
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_currents, u )
+                &  divertors%divertor(2)%target(1)%power_currents, u )
               call write_timed_value( &
-                & divertors%divertor(2)%power_currents, u )
+                &  divertors%divertor(2)%power_currents, u )
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
               u = idir(2)*sum(fch(ifpos(2),:,0))
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%current_incident, u )
+                &  divertors%divertor(2)%target(1)%current_incident, u )
               call write_timed_value( &
-                & divertors%divertor(2)%current_incident, u )
+                &  divertors%divertor(2)%current_incident, u )
 #endif
               call write_timed_value( &
-                & divertors%divertor(2)%particle_flux_recycled_total, &
-                & recycled_flux(2) )
+                &  divertors%divertor(2)%particle_flux_recycled_total, &
+                &  recycled_flux(2) )
             end if
           end if
         case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
@@ -8406,30 +8406,50 @@ contains
       case ( 1 ) !< Grid subset consists of nodes
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
                      &   basegrid, iSubset, IDSmap, tmpVx )
+        if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
       case ( 2 ) !< Grid subset consists of faces
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
                      &   basegrid, iSubset, IDSmap, tmpFace )
+        if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
       case ( 3 ) !< Grid subset consists of cells
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                 &
                       &  basegrid, iSubset, IDSmap, value )
+        if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
+      case ( 4 ) !< Grid subset consists of volumes
+        call xerrab( 'Case for volumetric grid subsets not yet coded !')
       case default
         call xerrab( 'Unknown grid subset '//int2str(iSubset)// &
             &        ' dimension : '//int2str(ndim) )
@@ -8474,71 +8494,77 @@ contains
 
     do iSubset = 1, nSubsets
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-       ndim = 3
-       iSubsetID = GRID_SUBSET_CELLS
+      ndim = 3
+      iSubsetID = GRID_SUBSET_CELLS
 #else
-       ndim = basegrid%grid_subset(iSubset)%dimension
-       iSubsetID =basegrid%grid_subset(iSubset)%identifier%index
+      ndim = basegrid%grid_subset(iSubset)%dimension
+      iSubsetID =basegrid%grid_subset(iSubset)%identifier%index
 #endif
-       if (ndim.eq.IDS_INT_INVALID) then
-         select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_MAGNETIC_AXIS,               &
-             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_INNER_STRIKEPOINT,           &
-             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-           ndim = 1
-         case( GRID_SUBSET_EDGES, &
-             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, &
-             & GRID_SUBSET_OUTER_MIDPLANE, &
-             & GRID_SUBSET_SECOND_SEPARATRIX, &
-             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
-           ndim = 2
-         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-           ndim = 3
-         case( GRID_SUBSET_VOLUMES )
-           ndim = 4
-         end select
-       end if
-       if (ndim.ne.3) cycle
+      if (ndim.eq.IDS_INT_INVALID) then
+        select case (iSubsetID)
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+          ndim = 1
+        case( GRID_SUBSET_EDGES, &
+            & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+            & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+            & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+            & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+            & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+            & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_FULL_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, &
+            & GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_SECOND_SEPARATRIX, &
+            & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+            & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+            & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+            & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+            & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+            & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+            & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+          ndim = 2
+        case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+            & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+            & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+            & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+          ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
+        end select
+      end if
+      if (ndim.ne.3) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
           &   basegrid, iSubset, IDSmap, b2CellData )
+      if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-       call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
+        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-       call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
+        scalar(iSubset)%grid_index = ggdId
+        call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
 #endif
-       deallocate(idsdata)
+      else
+        scalar(iSubset)%grid_index = ggdId
+        scalar(iSubset)%grid_subset_index = iSubsetID
+      end if
+      deallocate(idsdata)
     end do
 
     return
@@ -8649,8 +8675,13 @@ contains
       if (ndim.ne.3) cycle
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(           &
                    &   basegrid, iSubset, IDSmap, b2CellData )
-      call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
-          &   ggdID, iSubsetID, vectorID, idsdata )
+      if ( size(idsdata) > 0 ) then
+        call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
+            &   ggdID, iSubsetID, vectorID, idsdata )
+      else
+        vectorComponent(iSubset)%grid_index = ggdId
+        vectorComponent(iSubset)%grid_subset_index = iSubsetID
+      end if
       deallocate(idsdata)
     end do
 
@@ -8868,8 +8899,13 @@ contains
       if (ndim.ne.2) cycle
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS( &
                    &   basegrid, iSubset, IDSmap, b2FaceData )
-      call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
+      if ( size(idsdata) > 0 ) then
+        call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
                    &   ggdID, iSubsetID, vectorID, idsdata )
+      else
+        vectorComponent(iSubset)%grid_index = ggdId
+        vectorComponent(iSubset)%grid_subset_index = iSubsetID
+      end if
       deallocate(idsdata)
     end do
 
@@ -8911,70 +8947,76 @@ contains
 
     do iSubset = 1, nSubsets
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-       ndim = 3
-       iSubsetID = GRID_SUBSET_CELLS
+      ndim = 3
+      iSubsetID = GRID_SUBSET_CELLS
 #else
-       ndim = basegrid%grid_subset(iSubset)%dimension
-       iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
+      ndim = basegrid%grid_subset(iSubset)%dimension
+      iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
 #endif
-       if (ndim.eq.IDS_INT_INVALID) then
-         select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_MAGNETIC_AXIS,               &
-             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_INNER_STRIKEPOINT,           &
-             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-           ndim = 1
-         case( GRID_SUBSET_EDGES, &
-             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
-             & GRID_SUBSET_SECOND_SEPARATRIX, &
-             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
-           ndim = 2
-         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-           ndim = 3
-         case( GRID_SUBSET_VOLUMES )
-           ndim = 4
-         end select
-       end if
-       if (ndim.ne.1) cycle
+      if (ndim.eq.IDS_INT_INVALID) then
+        select case (iSubsetID)
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+          ndim = 1
+        case( GRID_SUBSET_EDGES, &
+            & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+            & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+            & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+            & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+            & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+            & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_FULL_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_SECOND_SEPARATRIX, &
+            & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+            & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+            & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+            & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+            & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+            & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+            & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+          ndim = 2
+        case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+            & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+            & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+            & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+          ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
+        end select
+      end if
+      if (ndim.ne.1) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
           &   basegrid, iSubset, IDSmap, b2VertexData )
+      if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-       call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
+        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-       call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
+        scalar(iSubset)%grid_index = ggdId
+        call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
 #endif
-       deallocate(idsdata)
+      else
+        scalar(iSubset)%grid_index = ggdId
+        scalar(iSubset)%grid_subset_index = iSubsetID
+      end if
+      deallocate(idsdata)
     end do
 
     return
@@ -9033,28 +9075,46 @@ contains
       !! Fill in vector component data
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, IDSmap, b2FaceData)
+      if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
+        call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
-      call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = GRID_SUBSET_Y_ALIGNED_EDGES
+      end if
       deallocate(idsdata)
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, IDSmap, b2FaceData)
+      if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
+        call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
-      call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = GRID_SUBSET_X_ALIGNED_EDGES
+      end if
       deallocate(idsdata)
     else
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, gridSubsetInd, IDSmap, b2FaceData)
+      if ( size( idsdata ) > 0 ) then
 #if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, gridSubsetID, idsdata )
+        call gridWriteData( vector, gridId, gridSubsetID, idsdata )
 #else
-      call gridWriteData( vector, gridSubsetID, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, gridSubsetID, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = gridSubsetID
+      end if
       deallocate(idsdata)
     end if
 
@@ -9648,7 +9708,8 @@ contains
       allocate(values(5))
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, B2_SUBGRID_CELLS, &
                &  CPOmap, value )
-      call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
       tmpFace = 0.0_ITM_R8
       do i = TO_SELF, TO_TOP
@@ -9657,21 +9718,25 @@ contains
       call value_on_faces(nx,ny,weight,value,tmpFace)
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, &
                & iSgCore, CPOmap, tmpFace )
-      call gridWriteData( values(2), iSgCore, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( CPOmap%b2nx, CPOmap%b2ny, &
                & VX_LOWERLEFT, value )
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & iSgInnerMidplane, CPOmap, tmpVx )
-      call gridWriteData( values(3), iSgInnerMidplane, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & iSgOuterMidplane, CPOmap, tmpVx )
-      call gridWriteData( values(4), iSgOuterMidplane, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(4), iSgOuterMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & B2_SUBGRID_NODES, CPOmap, tmpVx )
-      call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
       deallocate(cpodata)
       allocate( fluxes(2) )
       call write_face_vector( fluxes(1), flux )
@@ -9689,7 +9754,8 @@ contains
       allocate(scalar(1))
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, &
                & B2_SUBGRID_CELLS, CPOmap, b2CellData )
-      call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
     end subroutine write_cell_scalar
 
@@ -9720,7 +9786,8 @@ contains
       do i = 1, dim
          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
                   & B2_SUBGRID_CELLS, CPOmap, vecdata(:,:,i-1))
-         call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
+         if ( size(cpodata) > 0 ) &
+            & call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
          deallocate(cpodata)
       end do
 
@@ -9749,11 +9816,13 @@ contains
 !!$          ! Fill in vector component data
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & B2_SUBGRID_EDGES_Y, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
 !!$          deallocate(cpodata)
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & B2_SUBGRID_EDGES_X, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
 !!$          deallocate(cpodata)
 !!$      else
 !!$          allocate(vector%comp(1))
@@ -9765,7 +9834,8 @@ contains
 !!$
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & subgridInd, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(1), subgridInd, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(1), subgridInd, cpodata )
 !!$          deallocate(cpodata)
 !!$      end if
 
@@ -9833,7 +9903,6 @@ contains
 
             e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
 
-
             !! radial direction
             !! Try to find top neighbour
             dir = 1.0
@@ -9867,12 +9936,10 @@ contains
 
             e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
 
-
             !! toroidal direction
             e3(ix,iy,1) = 0.0   !! R
             e3(ix,iy,2) = 1.0   !! phi
             e3(ix,iy,3) = 0.0   !! Z
-
 
             !! make unit vectors
             e1(ix,iy,:) = unitVector(e1(ix,iy,:))
