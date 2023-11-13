@@ -4,11 +4,6 @@ ifndef SOLPS_CPP
 DEFINES += -DGFORTRAN
 endif
 
-GFORTRAN_VERSION = $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
-
-GFORTRAN_MAJOR_VERSION = $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION = $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
-
 DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
 
 CPPOPTS = -P -I${srcdir} ${EQUIVS}

@@ -2623,7 +2623,7 @@ c
           do is=0,ns-1
             do ix=-1,nx
               do iy=-1,ny
-                if (.not.is_neutral(is)) then
+                if (is_neutral(is)) then
                   mach(ix,iy,is)=0.0_R8
                 else
                   mach(ix,iy,is)=bb(ix,iy,3)/

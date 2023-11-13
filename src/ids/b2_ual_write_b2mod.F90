@@ -121,7 +121,7 @@
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
 !!          --shot <shot> --run <run> --username <username> --database <database>
-!!          --version <version> --step <step>
+!!          --version <version> --step
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
@@ -135,7 +135,7 @@
 !!      Example of the command:
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
-!!          --shot 1512 --run 6 --username penkod --database solps-iter --version 3 --step 250
+!!          --shot 1512 --run 6 --username penkod --database solps-iter --version 3 --step
 !!      @endverbatim
 !!
 !!      \b References:
@@ -289,15 +289,14 @@ program b2_ual_write_b2mod
 #endif
 
     !! Local variables
-    integer :: num_step !< Number of steps
     integer :: narg     !< Total Number of input arguments (shot, run etc.)
     integer :: cptArg
 
     !! Dummy variables
     character(len=24) :: shot_string
     character(len=24) :: run_string
-    character(len=24) :: num_step_string
     character(len=24) :: argName
+    logical :: new_run
 
     !! Procedures
     character*16 usrnam
@@ -311,9 +310,10 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2fmovie" )
     call checkFileAndDelete( "b2ftrace" )
     call checkFileAndDelete( "b2ftrack" )
+    call checkFileAndDelete( "b2fplasma" )
 
-    !! Set default value for IMAS major version and number of steps
-    num_step = -1
+    !! Set default value for IMAS major version
+    new_run = .false.
     status = 0
     write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
@@ -346,24 +346,22 @@ program b2_ual_write_b2mod
         do cptArg = 1, narg
             call get_command_argument( cptArg, argName )
             select case( adjustl( argName ) )
-                case("--shot")
+                case("--shot","-s")
                     call get_command_argument( cptArg + 1, shot_string )
                     !! Transform dummy string variable to integer
                     read( shot_string, *) shot
-                case("--run")
+                case("--run","-r")
                     call get_command_argument( cptArg + 1, run_string )
                     !! Transform dummy string variable to integer
                     read( run_string, *) run
-                case("--username")
+                case("--username","-u")
                     call get_command_argument( cptArg + 1, username )
-                case("--device","--database")
+                case("--device","--database","-d")
                     call get_command_argument( cptArg + 1, database )
-                case("--version")
+                case("--version","-v")
                     call get_command_argument( cptArg + 1, version )
-                case("--step")
-                    call get_command_argument( cptArg + 1, num_step_string )
-                    !! Transform dummy string variable to integer
-                    read( num_step_string, *) num_step
+                case("--step","-S")
+                    new_run = .true.
             end select
         end do
     !! If not at least shot, run, username, and database were defined, display
@@ -398,12 +396,10 @@ program b2_ual_write_b2mod
     call b2mn_init
     write(0,*) "b2mn_init completed"
 
-    !! If steps were defined then run the b2mn_step routine for the number of
-    !! steps
-    if( num_step .gt. -1 ) then
-        write(0,*) "Running b2mn_step(", num_step, ")"
-        write(0,*) "num_step: ", num_step
-        call b2mn_step( num_step )
+    !! If step was defined then run the b2mn_step routine
+    if( new_run ) then
+        write(0,*) "Running b2mn_step()"
+        call b2mn_step( 0 )
         write(0,*) "b2mn_step() completed"
     end if
 
@@ -596,9 +592,9 @@ program b2_ual_write_b2mod
     call close_ual(idx)
     idx = 0
 
-    ! write(0,*) " Running b2mn_fin"
-    ! call b2mn_fin
-    ! write(0,*) "b2mn_fin completed"
+    write(0,*) " Running b2mn_fin"
+    call b2mn_fin
+    write(0,*) "b2mn_fin completed"
 
 contains
 
