@@ -247,9 +247,9 @@ c   Bohm
      &   vsa_bohm(1:nCv,0,is), co%cvsa(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   vsa_bohm(1:nCv,1,is), co%cvsa(1:nFc,1,is))
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   vla_bohm(1:nCv,0,is), co%cvla(1:nFc,0,is))
-        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   vla_bohm(1:nCv,1,is), co%cvla(1:nFc,1,is))
        enddo
       endif
