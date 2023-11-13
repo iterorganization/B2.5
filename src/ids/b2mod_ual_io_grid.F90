@@ -52,7 +52,7 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_FACES
 #   endif
     use ids_grid_structured & ! IGNORE
-     & , only : GridWriteData, GridSetupStruct1dSpace
+     & , only : GridSetupStruct1dSpace
     use ids_grid_common     & ! IGNORE
      & , only : COORDTYPE_R, COORDTYPE_Y, COORDTYPE_Z, COORDTYPE_PHI,         &
      &          gridSubsetName, gridSubsetDescription,                        &
@@ -1551,10 +1551,16 @@ contains
             &   GRID_SUBSET_X_POINTS, 'x-points',                    &
             &   "All X-points (0D objects) in the domain." )
         !! Initialize explicit object list for edges (class (/1/) )
-        call createExplicitObjectListSingleSpace( grid_ggd,          &
+        if ( gmap%nsv > 0 ) then
+          call createExplicitObjectListSingleSpace( grid_ggd,        &
                 &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),    &
                 &   IDS_CLASS_NODE, xpoints(:, SPACE_POLOIDALPLANE), &
                 &   IDS_CLASS_NODE, SPACE_POLOIDALPLANE )
+          deallocate(xpoints)
+        else
+          grid_ggd%grid_subset( GRID_SUBSET_X_POINTS )%dimension =   &
+                &   IDS_CLASS_NODE
+        end if
 
         !! Set up specific grid subset by collecting edges for regions
 
@@ -1610,11 +1616,15 @@ contains
                 call collectIndexListForRegionSubroutine( gmap, cflag, region, &
                     &   iType, iRegion, indexList2d )
 
+                if ( size(indexList2d,1) > 0 ) then
                 !! Initialize explicit object list for grid subset
-                call createExplicitObjectListSingleSpace( grid_ggd,     &
+                  call createExplicitObjectListSingleSpace( grid_ggd,   &
                     &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                     &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
                     &   SPACE_POLOIDALPLANE )
+                else
+                  grid_ggd%grid_subset( GSubsetCount )%dimension = sum(cls)
+                end if
 
             end do
         end do
@@ -2295,15 +2305,20 @@ contains
                 indextmp2d( isize+1 : isize+size(indexPart2d,1),:) = indexPart2d(:,:)
                 isize = isize + size(indexPart2d,1)
             end do
-            allocate( indexList2d ( isize, SPACE_COUNT ) )
-            indexList2d(1:isize,:) = indextmp2d(1:isize,:)
+            if (isize.gt.0) then
+              allocate( indexList2d ( isize, SPACE_COUNT ) )
+              indexList2d(1:isize,:) = indextmp2d(1:isize,:)
 
             !! Initialize explicit object list for grid subset
-            call createExplicitObjectListSingleSpace( grid_ggd,     &
-               &   grid_ggd%grid_subset( GSubsetCount ), sum(cls),  &
-               &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
-               &   SPACE_POLOIDALPLANE )
-            deallocate(indexList2d,indexPart2d,indextmp2d)
+              call createExplicitObjectListSingleSpace( grid_ggd,      &
+                  &   grid_ggd%grid_subset( GSubsetCount ), sum(cls),  &
+                  &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
+                  &   SPACE_POLOIDALPLANE )
+              deallocate( indexList2d )
+            else
+              grid_ggd%grid_subset( GSubsetCount )%dimension = sum(cls)
+            end if
+            deallocate(indexPart2d,indextmp2d)
 
         end do
 
@@ -2418,7 +2433,8 @@ contains
 
                 end if
             end do
-        case ( GEOMETRY_SN, GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+        case ( GEOMETRY_SN, &
+             & GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
             iType = REGIONTYPE_YEDGE
             cls = CLASS_POLOIDALRADIAL_EDGE
             iSubset = GRID_SUBSET_SEPARATRIX
@@ -3156,7 +3172,7 @@ contains
       dynamic_grid%grid_subset(i1)%dimension = &
        & AoS3_grid%grid_subset(i1)%dimension
       nelems = size( AoS3_grid%grid_subset(i1)%element )
-      allocate( dynamic_grid%grid_subset(i1)%element( nelems ) )
+      if (nelems.gt.0) allocate( dynamic_grid%grid_subset(i1)%element( nelems ) )
       do i2 = 1, nelems
         nobjects = size( AoS3_grid%grid_subset(i1)%element(i2)%object )
         allocate( dynamic_grid%grid_subset(i1)%element(i2)%object( nobjects ) )
@@ -3171,7 +3187,7 @@ contains
       end do
       if ( associated( dynamic_grid%grid_subset(i1)%base ) ) then
         nbase = size( AoS3_grid%grid_subset(i1)%base )
-        allocate( dynamic_grid%grid_subset(i1)%base( nbase ) )
+        if (nbase.gt.0) allocate( dynamic_grid%grid_subset(i1)%base( nbase ) )
         do i2 = 1, nbase
           i = size( AoS3_grid%grid_subset(i1)%base(i2)%jacobian )
           allocate( dynamic_grid%grid_subset(i1)%base(i2)%jacobian( i ) )
@@ -3199,31 +3215,37 @@ contains
       end if
       if ( associated( dynamic_grid%grid_subset(i1)%metric%jacobian ) ) then
         i = size( AoS3_grid%grid_subset(i1)%metric%jacobian )
-        allocate( dynamic_grid%grid_subset(i1)%metric%jacobian( i ) )
-        dynamic_grid%grid_subset(i1)%metric%jacobian( : ) = &
-         & AoS3_grid%grid_subset(i1)%metric%jacobian( : )
+        if (i.gt.0) then
+          allocate( dynamic_grid%grid_subset(i1)%metric%jacobian( i ) )
+          dynamic_grid%grid_subset(i1)%metric%jacobian( : ) = &
+           & AoS3_grid%grid_subset(i1)%metric%jacobian( : )
+        end if
       end if
       if ( associated( dynamic_grid%grid_subset(i1)%metric% &
         &              tensor_covariant ) ) then
         i = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 1 )
         j = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 2 )
         k = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 3 )
-        allocate( dynamic_grid%grid_subset(i1)%metric% &
-           &      tensor_covariant( i, j, k ) )
-        dynamic_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : ) = &
-         & AoS3_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : )
+        if (i.gt.0 .and. j.gt.0 .and. k.gt.0) then
+          allocate( dynamic_grid%grid_subset(i1)%metric% &
+             &      tensor_covariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : )
+        end if
       end if
       if ( associated( dynamic_grid%grid_subset(i1)%metric% &
         &              tensor_contravariant ) ) then
         i = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 1 )
         j = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 2 )
         k = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 3 )
-        allocate( dynamic_grid%grid_subset(i1)%metric% &
-           &      tensor_contravariant( i, j, k ) )
-        dynamic_grid%grid_subset(i1)%metric% &
-           &      tensor_contravariant( : , : , : ) = &
-         & AoS3_grid%grid_subset(i1)%metric% &
-           &      tensor_contravariant( : , : , : )
+        if (i.gt.0 .and. j.gt.0 .and. k.gt.0) then
+          allocate( dynamic_grid%grid_subset(i1)%metric% &
+             &      tensor_contravariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%metric% &
+             &      tensor_contravariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%metric% &
+             &      tensor_contravariant( : , : , : )
+        end if
       end if
     end do
 
@@ -3412,7 +3434,6 @@ contains
           end if
               !if (itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 )
 
-
           case( RIGHT )
               !! start index: 1=start node
               itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
@@ -3425,7 +3446,6 @@ contains
                   call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
               end if
           end select
-
 
           !! Neighbour edges of this edge
           !! Bottom neighbour: edge continuing to the bottom of this edge
@@ -3492,7 +3512,6 @@ contains
                 itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour(iCv, dir+1, 1) = gmap % mapCvI( nix, niy )
              end if
           end do
-
       end do
 
       !! Fill in x-point indices
@@ -3597,6 +3616,7 @@ contains
       call createSubGridForExplicitList( itmgrid,     &
           & itmgrid % subgrids( B2_SUBGRID_XPOINTS ), &
           & CLASS_NODE(1:SPACE_COUNT), xpoints, 'x-points' )
+      deallocate(xpoints)
 
       !! Set up specific subgrids by collecting edges for regions
 
