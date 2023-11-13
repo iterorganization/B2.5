@@ -366,7 +366,7 @@ c*** Set default values according to current species list
      & call xerrab('IMP LIST NOT SORTED')
       end do
 ! Find position of separatrix in IMP list (same as for OMP)
-      icsepimp = nint(nomp/2.0)
+      icsepimp = nint(nimp/2.0)
       ic = 1
       found = .false.
       do while (ic.lt.nimp .and..not.found)
