@@ -30,7 +30,7 @@ endif
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all
+FCOPTS   = -g -C -debug all -warn interfaces -traceback -check all
 else
 FCOPTS   = -O2 -fp-model=precise
 endif
