@@ -273,7 +273,7 @@ contains
     type( geometry ), intent(in) :: geo
     integer tvalues(8)
     integer i, iCv, iFc
-    real(kind=R8) :: r_min, r_max, z_min, z_max
+    real(IDS_real) :: r_min, r_max, z_min, z_max
     logical, save :: IDS_initialized = .false.
     character*16 usrnam
     character*32 get_B25_hash
@@ -1235,36 +1235,36 @@ contains
                 &  divertors%divertor(i)%target(1)%power_incident_fraction, &
                 &  1.0_IDS_real )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_conducted, &
-                & power_conducted(i) )
+                &  divertors%divertor(i)%target(1)%power_conducted, &
+                &  power_conducted(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_conducted, &
-                & power_conducted(i) )
+                &  divertors%divertor(i)%power_conducted, &
+                &  power_conducted(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_convected, &
-                & power_convected(i) )
+                &  divertors%divertor(i)%target(1)%power_convected, &
+                &  power_convected(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_convected, &
-                & power_convected(i) )
+                &  divertors%divertor(i)%power_convected, &
+                &  power_convected(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_recombination_plasma, &
-                & power_recombination_plasma(i) )
+                &  divertors%divertor(i)%target(1)%power_recombination_plasma, &
+                &  power_recombination_plasma(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_recombination_plasma, &
-                & power_recombination_plasma(i) )
+                &  divertors%divertor(i)%power_recombination_plasma, &
+                &  power_recombination_plasma(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_currents, &
-                & power_currents(i) )
+                &  divertors%divertor(i)%target(1)%power_currents, &
+                &  power_currents(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_currents, &
-                & power_currents(i) )
+                &  divertors%divertor(i)%power_currents, &
+                &  power_currents(i) )
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%current_incident, &
-                & current_incident(i) )
+                &  divertors%divertor(i)%target(1)%current_incident, &
+                &  current_incident(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%current_incident, &
-                & current_incident(i) )
+                &  divertors%divertor(i)%current_incident, &
+                &  current_incident(i) )
 #endif
             end do
           end if
@@ -5288,6 +5288,7 @@ contains
     logical exists
     logical is_comment, streql
     external is_comment, streql
+    external b2agx0, find_file, ipgetr, strip_spaces
 
     eq_found = .false.
     new_eq_ggd = .false.
@@ -6914,6 +6915,7 @@ contains
     return
     end subroutine write_sourced_value_root
 
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
     subroutine write_sourced_rz( val, rvalue, zvalue )
     implicit none
     type(ids_summary_rz1d_dynamic) :: val
@@ -6928,6 +6930,7 @@ contains
 
     return
     end subroutine write_sourced_rz
+#endif
 
     subroutine write_errored_value( val, value, error )
     implicit none
