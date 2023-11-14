@@ -1115,7 +1115,7 @@
               call xerrab ('expected guard cell')
             endif
             iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-            wrk1(iCv1) = gm%fcHt(iFc)
+            wrk1(iCv) = gm%fcHt(iFc)
           enddo
         else
           call xerrab ('Problem with flux tube definition')
