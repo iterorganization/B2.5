@@ -136,6 +136,9 @@
      ,        num_time_slices, num_batch_slices
 #endif
       use b2mod_subsys
+c ECH module
+      use b2mod_ech
+
       implicit none
 *   ..common blocks
 #     include "DIMENSIONS.F"
@@ -1842,6 +1845,10 @@ c   --> better way doing this is necessary)
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
       endif
+c ECH module
+      if(switch%use_ech.eq.1) then
+        call alloc_b2mod_ech(nCv)
+      endif
 !csc  reading transpot input is needed here otherwise when optimization is running it will override the optimized parameters
       if (switch%b2tqna_transport_inputfile .eq. 1) then
         call read_transport_input(transport_ip_filename)
@@ -2802,6 +2809,7 @@ c new CDF movie option
       CALL EIRENE_DEALLOC_CTRCEI
 #else
       call dealloc_b2mod_braeir
+      call dealloc_b2mod_ech
       call destroyB2SourceEir( state % sr_eir )
 #endif
       call subend ()
