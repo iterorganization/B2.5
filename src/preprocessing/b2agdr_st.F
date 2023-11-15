@@ -22,7 +22,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, ccut1, nout_st, io
+      integer ninp(0:1), nout(0:2), nx, ny, nx1, ny1, ccut1, io
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -77,6 +77,8 @@
 *     nout(0): formatted; provides summary printed output.
 *     nout(1): un*formatted; full specification of the geometry and
 *      field.
+*     nout(2): un*formatted; full specification of the geometry and
+*      field in structured format
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -297,7 +299,8 @@
       call subini ('b2agdr_st')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.
-     &             1.le.nout(0).and.1.le.nout(1),
+     &             1.le.nout(0).and.1.le.nout(1).and.
+     &             1.le.nout(2),
      &  'faulty argument ninp, nout')
 *   ..test nx, ny
       call xertst (1.le.nx.and.1.le.ny, 'faulty argument nx, ny')
@@ -622,31 +625,30 @@ cdpc-debug
 !      call b2wfgm (nout(0), idout, nx, ny)
 *   ..write structured b2fgmtry_st
 #ifdef F2003
-      open (newunit=nout_st,file='b2fgmtry_st',iostat=io)
+      open (unit=nout(2),file='b2fgmtry_st',iostat=io)
 #else
-      nout_st = newunit()
-      open (unit=nout_st,file='b2fgmtry_st',iostat=io)
+      open (unit=nout(2),file='b2fgmtry_st',iostat=io)
 #endif
 *   ..write version number
-      call cfverw (nout_st, newversion)
+      call cfverw (nout(2), newversion)
 *   ..save dimensions
       idum(0) = nx
       idum(1) = ny
-      call cfwuin (nout_st, 2, idum, 'nx,ny')
+      call cfwuin (nout(2), 2, idum, 'nx,ny')
 *   ..save label
-      call cfwuch (nout_st, 120, lblgm, 'label')
+      call cfwuch (nout(2), 120, lblgm, 'label')
 *   ..save isymm
       idum(0) = isymm
-      call cfwuin (nout_st, 1, idum, 'isymm')
+      call cfwuin (nout(2), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout_st, nx, ny)
+      call b2wugm (nout(2), nx, ny)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
      &     topix, topiy, bottomix, bottomiy, .true., gmap, .true.)
       mapInitialized = .true.
 *   ..save parameters
-      call cfwure (nout_st, 100, parg, 'parg')
+      call cfwure (nout(2), 100, parg, 'parg')
       write(*,*) 'b2agdr_st3: bb(nx,ny,0) ',bb(nx,ny,0)
 
 !   ..conversion to new, unstructured data-types

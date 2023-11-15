@@ -88,14 +88,14 @@
 
 *   ..local variables
       character :: id*8, id2*20
-      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, ccut1, io
+      integer ninp(0:1), nout(0:2), nx, ny, nx1, ny1, ccut1, io
       logical file_open, streql
 *   ..procedures
       external prgini, prgend, cfopen, streql
       external b2agx0, b2agx0_st, b2agdr, b2agdr_st
 *   ..initialise input/output units
       data ninp/50,51/
-      data nout/60,61/
+      data nout/60,61,62/
 
       type(geometry), save :: g
       type(mapping), save :: m 
@@ -111,7 +111,7 @@
 *     ninp - (0:1) integer array.
 *     ninp specifies the input unit numbers.
 *
-*     nout - (0:1) integer array.
+*     nout - (0:2) integer array.
 *     nout specifies the output unit numbers.
 *
 *     nx, ny - integer.
@@ -146,11 +146,11 @@
 *     ..run the unstructured version
         write (*,*) 'Unstructured b2ag used'
 *     ..obtain nCv, nVx, nFc
-        call b2ag_read_parameters(ninp,nout,m)
+        call b2ag_read_parameters(ninp,nout(0:1),m)
 *     ..call principal driver routine
         call alloc_mapping(m)
         call alloc_geometry(g,m%nCv,m%nFc,m%nVx,m%nFs,m%nFt,m%nVmxCv)
-        call b2agdr (ninp, nout, g, m)
+        call b2agdr (ninp, nout(0:1), g, m)
 *     ..end of computation
         call dealloc_geometry(g)
         call dealloc_mapping(m)
@@ -160,7 +160,8 @@
 *     ..rewind b2ag.dat file
         rewind ninp(0)
 *     ..obtain nx, ny, nx1, ny1
-        call b2ag_read_parameters_st(ninp,nout, nx, ny, nx1, ny1, ccut1)
+        call b2ag_read_parameters_st(ninp,nout(0:1), nx, ny, nx1, ny1,
+     &         ccut1)
 *     ..call principal driver routine
         call alloc_b2mod_indirect(nx,ny,nncutmax)
         call alloc_b2mod_geo(nx,ny)
