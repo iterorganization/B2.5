@@ -2255,7 +2255,8 @@ cxpb size is changed in DIMENSIONS.F
             endif
             
           feedback_namelist_used = feedback_namelist_used .or.
-     &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3
+     &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3 .or. 
+     &     fb_actuator(ifb).eq.8
 
         enddo !ifb
 
