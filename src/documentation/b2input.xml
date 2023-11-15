@@ -1045,14 +1045,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2stbc_fb_fchi_style</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Experimental switch controlling the feedback behavior for matching the outer target ion saturation current through e.g. fitting a gas puff or an impurity seeding rate. Consequently, it affects only the case NA_FEEDBACK_CHOICE=11, and is meaningful in this case only. 0 (Default) - INCREASE the NA_FEEDBACK_ACTUATOR (e.g. gas puff) to increase the ion saturation current (e.g. assuming that the rollover is not yet achieved); 1 - DECREASE the NA_FEEDBACK_ACTUATOR (e.g. gas puff) to increase the ion saturation current (e.g. assuming that target is already detached and further increase of gas puff would increase the degree of detachment and decrease the ion saturation current). 
-				</description>
-			</switch>
-			<switch>
 				<name>b2stbr_first_flight</name>
 				<default>0</default>
 				<type>integer</type>
@@ -6570,11 +6562,12 @@
 						8: relative average concentration of this species averaged over the rectangle of cells[IX1:IX2,IY1:IY2].
 						9: inner midplane separatrix electron density.
 						10: neutral pressure at PFR southern boundary (by A. Kukushkin).
-						11: ion saturation current at outer bottom target - experimental: due to rollover the behavior of actuator might need correction.
-						12: power flux density at outer bottom target - experimental
-						13: radiated power in Watts within the rectangle of cells[IX1:IX2,IY1:IY].
-						14: total radiated power over the whole B2 mesh in Watts
-						15: radiated power in Watts from the zone outside the separatrix, including the PFR
+						11: total particle content for that species outside the separatrix, including contributions from Eirene species.
+						12: radiated power in Watts within the rectangle of cells[IX1:IX2,IY1:IY].
+						13: radiated power in Watts from the zone outside the separatrix, including the PFR.
+						14: power flux density at outer bottom target. Usually NA_FEEDBACK_INVERSE should be set to .true. for this actuator to work properly.
+						15: total ion saturation current at the target. NA_FEEDBACK_INVERSE should be set accordingly, depending on where the solution is with respect to detachment threshold.
+						16: peak ion saturation current at the target. NA_FEEDBACK_INVERSE should be set accordingly, depending on where the solution is with respect to detachment threshold.
 				</description>
 			</switch>
 			<switch>
@@ -6594,7 +6587,8 @@
 						   S --&gt; max(0, min(X,S + D)), where D = F*((N - &lt;N&gt;)/dt + (&lt;N&gt;_prev - &lt;N&gt;)/dt_prev)
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
 						6: rescale slowed by na_feedback_alpha (SOLPS4 style)
-						7: combinations of cases 2 and 3: if difference between current and target value is within 1%, then pure rescaling is applied, the slowing down by tanh(log) is applied otherwise. 
+						7: combinations of cases 2 and 3: if difference between current and target value is within NA_FEEDBACK_GAMMA, then slowing down by tanh(log) is applied, pure rescaling applied otherwise. 
+						8: rescaling calculated similarly to option 7, however it is then multiplied by the current pumping/puffing balance (S_pump - S_core - S_ext). Only applicable to gas puff actuator, making it follow pumping that suppresses the oscillations around the target value typical for gas puff actuator.
 				</description>
 			</switch>
 			<switch>
@@ -6627,6 +6621,14 @@
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
 					Factor by which the rescaling is slowed. See above. Options 4 and 5: Corresponds to parameter V (ffb_rtvn)
+				</description>
+			</switch>
+			<switch>
+				<name>NA_FEEDBACK_GAMMA</name>
+				<default>0.01</default>
+				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<description>
+					Ratio of current to target feedback value at which linear rescaling transitions to tanh slowed rescaling for feedback options 7 and 8.
 				</description>
 			</switch>
 			<switch>
@@ -6672,10 +6674,34 @@
 			</switch>
 			<switch>
 				<name>NA_FEEDBACK_IB</name>
-				<default>-1</default>
+				<default>0</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Index of boundary condition through which the feedback is being applied.
+					Index of boundary condition through which the feedback is being applied. If negative refers to the EIRENE stratum index instead. Specifically for actuator 4 it refers to the index of special surface group.
+				</description>
+			</switch>
+			<switch>
+				<name>NA_FEEDBACK_IT</name>
+				<default>0</default>
+				<type>Integer array of size (0:NSPECIES-1)</type>
+				<description>
+					Index of divertor target to which feedback is applied.
+				</description>
+			</switch>
+			<switch>
+				<name>NA_FEEDBACK_ACTUATOR_MIN</name>
+				<default>0.0</default>
+				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<description>
+					Minimum value of actuator being applied.
+				</description>
+			</switch>
+			<switch>
+				<name>NA_FEEDBACK_ACTUATOR_MAX</name>
+				<default>0.0</default>
+				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<description>
+					Maximum value of actuator being applied.
 				</description>
 			</switch>
 			<switch>
@@ -6683,7 +6709,7 @@
 				<default>0.0</default>
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
-					Minimum gas puff being applied.
+					Minimum gas puff being applied. Obsolete.
 				</description>
 			</switch>
 			<switch>
@@ -6691,7 +6717,7 @@
 				<default>0.0</default>
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
-					Maximum gas puff being applied.
+					Maximum gas puff being applied. Obsolete.
 				</description>
 			</switch>
 			<switch>
@@ -6700,6 +6726,14 @@
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
 					If the density is larger than target*overshoot, the gas puff is turned off.
+				</description>
+			</switch>
+			<switch>
+				<name>NA_FEEDBACK_INVERSE</name>
+				<default>.false.</default>
+				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<description>
+					If .true. both feedback target and feedback current are inverted. If .false. actuator value increases in order to increase current feedback value. If .true. actuator value decreases in order to increase current feedback value.
 				</description>
 			</switch>
 		</category>
