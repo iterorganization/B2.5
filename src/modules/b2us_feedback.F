@@ -27,10 +27,11 @@
 
 *   ..variables
       real (kind=R8), save ::
-     * cum_volrec, dt_prev, ddtim
+     * cum_volrec, dt_prev, ddtim, she_rad_tot
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated=.false.
+      logical, save :: calc_cum=.false.
       real (kind=R8) :: charge_frac(DEF_NSD)
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
@@ -47,13 +48,19 @@
      & fb_const(DEF_NATM) = 0.0_R8, fb_puff_min(DEF_NATM) = 0.0_R8,
      & fb_puff_max(DEF_NATM) = 0.0_R8, fb_overshoot(DEF_NATM) = 0.0_R8,
      & fb_current(DEF_NATM) = 0.0_R8, fb_prev(DEF_NATM) = 0.0_R8,
-     & fb_rescale(DEF_NATM) = 1.0_R8
+     & fb_rescale(DEF_NATM) = 1.0_R8, fb_cum_actuator(DEF_NATM) = 0.0_R8,
+     & fb_current_prev(DEF_NATM) = 0.0_R8,
+     & fb_target_actuator(DEF_NATM) = 0.0_R8
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
      & fb_type(DEF_NATM) = 0, fb_rescale_option(DEF_NATM) = 0,
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
-     & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
+     & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0, !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
+    !  & fb_cum_tim(DEF_NATM) = 0,
+     & set_act_tar(DEF_NATM) = 0
+      integer, parameter :: NACT_LEN = 10
+      real (kind=R8) :: actuator_conv(DEF_NATM,NACT_LEN), actuator_conv_end(DEF_NATM)
 
 ! csc old switches
       integer, save :: fhiycore_kinetic_energy
@@ -93,7 +100,8 @@
      9  save_pfr2_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
      i  coreregno/1/, coreregn2/0/, solregno/6/,
      i  pfrregno1/4/, pfrregno2/5/, isfeedback/0/, nesepm_istra/-1/
-
+        real (kind=R8), save ::  fb_accuracy = 0.0_R8
+        integer, save :: fb_update_range = 0
       namelist /feedback/ saved_fb_actuator
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/
@@ -321,6 +329,8 @@ cxpb size is changed in DIMENSIONS.F
       call ipgetr ('b2stbc_ndes_sol', ndes_sol)
       call xertst (0.0_R8.le.ndes_sol,
      . 'faulty internal parameter ndes_sol')
+      call ipgetr('b2stbc_fb_accuracy', fb_accuracy)
+      call ipgeti('b2stbc_fb_update_range', fb_update_range)
 #ifdef WG_RM
       if(fnaycore.ne.-1.0e30_R8.or.fheycore.gt.0.0_R8.or.
      &   fhiycore.gt.0.0_R8.or.fchycore.ne.-1.0e30_R8.or.
@@ -780,7 +790,9 @@ cxpb size is changed in DIMENSIONS.F
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8)) ) call xerrab('init_feedback:'//
+     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17).or.
+     &            (fb_type(ifb).eq.19)) )
+     &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
         is_start = is0+1
@@ -825,7 +837,7 @@ cxpb size is changed in DIMENSIONS.F
         if (fb_ib(ifb).ge.0) cycle
         consistent = consistent .and.
      &    .not.(fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3) .and.
+     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7) .and.
      &    .not.(fb_rescale_option(ifb).eq.4)
       end do
       do ifb = 1, nFb
@@ -908,12 +920,18 @@ cxpb size is changed in DIMENSIONS.F
         end do
       endif
       nfbreg = ifbreg - 1
-      call subend()
+
+      actuator_conv_end = 1 
+      actuator_conv = 0.0_R8
+
+      call subend() 
       return
       end subroutine init_feedback
 
-      subroutine compute_feedback(nCv, nFc, ns, ismain,
-     &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
+      subroutine compute_feedback(nCv, nFc, nVx, ns, ismain,
+     &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call,
+     &  diagno)
+      use b2us_data, only : state
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, ismain
@@ -927,12 +945,13 @@ cxpb size is changed in DIMENSIONS.F
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss
+     & is_end, iss, iCv1, ibc, ib
 #ifdef B25_EIRENE
-      integer :: i, j, k, l
+      integer :: i, j, l
 #endif
       integer, save :: ncall = 0
-      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
+      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, t0, t1, 
+     &    t2, k
 
       call subini ('compute_feedback')
       if (ncall.eq.0) then
@@ -963,6 +982,8 @@ cxpb size is changed in DIMENSIONS.F
               fb_prev(ifb) = saved_fb_actuator(ifb)
             end if
 
+          if (abs(fb_current(ifb))>1e-7_R8)
+     >        fb_current_prev(ifb) = fb_current(ifb) 
 ! phase 1:
             select case(fb_type(ifb))
 
@@ -1470,6 +1491,72 @@ cxpb size is changed in DIMENSIONS.F
                 endif
               enddo
 
+            case (17) !  density of ions at outer midplane
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'density of ions at outer midplane for sequence ',
+     &           b2espcr(fb_species(ifb))
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  fb_current(ifb) = fb_current(ifb) + 0.5_R8 * 
+     &              (pl%na(omp(icsepomp-1),is)+pl%na(omp(icsepomp),is))
+                  is_end=is
+                endif
+              enddo
+
+            case (18) !  density of ions at outer midplane
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'total electron radiation looses ',
+     &           b2espcr(fb_species(ifb))
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = she_rad_tot
+            
+            case (19) !  density of ions at outer midplane
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'total particle content ',
+     &           b2espcr(fb_species(ifb))
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                  do iCv = 1,mpg%nCv
+                  fb_current(ifb) = fb_current(ifb) +
+     &                  pl%na(iCv,is) * geo%cvVol(iCv)
+                  end do
+                endif
+              enddo
+
             case default
                write(*,*) 'fb_type not coded ',
      &              fb_type(ifb)
@@ -1616,6 +1703,34 @@ cxpb size is changed in DIMENSIONS.F
                   fb_rescale(ifb) =
      &               fb_alpha(ifb) * fb_current(ifb)
 
+            case (7) ! rescale slowed by tanh_log
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_option: using ',
+     &           'tanh_log_rescale with plato for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+              t0 = fb_target(ifb)*(1-fb_const(ifb))
+              t1 = fb_target(ifb)*(1+fb_const(ifb))
+              if(fb_current(ifb) < t0) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t0 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              elseif(fb_current(ifb) > t1) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t1 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              else
+                fb_rescale(ifb) = 1.0_R8
+              endif
+
             case default
               write(*,*) 'fb_rescale_option not coded ',
      &          fb_rescale_option(ifb)
@@ -1673,8 +1788,36 @@ cxpb size is changed in DIMENSIONS.F
               endif
 
               if (fb_rescale_option(ifb).lt.4) then
+                if (switch%use_pump.eq.1) then
+                t0 = 0.0_R8
+                t2 = 0.0_R8
+                DO ib = 1, nbc
+                  if (BCCON(is_start,ib).eq.10) then
+                  do ibc = 1, mpg%bcCvP(ib,2)
+                    iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+                    if (switch%recycle_afn.eq.0.or.
+     &                 fb_species(ifb).gt.1) then
+                      t0 = t0 + state%sr%sna(iCv1,0,is_start)
+     &               +pl%na(iCv1,is_start)*state%sr%sna(iCv1,1,is_start)
+                    endif
+                  enddo
+                  endif
+                enddo
+                t1 = 0.0_R8
+                do is=is_start,is_end
+                  do ib=1,nbc
+                    if (BCCON(IS,IB).eq.8) then
+                      t1 = t1+CONPAR(is,ib,1)
+                    endif
+                  enddo
+                enddo
+                print *,'pump', t0,'puff',t1 
+                if (t0 <-1e0_R8)
+     &          saved_fb_actuator(ifb) = abs(t0)*fb_rescale(ifb)
+                else
                 saved_fb_actuator(ifb) =
      &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+                endif
               else
                 saved_fb_actuator(ifb) =
      &            fb_rescale(ifb)
@@ -1931,32 +2074,100 @@ cxpb size is changed in DIMENSIONS.F
      &            call xerrab('can`t control pump in Eirene!')          
 
               if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
-                if (conpar(is_start, fb_ib(ifb), 1).lt.0.0_R8) then
-                  saved_fb_actuator(ifb) =
-     &              conpar(is_start, fb_ib(ifb), 1)
-                  write(message,'(a,i3,a,i2,a)')
-     .             'Initial pump coef set by CONPAR(',
-     .             is_start,',',fb_ib(ifb),',1) !'
-    !             elseif (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
-    !               saved_fb_actuator(ifb) =
-    !  &              userfluxparm(fb_istra(ifb),1)
-    !               write(message,'(a,i3,a,i2,a)')
-    !  .             'Initial gas puff strength set by USERFLUXPARM(',
-    !  .             fb_istra(ifb),',1)  !'
-                else
-                  saved_fb_actuator(ifb) = -1.0e-2_R8
-                    write(*,*) 'Warning!  ','The pump was ',
-     .               'started with an initial rate of 1e-2!'
+                  if (conpar(is_start, fb_ib(ifb), 1).lt.0.0_R8) then
+                    saved_fb_actuator(ifb) =
+     &               conpar(is_start, fb_ib(ifb), 1)
+                    write(message,'(a,i3,a,i2,a)')
+     .              'Initial pump coef set by CONPAR(',
+     .              is_start,',',fb_ib(ifb),',1) !'
+                  elseif(switch%recycle_afn.eq.1.and.
+     &                fb_species(ifb).eq.1) then
+                      write(message,'(a,i3,a,i2,a)')
+     .              'Initial pump coef set by b2recyc(',
+     .              is_start,',',fb_ib(ifb),',1) !'
+                    saved_fb_actuator(ifb) =
+     &                b2recyc(is_start,fb_ib(ifb))-1
+                  else
+                    saved_fb_actuator(ifb) = -1.0e-2_R8
+                      write(*,*) 'Warning!  ','The pump was ',
+     .                'started with an initial rate of 1e-2!'
+                  endif
                 endif
-              endif
 
-              if (fb_rescale_option(ifb).lt.4) then
-                saved_fb_actuator(ifb) =
+              if (fb_rescale_option(ifb).lt.4 .or. 
+     &            fb_rescale_option(ifb).eq.7) then
+                if (switch%use_pump.eq.1) then
+                t0 = 0.0_R8
+                t2 = 0.0_R8
+                do ibc = 1, mpg%bcCvP(fb_ib(ifb),2)
+                  iCv1 = mpg%bcCv(mpg%bcCvP(fb_ib(ifb),1)+ibc-1,1)
+                  t0 = t0 + state%sr%sna(iCv1,0,is_start)
+     &              +pl%na(iCv1,is_start)*state%sr%sna(iCv1,1,is_start)
+                enddo
+                t1 = 0.0_R8
+                do is=is_start,is_end
+                  do ib=1,nbc
+                    if (BCCON(IS,IB).eq.8) then
+                      t1 = t1+CONPAR(is,ib,1)
+                    endif
+                  enddo
+                enddo
+              
+                  print *,'pump', t0,'puff',t1
+                  if (t0 < -1e0_R8) then
+                    print *,"sna_tot is", t2
+                    saved_fb_actuator(ifb) = abs(t1/t0)
+     &              * saved_fb_actuator(ifb)/fb_rescale(ifb)
+                  else
+                    print *,"pump bigger then -1!", t0
+                  endif
+                else
+                  saved_fb_actuator(ifb) =
      &            saved_fb_actuator(ifb)/fb_rescale(ifb)
+                endif
               else
                 saved_fb_actuator(ifb) =
      &            fb_rescale(ifb)
               end if
+
+    !           print *,"cum prev, cur",fb_current_prev(ifb),
+    !  &          fb_current(ifb)
+    !           if((fb_current_prev(ifb)>fb_target(ifb)).and.
+    !  &           (fb_current(ifb)<=fb_target(ifb))) then
+    !             if (fb_cum_tim(ifb) < 10) then
+    !                 calc_cum = .true.
+    !             else
+    !               saved_fb_actuator(ifb) = fb_cum_actuator(ifb)/
+    !  &              fb_cum_tim(ifb) 
+    !               print *, "cum set avg act",saved_fb_actuator(ifb)
+    !               calc_cum = .false.
+    !             endif
+    !           endif
+    !           if ((fb_cum_tim(ifb) > 10).and.(.not.calc_cum)) then
+    !             saved_fb_actuator(ifb) = fb_cum_actuator(ifb)/
+    !  &           fb_cum_tim(ifb) 
+    !             print *, "cum set avg act",saved_fb_actuator(ifb)
+    !             calc_cum = .false.
+    !           endif
+
+                if((fb_current_prev(ifb)-fb_target(ifb))*
+     &          (fb_current(ifb)-fb_target(ifb)) < 0 
+     &          .and. (ncall > 10) .and. (fb_accuracy.gt.1e-6_R8)) then
+                  print *, "save target actuator";
+                  set_act_tar(ifb) = 1
+                  fb_target_actuator(ifb) = saved_fb_actuator(ifb);
+                endif
+
+                if (set_act_tar(ifb).eq.1) then
+                  if (abs(1-fb_current(ifb)/fb_target(ifb))
+     &                .lt.fb_accuracy) then
+                    saved_fb_actuator(ifb) = fb_target_actuator(ifb)
+                    print *,"set target actuator",saved_fb_actuator(ifb)
+                  else
+                    set_act_tar(ifb) = 0
+                  endif
+                endif
+
               if(fb_puff_min(ifb) .le. 0.0_R8)
      &          saved_fb_actuator(ifb) =
      &            max(fb_puff_min(ifb),
@@ -1965,6 +2176,23 @@ cxpb size is changed in DIMENSIONS.F
      &          saved_fb_actuator(ifb) =
      &            min(fb_puff_max(ifb),
      &            saved_fb_actuator(ifb))
+            
+              if (actuator_conv_end(ifb) <= NACT_LEN) then
+                actuator_conv(ifb,actuator_conv_end(ifb)) =
+     &              saved_fb_actuator(ifb)
+                actuator_conv_end(ifb) = actuator_conv_end(ifb)+1
+              else
+                do k=2,NACT_LEN
+                actuator_conv(ifb,k-1) = actuator_conv(ifb,k)
+                enddo
+                actuator_conv(ifb,NACT_LEN) = saved_fb_actuator(ifb)
+              endif
+              print *, "actuator_conv", actuator_conv(ifb,:)
+               if (abs(actuator_conv(ifb,NACT_LEN)) > 1e-7_R8) then
+                saved_fb_actuator(ifb) =
+     &             sum(actuator_conv(ifb,:))/NACT_LEN
+                print *,"set conv val", saved_fb_actuator(ifb)
+              endif
 
               if(fb_overshoot(ifb) .gt. 1.0_R8 .and.
      &           fb_current(ifb) .gt.
@@ -1979,8 +2207,16 @@ cxpb size is changed in DIMENSIONS.F
                 endif
               else
                 if (switch%use_eirene.eq.0) then
-                  conpar(is_start, fb_ib(ifb), 1) = 
-     &              saved_fb_actuator(ifb)
+                  if (switch%recycle_afn.eq.0.or.
+     &                fb_species(ifb).gt.1) then
+                    conpar(is_start, fb_ib(ifb), 1) = 
+     &               saved_fb_actuator(ifb)
+                  else
+                    b2recyc(is_start,fb_ib(ifb)) = 
+     &                  (1+saved_fb_actuator(ifb))
+                    recyc(is_start,fb_ib(ifb)) = 
+     &                  b2recyc(is_start,fb_ib(ifb))
+                  endif
                 else
                   userfluxparm(fb_istra(ifb),1) = saved_fb_actuator(ifb)
                 endif
@@ -1991,13 +2227,33 @@ cxpb size is changed in DIMENSIONS.F
 
             end select
 
+    !         if (calc_cum) then
+    !           if((saved_fb_actuator(ifb).lt.fb_puff_max(ifb)).and.
+    !  &        (saved_fb_actuator(ifb).gt.fb_puff_min(ifb))) then
+    !             fb_cum_actuator(ifb) = 
+    !  &          fb_cum_actuator(ifb)+saved_fb_actuator(ifb)
+    !             fb_cum_tim(ifb) = fb_cum_tim(ifb)+1
+    !           endif
+    !          print *,"cum vals",ifb, 
+    !  &        fb_cum_actuator(ifb),fb_cum_tim(ifb)
+    !         endif
             if (fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.8)
+     &          fb_actuator(ifb).eq.3)
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
      &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
 
-          endif
+            endif
 
+            if (fb_actuator(ifb).eq.8) then
+              if (switch%recycle_afn.eq.0.or.fb_species(ifb).gt.1) then
+               write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
+     &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
+              else
+               write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
+     &         b2espcr(fb_species(ifb)),  b2recyc(is_start,fb_ib(ifb))
+              endif
+            endif
+            
           feedback_namelist_used = feedback_namelist_used .or.
      &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3
 
