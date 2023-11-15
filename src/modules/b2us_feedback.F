@@ -2318,7 +2318,8 @@ cxpb size is changed in b2mod_dimensions
             endif
             
           feedback_namelist_used = feedback_namelist_used .or.
-     &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3
+     &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3 .or. 
+     &     fb_actuator(ifb).eq.8
 
           if (fb_current_prev(ifb).gt.0.0_R8) then
             saved_fb_prev(ifb) = fb_current_prev(ifb)
