@@ -693,7 +693,7 @@ contains
 #ifdef IMAS
         integer :: lStatus = 0
         character(32) :: lTreename = "ids"
-#if ( UAL_MAJOR_VERSION < 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION < 9 ) )
+#if ( AL_MAJOR_VERSION < 4 || ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION < 9 ) )
         character(13) :: hlp_frm
         character(80) :: message
         integer len_of_digits
