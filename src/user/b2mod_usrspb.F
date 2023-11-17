@@ -664,13 +664,14 @@ c======================================================================
 #endif
       implicit none
       
-      integer ix,iy,iyp,it, ns,ny, k, is, use_eirene
-      data use_eirene / 0 /
+      integer ix,iy,iyp,it, ns,ny, k, is, use_eirene, ncall
+      save use_eirene, ncall
+      data use_eirene / 0 /, ncall /0/
 
 ! neutral pressure in PFR
 ! Q_pneut - mean, Q_pneut_trg(1) - inner PFR, Q_pneut_trg(2) - outer PFR
 
-      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (ncall .eq. 0) call ipgeti ('b2mndr_eirene', use_eirene)
 
       iy=0
       iyp=1
@@ -718,6 +719,8 @@ c======================================================================
      > Q_pneut = ( Q_pneut_trg(1) * Area_pneut_trg(1) +
      &    Q_pneut_trg(2) * Area_pneut_trg(2) ) /
      &   (Area_pneut_trg(1) + Area_pneut_trg(2))
+     
+      if (ncall .eq. 0) ncall = 1
 
       return
       end subroutine calc_pneut
