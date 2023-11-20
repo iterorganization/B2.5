@@ -67,22 +67,24 @@
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
+     * , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
-     , ,only: iunout, iunin
+     , , only : iunout, iunin
       use eirmod_comusr
-     , ,only: eirene_alloc_comusr
+     , , only : eirene_alloc_comusr
       use eirmod_refusr
-     , ,only: write_conbe
+     , , only : write_conbe
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
+     * , only : eirene_dealloc_infcop
       use eirmod_mcarlo
       use eirmod_wneutrals
       use b2mod_eirene
       use b2mod_b2plot
-     , ,only: vxa, dealloc_b2mod_b2plot_eirene
+     , , only : vxa, dealloc_b2mod_b2plot_eirene
 #ifdef NAGFOR
       use f90_unix_proc ! IGNORE
 #endif
@@ -91,7 +93,7 @@
       use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
-     , ,only: write_b2_to_astra
+     , , only : write_b2_to_astra
 #ifdef JET
       use b2mod_ppout
 #endif
@@ -100,32 +102,32 @@
 #endif
 #ifdef IMAS
       use ids_routines  ! IGNORE
-     , ,only: imas_open_env, ids_deallocate, ids_get
+     , , only : imas_open_env, ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
-     , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
-     ,        ids_radiation, ids_dataset_description, ids_equilibrium
-#if IMAS_MINOR_VERSION > 8
+     , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
+     ,          ids_radiation, ids_dataset_description, ids_equilibrium
+#if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_real, ids_real_invalid
+     , , only : ids_real, ids_real_invalid
 #endif
 #if IMAS_MINOR_VERSION > 21
       use ids_schemas   ! IGNORE
-     , ,only: ids_summary
+     , , only : ids_summary
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34)
       use ids_schemas   ! IGNORE
-     , ,only: ids_numerics
+     , , only : ids_numerics
 #endif
 #if IMAS_MINOR_VERSION > 30
       use ids_schemas   ! IGNORE
-     , ,only: ids_divertors
+     , , only : ids_divertors
 #endif
       use b2mod_ual
-     , ,only: put_ids_edge, new_ids_edge, close_ual,
-     ,        dealloc_ids_edge, dealloc_batch_edge
+     , , only : put_ids_edge, new_ids_edge, close_ual,
+     ,          dealloc_ids_edge, dealloc_batch_edge
       use b2mod_ual_io
-     , ,only: b25_process_ids, b25_av_ids,
-     ,        num_time_slices, num_batch_slices
+     , , only : b25_process_ids, b25_av_ids,
+     ,          num_time_slices, num_batch_slices
 #endif
       use b2mod_subsys
       implicit none
@@ -328,7 +330,7 @@
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer ix, iy, is, k, idum(0:9)
+      integer is, ix, iy, k, idum(0:9)
 #ifdef B25_EIRENE
       integer iflag
 #endif
