@@ -375,11 +375,6 @@ csw 01oct2012 initialize potential if necessary
      * cvsa_hAdp_albe, cvsa_hBdp_al,                                     !som 20.10.21
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
 *                                                                        !srv 09.03.21 {
-*   ..set nep
-*     (= ne before continuity update)
-      call b2scopy (n2, ne, 1, nep, 1)
-      nip = ni
-      uap = ua                                                           !srv 24.05.21
 *   ..recompute currents
       call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,                 !srv 20.09.06 }
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 !som 02.11.21
