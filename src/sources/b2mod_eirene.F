@@ -438,7 +438,7 @@ csw 26feb2013
 !! set logical lneustra
       lneustra = switch%spatial_hybrid.ne.0
 !! set L_macro for EIRENE
-      L_macro = switch%L_macro_AFN
+      L_macro_b25 = switch%L_macro_AFN
 
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then
