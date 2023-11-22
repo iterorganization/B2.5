@@ -3597,6 +3597,7 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       call write_f31(mpg)
 csw 26jan2011
       call eirene_extrab25_cleanup
+      call eirene_wneutrals_dealloc
 #ifndef B25_EIRENE
       call dealloc_b2mod_eirdiag
 #endif
