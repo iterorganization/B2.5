@@ -86,6 +86,7 @@
      , ,only: iunout
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_infcop
       use eirmod_extrab25
       use eirmod_wneutrals
       use b2mod_eirene
@@ -3470,6 +3471,7 @@ c$$$     .              username, database, version, status)
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+      CALL EIRENE_DEALLOC_INFCOP
 #else
       call dealloc_b2mod_braeir
       call destroyB2SourceEir( state % sr_eir )
