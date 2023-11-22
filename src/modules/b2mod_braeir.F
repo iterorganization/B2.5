@@ -20,7 +20,7 @@ c
       REAL(kind=R8), ALLOCATABLE, SAVE, PUBLIC :: 
      &  PUX(:),  PUY(:),  PVX(:),  PVY(:)
 
-      REAL(kind=R8), SAVE, PUBLIC :: L_MACRO
+      REAL(kind=R8), SAVE, PUBLIC :: L_MACRO_B25
 
       type :: targetdata
         integer :: ntrgdat
