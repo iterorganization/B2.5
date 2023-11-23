@@ -343,10 +343,6 @@
 
 *   ..read the header of geometry file
       call cfruch (ninp(1), 120, lblgm, 'label')
-#if ( defined(JET) || defined(IMAS) )
-      labgeo=lblgm
-      labgeo=lblgm
-#endif
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
