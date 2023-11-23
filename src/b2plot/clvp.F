@@ -1,6 +1,6 @@
       subroutine clvp(npplvp,npplvm)
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
 
 c version : 04.02.2002 17:40
@@ -23,7 +23,7 @@ c*** The data dimensions must be nx, ny, and 1, respectively.
 
       implicit none
       integer npplvp,npplvm
-      integer i,j,k,l,m,n,kk,ll,mm,nn,npoplv
+      integer iCv,i,j,k,l,m,n,kk,ll,mm,nn,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,w_hlp
 c=======================================================================
 c      print *,'=== clvp: ',npplvp,npplvm !###
@@ -37,24 +37,19 @@ c      print *,'=== clvp: iwrk=',iwrk     !###
       end if !}
 c      print *,'=== clvp: nx,ny,ns,ndim',nx,ny,ns,               !###
 c     ,                                    (ndim(i,iwrk),i=1,3)  !###
-      if(ndim(3,iwrk).ne.1) then !{
-        print *,'clvp: ns must be 1 - is',ndim(3,iwrk)
+      if(ndim(2,iwrk).ne.1) then !{
+        print *,'clvp: ns must be 1 - is',ndim(2,iwrk)
         return
       end if !}
-      if(ndim(1,iwrk).ne.nx .or. ndim(2,iwrk).ne.ny) then !{
-        print *,'clvp: the data array not conforming to the grid'
+      if(ndim(1,iwrk).ne.mpg%nCv) then !{
+        print *,'clvp: the data array does not conform to the grid'
         return
       end if !}
       
 c*** Put the data in a 1D array and sort it
 
-      n=0
-      do j=0,ny-1 !{
-        do i=0,nx-1 !{
-          n=n+1
-          wrk_hlp(n)=work(i,j,0,iwrk)
-        end do !}
-      end do !}
+      n=mpg%nCi
+      wrk_hlp(1:n)=work(1:n,0,iwrk)
       call sortda(wrk_hlp,ind_hlp,n)
 
 c*** Calculate the integral over the whole volume
@@ -62,13 +57,11 @@ c*** Calculate the integral over the whole volume
       tot_hlp=0.0_R8
       neg_hlp=0.0_R8
       vol_hlp=0.0_R8
-      do j=0,ny-1 !{
-        do i=0,nx-1 !{
-          tot_hlp=tot_hlp+abs(work(i,j,0,iwrk)*vol(i,j))
-          if(work(i,j,0,iwrk).lt.0.0_R8) neg_hlp=neg_hlp-
-     -                                        work(i,j,0,iwrk)*vol(i,j)
-          vol_hlp=vol_hlp+vol(i,j)
-        end do !}
+      do iCv=1,mpg%nCi !{
+        tot_hlp=tot_hlp+abs(work(iCv,0,iwrk)*geo%cvVol(iCv))
+        if(work(iCv,0,iwrk).lt.0.0_R8) neg_hlp=neg_hlp-
+     -                                  work(iCv,0,iwrk)*geo%cvVol(iCv)
+        vol_hlp=vol_hlp+geo%cvVol(iCv)
       end do !}
 c      print *,'clvp: volume, integral, negative part ',     !###
 c     ,                              vol_hlp,tot_hlp,neg_hlp !###
@@ -91,10 +84,8 @@ c*** Calculate the necessary levels and put them on the real stack
         do m=mm,n !{
           if(l.lt.npplvm-1) then !{
             k=ind_hlp(m)
-            i=ixx(k)
-            j=iyy(k)
-            t=t+abs(wrk_hlp(k)*vol(i,j))
-            v=v+vol(i,j)
+            t=t+abs(wrk_hlp(k)*geo%cvVol(k))
+            v=v+geo%cvVol(k)
             if(t.ge.f) then !{
               l=l+1
               if(l.eq.npplvm-1) mm=m+1
@@ -134,10 +125,8 @@ c     ,                wrk_hlp(ind_hlp(mm)),wrk_hlp(ind_hlp(mm-1))  !###
           if(l.lt.nn) then !{
             kk=k
             k=ind_hlp(m)
-            i=ixx(k)
-            j=iyy(k)
-            t=t+abs(wrk_hlp(k)*vol(i,j))
-            v=v+vol(i,j)
+            t=t+abs(wrk_hlp(k)*geo%cvVol(k))
+            v=v+geo%cvVol(k)
             if(t.ge.f) then !{
               ll=int(t/d)
               if(ll-1.gt.l+1) then !{
@@ -173,24 +162,9 @@ c*** Transfer the data to the plotting routines
 
       call clvs(l,wrk_hlp,l)
       return
-
-      contains
-
-      integer function ixx(i)
-      implicit none
-      integer, intent(in) :: i
-      ixx = mod(i-1,nx)+1-1
-      return
-      end function ixx
-
-      integer function iyy(i)
-      implicit none
-      integer, intent(in) :: i
-      iyy = (i-1)/nx+1-1
-      return
-      end function iyy
-c=======================================================================
       end subroutine clvp
+
+c=======================================================================
 
       subroutine eclvp(npplvp,npplvm)
       use b2mod_types

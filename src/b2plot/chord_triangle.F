@@ -4,7 +4,7 @@ c
      2 xp,yp,zp,dxp,dyp,dzp,vector)
 
       use b2mod_types
-      use b2mod_geo
+      use b2us_geo
       use b2mod_constants
       use b2mod_subsys
       use b2mod_b2plot
@@ -61,6 +61,7 @@ c
       endif
 
       if(vector) then
+#ifdef WG_TODO
         if (ixtri(it).ne.-1 .and. iytri(it).ne.-1) then
 c in r,z,phi
           dbr=((crx(ix_e2b(ixtri(it)),iytri(it)-1,1)+
@@ -101,6 +102,7 @@ c         write(*,*) 'bl = ',dbx,dby,dbz
 c         write(*,*) 'dl.bl = ',dotprod
           chord_tria_value=tt(it)*dotprod
         endif
+#endif
       else
         chord_tria_value=tt(it)
       endif

@@ -114,7 +114,7 @@ c
      7   za(0:nsd_local-1)
 #endif
 c
-      integer n2, nCv, nFc
+      integer n2, nCv, nFc, nVx
       integer ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
@@ -203,7 +203,7 @@ c
       call alloc_b2mod_braeir(nCv,nFc,nsd_local,nstra)
       call alloc_b2mod_eirbra(nCv,nsd_local,natm,npls,nstra)
 #endif
-      call alloc_b2mod_b2plot(nCv,nFc,nsd_local,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nVx,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       solpstop=' '
 #ifndef NO_GETENV

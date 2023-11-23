@@ -2387,12 +2387,13 @@ cwdk also need to correct for degenerate faces?
 
       subroutine write_rcparms (ns, m)
       use b2mod_b2cmpa
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: istra, iout, is, i
+      integer :: ii(1)
       character(1) :: ap =''''
-      character(10) :: new_neutrals_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -2405,7 +2406,7 @@ cwdk also need to correct for degenerate faces?
       open(unit=iout,file='b2us.neutrals.parameters')
 #endif
 
-      call cfverw(iout,new_neutrals_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&NEUTRALS'
       write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_CPU = ',eirene_step_cpu
@@ -2603,8 +2604,16 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        write (iout,'(1x,a,(10(i5,a1,1x)))')
-     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,n_spcsrf)
+        ii=minloc(abs(l_spcsrf))
+        if (ii(1).eq.1) then
+          is = 0
+        else if (l_spcsrf(ii(1)).eq.0) then
+          is = ii(1)-1
+        else
+          is = size(l_spcsrf)
+        end if
+        if (is.gt.0) write (iout,'(1x,a,(10(i5,a1,1x)))')
+     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,is)
         write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))')
      .    'sps_id= ',(ap,sps_id(i),ap,',',i=1,n_spcsrf)
         write (iout,'(1x,a,(10(i5,a1,1x)))')
