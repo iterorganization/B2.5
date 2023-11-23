@@ -979,7 +979,8 @@ c.. Test consistency with region boundaries
       type(mapping), intent(inout) :: m
       logical, intent(in) :: dotest
       integer is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
-      integer :: ian, ien
+      integer :: ian, ien, nfaces
+      character*3 ss
 #ifdef WG_OUT
       logical covered, corner, guard_cell, found
 #else
@@ -997,7 +998,7 @@ c.. Test consistency with region boundaries
       integer newunit
       external newunit
 #endif
-      external find_file, xerrab
+      external find_file, xerrab, check_boundary_labels
 
       filename=boundary_filename
       boundary_time_mod = 0.0_R8
@@ -1045,8 +1046,12 @@ c.. Test consistency with region boundaries
               indss = bcstart(ib)+iss-1
               write (*,*) ' surface index ',indss
 ! find all faces belonging to surface structure INDSS
+              nfaces = 0
               call find_faces (indss, inbc, nbcfc,
-     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
+     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb, nfaces)
+              write(ss,"(I0)") indss
+              call xertst(nfaces.gt.0, 
+     &         'No faces found for boundary face label = '//ss)
             end do              ! iss
             m%bcFcP(ib,2) = nbcfc
           else
@@ -1056,6 +1061,9 @@ c.. Test consistency with region boundaries
         close(idb)
       end if
 !      call bc_to_struct (m)
+
+      ! now check that all boundary faces are assigned to a BC
+      call check_boundary_labels(m, nBc, bcstart, bcend, .true.)
 
       if (any(bc_list_size > 0))
      .  call xerrab
@@ -1782,6 +1790,9 @@ cwdk also need to correct for degenerate faces?
         endif
       enddo
       close (idb)
+
+      ! now check that all boundary faces are assigned to a BC
+      call check_boundary_labels(m, nBc, bcstart, bcend, .true.)
 
       acchar(1:nbc) = lchar(1:nbc)
       abcstart(1:nbc) = minlbl(1:nbc)

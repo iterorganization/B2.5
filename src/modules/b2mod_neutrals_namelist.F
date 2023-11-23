@@ -1273,7 +1273,7 @@ c.. Test consistency with physical edges within the computational domain
       integer ns
       logical dotest
       integer is, ist, ix, istra, i, j, k, n, ii(1), itrack,
-     >        noss, instra, iss, indss, idb, nrcl
+     >        noss, instra, iss, indss, idb, nrcl, nfaces
 #ifdef WG_TODO
       integer ic
       logical found, side
@@ -1283,6 +1283,7 @@ c.. Test consistency with physical edges within the computational domain
 #ifdef WG_TODO
       logical, allocatable :: old_style(:)
 #endif
+      character*3 ss
       character*16 hlp_frm
       character*260 filename
 #ifndef F2003
@@ -1357,10 +1358,14 @@ cwvu    for (advanced) spatially hybrid, might need even more.
             noss = rcend(istra) - rcstart(istra) + 1
             do iss = 1, noss
               indss = rcstart(istra)+iss-1
+              nfaces = 0
               write (*,*) ' surface index ',indss
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, instra, nrcl,
-     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
+     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb, nfaces)
+              write(ss,"(I0)") indss
+              call xertst(nfaces.gt.0, 
+     &         'No faces found for neutrals face label = '//ss)
             end do              ! iss
             m%rcFcP(istra,2) = nrcl
          elseif ((crcstra(istra) /= 'T') .and. (crcstra(istra) /= 'V')
@@ -1370,6 +1375,9 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         end do
         close(idb)
       end if
+
+      ! now check that all boundary faces are assigned to a stratum
+      call check_boundary_labels(m, nstrai, rcstart, rcend, .false.)
 
       if (any(rc_list_size > 0))
      .  call xerrab
@@ -2137,10 +2145,11 @@ c.. Test consistency with physical edges within the computational domain
       use b2mod_indirect
       implicit none
       integer :: istra, istrac, instra,
-     .           noss, iss, indss, idb
+     .           noss, iss, indss, idb, nfaces
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       integer :: minlbl(nstrat), maxlbl(nstrat)
       character(1) :: lchar(nstrat)
+      character*3 ss
       type (mapping), intent (inout) :: m
 #ifndef F2003
       integer newunit
@@ -2285,10 +2294,14 @@ cwdk also need to correct for degenerate faces?
           noss = rcend(istra) - rcstart(istra) + 1
           do iss = 1, noss
             indss = rcstart(istra)+iss-1
+            nfaces = 0
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             call find_faces (indss, instra, rcl(istra),
-     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
+     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb, nfaces)
+            write(ss,"(I0)") indss
+            call xertst(nfaces.gt.0, 
+     &         'No faces found for neutrals face label = '//ss)
           end do  ! iss
           m%rcFcP(istra,2) = rcl(istra)
           rcfe(istra) = 0.5_R8
@@ -2299,6 +2312,9 @@ cwdk also need to correct for degenerate faces?
         endif
       enddo
       close (idb)
+
+      ! now check that all boundary faces are assigned to a stratum
+      call check_boundary_labels(m, nstrai, rcstart, rcend, .false.)
 
       arcstra(1:nstrai) = lchar(1:nstrai)
       where (minlbl == huge(1))
