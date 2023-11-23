@@ -1,4 +1,4 @@
-      subroutine get_adas_data(reac,ns,nxd,nyd,nx,ny,ne,te,mach)
+      subroutine get_adas_data(reac,ns,nCv,ne,te,mach)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2cmpa
@@ -6,11 +6,11 @@
       use b2mod_subsys
       IMPLICIT NONE
 *..   input parameters (unchanged on exit)
-      integer ns,nxd,nyd,nx,ny
-      real (kind=R8) :: ne(0:nxd+1,0:nyd+1),te(0:nxd+1,0:nyd+1)
+      integer ns,nCv
+      real (kind=R8) :: ne(nCv),te(nCv)
       CHARACTER REAC*9
 *..   output data
-      real (kind=R8) :: mach(0:nxd+1,0:nyd+1,0:ns-1)
+      real (kind=R8) :: mach(nCv,0:ns-1)
 c     helpers for reading in data
       integer IZMAX,IZ1MIN,IZ1MAX
       integer isdimd,iddimd,itdimd
@@ -36,7 +36,7 @@ c     log10 of rate coefficient (in cm3/s)
       real (kind=R8) ::
      *   DREAC(isdimd,itdimd,iddimd),DTMP(itdimd,iddimd),ans
 *..   local variables
-      integer is, ic, ix, iy
+      integer is, ic, iCv
       CHARACTER*2 ELNAME
       CHARACTER*200 DSN
 *..   procedures
@@ -126,24 +126,22 @@ c     filling array and computing rate
             else
               DTMP(1:ITMAXD,1:IDMAXD)=0.0_R8
             endif
-            do ix=0,nx+1
-              do iy=0,ny+1
-                logT=log10(te(ix,iy)/qe)
-                logD=log10(ne(ix,iy)/1.0e6_R8)
-                call int2d(DTMP(1:itdimd,1:iddimd),itdimd,iddimd,
-     1           DTEVD,ITMAXD,DDENSD,IDMAXD,
-     2           logT,logD,ans)
-                if(id.lt.10) then
-                  if((ic.eq.0.and..not.first_stage) .or.
-     &               (ic.eq.ncnct-1.and..not.last_stage)) then
-                    mach(ix,iy,is+ic)=0.0_R8
-                  else
-                    mach(ix,iy,is+ic)=10.0_R8**(ans-6.0_R8)
-                  end if
+            do iCv=1,nCv
+              logT=log10(te(iCv)/qe)
+              logD=log10(ne(iCv)/1.0e6_R8)
+              call int2d(DTMP(1:itdimd,1:iddimd),itdimd,iddimd,
+     1         DTEVD,ITMAXD,DDENSD,IDMAXD,
+     2         logT,logD,ans)
+              if(id.lt.10) then
+                if((ic.eq.0.and..not.first_stage) .or.
+     &             (ic.eq.ncnct-1.and..not.last_stage)) then
+                  mach(iCv,is+ic)=0.0_R8
                 else
-                  mach(ix,iy,is+ic)=ans
-                endif
-              enddo
+                  mach(iCv,is+ic)=10.0_R8**(ans-6.0_R8)
+                end if
+              else
+                mach(iCv,is+ic)=ans
+              endif
             enddo
           enddo
           is = is + ncnct
@@ -152,7 +150,7 @@ c     filling array and computing rate
           write(*,*) 'No ADAS file found : setting data to 0'
           same_element = .true.
           do while (same_element)
-            mach(0:nx+1,0:ny+1,is) = 0.0_R8
+            mach(:,is) = 0.0_R8
             ic = is
             is = is + 1
             if (is.eq.ns) then
@@ -168,17 +166,15 @@ c     filling array and computing rate
       end subroutine get_adas_data
 
       subroutine get_amjuel_data(filnam,h123,reac,crc,
-     1 nxd,nyd,nx,ny,ne,te,mach)
+     1 nCv,ne,te,mach)
       use b2mod_types
       use b2mod_constants
       IMPLICIT NONE
 #     include <eir_reac.F>
-      integer nxd,nyd,nx,ny
-      real (kind=R8) ::
-     1 ne(0:nxd+1,0:nyd+1),te(0:nxd+1,0:nyd+1),
-     2 mach(0:nxd+1,0:nyd+1),D11(0:8,0:8)
+      integer nCv
+      real (kind=R8) :: ne(nCv),te(nCv),mach(nCv),D11(0:8,0:8)
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
-      integer ir,i,j,ix,iy
+      integer ir,i,j,iCv
       real (kind=R8) ::
      1 rmin,rmax,tef,def,dnnn,tei,dej
 
@@ -213,21 +209,20 @@ c     filling array and computing rate
 
       rmin=1.0e30_R8
       rmax=1.0e-30_R8
-      do iy=0,ny+1
-        do ix=0,nx+1
-          TEF=LOG(TE(ix,iy)/qe)
-          DEF=LOG(ne(ix,iy)*1.0e-8_R8*1.0e-6_R8)
-          dnnn=0.0_R8
-          DO I=0,8
-            TEI=TEF**I
-            if(
+      do iCv=1,nCv
+        TEF=LOG(TE(iCv)/qe)
+        DEF=LOG(ne(iCv)*1.0e-8_R8*1.0e-6_R8)
+        dnnn=0.0_R8
+        DO I=0,8
+          TEI=TEF**I
+          if(
      1       h123.eq.'H.1'.or.
      1       h123.eq.'H.2'.or.
      1       h123.eq.'H.5'.or.
      1       h123.eq.'H.8'.or.
      1       h123.eq.'H.11') then ! single polynomial fit
               DNNN=DNNN+D11(I,0)*TEI
-            elseif(
+          elseif(
      1       h123.eq.'H.3'.or.
      1       h123.eq.'H.4'.or.
      1       h123.eq.'H.6'.or.
@@ -235,25 +230,24 @@ c     filling array and computing rate
      1       h123.eq.'H.9'.or.
      1       h123.eq.'H.10'.or.
      1       h123.eq.'H.12') then
-              DO J=0,8
-                DEJ=DEF**J
-                DNNN=DNNN+D11(I,J)*TEI*DEJ
-              ENDDO
-            ELSE
-c             write(*,*) 'Do not yet know about ',h123
-            ENDIF
-          enddo
-          if(dnnn.gt.log(1.0e30_R8)) then
-            dnnn=1.0e30_R8
-          elseif(dnnn.lt.log(1.0e-30_R8)) then
-            dnnn=1.0e-30_R8
-          else
-            DNNN=EXP(DNNN)
-          endif
-          rmin=min(rmin,dnnn)
-          rmax=max(rmax,dnnn)
-          mach(ix,iy)=dnnn
+            DO J=0,8
+              DEJ=DEF**J
+              DNNN=DNNN+D11(I,J)*TEI*DEJ
+            ENDDO
+          ELSE
+c           write(*,*) 'Do not yet know about ',h123
+          ENDIF
         enddo
+        if(dnnn.gt.log(1.0e30_R8)) then
+          dnnn=1.0e30_R8
+        elseif(dnnn.lt.log(1.0e-30_R8)) then
+          dnnn=1.0e-30_R8
+        else
+          DNNN=EXP(DNNN)
+        endif
+        rmin=min(rmin,dnnn)
+        rmax=max(rmax,dnnn)
+        mach(iCv)=dnnn
       enddo
       write(*,*) 'rmin,rmax= ',rmin,rmax
       return

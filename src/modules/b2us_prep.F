@@ -4973,10 +4973,10 @@
 
 
 #ifdef F2003
-        open(newunit=iout,file='info.dat')
+        open(newunit=iout,file='b2us.midplane.parameters')
 #else
         iout = newunit()
-        open(unit=iout,file='info.dat')
+        open(unit=iout,file='b2us.midplane.parameters')
 #endif
         write(iout,'(a,i4)') ' Number of outer midplane cell =', n_omp
         write(iout,'(a,f6.2,a,f6.2)') ' Ro1 = ', ro(1),' Zo1 = ', zo(1)
