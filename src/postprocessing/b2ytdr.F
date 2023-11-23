@@ -426,13 +426,13 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable :: VOLCOR(:), VOLADD(:)
       real (kind=R8), allocatable :: RLB(:)
       real (kind=R8), allocatable :: EELECA(:,:), EBULKA(:,:),
-     .           ESCD1A(:,:), ESCD2A(:,:), FREACA(:,:), FLDLMA(:,:)
+     .           ESCD1A(:,:), ESCD2A(:,:), FREACA(:,:), EDPOTA(:,:)
       real (kind=R8), allocatable :: EELECM(:,:), EBULKM(:,:),
      .           ESCD1M(:,:), ESCD2M(:,:), FREACM(:,:)
       real (kind=R8), allocatable :: EELECI(:,:), EBULKI(:,:),
      .           ESCD1I(:,:), ESCD2I(:,:), FREACI(:,:)
       real (kind=R8), allocatable :: EELECPH(:,:),EBULKPH(:,:),
-     .           ESCD1PH(:,:),ESCD2PH(:,:),FREACPH(:,:),FLDLMPH(:,:)
+     .           ESCD1PH(:,:),ESCD2PH(:,:),FREACPH(:,:),EDPOTPH(:,:)
       real (kind=R8), allocatable :: EELECP(:,:), EBULKP(:,:),
      .           ESCD1P(:,:), ESCD2P(:,:), FREACP(:,:)
       real (kind=R8), allocatable ::
@@ -4898,7 +4898,7 @@ Cxpb then rewrite the entire block
         allocate(IESTMA(NATMI,NNREAC),IBGKA(NATMI,NNREAC))
         allocate(EELECA(NATMI,NNREAC),EBULKA(NATMI,NNREAC),
      .           ESCD1A(NATMI,NNREAC),ESCD2A(NATMI,NNREAC),
-     .           FREACA(NATMI,NNREAC),FLDLMA(NATMI,NNREAC))
+     .           FREACA(NATMI,NNREAC),EDPOTA(NATMI,NNREAC))
         DO 4212 JATM=1,NATMI
           READ (IUNIN,'(A72)') ZEILE
           DO 4222 K=1,NRCA(JATM)
@@ -4926,7 +4926,7 @@ Cxpb then rewrite the entire block
             LMULPL = LMULPL .OR. (IBGKA(JATM,K) /= 0)
             READ (IUNIN,6664) EELECA(JATM,K),EBULKA(JATM,K),
      .                        ESCD1A(JATM,K),ESCD2A(JATM,K),
-     .                        FREACA(JATM,K),FLDLMA(JATM,K)
+     .                        FREACA(JATM,K),EDPOTA(JATM,K)
  4222     CONTINUE
           J=0
           DO K=1,NRCA(JATM)
@@ -4962,7 +4962,7 @@ Cxpb then rewrite the entire block
               ENDIF
               ESCD2A(JATM,J) = ESCD2A(JATM,K)
               FREACA(JATM,J) = FREACA(JATM,K)
-              FLDLMA(JATM,J) = FLDLMA(JATM,K)
+              EDPOTA(JATM,J) = EDPOTA(JATM,K)
             END IF
           END DO
           NRCA(JATM) = J
@@ -5304,7 +5304,7 @@ Cxpb then rewrite the entire block
             ENDIF
             READ (IUNIN,6664) rdum(0:5) ! EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
                                         ! ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
-                                        ! FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
+                                        ! FREACPH(JPHOT,K),EDPOTPH(JPHOT,K)
   452     CONTINUE
   451   CONTINUE
         DO 4511 JPHOT=1,NPHOTI
@@ -5322,7 +5322,7 @@ Cxpb then rewrite the entire block
         allocate(IESTMPH(NPHOTI,NNREAC),IBGKPH(NPHOTI,NNREAC))
         allocate(EELECPH(NPHOTI,NNREAC),EBULKPH(NPHOTI,NNREAC),
      .           ESCD1PH(NPHOTI,NNREAC),ESCD2PH(NPHOTI,NNREAC),
-     .           FREACPH(NPHOTI,NNREAC),FLDLMPH(NPHOTI,NNREAC))
+     .           FREACPH(NPHOTI,NNREAC),EDPOTPH(NPHOTI,NNREAC))
         DO 4512 JPHOT=1,NPHOTI
           READ (IUNIN,'(A72)') ZEILE
           DO 4522 K=1,NRCPH(JPHOT)
@@ -5350,7 +5350,7 @@ Cxpb then rewrite the entire block
             LMULPL = LMULPL .OR. (IBGKPH(JPHOT,K) /= 0)
             READ (IUNIN,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
      .                        ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
-     .                        FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
+     .                        FREACPH(JPHOT,K),EDPOTPH(JPHOT,K)
  4522     CONTINUE
           J=0
           DO K=1,NRCPH(JPHOT)
@@ -5380,7 +5380,7 @@ Cxpb then rewrite the entire block
               END IF
               ESCD2PH(JPHOT,J) = ESCD2PH(JPHOT,K)
               FREACPH(JPHOT,J) = FREACPH(JPHOT,K)
-              FLDLMPH(JPHOT,J) = FLDLMPH(JPHOT,K)
+              EDPOTPH(JPHOT,J) = EDPOTPH(JPHOT,K)
             END IF
           END DO
           NRCPH(JPHOT) = J
@@ -6489,7 +6489,7 @@ cxpb We purge the reaction list from ambiguous BGK reactions due to mass degener
               ESCD1A(JATM,K:NRCA(JATM)-1) = ESCD1A(JATM,K+1:NRCA(JATM))
               ESCD2A(JATM,K:NRCA(JATM)-1) = ESCD2A(JATM,K+1:NRCA(JATM))
               FREACA(JATM,K:NRCA(JATM)-1) = FREACA(JATM,K+1:NRCA(JATM))
-              FLDLMA(JATM,K:NRCA(JATM)-1) = FLDLMA(JATM,K+1:NRCA(JATM))
+              EDPOTA(JATM,K:NRCA(JATM)-1) = EDPOTA(JATM,K+1:NRCA(JATM))
               NRCA(JATM) = NRCA(JATM) - 1
             ELSE
               K = K + 1
@@ -6610,8 +6610,8 @@ cxpb We purge the reaction list from ambiguous BGK reactions due to mass degener
      .         ESCD2PH(JPHOT,K+1:NRCPH(JPHOT))
               FREACPH(JPHOT,K:NRCPH(JPHOT)-1) =
      .         FREACPH(JPHOT,K+1:NRCPH(JPHOT))
-              FLDLMPH(JPHOT,K:NRCPH(JPHOT)-1) =
-     .         FLDLMPH(JPHOT,K+1:NRCPH(JPHOT))
+              EDPOTPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         EDPOTPH(JPHOT,K+1:NRCPH(JPHOT))
               NRCPH(JPHOT) = NRCPH(JPHOT) - 1
             ELSE
               K = K + 1
@@ -7053,7 +7053,7 @@ cxpb We now rewrite the modified block 4
             ENDIF
             WRITE(IUNOT,6664) EELECA(IATM,K),EBULKA(IATM,K),
      .                        ESCD1A(IATM,K),ESCD2A(IATM,K),
-     .                        FREACA(IATM,K),FLDLMA(IATM,K)
+     .                        FREACA(IATM,K),EDPOTA(IATM,K)
  4223      CONTINUE
           END IF
           IATM = IATM + 1
@@ -7221,7 +7221,7 @@ cxpb We now rewrite the modified block 4
               ENDIF
               WRITE(IUNOT,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
      .                          ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
-     .                          FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
+     .                          FREACPH(JPHOT,K),EDPOTPH(JPHOT,K)
  4523       CONTINUE
  4513     CONTINUE
         ENDIF
@@ -7322,7 +7322,7 @@ cxpb We now rewrite the modified block 4
         deallocate(NHSTA,NHSTM,NHSTI,NHSTP,NHSTP1)
         deallocate(TEXTP,TEXTP1)
         deallocate(IREACA,IBULKA,ISCD1A,ISCD2A,ISCD3A,ISCD4A,ISCDEA)
-        deallocate(EELECA,EBULKA,ESCD1A,ESCD2A,FREACA,FLDLMA)
+        deallocate(EELECA,EBULKA,ESCD1A,ESCD2A,FREACA,EDPOTA)
         deallocate(IREACM,IBULKM,ISCD1M,ISCD2M,ISCD3M,ISCD4M,ISCDEM)
         deallocate(EELECM,EBULKM,ESCD1M,ESCD2M,FREACM)
         deallocate(IREACI,IBULKI,ISCD1I,ISCD2I,ISCD3I,ISCD4I,ISCDEI)
@@ -7346,7 +7346,7 @@ cxpb We now rewrite the modified block 4
           deallocate(TEXTPH)
           deallocate(IREACPH,IBULKPH)
           deallocate(ISCD1PH,ISCD2PH,ISCD3PH,ISCD4PH,ISCDEPH)
-          deallocate(EELECPH,EBULKPH,ESCD1PH,ESCD2PH,FREACPH,FLDLMPH)
+          deallocate(EELECPH,EBULKPH,ESCD1PH,ESCD2PH,FREACPH,EDPOTPH)
           deallocate(IESTMPH,IBGKPH)
         endif
         if (NCRM.GT.0) then
