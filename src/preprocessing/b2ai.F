@@ -3,11 +3,9 @@
 
       program b2ai
       use b2mod_types
-      use b2mod_rates
-      use b2mod_geo
-      use b2mod_work
-      use b2mod_plasma
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       use b2mod_xerset
       implicit none
 
@@ -75,13 +73,16 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:3), nout(0:1), nx, ny, ns, io                   !srv 22.12.09
+      integer ninp(0:2), nout(0:1), nCv, nFc, ns, io                    !srv 22.12.09
       logical file_open
+      type(mapping)  :: mpg
+      type(geometry) :: geo
+      type(B2State)  :: st
 *   ..procedures
       external prgini, prgend, cfopen
       external b2aix0, b2aidr
 *   ..initialise input/output units
-      data ninp/50,51,52,53/                                         !srv 22.12.09
+      data ninp/50,51,52/                                               !srv 22.12.09
       data nout/60,61/
 
 *-----------------------------------------------------------------------
@@ -98,11 +99,10 @@
 *     nout - (0:1) integer array.
 *     nout specifies the output unit numbers.
 *
-*     nx, ny - integer.
-*     nx and ny specify the number of interior cells along the first
-*     and the second coordinate, respectively. The total number of
-*     cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-*     It will hold that 0.le.nx and 0.le.ny.
+*     nCv, nFc - integer.
+*     nCv and nFc specify the number of control volumes and cell faces
+*     in the unstructured mesh.
+*     It will hold that 0.le.nCv and 0.le.nFc.
 *
 *     ns - integer.
 *     ns specifies the number of atomic species in the calculation.
@@ -115,22 +115,21 @@
 *   ..program start-up calls
       call prgini ('b2ai')
 *   ..open files
-      call cfopen (ninp(0),'b2ag.dat','old','formatted')
-      call cfopen (ninp(1),'b2ai.dat','old','formatted')
-      call cfopen (ninp(2),'b2fgmtry_st','old','un*formatted')
+      call cfopen (ninp(0),'b2ai.dat','old','formatted')
+      call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
       call cfopen (nout(0),'b2ai.prt','new','formatted')
-      call cfopen (nout(1),'b2fstati_st','new','un*formatted')
+      call cfopen (nout(1),'b2fstati','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain nx, ny, ns
-      call b2aix0 (ninp, nx, ny, ns)
+*   ..obtain nCv, nFc, ns
+      call b2aix0 (ninp, nCv, nFc, ns, mpg)
+*   ..allocate structures
+      call alloc_mapping(mpg)
+      call alloc_geometry(geo,mpg%nCv,mpg%nFc,mpg%nVx,mpg%nFs,
+     .  mpg%nFt,mpg%nVmxCv)
+      call createB2State (nCv, nFc, ns, st)
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_rates(nx,ny,ns)
-      call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
-      call b2aidr (ninp, nout, nx, ny, ns)
+      call b2aidr (ninp, nout, nCv, nFc, ns, geo, mpg, st)
 *   ..close graphics files
 *     (none)
 *   ..close other files
@@ -144,11 +143,9 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_work
-      call dealloc_b2mod_rates
-      call dealloc_b2mod_plasma
-      call dealloc_b2mod_indirect
+      call destroyB2State (st)
+      call dealloc_geometry (geo)
+      call dealloc_mapping (mpg)
       call prgend ()
       stop 'b2ai'
 
