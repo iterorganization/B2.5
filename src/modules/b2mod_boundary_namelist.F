@@ -1835,12 +1835,12 @@ cwdk also need to correct for degenerate faces?
 ***********************************************************************
 
       subroutine write_bcparms (ns, m)
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: ib, iout, is
       character(1) :: ap =''''
-      character(10) :: new_boundary_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -1852,7 +1852,7 @@ cwdk also need to correct for degenerate faces?
       iout = newunit()
       open(unit=iout,file='b2us.boundary.parameters')
 #endif
-      call cfverw(iout,new_boundary_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&boundary'
       write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc

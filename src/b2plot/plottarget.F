@@ -1,5 +1,5 @@
 C =====================================================================
-      subroutine plottarget(nx,ny,nbnd,ndepth,
+      subroutine plottarget(nCv,nbnd,ndepth,
      . targetcr,targetcz,target_stack,
      . ZLOD,ZHID,PHYSICAL,linlog,igraphs)
 C =====================================================================
@@ -7,7 +7,7 @@ C =====================================================================
       use b2mod_b2plot_debug
       implicit none
 #include "graphics_vars.h"
-      integer nx,ny,nbnd,ndepth,igraphs,linlog
+      integer nCv,nbnd,ndepth,igraphs,linlog
       REAL (KIND=R8) :: 
      * targetcr(1:nbnd,1:ndepth,1:2),targetcz(1:nbnd,1:ndepth,1:2),
      1 target_stack(1:nbnd,1:ndepth),ZLOD,ZHID
@@ -99,8 +99,8 @@ C =====================================================================
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               tclval(i)=zval
             enddo
           else
@@ -240,7 +240,7 @@ C Draw Mesh/Vessel if wanted
 C Draw Wall elements if wanted
       if(wall) then
         call data_copy(0)
-        call pltwall(nx,ny,physical,.true.)
+        call pltwall(nCv,physical,.true.)
       endif
       return
       end subroutine plottarget
