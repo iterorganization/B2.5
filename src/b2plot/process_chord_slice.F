@@ -1,7 +1,7 @@
 c
       subroutine process_chord_slice(filename)
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
@@ -20,7 +20,7 @@ c
       external lnblnk,chord_value,xerrab
 
       call subini ('process_chord_slice')
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         if(.not.open_file(99,filename,
      1   'data.local/chords|data/chords')) then
           call subend ()
@@ -38,8 +38,8 @@ c
           read(99,*,err=30,end=40) x1,y1,z1,xvalues(inpts+1)
         endif
         inpts=inpts+1
-        yvalues(inpts)=chord_value(nx,ny,
-     1   work(-1,-1,is,iwrk),x1,y1,z1,dx1,dy1,dz1,vector)
+        yvalues(inpts)=chord_value(mpg%nCv,
+     1   work(1,is,iwrk),x1,y1,z1,dx1,dy1,dz1,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab ('increase array size in process_chord_slice')
    30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))

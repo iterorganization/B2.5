@@ -26,7 +26,7 @@ c     the line format common
       common /line_format/ linefmt
 
       call subini ('fy')
-c      if(nidim .ne. 2) call line(2)
+#ifdef WG_TODO
       iystart=-1
       do while (region(ix,iystart,0).eq.0 .and. iystart.le.ny)
         iystart=iystart+1
@@ -145,7 +145,7 @@ c      if(nidim .ne. 2) call line(2)
       else
         ysep=iyref
       endif
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         tmpstring1=textwk(is,iwrk)
         lmin=work(ix,iystart,is,iwrk)
         lmax=work(ix,iystart,is,iwrk)
@@ -463,6 +463,7 @@ c      if(nidim .ne. 2) call line(2)
           call end_page
         endif
       enddo
+#endif
       call subend ()
       return
       end subroutine fy

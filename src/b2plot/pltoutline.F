@@ -67,29 +67,23 @@ c       call gslwsc_d(1.0_R8)
 c
       subroutine plot_arrows(is)
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_debug
-      use b2mod_indirect
       implicit none
-      integer is,ix,iy
+      integer is,iCv
       real (kind=R8) ::
      * fmax,fmay,fmmax,rmagst,rmaguv,r,s,t,u,v,sb,cb,rl,rd,
      1 uu1,vv1,uu2,vv2,brx,bzy,dfx,dfy,uuu,vvv
       intrinsic max, sqrt
 
-      fmax=arrowx(0,0,is)
-      fmay=arrowy(0,0,is)
+      fmax=arrowx(1,is)
+      fmay=arrowy(1,is)
       fmmax=sqrt(fmax**2+fmay**2)
-      do iy=-1,ny
-        do ix=-1,nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2) then
-            fmax=arrowx(ix,iy,is)
-            fmay=arrowy(ix,iy,is)
-            fmmax=max(fmmax,sqrt(fmax*fmax+fmay*fmay))
-          endif
-        enddo
+      do iCv=2,mpg%nCi
+        fmax=arrowx(iCv,is)
+        fmay=arrowy(iCv,is)
+        fmmax=max(fmmax,sqrt(fmax*fmax+fmay*fmay))
       enddo
       if(fmmax.eq.0.0_R8) then
         write(*,*) 'Cannot plot arrows for a zero field'
@@ -101,12 +95,10 @@ c
       call gslwsc_d(arroww) ! increase arrow line width
       if (acol .gt. 1) call gsplci(acol) ! change arrow colour
 #endif
-      do iy=-1,ny
-        do ix=-1,nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2) then
-            brx=cr(ix,iy)
-            bzy=cz(ix,iy)
+      do iCv=1,mpg%nCi
+        brx=geo%cvX(iCv)
+        bzy=geo%cvY(iCv)
+#ifdef WG_TODO
             s=cr(rightix(ix,iy),rightiy(ix,iy))-
      .        cr(leftix(ix,iy),leftiy(ix,iy))
             t=cz(rightix(ix,iy),rightiy(ix,iy))-
@@ -115,29 +107,27 @@ c
      .        cr(bottomix(ix,iy),bottomiy(ix,iy))
             v=cz(topix(ix,iy),topiy(ix,iy))-
      .        cz(bottomix(ix,iy),bottomiy(ix,iy))
-            rmagst=sqrt(s**2+t**2)
-            rmaguv=sqrt(u**2+v**2)
+#endif
+        rmagst=sqrt(s**2+t**2)
+        rmaguv=sqrt(u**2+v**2)
+        dfx=arrowx(iCv,is)/fmmax
+        dfy=arrowy(iCv,is)/fmmax
 
-            dfx=arrowx(ix,iy,is)/fmmax
-            dfy=arrowy(ix,iy,is)/fmmax
-
-            uuu=arrowl*(dfx*s/rmagst+dfy*u/rmaguv)
-            vvv=arrowl*(dfx*t/rmagst+dfy*v/rmaguv)
-            r=sqrt(uuu**2+vvv**2)
-            sb=vvv/r
-            cb=uuu/r
-            rl=0.2_R8*r
-            rd=0.1_R8*r
-            uu1=uuu-rl*cb+rd*sb
-            vv1=vvv-rl*sb-rd*cb
-            uu2=uuu-rl*cb-rd*sb
-            vv2=vvv-rl*sb+rd*cb
-            call lined_d(brx,bzy,brx+uuu,bzy+vvv)
-            call lined_d(brx+uuu,bzy+vvv,brx+uu1,bzy+vv1)
-            call lined_d(brx+uuu,bzy+vvv,brx+uu2,bzy+vv2)
-c           call lined_d(brx+uu1,bzy+vv1,brx+uu2,bzy+vv2)
-          endif
-        enddo
+        uuu=arrowl*(dfx*s/rmagst+dfy*u/rmaguv)
+        vvv=arrowl*(dfx*t/rmagst+dfy*v/rmaguv)
+        r=sqrt(uuu**2+vvv**2)
+        sb=vvv/r
+        cb=uuu/r
+        rl=0.2_R8*r
+        rd=0.1_R8*r
+        uu1=uuu-rl*cb+rd*sb
+        vv1=vvv-rl*sb-rd*cb
+        uu2=uuu-rl*cb-rd*sb
+        vv2=vvv-rl*sb+rd*cb
+        call lined_d(brx,bzy,brx+uuu,bzy+vvv)
+        call lined_d(brx+uuu,bzy+vvv,brx+uu1,bzy+vv1)
+        call lined_d(brx+uuu,bzy+vvv,brx+uu2,bzy+vv2)
+c       call lined_d(brx+uu1,bzy+vv1,brx+uu2,bzy+vv2)
       enddo
 #ifndef PLPLOT
       call gslwsc_d(1.0_R8)

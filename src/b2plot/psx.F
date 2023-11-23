@@ -10,9 +10,10 @@ c
       intrinsic min,max
       external lnblnk
 
+#ifdef WG_TODO
       values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)
       values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         do iy=-1,ny
           do ix=-1,nx
             work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/gs(ix,iy,0)
@@ -21,6 +22,7 @@ c
           enddo
         enddo
       enddo
+#endif
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
@@ -37,9 +39,10 @@ c
       intrinsic min,max
       external lnblnk
 
+#ifdef WG_TODO
       values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
       values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         do iy=-1,ny
           do ix=-1,nx
             work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/
@@ -49,6 +52,7 @@ c
           enddo
         enddo
       enddo
+#endif
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
