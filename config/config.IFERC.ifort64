@@ -30,6 +30,10 @@ INCMOD   = -B
 GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
 DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
+ifdef USE_OPENMP
+FCOPTS  += -fopenmp
+LDOPTS  += -fopenmp
+endif
 else
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o

@@ -357,7 +357,7 @@ cwdk move to dv
       call destroyB2SourceWork( st % srw )
       call destroyB2Rates( st % rt )
       call destroyB2RatesWork( st % rtw )
-      call destroyB2PlasmaSnapshot(  st % psnl )
+      call destroyB2PlasmaSnapshot( st % psnl )
       call destroyB2PlasmaSnapshot( st % psnc )
       call destroyB2Diagnostic( st % diag )
       call destroyB2Update( st % update )

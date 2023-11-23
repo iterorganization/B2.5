@@ -301,11 +301,11 @@ csw
 #ifndef NAGFOR
       use b2mod_input_profile
      , , only : tdata
-      use b2mod_ad
-     , , only: nncf
       use b2mod_par_opt
      & , only : par_opt_phys, npar_opt, sigma, nsigma
 #endif
+      use b2mod_ad
+     , , only: nncf
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
