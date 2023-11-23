@@ -2157,6 +2157,28 @@ c
             mach(:,0:nz-1)=0.0_R8
             call copy(mach,1.0_R8,nz,textbl)
           endif
+        case ('molrad')
+          description='Power loss due to molecule radiation (W)'
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,0:nz-1)=emolrad(:,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
+        case ('ionrad')
+          description='Power loss due to molecular ion radiation (W)'
+          if (nioni.gt.0) then
+            nz=nioni
+            mach(:,0:nz-1)=eionrad(:,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textin)
+          else
+            nz=1
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
         case ('rqae')
           description='Electron cooling rate (W) [rqahe]'
           nz=ns

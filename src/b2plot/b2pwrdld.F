@@ -116,6 +116,12 @@ c
           do is=1,natmi
             u=u-eneutrad(ix+1,iy+1,is,0)
           end do
+          do is=1,nmoli
+            u=u-emolrad(ix+1,iy+1,is,0)
+          end do
+          do is=1,nioni
+            u=u-eionrad(ix+1,iy+1,is,0)
+          end do
 #endif
           k=k+1
           ssrcm(k)=u
@@ -212,6 +218,18 @@ c*** Calculate the radiation load split by impurity species from B2
               do iatm=1,natmi !{
                 if (latmscl(iatm).eq.j)
      >            ssrcm(k)=ssrcm(k)-eneutrad(ix+1,iy+1,iatm,0)
+              end do !}
+              do imol=1,nmoli !{
+                iatm = lmolscl(imol)
+                if (iatm.eq.0) cycle
+                if (latmscl(iatm).eq.j)
+     >            ssrcm(k)=ssrcm(k)-emolrad(ix+1,iy+1,imol,0)
+              end do !}
+              do iion=1,nioni !{
+                iatm = lionscl(iion)
+                if (iatm.eq.0) cycle
+                if (latmscl(iatm).eq.j)
+     >            ssrcm(k)=ssrcm(k)-eionrad(ix+1,iy+1,iion,0)
               end do !}
 #endif
               do is=eb2spcr(j),eb2spcr(j)+nfluids(j)
