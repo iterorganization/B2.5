@@ -1,5 +1,5 @@
       subroutine find_faces(indss, inbc, bcl, ndfc, Fc, FcOr,
-     .                      m, idb)
+     .                      m, idb, ncoss)
       
       use b2mod_types
       use b2mod_indirect
@@ -8,13 +8,13 @@
       use carre_constants
       implicit none
       integer, intent(in) :: indss, ndfc, idb
-      integer, intent(inout) :: inbc, bcl
+      integer, intent(inout) :: inbc, bcl, ncoss
       integer, intent(inout) :: Fc(ndfc)
       real(R8), intent(inout) :: FcOr(ndFc)
       
       type (mapping), intent (inout) :: m
 
-      integer :: ncoss, icoss,
+      integer :: icoss,
      .           iFc1, i, imn, imx,
      .           ncout, istart
       integer, allocatable :: fcss(:), indfc(:)
