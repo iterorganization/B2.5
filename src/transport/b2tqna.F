@@ -3887,7 +3887,7 @@ cwdk same dna_ExB for all ion species
           if (switch%keps_alf.gt.0.0_R8) then
             alf0 = switch%keps_alf*(dna_ExB + switch%dna_min)*
      &         dv%ne(omp(icsepomp))*sqrt(qe/pl%te)*
-     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
+     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*alf0
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
           dzt0 = switch%keps_dzt*dna0(:,ismain)*pl%na(:,ismain)
