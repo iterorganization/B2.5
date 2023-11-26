@@ -112,6 +112,16 @@ c
       EXTERNAL GFSUB2
       external ipgeti, streql, get_Eir_hash
       external convert_eirdiag, conformal_convert
+
+      interface
+        subroutine rdneutrs(kard,dummy,ldmf,extra_time)
+        use b2mod_types
+        use eirmod_parmmod
+        integer, intent(in) :: kard, ldmf
+        real(kind=R8) :: dummy(nlimps,*)
+        logical, intent(in), optional :: extra_time
+        end subroutine rdneutrs
+      end interface
 #endif
 
 *=======================================================================

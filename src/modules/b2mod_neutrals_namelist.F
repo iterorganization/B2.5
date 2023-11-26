@@ -38,11 +38,15 @@ cank }
 #ifndef SOLPS4_3
       use eirmod_extrab25
       use eirmod_parmmod
+      use eirmod_comusr
+     , , only : ntime
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
       use eirdiag   ! IGNORE
       use ceirsrt   ! IGNORE
+      use comusr    ! IGNORE
+     , , only : ntime
 #endif
       use eirmod_solps
 #else
@@ -559,11 +563,15 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrat=nstrai+1
         else
 #ifdef B25_EIRENE
-          nstrat=nstrai+1
-          crcstra(nstrat)='T'
-          rcpos(nstrat)=0
-          rcstart(nstrat)=0
-          rcend(nstrat)=0
+          if (ntime.ge.1) then
+            nstrat=nstrai+1
+            crcstra(nstrat)='T'
+            rcpos(nstrat)=0
+            rcstart(nstrat)=0
+            rcend(nstrat)=0
+          else
+            nstrat=nstrai
+          endif
 #else
           nstrat=nstrai
 #endif
