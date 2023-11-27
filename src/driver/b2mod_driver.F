@@ -31,6 +31,7 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
+      use b2mod_transport_nspecies
       use b2mod_transport_namelist
       use b2mod_anomalous_transport
       use b2mod_transport_disruption
@@ -174,7 +175,13 @@
      &  ixfb, iyfb, ax, ay
       real (kind=R8), allocatable ::
      *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
-     *  rza0(:,:,:), rz20(:,:,:), rpt0(:,:,:), rpi0(:,:,:)
+     *  rza0(:,:,:), rz20(:,:,:), rpt0(:,:,:), rpi0(:,:,:),
+     *  lnlam(:,:), cssb(:,:,:), fna_53(:,:,:,:)
+      real (kind=R8), allocatable ::
+     *  she0(:,:,:),
+     1  sna0_ion(:,:,:,:), sna0_rec(:,:,:,:),
+     3  smq0_ion(:,:,:,:), smq0_rec(:,:,:,:),
+     5  shi0_ion(:,:,:), shi0_rec(:,:,:)
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
      &  ne_wanted_mod_time, ixfb, iyfb
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
@@ -1219,7 +1226,16 @@ csw dec2013 allow for negative values; this is tweak to scale a specific species
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1),
      *  rza0(-1:nx,-1:ny,0:ns-1), rz20(-1:nx,-1:ny,0:ns-1),
-     *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1))
+     *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1),
+     *  lnlam(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),
+     *  fna_53(-1:nx,-1:ny,0:1,0:ns-1))
+       allocate(
+     *  she0(-1:nx,-1:ny,0:3),
+     1  sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),
+     2  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1),
+     3  smq0_ion(-1:nx,-1:ny,0:3,0:ns-1),
+     4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1),
+     5  shi0_ion(-1:nx,-1:ny,0:3), shi0_rec(-1:nx,-1:ny,0:3))
        call ipgeti ('b2mndr_coronal_model', coronal)
        if(coronal.ne.0) then
           write(*,*)
@@ -1978,9 +1994,90 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
       endif
+*   ..initialise tracing routines
+      write(*,*) 'Calling alloc_b2mod_elements'
+      call alloc_b2mod_elements(ns,zn,am)
+      call alloc_b2mod_neutrals
+     & (nx,ny,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
+      natmi = 0
+      do is = 0, ns-1
+        if (is_neutral(is)) natmi = natmi+1
+      enddo
+      call xertst (natmi.le.DEF_NATM,
+     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
+cxpb initialize the data necessary for boundary conditions
+      call get_boundary_namelist
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx,ny,ns,tim)
+      else
+        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+      endif
+      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
+     > call read_neutrals_namelist(nx, ny, ns, .true.)
+cxpb initialize the numerics data
+      call ipgeti ('b2mndt_style', b2mndt_style)
+      call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
+      call alloc_b2mod_numerics(nx,ny,ns)
+      if(b2mndt_style.eq.2) then                                      !srv 07.07.21 {
+        solvemt=.false.
+        solveet=.false.
+      endif                                                           !srv 07.07.21 }
+      if(numerics_namelist.ge.1) then
+        nsmin = 0
+        nsmax = ns
+        call ipgeti ('b2news_nsmin', nsmin)
+        call ipgeti ('b2news_nsmax', nsmax)
+        nsmin = max(0,min(nsmin,ns))
+        nsmax = max(0,min(nsmax,ns))
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,.false.)
+        call write_b2mod_numerics_namelist
+      endif
+      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
+      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+cxpb read the Eirene output for 0-timestep runs and
+cxpb for neutral fluxes used in b2stbc_phys
+      nlimi = 0
+#ifdef B25_EIRENE
+      filename=fort_lc//'44'
+      call find_file(filename,ex)
+      CALL EIRENE_SETCON
+      if (use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
+      if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
+     &    delta_ids_time.gt.0.0_R8.or.filedata(ntrc_uss)) then
+        call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+     .                          natm,nmol,nion,nlimps)
+        if (use_eirene.ne.0.and.ex) then
+          open(unit=44,file=filename)
+          call ngread(ismain,iflag)
+        endif
+      endif
+      filename=fort_lc//'46_aver'
+      call find_file(filename,ex)
+      if (ex) call ntread_save
+#else
+      if (ids_save.ne.0.or.ids_av.gt.0.or.delta_ids_time.gt.0.0_R8)
+     > call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+     .                         natm,nmol,nion,nlimps)
+#endif
 c calculate additional fluxes (fhj, fhm, fhp, fht)
 !ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
       if (b2fplasma_version.lt.'03.000.007') then
+*   ..update transport coefficients and fluxes to match the current state
+        call b2xpni (nx, ny, ns, na, ni)
+        call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
+        call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,
+     1    bb, conn, vol, gs, hx, hy, hz, qz, qc, qs,
+     1    pbs, crx, cry, bzb, lnlam,
+     1    fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,
+     2    cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,
+     3    chvi, csig, csigin, calf, cthe, cthi,
+     4    cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
+     *    cvsahz_drho, cvsa_drho,
+     *    chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
+     *    cvsa_hAdp_albe, cvsa_hBdp_al,
+     5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
+     &    csig_stoch, chce_stoch)
         call b2xpen (nx, ny, ns,
      1    fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
      2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
@@ -2073,72 +2170,30 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
       save_plasma_time = tim + delta_plasma_time
       save_ids_time = tim + delta_ids_time
       save_cdfmovie_time = tim
-*   ..initialise tracing routines
-      write(*,*) 'Calling alloc_b2mod_elements'
-      call alloc_b2mod_elements(ns,zn,am)
-      call alloc_b2mod_neutrals
-     & (nx,ny,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
-      natmi = 0
-      do is = 0, ns-1
-        if (is_neutral(is)) natmi = natmi+1
-      enddo
-      call xertst (natmi.le.DEF_NATM,
-     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
-cxpb initialize the data necessary for boundary conditions
-      call get_boundary_namelist
-      if (boundary_namelist.ge.1) then
-        call initialize_b2mod_boundary(nx,ny,ns,tim)
-      else
-        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
-      endif
-      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
-     > call read_neutrals_namelist(nx, ny, ns, .true.)
-cxpb initialize the numerics data
-      call ipgeti ('b2mndt_style', b2mndt_style)
-      call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
-      call alloc_b2mod_numerics(nx,ny,ns)
-      if(b2mndt_style.eq.2) then                                      !srv 07.07.21 {
-        solvemt=.false.
-        solveet=.false.
-      endif                                                           !srv 07.07.21 }
-      if(numerics_namelist.ge.1) then
-        nsmin = 0
-        nsmax = ns
-        call ipgeti ('b2news_nsmin', nsmin)
-        call ipgeti ('b2news_nsmax', nsmax)
-        nsmin = max(0,min(nsmin,ns))
-        nsmax = max(0,min(nsmax,ns))
-        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax,.false.)
-        call write_b2mod_numerics_namelist
-      endif
-      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
-      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-cxpb read the Eirene output for 0-timestep runs and
-cxpb for neutral fluxes used in b2stbc_phys
-      nlimi = 0
-#ifdef B25_EIRENE
-      filename=fort_lc//'44'
-      call find_file(filename,ex)
-      CALL EIRENE_SETCON
-      if (use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
-      if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
-     &    delta_ids_time.gt.0.0_R8.or.filedata(ntrc_uss)) then
-        call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
-     .                          natm,nmol,nion,nlimps)
-        if (use_eirene.ne.0.and.ex) then
-          open(unit=44,file=filename)
-          call ngread(ismain,iflag)
-        endif
-      endif
-      filename=fort_lc//'46_aver'
-      call find_file(filename,ex)
-      if (ex) call ntread_save
-#else
-      if (ids_save.ne.0.or.ids_av.gt.0.or.delta_ids_time.gt.0.0_R8)
-     > call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
-     .                         natm,nmol,nion,nlimps)
-#endif
       call b2stbr_init (nx, ny, ns, BoRiS)
+*     ..compute sources due to electron-atom processes
+*    (to provide rqrad and rqahe in the first movie frame and b2brem to Eirene)
+      call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz,
+     &  na, ua, wadia, vadia, vaecrb, te, ti, po, ne, ni,
+     &  facdrift, fac_ExB,
+     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi,
+     &  rlsa, rlra, rlqa,
+     &  sna0_ion, sna0_rec, smq0_ion, smq0_rec,
+     &  she0, shi0_ion, shi0_rec)
+*   ..compute temperature equilibration term for Eirene
+      call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
+      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)
+      b2qie=0.0_R8
+      do iy=-1,ny
+        do ix=-1,nx
+          if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+
+     &        ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
+     &       (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
+          end if
+        end do
+      end do
+      b2qie(0)=sum(b2qie(1:nnreg(0)))
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.(save_cdfmovie_time-dteff/2.0_R8).and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
@@ -2389,7 +2444,26 @@ csw 09oct2012 set default potential already at this point (BCs)
      .     'b2mndr_02:itim,dtim,ntim,stack_ptr',
      1                itim,dteff,ntim,stack_ptr
         end do
-*    ..produce time-dependent file
+*   ..update transport coefficients and fluxes
+        call b2xpni (nx, ny, ns, na, ni)
+        call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
+        call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,
+     1    bb, conn, vol, gs, hx, hy, hz, qz, qc, qs,
+     1    pbs, crx, cry, bzb, lnlam,
+     1    fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,
+     2    cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,
+     3    chvi, csig, csigin, calf, cthe, cthi,
+     4    cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
+     *    cvsahz_drho, cvsa_drho,
+     *    chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
+     *    cvsa_hAdp_albe, cvsa_hBdp_al,
+     5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
+     &    csig_stoch, chce_stoch)
+        call b2xpen (nx, ny, ns,
+     1    fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+*    ..produce time-dependent file if requested
         if (save_f31.lt.0) then
           write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
@@ -3081,12 +3155,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
        close(nout(8))
       end if
 *   ..write out fort.30 and fort.31 files if not yet done
-      if (use_eirene.eq.0) then
-       if (save_f30.ne.0) call write_f30(nx, ny)
-       if (save_f31.ne.0) then
+      if (save_f30.ne.0) call write_f30(nx, ny)
+      if (save_f31.gt.0.or.use_eirene.ne.0) then
         call copy_background(nx, ny, ns, BoRiS)
         call write_f31(nx, ny)
-       end if
       end if
 *   ..produce data for last frame in movie if not yet done
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
@@ -3432,6 +3504,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 * ..return
       ncall = ncall+1
       deallocate(rsa, rra, rqa, rrd, rbr, rza0, rz20, rpt0, rpi0)
+      deallocate(she0, sna0_ion, sna0_rec, smq0_ion, smq0_rec,
+     .                 shi0_ion, shi0_rec)
+      deallocate(lnlam, cssb, fna_53)
       call dealloc_b2mod_diag
       call dealloc_b2mod_ma28
       call dealloc_b2mod_mrel

@@ -20,6 +20,7 @@
       use b2mod_file
       use b2mod_batch
       use b2mod_b2cmpa
+      use b2mod_tallies
       use b2mod_running_average
       use b2mod_external
       use b2mod_neoclassical
@@ -91,6 +92,17 @@
      *  rxf, BoRiS
       real (kind=R8) ::
      *  nstg_areshe, nstg_areshi, nstg_aresco
+      real (kind=R8) ::
+     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
+     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
+     &  rbr(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8) ::
+     *  she0(-1:nx,-1:ny,0:3),
+     1  sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),
+     2  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1),
+     3  smq0_ion(-1:nx,-1:ny,0:3,0:ns-1),
+     4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1),
+     5  shi0_ion(-1:nx,-1:ny,0:3), shi0_rec(-1:nx,-1:ny,0:3)
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt, nsmin, nsmax,        !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
      *  nstg_areshe, nstg_areshi, nstg_aresco
@@ -297,6 +309,10 @@ c therefore initialise here
 *    ..compute log-log electron rate coefficients
         call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &   rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+*   ..compute electron rate coefficients
+        call b2sqel (nx, ny, ns, ismain, ev, te,
+     &   rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
+     &   rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *    ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
          call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
@@ -358,19 +374,42 @@ ctmp.dpc
      &             fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
-         call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)  !srv 05.06.18
-         src_ni=0.0_R8
-         src_ne=0.0_R8
-         src_mo=0.0_R8
-         src_ee=0.0_R8
-         src_ei=0.0_R8
-         src_ms=0.0_R8
-         src_es=0.0_R8
-         cor_ni=0.0_R8
-         cor_ne=0.0_R8
-         cor_mo=0.0_R8
-         cor_ee=0.0_R8
-         cor_ei=0.0_R8
+          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18
+*      ..compute sources due to electron-atom processes
+*       (to provide b2brem to Eirene)
+          call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz,
+     &      na, ua, wadia, vadia, vaecrb, te, ti, po, ne, ni,
+     &      facdrift, fac_ExB,
+     &      rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi,
+     &      rlsa, rlra, rlqa,
+     &      sna0_ion, sna0_rec, smq0_ion, smq0_rec,
+     &      she0, shi0_ion, shi0_rec)
+*      ..compute temperature equilibration term for Eirene
+          call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
+          call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)
+          b2qie=0.0_R8
+          do iy=-1,ny
+            do ix=-1,nx
+              if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+                b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+
+     &            ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
+     &           (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
+              end if
+            end do
+          end do
+          b2qie(0)=sum(b2qie(1:nnreg(0)))
+          src_ni=0.0_R8
+          src_ne=0.0_R8
+          src_mo=0.0_R8
+          src_ee=0.0_R8
+          src_ei=0.0_R8
+          src_ms=0.0_R8
+          src_es=0.0_R8
+          cor_ni=0.0_R8
+          cor_ne=0.0_R8
+          cor_mo=0.0_R8
+          cor_ee=0.0_R8
+          cor_ei=0.0_R8
 *     ..compute source linearisation
          wrong_flow = .false.
          main_call = ntim.ne.0
