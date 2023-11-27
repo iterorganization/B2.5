@@ -946,11 +946,11 @@ cnv   but now for quads
       !magnetic field on intersection point 0
       ! via inverse distance weighting 
       dist_is0v1 = sqrt((isx(0) - g%vxX(v1) )**2 + 
-     &       (isy(0) - g%vxY(v1)   )**2)
+     &                  (isy(0) - g%vxY(v1)   )**2)
       dist_is0v2 = sqrt((isx(0) - g%vxX(v2)  )**2 + 
-     &       (isy(0) - g%vxY(v1)   )**2)
+     &                  (isy(0) - g%vxY(v2)   )**2)
       dist_v1v2 = sqrt((g%vxX(v2) - g%vxX(v1)  )**2 + 
-     &       (g%vxY(v2) - g%vxY(v1)   )**2)
+     &                 (g%vxY(v2) - g%vxY(v1)   )**2)
       
 
       isbb(0,0) = (dist_is0v2 * g%vxBb(v1,0) + 
