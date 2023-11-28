@@ -293,7 +293,8 @@
 *   ..read /b2cmpa/
       call b2ruzd (nget, version, ns, zamin, zamax, zn, am, .true.)
 *   ..read /b2cmpb/
-      call cfruin (nget, 8, idum, 'cbir,cbnr')
+      idum = 0
+      call cfruin_opt (nget, 8, idum, 'cbir,cbnr')
       cbirso = idum(0)
       cbirno = idum(1)
       cbirwe = idum(2)
@@ -304,7 +305,17 @@
       cbnrea = idum(7)
       call xertst (cbnrso+cbnrno+cbnrwe+cbnrea.le.cbnrmx,
      &  'faulty parameter cbnrmx')
-      call cfrure (nget, cbnrso+cbnrno+cbnrwe+cbnrea, cbrbrk, 'cbrbrk')
+      cbrbrk = 0.0_R8
+      call cfrure_opt
+     &  (nget, cbnrso+cbnrno+cbnrwe+cbnrea, cbrbrk, 'cbrbrk')
+      cbsna = 0.0_R8
+      cbsmo = 0.0_R8
+      cbshi = 0.0_R8
+      cbshe = 0.0_R8
+      cbsch = 0.0_R8
+      cbrec = 0.0_R8
+      cbmsa = 0.0_R8
+      cbmsb = 0.0_R8
       do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
        call cfrure (nget, 8*ns, cbsna(0,0,ireg), 'cbsna')
        call cfrure (nget, 8*ns, cbsmo(0,0,ireg), 'cbsmo')

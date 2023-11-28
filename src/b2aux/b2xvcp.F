@@ -95,34 +95,36 @@
        endif
       enddo
 *   ..test region boundaries in /b2cmpb/
-      call xertst (cbirso.eq.0.and.cbirso+cbnrso.eq.cbirno.and.
-     &  cbirno+cbnrno.eq.cbirwe.and.cbirwe+cbnrwe.eq.cbirea.and.
-     &  cbirea+cbnrea.le.cbnrmx, 'faulty argument cbir, cbnr')
-      do ireg = cbirso, cbirso+cbnrso-2
+      if (cbnrso.gt.0.and.cbnrno.gt.0.and.
+     &    cbnrwe.gt.0.and.cbnrea.gt.0) then
+       call xertst (cbirso.eq.0.and.cbirso+cbnrso.eq.cbirno.and.
+     &   cbirno+cbnrno.eq.cbirwe.and.cbirwe+cbnrwe.eq.cbirea.and.
+     &   cbirea+cbnrea.le.cbnrmx, 'faulty argument cbir, cbnr')
+       do ireg = cbirso, cbirso+cbnrso-2
        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
      &   'faulty argument cbrbrk, south, not monotone')
-      enddo
-      call xertst (1.0_R8.lt.cbrbrk(cbirso+cbnrso-1),
-     &  'faulty argument cbrbrk, south, endpoint')
-      do ireg = cbirno, cbirno+cbnrno-2
-       call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
-     &   'faulty argument cbrbrk, north, not monotone')
-      enddo
-      call xertst (1.0_R8.lt.cbrbrk(cbirno+cbnrno-1),
-     &  'faulty argument cbrbrk, north, endpoint')
-      do ireg = cbirwe, cbirwe+cbnrwe-2
-       call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
-     &   'faulty argument cbrbrk, west, not monotone')
-      enddo
-      call xertst (1.0_R8.lt.cbrbrk(cbirwe+cbnrwe-1),
-     &  'faulty argument cbrbrk, west, endpoint')
-      do ireg = cbirea, cbirea+cbnrea-2
-       call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
-     &   'faulty argument cbrbrk, east, not monotone')
-      enddo
-      call xertst (1.0_R8.lt.cbrbrk(cbirea+cbnrea-1),
-     &  'faulty argument cbrbrk, east, endpoint')
-*   ..test boundary cross-consistency in /b2cmpb/
+       enddo
+       call xertst (1.0_R8.lt.cbrbrk(cbirso+cbnrso-1),
+     &   'faulty argument cbrbrk, south, endpoint')
+       do ireg = cbirno, cbirno+cbnrno-2
+        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
+     &    'faulty argument cbrbrk, north, not monotone')
+       enddo
+       call xertst (1.0_R8.lt.cbrbrk(cbirno+cbnrno-1),
+     &   'faulty argument cbrbrk, north, endpoint')
+       do ireg = cbirwe, cbirwe+cbnrwe-2
+        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
+     &    'faulty argument cbrbrk, west, not monotone')
+       enddo
+       call xertst (1.0_R8.lt.cbrbrk(cbirwe+cbnrwe-1),
+     &   'faulty argument cbrbrk, west, endpoint')
+       do ireg = cbirea, cbirea+cbnrea-2
+        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
+     &    'faulty argument cbrbrk, east, not monotone')
+       enddo
+       call xertst (1.0_R8.lt.cbrbrk(cbirea+cbnrea-1),
+     &   'faulty argument cbrbrk, east, endpoint')
+*    ..test boundary cross-consistency in /b2cmpb/
 #ifdef WG_TODO
 cwdk  this check relies on nx and b2mod_indirect
 cwdk  not available anymore; needed at all with new solver?
@@ -146,38 +148,39 @@ cwdk  can probably be removed completely?
      .   'Mismatch between rightcut and cbrbrk (South)!')
       end do
 #endif
-*   ..test parameters in /b2cmpb/
-      do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
-*    ..test cbsna, cbsmo, cbshi
-       do is = 0, ns-1
-        call xertst (0.0_R8.le.cbsna(0,is,ireg).and.
+*    ..test parameters in /b2cmpb/
+       do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
+*     ..test cbsna, cbsmo, cbshi
+        do is = 0, ns-1
+         call xertst (0.0_R8.le.cbsna(0,is,ireg).and.
      &    cbsna(1,is,ireg).le.0.0_R8.and.cbsna(2,is,ireg).le.0.0_R8.and.
      &    cbsna(3,is,ireg).le.0.0_R8.and.cbsna(4,is,ireg).le.0.0_R8.and.
      &    cbsna(5,is,ireg).le.0.0_R8.and.0.0_R8.le.cbsna(6,is,ireg).and.
      &    cbsna(7,is,ireg).le.0.0_R8, 'faulty argument sign cbsna')
-        call xertst (cbsmo(3,is,ireg).le.0.0_R8.and.
+         call xertst (cbsmo(3,is,ireg).le.0.0_R8.and.
      &    cbsmo(4,is,ireg).le.0.0_R8.and.cbsmo(6,is,ireg).le.0.0_R8,
      &    'faulty argument sign cbsmo')
-        call xertst (0.0_R8.le.cbshi(0,is,ireg).and.
+         call xertst (0.0_R8.le.cbshi(0,is,ireg).and.
      &    cbshi(1,is,ireg).le.0.0_R8.and.cbshi(2,is,ireg).le.0.0_R8.and.
      &    cbshi(3,is,ireg).le.0.0_R8.and.cbshi(4,is,ireg).le.0.0_R8.and.
      &    cbshi(5,is,ireg).le.0.0_R8.and.0.0_R8.le.cbshi(6,is,ireg).and.
      &    cbshi(7,is,ireg).le.0.0_R8, 'faulty argument sign cbshi')
-       enddo
-*    ..test cbshe
-       call xertst (0.0_R8.le.cbshe(0,ireg).and.
+        enddo
+*     ..test cbshe
+        call xertst (0.0_R8.le.cbshe(0,ireg).and.
      &   cbshe(1,ireg).le.0.0_R8.and.cbshe(2,ireg).le.0.0_R8.and.
      &   cbshe(3,ireg).le.0.0_R8.and.cbshe(4,ireg).le.0.0_R8.and.
      &   cbshe(5,ireg).le.0.0_R8.and.0.0_R8.le.cbshe(6,ireg).and.
      &   cbshe(7,ireg).le.0.0_R8, 'faulty argument sign cbshe')
-*    ..test cbsch
-       call xertst (cbsch(1,ireg).le.0.0_R8.and.
+*     ..test cbsch
+        call xertst (cbsch(1,ireg).le.0.0_R8.and.
      &   cbsch(3,ireg).le.0.0_R8.and.cbsch(5,ireg).le.0.0_R8.and.
      &   cbsch(6,ireg).ge.0.0_R8.and.cbsch(7,ireg).ge.0.0_R8,
      &   'faulty argument sign cbsch')
-*    ..test cbrec, cbmsa, cbmsb
+*     ..test cbrec, cbmsa, cbmsb
 *      (there are no tests for cbrec, cbmsa, cbmsb)
-      enddo
+       enddo
+      endif
 *   ..test parameters in /b2cmpt/
       do is = 0, ns-1
        call b2xvsg (3, cfdf0(0,is), 1, 'cfdf0', '.ge.')
