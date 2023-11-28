@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ahdr (ninp, nout, nx, ns)
+      subroutine b2ahdr (ninp, nout, ns)
       use b2mod_types
       use b2mod_version
       use b2mod_constants
@@ -11,7 +11,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:0), nout(0:1), nx, ns
+      integer ninp(0:0), nout(0:1), ns
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -40,11 +40,6 @@
 *     nout specifies the output unit numbers, as follows.
 *     nout(0): formatted; provides summary printed output.
 *     nout(1): un*formatted; provides default physics parameters.
-*
-*     nx - integer, input.
-*     nx specifies the number of poloidal cells in the calculation.
-*     The cells are indexed by (-1:nx).
-*     It will hold that 1.le.nx.
 *
 *     ns - integer, input.
 *     ns specifies the number of atomic species in the calculation.
@@ -309,7 +304,6 @@
       call xertst (1.le.ninp(0).and.1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
-      call xertst (1.le.nx, 'faulty argument nx')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
