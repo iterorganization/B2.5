@@ -14,6 +14,15 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tqin
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+     & , only : dab2
+#else
+      use b2mod_eirdiag
+     & , only : dab2
+#endif
+      use b2mod_neutrals_namelist
+     &  , only : b2eatcr
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -46,7 +55,7 @@
 *     Here, ehx and ehy are the components of the ... modified electric
 *     field: ehx = -(d/dx)po - (1/(qe*ni))*(d/dx)(ni*ti)+B*hx*Vyn,
 *     ehy = -(d/dy)po - (1/(ni*te))*(d/dy)(ne*te)-B*hy*Vpn.
-*     See ... 
+*     See ...
 *
 *     The equations indicated above do not describe all the relevant
 *     transport properties of a plasma. The most significant omission
@@ -63,6 +72,7 @@
       integer iCv, is, is0, k
       real (kind=R8) ::
      *   rcx, t0, tav
+      real (kind=R8) :: na0_kin(nCv), na0_fluid(nCv), na0_tot(nCv) !! fluid and kinetic densities of main hydrogen neutral atom
 *   ..procedures
       intrinsic sqrt, log
       external xertst, sfill
@@ -70,7 +80,7 @@
 *   ..initialisation
 
 *-----------------------------------------------------------------------
-*.documentation-internal 
+*.documentation-internal
 *
 *     Description of some local variables:
 *
@@ -92,7 +102,7 @@
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
       endif
-    
+
 * ..compute classical sigin
 *   ..compute sigin.
       call sfill (nCv*2*ns*nscx, 0.0_R8, sigin, 1)
@@ -100,6 +110,13 @@
 *   ..this is only nonzero for hydrogen neutral on hydrogen ion CX
       do k = 0, nscx-1
         is0 = iscx(k)
+        if (switch%use_eirene.ne.0) then
+          na0_kin = dab2(:,b2eatcr(is0),1)
+        else
+          na0_kin = 0.0_R8
+        endif
+        na0_fluid = pl%na(:,is0)
+        na0_tot = na0_kin + na0_fluid !! sum for hybrid fluid-kinetic simulations
         do is = 0, ns-1
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
           do iCv = 1, nCv
@@ -107,13 +124,23 @@
             t0 = log(tav/(am(is0)*ev))
             rcx = switch%b2sqcx_phm0*
      &       expu(rt%rlcx(iCv,0,is,k)+rt%rlcx(iCv,1,is,k)*t0)
-! From 5.2: Using the diffusivity of room temperature hydrogen gas
-            sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)      !srv 01.07.99
-     &       *(pl%na(iCv,is0)*3.2e-15_R8)
-     &       *sqrt(pl%ti(iCv)/ev/0.026_R8)/(2.0_R8*geo%cvBb(iCv,3)**2)
-! From 5.0/5.1: Using the CX rate
-!            sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
-!     &       *rcx*pl%na(iCv,is0)/(2.0_R8*geo%cvBb(iCv,3)**2)        
+            if (switch%b2tqin_csigin_style.eq.0) then
+              ! From 5.0/5.1: Using the CX rate
+              if (switch%transport_afn.eq.0) then !! default
+                sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
+     &          *rcx*na0_tot(iCv)/(2.0_R8*geo%cvBb(iCv,3)**2)
+              else
+!! in case of advanced fluid neutrals, rcx = Kcxm and in that case the factor 1/2 should not be there
+!! ( see "Van Uytven, Wim, et al. "Effect of drifts and currents on the validity of a fluid model for the atoms in the plasma edge." Nuclear Materials and Energy 33 (2022): 101255.")
+                sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
+     &          *rcx*na0_tot(iCv)/(geo%cvBb(iCv,3)**2)
+              endif
+            else
+              ! From 5.2: Using the diffusivity of room temperature hydrogen gas
+              sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)      !srv 01.07.99
+     &         *(pl%na(iCv,is0)*3.2e-15_R8)
+     &         *sqrt(pl%ti(iCv)/ev/0.026_R8)/(2.0_R8*geo%cvBb(iCv,3)**2)
+            endif
             sigin(iCv,1,is,k) = sigin(iCv,0,is,k)
           enddo
          endif

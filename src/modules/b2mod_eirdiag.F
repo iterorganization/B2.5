@@ -9,6 +9,8 @@
      &  refluxa(:,:,:), refluxm(:,:,:),
      &  pfluxa(:,:,:), pfluxm(:,:,:),
      &  pefluxa(:,:,:), pefluxm(:,:,:),
+     &  tfluxa(:,:,:), tfluxm(:,:,:),
+     &  tefluxa(:,:,:), tefluxm(:,:,:),
      &  emiss(:,:,:), emissmol(:,:,:),
      &  srcml(:,:,:), edissml(:,:,:),
      &  wldnek(:,:), wldnep(:,:),
@@ -46,7 +48,7 @@ C
 C  eirdiag_nds_ind(IS) : is the index AFTER WHICH the data for surface IS is started in arrays '*_res'.
 C                        IF _ind(IS)<0 then this surface is skipped
 C  fnmti_b2            : the list of the triangle faces making up the non-standard surfaces
-C      
+C
 C
       CHARACTER(8), allocatable :: eirtxt(:)
 
@@ -56,23 +58,23 @@ C
       logical lhalpha,lvib
 c
 c*** Volume data:
-c***	srcml	:   power loss due to molecules, including
-c***	edissml :   power loss due to molecule dissociation
+c***    srcml   :   power loss due to molecules, including
+c***    edissml :   power loss due to molecule dissociation
 c*** Surface data:
-c***	wldnek	:   net kinetic energy deposited by neutrals
-c***	wldnep	:   energy released by recombination into molecules
-c***	wldna	:   flux of atoms impinging onto the surface
-c***	ewlda	:   their average energy
-c***	wldnm	:   flux of molecules impinging onto the surface
-c***	ewldm	:   their average energy
-c***	wldra	:   flux of reflected atoms
-c***	wldrm	:   flux of reflected molecules
-c***	wldpp	:   flux of plasma ions impinging onto the surface
-c***	wldpa	:   flux of resulting atoms
-c***	wldpm	:   flux of resulting molecules
-c***	wldpeb	:   power carried away by these atoms and molecules
-c***	wldspt	:   flux of sputtered wall material
-c***	isrftype:   surface type (iliin in Eirene)
+c***    wldnek  :   net kinetic energy deposited by neutrals
+c***    wldnep  :   energy released by recombination into molecules
+c***    wldna   :   flux of atoms impinging onto the surface
+c***    ewlda   :   their average energy
+c***    wldnm   :   flux of molecules impinging onto the surface
+c***    ewldm   :   their average energy
+c***    wldra   :   flux of reflected atoms
+c***    wldrm   :   flux of reflected molecules
+c***    wldpp   :   flux of plasma ions impinging onto the surface
+c***    wldpa   :   flux of resulting atoms
+c***    wldpm   :   flux of resulting molecules
+c***    wldpeb  :   power carried away by these atoms and molecules
+c***    wldspt  :   flux of sputtered wall material
+c***    isrftype:   surface type (iliin in Eirene)
 c***    eneutrad:   power radiated due to neutrals (only atoms at the moment)
 c
 
@@ -98,6 +100,10 @@ c
       allocate(pfluxm(nCv,max(1,nmold),1))
       allocate(pefluxa(nCv,max(1,natmd),1))
       allocate(pefluxm(nCv,max(1,nmold),1))
+      allocate(tfluxa(nCv,max(1,natmd),1))
+      allocate(tfluxm(nCv,max(1,nmold),1))
+      allocate(tefluxa(nCv,max(1,natmd),1))
+      allocate(tefluxm(nCv,max(1,nmold),1))
       allocate(emiss(nCv,1,1))
       allocate(emissmol(nCv,1,1))
       allocate(srcml(nCv,max(1,nmold),1))
@@ -161,6 +167,10 @@ c
       deallocate(pfluxm)
       deallocate(pefluxa)
       deallocate(pefluxm)
+      deallocate(tfluxa)
+      deallocate(tfluxm)
+      deallocate(tefluxa)
+      deallocate(tefluxm)
       deallocate(emiss)
       deallocate(emissmol)
       deallocate(srcml)
