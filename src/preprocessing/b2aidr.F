@@ -598,7 +598,7 @@
         call sfill (nFc*2, 0.0_R8, st%dv%vadia(1,0,is), 1)
         call sfill (nFc*2, 0.0_R8, st%dv%wadia(1,0,is), 1)
         call sfill (nFc*2, 0.0_R8, st%dv%vaecrb(1,0,is), 1)
-        call sfill (nFc, (zamin(is)+zamax(is))/2.0_R8,
+        call sfill (nCv, (zamin(is)+zamax(is))/2.0_R8,
      .    st%rt%rza(1,is), 1)
        enddo
        call b2xpne (nCv,ns,st%rt%rza,st%pl%na,zero,st%dv%ne)
