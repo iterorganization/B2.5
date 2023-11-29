@@ -8,7 +8,7 @@
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1)
+      integer ninp(0:2)
 *   ..output arguments (unspecified on entry)
       integer nCv, nFc, ns
       type(mapping), intent(inout) :: mpg
@@ -24,8 +24,8 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit ninp(0) the mesh dimensions, nx and
-*     ny, and from unit ninp(1) the number of species, ns. These units
+*     This routine reads from unit ninp(0) the number of species, ns,
+*     and from ninp(1) the mesh dimensions. These units
 *     must be connected to a formatted file. The input files must be
 *     positioned properly: the first record must begin with the text
 *     '*dimens ' or '*DIMENS ', and the next record must contain the
@@ -35,7 +35,7 @@
 *
 *  5. parameters (see also routine b2cdcv)
 *
-*     ninp - (0:1) integer array.
+*     ninp - (0:2) integer array.
 *     ninp specifies the input unit numbers.
 *
 *     nCv, nFc - integer.

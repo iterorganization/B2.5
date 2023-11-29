@@ -34,8 +34,8 @@
 *
 *     The input units are:
 *     ninp(0): formatted; provides parameters describing the state.
-*     ninp(1): formatted; provides parameters describing the geometry.
-*     ninp(2): un*formatted; provides the geometry.
+*     ninp(1): un*formatted; provides the geometry.
+*     ninp(2): un*formatted; provides an existing state to start from (optional)
 *
 *     The output units are:
 *     nout(0): formatted; provides summary printed output.
