@@ -1,6 +1,5 @@
       module b2mod_transport_namelist
       use b2mod_types
-      use b2mod_indirect
       use b2mod_ad
      & , only : nsdmax
       implicit none
