@@ -212,6 +212,7 @@ c style  switches
       integer :: b2npht_style
       integer :: fnb_drift_style
       integer :: b2sifr_styl0
+      integer :: b2tqin_csigin_style
 
 c phm switches
       real (kind=R8) :: b2sian_phm0
@@ -620,7 +621,7 @@ c Advanced fluid neutral models
         s % b2tlv0_alpha = 1.0_R8
         s % b2tlh0_alpha = 1.0_R8
         s % b2tlc0_alpha = 1.0_R8
-      else 
+      else
         s % b2tlv0_alpha = 0.0_R8
         s % b2tlh0_alpha = 0.0_R8
         s % b2tlc0_alpha = 0.0_R8
@@ -724,6 +725,7 @@ c Advanced fluid neutral models
       s % b2npht_style = 1
       s % fnb_drift_style = 1
       s % b2sifr_styl0 = 0
+      s % b2tqin_csigin_style = 0
 
       s % b2sian_phm0 = 1.0e0_R8
       s % b2sicf_phm0 = 1.0e0_R8
@@ -1228,6 +1230,8 @@ c style/mode switches
       call ipgeti ('b2npht_style', s % b2npht_style)                !srv 09.07.08
       call ipgeti ('b2tfnb_drift_style', s % fnb_drift_style)       !srv 21.06.08f
       call ipgeti ('b2sifr_styl0', s % b2sifr_styl0)
+      call ipgeti ('b2tqin_csigin_style', s % b2tqin_csigin_style)
+
 
 c phm switches
       call ipgetr ('b2sian_phm0', s % b2sian_phm0)
