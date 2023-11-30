@@ -1325,6 +1325,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           rcpos(nstrat)=0
           rcstart(nstrat)=0
           rcend(nstrat)=0
+          if (switch%recycle_afn.ne.0) then
+            do is = 0, ns-1
+              if (nint(zn(is)).eq.1) then
+                erecyc(is,nstrat) = 0.0_R8
+                mrecyc(is,nstrat) = 0.0_R8
+              end if
+            end do
+          end if
 #else
           nstrat=nstrai
 #endif
