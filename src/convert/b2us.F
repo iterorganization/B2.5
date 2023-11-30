@@ -354,7 +354,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 #ifdef B25_EIRENE
       filename='input.dat'
       call find_file(filename,file_exists)
-      if (file_exists.and.use_eirene.ne.0) then
+      if (file_exists) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) line
         rewind(45)

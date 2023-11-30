@@ -57,7 +57,7 @@
       character*40 :: axis3
 #endif
 
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, idum(0:9), io
       character lblmn*120, title*64
       character hlp_frm*22
       logical file_open

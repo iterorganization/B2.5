@@ -23,8 +23,11 @@ c
       logical vector
 
       real (kind=R8) ::
-     * x,y,z,dl,dx,dy,dz,dbr,dbz,dbphi,dbx,dby,dbs,dotprod,
-     2 phi,rt,zt
+     * x,y,z,dx,dy,dz,rt,zt
+#ifdef WG_TODO
+      real (kind=R8) ::
+     * dl,dbz,dbs,dbphi,dotprod,dbx,dby,phi
+#endif
       integer it
       logical found
 
@@ -32,7 +35,10 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      intrinsic sqrt,sin,cos,abs,atan2
+      intrinsic sqrt
+#ifdef WG_TODO
+      intrinsic abs,atan2,cos,sin
+#endif
       external chord_find, xertst
 
       call subini ('chord_tria_value')

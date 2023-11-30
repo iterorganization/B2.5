@@ -107,9 +107,10 @@ c
      *   omega(-1:nxd,-1:nyd,0:nsd_local),
      *   deltab(-1:nxd,-1:nyd,0:nsd_local),
      *   deltapar(-1:nxd,-1:nyd,0:nsd_local),
-     *   vtha(-1:nxd,-1:nyd,0:nsd_local),
+     *   vtha(-1:nxd,-1:nyd,0:nsd_local), q,
+     *   zaf(0:nsd_local-1), pxf, tif,
 #endif
-     9   zaf(0:nsd_local-1), tif, pxf, pb0
+     9   pb0
       real (kind=R8), allocatable ::
      *   pr(:), pz(:), ro(:,:), up(:,:), vv(:,:), ww(:,:),
      *   fnax(:,:), fnay(:,:), fmox(:,:), fmoy(:,:),
@@ -135,7 +136,7 @@ c
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
      2   stick_coef, plate_kb, plate_ka,
-     3   q, sput_mixed_alpha, sput_mixed_beta
+     3   sput_mixed_alpha, sput_mixed_beta
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
@@ -194,13 +195,18 @@ c
 #endif
 c
       real (kind=R8) ::
-     * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time,minpsi,maxpsi
+     * dummy,rval,time,minpsi,maxpsi
       real (kind=R8) ::
-     1 lambda, lnlam, hh, hhn, phi_app
-      integer i,j,icell,il,imi,
+     1 lambda, lnlam
+#ifdef WG_TODO
+      integer icell,idir,isign,ixn,iyn,ixf,iyf
+      real (kind=R8) ::
+     * hh, hhn, phi_app, sumjxa, sumjxi, suml(2), sumr(2)
+#endif
+      integer i,j,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
-     2 ikind,lnblnk,nz,ixl,ixr,iyb,iyt,isel,
-     3 i1,ibnd,ixn,iyn,ixf,iyf,idir,isign
+     2 ikind,lnblnk,nz,isel,
+     3 i1,ibnd
       external lnblnk
       data sput_src/1/, ismain/1/, sput_frc/0.0_R8/,
      5     plate_kb/1.6e-3_R8/, plate_ka/1.3e-5_R8/,
@@ -1522,7 +1528,10 @@ c
       end function iyy
 
       subroutine select_matrix
-      integer ix, iy, is, iso, ibc
+      integer i, is, ibc, iCv
+#ifdef WG_TODO
+      integer ix, iy, iso
+#endif
 
       cflag=.true.
       CVALUE: select case (cval)
@@ -4512,7 +4521,10 @@ c     assumes that bb is OK for 1d cases
       end subroutine select_matrix
 
       subroutine select_stack_manipulation
-      integer i,ix,iy,is,isp,iatm
+      integer i,is,isp,iatm,iCv
+#ifdef WG_TODO
+      integer ix,iy
+#endif
 
       cflag=.true.
       FVALUE: select case (cval)
@@ -5726,7 +5738,11 @@ c
       end subroutine select_parameters
 
       subroutine select_command
-      integer i,in,is,ix,iy
+      integer is,iCv
+#ifdef WG_TODO
+      integer i,in,ix,iy,ixr,iyt
+      real(kind=R8) :: b0r0
+#endif
 
       cflag=.true.
       stack_req=(/0,0,1,0,0,0,0/)
@@ -6809,7 +6825,7 @@ cdpc still in testing phase
 
       subroutine select_eirene_command
 #ifdef B25_EIRENE
-      integer i, ix, iy, is, it, iclv
+      integer i, ix, iy, is, it, iclv, iCv
       integer :: nntria(mpg%nCv)
       real (kind=R8) :: volsum,
      *   xc, yc, x1, x2, x3, x4, y1, y2, y3, y4

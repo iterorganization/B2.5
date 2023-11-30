@@ -2322,7 +2322,9 @@ cwdk also need to correct for degenerate faces?
       subroutine rc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: istra, instra, istrac, ifc, ic1, ic2
+#ifdef WG_DEBUG
       integer :: iout, ian, ien, i
+#endif
 #ifndef F2003
       integer newunit
       external newunit

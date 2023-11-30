@@ -106,14 +106,13 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
 *    ..test sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
-                call b2xvsg (nFc, csigin(:,0,is,is0)*geo%fcQalf(:,0), 1,
-     &            'csigin0', '.ge.')
-                call b2xvsg (nFc, csigin(:,1,is,is0)*geo%fcQalf(:,1), 1,
-     &            'csigin1', '.ge.')
+                wrk2 = csigin(:,0,is,is0)*geo%fcQalf(:,0)
+                call b2xvsg (nFc, wrk2, 1, 'csigin0', '.ge.')
+                wrk2 = csigin(:,1,is,is0)*geo%fcQalf(:,1)
+                call b2xvsg (nFc, wrk2, 1, 'csigin1', '.ge.')
               enddo
             enddo
           endif
-
 
 *    ..assemble densities (for fluid, kinetic, or hybrid fluid-kinetic neutrals)
           do is = 0, ns-1
@@ -146,7 +145,8 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
           !! b2tinnt_style = 1 (default)
             do is = 0, ns-1
 *   ..pre-computation of differences
-              call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,is)*pl%ti,
+              wrk = pl%na(:,is)*pl%ti
+              call diff(nCv, nFc, nVx, 0, geo, mpg, wrk,
      &          wrkVx, wrk0(:,:,is))
             enddo
             call diff(nCv, nFc, nVx, 0, geo, mpg, pl%po, wrkVx, dpo)
