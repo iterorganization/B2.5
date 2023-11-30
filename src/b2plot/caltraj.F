@@ -100,7 +100,10 @@ c                                       !number of particles per cell
       integer isclvl(0:ns-1)
       character*16 texttraj(1:ns)
 
-      integer zaehler,zaehler2,ip,randzaehler
+      integer ip,randzaehler,zaehler
+#ifdef WG_TODO
+      integer zaehler2
+#endif
 
       integer counter
 
@@ -900,11 +903,11 @@ c     --------------------------------------------------------------------------
       real (kind=R8) ::
      *   vr,vz
       real (kind=R8) ::
-     *   rechvv(1:2),rechuu(1:2),betrag
-      real (kind=R8) ::
      *   clr(-1:nx,-1:ny,1:4),clz(-1:nx,-1:ny,1:4)
-
 #ifdef WG_TODO
+      real (kind=R8) ::
+     *   rechvv(1:2),rechuu(1:2),betrag
+
 C Projection of the vvtraj upon the axis of the cell (side middle points)
 
       betrag=sqrt(((clr(ii,jj,2)-clr(ii,jj,4))**2+

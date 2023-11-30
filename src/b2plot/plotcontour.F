@@ -20,20 +20,24 @@ cxpb  INTEGER NNCUT_L
       CHARACTER*20 DEBUGSTRING
       LOGICAL PHYSICAL,DEBUG,LBLBR
 
-      INTEGER NXSTRT(99),NYSTRT(99),NXEND(99),NYEND(99),NPERD(99)
       INTEGER LRWK,LIWK,LMAP,NWRK,NOGRPS
       PARAMETER (LRWK=50000,LIWK=50000,LMAP=5000000,NWRK=50000,NOGRPS=6)
-      REAL (KIND=R4) :: RWRK(LRWK), XWRK(NWRK), YWRK(NWRK)
-      INTEGER IWRK(LIWK)
-      INTEGER MAP(LMAP),IAREA(NOGRPS),IGRP(NOGRPS)
+      REAL (KIND=R4) :: RWRK(LRWK)
+      INTEGER MAP(LMAP)
+#ifdef WG_TODO
+      INTEGER NXSTRT(99),NYSTRT(99),NXEND(99),NYEND(99),NPERD(99)
+      INTEGER IWRK(LIWK),IAREA(NOGRPS),IGRP(NOGRPS)
+      REAL (KIND=R4) :: XWRK(NWRK), YWRK(NWRK)
+      integer irold,nerrf,nerro,
+     .        ix,iy,iyt,k,kreg,ixstrt,ixend,iystrt,iyend
+      logical iniso
+#endif
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
 
-      integer irold,nerrf,nerro,nfmtz,noz,nozm,
-     .        i,ic,iCv,iiso,ix,ixl,iy,iyt,k,kreg,l,
-     .        ixstrt,ixend,iystrt,iyend
+      integer nfmtz,noz,nozm,
+     .        i,ic,iCv,iiso,ixl,l
       real rlo, rhi, zlo, zhi, zinc, zval, clv, special
-      logical iniso
       integer lnblnk, no_available_colors
       real ceil
       external lnblnk, no_available_colors, ceil, xertst

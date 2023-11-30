@@ -26,8 +26,11 @@ C =====================================================================
 #endif
       real (kind=R4) :: xbox(8),ybox(8),
      1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
-      integer iCv,icol,ici,n,i,ic,
+      integer iCv,icol,ici,n,i,
      2 no_available_colors,noz,nozm,nfmtz
+#ifdef WG_TODO
+      integer ic
+#endif
       real floor,ceil
       external floor,ceil
 

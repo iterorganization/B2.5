@@ -239,8 +239,10 @@ c
       logical found
       integer cvpos
 
+#ifdef WG_TODO
       logical inside_rectangle
-      integer i,iCv,icnt1,icnt2
+#endif
+      integer iCv,icnt1,icnt2
       real (kind=R8) ::
      *   x,y,z,r,rmin,rmax,zmin,zmax
 
@@ -255,12 +257,15 @@ c
 #ifdef EASY
       integer ir1,ir2,iz1,iz2
 #else
-      integer ip,irmin,irmax,izmin,izmax
-      integer next(0:3),
-     1 xmin(lngcov),xmax(lngcov),ymin,ymax
+      integer ip
+#ifdef WG_TODO
+      integer irmin,irmax,izmin,izmax
+      integer next(0:3)
       real (kind=R8) ::
      *   r1,r2,z1,z2
       data next/1,3,0,2/
+#endif
+      integer xmin(lngcov),xmax(lngcov),ymin,ymax
 #endif
 
       real (kind=R8) ::
