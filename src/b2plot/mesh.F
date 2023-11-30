@@ -7,8 +7,10 @@ c
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
       implicit none
+#ifdef WG_TODO
       real (kind=R8) ::
      *   x1,x2,y1,y2
+#endif
       integer lnblnk,iFc
       character*500 plotlabel
       external lnblnk

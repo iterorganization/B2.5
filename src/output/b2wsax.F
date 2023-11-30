@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wsax (nsav, nx, ny, ns, lblgm,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
+     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, rz2, pr, uac)
       use b2mod_types
       use b2mod_geo
       use b2mod_indirect
@@ -19,7 +19,7 @@
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), pr(-1:nx,-1:ny),
+     *  ne(-1:nx,-1:ny), pr(-1:nx,-1:ny),
      &  rz2(-1:nx,-1:ny,0:ns-1), uac(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -59,7 +59,7 @@
 *
 *     crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs - real*8 array, input.
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     ne, ne2, pr, uac - real*8 array, input.
+*     ne, pr, uac - real*8 array, input.
 *     See the calling routine for description.
 *
 *
