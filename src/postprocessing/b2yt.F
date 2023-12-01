@@ -177,7 +177,7 @@
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
-      call b2ytdr (ninp, nout, nx1, ny1)
+      call b2ytdr (ninp, nout, nx, ny, nx1, ny1)
 *   ..close files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

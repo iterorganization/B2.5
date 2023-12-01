@@ -52,8 +52,6 @@ module b2mod_ual_io
 #endif
     use b2mod_diag &
      & , only : nfluids, species_list, label
-    use b2mod_b2plot &
-     & , only : nxtl, nxtr
 #endif
 !    use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
@@ -66,7 +64,7 @@ module b2mod_ual_io
      & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
     use b2mod_b2plot &
-     & , only : triangle_vol, ix_e2b, wklng, alloc_b2mod_b2plot_eirene
+     & , only : triangle_vol, wklng, alloc_b2mod_b2plot_eirene
 #endif
 #elif defined(IMAS)
     use b2mod_b2plot &

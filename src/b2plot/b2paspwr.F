@@ -46,6 +46,7 @@ c
       data hlp_hda / 'Pin' /
 c======================================================================
 
+#ifdef WG_TODO
       n_hlp=2*m_hlp+m_hlpa
       isep=jsep+1
 
@@ -199,6 +200,7 @@ c*** Write the data
       write(lun,hlp_frm) lv_hlp,(eqa_hlp(j),j=1,m_hlpa),
      ,                            ((equ_hlp(i,j),j=1,m_hlp),i=1,2),1234
       close(lun)
+#endif
       return
 c======================================================================
   900 write(0,*) 'b2paspwr: unable to open ',hlp_fn

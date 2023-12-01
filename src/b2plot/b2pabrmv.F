@@ -10,10 +10,9 @@ c***
 c***  abramov.dat with the data for V. Abramov
 c----------------------------------------------------------------------
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2cmpa
       use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
@@ -23,7 +22,7 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,is
+      integer iCv,is
       integer, allocatable :: mz_hlp(:)
       real (kind=R8) :: vr,vz,vt,u
       character*2, allocatable :: hlp_al(:)
@@ -37,23 +36,23 @@ c
       end do
 c
       open(lun,file='abramov.dat')
-  710 format(a9,5x,a5,7x,a5,4x,a10,4x,
+  710 format(a6,8x,a5,7x,a5,4x,a10,4x,
      ,       a7,5x,a7,7x,a2,10x,a2,10x,a2,
      ,       10x,a2,10x,a3/)
-      write (lun,710) '   ix  iy','R (m)','Z (m)','ne (m**-3)',
+      write (lun,710) '   iCv','R (m)','Z (m)','ne (m**-3)',
      ,                'Te (eV)','Ti (eV)','vr','vz','vt','nH','nH2'
 c
-      do ix=0,nx-1
-        do iy=0,ny-1
-          u=atan2(cz(ix+1,iy)-cz(ix-1,iy),cr(ix+1,iy)-cr(ix-1,iy))
-          vr=cos(u)*abs(bb(ix,iy,0))/bb(ix,iy,3)
-          vz=sin(u)*abs(bb(ix,iy,0))/bb(ix,iy,3)
-          vt=sqrt(max(0.0_R8,1.0_R8-(bb(ix,iy,0)/bb(ix,iy,3))**2))
-          write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),ne(ix,iy),
-     ,                    te(ix,iy)/ev,ti(ix,iy)/ev,vr,vz,vt
-!WG_TODO     ,                    ,dab2(ix+1,iy+1,j_h_at,1),dmb2(ix+1,iy+1,1,1)
-  700     format(1x,1p,2i4,48e12.3)
-        end do
+      do iCv=1,mpg%nCv
+#ifdef WG_TODO
+        u=atan2(cz(ix+1,iy)-cz(ix-1,iy),cr(ix+1,iy)-cr(ix-1,iy))
+#endif
+        vr=cos(u)*abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+        vz=sin(u)*abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+        vt=sqrt(max(0.0_R8,1.0_R8-(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))**2))
+        write (lun,700) iCv,geo%cvX(iCv),geo%cvY(iCv),state%dv%ne(iCv),
+     ,                  state%pl%te(iCv)/ev,state%pl%ti(iCv)/ev,vr,vz,vt
+     ,                 ,dab2(iCv,j_h_at,1),dmb2(iCv,1,1)
+  700   format(1x,1p,i6,10e12.3)
       end do
       close (lun)
       deallocate(mz_hlp,hlp_al)

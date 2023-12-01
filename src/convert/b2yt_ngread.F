@@ -16,7 +16,7 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ngread(solps_version, eirene_format,
+      subroutine b2yt_ngread(solps_version, eirene_format, nx, ny,
      . nx1, ny1, natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1,
      . nfla, no_sputtering, savestratum, non_commensurate,
      . e_bundle_contr, jsep1, region1,
@@ -45,7 +45,8 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      integer nx1,ny1,natm1,nmol1,nion1,npls1,nfla,non_commensurate
+      integer nx,ny,nx1,ny1
+      integer natm1,nmol1,nion1,npls1,nfla,non_commensurate
       integer iatm1(natm), imol1(nmol), iion1(nion), ipls1(npls)
       integer jsep1
       integer region1(-1:nx1,-1:ny1,0:2)
