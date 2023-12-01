@@ -25,13 +25,13 @@ cxpb  INTEGER NNCUT_L
       REAL (KIND=R4) :: RWRK(LRWK)
       INTEGER MAP(LMAP)
 #ifdef WG_TODO
-      INTEGER LRWK,LIWK,LMAP,NWRK,NOGRPS
-      PARAMETER (LRWK=50000,LIWK=50000,LMAP=5000000,NWRK=50000,NOGRPS=6)
+      INTEGER LIWK,NWRK,NOGRPS
+      PARAMETER (LIWK=50000,NWRK=50000,NOGRPS=6)
       INTEGER NXSTRT(99),NYSTRT(99),NXEND(99),NYEND(99),NPERD(99)
       INTEGER IWRK(LIWK),IAREA(NOGRPS),IGRP(NOGRPS)
       REAL (KIND=R4) :: XWRK(NWRK), YWRK(NWRK)
-      integer irold,nerrf,nerro,l,
-     .        ix,iy,ixl,iyt,k,kreg,ixstrt,ixend,iystrt,iyend
+      integer irold,nerrf,nerro,
+     .        ix,iy,iyt,k,kreg,ixstrt,ixend,iystrt,iyend,ixl,l
       logical iniso
 #endif
       INTEGER LFIN(100),choose_color

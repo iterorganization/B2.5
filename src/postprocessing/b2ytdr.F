@@ -7,7 +7,7 @@ c 2002-09-11: logic revised
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ytdr (ninp, nout, nx1, ny1)
+      subroutine b2ytdr (ninp, nout, nx, ny, nx1, ny1)
 #ifdef NO_OPT
 #ifdef CRAY
 !DIR$ OPTIMIZE (-O0 -hfp0)
@@ -44,9 +44,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmfs
       use b2mod_ppout
       use b2mod_b2plot
-     , ,only: nx, ny, ns, wklng,
-     ,        ixref, iyref,
-     ,        jsep, jxa, jxi, nxtl, nxtr,
+     , ,only: ns, wklng,
      ,        natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
@@ -93,7 +91,7 @@ c 2002-09-11: logic revised
 #     include "DIMENSIONS.F"
 
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:8), nout(0:6), nx1, ny1
+      integer ninp(0:8), nout(0:6), nx, ny, nx1, ny1
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -182,12 +180,13 @@ c 2002-09-11: logic revised
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
-      integer ixref1, iyref1
+      integer ixref, iyref, ixref1, iyref1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
       integer mw_jxa1, mw_jsep1, iyped1
+      integer jsep, jxi, jxa, nxtl, nxtr
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
       integer indx, indy, indx1, indy1
       integer coriolis
@@ -596,9 +595,9 @@ c 2002-09-11: logic revised
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
       namelist /transport/ ndata, tdata, addspec,
-     1   transport_ip_filename, transport_ip_time_mod, 
-     2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end, 
-     3   scaling_strength, region_flags, no_pflux, poloidal_scaling, 
+     1   transport_ip_filename, transport_ip_time_mod,
+     2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end,
+     3   scaling_strength, region_flags, no_pflux, poloidal_scaling,
      4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
      5   elm_ix_begin, elm_ix_end, no_div
       namelist /atomic_physics_rescale/
@@ -1433,7 +1432,7 @@ c 2002-09-11: logic revised
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
 #ifdef WG_TODO
-      if (numerics_namelist.ge.1) 
+      if (numerics_namelist.ge.1)
      >  call alloc_b2mod_numerics((nx+2)*(ny+2), ns, nnreg)
 #endif
       filename='b2.neutrals.parameters'
@@ -3477,7 +3476,7 @@ cxpb This will need to be checked !!!
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
 #ifdef WG_TODO
-        if (numerics_namelist.eq.0) 
+        if (numerics_namelist.eq.0)
      >   call alloc_b2mod_numerics((nx+2)*(ny+2),ns,nnreg)
         call read_b2mod_numerics_namelist((nx+2)*(ny+2),ns,nsmin,nsmax,
      >    nnreg,on_closed_surface)
@@ -9562,7 +9561,7 @@ C  INFO FOR KINETIC-FLUID CONDENSATION PROCESS
               READ (IUNIN,'(2I6)') IDUM(0:1)
               WRITE(IUNOT,'(2I6)') IDUM(0:1)
             ENDDO
-          ENDIF        
+          ENDIF
           READ (IUNIN,'(2I6)') idum(0:1) ! NDXA,NDYA
           WRITE(IUNOT,'(2I6)') nx1+max(1,nncut*3)-1, ny1
 C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
@@ -9835,7 +9834,7 @@ cxpb  Convert fort.44 file if needed
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
-          call b2yt_ngread(solps_version, eirene_format,
+          call b2yt_ngread(solps_version, eirene_format, nx, ny,
      &     nx1, ny1, natmi1, iatm1, nmol1, imol1, nion1, iion1,
      &     ns1-nspecies1, ipls1, npls,
      &     no_sputtering, savestratum, non_commensurate,
