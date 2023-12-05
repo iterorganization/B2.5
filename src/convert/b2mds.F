@@ -52,6 +52,7 @@
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
+      use eirmod_infcop
       use eirmod_wneutrals
 #else
       use b2mod_braeir
