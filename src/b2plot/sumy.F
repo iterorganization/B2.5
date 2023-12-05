@@ -4,11 +4,11 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
+#ifdef WG_TODO
       integer ix,iy,is
 c
 c apply operator
 c
-#ifdef WG_TODO
       do is=0,ndim(2,iwrk)-1
         do ix=-1,nx
           do iy=0,ny
@@ -37,11 +37,11 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
+#ifdef WG_TODO
       integer ix,iy,is
 c
 c apply operator
 c
-#ifdef WG_TODO
       do is=0,ndim(2,iwrk)-1
         do ix=-1,nx
           do iy=1,ny

@@ -259,7 +259,7 @@ c
 
       type(mapping) :: mpg
       type(geometry) :: geo
-      integer maxchords,maxcompile,nx,ny,inpts
+      integer maxchords,maxcompile,inpts
       integer indchd(maxchords+1),indCv(maxcompile)
       real (kind=R8) ::
      * indscl(maxcompile)

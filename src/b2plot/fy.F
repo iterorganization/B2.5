@@ -8,13 +8,15 @@ c
       use b2mod_boundary_namelist
       use b2mod_subsys
       implicit none
+      integer ix
+#ifdef WG_TODO
       character*12 hlp_frm
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,
      1   y_transform
-      integer ix,ixl,ixr,iy,is,iiso,lnblnk
+      integer ixl,ixr,iy,is,iiso,lnblnk
       integer ysep,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
       logical iniso
@@ -24,6 +26,7 @@ c
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
+#endif
 
       call subini ('fy')
 #ifdef WG_TODO
