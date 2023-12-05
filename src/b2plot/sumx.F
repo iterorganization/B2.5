@@ -4,7 +4,10 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer ix,iy,is
+      integer is
+#ifdef WG_TODO
+      integer ix,iy
+#endif
 c
 c apply operator
 c
@@ -100,12 +103,12 @@ c
       use b2mod_indirect
       use b2mod_b2plot_values
       implicit none
+#ifdef WG_TODO
       integer ix,ixl,ixr,iy,is
       intrinsic min, max
 c
 c apply operator
 c
-#ifdef WG_TODO
       do is=0,ndim(2,iwrk)-1
         do iy=-1,ny
           if(nnreg(0).le.5 .or. iy.gt.jsep) then

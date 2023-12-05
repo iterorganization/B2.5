@@ -1327,6 +1327,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           rcpos(nstrat)=0
           rcstart(nstrat)=0
           rcend(nstrat)=0
+          if (switch%recycle_afn.ne.0) then
+            do is = 0, ns-1
+              if (nint(zn(is)).eq.1) then
+                erecyc(is,nstrat) = 0.0_R8
+                mrecyc(is,nstrat) = 0.0_R8
+              end if
+            end do
+          end if
 #else
           nstrat=nstrai
 #endif
@@ -2324,7 +2332,9 @@ cwdk also need to correct for degenerate faces?
       subroutine rc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: istra, instra, istrac, ifc, ic1, ic2
+#ifdef WG_DEBUG
       integer :: iout, ian, ien, i
+#endif
 #ifndef F2003
       integer newunit
       external newunit
@@ -2360,6 +2370,7 @@ cwdk also need to correct for degenerate faces?
           end if
         end do
       end do
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='rc.testout')
 #else
@@ -2380,6 +2391,7 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(a,/(10f6.2))') 'rcFcOr  ',(m%rcFcOr(i),i=ian,ien)
       end do
       close (iout)
+#endif
 
       end subroutine rc_to_struct
 

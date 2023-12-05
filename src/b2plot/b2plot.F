@@ -84,21 +84,10 @@ c
       real (kind=R8) ::
 #ifdef WG_TODO
      1   r_ref, z_ref, s_ref(-1:nyd), profile(-1:nyd),
-     2   energy_balance(-1:nxd,-1:nyd),
-     3   energy_balance_old(-1:nxd,-1:nyd),
-     4   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
      5   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
      6   uedge_c(-1:nxd,-1:nyd), uedge_v(-1:nxd,-1:nyd,1:4),
      7   corners(-1:nxd+1,-1:nyd+1),
      8   safetyfactor(-1:nyd), shear(-1:nyd), rave(-1:nyd)
-      real (kind=R8) ::
-     3   div_fna(-1:nxd,-1:nyd,0:nsd_local-1),
-     *   div_fmo(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhm(-1:nxd,-1:nyd,0:nsd_local-1),
-     *   div_fhp(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhe(-1:nxd,-1:nyd), div_fhi(-1:nxd,-1:nyd),
-     3   div_fhet(-1:nxd,-1:nyd), div_fhit(-1:nxd,-1:nyd),
-     4   div_fch(-1:nxd,-1:nyd), div_fhj(-1:nxd,-1:nyd)
       real (kind=R8) ::                                                !cjk
      *   dn_neo(-1:nxd,-1:nyd,0:nsd_local),
      *   chi_neo(-1:nxd,-1:nyd,0:nsd_local),
@@ -119,9 +108,10 @@ c
      *   omega(-1:nxd,-1:nyd,0:nsd_local),
      *   deltab(-1:nxd,-1:nyd,0:nsd_local),
      *   deltapar(-1:nxd,-1:nyd,0:nsd_local),
-     *   vtha(-1:nxd,-1:nyd,0:nsd_local),
+     *   vtha(-1:nxd,-1:nyd,0:nsd_local), q,
+     *   zaf(0:nsd_local-1), pxf, tif,
 #endif
-     9   zaf(0:nsd_local-1), tif, pxf
+     9   pb0
       real (kind=R8), allocatable ::
      *   pr(:), pz(:), ro(:,:), up(:,:), vv(:,:), ww(:,:),
      *   fnax(:,:), fnay(:,:), fmox(:,:), fmoy(:,:),
@@ -132,8 +122,12 @@ c
      *   cvsa_cl_x(:,:), cvsa_cl_y(:,:),
      *   fllim0fna_x(:,:), fllim0fna_y(:,:),
      *   fllim0fhi_x(:,:), fllim0fhi_y(:,:),
-     *   energy_balance2(:),
-     *   wall_tmp(:,:), trg_tmp(:,:)
+     *   energy_balance(:), energy_balance2(:), particle_balance(:,:),
+     *   energy_balance_old(:), wall_tmp(:,:), trg_tmp(:,:)
+      real (kind=R8), allocatable ::
+     *   div_fna(:,:), div_fmo(:,:), div_fhm(:,:), div_fhp(:,:),
+     *   div_fhe(:), div_fhi(:), div_fhet(:), div_fhit(:),
+     *   div_fch(:), div_fhj(:)
       logical, save :: first_neoclassical = .true.
       logical, save :: rerun_neoclassical = .true.
       real (kind=R8), allocatable :: mach(:,:)
@@ -143,7 +137,7 @@ c
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
      2   stick_coef, plate_kb, plate_ka,
-     3   q, sput_mixed_alpha, sput_mixed_beta
+     3   sput_mixed_alpha, sput_mixed_beta
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
@@ -202,13 +196,18 @@ c
 #endif
 c
       real (kind=R8) ::
-     * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time,minpsi,maxpsi
+     * dummy,rval,time,minpsi,maxpsi
       real (kind=R8) ::
-     1 lambda, lnlam, hh, hhn, phi_app
-      integer i,j,icell,il,imi,
+     1 lambda, lnlam
+#ifdef WG_TODO
+      integer icell,idir,isign,ixn,iyn,ixf,iyf
+      real (kind=R8) ::
+     * hh, hhn, phi_app, sumjxa, sumjxi, suml(2), sumr(2)
+#endif
+      integer i,j,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
-     2 ikind,lnblnk,nz,ixl,ixr,iyb,iyt,isel,
-     3 i1,ibnd,ixn,iyn,ixf,iyf,idir,isign
+     2 ikind,lnblnk,nz,isel,
+     3 i1,ibnd
       external lnblnk
       data sput_src/1/, ismain/1/, sput_frc/0.0_R8/,
      5     plate_kb/1.6e-3_R8/, plate_ka/1.3e-5_R8/,
@@ -333,8 +332,21 @@ c
       allocate(fnex(mpg%nCv),fney(mpg%nCv))
       allocate(fhetx(mpg%nCv),fhety(mpg%nCv))
       allocate(fhitx(mpg%nCv),fhity(mpg%nCv))
+      allocate(div_fna(mpg%nCv,0:nsd_local-1))
+      allocate(div_fmo(mpg%nCv,0:nsd_local-1))
+      allocate(div_fhm(mpg%nCv,0:nsd_local-1))
+      allocate(div_fhp(mpg%nCv,0:nsd_local-1))
+      allocate(div_fhet(mpg%nCv))
+      allocate(div_fhit(mpg%nCv))
+      allocate(div_fhe(mpg%nCv))
+      allocate(div_fhi(mpg%nCv))
+      allocate(div_fch(mpg%nCv))
+      allocate(div_fhj(mpg%nCv))
       allocate(pr(mpg%nCv),pz(mpg%nCv))
+      allocate(energy_balance(mpg%nCv))
       allocate(energy_balance2(mpg%nCv))
+      allocate(energy_balance_old(mpg%nCv))
+      allocate(particle_balance(mpg%nCv,0:nsd_local-1))
       allocate(ro(mpg%nCv,0:nsd_local-1))
       allocate(up(mpg%nCv,0:nsd_local-1))
       allocate(vv(mpg%nCv,0:nsd_local-1))
@@ -558,88 +570,29 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
      3 state%rt%rpt, state%pl%te, state%pl%ti, state%pl%tn,
      4 state%pl%po, switch%BoRiS, state%dv%fhm, state%dv%fhp,
      5 state%dv%fhj, state%dv%fht)
-#ifdef WG_TODO
 c calculate divergences of the various fluxes
       do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-              div_fna(ix,iy,is)=
-     1         +fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-     1         -fna(ix,iy,0,0,is)
-     2         +fna(topix(ix,iy),topiy(ix,iy),1,1,is)-fna(ix,iy,1,1,is)
-              div_fmo(ix,iy,is)=
-     1         +fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-     1         -fmo(ix,iy,0,0,is)
-     2         +fmo(topix(ix,iy),topiy(ix,iy),1,1,is)-fmo(ix,iy,1,1,is)
-              div_fhm(ix,iy,is)=
-     1         +fhm(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-     1         -fhm(ix,iy,0,0,is)
-     2         +fhm(topix(ix,iy),topiy(ix,iy),1,1,is)-fhm(ix,iy,1,1,is)
-              div_fhp(ix,iy,is)=
-     1         +fhp(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-     1         -fhp(ix,iy,0,0,is)
-     2         +fhp(topix(ix,iy),topiy(ix,iy),1,1,is)-fhp(ix,iy,1,1,is)
-            else
-              div_fna(ix,iy,is)=0.0_R8
-              div_fmo(ix,iy,is)=0.0_R8
-              div_fhm(ix,iy,is)=0.0_R8
-              div_fhp(ix,iy,is)=0.0_R8
-            endif
-          enddo
-        enddo
+        call div(mpg%nCv, mpg%nFc, mpg, state%dv%fna(1,0,is),
+     .   div_fna(1,is))
+        call div(mpg%nCv, mpg%nFc, mpg, state%dv%fmo(1,0,is),
+     .   div_fmo(1,is))
+        call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhm(1,0,is),
+     .   div_fhm(1,is))
+        call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhp(1,0,is),
+     .   div_fhp(1,is))
       enddo
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            div_fhet(ix,iy)=
-     1       +fhet(rightix(ix,iy),rightiy(ix,iy),0,0)-fhet(ix,iy,0,0)
-     2       +fhet(topix(ix,iy),topiy(ix,iy),1,1)-fhet(ix,iy,1,1)
-            div_fhit(ix,iy)=
-     1       +fhit(rightix(ix,iy),rightiy(ix,iy),0,0)-fhit(ix,iy,0,0)
-     2       +fhit(topix(ix,iy),topiy(ix,iy),1,1)-fhit(ix,iy,1,1)
-            div_fhe(ix,iy)=
-     1       +fhe(rightix(ix,iy),rightiy(ix,iy),0,0)-fhe(ix,iy,0,0)
-     2       +fhe(topix(ix,iy),topiy(ix,iy),1,1)-fhe(ix,iy,1,1)
-            div_fhi(ix,iy)=
-     1       +fhi(rightix(ix,iy),rightiy(ix,iy),0,0)-fhi(ix,iy,0,0)
-     2       +fhi(topix(ix,iy),topiy(ix,iy),1,1)-fhi(ix,iy,1,1)
-            div_fch(ix,iy)=
-     1       +fch(rightix(ix,iy),rightiy(ix,iy),0,0)-fch(ix,iy,0,0)
-     2       +fch(topix(ix,iy),topiy(ix,iy),1,1)-fch(ix,iy,1,1)
-            div_fhj(ix,iy)=0
-     1       +fhj(rightix(ix,iy),rightiy(ix,iy),0,0)-fhj(ix,iy,0,0)
-     2       +fhj(topix(ix,iy),topiy(ix,iy),1,1)-fhj(ix,iy,1,1)
-          else
-            div_fhet(ix,iy)=0.0_R8
-            div_fhit(ix,iy)=0.0_R8
-            div_fhe(ix,iy)=0.0_R8
-            div_fhi(ix,iy)=0.0_R8
-            div_fch(ix,iy)=0.0_R8
-            div_fhj(ix,iy)=0.0_R8
-          endif
-        enddo
-      enddo
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhet, div_fhet)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhit, div_fhit)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhe, div_fhe)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhi, div_fhi)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fch, div_fch)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhj, div_fhj)
 c calculate the energy balance
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            energy_balance(ix,iy)=-div_fhet(ix,iy)-div_fhit(ix,iy)-
-     1       div_fhj(ix,iy)
-            do is=0,ns-1
-              energy_balance(ix,iy)=energy_balance(ix,iy)-
-     1         div_fhm(ix,iy,is)*(1.0_R8-BoRiS)-div_fhp(ix,iy,is)
-            enddo
-c the viscous piece is still missing!
-          else
-            energy_balance(ix,iy)=0.0_R8
-          endif
-        enddo
+      energy_balance=-div_fhet-div_fhit-div_fhj
+      do is=0,ns-1
+        energy_balance(:)=energy_balance(:)-
+     1   div_fhm(:,is)*(1.0_R8-switch%BoRiS)-div_fhp(:,is)
       enddo
-#endif
 c additional sources
       do iCv=1,mpg%nCi
         energy_balance2(iCv)=
@@ -741,54 +694,45 @@ c charge exchange for H+/D+/T+
         enddo
       enddo
       energy_balance2(mpg%nCi+1:mpg%nCv)=0.0_R8
-#ifdef WG_TODO
 c particle balance
       do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-              pb0=-div_fna(ix,iy,is)-rsana(ix,iy,is)-rrana(ix,iy,is)+
-     1         b2stbc_sna(ix,iy,is)+b2stbr_sna(ix,iy,is)+
-     2         b2stbm_sna(ix,iy,is)+ext_sna(ix,iy,is)
-              if (is_neutral(is)) then
-                pb0=pb0+rcxna(ix,iy,is)
-              else
-                pb0=pb0-rcxna(ix,iy,is)
-              endif
-              if(is.gt.0) then
-                pb0=pb0+rsana(ix,iy,is-1)
-                if(is_neutral(is-1)) then
-                  pb0=pb0+rcxna(ix,iy,is-1)
-                endif
-              endif
-              if(is.lt.ns-1) then
-                pb0=pb0+rrana(ix,iy,is+1)
-                if(.not.is_neutral(is+1)) then
-                  pb0=pb0+rcxna(ix,iy,is+1)
-                endif
-              endif
-              particle_balance(ix,iy,is)=pb0
-            else
-              particle_balance(ix,iy,is)=0.0_R8
+        do iCv=1,mpg%nCv
+          pb0=-div_fna(iCv,is)
+     *        -state%srw%rsana(iCv,is)-state%srw%rrana(iCv,is)
+     *        +state%srw%b2stbc_sna(iCv,is)
+     *        +state%srw%b2stbr_sna(iCv,is)
+     *        +state%srw%b2stbm_sna(iCv,is)
+     *        +state_ext%sna(iCv,is)
+          if (is_neutral(is)) then
+            pb0=pb0+state%srw%rcxna(iCv,is)
+          else
+            pb0=pb0-state%srw%rcxna(iCv,is)
+          endif
+          if (is.gt.0) then
+            pb0=pb0+state%srw%rsana(iCv,is-1)
+            if (is_neutral(is-1)) then
+              pb0=pb0+state%srw%rcxna(iCv,is-1)
             endif
-          enddo
+          endif
+          if (is.lt.ns-1) then
+            pb0=pb0+state%srw%rrana(iCv,is+1)
+            if (.not.is_neutral(is+1)) then
+              pb0=pb0+state%srw%rcxna(iCv,is+1)
+            endif
+          endif
+          particle_balance(iCv,is)=pb0
         enddo
       enddo
 c alternative (failed) calculation of energy balance (elegant, but flawed)
-      do iy=-1,ny
-        do ix=-1,nx
-          energy_balance_old(ix,iy)=div_fhet(ix,iy)+div_fhit(ix,iy)-
-     1     po(ix,iy)*div_fch(ix,iy)
-          do is=0,ns-1
-            energy_balance_old(ix,iy)=energy_balance_old(ix,iy)-
-     1       ua(ix,iy,is)*div_fmo(ix,iy,is)-
-     2       rpt(ix,iy,is)*ev*div_fna(ix,iy,is)+
-     3       div_fhm(ix,iy,is)*(1.0_R8-BoRiS)-
-     4       rqahe(ix,iy,is)
-          enddo
-        enddo
+      energy_balance_old=div_fhet+div_fhet-state%pl%po*div_fch
+      do is=0,ns-1
+        energy_balance_old(:)=energy_balance_old(:)-
+     1   state%pl%ua(:,is)*div_fmo(:,is)-
+     2   state%rt%rpt(:,is)*ev*div_fna(:,is)+
+     3   div_fhm(:,is)*(1.0_R8-switch%BoRiS)-
+     4   state%srw%rqahe(:,is)
       enddo
+#ifdef WG_TODO
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
@@ -1429,10 +1373,14 @@ c
             deallocate(fetx,fety,fhex,fhey,fhjx,fhjy,fhtx,fhty)
             deallocate(fnex,fney,fhix,fhiy)
             deallocate(fhetx,fhety,fhitx,fhity)
+            deallocate(div_fna,div_fmo,div_fhm,div_fhp)
+            deallocate(div_fhe,div_fhi,div_fch,div_fhj)
+            deallocate(div_fhet,div_fhit)
             deallocate(cvsa_cl_x,cvsa_cl_y)
             deallocate(fllim0fna_x,fllim0fna_y)
             deallocate(fllim0fhi_x,fllim0fhi_y)
-            deallocate(energy_balance2)
+            deallocate(energy_balance,energy_balance2,particle_balance)
+            deallocate(energy_balance_old)
             deallocate(mach)
             call dealloc_b2mod_diag
             call dealloc_b2mod_wall
@@ -1517,10 +1465,14 @@ c
           deallocate(fetx,fety,fhex,fhey,fhjx,fhjy,fhtx,fhty)
           deallocate(fnex,fney,fhix,fhiy)
           deallocate(fhetx,fhety,fhitx,fhity)
+          deallocate(div_fna,div_fmo,div_fhm,div_fhp)
+          deallocate(div_fhe,div_fhi,div_fch,div_fhj)
+          deallocate(div_fhet,div_fhit)
           deallocate(cvsa_cl_x,cvsa_cl_y)
           deallocate(fllim0fna_x,fllim0fna_y)
           deallocate(fllim0fhi_x,fllim0fhi_y)
-          deallocate(energy_balance2)
+          deallocate(energy_balance,energy_balance2,particle_balance)
+          deallocate(energy_balance_old)
           deallocate(mach)
           call dealloc_b2mod_diag
           call dealloc_b2mod_wall
@@ -1582,7 +1534,10 @@ c
       end function iyy
 
       subroutine select_matrix
-      integer ix, iy, is, iso, ibc
+      integer i, is, ibc, iCv
+#ifdef WG_TODO
+      integer ix, iy, iso
+#endif
 
       cflag=.true.
       CVALUE: select case (cval)
@@ -1697,7 +1652,6 @@ c
           description='Electric potential (V)'
           nz=1
           call copy(state%pl%po,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case('dfhe')
           description='\mtD\dfhe (W)'
           nz=1
@@ -1738,7 +1692,6 @@ c
           description='\mtD\dfhp (W)'
           nz=ns
           call copy(div_fhp,1.0_R8,nz,textpl)
-#endif
         case('zeff')
           description='Z_{eff}'
           nz=1
@@ -1942,17 +1895,14 @@ c
           write(*,*) 'ceqp min/max ',minval(state%co%ceqp),
      .                               maxval(state%co%ceqp)
           call copy(state%co%ceqp,1.0_R8,nz,textbl)
-#ifdef WG_TODO
        case('ebld')
           description='Energy balance (-divergence of fluxes) (W)'
           nz=1
           call copy(energy_balance,1.0_R8,nz,textbl)
-#endif
        case('ebls')
           description='Energy balance (sources) (W)'
           nz=1
           call copy(energy_balance2,1.0_R8,nz,textbl)
-#ifdef WG_TODO
        case('ebal')
           description='Energy balance (W)'
           nz=1
@@ -1961,7 +1911,6 @@ c
           description='Particle balance (particles)'
           nz=ns
           call copy(particle_balance,1.0_R8,nz,textpl)
-#endif
        case('hx')
           description='hx (m)'
           nz=1
@@ -4600,7 +4549,10 @@ c     assumes that bb is OK for 1d cases
       end subroutine select_matrix
 
       subroutine select_stack_manipulation
-      integer i,ix,iy,is,isp,iatm
+      integer i,is,isp,iatm,iCv
+#ifdef WG_TODO
+      integer ix,iy
+#endif
 
       cflag=.true.
       FVALUE: select case (cval)
@@ -5814,7 +5766,11 @@ c
       end subroutine select_parameters
 
       subroutine select_command
-      integer i,in,is,ix,iy
+      integer is,iCv
+#ifdef WG_TODO
+      integer i,in,ix,iy,ixr,iyt
+      real(kind=R8) :: b0r0
+#endif
 
       cflag=.true.
       stack_req=(/0,0,1,0,0,0,0/)
@@ -6897,7 +6853,7 @@ cdpc still in testing phase
 
       subroutine select_eirene_command
 #ifdef B25_EIRENE
-      integer i, ix, iy, is, it, iclv
+      integer i, ix, iy, is, it, iclv, iCv
       integer :: nntria(mpg%nCv)
       real (kind=R8) :: volsum,
      *   xc, yc, x1, x2, x3, x4, y1, y2, y3, y4

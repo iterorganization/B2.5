@@ -2641,31 +2641,31 @@ c new CDF movie option
           if (idx.eq.0.and.continued) then
             write(*,*) "Checking if IMAS data-entry already exists : ",
      .       trim(database), shot, run
-c$$$            call imas_open_env(treename, shot, run, idx,
-c$$$     .       username, database, version, status)
-            call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-     .           username, database, version, idx )
-            call ual_open_pulse( idx, OPEN_PULSE, '', status )
+            call imas_open_env(treename, shot, run, idx,
+     .       username, database, version, status)
+c$$$            call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .           username, database, version, idx )
+c$$$            call ual_open_pulse( idx, OPEN_PULSE, '', status )
             if (status.ne.0) then
               if (database.eq.'ITER') then
                 write(*,*) "Did not find ITER database IDS file."
                 write(*,*) "Checking if old ''iter'' case exists."
-c$$$                call imas_open_env(treename, shot, run, idx,
-c$$$     .           username, 'iter', version, status)
-                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-     .               username, 'iter', version, idx )
-                call ual_open_pulse( idx, OPEN_PULSE, '', status )
+                call imas_open_env(treename, shot, run, idx,
+     .           username, 'iter', version, status)
+c$$$                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .               username, 'iter', version, idx )
+c$$$                call ual_open_pulse( idx, OPEN_PULSE, '', status )
                 if (status.eq.0) then
                   database = 'iter'
                   write(*,*) "Old database case found."
                   write(*,*) "Will be rewritten in new location."
                 end if
               else if (database.eq.'iter') then
-c$$$                call imas_open_env(treename, shot, run, idx,
-c$$$     .           username, 'ITER', version, status)
-                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-     .               username, 'ITER', version, idx )
-                call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
+                call imas_open_env(treename, shot, run, idx,
+     .           username, 'ITER', version, status)
+c$$$                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .               username, 'ITER', version, idx )
+c$$$                call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
                 database = 'ITER'
               end if
             end if
@@ -2773,11 +2773,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
                     end if
                     if (database.eq.'iter') database = 'ITER'
-c$$$                    call imas_open_env(treename, shot, run, idx,
-c$$$     .                username, database, version, status)
-                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
-     .                run, username, database, version, idx )
-                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
+                    call imas_open_env(treename, shot, run, idx,
+     .                username, database, version, status)
+c$$$                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
+c$$$     .                run, username, database, version, idx )
+c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
                   end if
                   if (continued) then
                     if (process_ids) then
@@ -3172,31 +3172,31 @@ c$$$     .                username, database, version, status)
         else if (continued) then
           write(*,*) "Checking if IMAS data-entry already exists : ",
      .      trim(database), shot, run
-c$$$          call imas_open_env(treename, shot, run, idx,
-c$$$     .      username, database, version, status)
-          call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-     .         username, database, version, idx )
-          call ual_open_pulse( idx, OPEN_PULSE, '', status )
+          call imas_open_env(treename, shot, run, idx,
+     .      username, database, version, status)
+c$$$          call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .         username, database, version, idx )
+c$$$          call ual_open_pulse( idx, OPEN_PULSE, '', status )
           if (status.ne.0) then
             if (database.eq.'ITER') then
               write(*,*) "Did not find ITER database IDS file."
               write(*,*) "Checking if old ''iter'' case exists."
-c$$$              call imas_open_env(treename, shot, run, idx,
-c$$$     .         username, 'iter', version, status)
-              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-     .             username, 'iter', version, idx )
-              call ual_open_pulse( idx, OPEN_PULSE, '', status )
+              call imas_open_env(treename, shot, run, idx,
+     .         username, 'iter', version, status)
+c$$$              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .             username, 'iter', version, idx )
+c$$$              call ual_open_pulse( idx, OPEN_PULSE, '', status )
               if (status.eq.0) then
                 database = 'iter'
                 write(*,*) "Old database case found."
                 write(*,*) "Will be rewritten in new location."
               end if
             else if (database.eq.'iter') then
-c$$$              call imas_open_env(treename, shot, run, idx,
-c$$$     .         username, 'ITER', version, status)
-              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-     .             username, 'ITER', version, idx )
-              call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
+              call imas_open_env(treename, shot, run, idx,
+     .         username, 'ITER', version, status)
+c$$$              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .             username, 'ITER', version, idx )
+c$$$              call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
               database = 'ITER'
             end if
           end if
@@ -3299,11 +3299,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
                   end if
                   if (database.eq.'iter') database = 'ITER'
-c$$$                  call imas_open_env(treename, shot, run, idx,
-c$$$     .              username, database, version, status)
-                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
-     .                run, username, database, version, idx )
-                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
+                  call imas_open_env(treename, shot, run, idx,
+     .              username, database, version, status)
+c$$$                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
+c$$$     .                run, username, database, version, idx )
+c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
                 end if
                 if (continued) then
                   write(*,*)

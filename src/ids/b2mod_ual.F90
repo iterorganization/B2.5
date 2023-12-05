@@ -145,11 +145,11 @@ contains
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
-!!$          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-!!$             & database, version, status )
-          call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
-             & database, version, idx )
-          call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', status )
+          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+             & database, version, status )
+!!$          call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+!!$             & database, version, idx )
+!!$          call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', status )
           if (status.ne.0) then
             write(0,*) 'Opening IMAS database failed !'
             write(0,*) 'Make sure it exists or create it with the command:'
@@ -338,11 +338,11 @@ contains
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
-!!$          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-!!$             & database, version, status )
-          call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
-             & database, version, idx )
-          call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', status )
+          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+             & database, version, status )
+!!$          call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+!!$             & database, version, idx )
+!!$          call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', status )
           if (status.ne.0) then
             write(0,*) 'Opening IMAS database failed !'
             write(0,*) 'Make sure it exists or create it with the command:'

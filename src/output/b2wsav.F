@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wsav (nsav, nx, ny, ns, lblgm, crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
+      subroutine b2wsav (nsav, nx, ny, ns, lblgm,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch)
       use b2mod_types
       use b2mod_rates
@@ -13,12 +12,6 @@
 *   ..input arguments (unchanged on exit)
       integer nsav, nx, ny, ns
       character lblgm*120
-      real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), qc(-1:nx,-1:ny,0:1),
-     &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -56,7 +49,7 @@
      1  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..procedures
       external subini, subend
-      external b2xpne, b2xppr, b2xpxc, b2wsax
+      external b2xpne_st, b2xppr_st, b2xpxc, b2wsax
 
 *-----------------------------------------------------------------------
 *.computation
@@ -67,17 +60,15 @@
 
 * ..produce output
 *   ..compute auxiliaries
-#ifdef WG_TODO
-      call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
-      call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-      call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-#endif
+      call b2xpne_st (nx, ny, ns, rza, na, ne_ext, ne)
+      call b2xpne_st (nx, ny, ns, rz2, na, ne2_ext, ne2)
+      call b2xppr_st (nx, ny, ns, ne, na, te, ti, pr)
       do is = 0, ns-1
        call b2xpxc (nx, ny, ua(-1,-1,is), uac(-1,-1,is))
       enddo
 *   ..produce output
       call b2wsax (nsav, nx, ny, ns, lblgm,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
+     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, rz2, pr, uac)
 
 * ..return
       call subend ()

@@ -8,4 +8,4 @@
         ceil=int(x)
       endif
       return
-      end
+      end function ceil

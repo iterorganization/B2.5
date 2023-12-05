@@ -56,9 +56,9 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv)
-      real (kind=R8) :: !djm Jan2017
-     &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
-     &  shetmp(nCv,0:3), shitmp(nCv,0:3)!, shntmp(nCv,0:3)
+!WG_TODO      real (kind=R8) :: !djm Jan2017
+!WG_TODO     &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
+!WG_TODO     &  shetmp(nCv,0:3), shitmp(nCv,0:3)!, shntmp(nCv,0:3)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -90,10 +90,10 @@
       endif
 
 cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
-      snatmp = sr%sna
-      smotmp = sr%smo
-      shetmp = sr%she
-      shitmp = sr%shi
+!WG_TODO      snatmp = sr%sna
+!WG_TODO      smotmp = sr%smo
+!WG_TODO      shetmp = sr%she
+!WG_TODO      shitmp = sr%shi
 !!      shntmp = sr%shn
 
 * ..include the contributions from dtim

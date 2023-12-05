@@ -6,12 +6,14 @@ c
       use b2mod_indirect
       use b2mod_b2plot_values
       implicit none
+      integer iy
+#ifdef WG_TODO
       character*12 hlp_frm
       character*32 tmpstring1,tmpstring2
       character*256 tmpstring, titlestring
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,xmult
-      integer ix,iy,is,lnblnk,ixstart,ixend,len_of_digits
+      integer ix,is,lnblnk,ixstart,ixend,len_of_digits
 
 c     the line format common
       character*10 linefmt
@@ -20,7 +22,6 @@ c     the line format common
       intrinsic min,max,mod,sqrt
       external xertst,lnblnk,len_of_digits
 
-#ifdef WG_TODO
       ixstart=-1
       do while (region(ixstart,iy,0).eq.0 .and. ixstart.le.nx)
         ixstart=ixstart+1
