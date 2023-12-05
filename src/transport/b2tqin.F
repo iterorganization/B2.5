@@ -15,7 +15,7 @@
       use b2mod_ad
      & , only : ncall_b2tqin
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : dab2
 #else
       use b2mod_eirdiag

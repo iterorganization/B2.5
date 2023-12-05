@@ -14,7 +14,7 @@
       use b2us_map
       use b2us_plasma
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : dab2, rfluxa, pfluxa, tfluxa
 #else
       use b2mod_eirdiag
