@@ -24,7 +24,7 @@
       use b2mod_b2zhco
      & , only: zhflcorr, zhcscorr, zhcscorr_vq,                         !som 21.03.21
      &         zh_imp_analyt, zh_analyt_mdf,
-     &         zhflcorrh, zh_dist_fun, zh_tf_toff, 
+     &         zhflcorrh, zh_dist_fun, zh_vis_type, zh_tf_toff, 
      &         alloc_b2mod_zhco_amfact, amfact,
      &         amfact_on
       use b2mod_zhfrtf
@@ -129,7 +129,6 @@
       integer, save :: Zhdanov_test = 0                                 !som 16.06.21
       integer, save :: Zhdanov_cond = 1                                 !som 22.06.21
       integer, save :: Zhdanov_visu = 1                                 !som 10.08.21
-      integer, save :: zh_vis_type = 0                                  !som 13.01.22
       integer, save :: icase = 0                                        !som 05.03.21
       integer, save :: mode = 1                                         !som 10.06.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21

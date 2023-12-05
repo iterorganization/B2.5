@@ -115,7 +115,13 @@
      &  c_pi_hA_an(0:nspecies-1),
      &  tau_Zh(0:nspecies-1,0:nspecies-1),
      &  eta_cl(-1:nx,-1:ny,0:ns-1),
+     &  eta_cl_a_only(-1:nx,-1:ny,0:ns-1),
      &  eta_cl_fl(-1:nx,-1:ny,0:ns-1),
+     &  eta_cl_a_only_fl(-1:nx,-1:ny,0:ns-1),
+     &  eta_uAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
+     &  eta_uBdp(-1:nx,-1:ny,0:nspecies-1),
+     &  eta_uAdp_fl(-1:nx,-1:ny,0:ns-1,0:nspecies-1),
+     &  eta_uBdp_fl(-1:nx,-1:ny,0:ns-1),
      &  eta_hAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
      &  eta_hBdp(-1:nx,-1:ny,0:nspecies-1),
      &  t0, t1, czetap, zetap(-1:nx,-1:ny), I_al(0:nspecies-1),
@@ -142,7 +148,15 @@
      &  kappa_rTA(0:nspecies-1,0:nspecies-1),kappa_rTB(0:nspecies-1),
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1)
 
       save ncall
       data ncall/0/
@@ -496,6 +510,7 @@
             c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
             c_R_w (ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
           endif
+
 *    ..calculate the classical eta coefficient including charge state correction
           eta_cl(ix,iy,0:ns-1) = 0.0_R8
           do i = 0, nspecies-1
@@ -512,6 +527,12 @@
      &        (temp+zhcscorr*2.0_R8*c_pi_uB(i)*tau_Zh(i,i)*
      &        (z2n_xy(ix,iy,i)/(nal(ix,iy,i)*iz**2)-1.0_R8))
             enddo
+
+            do j = 0, nspecies-1
+              eta_uAdp(ix,iy,i,j) = c_pi_uA(i,j)*tau_Zh(i,j)
+            enddo
+
+            eta_uBdp(ix,iy,i) = 2.0_R8*c_pi_uB(i)*tau_Zh(i,i)
 
 *    ..the heat flux dependent part
             do j = 0, nspecies-1
@@ -535,6 +556,40 @@
 *    ..apply flux limiting
             eta_cl_fl(ix,iy,is) = eta_cl(ix,iy,is)*
      &       cF_limv(is)
+          enddo
+
+*    ..the velocity-dependent part improved form
+          do i = 0, nspecies-1
+*    ..apply bx^2
+            do j = 0, nspecies-1
+              eta_uAdp(ix,iy,i,j) = eta_uAdp(ix,iy,i,j)*
+     &         (bb(ix,iy,0)/bb(ix,iy,3))**2
+            enddo
+
+            eta_uBdp(ix,iy,i) = eta_uBdp(ix,iy,i)*
+     &       (bb(ix,iy,0)/bb(ix,iy,3))**2
+
+            do iz= 1, znnucl_int(i)
+              eta_cl_a_only(ix,iy,nucl2s(i,iz)) =
+     &         na(ix,iy,nucl2s(i,iz))*ti(ix,iy)*
+     &         na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
+     &        (eta_uAdp(ix,iy,i,i)+zhcscorr*eta_uBdp(ix,iy,i)*
+     &        (1/Ia(ix,iy,nucl2s(inucl,iz))-1.0_R8))
+
+*    ..apply flux limiting
+              eta_cl_a_only_fl(ix,iy,nucl2s(i,iz)) =
+     &         eta_cl_a_only(ix,iy,nucl2s(i,iz))*
+     &         cF_limv(nucl2s(i,iz))
+
+              do j = 0, nspecies-1
+                eta_uAdp_fl(ix,iy,nucl2s(i,iz),j) = 
+     &           eta_uAdp(ix,iy,i,j)*
+     &           cF_limv(nucl2s(i,iz))
+              enddo
+
+              eta_uBdp_fl(ix,iy,nucl2s(i,iz)) = eta_uBdp(ix,iy,i)*
+     &         cF_limv(nucl2s(i,iz))
+            enddo
           enddo
 
 *    ..the heat flux dependent part
@@ -674,21 +729,47 @@
       cvsa_drho   = 0.0_R8                                               !srv 30.01.23
       cvsahz_drho = 0.0_R8                                               !srv 30.01.23
       volhz = hz*vol
+      if (zh_vis_type.eq.0 .or. zh_vis_type.eq.1) then
+        do is = 0, ns-1
+          wrk(-1:nx,-1:ny) =
+     &     eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     wrk, cvsahz0(-1,-1,0,is))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     wrk, cvsa0(-1,-1,0,is))
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_cl_fl(-1,-1,is), cvsahz_drho(-1,-1,0,is))
+          wrk(-1:nx,-1:ny) =
+     &     eta_cl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     wrk, cvsahz0_nofl(-1,-1,0,is))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     eta_cl_fl(-1,-1,is), cvsa_drho(-1,-1,0,is))
+        enddo
+      else if (zh_vis_type.eq.2) then
+        do is = 0, ns-1
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_cl_a_only_fl(-1:nx,-1:ny,is), cvsahz0(-1,-1,0,is))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     eta_cl_a_only_fl(-1:nx,-1:ny,is), cvsa0(-1,-1,0,is))
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_cl_a_only(-1:nx,-1:ny,is), cvsahz0_nofl(-1,-1,0,is))
+        enddo
+      endif 
+
+*    ..additional velocity-dependent viscosity on the cell boundary
       do is = 0, ns-1
-        wrk(-1:nx,-1:ny) =
-     &   eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+        do j = 0, nspecies-1
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_uAdp_fl(-1,-1,is,j), cvsahz_uAdp_fl(-1,-1,0,is,j))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     eta_uAdp_fl(-1,-1,is,j), cvsa_uAdp_fl(-1,-1,0,is,j))
+        enddo
+
         call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &   wrk, cvsahz0(-1,-1,0,is))
+     &   eta_uBdp_fl(-1,-1,is), cvsahz_uBdp_fl(-1,-1,0,is))
         call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &   wrk, cvsa0(-1,-1,0,is))
-        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &   eta_cl_fl(-1,-1,is), cvsahz_drho(-1,-1,0,is))
-        wrk(-1:nx,-1:ny) =
-     &   eta_cl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
-        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &   wrk, cvsahz0_nofl(-1,-1,0,is))
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &   eta_cl_fl(-1,-1,is), cvsa_drho(-1,-1,0,is))
+     &   eta_uBdp_fl(-1,-1,is), cvsa_uBdp_fl(-1,-1,0,is))
       enddo
 
 *    ..ion heat flux dependent viscosity on the cell boundary
@@ -759,6 +840,45 @@
      &         f_luc_et(ix,iy)
               cvsa_drho_luc(ix,iy,0,is) = cvsa_drho(ix,iy,0,is)*
      &         f_luc_et(ix,iy)
+            endif
+          enddo
+        enddo
+      enddo
+
+*    ..apply Luciani correction for the addtional part of the 
+*      velocity-dependent viscosity
+      do is = 0, ns-1
+        do j = 0, nspecies-1
+          do iy = -1, ny
+            do ix = -1, nx                                               !srv 30.01.23
+              if (on_closed_surface(ix,iy) .and. 
+     &                                   .not.is_neutral(is)) then
+                cvsahz_uAdp_luc(ix,iy,0,is,j) =
+     &           cvsahz_uAdp_fl(ix,iy,0,is,j)*
+     &                                    f_luc_et(ix,iy)
+                cvsa_uAdp_luc(ix,iy,0,is,j) =
+     &           cvsa_uAdp_fl(ix,iy,0,is,j)*f_luc_et(ix,iy)
+              else
+                cvsahz_uAdp_luc(ix,iy,0,is,j) =
+     &           cvsahz_uAdp_fl(ix,iy,0,is,j)
+                cvsa_uAdp_luc(ix,iy,0,is,j) =
+     &           cvsa_uAdp_fl(ix,iy,0,is,j)
+              endif
+            enddo
+          enddo
+        enddo
+
+        do iy = -1, ny
+          do ix = -1, nx                                                 !srv 30.01.23
+            if (on_closed_surface(ix,iy) .and. 
+     &                                   .not.is_neutral(is)) then
+              cvsahz_uBdp_luc(ix,iy,0,is) = cvsahz_uBdp_fl(ix,iy,0,is)*
+     &         f_luc_et(ix,iy)
+              cvsa_uBdp_luc(ix,iy,0,is) = cvsa_uBdp_fl(ix,iy,0,is)*
+     &         f_luc_et(ix,iy)
+            else
+              cvsahz_uBdp_luc(ix,iy,0,is) = cvsahz_uBdp_fl(ix,iy,0,is)
+              cvsa_uBdp_luc(ix,iy,0,is) = cvsa_uBdp_fl(ix,iy,0,is)
             endif
           enddo
         enddo

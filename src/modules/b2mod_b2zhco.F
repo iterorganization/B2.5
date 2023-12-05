@@ -4,6 +4,7 @@
       implicit none
       integer :: zhd_corr=1, zhd_corrT=1, zhcscorr=1, zhcscorr_vq=1,
      &  zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0,
+     &  zh_vis_type=0,
      &  amfact_on=0
 #if DEF_NATM > 1
       character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff =
