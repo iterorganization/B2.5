@@ -416,31 +416,31 @@ program b2_ual_write_b2mod
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
-!!$    call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-!!$       &     database, version, status )
-    call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
-        & database, version, idx )
-    call ual_open_pulse( idx, OPEN_PULSE, '', status )
+    call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+       &     database, version, status )
+!!$    call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+!!$        & database, version, idx )
+!!$    call ual_open_pulse( idx, OPEN_PULSE, '', status )
     if (status.ne.0) then
       if (database.eq.'ITER') then
         write(*,*) "Did not find ITER database IDS file."
         write(*,*) "Checking if old ''iter'' case exists."
-!!$        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-!!$       &     'iter', version, status )
-        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
-            & 'iter', version, idx )
-        call ual_open_pulse( idx, OPEN_PULSE, '', status )
+        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+       &     'iter', version, status )
+!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+!!$            & 'iter', version, idx )
+!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         if (status.eq.0) then
           database = 'iter'
           write(*,*) "Old database case found."
           write(*,*) "Will be rewritten in new location."
         end if
       else if (database.eq.'iter') then
-!!$        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-!!$       &     'ITER', version, status )
-        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
-            & 'ITER', version, idx )
-        call ual_open_pulse( idx, OPEN_PULSE, '', status )
+        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+       &     'ITER', version, status )
+!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+!!$            & 'ITER', version, idx )
+!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         database = 'ITER'
       end if
     end if
@@ -659,11 +659,11 @@ contains
         !! Open input datafile from local database
         write (0,*) "Started reading input IMAS data-entry", idx, shot, run
 
-!!$        call imas_open_env(treename, shot, run, idx, username, &
-!!$            &   database, version, status )
-        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
-            & database, version, idx )
-        call ual_open_pulse( idx, OPEN_PULSE, '', status )
+        call imas_open_env(treename, shot, run, idx, username, &
+            &   database, version, status )
+!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, &
+!!$            & database, version, idx )
+!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         call xertst ( status.eq.0, 'Error opening IMAS data entry !')
         call ids_get(idx, "edge_profiles", edge_profiles, status)
         call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')

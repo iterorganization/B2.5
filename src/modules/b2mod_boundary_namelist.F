@@ -2019,7 +2019,10 @@ cc BCPOT
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: ib, inbc, ibc, iFc, ic1, ic2
-      integer :: iout, ian, ien, i, j, k
+      integer :: i, j, k
+#ifdef WG_DEBUG
+      integer :: iout, ian, ien
+#endif
 #ifndef F2003
       integer newunit
       external newunit
@@ -2064,7 +2067,7 @@ cc BCPOT
           end do
         end do
       end if
-
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='bc.testout')
 #else
@@ -2083,7 +2086,7 @@ cc BCPOT
         write (iout,'(a,/(10f6.2))') 'bcCv(2) ',(m%bcFcOr(i),i=ian,ien)
       end do
       close (iout)
-
+#endif
       end subroutine bc_to_struct
 
       end module b2mod_boundary_namelist
