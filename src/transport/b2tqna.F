@@ -3977,18 +3977,19 @@ c*******************************************************************************
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
 *   ..input/output arguments
-      real (kind=R8), intent(inout) ::
-     &  hce0(nCv), hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
+*   ..input arguments
       real (kind=R8), intent(in) ::
      &  dna0(nCv,0:ns-1), vla0(nCv,0:1,0:ns-1), vma0(nCv,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8), intent(inout) ::
      *  dna_bohm(nCv,0:1,0:ns-1), vla_bohm(nCv,0:1,0:ns-1),
-     &  vsa_bohm(nCv,0:1,0:ns-1)
+     &  vsa_bohm(nCv,0:1,0:ns-1),
+     &  hce0(nCv), hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
 *   ..workspace arguments (unspecified on entry and on exit)
       integer :: is, iCv
-      real (kind=R8) :: rholi(nCv), rhole(nCv), mass, vthi(nCv),
-     &  charge(nCv,0:ns-1), vthn(nCv), vthe(nCv),
+      real (kind=R8) :: mass, charge(nCv,0:ns-1),
+     &  rholi(nCv), rhole(nCv), mfpi(nCv), nui(nCv),
+     &  vthi(nCv), vthn(nCv), vthe(nCv),
      &  nuab(nCv,0:ns,0:ns), nua(nCv,0:ns)
 *   ..local variables for output
       character chns*3, chnd*1
@@ -3996,6 +3997,16 @@ c*******************************************************************************
 
 *   ..subprogram start-up calls
       call subini ('set_transport_bohm')
+
+*   ..initialisation
+      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replace with a switch
+      call sfill (nCv*ns*2, 0.0_R8, dna_bohm, 1)
+      call sfill (nCv*ns*2, 0.0_R8, vla_bohm, 1)
+      call sfill (nCv*ns*2, 0.0_R8, vsa_bohm, 1)
+      call sfill (nCv, 0.0_R8, hce0, 1)
+      call sfill (nCv, 0.0_R8, hci0, 1)
+      call sfill (nCv, 0.0_R8, hcn0, 1)
+      call sfill (nCv*ns, 0.0_R8, hcib, 1)
 
 *   ..Check whether dna0, vla0 and vma0 are zero for all the species since they are not used in Bohm transport or print warning
       do is = 0, ns-1
@@ -4016,41 +4027,45 @@ c*******************************************************************************
         endif 
       enddo
 
+*   ..compute collision frequencies
       call b2tnua(nCv, ns, switch, pl, dv, rt, nuab, nua)
 
       do is = 0, ns-1
         if(.not.is_neutral(is)) then
           mass = am(is)*mp
-          vthi = sqrt(2.0_R8*pl%ti/mass)
+          vthi = sqrt(1.0_R8*pl%ti/mass)
           charge(:,is) = rt%rza(:,is)*qe
 
-*   ..compute local larmor radius
+*   ..compute auxiliary quantities: Larmor radius and mean free path
           rholi(:) = mass*vthi/abs(charge(:,is)*geo%cvBb(:,3))
+          mfpi(:) = sqrt((pl%te + pl%ti*pl%na(:,is)/dv%ne)/mass)/
+     &              nua(:,is)
 
-*   ..compute dna_bohm (Bohm-like particle diffusion)
-          dna_bohm(:,0,is) = 1.00_R8/3.00_R8*1.0_R8/16.0_R8*vthi*
-     &              (rholi(:) + vthi/nua(:,is)*
-     &              geo%cvBb(:,0)/geo%cvBb(:,2))
-          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*1.0_R8/16.0_R8*vthi*
-     &              (rholi(:) + vthi/nua(:,is)*
-     &              geo%cvBb(:,1)/geo%cvBb(:,2))
+*   ..compute dna_bohm (Bohm-like particle diffusion coefficient)
+          dna_bohm(:,0,is) = 1.00_R8/3.00_R8*nua(:,is)*mfpi*(rholi +
+     &                       mfpi*geo%cvBb(:,0)/1.5_R8)*0.659_R8
+          dna_bohm(:,1,is) = 1.00_R8/3.00_R8*nua(:,is)*mfpi*(rholi +
+     &                       mfpi*geo%cvBb(:,1)/1.5_R8)*0.659_R8
 
-*   ..compute vsa_bohm (Bohm-like)
+*   ..compute vsa_bohm (Bohm-like viscosity - extesion of the model, be careful)
           vsa_bohm(:,1,is) = switch%bohm_gammaD*am(is)*mp* ! move from gammaD to another one (?)
      &                       pl%na(:,is)*dna_bohm(:,1,is)
           vsa_bohm(:,0,is) = switch%bohm_gammaD*am(is)*mp*
      &                       pl%na(:,is)*dna_bohm(:,0,is)
 
-*   ..compute hcib (Bohm-like)
+*   ..compute hcib (Bohm-like ion heat conductivity - extesion of the model, be careful)
           hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
 
-*   ..compute vla_bohm (Bohm-like)
+*   ..compute vla_bohm (Bohm-like convection velocity)
           if(switch%bohm_pureDiff.eq.1) then
-            vla_bohm(:,:,is) = 0.0_R8
+            call sfill (nCv*2, 0.0_R8, vla_bohm(:,:,is), 1)
+c            vla_bohm(:,:,is) = 0.0_R8
           elseif (switch%bohm_pureDiff.eq.0.and.
      &            switch%bohm_ExB.eq.1) then
-            vla_bohm(:,0,is) = (0.25_R8*(pl%te + pl%ti))/(geo%cvBb(:,3))
-            vla_bohm(:,1,is) = (0.25_R8*(pl%te + pl%ti))/(geo%cvBb(:,3))
+            vla_bohm(:,0,is) = (5.0_R8*(pl%te + pl%ti)/ev)/
+     &                         (geo%cvBb(:,3))
+            vla_bohm(:,1,is) = (5.0_R8*(pl%te + pl%ti)/ev)/
+     &                         (geo%cvBb(:,3))
           else
             vla_bohm(:,0,is) = 2.0_R8*dna_bohm(:,0,is)/switch%R0*6.5_R8 ! R0 major radius from switches ! 6.5 numerical factor
             vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/switch%R0*6.5_R8
@@ -4062,8 +4077,8 @@ c*******************************************************************************
 
 *   ..compute dna_bohm (Bohm-like particle diffusion) for neutrals
           dna_bohm(:,0,is) = 1.00_R8/3.00_R8*vthn*
-     &               1/(2.0_R8/switch%a0 + nua(:,is)/vthn) ! a0 minor radius from switches ! nua to be updated with a suitable collision frequency for neutrals
-          dna_bohm(:,1,is) = dna_bohm(:,0,is) ! isotropic for neutrals
+     &               1/(2.0_R8/switch%a0 + nua(:,is)/vthn) ! a0 minor radius ! nua to be updated with a suitable collision frequency for neutrals
+          dna_bohm(:,1,is) = dna_bohm(:,0,is) ! diffusion is isotropic for neutrals
 
 *   ..compute vsa_bohm (Bohm-like) for neutrals
           vsa_bohm(:,0,is) = switch%bohm_gammaD*am(is)*mp*pl%na(:,is)*
@@ -4075,11 +4090,12 @@ c*******************************************************************************
           hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
 
 *   ..compute vla_bohm (Bohm-like) for neutrals 
-          vla_bohm(:,:,is) = 0.0_R8 ! no convection for neutrals
+c          vla_bohm(:,:,is) = 0.0_R8 ! no convection for neutrals
+          call sfill (nCv*2, 0.0_R8, vla_bohm(:,:,is), 1)
         endif
       enddo
 
-*   ..compute rhole, vthe, hce0 (Bohm-like)
+*   ..compute rhole, vthe, hce0 (Bohm-like) for electrons
       rhole(:) = me*sqrt(2.0_R8*pl%te/(me))/abs(qe*geo%cvBb(:,3))
       vthe(:)  = sqrt(2.0_R8*pl%te/me)
       hce0(:)  = switch%bohm_gammaD*dv%ne(:)*1.00_R8/3.00_R8*
@@ -4087,8 +4103,6 @@ c*******************************************************************************
      &           geo%cvBb(:,0)/geo%cvBb(:,2))
 
 *   ..recompute hci0, hcn0
-      hci0 = 0.0_R8
-      hcn0 = 0.0_R8
       do is = 0, ns-1
 *     ..compute hci0
         if (switch%tn_style.eq.0) then
