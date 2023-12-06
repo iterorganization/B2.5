@@ -125,7 +125,11 @@ c Advanced fluid neutral models
 
 c ECH model
       integer :: use_ech
-      integer :: ECH_out
+      integer :: ech_out
+      real (kind=R8) :: ech_RFfreq
+      integer :: ech_harmonics
+      real (kind=R8) :: ech_power
+      real (kind=R8) :: ech_Rdep
 
 c iout switches
       integer :: iout_b2wdat
@@ -311,6 +315,7 @@ c geometry
       integer :: vxVol_style
       real (kind=R8) :: R0
       real (kind=R8) :: a0
+      real (kind=R8) :: b
 
 c Eirene coupling
       integer :: use_eirene
@@ -380,6 +385,15 @@ c Bohm-like diffusion model
       integer :: transport_bohm
       real (kind=R8) :: bohm_gammaD
       integer :: bohm_pureDiff
+      integer :: bohm_ExB
+      integer :: bohm_iout
+
+c Artificial losses
+      integer :: losses_poloidal
+      integer :: losses_limiters
+      integer :: losses_drifts
+      integer :: nlimiters
+      real (kind=R8) :: limiter_width
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -635,7 +649,11 @@ c Advanced fluid neutral models
 
 c ECH model
       s % use_ech = 0
-      s % ECH_out = 0
+      s % ech_out = 0
+      s % ech_RFfreq = 1.0E+9_R8
+      s % ech_harmonics = 2
+      s % ech_power = 100.0E+3_R8
+      s % ech_Rdep = 0.894_R8
 
 c iout
       s % iout_b2wdat = 0
@@ -810,8 +828,9 @@ c geometry
       s % use_9pt_stencil = 1
       s % fcVol_style = 0
       s % vxVol_style = 2
-      s % R0 = 1.0
-      s % a0 = 0.5
+      s % R0 = 1.0_R8
+      s % a0 = 0.5_R8
+      s % b = 0.1_R8
 
 c eirene coupling
       s % use_eirene = 0
@@ -885,6 +904,15 @@ c Bohm-like diffusion model
       s % transport_bohm = 0
       s % bohm_gammaD = 3.0_R8
       s % bohm_pureDiff = 0
+      s % bohm_ExB = 1
+      s % bohm_iout = 0
+
+c Artificial losses
+      s % losses_poloidal = 0
+      s % losses_limiters = 0
+      s % losses_drifts = 0
+      s % nlimiters = 0
+      s % limiter_width = 0.0_R8
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -1143,7 +1171,11 @@ c Advanced fluid neutral models
       call ipgetr ('L_macro_AFN', s % L_macro_AFN)
 
 c ECH model
-      call ipgeti ('b2stbr_ech', s % use_ech)
+      call ipgeti ('b2sral_use_ECH', s % use_ech)
+      call ipgetr ('b2sral_ECH_RFfrequency', s % ech_RFfreq)
+      call ipgeti ('b2sral_ECH_harmonics', s % ech_harmonics)
+      call ipgetr ('b2sral_ECH_power', s % ech_power)
+      call ipgetr ('b2sral_ECH_Rdep', s % ech_Rdep)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -1193,7 +1225,7 @@ c iout switches
       call ipgeti ('b2stbr_phys_iout', s % b2stbr_phys_iout)                  !srv 11.07.05
       call ipgeti('b2wdat_append', s % b2wdat_append)
       call ipgeti ('b2stbr_AFN_out',s % AFN_out)
-      call ipgeti ('b2stbr_ECH_out',s % ECH_out)
+      call ipgeti ('b2sral_ECH_out',s % ech_out)
       call ipgeti('copy_background_iout', s%copy_background_iout)   !srv 14.07.10
       call ipgeti ('eirene_mc_iout', s % eirene_mc_iout)
       call ipgeti ('b2mndr_iout', s % b2mndr_iout)
@@ -1334,6 +1366,7 @@ c geometry
       call ipgeti ('b2mndr_vxVol_style', s % vxVol_style)
       call ipgetr ('R0', s % R0)
       call ipgetr ('a0', s % a0)
+      call ipgetr ('b', s % b)
 
 c Eirene coupling
       call ipgeti ('b2mndr_eirene', s % use_eirene)
@@ -1412,6 +1445,15 @@ c Bohm-like diffusion model
         call ipgeti ('b2tqna_transport_bohm', s%transport_bohm)
         call ipgetr ('b2tqna_bohm_gammaD', s%bohm_gammaD)
         call ipgeti ('b2tqna_bohm_diff', s%bohm_pureDiff)
+        call ipgeti ('b2tqna_bohm_ExB', s%bohm_ExB)
+        call ipgeti ('b2tqna_bohm_iout', s%bohm_iout)
+
+c Artificial losses
+        call ipgeti ('b2sral_losses_poloidal', s%losses_poloidal)
+        call ipgeti ('b2sral_losses_limiters', s%losses_limiters)
+        call ipgeti ('b2sral_losses_drifts', s%losses_drifts)
+        call ipgeti ('b2sral_nlimiters', s%nlimiters)
+        call ipgetr ('b2sral_limiter_width', s % limiter_width)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1832,7 +1874,8 @@ c AFN model
      &  'b2stbr_recycle_afn value not coded')
 
 c ECH model
-      call xertst (0.le.s%use_ech.le.1, 'b2stbr_ech value not coded')
+      call xertst (0.le.s%use_ech.le.1,
+     &            'b2sral_use_ECH value not coded')
 
 c k-enstrophy model
       call xertst (0.le.s%solve_keps .and. s%solve_keps.le.2,
@@ -1903,14 +1946,34 @@ c k-enstrophy model
      &  'b2sikt_min_source must be either 0, 1 or 2')
 
 c Bohm-like diffusion model
-       call xertst (0.le.s%transport_bohm.le.1,
-     1                          'b2tqna_transport_bohm value not coded')
-       call xertst (0.0_R8.lt.s%bohm_gammaD,
-     1                          'b2tqna_bohm_gammaD must be .gt. 0.0')
-       call xertst (0.0_R8.lt.s%R0, 'Major radius must be .gt. 0.0')
-       call xertst (0.0_R8.lt.s%a0, 'Minor radius must be .gt. 0.0')
-       call xertst (0.le.s%bohm_pureDiff.le.1,
-     1                          'b2tqna_bohm_diff value not coded')
+      call xertst (s%transport_bohm.ge.0.and.s%transport_bohm.le.1,
+     1                         'b2tqna_transport_bohm value not coded')
+      call xertst (s%bohm_gammaD.gt.0.0_R8,
+     1                         'b2tqna_bohm_gammaD must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%R0, 'Major radius must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%a0, 'Minor radius must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%b, 'b must be .gt. 0.0')
+      call xertst (s%bohm_pureDiff.ge.0.and.s%bohm_pureDiff.le.1,
+     1                         'b2tqna_bohm_diff value not coded')
+      call xertst (s%bohm_ExB.ge.0.and.s%bohm_ExB.le.1,
+     1                         'b2tqna_bohm_ExB value not coded')
+      call xertst (s%bohm_iout.ge.0.and.s%bohm_iout.le.1,
+     1                         'b2tqna_bohm_iout value not coded')
+
+c Artificial losses
+      call xertst (s%losses_poloidal.ge.0.and.s%losses_poloidal.le.1,
+     1                        'b2sral_losses_poloidal value not coded')
+      call xertst (s%losses_limiters.ge.0.and.s%losses_limiters.le.1,
+     1                        'b2sral_losses_poloidal value not coded')
+      call xertst (s%losses_drifts.ge.0.and.s%losses_drifts.le.1,
+     1                        'b2sral_losses_poloidal value not coded')
+
+      call xertst (0.le.s%nlimiters,
+     1              'Number of limiters must be .ge. 0')
+      call xertst (0.0_R8.lt.s%limiter_width,
+     1              'Limiter width must be .gt. 0.0')
+
+
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
@@ -2062,18 +2125,24 @@ c AFN neutral model
         call xerrab ('b2stbr_recycle_afn should be 1 when using '//
      &   'AFN transport coefficients')
       endif
-c      if(s%transport_bohm.ne.0.and.s%recycle_afn.ne.0) then
-c        call xerrab ('faulty inputs: cannot use both Bohm and ' //
-c     &   'AFN model')
-c      endif
 
 c ECH model
-      if(s%ECH_out.ne.0.and.s%use_ech.eq.0) then
-        call xerrab('b2stbr_ech should be 1 when writing ECH output')
+      if(s%ech_out.ne.0.and.s%use_ech.eq.0) then
+        call xerrab('b2sral_use_ECH should be 1 when writing' //
+     &              'ECH output')
       endif
-      if(s%ECH_out.ne.0.and.s%ECH_out.ne.1.and.s%ECH_out.ne.2) then
-        call xerrab('b2stbr_ECH_out should be either 0 (no output),' //
-     &   '1 (standard output) or 2 (detailed output)')
+      if(s%ech_out.ne.0.and.s%ech_out.ne.1) then
+        call xerrab('b2sral_ECH_out should be either 0 (no output)' //
+     &   'or 1 (standard output)')
+      endif
+      if(s%ech_RFfreq.le.0.0_R8) then
+        call xerrab('b2sral_ECH_RFfreq should be .ge. 0.0')
+      endif
+      if(s%ech_harmonics.le.1) then
+        call xerrab('b2sral_ECH_harmonics should be .ge. 1 and integer')
+      endif
+      if(s%ech_power.lt.0) then
+        call xerrab('b2sral_ECH_power should be .ge. 0')
       endif
 
 c spatially hybrid neutrals
