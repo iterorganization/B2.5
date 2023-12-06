@@ -22,6 +22,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+c ECH test
+      use b2mod_ech
+c Artificial losses test
+      use b2mod_artificialsinks
+
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
@@ -405,6 +410,41 @@
 !WG_TODO      rcxna=0.0_R8
 !WG_TODO      rcxhi=0.0_R8
 !WG_TODO      rcxmo=0.0_R8
+
+c ECH module test
+      if(switch%use_ech.eq.1) then
+        call CalcECH(nCv,geo,mpg,switch,st%srw%she0)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
+      endif
+
+c Artificial losses module test
+      if(switch%losses_limiters.eq.1) then
+        call limiterloss(nCv, ns, is, switch, geo,
+     &       mpg, st%pl, st%dv, st%rt, st%srw%sna0,
+     &       st%srw%shi0, st%srw%she0)
+        call b2saxpy (nCv*2*ns, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
+      endif
+
+      if(switch%losses_drifts.eq.1) then
+        call driftloss(nCv, ns, is, switch, geo,
+     &       mpg, st%pl, st%dv, st%rt, st%srw%sna0,
+     &       st%srw%shi0, st%srw%she0)
+        call b2saxpy (nCv*2*ns, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
+      endif
+
+      if(switch%losses_poloidal.eq.1) then
+        call poloidloss(nCv, ns, is, switch, geo,
+     &       mpg, st%pl, st%dv, st%rt, st%srw%sna0,
+     &       st%srw%shi0, st%srw%she0)
+        call b2saxpy (nCv*2*ns, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
+      endif
+c end artificial losses
 
       if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
