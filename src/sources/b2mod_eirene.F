@@ -209,7 +209,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       integer icount
 #endif
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      integer i,j,k,l,js,ls,kks,n,itmp,ind,nplsh
+      integer i,j,k,l,js,ls,kks,n,ind,nplsh
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       integer, save, allocatable :: NPTS_input(:)

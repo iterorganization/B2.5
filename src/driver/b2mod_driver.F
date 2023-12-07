@@ -1943,7 +1943,7 @@ c   --> better way doing this is necessary)
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_neutrals
-     & (mpg%nCi/2,mpg%nCi/2,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
+     & (ns,natm,nmol,nion,nstraid,nsts,sput_dst)
       natmi = 0
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1

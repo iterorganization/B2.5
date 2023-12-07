@@ -400,12 +400,12 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         natm_loc = max(natm, ntm)
         if (neutrals_version.lt.'03.002.000') then
           call alloc_b2mod_neutrals
-     .     (nx, ny, ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
+     .     (ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
           call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
         else
-          call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns,
+          call alloc_b2mod_neutrals (ns,
      .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(ns, mpg, switch, .false.)
         end if
