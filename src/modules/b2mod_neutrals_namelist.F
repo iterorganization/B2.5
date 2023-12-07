@@ -260,13 +260,13 @@ csw 21feb2012
 
       contains
 
-      subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
+      subroutine alloc_b2mod_neutrals(nsd,
      &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
      & , only : is_codes
       use b2mod_b2cmpa
       implicit none
-      integer, intent(in) :: nxd, nyd, nsd,
+      integer, intent(in) :: nsd,
      &  natm_in, nmol_in, nion_in, nstra_in, nsts_in, sput_dst
       integer is, isstart, isend
       integer is0, ispecies
@@ -299,12 +299,12 @@ csw 21feb2012
       allocate(RCFE(NSTRAID))
       allocate(RCFI(NSTRAID))
       allocate(RC_LIST_SIZE(NSTRAID))
-      allocate(RC_LIST_X(2*(NXD+NYD),NSTRAID))
-      allocate(RC_LIST_Y(2*(NXD+NYD),NSTRAID))
-      allocate(RC_LIST_CHAR(2*(NXD+NYD),NSTRAID))
+      allocate(RC_LIST_X(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_LIST_Y(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_LIST_CHAR(2*(DEF_NXD+DEF_NYD),NSTRAID))
       allocate(NRCFACES(NSTRAID))
-      allocate(RC_FACES(2*(NXD+NYD),NSTRAID))
-      allocate(RC_FACE_ORI(2*(NXD+NYD),NSTRAID))
+      allocate(RC_FACES(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NSTRAID))
       allocate(TARGSP(NSTRAID,ntrack))
       allocate(CHEMSP(NSTRAID))
       allocate(TIME_DEP_PUFF(NSTRAID))
@@ -349,10 +349,6 @@ csw 21feb2012
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
 #else
-#ifdef WG_TODO
-      call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
-      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
-#endif
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write (*,*) ' natm_id,natmid ',natm_in, natmid
       call xertst (natm_in.le.NATMID, 'faulty parameter natm_in')

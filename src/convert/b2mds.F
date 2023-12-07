@@ -391,7 +391,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call alloc_b2mod_neutrals
-     > (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+     > (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst (nstrat.le.nstraid,

@@ -760,7 +760,7 @@ c
       call xertst(nniso.le.nnisod,
      . 'increase size in DEF_NISO in DIMENSIONS.F')
       call alloc_b2mod_neutrals
-     . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+     . (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid,

@@ -1446,7 +1446,7 @@ c 2002-09-11: logic revised
       todo = todo .or. found
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals
-     .   (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+     .   (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
         call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in DIMENSIONS.F')
