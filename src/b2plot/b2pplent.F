@@ -47,7 +47,10 @@ c*** Grid sub-division for calculation of sources
 c
 c*** Local variables
       integer i,j,k,l,iCv,jmp,jtp
-      real (kind=R8) :: x, a, b, cc, d, e, f, a0, a1, a2
+#ifdef WG_TODO
+      real (kind=R8) :: x
+#endif
+      real (kind=R8) :: a, b, cc, d, e, f, a0, a1, a2
       real (kind=R8) :: sga,bgd,sgd,sgb
       real (kind=R8) :: initparm(10), r0rad
       real (kind=R8) :: q_tmp(nnr,nnz)
