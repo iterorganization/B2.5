@@ -1967,10 +1967,9 @@ c Artificial losses
      1                        'b2sral_losses_poloidal value not coded')
       call xertst (s%losses_drifts.ge.0.and.s%losses_drifts.le.1,
      1                        'b2sral_losses_poloidal value not coded')
-
-      call xertst (0.le.s%nlimiters,
+      call xertst (0.le.s%nlimiters.or.s%losses_limiters.eq.0,
      1              'Number of limiters must be .ge. 0')
-      call xertst (0.0_R8.lt.s%limiter_width,
+      call xertst (0.0_R8.lt.s%limiter_width.or.s%losses_limiters.eq.0,
      1              'Limiter width must be .gt. 0.0')
 
 
