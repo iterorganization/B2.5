@@ -1273,7 +1273,7 @@ c.. Test consistency with physical edges within the computational domain
       integer ns
       logical dotest
       integer is, ist, ix, istra, i, j, k, n, ii(1), itrack,
-     >        noss, instra, iss, indss, idb, nrcl, nfaces
+     >        noss, instra, iss, indss, idb, nrcl
 #ifdef WG_TODO
       integer ic
       logical found, side
@@ -1358,15 +1358,14 @@ cwvu    for (advanced) spatially hybrid, might need even more.
             noss = rcend(istra) - rcstart(istra) + 1
             do iss = 1, noss
               indss = rcstart(istra)+iss-1
-              nfaces = 0
               write (*,*) ' surface index ',indss
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, instra, nrcl,
-     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb, nfaces)
-              write(ss,"(I0)") indss
-              call xertst(nfaces.gt.0, 
-     &         'No faces found for neutrals face label = '//ss)
+     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
             end do              ! iss
+            write(ss,"(I0)") istra
+            call xertst(nrcl.gt.0, 
+     &       'No faces found for neutrals stratum = '//ss)
             m%rcFcP(istra,2) = nrcl
          elseif ((crcstra(istra) /= 'T') .and. (crcstra(istra) /= 'V')
      >     .and. (crcstra(istra) /= 'C')) then
@@ -2145,7 +2144,7 @@ c.. Test consistency with physical edges within the computational domain
       use b2mod_indirect
       implicit none
       integer :: istra, istrac, instra,
-     .           noss, iss, indss, idb, nfaces
+     .           noss, iss, indss, idb
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       integer :: minlbl(nstrat), maxlbl(nstrat)
       character(1) :: lchar(nstrat)
@@ -2294,15 +2293,14 @@ cwdk also need to correct for degenerate faces?
           noss = rcend(istra) - rcstart(istra) + 1
           do iss = 1, noss
             indss = rcstart(istra)+iss-1
-            nfaces = 0
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             call find_faces (indss, instra, rcl(istra),
-     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb, nfaces)
-            write(ss,"(I0)") indss
-            call xertst(nfaces.gt.0, 
-     &         'No faces found for neutrals face label = '//ss)
+     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
           end do  ! iss
+          write(ss,"(I0)") istra
+          call xertst(rcl(istra).gt.0, 
+     &      'No faces found for neutrals stratum = '//ss)
           m%rcFcP(istra,2) = rcl(istra)
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8

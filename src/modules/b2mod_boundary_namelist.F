@@ -979,7 +979,7 @@ c.. Test consistency with region boundaries
       type(mapping), intent(inout) :: m
       logical, intent(in) :: dotest
       integer is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
-      integer :: ian, ien, nfaces
+      integer :: ian, ien
       character*3 ss
 #ifdef WG_OUT
       logical covered, corner, guard_cell, found
@@ -1046,13 +1046,12 @@ c.. Test consistency with region boundaries
               indss = bcstart(ib)+iss-1
               write (*,*) ' surface index ',indss
 ! find all faces belonging to surface structure INDSS
-              nfaces = 0
               call find_faces (indss, inbc, nbcfc,
-     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb, nfaces)
-              write(ss,"(I0)") indss
-              call xertst(nfaces.gt.0, 
-     &         'No faces found for boundary face label = '//ss)
+     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
             end do              ! iss
+            write(ss,"(I0)") ib
+            call xertst(nbcfc.gt.0, 
+     &        'No faces found for boundary condition = '//ss)
             m%bcFcP(ib,2) = nbcfc
           else
             call xerrab ('BCCHAR /= A ')
@@ -1656,6 +1655,7 @@ c.. Test consistency with region boundaries
       integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
       character(1) :: lchar(nbc)
+      character*3 ss
 #ifndef F2003
       integer newunit
       external newunit
@@ -1784,6 +1784,9 @@ cwdk also need to correct for degenerate faces?
             call find_faces (indss, inbc, bcl(ib),
      >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
           end do  ! iss
+          write(ss,"(I0)") ib
+          call xertst(bcl(ib).gt.0, 
+     &      'No faces found for boundary condition = '//ss)
           m%bcFcP(ib,2) = bcl(ib)
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')
