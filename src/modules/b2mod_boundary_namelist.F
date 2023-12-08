@@ -1649,7 +1649,7 @@ c.. Test consistency with region boundaries
       type (mapping), intent (inout) :: m
       type (geometry), intent (inout) :: g
       integer :: ib, ibc, is, inbc, noss, iss, indss,
-     .           i, iFc, iCv, idb
+     .           i, iFc, iCv, idb, nfaces
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
       integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
@@ -1780,7 +1780,7 @@ cwdk also need to correct for degenerate faces?
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             call find_faces (indss, inbc, bcl(ib),
-     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
+     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb, nfaces)
           end do  ! iss
           m%bcFcP(ib,2) = bcl(ib)
         else
