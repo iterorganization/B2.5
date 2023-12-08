@@ -66,11 +66,11 @@
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
-     * , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl
+     , , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
-     , , only : iunout, iunin
+     , , only : iunin, iunout
       use eirmod_comusr
      , , only : eirene_alloc_comusr
       use eirmod_refusr
@@ -78,7 +78,7 @@
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
-     * , only : eirene_dealloc_infcop
+     , , only : eirene_dealloc_infcop
       use eirmod_mcarlo
       use eirmod_wneutrals
       use b2mod_eirene
