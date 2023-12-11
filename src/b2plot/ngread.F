@@ -487,7 +487,7 @@ cank
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
 
-          NCL=eirdiag_nds_ind(nstsi+1)-1
+          NCL=eirdiag_nds_ind(nstsi+1)
           IF (NCL.GT.0) THEN
             IF(.NOT.ALLOCATED(fnmti_b2)) ALLOCATE(fnmti_b2(NCL))
             call read_title(44)
