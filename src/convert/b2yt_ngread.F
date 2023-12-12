@@ -141,7 +141,7 @@ C
       write(*,*) 'Writing '//trim(filename)
 C
 #ifdef WG_TODO
-      READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
+      READ (44,'(I4,2X,I4,2X,I8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
      &   .and.
      &   (streql(eirene_format,'old').or.streql(eirene_format,'new')))
@@ -154,7 +154,7 @@ C
       else
         jvftnew = max(jvft44,20160829)
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_Eir_hash()
+      WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,5i4)')
@@ -1171,7 +1171,7 @@ cank
           deallocate(eneutrad1)
         end if
 
-        if (jvft44 .ge. 20180323) then
+        if (jvft44 .ge. 20180323 .and. jvft44.ne.20200402) then
           do is = 1, nmoli
             call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
           end do
