@@ -431,7 +431,7 @@ c we derive the guard cell value from its neighbouring interior cell
         endif
 
 #ifdef B25_EIRENE
-        call eirene_alloc_target_data(istra,ntrgdat,nflai,ifoff)
+        call eirene_alloc_target_data(istra,ntrgdat,nflai)
 #else
         call alloc_target_data(istra,ntrgdat,nflai)
 #endif
