@@ -1063,7 +1063,8 @@ c.. Test consistency with region boundaries
 !      call bc_to_struct (m)
 
       ! now check that all boundary faces are assigned to a BC
-      call check_boundary_labels(m, nBc, bcstart, bcend, .true.)
+      call check_boundary_labels(m, nBc, bcstart(1:nbc), bcend(1:nbc),
+     & .true.)
 
       if (any(bc_list_size > 0))
      .  call xerrab
@@ -1791,12 +1792,13 @@ cwdk also need to correct for degenerate faces?
       enddo
       close (idb)
 
-      ! now check that all boundary faces are assigned to a BC
-      call check_boundary_labels(m, nBc, bcstart, bcend, .true.)
-
       acchar(1:nbc) = lchar(1:nbc)
       abcstart(1:nbc) = minlbl(1:nbc)
       abcend(1:nbc) = maxlbl(1:nbc)
+
+      ! now check that all boundary faces are assigned to a BC
+      call check_boundary_labels(m, nBc, abcstart(1:nbc), abcend(1:nbc),
+     & .true.)
 
       if (inbc .ne. m%nCg ) then
         write (*,*) 'inbc, nCg ',inbc,m%nCg
