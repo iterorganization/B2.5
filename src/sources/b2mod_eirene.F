@@ -888,11 +888,13 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
           nplsh = 0
-          do is = 0,ns-1
-            if (is_neutral(is).and.nint(zn(is)).eq.1) then
-              nplsh = nplsh + 1
-            end if
-          end do
+          if (switch%spatial_hybrid.ne.0) then
+            do is = 0,ns-1
+              if (is_neutral(is).and.nint(zn(is)).eq.1) then
+                nplsh = nplsh + 1
+              end if
+            end do
+          end if
           call post_couple(nCv,nFc,ns,nstrai,nplsh)
           write(*,*) 'Called post_couple'
         endif
