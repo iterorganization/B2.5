@@ -1366,7 +1366,8 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
       end if
 
       ! now check that all boundary faces are assigned to a stratum
-      call check_boundary_labels(m, nstrai, rcstart, rcend, .false.)
+      call check_boundary_labels(m, nstrai, rcstart(1:nstrai),
+     & rcend(1:nstrai), .false.)
 
       if (any(rc_list_size > 0))
      .  call xerrab 
@@ -2304,9 +2305,6 @@ cwdk also need to correct for degenerate faces?
       enddo
       close (idb)
 
-      ! now check that all boundary faces are assigned to a stratum
-      call check_boundary_labels(m, nstrai, rcstart, rcend, .false.)
-
       arcstra(1:nstrai) = lchar(1:nstrai)
       where (minlbl == huge(1))
         minlbl = 0
@@ -2316,6 +2314,10 @@ cwdk also need to correct for degenerate faces?
       end where
       arcstart(1:nstrai) = minlbl(1:nstrai)
       arcend(1:nstrai) = maxlbl(1:nstrai)
+
+      ! now check that all boundary faces are assigned to a stratum
+      call check_boundary_labels(m, nstrai, arcstart(1:nstrai),
+     & arcend(1:nstrai), .false.)
 
       if (crcstra(nstrai) == 'T') then
         arcstart(nstrai) = 0
