@@ -170,9 +170,9 @@ C
      . ' Dimensions in ',fort_lc,'46 =   ',ntrii,natmi,nmoli,nioni
       write(*,'(3a,4i6)')
      . ' Dimensions in ',fort_lc,'46.2 = ',ntrii,natm1,nmol1,nion1
-      call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
-      call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
-      call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
+      call xertst(natmi .le. natm, 'NTREAD: NATMI > NATM')
+      call xertst(nmoli .le. nmol, 'NTREAD: NMOLI > NMOL')
+      call xertst(nioni .le. nion, 'NTREAD: NIONI > NION')
       allocate(field1(max(1,natm1,nmol1,nion1),ntrii))
 
 c

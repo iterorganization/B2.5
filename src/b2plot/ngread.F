@@ -54,8 +54,10 @@ c
       real (kind=R8) :: recyctmp
       character charns*3
       character*18 hlp_frm
+      character*72 zeile
       character*256 filename
-      logical ex
+      logical ex, streql
+      external streql
 #endif
       integer, save :: use_recyceir, iout
       data use_recyceir /1/, iout/0/
@@ -91,9 +93,16 @@ C
 *
       rewind (44)
 C
-      READ(44,'(I4,2X,i8)',END=99,ERR=99) nCvp,jvft44
+      READ(44,'(A72)',END=99) ZEILE
+      IF (streql(ZEILE(7:8),'  ')) THEN
+        READ(ZEILE,'(I6,2X,I8)',ERR=99) nCvp,jvft44
+      ELSE IF (streql(ZEILE(5:6),'  ')) THEN
+        READ(ZEILE,'(I4,2X,I8)',ERR=99) nCvp,jvft44
+      ELSE
+        GOTO 99
+      END IF
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-      write(*,'(3a,t27,5i5)')
+      write(*,'(3a,t27,i6,3i4)')
      . ' Dimensions in ',fort_lc,'44 = ',nCvp,natmi,nmoli,nioni
       call xertst(nCvp .le. mpg%nCv, 'NGREAD: nCvp > nCv')
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
@@ -474,7 +483,7 @@ cank
           end do
         end if
 
-        if(jvft44 .ge. 20180323) then
+        if(jvft44 .ge. 20180323 .and. jvft44.ne.20200402) then
           do is = 1, nmoli
             call gfsub2(44,mpg%nCv,nCvp,emolrad(:,is,0))
           end do
