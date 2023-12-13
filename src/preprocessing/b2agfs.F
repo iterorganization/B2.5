@@ -1019,6 +1019,9 @@ cxpb  if just below the top corner, make the corner cell follow
              elseif (sin2.gt.0.0_R8) then
                  new_faces(1) =  faces(index(2))
              else
+                 write (*,*) 'Problem for cell iCv, cvX, cvY = ', iCv,
+     &             g%cvX(iCv), g%cvY(iCv)
+                 write (*,*) 'sin1, sin2 : ', sin1, sin2
                  call xerrab('order_vertices: no start face assigned')
              endif 
 
