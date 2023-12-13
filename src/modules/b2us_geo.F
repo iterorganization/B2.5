@@ -410,7 +410,7 @@
      &           i1, i2, inv_dist(mpg%nVx) 
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, dux, duy, du, sbf, Psi1, Psi2,
-     .  cvPsi(mpg%nCv), count_up, count_down, dpsi(mpg%nCv),
+     .  cvPsi(mpg%nCv), count_up, count_down, count_eq, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, maxloc, minloc, abs, sqrt
@@ -432,7 +432,10 @@
       else if (mpg%nnreg(0).eq.7) then
         mpg%cvOnClosedSurface = mpg%cvReg.eq.1
       else
-        call xerrab ('Unknown number of regions!')
+        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+        write (*,*) 'Warning: unknown number of regions'
+        write (*,*) 'Assuming core is region 1'
+        !call xerrab ('Unknown number of regions!')
       end if
 
 *   ..set weights for interpolation to faces
@@ -482,18 +485,61 @@
         enddo
        enddo
       elseif (switch%vxVol_style.eq.2) then
-       ! assign 1/4, except guard cells
+       ! Assumption: all internal 'radial' faces aligned (boundaries faces possibly non-aligned)
+       ! Idea: assign equal total weight to all cells on either side of the flux surface
+       !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
+       !                  average between flux tube values)
+       ! calculate cvPsi
+       ! eventually: consider including cvFpsi as variable into the geo-structure 
+       do iCv = 1, nCv
+         allocate(verts(1:mpg%cvVxP(iCv,2)))
+         verts = mpg%cvVx(mpg%cvVxP(iCv,1):mpg%cvVxP(iCv,1)+
+     &     mpg%cvVxP(iCv,2)-1)
+         cvPsi(iCv) = 0.5_R8*(
+     &     maxval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) + 
+     &     minval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) )
+         dpsi(iCv) = abs(
+     &     maxval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) - 
+     &     minval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) )
+         deallocate(verts)
+       enddo
+       ! Count cells per vertex with higher, lower Psi
+       ! Exceptional case: equal Psi (pentagon splitting);
+       ! will also catch case where Psi = 0 everywhere
        do iVx = 1, nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if (iCv.le.mpg%nCi) then
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
-         else
-          ! Make sure guard cells dominate in the interpolation
-          ! to vertices => use volume
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
-         endif
-        enddo
+         count_down    = 0.0_R8
+         count_up      = 0.0_R8
+         count_eq      = 0.0_R8
+         do inCv = 1, mpg%vxCvP(iVx,2)
+           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+           if (cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+             count_up = count_up + 1.0e0_R8
+           elseif (cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+             count_down = count_down + 1.0e0_R8
+           else
+             count_eq = count_eq + 1.0e0_R8
+           endif 
+         enddo
+         do inCv = 1, mpg%vxCvP(iVx,2)
+           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+           if (iCv.le.mpg%nCi) then
+            if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &          (count_up + count_down + 2.0_R8*count_eq) / count_up
+            elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &          (count_up + count_down + 2.0_R8*count_eq) / count_down
+            else
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &          (count_up + count_down + 2.0_R8*count_eq) /
+     &          (2.0_R8*count_eq)             
+            endif
+           else
+            ! Make sure guard cells dominate in the interpolation
+            ! to vertices => use small number
+            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8          
+           endif 
+         enddo
        enddo
       elseif (switch%vxVol_style.eq.3) then
        ! equal weight for each cell around the vertex
@@ -1188,6 +1234,7 @@
       ! connection length evaluated for flux surfaces and vertices
       gm%fsConn = 0.0_R8
       gm%vxConn = 0.0_R8
+#ifdef WG_TODO
       do iFs = 1, mpg%nFs
         do i = mpg%fsFcP(iFs,1), mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
           iFc = mpg%fsFc(i)
@@ -1276,7 +1323,7 @@
           end do
         end if
       end do
-
+#endif
       if (iout.ne.0) then
        call my_out_us(70,mpg%nCv,0,gm%cvConn,'calc_conn_cvConn')
        call my_out_us(70,mpg%nFt,0,gm%ftConn,'calc_conn_ftConn')
