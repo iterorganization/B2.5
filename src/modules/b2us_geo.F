@@ -1131,10 +1131,10 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nfx, iCn, iCp, iCv, iCv1, iCv2, idir, ic
-      integer :: iFc, iFn, iFs, iFt, iVx, iVm, iVp, iVn, i, ii, j, jj
+      integer :: nfx, iCv, iCv1, iCv2, ic
+      integer :: iFc, iFs, iFt, iVx, i, j
       integer, save :: conn_style = 0, iout = 0
-      real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), Lr, Ll,
+      real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), L1, L2, LL,
      .  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)
       external ipgeti, my_out_us, xerrab
 
@@ -1213,16 +1213,16 @@
          ! at one  of the targets
          do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
           iCv = mpg%ftCv(ic)
-          Lr = 0.5_R8*wrk0(iCv)
+          L1 = 0.5_R8*wrk0(iCv)
           do j = ic+1, mpg%ftCvP(iFt,1) + mpg%ftCvP(iFt,2)-1
-           Lr = Lr + wrk0(mpg%ftCv(j))
+           L1 = L1 + wrk0(mpg%ftCv(j))
           end do
-          Ll = 0.5_R8*wrk0(iCv)
+          L2 = 0.5_R8*wrk0(iCv)
           do j = mpg%ftCvP(iFt,1), ic-1
-           Ll = Ll + wrk0(mpg%ftCv(j))
+           L2 = L2 + wrk0(mpg%ftCv(j))
           end do
           if (conn_style.ne.2) then
-           gm%cvConn(iCv) = min(Lr,Ll)
+           gm%cvConn(iCv) = min(L1,L2)
           elseif (conn_style.eq.2) then
            call xerrab ('Use of conn_style.eq.2 is deprecated')
           endif
@@ -1234,7 +1234,6 @@
       ! connection length evaluated for flux surfaces and vertices
       gm%fsConn = 0.0_R8
       gm%vxConn = 0.0_R8
-#ifdef WG_TODO
       do iFs = 1, mpg%nFs
         do i = mpg%fsFcP(iFs,1), mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
           iFc = mpg%fsFc(i)
@@ -1254,76 +1253,29 @@
         else
           do i = mpg%fsFcP(iFs,1), mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
             iFc = mpg%fsFc(i)
+
+            ! First follow first vertex
             iVx = mpg%fcVx(iFc,1)
-            iVp = iVx
-            iVm = iVx
-            Ll = 0.0_R8
-            ! First go left, i.e. do not include the face and step backward
-            do j = mpg%vxFcP(iVx,1), mpg%vxFcP(iVx,1)+mpg%vxFcP(iVx,2)-1
-              iFn = mpg%vxFc(j)
-              iVn = 0
-              if (iFn.eq.iFc) cycle ! we eliminate the current face
-              if (mpg%fcVx(iFn,1).ne.iVx.and.
-     &            mpg%vxFs(mpg%fcVx(iFn,1)).eq.iFs) then
-                Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,3)/gm%fcBb(iFn,0)
-                iVn = mpg%fcVx(iFn,1)
-              else if (mpg%fcVx(iFn,2).ne.iVx.and.
-     &                 mpg%vxFs(mpg%fcVx(iFn,2)).eq.iFs) then
-                Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,3)/gm%fcBb(iFn,0)
-                iVn = mpg%fcVx(iFn,2)
-              end if
-              do while (iVn.ne.0)
-                iVp = iVn
-                iVn = 0
-                do jj = mpg%vxFcP(iVp,1),
-     &                  mpg%vxFcP(iVp,1)+mpg%vxFcP(iVp,2)-1
-                  iFn = mpg%vxFc(jj)
-                  if (mpg%fcVx(iFn,1).ne.iVp.and.
-     &                mpg%fcVx(iFn,1).ne.iVm.and.
-     &                mpg%vxFs(mpg%fcVx(iFn,1)).eq.iFs) then
-                    Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,3)/gm%fcBb(iFn,0)
-                    iVn = mpg%fcVx(iFn,1)
-                    iVm = iVp
-                  else if (mpg%fcVx(iFn,2).ne.iVp.and.
-     &                     mpg%fcVx(iFn,2).ne.iVm.and.
-     &                     mpg%vxFs(mpg%fcVx(iFn,2)).eq.iFs) then
-                    Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,3)/gm%fcBb(iFn,0)
-                    iVn = mpg%fcVx(iFn,2)
-                    iVm = iVp
-                  end if
-                end do
-              end do
-            end do
-            ! Now we go right, i.e. we include the face and step forward
-            Lr = gm%fcHt(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)
-            iVn = mpg%fcVx(iFc,2)
-            iVm = iVx
-            do while (iVn.ne.0)
-              iVp = iVn
-              iVn = 0
-              do jj = mpg%vxFcP(iVp,1),
-     &                mpg%vxFcP(iVp,1)+mpg%vxFcP(iVp,2)-1
-                iFn = mpg%vxFc(jj)
-                if (mpg%fcVx(iFn,1).ne.iVp.and.
-     &              mpg%fcVx(iFn,1).ne.iVm.and.
-     &              mpg%vxFs(mpg%fcVx(iFn,1)).eq.iFs) then
-                  Lr = Lr + gm%fcHt(iFn)*gm%fcBb(iFn,3)/gm%fcBb(iFn,0)
-                  iVn = mpg%fcVx(iFn,1)
-                  iVm = iVp
-                else if (mpg%fcVx(iFn,2).ne.iVp.and.
-     &                   mpg%fcVx(iFn,2).ne.iVm.and.
-     &                   mpg%vxFs(mpg%fcVx(iFn,2)).eq.iFs) then
-                  Lr = Lr + gm%fcHt(iFn)*gm%fcBb(iFn,3)/gm%fcBb(iFn,0)
-                  iVn = mpg%fcVx(iFn,2)
-                  iVm = iVp
-                end if
-              end do
-            end do
-            gm%vxConn(iVx) = min(Lr,Ll)
+            L1 = 0.0_R8
+            call follow_flux_surface(mpg, gm, ifs, iFc, iVx, L1)
+
+            ! Second follow second vertex
+            iVx = mpg%fcVx(iFc,2)
+            L2 = 0.0_R8
+            call follow_flux_surface(mpg, gm, ifs, iFc, iVx, L2)
+
+            ! connection length of current face
+            LL = gm%fcHt(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)
+
+            ! first vertex --> L2 must be increased by LL
+            iVx = mpg%fcVx(iFc,1)
+            gm%vxConn(iVx) = min(L2+LL,L1)
+            ! second vertex --> L1 must be increased by LL
+            iVx = mpg%fcVx(iFc,2)
+            gm%vxConn(iVx) = min(L2,L1+LL)
           end do
         end if
       end do
-#endif
       if (iout.ne.0) then
        call my_out_us(70,mpg%nCv,0,gm%cvConn,'calc_conn_cvConn')
        call my_out_us(70,mpg%nFt,0,gm%ftConn,'calc_conn_ftConn')
@@ -1467,6 +1419,59 @@ cxpb  and the radial value to 'radial' faces.
 
       return
       end subroutine split_face_flux
+
+***********************************************************************
+
+      subroutine follow_flux_surface( mpg, geo, ifs, ifc, ivx, LL )
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      integer, intent(in) :: ifs
+      integer, intent(in) :: ifc, ivx
+      real(kind=R8), intent (inout) :: LL
+      integer fc_current, vx_current, fc_next, vx1, vx2, j
+      logical found_next
+
+csc   This routine follows a flux surface starting from a vertex of a face
+csc   until a target, and calculates its connection length.
+csc   The idea is: find a face that is on same flux tube but is different
+csc   than previous face, then identify next vertex
+      fc_current = ifc
+      vx_current = ivx
+      found_next = .true.
+      do while (found_next)
+         ! we have a new face, loop over all faces connected to the current vertex
+         found_next = 0
+         do j = mpg%vxFcP(vx_current,1), 
+     &          mpg%vxFcP(vx_current,1)+mpg%vxFcP(vx_current,2)-1
+           fc_next = mpg%vxFc(j)
+           if (fc_next==fc_current) cycle  ! we ingore the current face
+           ! check if face belongs to same flux tube
+           if (mpg%fcFs(fc_next)==ifs) then
+             ! face belongs to flux tube and is not the previous face
+             found_next = .true.
+             LL = LL + geo%fcHt(fc_next)*geo%fcBb(fc_next,3)/
+     &                 geo%fcBb(fc_next,0)
+             vx1 = mpg%fcVx(fc_next,1)
+             vx2 = mpg%fcVx(fc_next,2)
+             ! identify vertex of next face which is not the current vertex
+             if (vx1==vx_current) then
+               vx_current = vx2
+             else
+               vx_current = vx1
+             endif
+             ! update the current face number
+             fc_current = fc_next
+           endif
+           ! stop the for loop if we found the next face
+           if (found_next) exit
+         enddo
+      end do! while
+
+
+      return
+      end subroutine follow_flux_surface
 
 ***********************************************************************
 
