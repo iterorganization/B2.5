@@ -51,6 +51,7 @@ c 2002-09-11: logic revised
      , , only: eirene_init_cinit, fort_lc
       use eirmod_extrab25
       use eirmod_wneutrals
+      use eirmod_infcop
       use eirmod_braeir
       use eirmod_cestim
       use eirmod_coutau
@@ -107,9 +108,10 @@ c
      *   omega(-1:nxd,-1:nyd,0:nsd_local),
      *   deltab(-1:nxd,-1:nyd,0:nsd_local),
      *   deltapar(-1:nxd,-1:nyd,0:nsd_local),
-     *   vtha(-1:nxd,-1:nyd,0:nsd_local),
+     *   vtha(-1:nxd,-1:nyd,0:nsd_local), q,
+     *   zaf(0:nsd_local-1), pxf, tif,
 #endif
-     9   zaf(0:nsd_local-1), tif, pxf, pb0
+     9   pb0
       real (kind=R8), allocatable ::
      *   pr(:), pz(:), ro(:,:), up(:,:), vv(:,:), ww(:,:),
      *   fnax(:,:), fnay(:,:), fmox(:,:), fmoy(:,:),
@@ -135,7 +137,7 @@ c
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
      2   stick_coef, plate_kb, plate_ka,
-     3   q, sput_mixed_alpha, sput_mixed_beta
+     3   sput_mixed_alpha, sput_mixed_beta
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
@@ -194,13 +196,18 @@ c
 #endif
 c
       real (kind=R8) ::
-     * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time,minpsi,maxpsi
+     * dummy,rval,time,minpsi,maxpsi
       real (kind=R8) ::
-     1 lambda, lnlam, hh, hhn, phi_app
-      integer i,j,icell,il,imi,
+     1 lambda, lnlam
+#ifdef WG_TODO
+      integer icell,idir,isign,ixn,iyn,ixf,iyf
+      real (kind=R8) ::
+     * hh, hhn, phi_app, sumjxa, sumjxi, suml(2), sumr(2)
+#endif
+      integer i,j,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
-     2 ikind,lnblnk,nz,ixl,ixr,iyb,iyt,isel,
-     3 i1,ibnd,ixn,iyn,ixf,iyf,idir,isign
+     2 ikind,lnblnk,nz,isel,
+     3 i1,ibnd
       external lnblnk
       data sput_src/1/, ismain/1/, sput_frc/0.0_R8/,
      5     plate_kb/1.6e-3_R8/, plate_ka/1.3e-5_R8/,
@@ -291,11 +298,12 @@ c
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(mpg%nCv,mpg%nFc,nsd_local,nstra)
       call alloc_b2mod_eirbra(mpg%nCv,nsd_local,natm,npls,nstra)
@@ -752,7 +760,7 @@ c
       call xertst(nniso.le.nnisod,
      . 'increase size in DEF_NISO in DIMENSIONS.F')
       call alloc_b2mod_neutrals
-     . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+     . (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid,
@@ -1401,7 +1409,9 @@ c
             CALL EIRENE_DEALLOC_CTRCEI
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
+            CALL EIRENE_DEALLOC_INFCOP
             CALL EIRENE_EXTRAB25_CLEANUP
+            CALL EIRENE_WNEUTRALS_DEALLOC
 #else
             call dealloc_b2mod_braeir
             call dealloc_b2mod_eirbra
@@ -1491,7 +1501,9 @@ c
           CALL EIRENE_DEALLOC_CTRCEI
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
+          CALL EIRENE_DEALLOC_INFCOP
           CALL EIRENE_EXTRAB25_CLEANUP
+          CALL EIRENE_WNEUTRALS_DEALLOC
 #else
           call dealloc_b2mod_braeir
           call dealloc_b2mod_eirbra
@@ -1522,7 +1534,10 @@ c
       end function iyy
 
       subroutine select_matrix
-      integer ix, iy, is, iso, ibc
+      integer i, is, ibc, iCv
+#ifdef WG_TODO
+      integer ix, iy, iso
+#endif
 
       cflag=.true.
       CVALUE: select case (cval)
@@ -2086,6 +2101,28 @@ c
             nz=natmi
             mach(:,0:nz-1)=eneutrad(:,1:nz,0)
             call copy(mach,-1.0_R8,nz,textan)
+          else
+            nz=1
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
+        case ('molrad')
+          description='Power loss due to molecule radiation (W)'
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,0:nz-1)=emolrad(:,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
+        case ('ionrad')
+          description='Power loss due to molecular ion radiation (W)'
+          if (nioni.gt.0) then
+            nz=nioni
+            mach(:,0:nz-1)=eionrad(:,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textin)
           else
             nz=1
             mach(:,0:nz-1)=0.0_R8
@@ -4512,7 +4549,10 @@ c     assumes that bb is OK for 1d cases
       end subroutine select_matrix
 
       subroutine select_stack_manipulation
-      integer i,ix,iy,is,isp,iatm
+      integer i,is,isp,iatm,iCv
+#ifdef WG_TODO
+      integer ix,iy
+#endif
 
       cflag=.true.
       FVALUE: select case (cval)
@@ -5726,7 +5766,11 @@ c
       end subroutine select_parameters
 
       subroutine select_command
-      integer i,in,is,ix,iy
+      integer is,iCv
+#ifdef WG_TODO
+      integer i,in,ix,iy,ixr,iyt
+      real(kind=R8) :: b0r0
+#endif
 
       cflag=.true.
       stack_req=(/0,0,1,0,0,0,0/)
@@ -6809,7 +6853,7 @@ cdpc still in testing phase
 
       subroutine select_eirene_command
 #ifdef B25_EIRENE
-      integer i, ix, iy, is, it, iclv
+      integer i, ix, iy, is, it, iclv, iCv
       integer :: nntria(mpg%nCv)
       real (kind=R8) :: volsum,
      *   xc, yc, x1, x2, x3, x4, y1, y2, y3, y4

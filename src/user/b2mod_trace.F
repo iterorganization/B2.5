@@ -36,7 +36,7 @@
       use eirmod_parmmod
      .   , only : nmol
 #endif
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 c
 c  version : 29.08.2000 00:26

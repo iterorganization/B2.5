@@ -25,8 +25,10 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,k
-      real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
+#ifdef WG_TODO
+      integer ix, k
+      real (kind=R8) :: x, y, z, hlp_je, hlp_q, hlp_qp, hlp_si
+#endif
 c----------------------------------------------------------------------
 c*** Check the ig value
 c

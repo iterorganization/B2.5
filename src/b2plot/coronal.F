@@ -287,7 +287,7 @@ c     -------------------------------------------------------------------------
       integer ismain
 *   ..common blocks
 
-      integer ix,iy,is
+      integer is
       type(B2Rates) :: rtco
       type(B2RatesWork) :: rtwco
       real (kind=R8) ::

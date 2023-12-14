@@ -20,7 +20,7 @@ c
       REAL(kind=R8), ALLOCATABLE, SAVE, PUBLIC :: 
      &  PUX(:),  PUY(:),  PVX(:),  PVY(:)
 
-      REAL(kind=R8), SAVE, PUBLIC :: L_MACRO
+      REAL(kind=R8), SAVE, PUBLIC :: L_MACRO_B25
 
       type :: targetdata
         integer :: ntrgdat
@@ -29,7 +29,8 @@ c
         real (kind=R8), allocatable :: 
      &    tet(:), tit(:), tnt(:), fe(:), fsh(:),
      &    flux(:,:), dnit(:,:), vxt(:,:), vyt(:,:), vzt(:,:),
-     &    fi(:,:), fel(:,:), vpart(:,:), mach(:,:), usr(:,:)
+     &    fi(:,:), fel(:,:), vpart(:,:), mach(:,:), usr(:,:),
+     &    zit(:,:)
       end type targetdata
 
       type(targetdata), allocatable :: trgt(:)
@@ -142,6 +143,7 @@ c
           allocate (trgt(ist)%vpart(ndat,nfl))
           allocate (trgt(ist)%mach(ndat,nfl))
           allocate (trgt(ist)%usr(ndat,nfl))
+          allocate (trgt(ist)%zit(ndat,nfl))
         end if
         
         trgt(ist)%faces = 0
@@ -162,6 +164,7 @@ c
         trgt(ist)%vpart = 0.0_R8
         trgt(ist)%mach = 0.0_R8
         trgt(ist)%usr = 0.0_R8
+        trgt(ist)%zit = 0.0_R8
         
       end if
 
@@ -229,6 +232,7 @@ c
             DEALLOCATE (TRGT(I)%VPART)
             DEALLOCATE (TRGT(I)%MACH)
             DEALLOCATE (TRGT(I)%USR)
+            DEALLOCATE (TRGT(I)%ZIT)
           END IF
         ENDDO
         DEALLOCATE (TRGT)

@@ -24,7 +24,7 @@
      3          b2stbm_shi0to3
 #endif
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_switches
       use b2us_geo

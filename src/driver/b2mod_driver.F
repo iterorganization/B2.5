@@ -75,7 +75,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff,
+     *          nsrfs, n1st, n2nd, n3rd, nreac, 
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -86,6 +86,7 @@
      , ,only: iunout
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_infcop
       use eirmod_extrab25
       use eirmod_wneutrals
       use b2mod_eirene
@@ -1441,7 +1442,7 @@ csw 09oct2012
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        IUNOUT=6+IFOFF
+        IUNOUT=6
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1482,10 +1483,11 @@ csw 09oct2012
       endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
       call createB2SourceEir( nCv, ns, nstra, state % sr_eir )
@@ -1941,7 +1943,7 @@ c   --> better way doing this is necessary)
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_neutrals
-     & (mpg%nCi/2,mpg%nCi/2,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
+     & (ns,natm,nmol,nion,nstraid,nsts,sput_dst)
       natmi = 0
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
@@ -1983,7 +1985,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
         call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
@@ -3469,6 +3471,7 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+      CALL EIRENE_DEALLOC_INFCOP
 #else
       call dealloc_b2mod_braeir
       call destroyB2SourceEir( state % sr_eir )
