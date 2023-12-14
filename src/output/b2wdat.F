@@ -12,7 +12,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      *   , only : natm, nmol, nstra,  npls
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2us_geo
       use b2us_map

@@ -308,11 +308,12 @@
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(nCv,nFc,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
       call alloc_b2mod_eirbra(nCv,ns,natm,npls,nstra)
@@ -325,8 +326,8 @@
       call alloc_b2mod_boundary(1, 1, ns, nbcd, nnisod)
       if (switch%b2stbc_boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(ns, mpg, .false.)
-      call alloc_b2mod_neutrals(mpg%nCi/2, mpg%nCi/2,
-     .  ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+      call alloc_b2mod_neutrals
+     . (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (switch%b2stbr_neutrals_namelist.eq.1 .or.
      &    switch%use_eirene.ne.0)
      > call read_neutrals_namelist(ns, mpg, switch, .false.)

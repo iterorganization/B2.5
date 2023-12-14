@@ -127,7 +127,7 @@ program b2_ual_write
     ! call b2mn_step(0)
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstrat,npls)
+    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
 #endif
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
