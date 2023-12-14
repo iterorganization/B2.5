@@ -2035,7 +2035,10 @@ cc BCPOT
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: ib, inbc, ibc, iFc, ic1, ic2
-      integer :: iout, ian, ien, i, j, k
+      integer :: i, j, k
+#ifdef WG_DEBUG
+      integer :: iout, ian, ien
+#endif
 #ifndef F2003
       integer newunit
       external newunit

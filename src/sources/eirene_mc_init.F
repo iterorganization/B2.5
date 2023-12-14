@@ -3,6 +3,8 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      &   , ncv_eir => ncv
+      use eirmod_eirbra
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirbra
@@ -57,6 +59,8 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(wldpeb(nlimps,0:nstra+1))
         allocate(wldspt(nlimps,0:nstra+1))
         allocate(eneutrad(nCv,natm,0:nstra+1))
+        allocate(emolrad(nCv,nmol,0:nstra+1))
+        allocate(eionrad(nCv,nion,0:nstra+1))
         allocate(isrftype(nlimps))
 #else
 !        call alloc_b2mod_eirdiag(nx,ny,
@@ -86,6 +90,8 @@ c     avoids double module definition in case code is compiled with Eirene
         srcml=0.0_R8
         edissml=0.0_R8
         eneutrad=0.0_R8
+        emolrad=0.0_R8
+        eionrad=0.0_R8
         wldnek=0.0_R8
         wldnep=0.0_R8
         wldna=0.0_R8

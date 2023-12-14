@@ -30,7 +30,7 @@ c
       use b2mod_neutrals_namelist
       use eirmod_parmmod
      .   , only : natm, nmol, nion, nstra, nlmpgs, nspz
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
       use eirmod_clogau
       use eirmod_cinit
@@ -49,13 +49,15 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
-      integer nCvp, iCv, ix, iy, jvft44, istra
+      integer nCvp, iCv, ix, iy, jvft44, istra, nstrai_in
       integer i, j, k, ncl
       real (kind=R8) :: recyctmp
       character charns*3
       character*18 hlp_frm
+      character*72 zeile
       character*256 filename
-      logical ex
+      logical ex, streql
+      external streql
 #endif
       integer, save :: use_recyceir, iout
       data use_recyceir /1/, iout/0/
@@ -74,7 +76,11 @@ C
 
       nplsi = 0
       do is = 0, ns-1
-        if (.not.is_neutral(is)) nplsi = nplsi + 1
+        if (.not.is_neutral(is)) then
+          nplsi = nplsi + 1
+        elseif (switch%spatial_hybrid.ne.0) then
+          if (nint(zn(is)).eq.1) nplsi = nplsi + 1
+        endif
       end do
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'faulty argument ismain')
@@ -87,9 +93,16 @@ C
 *
       rewind (44)
 C
-      READ(44,'(I4,2X,i8)',END=99,ERR=99) nCvp,jvft44
+      READ(44,'(A72)',END=99) ZEILE
+      IF (streql(ZEILE(7:8),'  ')) THEN
+        READ(ZEILE,'(I6,2X,I8)',ERR=99) nCvp,jvft44
+      ELSE IF (streql(ZEILE(5:6),'  ')) THEN
+        READ(ZEILE,'(I4,2X,I8)',ERR=99) nCvp,jvft44
+      ELSE
+        GOTO 99
+      END IF
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-      write(*,'(3a,t27,5i5)')
+      write(*,'(3a,t27,i6,3i4)')
      . ' Dimensions in ',fort_lc,'44 = ',nCvp,natmi,nmoli,nioni
       call xertst(nCvp .le. mpg%nCv, 'NGREAD: nCvp > nCv')
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
@@ -248,12 +261,13 @@ cank 960511
         end do
       end if
       if(jvft44 .ge. 960513) then
-        read(44,'(3i6)') nlimi,nstsi,nstrai
-        print '(1x,a,5i6)','nlimi,nstsi,nstrai,nlimps,nlmpgs:',
-     .                      nlimi,nstsi,nstrai,nlimps,nlmpgs
+        read(44,'(3i6)') nlimi,nstsi,nstrai_in
+        if (nstrai.eq.0) nstrai = nstrai_in
+        print '(1x,a,5i6)','nlimi,nstsi,nstrai_in,nlimps,nlmpgs:',
+     .                      nlimi,nstsi,nstrai_in,nlimps,nlmpgs
         call xertst(nlimi  .le. nlim , 'NGREAD:  NLIMI > NLIM ')
         call xertst(nstsi  .le. nsts , 'NGREAD:  NSTSI > NSTS ')
-        call xertst(nstrai .le. nstra, 'NGREAD: NSTRAI > NSTRA')
+        call xertst(nstrai_in .le. nstra, 'NGREAD: NSTRAI > NSTRA')
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)
@@ -274,8 +288,8 @@ cank-960727
         call rdneutrs(44,wldrm,nmoli)
       end if
       if(jvft44 .ge. 960727) then
-        if(nstrai .gt. 1) then
-          do istra=1,nstrai
+        if(nstrai_in .gt. 1) then
+          do istra=1,nstrai_in
             call rdneutrs(44,wldnek(1,istra),1)
             call rdneutrs(44,wldnep(1,istra),1)
             call rdneutrs(44,wldna(:,:,istra),natmi)
@@ -314,7 +328,7 @@ cank-960727
             wldrm(ix,is,0)=0.0_R8
             ewldm(ix,is,0)=0.0_R8
           end do
-          do istra=1,nstrai
+          do istra=1,nstrai_in
             if(use_recyceir.gt.0) then
               recyctmp=recyceir(istra)
             else
@@ -383,8 +397,8 @@ cank-960727
           call rdneutrs(44,wldspta,natmi)
           call rdneutrs(44,wldsptm,nmoli)
         end if
-        if(nstrai .gt. 1) then
-          do istra=1,nstrai
+        if(nstrai_in .gt. 1) then
+          do istra=1,nstrai_in
             call rdneutrs(44,wldpp(:,:,istra),nplsi)
             call rdneutrs(44,wldpa(:,:,istra),natmi)
             call rdneutrs(44,wldpm(:,:,istra),nmoli)
@@ -469,6 +483,15 @@ cank
           end do
         end if
 
+        if(jvft44 .ge. 20180323 .and. jvft44.ne.20200402) then
+          do is = 1, nmoli
+            call gfsub2(44,mpg%nCv,nCvp,emolrad(:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,mpg%nCv,nCvp,eionrad(:,is,0))
+          end do
+        end if
+
         if(jvft44 .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
@@ -481,6 +504,7 @@ cank
             IF(.NOT.ALLOCATED(wldna_res))
      >         ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                  ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                  ewldt_res(NCL),
      .                  ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
      .                  ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                  wldspt_res(NCL), sarea_res(NCL),
@@ -537,6 +561,10 @@ cank
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
      ,                                i=1,NCL)
             end if
+            if (jvft44.ge.20201006) then
+              call read_title(44)
+              read(44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
+            end if
           ELSE
             call read_title(44)
             READ (44,1028)
@@ -579,41 +607,55 @@ cank
 
         if(jvft44 .ge. 20081111) then
           call read_title(44)
-          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,natmi),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,nmoli),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,nioni),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
-          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,natmi),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,nmoli),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
           call read_title(44)
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
-     .                                                     J=0,NSTRAI)
+     .                                                    J=0,NSTRAI_IN)
         end if
   999   continue
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,mpg%nCv,nCvp,eneutrad(:,is,0))
+          end do
+        end if
+        if(jvft44 .ge. 20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,mpg%nCv,nCvp,emolrad(:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,mpg%nCv,nCvp,eionrad(:,is,0))
           end do
         end if
       end if

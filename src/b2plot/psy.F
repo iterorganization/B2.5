@@ -5,9 +5,12 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer ix,iy,is,lnblnk
-      character*256 stmp
+#ifdef WG_TODO
+      integer ix,iy,is
       intrinsic min,max
+#endif
+      integer lnblnk
+      character*256 stmp
       external lnblnk
 
 #ifdef WG_TODO

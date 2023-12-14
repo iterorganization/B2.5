@@ -24,7 +24,7 @@ c
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cestim
       use eirmod_cinit
@@ -155,9 +155,9 @@ C
       READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       write(*,'(3a,4i6)')
      . ' Dimensions in ',fort_lc,'46 = ',ntrii,natmi,nmoli,nioni
-      call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
-      call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
-      call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
+      call xertst(natmi .le. natm, 'NTREAD: NATMI > NATM')
+      call xertst(nmoli .le. nmol, 'NTREAD: NMOLI > NMOL')
+      call xertst(nioni .le. nion, 'NTREAD: NIONI > NION')
 c
 * labels
 * neutral atoms

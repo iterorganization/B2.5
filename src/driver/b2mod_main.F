@@ -186,7 +186,6 @@ csw 28feb2011 mpi
       if(rank_mpi .ne. 0) then
 #ifdef B25_EIRENE
         my_pe=rank_mpi
-        iunout=7+ifoff
         call eirene_find_param(0)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,

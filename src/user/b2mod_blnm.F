@@ -100,10 +100,13 @@ c
      ,            (equdiv(1,13), rlres)
 c----------------------------------------------------------------------
 c
-      integer i, j, ic, is, iCv
+      integer i, j, ic
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(mpg%nCv)
+#ifdef WG_TODO
+      integer, save :: is
+#endif
 c----------------------------------------------------------------------
 c*** To be taken from the common blocks (not used yet):
 c***  lcbs: boundary segments representing the core boundary in B2
@@ -115,7 +118,7 @@ c
      ,  rsfrc, rlptg, rlmup,
      ,  rlmtg, rlfnu, rlfmf,
      ,  rlres,
-     +  i, j, ic, is, iCv,
+     +  i, j, ic,
      +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf
 c======================================================================
 

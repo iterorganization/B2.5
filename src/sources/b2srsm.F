@@ -58,10 +58,10 @@
       integer diagno
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
-#endif
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)
+#endif
 *   ..procedures
       external xertst, ipgeti, b2xvsg
 #ifdef WG_TODO
@@ -101,10 +101,10 @@ c        call ipgeti ('b2srsm_diagno', diagno)
       endif
 
 cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
-      snatmp = sr%sna
-      smotmp = sr%smo
-      shetmp = sr%she
-      shitmp = sr%shi
+!WG_TODO      snatmp = sr%sna
+!WG_TODO      smotmp = sr%smo
+!WG_TODO      shetmp = sr%she
+!WG_TODO      shitmp = sr%shi
 
       if(switch%b2srsm_enable.ne.0) then
         call xerrab ('b2srsm not adapted for WG')

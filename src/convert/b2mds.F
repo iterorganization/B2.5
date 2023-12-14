@@ -42,7 +42,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff, 
+     *          nsrfs, n1st, n2nd, n3rd, nreac, 
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -52,7 +52,8 @@
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
-      use eirmod_extrab25
+      use eirmod_infcop
+      use eirmod_wneutrals
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -194,11 +195,12 @@ c
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(nCv,nFc,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,nsd_local,nstra)
       call alloc_b2mod_eirbra(nCv,nsd_local,natm,npls,nstra)
@@ -389,7 +391,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call alloc_b2mod_neutrals
-     > (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+     > (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst (nstrat.le.nstraid,
@@ -702,6 +704,7 @@ c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
 c 26: using total field for computing dspar
+c 27: Added EMOLRAD and EIONRAD arrays
 
       dbversion=23
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
@@ -1338,6 +1341,10 @@ c
      1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,0)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EMOLRAD','W',nx+2,
+     1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
       if(nioni.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
@@ -1347,6 +1354,10 @@ c
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
      1   tmp(ix,iy,is)=tib2(ix+1,iy+1,is+1,1)/ev
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
+     1   ny+2,nioni,tmp,'TEXTIN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
+     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,0)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EIONRAD','W',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
       endif
 #endif
@@ -1482,7 +1493,9 @@ c
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_INFCOP
       CALL EIRENE_EXTRAB25_CLEANUP
+      CALL EIRENE_WNEUTRALS_DEALLOC
 #else
       call dealloc_b2mod_braeir
       call dealloc_b2mod_eirbra

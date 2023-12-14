@@ -45,7 +45,7 @@
      , , only: ALLOC, texts, nsph, nspa, nspam
       use eirmod_cinit
      , , only: fort_lc
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_clgin
      ,   , only : iliin
 #else
@@ -129,7 +129,7 @@
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
+      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
 #ifdef WG_RM
       integer ifb
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
@@ -209,7 +209,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       integer icount
 #endif
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      integer i,j,k,l,js,ls,kks,n,itmp,ind,nplsh
+      integer i,j,k,l,js,ls,kks,n,ind,nplsh
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       integer, save, allocatable :: NPTS_input(:)
@@ -428,22 +428,6 @@ csw 26feb2013
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(nhist.gt.1) call alloc_hist_arrays(nhist)
         if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays
-        if(lhalpha) then
-          itmp=1
-        else
-          itmp=0
-        endif
-        call ipgeti('eirene_lhalpha',itmp)
-        lhalpha=itmp.ne.0
-        write(*,*) 'lhalpha = ',lhalpha
-        if(lvib) then
-          itmp=1
-        else
-          itmp=0
-        endif
-        call ipgeti('eirene_lvib',itmp)
-        lvib=itmp.ne.0
-        write(*,*) 'lvib = ',lvib
         call xertst(switch%ank_mods.eq.0.or.switch%ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
@@ -454,7 +438,7 @@ csw 26feb2013
 !! set logical lneustra
       lneustra = switch%spatial_hybrid.ne.0
 !! set L_macro for EIRENE
-      L_macro = switch%L_macro_AFN
+      L_macro_b25 = switch%L_macro_AFN
 
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then
@@ -904,12 +888,14 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
           nplsh = 0
-          do is = 0,ns-1
-            if (is_neutral(is).and.nint(zn(is)).eq.1) then
-              nplsh = nplsh + 1
-            end if
-          end do
-          call post_couple(nCv,nFc,ns,nstrat,nplsh)
+          if (switch%spatial_hybrid.ne.0) then
+            do is = 0,ns-1
+              if (is_neutral(is).and.nint(zn(is)).eq.1) then
+                nplsh = nplsh + 1
+              end if
+            end do
+          end if
+          call post_couple(nCv,nFc,ns,nstrai,nplsh)
           write(*,*) 'Called post_couple'
         endif
       elseif(.not.main_call) then !}{
@@ -3424,10 +3410,21 @@ c
 !             rad_neutr=rad_neutr-edissml(ic,imol,1)
 !             rdneureg(k)=rdneureg(k)-edissml(ic,imol,1)
 !             recycereg(k)=recycereg(k)-edissml(ic,imol,1)
-              radarr(ic)=radarr(ic)-edissml(ic,imol,0)
-              rad_neutr=rad_neutr-edissml(ic,imol,0)
-              rdneureg(k)=rdneureg(k)-edissml(ic,imol,0)
-              recycereg(k)=recycereg(k)-edissml(ic,imol,0)
+cxpb Replacing edissml contribution with emolrad
+c$$$              radarr(ic)=radarr(ic)-edissml(ic,imol,0)
+c$$$              rad_neutr=rad_neutr-edissml(ic,imol,0)
+c$$$              rdneureg(k)=rdneureg(k)-edissml(ic,imol,0)
+c$$$              recycereg(k)=recycereg(k)-edissml(ic,imol,0)
+              radarr(ic)=radarr(ic)+emolrad(ic,imol,0)
+              rad_neutr=rad_neutr+emolrad(ic,imol,0)
+              rdneureg(k)=rdneureg(k)+emolrad(ic,imol,0)
+              recycereg(k)=recycereg(k)+emolrad(ic,imol,0)
+            end do
+            do iion = 1, nnioni
+              radarr(ic)=radarr(ic)+eionrad(ic,iion,0)
+              rad_neutr=rad_neutr+eionrad(ic,iion,0)
+              rdneureg(k)=rdneureg(k)+eionrad(ic,iion,0)
+              recycereg(k)=recycereg(k)+eionrad(ic,iion,0)
             end do
           endif
         enddo
@@ -3435,6 +3432,12 @@ c
         if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
      .   'EIRENE_MC. ENEUTRAD : ',
      .   (SUM(eneutrad(1:nCv,iatm,0)),iatm=1,nnatmi)
+        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
+     .   'EIRENE_MC. EMOLRAD : ',
+     .   (SUM(emolrad(1:nCv,imol,0)),imol=1,nnmoli)
+        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
+     .   'EIRENE_MC. EIONRAD : ',
+     .   (SUM(eionrad(1:nCv,iion,0)),iion=1,nnioni)
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
      . 'EIRENE_MC. RADARR, RAD_NEUTR : ',
@@ -3613,6 +3616,7 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       call write_f31(mpg)
 csw 26jan2011
       call eirene_extrab25_cleanup
+      call eirene_wneutrals_dealloc
 #ifndef B25_EIRENE
       call dealloc_b2mod_eirdiag
 #endif

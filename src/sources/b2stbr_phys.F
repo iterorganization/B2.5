@@ -184,9 +184,9 @@ c     output for analysis/debugging
               if (nint(zn(is)).eq.1) then
                 if(erecyc(is,istra)>0.0_R8.or.
      2            mrecyc(is,istra)>0.0_R8)
-     3            write(*,*)'recycle_afn incompatible with ',
-     4            'user-defined momentum and energy recycling ',
-     5            'coefficients > 0 for istra= ', istra
+     3            write(*,*)'recycle_afn incompatible with '//
+     4             'user-defined momentum and energy recycling '//
+     5             'coefficients > 0 for istra= ', istra
               endif
             enddo
           endif
