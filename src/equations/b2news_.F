@@ -315,20 +315,26 @@ csw 01oct2012 initialize potential if necessary
       else
         st%co%cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
-!        do is=0,ns-1                                                    !srv 01.10.99
-        do is = switch%nsmin, switch%nsmax-1
+c The Rhie-Chow term in the particle fluxes uses pccb terms
+c which are calculated in b2npmo.
+c Hence to get a consistent calculation we need to do a dummy call to
+c b2npmo with rxf = 0 and recompute fluxes.
+      call b2npmo (nCv, nFc, nVx, ns, ismain,
+     &    switch, geo, mpg,
+     &    ncall_b2news_, b2news_solving(1), 0.0_R8,
+     &    st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
+      do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
-          call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
-     &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))                      !srv 01.10.99
+        call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
+     &   st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain,
-     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
-        enddo                                                            !srv 01.10.99
-*      ..compute electron drift velocities
-        call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
+        call b2tfnb (nCv, nFc, nVx, is, ismain,
+     &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
+      enddo
+*    ..compute electron drift velocities
+      call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
      &    st%dv%fac_ExB, st%dv%ne, st%pl%te, st%pl%po, st%dv%vedia,
      &    st%dv%veecrb)
-!      end if                                                            !srv 01.10.99
 
 csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
 c   extra call at this place within internal iteration)
@@ -413,24 +419,6 @@ c   extra call at this place within internal iteration)
 !lkw20.03.2023}
 csw 11oct2012 added check on Coriolis force (taken from b2news)
       ier0=0
-c Necessary for smooth restart with Rhie-Chow:
-c The Rhie-Chow term in the particle fluxes uses pccb terms which are calculated in b2npmo.
-c Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to
-c b2npmo with rxf = 0 and recompute fluxes.
-      if (ncall_b2news_.eq.0) then
-        call b2npmo (nCv, nFc, nVx, ns, ismain,
-     &    switch, geo, mpg,
-     &    ncall_b2news_, b2news_solving(1), 0.0_R8,
-     &    st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
-        do is = switch%nsmin, switch%nsmax-1
-*    ..compute partial pressure
-          call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
-     &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
-*    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain,
-     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
-        enddo
-      endif
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1,
@@ -696,7 +684,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,st%dv%ue)
       do is=0,ns-1
-        st%dv%ue = st%dv%ue + 
+        st%dv%ue = st%dv%ue +
      &           st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
       enddo
       st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
