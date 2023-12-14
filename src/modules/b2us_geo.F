@@ -486,7 +486,7 @@
        enddo
       elseif (switch%vxVol_style.eq.2) then
        ! Assumption: all internal 'radial' faces aligned (boundaries faces possibly non-aligned)
-       ! Idea: assign equal total weight to all cells on either side of the flux surface
+       ! Idea: assign equal total weight to all cells on either side of the flux surface (inverse volume weighting!)
        !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
        !                  average between flux tube values)
        ! calculate cvPsi
@@ -525,14 +525,13 @@
            if (iCv.le.mpg%nCi) then
             if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
               gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &          (count_up + count_down + 2.0_R8*count_eq) / count_up
+     &          2.0_R8*count_up
             elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
               gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &          (count_up + count_down + 2.0_R8*count_eq) / count_down
+     &          2.0_R8*count_down
             else
               gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &          (count_up + count_down + 2.0_R8*count_eq) /
-     &          (2.0_R8*count_eq)             
+     &          count_eq
             endif
            else
             ! Make sure guard cells dominate in the interpolation
