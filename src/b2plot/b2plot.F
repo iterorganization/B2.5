@@ -6283,10 +6283,18 @@ cdpc still in testing phase
         case('amju','amjuel')    ! accesses Eirene type atomic physics data
           stack_req=(/0,0,4,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call strcopy(3,256,crc,spop(sstack,isstack))
-          call strcopy(9,256,reac,spop(sstack,isstack))
-          call strcopy(4,256,h123,spop(sstack,isstack))
-          call strcopy(8,256,filnam,spop(sstack,isstack))
+          stmp = spop(sstack,isstack)
+          call strip_spaces(stmp)
+          call strcopy(3,256,crc,stmp)
+          stmp = spop(sstack,isstack)
+          call strip_spaces(stmp)
+          call strcopy(9,256,reac,stmp)
+          stmp = spop(sstack,isstack)
+          call strip_spaces(stmp)
+          call strcopy(4,256,h123,stmp)
+          stmp = spop(sstack,isstack)
+          call strip_spaces(stmp)
+          call strcopy(8,256,filnam,stmp)
           nz=1
           call get_amjuel_data(filnam,h123,reac,crc,
      1     mpg%nCv,state%dv%ne,state%pl%te,mach)
@@ -6297,7 +6305,9 @@ cdpc still in testing phase
         case('adas')     ! accesses ADAS atomic physics data
           stack_req=(/0,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call strcopy(9,256,reac,spop(sstack,isstack))
+          stmp = spop(sstack,isstack)
+          call strip_spaces(stmp)
+          call strcopy(9,256,reac,stmp)
           nz=ns
           call get_adas_data(reac,nz,mpg%nCv,
      1     state%dv%ne,state%pl%te,mach)

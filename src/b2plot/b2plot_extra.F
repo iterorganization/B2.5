@@ -113,6 +113,8 @@ cxpb The number 2 is dependent on the type of data being read
           endif
 c     filling array and computing rate
           do ic=0,ncnct-1
+            if(is+ic.ge.ns) cycle
+            if(ic.gt.0.and..not.lnext(is,is+ic)) cycle
             if((ic.eq.0.and.first_stage).or.
      &         (ic.eq.ncnct-1.and.last_stage).or.
      &         (ic.gt.0.and.ic.lt.ncnct-1)) then
