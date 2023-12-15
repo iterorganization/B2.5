@@ -2243,6 +2243,7 @@ c new CDF movie option (1st frame at t=0)
 *    ..guess the next state
         call b2mxnp (n2*ns, nap, na0, na)
         call b2mxnu (n2*ns, uap, ua0, ua)
+        call b2mxnu (n2*2, nip, ni0, ni)
         call b2mxnp (n2, nep, ne0, ne)
         call b2mxnp (n2, tep, te0, te)
         call b2mxnp (n2, tip, ti0, ti)
