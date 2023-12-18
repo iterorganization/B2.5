@@ -138,6 +138,8 @@
       use b2mod_subsys
 c ECH module
       use b2mod_ech
+c Artificial losses module
+      use b2mod_artificialsinks
 
       implicit none
 *   ..common blocks
@@ -1849,6 +1851,11 @@ c ECH module
       if(switch%use_ech.eq.1) then
         call alloc_b2mod_ech(nCv)
       endif
+c Artificial losses module
+      if(switch%losses_limiters.eq.1.or.switch%losses_drifts.eq.1.or.
+     &   switch%losses_poloidal.eq.1) then
+        call alloc_b2mod_artificialsinks(nCv, ns)
+      endif
 !csc  reading transpot input is needed here otherwise when optimization is running it will override the optimized parameters
       if (switch%b2tqna_transport_inputfile .eq. 1) then
         call read_transport_input(transport_ip_filename)
@@ -2810,6 +2817,7 @@ c new CDF movie option
 #else
       call dealloc_b2mod_braeir
       call dealloc_b2mod_ech
+      call dealloc_b2mod_artificialsinks
       call destroyB2SourceEir( state % sr_eir )
 #endif
       call subend ()
