@@ -543,8 +543,8 @@ ctmp.dpc
             call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &       ncall_b2news_, ismain, solving, solveee, solveei,           !srv 22.05.18
      &       solveen, solveet, solvepo, solvemo, solvekt, solvezt,
-     &       switch%b2mndt_rxf,
-     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)
+     &       switch%b2mndt_rxf, dtim, st%pl, st%dv, st%co, st%rt,
+     &       st%sr, st%srw, st%psnc, st%psnl, st_ext, ier0)
           endif
 *     ..end intermediate iteration
           istg(1) = istg(1)+1
