@@ -3,36 +3,37 @@ c********************  NEW KU Leuven module for artificial sinks  **************
 c**************************************************************************************
 ! mb  10/11/23
 ! main author: Anthony Piras
-c   This module is intended to
+c This module is intended to simulate artificial sinks due to losses in the poloidal direction,
+c drifts and eventual losses to limiters. These sinks are used when "tweaking" SOLPS-ITER to
+c run 1D models (i.e. symmetry BCs applied in poloidal direction, purely radial model).
+c Subroutines contained in this module should not be used when running a full 2D simulation.
+c Verify that losses_limiters, losses_drifts and losses_poloidal switches have their default
+c value (zero), thus being turned off.
+c This losses model comes from the TOMATOR1D code (credits: Tom Wauters tom.wauters@iter.org).
+c The losses are stored in vectors sna0_XXXloss, she0_XXXloss and shi0_XXXloss, all of them of
+c the same size of st%sr%sna/she/shi.
+c Particle losses are assumed to be of the form n_i/tau, hence only sna0_XXXloss(:,1,:) is
+c non-zero. The subroutines return sna0_XXXloss(:,1,:) = -1.0/tau, then the multiplication by
+c n_i is carried out in b2sral.
+c Energy losses are assumed to be of the form n*T/tau, hence only shY0_XXXloss(:,3) is non-zero.
+ 
       module b2mod_artificialsinks
 *   ..other modules called 
       use b2mod_types
       use b2mod_constants
-c      use b2mod_wall
-c      use b2mod_math
-c      use b2mod_types
-c      use b2mod_math
-c      use b2mod_transport_namelist
-c      use b2mod_input_profile
-c      use b2mod_constants
-c      use b2mod_time
-c      use b2mod_diag
-c      use b2mod_b2cmpa
-c      use b2mod_b2cmpt
-c      use b2mod_b2cmpb
-c      use b2mod_ranges
-c      use b2mod_neoclassical
-c      use b2mod_geo_corner
-c      use b2mod_user_namelist
-c      use b2mod_switches
-c      use b2us_geo
-c      use b2us_map
-c      use b2us_plasma
 
       implicit none
 
+c The allocatable variables hereunder have the same dimensions of the ones defined in b2us_plasma
+c plus an extra dimension equal to 3. The logic is as follows:
+c sna_losses(:,:,:,1) = sna0_limloss(:,:,:)   for limiter losses
+c sna_losses(:,:,:,2) = sna0_driftloss(:,:,:) for drift losses
+c sna_losses(:,:,:,3) = sna0_polloss(:,:,:)   for poloidal losses
+c and so on and so forth for the other variables
       real (kind=R8), allocatable, save ::
-     &  sna_pol(:,:,:), sna_lim(:,:,:), sna_dri(:,:,:)
+     &  sna_losses(:,:,:,:), ! particles losses
+     &  she_losses(:,:,:),   ! electron energy losses
+     &  shi_losses(:,:,:)    ! ion energy losses
 
       contains
 
@@ -41,13 +42,13 @@ c Alloc
       implicit none
       integer, intent(in) :: nCv, ns
 
-      allocate(sna_pol(nCv,0:1,ns))
-      allocate(sna_lim(nCv,0:1,ns))
-      allocate(sna_dri(nCv,0:1,ns))
+      allocate(sna_losses(nCv,0:1,ns,3))
+      allocate(she_losses(nCv,0:3,3))
+      allocate(shi_losses(nCv,0:3,3))
 
-      sna_pol(:,:,:) = 0.0_R8
-      sna_lim(:,:,:) = 0.0_R8
-      sna_dri(:,:,:) = 0.0_R8
+      sna_losses(:,:,:,:) = 0.0_R8
+      she_losses(:,:,:) = 0.0_R8
+      shi_losses(:,:,:) = 0.0_R8
 
       return
       end subroutine alloc_b2mod_artificialsinks
@@ -83,7 +84,7 @@ c Limiter losses computation
 
       call subini ('limiterloss')
 
-      call sfill(nCv*2*ns, 0.0_R8, sna0_limloss, 1)
+      call sfill (nCv*2*ns, 0.0_R8, sna0_limloss, 1)
       call sfill (nCv*ns, 0.0_R8, tauion_lim, 1)
       call sfill (nCv*4, 0.0_R8, shi0_limloss, 1)
       call sfill (nCv*4, 0.0_R8, she0_limloss, 1)
@@ -100,15 +101,21 @@ c Limiter losses computation
             tauion_lim(iCv,is) = 0.66_R8*2.0_R8*pi*geo%cvX(iCv)/ ! 0.66 numerical factor by Tom (see emails)
      &                        switch%nlimiters/c_sound
             if(tauion_lim(iCv,is).ne.0.0_R8) then
-              sna0_limloss(iCv,1,is) = -1.0_R8/tauion_lim(iCv,is)
+              sna0_limloss(iCv,1,is) = -1.0_R8/tauion_lim(iCv,is)*
+     &                        geo%cvVol(iCv)
               shi0_limloss(iCv,3) = -1.0_R8/(tauion_lim(iCv,is)/
-     &                               switch%bohm_gammaD)
+     &                             switch%bohm_gammaD)*geo%cvVol(iCv)
               she0_limloss(iCv,3) = -1.0_R8*rt%rza(iCv,is)/
-     &                        (tauion_lim(iCv,is)/switch%bohm_gammaD)
+     &                        (tauion_lim(iCv,is)/switch%bohm_gammaD)*
+     &                        geo%cvVol(iCv)
             endif
           endif
         enddo
       enddo
+
+      sna_losses(:,:,:,1) = sna0_limloss(:,:,:)
+      she_losses(:,:,1) = she0_limloss(:,:)
+      shi_losses(:,:,1) = shi0_limloss(:,:)
 
 *   ..return
       call subend ()
@@ -155,14 +162,20 @@ c Drift losses computation
           tauion_drift(:,is) = switch%a0/(2.0*pl%ti/charge(:,is)/
      &                         geo%cvBb(:,3)/geo%cvX(:))
           do iCv = 1, mpg%nCi
-            sna0_driftloss(iCv,1,is) = -1.0_R8/tauion_drift(iCv,is)
+            sna0_driftloss(iCv,1,is) = -1.0_R8/tauion_drift(iCv,is)*
+     &                        geo%cvVol(iCv)
             shi0_driftloss(iCv,3) = -1.0_R8/(tauion_drift(iCv,is)/
-     &                             switch%bohm_gammaD)
+     &                             switch%bohm_gammaD)*geo%cvVol(iCv)
             she0_driftloss(iCv,3) = -1.0_R8*rt%rza(iCv,is)/
-     &                      (tauion_drift(iCv,is)/switch%bohm_gammaD)
+     &                      (tauion_drift(iCv,is)/switch%bohm_gammaD)*
+     &                        geo%cvVol(iCv)
           enddo
         endif
       enddo
+
+      sna_losses(:,:,:,2) = sna0_driftloss(:,:,:)
+      she_losses(:,:,2) = she0_driftloss(:,:)
+      shi_losses(:,:,2) = shi0_driftloss(:,:)
 
 *   ..return
       call subend ()
@@ -172,7 +185,7 @@ c Drift losses computation
 c Poloidal losses computation
       subroutine poloidloss(nCv, ns, is,
      &   switch, geo, mpg, pl, dv, rt,
-     &   sna0_pollos, shi0_pollos, she0_pollos)
+     &   sna0_polloss, shi0_polloss, she0_polloss)
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_map
@@ -191,8 +204,8 @@ c Poloidal losses computation
       type (B2Rates), intent (in) :: rt
 *   ..input/output arguments
       real (kind=R8) :: dna_bohm_vert(nCv),
-     &  sna0_pollos(nCv,0:1,0:ns-1),
-     &  shi0_pollos(nCv,0:3), she0_pollos(nCv,0:3)
+     &  sna0_polloss(nCv,0:1,0:ns-1),
+     &  shi0_polloss(nCv,0:3), she0_polloss(nCv,0:3)
 *   ..workspace arguments (unspecified on entry and on exit)
       integer :: is, iCv
       real (kind=R8) :: rholi(nCv), mass, vthi(nCv),
@@ -202,11 +215,11 @@ c Poloidal losses computation
 
       call subini ('poloidloss')
 
-      call sfill (nCv*2*ns, 0.0_R8, sna0_pollos, 1)
+      call sfill (nCv*2*ns, 0.0_R8, sna0_polloss, 1)
       call sfill (nCv*ns, 0.0_R8, tauion_pol, 1)
       call sfill (nCv, 0.0_R8, dna_bohm_vert, 1)
-      call sfill (nCv*4, 0.0_R8, shi0_pollos, 1)
-      call sfill (nCv*4, 0.0_R8, she0_pollos, 1)
+      call sfill (nCv*4, 0.0_R8, shi0_polloss, 1)
+      call sfill (nCv*4, 0.0_R8, she0_polloss, 1)
 
       call b2tnua(nCv, ns, switch, pl, dv, rt, nuab, nua)
 
@@ -218,7 +231,6 @@ c Poloidal losses computation
 
 *   ..compute local larmor radius
           rholi(:) = mass*vthi/abs(charge(:,is)*geo%cvBb(:,3))
-c          call sfill (nCv, 4.03E+5_R8, nui, 1)
           mfpi(:) = sqrt((pl%te + pl%ti*pl%na(:,is)/dv%ne)/mass)/
      &              nua(:,is)
 
@@ -227,14 +239,20 @@ c          call sfill (nCv, 4.03E+5_R8, nui, 1)
      &                  mfpi*(rholi+mfpi*geo%cvBb(:,0)/1.5_R8)*0.659_R8
           tauion_pol(:,is) = switch%b**2/(2.0_R8*dna_bohm_vert(:))
           do iCv = 1, mpg%nCi
-            sna0_pollos(iCv,1,is) = -1.0_R8/tauion_pol(iCv,is)
-            shi0_pollos(iCv,3) = -1.0_R8/(tauion_pol(iCv,is)/
-     &                               switch%bohm_gammaD)
-            she0_pollos(iCv,3) = -1.0_R8*rt%rza(iCv,is)/
-     &                        (tauion_pol(iCv,is)/switch%bohm_gammaD)
+            sna0_polloss(iCv,1,is) = -1.0_R8/tauion_pol(iCv,is)*
+     &                               geo%cvVol(iCv)
+            shi0_polloss(iCv,3) = -1.0_R8/(tauion_pol(iCv,is)/
+     &                            switch%bohm_gammaD)*geo%cvVol(iCv)
+            she0_polloss(iCv,3) = -1.0_R8*rt%rza(iCv,is)/
+     &                         (tauion_pol(iCv,is)/switch%bohm_gammaD)*
+     &                         geo%cvVol(iCv)
           enddo
         endif
       enddo
+
+      sna_losses(:,:,:,3) = sna0_polloss(:,:,:)
+      she_losses(:,:,3) = she0_polloss(:,:)
+      shi_losses(:,:,3) = shi0_polloss(:,:)
 
 *   ..return
       call subend ()
@@ -244,14 +262,14 @@ c          call sfill (nCv, 4.03E+5_R8, nui, 1)
 c Dealloc
       subroutine dealloc_b2mod_artificialsinks
       implicit none
-      if (allocated(sna_pol)) then
-        deallocate(sna_pol)
+      if (allocated(sna_losses)) then
+        deallocate(sna_losses)
       endif
-      if (allocated(sna_lim)) then
-        deallocate(sna_lim)
+      if (allocated(she_losses)) then
+        deallocate(she_losses)
       endif
-      if (allocated(sna_dri)) then
-        deallocate(sna_dri)
+      if (allocated(shi_losses)) then
+        deallocate(shi_losses)
       endif
 
       return
