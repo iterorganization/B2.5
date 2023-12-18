@@ -294,9 +294,11 @@ csw 01oct2012 initialize potential if necessary
 
 !! TODO_B2MNDT is this correct?
 *   ..set values for previous timestep
-      call b2scopy (nCv, st%dv%ne, 1, st%psnl%ne, 1)
-      call b2scopy (nCv, st%dv%ni, 1, st%psnl%ni, 1)
-      call b2scopy (ns*nCv, st%pl%ua, 1, st%psnl%ua, 1)
+      if (switch%b2mndt2_temp_1.eq.1) then
+        call b2scopy (nCv, st%dv%ne, 1, st%psnl%ne, 1)
+        call b2scopy (nCv, st%dv%ni, 1, st%psnl%ni, 1)
+        call b2scopy (ns*nCv, st%pl%ua, 1, st%psnl%ua, 1)
+      endif
 !      st%psnl%ne = st%dv%ne
 !      st%psnl%ni = st%dv%ni
 !      st%psnl%ua = st%pl%ua                                                           !srv 24.05.21
