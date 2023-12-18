@@ -461,7 +461,11 @@ c b2mndt
       real (kind=R8) :: facdrift_start
       real (kind=R8) :: facExB_start
       integer :: b2mndt_style
-      integer :: b2mndt2_backward_comp
+      integer :: b2mndt2_temp_0
+      integer :: b2mndt2_temp_1
+      integer :: b2mndt2_temp_2
+
+
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -976,7 +980,10 @@ c b2mndt
       s % facdrift_start = 0.0_R8
       s % facExB_start = 0.0_R8
       s % b2mndt_style = 1
-      s % b2mndt2_backward_comp = 0
+      s % b2mndt2_temp_0 = 1
+      s % b2mndt2_temp_1 = 1
+      s % b2mndt2_temp_2 = 1
+
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1521,9 +1528,9 @@ c b2mndt
       call ipgetr ('b2news_facdrift_start', s%facdrift_start)
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
-      call ipgeti ('b2mndt2_backward_comp',s%b2mndt2_backward_comp)
-
-
+      call ipgeti ('b2mndt2_temp_0',s%b2mndt2_temp_0)
+      call ipgeti ('b2mndt2_temp_1',s%b2mndt2_temp_1)
+      call ipgeti ('b2mndt2_temp_2',s%b2mndt2_temp_2)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08

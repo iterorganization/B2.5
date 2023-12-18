@@ -149,7 +149,7 @@
 *   ..compute new ub
       if (ua_solve) then
        if(pcm0*rxf.ne.0.0_R8 .and. all(pccb0.ne.0.0_R8).and.
-     &     switch%b2mndt2_backward_comp.eq.1) then
+     &     switch%b2mndt2_temp_0.eq.1) then
           psnl%ua(:,isb) = ub
        endif
        do iCv = 1, mpg%nCi ! internal cells only
