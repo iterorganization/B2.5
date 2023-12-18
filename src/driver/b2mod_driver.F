@@ -2175,6 +2175,8 @@ c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc
         state%psnc%ua = state%pl%ua
         state%psnl%ne = state%dv%ne
         state%psnc%ne = state%dv%ne
+        state%psnl%ni = state%dv%ni
+        state%psnc%ni = state%dv%ni
         state%psnl%te = state%pl%te
         state%psnc%te = state%pl%te
         state%psnl%ti = state%pl%ti
