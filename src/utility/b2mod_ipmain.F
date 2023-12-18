@@ -183,9 +183,9 @@
         case ('b2sifr_styl1')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete.'
-     case ('b2mndt2_backward_comp')
-       write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
-  &     trim(ipnam(ip)),'Now obsolete.'
+        case ('b2mndt2_backward_comp')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete.'
         case default
           prohib = .false.
         end select
