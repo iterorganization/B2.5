@@ -18,9 +18,9 @@
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      integer nCv, nCi, ns, BoRiS
+      integer nCv, nCi, ns
       real (kind=R8) ::
-     *  dtim, cvVol(nCv), nap(nCv,0:ns-1),
+     *  dtim, BoRiS, cvVol(nCv), nap(nCv,0:ns-1),
      &  tep(nCv), tip(nCv), tnp(nCv),
      &  ne(nCv), ni(nCv,0:1), nn(nCv),
      &  kinrgyp(nCv,0:ns-1)
