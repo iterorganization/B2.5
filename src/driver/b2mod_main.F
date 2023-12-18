@@ -282,7 +282,6 @@ csw
       call alloc_b2mod_recycle(mpg%nFc,ns)   !nh 30.03.21
 !WG_TODO      call alloc_b2mod_astra_to_b2(nx, ny)
 !WG_TODO      call alloc_b2mod_b2_to_astra(nx, ny, ns)
-      call check_string_duplicates('b2mn.dat')
 
       call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg, 
      &               state, state_ext)
