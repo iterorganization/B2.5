@@ -2177,6 +2177,8 @@ cwdk  set some integers
         state%psnc%ua = state%pl%ua
         state%psnl%ne = state%psnc%ne
         state%psnc%ne = state%dv%ne
+        state%psnl%ni = state%psnc%ni
+        state%psnc%ni = state%dv%ni
         state%psnl%te = state%psnc%te
         state%psnc%te = state%pl%te
         state%psnl%ti = state%psnc%ti
