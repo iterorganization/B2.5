@@ -488,6 +488,8 @@ c   extra call at this place within internal iteration)
         call b2sral (nCv, nFc, nVx, ns,
      &    nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &    switch, geo, mpg, st, st_ext, st_avg, wrong_flow, .false.)
+
+#ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
           write(*,*) 'b2news_m: wrong_flow returned from b2sral'
@@ -523,8 +525,8 @@ c   extra call at this place within internal iteration)
      &    .false.)                                                       !srv 23.07.21
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nCv, ns, switch,
-     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po,    !srv 01.07.08
-     &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)       !srv 23.07.21
+     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, !srv 01.07.08
+     &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)    !srv 23.07.21
       endif
 *   ..compute ue, electron parallel velocity
 ! lkw20.03.2023{
@@ -707,10 +709,11 @@ c      with diamagnetic drift part                                       !srv 13
      &  st%pl, st%dv, st%co, st%rt, st_ext, .true.)                      !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,          !srv 13.10.06
-     &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
-      st%dv%floi_noc = st%dv%floi                                        !srv 24.10.02
-      st%dv%floe_noc = st%dv%floe                                        !srv 24.10.02
-      call b2xpen (nCv, nFc, ns, mpg, switch,
+     &  st%pl, st%dv, st%co, .true.)                              !djm Jan2017
+      st%dv%floi_noc = st%dv%floi                                       !srv 24.10.02
+      st%dv%floe_noc = st%dv%floe                                       !srv 24.10.02
+
+      call b2xpen (nCv, nFc, ns, mpg,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,
      &  st%pl%ti, st%pl%tn, st%pl%po,
