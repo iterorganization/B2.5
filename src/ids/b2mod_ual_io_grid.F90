@@ -42,7 +42,7 @@ module b2mod_ual_io_grid
      & , only : ids_generic_grid_dynamic_grid_subset, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, GRID_SUBSET_CELLS, &
      &          GridObject
-#   if GGD_MINOR_VERSION > 9
+#   if ( GGD_MINOR_VERSION > 9 || GGD_MAJOR_VERSION > 1 )
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES
@@ -87,15 +87,15 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,                       &
      &          GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,                       &
      &          IDS_GRID_UNDEFINED => GRID_UNDEFINED
-#   if GGD_MINOR_VERSION > 9
+#   if ( GGD_MINOR_VERSION > 9 || GGD_MAJOR_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_VOLUMES
 #   endif
-#   if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
+#   if ( ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) || GGD_MAJOR_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #   endif
-#   if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 2 )
+#   if ( ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 2 ) ) || GGD_MAJOR_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,   &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,   &
@@ -267,7 +267,7 @@ module b2mod_ual_io_grid
     !! IMAS uses GGD grid subset identifier definitions defined in GSL
     !! (in ids_grid_common)
 #ifdef IMAS
-# if GGD_MINOR_VERSION < 9
+# if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION == 1 )
     !! IMAS GGD grid subset identifier definitions
     integer, parameter :: GRID_SUBSET_TYPES = 106
 
@@ -458,17 +458,17 @@ module b2mod_ual_io_grid
        &    'Point on non-active separatrix at inner active target                                        '   &
        &   /)
 # endif
-# if GGD_MINOR_VERSION < 10
+# if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     !> All volumes
     integer, parameter :: GRID_SUBSET_VOLUMES = 43
 # endif
-# if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+# if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) && GGD_MAJOR_VERSION == 1 )
     !> All edges defining walls, baffles, and targets
     integer, parameter :: GRID_SUBSET_FULL_WALL = 44
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
 # endif
-# if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+# if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 ) ) && GGD_MAJOR_VERSION == 1 )
     !> y-aligned edges defining the SOL entrance to the first snowflake outer leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
     !> y-aligned edges defining the SOL entrance to the third snowflake outer leg
@@ -478,7 +478,7 @@ module b2mod_ual_io_grid
     !> y-aligned edges defining the connection between the outer snowflake first and second leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
 # endif
-# if GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION > 0
+# if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     integer, parameter :: GRID_SUBSET_X_ALIGNED_EDGES = GRID_SUBSET_X_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_Y_ALIGNED_EDGES = GRID_SUBSET_Y_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_EDGES = GRID_SUBSET_FACES
@@ -656,8 +656,21 @@ contains
 
         !! Set the space coordinates, also defining the dimension of the space
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type( NDIM ) )
+#if IMAS_MAJOR_VERSION < 4
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1) = COORDTYPE_R
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2) = COORDTYPE_Z
+#else
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%name = 'r'
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%index = COORDTYPE_R
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%description = 'Major radius'
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%name = 'z'
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%index = COORDTYPE_Z
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%description = 'Vertical coordinate z'
+#endif
 
         !! Three types of objects: 0D vertices/nodes, 1D faces/edges, 2D cells
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
@@ -1258,7 +1271,7 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) )
+#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
@@ -1401,7 +1414,7 @@ contains
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
         integer, save :: geoId
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         integer :: iRegion
         integer :: iPrivateB2
 #endif
@@ -1434,7 +1447,7 @@ contains
 
         !! Procedures
         external get_jsep, get_nxt, xertst
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         external xerrab
 #endif
 
@@ -1446,7 +1459,7 @@ contains
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
 #else
         nGSubset = B2_GENERIC_GSUBSET_COUNT
@@ -1567,7 +1580,7 @@ contains
         !! Start counting from end of generic grid subset
         GSubsetCount = B2_GENERIC_GSUBSET_COUNT
 
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         iPrivateB2 = 0
         !! Cell + edge grid subset
         !! These are the "private" B2 regions, so will be given negative
@@ -2255,7 +2268,7 @@ contains
 
             SubsetName = gridSubsetName( iSubset )
             RegionDescription = gridSubsetDescription( iSubset )
-#if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#if ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) )
             if ( iSubset == GRID_SUBSET_FULL_WALL ) then
               SubsetName = 'FULL_WALL'
               RegionDescription = &
@@ -3064,8 +3077,21 @@ contains
        & AoS3_grid%space(i1)%geometry_type%description
       i = size( AoS3_grid%space(i1)%coordinates_type )
       allocate( dynamic_grid%space(i1)%coordinates_type( i ) )
+#if IMAS_MAJOR_VERSION < 4
       dynamic_grid%space(i1)%coordinates_type( : ) = &
        & AoS3_grid%space(i1)%coordinates_type( : )
+#else
+      do i2 = 1, i
+        allocate( dynamic_grid%space(i1)%coordinates_type(i2)%name(1) )
+        dynamic_grid%space(i1)%coordinates_type(i2)%name = &
+         & aoS3_grid%space(i1)%coordinates_type(i2)%name
+        dynamic_grid%space(i1)%coordinates_type(i2)%index = &
+         & aoS3_grid%space(i1)%coordinates_type(i2)index
+        allocate( dynamic_grid%space(i1)%coordinates_type(i2)%description(1) )
+        dynamic_grid%space(i1)%coordinates_type(i2)%description = &
+         & aoS3_grid%space(i1)%coordinates_type(i2)%description
+      end do
+#endif
       ndims = size( AoS3_grid%space(i1)%objects_per_dimension )
       allocate( dynamic_grid%space(i1)%objects_per_dimension( ndims ) )
       do i2 = 1, ndims

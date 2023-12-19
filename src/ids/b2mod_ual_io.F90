@@ -114,7 +114,7 @@ module b2mod_ual_io
      &          VEC_ALIGN_PARALLEL_ID, &
      &          VEC_ALIGN_TOROIDAL_ID
 #endif
-#if GGD_MINOR_VERSION < 9
+#if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION < 2 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
      &          GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
@@ -127,16 +127,16 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
 #if GGD_MAJOR_VERSION > 0
-#if GGD_MINOR_VERSION < 10
+#if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES, GRID_SUBSET_VOLUMES
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
@@ -8407,7 +8407,7 @@ contains
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
                      &   basegrid, iSubset, IDSmap, tmpVx )
         if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
           call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
           val(iSubset)%grid_index = ggdId
@@ -8422,7 +8422,7 @@ contains
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
                      &   basegrid, iSubset, IDSmap, tmpFace )
         if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
           call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
           val(iSubset)%grid_index = ggdId
@@ -8437,7 +8437,7 @@ contains
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                 &
                       &  basegrid, iSubset, IDSmap, value )
         if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
           call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
           val(iSubset)%grid_index = ggdId
@@ -8554,7 +8554,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
           &   basegrid, iSubset, IDSmap, b2CellData )
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
         scalar(iSubset)%grid_index = ggdId
@@ -9006,7 +9006,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
           &   basegrid, iSubset, IDSmap, b2VertexData )
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
         scalar(iSubset)%grid_index = ggdId
@@ -9076,7 +9076,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, IDSmap, b2FaceData)
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
         vector%grid_index = gridId
@@ -9090,7 +9090,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, IDSmap, b2FaceData)
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
         vector%grid_index = gridId
@@ -9105,7 +9105,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, gridSubsetInd, IDSmap, b2FaceData)
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( vector, gridId, gridSubsetID, idsdata )
 #else
         vector%grid_index = gridId
