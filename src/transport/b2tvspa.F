@@ -133,7 +133,7 @@ c Drift terms
          endif
         else
          if (.not.is_neutral(is)) then                                  !som 09.11.21
-          if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then                                    !som 13.01.22
+          if (zh_vis_type.eq.0) then                                    !som 13.01.22
            do iy = -1, ny
             do ix = 0, nx
              if(leftix(ix,iy).ne.-2) then
@@ -163,6 +163,23 @@ c Drift terms
      &         cvsa_drho(ix,iy,0,is)*
      &        (avm_u(ix,iy)*sqrt(bb(ix,iy,3))
      &        -avm_u(leftix(ix,iy),leftiy(ix,iy))*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+             endif
+            enddo
+           enddo
+          else if (zh_vis_type.eq.2) then
+           do iy = -1, ny
+            do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then
+!           it has been considered that cvsa_cl was multiplied by bx**2
+              dvpar(ix,iy) =
+     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &         cvsa_cl(ix,iy,0,is)*
+     &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
+     &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
              endif
             enddo
