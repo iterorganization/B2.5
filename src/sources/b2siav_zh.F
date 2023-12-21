@@ -24,7 +24,7 @@
       use b2mod_b2mrel
      & , only : amnucl, s2nucl
       use b2mod_b2zhco
-     & , only : zhcscorr, zhcscorr_vq
+     & , only : zhcscorr, zhcscorr_vq, zh_vis_type
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
@@ -64,7 +64,6 @@
       integer ncall, ix, iy, k, inucl
       integer, save :: hstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
-      integer, save :: zh_vis_type = 0                              !som 13.01.22
       !$OMP THREADPRIVATE(ncall, hstyle, lluciani, iout)
       character chns*3, chns0*3, chk*1                              !srv 17.06.02
       real (kind=R8) ::
@@ -111,7 +110,6 @@
        call ipgeti ('b2siav_style_qip', hstyle)                     !lk 23.05.06 05.07.07
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
-       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
       endif
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
@@ -467,9 +465,15 @@
               if(leftix(ix,iy).eq.-2) then
                 wrk0(ix,iy)=0.0e0_R8
               else
-                wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
+                if(zh_vis_type.eq.2) then
+                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz(ix,iy,0)/          !som 21.12.23
+     &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
+     &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
+                else
+                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*  !som 18.08.21
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
+                endif
               endif
             enddo
           enddo
@@ -478,7 +482,7 @@
             do ix= 0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >         then
-                if (zh_vis_type.eq.0) then                          !som 13.01.22
+                if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then    !som 13.01.22 21.12.23
                  t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
      *             *wrk2(ix,iy)
                 else if (zh_vis_type.eq.1) then

@@ -16,7 +16,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_b2zhco
-     & , only: zhd_corr                                               !som 21.03.21
+     & , only: zhd_corr , zh_vis_type                                 !som 21.03.21  21.12.23
       use b2mod_zhfrtf
      & , only: avm_u,                                                 !som 21.03.21 16.08.21
      &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
@@ -79,7 +79,6 @@
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      &                 Zhdanov_tf_fr = 1                              !som 01.07.21
       integer, save :: Zhdanov_visu = 1                               !som 16.08.21
-      integer, save :: zh_vis_type = 0                              !som 13.01.22
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
       real (kind=R8) :: ft                                            !som 16.08.21
@@ -185,7 +184,6 @@
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 21.03.21
        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)             !som 01.07.21
        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)               !som 18.08.21
-       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                 !som 13.01.22
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -487,7 +485,7 @@
           enddo
          enddo
         else
-         if (zh_vis_type.eq.0) then                                   !som 13.01.22
+         if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then             !som 13.01.22 21.12.23
           do iy = -1, ny                                              !srv 28.08.02 21.07.05 16.10.17 {
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then

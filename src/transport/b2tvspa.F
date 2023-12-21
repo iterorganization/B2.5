@@ -16,6 +16,8 @@
      , , only: avm_u,                                                   !som 17.08.21
      &         b2mod_zhfrtf_avm_u                                       !som 18.08.21
       use b2mod_subsys
+      use b2mod_b2zhco
+     , , only: zh_vis_type
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                        !srv 19.02.21
@@ -55,7 +57,6 @@
       save ncall, vis_par
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
       integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
-      integer, save :: zh_vis_type = 0                                   !som 13.01.22
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -83,7 +84,6 @@
         call b2xvff (nx, ny, cvsa_cl(-1,-1,0,is), 'cvsa_cl')            !srv 16.10.17
        enddo
        call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                  !som 13.01.22
       endif
 
       if (Zhdanov_closure.ne.0 .and. Zhdanov_test.ne.1 .and.
@@ -133,7 +133,7 @@ c Drift terms
          endif
         else
          if (.not.is_neutral(is)) then                                  !som 09.11.21
-          if (zh_vis_type.eq.0) then                                    !som 13.01.22
+          if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then                                    !som 13.01.22
            do iy = -1, ny
             do ix = 0, nx
              if(leftix(ix,iy).ne.-2) then

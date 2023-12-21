@@ -355,7 +355,7 @@
      &     cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1)
           cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1)=
      &     cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
-         else if (zh_vis_type.eq.1) then
+         else if (zh_vis_type.eq.1 .or. zh_vis_type.eq.2) then
           cvsahz0(-1:nx,-1:ny,0:1,0:ns-1)=
      &     cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1)
           cvsa0(-1:nx,-1:ny,0:1,0:ns-1)=
