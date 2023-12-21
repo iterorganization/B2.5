@@ -574,7 +574,7 @@
      &         na(ix,iy,nucl2s(i,iz))*ti(ix,iy)*
      &         na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
      &        (eta_uAdp(ix,iy,i,i)+zhcscorr*eta_uBdp(ix,iy,i)*
-     &        (1/Ia(ix,iy,nucl2s(inucl,iz))-1.0_R8))
+     &        (1/Ia(ix,iy,nucl2s(i,iz))-1.0_R8))
 
 *    ..apply flux limiting
               eta_cl_a_only_fl(ix,iy,nucl2s(i,iz)) =
