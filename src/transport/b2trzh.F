@@ -728,6 +728,9 @@
 *    ..ion velocity-dependent viscosity on the cell boundary
       cvsa_drho   = 0.0_R8                                               !srv 30.01.23
       cvsahz_drho = 0.0_R8                                               !srv 30.01.23
+      cvsa0 = 0.0_R8                                                     !som 19.12.23
+      cvsahz0 = 0.0_R8                                                   !som 20.12.23
+      
       volhz = hz*vol
       if (zh_vis_type.eq.0 .or. zh_vis_type.eq.1) then
         do is = 0, ns-1
