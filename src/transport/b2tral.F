@@ -82,10 +82,10 @@
      &  cvsa_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                    !som 20.10.21
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),     !som 08.10.21
      &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 08.10.21
-     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),             !som 22.12.23
-     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1), 
+     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),             !som 22.12.23
+     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1), 
      1  fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1),
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
@@ -163,10 +163,10 @@
      &  cvsa0_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
      &  cvsahz0_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 08.10.21
      &  cvsahz0_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 08.10.21
-     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),              !som 22.12.23
-     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1), 
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),              !som 22.12.23
+     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1), 
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message

@@ -55,14 +55,14 @@
      &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
-     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),             !som 22.12.23
-     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1)
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),             !som 22.12.23
+     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -105,6 +105,7 @@
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
      &  amti_mdf(0:nspecies-1),
      &  zeffne, nz2n(0:nspecies-1), nati(0:ns-1), eta_cl_xy(0:ns-1),
+     &  nalti(0:nspecies-1),eta_cl_al_eff_xy(0:nspecies-1),
      &  G2(0:nspecies-1,0:nspecies-1), G8(0:nspecies-1,0:nspecies-1),
      &  Ainv(0:2*nspecies-1,0:2*nspecies-1),
      &  Ainv_mdf(0:nspecies-1,0:2*nspecies-1),
@@ -131,14 +132,14 @@
      &  eta_cl_a_only_fl(-1:nx,-1:ny,0:ns-1),
      &  eta_uAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
      &  eta_uBdp(-1:nx,-1:ny,0:nspecies-1),
-     &  eta_uAdp_fl(-1:nx,-1:ny,0:ns-1,0:nspecies-1),
-     &  eta_uBdp_fl(-1:nx,-1:ny,0:ns-1),
+     &  eta_uAdp_fl(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
+     &  eta_uBdp_fl(-1:nx,-1:ny,0:nspecies-1),
      &  eta_hAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
      &  eta_hBdp(-1:nx,-1:ny,0:nspecies-1),
      &  t0, t1, czetap, zetap(-1:nx,-1:ny), I_al(0:nspecies-1),
      &  cF_limh(0:nspecies-1), cF_limBh(0:nspecies-1),
      &  cF_lim(0:nspecies-1), cF_limB(0:nspecies-1),
-     &  cF_limv(0:ns-1),
+     &  cF_limv(0:ns-1), cF_limv_al(0:nspecies-1),
      &  wrkc(0:nspecies-1), wrkcc(0:nspecies-1,0:nspecies-1),
      &  wrkcA(0:nspecies-1,0:nspecies-1),
      &  wrkcB(0:nspecies-1,0:nspecies-1),
@@ -543,6 +544,14 @@
             enddo
 
             eta_hBdp(ix,iy,i) = 2.0_R8*c_pi_hB(i)*tau_Zh(i,i)
+            
+*    ..the effective velocity-dependent part for the flux limiting
+            eta_cl_al_eff_xy(i) = 0.0_R8
+            do j = 0, nspecies-1
+              eta_cl_al_eff_xy(i) = eta_cl_al_eff_xy(i) +
+     &         eta_uAdp(ix,iy,i,j) * ti(ix,iy) * na(ix,iy,j)
+              
+            enddo
           enddo
 
 *    ..calculate flux limiting for the viscous stress
@@ -550,6 +559,10 @@
           eta_cl_xy(0:ns-1) = eta_cl(ix,iy,0:ns-1)
           call b2trfl_vis (ix, iy, ns,
      &     eta_cl_xy, nati, gamma, cfl(ix,iy), cF_limv)
+     
+          nalti(0:nspecies-1) = nal(ix,iy,0:nspecies-1)*ti(ix,iy)
+          call b2trfl_vis (ix, iy, nspecies,
+     &     eta_cl_al_eff_xy, nalti, gamma, cfl(ix,iy), cF_limv_al)
 
 *    ..the velocity-dependent part
           do is = 0, ns-1
@@ -582,16 +595,16 @@
 *    ..apply flux limiting
               eta_cl_a_only_fl(ix,iy,nucl2s(i,iz)) =
      &         eta_cl_a_only(ix,iy,nucl2s(i,iz))*
-     &         cF_limv(nucl2s(i,iz))
+     &         cF_limv_al(i)
 
               do j = 0, nspecies-1
-                eta_uAdp_fl(ix,iy,nucl2s(i,iz),j) = 
+                eta_uAdp_fl(ix,iy,i,j) = 
      &           eta_uAdp(ix,iy,i,j)*
-     &           cF_limv(nucl2s(i,iz))
+     &           cF_limv_al(i)
               enddo
 
-              eta_uBdp_fl(ix,iy,nucl2s(i,iz)) = eta_uBdp(ix,iy,i)*
-     &         cF_limv(nucl2s(i,iz))
+              eta_uBdp_fl(ix,iy,i) = eta_uBdp(ix,iy,i)*
+     &         cF_limv_al(i)
             enddo
           enddo
 
@@ -764,18 +777,18 @@
       endif 
 
 *    ..additional velocity-dependent viscosity on the cell boundary
-      do is = 0, ns-1
+      do i = 0, nspecies-1
         do j = 0, nspecies-1
           call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &     eta_uAdp_fl(-1,-1,is,j), cvsahz_uAdp_fl(-1,-1,0,is,j))
+     &     eta_uAdp_fl(-1,-1,i,j), cvsahz_uAdp_fl(-1,-1,0,i,j))
           call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &     eta_uAdp_fl(-1,-1,is,j), cvsa_uAdp_fl(-1,-1,0,is,j))
+     &     eta_uAdp_fl(-1,-1,i,j), cvsa_uAdp_fl(-1,-1,0,i,j))
         enddo
 
         call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &   eta_uBdp_fl(-1,-1,is), cvsahz_uBdp_fl(-1,-1,0,is))
+     &   eta_uBdp_fl(-1,-1,i), cvsahz_uBdp_fl(-1,-1,0,i))
         call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &   eta_uBdp_fl(-1,-1,is), cvsa_uBdp_fl(-1,-1,0,is))
+     &   eta_uBdp_fl(-1,-1,i), cvsa_uBdp_fl(-1,-1,0,i))
       enddo
 
 *    ..ion heat flux dependent viscosity on the cell boundary
@@ -853,22 +866,21 @@
 
 *    ..apply Luciani correction for the addtional part of the 
 *      velocity-dependent viscosity
-      do is = 0, ns-1
+      do i = 0, nspecies-1
         do j = 0, nspecies-1
           do iy = -1, ny
             do ix = -1, nx                                               !srv 30.01.23
-              if (on_closed_surface(ix,iy) .and. 
-     &                                   .not.is_neutral(is)) then
-                cvsahz_uAdp_luc(ix,iy,0,is,j) =
-     &           cvsahz_uAdp_fl(ix,iy,0,is,j)*
+              if (on_closed_surface(ix,iy)) then
+                cvsahz_uAdp_luc(ix,iy,0,i,j) =
+     &           cvsahz_uAdp_fl(ix,iy,0,i,j)*
      &                                    f_luc_et(ix,iy)
-                cvsa_uAdp_luc(ix,iy,0,is,j) =
-     &           cvsa_uAdp_fl(ix,iy,0,is,j)*f_luc_et(ix,iy)
+                cvsa_uAdp_luc(ix,iy,0,i,j) =
+     &           cvsa_uAdp_fl(ix,iy,0,i,j)*f_luc_et(ix,iy)
               else
-                cvsahz_uAdp_luc(ix,iy,0,is,j) =
-     &           cvsahz_uAdp_fl(ix,iy,0,is,j)
-                cvsa_uAdp_luc(ix,iy,0,is,j) =
-     &           cvsa_uAdp_fl(ix,iy,0,is,j)
+                cvsahz_uAdp_luc(ix,iy,0,i,j) =
+     &           cvsahz_uAdp_fl(ix,iy,0,i,j)
+                cvsa_uAdp_luc(ix,iy,0,i,j) =
+     &           cvsa_uAdp_fl(ix,iy,0,i,j)
               endif
             enddo
           enddo
@@ -876,15 +888,14 @@
 
         do iy = -1, ny
           do ix = -1, nx                                                 !srv 30.01.23
-            if (on_closed_surface(ix,iy) .and. 
-     &                                   .not.is_neutral(is)) then
-              cvsahz_uBdp_luc(ix,iy,0,is) = cvsahz_uBdp_fl(ix,iy,0,is)*
+            if (on_closed_surface(ix,iy)) then
+              cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)*
      &         f_luc_et(ix,iy)
-              cvsa_uBdp_luc(ix,iy,0,is) = cvsa_uBdp_fl(ix,iy,0,is)*
+              cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)*
      &         f_luc_et(ix,iy)
             else
-              cvsahz_uBdp_luc(ix,iy,0,is) = cvsahz_uBdp_fl(ix,iy,0,is)
-              cvsa_uBdp_luc(ix,iy,0,is) = cvsa_uBdp_fl(ix,iy,0,is)
+              cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)
+              cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)
             endif
           enddo
         enddo
