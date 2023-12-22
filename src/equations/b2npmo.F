@@ -645,7 +645,8 @@
      &      smbvh, smbvv, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
      *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
-     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
+     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u,
+     &      na(-1,-1,0), ua(-1,-1,0))
          else
            smbvh=0.0_R8                                                !som 13.08.21
            smbvv=0.0_R8
@@ -666,7 +667,8 @@
      &      smbvtemp, smbvv, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
      *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
-     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
+     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u,
+     &      na(-1,-1,0), ua(-1,-1,0))
          else
            smbvh=0.0_R8                                                !som 13.08.21
            smbvv=0.0_R8
@@ -687,7 +689,8 @@
      &      smbvh, smbvtemp, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
      *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
-     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
+     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u,
+     &      na(-1,-1,0), ua(-1,-1,0))
          else
            smbvh=0.0_R8                                                !som 13.08.21
            smbvv=0.0_R8

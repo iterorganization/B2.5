@@ -6,7 +6,8 @@
      & cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
      & alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
      * cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
-     & wrk0, wrk1, wrk2, rho_rel, avm_u)
+     & wrk0, wrk1, wrk2, rho_rel, avm_u,
+     & na, ua)
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
@@ -23,7 +24,7 @@
       use b2mod_zhfrtf
      & , only : nal, Z_to_m1, Ia
       use b2mod_b2mrel
-     & , only : amnucl, s2nucl
+     & , only : amnucl, s2nucl, nucl2s, znnucl_int
       use b2mod_b2zhco
      & , only : zhcscorr, zhcscorr_vq, zh_vis_type
       implicit none
@@ -41,8 +42,9 @@
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),  !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 08.10.21
      *  cvsahz_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
-     *  cvsahz_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 22.12.23
-     &  rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny)                      !som 13.08.21
+     *  cvsahz_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 22.12.23
+     &  rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny),                     !som 13.08.21
+     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
@@ -64,7 +66,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, k, inucl
+      integer ncall, ix, iy, k, inucl, iz
       integer, save :: hstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
       !$OMP THREADPRIVATE(ncall, hstyle, lluciani, iout)
@@ -527,6 +529,57 @@
      &           (u_res(ix,iy)*wrk2(ix,iy) -
      &           u_res(leftix(ix,iy),leftiy(ix,iy))*
      &           wrk2(leftix(ix,iy),leftiy(ix,iy)))
+              endif
+            enddo
+           enddo
+
+           do iy=0,ny-1
+            do ix=0,nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+                smbvi(ix,iy,0)=vol(ix,iy)/hx(ix,iy)*hz(ix,iy)*
+     &            bb(ix,iy,0)*wrk2(ix,iy)*
+     &            (wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
+              else
+                smbvi(ix,iy,0) = 0.0e0_R8
+              endif
+            enddo
+           enddo
+          else if (zh_vis_type.eq.2) then
+           do iy=0,ny-1
+            do ix=0,nx
+              wrk0(ix,iy)=0.0e0_R8
+              if(leftix(ix,iy).eq.-2) then
+                wrk0(ix,iy)=0.0e0_R8
+              else
+               do inucl=0,nspecies-1
+                if(inucl.ne.s2nucl(isb)-1) then
+                 t0=0.0e0_R8
+                 do iz= 1, znnucl_int(inucl)
+                  t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(inucl,iz))*
+     &            ti(ix,iy)+
+     &            na(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
+     &            ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &            (ua(ix,iy,nucl2s(inucl,iz))*wrk2(ix,iy) -
+     &            ua(leftix(ix,iy),leftiy(ix,iy),
+     &            nucl2s(inucl,iz))*
+     &            wrk2(leftix(ix,iy),leftiy(ix,iy)))
+                 enddo
+                
+                 wrk0(ix,iy) = wrk0(ix,iy) +
+     &           (nb(ix,iy)/nal(ix,iy,s2nucl(isb)-1)+
+     &           nb(leftix(ix,iy),leftiy(ix,iy))/
+     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))*
+     &           ft*cvsahz_uAdp_albe(ix,iy,0,s2nucl(isb)-1,inucl)/
+     &           (bb(ix,iy,0)*bb(ix,iy,3)*
+     &           vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
+     &           bb(leftix(ix,iy),leftiy(ix,iy),0)*
+     &           bb(leftix(ix,iy),leftiy(ix,iy),3)*
+     &           vol(leftix(ix,iy),leftiy(ix,iy))/
+     &           hx(leftix(ix,iy),leftiy(ix,iy))*
+     &           hz(leftix(ix,iy),leftiy(ix,iy)))*
+     &           t0
+                endif
+               enddo
               endif
             enddo
            enddo
