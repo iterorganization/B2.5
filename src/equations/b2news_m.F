@@ -489,7 +489,7 @@ c   extra call at this place within internal iteration)
       if(switch%b2news_iout.ne.0) then                                                 !srv 05.07.17
         call b2xzef(nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff,
      &       st_ext)
-        call b2xpic (nCv, ns, mpg, qe, st%rt%rza, geo%cvBb,
+        call b2xpic (nCv, ns, qe, st%rt%rza, geo%cvBb,
      &    st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
         call b2xpif (nCv, nFc, switch, geo, mpg, st%dv%fch_pi_c,
      &   st%dv%fch_pi_f)
