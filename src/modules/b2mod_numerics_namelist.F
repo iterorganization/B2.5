@@ -18,8 +18,8 @@
      *   dtee(:), dtee_ft(:),
      *   dtei(:), dtei_ft(:),
      *   dten(:),
-     *   corr_core_dn(:),                                   ! IYS 19.12.2017
-     *   min_na(:,:)
+     *   corr_core_dn(:)                                   ! IYS 19.12.2017
+     *   sna_corr(:), taumax(:)                            ! iyv 20.09.22
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -31,10 +31,11 @@
      *   solveet(:),
      *   solvekt(:),
      *   solvezt(:),
-     *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
+     *   last_solve_5(:),
+     *   last_solve_9(:),
+     *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
 #else
-      integer, save :: dtfts(1:DEF_NYD)
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX),
      & dtco_ft(1:DEF_NYD)
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX),
@@ -45,7 +46,7 @@
      &  dtei_ft(1:DEF_NYD)
       real (kind=R8), save :: dten(0:CVREGMAX)
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
-      real (kind=R8), save :: min_na(0:nsdmax-1,0:CVREGMAX)
+      real (kind=R8), save :: sna_corr(DEF_NATM),taumax(DEF_NATM)       ! IYS 10.03.2023
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemt(0:CVREGMAX)
@@ -58,6 +59,7 @@
       logical, save :: solvezt(0:CVREGMAX)
       logical, save :: add_te_corr_to_po(0:CVREGMAX)       ! IYS 21.09.2018
       logical, save :: do_sna_corr_core(DEF_NATM)          ! IYS 10.03.2023
+      integer, save :: dtfts(1:DEF_NYD)
 #endif
       real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
       real (kind=R8), save :: time_factor_required,
@@ -82,7 +84,7 @@
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
      & corr_core_dn, corr_core_dt, add_te_corr_to_po,       ! IYS 19.12.2017
-     & min_na
+     & sna_corr, taumax, do_sna_corr_core
 
       contains
 
@@ -123,7 +125,7 @@
       allocate(solvekt(0:nnreg(0)))
       allocate(solvezt(0:nnreg(0)))
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
-      allocate(min_na(0:nsd-1,0:nnreg(0)))
+      allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in b2mod_dimensions')
@@ -199,7 +201,8 @@
       deallocate(dtei_ft)
       deallocate(dten)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
-      deallocate(min_na)
+      deallocate(sna_corr)                                         !iyv 20.09.22
+      deallocate(taumax)                                           !iyv 20.09.22
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
