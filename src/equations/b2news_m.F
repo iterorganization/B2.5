@@ -536,12 +536,12 @@ c   extra call at this place within internal iteration)
         wrk0 = wrk0 + st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
       enddo
       wrk0 = wrk0 + st_ext%ue*st_ext%ne
-      wrk0 = wrk0/st%dv%ne                                               !srv 05.03.11
-      if(switch%b2news_iout.ne.0) then                                   !srv 05.07.17
-        call b2xzef (nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff,
-     &   st_ext)
+      wrk0 = wrk0/st%dv%ne                                                  !srv 05.03.11
+      if(switch%b2news_iout.ne.0) then                                                 !srv 05.07.17
+        call b2xzef(nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff,
+     &       st_ext)
         call b2xpic (nCv, ns, qe, st%rt%rza, geo%cvBb,
-     &   st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
+     &    st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
         call b2xpif (nCv, nFc, switch, geo, mpg, st%dv%fch_pi_c,
      &   st%dv%fch_pi_f)
         call my_out_us(70,nCv,0,st%dv%fch_pi_c,'b2news__fch_pi_c')
