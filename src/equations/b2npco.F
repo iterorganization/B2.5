@@ -173,7 +173,7 @@ cdjm Jan2017 update particle source components for balance
         call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
        endif
-       if(switch%b2mndt2_temp_3.eq.0) then
+       if(switch%b2mndt2_temp_3.eq.1) then
         if(switch%b2mndt_style.eq.2) then
           dv%resco(:,isb) = dv%resco(:,isb) +
      &      (pl%na(:,isb)-psnl%na(:,isb))*sr%snadt(:,1,isb)
