@@ -609,13 +609,12 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
-      integer :: b2mndt_var_style
-      real (kind=R8) :: b2mndt_var_te_min
-      real (kind=R8) :: b2mndt_var_te_max
-      real (kind=R8) :: b2mndt_var_mult
-      real (kind=R8) :: b2mndt_var_style2_SF
-      real (kind=R8) :: b2mndt_var_style3_Cmax
-      integer :: b2mndt_var_style_nfilter
+      integer :: b2mndt2_temp_0
+      integer :: b2mndt2_temp_1
+      integer :: b2mndt2_temp_2
+      integer :: b2mndt2_temp_3
+
+
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1317,18 +1316,16 @@ c b2mndt
       s % nstg_areshe = 0.0_R8
       s % nstg_areshi = 0.0_R8
       s % BoRiS = 0.0_R8
-      if (s % b2mndt_style.eq.2) then
-        s % b2mndt_rxf = 1.0_R8
-      else
-        s % b2mndt_rxf = 0.5_R8
-      end if
-      s % b2mndt_var_style = 0
-      s % b2mndt_var_te_min = 0.0_R8
-      s % b2mndt_var_te_max = 1e30_R8
-      s % b2mndt_var_mult = 1.0_R8
-      s % b2mndt_var_style2_SF = 10.0_R8
-      s % b2mndt_var_style3_Cmax = 1.0_R8
-      s % b2mndt_var_style_nfilter = 1
+      s % b2mndt_rxf = 0.5_R8
+      s % facvis_start = 0.0_R8
+      s % facdrift_start = 0.0_R8
+      s % facExB_start = 0.0_R8
+      s % b2mndt_style = 1
+      s % b2mndt2_temp_0 = 1
+      s % b2mndt2_temp_1 = 1
+      s % b2mndt2_temp_2 = 1
+      s % b2mndt2_temp_3 = 1
+
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -2140,14 +2137,14 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
-      call ipgeti ('b2mndt_var_style', s%b2mndt_var_style)
-      call ipgetr ('b2mndt_var_te_min', s%b2mndt_var_te_min)
-      call ipgetr ('b2mndt_var_te_max', s%b2mndt_var_te_max)
-      call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
-      call ipgetr ('b2mndt_var_style2_SF', s%b2mndt_var_style2_SF)
-      call ipgetr ('b2mndt_var_style3_Cmax', s%b2mndt_var_style3_Cmax)
-      call ipgeti ('b2mndt_var_style_nfilter',
-     &              s%b2mndt_var_style_nfilter)
+      call ipgetr ('b2news_facExB_start',   s%facExB_start)
+      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
+      call ipgetr ('b2news_facvis_start',   s%facvis_start)
+      call ipgeti ('b2mndt_style',s%b2mndt_style)
+      call ipgeti ('b2mndt2_temp_0',s%b2mndt2_temp_0)
+      call ipgeti ('b2mndt2_temp_1',s%b2mndt2_temp_1)
+      call ipgeti ('b2mndt2_temp_2',s%b2mndt2_temp_2)
+      call ipgeti ('b2mndt2_temp_3',s%b2mndt2_temp_3)
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
