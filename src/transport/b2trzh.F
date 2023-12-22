@@ -8,7 +8,10 @@
      &  cvsahz0_nofl, cvsahz0, cvsahz0_luc, cvsahz_drho_luc,
      &  cvsa0_luc, cvsa_drho_luc,
      &  cvsa_hAdp, cvsa_hBdp, cvsa_hAdp_luc, cvsa_hBdp_luc,
-     &  cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc)     !som 08.10.2021
+     &  cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc,
+     &  cvsa_uAdp_fl, cvsa_uBdp_fl, cvsa_uAdp_luc ,cvsa_uBdp_luc,
+     &  cvsahz_uAdp_fl, cvsahz_uBdp_fl, cvsahz_uAdp_luc,
+     &  cvsahz_uBdp_luc)     !som 08.10.2021 22.12.2023
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_b2cmpt
@@ -51,7 +54,15 @@
      &  cvsahz_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
-     &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1)
+     &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),             !som 22.12.23
+     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -148,15 +159,7 @@
      &  kappa_rTA(0:nspecies-1,0:nspecies-1),kappa_rTB(0:nspecies-1),
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
-     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1)
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
 
       save ncall
       data ncall/0/

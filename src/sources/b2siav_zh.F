@@ -5,6 +5,7 @@
      & ub, wbdia, vbecrb, te, ti, nb, ne2, lnlam,                     !srv 01.07.09
      & cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
      & alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
+     * cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
      & wrk0, wrk1, wrk2, rho_rel, avm_u)
       use b2mod_types
       use b2mod_geo
@@ -39,6 +40,8 @@
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                               !som 08.10.21
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),  !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 08.10.21
+     *  cvsahz_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
+     *  cvsahz_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 22.12.23
      &  rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny)                      !som 13.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::

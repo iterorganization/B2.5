@@ -339,6 +339,7 @@
      *   cvsahz_drho, cvsa_drho,                                         !som 18.08.21
      *   chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,              !som 08.10.21
      *   cvsa_hAdp_albe, cvsa_hBdp_al,                                   !som 20.10.21
+     *   cvsahz_uAdp_albe, cvsahz_uBdp_al,                               !som 22.12.23
      5   fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch) !srv 24.08.21
         if (ncall.eq.ncallout) then
           write(*,*) 'ncall,ipass',ncall,ipass
@@ -551,6 +552,7 @@ cxpb
      &    vol, hx, hz, bb, pbshz, lnlam,                                 !srv 01.07.09
      &    cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,                  !srv 02.07.08 som 18.08.21
      &    alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
      &    smo, smq, cthe, cthi, chci, smof,
      &    resmo, resmt, corua, corut, pcca, pccm, ier0)
         call xertst (ier0.eq.0, 'error return from b2npmo')

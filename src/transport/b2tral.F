@@ -10,6 +10,7 @@
      * cvsahz_drho, cvsa_drho,                                          !som 18.08.21
      * chci_al_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,       !som 08.10.21
      * cvsa_hAdp_luc, cvsa_hBdp_luc,                                    !som 20.10.21
+     * cvsahz_uAdp_luc, cvsahz_uBdp_luc,                                !som 22.12.23                                    
      4 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)  !srv 24.08.21
       use b2mod_types
       use b2mod_indirect
@@ -81,6 +82,10 @@
      &  cvsa_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                    !som 20.10.21
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),     !som 08.10.21
      &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 08.10.21
+     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),             !som 22.12.23
+     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:ns-1), 
      1  fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1),
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
@@ -158,6 +163,10 @@
      &  cvsa0_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
      &  cvsahz0_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 08.10.21
      &  cvsahz0_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 08.10.21
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),              !som 22.12.23
+     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:ns-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:ns-1), 
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
@@ -339,7 +348,10 @@
      &   cvsahz0_nofl, cvsahz0_fl, cvsahz0_luc, cvsahz_drho,
      &   cvsa0_luc, cvsa_drho, cvsa0_hAdp, cvsa0_hBdp,
      &   cvsa_hAdp_luc, cvsa_hBdp_luc, cvsahz0_hAdp, cvsahz0_hBdp,
-     &   cvsahz_hAdp_luc, cvsahz_hBdp_luc)                            !som 08.10.21
+     &   cvsahz_hAdp_luc, cvsahz_hBdp_luc,
+     &   cvsa_uAdp_fl, cvsa_uBdp_fl, cvsa_uAdp_luc ,cvsa_uBdp_luc,
+     &   cvsahz_uAdp_fl, cvsahz_uBdp_fl, cvsahz_uAdp_luc,
+     &   cvsahz_uBdp_luc)                                             !som 08.10.2021 22.12.23
 
         if (Zhdanov_test.eq.0 .and. Zhdanov_cond.eq.1) then           !som 10.08.21
           chci0(-1:nx,-1:ny,0:1)=chci0_luc(-1:nx,-1:ny,0:1)

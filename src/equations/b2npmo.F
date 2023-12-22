@@ -5,6 +5,7 @@
      &  dtim, vol, hx, hz, bb, pbshz, lnlam,                           !srv 07.07.21
      &  cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,
      &  alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
+     *  cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
      &  smo, smq, cthe, cthi, chci, smof,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
       use b2mod_types
@@ -91,6 +92,8 @@
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                !som 08.10.21
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),   !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 08.10.21
+     *  cvsahz_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
+     *  cvsahz_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 22.12.23
      &  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
@@ -529,6 +532,7 @@
 !$OMP& SHARED(Zhdanov_closure, Zhdanov_test, Zhdanov_visu, Zhdanov_vish)
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
+!$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
 #ifndef GFORTRAN
 #ifndef PGF90
 #ifndef CRAY
@@ -640,6 +644,7 @@
      &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
      &      smbvh, smbvv, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
      &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
          else
            smbvh=0.0_R8                                                !som 13.08.21
@@ -660,6 +665,7 @@
      &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
      &      smbvtemp, smbvv, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
      &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
          else
            smbvh=0.0_R8                                                !som 13.08.21
@@ -680,6 +686,7 @@
      &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
      &      smbvh, smbvtemp, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
      &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
          else
            smbvh=0.0_R8                                                !som 13.08.21

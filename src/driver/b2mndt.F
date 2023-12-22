@@ -325,6 +325,7 @@ ctmp.dpc
      *       cvsahz_drho, cvsa_drho,                                     !som 18.08.21
      *       chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,          !som 08.10.21
      *       cvsa_hAdp_albe, cvsa_hBdp_al,                               !som 20.10.21
+     *       cvsahz_uAdp_albe, cvsahz_uBdp_al,                           !som 22.12.23
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.

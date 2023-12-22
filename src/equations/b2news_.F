@@ -369,6 +369,7 @@ csw 01oct2012 initialize potential if necessary
      * cvsahz_drho, cvsa_drho,                                           !som 18.08.21
      * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,                !som 08.10.21
      * cvsa_hAdp_albe, cvsa_hBdp_al,                                     !som 20.10.21
+     * cvsahz_uAdp_albe, cvsahz_uBdp_al,                                 !som 22.12.23
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
       call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
@@ -572,6 +573,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &   vol, hx, hz, bb, pbshz, lnlam,                                  !srv 23.07.99 09.01.01 01.07.09
      &   cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,                   !srv 19.07.02 som 18.08.21
      &   alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,      !som 08.10.21
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
      &   smo, smq, cthe, cthi, chci, smof,                               !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
 
