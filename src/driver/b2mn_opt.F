@@ -242,14 +242,15 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from b2fparam file
-      call cfruin (ninp(2), 1, idum(2), 'ns')
-      call xertst (idum(2).ne.ns,
+      call cfruin (ninp(2),1,idum,'ns')
+      call xertst (idum(0).eq.ns,
      &  'faulty input ns from physics parameters file')
 *   ..call principal driver routine
       call alloc_mapping (mpg)
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
      .  mpg%nFt, mpg%nVmxCv)
       call createB2State (nCv, nFc, ns, state)
+      call alloc_b2mod_ppout(DEF_NXD, DEF_NYD, ns)
 *   ..call driver routines
       call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg,
      &  state, state_ext, state_avg)
@@ -296,6 +297,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       deallocate(par_opt0, par_opt, par_opt_phys)
 
 * ..end of computation
+      call dealloc_b2mod_ppout
       call destroyB2State (state)
       call destroyB2StateExt (state_ext)
       call dealloc_geometry (geo)

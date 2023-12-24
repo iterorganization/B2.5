@@ -8,12 +8,11 @@
       use b2mod_work
       use b2mod_rates
       use b2mod_plasma
-      use b2mod_b2plot
       use b2mod_version
       use b2mod_indirect
       use b2mod_xerset
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -83,7 +82,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:8), nout(0:6), nx1, ny1, idum(0:9)
+      integer ninp(0:8), nout(0:6), nx, ny, ns, nx1, ny1, idum(0:9)
       integer io
       logical file_open
 *   ..procedures
@@ -177,7 +176,7 @@
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
-      call b2ytdr (ninp, nout, nx, ny, nx1, ny1)
+      call b2ytdr (ninp, nout, ns, nx, ny, nx1, ny1)
 *   ..close files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

@@ -1,36 +1,33 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,  !cjk
+      subroutine neo_validity(ny, ns, safetyfactor,  !cjk
      &  nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &  deltawn, deltawt, omega, deltab, deltapar, vtha)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_ranges
-      use b2mod_rates
       use b2mod_neoclassical
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_subsys
+      use b2us_data
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, jsep, jxa
+      integer ny, ns
       real (kind=R8) ::
-     *   safetyfactor(-1:ny)
+     *   safetyfactor(mpg%nFs)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   nuab(-1:nx,-1:ny,0:ns,0:ns), nua(-1:nx,-1:ny,0:ns),
-     &   nustar(-1:nx,-1:ny,0:ns), rhol(-1:nx,-1:ny,0:ns),
-     &   lnn(-1:nx,-1:ny,0:ns), ltt(-1:nx,-1:ny,0:ns),
-     &   deltal(-1:nx,-1:ny,0:ns), wb(-1:nx,-1:ny,0:ns),
-     &   deltaw(-1:nx,-1:ny,0:ns), deltawn(-1:nx,-1:ny,0:ns),
-     &   deltawt(-1:nx,-1:ny,0:ns), omega(-1:nx,-1:ny,0:ns),
-     &   deltab(-1:nx,-1:ny,0:ns), deltapar(-1:nx,-1:ny,0:ns),
-     &   vtha(-1:nx,-1:ny,0:ns)
+     *   nuab(mpg%nCv,0:ns,0:ns), nua(mpg%nCv,0:ns),
+     &   nustar(mpg%nCv,0:ns), rhol(mpg%nCv,0:ns),
+     &   lnn(mpg%nCv,0:ns), ltt(mpg%nCv,0:ns),
+     &   deltal(mpg%nCv,0:ns), wb(mpg%nCv,0:ns),
+     &   deltaw(mpg%nCv,0:ns), deltawn(mpg%nCv,0:ns),
+     &   deltawt(mpg%nCv,0:ns), omega(mpg%nCv,0:ns),
+     &   deltab(mpg%nCv,0:ns), deltapar(mpg%nCv,0:ns),
+     &   vtha(mpg%nCv,0:ns)
 
       real (kind=R8) :: min_value
 c     minimum value for real arrays to avoid division by zero
@@ -87,20 +84,28 @@ c     conversion of constants to CGS units
 *     to the one-dimensional nature of the implemented neoclassical model
 *-----------------------------------------------------------------------
 *   ..local variables
-      integer n2, ix, iy, is, is2, ixref, iyref
+      integer iCv, is, is2, ixref, iyref
       save ixref, iyref
       real (kind=R8) ::
      &   gradient, lnab, minlnlt, crmin, crmax
       real (kind=R8) ::
-     &   rmaj_(-1:ny)
+     &   rmaj_(mpg%nFs)
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg
 
 *   ..subprogram start-up calls
       call subini ('neo_validity')
+*   ..test ny, ns
+      call xertst (0.le.ny, 'faulty argument ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+#ifdef WG_TODO
       if(nnreg(0).eq.4) then
-        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        if (geo%LSN) then
+          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        else
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+        endif
         iyref=2*topcut(1)/3
       elseif(nnreg(0).eq.5) then
         ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
@@ -124,41 +129,38 @@ c     conversion of constants to CGS units
       call ipgeti ('set_transport_iyref', iyref)
       call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (1.le.ns, 'faulty argument ns')
+#endif
 *   ..extensive tests on first few calls
 *   ..test bb
-      call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
+      call b2xvsg (mpg%nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *   ..test state
-      call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-      call b2xvsg (n2, te, 1, 'te', '.gt.')
-      call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-      call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-      call b2xvsg (n2, ne, 1, 'ne', '.gt.')
+      call b2xvsg (mpg%nCv*ns, state%pl%na, 1, 'na', '.gt.')
+      call b2xvsg (mpg%nCv, state%pl%te, 1, 'te', '.gt.')
+      call b2xvsg (mpg%nCv, state%pl%ti, 1, 'ti', '.gt.')
+      call b2xvsg (mpg%nCv*2, state%dv%ni, 1, 'ni', '.gt.')
+      call b2xvsg (mpg%nCv, state%dv%ne, 1, 'ne', '.gt.')
 
 *   ..main
 
 *   ..intialize arrays (set to zero for neutrals)
-      vtha(:,:,:)=0._R8
-      nuab(:,:,:,:)=0._R8
-      nua(:,:,:)=0._R8
-      nustar(:,:,:)=0._R8
-      rhol(:,:,:)=0._R8
-      lnn(:,:,:)=0._R8
-      ltt(:,:,:)=0._R8
-      deltal(:,:,:)=0._R8
-      wb(:,:,:)=0._R8
-      deltaw(:,:,:)=0._R8
-      deltawn(:,:,:)=0._R8
-      deltawt(:,:,:)=0._R8
-      omega(:,:,:)=0._R8
-      deltab(:,:,:)=0._R8
-      deltapar(:,:,:)=0._R8
+      vtha(:,:)=0._R8
+      nuab(:,:,:)=0._R8
+      nua(:,:)=0._R8
+      nustar(:,:)=0._R8
+      rhol(:,:)=0._R8
+      lnn(:,:)=0._R8
+      ltt(:,:)=0._R8
+      deltal(:,:)=0._R8
+      wb(:,:)=0._R8
+      deltaw(:,:)=0._R8
+      deltawn(:,:)=0._R8
+      deltawt(:,:)=0._R8
+      omega(:,:)=0._R8
+      deltab(:,:)=0._R8
+      deltapar(:,:)=0._R8
       rmaj_(:)=0._R8
 
+#ifdef WG_TODO
 *   ..calculate major radius of closed flux surfaces
       do iy=-1,jsep
         ix=jxa
@@ -436,41 +438,45 @@ c     conversion of constants to CGS units
      &    omega(ix,iy,ns))
        enddo
       enddo
-
+#endif
 
 *   ..return
       call subend ()
       return
       end subroutine neo_validity
 
-      subroutine chang_hinton(nx,ny,ns,jsep,jxa,lambda,safetyfactor,
+      subroutine chang_hinton(mpg,switch,ns,safetyfactor,
      1 ne,te,ti,na,transport)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_indirect
       use b2mod_constants
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_external
       use b2mod_subsys
+      use b2us_map
+      use b2mod_switches
       implicit none
-      integer nx,ny,ns,jsep,jxa
-      real (kind=R8) :: lambda,
-     2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     3 na(-1:nx,-1:ny,0:ns-1), safetyfactor(-1:ny),
-     2 transport(-1:nx,-1:ny,0:ns-1)
+      type(mapping), intent(in) :: mpg
+      type(switches), intent(in) :: switch
+      integer, intent(in) :: ns
+      real (kind=R8) ::
+     2 ne(mpg%nCv), te(mpg%nCv), ti(mpg%nCv),
+     3 na(mpg%nCv,0:ns-1), safetyfactor(mpg%nFs),
+     2 transport(mpg%nCv,0:ns-1)
 
       integer ix,iy,is,irmin,irmax, is_fuel
       real (kind=R8) :: crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
-     2 bave,epsilon,lnlam,vthi,omegaci,
+     2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
      2 bracket1, bracket2, ammin
+      real (kind=R8) :: lnlam(mpg%nCv)
       external xertst
 
       call subini ('chang_hinton')
       transport=0.0_R8
+      call b2tlnl(mpg%nCv,switch,1,te,ti,ne,lnlam)
+#ifdef WG_TODO
       do iy=-1,jsep
         if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
         ix=jxa
@@ -500,14 +506,7 @@ c     conversion of constants to CGS units
      1   ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
         epsilon=(crmax-crmin)/(crmax+crmin)
         if (b2plot_debug.ge.8) write(*,*) 'epsilon: ',epsilon
-        if (lambda.lt.0.0_R8) then
-          lnlam=max(-lambda,17.3_R8-
-     1     log(ne(ix,iy)/1e20_R8)/2.0_R8+
-     2     1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-        else
-          lnlam = lambda
-        endif
-        if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam
+        if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam(ix,iy)
         cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
         cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
         cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
@@ -559,7 +558,7 @@ c     conversion of constants to CGS units
             if (b2plot_debug.ge.8) write(*,*) 'rhoi: ',rhoi
             taui=12.0_R8*pi**1.5_R8*eps0**2*
      1       (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2       (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
+     2       (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam(ix,iy))
             if (b2plot_debug.ge.8) write(*,*) 'taui: ',taui
             nui=1.0_R8/taui
             nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/
@@ -599,6 +598,7 @@ c     conversion of constants to CGS units
           endif
         enddo
       enddo
+#endif
       call subend ()
       return
       end subroutine chang_hinton

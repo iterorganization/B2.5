@@ -4,7 +4,7 @@ c
       integer iun, ipos
       character*500 textline
       character*1 c
-      logical isnegative,isplusorminus
+      logical isnegative, isplusorminus
       c=textline(ipos:ipos)
       isnegative=.false.
       if(isplusorminus(c)) then
@@ -13,4 +13,4 @@ c
         if(ipos .gt. 500) call readline(textline,iun,ipos)
       endif
       return
-      end
+      end function isnegative

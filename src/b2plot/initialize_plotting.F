@@ -131,6 +131,8 @@ c
 c
       extralabel=' '
       globalheader=' '
+      xlabel=' '
+      ylabel=' '
       runtime=real(time,R4)
       glsz=1.0_R4
       lbsz=1.0_R4
@@ -142,6 +144,7 @@ c
       color_map_loaded=.false.
       color_file=' '
       device='psc'
+      bold=.false.
       return
       end subroutine initialise_plotting_flags
 
@@ -316,6 +319,16 @@ c
       gcol=iopt
       return
       end subroutine set_title_color
+
+      subroutine set_frame_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
+      fcol=iopt
+      return
+      end subroutine set_frame_color
 
       subroutine set_barlabel_color(iopt)
       use b2mod_types

@@ -16,7 +16,7 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ngread(solps_version, eirene_format, nx, ny,
+      subroutine b2yt_ngread(solps_version, eirene_format, nx, ny, ns,
      . nx1, ny1, natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1,
      . nfla, no_sputtering, savestratum, non_commensurate,
      . e_bundle_contr, jsep1, region1,
@@ -27,7 +27,6 @@ c  version : 06.11.97 22:11
 c
       use b2mod_types
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -45,7 +44,7 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      integer nx,ny,nx1,ny1
+      integer nx,ny,ns,nx1,ny1
       integer natm1,nmol1,nion1,npls1,nfla,non_commensurate
       integer iatm1(natm), imol1(nmol), iion1(nion), ipls1(npls)
       integer jsep1
@@ -1400,6 +1399,10 @@ cank
               write(45,'(1p,6e13.5)') ((wlpump1res(j+k,i),j=1,npls1),
      ,                                                       i=1,ncl)
               deallocate (wlpump1res)
+            end if
+            if (jvftnew.ge.20201006) then
+              call write_title(45,'ewldt_res',ncl)
+              WRITE(45,'(6e15.7)') (ewldt_res(i),i=1,NCL)
             end if
             deallocate(wldna1res, ewlda1res, ewldea1res)
             deallocate(wldnm1res, ewldm1res, ewldem1res)

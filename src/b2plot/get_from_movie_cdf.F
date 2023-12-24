@@ -14,6 +14,7 @@
 #endif
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
       integer ncidcdf,istep,nCv,ns
       type (B2State) :: state

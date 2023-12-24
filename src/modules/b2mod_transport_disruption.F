@@ -5,15 +5,17 @@
       integer, save :: quenching
       real (kind=R8), save :: time_quenching
       real (kind=R8), allocatable, save ::
-     *  rho_(:), f_quench(:,:)
+     *  rho_(:), f_quench(:)
 
       contains
 
-      subroutine alloc_b2mod_transport_disruption(nxd,nyd)
-      integer nxd,nyd
+      subroutine alloc_b2mod_transport_disruption(mpg)
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: mpg
 
-      allocate(rho_(-1:nyd))
-      allocate(f_quench(-1:nxd,-1:nyd))
+      allocate(rho_(mpg%nFs))
+      allocate(f_quench(mpg%nCv))
       
       end subroutine alloc_b2mod_transport_disruption
 

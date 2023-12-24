@@ -397,8 +397,8 @@ contains
 #ifdef NO_OPT
 !DIR$ NOOPTIMIZE
 #endif
+        use b2mod_dimensions
         implicit none
-#include <DIMENSIONS.F>
         type (geometry), intent(in) :: geo
         type (mapping), intent(inout) :: mpg
         type (B2state), intent(inout) :: state
