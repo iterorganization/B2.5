@@ -33,13 +33,13 @@ c
         if(mod(typeofplot,2) .eq. 1) then
           if(b2plot_debug.ge.7) write(*,*) 'physical domain'
           call map(mpg%nCv,
-     1         geo%cvVol,work(1,is,iwrk),work(1,ns+1,iwrk))
+     1         geo%cvVol,work(1,is,iwrk),work(1,state%ns+1,iwrk))
           call init_page(titlestring,
      1     values(5),values(6),values(7),values(8),1,.true.,.true.,
      2     .true.)
           call plotcontour(mpg%nCv,is,
      2     wrkx,wrky,
-     3     work(1,ns+1,iwrk),
+     3     work(1,state%ns+1,iwrk),
      4     values(9),values(10),.true.,linlog)
           if(arrowl .gt. 0.0_R8) call plot_arrows(is)
           call end_page

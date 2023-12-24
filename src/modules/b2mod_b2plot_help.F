@@ -4,8 +4,8 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=355,nfns=205,nsparameters=32,nelabels=36,
-     *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
+      parameter(nlabels=357,nfns=212,nsparameters=34,nelabels=36,
+     *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
      * dimensions(nlabels), wdimensions(nwlabels), edimensions(nelabels)
@@ -98,8 +98,9 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:355) /
-     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      /
+      data labels(351:357) /
+     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      ,
+     2  'molrad'  , 'ionrad'  /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -429,7 +430,7 @@
      7    'Recycling conditions',
      8    'Molecule dissociation rate (#.s^{-1})',
      9    'Power to atoms due to molecule dissociation (W)',
-     *    'Total power loss due to atom radiation (W)'/
+     *    'Power loss due to atom radiation (W)'/
       data descriptions(301:310) /
      1    'Poloidal particle flux without drifts (s^{-1})',
      2    'Radial particle flux without drifts (s^{-1})',
@@ -485,12 +486,14 @@
      8    'Thermo-electric classical flux limit factor',
      9    'Thermo-electric coefficient limit factor',
      *    'Eirene atomic species index'/
-      data descriptions(351:355) /
+      data descriptions(351:357) /
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
      4    'Toroidal magnetic flux function (Wb/m)',
-     5    'Plasma pressure (Pa)'/
+     5    'Plasma pressure (Pa)',
+     6    'Power loss due to molecule radiation (W)',
+     7    'Power loss due to molecular ion radiation (W)'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -568,8 +571,9 @@
      8    0,      0,      2,      2,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      2/
-      data dimensions(351:355) /
-     1    1,      1,      1,      1,      1/
+      data dimensions(351:357) /
+     1    1,      1,      1,      1,      1,
+     2    2,      2/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -614,9 +618,10 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:205) /
-     1 'trigmesh', 'earox', 'earoy', 'earow',
-     2 'glsz' /
+      data fns(201:212) /
+     1 'trigmesh', 'earox', 'earoy', 'earow', 'nice' ,
+     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   , 'etal'  ,
+     3 'fcol' , 'bold' /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',
@@ -798,17 +803,17 @@
      5 'trgtemp' , 'trgwsel' , 'rtrgmmi' , 'rtrgmma' , 'trglt'   ,
      6 'trgle'   , 'trgeq'   , 'trgne'   , 'trggt'   , 'trgge'   ,
      7 'trglog'  , 'trgln'   , 'trgsqrt' , 'trgexp'  , 'trgchs'  ,
-     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgl'    ,
-     9 'trgsurf' , 'kappa_ab', 'kappa'   , 'dkappadt', 'kappap'  , 
-     * 'kappapdt', 'cp'      , 'trgwidth', 'trgdepth', 'trgdup'  , 
-     1 'trgswap' , 'trgover' , 'trgmmin' , 'trgmmax' , 'trgr1'   , 
-     2 'trgr2'   , 'trgz1'   , 'trgz2'   , 'trgnorth', 'trgsouth', 
-     3 'trgwest' , 'trgeast' , 'trgseg'  , 'itrglt'  , 'itrgeq'  , 
-     4 'itrggt'  , 'trgm+'   , 'trgm-'   , 'trgm*'   , 'trgm/'   ,
-     5 'trgvol'  , 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  ,
-     6 'ztrggt'  , 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' ,
-     7 'trglist' , 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  ,
-     8 'itrgge'  , 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
+     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgsurf' ,
+     9 'kappa_ab', 'kappa'   , 'dkappadt', 'kappap'  , 'kappapdt',
+     * 'cp'      , 'trgwidth', 'trgdepth', 'trgdup'  , 'trgswap' ,
+     1 'trgover' , 'trgmmin' , 'trgmmax' , 'trgr1'   , 'trgr2'   ,
+     2 'trgz1'   , 'trgz2'   , 'trgnorth', 'trgsouth', 'trgwest' ,
+     3 'trgeast' , 'trgseg'  , 'itrglt'  , 'itrgeq'  , 'itrggt'  ,
+     4 'trgm+'   , 'trgm-'   , 'trgm*'   , 'trgm/'   , 'trgvol'  ,
+     5 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  , 'ztrggt'  ,
+     6 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' , 'trglist' ,
+     7 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  , 'itrgge'  ,
+     8 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
       data elabels /
      1 'pdena'   , 'pdenm'   , 'pdeni'   , 'edena'   , 'edenm'   ,
      2 'edeni'   , 'vxdena'  , 'vxdenm'  , 'vxdeni'  , 'vydena'  ,
@@ -874,7 +879,7 @@
      4 'uedgegrd', 'expf' , 'outp', 'pdev'    , 'mprt',
      5 'mtab'    , 'amju' , 'adas', 'wallblbl', 'trgblbl',
      6 'glbl'    , 'wlbl' , 'tlbl', 'wslbl'   , 'tranprof',
-     7 'elbl'    , 'eslbl'/
+     7 'elbl'    , 'eslbl', 'xlab', 'ylab'/
       data constant_name /
      1 'me'    ,'mp' , 'ev'  , 'qe'   , 'mu0',
      2 'eps0'  ,'pi' , 'c'   , 'avogr', 'kbolt'/

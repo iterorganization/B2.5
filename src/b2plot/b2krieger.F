@@ -16,7 +16,6 @@ c-----------------------------------------------------------------------
       use b2mod_types
       use b2us_data
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_b2cmpa
       use b2mod_elements
       use b2mod_constants
@@ -33,15 +32,15 @@ c
 c-----------------------------------------------------------------------
 c*** The plasma data at the cell centers
 c
-      allocate(mz_hlp(nspecies+ns),hlp_al(nspecies+ns))
+      allocate(mz_hlp(nspecies+state%ns),hlp_al(nspecies+state%ns))
       allocate(n_hlp(nspecies),v_hlp(nspecies))
-      do is=0,ns-1 !{
+      do is=0,state%ns-1 !{
         mz_hlp(nspecies+1+is)=nint((zamin(is)+zamax(is))/2.0_R8)
         hlp_al(nspecies+1+is)=is_codes(is)
         hlp_al(b2espcr(is))=hlp_al(nspecies+1+is)
         mz_hlp(b2espcr(is))=99
       end do !}
-      do is=1,nspecies+ns !{
+      do is=1,nspecies+state%ns !{
         if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
       end do !}
 
@@ -66,13 +65,13 @@ c
       write (lun,*)
       write (hlp_frmr,'(a,i3,a)')
      ,  '(a6,9x,a1,11x,a1,10x,a3,9x,a2,11x,a2,10x,a2,4x,',
-     ,    nspecies+ns,'(4x,a3,i2.2,6x,a4,i2.2,3x)/)'
+     ,    nspecies+state%ns,'(4x,a3,i2.2,6x,a4,i2.2,3x)/)'
       write (lun,hlp_frmr)
      ,  '#  iCv','R','Z','pit','ne','Te','Ti',
      ,  ('n'//hlp_al(i),mz_hlp(i),
-     ,  'vp'//hlp_al(i),mz_hlp(i),i=1,nspecies+ns)
+     ,  'vp'//hlp_al(i),mz_hlp(i),i=1,nspecies+state%ns)
       write (hlp_frm,'(a,i3,a)')
-     ,  '(1x,1p,i6,',6+2*(nspecies+ns),'e12.4)'
+     ,  '(1x,1p,i6,',6+2*(nspecies+state%ns),'e12.4)'
 
       do iCv=1,mpg%nCi !{
         k=0
@@ -90,7 +89,7 @@ c
      ,   iCv,geo%cvX(iCv),geo%cvY(iCv),pitch(geo,iCv),
      ,   state%dv%ne(iCv),state%pl%te(iCv)/ev,state%pl%ti(iCv)/ev,
      ,   (n_hlp(j),v_hlp(j),j=1,nspecies),
-     ,   (state%pl%na(iCv,k),state%pl%ua(iCv,k),k=0,ns-1)
+     ,   (state%pl%na(iCv,k),state%pl%ua(iCv,k),k=0,state%ns-1)
       end do !}
       close (lun)
       deallocate(mz_hlp,hlp_al)

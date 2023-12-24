@@ -117,7 +117,7 @@ C =========== Setting up Contour Levels and Labeling =================
       IF(mod(LINLOG,2).EQ.1) THEN   ! ==> do linear plot <====================
         IF(NOFCLS.EQ.0) THEN ! standard contouring
           write (*,*) 'STANDARD CONTOURING'
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm
@@ -158,7 +158,7 @@ C do something to avoid this
           do i=1,ncont+1
             write (*,*) 'clval(',i,') =',clval(i)
           enddo
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           ZINC=(ZHI-ZLO)/(NCONT)
           if(b2plot_debug.ge.10)
      1       write (*,*) 'zlo =',zlo,' zhi =',zhi,' zinc =',zinc

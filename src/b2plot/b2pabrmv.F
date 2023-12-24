@@ -12,7 +12,6 @@ c----------------------------------------------------------------------
       use b2mod_types
       use b2us_data
       use b2mod_b2cmpa
-      use b2mod_b2plot
       use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
@@ -29,8 +28,8 @@ c
 c----------------------------------------------------------------------
 c*** Write the header
 c
-      allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1))
-      do is=0,ns-1
+      allocate(mz_hlp(0:state%ns-1),hlp_al(0:state%ns-1))
+      do is=0,state%ns-1
         mz_hlp(is)=nint((zamin(is)+zamax(is))/2.0_R8)
         hlp_al(is)=is_codes(is)
       end do

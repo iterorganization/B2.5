@@ -3,6 +3,7 @@
       use b2mod_time
       use b2us_geo
       use b2us_plasma
+      use b2mod_dimensions
 #ifndef NO_CDF
       use b2mod_movies
       use b2mod_constants
@@ -128,7 +129,6 @@
       ncall = ncall+1
       call subend ()
 #else
-#     include <DIMENSIONS.F>
 *  ..procedures
       external xertst
 

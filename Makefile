@@ -35,7 +35,7 @@ ifndef SOLPS_CPP
     MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
   endif
 else
-  MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+  MAKES += ${SOLPSTOP}/Makefile ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
   ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.common.${COMPILER} ] && echo yes || echo no ),yes)
     MAKES += ${SOLPSTOP}/SETUP/config.common.${COMPILER}
   endif
@@ -480,12 +480,17 @@ MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/c
 MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f
 MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
+DIMSDIR=${SRCDIR}/modules
+ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
+DIMSDIR=${SRCDIR}/modules.local
+endif
+DEFINES += -DDIMENSIONS_MODULE
+else
 ifeq ($(COMPILER),pgf90)
 ifdef SOLPS_DEBUG
 AMEXTRA=${MNEXTRA}
 endif
 endif
-else
 # MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_infcop.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_solps.o
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
 endif
@@ -530,380 +535,380 @@ ${OBJDIR}/ioflush.o:
 
 ifneq (${MOD},o)
 ${OBJDIR}/eirmod_extrab25.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_extrab25.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_extrab25.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_wneutrals.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_wneutrals.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_wneutrals.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_refusr.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_refusr.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_refusr.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_balanced_strategy.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_balanced_strategy.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_braeir.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_braeir.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_braeir.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_brascl.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_brascl.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_brascl.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_braspoi.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_braspoi.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_braspoi.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cadgeo.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cadgeo.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cadgeo.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cai.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cai.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cai.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_calstr_buffered.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_calstr_buffered.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_calstr_buffered.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ccona.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ccona.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ccona.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ccoupl.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ccoupl.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ccoupl.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ccrm.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ccrm.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ccrm.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cestim.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cestim.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cestim.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cfplk.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cfplk.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cfplk.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cgeom.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cgeom.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cgeom.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cgrid.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cgrid.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cgrid.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cgrptl.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cgrptl.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cgrptl.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cinit.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cinit.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cinit.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_clast.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_clast.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clast.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_clgin.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_clgin.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clgin.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_clogau.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_clogau.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clogau.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_clmsur.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_clmsur.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clmsur.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_comnnl.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_comnnl.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comnnl.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_comprt.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_comprt.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comprt.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_comsig.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_comsig.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comsig.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_comsou.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_comsou.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comsou.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_comspl.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_comspl.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comspl.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_comusr.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_comusr.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comusr.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_comxs.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_comxs.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comxs.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_coutau.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_coutau.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_coutau.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpes.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cpes.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cpes.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpl3d.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cpl3d.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cpl3d.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cplmsk.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cplmsk.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cplmsk.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cplot.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cplot.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cplot.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpolyg.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cpolyg.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cpolyg.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_crand.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_crand.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_crand.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_crech.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_crech.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_crech.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cref.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cref.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cref.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_crefmod.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_crefmod.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_crefmod.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_csdvi.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_csdvi.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_csdvi.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_csdvi_bgk.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_csdvi_bgk.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_csdvi_bgk.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_csdvi_cop.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_csdvi_cop.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_csdvi_cop.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cspei.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cspei.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cspei.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cspez.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cspez.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cspez.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cstep.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cstep.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cstep.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctetra.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ctetra.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctetra.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctext.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ctext.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctext.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctrcei.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ctrcei.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctrcei.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctrig.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ctrig.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctrig.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctsurf.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_ctsurf.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctsurf.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cupd.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cupd.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cupd.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cvarusr.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_cvarusr.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cvarusr.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_czt1.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_czt1.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_czt1.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_eirbra.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_eirbra.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_eirbra.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_eirdiag.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_eirdiag.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_eirdiag.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD}
-	ln -sf ${EIRDIR}/eirmod_infcop.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_infcop.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_module_avltree.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_module_avltree.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_module_avltree.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_mpi.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_mpi.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_mpi.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_octree.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_octree.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_octree.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_parmmod.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_parmmod.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_parmmod.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_precision.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_precision.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_precision.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_solps.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_solps.${MOD} ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_solps.${MOD} ${OBJDIR}
 endif
 
 ${OBJDIR}/eirmod_extrab25.o:
-	ln -sf ${EIRDIR}/eirmod_extrab25.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_extrab25.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_wneutrals.o:
-	ln -sf ${EIRDIR}/eirmod_wneutrals.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_wneutrals.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_refusr.o:
-	ln -sf ${EIRDIR}/eirmod_refusr.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_refusr.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_balanced_strategy.o:
-	ln -sf ${EIRDIR}/eirmod_balanced_strategy.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_balanced_strategy.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_braeir.o:
-	ln -sf ${EIRDIR}/eirmod_braeir.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_braeir.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_brascl.o:
-	ln -sf ${EIRDIR}/eirmod_brascl.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_brascl.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_braspoi.o:
-	ln -sf ${EIRDIR}/eirmod_braspoi.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_braspoi.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cadgeo.o:
-	ln -sf ${EIRDIR}/eirmod_cadgeo.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cadgeo.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cai.o:
-	ln -sf ${EIRDIR}/eirmod_cai.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cai.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_calstr_buffered.o:
-	ln -sf ${EIRDIR}/eirmod_calstr_buffered.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_calstr_buffered.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ccona.o:
-	ln -sf ${EIRDIR}/eirmod_ccona.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ccona.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cestim.o:
-	ln -sf ${EIRDIR}/eirmod_cestim.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cestim.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ccoupl.o:
-	ln -sf ${EIRDIR}/eirmod_ccoupl.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ccoupl.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ccrm.o:
-	ln -sf ${EIRDIR}/eirmod_ccrm.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ccrm.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cfplk.o:
-	ln -sf ${EIRDIR}/eirmod_cfplk.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cfplk.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cgeom.o:
-	ln -sf ${EIRDIR}/eirmod_cgeom.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cgeom.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cgrid.o:
-	ln -sf ${EIRDIR}/eirmod_cgrid.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cgrid.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cgrptl.o:
-	ln -sf ${EIRDIR}/eirmod_cgrptl.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cgrptl.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cinit.o:
-	ln -sf ${EIRDIR}/eirmod_cinit.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cinit.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_clast.o:
-	ln -sf ${EIRDIR}/eirmod_clast.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clast.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_clgin.o:
-	ln -sf ${EIRDIR}/eirmod_clgin.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clgin.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_clogau.o:
-	ln -sf ${EIRDIR}/eirmod_clogau.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clogau.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_clmsur.o:
-	ln -sf ${EIRDIR}/eirmod_clmsur.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_clmsur.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_comnnl.o:
 	ln -sf ${EIRDIR}/eirmod_comnnl.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_comprt.o:
-	ln -sf ${EIRDIR}/eirmod_comprt.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comprt.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_comsig.o:
-	ln -sf ${EIRDIR}/eirmod_comsig.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comsig.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_comsou.o:
-	ln -sf ${EIRDIR}/eirmod_comsou.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comsou.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_comspl.o:
-	ln -sf ${EIRDIR}/eirmod_comspl.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comspl.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_comusr.o:
-	ln -sf ${EIRDIR}/eirmod_comusr.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comusr.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_comxs.o:
-	ln -sf ${EIRDIR}/eirmod_comxs.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_comxs.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_coutau.o:
-	ln -sf ${EIRDIR}/eirmod_coutau.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_coutau.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpes.o:
-	ln -sf ${EIRDIR}/eirmod_cpes.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cpes.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpl3d.o:
-	ln -sf ${EIRDIR}/eirmod_cpl3d.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cpl3d.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cplmsk.o:
-	ln -sf ${EIRDIR}/eirmod_cplmsk.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cplmsk.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cplot.o:
-	ln -sf ${EIRDIR}/eirmod_cplot.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cplot.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpolyg.o:
-	ln -sf ${EIRDIR}/eirmod_cpolyg.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cpolyg.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_crand.o:
-	ln -sf ${EIRDIR}/eirmod_crand.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_crand.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_crech.o:
-	ln -sf ${EIRDIR}/eirmod_crech.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_crech.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cref.o:
-	ln -sf ${EIRDIR}/eirmod_cref.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cref.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_crefmod.o:
-	ln -sf ${EIRDIR}/eirmod_crefmod.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_crefmod.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_csdvi.o:
-	ln -sf ${EIRDIR}/eirmod_csdvi.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_csdvi.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_csdvi_bgk.o:
-	ln -sf ${EIRDIR}/eirmod_csdvi_bgk.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_csdvi_bgk.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_csdvi_cop.o:
-	ln -sf ${EIRDIR}/eirmod_csdvi_cop.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_csdvi_cop.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cspei.o:
-	ln -sf ${EIRDIR}/eirmod_cspei.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cspei.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cspez.o:
-	ln -sf ${EIRDIR}/eirmod_cspez.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cspez.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cstep.o:
-	ln -sf ${EIRDIR}/eirmod_cstep.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cstep.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctetra.o:
-	ln -sf ${EIRDIR}/eirmod_ctetra.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctetra.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctext.o:
-	ln -sf ${EIRDIR}/eirmod_ctext.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctext.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctrcei.o:
-	ln -sf ${EIRDIR}/eirmod_ctrcei.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctrcei.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctrig.o:
-	ln -sf ${EIRDIR}/eirmod_ctrig.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctrig.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ctsurf.o:
-	ln -sf ${EIRDIR}/eirmod_ctsurf.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_ctsurf.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cupd.o:
-	ln -sf ${EIRDIR}/eirmod_cupd.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cupd.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cvarusr.o:
-	ln -sf ${EIRDIR}/eirmod_cvarusr.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_cvarusr.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_czt1.o:
-	ln -sf ${EIRDIR}/eirmod_czt1.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_czt1.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_eirbra.o:
-	ln -sf ${EIRDIR}/eirmod_eirbra.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_eirbra.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_infcop.o: ${OBJDIR}/eirmod_cplot.o
-	ln -sf ${EIRDIR}/eirmod_infcop.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_infcop.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_module_avltree.o:
-	ln -sf ${EIRDIR}/eirmod_module_avltree.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_module_avltree.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_mpi.o:
-	ln -sf ${EIRDIR}/eirmod_mpi.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_mpi.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_octree.o:
-	ln -sf ${EIRDIR}/eirmod_octree.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_octree.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_parmmod.o:
-	ln -sf ${EIRDIR}/eirmod_parmmod.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_parmmod.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_precision.o:
-	ln -sf ${EIRDIR}/eirmod_precision.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_precision.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_solps.o:
-	ln -sf ${EIRDIR}/eirmod_solps.o ${OBJDIR}
+	@ln -sf ${EIRDIR}/eirmod_solps.o ${OBJDIR}
 else
 ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
 	touch ${OBJDIR}/eirmod_balanced_strategy.${MOD}
@@ -919,6 +924,9 @@ ${OBJDIR}/eirmod_ccoupl.${MOD}:
 
 ${OBJDIR}/eirmod_cestim.${MOD}:
 	touch ${OBJDIR}/eirmod_cestim.${MOD}
+
+${OBJDIR}/eirmod_cgeom.${MOD}:
+	touch ${OBJDIR}/eirmod_cgeom.${MOD}
 
 ${OBJDIR}/eirmod_cinit.${MOD}:
 	touch ${OBJDIR}/eirmod_cinit.${MOD}
@@ -1140,16 +1148,16 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} -DSOLPS_ITER ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} -DSOLPS_ITER ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
 endif
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 
 ${EIR4OBJS}: ${OBJDIR}/%.o: ${EIR4}/%.F
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${OBJDEST} -c $?
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} ${SOLPSINCLUDE} ${OBJDEST} -c $?
 
 ${EIR4MODS}: ${OBJDIR}/%.${MOD}: ${EIR4}/%.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
@@ -1157,9 +1165,9 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${SOLPS4INCLUDE} ${OBJDEST} ${OBJDIR}/$*.f
 	@touch ${OBJDIR}/$*.${MOD}

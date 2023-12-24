@@ -3,12 +3,9 @@
       subroutine b2stbc_fb_post (nCv, nFc, ns, ismain,
      &  geo, pl, dv, main_call)
       use b2mod_types
-!      use b2mod_rates
-!      use b2mod_indirect
       use b2mod_constants
       use b2mod_feedback
       use b2mod_b2cmpa
-!      use b2mod_b2cmpb
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2us_geo
@@ -214,8 +211,8 @@
       use eirmod_wneutrals
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch

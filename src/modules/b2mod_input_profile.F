@@ -1,18 +1,14 @@
       module b2mod_input_profile
-c      use b2mod_types
+      use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_time
-!WG_TODO      use b2mod_sources
-!WG_TODO     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
-!WG_TODO     &             balance_netcdf
-!WG_TODO      use b2mod_geo_corner
-!WG_TODO     &     , only: nmdpl
       use b2us_geo
       use b2us_map
       use b2us_plasma
       use b2mod_subsys
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -27,7 +23,6 @@ c      use b2mod_types
       real(kind=R8), allocatable, save :: tdata(:,:,:,:)
       integer, allocatable, save :: addspec(:,:,:)
 #else
-#     include "DIMENSIONS.F"
       parameter(nrr = DEF_NYD+2, nxx = DEF_NXD+2, nss = DEF_NSD)
       integer, save :: nsdata(nkind_data,nkind_source,0:nss)
       integer, save :: nxdata(nkind_data,nkind_source,0:nss)
@@ -238,7 +233,7 @@ c      use b2mod_types
           enddo
           if (ndat.eq.0) goto 1
           call xertst(ndat.le.nrr,
-     .     'Increase NYD in DIMENSIONS.F to match size of profile')
+     .     'Increase NYD in b2mod_dimensions to match size of profile')
 !       allocate (f(1:ndat))
 !       allocate (r(1:ndat))
           do i=1,ndat
@@ -275,7 +270,7 @@ c      use b2mod_types
           xf(nx)=0.0_R8
           if (nxdat.gt.0) then
             call xertst(nxdat.le.nxx+2,
-     .       'Increase NXD in DIMENSIONS.F to match size of profile')
+     .     'Increase NXD in b2mod_dimensions to match size of profile')
             do i=1,nxdat
               x(i)=xdata(1,i,kind_source,spec)
               fx(i)=xdata(2,i,kind_source,spec)
@@ -617,7 +612,7 @@ cdjm Jan2017 Keep linearised sources for balance
             ndat=ndata(kind_data,kind_coeff,spec)
             if (ndat.eq.0) goto 1
             call xertst(ndat.le.nrr,
-     .       'Increase NYD in DIMENSIONS.F to match size of profile')
+     .      'Increase NYD in b2mod_dimensions to match size of profile')
             nspec=1
             nsp(1)=spec
             do is=1,ns
@@ -654,6 +649,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             if (elm_data)
      >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+
             if (tr_ip_new_files) then
 
               if (elm_data) then
@@ -750,7 +746,6 @@ cdjm Jan2017 Keep linearised sources for balance
      1                 prof(iy)*mp*am(nsp(is))*pl%na(icv,nsp(is))
 
                     elseif (kind_coeff.eq.8) then
-
                       if (csig_an_style.eq.0) then
                         sig0(icv)=prof(iy)*qe*dv%ne(icv)*
      1                   poloidal_scale_factor
@@ -772,6 +767,7 @@ cdjm Jan2017 Keep linearised sources for balance
                       write(*,*)
      .                 'Option',kind_coeff,'not yet implemented'
                     endif
+
                   endif
                  enddo !ic
                 enddo !ift=1,mpg%nFt

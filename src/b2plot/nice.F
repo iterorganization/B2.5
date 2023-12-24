@@ -1,7 +1,8 @@
-      subroutine nice(xmin,xmax,nomaj,nomin,fmtc,nfmt)
+      subroutine nice(xmin,xmax,nomaj,nomin,fmtc,nfmt,nice_axes)
       character*10 fmtc
       real xmin, xmax
       integer nomaj, nomin, nfmt
+      logical nice_axes
       real dx, scale
       integer iscale, ir, il
       real ceil, floor
@@ -11,10 +12,10 @@
       ir=iscale
       scale=10.0**(iscale)
       dx=ceil(dx*scale)
-      if(dx.ge.3.and.dx.le.5) dx=5
-      if(dx.ge.6.and.dx.le.9) dx=10
+      if(dx.ge.3.and.dx.le.5.and.nice_axes) dx=5
+      if(dx.ge.6.and.dx.le.9.and.nice_axes) dx=10
       nomin=int(dx)
-      if(nomin.gt.5) nomin=1
+      if(nomin.gt.5.and.nice_axes) nomin=1
       dx=dx/scale
       xmin=floor(xmin/dx)*dx
       xmax=ceil(xmax/dx)*dx

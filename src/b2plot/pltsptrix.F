@@ -17,6 +17,7 @@ c
       call gslwsc_d(sepwidth)
 #endif
       if(.not.physical) then
+#ifdef WG_TODO
         do iy = -1, ny-1
           ix1 = -1
           ix = 0
@@ -151,8 +152,10 @@ c
           y2=jsep+0.5_R8
           call lined_d(x1,y1,x2,y2)
         end if
+#endif
       endif
       if(physical) then
+#ifdef WG_TODO
         do iy = -1, ny-1
           ix1 = -1
           ix = 0
@@ -217,6 +220,7 @@ c
      1                   crx(ix,jsep,3),cry(ix,jsep,3))
           enddo
         endif
+#endif
       endif
 #ifndef PLPLOT
       call gslwsc_d(lwidth)

@@ -1,4 +1,4 @@
-      subroutine b2pwldl(boundary_namelist,BoRiS)
+      subroutine b2pwldl(ns,boundary_namelist,BoRiS)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2plot_wall_loading
@@ -19,7 +19,7 @@ c*** coordinates of the segment centers and the corresponding values of
 c*** the distance along the wall.
 c=======================================================================
       implicit none
-      integer boundary_namelist
+      integer ns, boundary_namelist
       real (kind=R8) :: BoRiS
 
 c*** Local variables
@@ -61,7 +61,7 @@ c*** Open the file and write the heading line
 
         do i=1,nwldlis(il) !{
 c*** Write the next line to the output file
-          call b2pwldw(lun_w,.false.,il,i,boundary_namelist,BoRiS)
+          call b2pwldw(lun_w,ns,.false.,il,i,boundary_namelist,BoRiS)
         end do !}
         close(lun_w)
    20 continue !}

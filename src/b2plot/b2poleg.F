@@ -12,13 +12,10 @@ c***
 c***  oleg.dat with the data for Oleg
 c----------------------------------------------------------------------
       use b2mod_types
-      use b2mod_geo
-      use b2mod_rates
       use b2mod_b2plot
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_external
       use b2mod_constants
+      use b2us_data
+      use b2mod_dimensions
       implicit none
       integer ig
       integer lun
@@ -32,7 +29,7 @@ c
 c----------------------------------------------------------------------
 c*** Check the ig value
 c
-      if(ig.lt.0 .or. ig.gt.ny) then
+      if(ig.lt.0 .or. ig.gt.DEF_NYD) then
         print *,'*** b2poleg: wrong value of ig = ',ig
         return
       end if
@@ -78,11 +75,11 @@ c
 c
       contains
 
-      function area(ix,iy)
+      function area(iFc)
       implicit none
-      integer, intent(in) :: ix, iy
+      integer, intent(in) :: iFc
       real(kind=R8) :: area
-      area = gs(ix,iy,0)*qc(ix,iy,0)
+      area = geo%fcS(iFc)*geo%fcQgam(iFc,0)
       return
       end function area
 

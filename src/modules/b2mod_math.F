@@ -118,6 +118,15 @@
       return
       end function trim1
 
+*     (trimg will be used to trim the logarithmic gradients to avoid
+*     some pathetic behaviour near the underflow limit.)
+      function trimg(t0,t1,tt)
+      implicit none
+      real(kind=R8) :: trimg, t0, t1, tt
+      trimg = max(t0,min(t1,tt))
+      return
+      end function trimg
+
       function trunc(t0,edg)
       implicit none
       real(kind=R8) :: trunc, t0, edg
@@ -132,6 +141,25 @@
       return
       end function ltst
 
+  !> Area of triangle given by vertex coordinates
+      function triangleArea( x0, y0, x1, y1, x2, y2 )
+      implicit none
+      real (kind=R8) :: triangleArea
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2
+      intrinsic abs
+      triangleArea = 0.5_R8 * abs( (x1-x0)*(y2-y0) - (y1-y0)*(x2-x0) )
+      return
+      end function triangleArea
+
+  !> Coordinates of centroid of a triangle given by vertex coordinates
+      function triangleCentroid( x0, y0, x1, y1, x2, y2 )
+      implicit none
+      real (kind=R8) :: triangleCentroid(0:1)
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2
+      triangleCentroid(0) = ( x0 + x1 + x2 ) / 3.0_R8
+      triangleCentroid(1) = ( y0 + y1 + y2 ) / 3.0_R8
+      return
+      end function triangleCentroid
 
       subroutine b2mod_math_init
       implicit none

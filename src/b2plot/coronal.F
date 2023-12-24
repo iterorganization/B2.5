@@ -30,11 +30,7 @@ c     -------------------------------------------------------------------------
 
       integer is,ite,ine
       logical ltst0
-      real (kind=R8) :: trimg
-      external trimg
       intrinsic log
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
 
       call subini('getsa')
 
@@ -211,11 +207,12 @@ c     -------------------------------------------------------------------------
       subroutine setcorora(ismain)
       use b2mod_types
       use b2us_data
+      use b2us_plasma
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_b2plot
       use b2mod_subsys
       implicit none
       integer ismain
@@ -233,10 +230,12 @@ c     -------------------------------------------------------------------------
 
       call subini('corora')
       neco = 1.0e16_R8
+      call createB2Rates (mpg%nCv, state%ns, rtco)
+      call createB2RatesWork (mpg%nCv, state%ns, rtwco)
 *    ..compute log-log electron rate coefficients
-      call b2spel (mpg%nCv, ns, ev, state%pl%te, neco, rtco)
+      call b2spel (mpg%nCv, state%ns, ev, state%pl%te, neco, rtco)
 *   ..compute electron rate coefficients
-      call b2sqel (mpg%nCv, ns, ismain, switch, ev, state%pl%te,
+      call b2sqel (mpg%nCv, state%ns, ismain, switch, ev, state%pl%te,
      .  rtco, rtwco)
 c     initialise array on stack for coronal radiation
       if(iwrk .ge. wklng) call dropstackbottom()
@@ -248,12 +247,13 @@ c     initialise array on stack for coronal radiation
         textwk(iss,iwrk)=textsp(iss)
       enddo
       work(:,:,iwrk)=0.0_R8
-      do is=0,ns-1
+      do is=0,state%ns-1
         iss = b2espcr(is)-1
         work(:,iss,iwrk)=work(:,iss,iwrk)+
      .   (rtwco%rrd(:,is)+rtwco%rbr(:,is))
      .   *geo%cvVol(:)*state%dv%ne(:)*state%pl%na(:,is)
       enddo
+
       gsum=0.0_R8
       do iss=0,nspecies-1
         ssum=0.0_R8
@@ -264,6 +264,8 @@ c     initialise array on stack for coronal radiation
         gsum=gsum+ssum
       enddo
       write(*,*) 'Coronal radiation rate for all species = ',gsum
+      call destroyB2RatesWork( rtwco )
+      call destroyB2Rates( rtco )
       call subend()
       return
       end subroutine setcorora
@@ -278,10 +280,11 @@ c     -------------------------------------------------------------------------
       subroutine setcoroni(ismain)
       use b2mod_types
       use b2us_data
-      use b2mod_b2plot
+      use b2us_plasma
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_b2plot
       use b2mod_subsys
       implicit none
       integer ismain
@@ -295,38 +298,40 @@ c     -------------------------------------------------------------------------
       real (kind=R8) ::
      *   prod(mpg%nCv),divid(mpg%nCv)
       real (kind=R8) ::
-     *   ntot(mpg%nCv,0:ns-1)
+     *   ntot(mpg%nCv,0:state%ns-1)
       real (kind=R8) ::
-     *   n(mpg%nCv,0:ns-1)
+     *   n(mpg%nCv,0:state%ns-1)
       real (kind=R8) ::
-     *   sum(mpg%nCv,0:ns-1)
+     *   sum(mpg%nCv,0:state%ns-1)
       integer is0,isstart,isend,co1,co2
       external b2spel, b2sqel
 
       call subini('coroni')
       neco = 1.0e16_R8
+      call createB2Rates (mpg%nCv, state%ns, rtco)
+      call createB2RatesWork (mpg%nCv, state%ns, rtwco)
 *    ..compute log-log electron rate coefficients
-      call b2spel (mpg%nCv, ns, ev, state%pl%te, neco, rtco)
+      call b2spel (mpg%nCv, state%ns, ev, state%pl%te, neco, rtco)
 *   ..compute electron rate coefficients
-      call b2sqel (mpg%nCv, ns, ismain, switch, ev, state%pl%te,
+      call b2sqel (mpg%nCv, state%ns, ismain, switch, ev, state%pl%te,
      .  rtco, rtwco)
 c     initialise array on stack for coronal radiation
       if(iwrk .ge. wklng) call dropstackbottom()
       iwrk=iwrk+1
       ndim(1,iwrk)=mpg%nCv
-      ndim(2,iwrk)=ns
+      ndim(2,iwrk)=state%ns
       call customise_label('Coronal equilibrium ion density (m^{-3})',
      . graphlabel(iwrk))
-      do is=0,ns-1
+      do is=0,state%ns-1
          textwk(is,iwrk)=textpl(is)
       enddo
       work(:,is,iwrk)=0.0_R8
       is0 = 0
-      do while (is0.lt.ns)
+      do while (is0.lt.state%ns)
         is = is0
         ntot(:,is0) = 0.0_R8
         do while (nint(zn(is)).eq.nint(zn(is0)).and.
-     &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.ns)
+     &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.state%ns)
           ntot(:,is0) = ntot(:,is0) + state%pl%na(:,is)
           is = is + 1
         enddo
@@ -354,6 +359,9 @@ c     coronal equilibrium
 c Move on to next isonuclear sequence
         is0 = is 
       enddo
+
+      call destroyB2RatesWork( rtwco )
+      call destroyB2Rates( rtco )
       call subend()
       return
       end subroutine setcoroni

@@ -1,9 +1,8 @@
 c
       subroutine pltoutline(physical)
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
-      use b2mod_indirect
+      use b2us_data
       implicit none
       integer ix,iy
       logical physical
@@ -15,6 +14,7 @@ c       call gslwsc_d(1.0_R8)
       call gslwsc_d(owidth)
 #endif
       if(physical) then ! mesh physical domain
+#ifdef WG_TODO
         do ix=-1,nx
           do iy=-1,ny
             if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
@@ -35,7 +35,9 @@ c       call gslwsc_d(1.0_R8)
      1                    crx(ix,iy,3),cry(ix,iy,3))
           enddo
         enddo
+#endif
       else
+#ifdef WG_TODO
         do ix=-1,nx
           do iy=-1,ny
             if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
@@ -56,6 +58,7 @@ c       call gslwsc_d(1.0_R8)
      1                    xx(ix,1)+1.0_R8,yy(iy,1)+1.0_R8)
           enddo
         enddo
+#endif
       endif
 #ifndef PLPLOT
       call lastd
@@ -110,6 +113,7 @@ c
 #endif
         rmagst=sqrt(s**2+t**2)
         rmaguv=sqrt(u**2+v**2)
+
         dfx=arrowx(iCv,is)/fmmax
         dfy=arrowy(iCv,is)/fmmax
 

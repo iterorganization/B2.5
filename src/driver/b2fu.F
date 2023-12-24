@@ -66,8 +66,8 @@
       call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from plasma state file')
 *   ..obtain ns from b2fparam file
-      call cfruin (ninp(2), 1, idum(2), 'ns')
-      call xertst (idum(2).eq.ns,
+      call cfruin (ninp(2), 1, idum, 'ns')
+      call xertst (idum(0).eq.ns,
      &  'faulty input ns from physics parameters file')
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')

@@ -39,9 +39,7 @@
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
 #endif
-#ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
-#endif
+      use b2mod_dimensions
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -293,7 +291,7 @@
           call read_neutrals_namelist(nx, ny, ns, .true.)
           new_sputter_namelist=.true.
           call xertst (nstrat.le.nstraid,
-     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+     &     'Increase DEF_NSTRA in b2mod_dimensions')
           call write_b2mod_neutrals_namelist
         endif
 #endif
@@ -666,17 +664,17 @@ cwdk these are now put back into the constant part of the sources (0-component)
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,0,is)+
      &             sna0_eir(:,1,is)*st%pl%na(:,is)
-              call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
+              call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
             endif
           enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*st%pl%te(:,:)+she0_eir(:,:,2)*st%dv%ne+
      &     she0_eir(:,:,3)*st%dv%ne*st%pl%te
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
+          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*st%pl%ti+shi0_eir(:,:,2)*st%dv%ni(:,:,0)+
      &     shi0_eir(:,:,3)*st%dv%ni(:,:,0)*st%pl%ti
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
+          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
         do ia = 1, nnatmi
@@ -1119,9 +1117,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
-#ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
-#endif
+      use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: ns
@@ -1221,7 +1217,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 
       call read_neutrals_namelist(ns, mpg, switch, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
-     &   'Increase DEF_NSTRA in DIMENSIONS.F')
+     &   'Increase DEF_NSTRA in b2mod_dimensions')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
       if(neutrals_time_mod.gt.0.0_R8) then
@@ -1242,7 +1238,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
         call read_neutrals_namelist(ns, mpg, switch, .true.)
         new_sputter_namelist=.true.
         call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
+     &       'Increase DEF_NSTRA in b2mod_dimensions')
         call write_b2mod_neutrals_namelist
         if(neutrals_time_mod.gt.0.0_R8) then
           catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch

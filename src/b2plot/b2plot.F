@@ -47,6 +47,8 @@ c 2002-09-11: logic revised
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_ctrig
+      use eirmod_cgeom
+     , , only: ncltal
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
       use eirmod_extrab25
@@ -69,8 +71,8 @@ c 2002-09-11: logic revised
      & , smo_eir => smo
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include <DIMENSIONS.F>
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
@@ -82,36 +84,34 @@ c
       common /t_ratio/ ratio
 
       real (kind=R8) ::
-#ifdef WG_TODO
-     1   r_ref, z_ref, s_ref(-1:nyd), profile(-1:nyd),
-     5   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
-     6   uedge_c(-1:nxd,-1:nyd), uedge_v(-1:nxd,-1:nyd,1:4),
-     7   corners(-1:nxd+1,-1:nyd+1),
-     8   safetyfactor(-1:nyd), shear(-1:nyd), rave(-1:nyd)
+     1   r_ref, z_ref, s_ref(mpg%nFt), profile(mpg%nFt),
+     5   bas_vis_piece(mpg%nCv,0:nsd_local-1),
+     6   uedge_c(DEF_NXD,DEF_NYD), uedge_v(DEF_NXD,DEF_NYD,1:4),
+     7   corners(DEF_NXD+1,DEF_NYD+1),
+     8   safetyfactor(mpg%nFt), shear(mpg%nFs), rave(mpg%nFt)
       real (kind=R8) ::                                                !cjk
-     *   dn_neo(-1:nxd,-1:nyd,0:nsd_local),
-     *   chi_neo(-1:nxd,-1:nyd,0:nsd_local),
-     *   vn_neo(-1:nxd,-1:nyd,0:nsd_local),
-     *   vw_neo(-1:nxd,-1:nyd,0:nsd_local)
-      real (kind=R8) ::                                                !cjk
-     *   nuab(-1:nxd,-1:nyd,0:nsd_local,0:nsd_local),
-     *   nua(-1:nxd,-1:nyd,0:nsd_local),
-     *   nustar(-1:nxd,-1:nyd,0:nsd_local),
-     *   rhol(-1:nxd,-1:nyd,0:nsd_local),
-     *   lnn(-1:nxd,-1:nyd,0:nsd_local),
-     *   ltt(-1:nxd,-1:nyd,0:nsd_local),
-     *   deltal(-1:nxd,-1:nyd,0:nsd_local),
-     *   wb(-1:nxd,-1:nyd,0:nsd_local),
-     *   deltaw(-1:nxd,-1:nyd,0:nsd_local),
-     *   deltawn(-1:nxd,-1:nyd,0:nsd_local),
-     *   deltawt(-1:nxd,-1:nyd,0:nsd_local),
-     *   omega(-1:nxd,-1:nyd,0:nsd_local),
-     *   deltab(-1:nxd,-1:nyd,0:nsd_local),
-     *   deltapar(-1:nxd,-1:nyd,0:nsd_local),
-     *   vtha(-1:nxd,-1:nyd,0:nsd_local), q,
+     *   nuab(mpg%nCv,0:nsd_local,0:nsd_local),
+     *   nua(mpg%nCv,0:nsd_local),
+     *   nustar(mpg%nCv,0:nsd_local),
+     *   rhol(mpg%nCv,0:nsd_local),
+     *   lnn(mpg%nCv,0:nsd_local),
+     *   ltt(mpg%nCv,0:nsd_local),
+     *   deltal(mpg%nCv,0:nsd_local),
+     *   wb(mpg%nCv,0:nsd_local),
+     *   deltaw(mpg%nCv,0:nsd_local),
+     *   deltawn(mpg%nCv,0:nsd_local),
+     *   deltawt(mpg%nCv,0:nsd_local),
+     *   omega(mpg%nCv,0:nsd_local),
+     *   deltab(mpg%nCv,0:nsd_local),
+     *   deltapar(mpg%nCv,0:nsd_local),
+     *   vtha(mpg%nCv,0:nsd_local), q,
      *   zaf(0:nsd_local-1), pxf, tif,
-#endif
      9   pb0
+      real (kind=R8) ::                                                !cjk
+     *   dn_neo(mpg%nCv,0:nsd_local),
+     *   chi_neo(mpg%nCv,0:nsd_local),
+     *   vn_neo(mpg%nCv,0:nsd_local),
+     *   vw_neo(mpg%nCv,0:nsd_local)
       real (kind=R8), allocatable ::
      *   pr(:), pz(:), ro(:,:), up(:,:), vv(:,:), ww(:,:),
      *   fnax(:,:), fnay(:,:), fmox(:,:), fmoy(:,:),
@@ -153,7 +153,7 @@ c
       integer ntstepcdf, istepcdf
 #endif
       integer lucdf
-      integer itmp, istart, iend,
+      integer itmp, istart, iend, ns,
      * sput_src, refl_model, sput_phys_model,
      * sput_chem_model, sput_phys_col
       character*256 stmp, filename, varname
@@ -197,8 +197,6 @@ c
 c
       real (kind=R8) ::
      * dummy,rval,time,minpsi,maxpsi
-      real (kind=R8) ::
-     1 lambda, lnlam
 #ifdef WG_TODO
       integer icell,idir,isign,ixn,iyn,ixf,iyf
       real (kind=R8) ::
@@ -213,7 +211,7 @@ c
      5     plate_kb/1.6e-3_R8/, plate_ka/1.3e-5_R8/,
      6     vappr_a/-40181.0_R8/, vappr_b/14.80_R8/, stick_coef/0.4_R8/,
      7     sput_phys_col/3/, sput_chem_model/0/, refl_model/1/,
-     8     sput_phys_model/1/, sput_phys/0.0_R8/, lambda/-5.0_R8/,
+     8     sput_phys_model/1/, sput_phys/0.0_R8/,
      9     boundary_namelist/0/,
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
@@ -221,7 +219,7 @@ c
       save sput_src, sput_frc,
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
-     3     sput_phys_model, sput_phys_col, sput_phys, lambda, BoRiS,
+     3     sput_phys_model, sput_phys_col, sput_phys, BoRiS,
      4     boundary_namelist, neutrals_namelist,
      5     sput_frac_flag, use_eirene, ismain0
 
@@ -244,11 +242,18 @@ c
       call subini ('b2plot')
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
+        rewind(45)
+        do while (index(zeile,'*** 14') == 0)
+          read (45,'(A72)') ZEILE
+        end do
+        read (45,'(A72)') ZEILE
+        read (45,'(2I6)') ITMP, NTRFRM
         rewind(45)
         CALL EIRENE_FIND_PARAM(45)
         close(45)
@@ -298,12 +303,12 @@ c
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_BRAEIR(mpg%nCv,mpg%nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(mpg%nCv,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_WNEUTRALS_INIT
+      if (use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(mpg%nCv,mpg%nFc,nsd_local,nstra)
       call alloc_b2mod_eirbra(mpg%nCv,nsd_local,natm,npls,nstra)
@@ -410,7 +415,17 @@ c
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(imi.ne.nuclear_mass(il)) then
+              if(imi.lt.10) then
+                write(textsp(iss),'(a,i1,a)') ' ',imi,trim(elements(il))
+              else if(imi.lt.100) then
+                write(textsp(iss),'(a,i2,a)') ' ',imi,trim(elements(il))
+              else
+                write(textsp(iss),'(a,i3,a)') ' ',imi,trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -440,28 +455,6 @@ c
 
 !!!      if(safetyfactor(-1) .eq. 0.0_R8) call init_q
 
-cxpb  This call is moved up from 'f31' so that we used the original cell-faced
-cxpb  quantities before their mapping to cell centers
-      call ipgetr ('b2news_BoRiS', switch%BoRiS)
-      call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
-      nflai=0
-      do is=0,ns-1
-        if(is_neutral(is)) nflai=nflai+1
-      enddo
-      if(nflai.gt.NFL) then
-        write(*,*) 'copy_background not called because nflai.gt.NFL',
-     1   nflai,NFL
-      elseif(nx.gt.NXDD.or.ny.gt.NYDD) then
-        write(*,*)
-     1   'copy_background not called because NX>NXDD or NY>NYDD',
-     1   nx,nxdd,ny,nydd
-      else
-        call copy_background(mpg%nCv, mpg%nFc, ns, switch, mpg, geo,
-     &                       state%pl, state%dv)
-      endif
-c
-      call ipgetr ('b2trcl_lambda', lambda)
-      call xertst (0.0_R8.ne.lambda, 'faulty internal parameter lambda')
       call ipgeti ('b2stbr_refl_model', refl_model)
       call ipgeti ('b2stbr_plate_model', plate_model)
       if (plate_model.eq.0) then
@@ -531,8 +524,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
        found = .false.
        is = ismain
        do while (is.ge.0 .and. .not.found)
-         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain)) .and.
-     &       nint(am(is)).eq.nint(am(ismain))) then
+         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
+     &                      .and. nint(am(is)).eq.nint(am(ismain))) then
            ismain0 = is
            found = .true.
          end if
@@ -564,6 +557,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
+      call ipgetr ('b2news_BoRiS', switch%BoRiS)
+      call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
       call b2xpen (mpg%nCv, mpg%nFc, ns, mpg,
      1 state%dv%fna, state%dv%fna_53, state%dv%fne_53,
      2 state%dv%fch, state%dv%fhe, state%dv%fhi, state%dv%fhn,
@@ -752,38 +747,49 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
       enddo
 #endif
 c
-      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+      call alloc_b2mod_boundary(DEF_NXD, DEF_NYD, ns, nbcd, nnisod)
       if (boundary_namelist.eq.1)
-     > call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
+     > call read_b2mod_boundary_namelist(ns, mpg, .false.)
       call xertst(nbc.le.nbcd,
-     . 'increase size of DEF_NBC in DIMENSIONS.F')
+     . 'increase size of DEF_NBC in b2mod_dimensions')
       call xertst(nniso.le.nnisod,
-     . 'increase size in DEF_NISO in DIMENSIONS.F')
+     . 'increase size in DEF_NISO in b2mod_dimensions')
       call alloc_b2mod_neutrals
      . (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
-     > call read_neutrals_namelist(nx, ny, ns, .false.)
+     > call read_neutrals_namelist(ns, mpg, switch, .false.)
       call xertst(nstrat.le.nstraid,
-     . 'Increase DEF_NSTRA in DIMENSIONS.F')
-#ifdef WG_TODO
+     . 'Increase DEF_NSTRA in b2mod_dimensions')
       if(.not.allocated(iz))
-     > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-#endif
+     > call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),nstra,natm,
+     >                       switch)
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+c
+      nflai=0
+      do is=0,ns-1
+        if(is_neutral(is)) nflai=nflai+1
+      enddo
+      if(nflai.gt.NFL) then
+        write(*,*) 'copy_background not called because nflai.gt.NFL',
+     1   nflai,NFL
+      else
+        call copy_background(mpg%nCv, mpg%nFc, ns, switch, mpg, geo,
+     &                       state%pl, state%dv)
+      endif
 cxpb  Bring in wall data and compute oft-needed wall quantities
+#ifdef WG_TODO
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
-#ifdef WG_TODO
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       call init_wall(nx,ny)
-#endif
       call read_b2mod_wall_namelist(99,'    ',found)
       allocate(wall_tmp(1:nwall,0:nsd_local-1),
      *   trg_tmp(1:nwall,1:ndepth_nml))
       call alloc_b2mod_b2plot_wall(nsd_local,natmi,nmoli,nioni,
      *   nwall,ndepth_nml,wklng)
+#endif
       call alloc_b2mod_b2plot_ank(nwall)
       call alloc_b2plot_wall_loading(nlim,nsgmx)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
@@ -869,8 +875,10 @@ cxpb  Western boundary
         wall_area(ibnd) = plate_area(ibnd)
         wall_temp(ibnd) = target_temp(ibnd,1)
       enddo
+#ifdef WG_TODO
       target_stack(1:nbnd,1:ndepth_nml,1) =
      1  target_temp(1:nbnd,1:ndepth_nml)
+#endif
       target_label(1)='Target temperature (K)'
       call set_targetbarlabel(target_label(1))
 c
@@ -888,16 +896,15 @@ c
         nioni=1
         textin(0)=' ZERO'
         nsw=ns
-        call eirene_mc_init(nx,ny)
-#ifdef WG_TODO
-        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
-#endif
+        call eirene_mc_init(mpg%nCv,mpg%nFc)
+        call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),
+     .                        nstraid,natm,switch)
         nlimi=0
         p1=0.0_R8
         p2=0.0_R8
       else
         open(unit=44,file=filename)
-        call ngread(mpg,switch,ismain,iflag)
+        call ngread(mpg,geo,ns,switch,ismain,iflag)
         if (natmi.gt.0)
      .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         if (nmoli.gt.0)
@@ -1006,12 +1013,12 @@ c
           endif
         enddo
         if(is_neutral(is) .and. nint(zn(is)).eq.1) then
-          nh(1:mpg%nCv,1)=nh(1:mpg%nCv,1)+state%pl%na(1:mpg%nCv,is)
+          nh(1:mpg%nCv)=nh(1:mpg%nCv)+state%pl%na(1:mpg%nCv,is)
           do iss=1,natmi
             stmp2=trim(textan(iss-1))//'0'
             call lower_case(stmp2)
             if(streql(stmp1,stmp2)) then
-              nh(1:mpg%nCv,1)=nh(1:mpg%nCv,1)+dab2(1:mpg%nCv,iss,1)
+              nh(1:mpg%nCv)=nh(1:mpg%nCv)+dab2(1:mpg%nCv,iss,1)
             endif
           enddo
         endif
@@ -1025,6 +1032,7 @@ c
 c
       nz=ns
 c
+#ifdef WG_TODO
       do ix=-1,nx
         XX(IX,2) = real(ix,R8)
         XX(IX,1) = real(IX,R8)-0.5_R8
@@ -1033,6 +1041,7 @@ c
         YY(IY,2) = real(IY,R8)
         YY(IY,1) = real(IY,R8)-0.5_R8
       end do
+#endif
       do ibnd=1,nbnd
         targetx(ibnd,2) = real(ibnd,R8)
         targetx(ibnd,1) = real(ibnd,R8)-0.5_R8
@@ -1100,6 +1109,7 @@ c
       values(21)=0.0_R8                                  !a0
       values(22)=0.0_R8                                  !b0
       values(23)=0.0_R8                                  !tt0
+#ifdef WG_TODO
       values(24)=minval(targetx(1:nbnd,:))               !xmin target
       values(25)=maxval(targetx(1:nbnd,:))+0.5_R8        !xmax target
       values(26)=minval(targety(1:ndepth_nml,:))         !ymin target
@@ -1110,6 +1120,7 @@ c
       values(31)=maxval(targetcz(1:nbnd,1:ndepth_nml,:)) !zmax target
       values(32)=minval(target_temp(1:nbnd,1:ndepth_nml))!fmin target
       values(33)=maxval(target_temp(1:nbnd,1:ndepth_nml))!fmax target
+#endif
       values(34)=init_value                              !omin target
       values(35)=init_value                              !omax target
       values(36)=init_value                              !smin wall
@@ -1131,6 +1142,11 @@ c
       call trigon(.false.)         ! overlayed triangular grid off by default
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
+      call adjust_axes(.false.)    ! nice axes by default
+      call adjust_bold(.false.)    ! do not bold axes by default
+      call set_full_psi_plotting(.false.) ! do not plot against full psi
+      call set_norm_psi_plotting(.false.) ! do not plot against normalised psi
+      call set_root_psi_plotting(.false.) ! do not plot against root(psi)
       call set_midplane_mapping(.false.)  ! do not map to midplane by default
       call wallon(.false.,0,values(14),values(15),1)
       call targeton(.false.,values(32),values(33),1)
@@ -1170,6 +1186,7 @@ c
       bcol=1
       dcol=1
       ecol=1
+      fcol=1
       gcol=1
       hcol=1
       mcol=1
@@ -1402,6 +1419,7 @@ c
               deallocate(emach)
               call dealloc_b2mod_b2plot_eirene
             end if
+            if (allocated(ncltal)) deallocate(ncltal)
             CALL EIRENE_DEALLOC_CTRIG
             CALL EIRENE_DEALLOC_CESTIM
             CALL EIRENE_DEALLOC_COMUSR
@@ -1494,6 +1512,7 @@ c
             deallocate(emach)
             call dealloc_b2mod_b2plot_eirene
           end if
+          if (allocated(ncltal)) deallocate(ncltal)
           CALL EIRENE_DEALLOC_CTRIG
           CALL EIRENE_DEALLOC_CESTIM
           CALL EIRENE_DEALLOC_COMUSR
@@ -1518,20 +1537,6 @@ c
       goto 10
 
       contains
-
-      integer function ixx(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      ixx = mod(ix+1,nx+2)-1
-      return
-      end function ixx
-
-      integer function iyy(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      iyy = iy+(ix+1)/(nx+2)
-      return
-      end function iyy
 
       subroutine select_matrix
       integer i, is, ibc, iCv
@@ -1582,7 +1587,7 @@ c
               minpsi = min(minpsi,geo%vxFpsi(iVx))
               maxpsi = max(maxpsi,geo%vxFpsi(iVx))
             end do
-            mach(iCv,0) = (minpsi+maxpsi)/2.0_R8
+            mach(iCv,0) = (minpsi+maxpsi)/2.0_R8-geo%fsPsi(mpg%iFssep)
           end do
           call copy(mach,1.0_R8,nz,textbl)
         case('na')
@@ -3389,30 +3394,25 @@ c
         case ('lnlam')
           description='ln \GK\R'
           nz=1
-          do iCv=1,mpg%nCv
-!xpb lnlam is allowed to vary as per the NRL formulary using the
-!xpb formula for ion-ion collisions or may be set by user.
-!further modified to use Wesson
-            if (lambda.eq.-5.0_R8) then                    !srv 09.02.11
-              lnlam=max(-lambda,17.3_R8-
-     1         log(state%dv%ne(iCv)/1.0e20_R8)/2.0_R8+
-     2         1.5_R8*log(state%pl%ti(iCv)/ev/1000.0_R8))
-            elseif (lambda.eq.-4.0_R8) then                !srv 09.02.11 {
-              if(state%pl%te(iCv)/ev .le. 50.0_R8) then
-                lnlam=23.4_R8 -
-     .                 1.15_R8*log10(state%dv%ne(iCv)/1.0e6_R8) +
-     *                 3.45_R8*log10(state%pl%te(iCv)/ev)
-              else
-                lnlam=25.3_R8 -
-     .                 1.15_R8*log10(state%dv%ne(iCv)/1.0e6_R8) +
-     *                 2.30_R8*log10(state%pl%te(iCv)/ev)
-              endif                                         !srv 09.02.11 }
-            else
-              lnlam = lambda
-            endif
-            mach(iCv,0)=lnlam
-          end do
-          call copy(mach,1.0_R8,nz,textbl)
+          isel=0
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+          end if
+          if (isel.eq.0) then
+            description=trim(description)//'_{Br}'
+          else if (isel.eq.1) then
+            description=trim(description)//'_{ii}'
+          else if (isel.eq.2) then
+            description=trim(description)//'_{ee}'
+          else if (isel.eq.3) then
+            description=trim(description)//'_{ei}'
+          else
+            write(*,*) 'selected value of ',isel,' out of range 0..3'
+            return
+          end if
+          call b2tlnl(mpg%nCv, switch, isel,
+     .     state%pl%te, state%pl%ti, state%dv%ne, state%dv%lnlam)
+          call copy(state%dv%lnlam,1.0_R8,nz,textbl)
 #ifdef WG_TODO
         case ('q')
           description='q'
@@ -3712,7 +3712,7 @@ c     assumes that bb is OK for 1d cases
           description='Recycling conditions'
           nz=1
           mach(:,0)=0.0_R8
-          do ibc = 1, nstrat
+          do ibc=1,nstrat
             if (crcstra(ibc).eq.'S' .or. crcstra(ibc).eq.'N' .or.
      &          crcstra(ibc).eq.'W' .or. crcstra(ibc).eq.'E' .or.
      &          crcstra(ibc).eq.'A') then
@@ -4441,8 +4441,8 @@ c     assumes that bb is OK for 1d cases
           call copy(deltapar,1.0_R8,nz,textplel)
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
-          call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,lambda,
-     1     safetyfactor,ne,te,ti,na,mach)
+          call chang_hinton(mpg,switch,nsd_local,safetyfactor,
+     1     state%dv%ne,state%pl%te,state%pl%ti,state%pl%na,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
@@ -4477,7 +4477,7 @@ c     assumes that bb is OK for 1d cases
           nz=state_ext%ns
           do is=0,nz-1
             mach(:,is)=state_ext%zn(is)
-          end do
+          enddo
           call copy(mach,1.0_R8,nz,state_ext%text)
         case ('za_ext')
           if(state_ext%ns.eq.0) return
@@ -4498,7 +4498,7 @@ c     assumes that bb is OK for 1d cases
           if(state_ext%ns.eq.0) return
           description='External species mass (kg)'
           nz=state_ext%ns
-          do is=0,nz-1
+          do is = 0, nz-1
             mach(:,is)=state_ext%am(is)
           end do
           call copy(mach,mp,nz,state_ext%text)
@@ -4572,6 +4572,7 @@ c     assumes that bb is OK for 1d cases
           call sumy()
           graphlabel(iwrk)=graphlabel(iwrk)
      1                 (1:lnblnk(graphlabel(iwrk)))//' SUMY '
+#ifdef WG_TODO
         case('f.x')      ! line plot versus x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -4590,6 +4591,7 @@ c     assumes that bb is OK for 1d cases
             write(*,*) 'Faulty ix = ',istack(iistack),' chosen for f.y!'
           endif
           call pop_stack(stack_req)
+#endif
         case('intx')     ! integrate over x
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -4598,6 +4600,7 @@ c     assumes that bb is OK for 1d cases
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call inty()
+#ifdef WG_TODO
         case('f.lx')     ! line plot versus log x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -4616,6 +4619,7 @@ c     assumes that bb is OK for 1d cases
             write(*,*)'Faulty ix = ',istack(iistack),' chosen for f.ly!'
           endif
           call pop_stack(stack_req)
+#endif
         case('cont')     ! plot contours
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5282,34 +5286,18 @@ c     assumes that bb is OK for 1d cases
           call caltraj(istack(iistack-6-istack(iistack)),
      +     7+istack(iistack))
           call pop_stack(stack_req)
-#ifdef WG_TODO
         case('stoe')     ! matrix --> Eirene array
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
 #ifdef B25_EIRENE
           if(iewrk .eq. wklng) call dropeirenestackbottom()
-          iewrk=iewrk+1
-          nedim(1,iewrk)=ntrii
-          nedim(2,iewrk)=ndim(2,iwrk)
-          do i = 1, ntrii
-            if (b2_cell(ixtri(i),iytri(i))) then
-              eirene_stack(i,0:ndim(2,iwrk)-1,iewrk)=
-     .         work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(2,iwrk)-1,iwrk)
-            else
-              eirene_stack(i,0:ndim(2,iwrk)-1,iewrk)=0.0_R8
-            end if
-          enddo
-          values(38)=
-     .     minval(eirene_stack(1:ntrii,0:nedim(2,iewrk)-1,iewrk))
-          values(39)=
-     .     maxval(eirene_stack(1:ntrii,0:nedim(2,iewrk)-1,iewrk))
-          eirene_label(iewrk)=
-     .     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
-          textewk(0:nedim(2,iewrk)-1,iewrk)=textwk(0:ndim(2,iwrk),iwrk)
+          call eirene_coarse_copy(work,1.0_R8,mpg%nCv,ndim(2,iwrk),
+     .                            textwk(0:ndim(2,iwrk),iwrk))
 #else
           write(*,*) 'Must compile with Eirene for stoe function'
 #endif
           goto 2059
+#ifdef WG_TODO
         case('stow')     ! matrix --> wall array
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5391,7 +5379,7 @@ c     assumes that bb is OK for 1d cases
           values(33)=rstack(irstack)
           write(target_label(itwrk),'(1pe15.8)') rpop(rstack,irstack)
           call set_targetbarlabel(target_label(itwrk))
-        case('eirc')     ! add the Eirene atomic densities to the B2 values
+        case('eirc')     ! add the Eirene atomic quantities to the B2 values
           if (eirc_done) return
           stack_req=(/0,0,0,0,0,0,0/)
           if(b2plot_debug.ge.12)
@@ -5779,6 +5767,14 @@ c
           if(bad_args(stack_req)) return
           call customise_label(spop(sstack,isstack),stmp)
           call clear_extralabel(stmp)
+        case('xlab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_xlabel(stmp)
+        case('ylab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_ylabel(stmp)
         case('cltb')     ! colour table
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
@@ -6827,24 +6823,24 @@ cdpc still in testing phase
         case('pux')
           description='PUX'
           nz=1
-          call eirene_coarse_copy(pux,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pux,1.0_R8,mpg%nCv,nz,textbl)
         case('puy')
           description='PUY'
           nz=1
-          call eirene_coarse_copy(puy,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(puy,1.0_R8,mpg%nCv,nz,textbl)
         case('pvx')
           description='PVX'
           nz=1
-          call eirene_coarse_copy(pvx,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pvx,1.0_R8,mpg%nCv,nz,textbl)
         case('pvy')
           description='PVY'
           nz=1
-          call eirene_coarse_copy(pvy,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pvy,1.0_R8,mpg%nCv,nz,textbl)
         case('tindex')
           description='Triangle index'
           nz=1
           do i = 1, ntrii
-            emach(1,i) = real(i)
+            emach(1,i) = real(i,R8)
           end do
           call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
         case default EVALUE
@@ -7591,6 +7587,56 @@ cdpc still in testing phase
             enddo
           enddo
           goto 4049
+        case('etal')     ! read Eirene tally output file onto the Eirene stack
+          stack_req=(/0,0,1,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          arg=spop(sstack,isstack)
+          call find_file(arg,ex)
+          if (.not.ex) then
+            write(*,*) 'Eirene tally file ', trim(arg), ' not found!'
+            return
+          end if
+          nz=0
+          open(99,file=arg,status='old')
+          iewrk=iewrk+1
+          if(iewrk .eq. wklng) call dropeirenestackbottom()
+          nedim(1,iewrk)=ntrii
+ 4001     continue
+          read(99,1028,end=4003)
+          read(99,1028)
+          read(99,'(a)') stmp  ! Tally title
+          read(99,'(a)') stmp1 ! Species name
+          read(99,'(a)') stmp2 ! Units
+          read(99,1028)
+          read(99,1028)
+          read(99,1028)
+          call strip_spaces(stmp2)
+          description=trim(stmp)//' ('//trim(stmp2)//')'
+          textewk(nz,iewrk)=trim(stmp1)
+          do i=1,ntrii
+            read(99,*) j,dummy,eirene_stack(j,nz,iewrk)
+          end do
+          read(99,1028)
+          read(99,1028) ! average value
+          read(99,1028)
+          read(99,1028) ! additional cells
+ 4002     continue
+          read(99,'(a)',end=4003) stmp
+          if (index(stmp,'=').eq.0) then
+            goto 4002
+          else
+            nz=nz+1
+          end if
+          goto 4001
+ 4003     continue
+          nedim(2,iewrk)=nz
+          values(38)=minval(eirene_stack(1:ntrii,0:nz-1,iewrk))
+          values(39)=minval(eirene_stack(1:ntrii,0:nz-1,iewrk))
+          call customise_label(description,eirene_label(iewrk))
+          call set_wallbarlabel(eirene_label(iewrk))
+          if (b2plot_debug.ge.1)
+     .     write(*,'(4a)') 'Copied ',trim(description),
+     .                     ' to Eirene stack from file ',trim(arg)
         case('echor')    ! chord file for Eirene stack data
           stack_req=(/0,0,1,0,1,0,0/)
           if(bad_args(stack_req)) return
@@ -7701,6 +7747,7 @@ cdpc still in testing phase
       END SELECT EFVALUE
 c
       goto 4900
+ 1028 format()
 
  4049 continue
       stack_req=(/0,0,0,0,1,0,0/)
@@ -7781,6 +7828,7 @@ c
           description='Vaporisation temperature (K)'
           nz=1
           call wall_copy(matsurf_vapor_temp,1.0_R8,nz,textbl)
+#ifdef WG_TODO
         case('north')
           description='North boundary'
           nz=1
@@ -7825,6 +7873,7 @@ c
             endif
           enddo
           call wall_copy(data,1.0_R8,nz,textbl)
+#endif
         case('nseg')
           description='Wall segment'
           nz=1
@@ -9243,7 +9292,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),boundary_namelist,BoRiS)
+          call b2pwld(istack(iistack),ns,boundary_namelist,BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff
@@ -9871,11 +9920,6 @@ c
             enddo
           enddo
           close(99)
-        case('trgl')     ! ANK target loading
-          stack_req=(/2,0,0,0,0,0,1/)
-          if(bad_args(stack_req)) return
-          call b2ptrg(istack,iistack)
-          call pop_stack(stack_req)
         case('trgsurf')  ! plot target plot
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
@@ -10065,6 +10109,7 @@ c
           call target_copy(targetcz(:,:,2),1.0_R8)
           target_label(itwrk)='Target element Z2 position (m)'
           call set_targetbarlabel(target_label(itwrk))
+#ifdef WG_TODO
         case('trgnorth') ! North boundary
           do ibnd = 1, nbnd
             if(topiy(imapx(ibnd),imapy(ibnd)).eq.ny+1) then
@@ -10109,6 +10154,7 @@ c
           call target_copy(trg_tmp,1.0_R8)
           target_label(itwrk)='East boundary'
           call set_targetbarlabel(target_label(itwrk))
+#endif
         case('trgseg')   ! target segment
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -10453,6 +10499,7 @@ c
         case('kbolt')    ! Boltzmann constant
           stack_name='real'
           call rpush(rstack,irstack,kbolt)
+#ifdef WG_TODO
         case('jxi')      ! jxi
           stack_name='integer'
           call ipush(istack,iistack,jxi)
@@ -10474,6 +10521,7 @@ c
         case('ny')       ! ny
           stack_name='integer'
           call ipush(istack,iistack,ny)
+#endif
         case('ns')       ! ns
           stack_name='integer'
           call ipush(istack,iistack,ns)
@@ -10492,7 +10540,9 @@ c
         case('nxtl')     ! nxtl
           stack_name='integer'
           if (nnreg(0).ge.7) then
+#ifdef WG_TODO
             call ipush(istack,iistack,nxtl)
+#endif
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'
@@ -10500,7 +10550,9 @@ c
         case('nxtr')     ! nxtr
           stack_name='integer'
           if (nnreg(0).ge.7) then
+#ifdef WG_TODO
             call ipush(istack,iistack,nxtr)
+#endif
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'
@@ -10535,12 +10587,10 @@ c
 
       cflag=.true.
       FLVALUE: select case(cval)
-#ifdef WG_TODO
         case('f30')      ! write fort.30
-          call write_f30(gm, mpg)
+          call write_f30(geo, mpg)
         case('f31')      ! write fort.31
-          call write_f31(nx, ny)
-#endif
+          call write_f31(mpg)
         case('glob')     ! transform an extra label into a global header
           call set_globalheader
         case('both')     ! both phys and comp
@@ -10682,8 +10732,18 @@ c
           call vesselon(.true.)
         case('mmid')     ! map to midplane
           call set_midplane_mapping(.true.)
+        case('fpsi')     ! plot versus full psi
+          call set_full_psi_plotting(.true.)
+        case('mpsi')     ! plot versus normalised psi
+          call set_norm_psi_plotting(.true.)
+        case('rpsi')     ! plot versus root(normalised psi)
+          call set_root_psi_plotting(.true.)
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
+        case('nice')     ! toggle whether axes will have nice values
+          call adjust_axes(.true.)
+        case('bold')     ! toggle whether to bold the axis labels
+          call adjust_bold(.true.)
         case('sepw')     ! change separatrix line width
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -11048,6 +11108,12 @@ c
           if(bad_args(stack_req)) return
           ecol=istack(iistack)
           call pop_stack(stack_req)
+        case('fcol')     ! colour index for graph frame
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call set_frame_color(istack(iistack))
+          fcol=istack(iistack)
+          call pop_stack(stack_req)
         case('nspe','nspec')    ! new spectrometer
           stack_req=(/3,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -11088,6 +11154,7 @@ c     <delta wavelength in A> nspe
             writing_to_file=.false.
             close(nwtf)
           end if
+#ifdef WG_TODO
         case('omp')      ! set jxa (OMP)
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -11125,6 +11192,7 @@ c     <delta wavelength in A> nspe
      .       'Faulty iy = ',istack(iistack),' chosen for iyref!'
             call pop_stack(stack_req)
           endif
+#endif
         case default FLVALUE
           cflag=.false.
       END SELECT FLVALUE
@@ -11138,18 +11206,18 @@ c     <delta wavelength in A> nspe
       integer neo_ic
       if(first_neoclassical) then
 c calculate neoclassical diagnostics
-        call alloc_b2mod_neoclassical(nx,ny,ns,mmx)
+        call alloc_b2mod_neoclassical(mpg,ns,mmx)
         first_neoclassical = .false.
       endif
       if(rerun_neoclassical) then
+        call neo_diagnostics(mpg, geo, state, ns, neo_ic,
+     &   dn_neo, chi_neo, vn_neo, vw_neo)
 #ifdef WG_TODO
-        call neo_diagnostics(nx, ny, ns, neo_ic, dn_neo, chi_neo,
-     &   vn_neo, vw_neo)
-        call neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,
+        call neo_validity(ny, ns, safetyfactor,
      &   nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
-#endif
         rerun_neoclassical = .false.
+#endif
       endif
       return
       end subroutine initialize_neoclassical

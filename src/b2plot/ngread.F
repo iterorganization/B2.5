@@ -15,18 +15,19 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      SUBROUTINE NGREAD (mpg,switch,ismain,NFEND)
+      SUBROUTINE NGREAD (mpg,geo,ns,switch,ismain,NFEND)
 c
 c  version : 06.11.97 22:11
 c
       use b2mod_types
       use b2mod_diag
       use b2mod_b2plot
-      use b2mod_indirect
+      use b2mod_geometry
       use b2mod_b2cmpa
       use b2mod_switches
       use b2mod_subsys
 #ifdef B25_EIRENE
+      use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use eirmod_parmmod
      .   , only : natm, nmol, nion, nstra, nlmpgs, nspz
@@ -36,11 +37,13 @@ c
       use eirmod_cinit
 #endif
       use b2us_map
+      use b2us_geo
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      integer, intent(in) :: ismain
+      integer, intent(in) :: ns, ismain
       type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
       type(switches), intent(in) :: switch
 
 *  -- OUTPUT ARGUMENTS --
@@ -51,13 +54,13 @@ c
 #ifdef B25_EIRENE
       integer nCvp, iCv, ix, iy, jvft44, istra, nstrai_in
       integer i, j, k, ncl
+      integer geometryType
       real (kind=R8) :: recyctmp
       character charns*3
       character*18 hlp_frm
       character*72 zeile
       character*256 filename
-      logical ex, streql
-      external streql
+      logical ex, target_east, target_west
 #endif
       integer, save :: use_recyceir, iout
       data use_recyceir /1/, iout/0/
@@ -65,6 +68,10 @@ c
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
       external ipgeti, xertst
+#ifdef B25_EIRENE
+      logical streql
+      external streql
+#endif
 
 *=======================================================================
 *//COMPUTATION//
@@ -235,7 +242,6 @@ cank 960511
           edissml(iCv,is,0)=0.0_R8
         end do
       end do
-
       do istra=0,nstra
         do ix=1,nlimps
           wldnek(ix,istra)=0.0_R8
@@ -265,8 +271,8 @@ cank 960511
         if (nstrai.eq.0) nstrai = nstrai_in
         print '(1x,a,5i6)','nlimi,nstsi,nstrai_in,nlimps,nlmpgs:',
      .                      nlimi,nstsi,nstrai_in,nlimps,nlmpgs
-        call xertst(nlimi  .le. nlim , 'NGREAD:  NLIMI > NLIM ')
-        call xertst(nstsi  .le. nsts , 'NGREAD:  NSTSI > NSTS ')
+        call xertst(nlimi  .le. nlim , 'NGREAD: NLIMI > NLIM')
+        call xertst(nstsi  .le. nsts , 'NGREAD: NSTSI > NSTS')
         call xertst(nstrai_in .le. nstra, 'NGREAD: NSTRAI > NSTRA')
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
@@ -396,6 +402,12 @@ cank-960727
         if (jvft44 .ge. 20170328) then
           call rdneutrs(44,wldspta,natmi)
           call rdneutrs(44,wldsptm,nmoli)
+          do j = 1, natmi
+            eirspta(j) = sum(wldspta(:,j,0))
+          enddo
+          do j = 1, nmoli
+            eirsptm(j) = sum(wldsptm(:,j,0))
+          enddo
         end if
         if(nstrai_in .gt. 1) then
           do istra=1,nstrai_in
@@ -447,7 +459,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                       i=1,nstsi)
         end if
 
         if(jvft44 .ge. 20170328) then
@@ -474,7 +486,11 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                      i=1,nstsi)
+
+          do j=1,k+nplsi
+            eirpump(j) = sum(wlpump(j,:))
+          end do
         end if
 
         if(jvft44 .ge. 20071209) then
@@ -496,6 +512,62 @@ cank
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
 
+          geometryType = geometryId( mpg, geo )
+          if (geometryType.eq.GEOMETRY_LINEAR .or.
+     &        geometryType.eq.GEOMETRY_CYLINDER) then
+            target_east = .false.
+            target_west = .false.
+#ifdef WG_TODO
+            do i = 1, nbc
+              if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
+                target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                        bcene(i).eq.15
+              end if
+              if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
+                target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                        bcene(i).eq.15
+              end if
+            end do
+#endif
+          else if (geometryType.eq.GEOMETRY_ANNULUS) then
+            target_east = .false.
+            target_west = .false.
+          else
+            target_east = .true.
+            target_west = .true.
+          end if
+#ifdef WG_TODO
+          do i = 1, ntns
+            if (eirdiag_nds_typ(ltns(i)).eq.2) then
+              if (eirdiag_nds_srf(ltns(i)).eq.0) then
+                if (target_west) ktns(i) = 1
+              else if (eirdiag_nds_srf(ltns(i)).eq.nx) then
+                if (nncut.ge.1) then
+                  ktns(i) = 2*nncut
+                else if (nncut.eq.0) then
+                  if (target_east) ktns(i) = 2
+                end if
+              else if (eirdiag_nds_srf(ltns(i)).eq.nxtl) then
+                ktns(i) = 2
+              else if (eirdiag_nds_srf(ltns(i)).eq.nxtr+1) then
+                ktns(i) = 3
+              end if
+            end if
+          end do
+#ifdef DBG
+          if(ntns.gt.0) then !{
+            write(hlp_frm,'(a,i3,a)') '(1x,a,3x,',max(ntns,4),'i5)'
+            write(*,hlp_frm) 'ltns = ',(ltns(i),i=1,ntns)
+            write(*,hlp_frm) 'eirdiag_nds_typ = ',
+     .                       (eirdiag_nds_typ(ltns(i)),i=1,ntns)
+            write(*,hlp_frm) 'eirdiag_nds_srf = ',
+     .                       (eirdiag_nds_srf(ltns(i)),i=1,ntns)
+            write(*,hlp_frm) 'nx, nxtl, nxtr, nncut :',
+     .                        nx, nxtl, nxtr, nncut
+            write(*,hlp_frm) 'Calculated ktns :',(ktns(i),i=1,ntns)
+          end if !}
+#endif
+#endif
           NCL=eirdiag_nds_ind(nstsi+1)
           IF (NCL.GT.0) THEN
             IF(.NOT.ALLOCATED(fnmti_b2)) ALLOCATE(fnmti_b2(NCL))
@@ -599,6 +671,10 @@ cank
               READ (44,1028)
               call read_title(44)
               READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+            end if
+            if (jvft44.ge.20201006) then
               call read_title(44)
               READ (44,1028)
             end if

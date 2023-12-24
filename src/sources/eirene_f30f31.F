@@ -1,10 +1,7 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm,
      &                           pl, dv)
       use b2mod_types
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_switches
-      use b2mod_geo
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa

@@ -57,8 +57,8 @@ cank }
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #endif
@@ -100,7 +100,7 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), micmp(:,:),
-     *   lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
+     *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:), time_dep_puff_case(:),
      *   accel_ion(:),
      *   maxw(:),                                 !nh 11.07.18
@@ -180,7 +180,7 @@ cank }
       character*1, save :: HYB_TYPE(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid), micmp(natmid,nionid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid),
+     ,  lcns(nstsid), ktns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
       real (kind=R8), save :: RCFE(NSTRAID), RCFI(NSTRAID)
@@ -337,6 +337,7 @@ csw 21feb2012
       allocate(micmp(natm_in,nion_in))
       allocate(lcns(nsts_in))
       allocate(ltns(nsts_in))
+      allocate(ktns(nsts_in))
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
@@ -459,6 +460,7 @@ cmb   b2species_start and end are set -100 here to check whether the field was r
       micmp=0
       lcns=0
       ltns=0
+      ktns=0
       ncns=0
       ntns=0
       ksns=0
@@ -599,6 +601,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(micmp)
       deallocate(lcns)
       deallocate(ltns)
+      deallocate(ktns)
       deallocate(lsns)
       deallocate(ksns)
       deallocate(msns)
@@ -742,10 +745,10 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
 !   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
         if (b2species_start(istra).eq.-100) then
-        b2species_start(istra) = species_start(istra)
+          b2species_start(istra) = species_start(istra)
         endif
         if (b2species_end(istra).eq.-100) then
-        b2species_end(istra) = species_end(istra)
+          b2species_end(istra) = species_end(istra)
         endif
         do is = 0, ns-1
           if (b2recyc(is,istra).lt.0.0_R8) then

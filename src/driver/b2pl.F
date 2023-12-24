@@ -10,7 +10,9 @@
       use b2us_prep
       use b2us_io
       use b2us_data
+      use b2mod_ppout
       use b2mod_xerset
+      use b2mod_dimensions
       implicit none
 
 *-----------------------------------------------------------------------
@@ -156,20 +158,26 @@
       call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from b2fparam file
-      call cfruin (ninp(2), 1, idum(2), 'ns')
-      call xertst (idum(2).ne.ns,
+      call cfruin (ninp(2),1,idum,'ns')
+      call xertst (idum(0).eq.ns,
      &  'faulty input ns from physics parameters file')
 *   ..call principal driver routine
       call alloc_mapping (mpg)
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
      .  mpg%nFt, mpg%nVmxCv)
       call createB2State (nCv, nFc, ns, state)
+      call createB2StateExt (mpg%nCv, mpg%nFc, ns, state_ext)
 *   ..obtain parameters from b2fplasmf file
       call cfruin (ninp(4),3,idum,'nCv,nFc,ns')
       call xertst (idum(0).eq.nCv.and.idum(1).eq.nFc.and.idum(2).eq.ns,
      &  'faulty input nCv, nFc, ns from b2fplasmf file')
+*   ..obtain parameters from tracing file
+      call cfruin (ninp(6),3,idum,'nCv,nFc,ns')
+      call xertst (idum(0).eq.nCv.and.idum(1).eq.nFc.and.idum(2).eq.ns,
+     &  'faulty input nCv, nFc, ns from tracing file')
 *   ..read plasma state
       call read_b2fplasma(ninp(4), nCv, nFc, ns, state)
+      call alloc_b2mod_ppout(DEF_NXD, DEF_NYD, ns)
       call b2pldr (ninp, nout, ns)
 *   ..close files
       do io=0,size(ninp)-1
@@ -182,7 +190,9 @@
       enddo
 
 * ..end of computation
+      call dealloc_b2mod_ppout
       call destroyB2State (state)
+      call destroyB2StateExt (state_ext)
       call dealloc_geometry (geo)
       call dealloc_mapping (mpg)
       call prgfin ()

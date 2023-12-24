@@ -225,7 +225,6 @@ c
       use b2mod_types
       use b2us_map
       use b2us_geo
-      use b2mod_indirect
       use b2mod_subsys
       implicit none
 

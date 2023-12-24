@@ -1,23 +1,25 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_diagnostics(nx, ny, ns, ic,
+      subroutine neo_diagnostics(mpg, geo, state, ns, ic,
      &  dn_neo, chi_neo, vn_neo, vw_neo)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_ranges
-      use b2mod_rates
       use b2mod_neoclassical
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_subsys
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2State), intent(in) :: state
+      integer ns
 *   ..set the contribution ic
 *     0 --- classical particle flux
 *     1 --- banana plateau contribution
@@ -29,8 +31,8 @@
       integer ic
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   dn_neo(-1:nx,-1:ny,0:ns), chi_neo(-1:nx,-1:ny,0:ns),
-     &   vn_neo(-1:nx,-1:ny,0:ns), vw_neo(-1:nx,-1:ny,0:ns)
+     *   dn_neo(mpg%nCv,0:ns), chi_neo(mpg%nCv,0:ns),
+     &   vn_neo(mpg%nCv,0:ns), vw_neo(mpg%nCv,0:ns)
 
 *     nints=number of intervals for integration
       integer nints
@@ -61,7 +63,7 @@
 *     - vw_neo:  heat pinch velocity
 *-----------------------------------------------------------------------
 *   ..local variables
-      integer n2, ix, iy, is, is2, ixref, iyref
+      integer iCv, is, is2, ixref, iyref
       save ixref, iyref
 *   ..local variables for neoclassical transport
       integer :: istate,ispecies,ishift
@@ -71,27 +73,27 @@
      &   den(0:ns,0:nzdecl-1), ds(0:ns,0:nzdecl-1,2),
      &   denl(0:ns,0:nzdecl-1), tl(0:ns),
      &   denr(0:ns,0:nzdecl-1), tr(0:ns),
-     &   vtn(0:ns,0:nzdecl-1,-1:ny),
-     &   kappa(0:ns,0:nzdecl-1,-1:ny),
-     &   vw(0:ns,0:nzdecl-1,-1:ny),
-     &   dfhcb, dfhce, hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
-     &   cellface(0:ns,0:nzdecl-1,-1:ny,1:5)
+     &   vtn(0:ns,0:nzdecl-1,mpg%nFs),
+     &   kappa(0:ns,0:nzdecl-1,mpg%nFs),
+     &   vw(0:ns,0:nzdecl-1,mpg%nFs),
+     &   dfhcb, dfhce, hthet(mpg%nCv), quant(mpg%nCv),
+     &   cellface(0:ns,0:nzdecl-1,mpg%nFs,1:5)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy
       parameter (epsn=1.e-3)
       real (kind=R8) ::
-     *   thet, ilpb, hxface, ilp(-1:ny), bmax, nlambda, nfactor,
+     *   thet, ilpb, hxface, ilp(mpg%nFs), bmax, nlambda, nfactor,
      &   hxpface, hxnface, eparr, rho, prefactor, postfactor
       save eparr
       real (kind=R8) ::
      *   fluxav, sfluxav, tfluxav
-      logical closedf(0:ny)
+      logical closedf(mpg%nFs)
 *   ..for consistency check
       real (kind=R8) ::
-     *   densav(0:ns,0:nzdecl-1,-1:ny),
-     &   gradnsav(0:ns,0:nzdecl-1,-1:ny),
-     &   tforce(0:ns,0:nzdecl-1,1:2,-1:ny)
+     *   densav(0:ns,0:nzdecl-1,mpg%nFs),
+     &   gradnsav(0:ns,0:nzdecl-1,mpg%nFs),
+     &   tforce(0:ns,0:nzdecl-1,1:2,mpg%nFs)
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav, 
@@ -113,6 +115,7 @@
      1 write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
       if(ic.eq.4)
      1 write(*,*) '  NEOART: all'
+#ifdef WG_TODO
       if(nnreg(0).eq.4) then
         ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
         iyref=2*topcut(1)/3
@@ -138,20 +141,18 @@
       call ipgeti ('set_transport_iyref', iyref)
       call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+#endif
+*   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
 *   ..test bb
-      call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
+      call b2xvsg (mpg%nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *   ..test state
-      call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-      call b2xvsg (n2, te, 1, 'te', '.gt.')
-      call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-      call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-      call b2xvsg (n2, ne, 1, 'ne', '.gt.')
+      call b2xvsg (mpg%nCv*ns, state%pl%na, 1, 'na', '.gt.')
+      call b2xvsg (mpg%nCv, state%pl%te, 1, 'te', '.gt.')
+      call b2xvsg (mpg%nCv, state%pl%ti, 1, 'ti', '.gt.')
+      call b2xvsg (mpg%nCv*2, state%dv%ni, 1, 'ni', '.gt.')
+      call b2xvsg (mpg%nCv, state%dv%ne, 1, 'ne', '.gt.')
 
 *   ..main
 
@@ -175,6 +176,7 @@
      > write(*,*) 'Loop voltage: eparr =', eparr
 
 *   ..initialize geometric parameters
+#ifdef WG_TODO
       do iy=-1,ny
         bav_(iy)=0.0_R8
         b2av_(iy)=0.0_R8
@@ -191,6 +193,7 @@
         r2i_(iy)=0.0_R8
         rho_(iy)=0.0_R8
       enddo
+#endif
 
 *   ..split species into species and charge states
       do ispecies=0,ns
@@ -319,13 +322,10 @@
 *   ..calculate generalized poloidal angle theta
 *      default value 0 for grid points outside the core and on
 *      the inner boundary
-      do iy=-1,ny
-        do ix=-1,nx
-          theta(ix,iy)=0.0_R8
-        enddo
-      enddo
+      theta=0.0_R8
 
 *    ..determine closed field lines
+#ifdef WG_TODO
       do iy=0,ny
         closedf(iy)=.false.
         ix=rightix(ixref,iy)
@@ -498,7 +498,6 @@
         endif
 
       enddo
-
 
 *   ..now calculate the neoclassical transport
 
@@ -734,10 +733,10 @@
 *       coefficients: dn_neo, chi_neo, vn_neo, and vw_neo
 
 *    ..initialize transport coefficients
-      dn_neo(:,:,:)=0.0_R8
-      chi_neo(:,:,:)=0.0_R8
-      vn_neo(:,:,:)=0.0_R8
-      vw_neo(:,:,:)=0.0_R8
+      dn_neo(:,:)=0.0_R8
+      chi_neo(:,:)=0.0_R8
+      vn_neo(:,:)=0.0_R8
+      vw_neo(:,:)=0.0_R8
 
       do ix=-1,nx
        do iy=-1,ny
@@ -782,6 +781,8 @@
 
        enddo
       enddo
+#endif
+
 *   ..return
       call subend ()
       return

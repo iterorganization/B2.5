@@ -6,7 +6,7 @@ endif
 LD_NAG    ?= `pkg-config openblas --libs`
 LD_NETCDF ?=
 
-EQUIVS = -Dsdot=ddot -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
 
 ifndef SOLPS_CPP
   DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
@@ -61,7 +61,7 @@ endif
 
 ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
-  IMASLIBS = ${LD_UAL}
+  IMASLIBS = ${LD_AL}
 endif
 
 LD = nagfor
