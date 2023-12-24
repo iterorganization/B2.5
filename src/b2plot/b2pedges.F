@@ -11,14 +11,11 @@ c***
 c***  gridedge.dat with the data for G. Strohmayer
 c=======================================================================
       use b2mod_types
-      use b2mod_geo
       use b2mod_diag
       use b2mod_b2cmpa
-      use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_elements
-      use b2mod_indirect
       use b2mod_constants
+      use b2us_data
       implicit none
       integer lun
 
@@ -39,7 +36,9 @@ c***  hlp_area: area of the corresponding cell face
       integer nx_hlp,nl_hlp
       parameter (nx_hlp=10)
       integer, allocatable :: mz_hlp(:)
+#ifdef WG_TODO
       integer, allocatable :: ix(:,:), iy(:,:), jx(:,:), jy(:,:)
+#endif
       integer i,j,k,l,m,i1,i2,is,ns_hlp
       integer ld_hlp(nx_hlp),nc_hlp(nx_hlp)
       real (kind=R8) :: d,re,ze,ra,za,rb,zb,z,zz,hlp_area
@@ -48,16 +47,18 @@ c***  hlp_area: area of the corresponding cell face
       character*2, allocatable :: hlp_al(:)
 c=======================================================================
 
-      nl_hlp=max(nx,ny)
-      allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1))
-      allocate(hlp_flx(0:ns-1))
+      nl_hlp=mpg%nFc
+      allocate(mz_hlp(0:state%ns-1),hlp_al(0:state%ns-1))
+      allocate(hlp_flx(0:state%ns-1))
+#ifdef WG_TODO
       allocate(ix(nl_hlp,nx_hlp),iy(nl_hlp,nx_hlp))
       allocate(jx(nl_hlp,nx_hlp),jy(nl_hlp,nx_hlp))
-      do is=0,ns-1
+#endif
+      do is=0,state%ns-1
         mz_hlp(is)=nint((zamin(is)+zamax(is))/2.0_R8)
         hlp_al(is)=is_codes(is)
       end do
-
+#ifdef WG_TODO
       if(nncut.eq.1) then !{                        === single null ===
 
         ns_hlp=5
@@ -273,6 +274,7 @@ c          end do !}
 c        end if !}
 c        print *
 c!###}
+#endif
 
 c*** Write the header
 
@@ -282,21 +284,17 @@ c*** Write the header
      ,                                         '   Version : 05.05.2004'
       write (lun,'(2a)') '# ',trim(label)
       write (lun,*)
-      write (lun,'(a,3i5)') '# nx,ny,ns = ',nx,ny,ns
+      write (lun,'(a,3i5)') '# nCv,nFc,ns = ',mpg%nCv,mpg%nFc,state%ns
       write (hlp_frmr,'(a,i2,a)') '(a,i3,',nspecies,'i3)'
       if(nspecies.gt.0) write (lun,hlp_frmr) '# nspecies,nfluids = ',
      ,                                nspecies,(nfluids(i),i=1,nspecies)
-      write (hlp_frmr,'(a,i2,a)') '(a,i2,',2*nncut,'i4)'
-      write (lun,hlp_frmr) '# nncut,leftcut,rightcut = ',
-     ,                 nncut,(leftcut(i),i=1,nncut),
-     ,                       (rightcut(i),i=1,nncut)
 
       write (lun,*)
       write (lun,'(2a)') '# il     : cell index in the list;'
       write (lun,'(2a)')
      ,  '# ldir   : direction of the fluxes in the order S W N E'
       write (lun,'(2a)')
-     ,  '# ix, iy : x and y indices in the grid;'
+     ,  '# iFc    : face indices in the grid;'
       write (lun,'(2a)')
      ,  '# R , Z  : R and Z coordinates of the ',
      ,                                  'centres of the cell faces [m];'
@@ -311,22 +309,23 @@ c*** Write the header
       write (lun,*)
 
       write(hlp_frmr,'(a,i3,a)')
-     , '(a15,7x,a1,13x,a1,13x,a1,11x,a4,11x,a2,10x,a2,5x,',
-     ,   ns,'(a6,i2.2,a2,2x))'
+     , '(a11,7x,a1,13x,a1,13x,a1,11x,a4,11x,a2,10x,a2,5x,',
+     ,   state%ns,'(a6,i2.2,a2,2x))'
 c      print *,hlp_frmr               !###
-      write (lun,hlp_frmr) '#  il   ix   iy',
+      write (lun,hlp_frmr) '#  il   iFc',
      ,                     'R','Z','x','area','Ti','Te',
-     ,                    ('  flx_',mz_hlp(i),hlp_al(i),i=0,ns-1)
+     ,                    ('  flx_',mz_hlp(i),hlp_al(i),i=0,state%ns-1)
 
-      write(hlp_frmr,720) ns+2
+      write(hlp_frmr,720) state%ns+2
 c      print *,hlp_frmr               !###
-  720 format('(1p,3i5,4e14.6,',i3,'e12.4)')
+  720 format('(1p,2i5,4e14.6,',i3,'e12.4)')
       k=0
       zz=0.0_R8
+#ifdef WG_TODO
       do m=1,ns_hlp !{
         do l=1,nc_hlp(m) !{
           k=k+1
-          do j=0,ns-1 !{
+          do j=0,state%ns-1 !{
             if(ld_hlp(m).eq.1) then !{                            === S:
               hlp_area=gs(jx(l,m),jy(l,m),1)
               hlp_flx(j)=-fna(jx(l,m),jy(l,m),1,1,j)/hlp_area
@@ -361,14 +360,17 @@ c      print *,hlp_frmr               !###
 
           write(lun,hlp_frmr) k,ix(l,m),iy(l,m),re,ze,z,hlp_area,
      ,               ti(ix(l,m),iy(l,m))/ev,te(ix(l,m),iy(l,m))/ev,
-     ,                                            (hlp_flx(j),j=0,ns-1)
+     ,              (hlp_flx(j),j=0,state%ns-1)
         end do !}
       end do !}
+#endif
 
       close (lun)
       deallocate(mz_hlp,hlp_al)
       deallocate(hlp_flx)
+#ifdef WG_TODO
       deallocate(ix,iy,jx,jy)
+#endif
       return
 c=======================================================================
       end subroutine b2pedges

@@ -8,8 +8,6 @@
       use b2mod_sputter
       use b2mod_diag
       use b2mod_b2plot
-!      use b2mod_external
-!      use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
@@ -47,8 +45,8 @@
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -80,7 +78,7 @@
 #endif
 #endif
 #endif
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns0, idum(0:9), io, is
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io, is
       integer iflag
 #if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
@@ -261,6 +259,7 @@
       if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
       call ipgeti ('b2mwti_ismain0', ismain0)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,file_exists)
       if (file_exists.and.switch%use_eirene.ne.0) then
@@ -352,7 +351,7 @@
 #endif
         if (file_exists) then
           open(unit=44,file=filename)
-          call ngread(mpg,switch,ismain,iflag)
+          call ngread(mpg,geo,ns,switch,ismain,iflag)
           nnatmi = natmi
           nnmoli = nmoli
         else

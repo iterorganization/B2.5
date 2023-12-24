@@ -3,6 +3,7 @@
       use b2mod_constants
       use b2mod_diag
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 c
 c  version : 18.02.98 19:00
@@ -27,7 +28,6 @@ c***  radld   radiation power coming to the segments of T
 c***  ttsrc   the total power radiated from the sources
 c***  tttrg   the total power coming to T
 c======================================================================
-#include "DIMENSIONS.F"
 #include "rdload.inc"
       real (kind=R8) :: upi, udpi, ueps
       parameter (upi=pi)
@@ -73,7 +73,6 @@ c>>>
         xsrc=xysrc(1,i)
         ysrc=xysrc(2,i)
 c<<<
-c        uu_dbg= i .eq. 1
 c        print *
 c        print *,'Source number, ssrc, xsrc, ysrc'
 c        print '(1p,2x,i4,3e10.2)',i, ssrc, xsrc, ysrc

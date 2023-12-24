@@ -15,7 +15,6 @@
       use b2mod_anomalous_transport
       use b2mod_work
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_indirect
       use b2mod_external
       use b2mod_elements
@@ -53,8 +52,8 @@
 #endif
       use b2mod_ipmain
       use b2mod_xerset
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -96,7 +95,7 @@
       type(B2StateExt), save :: state_ext
       type(B2Average), save :: state_avg
       type(switches), save :: switch
-      integer :: ntm, is, natm_loc
+      integer :: nx, ny, ns, nxtl, nxtr, ntm, is, natm_loc
 *   ..procedures
       logical is_comment
       external is_comment

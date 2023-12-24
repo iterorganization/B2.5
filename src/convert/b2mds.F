@@ -3,7 +3,7 @@
       use b2mod_constants
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
-     *          textcomponents, text0123, ns,
+     *          textcomponents, text0123,
      *          natmi, nmoli, nioni, nlimi, wklng,
      *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
@@ -22,13 +22,11 @@
       use b2mod_mdsplus
 #endif
       use b2mod_version
-
       use b2us_map
       use b2us_geo
       use b2us_plasma
       use b2us_prep
       use b2mod_switches
-
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
@@ -53,9 +51,9 @@
       use b2mod_b2cmfs
       use b2mod_external
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 
-#     include <DIMENSIONS.F>
 #ifdef MDSPLUS
 #     include "mdslib.inc"
 #endif
@@ -89,7 +87,7 @@ c
       character :: mds_signal_name*(64), tdi*(172)
       real (kind=R8), allocatable ::
      *   vesl(:,:)
-      integer i, j, icnt, nsw
+      integer i, j, icnt, ns, nsw
 #ifdef WG_TODO
       integer itmp(-1:nxd,-1:nyd)
 #endif
@@ -139,6 +137,7 @@ c
       nVx = mpg%nVx
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
@@ -406,7 +405,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         nlimi=0
       else
         open(unit=44,file=filename)
-        call ngread(mpg,switch,ismain,iflag)
+        call ngread(mpg,gm,ns,switch,ismain,iflag)
         if (natmi.gt.0)
      .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         if (nmoli.gt.0)
@@ -640,8 +639,10 @@ c     fni_32, fni_52, fne_32, fne_52,
 c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
+c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
+c 29: Same indexing error was also present in emolrad and eionrad
 c 30: changed quantities to unstructured grid
 
       dbversion=30
@@ -1237,7 +1238,7 @@ c
         temp(:)=emiss(:,1,1)
         call mds_put_double_us('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
      1       nCv,temp,'')
-        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=eneutrad(iCv,is+1,1)
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=eneutrad(iCv,is+1,0)
         call mds_put_double_usns('\TOP.SNAPSHOT:ENEUTRAD','W',
      1       nCv,natmi,tmp,'TEXTAN','')
       endif

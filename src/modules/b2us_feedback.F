@@ -21,9 +21,9 @@
       use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
 #endif
+      use b2mod_dimensions
       implicit none
       integer, parameter :: nvac=4, nvacreg=4, nMxFbReg = 1000
-#     include "DIMENSIONS.F"
 
 *   ..variables
       real (kind=R8), save ::

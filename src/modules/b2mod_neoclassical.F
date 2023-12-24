@@ -12,7 +12,7 @@ c     max. number of ionisation stages
      *  ncl(:), isort(:,:)
       real (kind=R8), allocatable, save ::
      *  m(:), zsp(:,:),
-     *  theta(:,:),
+     *  theta(:),
      *  bav_(:), b2av_(:), bi2a_(:), rbt_(:),
      *  bgradp_(:), dpsidr_(:), rnq_(:),
      *  fc_(:), gclass_(:), fm_(:,:),
@@ -23,8 +23,12 @@ c     max. number of ionisation stages
 
       contains
 
-      subroutine alloc_b2mod_neoclassical(nxd,nyd,nsd,mmxd)
-      integer nxd,nyd,nsd,nzd,mmxd
+      subroutine alloc_b2mod_neoclassical(mpg,nsd,mmxd)
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: mpg
+      integer, intent(in) :: nsd, mmxd
+      integer nzd
 
       nzdecl=nint(maxval(zn(0:nsd-1)))+1
       nzd=nzdecl
@@ -32,23 +36,23 @@ c     max. number of ionisation stages
       allocate(isort(0:nsd,0:nzd-1))
       allocate(m(0:nsd))
       allocate(zsp(0:nsd,0:nzd-1))
-      allocate(theta(-1:nxd,-1:nyd))
-      allocate(bav_(-1:nyd))
-      allocate(b2av_(-1:nyd))
-      allocate(bi2a_(-1:nyd))
-      allocate(rbt_(-1:nyd))
-      allocate(bgradp_(-1:nyd))
-      allocate(dpsidr_(-1:nyd))
-      allocate(rnq_(-1:nyd))
-      allocate(fc_(-1:nyd))
-      allocate(gclass_(-1:nyd))
-      allocate(fm_(1:mmxd,-1:nyd))
-      allocate(r2i_(-1:nyd))
-      allocate(rho_(-1:nyd))
-      allocate(dd(0:nsd,0:nzd-1,-1:nyd))
-      allocate(vvn(0:nsd,0:nzd-1,-1:nyd))
-      allocate(chi(0:nsd,0:nzd-1,-1:nyd))
-      allocate(vwt(0:nsd,0:nzd-1,-1:nyd))
+      allocate(theta(mpg%nCv))
+      allocate(bav_(mpg%nFs))
+      allocate(b2av_(mpg%nFs))
+      allocate(bi2a_(mpg%nFs))
+      allocate(rbt_(mpg%nFs))
+      allocate(bgradp_(mpg%nFs))
+      allocate(dpsidr_(mpg%nFs))
+      allocate(rnq_(mpg%nFs))
+      allocate(fc_(mpg%nFs))
+      allocate(gclass_(mpg%nFs))
+      allocate(fm_(1:mmxd,mpg%nFs))
+      allocate(r2i_(mpg%nFs))
+      allocate(rho_(mpg%nFs))
+      allocate(dd(0:nsd,0:nzd-1,mpg%nFs))
+      allocate(vvn(0:nsd,0:nzd-1,mpg%nFs))
+      allocate(chi(0:nsd,0:nzd-1,mpg%nFs))
+      allocate(vwt(0:nsd,0:nzd-1,mpg%nFs))
 
       end subroutine alloc_b2mod_neoclassical
 

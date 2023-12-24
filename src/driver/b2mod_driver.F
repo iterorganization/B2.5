@@ -1,20 +1,10 @@
       module b2mod_driver
       use b2mod_types
       use b2mod_version
-!WG_RM      use b2mod_geo
-!WG_RM      use b2mod_ma28
-!WG_RM      use b2mod_plasma
-!WG_RM      use b2mod_rates
-!WG_RM      use b2mod_residuals
-!WG_RM      use b2mod_sources
-!WG_RM      use b2mod_transport
       use b2mod_tallies
-!WG_RM      use b2mod_indirect
       use b2mod_constants
-!WG_RM      use b2mod_geo_corner
       use b2mod_time
       use b2mod_diag
-!WG_RM      use b2mod_work
       use b2mod_elements
       use b2us_feedback
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
@@ -30,23 +20,18 @@
       use b2mod_first_flight
       use b2mod_input_profile
       use b2mod_user_namelist
-!WG_RM      use b2mod_ma28_for_7diag
-!WG_RM      use b2mod_ma28_for_9diag
       use b2mod_ma28_for_us
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
-!WG_RM      use b2mod_anomalous_transport
       use b2mod_transport_disruption
       use b2mod_b2cmfs
-!WG_RM      use b2mod_b2cmgs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
-!WG_RM      use b2mod_external
       use b2mod_mwti
       use b2mod_file
       use b2mod_batch_average
@@ -83,7 +68,7 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
-     , ,only: iunout
+     , , only : iunout
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
@@ -98,7 +83,7 @@
       use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
-     , ,only: write_b2_to_astra
+     , , only : write_b2_to_astra
 #ifdef JET
       use b2mod_ppout
 #endif
@@ -107,38 +92,38 @@
 #endif
 #ifdef IMAS
       use ids_routines  ! IGNORE
-     , ,only: imas_open_env, ids_deallocate, ids_get,
-     ,        ual_begin_pulse_action, ual_open_pulse,
-     ,        HDF5_BACKEND, OPEN_PULSE, FORCE_OPEN_PULSE
+     , , only : imas_open_env, ids_deallocate, ids_get,
+     ,         ual_begin_pulse_action, ual_open_pulse,
+     ,         HDF5_BACKEND, OPEN_PULSE, FORCE_OPEN_PULSE
       use ids_schemas   ! IGNORE
-     , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
-     ,        ids_radiation, ids_dataset_description, ids_equilibrium
+     , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
+     ,          ids_radiation, ids_dataset_description, ids_equilibrium
 #if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_real, ids_real_invalid
+     , , only : ids_real, ids_real_invalid
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_summary
+     , , only : ids_summary
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_numerics
+     , , only : ids_numerics
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_divertors
+     , , only : ids_divertors
 #endif
       use b2mod_ual
-     , ,only: put_ids_edge, new_ids_edge, close_ual,
-     ,        dealloc_ids_edge
+     , , only : put_ids_edge, new_ids_edge, close_ual,
+     ,          dealloc_ids_edge
       use b2mod_ual_io
-     , ,only: b25_process_ids, num_time_slices
+     , , only : b25_process_ids, num_time_slices
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 *   ..common blocks
-#     include "DIMENSIONS.F"
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
@@ -1443,6 +1428,7 @@ csw 09oct2012
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
         IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1473,6 +1459,7 @@ csw 09oct2012
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
@@ -1664,9 +1651,9 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      .    'b2mndr_uadia_th'//chns)
         call my_out_us(70,nCv,0,state%dv%uadia(1,1,is),
      .    'b2mndr_uadia_r'//chns)
-       call my_out_us(70,nFc,1,state%dv%fna(1,0,is),
+        call my_out_us(70,nFc,1,state%dv%fna(1,0,is),
      &    'b2mndr_fna_th'//chns)
-       call my_out_us(70,nFc,1,state%dv%fna(1,1,is),
+        call my_out_us(70,nFc,1,state%dv%fna(1,1,is),
      &    'b2mndr_fna_r'//chns)
        enddo
        call my_out_us(70,nCv,0,state%pl%te,'b2mndr_te')
@@ -1991,7 +1978,7 @@ cxpb for neutral fluxes used in b2stbc_phys
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
-          call ngread(mpg,switch,ismain,iflag)
+          call ngread(mpg,geo,ns,switch,ismain,iflag)
         endif
       endif
 #else

@@ -699,7 +699,7 @@ contains
 #ifdef IMAS
         integer :: lStatus = 0
         character(32) :: lTreename = "ids"
-#if ( UAL_MAJOR_VERSION < 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION < 9 ) )
+#if ( AL_MAJOR_VERSION < 4 || ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION < 9 ) )
         character(13) :: hlp_frm
         character(80) :: message
         integer len_of_digits
@@ -766,17 +766,17 @@ contains
         if( lDoCreate ) then
 #ifdef IMAS
             if( lUseHdf5 ) then
-# if ( UAL_MAJOR_VERSION > 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 ) )
+# if ( AL_MAJOR_VERSION > 4 || ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION > 8 ) )
                 call ual_begin_pulse_action( HDF5_BACKEND, lShot, lRun, lUser, &
                         &    lTokamak, lDataversion, idx )
                 call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', lStatus )
                 call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
 # else
                 write(hlp_frm,'(a,i1,a)') &
-                   &  '(a,i1,a,i',len_of_digits(UAL_MINOR_VERSION),',a)'
+                   &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
                 write(message,hlp_frm) &
                    &  'HDF5 backend not supported with AL v', &
-                   &   UAL_MAJOR_VERSION,'.',UAL_MINOR_VERSION,'!'
+                   &   AL_MAJOR_VERSION,'.',AL_MINOR_VERSION,'!'
                 call xerrab (message)
 # endif
             else
@@ -786,7 +786,7 @@ contains
                         &   lStatus)
                     call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
                 else
-# if UAL_MAJOR_VERSION < 4
+# if AL_MAJOR_VERSION < 4
                     call imas_create(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
 # else
@@ -796,17 +796,17 @@ contains
             end if
         else
             if( lUseHdf5 ) then
-# if ( UAL_MAJOR_VERSION > 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 ) )
+# if ( AL_MAJOR_VERSION > 4 || ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION > 8 ) )
                 call ual_begin_pulse_action( HDF5_BACKEND, lShot, lRun, lUser, &
                         &    lTokamak, lDataversion, idx )
                 call ual_open_pulse( idx, OPEN_PULSE, '', lStatus )
                 call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !')
 # else
                 write(hlp_frm,'(a,i1,a)') &
-                   &  '(a,i1,a,i',len_of_digits(UAL_MINOR_VERSION),',a)'
+                   &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
                 write(message,hlp_frm) &
                    &  'HDF5 backend not supported with AL v', &
-                   &   UAL_MAJOR_VERSION,'.',UAL_MINOR_VERSION,'!'
+                   &   AL_MAJOR_VERSION,'.',AL_MINOR_VERSION,'!'
                 call xerrab (message)
 # endif
             else
@@ -815,7 +815,7 @@ contains
                         &   lTokamak, lDataversion, lStatus)
                     call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !')
                 else
-# if UAL_MAJOR_VERSION < 4
+# if AL_MAJOR_VERSION < 4
                     call imas_open(lTreename, lShot, lRun, idx)
 # else
                     call xerrab ('Must define username!')

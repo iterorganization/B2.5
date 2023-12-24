@@ -9,12 +9,10 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_constants
-!      use b2mod_geo_corner
       use b2mod_time
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2cmpb
-      use b2mod_external
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
       use b2us_geo
@@ -37,8 +35,8 @@
      *  NUEOUT, FS, VS, NAS, TES, TIS, NIVS, FFAC, DFS, POS, S2
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) :: praverage(2)

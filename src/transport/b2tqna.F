@@ -549,7 +549,7 @@ c mw end
      2   na, ne, te, ti, crx, hy1)
       elseif(user_transport.eq.8) then
         if(ncall_b2tqna.eq.0) then
-          call alloc_b2mod_neoclassical(nx,ny,nsdecl,mmx)
+          call alloc_b2mod_neoclassical(mpg,nsdecl,mmx)
         endif
         call set_transport_neo(nx, ny, ns, hx, hy, vol, crx, cry,
      &   conn, qz, bb, na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
@@ -1842,7 +1842,7 @@ c
 *   ..subprogram start-up calls
       call subini ('set_transport_eta')
       if (ncall.eq.0) then
-        call alloc_b2mod_transport_models(nx, ny, ns)
+        call alloc_b2mod_transport_models(mpg%nFs,ns)
         call read_b2mod_transport_models(99,'    ',models_found)
         if(nnreg(0).eq.4) then
           if(LSN) then
@@ -2603,7 +2603,7 @@ c*** We only apply this in the outer SOL region
       call subini ('set_transport_disruption')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        call alloc_b2mod_transport_disruption(nx,ny)
+        call alloc_b2mod_transport_disruption(mpg)
         if(nnreg(0).eq.4) then
           if (LSN) then
             ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4

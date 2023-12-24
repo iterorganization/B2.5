@@ -21,6 +21,7 @@ c
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -60,6 +61,7 @@ c
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -117,6 +119,7 @@ c  shift : data offset in the Eirene arrays
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -158,6 +161,7 @@ c
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -201,6 +205,7 @@ c
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
