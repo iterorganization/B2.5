@@ -726,10 +726,6 @@ cdjm Jan2017 update momentum source components for balance
      &   ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
         fmo(:,:,:,is)=wrkf
-        if(style_b2mndt.eq.2) then                                     !srv 10.10.22 {
-          resmo(:,:,is)=resmo(:,:,is)+(ua(:,:,is)-uap(:,:,is))*
-     &       am(is)*mp*na(:,:,is)*smodt(:,:,3,is)
-        endif                                                          !srv 10.10.22 }
 
 cdjm Mar2019 output the total momentum flux and source for balance
         if (balance_netcdf.ne.0) then
