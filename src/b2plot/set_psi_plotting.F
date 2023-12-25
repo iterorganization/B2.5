@@ -15,7 +15,7 @@ c
         if (plot_vs_root_psi) call set_root_psi_plotting(.false.)
       end if
       return
-      end
+      end subroutine set_norm_psi_plotting
 c
       subroutine set_full_psi_plotting(onflag)
       use b2mod_types
@@ -33,7 +33,7 @@ c
         if (plot_vs_root_psi) call set_root_psi_plotting(.false.)
       end if
       return
-      end
+      end subroutine set_full_psi_plotting
 c
       subroutine set_root_psi_plotting(onflag)
       use b2mod_types
@@ -51,4 +51,4 @@ c
         if (plot_vs_full_psi) call set_full_psi_plotting(.false.)
       end if
       return
-      end
+      end subroutine set_root_psi_plotting

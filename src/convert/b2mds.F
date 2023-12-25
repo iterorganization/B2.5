@@ -20,10 +20,8 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
-!      use b2mod_b2plot_debug
       use b2mod_elements
       use b2mod_sputter
-!      use b2mod_movies
       use b2mod_external
 #ifdef NAGF95
       use f90_unix           ! IGNORE

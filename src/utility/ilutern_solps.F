@@ -154,91 +154,91 @@ c             (maybe necessary in case of multi-fluid?)
 !!FR The b2_matrix file will not write out correctly if code runs in parallel
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
-        if (in_parallel()) then !!FR in parallel do not write this file
-          !$OMP MASTER
-           write(*,*)'OpenMP: warning: running in parallel the ',
-     1      'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
-     2      'will not be written out'
-          !$OMP END MASTER
-        else
-          write(*,*) 'Opening 76'
-          open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
+       if (in_parallel()) then !!FR in parallel do not write this file
+        !$OMP MASTER
+         write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
+     2    'will not be written out'
+        !$OMP END MASTER
+       else
+         write(*,*) 'Opening 76'
+         open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
      .         form='unformatted')                                   !srv 11.03.13
-          write(76) n
-          do i=1,n
-            write(76) r1(i)
-          enddo
-          close(76)
-          write(*,*) 'Opening 77'
-          open(77,file='b2_5_mtr_binary_'//trim(name)//'.dat',
+         write(76) n
+         do i=1,n
+           write(76) r1(i)
+         enddo
+         close(76)
+         write(*,*) 'Opening 77'
+         open(77,file='b2_5_mtr_binary_'//trim(name)//'.dat',
      .         form='unformatted')                                   !srv 11.03.13
-          write(77) n, nz
-          do i=1,nz
-            write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
-          enddo
-          close(77)
-        end if
+         write(77) n, nz
+         do i=1,nz
+           write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+         enddo
+         close(77)
+       end if
       endif
 
       if(kwrite_fmt.eq.ncall) then
-        if (in_parallel()) then !!FR in parallel do not write this file
-          !$OMP MASTER
-           write(*,*)'OpenMP: warning: running in parallel the ',
-     1      'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
-          !$OMP END MASTER
-        else
-          write(*,*) 'Opening 76'
-          open(76,file='b2_5_rhs_'//trim(name)//'.dat')
-          write(76,*) n
-          do i=1,n
-            write(76,*) r1(i)
-          enddo
-          close(76)
-          open(77,file='b2_5_matrix_'//trim(name)//'.dat')
-          write(77,*) n, nz
-          do i=1,nz
-            write(77,*) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
-          enddo
-          close(77)
-        end if
+       if (in_parallel()) then !!FR in parallel do not write this file
+        !$OMP MASTER
+         write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
+        !$OMP END MASTER
+       else
+        write(*,*) 'Opening 76'
+        open(76,file='b2_5_rhs_'//trim(name)//'.dat')
+        write(76,*) n
+        do i=1,n
+          write(76,*) r1(i)
+        enddo
+        close(76)
+        open(77,file='b2_5_matrix_'//trim(name)//'.dat')
+        write(77,*) n, nz
+        do i=1,nz
+          write(77,*) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+        enddo
+        close(77)
+       end if
       endif                                                          !srv 18.03.10 }
 
 cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
-          if (in_parallel()) then !!FR in parallel do not write this file
-            !$OMP MASTER
-            write(*,*)'OpenMP: warning: running in parallel the ',
+         if (in_parallel()) then !!FR in parallel do not write this file
+          !$OMP MASTER
+           write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_matrix_ files will not be written out'
-            !$OMP END MASTER
-          else
-            if (ncall.eq.0) then
-              write(*,*) 'Opening 84'
-              open(84,file='b2_matrix')
-            end if
-            write(*,*) 'Writing 84'
-            write(84,*) 'Called from '//trim(name)
-            write(84,*) n,' n'
-            write(84,*) 'ASO AWE ACP AEA ANO RHS'
-            do i=1,n
-              iy = (i-1)/n1+1
-              ix = i-(iy-1)*n1
-              write(84,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
-     .         aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy),
-     .         ano(ix,iy), rhs(ix,iy)
-            enddo
-            write(84,*) nz,' nz'
-            do i=1,nz
-              write(84,'(4(i6,1x),1p,1e15.8)')
-     .         IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
-            enddo
-            if (ncall+1.eq.nwrite) then
-              write(*,*) 'Closing 84'
-              close(84)
-            end if
+          !$OMP END MASTER
+         else
+          if (ncall.eq.0) then
+            write(*,*) 'Opening 84'
+            open(84,file='b2_matrix')
           end if
-        endif
-      endif
+          write(*,*) 'Writing 84'
+          write(84,*) 'Called from '//trim(name)
+          write(84,*) n,' n'
+          write(84,*) 'ASO AWE ACP AEA ANO RHS'
+          do i=1,n
+            iy = (i-1)/n1+1
+            ix = i-(iy-1)*n1
+            write(84,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
+     .       aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy),
+     .       ano(ix,iy), rhs(ix,iy)
+          enddo
+          write(84,*) nz,' nz'
+          do i=1,nz
+            write(84,'(4(i6,1x),1p,1e15.8)')
+     .       IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+          enddo
+          if(ncall+1.eq.nwrite) then
+            write(*,*) 'Closing 84'
+            close(84)
+          end if
+         end if
+        end if
+      end if
 cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then

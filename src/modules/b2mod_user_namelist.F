@@ -60,7 +60,7 @@ c*** npfrgrp   :  actual number of surface groups for PFR flows
 c*** lpfrgrp   :  list of surface segments for PFR flows
 c*** [ij]pfrgrp:  first and last positions in this list for each group
 c*** gpfrgrp   :  identifiers for the PFR surface groups
-c*** nntrgrpd  :  max. number of surface groups for neutral data 
+c*** nntrgrpd  :  max. number of surface groups for neutral data
 c*** nntrgrp   :  actual number of surface groups for neutral data
 c*** lntrgrp   :  list of surface segments for neutral data
 c*** [ij]ntrgrp:  first and last positions in this list for each group
@@ -87,7 +87,7 @@ c----------------------------------------------------------------------
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
       allocate(l_h_mol(nmol,3))
 #endif
-      
+
 c*** PFR specification - for He enrichment and neutral pressure
 c***  Standard set-up:
       lpfrs_pmp=0            ! no pumping

@@ -719,7 +719,6 @@ cank
 
 cc<<<
 * -- NO ERROR --
-
       call extend(dab2,ndx,ndy,natm,nnx,nny,natmi)
       call extend(tab2,ndx,ndy,natm,nnx,nny,natmi)
       call extend(dmb2,ndx,ndy,nmol,nnx,nny,nmoli)

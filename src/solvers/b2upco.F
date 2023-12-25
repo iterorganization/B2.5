@@ -9,8 +9,6 @@
       use b2mod_numerics_namelist
      , , only : corr_core_dn
       use b2mod_subsys
-      use b2mod_plasma                                                  !srv 07.07.21
-     & , only : uap
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, isb

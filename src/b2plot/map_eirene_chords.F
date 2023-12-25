@@ -44,9 +44,12 @@ c
         yo=y
         zo=z
         ro=r
-        x=x1*real(npoints-i)/real(npoints)+x2*real(i)/real(npoints)
-        y=y1*real(npoints-i)/real(npoints)+y2*real(i)/real(npoints)
-        z=z1*real(npoints-i)/real(npoints)+z2*real(i)/real(npoints)
+        x=x1*real(npoints-i,R8)/real(npoints,R8)+
+     .    x2*real(i,R8)/real(npoints,R8)
+        y=y1*real(npoints-i,R8)/real(npoints,R8)+
+     .    y2*real(i,R8)/real(npoints,R8)
+        z=z1*real(npoints-i,R8)/real(npoints,R8)+
+     .    z2*real(i,R8)/real(npoints,R8)
         r=sqrt(x**2+y**2)
         call chord_tria_find(ntrii,nrknot,necke,xtrian,ytrian,
      1     (x+xo)/2.0_R8,(y+yo)/2.0_R8,(z+zo)/2.0_R8,
