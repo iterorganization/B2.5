@@ -56,15 +56,16 @@ c*  wid_trg:  ideal power on the targets
 c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
       real (kind=R8) ::
      *  h,ha,hb,hc,t,u,a,b,d,p,wo,wt,mion,t1(2),
-     ,  z_hlp(ntrgsx),xtg_hlp(-1:ny,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
-     ,  xmc_hlp(0:ny-1,ntrgsx),s(0:ny-1,ntrgsx),wi(ntrgsx),
+     ,  z_hlp(ntrgsx),wi(ntrgsx),
+     ,  xtg_hlp(-1:ny,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
+     ,  xmc_hlp(0:ny-1,ntrgsx),s(0:ny-1,ntrgsx),
      ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),
      ,  xtrg(0:ny-1,ntrgsx),netrg(0:ny-1,ntrgsx),tetrg(0:ny-1,ntrgsx),
      ,  titrg(0:ny-1,ntrgsx),wpttrg(0:ny-1,ntrgsx),
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
      ,  wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM),wtttrg(0:ny-1,ntrgsx),
      ,  wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
-!!!     wpk_tt(0:ntrgsx) now in module b2mod_b2plot_all_loading  iyv 11.04.22
+!!!     wpk_tt(0:ntrgsx) now in module b2mod_b2plot_wall_loading  iyv 11.04.22
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),wp_xpt(0:ny-1,ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  wid_par(0:ny-1,ntrgsx),wid_trg(0:ny-1,ntrgsx),
@@ -74,7 +75,8 @@ c* Integrals of total and radiated power to the targets, power widths
      ,  pwr_tt(ntrgsx),pwr_rd(ntrgsx),fwht_tt(ntrgsx),fwxt_tt(ntrgsx),
      ,  pwr_cr(ntrgsx),frc_cr(ntrgsx),
      ,  hwht_tt(ntrgsx),hwhm_tt(ntrgsx),hwxt_tt(ntrgsx),
-     ,  hwxm_tt(ntrgsx),lcnnt(0:ny-1,ntrgsx),lcnnx(0:ny-1,ntrgsx),
+     ,  hwxm_tt(ntrgsx)
+     , ,lcnnt(0:ny-1,ntrgsx),lcnnx(0:ny-1,ntrgsx),
      ,  hwxm_idp(ntrgsx),hwxm_idt(ntrgsx),
      ,  hwhm_idp(ntrgsx),hwhm_idt(ntrgsx),
      ,  wpar_hlp(ntrgsx),wtrg_hlp(ntrgsx),
@@ -1697,7 +1699,7 @@ c
             ersn_l(itrg(j))=0.0_R8
           end if
         end do !}
-        ersn_am=ersn_am/ss_m
+        if (ss_m.gt.0.0_R8) ersn_am=ersn_am/ss_m
         write(lun,fmt_peak) 'average',(tab,ersn_a(itrg(i)),i=1,ntrgts),
      .                                 tab,ersn_am
         write(lun,fmt_peak) 'peak',(tab,ersn_p(itrg(i)),i=1,ntrgts),

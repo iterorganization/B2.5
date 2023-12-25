@@ -42,7 +42,7 @@ c     ,                                    (ndim(i,iwrk),i=1,3)  !###
         return
       end if !}
       if(ndim(1,iwrk).ne.nx .or. ndim(2,iwrk).ne.ny) then !{
-        print *,'clvp: the data array not conforming to the grid'
+        print *,'clvp: the data array does not conform to the grid'
         return
       end if !}
       

@@ -33,7 +33,7 @@ c
       enddo
 
       return
-      end
+      end subroutine sumy
 c
       subroutine inty()
       use b2mod_types
@@ -67,4 +67,4 @@ c
       enddo
 
       return
-      end
+      end subroutine inty

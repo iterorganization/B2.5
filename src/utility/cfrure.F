@@ -43,7 +43,7 @@ c             pgf90 compiler , see below
         if (jloc.eq.0) jloc = index(zeile,'d')
         if (iloc.eq.0 .or. jloc.eq.0) goto 93
         ndigits = jloc-iloc-1
-        select case (ndigits) 
+        select case (ndigits)
         case (17)
           ifmt = 0
         case (13)
@@ -118,12 +118,12 @@ c             pgf90 compiler , see below
       inquire (nget,form=chf,err=91)
       if (streql(chf,'formatted')) then
 *    ..formatted read
-       read (nget,'(2a8,i12,4x,a32)',err=92,end=89) 
+       read (nget,'(2a8,i12,4x,a32)',err=92,end=89)
      &   idcod, idtyp, n0, id1
        call xertst (streql('*cf:',idcod),
      &   'cfrure_opt--not a header line, expected *cf:, found '//idcod)
        if (.not.streql(id0,id1)) then
-         write(6,'(a)') 
+         write(6,'(a)')
      &    'In cfrure_opt: expected '//trim(id0)//', found '//trim(id1)
          write(6,*) 'Reading skipped!'
          backspace(nget)
@@ -149,7 +149,7 @@ c             pgf90 compiler , see below
         if (jloc.eq.0) jloc = index(zeile,'d')
         if (iloc.eq.0 .or. jloc.eq.0) goto 93
         ndigits = jloc-iloc-1
-        select case (ndigits) 
+        select case (ndigits)
         case (17)
           ifmt = 0
         case (13)
@@ -173,7 +173,7 @@ c             pgf90 compiler , see below
        call xertst (streql('*cf:',idcod),
      &   'cfrure_opt--not a header line, expected *cf:, found '//idcod)
        if (.not.streql(id0,id1)) then
-         write(6,'(a)') 
+         write(6,'(a)')
      &    'In cfrure_opt: expected '//trim(id0)//', found '//trim(id1)
          write(6,*) 'Reading skipped!'
          backspace(nget)
@@ -197,11 +197,11 @@ c             pgf90 compiler , see below
       endif
       return
 *     ------------------------------------------------------------------
-   89 write(6,'(a)') 
+   89 write(6,'(a)')
      &    'In cfrure_opt: expected '//trim(id0)//', found end of file'
       write(6,*) 'Reading skipped!'
       backspace(nget)
-      return 
+      return
 *     ------------------------------------------------------------------
    91 call xerrab ('cfrure_opt--error return from inquire statement')
    92 call xerrab ('cfrure_opt--read error at head, formatted, id='//

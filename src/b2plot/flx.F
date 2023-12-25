@@ -19,4 +19,4 @@ c
       call fx(iy)
       linlog=linlog-iadd
       return
-      end
+      end subroutine flx

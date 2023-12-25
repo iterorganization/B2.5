@@ -44,11 +44,11 @@ c 2002-09-11: logic revised
       use b2mod_b2zhco
       use b2mod_ppout
       use b2mod_b2plot
-     , ,only: nx, ny, ns, wklng,
-     ,        ixref, iyref,
-     ,        jsep, jxa, jxi, nxtl, nxtr,
-     ,        nlimi, natmi, nmoli, nioni,
-     ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     , , only : nx, ny, ns, wklng,
+     ,          ixref, iyref,
+     ,          jsep, jxa, jxi, nxtl, nxtr,
+     ,          nlimi, natmi, nmoli, nioni,
+     ,          alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
       use b2mod_work
 #ifdef B25_EIRENE
@@ -58,26 +58,26 @@ c 2002-09-11: logic revised
      , , tio => ti0, til => ti1, teo => te0, tel => te1
       use eirmod_ctrig
       use eirmod_comusr
-     , ,only: NMASSA, NCHARA, lkindp, lkindm, lkindi,
-     ,        eirene_alloc_comusr, eirene_dealloc_comusr
+     , , only : NMASSA, NCHARA, lkindp, lkindm, lkindi,
+     ,          eirene_alloc_comusr, eirene_dealloc_comusr
       use eirmod_comprt
      , , istr => istra
       use eirmod_coutau
-     , ,only: eirene_alloc_coutau, eirene_dealloc_coutau
+     , , only : eirene_alloc_coutau, eirene_dealloc_coutau
       use eirmod_ccoupl
       use eirmod_cestim
       use eirmod_ctrcei
       use eirmod_eirbra
       use eirmod_infcop
       use eirmod_wneutrals
-     , ,only: eirene_wneutrals_init, eirene_wneutrals_dealloc
+     , , only : eirene_wneutrals_init, eirene_wneutrals_dealloc
       use eirmod_extrab25
-     , ,only: texta,
-     ,        eirene_extrab25_eirpbls_init
+     , , only : texta,
+     ,          eirene_extrab25_eirpbls_init
       use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
-     , ,only : nstsi
+     , , only : nstsi
 #else
       use b2mod_braeir
 #endif
@@ -617,10 +617,10 @@ c 2002-09-11: logic revised
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
       namelist /transport/ ndata, tdata, addspec,
-     1   transport_filename, transport_time_mod, transport_time_switch,
-     2   scaling_ix_begin, scaling_ix_end, scaling_strength,
-     3   region_flags, no_pflux, poloidal_scaling, scaling_width,
-     4   elm_time_begin, elm_time_end, elm_time_period,
+     1   transport_filename, transport_time_mod,
+     2   transport_time_switch, scaling_ix_begin, scaling_ix_end,
+     3   scaling_strength, region_flags, no_pflux, poloidal_scaling,
+     4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
      5   elm_ix_begin, elm_ix_end
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
@@ -3879,7 +3879,7 @@ cxpb This will need to be checked !!!
             solvtmp(0,4) = solvemt(3)
           endif
           if (todo) write(99,hlp_frm)
-     .      'SOLVEMT=',(solvtmp(0,ireg),is=0,nnreg(0)),','
+     .      'SOLVEMT=',(solvtmp(0,ireg),ireg=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solvepo(ireg)
@@ -3890,7 +3890,7 @@ cxpb This will need to be checked !!!
             solvtmp(0,4) = solvepo(3)
           endif
           if (todo) write(99,hlp_frm)
-     .      'SOLVEPO=',(solvtmp(0,ireg),is=0,nnreg(0)),','
+     .      'SOLVEPO=',(solvtmp(0,ireg),ireg=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveee(ireg)
@@ -3901,7 +3901,7 @@ cxpb This will need to be checked !!!
             solvtmp(0,4) = solveee(3)
           endif
           if (todo) write(99,hlp_frm)
-     .     'SOLVEEE=',(solvtmp(0,ireg),is=0,nnreg(0)),','
+     .     'SOLVEEE=',(solvtmp(0,ireg),ireg=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveei(ireg)
@@ -3912,7 +3912,7 @@ cxpb This will need to be checked !!!
             solvtmp(0,4) = solveei(3)
           endif
           if (todo) write(99,hlp_frm)
-     .     'SOLVEEI=',(solvtmp(0,ireg),is=0,nnreg(0)),','
+     .     'SOLVEEI=',(solvtmp(0,ireg),ireg=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveet(ireg)
@@ -3923,7 +3923,7 @@ cxpb This will need to be checked !!!
             solvtmp(0,4) = solveet(3)
           endif
           if (todo) write(99,hlp_frm)
-     .     'SOLVEET=',(solvtmp(0,ireg),is=0,nnreg(0)),','
+     .     'SOLVEET=',(solvtmp(0,ireg),ireg=0,nnreg(0)),','
           if(numerics_time_mod.gt.0.0_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_MOD=',numerics_time_mod,','
@@ -10225,7 +10225,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
           WRITE(IUNOT,'(A72)') ZEILEN(I)
         END DO
         READ (IUNIN,'(A80)') ZEILE
-        call fix_logical_input(zeile,2)
+        call fix_logical_input(zeile,5)
         READ (ZEILE,6665) ldum(0:4) ! PLCHOR,PLSPEC,PRSPEC,PLARGL,PRARGL
         WRITE(IUNOT,6665) ldum(0:4)
         if (streql(eirene_format,'juelich') .or.

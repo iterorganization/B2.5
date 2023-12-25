@@ -1,4 +1,4 @@
-      
+
 C =====================================================================
       SUBROUTINE PLOTCONTOUR(NX,NY,NR,NZ,IS,
      . CR,CZ,FIELD,ZLOD,ZHID,PHYSICAL,LINLOG)
@@ -20,7 +20,7 @@ cxpb  INTEGER NNCUT_L
       CHARACTER*256 STRING
       CHARACTER*20 DEBUGSTRING
       LOGICAL PHYSICAL,DEBUG,LBLBR
-      
+
       INTEGER NXSTRT(99),NYSTRT(99),NXEND(99),NYEND(99),NPERD(99)
       INTEGER LRWK,LIWK,LMAP,NWRK,NOGRPS
       PARAMETER (LRWK=50000,LIWK=50000,LMAP=5000000,NWRK=50000,NOGRPS=6)
@@ -29,7 +29,7 @@ cxpb  INTEGER NNCUT_L
       INTEGER MAP(LMAP),IAREA(NOGRPS),IGRP(NOGRPS)
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
-      
+
       integer irold,nerrf,nerro,nfmtz,noz,nozm,
      .        i,ic,iiso,ix,ixl,iy,iyt,k,kreg,l,
      .        ixstrt,ixend,iystrt,iyend
@@ -39,13 +39,13 @@ cxpb  INTEGER NNCUT_L
       real ceil
       external lnblnk, no_available_colors, ceil, xertst
       intrinsic mod
-      
+
       EXTERNAL FILL,CPDRPL
 
       logical first
       save first
       data first /.true./
-      
+
       INTEGER LNGDEC
       PARAMETER(LNGDEC=200*200)
       REAL (KIND=R4) :: Z(LNGDEC)
@@ -57,7 +57,7 @@ cxpb  INTEGER NNCUT_L
       endif
       rwrk=0   ! bug in NCAR: The variable (RWRK(209)) has an undefined value.
       z=0
-      
+
 C ========== GLOBAL OPTIONS ==========================================
 #ifdef DBG
       DEBUG=.true.
@@ -83,7 +83,7 @@ C ========== GLOBAL OPTIONS ==========================================
       CALL CPSETC('CFT - CONSTANT FIELD LABEL',' ')
       LBLBR=.true.
 C ====================================================================
-      
+
       ZLO=real(ZLOD,R4)
       ZHI=real(ZHID,R4)
       rlo=real(field(-1,-1),R4)
@@ -98,7 +98,7 @@ C ====================================================================
         zlo=rlo
         zhi=rhi
       ENDIF
-      
+
       if(zlo.eq.zhi) then
         zlo=min(zlo*0.9_R4,zlo*1.1_R4)
         zhi=max(zhi*0.9_R4,zhi*1.1_R4)
@@ -107,9 +107,9 @@ C ====================================================================
           zhi=+1.0_R4
         endif
       endif
-      
+
       WRITE(*,*) 'zlo =',ZLO,' zhi =',ZHI
-      
+
 C =========== Setting up Contour Levels and Labeling =================
       IF(mod(LINLOG,2).EQ.1) THEN   ! ==> do linear plot <====================
         IF(NOFCLS.EQ.0) THEN ! standard contouring
@@ -239,13 +239,13 @@ c     1       CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
         WRITE(STRING,'(a,2(1pg12.5,a))')
      1   'contoured from',ZLO,'to',ZHI
       ENDIF ! ==> end of lin/log plot <===============================
-      
+
       CALL CPSETC('ILT - INFORMATION LABEL TEXT STRING',
      1 STRING(1:LNBLNK(STRING)))
       CALL CPSETR('ILX - INFORMATION LABEL X POSITION',0.5)
       CALL CPSETR('ILY - INFORMATION LABEL Y POSITION',0.95)
       CALL CPSETI('ILP - INFORMATION LABEL POSITION',-3)
-      
+
       SPECIAL=-1E30
       CALL CPSETR('SPV - SPECIAL VALUE',SPECIAL)
 
@@ -500,7 +500,7 @@ cxpb Obtaining the inner contour outline of the plasma region to be plotted
         y(ic)=real(cz(ixl,iy),R4)
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
-        
+
         IF(DEBUG) THEN
           do iiso = 1, nniso
             WRITE (*,*) 'nxiso1(',iiso,') =',nxiso1(iiso),
@@ -509,19 +509,19 @@ cxpb Obtaining the inner contour outline of the plasma region to be plotted
      1                 ' nyiso2(',iiso,') =',nyiso2(iiso)
           end do
         ENDIF
-        
+
         CALL CPSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
         CALL CPSETI('GIL - GROUP IDENTIFIER FOR LABELS',2)
         CALL CPSETI('GIS - GROUP IDENTIFIER FOR VSTRIPS',6)
         CALL CPSETI('NVS - NUMBER OF VSTRIPS',0)
-        
+
         IF(.NOT.CONTPLOT) GOTO 5150  ! skip contourplot
-        
+
 C ========= Initialise Data Array ===========================
 cxpb Region 1 is either the whole plasma (nncut=0 case) or
-cxpb the westernmost private region. 
+cxpb the westernmost private region.
         kreg=1
-        iy = -1 
+        iy = -1
         ix = -1
         nxstrt(kreg)=-1
         nystrt(kreg)=-1
@@ -557,7 +557,7 @@ cxpb Region 2 is the core plasma or its western half for double-null cases.
         nyend(kreg)=iy-1
 cxpb Region 3 is the eastern private region for single nulls or the private
 cxpb region to the west of the isolating wall in double nulls.
-        kreg=kreg+1                                           
+        kreg=kreg+1
         iy=-1
         ix=ix+1
         nxstrt(kreg)=ix
@@ -570,7 +570,7 @@ cxpb region to the west of the isolating wall in double nulls.
             iniso = iniso .or.
      &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
      &              iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-          end do                                        
+          end do
           iniso = iniso .or.
      &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
      &     (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
@@ -603,7 +603,7 @@ cxpb the westernmost plate.
             iniso = iniso .or.
      &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
      &              iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-          end do 
+          end do
           iniso = iniso .or.
      &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
      &     (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
@@ -622,7 +622,7 @@ cxpb the westernmost plate.
         nyend(kreg)=iy
         if(iy.eq.ny .and. ix.eq.nx .and. iyt.eq.ny)
      >   goto 5250  ! single null case done
-cxpb Region 5 in the easternmost private region for double-nulls or 
+cxpb Region 5 in the easternmost private region for double-nulls or
 cxpb the island region for island geometries (iyt<ny case)
         kreg=kreg+1
         if(iyt.eq.ny) then
@@ -815,9 +815,9 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
             ENDIF
           ENDIF
         ENDDO
-        
+
  5150   CONTINUE
-        
+
       ELSE      ! ======== plot computational domain
         IC=1
         X(IC)=XLO
@@ -862,14 +862,14 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         end if
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
-        
+
         CALL CPSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
         CALL CPSETI('GIL - GROUP IDENTIFIER FOR LABELS',2)
         CALL CPSETI('GIS - GROUP IDENTIFIER FOR VSTRIPS',6)
         CALL CPSETI('NVS - NUMBER OF VSTRIPS',0)
-        
+
         IF(.NOT.CONTPLOT) GOTO 5152
-        
+
         IC=0
         ixstrt=max(-1,min(nx,nint(values(1))))
         iystrt=max(-1,min(ny,nint(values(3))))
@@ -924,18 +924,18 @@ C Draw Contours
 C            CALL CPCLDR(z,RWRK,IWRK)
           CALL CPCLDM(z,RWRK,IWRK,MAP,CPDRPL)
         ENDIF
-        
+
  5152   CONTINUE
 
       ENDIF
-      
+
       IF(DEBUG) THEN
         DO I=1,2
           WRITE(DEBUGSTRING,'(I5)') I
           CALL ARDBPA(MAP,I,DEBUGSTRING)
         ENDDO
       ENDIF
-      
+
       IF(LBLBR.AND.CONTPLOT.and.colprt) THEN
         DO I=1,NCONT+1
           LFIN(I)=choose_color(i-1,0)
@@ -992,11 +992,11 @@ C            CALL CPCLDR(z,RWRK,IWRK)
           endif
         endif
       ENDIF
-      
+
 C Draw Mesh/Separatrix if wanted
       if(wall) call data_copy(is)
       call additional_elements(nx,ny,physical)
-      
+
       call subend ()
       RETURN
       END SUBROUTINE PLOTCONTOUR

@@ -123,23 +123,23 @@ c
       intrinsic sqrt
 
       call subini('chord_integral')
-      chord_integral=0.0
+      chord_integral=0.0_R8
 
       dx=xp2-xp1
       dy=yp2-yp1
       dz=zp2-zp1
       dl=sqrt(dx**2+dy**2+dz**2)
-      if(dl.eq.0.0) return
+      if(dl.eq.0.0_R8) return
       dx=dx/dl
       dy=dy/dl
       dz=dz/dl
       dl=dl/real(npoints)
 
       do i=1,npoints
-        f=real(i-0.5)/real(npoints)
-        x=xp1*(1.0-f)+xp2*f
-        y=yp1*(1.0-f)+yp2*f
-        z=zp1*(1.0-f)+zp2*f
+        f=(real(i,R8)-0.5_R8)/real(npoints,R8)
+        x=xp1*(1.0_R8-f)+xp2*f
+        y=yp1*(1.0_R8-f)+yp2*f
+        z=zp1*(1.0_R8-f)+zp2*f
         chord_integral=chord_integral+dl*
      1   chord_value(nx,ny,tt,x,y,z,dx,dy,dz,vector)
       enddo
@@ -178,12 +178,8 @@ c
       logical found
 
       call subini('chord_compile')
-      do iy=-1,ny
-        do ix=-1,nx
-          tt(ix,iy)=1.0_R8
-          score(ix,iy)=0.0_R8
-        enddo
-      enddo
+      tt=1.0_R8
+      score=0.0_R8
 
       dxp=xp2-xp1
       dyp=yp2-yp1
@@ -208,14 +204,14 @@ c
 
       i=0
       do iy=-1,ny
-        do ix=-1,nx
-          if(score(ix,iy).ne.0) then
-            i=i+1
-            indix(i)=ix
-            indiy(i)=iy
-            indscl(i)=score(ix,iy)
-          endif
-        enddo
+       do ix=-1,nx
+        if(score(ix,iy).ne.0) then
+          i=i+1
+          indix(i)=ix
+          indiy(i)=iy
+          indscl(i)=score(ix,iy)
+        endif
+       enddo
       enddo
       indchd=i
 
@@ -512,7 +508,8 @@ c next try the chain
       implicit none
       integer, intent(in) :: ir
       real(kind=R8) :: rpos
-      rpos = rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
+      rpos = rmin+
+     .       real(ir-1,R8)*(rmax-rmin)/(real(lngcov,R8)*0.999999_R8)
       return
       end function rpos
 
@@ -520,7 +517,8 @@ c next try the chain
       implicit none
       integer, intent(in) :: iz
       real(kind=R8) :: zpos
-      zpos = zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
+      zpos = zmin+
+     .       real(iz-1,R8)*(zmax-zmin)/(real(lngcov,R8)*0.999999_R8)
       return
       end function zpos
 
