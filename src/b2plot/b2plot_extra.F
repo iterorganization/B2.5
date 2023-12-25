@@ -129,23 +129,23 @@ c     filling array and computing rate
               DTMP(1:ITMAXD,1:IDMAXD)=0.0_R8
             endif
             do ix=0,nx+1
-              do iy=0,ny+1
-                logT=log10(te(ix,iy)/qe)
-                logD=log10(ne(ix,iy)/1.0e6_R8)
-                call int2d(DTMP(1:itdimd,1:iddimd),itdimd,iddimd,
-     1           DTEVD,ITMAXD,DDENSD,IDMAXD,
-     2           logT,logD,ans)
-                if(id.lt.10) then
-                  if((ic.eq.0.and..not.first_stage) .or.
-     &               (ic.eq.ncnct-1.and..not.last_stage)) then
-                    mach(ix,iy,is+ic)=0.0_R8
-                  else
-                    mach(ix,iy,is+ic)=10.0_R8**(ans-6.0_R8)
-                  end if
+             do iy=0,ny+1
+              logT=log10(te(ix,iy)/qe)
+              logD=log10(ne(ix,iy)/1.0e6_R8)
+              call int2d(DTMP(1:itdimd,1:iddimd),itdimd,iddimd,
+     1         DTEVD,ITMAXD,DDENSD,IDMAXD,
+     2         logT,logD,ans)
+              if(id.lt.10) then
+                if((ic.eq.0.and..not.first_stage) .or.
+     &             (ic.eq.ncnct-1.and..not.last_stage)) then
+                  mach(ix,iy,is+ic)=0.0_R8
                 else
-                  mach(ix,iy,is+ic)=ans
-                endif
-              enddo
+                  mach(ix,iy,is+ic)=10.0_R8**(ans-6.0_R8)
+                end if
+              else
+                mach(ix,iy,is+ic)=ans
+              endif
+             enddo
             enddo
           enddo
           is = is + ncnct
@@ -230,92 +230,92 @@ c     filling array and computing rate
         demax= huge(1.0_R8)
       endif
       do iy=0,ny+1
-        do ix=0,nx+1
-          TEF=LOG(TE(ix,iy)/qe)
-          DEF=LOG(ne(ix,iy)*1.0e-8_R8*1.0e-6_R8)
-          dnnn=0.0_R8
-          if(
-     1     h123.eq.'H.1'.or.
-     1     h123.eq.'H.2'.or.
-     1     h123.eq.'H.5'.or.
-     1     h123.eq.'H.8'.or.
-     1     h123.eq.'H.11') then ! single polynomial fit
-            IF (TEF.LT.RC1MN(IR)) THEN
-              IF (IF1MN(IR).LT.0) THEN ! Linear extrapolation of fit
-                S01 = RC1MN(IR)
-                S02 = LOG(1.25_R8)+RC1MN(IR)
-                DS12 = S02-S01
-                EXPO1 = D11(8,0)
-                EXPO2 = D11(8,0)
-                DO II = 7, 0, -1
-                  EXPO1 = EXPO1*S01+D11(II,0)
-                  EXPO2 = EXPO2*S02+D11(II,0)
-                END DO
-                CCXM1=EXPO1
-                CCXM2=EXPO2
-                FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
-                FP2=      (CCXM2-CCXM1)/DS12
-                FP3=0.0_R8
-                IFEX=3
-                COUMIN=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
-              ELSEIF (IF1MN(IR).GT.0) THEN ! use IF1MN asymptotic expression
-                COUMIN=D11(8,0)
-                DO II = 7, 0, -1
-                  COUMIN = COUMIN * RC1MN(IR) + D11(II,0)
-                END DO
-                IFEX=IF1MN(IR)
-                COUMIN=EXP(COUMIN)
-                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
-     .                             FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
-              ELSE
-                DO I=0,8
-                  TEI=RC1MN(IR)**I
-                  DNNN=DNNN+D11(I,0)*TEI
-                ENDDO
-              ENDIF
-            ELSEIF (TEF.GT.RC1MX(IR)) THEN
-              IF (IF1MX(IR).LT.0) THEN
-                S01 = RC1MX(IR)
-                S02 = LOG(0.75_R8)+RC1MX(IR)
-                DS12 = S02-S01
-                EXPO1 = D11(8,0)
-                EXPO2 = D11(8,0)
-                DO II = 7, 0, -1
-                  EXPO1 = EXPO1*S01+D11(II,0)
-                  EXPO2 = EXPO2*S02+D11(II,0)
-                END DO
-                CCXM1=EXPO1
-                CCXM2=EXPO2
-                FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
-                FP2=      (CCXM2-CCXM1)/DS12
-                FP3=0.0_R8
-                IFEX=3
-                COUMAX=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
-              ELSEIF (IF1MX(IR).GT.0) THEN
-                COUMAX=D11(8,0)
-                DO II = 7, 0, -1
-                  COUMAX = COUMAX * RC1MX(IR) + D11(II,0)
-                END DO
-                IFEX=IF1MX(IR)
-                COUMAX=EXP(COUMAX)
-                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
-     .                             FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
-              ELSE
-                DO I=0,8
-                  TEI=RC1MX(IR)**I
-                  DNNN=DNNN+D11(I,0)*TEI
-                ENDDO
-              ENDIF
+       do ix=0,nx+1
+        TEF=LOG(TE(ix,iy)/qe)
+        DEF=LOG(ne(ix,iy)*1.0e-8_R8*1.0e-6_R8)
+        dnnn=0.0_R8
+        if(
+     1   h123.eq.'H.1'.or.
+     1   h123.eq.'H.2'.or.
+     1   h123.eq.'H.5'.or.
+     1   h123.eq.'H.8'.or.
+     1   h123.eq.'H.11') then ! single polynomial fit
+          IF (TEF.LT.RC1MN(IR)) THEN
+            IF (IF1MN(IR).LT.0) THEN ! Linear extrapolation of fit
+              S01 = RC1MN(IR)
+              S02 = LOG(1.25_R8)+RC1MN(IR)
+              DS12 = S02-S01
+              EXPO1 = D11(8,0)
+              EXPO2 = D11(8,0)
+              DO II = 7, 0, -1
+                EXPO1 = EXPO1*S01+D11(II,0)
+                EXPO2 = EXPO2*S02+D11(II,0)
+              END DO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMIN=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MN(IR).GT.0) THEN ! use IF1MN asymptotic expression
+              COUMIN=D11(8,0)
+              DO II = 7, 0, -1
+                COUMIN = COUMIN * RC1MN(IR) + D11(II,0)
+              END DO
+              IFEX=IF1MN(IR)
+              COUMIN=EXP(COUMIN)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
+     .                           FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
             ELSE
               DO I=0,8
-                TEI=TEF**I
+                TEI=RC1MN(IR)**I
                 DNNN=DNNN+D11(I,0)*TEI
               ENDDO
             ENDIF
-            if (earrh(ir).gt.0.0) dnnn=dnnn-earrh(ir)/(te(ix,iy)/qe)
-          elseif(
+          ELSEIF (TEF.GT.RC1MX(IR)) THEN
+            IF (IF1MX(IR).LT.0) THEN
+              S01 = RC1MX(IR)
+              S02 = LOG(0.75_R8)+RC1MX(IR)
+              DS12 = S02-S01
+              EXPO1 = D11(8,0)
+              EXPO2 = D11(8,0)
+              DO II = 7, 0, -1
+                EXPO1 = EXPO1*S01+D11(II,0)
+                EXPO2 = EXPO2*S02+D11(II,0)
+              END DO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMAX=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MX(IR).GT.0) THEN
+              COUMAX=D11(8,0)
+              DO II = 7, 0, -1
+                COUMAX = COUMAX * RC1MX(IR) + D11(II,0)
+              END DO
+              IFEX=IF1MX(IR)
+              COUMAX=EXP(COUMAX)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
+     .                           FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
+            ELSE
+              DO I=0,8
+                TEI=RC1MX(IR)**I
+                DNNN=DNNN+D11(I,0)*TEI
+              ENDDO
+            ENDIF
+          ELSE
+            DO I=0,8
+              TEI=TEF**I
+              DNNN=DNNN+D11(I,0)*TEI
+            ENDDO
+          ENDIF
+          if (earrh(ir).gt.0.0) dnnn=dnnn-earrh(ir)/(te(ix,iy)/qe)
+        elseif(
      1     h123.eq.'H.3'.or.
      1     h123.eq.'H.4'.or.
      1     h123.eq.'H.6'.or.
@@ -323,202 +323,202 @@ c     filling array and computing rate
      1     h123.eq.'H.9'.or.
      1     h123.eq.'H.10'.or.
      1     h123.eq.'H.12') then
-            IF (TEF.LT.RC1MN(IR)) THEN
-              IF (IF1MN(IR).EQ.0) THEN
-                DO I = 0, 8
-                  TEI=RC1MN(IR)**I
-                  DO J = 0, 8
-                    DEJ=DEF**J
-                    DNNN=DNNN+D11(I,J)*TEI*DEJ
-                  ENDDO
-                ENDDO
-              ELSEIF (IF1MN(IR).LT.0) THEN
-                S01=RC1MN(IR)
-                S02=LOG(1.25_R8)+RC1MN(IR)
-                DS12 = S02-S01
-                EXPO1 = 0.0_R8
-                EXPO2 = 0.0_R8
-                DO I = 0, 8
-                  DO J = 0, 8
-                    EXPO1=EXPO1+S01**I*DEF**J*D11(I,J)
-                    EXPO2=EXPO2+S02**I*DEF**J*D11(I,J)
-                  ENDDO
-                ENDDO
-                CCXM1=EXPO1
-                CCXM2=EXPO2
-                FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
-                FP2=      (CCXM2-CCXM1)/DS12
-                FP3=0.0_R8
-                IFEX=3
-                COUMIN=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
-              ELSEIF (IF1MN(IR).GT.0) THEN
-                COUMIN=0.0_R8
-                DO I = 0, 8
-                  TEI=RC1MN(IR)**I
-                  DO J = 0, 8
-                    DEJ=DEF**J
-                    COUMIN=COUMIN+D11(I,J)*TEI*DEJ
-                  END DO
-                END DO
-                IFEX=IF1MN(IR)
-                COUMIN=EXP(COUMIN)
-                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
-     .                             FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
-              ENDIF
-            ELSEIF (TEF.GT.RC1MX(IR)) THEN
-              IF (IF1MX(IR).EQ.0) THEN
-                DO I = 0, 8
-                  TEI=RC1MX(IR)**I
-                  DO J = 0, 8
-                    DEJ=DEF**J
-                    DNNN=DNNN+D11(I,J)*TEI*DEJ
-                  ENDDO
-                ENDDO
-              ELSEIF (IF1MX(IR).LT.0) THEN
-                S01=RC1MX(IR)
-                S02=LOG(0.75_R8)+RC1MX(IR)
-                DS12 = S02-S01
-                EXPO1 = 0.0_R8
-                EXPO2 = 0.0_R8
-                DO I = 0, 8
-                  DO J = 0, 8
-                    EXPO1=EXPO1+S01**I*DEF**J*D11(I,J)
-                    EXPO2=EXPO2+S02**I*DEF**J*D11(I,J)
-                  ENDDO
-                ENDDO
-                CCXM1=EXPO1
-                CCXM2=EXPO2
-                FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
-                FP2=      (CCXM2-CCXM1)/DS12
-                FP3=0.0_R8
-                IFEX=3
-                COUMAX=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
-              ELSEIF (IF1MX(IR).GT.0) THEN
-                COUMAX=0.0_R8
-                DO I = 0, 8
-                  TEI=RC1MX(IR)**I
-                  DO J = 0, 8
-                    DEJ=DEF**J
-                    COUMAX=COUMAX+D11(I,J)*TEI*DEJ
-                  END DO
-                END DO
-                IFEX=IF1MX(IR)
-                COUMAX=EXP(COUMAX)
-                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
-     .                             FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
-              ENDIF
-            ELSEIF (DEF.LT.DEMIN) THEN
-              IF (IF2MN(IR).LT.0) THEN
-                DO I = 0, 8
-                  TEI=TEF**I
-                  DO J = 0, 8
-                    DEJ=DEMIN**J
-                    DNNN=DNNN+D11(I,J)*TEI*DEJ
-                  ENDDO
-                ENDDO
-              ELSEIF (IF2MN(IR).LT.0) THEN
-                S01=DEMIN
-                S02=LOG(1.25_R8)+DEMIN
-                DS12 = S02-S01
-                EXPO1 = 0.0_R8
-                EXPO2 = 0.0_R8
-                DO I = 0, 8
-                  DO J = 0, 8
-                    EXPO1=EXPO1+TEF**I*S01**J*D11(I,J)
-                    EXPO2=EXPO2+TEF**I*S02**J*D11(I,J)
-                  ENDDO
-                ENDDO
-                CCXM1=EXPO1
-                CCXM2=EXPO2
-                FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
-                FP2=      (CCXM2-CCXM1)/DS12
-                FP3=0.0_R8
-                IFEX=3
-                COUMIN=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,FP1,FP2,FP3)
-              ELSEIF (IF2MN(IR).GT.0) THEN
-                COUMIN=0.0_R8
-                DO I = 0, 8
-                  TEI=TEF**I
-                  DO J = 0, 8
-                    DEJ=DEMIN**J
-                    COUMIN=COUMIN+D11(I,J)*TEI*DEJ
-                  ENDDO
-                ENDDO
-                IFEX=IF2MN(IR)
-                COUMIN=EXP(COUMIN)
-                DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,
-     .                             FP2L(IR,1),FP2L(IR,2),FP2L(IR,3))
-              ENDIF
-            ELSEIF (DEF.GT.DEMAX) THEN
-              IF (IF2MX(IR).LT.0) THEN
-                DO I = 0, 8
-                  TEI=TEF**I
-                  DO J = 0, 8
-                    DEJ=DEMAX**J
-                    DNNN=DNNN+D11(I,J)*TEI*DEJ
-                  ENDDO
-                ENDDO
-              ELSEIF (IF2MX(IR).LT.0) THEN
-                S01=DEMAX
-                S02=LOG(0.75_R8)+DEMAX
-                DS12 = S02-S01
-                EXPO1 = 0.0_R8
-                EXPO2 = 0.0_R8
-                DO I = 0, 8
-                  DO J = 0, 8
-                    EXPO1=EXPO1+TEF**I*S01**J*D11(I,J)
-                    EXPO2=EXPO2+TEF**I*S02**J*D11(I,J)
-                  ENDDO
-                ENDDO
-                CCXM1=EXPO1
-                CCXM2=EXPO2
-                FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
-                FP2=      (CCXM2-CCXM1)/DS12
-                FP3=0.0_R8
-                IFEX=3
-                COUMAX=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,FP1,FP2,FP3)
-              ELSEIF (IF2MX(IR).GT.0) THEN
-                COUMAX=0.0_R8
-                DO I = 0, 8
-                  TEI=TEF**I
-                  DO J = 0, 8
-                    DEJ=DEMAX**J
-                    COUMAX=COUMAX+D11(I,J)*TEI*DEJ
-                  ENDDO
-                ENDDO
-                IFEX=IF2MX(IR)
-                COUMAX=EXP(COUMAX)
-                DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,
-     .                             FP2R(IR,1),FP2R(IR,2),FP2R(IR,3))
-              ENDIF
-            ELSE
+          IF (TEF.LT.RC1MN(IR)) THEN
+            IF (IF1MN(IR).EQ.0) THEN
               DO I = 0, 8
-                TEI=TEF**I
+                TEI=RC1MN(IR)**I
                 DO J = 0, 8
                   DEJ=DEF**J
                   DNNN=DNNN+D11(I,J)*TEI*DEJ
                 ENDDO
               ENDDO
+            ELSEIF (IF1MN(IR).LT.0) THEN
+              S01=RC1MN(IR)
+              S02=LOG(1.25_R8)+RC1MN(IR)
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+S01**I*DEF**J*D11(I,J)
+                  EXPO2=EXPO2+S02**I*DEF**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMIN=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MN(IR).GT.0) THEN
+              COUMIN=0.0_R8
+              DO I = 0, 8
+                TEI=RC1MN(IR)**I
+                DO J = 0, 8
+                  DEJ=DEF**J
+                  COUMIN=COUMIN+D11(I,J)*TEI*DEJ
+                END DO
+              END DO
+              IFEX=IF1MN(IR)
+              COUMIN=EXP(COUMIN)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
+     .                           FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
+            ENDIF
+          ELSEIF (TEF.GT.RC1MX(IR)) THEN
+            IF (IF1MX(IR).EQ.0) THEN
+              DO I = 0, 8
+                TEI=RC1MX(IR)**I
+                DO J = 0, 8
+                  DEJ=DEF**J
+                  DNNN=DNNN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+            ELSEIF (IF1MX(IR).LT.0) THEN
+              S01=RC1MX(IR)
+              S02=LOG(0.75_R8)+RC1MX(IR)
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+S01**I*DEF**J*D11(I,J)
+                  EXPO2=EXPO2+S02**I*DEF**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMAX=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MX(IR).GT.0) THEN
+              COUMAX=0.0_R8
+              DO I = 0, 8
+                TEI=RC1MX(IR)**I
+                DO J = 0, 8
+                  DEJ=DEF**J
+                  COUMAX=COUMAX+D11(I,J)*TEI*DEJ
+                END DO
+              END DO
+              IFEX=IF1MX(IR)
+              COUMAX=EXP(COUMAX)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
+     .                           FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
+            ENDIF
+          ELSEIF (DEF.LT.DEMIN) THEN
+            IF (IF2MN(IR).LT.0) THEN
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMIN**J
+                  DNNN=DNNN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+            ELSEIF (IF2MN(IR).LT.0) THEN
+              S01=DEMIN
+              S02=LOG(1.25_R8)+DEMIN
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+TEF**I*S01**J*D11(I,J)
+                  EXPO2=EXPO2+TEF**I*S02**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMIN=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF2MN(IR).GT.0) THEN
+              COUMIN=0.0_R8
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMIN**J
+                  COUMIN=COUMIN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+              IFEX=IF2MN(IR)
+              COUMIN=EXP(COUMIN)
+              DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,
+     .                           FP2L(IR,1),FP2L(IR,2),FP2L(IR,3))
+            ENDIF
+          ELSEIF (DEF.GT.DEMAX) THEN
+            IF (IF2MX(IR).LT.0) THEN
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMAX**J
+                  DNNN=DNNN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+            ELSEIF (IF2MX(IR).LT.0) THEN
+              S01=DEMAX
+              S02=LOG(0.75_R8)+DEMAX
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+TEF**I*S01**J*D11(I,J)
+                  EXPO2=EXPO2+TEF**I*S02**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMAX=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF2MX(IR).GT.0) THEN
+              COUMAX=0.0_R8
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMAX**J
+                  COUMAX=COUMAX+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+              IFEX=IF2MX(IR)
+              COUMAX=EXP(COUMAX)
+              DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,
+     .                           FP2R(IR,1),FP2R(IR,2),FP2R(IR,3))
             ENDIF
           ELSE
-c           write(*,*) 'Do not yet know about ',h123
+            DO I = 0, 8
+              TEI=TEF**I
+              DO J = 0, 8
+                DEJ=DEF**J
+                DNNN=DNNN+D11(I,J)*TEI*DEJ
+              ENDDO
+            ENDDO
           ENDIF
-          dnnn=dnnn+log(1.0e-6_R8)
-          if(dnnn.gt.log(1.0e30_R8)) then
-            dnnn=1.0e30_R8
-          elseif(dnnn.lt.log(1.0e-30_R8)) then
-            dnnn=1.0e-30_R8
-          else
-            DNNN=EXP(DNNN)
-          endif
-          rmin=min(rmin,dnnn)
-          rmax=max(rmax,dnnn)
-          mach(ix,iy)=dnnn
-        enddo
+        ELSE
+c         write(*,*) 'Do not yet know about ',h123
+        ENDIF
+        dnnn=dnnn+log(1.0e-6_R8)
+        if(dnnn.gt.log(1.0e30_R8)) then
+          dnnn=1.0e30_R8
+        elseif(dnnn.lt.log(1.0e-30_R8)) then
+          dnnn=1.0e-30_R8
+        else
+          DNNN=EXP(DNNN)
+        endif
+        rmin=min(rmin,dnnn)
+        rmax=max(rmax,dnnn)
+        mach(ix,iy)=dnnn
+       enddo
       enddo
       write(*,*) 'rmin,rmax= ',rmin,rmax
       return

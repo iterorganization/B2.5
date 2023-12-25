@@ -320,7 +320,7 @@ c
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_WNEUTRALS_INIT
+      if (use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local)
       call alloc_b2mod_eirbra(nxd,nyd,nsd_local,
@@ -1166,20 +1166,20 @@ c
       nz=ns
 c
       do ix=-1,nx
-        XX(IX,2) = real(ix)
-        XX(IX,1) = real(IX)-0.5_R8
+        XX(IX,2) = real(ix,R8)
+        XX(IX,1) = real(IX,R8)-0.5_R8
       end do
       do iy=-1,ny
-        YY(IY,2) = real(IY)
-        YY(IY,1) = real(IY)-0.5_R8
+        YY(IY,2) = real(IY,R8)
+        YY(IY,1) = real(IY,R8)-0.5_R8
       end do
       do ibnd=1,nbnd
-        targetx(ibnd,2) = real(ibnd)
-        targetx(ibnd,1) = real(ibnd)-0.5_R8
+        targetx(ibnd,2) = real(ibnd,R8)
+        targetx(ibnd,1) = real(ibnd,R8)-0.5_R8
       end do
       do i=1,ndepth_nml
-        targety(i,2) = real(i)
-        targety(i,1) = real(i)-0.5_R8
+        targety(i,2) = real(i,R8)
+        targety(i,1) = real(i,R8)-0.5_R8
       end do
 
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
@@ -2379,7 +2379,7 @@ c
           do is=0,ns-1
             do iy=-1,ny
               do ix=-1,nx
-                mach(ix,iy,is)=real(b2espcr(is))
+                mach(ix,iy,is)=real(b2espcr(is),R8)
               end do
             end do
           end do
@@ -2390,7 +2390,7 @@ c
           do is=0,ns-1
             do iy=-1,ny
               do ix=-1,nx
-                mach(ix,iy,is)=real(b2eatcr(is))
+                mach(ix,iy,is)=real(b2eatcr(is),R8)
               end do
             end do
           end do
@@ -3775,7 +3775,8 @@ c     assumes that bb is OK for 1d cases
      4            nint(mach(bc_list_x(ix,ibc),bc_list_y(ix,ibc),0)),
      5            ' and ',ibc
               else
-                mach(bc_list_x(ix,ibc),bc_list_y(ix,ibc),0) = ibc
+                mach(bc_list_x(ix,ibc),bc_list_y(ix,ibc),0) =
+     .           real(ibc,R8)
               end if
             end do
           enddo
@@ -3801,7 +3802,8 @@ c     assumes that bb is OK for 1d cases
      4              nint(mach(rc_list_x(ix,ibc),rc_list_y(ix,ibc),0)),
      5              ' and ',ibc
                 else
-                  mach(rc_list_x(ix,ibc),rc_list_y(ix,ibc),0) = ibc
+                  mach(rc_list_x(ix,ibc),rc_list_y(ix,ibc),0) =
+     .             real(ibc,R8)
                 end if
               end do
             end if
@@ -3812,7 +3814,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(ix+1)/real(nx+1)
+              mach(ix,iy,0)=real(ix+1,R8)/real(nx+1,R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3821,7 +3823,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(iy+1)/real(ny+1)
+              mach(ix,iy,0)=real(iy+1,R8)/real(ny+1,R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3830,7 +3832,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(ix)
+              mach(ix,iy,0)=real(ix,R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3839,7 +3841,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(iy)
+              mach(ix,iy,0)=real(iy,R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3848,7 +3850,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(leftix(ix,iy))
+              mach(ix,iy,0)=real(leftix(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3857,7 +3859,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(leftiy(ix,iy))
+              mach(ix,iy,0)=real(leftiy(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3866,7 +3868,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(rightix(ix,iy))
+              mach(ix,iy,0)=real(rightix(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3875,7 +3877,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(rightiy(ix,iy))
+              mach(ix,iy,0)=real(rightiy(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3884,7 +3886,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(bottomix(ix,iy))
+              mach(ix,iy,0)=real(bottomix(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3893,7 +3895,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(bottomiy(ix,iy))
+              mach(ix,iy,0)=real(bottomiy(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3902,7 +3904,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(topix(ix,iy))
+              mach(ix,iy,0)=real(topix(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -3911,7 +3913,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              mach(ix,iy,0)=real(topiy(ix,iy))
+              mach(ix,iy,0)=real(topiy(ix,iy),R8)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)
@@ -11039,7 +11041,7 @@ c
         case('itor')     ! integer --> real stack
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          dummy=real(ipop(istack,iistack))
+          dummy=real(ipop(istack,iistack),R8)
           call rpush(rstack,irstack,dummy)
         case('itostr')   ! integer --> string stack
           stack_req=(/1,0,0,0,0,0,0/)
@@ -11056,9 +11058,9 @@ c
           ndim(1,iwrk)=nx
           ndim(2,iwrk)=ny
           ndim(3,iwrk)=1
-          work(-1:nx,-1:ny,0,iwrk)=real(istack(iistack))
-          values(9)=real(istack(iistack))
-          values(10)=real(istack(iistack))
+          work(-1:nx,-1:ny,0,iwrk)=real(istack(iistack),R8)
+          values(9)=real(istack(iistack),R8)
+          values(10)=real(istack(iistack),R8)
           textwk(0,iwrk)=textbl(0)
           write(hlp_frm,'(a,i2,a)')
      .     '(i',len_of_digits(istack(iistack)),')'
@@ -11071,9 +11073,9 @@ c
           iewrk=iewrk+1
           nedim(1,iewrk)=ntrii
           nedim(2,iewrk)=1
-          eirene_stack(1:ntrii,0,iewrk)=real(istack(iistack))
-          values(38)=real(istack(iistack))
-          values(39)=real(istack(iistack))
+          eirene_stack(1:ntrii,0,iewrk)=real(istack(iistack),R8)
+          values(38)=real(istack(iistack),R8)
+          values(39)=real(istack(iistack),R8)
           textewk(0,iewrk)=textbl(0)
           write(hlp_frm,'(a,i2,a)')
      .     '(i',len_of_digits(istack(iistack)),')'
@@ -11089,9 +11091,9 @@ c
           iwwrk=iwwrk+1
           nwdim(1,iwwrk)=nbnd
           nwdim(2,iwwrk)=1
-          wall_stack(1:nbnd,0,iwwrk)=real(istack(iistack))
-          values(14)=real(istack(iistack))
-          values(15)=real(istack(iistack))
+          wall_stack(1:nbnd,0,iwwrk)=real(istack(iistack),R8)
+          values(14)=real(istack(iistack),R8)
+          values(15)=real(istack(iistack),R8)
           textwwk(0,iwwrk)=textbl(0)
           write(hlp_frm,'(a,i2,a)')
      .     '(i',len_of_digits(istack(iistack)),')'
@@ -11102,9 +11104,10 @@ c
           if(bad_args(stack_req)) return
           if(itwrk .eq. wklng) call droptargetstackbottom()
           itwrk=itwrk+1
-          target_stack(1:nbnd,1:ndepth_nml,itwrk)=real(istack(iistack))
-          values(32)=real(istack(iistack))
-          values(33)=real(istack(iistack))
+          target_stack(1:nbnd,1:ndepth_nml,itwrk)=
+     .               real(istack(iistack),R8)
+          values(32)=real(istack(iistack),R8)
+          values(33)=real(istack(iistack),R8)
           write(hlp_frm,'(a,i2,a)')
      .     '(i',len_of_digits(istack(iistack)),')'
           write(target_label(itwrk),hlp_frm) ipop(istack,iistack)

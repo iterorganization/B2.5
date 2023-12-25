@@ -211,7 +211,7 @@ csw 21feb2012
       subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
      &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_b2cmpa
       implicit none
       integer, intent(in) :: nxd, nyd, nsd,
@@ -602,14 +602,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
 c
       if(chemical_erosion_redep_fac.ne.1.0_R8)
      * write(*,*)
-     1 'Note: chemical_erosion_redep_fac = ',
-     2 chemical_erosion_redep_fac
+     1  'Note: chemical_erosion_redep_fac = ',
+     2   chemical_erosion_redep_fac
       if(chemical_erosion_be_fac)
      1 write(*,*) 'Note: suppression of chemical sputtering by Be ',
-     2 'is active with parameters ',
-     3 chemical_erosion_be_fac_a,
-     4 chemical_erosion_be_fac_b,
-     5 chemical_erosion_be_fac_c
+     2  'is active with parameters ',
+     3   chemical_erosion_be_fac_a,
+     4   chemical_erosion_be_fac_b,
+     5   chemical_erosion_be_fac_c
 c
       do istra = 1, nstrat
         do is = 1, nnatmi

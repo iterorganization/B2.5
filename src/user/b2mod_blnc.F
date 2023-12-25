@@ -847,13 +847,13 @@ c
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
-c     
+c
       logical file_open
 
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)
-        
+
       return
       end subroutine b2blncf
 c======================================================================

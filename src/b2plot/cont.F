@@ -10,6 +10,7 @@ c
       real (kind=R8) :: wrkx(-1:nx,-1:ny), wrky(-1:nx,-1:ny)
       integer ix,iy,is,lnblnk
       external lnblnk
+
       if(b2plot_debug.ge.10) write(*,*) 'Plotting array: nx, ny, nz = ',
      1 ndim(1,iwrk),ndim(2,iwrk),ndim(3,iwrk)
       if(ndim(1,iwrk) .lt. 0 .or. ndim(2,iwrk) .lt. 0) then

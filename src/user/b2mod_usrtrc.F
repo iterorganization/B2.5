@@ -198,7 +198,7 @@ c*** Column headers:
      ,     (equg2_tmp(1),  hlp_dodil), (equg2_tmp(2),  hlp_dodol),
      ,     (equg2_tmp(3),  hlp_dodiu), (equg2_tmp(4),  hlp_dodou)
       integer mgl3_tmp
-      integer kgl3_tmp(ngl3_tmp) 
+      integer kgl3_tmp(ngl3_tmp)
       data kgl3_tmp / -1, 0, 0, -1 /
       real (kind=R8) ::
      *     equg3_tmp(ngl3_tmp)
@@ -1965,7 +1965,7 @@ c     Finalization step
       if (.not.allocated(hlp_hdr)) return
       deallocate(hlp_hdr)
       deallocate(hlp_out)
-      
+
       return
       end subroutine b2usrtrf
 c=======================================================================
