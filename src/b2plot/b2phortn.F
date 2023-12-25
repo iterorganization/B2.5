@@ -37,7 +37,7 @@ c
 c----------------------------------------------------------------------
 c*** Write the header
 c
-      allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1)
+      allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1))
       allocate(hlp_ml(nmoli),imol(nmoli))
       do is=0,ns-1
         mz_hlp(is)=nint((zamin(is)+zamax(is))/2.0_R8)
