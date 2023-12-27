@@ -126,7 +126,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer idum(0:9), io
+      integer idum(0:9)
 #ifdef _OPENMP
       real (kind=R8) :: cpu_s, cpu_f
 #else
