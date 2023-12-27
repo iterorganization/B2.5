@@ -75,11 +75,12 @@ c  version : 27.07.96 20:37
 c
       integer ispecies(0:nsd_local-1)
 
-      integer is,iss,isp,nfla
+      integer is,iss,isp,nfla,ns
 c
       logical ex
 c
       integer il,imi,iFc
+      real (kind=R8) ::  pr(mpg%nCv)
 #ifdef MDSPLUS
       character*512 textpl_cat, textwl_cat
       character*12 :: textdrift(0:1)
@@ -87,12 +88,12 @@ c
       character :: mds_signal_name*(64), tdi*(172)
       real (kind=R8), allocatable ::
      *   vesl(:,:)
-      integer i, j, icnt, ns, nsw
+      integer i, j, iCv, icnt, nsw, iVx1, iVx2
 #ifdef WG_TODO
       integer itmp(-1:nxd,-1:nyd)
 #endif
       real (kind=R8) ::
-     *   rdummy, rtmp, temp(mpg%nCv), pr(mpg%nCv),
+     *   rdummy, rtmp, temp(mpg%nCv),
      5   tmp(mpg%nCv,0:nsd_local-1),
      5   crf(mpg%nFc), czf(mpg%nFc),
      7   flux_x(mpg%nFc,0:nsd_local-1),
@@ -105,7 +106,7 @@ c
      7   za(0:nsd_local-1)
 #endif
 c
-      integer nCv, nFc, nVx, iCv, iCv1, iCv2, iVx1, iVx2
+      integer nCv, nFc, nVx, iCv1, iCv2
       integer ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
