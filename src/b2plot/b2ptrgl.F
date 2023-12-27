@@ -1690,8 +1690,8 @@ c
             ersn_l(itrg(j))=0.0_R8
           end if
         end do !}
-#endif
         if (ss_m.gt.0.0_R8) ersn_am=ersn_am/ss_m
+#endif
         write(lun,fmt_peak) 'average',(tab,ersn_a(itrg(i)),i=1,ntrgts),
      .                                 tab,ersn_am
         write(lun,fmt_peak) 'peak',(tab,ersn_p(itrg(i)),i=1,ntrgts),
