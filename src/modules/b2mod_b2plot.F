@@ -112,7 +112,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
       integer, save ::
-     *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),
+     *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),ntrfrm,
      *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
 cank 960511
       integer, save ::
@@ -314,6 +314,7 @@ cank
       subroutine dealloc_b2mod_b2plot_eirene
       implicit none
 
+      if (.not.allocated(eirene_stack)) return
       deallocate(eirene_stack)
       deallocate(triangle_area)
       deallocate(triangle_vol)
@@ -336,6 +337,7 @@ cank
       subroutine dealloc_b2mod_b2plot_wall
       implicit none
 
+      if (.not.allocated(wwrk_hlp)) return
       deallocate(wwrk_hlp)
       deallocate(twrk_hlp)
       deallocate(indt_hlp)

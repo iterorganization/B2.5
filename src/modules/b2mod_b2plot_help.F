@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=355,nfns=205,nsparameters=32,nelabels=36,
+      parameter(nlabels=357,nfns=205,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -98,8 +98,9 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:355) /
-     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      /
+      data labels(351:357) /
+     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      ,
+     2  'molrad'  , 'ionrad'  /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -429,7 +430,7 @@
      7    'Recycling conditions',
      8    'Molecule dissociation rate (#.s^{-1})',
      9    'Power to atoms due to molecule dissociation (W)',
-     *    'Total power loss due to atom radiation (W)'/
+     *    'Power loss due to atom radiation (W)'/
       data descriptions(301:310) /
      1    'Poloidal particle flux without drifts (s^{-1})',
      2    'Radial particle flux without drifts (s^{-1})',
@@ -485,12 +486,14 @@
      8    'Thermo-electric classical flux limit factor',
      9    'Thermo-electric coefficient limit factor',
      *    'Eirene atomic species index'/
-      data descriptions(351:355) /
+      data descriptions(351:357) /
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
      4    'Toroidal magnetic flux function (Wb/m)',
-     5    'Plasma pressure (Pa)'/
+     5    'Plasma pressure (Pa)',
+     6    'Power loss due to molecule radiation (W)',
+     7    'Power loss due to molecular ion radiation (W)'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -568,8 +571,9 @@
      8    0,      0,      2,      2,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      2/
-      data dimensions(351:355) /
-     1    1,      1,      1,      1,      1/
+      data dimensions(351:357) /
+     1    1,      1,      1,      1,      1,
+     2    2,      2/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',

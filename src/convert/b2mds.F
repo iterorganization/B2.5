@@ -144,6 +144,7 @@ c
       call subini('b2mds')
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
@@ -703,10 +704,12 @@ c     fni_32, fni_52, fne_32, fne_52,
 c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
+c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
+c 29: Same indexing error was also present in emolrad and eionrad
 
-      dbversion=23
+      dbversion=29
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1300,7 +1303,7 @@ c
         call mds_put_double_rz('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
      1   nx+2,ny+2,temp,'')
         forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=eneutrad(ix+1,iy+1,is+1,1)
+     1   tmp(ix,iy,is)=eneutrad(ix+1,iy+1,is+1,0)
         call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
      1   ny+2,natmi,tmp,'TEXTAN','')
       endif

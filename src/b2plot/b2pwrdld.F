@@ -7,20 +7,20 @@ c*** Calculates radiation load onto the specified wall sections
 c*** The list of the wall segments is to be specified in lwldrad
 c======================================================================
       use b2mod_types
-      use b2mod_geo
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot
-      use b2mod_sources
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
+      use b2us_data
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
 #     include "DIMENSIONS.F"
 #     include "rdload.inc"
-#ifdef WG_TODO
-      integer iatm
-#endif
-      integer i,j,k,l,m,is,ix,iy,n_hlperr,
+      integer iatm,imol,iion
+      integer i,j,k,l,m,is,iCv,n_hlperr,
      ,        l_errt(nsgmx),l_errs(nsgmx)
       real (kind=R8) ::
      *   u
@@ -104,35 +104,29 @@ c
 c*** Now specify the radiation sources - in W (remember, the additional
 c*** sources are in MW !!!)
 c
-      k=0
-
-      do ix=0,nx-1
-        do iy=0,ny-1
-          u = 0.0_R8
-          do is=0,ns-1
-            u=u+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
-          end do
-#ifdef WG_TODO
-          do is=1,natmi
-            u=u-eneutrad(ix+1,iy+1,is,0)
-          end do
-          do is=1,nmoli
-            u=u-emolrad(ix+1,iy+1,is,0)
-          end do
-          do is=1,nioni
-            u=u-eionrad(ix+1,iy+1,is,0)
-          end do
-#endif
-          k=k+1
-          ssrcm(k)=u
-          xysrc(1,k)=cr(ix,iy)
-          xysrc(2,k)=cz(ix,iy)
+      do iCv=1,mpg%nCi
+        u = 0.0_R8
+        do is=0,state%ns-1
+          u=u+state%srw%rqrad(iCv,is)+state%srw%rqbrm(iCv,is)
         end do
+        do is=1,natmi
+          u=u-eneutrad(iCv,is,0)
+        end do
+        do is=1,nmoli
+          u=u-emolrad(iCv,is,0)
+        end do
+        do is=1,nioni
+          u=u-eionrad(iCv,is,0)
+        end do
+        ssrcm(iCv)=u
+        xysrc(1,iCv)=geo%cvX(iCv)
+        xysrc(2,iCv)=geo%cvY(iCv)
       end do
 
 #ifdef DBG
       print *,'nadsrc,add_rad = ',nadsrc,add_rad
 #endif
+      k=mpg%nCi
       if(nadsrc .gt. 0  .and.  add_rad .gt. 0.0_R8) then
         u=1.0e6_R8*add_rad/nadsrc
         do i=1,nadsrc
@@ -209,37 +203,32 @@ c*** Calculate the radiation load split by impurity species from B2
           do i=1,nplgs !{
             radld(i)=0.0_R8
           end do !}
-          k=0
-          do ix=0,nx-1 !{
-            do iy=0,ny-1 !{
-              k=k+1
-              ssrcm(k)=0.0_R8
-#ifdef WG_TODO
-              do iatm=1,natmi !{
-                if (latmscl(iatm).eq.j)
-     >            ssrcm(k)=ssrcm(k)-eneutrad(ix+1,iy+1,iatm,0)
-              end do !}
-              do imol=1,nmoli !{
-                iatm = lmolscl(imol)
-                if (iatm.eq.0) cycle
-                if (latmscl(iatm).eq.j)
-     >            ssrcm(k)=ssrcm(k)-emolrad(ix+1,iy+1,imol,0)
-              end do !}
-              do iion=1,nioni !{
-                iatm = lionscl(iion)
-                if (iatm.eq.0) cycle
-                if (latmscl(iatm).eq.j)
-     >            ssrcm(k)=ssrcm(k)-eionrad(ix+1,iy+1,iion,0)
-              end do !}
-#endif
-              do is=eb2spcr(j),eb2spcr(j)+nfluids(j)
-                ssrcm(k)=ssrcm(k)+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
-              end do
-              xysrc(1,k)=cr(ix,iy)
-              xysrc(2,k)=cz(ix,iy)
+          do iCv=1,mpg%nCi !{
+            ssrcm(iCv)=0.0_R8
+            do iatm=1,natmi !{
+              if (latmscl(iatm).eq.j)
+     >         ssrcm(iCv)=ssrcm(iCv)-eneutrad(iCv,iatm,0)
             end do !}
+            do imol=1,nmoli !{
+              iatm = lmolscl(imol)
+              if (iatm.eq.0) cycle
+              if (latmscl(iatm).eq.j)
+     >         ssrcm(iCv)=ssrcm(iCv)-emolrad(iCv,imol,0)
+            end do !}
+            do iion=1,nioni !{
+              iatm = lionscl(iion)
+              if (iatm.eq.0) cycle
+              if (latmscl(iatm).eq.j)
+     >         ssrcm(iCv)=ssrcm(iCv)-eionrad(iCv,iion,0)
+            end do !}
+            do is=eb2spcr(j),eb2spcr(j)+nfluids(j)
+              ssrcm(iCv)=ssrcm(iCv)+state%srw%rqrad(iCv,is)+
+     .                              state%srw%rqbrm(iCv,is)
+            end do
+            xysrc(1,iCv)=geo%cvX(iCv)
+            xysrc(2,iCv)=geo%cvY(iCv)
           end do !}
-          nsrc=k
+          nsrc=mpg%nCi
           call rlcomp
           write(*,*)   '  Total radiation         : ',ttsrc
           if (irdparm.eq.1) then

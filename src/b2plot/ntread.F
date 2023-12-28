@@ -28,19 +28,24 @@ c
       use eirmod_ctrig
       use eirmod_cestim
       use eirmod_cinit
+      use eirmod_cgeom
+     , , only : ncltal
       use eirmod_comusr
-     , , only: eirene_alloc_comusr
+     , , only : eirene_alloc_comusr
       use eirmod_coutau
-     , , only: eirene_alloc_coutau
+     , , only : eirene_alloc_coutau
+      use eirmod_eirbra
+     , , only : ncvtot
       use eirmod_braeir
-     .   , only : pux, puy, pvx, pvy
+     , , only : pux, puy, pvx, pvy
 #endif
       use b2mod_subsys
+      use b2us_data
       implicit none
 
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
-      INTEGER is, i, j, n, io, idummy, jvft46
+      INTEGER is, i, j, iCv, icoadd, n, io, idummy, jvft46
       character*256 filename
       logical ex
 #endif
@@ -98,24 +103,30 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       CALL EIRENE_ASSOCIATE_CESTIM
       call alloc_b2mod_b2plot_eirene(natmi,nmoli,nioni,ntrii,wklng)
 
-      READ(33,*,IOSTAT=IO) (XTRIAN(I),I=1,NRKNOT)
-      READ(33,*,IOSTAT=IO) (YTRIAN(I),I=1,NRKNOT)
-      IF(IO.GT.0) THEN
+      IF (NTRFRM == 0) THEN
+        READ(33,*,IOSTAT=IO) (XTRIAN(I),I=1,NRKNOT)
+        READ(33,*,IOSTAT=IO) (YTRIAN(I),I=1,NRKNOT)
+        IF(IO.GT.0) THEN
 C TO READ THE FILE PRODUCED BY DOS
-        WRITE(*,*) "Cannot read "//fort_lc//"33 in regular way"
-        WRITE(*,*) "Trying to read line by line..."
-        REWIND 33
-        READ(33,*) NRKNOT
-        N=INT((NRKNOT+3)/4)
-        DO I=1,N
-          J=(I-1)*4+1
-          READ(33,*,IOSTAT=IO) XTRIAN(J:J+4)
+          WRITE(*,*) "Cannot read "//fort_lc//"33 in regular way"
+          WRITE(*,*) "Trying to read line by line..."
+          REWIND 33
+          READ(33,*) NRKNOT
+          N=INT((NRKNOT+3)/4)
+          DO I=1,N
+            J=(I-1)*4+1
+            READ(33,*,IOSTAT=IO) XTRIAN(J:J+4)
+          END DO
+          DO I=1,N
+            J=(I-1)*4+1
+            READ(33,*,IOSTAT=IO) YTRIAN(J:J+4)
+          END DO
+          WRITE(*,*) "... ready!"
+        END IF
+      ELSE
+        DO I=1,NRKNOT
+          READ(33,*) J,XTRIAN(I),YTRIAN(I)
         END DO
-        DO I=1,N
-          J=(I-1)*4+1
-          READ(33,*,IOSTAT=IO) YTRIAN(J:J+4)
-        END DO
-        WRITE(*,*) "... ready!"
       END IF
 
       IF(NTRII.GT.0) THEN !VK
@@ -141,20 +152,32 @@ C
       end do
       call compute_triangle_area
       call compute_triangle_vol
-  
+C
+      icoadd = maxval(ixtri)
+      if (.not.allocated(ncltal)) allocate(ncltal(ntrii))
+      do i = 1, ntrii
+        iCv = ixtri(i)
+        if (iCv.gt.0) then
+          ncltal(i) = iCv
+        else
+          icoadd = icoadd + 1
+          ncltal(i) = icoadd
+        end if
+      end do
+C
       rewind (46)
 C
-      READ(46,*,END=99,ERR=99) idummy,jvft46
-      IF (IDUMMY /= NTRII) THEN
-        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
-        WRITE (*,*) ' IN GRID AND DATA FILES'
-        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
-        call xerrab
-     .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
-      END IF
+      READ(46,*,END=99,ERR=99) ncvtot,jvft46
       READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       write(*,'(3a,4i6)')
-     . ' Dimensions in ',fort_lc,'46 = ',ntrii,natmi,nmoli,nioni
+     . ' Dimensions in ',fort_lc,'46 = ',ncvtot,natmi,nmoli,nioni
+      IF (ICOADD /= NCVTOT) THEN
+        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH'
+        WRITE (*,*) ' BETWEEN GEOMETRY AND DATA FILES'
+        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY'
+        CALL XERRAB
+     .   ('Mismatch between '//fort_lc//'35 and '//fort_lc//'46 files!')
+      END IF
       call xertst(natmi .le. natm, 'NTREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NTREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NTREAD: NIONI > NION')
@@ -182,47 +205,62 @@ C
 * densities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
+      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ncvtot),i=1,max(natmi,1))
+      call eirene_extend(pdena,ntrii,ncltal,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
+      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ncvtot),i=1,max(nmoli,1))
+      call eirene_extend(pdenm,ntrii,ncltal,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
+      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ncvtot),i=1,max(nioni,1))
+      call eirene_extend(pdeni,ntrii,ncltal,max(nioni,1))
 
 * average energies
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
+      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ncvtot),i=1,max(natmi,1))
+      call eirene_extend(edena,ntrii,ncltal,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
+      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ncvtot),i=1,max(nmoli,1))
+      call eirene_extend(edenm,ntrii,ncltal,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
+      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ncvtot),i=1,max(nioni,1))
+      call eirene_extend(edeni,ntrii,ncltal,max(nioni,1))
 
 * X-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
+      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ncvtot),i=1,max(natmi,1))
+      call eirene_extend(vxdena,ntrii,ncltal,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
+      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ncvtot),i=1,max(nmoli,1))
+      call eirene_extend(vxdenm,ntrii,ncltal,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
+      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ncvtot),i=1,max(nioni,1))
+      call eirene_extend(vxdeni,ntrii,ncltal,max(nioni,1))
 
 * Y-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
+      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ncvtot),i=1,max(natmi,1))
+      call eirene_extend(vydena,ntrii,ncltal,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
+      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ncvtot),i=1,max(nmoli,1))
+      call eirene_extend(vydenm,ntrii,ncltal,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
+      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ncvtot),i=1,max(nioni,1))
+      call eirene_extend(vydeni,ntrii,ncltal,max(nioni,1))
 
 * Z-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
+      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ncvtot),i=1,max(natmi,1))
+      call eirene_extend(vzdena,ntrii,ncltal,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
+      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ncvtot),i=1,max(nmoli,1))
+      call eirene_extend(vzdenm,ntrii,ncltal,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
+      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ncvtot),i=1,max(nioni,1))
+      call eirene_extend(vzdeni,ntrii,ncltal,max(nioni,1))
 
 * Volumes
 C
@@ -237,13 +275,13 @@ C
           allocate(pvy(ntrii))
         end if
         call read_title(46)
-        read(46,'(6e15.7)') (pux(j),j=1,ntrii)
+        read(46,'(6e15.7)') (pux(j),j=1,mpg%nCv)
         call read_title(46)
-        read(46,'(6e15.7)') (puy(j),j=1,ntrii)
+        read(46,'(6e15.7)') (puy(j),j=1,mpg%nCv)
         call read_title(46)
-        read(46,'(6e15.7)') (pvx(j),j=1,ntrii)
+        read(46,'(6e15.7)') (pvx(j),j=1,mpg%nCv)
         call read_title(46)
-        read(46,'(6e15.7)') (pvy(j),j=1,ntrii)
+        read(46,'(6e15.7)') (pvy(j),j=1,mpg%nCv)
       end if
    99 CONTINUE
 #endif
@@ -274,7 +312,7 @@ C
 #ifdef B25_EIRENE
       subroutine compute_triangle_area
       use b2mod_b2plot
-      use b2mod_indirect
+      use b2mod_math
       use eirmod_ctrig
       implicit none
       integer i

@@ -244,11 +244,18 @@ c
       call subini ('b2plot')
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
+        rewind(45)
+        do while (index(zeile,'*** 14') == 0)
+          read (45,'(A72)') ZEILE
+        end do
+        read (45,'(A72)') ZEILE
+        read (45,'(2I6)') ITMP, NTRFRM
         rewind(45)
         CALL EIRENE_FIND_PARAM(45)
         close(45)
@@ -303,7 +310,7 @@ c
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_WNEUTRALS_INIT
+      if (use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(mpg%nCv,mpg%nFc,nsd_local,nstra)
       call alloc_b2mod_eirbra(mpg%nCv,nsd_local,natm,npls,nstra)
@@ -440,26 +447,6 @@ c
 
 !!!      if(safetyfactor(-1) .eq. 0.0_R8) call init_q
 
-cxpb  This call is moved up from 'f31' so that we used the original cell-faced
-cxpb  quantities before their mapping to cell centers
-      call ipgetr ('b2news_BoRiS', switch%BoRiS)
-      call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
-      nflai=0
-      do is=0,ns-1
-        if(is_neutral(is)) nflai=nflai+1
-      enddo
-      if(nflai.gt.NFL) then
-        write(*,*) 'copy_background not called because nflai.gt.NFL',
-     1   nflai,NFL
-      elseif(nx.gt.NXDD.or.ny.gt.NYDD) then
-        write(*,*)
-     1   'copy_background not called because NX>NXDD or NY>NYDD',
-     1   nx,nxdd,ny,nydd
-      else
-        call copy_background(mpg%nCv, mpg%nFc, ns, switch, mpg, geo,
-     &                       state%pl, state%dv)
-      endif
-c
       call ipgetr ('b2trcl_lambda', lambda)
       call xertst (0.0_R8.ne.lambda, 'faulty internal parameter lambda')
       call ipgeti ('b2stbr_refl_model', refl_model)
@@ -564,6 +551,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
+      call ipgetr ('b2news_BoRiS', switch%BoRiS)
+      call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
       call b2xpen (mpg%nCv, mpg%nFc, ns, mpg,
      1 state%dv%fna, state%dv%fna_53, state%dv%fne_53,
      2 state%dv%fch, state%dv%fhe, state%dv%fhi, state%dv%fhn,
@@ -770,6 +759,22 @@ c
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
 #endif
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+c
+      nflai=0
+      do is=0,ns-1
+        if(is_neutral(is)) nflai=nflai+1
+      enddo
+      if(nflai.gt.NFL) then
+        write(*,*) 'copy_background not called because nflai.gt.NFL',
+     1   nflai,NFL
+      elseif(nx.gt.NXDD.or.ny.gt.NYDD) then
+        write(*,*)
+     1   'copy_background not called because NX>NXDD or NY>NYDD',
+     1   nx,nxdd,ny,nydd
+      else
+        call copy_background(mpg%nCv, mpg%nFc, ns, switch, mpg, geo,
+     &                       state%pl, state%dv)
+      endif
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
@@ -1402,6 +1407,7 @@ c
               deallocate(emach)
               call dealloc_b2mod_b2plot_eirene
             end if
+            if (allocated(ncltal)) deallocate(ncltal)
             CALL EIRENE_DEALLOC_CTRIG
             CALL EIRENE_DEALLOC_CESTIM
             CALL EIRENE_DEALLOC_COMUSR
@@ -1494,6 +1500,7 @@ c
             deallocate(emach)
             call dealloc_b2mod_b2plot_eirene
           end if
+          if (allocated(ncltal)) deallocate(ncltal)
           CALL EIRENE_DEALLOC_CTRIG
           CALL EIRENE_DEALLOC_CESTIM
           CALL EIRENE_DEALLOC_COMUSR
@@ -5288,24 +5295,8 @@ c     assumes that bb is OK for 1d cases
           if(bad_args(stack_req)) return
 #ifdef B25_EIRENE
           if(iewrk .eq. wklng) call dropeirenestackbottom()
-          iewrk=iewrk+1
-          nedim(1,iewrk)=ntrii
-          nedim(2,iewrk)=ndim(2,iwrk)
-          do i = 1, ntrii
-            if (b2_cell(ixtri(i),iytri(i))) then
-              eirene_stack(i,0:ndim(2,iwrk)-1,iewrk)=
-     .         work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(2,iwrk)-1,iwrk)
-            else
-              eirene_stack(i,0:ndim(2,iwrk)-1,iewrk)=0.0_R8
-            end if
-          enddo
-          values(38)=
-     .     minval(eirene_stack(1:ntrii,0:nedim(2,iewrk)-1,iewrk))
-          values(39)=
-     .     maxval(eirene_stack(1:ntrii,0:nedim(2,iewrk)-1,iewrk))
-          eirene_label(iewrk)=
-     .     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
-          textewk(0:nedim(2,iewrk)-1,iewrk)=textwk(0:ndim(2,iwrk),iwrk)
+          call eirene_coarse_copy(work,1.0_R8,mpg%nCv,ndim(2,iwrk),
+     .                            textwk(0:ndim(2,iwrk),iwrk))
 #else
           write(*,*) 'Must compile with Eirene for stoe function'
 #endif
@@ -6817,19 +6808,19 @@ cdpc still in testing phase
         case('pux')
           description='PUX'
           nz=1
-          call eirene_coarse_copy(pux,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pux,1.0_R8,mpg%nCv,nz,textbl)
         case('puy')
           description='PUY'
           nz=1
-          call eirene_coarse_copy(puy,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(puy,1.0_R8,mpg%nCv,nz,textbl)
         case('pvx')
           description='PVX'
           nz=1
-          call eirene_coarse_copy(pvx,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pvx,1.0_R8,mpg%nCv,nz,textbl)
         case('pvy')
           description='PVY'
           nz=1
-          call eirene_coarse_copy(pvy,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pvy,1.0_R8,mpg%nCv,nz,textbl)
         case('tindex')
           description='Triangle index'
           nz=1

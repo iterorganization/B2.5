@@ -30,7 +30,7 @@ FCOPTS   = -fPIC -assume no2underscore
 ifdef SOLPS_DEBUG
 FCOPTS  += -g -C -debug all -traceback -check all
 else
-FCOPTS  += -O2 -fp-model=precise
+FCOPTS  += -O2 -xHost -fp-model=precise
 endif
 
 ifdef USE_OPENMP
