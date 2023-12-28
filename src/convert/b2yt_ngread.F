@@ -1400,6 +1400,10 @@ cank
      ,                                                       i=1,ncl)
               deallocate (wlpump1res)
             end if
+            if (jvftnew.ge.20201006) then
+              call write_title(45,'ewldt_res',ncl)
+              WRITE(45,'(6e15.7)') (ewldt_res(i),i=1,NCL)
+            end if
             deallocate(wldna1res, ewlda1res, ewldea1res)
             deallocate(wldnm1res, ewldm1res, ewldem1res)
             deallocate(ewldmr1res)

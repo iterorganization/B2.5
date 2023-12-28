@@ -920,6 +920,9 @@ ${OBJDIR}/eirmod_ccoupl.${MOD}:
 ${OBJDIR}/eirmod_cestim.${MOD}:
 	touch ${OBJDIR}/eirmod_cestim.${MOD}
 
+${OBJDIR}/eirmod_cgeom.${MOD}:
+	touch ${OBJDIR}/eirmod_cgeom.${MOD}
+
 ${OBJDIR}/eirmod_cinit.${MOD}:
 	touch ${OBJDIR}/eirmod_cinit.${MOD}
 

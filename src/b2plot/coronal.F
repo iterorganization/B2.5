@@ -30,11 +30,7 @@ c     -------------------------------------------------------------------------
 
       integer is,ite,ine
       logical ltst0
-      real (kind=R8) :: trimg
-      external trimg
       intrinsic log
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
 
       call subini('getsa')
 

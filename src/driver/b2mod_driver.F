@@ -1443,6 +1443,7 @@ csw 09oct2012
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
         IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1473,6 +1474,7 @@ csw 09oct2012
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
