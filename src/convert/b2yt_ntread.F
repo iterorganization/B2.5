@@ -17,31 +17,35 @@ C
 *//DECLARATIONS//
 
       subroutine b2yt_ntread(
-     &  natm1, iatm1, nmol1, imol1, nion1, iion1)
+     &  mpg, natm1, iatm1, nmol1, imol1, nion1, iion1)
 c
 c  version : 06.11.97 22:11
 c
       use b2mod_types
       use b2mod_diag
+      use b2mod_math
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmfs
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     *   , only : nion, natm, nmol
+     ,   , only : nion, natm, nmol
       use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cinit
       use eirmod_cestim
+      use eirmod_eirbra
+     ,   , only : ncvtot
       use eirmod_braeir
-     :   , only : pux, puy, pvx, pvy
+     ,   , only : pux, puy, pvx, pvy
 #endif
       use b2mod_subsys
+      use b2us_map
       implicit none
 
 *  -- INPUT ARGUMENTS --
+      type(mapping), intent(in) :: mpg
       integer natm1, nmol1, nion1
       integer iatm1(natm), imol1(nmol), iion1(nion)
 
