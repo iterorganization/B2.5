@@ -41,7 +41,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2
+FCOPTS   = -O2 -xHost
 endif
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)

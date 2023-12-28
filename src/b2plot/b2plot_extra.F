@@ -174,9 +174,13 @@ c     filling array and computing rate
       integer nCv
       real (kind=R8) :: ne(nCv),te(nCv),mach(nCv),D11(0:8,0:8)
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
-      integer ir,i,j,iCv
+      integer ir,i,j,ii,iCv,ifex
       real (kind=R8) ::
-     1 rmin,rmax,tef,def,dnnn,tei,dej
+     1 rmin,rmax,tef,def,dnnn,tei,dej,fp1,fp2,fp3,
+     2 s01,s02,ds12,expo1,expo2,ccxm1,ccxm2,coumin,coumax,
+     3 demin,demax
+      REAL (KIND=R8) :: SLREAC_EXTRAP
+      EXTERNAL SLREAC_EXTRAP
 
       IR=1
       CALL SLREAC_b2plot(IR,FILNAM,H123,REAC,CRC)
@@ -209,35 +213,294 @@ c     filling array and computing rate
 
       rmin=1.0e30_R8
       rmax=1.0e-30_R8
+      if (RC2MN(IR).ne.-HUGE(1.0_R8)) then
+        demin=RC2MN(IR)+LOG(1.0e-8_R8)
+      else
+        demin=-huge(1.0_R8)
+      endif
+      if (RC2MX(IR).ne.HUGE(1.0_R8)) then
+        demax=RC2MX(IR)+LOG(1.0e-8_R8)
+      else
+        demax= huge(1.0_R8)
+      endif
       do iCv=1,nCv
         TEF=LOG(TE(iCv)/qe)
         DEF=LOG(ne(iCv)*1.0e-8_R8*1.0e-6_R8)
         dnnn=0.0_R8
-        DO I=0,8
-          TEI=TEF**I
-          if(
-     1       h123.eq.'H.1'.or.
-     1       h123.eq.'H.2'.or.
-     1       h123.eq.'H.5'.or.
-     1       h123.eq.'H.8'.or.
-     1       h123.eq.'H.11') then ! single polynomial fit
-              DNNN=DNNN+D11(I,0)*TEI
-          elseif(
-     1       h123.eq.'H.3'.or.
-     1       h123.eq.'H.4'.or.
-     1       h123.eq.'H.6'.or.
-     1       h123.eq.'H.7'.or.
-     1       h123.eq.'H.9'.or.
-     1       h123.eq.'H.10'.or.
-     1       h123.eq.'H.12') then
-            DO J=0,8
-              DEJ=DEF**J
-              DNNN=DNNN+D11(I,J)*TEI*DEJ
-            ENDDO
+        if(
+     1   h123.eq.'H.1'.or.
+     1   h123.eq.'H.2'.or.
+     1   h123.eq.'H.5'.or.
+     1   h123.eq.'H.8'.or.
+     1   h123.eq.'H.11') then ! single polynomial fit
+          IF (TEF.LT.RC1MN(IR)) THEN
+            IF (IF1MN(IR).LT.0) THEN ! Linear extrapolation of fit
+              S01 = RC1MN(IR)
+              S02 = LOG(1.25_R8)+RC1MN(IR)
+              DS12 = S02-S01
+              EXPO1 = D11(8,0)
+              EXPO2 = D11(8,0)
+              DO II = 7, 0, -1
+                EXPO1 = EXPO1*S01+D11(II,0)
+                EXPO2 = EXPO2*S02+D11(II,0)
+              END DO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMIN=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MN(IR).GT.0) THEN ! use IF1MN asymptotic expression
+              COUMIN=D11(8,0)
+              DO II = 7, 0, -1
+                COUMIN = COUMIN * RC1MN(IR) + D11(II,0)
+              END DO
+              IFEX=IF1MN(IR)
+              COUMIN=EXP(COUMIN)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
+     .                           FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
+            ELSE
+              DO I=0,8
+                TEI=RC1MN(IR)**I
+                DNNN=DNNN+D11(I,0)*TEI
+              ENDDO
+            ENDIF
+          ELSEIF (TEF.GT.RC1MX(IR)) THEN
+            IF (IF1MX(IR).LT.0) THEN
+              S01 = RC1MX(IR)
+              S02 = LOG(0.75_R8)+RC1MX(IR)
+              DS12 = S02-S01
+              EXPO1 = D11(8,0)
+              EXPO2 = D11(8,0)
+              DO II = 7, 0, -1
+                EXPO1 = EXPO1*S01+D11(II,0)
+                EXPO2 = EXPO2*S02+D11(II,0)
+              END DO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMAX=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MX(IR).GT.0) THEN
+              COUMAX=D11(8,0)
+              DO II = 7, 0, -1
+                COUMAX = COUMAX * RC1MX(IR) + D11(II,0)
+              END DO
+              IFEX=IF1MX(IR)
+              COUMAX=EXP(COUMAX)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
+     .                           FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
+            ELSE
+              DO I=0,8
+                TEI=RC1MX(IR)**I
+                DNNN=DNNN+D11(I,0)*TEI
+              ENDDO
+            ENDIF
           ELSE
-c           write(*,*) 'Do not yet know about ',h123
+            DO I=0,8
+              TEI=TEF**I
+              DNNN=DNNN+D11(I,0)*TEI
+            ENDDO
           ENDIF
-        enddo
+          if (earrh(ir).gt.0.0) dnnn=dnnn-earrh(ir)/(te(iCv)/qe)
+        elseif(
+     1     h123.eq.'H.3'.or.
+     1     h123.eq.'H.4'.or.
+     1     h123.eq.'H.6'.or.
+     1     h123.eq.'H.7'.or.
+     1     h123.eq.'H.9'.or.
+     1     h123.eq.'H.10'.or.
+     1     h123.eq.'H.12') then
+          IF (TEF.LT.RC1MN(IR)) THEN
+            IF (IF1MN(IR).EQ.0) THEN
+              DO I = 0, 8
+                TEI=RC1MN(IR)**I
+                DO J = 0, 8
+                  DEJ=DEF**J
+                  DNNN=DNNN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+            ELSEIF (IF1MN(IR).LT.0) THEN
+              S01=RC1MN(IR)
+              S02=LOG(1.25_R8)+RC1MN(IR)
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+S01**I*DEF**J*D11(I,J)
+                  EXPO2=EXPO2+S02**I*DEF**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMIN=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MN(IR).GT.0) THEN
+              COUMIN=0.0_R8
+              DO I = 0, 8
+                TEI=RC1MN(IR)**I
+                DO J = 0, 8
+                  DEJ=DEF**J
+                  COUMIN=COUMIN+D11(I,J)*TEI*DEJ
+                END DO
+              END DO
+              IFEX=IF1MN(IR)
+              COUMIN=EXP(COUMIN)
+              DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
+     .                           FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
+            ENDIF
+          ELSEIF (TEF.GT.RC1MX(IR)) THEN
+            IF (IF1MX(IR).EQ.0) THEN
+              DO I = 0, 8
+                TEI=RC1MX(IR)**I
+                DO J = 0, 8
+                  DEJ=DEF**J
+                  DNNN=DNNN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+            ELSEIF (IF1MX(IR).LT.0) THEN
+              S01=RC1MX(IR)
+              S02=LOG(0.75_R8)+RC1MX(IR)
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+S01**I*DEF**J*D11(I,J)
+                  EXPO2=EXPO2+S02**I*DEF**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMAX=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF1MX(IR).GT.0) THEN
+              COUMAX=0.0_R8
+              DO I = 0, 8
+                TEI=RC1MX(IR)**I
+                DO J = 0, 8
+                  DEJ=DEF**J
+                  COUMAX=COUMAX+D11(I,J)*TEI*DEJ
+                END DO
+              END DO
+              IFEX=IF1MX(IR)
+              COUMAX=EXP(COUMAX)
+              DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
+     .                           FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
+            ENDIF
+          ELSEIF (DEF.LT.DEMIN) THEN
+            IF (IF2MN(IR).LT.0) THEN
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMIN**J
+                  DNNN=DNNN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+            ELSEIF (IF2MN(IR).LT.0) THEN
+              S01=DEMIN
+              S02=LOG(1.25_R8)+DEMIN
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+TEF**I*S01**J*D11(I,J)
+                  EXPO2=EXPO2+TEF**I*S02**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMIN=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF2MN(IR).GT.0) THEN
+              COUMIN=0.0_R8
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMIN**J
+                  COUMIN=COUMIN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+              IFEX=IF2MN(IR)
+              COUMIN=EXP(COUMIN)
+              DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,
+     .                           FP2L(IR,1),FP2L(IR,2),FP2L(IR,3))
+            ENDIF
+          ELSEIF (DEF.GT.DEMAX) THEN
+            IF (IF2MX(IR).LT.0) THEN
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMAX**J
+                  DNNN=DNNN+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+            ELSEIF (IF2MX(IR).LT.0) THEN
+              S01=DEMAX
+              S02=LOG(0.75_R8)+DEMAX
+              DS12 = S02-S01
+              EXPO1 = 0.0_R8
+              EXPO2 = 0.0_R8
+              DO I = 0, 8
+                DO J = 0, 8
+                  EXPO1=EXPO1+TEF**I*S01**J*D11(I,J)
+                  EXPO2=EXPO2+TEF**I*S02**J*D11(I,J)
+                ENDDO
+              ENDDO
+              CCXM1=EXPO1
+              CCXM2=EXPO2
+              FP1=CCXM1+(CCXM2-CCXM1)/DS12*(-S01)
+              FP2=      (CCXM2-CCXM1)/DS12
+              FP3=0.0_R8
+              IFEX=3
+              COUMAX=EXP(EXPO1)
+              DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,FP1,FP2,FP3)
+            ELSEIF (IF2MX(IR).GT.0) THEN
+              COUMAX=0.0_R8
+              DO I = 0, 8
+                TEI=TEF**I
+                DO J = 0, 8
+                  DEJ=DEMAX**J
+                  COUMAX=COUMAX+D11(I,J)*TEI*DEJ
+                ENDDO
+              ENDDO
+              IFEX=IF2MX(IR)
+              COUMAX=EXP(COUMAX)
+              DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,
+     .                           FP2R(IR,1),FP2R(IR,2),FP2R(IR,3))
+            ENDIF
+          ELSE
+            DO I = 0, 8
+              TEI=TEF**I
+              DO J = 0, 8
+                DEJ=DEF**J
+                DNNN=DNNN+D11(I,J)*TEI*DEJ
+              ENDDO
+            ENDDO
+          ENDIF
+        ELSE
+c         write(*,*) 'Do not yet know about ',h123
+        ENDIF
+        dnnn=dnnn+log(1.0e-6_R8)
         if(dnnn.gt.log(1.0e30_R8)) then
           dnnn=1.0e30_R8
         elseif(dnnn.lt.log(1.0e-30_R8)) then
@@ -330,18 +593,21 @@ C                                   (ON CREAC(..,J,IR),J=1,9)
 C                   N           =0  ELSE
 C
 #     include <eir_reac.F>
-      real(kind=R8) :: CONST
-      integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IREAC,INDFF,IFLG
+      real(kind=R8) :: CONST, FPARM(3)
+      REAL(kind=R8) :: R1MN, R1MX, R2MN, R2MX
+      integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IANF,IREAC,INDFF,IFLG
       integer IFTFLG(0:5)
-      CHARACTER*80 ZEILE, LAST_TEX
+      CHARACTER*80 ZEILE, LAST_TEX, ULINE
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
       CHARACTER*1 BACK
       CHARACTER*8 SECTION
       CHARACTER*9 FITFLAG
-      CHARACTER*4 CHR
-      CHARACTER*3 CHRL, CHRR
+      CHARACTER*11 REACSTR
+      CHARACTER*4 CHR, CHRA, BEND
+      CHARACTER*3 CH1L, CH1R, CH2L, CH2R
+      CHARACTER*7 C1L, C1R, C2L, C2R
       LOGICAL LCONST
-      LOGICAL :: LGEMIN,LGEMAX
+      LOGICAL :: LGC1MIN,LGC1MAX,LGC2MIN,LGC2MAX
       logical open_file
       external open_file, xerrab, xertst
 C
@@ -351,18 +617,29 @@ C
 ! defining backslash character
       BACK=ACHAR(92)
       SECTION=BACK//'section'
+      BEND=BACK//'end'
 ! set some defaults
-      LGEMIN=.FALSE.
-      LGEMAX=.FALSE.
       ISWR(IR)=0
       CONST=0.
       CHR=' l0 '
       I0=0
 ! header of dataset (optional)
       FITFLAG='fit-flag '
+      IFTFLG=0
+      EARRH(IR) = 0.0_R8
+      RC1MN(IR) =-HUGE(1.0_R8)
+      RC1MX(IR) = HUGE(1.0_R8)
+      RC2MN(IR) =-HUGE(1.0_R8)
+      RC2MX(IR) = HUGE(1.0_R8)
 C     Defaults: no asymptotics
-      CHRL='ll0'
-      CHRR='lr0'
+      CH1L='ll0'
+      CH1R='lr0'
+      CH2L='ll0'
+      CH2R='lr0'
+      C1L = 'XXMIN'
+      C1R = 'XXMAX'
+      C2L = 'YYMIN'
+      C2R = 'YYMAX'
 C
       IF (INDEX(CRC,'EI').NE.0.OR.
      .    INDEX(CRC,'DS').NE.0) ISWR(IR)=1
@@ -400,107 +677,185 @@ C
         READ (H123(3:4),'(I2)') ISW
       ENDIF
 C
-      IREAC=INDEX(REAC,' ')-1
-      IF (IREAC.LT.0) IREAC=LEN(REAC)
+      REACSTR=REPEAT(' ',11)
+      IANF=VERIFY(REAC,' ')
+      IF (IANF > 0) THEN
+        IREAC=INDEX(REAC(IANF:),' ')-1
+        IF (IREAC.LT.0) IREAC=LEN(REAC(IANF:))
+        REACSTR(2:IREAC+1)=REAC(IANF:IREAC+IANF-1)
+C  ADD ONE MORE BLANK, IF POSSIBLE
+        IREAC=IREAC+2
+      ELSE
+        IF (.NOT.LCONST) THEN
+          call xerrab ('No reaction name specified')
+        END IF
+      END IF
 C
       IF (ISW.EQ.0) THEN
         CHR=' p0 '
+        CHRA=' p-1'
         I0=-1
         MODCLF(IR)=MODCLF(IR)+1
         IFLG=0
         IFTFLG(IFLG)=2
       ELSEIF (ISW.EQ.1) THEN
         CHR=' a0 '
-        CHRL='al0'
-        CHRR='ar0'
+        CHRA=' a-1'
+        CH1L='al0'
+        CH1R='ar0'
         I0=0
         MODCLF(IR)=MODCLF(IR)+10
         IFLG=1
         IFTFLG(IFLG)=0
+        C1L = 'ELABMIN'
+        C1R = 'ELABMAX'
       ELSEIF (ISW.EQ.2) THEN
         CHR=' b0 '
-        CHRL='bl0'
-        CHRR='br0'
+        CHRA=' b-1'
+        CH1L='bl0'
+        CH1R='br0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+100
         IFLG=2
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
       ELSEIF (ISW.EQ.3) THEN
         CHR=' c0 '
-        CHRL='cl0'
-        CHRR='cr0'
+        CHRA=' c-1'
+        CH1L='cl0'
+        CH1R='cr0'
+        CH2L='cb0'
+        CH2R='ct0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+200
         IFLG=2
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
+        C2L = 'E2MIN'
+        C2R = 'E2MAX'
       ELSEIF (ISW.EQ.4) THEN
         CHR=' d0 '
-        CHRL='dl0'
-        CHRR='dr0'
+        CHRA=' d-1'
+        CH1L='dl0'
+        CH1R='dr0'
+        CH2L='db0'
+        CH2R='dt0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+300
         IFLG=2
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
+        C2L = 'N2MIN'
+        C2R = 'N2MAX'
       ELSEIF (ISW.EQ.5) THEN
         CHR=' e0 '
-        CHRL='el0'
-        CHRR='er0'
+        CHRA=' e-1'
+        CH1L='el0'
+        CH1R='er0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+1000
+        IFLG=3
+        IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
       ELSEIF (ISW.EQ.6) THEN
         CHR=' f0 '
-        CHRL='fl0'
-        CHRR='fr0'
+        CHRA=' f-1'
+        CH1L='fl0'
+        CH1R='fr0'
+        CH2L='fb0'
+        CH2R='ft0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+2000
         IFLG=3
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
+        C2L = 'E2MIN'
+        C2R = 'E2MAX'
       ELSEIF (ISW.EQ.7) THEN
         CHR=' g0 '
-        CHRL='gl0'
-        CHRR='gr0'
+        CHRA=' g-1'
+        CH1L='gl0'
+        CH1R='gr0'
+        CH2L='gb0'
+        CH2R='gt0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+3000
         IFLG=3
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
+        C2L = 'N2MIN'
+        C2R = 'N2MAX'
       ELSEIF (ISW.EQ.8) THEN
         CHR=' h0 '
-        CHRL='hl0'
-        CHRR='hr0'
+        CHRA=' h-1'
+        CH1L='hl0'
+        CH1R='hr0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+10000
         IFLG=4
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
       ELSEIF (ISW.EQ.9) THEN
         CHR=' i0 '
-        CHRL='il0'
-        CHRR='ir0'
+        CHRA=' i-1'
+        CH1L='il0'
+        CH1R='ir0'
+        CH2L='ib0'
+        CH2R='it0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+20000
         IFLG=4
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
+        C2L = 'E2MIN'
+        C2R = 'E2MAX'
       ELSEIF (ISW.EQ.10) THEN
         CHR=' j0 '
-        CHRL='jl0'
-        CHRR='jr0'
+        CHRA=' j-1'
+        CH1L='jl0'
+        CH1R='jr0'
+        CH2L='jb0'
+        CH2R='jt0'
         I0=1
         MODCLF(IR)=MODCLF(IR)+30000
         IFLG=4
         IFTFLG(IFLG)=0
+        C1L = 'T1MIN'
+        C1R = 'T1MAX'
+        C2L = 'N2MIN'
+        C2R = 'N2MAX'
       ELSEIF (ISW.EQ.11) THEN
         CHR=' k0 '
-        CHRL='kl0'
-        CHRR='kr0'
+        CHRA=' k-1'
+        CH1L='kl0'
+        CH1R='kr0'
         I0=1
         IFLG=5
         IFTFLG(IFLG)=0
+        C1L = 'P1MIN'
+        C1R = 'P1MAX'
       ELSEIF (ISW.EQ.12) THEN
         CHR=' l0 '
-        CHRL='ll0'
-        CHRR='lr0'
+        CHRA=' l-1'
+        CH1L='ll0'
+        CH1R='lr0'
+        CH2L='lb0'
+        CH2R='lt0'
         I0=1
         IFLG=5
         IFTFLG(IFLG)=0
+        C1L = 'P1MIN'
+        C1R = 'P1MAX'
+        C2L = 'P2MIN'
+        C2R = 'P2MAX'
       ENDIF
 C
       IF (.NOT.LCONST) THEN
@@ -521,7 +876,7 @@ C
         IF (INDEX(ZEILE,'H.').NE.0 .and.
      .      INDEX(ZEILE,'section').NE.0) GOTO 990
         IF (INDEX(ZEILE,'Reaction ').EQ.0.or.
-     .      INDEX(ZEILE,REAC(1:ireac)).EQ.0) GOTO 2
+     .      INDEX(ZEILE,REACSTR(1:ireac)).EQ.0) GOTO 2
       ENDIF
 C
 C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
@@ -531,11 +886,17 @@ C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
     3     READ (29,'(A80)',END=990) ZEILE
           INDFF=INDEX(ZEILE,FITFLAG)
 c  skip empty lines in header
-          IF (INDEX(ZEILE,CHR)+INDFF.EQ.0) GOTO 3
+          IF (INDEX(ZEILE,CHR)+INDEX(ZEILE,CHRA)+INDFF.EQ.0) GOTO 3
 c  input line found which either contains fit-flag FITFLAG,
 c       or the reaction identifier a0,b0,...k0
+c       or the Arrhenius prefactor a-1,b-1,...k-1
           IF (INDFF > 0) THEN
             READ (ZEILE(INDFF+8:80),*) IFTFLG(IFLG)
+            GOTO 3
+          ENDIF
+          IF (INDEX(ZEILE,CHRA) > 0) THEN
+c  read Arrhenius parameter
+            READ (ZEILE((INDFF+8):80),*) EARRH(IR)
             GOTO 3
           ENDIF
 
@@ -559,45 +920,6 @@ c  READ ONLY THE NON-ZERO PARAMETERS
             ENDDO
     9       CONTINUE
           ENDIF
-          IF (INDEX(ZEILE,CHRL).NE.0) THEN
-            IND=0
-            DO 5 I=1,3
-              IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
-              READ (ZEILE((IND+3):80),'(E20.12)') fparm(IR,i)
-    5       CONTINUE
-            LGEMIN=.true.
-            READ (29,'(A80)',END=990) ZEILE
-          ENDIF
-          IF (INDEX(ZEILE,CHRR).NE.0) THEN
-            IND=0
-            DO I=4,6
-              IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
-              READ (ZEILE((IND+3):80),'(E20.12)') fparm(IR,i)
-            END DO
-            LGEMAX=.true.
-            READ (29,'(A80)',END=990) ZEILE
-          ENDIF
-c
-          rcmn(ir)=-20.
-          rcmx(ir)= 20.
-          ifexmn(ir)=0
-          ifexmx(ir)=0
-c
-          if (lgemin) then
-            IND=INDEX(ZEILE,'=')
-            READ (ZEILE((IND+2):80),'(E12.5)') rcmn(IR)
-            rcmn(ir)=log(rcmn(ir))
-            ifexmn(ir)=5
-            READ (29,'(A80)',END=990) ZEILE
-          endif
-          if (lgemax) then
-            IND=INDEX(ZEILE,'=')
-            READ (ZEILE((IND+2):80),'(E12.5)') rcmx(IR)
-            rcmx(ir)=log(rcmx(ir))
-            ifexmx(ir)=5
-            READ (29,'(A80)',END=990) ZEILE
-          endif
-C
         ELSE
           CREAC(1,I0,IR)=CONST
           DO 6 J=2,9
@@ -633,6 +955,112 @@ cdr           write (6,*) IH,(CREAC(I,K,IR),K=J*3+1,J*3+3)
         READ (29,'(A80)',END=990) ZEILE
 C
       ENDIF
+
+C  NEXT: READ ASYMPTOTICS INFORMATION FROM ATOMIC DATA FILE
+C        HYDHEL, AMJUEL, AMMONX, H2VIBR, METHANE.
+
+C FOR 1D OR 2D DATASETS. 4 BOUNDARIES, LEFT1, RIGHT1, LEFT2, RIGHT2.
+C FOR 1D: ONLY "LEFT1" AND "RIGHT1" ARE USED
+
+      IF (ISW.EQ.0) GOTO 2000    ! NO ASYMPTOTICS FOR POTENTIALS
+
+c  INDICATE, IF EXTRAPOLATION COEFFICIENTS (fp1l,fp1r,fp2l,fp2r) ARE FOUND ON DATA FILE
+c  DEFAULT: NO DATA FOUND
+      LGC1MIN=.FALSE.
+      LGC1MAX=.FALSE.
+      LGC2MIN=.FALSE.
+      LGC2MAX=.FALSE.
+
+C  FLAG FOR CHOICE OF EXTRAPOLATION OPTION:
+C  DEFAULT ASYMPTOTIC EXPRESSION  (...=0): NO ASYMPTOTICS
+C  DEFAULT ASYMPTOTIC EXPRESSION  (...=1): SET TO ZERO BEYOND LAST VALID POINT
+C  DEFAULT ASYMPTOTIC EXPRESSION  (...=4): TAKE LAST VALID POINT AT r1mn,r1mx,....
+C  DEFAULT ASYMPTOTIC EXPRESSION  (...=5): 2ND-ORDER POLYNOMIAL BEYOND LAST VALID POINT
+C                                          (OLD DEFAULT FOR CROSS-SECTIONS)
+c  AND EXTRAPOLATE CONSTANT FROM THERE
+      IF1MN(IR) = 0
+      IF1MX(IR) = 0
+      IF2MN(IR) = 0
+      IF2MX(IR) = 0
+
+cdr Try to read asymptotics, unless already read: jfeximn,jfeximx /= 0
+cdr Even if jfeximn,jfeximx /= 0, read anyway, but later: do not use
+
+c  data for one "reaction IR" are located between "\begin" and "\end"
+!     BEND="\end" stops looking for asymptotics
+      DO WHILE(INDEX(ZEILE,BEND) == 0)
+
+        ULINE = ZEILE
+        CALL CHCASE(1,ULINE)
+c
+c  at this point we have found a card ZEILE which contains
+c  one of the extrapolation parameter identifiers al0,ar0,....,k0l,k0r
+c  that corresponds to the H.1, ....H.12 type of data IR.
+c  next: read up to three fit coefficients FP.L OR FP.R.
+c  CHR(2:2) is set to either character a,b,c,....,or k
+c
+        IF (INDEX(ZEILE,CH1L) /= 0) THEN
+          CALL SLREAC_READ_COEFFS (ZEILE,CHR(2:2),FPARM)
+          FP1L(IR,1:3) = FPARM(1:3)
+          LGC1MIN = .TRUE.
+        ENDIF
+        IF (INDEX(ZEILE,CH1R) /= 0) THEN
+          CALL SLREAC_READ_COEFFS (ZEILE,CHR(2:2),FPARM)
+          FP1R(IR,1:3) = FPARM(1:3)
+          LGC1MAX = .TRUE.
+        END IF
+
+        IF (INDEX(ZEILE,CH2L) /= 0) THEN
+          CALL SLREAC_READ_COEFFS (ZEILE,CHR(2:2),FPARM)
+          FP2L(IR,1:3) = FPARM(1:3)
+          LGC2MIN = .TRUE.
+        END IF
+        IF (INDEX(ZEILE,CH2R) /= 0) THEN
+          CALL SLREAC_READ_COEFFS (ZEILE,CHR(2:2),FPARM)
+          FP2R(IR,1:3) = FPARM(1:3)
+          LGC2MAX = .TRUE.
+        END IF
+c
+c  currently foreseen asymptotic data identifiers in data files:
+c  c1l,c2l,c1r,c2r: ELABMIN, ELABMAX,
+c                   T1MIN,T1MAX,E2MIN,E2MAX,N2MIN,N2MAX,
+c                   P1MIN,P1MAX,P2MIN,P2MAX
+        IF (INDEX(ULINE,TRIM(C1L)) /= 0) THEN
+          CALL SLREAC_READ_RANGE(ULINE,C1L,'EXT-FLG',R1MN,IF1MN(IR))
+          RC1MN(IR) = LOG(R1MN)
+c  old default: 2nd-order polynomial beyond valid range, with coefs. FPL1
+          IF (IF1MN(IR) == 0 .AND. LGC1MIN) IF1MN(IR) = 5
+c  default extrapolation from r1mn (by constant continuation) will be: jfex1mn=4
+          IF (IF1MN(IR) == 0) IF1MN(IR) = 4
+        END IF
+        IF (INDEX(ULINE,TRIM(C1R)) /= 0) THEN
+          CALL SLREAC_READ_RANGE(ULINE,C1R,'EXT-FLG',R1MX,IF1MX(IR))
+          RC1MX(IR) = LOG(R1MX)
+c  old default: 2nd-order polynomial beyond valid range, with coefs. FPR1
+          IF (IF1MX(IR) == 0 .AND. LGC1MAX) IF1MX(IR) = 5
+c  default extrapolation from r1mx (by constant continuation) will be: jfex1mx=4
+          IF (IF1MX(IR) == 0) IF1MX(IR) = 4
+        END IF
+        IF (INDEX(ULINE,TRIM(C2L)) /= 0) THEN
+          CALL SLREAC_READ_RANGE(ULINE,C2L,'EXT-FLG',R2MN,IF2MN(IR))
+          RC2MN(IR) = LOG(R2MN)
+c  old default: 2nd-order polynomial beyond valid range, with coefs. FPL2
+          IF (IF2MN(IR) == 0 .AND. LGC2MIN) IF2MN(IR) = 5
+c  default extrapolation from r2mn (by constant continuation) will be: jfex2mn=4
+          IF (IF2MN(IR) == 0) IF2MN(IR) = 4
+        END IF
+        IF (INDEX(ULINE,TRIM(C2R)) /= 0) THEN
+          CALL SLREAC_READ_RANGE(ULINE,C2R,'EXT-FLG',R2MX,IF2MX(IR))
+          RC2MX(IR) = LOG(R2MX)
+c  old default: 2nd-order polynomial beyond valid range, with coefs. FPr2
+          IF (IF2MX(IR) == 0 .AND. LGC2MAX) IF2MX(IR) = 5
+c  default extrapolation from r2mx (by constant continuation) will be: jfex2mx=4
+          IF (IF2MX(IR) == 0) IF2MX(IR) = 4
+        END IF
+
+        READ (29,'(A80)',END=990) ZEILE
+      END DO
+ 2000 CONTINUE
 C
       CLOSE (UNIT=29)
 C
@@ -646,6 +1074,113 @@ C
       call subend ()
       RETURN
       END SUBROUTINE SLREAC_b2plot
+
+      SUBROUTINE SLREAC_READ_COEFFS (ZEILE,CH,FP)
+      use b2mod_types
+      implicit none
+c  ZEILE is in upper case, and CH is found.
+c  CH is: a,b,c,.....k,l, (depending on H.1, H.2, ...H.12)
+c  read up to three parameters FP(i), i=1,3 formatted: '(E20.12)'
+c  to be used for extrapolation
+      CHARACTER(80), INTENT(IN) :: ZEILE
+      CHARACTER(1), INTENT(IN) :: CH
+      REAL(kind=R8), INTENT(OUT) :: FP(3)
+      INTEGER :: I, IND, INC
+
+      IND=0
+      DO I=1,3
+        INC=INDEX(ZEILE((IND+1):80),CH)
+        IF (INC.GT.0) THEN
+           IND=IND+INDEX(ZEILE((IND+1):80),CH)
+           READ (ZEILE((IND+3):80),'(E20.12)') FP(I)
+        ENDIF
+      END DO
+      RETURN
+
+      END SUBROUTINE SLREAC_READ_COEFFS
+
+      SUBROUTINE SLREAC_READ_RANGE(ZEILE,KEY1,KEY2,RNG,IFX)
+      use b2mod_types
+      implicit none
+c  called from slreac, after the original fit coefficients for reaction IR
+c  are read.
+c  At this point an extrapolation card ZEILE belonging to this reaction IR
+c  has already been found.
+c
+c  This routine:
+c  Reads validity range from atomic data file:
+c  Search in ZEILE for key1, key2 and return: RNG, IFX
+
+c  key1: 'ELABMIN','ELABMAX','T1MIN','T1MAX','E2MIN','E2MAX',
+C        'N2MIN','N2MAX','P1MIN','P1MAX','P1MIN','P1MAX'=,
+C                    read RNG (unformatted, real)
+c  key2: 'EXT-FLG'= ,read IFX (unformatted, integer)
+
+      CHARACTER(80), INTENT(IN) :: ZEILE
+      CHARACTER(7), INTENT(IN) :: KEY1, KEY2
+      REAL(kind=R8), INTENT(OUT) :: RNG
+      INTEGER, INTENT(OUT) :: IFX
+      INTEGER :: IND1, IND2, INDE, INDP, INDX, INDA, INDG
+      CHARACTER(20) :: FORM
+
+      IND1 = INDEX(ZEILE,TRIM(KEY1))
+      IND2 = INDEX(ZEILE,TRIM(KEY2))
+
+      RNG = 0.0_R8
+      IFX = 0
+
+      IF (IND1 > 0) THEN
+        INDG = INDEX(ZEILE,'=')
+        INDE = INDG + VERIFY(ZEILE(INDG+1:),'+-0123456789DEed. ') - 1
+        INDP = SCAN(ZEILE(INDG+1:),'.')
+        INDX = SCAN(ZEILE(INDG+1:),'EDed')
+        INDA = SCAN(ZEILE(INDG+1:),'+-0123456789.')
+        FORM=REPEAT(' ',20)
+        WRITE (FORM,'(A2,I0,A1,I0,A1)')
+     .         '(E',INDX+3-INDA+1,'.',INDX-INDP-1,')'
+        READ (ZEILE(INDG+INDA:INDE),FORM) RNG
+      END IF
+
+      IF (IND2 > 0) READ (ZEILE(IND2+7:),*) IFX
+      RETURN
+
+      END SUBROUTINE SLREAC_READ_RANGE
+
+      FUNCTION SLREAC_EXTRAP(PARM,FPARLIM,IFLAG,FP1,FP2,FP3)
+      use b2mod_types
+      IMPLICIT NONE
+
+      REAL(kind=R8), INTENT(IN) :: PARM, FPARLIM, FP1, FP2, FP3
+      INTEGER, INTENT(IN)  :: IFLAG
+      REAL(kind=R8)             :: X, EL, SLREAC_EXTRAP
+
+      IF (IFLAG.EQ.1) THEN
+C JUST RETURN ZERO BELOW THRESHOLD
+        SLREAC_EXTRAP = 1.0e-30_R8
+      ELSEIF (IFLAG.EQ.2) THEN
+C  JANEV TYPE 1, HIGH ENERGY EXTRAPOLATION OF CROSS-SECTIONS
+C  EXTRAPOLATION AT HIGH ENERGY END FOR REACTIONS WITH A NONZERO THRESHOLD
+C  FP1 SHOULD BE = E_THRESHOLD (EV)
+C  FP2 SCALING FACTOR, SHOULD BE COMPUTED FROM FPARLIM
+C  FP3=-N
+        EL = EXP(PARM)
+        X = EL/FP1
+        SLREAC_EXTRAP=FP2*X**FP3*LOG(X)
+      ELSEIF (IFLAG.EQ.3) THEN
+C  LINEAR EXTRAPOLATION OF LN(FF) IN PARM= LN(P)
+        SLREAC_EXTRAP=EXP(FP1+FP2*PARM)
+      ELSEIF (IFLAG.EQ.4) THEN
+C   EXTRAPOLATION WITH A CONSTANT
+        SLREAC_EXTRAP=FPARLIM
+      ELSEIF (IFLAG.EQ.5) THEN
+C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
+        SLREAC_EXTRAP=EXP(FP1+FP2*PARM+FP3*PARM**2)
+      ELSE
+        SLREAC_EXTRAP=0.0_R8
+      ENDIF
+      RETURN
+
+      END FUNCTION SLREAC_EXTRAP
 
       subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,lambda,
      1 safetyfactor,cr,cz,crx,bb,ne,te,ti,na,transport)

@@ -602,6 +602,10 @@ cank
               call read_title(44)
               READ (44,1028)
             end if
+            if (jvft44.ge.20201006) then
+              call read_title(44)
+              READ (44,1028)
+            end if
           END IF
         end if
 
