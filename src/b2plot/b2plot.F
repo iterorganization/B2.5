@@ -47,6 +47,8 @@ c 2002-09-11: logic revised
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_ctrig
+      use eirmod_cgeom
+     , , only: ncltal
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
       use eirmod_extrab25
