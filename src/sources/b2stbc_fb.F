@@ -241,7 +241,7 @@
      &        i, j, k, l,
 #endif
      &        ib, iss,
-     &        ifc, ifc1, ifc2, ic1, ic2
+     &        iFc, iFc1, iFc2, ic1, ic2
 #ifdef WG_TODO
       integer, save :: ncall_old, ncall_gap, n_flux_zero
       integer ixl1, ixr1, ixl2, ixr2, icount, istrai
@@ -951,11 +951,11 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                  ifc1 = mpg%fsFcP(mpg%iFssep,1)
-                  ifc2 = ifc1 + mpg%fsFcP(mpg%iFssep,2) - 1
+                  iFc1 = mpg%fsFcP(mpg%iFssep,1)
+                  iFc2 = iFc1 + mpg%fsFcP(mpg%iFssep,2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
-                  do iFc = ifc1, ifc2
+                  do iFc = iFc1, iFc2
                     ic1 = mpg%fcCv(mpg%fsFc(iFc),1)
                     ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
                     if(mpg%cvOnClosedSurface(ic1) .or.

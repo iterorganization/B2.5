@@ -1,4 +1,4 @@
-      subroutine b2mds(mpg,gm,state,state_ext,nsd_local,BoRiS)
+      subroutine b2mds(mpg,gm,state,state_ext,nsd_local,switch)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2plot
@@ -58,7 +58,6 @@
 #     include "mdslib.inc"
 #endif
       integer nsd_local
-      real (kind=R8) :: BoRiS
       character*24 hlp_frm
       integer iflag
       character*256 filename
@@ -387,7 +386,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .  'Inconsistent values of ndepth_nml and plate_model')
 #ifdef WG_TODO
-      call get_wall_data(nx,ny,ns,BoRiS,ex)
+      call get_wall_data(nx,ny,ns,switch%BoRiS,ex)
 #endif
 #ifdef B25_EIRENE
       filename=fort_lc//'44'

@@ -85,8 +85,7 @@
 *   ..procedures
       intrinsic nint
       external xertst, sfill, b2saxpy, ipgetr, ipgeti
-      external b2xvsg, b2xvff, b2xvps, b2xxgs,
-     1   b2stbc_phys
+      external b2xvsg, b2xvff, b2xvps, b2stbc_phys
 #ifdef WG_TODO
      & , b2stbc_bas, b2ssum                                            !srv 27.06.21
 #endif
@@ -378,20 +377,6 @@
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
 !WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
 !WG_RM     &    switch, geo, pl, dv, srw, main_call)
-
-* ..compute conditions on the cuts
-*     (no flow)
-!WG_TODO*   ..compute suitable large coefficient
-!WG_TODO      t0 = 1.0e20_R8*b2ssum(nCv,geo%cvVol,1)
-!WG_TODO*     (the dimension of t0 is m**3/s)
-!WG_TODO*   ..loop over species
-!WG_TODO      do is = 0, ns-1
-!WG_TODO*    ..set parallel momentum source
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
-!WG_TODO      enddo
 
 #ifdef WG_TODO
 c added 2001.11.26 dpc/xpb

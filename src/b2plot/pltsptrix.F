@@ -1,87 +1,62 @@
 c
       subroutine pltsptrix(physical)
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
-      use b2mod_boundary_namelist
+      use b2us_data
       implicit none
       logical physical
-      real (kind=R8) ::
-     *   x1,x2,y1,y2
-      integer ix,iy,ic,ix1,iiso
-      logical iniso
+      integer i,iCv,iFc,iFs,iVx1,iVx2,iXpt
 
 #ifndef PLPLOT
       call lastd
       if(scol .gt. 1) call gsplci(scol)
       call gslwsc_d(sepwidth)
 #endif
-      if(.not.physical) then
-#ifdef WG_TODO
-        do iy = -1, ny-1
-          ix1 = -1
-          ix = 0
-          do while (ix.lt.nx)
-            if(topiy(ix,iy).ne.ny+1 .and.
-     &         rightix(ix,iy).ne.nx+1) then
-              if(topix(rightix(ix,iy),rightiy(ix,iy)).ne.
-     &           rightix(topix(ix,iy),topiy(ix,iy))) then
-                ix1 = ix
-                x1=ix1-0.5_R8
-                y1=iy +0.5_R8
-                x2=ix1+0.5_R8
-                y2=iy +0.5_R8
-                call lined_d(x1,y1,x2,y2)
-                do while(leftix(ix1,iy).gt.-2 .and.
-     &                 leftix(topix(ix1,iy),topiy(ix1,iy)).eq.ix1-1)
-                  ix1 = ix1-1
-                  iniso = .false.
-                  do iiso = 1, nniso
-                    iniso = iniso .or.
-     1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
-     2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-                  end do
-                  if(.not.iniso) then
-                    x1=ix1-0.5_R8
-                    y1=iy +0.5_R8
-                    x2=ix1+0.5_R8
-                    y2=iy +0.5_R8
-                    call lined_d(x1,y1,x2,y2)
-                  end if
-                end do
-                ix1=ix+1
-                x1=ix1-0.5_R8
-                y1=iy +0.5_R8
-                x2=ix1+0.5_R8
-                y2=iy +0.5_R8
-                call lined_d(x1,y1,x2,y2)
-                do while(rightix(ix1,iy).lt.nx+1 .and.
-     &                   rightix(topix(ix1,iy),topiy(ix1,iy)).eq.ix1+1)
-                  ix1=ix1+1
-                  iniso = .false.
-                  do iiso = 1, nniso
-                    iniso = iniso .or.
-     1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
-     2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-                  end do
-                  if(.not.iniso) then
-                    x1=ix1-0.5_R8
-                    y1=iy +0.5_R8
-                    x2=ix1+0.5_R8
-                    y2=iy +0.5_R8
-                    call lined_d(x1,y1,x2,y2)
-                  end if
-                end do
-                ix1=-1
-              end if
-            end if
-            if (ix1.ne.-1 .and. rightix(ix1,iy).ne.nx+1) then
-              ix=ix1+1
-            else
-              ix=ix+1
-            end if
+      if(physical) then
+        do iXpt = 1, mpg%nXpt
+          iFs = mpg%vxFs(mpg%Xpt(iXpt))
+          do i = 1, mpg%fsFcP(iFs,2)
+            iFc = mpg%fsFc(mpg%fsFcP(iFs,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            call lined_d(geo%vxX(iVx1), geo%vxY(iVx1),
+     &                   geo%vxX(iVx2), geo%vxY(iVx2))
           end do
         end do
+        if (mpg%nXpt.eq.0.and.mpg%iFssep.gt.0) then
+          do i = 1, mpg%fsFcP(mpg%iFssep,2)
+            iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            call lined_d(geo%vxX(iVx1), geo%vxY(iVx1),
+     &                   geo%vxX(iVx2), geo%vxY(iVx2))
+          end do
+        end if
+      else if(mpg%isClassicalGrid.eq.1) then
+        do iXpt = 1, mpg%nXpt
+          iFs = mpg%vxFs(mpg%Xpt(iXpt))
+          do i = 1, mpg%fsFcP(iFs,2)
+            iFc = mpg%fsFc(mpg%fsFcP(iFs,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            call lined_d(real(vxIx(iVx1),R8)-0.5_R8,
+     &                   real(vxIy(iVx1),R8)-0.5_R8,
+     &                   real(vxIx(iVx2),R8)+0.5_R8,
+     &                   real(vxIx(iVx2),R8)-0.5_R8)
+          end do
+        end do
+        if (mpg%nXpt.eq.0.and.mpg%iFssep.gt.0) then
+          do i = 1, mpg%fsFcP(mpg%iFssep,2)
+            iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            call lined_d(real(vxIx(iVx1),R8)-0.5_R8,
+     &                   real(vxIy(iVx1),R8)-0.5_R8,
+     &                   real(vxIx(iVx2),R8)+0.5_R8,
+     &                   real(vxIx(iVx2),R8)-0.5_R8)
+          end do
+        end if
+#ifdef WG_TODO
         do ix = -1, nx
           do iy = -1, ny
             if(rightix(ix,iy).ne.ix+1) then
@@ -114,114 +89,8 @@ c
             end if
           end do
         end do
-        do ic=1,nniso
-          x1=nxiso1(ic)-0.5_R8
-          y1=nyiso1(ic)-0.5_R8
-          x2=nxiso1(ic)-0.5_R8
-          y2=nyiso2(ic)+0.5_R8
-          call lined_d(x1,y1,x2,y2)
-          x1=nxiso2(ic)+0.5_R8
-          y1=nyiso1(ic)-0.5_R8
-          x2=nxiso2(ic)+0.5_R8
-          y2=nyiso2(ic)+0.5_R8
-          call lined_d(x1,y1,x2,y2)
-          x1=nxiso1(ic)-0.5_R8
-          y1=nyiso1(ic)-0.5_R8
-          x2=nxiso2(ic)+0.5_R8
-          y2=nyiso1(ic)-0.5_R8
-          call lined_d(x1,y1,x2,y2)
-          x1=nxiso1(ic)-0.5_R8
-          y1=nyiso2(ic)+0.5_R8
-          x2=nxiso2(ic)+0.5_R8
-          y2=nyiso2(ic)+0.5_R8
-          call lined_d(x1,y1,x2,y2)
-        enddo
-        if (nncut.eq.0) then
-          if (jsep.gt.-2) then
-            x1=-1-0.5_R8
-            y1=jsep+0.5_R8
-            x2=nx+0.5_R8
-            y2=jsep+0.5_R8
-            call lined_d(x1,y1,x2,y2)
-          endif
-        endif
-        if (nnreg(0).eq.7) then
-          x1=rightcut(2)-0.5_R8
-          y1=jsep+0.5_R8
-          x2=nx+0.5_R8
-          y2=jsep+0.5_R8
-          call lined_d(x1,y1,x2,y2)
-        end if
 #endif
-      endif
-      if(physical) then
-#ifdef WG_TODO
-        do iy = -1, ny-1
-          ix1 = -1
-          ix = 0
-          do while (ix.lt.nx)
-            if (topiy(ix,iy).ne.ny+1 .and.
-     &          rightix(ix,iy).ne.nx+1) then
-              if(topix(rightix(ix,iy),rightiy(ix,iy)).ne.
-     &           rightix(topix(ix,iy),topiy(ix,iy))) then
-                ix1 = ix
-                call lined_d(crx(ix1,iy,3),cry(ix1,iy,3),
-     1                       crx(ix1,iy,2),cry(ix1,iy,2))
-                do while(leftix(ix1,iy).gt.-2 .and.
-     &           leftix(topix(ix1,iy),topiy(ix1,iy)).eq.ix1-1)
-                  ix1 = ix1-1
-                  iniso = .false.
-                  do iiso = 1, nniso
-                    iniso = iniso .or.
-     1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
-     2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-                  end do
-                  if(.not.iniso)
-     1             call lined_d(crx(ix1,iy,3),cry(ix1,iy,3),
-     2                          crx(ix1,iy,2),cry(ix1,iy,2))
-                end do
-                ix1=ix+1
-                call lined_d(crx(ix1,iy,2),cry(ix1,iy,2),
-     1                       crx(ix1,iy,3),cry(ix1,iy,3))
-                do while(rightix(ix1,iy).lt.nx+1 .and.
-     &                   rightix(topix(ix1,iy),topiy(ix1,iy)).eq.ix1+1)
-                  ix1=ix1+1
-                  iniso = .false.
-                  do iiso = 1, nniso
-                    iniso = iniso .or.
-     1               (ix1.ge.nxiso1(iiso).and.ix1.le.nxiso2(iiso).and.
-     2                iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-                  end do
-                  if(.not.iniso)
-     1             call lined_d(crx(ix1,iy,2),cry(ix1,iy,2),
-     2                          crx(ix1,iy,3),cry(ix1,iy,3))
-                end do
-                ix1=-1
-              end if
-            end if
-            if (ix1.ne.-1 .and. rightix(ix1,iy).ne.nx+1) then
-              ix=ix1+1
-            else
-              ix=ix+1
-            end if
-          end do
-        end do
-        if (nncut.eq.0) then
-          if (jsep.gt.-2) then
-            do ix=-1,nx
-              call lined_d(crx(ix,jsep,2),cry(ix,jsep,2),
-     1                     crx(ix,jsep,3),cry(ix,jsep,3))
-            enddo
-          endif
-        endif
-        if (nnreg(0).eq.7) then
-          do ix=rightcut(2),nx
-            call lined_d(crx(ix,jsep,2),cry(ix,jsep,2),
-     1                   crx(ix,jsep,3),cry(ix,jsep,3))
-          enddo
-        endif
-#endif
-      endif
+      end if
 #ifndef PLPLOT
       call gslwsc_d(lwidth)
       call lastd

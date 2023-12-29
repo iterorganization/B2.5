@@ -51,6 +51,10 @@
       integer, allocatable, save ::
      *  ind_hlp(:), indt_hlp(:)
 
+      integer, allocatable, save ::
+     *  cvIx(:), cvIy(:), fcxIx(:), fcxIy(:), fcyIx(:), fcyIy(:),
+     *  vxIx(:), vxIy(:)
+
       real (kind=R8), allocatable, save ::
      *  eirene_stack(:,:,:),
      *  triangle_area(:),
@@ -172,6 +176,14 @@ cank
       allocate(zeff(1:nCv))
       allocate(uutraj(1:nCv,0:nsd-1))
       allocate(vvtraj(1:nCv,0:nsd-1))
+      allocate(cvIx(1:nCv))
+      allocate(cvIy(1:nCv))
+      allocate(fcxIx(1:nFc))
+      allocate(fcxIy(1:nFc))
+      allocate(fcyIx(1:nFc))
+      allocate(fcyIy(1:nFc))
+      allocate(vxIx(1:nVx))
+      allocate(vxIy(1:nVx))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
       allocate(textplel(0:nsd))
@@ -274,6 +286,14 @@ cank
       deallocate(zeff)
       deallocate(uutraj)
       deallocate(vvtraj)
+      deallocate(cvIx)
+      deallocate(cvIy)
+      deallocate(fcxIx)
+      deallocate(fcxIy)
+      deallocate(fcyIx)
+      deallocate(fcyIy)
+      deallocate(vxIx)
+      deallocate(vxIy)
 #ifndef PSR
       deallocate(textpl)
       deallocate(textplel)
