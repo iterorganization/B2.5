@@ -4,7 +4,7 @@ c
       use b2mod_b2plot
       use b2us_data
       implicit none
-      integer ix,iy
+      integer i, iCv, iFc, iVx1, iVx2
       logical physical
 
 c       call gslwsc_d(1.0_R8)
@@ -14,51 +14,32 @@ c       call gslwsc_d(1.0_R8)
       call gslwsc_d(owidth)
 #endif
       if(physical) then ! mesh physical domain
-#ifdef WG_TODO
-        do ix=-1,nx
-          do iy=-1,ny
-            if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
-     >       call lined_d(crx(ix,iy,1),cry(ix,iy,1),
-     1                    crx(ix,iy,3),cry(ix,iy,3))
-            if(topiy(ix,iy).eq.ny+1 .and. region(ix,iy,0).ne.0 .and.
-     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >       call lined_d(crx(ix,iy,0),cry(ix,iy,0),
-     1                    crx(ix,iy,1),cry(ix,iy,1))
-            if(rightix(ix,iy).eq.nx+1 .and. region(ix,iy,0).ne.0 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
-     >       call lined_d(crx(ix,iy,0),cry(ix,iy,0),
-     1                    crx(ix,iy,2),cry(ix,iy,2))
-            if(bottomiy(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
-     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >       call lined_d(crx(ix,iy,2),cry(ix,iy,2),
-     1                    crx(ix,iy,3),cry(ix,iy,3))
-          enddo
-        enddo
-#endif
-      else
-#ifdef WG_TODO
-        do ix=-1,nx
-          do iy=-1,ny
-            if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
-     >       call lined_d(xx(ix,1)+1.0_R8,yy(iy,1),
-     1                    xx(ix,1)+1.0_R8,yy(iy,1)+1.0_R8)
-            if(topiy(ix,iy).eq.ny+1 .and. region(ix,iy,0).ne.0 .and.
-     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >       call lined_d(xx(ix,1)       ,yy(iy,1),
-     1                    xx(ix,1)+1.0_R8,yy(iy,1))
-            if(rightix(ix,iy).eq.nx+1 .and. region(ix,iy,0).ne.0 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
-     >       call lined_d(xx(ix,1),yy(iy,1),
-     1                    xx(ix,1),yy(iy,1)+1.0_R8)
-            if(bottomiy(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
-     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >       call lined_d(xx(ix,1)       ,yy(iy,1)+1.0_R8,
-     1                    xx(ix,1)+1.0_R8,yy(iy,1)+1.0_R8)
-          enddo
-        enddo
-#endif
+        do iCv = mpg%nCi+1, mpg%nCv
+          do i = 1, mpg%cvFcP(iCv,2)
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            call lined_d(geo%vxX(iVx1),geo%vxY(iVx1),
+     &                   geo%vxX(iVx2),geo%vxY(iVx2))
+          end do
+        end do
+      else if (mpg%isClassicalGrid.eq.1) then
+        do iCv = mpg%nCi+1, mpg%nCv+1
+          do i = 1, mpg%cvFcP(iCv,2)
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+            if (fcxIx(iFc).gt.-2  .and. fcxIy(iFc).gt.-2) then
+              call lined_d(real(fcxIx(iFc),R8)-0.5_R8,
+     &                     real(fcxIy(iFc),R8)-0.5_R8,
+     &                     real(fcxIx(iFc),R8)-0.5_R8,
+     &                     real(fcxIy(iFc),R8)+0.5_R8)
+            else if (fcyIx(iFc).gt.-2  .and. fcyIy(iFc).gt.-2) then
+              call lined_d(real(fcxIx(iFc),R8)-0.5_R8,
+     &                     real(fcxIy(iFc),R8)-0.5_R8,
+     &                     real(fcxIx(iFc),R8)+0.5_R8,
+     &                     real(fcxIy(iFc),R8)-0.5_R8)
+            endif
+          end do
+        end do
       endif
 #ifndef PLPLOT
       call lastd
