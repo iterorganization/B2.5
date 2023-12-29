@@ -505,7 +505,7 @@ cdpc        endif
       endif
       if(snapshot) then
         write(*,*) 'Calling b2mds'
-        call b2mds(mpg,geo,state,state_ext,ns,switch%BoRiS)
+        call b2mds(mpg,geo,state,state_ext,ns,switch)
         write(*,*) 'Returned from b2mds'
       else
         write(*,*) 'Skipped calling b2mds because snapshot=F'

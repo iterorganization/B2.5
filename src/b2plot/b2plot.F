@@ -19,6 +19,7 @@ c 2002-09-11: logic revised
       use b2mod_b2plot
       use b2mod_movies
       use b2mod_sputter
+      use b2mod_tallies
       use b2mod_elements
       use b2mod_constants
       use b2mod_b2plot_xy
@@ -106,7 +107,7 @@ c
      *   deltapar(mpg%nCv,0:nsd_local),
      *   vtha(mpg%nCv,0:nsd_local), q,
      *   zaf(0:nsd_local-1), pxf, tif,
-     9   pb0
+     9   pb0, t0
       real (kind=R8) ::                                                !cjk
      *   dn_neo(mpg%nCv,0:nsd_local),
      *   chi_neo(mpg%nCv,0:nsd_local),
@@ -116,26 +117,26 @@ c
      *   pr(:), pz(:), ro(:,:), up(:,:), vv(:,:), ww(:,:),
      *   fnax(:,:), fnay(:,:), fmox(:,:), fmoy(:,:),
      *   fhmx(:,:), fhmy(:,:), fhpx(:,:), fhpy(:,:),
-     *   fhjx(:), fhjy(:), fetx(:), fety(:), fhtx(:), fhty(:),
-     *   fhex(:), fhey(:), fhix(:), fhiy(:), fnex(:), fney(:),
-     *   fhetx(:), fhety(:), fhitx(:), fhity(:),
      *   cvsa_cl_x(:,:), cvsa_cl_y(:,:),
      *   fllim0fna_x(:,:), fllim0fna_y(:,:),
      *   fllim0fhi_x(:,:), fllim0fhi_y(:,:),
      *   energy_balance(:), energy_balance2(:), particle_balance(:,:),
-     *   energy_balance_old(:), wall_tmp(:,:), trg_tmp(:,:)
+     *   energy_balance_old(:), wall_tmp(:,:), trg_tmp(:,:),
+     *   k1(:), nu1(:), tau(:), flf(:,:), flv(:,:), wrkf2(:,:),
+     *   hce(:,:), alf(:,:), sig(:,:)
       real (kind=R8), allocatable ::
      *   div_fna(:,:), div_fmo(:,:), div_fhm(:,:), div_fhp(:,:),
      *   div_fhe(:), div_fhi(:), div_fhet(:), div_fhit(:),
-     *   div_fch(:), div_fhj(:)
+     *   div_fch(:), div_fhj(:), div_fhn(:), div_fkt(:), div_fzt(:)
       logical, save :: first_neoclassical = .true.
       logical, save :: rerun_neoclassical = .true.
       real (kind=R8), allocatable :: mach(:,:)
 #ifdef B25_EIRENE
       real (kind=R8), allocatable :: emach(:,:)
 #endif
+      real (kind=R8), parameter :: eps = 1.0e-60_R8
       real (kind=R8) ::
-     1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
+     1   vappr_a, vappr_b, sput_frc, sput_phys,
      2   stick_coef, plate_kb, plate_ka,
      3   sput_mixed_alpha, sput_mixed_beta
       real (kind=R8) ::
@@ -159,7 +160,7 @@ c
       character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
-      integer iCv, iVx, is, iss, isp, is2
+      integer iCv, iFt, iVx, is, iss, isp, is2
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -172,7 +173,7 @@ c
      *   rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
-      logical ex, cflag, found, eirc_done
+      logical ex, cflag, found, eirc_done, classical_style
       logical open_file, streql, isaletter
       integer len_of_digits
       real (kind=R8) ::
@@ -213,13 +214,13 @@ c
      7     sput_phys_col/3/, sput_chem_model/0/, refl_model/1/,
      8     sput_phys_model/1/, sput_phys/0.0_R8/,
      9     boundary_namelist/0/,
-     *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
+     *     neutrals_namelist/0/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      2     use_eirene/0/, ismain0/0/
       save sput_src, sput_frc,
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
-     3     sput_phys_model, sput_phys_col, sput_phys, BoRiS,
+     3     sput_phys_model, sput_phys_col, sput_phys,
      4     boundary_namelist, neutrals_namelist,
      5     sput_frac_flag, use_eirene, ismain0
 
@@ -329,14 +330,6 @@ c
       allocate(fhmy(mpg%nCv,0:nsd_local-1))
       allocate(fhpx(mpg%nCv,0:nsd_local-1))
       allocate(fhpy(mpg%nCv,0:nsd_local-1))
-      allocate(fetx(mpg%nCv),fety(mpg%nCv))
-      allocate(fhex(mpg%nCv),fhey(mpg%nCv))
-      allocate(fhix(mpg%nCv),fhiy(mpg%nCv))
-      allocate(fhjx(mpg%nCv),fhjy(mpg%nCv))
-      allocate(fhtx(mpg%nCv),fhty(mpg%nCv))
-      allocate(fnex(mpg%nCv),fney(mpg%nCv))
-      allocate(fhetx(mpg%nCv),fhety(mpg%nCv))
-      allocate(fhitx(mpg%nCv),fhity(mpg%nCv))
       allocate(div_fna(mpg%nCv,0:nsd_local-1))
       allocate(div_fmo(mpg%nCv,0:nsd_local-1))
       allocate(div_fhm(mpg%nCv,0:nsd_local-1))
@@ -347,6 +340,9 @@ c
       allocate(div_fhi(mpg%nCv))
       allocate(div_fch(mpg%nCv))
       allocate(div_fhj(mpg%nCv))
+      allocate(div_fhn(mpg%nCv))
+      allocate(div_fkt(mpg%nCv))
+      allocate(div_fzt(mpg%nCv))
       allocate(pr(mpg%nCv),pz(mpg%nCv))
       allocate(energy_balance(mpg%nCv))
       allocate(energy_balance2(mpg%nCv))
@@ -356,6 +352,15 @@ c
       allocate(up(mpg%nCv,0:nsd_local-1))
       allocate(vv(mpg%nCv,0:nsd_local-1))
       allocate(ww(mpg%nCv,0:nsd_local-1))
+      allocate(k1(mpg%nCv))
+      allocate(nu1(mpg%nCv))
+      allocate(tau(mpg%nCv))
+      allocate(hce(mpg%nCv,0:1))
+      allocate(sig(mpg%nCv,0:1))
+      allocate(alf(mpg%nCv,0:1))
+      allocate(flf(mpg%nFc,0:1))
+      allocate(flv(mpg%nFc,0:1))
+      allocate(wrkf2(mpg%nFc,0:1))
       allocate(mach(mpg%nCv,
      *     0:max(1,nsd_local,state_ext%ns,natm,nmol,nion)-1))
       solpstop=' '
@@ -556,6 +561,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
       call alloc_b2mod_elements(ns, zn, am)
+      call alloc_b2mod_tallies(mpg%nnreg, ns)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call ipgetr ('b2news_BoRiS', switch%BoRiS)
       call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
@@ -582,8 +588,11 @@ c calculate divergences of the various fluxes
       call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhi, div_fhi)
       call div(mpg%nCv, mpg%nFc, mpg, state%dv%fch, div_fch)
       call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhj, div_fhj)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fhn, div_fhn)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fkt, div_fkt)
+      call div(mpg%nCv, mpg%nFc, mpg, state%dv%fzt, div_fzt)
 c calculate the energy balance
-      energy_balance=-div_fhet-div_fhit-div_fhj
+      energy_balance=-div_fhet-div_fhit-div_fhj-div_fhn-div_fkt
       do is=0,ns-1
         energy_balance(:)=energy_balance(:)-
      1   div_fhm(:,is)*(1.0_R8-switch%BoRiS)-div_fhp(:,is)
@@ -593,9 +602,11 @@ c additional sources
         energy_balance2(iCv)=
 c boundary conditions (species independent)
      1   +state%srw%b2stbc_she(iCv)+state%srw%b2stbc_shi(iCv)
+     1   +state%srw%b2stbc_shn(iCv)+state%srw%b2stbc_skt(iCv)
      2   +state%srw%b2stbc_sch(iCv)*state%pl%po(iCv)
 c recycling (species independent)
      1   +state%srw%b2stbr_she(iCv)+state%srw%b2stbr_shi(iCv)
+     1   +state%srw%b2stbr_shn(iCv)+state%srw%b2stbr_skt(iCv)
      2   +state%srw%b2stbr_sch(iCv)*state%pl%po(iCv)
 c other sources (species independent)
      1   +state%srw%b2stbm_she(iCv)+state%srw%b2stbm_shi(iCv)
@@ -719,7 +730,8 @@ c particle balance
         enddo
       enddo
 c alternative (failed) calculation of energy balance (elegant, but flawed)
-      energy_balance_old=div_fhet+div_fhet-state%pl%po*div_fch
+      energy_balance_old=div_fhet+div_fhet+div_fhn+div_fkt
+     1      -state%pl%po*div_fch
       do is=0,ns-1
         energy_balance_old(:)=energy_balance_old(:)-
      1   state%pl%ua(:,is)*div_fmo(:,is)-
@@ -746,6 +758,84 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
         enddo
       enddo
 #endif
+      call b2xpne (mpg%nCv, state%ns, state%rt%rz2, state%pl%na,
+     . state_ext%ne2, state%dv%ne2)
+      isel = 0
+      call ipgeti ('b2tlnl_ii', isel)
+      call b2tlnl (mpg%nCv, switch, isel,
+     & state%pl%te, state%pl%ti, state%dv%ne, state%dv%lnlam)
+      do is = 0, state%ns-1
+        call calcflow(mpg%nCv,mpg%nFc,mpg%nVx,switch%b2npmo_discr_meth,
+     &   geo,mpg,state%pl%ua(:,is),state%dv%fna_fcor(:,:,is),
+     &   state%co%cvsahz(:,:,is),state%dv%fmo(:,:,is),flf,flv)
+        call diff(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+     &   state%pl%ua(:,is), wrkv, wrkf2)
+        state%co%cvsahz_eff(:,:,is)  = -flv/(wrkf2 + eps)
+      end do
+      call b2tqce (mpg%nCv, switch, geo, mpg, state%pl, state%dv,
+     & hce, sig, alf)
+      state%co%alfx_c = alf(:,0)
+      state%co%sigx_c = sig(:,0)
+      if(switch%lluciani.eq.1) then
+       do iCv = 1, mpg%nCv
+        if (mpg%cvOnClosedSurface(iCv)) then
+          iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+            t0 = 1.0_R8/(1.0_R8 +
+     1       7.5e16_R8*(state%pl%te(iCv)/ev)**2/
+     2                 (geo%ftConn(iFt)*state%dv%ne2(iCv)))
+            state%co%sigx_c(iCv) = state%co%sigx_c(iCv)*t0
+            state%co%alfx_c(iCv) = state%co%alfx_c(iCv)*t0
+          endif
+        endif
+       enddo
+      else if (switch%lluciani.eq.2) then  ! SOLPS4.0 formulation
+       do iCv = 1, mpg%nCv
+        if (mpg%cvOnClosedSurface(iCv)) then
+          iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+            t0 = 1.0_R8/(1.0_R8 +
+     1       0.3e16_R8*(state%pl%te(iCv)/ev)**2/state%dv%ne2(iCv))
+            state%co%sigx_c(iCv) = state%co%sigx_c(iCv)*t0
+            state%co%alfx_c(iCv) = state%co%alfx_c(iCv)*t0
+          endif
+        endif
+       enddo
+      else if (switch%lluciani.eq.3) then  ! new formulation
+       nu1 = 0.0_R8
+       k1 = 0.58e0_R8
+       t1 = (4.0_R8*pi*eps0/qe)/qe
+       t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
+       tau = t2/state%dv%lnlam*state%pl%te/ev*
+     &  sqrt(state%pl%te/ev)/state%dv%ne2
+       do iCv = 1, mpg%nCv
+        if (mpg%cvOnClosedSurface(iCv)) then
+          iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+            nu1(iCv) = geo%ftConn(iFt)/(tau(iCv)*
+     &        sqrt(state%pl%te(iCv)/me)*2.0e0_R8*pi*
+     &        geo%ftEps(iFt)**1.5e0_R8)
+            k1(iCv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(iCv))
+     &        +1.53e0_R8*nu1(iCv))
+     &        +0.52e0_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
+     &        /(1.0e0_R8+0.89e0_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
+            t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
+            state%co%sigx_c(iCv) = state%co%sigx_c(iCv)*t0
+            state%co%alfx_c(iCv) = state%co%alfx_c(iCv)*t0
+          endif
+        endif
+       enddo
+      endif
+      call b2sihs_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns,
+     & switch, geo, mpg, ismain,
+     & state%dv%fac_ExB, state%dv%lnlam, state%pl%na, state%pl%ua,
+     & state%dv%ue, state%pl%te, state%pl%ti, state%pl%tn,
+     & state%pl%po, state%dv%ne, state%dv%ni, state%dv%nn,
+     & state%dv%fna_fcor, state%dv%fne, state%dv%fch,
+     & state%co%cvsa, state%co%cvsahz_eff, state%co%f_luc_sg,
+     & state%co%alfx_c, state%co%sigx_c,
+     & state%rt%rza, state%rt%rz2, state_ext,
+     & state%srw%she0, state%srw%shi0, state%srw%shn0, state%srw)
 c
       call alloc_b2mod_boundary(DEF_NXD, DEF_NYD, ns, nbcd, nnisod)
       if (boundary_namelist.eq.1)
@@ -790,6 +880,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call alloc_b2mod_b2plot_wall(nsd_local,natmi,nmoli,nioni,
      *   nwall,ndepth_nml,wklng)
 #endif
+      call build_reverse_mapping(mpg)
       call alloc_b2mod_b2plot_ank(nwall)
       call alloc_b2plot_wall_loading(nlim,nsgmx)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
@@ -799,7 +890,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         texttargsp(i)=' '//trim(track_species(i))
       end do
 #ifdef WG_TODO
-      call get_wall_data(nx,ny,ns,BoRiS,found)
+      call get_wall_data(nx,ny,ns,switch%BoRiS,found)
 cxpb  We now use the data already computed in init_wall
       do ibnd = 1, nbnd
         ix = imapx(ibnd)
@@ -866,7 +957,7 @@ cxpb  Western boundary
      &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,idir,is))/
      &         gs(ixf,iyf,idir)*
      &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
-     &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
+     &           ta_ext(ix,iy,is))*(1.0_R8-switch%BoRiS) + pxf*ev)
         enddo
       enddo
 #endif
@@ -1032,16 +1123,12 @@ c
 c
       nz=ns
 c
-#ifdef WG_TODO
-      do ix=-1,nx
-        XX(IX,2) = real(ix,R8)
-        XX(IX,1) = real(IX,R8)-0.5_R8
+      do iCv=1,mpg%nCv
+        XX(iCv,2) = real(cvIx(iCv),R8)
+        XX(iCv,1) = real(cvIx(iCv),R8)-0.5_R8
+        YY(iCv,2) = real(cvIy(iCv),R8)
+        YY(iCv,1) = real(cvIy(iCv),R8)-0.5_R8
       end do
-      do iy=-1,ny
-        YY(IY,2) = real(IY,R8)
-        YY(IY,1) = real(IY,R8)-0.5_R8
-      end do
-#endif
       do ibnd=1,nbnd
         targetx(ibnd,2) = real(ibnd,R8)
         targetx(ibnd,1) = real(ibnd,R8)-0.5_R8
@@ -1210,34 +1297,6 @@ c
       enddo
       state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
       state%dv%ue = state%dv%ue/state%dv%ne
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .  state%dv%fhe(1,0),fhex)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .  state%dv%fhe(1,1),fhey)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .  state%dv%fhi(1,0),fhix)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .  state%dv%fhi(1,1),fhiy)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .  state%dv%fhj(1,0),fhjx)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .  state%dv%fhj(1,1),fhjy)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .  state%dv%fht(1,0),fhtx)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .  state%dv%fht(1,1),fhty)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .  state%dv%fne(1,0),fnex)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .  state%dv%fne(1,1),fney)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .  state%dv%fhet(1,0),fhetx)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .  state%dv%fhet(1,1),fhety)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .  state%dv%fhit(1,0),fhitx)
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .  state%dv%fhit(1,1),fhity)
       do is=0,ns-1
         ro(:,is)=am(is)*mp*state%pl%na(:,is)
         call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
@@ -1385,14 +1444,13 @@ c
             call terminate_plotting
             write(*,'(a,7i4)') 'STACK i,r,s,m,e,w,t = ',
      .       iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
-            deallocate(pr,pz,ro,up,vv,ww)
+            deallocate(pr,pz,ro,up,vv,ww,k1,nu1,tau)
+            deallocate(alf,hce,sig)
+            deallocate(flf,flv,wrkf2)
             deallocate(fnax,fnay,fmox,fmoy,fhpx,fhpy,fhmx,fhmy)
-            deallocate(fetx,fety,fhex,fhey,fhjx,fhjy,fhtx,fhty)
-            deallocate(fnex,fney,fhix,fhiy)
-            deallocate(fhetx,fhety,fhitx,fhity)
             deallocate(div_fna,div_fmo,div_fhm,div_fhp)
             deallocate(div_fhe,div_fhi,div_fch,div_fhj)
-            deallocate(div_fhet,div_fhit)
+            deallocate(div_fhn,div_fkt,div_fzt,div_fhet,div_fhit)
             deallocate(cvsa_cl_x,cvsa_cl_y)
             deallocate(fllim0fna_x,fllim0fna_y)
             deallocate(fllim0fhi_x,fllim0fhi_y)
@@ -1405,6 +1463,7 @@ c
             call dealloc_b2mod_b2plot
             call dealloc_sputter_data
             call dealloc_b2mod_sputter
+            call dealloc_b2mod_tallies
             call dealloc_b2mod_neutrals
             call dealloc_b2mod_elements
             call dealloc_b2mod_boundary
@@ -1478,14 +1537,13 @@ c
           call terminate_plotting
           write(*,'(a,7i4)') 'STACK i,r,s,m,e,w,t = ',
      .     iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
-          deallocate(pr,pz,ro,up,vv,ww)
+          deallocate(pr,pz,ro,up,vv,ww,k1,nu1,tau)
+          deallocate(alf,hce,sig)
+          deallocate(flf,flv,wrkf2)
           deallocate(fnax,fnay,fmox,fmoy,fhpx,fhpy,fhmx,fhmy)
-          deallocate(fetx,fety,fhex,fhey,fhjx,fhjy,fhtx,fhty)
-          deallocate(fnex,fney,fhix,fhiy)
-          deallocate(fhetx,fhety,fhitx,fhity)
           deallocate(div_fna,div_fmo,div_fhm,div_fhp)
           deallocate(div_fhe,div_fhi,div_fch,div_fhj)
-          deallocate(div_fhet,div_fhit)
+          deallocate(div_fhn,div_fkt,div_fzt,div_fhet,div_fhit)
           deallocate(cvsa_cl_x,cvsa_cl_y)
           deallocate(fllim0fna_x,fllim0fna_y)
           deallocate(fllim0fhi_x,fllim0fhi_y)
@@ -1498,6 +1556,7 @@ c
           call dealloc_b2mod_b2plot
           call dealloc_sputter_data
           call dealloc_b2mod_sputter
+          call dealloc_b2mod_tallies
           call dealloc_b2mod_elements
           call dealloc_b2mod_boundary
           call dealloc_b2mod_neutrals
@@ -1633,6 +1692,18 @@ c
           description='Ion temperature (eV)'
           nz=1
           call copy(state%pl%ti,1.0_R8/ev,nz,textbl)
+        case('tn')
+          description='Fluid neutral temperature (eV)'
+          nz=1
+          call copy(state%pl%tn,1.0_R8/ev,nz,textbl)
+        case('kt')
+          description='ExB turbulent kinetic energy density (?)'
+          nz=1
+          call copy(state%pl%kt,1.0_R8,nz,textbl)
+        case('zt')
+          description='Enstrophy (?)'
+          nz=1
+          call copy(state%pl%zt,1.0_R8,nz,textbl)
         case('pr')
           description='Static pressure (Pa)'
           nz=1
@@ -1665,6 +1736,10 @@ c
           description='\mtD\dfhi (W)'
           nz=1
           call copy(div_fhi,1.0_R8,nz,textbl)
+        case('dfhn')
+          description='\mtD\dfhn (W)'
+          nz=1
+          call copy(div_fhn,1.0_R8,nz,textbl)
         case('dhet','dfhet')
           description='\mtD\dfhet (W)'
           nz=1
@@ -1681,6 +1756,14 @@ c
           description='\mtD\dfch (A)'
           nz=1
           call copy(div_fch,1.0_R8,nz,textbl)
+        case('dfkt')
+          description='\mtD\dfkt (W)'
+          nz=ns
+          call copy(div_fkt,1.0_R8,nz,textpl)
+        case('dfzt')
+          description='\mtD\dfzt (?)'
+          nz=ns
+          call copy(div_fzt,1.0_R8,nz,textpl)
         case('dfna')
           description='\mtD\dfna (particles/s)'
           nz=ns
@@ -1716,11 +1799,27 @@ c
         case('fnex')
           description='Poloidal electron flux (s^{-1})'
           nz=1
-          call copy(fnex,1.0_R8,1,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fne(1,0),mach)
+          call copy(mach,1.0_R8,1,textbl)
         case('fney')
           description='Radial electron flux (s^{-1})'
           nz=1
-          call copy(fney,1.0_R8,1,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fne(1,1),mach)
+          call copy(mach,1.0_R8,1,textbl)
+        case('fnnx')
+          description='Poloidal fluid neutral particle flux (s^{-1})'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fnn(1,0),mach)
+          call copy(mach,1.0_R8,1,textbl)
+        case('fnny')
+          description='Radial fluid neutral particle flux (s^{-1})'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fnn(1,1),mach)
+          call copy(mach,1.0_R8,1,textbl)
         case('fmox')
           description='Poloidal flux of parallel momentum (N)'
           nz=ns
@@ -1732,35 +1831,63 @@ c
         case('fhex')
           description='Poloidal electron energy flux (W)'
           nz=1
-          call copy(fhex,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fhe(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhey')
           description='Radial electron energy flux (W)'
           nz=1
-          call copy(fhey,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fhe(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhetx')
           description='Poloidal electron energy flux [fhetx] (W)'
           nz=1
-          call copy(fhetx,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fhet(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhety')
           description='Radial electron energy flux [fhety] (W)'
           nz=1
-          call copy(fhety,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fhet(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhix')
           description='Poloidal ion energy flux (W)'
           nz=1
-          call copy(fhix,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fhi(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhiy')
           description='Radial ion energy flux (W)'
           nz=1
-          call copy(fhiy,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fhi(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhitx')
           description='Poloidal ion energy flux [fhitx] (W)'
           nz=1
-          call copy(fhitx,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fhit(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhity')
           description='Radial ion energy flux [fhity] (W)'
           nz=1
-          call copy(fhity,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fhit(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case('fhnx')
+          description='Poloidal fluid neutral energy flux (W)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fhn(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case('fhny')
+          description='Radial fluid neutral energy flux (W)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fhn(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhmx')
           description='Poloidal parallel kinetic energy flux (W)'
           nz=ns
@@ -1780,19 +1907,51 @@ c
         case('fhjx')
           description='Poloidal electrostatic energy flux (W)'
           nz=1
-          call copy(fhjx,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fhj(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhjy')
           description='Radial electrostatic energy flux (W)'
           nz=1
-          call copy(fhjy,1.0_R8,nz,textbl)
-         case('fhtx')
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fhj(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case('fhtx')
           description='Poloidal total energy flux (W)'
           nz=1
-          call copy(fhtx,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fht(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fhty')
           description='Radial total energy flux (W)'
           nz=1
-          call copy(fhty,1.0_R8,nz,textbl)
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fht(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case('fktx')
+          description='Poloidal ExB turbulent energy flux (W)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fkt(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case('fkty')
+          description='Radial ExB turbulent energy flux (W)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fkt(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case('fztx')
+          description='Poloidal enstrophy flux (?)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     state%dv%fzt(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case('fzty')
+          description='Radial enstrophy flux (?)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     state%dv%fzt(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case('fle')
           description='Electron heat flow flux limit factor'
           nz=1
@@ -2199,8 +2358,8 @@ c
             wrkf(:)=wrkf(:)+wrkfs(:,is)
           end do
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      wrkf,fetx)
-          call copy(fetx,1.0_R8,nz,textbl)
+     .      wrkf,mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('fety')
           description='Total radial internal energy flux (W)'
           nz=1
@@ -2216,8 +2375,8 @@ c
             wrkf(:)=wrkf(:)+wrkfs(:,is)
           end do
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      wrkf,fety)
-          call copy(fety,1.0_R8,nz,textbl)
+     .      wrkf,mach)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('tab2')
           description='Neutral atom temperature (eV)'
           if (natmi.gt.0) then
@@ -2582,6 +2741,10 @@ c
           description='ti at previous time step (eV)'
           nz=1
           call copy(state%psnl%ti,1.0_R8/ev,nz,textbl)
+        case ('tn0')
+          description='tn at previous time step (eV)'
+          nz=1
+          call copy(state%psnl%tn,1.0_R8/ev,nz,textbl)
         case ('ua0')
           description='ua at previous time step (m.s^{-1})'
           nz=ns
@@ -2590,6 +2753,14 @@ c
           description='po at previous time step (V)'
           nz=1
           call copy(state%psnl%po,1.0_R8,nz,textbl)
+        case ('kt0')
+          description='kt at previous time step (?)'
+          nz=1
+          call copy(state%psnl%kt,1.0_R8,nz,textbl)
+        case ('zt0')
+          description='zt at previous time step (?)'
+          nz=1
+          call copy(state%psnl%zt,1.0_R8,nz,textbl)
 #ifdef WG_TODO
         case ('smth')
           description='Thermal force (N)'
@@ -2917,6 +3088,37 @@ c
      .                state%dv%ni(:,0)*state%sr%shi(:,3)*state%pl%ti(:)
           endif
           call copy(mach,1.0_R8,nz,textbl)
+        case ('shn')
+          description='Fluid neutral heat source (W)'
+          nz=1
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Fluid neutral heat source, constant part (W)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Fluid neutral heat source, temperature part (s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Fluid neutral heat source, density part (W.m^{3})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .  'Fluid neutral heat source, energy density part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            mach(:,0)=state%sr%shn(:,isel)
+            write(*,*) '"shn" option with ',isel
+          else
+            description='Total fluid neutral heat source (W)'  ! IGNORE
+            mach(:,0)=state%sr%shn(:,0)+
+     .                state%pl%tn(:)*state%sr%shn(:,1)+
+     .                state%dv%nn(:)*state%sr%shn(:,2)+
+     .                state%dv%nn(:)*state%sr%shn(:,3)*state%pl%tn(:)
+          endif
+          call copy(mach,1.0_R8,nz,textbl)
         case ('sch')
           description='Charge source (A)'
           nz=1
@@ -2946,6 +3148,68 @@ c
      .                state%pl%po(:)*state%sr%sch(:,1)+
      .                state%dv%ne(:)*state%sr%sch(:,2)+
      .                state%dv%ne(:)*state%sr%sch(:,3)*state%pl%po(:)
+          endif
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('skt')
+          description='ExB turbulent energy source (W)'
+          nz=1
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'ExB turbulent energy source, constant part (W)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'ExB turbulent energy source, energy part (s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'ExB turbulent energy source, density part (?.m^{3})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .  'ExB turbulent energy source, energy*density part (?.m^{3})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            mach(:,0)=state%sr%skt(:,isel)
+            write(*,*) '"skt" option with ',isel
+          else
+            description='Total ExB turbulent energy source (A)'  ! IGNORE
+            mach(:,0)=state%sr%skt(:,0)+
+     .                state%pl%kt(:)*state%sr%skt(:,1)+
+     .                state%dv%ni(:,1)*state%sr%skt(:,2)+
+     .                state%dv%ni(:,1)*state%sr%skt(:,3)*state%pl%kt(:)
+          endif
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('szt')
+          description='Enstrophy source (?)'
+          nz=1
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Enstrophy source, constant part (?)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Enstrophy source, enstrophy part (s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Enstrophy source, density part (?.m^{3})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Enstrophy source, enstrophy*density part (?.m^{3})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            mach(:,0)=state%sr%szt(:,isel)
+            write(*,*) '"szt" option with ',isel
+          else
+            description='Total Enstrophy source (?)'  ! IGNORE
+            mach(:,0)=state%sr%szt(:,0)+
+     .                state%pl%zt(:)*state%sr%szt(:,1)+
+     .                state%dv%ni(:,1)*state%sr%szt(:,2)+
+     .                state%dv%ni(:,1)*state%sr%szt(:,3)*state%pl%zt(:)
           endif
           call copy(mach,1.0_R8,nz,textbl)
 #ifdef WG_TODO
@@ -3085,10 +3349,22 @@ c
           description='RESEI'
           nz=1
           call copy(state%dv%reshi,1.0_R8,nz,textbl)
+        case ('ren')
+          description='RESEN'
+          nz=1
+          call copy(state%dv%reshn,1.0_R8,nz,textbl)
         case ('rpo')
           description='RESPO'
           nz=1
           call copy(state%dv%respo,1.0_R8,nz,textbl)
+        case ('rkt')
+          description='RESKT'
+          nz=1
+          call copy(state%dv%reskt,1.0_R8,nz,textbl)
+        case ('rzt')
+          description='RESZT'
+          nz=1
+          call copy(state%dv%reszt,1.0_R8,nz,textbl)
         case ('cpa')
           description='CORPA'
           nz=ns
@@ -3109,24 +3385,34 @@ c
           description='CORTI'
           nz=1
           call copy(state%dv%corti,1.0_R8/ev,nz,textbl)
+        case ('ctn')
+          description='CORTN'
+          nz=1
+          call copy(state%dv%cortn,1.0_R8/ev,nz,textbl)
         case ('cpo')
           description='CORPO'
           nz=1
           call copy(state%dv%corpo,1.0_R8,nz,textbl)
-#ifdef WG_TODO
+        case ('ckt')
+          description='CORKT'
+          nz=1
+          call copy(state%dv%corkt,1.0_R8,nz,textbl)
+        case ('czt')
+          description='CORZT'
+          nz=1
+          call copy(state%dv%corzt,1.0_R8,nz,textbl)
         case ('ixlt')
           description='ixlt'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(ix .lt. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIx(iCv).lt.istack(iistack).and.cvIx(iCv).ne.-2) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"ixlt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3135,14 +3421,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(ix .le. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIx(iCv).le.istack(iistack).and.cvIx(iCv).ne.-2) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"ixle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3151,14 +3436,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(ix .eq. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIx(iCv).eq.istack(iistack)) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"ixeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3167,14 +3451,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(ix .eq. istack(iistack)) then
-                mach(ix,iy,0)=0.0_R8
-              else
-                mach(ix,iy,0)=1.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIx(iCv).eq.istack(iistack)) then
+              mach(iCv,0)=0.0_R8
+            else
+              mach(iCv,0)=1.0_R8
+            end if
           end do
           write(*,*) '"ixne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3183,14 +3466,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(ix .ge. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIx(iCv).ge.istack(iistack)) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"ixge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3199,14 +3481,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(ix .gt. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIx(iCv).gt.istack(iistack)) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"ixgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3215,14 +3496,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(iy .lt. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIy(iCv).lt.istack(iistack).and.cvIy(iCv).ne.-2) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"iylt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3231,14 +3511,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(iy .le. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIy(iCv).le.istack(iistack).and.cvIy(iCv).ne.-2) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"iyle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3247,14 +3526,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(iy .eq. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIy(iCv).eq.istack(iistack)) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"iyeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3263,14 +3541,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(iy .eq. istack(iistack)) then
-                mach(ix,iy,0)=0.0_R8
-              else
-                mach(ix,iy,0)=1.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIy(iCv).eq.istack(iistack)) then
+              mach(iCv,0)=0.0_R8
+            else
+              mach(iCv,0)=1.0_R8
+            end if
           end do
           write(*,*) '"iyne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3279,14 +3556,13 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(iy .ge. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIy(iCv).ge.istack(iistack)) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"iyge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3295,18 +3571,16 @@ c
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(iy .gt. istack(iistack)) then
-                mach(ix,iy,0)=1.0_R8
-              else
-                mach(ix,iy,0)=0.0_R8
-              end if
-            end do
+          if(.not.check_classical_grid(mpg)) return
+          do iCv=1,mpg%nCv
+            if(cvIy(iCv).gt.istack(iistack)) then
+              mach(iCv,0)=1.0_R8
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           write(*,*) '"iygt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
-#endif
         case ('islt')
           description='islt'
           nz=ns
@@ -3500,6 +3774,11 @@ c     assumes that bb is OK for 1d cases
           nz=1
           mach(:,0)=state%co%hci0(:)/state%dv%ni(:,0)
           call copy(mach,1.0_R8,nz,textbl)
+        case ('kyn0')
+          description='\Gv\R_{n}^{0} (m^{2}.s^{-1})'
+          nz=1
+          mach(:,0)=state%co%hcn0(:)/state%dv%nn(:)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('vlax')
           description='Poloidal pinch velocity (m.s^{-1})'
           nz=ns
@@ -3537,6 +3816,16 @@ c     assumes that bb is OK for 1d cases
           nz=1
           mach(:,0)=state%co%alf0(:)/
      *             (state%dv%ne(:)*sqrt(qe/state%pl%te(:)))
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('dkt')
+          description='ExB turbulent energy diffusivity (m^{2}.s^{-1})'
+          nz=1
+          mach(:,0)=state%co%dkt0(:)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('dzt')
+          description='Enstrophy diffusivity (?)'
+          nz=1
+          mach(:,0)=state%co%dzt0(:)
           call copy(mach,1.0_R8,nz,textbl)
         case ('fchp')
           description='Parallel current (A)'
@@ -3730,43 +4019,43 @@ c     assumes that bb is OK for 1d cases
             end if
           enddo
           call copy(mach,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case ('ix')
           description='ix (normalised)'
+          stack_req=(/0,0,0,0,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              mach(ix,iy,0)=real(ix+1,R8)/real(nx+1,R8)
-            enddo
+          do iCv=1,mpg%nCv
+            mach(iCv,0)=real(cvIx(iCv)+1,R8)/real(mpg%nx+1,R8)
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('iy')
           description='iy (normalised)'
+          stack_req=(/0,0,0,0,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              mach(ix,iy,0)=real(iy+1,R8)/real(ny+1,R8)
-            enddo
+          do iCv=1,mpg%nCv
+            mach(iCv,0)=real(cvIy(iCv)+1,R8)/real(mpg%ny+1,R8)
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('iix')
           description='ix'
+          stack_req=(/0,0,0,0,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              mach(ix,iy,0)=real(ix,R8)
-            enddo
+          do iCv=1,mpg%nCv
+            mach(iCv,0)=real(cvIx(iCv),R8)
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('iiy')
           description='iy'
+          stack_req=(/0,0,0,0,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              mach(ix,iy,0)=real(iy,R8)
-            enddo
+          do iCv=1,mpg%nCv
+            mach(iCv,0)=real(cvIy(iCv),R8)
           enddo
           call copy(mach,1.0_R8,nz,textbl)
+#ifdef WG_TODO
         case ('lix')
           description='leftix'
           nz=1
@@ -3894,10 +4183,22 @@ c     assumes that bb is OK for 1d cases
           description='Recycling ion heat source (W)'
           nz=1
           call copy(state%srw%b2stbr_shi,1.0_R8,nz,textbl)
+        case ('brhn')
+          description='Recycling fluid neutral heat source (W)'
+          nz=1
+          call copy(state%srw%b2stbr_shn,1.0_R8,nz,textbl)
         case ('brch')
           description='Recycling charge source (A)'
           nz=1
           call copy(state%srw%b2stbr_sch,1.0_R8,nz,textbl)
+        case ('brkt')
+          description='Recycling ExB turbulent energy source (W)'
+          nz=1
+          call copy(state%srw%b2stbr_skt,1.0_R8,nz,textbl)
+        case ('brzt')
+          description='Recycling enstrophy source (W)'
+          nz=1
+          call copy(state%srw%b2stbr_szt,1.0_R8,nz,textbl)
         case ('bcna')
           description='Boundary particle source (#.s^{-1})'
           nz=ns
@@ -3918,10 +4219,22 @@ c     assumes that bb is OK for 1d cases
           description='Boundary ion heat source (W)'
           nz=1
           call copy(state%srw%b2stbc_shi,1.0_R8,nz,textbl)
+        case ('bchn')
+          description='Boundary fluid neutral heat source (W)'
+          nz=1
+          call copy(state%srw%b2stbc_shn,1.0_R8,nz,textbl)
         case ('bcch')
           description='Boundary charge source (A)'
           nz=1
           call copy(state%srw%b2stbc_sch,1.0_R8,nz,textbl)
+        case ('bckt')
+          description='Boundary ExB turbulent energy source (W)'
+          nz=1
+          call copy(state%srw%b2stbc_skt,1.0_R8,nz,textbl)
+        case ('bczt')
+          description='Boundary enstrophy source (?)'
+          nz=1
+          call copy(state%srw%b2stbc_szt,1.0_R8,nz,textbl)
         case ('bmna')
           description='Additional particle source (#.s^{-1})'
           nz=ns
@@ -3970,42 +4283,38 @@ c     assumes that bb is OK for 1d cases
           description='External charge source (A)'
           nz=1
           call copy(state_ext%sch,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case ('dvue')
           description='b2sihs_divue (phm0)'
           nz=1
-          call copy(b2sihs_divue,1.0_R8,nz,textbl)
+          call copy(state%srw%b2sihs_divue,1.0_R8,nz,textbl)
         case ('dvua')
           description='b2sihs_divua (phm1)'
           nz=1
-          call copy(b2sihs_divua,1.0_R8,nz,textbl)
+          call copy(state%srw%b2sihs_divua,1.0_R8,nz,textbl)
         case ('exbe')
           description='b2sihs_exbe (phm5)'
           nz=1
-          call copy(b2sihs_exbe,1.0_R8,nz,textbl)
+          call copy(state%srw%b2sihs_exbe,1.0_R8,nz,textbl)
         case ('exba')
           description='b2sihs_exba (phm6)'
           nz=1
-          call copy(b2sihs_exba,1.0_R8,nz,textbl)
+          call copy(state%srw%b2sihs_exba,1.0_R8,nz,textbl)
         case ('visa')
           description='b2sihs_visa (phm2)'
           nz=1
-          call copy(b2sihs_visa,1.0_R8,nz,textbl)
-#endif
+          call copy(state%srw%b2sihs_visa,1.0_R8,nz,textbl)
         case ('joul')
           description='b2sihs_joule (phm3)'
           nz=1
           call copy(state%srw%b2sihs_joule,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case ('fraa')
           description='b2sihs_fraa (phm4)'
           nz=1
-          call copy(b2sihs_fraa,1.0_R8,nz,textbl)
+          call copy(state%srw%b2sihs_fraa,1.0_R8,nz,textbl)
         case ('str')
           description='b2sihs_str (style)'
           nz=1
-          call copy(b2sihs_str,1.0_R8,nz,textbl)
-#endif
+          call copy(state%srw%b2sihs_str,1.0_R8,nz,textbl)
         case ('ke')
           description='Parallel kinetic energy (J)'
           nz=ns
@@ -4022,11 +4331,11 @@ c     assumes that bb is OK for 1d cases
           description='fac_vis'
           nz=1
           call copy(state%dv%fac_vis,1.0_R8,nz,textbl)
+#ifdef WG_TODO
         case ('xymap')
           description='xymap'
           nz=1
-#ifdef WG_TODO
-          mach(-1:nx,-1:ny,0)=real(xymap(-1:nx,-1:ny))
+          mach(-1:nx,-1:ny,0)=real(xymap(-1:nx,-1:ny),R8)
           call copy(mach,1.0_R8,nz,textbl)
 #endif
         case ('fnax32')
@@ -4100,6 +4409,30 @@ c     assumes that bb is OK for 1d cases
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
      .      state%dv%fni_52(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('fnnx32')
+          description='Convective poloidal fluid neutral flux (s^{-1})'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .      state%dv%fnn_32(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('fnny32')
+          description='Convective radial fluid neutral flux (s^{-1})'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .      state%dv%fnn_32(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('fnnx52')
+          description='Conductive poloidal fluid neutral flux (s^{-1})'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .      state%dv%fnn_52(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('fnny52')
+          description='Conductive radial fluid neutral flux (s^{-1})'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .      state%dv%fnn_52(1,1),mach)
           call copy(mach,1.0_R8,nz,textbl)
         case ('fnex32')
           description='Convective poloidal electron flux (s^{-1})'
@@ -4318,6 +4651,20 @@ c     assumes that bb is OK for 1d cases
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
      .      state%dv%fchvisq(1,1),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('fcxviskt')
+          description=
+     .     'Poloidal current due to RS of kt-model (A)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .      state%dv%fchviskt(1,0),mach)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('fcyviskt')
+          description=
+     .     'Radial current due to RS of kt-model (A)'
+          nz=1
+          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .      state%dv%fchviskt(1,1),mach)
           call copy(mach,1.0_R8,nz,textbl)
         case ('fchxinrt')
           description=
@@ -4549,10 +4896,7 @@ c     assumes that bb is OK for 1d cases
       end subroutine select_matrix
 
       subroutine select_stack_manipulation
-      integer i,is,isp,iatm,iCv
-#ifdef WG_TODO
-      integer ix,iy
-#endif
+      integer i,is,isp,iatm,iCv,ix,iy
 
       cflag=.true.
       FVALUE: select case (cval)
@@ -4914,42 +5258,52 @@ c     assumes that bb is OK for 1d cases
             write(*,hlp_frm) trim(graphlabel(i)),
      .       (trim(textwk(is,i)),is=0,ndim(2,i)-1)
           end do
-#ifdef WG_TODO
         case('xsel')     ! select column
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           ix1=istack(iistack)
-          if(-1.gt.ix1.or.ix1.gt.ndim(1,iwrk)) then
+          if(-1.gt.ix1.or.ix1.gt.mpg%nx) then
             write(*,*) 'Faulty parameter ix = ',ix1,' for xsel!'
+            call pop_stack(stack_req)
             return
           endif
           do is=0,ndim(2,iwrk)-1
-            do iy=-1,ndim(2,iwrk)
-              do ix=-1,ndim(1,iwrk)
-                work(ixx(ix,iy),iyy(ix,iy),is,iwrk)=
-     1           work(ixx(ix1,iy),iyy(ix1,iy),is,iwrk)
-              end do
+            do iy=-1,mpg%ny
+              if (mpg%imapCv(ix1,iy).ne.0) then
+                do ix=-1,mpg%nx
+                  if (mpg%imapCv(ix,iy).ne.0) then
+                    work(mpg%imapCv(ix,iy),is,iwrk)=
+     1               work(mpg%imapCv(ix1,iy),is,iwrk)
+                  end if
+                end do
+              end if
             end do
           end do
           call pop_stack(stack_req)
         case('ysel')     ! select row
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           iy1=istack(iistack)
           if(-1.gt.iy1.or.iy1.gt.ndim(2,iwrk)) then
             write(*,*) 'Faulty parameter iy = ',iy1,' for ysel!'
+            call pop_stack(stack_req)
             return
           endif
           do is=0,ndim(2,iwrk)-1
-            do iy=-1,ndim(2,iwrk)
-              do ix=-1,ndim(1,iwrk)
-                work(ixx(ix,iy),iyy(ix,iy),is,iwrk)=
-     1           work(ixx(ix,iy1),iyy(ix,iy1),is,iwrk)
-              end do
+            do ix=-1,mpg%nx
+              if (mpg%imapCv(ix,iy1).ne.0) then
+                do iy=-1,mpg%ny
+                  if (mpg%imapCv(ix,iy).ne.0) then
+                    work(mpg%imapCv(ix,iy),is,iwrk)=
+     1               work(mpg%imapCv(ix,iy1),is,iwrk)
+                  end if
+                end do
+              end if
             end do
           end do
           call pop_stack(stack_req)
-#endif
         case('zsel')     ! select species
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5296,6 +5650,7 @@ c     assumes that bb is OK for 1d cases
 #else
           write(*,*) 'Must compile with Eirene for stoe function'
 #endif
+          eirene_label(iewrk)=graphlabel(iwrk)
           goto 2059
 #ifdef WG_TODO
         case('stow')     ! matrix --> wall array
@@ -5315,17 +5670,20 @@ c     assumes that bb is OK for 1d cases
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(2,iwrk),iwrk)
           call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
+#endif
         case('xtow')     ! x dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           iy = ipop(istack,iistack)
           if(iwwrk .eq. wklng) call dropwallstackbottom()
           iwwrk=iwwrk+1
           nwdim(1,iwwrk)=ndim(1,iwrk)+2
           nwdim(2,iwwrk)=ndim(2,iwrk)
-          do ix=-1,ndim(1,iwrk)
-            wall_stack(ix+2,0:ndim(2,iwrk)-1,iwwrk)=
-     .       work(ixx(ix,iy),iyy(ix,iy),0:ndim(2,iwrk)-1,iwrk)
+          do ix=-1,mpg%nx
+           if (mpg%imapCv(ix,iy).ne.0)
+     >      wall_stack(ix+2,0:ndim(2,iwrk)-1,iwwrk)=
+     .       work(mpg%imapCv(ix,iy),0:ndim(2,iwrk)-1,iwrk)
           enddo
           values(14)=
      .     minval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
@@ -5338,14 +5696,16 @@ c     assumes that bb is OK for 1d cases
         case('ytow')     ! y dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           if(iwwrk .eq. wklng) call dropwallstackbottom()
           ix = ipop(istack,iistack)
           iwwrk=iwwrk+1
           nwdim(1,iwwrk)=ndim(1,iwrk)
           nwdim(2,iwwrk)=ndim(2,iwrk)
-          do iy=-1,ndim(2,iwrk)
-            wall_stack(iy+2,0:ndim(2,iwrk)-1,iwwrk)=
-     .       work(ixx(ix,iy),iyy(ix,iy),0:ndim(2,iwrk)-1,iwrk)
+          do iy=-1,mpg%ny
+           if (mpg%imapCv(ix,iy).ne.0)
+     >      wall_stack(iy+2,0:ndim(2,iwrk)-1,iwwrk)=
+     .       work(mpg%imapCv(ix,iy),0:ndim(2,iwrk)-1,iwrk)
           enddo
           values(14)=
      .     minval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
@@ -5355,7 +5715,6 @@ c     assumes that bb is OK for 1d cases
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(2,iwrk),iwrk)
           call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
-#endif
         case('rtow')     ! real --> wall stack
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5754,7 +6113,7 @@ c
       end subroutine select_parameters
 
       subroutine select_command
-      integer is,iCv
+      integer is,iCv,iCv1,iCv2
 #ifdef WG_TODO
       integer i,in,ix,iy,ixr,iyt
       real(kind=R8) :: b0r0
@@ -6190,10 +6549,24 @@ cdpc still in testing phase
           expfile=spop(sstack,isstack)
           call plot_expfile
         case('outp')     ! prints the value of a specific element
-          stack_req=(/1,0,1,1,0,0,0/)
-          if(bad_args(stack_req)) return
+          if(iistack.le.1.or.mpg%isClassicalGrid.eq.0) then
+            stack_req=(/1,0,1,1,0,0,0/)
+            if(bad_args(stack_req)) return
+            iCv=ipop(istack,iistack)
+          else
+            stack_req=(/2,0,1,1,0,0,0/)
+            if(bad_args(stack_req)) return
+            if(.not.check_classical_grid(mpg)) return
+            iy=ipop(istack,iistack)
+            ix=ipop(istack,iistack)
+            if(-1.gt.ix.or.ix.gt.mpg%nx.or.
+     &         -1.gt.iy.or.iy.gt.mpg%ny) then
+              write(*,*) 'Faulty parameters ix,iy = ',ix,iy,' for outp!'
+              return
+            endif
+            iCv=mpg%imapCv(ix,iy)
+          endif
           stmp=spop(sstack,isstack)
-          iCv=ipop(istack,iistack)
           if(1.gt.iCv.or.iCv.gt.mpg%nCv) then
             write(*,*) 'Faulty parameter iCv = ',iCv,' for outp!'
             return
@@ -6222,7 +6595,6 @@ cdpc still in testing phase
         case('pdev')     ! PLPLOT device name
           if(bad_args(stack_req)) return
           call set_device(spop(sstack,isstack))
-#ifdef WG_TODO
         case('mprt')     ! output the top of matrix stack to a file
           stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -6238,28 +6610,48 @@ cdpc still in testing phase
           enddo
           close(99)
         case('mtab')     ! output a table from the top of matrix stack to a file
-          stack_req=(/4,0,1,1,0,0,0/)
-          if(bad_args(stack_req)) return
-          iy2=ipop(istack,iistack)
-          iy1=ipop(istack,iistack)
-          if (iy1.eq.0 .and. iy2.eq.0) then
-            iy1 = -1
-            iy2 = ny
-          end if
-          ix2=ipop(istack,iistack)
-          ix1=ipop(istack,iistack)
-          if (ix1.eq.0 .and. ix2.eq.0) then
-            ix1 = -1
-            ix2 = nx
-          end if
-          if (ix1 .lt. -1 .or. ix2 .gt. nx .or.
-     &        iy1 .lt. -1 .or. iy2 .gt. ny .or.
-     1        ix1 .gt. ix2 .or. iy1 .gt. iy2) then
-            write(*,*) 'Parameters supplied to mtab were invalid - ',
-     1                 'valid parameters are:'
-            write(*,*) ' -1 <= ',ix1,' <= ',ix2,' <= ',nx
-            write(*,*) ' -1 <= ',iy1,' <= ',iy2,' <= ',ny
-            return
+          if(iistack.lt.4.or.mpg%isClassicalGrid.eq.0) then
+            stack_req=(/2,0,1,1,0,0,0/)
+            if (bad_args(stack_req)) return
+            iCv2=ipop(istack,iistack)
+            iCv1=ipop(istack,iistack)
+            if (iCv1.eq.0 .and. iCv2.eq.0) then
+              iCv1 = 1
+              iCv2 = mpg%nCv
+            end if
+            if (iCv1.lt.1 .or. iCv2.gt.mpg%nCv .or. iCv1.gt.iCv2) then
+              write(*,*) 'Parameters supplied to mtab were invalid - ',
+     1                   'valid parameters are:'
+              write(*,*) ' 1 <= ',iCv1,' <= ',iCv2,' <= ',mpg%nCv
+              return
+            end if
+            classical_style = .false.
+          else
+            stack_req=(/4,0,1,1,0,0,0/)
+            if (bad_args(stack_req)) return
+            if (.not.check_classical_grid(mpg)) return
+            iy2=ipop(istack,iistack)
+            iy1=ipop(istack,iistack)
+            if (iy1.eq.0 .and. iy2.eq.0) then
+              iy1 = -1
+              iy2 = mpg%ny
+            end if
+            ix2=ipop(istack,iistack)
+            ix1=ipop(istack,iistack)
+            if (ix1.eq.0 .and. ix2.eq.0) then
+              ix1 = -1
+              ix2 = mpg%nx
+            end if
+            if (ix1 .lt. -1 .or. ix2 .gt. mpg%nx .or.
+     &          iy1 .lt. -1 .or. iy2 .gt. mpg%ny .or.
+     1          ix1 .gt. ix2 .or. iy1 .gt. iy2) then
+              write(*,*) 'Parameters supplied to mtab were invalid - ',
+     1                   'valid parameters are:'
+              write(*,*) ' -1 <= ',ix1,' <= ',ix2,' <= ',mpg%nx
+              write(*,*) ' -1 <= ',iy1,' <= ',iy2,' <= ',mpg%ny
+              return
+            end if
+            classical_style = .true.
           end if
           stmp=spop(sstack,isstack)
           nz=ndim(2,iwrk)
@@ -6268,14 +6660,21 @@ cdpc still in testing phase
           write(99,hlp_frm) '#',
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))),
      2       (textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is=0,nz-1)
-          write(hlp_frm,'(a,i3,a)') '(2i4,1p,',nz,'(1x,1e12.5))'
-          do iy=iy1,iy2
-            do ix=ix1,ix2
-              write(99,hlp_frm) ix,iy,(work(ix,iy,i,iwrk),i=0,nz-1)
+          if (classical_style) then
+            write(hlp_frm,'(a,i3,a)') '(2i4,1p,',nz,'(1x,1e12.5))'
+            do iy=iy1,iy2
+              do ix=ix1,ix2
+                if (mpg%imapCv(ix,iy).ne.0) write(99,hlp_frm)
+     >           ix,iy,(work(mpg%imapCv(ix,iy),i,iwrk),i=0,nz-1)
+              enddo
             enddo
-          enddo
+          else
+            write(hlp_frm,'(a,i3,a)') '(i6,1p,',nz,'(1x,1e12.5))'
+            do iCv=iCv1,iCv2
+              write(99,hlp_frm) iCv,(work(iCv,i,iwrk),i=0,nz-1)
+            enddo
+          endif
           close(99)
-#endif
         case('amju','amjuel')    ! accesses Eirene type atomic physics data
           stack_req=(/0,0,4,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -7518,17 +7917,14 @@ cdpc still in testing phase
           ndim(2,iwrk)=nedim(2,iewrk)
           work(:,0:ndim(2,iwrk)-1,iwrk)=0.0_R8
           nntria(:)=0
-#ifdef WG_TODO
           do i=1,ntrii
-            if (b2_cell(ixtri(i),iytri(i))) then
-              nntria(ix_e2b(ixtri(i)),iytri(i)-1)=
-     .         nntria(ix_e2b(ixtri(i)),iytri(i)-1)+1
-              work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(2,iwrk)-1,iwrk)=
-     .         work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(2,iwrk)-1,iwrk)+
+            if (ixtri(i).gt.0) then
+              nntria(ixtri(i))=nntria(ixtri(i))+1
+              work(ixtri(i),0:ndim(2,iwrk)-1,iwrk)=
+     .         work(ixtri(i),0:ndim(2,iwrk)-1,iwrk)+
      .         eirene_stack(i,0:ndim(2,iwrk)-1,iewrk)
             end if
           enddo
-#endif
           do iCv = 1, mpg%nCv
             if (nntria(iCv).gt.0) then
               work(iCv,0:ndim(2,iwrk)-1,iwrk)=
@@ -7561,7 +7957,7 @@ cdpc still in testing phase
           if(bad_args(stack_req)) return ! 4900
           do is=0,nedim(2,iewrk)-1
             do i=1,nedim(1,iewrk)
-              if (.not.b2_cell(ixtri(i),iytri(i))) then
+              if (ixtri(i).le.0) then
                 eirene_stack(i,is,iewrk) = rstack(irstack)
               end if
             enddo
@@ -9292,7 +9688,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),ns,boundary_namelist,BoRiS)
+          call b2pwld(istack(iistack),ns,boundary_namelist,switch%BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff
@@ -10468,6 +10864,7 @@ c
       character*7 stack_name
 
       cflag=.true.
+      stack_req=(/0,0,0,0,0,0,0/)
       CNVALUE: select case(cval)
         case('me')       ! electron mass
           stack_name='real'
@@ -10515,16 +10912,18 @@ c
         case('iyref')    ! iyref
           stack_name='integer'
           call ipush(istack,iistack,iyref)
-        case('nx')       ! nx
-          stack_name='integer'
-          call ipush(istack,iistack,nx)
-        case('ny')       ! ny
-          stack_name='integer'
-          call ipush(istack,iistack,ny)
 #endif
+        case('nx')       ! nx
+          if(.not.check_classical_grid(mpg)) return
+          stack_name='integer'
+          call ipush(istack,iistack,mpg%nx)
+        case('ny')       ! ny
+          if(.not.check_classical_grid(mpg)) return
+          stack_name='integer'
+          call ipush(istack,iistack,mpg%ny)
         case('ns')       ! ns
           stack_name='integer'
-          call ipush(istack,iistack,ns)
+          call ipush(istack,iistack,state%ns)
         case('nspecies') ! nspecies
           stack_name='integer'
           call ipush(istack,iistack,nspecies)
@@ -10538,6 +10937,7 @@ c
           stack_name='integer'
           call ipush(istack,iistack,nion)
         case('nxtl')     ! nxtl
+          if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
           if (nnreg(0).ge.7) then
 #ifdef WG_TODO
@@ -10546,8 +10946,10 @@ c
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'
+            return
           endif
         case('nxtr')     ! nxtr
+          if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
           if (nnreg(0).ge.7) then
 #ifdef WG_TODO
@@ -10556,6 +10958,7 @@ c
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'
+            return
           endif
         case('nbnd')     ! nbnd
           stack_name='integer'
@@ -11239,3 +11642,44 @@ c calculate neoclassical diagnostics
       enddo
       return
       end subroutine write_crazy
+
+      subroutine build_reverse_mapping(mpg)
+      use b2us_map
+      use b2mod_b2plot
+      implicit none
+      type(mapping), intent(in) :: mpg
+      integer ix, iy
+
+      cvIx = -2
+      cvIy = -2
+      fcxIx = -2
+      fcxIy = -2
+      fcyIx = -2
+      fcyIy = -2
+      vxIx = -2
+      vxIy = -2
+      if (mpg%isClassicalGrid.eq.1) then
+        do iy = 1, mpg%ny
+          do ix = 1, mpg%nx
+            if (mpg%imapCv(ix,iy).gt.0) then
+              cvIx(mpg%imapCv(ix,iy)) = ix
+              cvIy(mpg%imapCv(ix,iy)) = iy
+            end if
+            if (mpg%imapFcx(ix,iy).gt.0) then
+              fcxIx(mpg%imapFcx(ix,iy)) = ix
+              fcxIy(mpg%imapFcx(ix,iy)) = iy
+            end if
+             if (mpg%imapFcy(ix,iy).gt.0) then
+              fcyIx(mpg%imapFcy(ix,iy)) = ix
+              fcyIy(mpg%imapFcy(ix,iy)) = iy
+            end if
+            if (mpg%imapVx(ix,iy).gt.0) then
+              vxIx(mpg%imapVx(ix,iy)) = ix
+              vxIy(mpg%imapVx(ix,iy)) = iy
+            end if
+          end do
+        end do
+      end if
+
+      return
+      end subroutine build_reverse_mapping

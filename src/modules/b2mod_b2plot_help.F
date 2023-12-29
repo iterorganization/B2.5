@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=357,nfns=212,nsparameters=34,nelabels=36,
+      parameter(nlabels=398,nfns=212,nsparameters=34,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
@@ -98,9 +98,17 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:357) /
+      data labels(351:398) /
      1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      ,
-     2  'molrad'  , 'ionrad'  /
+     2  'molrad'  , 'ionrad'  , 'tn'      , 'kt'      , 'zt'      ,
+     3  'fcxviskt', 'fcyviskt', 'fnnx32'  , 'fnny32'  , 'fnnx52'  ,
+     4  'fnny52'  , 'fktx'    , 'fkty'    , 'fztx'    , 'fzty'    ,
+     5  'shn'     , 'skt'     , 'szt'     , 'rkt'     , 'rzt'     ,
+     6  'ckt'     , 'czt'     , 'ren'     , 'ctn'     , 'kyn0'    ,
+     7  'dkt'     , 'dzt'     , 'dfhn'    , 'dfkt'    , 'dfzt'    ,
+     8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
+     9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
+     *  'fnny'    , 'fhnx'    , 'fhny'    /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -486,14 +494,59 @@
      8    'Thermo-electric classical flux limit factor',
      9    'Thermo-electric coefficient limit factor',
      *    'Eirene atomic species index'/
-      data descriptions(351:357) /
+      data descriptions(351:360) /
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
      4    'Toroidal magnetic flux function (Wb/m)',
      5    'Plasma pressure (Pa)',
      6    'Power loss due to molecule radiation (W)',
-     7    'Power loss due to molecular ion radiation (W)'/
+     7    'Power loss due to molecular ion radiation (W)',
+     8    'Fluid neutral temperature (eV)',
+     9    'ExB turbulent kinetic energy density (?)',
+     *    'Enstrophy (?)'/
+      data descriptions(361:370) /
+     1    'Poloidal current due to RS of kt-model (A)',
+     2    'Radial current due to RS of kt-model (A)',
+     3    'Convective poloidal fluid neutral flux (s^{-1})',
+     4    'Convective radial fluid neutral flux (s^{-1})',
+     5    'Conductive poloidal fluid neutral flux (s^{-1})',
+     6    'Conductive radial fluid neutral flux (s^{-1})',
+     7    'Poloidal ExB turbulent energy flux (W)',
+     8    'Radial ExB turbulent energy flux (W)',
+     9    'Poloidal enstrophy flux (?)',
+     *    'Radial enstrophy flux (?)'/
+      data descriptions(371:380) /
+     1    'Fluid neutral heat source (W)',
+     2    'ExB turbulent energy source (W)',
+     3    'Enstrophy source (?)',
+     4    'RESKT',
+     5    'RESZT',
+     6    'CORKT',
+     7    'CORZT',
+     8    'RESEN',
+     9    'CORTN',
+     *    '\Gv\R_{n}^{0} (m^{2}.s^{-1})'/
+      data descriptions(381:390) /
+     1    'ExB turbulent energy diffusivity (m^{2}.s^{-1})',
+     2    'Enstrophy diffusivity (?)',
+     3    '\mtD\dfhn (W)',
+     4    '\mtD\dfkt (W)',
+     5    '\mtD\dfzt (?)',
+     6    'Boundary fluid neutral heat source (W)',
+     7    'Boundary ExB turbulent energy source (W)',
+     8    'Boundary enstrophy source (W)',
+     9    'Recycling fluid neutral heat source (W)',
+     *    'Recycling ExB turbulent energy source (W)'/
+      data descriptions(391:398) /
+     1    'Recycling enstrophy source (?)',
+     2    'tn at previous time step (eV)',
+     3    'kt at previous time step (?)',
+     4    'zt at previous time step (?)',
+     5    'Poloidal fluid neutral particle flux (s^{-1})',
+     6    'Radial fluid neutral particle flux (s^{-1})',
+     7    'Poloidal fluid neutral energy flux (W)',
+     8    'Radial fluid neutral energy flux (W)'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -571,9 +624,17 @@
      8    0,      0,      2,      2,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      2/
-      data dimensions(351:357) /
+      data dimensions(351:398) /
      1    1,      1,      1,      1,      1,
-     2    2,      2/
+     2    2,      2,      1,      1,      1,
+     3    1,      1,      1,      1,      1,
+     4    1,      1,      1,      1,      1,
+     5    1,      1,      1,      1,      1,
+     6    1,      1,      1,      1,      1,
+     7    1,      1,      1,      1,      1,
+     8    1,      1,      1,      1,      1,
+     9    1,      1,      1,      1,      1,
+     *    1,      1,      1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
