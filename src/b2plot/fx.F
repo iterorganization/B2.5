@@ -157,7 +157,7 @@ cxpb : new default behaviour : zero of distance set at ixref
 #endif
           call end_page
         endif
-        if(typeofplot/2 .eq. 1) then
+        if(typeofplot/2 .eq. 1 .and. mpg%isClassicalGrid .eq. 1) then
           do ix=ixstart,ixend
             wrk(ix)=xx(ix,2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
@@ -209,7 +209,8 @@ cxpb : new default behaviour : zero of distance set at ixref
           if (dcol.gt.1) then
              call gsplci(dcol)
           elseif(dcol.lt.0) then
-             if(typeofplot.eq.3) dcol=dcol+1
+             if(typeofplot.eq.3.and.mpg%isClassicalGrid.eq.1)
+     >        dcol=dcol+1
              call gsplci(-dcol)
              dcol=dcol-1
              if (dcol.lt.-17) then

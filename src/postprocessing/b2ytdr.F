@@ -44,7 +44,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmfs
       use b2mod_ppout
       use b2mod_b2plot
-     , , only : wklng, ntrfrm,
+     , , only : wklng,
      ,          natmi, nmoli, nioni,
      ,          alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
@@ -78,7 +78,7 @@ c 2002-09-11: logic revised
       use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
-     , , only : nlimi, nstsi
+     , , only : nlimi, nstsi, ntrfrm
 #else
       use b2mod_braeir
 #endif
