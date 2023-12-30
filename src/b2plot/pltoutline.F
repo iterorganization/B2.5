@@ -24,7 +24,7 @@ c       call gslwsc_d(1.0_R8)
           end do
         end do
       else if (mpg%isClassicalGrid.eq.1) then
-        do iCv = mpg%nCi+1, mpg%nCv+1
+        do iCv = mpg%nCi+1, mpg%nCv
           do i = 1, mpg%cvFcP(iCv,2)
             iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
             if (fcxIx(iFc).gt.-2  .and. fcxIy(iFc).gt.-2) then
@@ -33,10 +33,10 @@ c       call gslwsc_d(1.0_R8)
      &                     real(fcxIx(iFc),R8)-0.5_R8,
      &                     real(fcxIy(iFc),R8)+0.5_R8)
             else if (fcyIx(iFc).gt.-2  .and. fcyIy(iFc).gt.-2) then
-              call lined_d(real(fcxIx(iFc),R8)-0.5_R8,
-     &                     real(fcxIy(iFc),R8)-0.5_R8,
-     &                     real(fcxIx(iFc),R8)+0.5_R8,
-     &                     real(fcxIy(iFc),R8)-0.5_R8)
+              call lined_d(real(fcyIx(iFc),R8)-0.5_R8,
+     &                     real(fcyIy(iFc),R8)-0.5_R8,
+     &                     real(fcyIx(iFc),R8)+0.5_R8,
+     &                     real(fcyIy(iFc),R8)-0.5_R8)
             endif
           end do
         end do
