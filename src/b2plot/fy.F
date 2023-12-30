@@ -396,7 +396,7 @@ c     the line format common
 #endif
           call end_page
         endif
-        if(typeofplot/2 .eq. 1) then
+        if(typeofplot/2 .eq. 1 .and. mpg%isClassicalGrid .eq. 1) then
           do iy=iystart,iyend
             wrk(iy)=yy(iy,2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
@@ -454,7 +454,8 @@ c     the line format common
           if (dcol.gt.1) then
              call gsplci(dcol)
           elseif(dcol.lt.0) then
-             if(typeofplot.eq.3) dcol=dcol+1
+             if(typeofplot.eq.3.and.mpg%isClassicalGrid.eq.1)
+     >        dcol=dcol+1
              call gsplci(-dcol)
              dcol=dcol-1
              if (dcol.lt.-17) then

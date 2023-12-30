@@ -1250,7 +1250,11 @@ c
       wwidth=10.0_R8             ! wall linewidth
       zwidth=1.0_R8              ! axis linewidth
       lfsz=0                     ! line label font size
-      typeofplot=3               ! physical and computational
+      if (mpg%isClassicalGrid.eq.1) then
+        typeofplot=3             ! physical and computational
+      else
+        typeofplot=1             ! only physical domain available
+      endif
       xparallel=.false.          ! default to f.y using poloidal distance
       expline=.true.             ! default to plotting experimental data as lines
       expsymbol=5                ! default symbol is crosses
@@ -6113,9 +6117,9 @@ c
       end subroutine select_parameters
 
       subroutine select_command
-      integer is,iCv,iCv1,iCv2
+      integer i,is,ix,iy,iCv,iCv1,iCv2
 #ifdef WG_TODO
-      integer i,in,ix,iy,ixr,iyt
+      integer in,ixr,iyt
       real(kind=R8) :: b0r0
 #endif
 
@@ -10997,10 +11001,16 @@ c
         case('glob')     ! transform an extra label into a global header
           call set_globalheader
         case('both')     ! both phys and comp
-          typeofplot=3   ! both
+          if (mpg%isClassicalGrid.eq.1) then
+            typeofplot=3 ! both
+          else
+            typeofplot=1 ! only physical domain available
+          endif
         case('phys')     ! physical domain only
           typeofplot=1   ! physical domain only
         case('comp')     ! computational domain only
+          stack_req=(/0,0,0,0,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           typeofplot=2   ! computational domain only
         case('trigmesh') ! overlay triangular grid
           call trigmesh
@@ -11659,8 +11669,8 @@ c calculate neoclassical diagnostics
       vxIx = -2
       vxIy = -2
       if (mpg%isClassicalGrid.eq.1) then
-        do iy = 1, mpg%ny
-          do ix = 1, mpg%nx
+        do iy = -1, mpg%ny
+          do ix = -1, mpg%nx
             if (mpg%imapCv(ix,iy).gt.0) then
               cvIx(mpg%imapCv(ix,iy)) = ix
               cvIy(mpg%imapCv(ix,iy)) = iy
