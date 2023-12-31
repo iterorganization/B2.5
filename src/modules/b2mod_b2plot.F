@@ -56,6 +56,9 @@
      *  vxIx(:), vxIy(:)
 
       real (kind=R8), allocatable, save ::
+     *  dsimp(:), dsomp(:), wdimp(:), wdomp(:)
+
+      real (kind=R8), allocatable, save ::
      *  eirene_stack(:,:,:),
      *  triangle_area(:),
      *  triangle_vol(:),
@@ -117,7 +120,8 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
      * nidim,linlog,wlinlog,tlinlog,trglinlog
       integer, save ::
      *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),ntrfrm,
-     *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
+     *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average,
+     *  ixref,iyref
 cank 960511
       integer, save ::
      *  nlimi,nstsi,natmi,nmoli,nioni,nlim1
