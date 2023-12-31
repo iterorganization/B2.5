@@ -23,8 +23,6 @@ c
       integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,iVx,nlist
       integer iystart,iyend
       integer len_of_digits
-      logical found
-      intrinsic min,max
       integer lnblnk
       external xertst, lnblnk, len_of_digits
 c     the line format common
@@ -221,6 +219,27 @@ c     the line format common
               lmax=max(lmax,work(iCv,is,iwrk))
             end do
           endif
+        else if (plot_vs_rmaj) then
+          x1 = geo%cvX(cvlist(1))
+          x2 = geo%cvX(cvlist(nlist))
+          if (x1.eq.x2) then
+            write(6,*)
+     .       'No major radius variation over the range to plot'
+            write(6,*) 'Graph abandoned'
+            if(allocated(ds)) deallocate(ds)
+            if(allocated(wd)) deallocate(wd)
+            if(allocated(wrk)) deallocate(wrk)
+            if(allocated(cvlist)) deallocate(cvlist)
+            call subend ()
+            return
+          else
+            do iy=iystart,iyend
+              iCv=mpg%imapCv(ix,iy)
+              wrk(iy)=geo%cvX(iCv)
+              lmin=min(lmin,work(iCv,is,iwrk))
+              lmax=max(lmax,work(iCv,is,iwrk))
+            end do
+          endif
         else
           do iy=iystart,iyend
             wrk(iy)=ds(iy-iystart+1)
@@ -250,6 +269,8 @@ c     the line format common
             write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \GW\R)'
           else if (plot_vs_root_psi) then
             write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \Gq\R_{pol})'
+          else if (plot_vs_rmaj) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs R)'
           else if (map_to_midplane) then
             write(tmpstring2,hlp_frm) ' <ix = ',ix,'> '//
      &       '(mapped to midplane)'
@@ -425,16 +446,16 @@ c     the line format common
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
           if (dcol.gt.1) then
-             call gsplci(dcol)
+            call gsplci(dcol)
           elseif(dcol.lt.0) then
-             if(typeofplot.eq.3.and.mpg%isClassicalGrid.eq.1)
-     >        dcol=dcol+1
-             call gsplci(-dcol)
-             dcol=dcol-1
-             if (dcol.lt.-17) then
-               dcol=-mod(abs(dcol),17)
-               if (dcol.eq.0) dcol=-17
-             endif
+            if(typeofplot.eq.3.and.mpg%isClassicalGrid.eq.1)
+     >       dcol=dcol+1
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
           endif
 #endif
           do iy=iystart,iyend-1
@@ -507,6 +528,602 @@ c     the line format common
       call subend ()
       return
       end subroutine fy
+c
+      subroutine fimp()
+      use b2mod_types
+      use b2mod_b2plot
+      use b2mod_b2plot_debug
+      use b2mod_b2plot_values
+      use b2mod_user_namelist
+      use b2us_data
+      implicit none
+      integer i,j,is,iCv,iVx
+      real (kind=R8) :: x1,x2,xmin,xmax,lmin,lmax,psign,pnorm,poffset
+      real (kind=R8), allocatable :: wrk(:)
+      character*44 tmpstring1,tmpstring2
+      character*256 tmpstring,titlestring
+      integer lnblnk
+      external lnblnk
+c     the line format common
+      character*10 linefmt
+      common /line_format/ linefmt
+
+      if (nimp.eq.0) return
+      if (b2plot_debug.ge.5)
+     > write(*,*) 'Plotting along the inner midplane'
+      allocate(wrk(1:nimp))
+      do is=0,ndim(2,iwrk)-1
+        tmpstring1=textwk(is,iwrk)
+        lmin=work(imp(1),is,iwrk)
+        lmax=work(imp(1),is,iwrk)
+        if (plot_vs_norm_psi.or.plot_vs_full_psi.or.
+     &      plot_vs_root_psi) then
+          xmin = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(imp(1),1)))
+          xmax = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(imp(1),1)))
+          do i = 2, mpg%cvVxP(imp(1),2)
+            iVx = mpg%cvVx(mpg%cvVxP(imp(1),1)+i-1)
+            xmin = min(xmin,geo%vxFpsi(iVx))
+            xmax = max(xmax,geo%vxFpsi(iVx))
+          end do
+          x1 = (xmin+xmax)/2.0_R8
+          xmin = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(imp(nimp),1)))
+          xmax = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(imp(nimp),1)))
+          do i = 2, mpg%cvVxP(imp(nimp),2)
+            iVx = mpg%cvVx(mpg%cvVxP(imp(nimp),1)+i-1)
+            xmin = min(xmin,geo%vxFpsi(iVx))
+            xmax = max(xmax,geo%vxFpsi(iVx))
+          end do
+          x2 = (xmin+xmax)/2.0_R8
+          psign = sign(1.0_R8,x2-x1)
+          if (plot_vs_norm_psi.or.plot_vs_root_psi) then
+            poffset = 1.0_R8
+            pnorm = geo%fsPsi(mpg%iFssep)
+          end if
+          do j = 1, nimp
+            iCv=imp(j)
+            xmin = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1)))
+            xmax = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1)))
+            do i = 2, mpg%cvVxP(iCv,2)
+              iVx = mpg%cvVx(mpg%cvVxP(iCv,1)+i-1)
+              xmin = min(xmin,geo%vxFpsi(iVx))
+              xmax = max(xmax,geo%vxFpsi(iVx))
+            end do
+            if (plot_vs_norm_psi.or.plot_vs_root_psi) then
+              wrk(j)=(((xmin+xmax)/2.0_R8-pnorm)*psign/pnorm)+poffset
+            else
+              wrk(j)=(xmin+xmax)/2.0_R8
+            end if
+            if (plot_vs_root_psi) wrk(j)=sqrt(wrk(j))
+            lmin=min(lmin,work(iCv,is,iwrk))
+            lmax=max(lmax,work(iCv,is,iwrk))
+          end do
+        else if (plot_vs_rmaj) then
+          do i=1,nimp
+            wrk(i)=geo%cvX(imp(i))
+            lmin=min(lmin,work(imp(i),is,iwrk))
+            lmax=max(lmax,work(imp(i),is,iwrk))
+          end do
+        else
+          do i=1,nimp
+            wrk(i)=dsimp(i)
+            lmin=min(lmin,work(imp(i),is,iwrk))
+            lmax=max(lmax,work(imp(i),is,iwrk))
+          enddo
+        end if
+        if(values(9) .ne. values(10)) then
+          lmin=values(9)
+          lmax=values(10)
+        endif
+        if(lmin.eq.lmax) then
+          lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+          lmax=max(lmax*0.9_R8,lmax*1.1_R8)
+          if(lmin.eq.lmax) then
+            lmin=-1.0_R8
+            lmax=+1.0_R8
+          end if
+        end if
+        if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
+        if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
+        if(mod(typeofplot,2) .eq. 1) then
+          if (plot_vs_norm_psi) then
+            write(tmpstring2,'(a)') ' (IMP vs \Gw\R)'
+          else if (plot_vs_full_psi) then
+            write(tmpstring2,'(a)') ' (IMP vs \GW\R)'
+          else if (plot_vs_root_psi) then
+            write(tmpstring2,'(a)') ' (IMP vs \Gq\R_{pol})'
+          else if (plot_vs_rmaj) then
+            write(tmpstring2,'(a)') ' (IMP vs R)'
+          else
+            write(tmpstring2,'(a)') ' (IMP)'
+          endif
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
+          if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
+            xmin=values(11)
+          else
+            xmin=min(wrk(1),wrk(nimp))
+          endif
+          if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
+            xmax=values(12)
+          else
+            xmax=max(wrk(1),wrk(nimp))
+          endif
+          if(xmin.eq.xmax) then
+            xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+            xmax=max(xmax*0.9_R8,xmax*1.1_R8)
+            if(xmin.eq.xmax) then
+              xmin=-1.0_R8
+              xmax=+1.0_R8
+            end if
+          end if
+          if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
+          if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
+          call init_page(titlestring,
+     1     xmin,xmax,lmin,lmax,
+     4     linlog,.false.,.false.,.true.)
+          if(writing_to_file) then
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            do i=1,nimp
+              write(nwtf,*) wrk(i),work(imp(i),is,iwrk)
+            enddo
+          endif
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
+          if (dcol.gt.1) then
+            call gsplci(dcol)
+          elseif(dcol.lt.0) then
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
+          endif
+#endif
+          do i=1,nimp-1
+            call lined_d(
+     1       wrk(i),
+     2       min(lmax,max(lmin,work(imp(i),is,iwrk))),
+     3       wrk(i+1),
+     4       min(lmax,max(lmin,work(imp(i+1),is,iwrk))))
+          end do
+          if (plotting_sep.and.icsepimp.gt.1) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(icsepimp-1)+wrk(icsepimp)).gt.0.0_R8
+     &          .or.linlog.le.2)
+     >        call lined_d(
+     1         (wrk(icsepimp-1)+wrk(icsepimp))/2.0_R8,lmin,
+     1         (wrk(icsepimp-1)+wrk(icsepimp))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          end if
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
+          if (dcol.ne.1) call gsplci(1)
+#endif
+          call end_page
+        end if
+        if(typeofplot/2 .eq. 1) then
+          do i=1,nimp
+            wrk(i)=real(i,R8)
+            lmin=min(lmin,work(imp(i),is,iwrk))
+            lmax=max(lmax,work(imp(i),is,iwrk))
+          end do
+          if(values(9) .ne. values(10)) then
+            lmin=values(9)
+            lmax=values(10)
+          end if
+          if(lmin.eq.lmax) then
+            lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+            lmax=max(lmax*0.9_R8,lmax*1.1_R8)
+            if(lmin.eq.lmax) then
+              lmin=-1.0_R8
+              lmax=+1.0_R8
+            end if
+          end if
+          if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
+          if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
+          if(values(3).ne.values(4)) then
+            xmin=values(3)
+            xmax=values(4)
+          else
+            xmin=min(wrk(1),wrk(nimp))
+            xmax=max(wrk(1),wrk(nimp))
+          endif
+          if(xmin.eq.xmax) then
+            xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+            xmax=max(xmax*0.9_R8,xmax*1.1_R8)
+            if(xmin.eq.xmax) then
+              xmin=-1.0_R8
+              xmax=+1.0_R8
+            end if
+          end if
+          if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
+          if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
+          write(tmpstring2,'(a)') ' (IMP)'
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
+          call init_page(titlestring,
+     1     xmin,xmax,lmin,lmax,
+     4     linlog,.false.,.false.,.false.)
+          if(writing_to_file) then
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            do i=1,nimp
+              write(nwtf,*) wrk(i),work(imp(i),is,iwrk)
+            enddo
+          endif
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
+          if (dcol.gt.1) then
+            call gsplci(dcol)
+          elseif(dcol.lt.0) then
+            if(typeofplot.eq.3) dcol=dcol+1
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
+          endif
+#endif
+          do i=1,nimp-1
+            if(wrk(i+1).lt.xmin) cycle
+            if(wrk(i).gt.xmax) cycle
+            call lined_d(
+     1       wrk(i),
+     2       min(lmax,max(lmin,work(imp(i),is,iwrk))),
+     3       wrk(i+1),
+     4       min(lmax,max(lmin,work(imp(i+1),is,iwrk))))
+          end do
+          if (plotting_sep.and.icsepimp.gt.1) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(icsepimp-1)+wrk(icsepimp)).gt.0.0_R8
+     &          .or.linlog.le.2)
+     >        call lined_d(
+     1         (wrk(icsepimp-1)+wrk(icsepimp))/2.0_R8,lmin,
+     1         (wrk(icsepimp-1)+wrk(icsepimp))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          end if
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
+          if (dcol.ne.1) call gsplci(1)
+#endif
+          call end_page
+        end if
+      end do
+      deallocate(wrk)
+
+      return
+      end subroutine fimp
+c
+      subroutine fomp()
+      use b2mod_types
+      use b2mod_b2plot
+      use b2mod_b2plot_debug
+      use b2mod_b2plot_values
+      use b2mod_user_namelist
+      use b2us_data
+      implicit none
+      integer i,j,is,iCv,iVx
+      real (kind=R8) :: x1,x2,xmin,xmax,lmin,lmax,psign,pnorm,poffset
+      real (kind=R8), allocatable :: wrk(:)
+      character*44 tmpstring1,tmpstring2
+      character*256 tmpstring,titlestring
+      integer lnblnk
+      external lnblnk
+c     the line format common
+      character*10 linefmt
+      common /line_format/ linefmt
+
+      if (nomp.eq.0) return
+      if (b2plot_debug.ge.5)
+     > write(*,*) 'Plotting along the outer midplane'
+      allocate(wrk(1:nomp))
+      do is=0,ndim(2,iwrk)-1
+        tmpstring1=textwk(is,iwrk)
+        lmin=work(omp(1),is,iwrk)
+        lmax=work(omp(1),is,iwrk)
+        if (plot_vs_norm_psi.or.plot_vs_full_psi.or.
+     &      plot_vs_root_psi) then
+          xmin = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(omp(1),1)))
+          xmax = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(omp(1),1)))
+          do i = 2, mpg%cvVxP(omp(1),2)
+            iVx = mpg%cvVx(mpg%cvVxP(omp(1),1)+i-1)
+            xmin = min(xmin,geo%vxFpsi(iVx))
+            xmax = max(xmax,geo%vxFpsi(iVx))
+          end do
+          x1 = (xmin+xmax)/2.0_R8
+          xmin = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(omp(nomp),1)))
+          xmax = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(omp(nomp),1)))
+          do i = 2, mpg%cvVxP(omp(nomp),2)
+            iVx = mpg%cvVx(mpg%cvVxP(omp(nomp),1)+i-1)
+            xmin = min(xmin,geo%vxFpsi(iVx))
+            xmax = max(xmax,geo%vxFpsi(iVx))
+          end do
+          x2 = (xmin+xmax)/2.0_R8
+          psign = sign(1.0_R8,x2-x1)
+          if (plot_vs_norm_psi.or.plot_vs_root_psi) then
+            poffset = 1.0_R8
+            pnorm = geo%fsPsi(mpg%iFssep)
+          end if
+          do j = 1, nomp
+            iCv=omp(j)
+            xmin = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1)))
+            xmax = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1)))
+            do i = 2, mpg%cvVxP(iCv,2)
+              iVx = mpg%cvVx(mpg%cvVxP(iCv,1)+i-1)
+              xmin = min(xmin,geo%vxFpsi(iVx))
+              xmax = max(xmax,geo%vxFpsi(iVx))
+            end do
+            if (plot_vs_norm_psi.or.plot_vs_root_psi) then
+              wrk(j)=(((xmin+xmax)/2.0_R8-pnorm)*psign/pnorm)+poffset
+            else
+              wrk(j)=(xmin+xmax)/2.0_R8
+            end if
+            if (plot_vs_root_psi) wrk(j)=sqrt(wrk(j))
+            lmin=min(lmin,work(iCv,is,iwrk))
+            lmax=max(lmax,work(iCv,is,iwrk))
+          end do
+        else if (plot_vs_rmaj) then
+          do i=1,nomp
+            wrk(i)=geo%cvX(omp(i))
+            lmin=min(lmin,work(omp(i),is,iwrk))
+            lmax=max(lmax,work(omp(i),is,iwrk))
+          end do
+        else
+          do i=1,nomp
+            wrk(i)=dsomp(i)
+            lmin=min(lmin,work(omp(i),is,iwrk))
+            lmax=max(lmax,work(omp(i),is,iwrk))
+          enddo
+        end if
+        if(values(9) .ne. values(10)) then
+          lmin=values(9)
+          lmax=values(10)
+        endif
+        if(lmin.eq.lmax) then
+          lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+          lmax=max(lmax*0.9_R8,lmax*1.1_R8)
+          if(lmin.eq.lmax) then
+            lmin=-1.0_R8
+            lmax=+1.0_R8
+          end if
+        end if
+        if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
+        if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
+        if(mod(typeofplot,2) .eq. 1) then
+          if (plot_vs_norm_psi) then
+            write(tmpstring2,'(a)') ' (OMP vs \Gw\R)'
+          else if (plot_vs_full_psi) then
+            write(tmpstring2,'(a)') ' (OMP vs \GW\R)'
+          else if (plot_vs_root_psi) then
+            write(tmpstring2,'(a)') ' (OMP vs \Gq\R_{pol})'
+          else if (plot_vs_rmaj) then
+            write(tmpstring2,'(a)') ' (OMP vs R)'
+          else
+            write(tmpstring2,'(a)') ' (OMP)'
+          endif
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
+          if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
+            xmin=values(11)
+          else
+            xmin=min(wrk(1),wrk(nomp))
+          endif
+          if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
+            xmax=values(12)
+          else
+            xmax=max(wrk(1),wrk(nomp))
+          endif
+          if(xmin.eq.xmax) then
+            xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+            xmax=max(xmax*0.9_R8,xmax*1.1_R8)
+            if(xmin.eq.xmax) then
+              xmin=-1.0_R8
+              xmax=+1.0_R8
+            end if
+          end if
+          if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
+          if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
+          call init_page(titlestring,
+     1     xmin,xmax,lmin,lmax,
+     4     linlog,.false.,.false.,.true.)
+          if(writing_to_file) then
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            do i=1,nomp
+              write(nwtf,*) wrk(i),work(omp(i),is,iwrk)
+            enddo
+          endif
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
+          if (dcol.gt.1) then
+            call gsplci(dcol)
+          elseif(dcol.lt.0) then
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
+          endif
+#endif
+          do i=1,nomp-1
+            call lined_d(
+     1       wrk(i),
+     2       min(lmax,max(lmin,work(omp(i),is,iwrk))),
+     3       wrk(i+1),
+     4       min(lmax,max(lmin,work(omp(i+1),is,iwrk))))
+          end do
+          if (plotting_sep.and.icsepomp.gt.1) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(icsepomp-1)+wrk(icsepomp)).gt.0.0_R8
+     &          .or.linlog.le.2)
+     >        call lined_d(
+     1         (wrk(icsepomp-1)+wrk(icsepomp))/2.0_R8,lmin,
+     1         (wrk(icsepomp-1)+wrk(icsepomp))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          end if
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
+          if (dcol.ne.1) call gsplci(1)
+#endif
+          call end_page
+        end if
+        if(typeofplot/2 .eq. 1) then
+          do i=1,nomp
+            wrk(i)=real(i,R8)
+            lmin=min(lmin,work(omp(i),is,iwrk))
+            lmax=max(lmax,work(omp(i),is,iwrk))
+          end do
+          if(values(9) .ne. values(10)) then
+            lmin=values(9)
+            lmax=values(10)
+          end if
+          if(lmin.eq.lmax) then
+            lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+            lmax=max(lmax*0.9_R8,lmax*1.1_R8)
+            if(lmin.eq.lmax) then
+              lmin=-1.0_R8
+              lmax=+1.0_R8
+            end if
+          end if
+          if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
+          if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
+          if(values(3).ne.values(4)) then
+            xmin=values(3)
+            xmax=values(4)
+          else
+            xmin=min(wrk(1),wrk(nomp))
+            xmax=max(wrk(1),wrk(nomp))
+          endif
+          if(xmin.eq.xmax) then
+            xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+            xmax=max(xmax*0.9_R8,xmax*1.1_R8)
+            if(xmin.eq.xmax) then
+              xmin=-1.0_R8
+              xmax=+1.0_R8
+            end if
+          end if
+          if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
+          if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
+          write(tmpstring2,'(a)') ' (OMP)'
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
+          call init_page(titlestring,
+     1     xmin,xmax,lmin,lmax,
+     4     linlog,.false.,.false.,.false.)
+          if(writing_to_file) then
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            do i=1,nomp
+              write(nwtf,*) wrk(i),work(omp(i),is,iwrk)
+            enddo
+          endif
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
+          if (dcol.gt.1) then
+            call gsplci(dcol)
+          elseif(dcol.lt.0) then
+            if(typeofplot.eq.3) dcol=dcol+1
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
+          endif
+#endif
+          do i=1,nomp-1
+            if(wrk(i+1).lt.xmin) cycle
+            if(wrk(i).gt.xmax) cycle
+            call lined_d(
+     1       wrk(i),
+     2       min(lmax,max(lmin,work(omp(i),is,iwrk))),
+     3       wrk(i+1),
+     4       min(lmax,max(lmin,work(omp(i+1),is,iwrk))))
+          end do
+          if (plotting_sep.and.icsepomp.gt.1) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(icsepomp-1)+wrk(icsepomp)).gt.0.0_R8
+     &          .or.linlog.le.2)
+     >        call lined_d(
+     1         (wrk(icsepomp-1)+wrk(icsepomp))/2.0_R8,lmin,
+     1         (wrk(icsepomp-1)+wrk(icsepomp))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          end if
+#ifndef PLPLOT
+          call lastd
+          if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
+          if (dcol.ne.1) call gsplci(1)
+#endif
+          call end_page
+        end if
+      end do
+      deallocate(wrk)
+
+      return
+      end subroutine fomp
 c
       function y_transform(r,z)
       use b2mod_types

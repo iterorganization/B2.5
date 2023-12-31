@@ -132,7 +132,7 @@ cank
 
       logical, save ::
      *  writing_to_file,color_set,use_compile,
-     *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,
+     *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,plot_vs_rmaj,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
      *  xparallel,plotting_sep,bold,expline
 
