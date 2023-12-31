@@ -363,7 +363,7 @@ c*** Set default values according to current species list
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nimp
-        if (geo%cVx(imp(ic)).lt.geo%cVx(imp(ic-1)))
+        if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
      &   call xerrab('IMP LIST NOT SORTED')
       end do
 ! Find position of separatrix in IMP list (same as for OMP)

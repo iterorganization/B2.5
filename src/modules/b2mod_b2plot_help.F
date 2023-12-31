@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=398,nfns=212,nsparameters=34,nelabels=36,
+      parameter(nlabels=399,nfns=212,nsparameters=34,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
@@ -98,7 +98,7 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:398) /
+      data labels(351:399) /
      1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      ,
      2  'molrad'  , 'ionrad'  , 'tn'      , 'kt'      , 'zt'      ,
      3  'fcxviskt', 'fcyviskt', 'fnnx32'  , 'fnny32'  , 'fnnx52'  ,
@@ -108,7 +108,7 @@
      7  'dkt'     , 'dzt'     , 'dfhn'    , 'dfkt'    , 'dfzt'    ,
      8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
      9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
-     *  'fnny'    , 'fhnx'    , 'fhny'    /
+     *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -538,7 +538,7 @@
      8    'Boundary enstrophy source (W)',
      9    'Recycling fluid neutral heat source (W)',
      *    'Recycling ExB turbulent energy source (W)'/
-      data descriptions(391:398) /
+      data descriptions(391:399) /
      1    'Recycling enstrophy source (?)',
      2    'tn at previous time step (eV)',
      3    'kt at previous time step (?)',
@@ -546,7 +546,8 @@
      5    'Poloidal fluid neutral particle flux (s^{-1})',
      6    'Radial fluid neutral particle flux (s^{-1})',
      7    'Poloidal fluid neutral energy flux (W)',
-     8    'Radial fluid neutral energy flux (W)'/
+     8    'Radial fluid neutral energy flux (W)',
+     9    'Flux tube number'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -624,7 +625,7 @@
      8    0,      0,      2,      2,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      2/
-      data dimensions(351:398) /
+      data dimensions(351:399) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      1,      1,      1,
      3    1,      1,      1,      1,      1,
@@ -634,7 +635,7 @@
      7    1,      1,      1,      1,      1,
      8    1,      1,      1,      1,      1,
      9    1,      1,      1,      1,      1,
-     *    1,      1,      1/
+     *    1,      1,      1,      1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
