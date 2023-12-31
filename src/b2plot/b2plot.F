@@ -4964,6 +4964,12 @@ c     assumes that bb is OK for 1d cases
           call sumy()
           graphlabel(iwrk)=graphlabel(iwrk)
      1                 (1:lnblnk(graphlabel(iwrk)))//' SUMY '
+        case('sumft')    ! sum over flux tube
+          stack_req=(/0,0,0,1,0,0,0/)
+          if(bad_args(stack_req)) return
+          call sumft()
+          graphlabel(iwrk)=graphlabel(iwrk)
+     1                 (1:lnblnk(graphlabel(iwrk)))//' SUMFT '
         case('f.x')      ! line plot versus x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return

@@ -109,7 +109,6 @@ c
       use b2us_data
       implicit none
       integer i,iCv,iCp,iFt,is
-      intrinsic min, max
 c
 c apply operator
 c
@@ -127,6 +126,36 @@ c
 
       return
       end subroutine intx
+c
+      subroutine sumft()
+      use b2mod_types
+      use b2mod_b2plot
+      use b2mod_b2plot_values
+      use b2us_data
+      implicit none
+      integer i,iCv,iCp,iFt,is
+c
+c apply operator
+c
+      do is=0,ndim(2,iwrk)-1
+        do iFt=1,mpg%nFt
+          do i = 2, mpg%ftCvP(iFt,2)
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            iCp = mpg%ftCv(mpg%ftCvP(iFt,1)+i-2)
+            work(iCv,is,iwrk)=work(iCv,is,iwrk)+work(iCp,is,iwrk)
+          enddo
+          iCp = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1)
+          do i = 1, mpg%ftCvP(iFt,2)-1
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            work(iCv,is,iwrk)=work(iCp,is,iwrk)
+          enddo
+        enddo
+      enddo
+      values(9)=minval(work(:,0:ndim(2,iwrk)-1,iwrk))
+      values(10)=maxval(work(:,0:ndim(2,iwrk)-1,iwrk))
+
+      return
+      end subroutine sumft
 c
       subroutine intw()
       use b2mod_types
