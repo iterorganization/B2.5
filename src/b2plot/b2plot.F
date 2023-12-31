@@ -197,11 +197,11 @@ c
 #endif
 c
       real (kind=R8) ::
-     * dummy,rval,time,minpsi,maxpsi
+     * dummy,rval,time,minpsi,maxpsi,sumomp,sumimp
 #ifdef WG_TODO
       integer icell,idir,isign,ixn,iyn,ixf,iyf
       real (kind=R8) ::
-     * hh, hhn, phi_app, sumjxa, sumjxi, suml(2), sumr(2)
+     * hh, hhn, phi_app, suml(2), sumr(2)
 #endif
       integer i,j,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
@@ -854,6 +854,14 @@ c
      > call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),nstra,natm,
      >                       switch)
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+      if (nomp.gt.0) then
+        allocate(dsomp(nomp),wdomp(nomp))
+        call set_distances(mpg,geo,nomp,omp,icsepomp-1,dsomp,wdomp)
+      end if
+      if (nimp.gt.0) then
+        allocate(dsimp(nimp),wdimp(nimp))
+        call set_distances(mpg,geo,nimp,imp,icsepimp-1,dsimp,wdimp)
+      end if
 c
       nflai=0
       do is=0,ns-1
@@ -1255,6 +1263,10 @@ c
       else
         typeofplot=1             ! only physical domain available
       endif
+      if (nomp.gt.0) then
+        ixref=cvIx(omp(icsepomp))
+        iyref=cvIy(omp(icsepomp))
+      end if
       xparallel=.false.          ! default to f.y using poloidal distance
       expline=.true.             ! default to plotting experimental data as lines
       expsymbol=5                ! default symbol is crosses
@@ -1460,6 +1472,8 @@ c
             deallocate(fllim0fhi_x,fllim0fhi_y)
             deallocate(energy_balance,energy_balance2,particle_balance)
             deallocate(energy_balance_old)
+            if (allocated(dsomp)) deallocate(dsomp,wdomp)
+            if (allocated(dsimp)) deallocate(dsimp,wdimp)
             deallocate(mach)
             call dealloc_b2mod_diag
             call dealloc_b2mod_wall
@@ -1553,6 +1567,8 @@ c
           deallocate(fllim0fhi_x,fllim0fhi_y)
           deallocate(energy_balance,energy_balance2,particle_balance)
           deallocate(energy_balance_old)
+          if (allocated(dsomp)) deallocate(dsomp,wdomp)
+          if (allocated(dsimp)) deallocate(dsimp,wdimp)
           deallocate(mach)
           call dealloc_b2mod_diag
           call dealloc_b2mod_wall
@@ -1650,7 +1666,7 @@ c
               minpsi = min(minpsi,geo%vxFpsi(iVx))
               maxpsi = max(maxpsi,geo%vxFpsi(iVx))
             end do
-            mach(iCv,0) = (minpsi+maxpsi)/2.0_R8-geo%fsPsi(mpg%iFssep)
+            mach(iCv,0) = (minpsi+maxpsi)/2.0_R8
           end do
           call copy(mach,1.0_R8,nz,textbl)
         case('na')
@@ -2585,25 +2601,27 @@ c
             mach(iCv,0)=vel/(vth*state%dv%ne(iCv))
             mach(iCv,0)=pz(iCv)*(1.0_R8+mach(iCv,0)**2)
           end do
+          sumomp=0.0_R8
+          sumimp=0.0_R8
+          if (nomp.gt.0) then
+            do ix=1,nomp
+              iCv = omp(ix)
+              if (mpg%cvOnClosedSurface(iCv)) cycle
+              sumomp = sumomp+mach(iCv,0)*geo%cvX(iCv)*wdomp(ix)*
+     1          sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)
+            end do
+          end if
+          if (nimp.gt.0) then
+            do ix=1,nimp
+              iCv = imp(ix)
+              if (mpg%cvOnClosedSurface(iCv)) cycle
+              sumimp = sumimp+mach(iCv,0)*geo%cvX(iCv)*wdimp(ix)*
+     1          sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)
+            end do
+          end if
 #ifdef WG_TODO
-          sumjxa=0.0_R8
-          sumjxi=0.0_R8
           suml=0.0_R8
           sumr=0.0_R8
-          ix=jxa
-          do iy=jsep+1,ny
-            sumjxa=sumjxa+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-          end do
-          if(nnreg(0).eq.8) then
-            ix=jxi
-            do iy=jsep+1,ny
-              sumjxi=sumjxi+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-            end do
-          endif
           do iy=-1,ny
             ix=0
             if (iy.ge.topcut(1)) suml(1)=suml(1)+mach(ix,iy,0)*
@@ -2637,31 +2655,31 @@ c
               endif
             endif
           end do
-          if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
-            write(*,*) 'Midplane pressure: ',sumjxa
+          if (mpg%nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+            write(*,*) 'Midplane pressure: ',sumomp
             write(*,*) 'Inner target:      ',suml(1)
             write(*,*) 'Near SOL target:   ',sumr(1)
             write(*,*) 'Far SOL target:    ',sumr(2)
             write(*,*) 'Pressure drop (inner & outer): ',
-     1             suml(1)/sumjxa,sumr(1)+sumr(2)/sumjxa
-          else if (nnreg(0).le.7) then
-            write(*,*) 'Midplane pressure: ',sumjxa
+     1             suml(1)/sumomp,(sumr(1)+sumr(2))/sumomp
+          else if (mpg%nnreg(0).le.7) then
+            write(*,*) 'Midplane pressure: ',sumomp
             write(*,*) 'Western target:    ',suml(1)
             write(*,*) 'Eastern target:    ',sumr(1)
             write(*,*) 'Pressure drop (inner & outer): ',
-     1             suml(1)/sumjxa,sumr(1)/sumjxa
-          else if (nnreg(0).eq.8) then
-            write(*,*) 'Outer midplane pressure: ',sumjxa
+     1             suml(1)/sumomp,sumr(1)/sumomp
+          else if (mpg%nnreg(0).eq.8) then
+            write(*,*) 'Outer midplane pressure: ',sumomp
             write(*,*) 'Outer top target:        ',suml(2)
             write(*,*) 'Outer bottom target:     ',sumr(1)
             write(*,*) 'Pressure drop (top & bottom): ',
-     1             suml(2)/sumjxa,sumr(1)/sumjxa
+     1             suml(2)/sumomp,sumr(1)/sumomp
             write(*,*) ' '
-            write(*,*) 'Inner midplane pressure: ',sumjxi
+            write(*,*) 'Inner midplane pressure: ',sumimp
             write(*,*) 'Inner top target:        ',sumr(2)
             write(*,*) 'Inner bottom target:     ',suml(1)
             write(*,*) 'Pressure drop (top & bottom): ',
-     1             sumr(2)/sumjxi,suml(1)/sumjxi
+     1             sumr(2)/sumimp,suml(1)/sumimp
           endif
 #endif
           call copy(mach,1.0_R8,nz,textbl)
@@ -4059,6 +4077,17 @@ c     assumes that bb is OK for 1d cases
             mach(iCv,0)=real(cvIy(iCv),R8)
           enddo
           call copy(mach,1.0_R8,nz,textbl)
+        case ('ift')
+          description='Flux tube number'
+          nz=1
+          mach(:,0)=0.0_R8
+          do iFt=1,mpg%nFt
+            do i=1,mpg%ftCvP(iFt,2)
+              iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+              mach(iCv,0)=real(iFt,R8)
+            enddo
+          enddo
+          call copy(mach,1.0_R8,nz,textbl)
 #ifdef WG_TODO
         case ('lix')
           description='leftix'
@@ -4920,11 +4949,11 @@ c     assumes that bb is OK for 1d cases
           call sumy()
           graphlabel(iwrk)=graphlabel(iwrk)
      1                 (1:lnblnk(graphlabel(iwrk)))//' SUMY '
-#ifdef WG_TODO
         case('f.x')      ! line plot versus x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.ny) then
+          if(.not.check_classical_grid(mpg)) return
+          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%ny) then
             call fx(istack(iistack))
           else
             write(*,*) 'Faulty iy = ',istack(iistack),' chosen for f.x!'
@@ -4933,13 +4962,13 @@ c     assumes that bb is OK for 1d cases
         case('f.y')      ! line plot versus y
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
+          if(.not.check_classical_grid(mpg)) return
+          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%nx) then
             call fy(istack(iistack))
           else
             write(*,*) 'Faulty ix = ',istack(iistack),' chosen for f.y!'
           endif
           call pop_stack(stack_req)
-#endif
         case('intx')     ! integrate over x
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -4948,11 +4977,11 @@ c     assumes that bb is OK for 1d cases
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call inty()
-#ifdef WG_TODO
         case('f.lx')     ! line plot versus log x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.ny) then
+          if(.not.check_classical_grid(mpg)) return
+          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%ny) then
             call flx(istack(iistack))
           else
             write(*,*)'Faulty iy = ',istack(iistack),' chosen for f.lx!'
@@ -4961,13 +4990,13 @@ c     assumes that bb is OK for 1d cases
         case('f.ly')     ! line plot versus log y
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
+          if(.not.check_classical_grid(mpg)) return
+          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%nx) then
             call fly(istack(iistack))
           else
             write(*,*)'Faulty ix = ',istack(iistack),' chosen for f.ly!'
           endif
           call pop_stack(stack_req)
-#endif
         case('cont')     ! plot contours
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -10910,13 +10939,13 @@ c
         case('jsep')     ! jsep
           stack_name='integer'
           call ipush(istack,iistack,jsep)
+#endif
         case('ixref')    ! ixref
           stack_name='integer'
           call ipush(istack,iistack,ixref)
         case('iyref')    ! iyref
           stack_name='integer'
           call ipush(istack,iistack,iyref)
-#endif
         case('nx')       ! nx
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
@@ -11144,7 +11173,11 @@ c
         case('vesl')     ! plot vessel walls from mesh.extra file
           call vesselon(.true.)
         case('mmid')     ! map to midplane
-          call set_midplane_mapping(.true.)
+          if(nomp.gt.0) then
+            call set_midplane_mapping(.true.)
+          else
+            write(*,*) 'No midplane defined !'
+          end if
         case('fpsi')     ! plot versus full psi
           call set_full_psi_plotting(.true.)
         case('mpsi')     ! plot versus normalised psi
@@ -11511,11 +11544,13 @@ c
           call set_partition_colors(rpop(rstack,irstack))
         case('lbsa')     ! toggle label lines
           call toggle_label_lines
+#ifdef WG_TODO
         case('ytra')     ! transform the "y" coordinate for comparison to experiment
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           y_transform_l=istack(iistack)
           call pop_stack(stack_req)
+#endif
         case('ecol')     ! colour index of experimental data
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -11637,6 +11672,7 @@ c calculate neoclassical diagnostics
 
       end subroutine b2plot
 
+
       subroutine write_crazy(lu,ndata,kind,is,s_ref,q)
       use b2mod_types
       implicit none
@@ -11652,6 +11688,7 @@ c calculate neoclassical diagnostics
       enddo
       return
       end subroutine write_crazy
+
 
       subroutine build_reverse_mapping(mpg)
       use b2us_map
@@ -11693,3 +11730,74 @@ c calculate neoclassical diagnostics
 
       return
       end subroutine build_reverse_mapping
+
+
+      subroutine set_distances(mpg,geo,nlist,cvlist,isep,ds,wd)
+      use b2us_map
+      use b2us_geo
+      use b2mod_types
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      integer, intent(in) :: nlist, isep
+      integer, intent(in) :: cvlist(nlist)
+      real(kind=R8), intent(out) :: ds(nlist), wd(nlist)
+      integer i,j,iFc,iCv1,iCv2,ifound
+      real(kind=R8) :: ds_offset
+      intrinsic sqrt
+
+      ds(1)= 0.0_R8
+      do i=2,nlist
+        ds(i)=ds(i-1)+
+     &      sqrt((geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))**2+
+     &           (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))**2)
+      enddo
+      if(isep.ne.0) then
+        ds_offset=(ds(isep)+ds(isep+1))/2.0_R8
+        do i=1,nlist
+          ds(i)=ds(i)-ds_offset
+        enddo
+      endif
+      if(.not.mpg%cvOnClosedSurface(cvlist(1)).and.
+     &        mpg%cvOnClosedSurface(cvlist(nlist))) then ! flip sign
+        ds(1:nlist)=-ds(1:nlist)
+      endif
+      do i=1,nlist
+        ifound=0
+        do j=1,mpg%cvFcP(cvlist(i),2)
+          iFc=mpg%cvFc(mpg%cvFcP(cvlist(i),1)+j-1)
+          iCv1=mpg%fcCv(iFc,1)
+          iCv2=mpg%fcCv(iFc,2)
+          if(iCv1.eq.cvlist(i)) then
+            if(i.gt.1) then
+              if(iCv2.eq.cvlist(i-1)) then
+                ifound=ifound+1
+                wd(i)=wd(i)+geo%fcHc(iFc,1)
+              endif
+            endif
+            if(i.lt.nlist) then
+              if(iCv2.eq.cvlist(i+1)) then
+                ifound=ifound+1
+                wd(i)=wd(i)+geo%fcHc(iFc,1)
+              endif
+            endif
+          else if(iCv2.eq.cvlist(i)) then
+            if(i.gt.1) then
+              if(iCv1.eq.cvlist(i-1)) then
+                ifound=ifound+1
+                wd(i)=wd(i)+geo%fcHc(iFc,2)
+              endif
+            endif
+            if(i.lt.nlist) then
+              if(iCv1.eq.cvlist(i+1)) then
+                ifound=ifound+1
+                wd(i)=wd(i)+geo%fcHc(iFc,2)
+              endif
+            endif
+          endif
+        enddo
+        if (ifound.eq.1) wd(i)=2.0_R8*wd(i)
+      enddo
+
+      return
+      end subroutine set_distances
