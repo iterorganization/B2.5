@@ -1131,12 +1131,17 @@ c
 c
       nz=ns
 c
-      do iCv=1,mpg%nCv
-        XX(iCv,2) = real(cvIx(iCv),R8)
-        XX(iCv,1) = real(cvIx(iCv),R8)-0.5_R8
-        YY(iCv,2) = real(cvIy(iCv),R8)
-        YY(iCv,1) = real(cvIy(iCv),R8)-0.5_R8
-      end do
+      if (mpg%isClassicalGrid.eq.1) then
+        do iCv=1,mpg%nCv
+          XX(iCv,2) = real(cvIx(iCv),R8)
+          XX(iCv,1) = real(cvIx(iCv),R8)-0.5_R8
+          YY(iCv,2) = real(cvIy(iCv),R8)
+          YY(iCv,1) = real(cvIy(iCv),R8)-0.5_R8
+        end do
+      else
+        XX = 0.0_R8
+        YY = 0.0_R8
+      end if
       do ibnd=1,nbnd
         targetx(ibnd,2) = real(ibnd,R8)
         targetx(ibnd,1) = real(ibnd,R8)-0.5_R8
@@ -1174,10 +1179,17 @@ c
         z0=cz(-1,-1)
       endif
 #endif
-      values(1)=minval(xx)                               !xmin
-      values(2)=maxval(xx)+0.5_R8                        !xmax
-      values(3)=minval(yy)                               !ymin
-      values(4)=maxval(yy)+0.5_R8                        !ymax
+      if (mpg%isClassicalGrid.eq.1) then
+        values(1)=minval(xx)                             !xmin
+        values(2)=maxval(xx)+0.5_R8                      !xmax
+        values(3)=minval(yy)                             !ymin
+        values(4)=maxval(yy)+0.5_R8                      !ymax
+      else
+        values(1)=init_value
+        values(2)=init_value
+        values(3)=init_value
+        values(4)=init_value
+      end if
 #ifdef B25_EIRENE
       if (ex.and.use_eirene.ne.0) then
         values(5)=min(minval(geo%vxX),minval(xtrian))    !rmin
@@ -1239,6 +1251,7 @@ c
       call separatrixon(.false.)   ! same for separatrix
       call adjust_axes(.false.)    ! nice axes by default
       call adjust_bold(.false.)    ! do not bold axes by default
+      call set_rmaj_plotting(.false.)     ! do not plot against major radius
       call set_full_psi_plotting(.false.) ! do not plot against full psi
       call set_norm_psi_plotting(.false.) ! do not plot against normalised psi
       call set_root_psi_plotting(.false.) ! do not plot against root(psi)
@@ -1618,9 +1631,9 @@ c
       contains
 
       subroutine select_matrix
-      integer i, is, ibc, iCv
+      integer i, is, ix, ibc, iCv, iFt
 #ifdef WG_TODO
-      integer ix, iy, iso
+      integer iy, iso
 #endif
 
       cflag=.true.
@@ -4940,12 +4953,14 @@ c     assumes that bb is OK for 1d cases
         case('sumx')     ! sum over x
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           call sumx()
           graphlabel(iwrk)=graphlabel(iwrk)
      1                 (1:lnblnk(graphlabel(iwrk)))//' SUMX '
         case('sumy')     ! sum over y
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           call sumy()
           graphlabel(iwrk)=graphlabel(iwrk)
      1                 (1:lnblnk(graphlabel(iwrk)))//' SUMY '
@@ -4969,14 +4984,35 @@ c     assumes that bb is OK for 1d cases
             write(*,*) 'Faulty ix = ',istack(iistack),' chosen for f.y!'
           endif
           call pop_stack(stack_req)
-        case('intx')     ! integrate over x
+        case('f.imp')    ! line plot along inner midplane
+          stack_req=(/0,0,0,1,0,0,0/)
+          if(bad_args(stack_req)) return
+          if (nimp.gt.0) then
+            call fimp()
+          else
+            write(*,*) 'No inner midplane defined!'
+          endif
+        case('f.omp')    ! line plot along outer midplane
+          stack_req=(/0,0,0,1,0,0,0/)
+          if(bad_args(stack_req)) return
+          if (nomp.gt.0) then
+            call fomp()
+          else
+            write(*,*) 'No outer midplane defined!'
+          endif
+        case('intx')     ! integrate over flux tubes
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call intx()
+          graphlabel(iwrk)=graphlabel(iwrk)
+     1                 (1:lnblnk(graphlabel(iwrk)))//' INTX '
         case('inty')     ! integrate over y
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           call inty()
+          graphlabel(iwrk)=graphlabel(iwrk)
+     1                 (1:lnblnk(graphlabel(iwrk)))//' INTY '
         case('f.lx')     ! line plot versus log x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -4995,6 +5031,17 @@ c     assumes that bb is OK for 1d cases
             call fly(istack(iistack))
           else
             write(*,*)'Faulty ix = ',istack(iistack),' chosen for f.ly!'
+          endif
+          call pop_stack(stack_req)
+        case('f.t')      ! line plot along a flux tube
+          stack_req=(/1,0,0,1,0,0,0/)
+          if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFt) then
+            call ft(istack(iistack))
+          else
+            write(*,*)
+     .       'Faulty iFt = ',istack(iistack),' chosen for f.t!'
           endif
           call pop_stack(stack_req)
         case('cont')     ! plot contours
@@ -11184,6 +11231,8 @@ c
           call set_norm_psi_plotting(.true.)
         case('rpsi')     ! plot versus root(normalised psi)
           call set_root_psi_plotting(.true.)
+        case('rmaj')     ! plot versus major radius
+          call set_rmaj_plotting(.true.)
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
         case('nice')     ! toggle whether axes will have nice values
