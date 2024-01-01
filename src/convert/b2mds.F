@@ -378,7 +378,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call alloc_b2mod_sputter(nx,ny,ns)
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       call alloc_b2mod_wall_init(nx,ny,nncut)
-!!      call alloc_b2mod_wall(ns,natm,nmol,nion)
       call alloc_b2mod_wall(ns)
       call init_wall(nx,ny)
 #endif

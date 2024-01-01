@@ -7,9 +7,9 @@ C =====================================================================
       use b2mod_b2plot_values
       use b2mod_b2plot_debug
       use b2mod_b2plot_xy
-      use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_subsys
+      use b2us_data
       implicit none
 #include "graphics_vars.h"
       INTEGER NCV,IS,LINLOG
@@ -20,26 +20,26 @@ cxpb  INTEGER NNCUT_L
       CHARACTER*20 DEBUGSTRING
       LOGICAL PHYSICAL,DEBUG,LBLBR
 
-      INTEGER LRWK,LMAP
-      PARAMETER (LRWK=50000,LMAP=5000000)
-      REAL (KIND=R4) :: RWRK(LRWK)
-      INTEGER MAP(LMAP)
+      INTEGER LIWK,LRWK,LMAP,NOGRPS,NWRK
+      PARAMETER (NWRK=50000)
+      PARAMETER (LIWK=50000,LRWK=50000,LMAP=5000000,NOGRPS=6)
+      REAL (KIND=R4) :: XWRK(NWRK),YWRK(NWRK),RWRK(LRWK)
+      INTEGER IWRK(LIWK),MAP(LMAP),IAREA(NOGRPS),IGRP(NOGRPS)
+      integer irold,nerro,nerrf
 #ifdef WG_TODO
-      INTEGER LIWK,NWRK,NOGRPS
-      PARAMETER (LIWK=50000,NWRK=50000,NOGRPS=6)
       INTEGER NXSTRT(99),NYSTRT(99),NXEND(99),NYEND(99),NPERD(99)
-      INTEGER IWRK(LIWK),IAREA(NOGRPS),IGRP(NOGRPS)
-      REAL (KIND=R4) :: XWRK(NWRK), YWRK(NWRK)
-      integer irold,nerrf,nerro,
-     .        ix,iy,iyt,k,kreg,ixstrt,ixend,iystrt,iyend,ixl,l
+      integer iyt,k,kreg,ixl,l,iiso
       logical iniso
 #endif
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
+      logical done(mpg%nCi+1:mpg%nCv)
 
+      integer ix,iy,ixstrt,ixend,iystrt,iyend
       integer nfmtz,noz,nozm,
-     .        i,ic,iCv,iiso
+     .        i,ic,iCv,iCn,iFc,iVx1,iVx2,iVa,iVb
       real rlo, rhi, zlo, zhi, zinc, zval, clv, special
+      logical right_match_found, left_match_found
       integer lnblnk, no_available_colors
       real ceil
       external lnblnk, no_available_colors, ceil, xertst
@@ -93,9 +93,9 @@ C ====================================================================
       ZHI=real(ZHID,R4)
       rlo=real(field(1),R4)
       rhi=real(field(1),R4)
-      DO ICV=2,NCV
-        RLO=MIN(RLO,REAL(FIELD(ICV),R4))
-        RHI=MAX(RHI,REAL(FIELD(ICV),R4))
+      DO iCv=2,nCv
+        RLO=MIN(RLO,REAL(FIELD(iCv),R4))
+        RHI=MAX(RHI,REAL(FIELD(iCv),R4))
       ENDDO
       IF(zlo.eq.zhi) then
         zlo=rlo
@@ -278,242 +278,71 @@ C Initialise Areas
           write(*,*) 'Y : ', Y(1:5)
         end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
-#ifdef WG_TODO
-cxpb Obtaining the outer contour outline of the plasma region to be plotted
-        IC=1
-        IX=-1
-        IY=-1
-        X(IC)=real(CR(IX,IY),R4)
-        Y(IC)=real(CZ(IX,IY),R4)
-        do while(iy.lt.ny .and. topiy(ix,iy).eq.iy+1)
-          IC=IC+1
-          iy=iy+1
-          X(IC)=real(CR(IX,IY),R4)
-          Y(IC)=real(CZ(IX,IY),R4)
-        end do
-        iyt=iy
-        if(iy.eq.ny) then
-          iniso=.false.
-          do while(ix.lt.nx .and. .not.iniso)
-            ix=rightix(ix,iy)
-            iniso=.false.
-            do iiso = 1, nniso
-              iniso = iniso .or.
-     &         (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &          iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-            end do
-            iniso = iniso .or.
-     &       (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-            if(.not.iniso) then
-              ic=ic+1
-              x(ic)=real(cr(ix,iy),R4)
-              y(ic)=real(cz(ix,iy),R4)
-            else
-              ix=ix-1
-            end if
-          end do
-        else
-          ix=leftix(0,iyt+1)
-          ic=ic+1
-          x(ic)=real(cr(ix,iy),R4)
-          y(ic)=real(cz(ix,iy),R4)
-        end if
-        do iy = iyt-1, -1, -1
-          ic=ic+1
-          x(ic)=real(cr(ix,iy),R4)
-          y(ic)=real(cz(ix,iy),R4)
-        end do
-        iniso = .false.
-        iy=0
-        do while(ix.gt.-1 .and. .not.iniso)
-          iniso=.false.
-          if(iyt.eq.ny) then
-            ix=leftix(ix,iy)
-            do iiso = 1, nniso
-              iniso = iniso .or.
-     &         (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &          iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-            end do
-            iniso = iniso .or.
-     &       (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-          else
-            if(leftix(ix,iy).eq.ix-1) then
-              ix=leftix(ix,iy)
-              do iiso = 1, nniso
-                iniso = iniso .or.
-     &           (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &            iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
+cxpb Obtaining the contour outlines of the plasma region to be plotted
+        done=.false.
+        do while (.not.all(done))
+          do iCv = mpg%nCi+1, mpg%nCv
+            if (done(iCv)) cycle
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            X(1)=real(geo%vxX(iVx1),R4)
+            Y(1)=real(geo%vxY(iVx1),R4)
+            X(2)=real(geo%vxX(iVx2),R4)
+            Y(2)=real(geo%vxY(iVx2),R4)
+            iVa = iVx1
+            iVb = iVx2
+            ic=2
+            done(iCv)=.true.
+            do while (iVa.ne.iVb.or.(.not.(all(done))))
+              do iCn = mpg%nCi+1,mpg%nCv
+                if (done(iCn)) cycle
+                left_match_found=.false.
+                right_match_found=.false.
+                iFc = mpg%cvFc(mpg%cvFcP(iCn,1))
+                iVx1 = mpg%fcVx(iFc,1)
+                iVx2 = mpg%fcVx(iFc,2)
+                if (iVx1.eq.iVa) then
+                  left_match_found=.true.
+                  do i=ic,1,-1
+                    X(i+1)=X(i)
+                    Y(i+1)=Y(i)
+                  end do
+                  X(1)=real(geo%vxX(iVx1),R4)
+                  Y(1)=real(geo%vxY(iVx1),R4)
+                  iVa = iVx1
+                  ic = ic+1
+                else if (iVx1.eq.iVb) then
+                  right_match_found=.true.
+                  X(ic+1)=real(geo%vxX(iVx1),R4)
+                  Y(ic+1)=real(geo%vxY(iVx1),R4)
+                  iVb = iVx1
+                  ic = ic+1
+                end if
+                if (iVx2.eq.iVa) then
+                  left_match_found=.true.
+                  do i=ic,1,-1
+                    X(i+1)=X(i)
+                    Y(i+1)=Y(i)
+                  end do
+                  X(1)=real(geo%vxX(iVx2),R4)
+                  Y(1)=real(geo%vxY(iVx2),R4)
+                  iVa = iVx2
+                  ic = ic+1
+                else if (iVx2.eq.iVb) then
+                  right_match_found=.true.
+                  X(ic+1)=real(geo%vxX(iVx2),R4)
+                  Y(ic+1)=real(geo%vxY(iVx2),R4)
+                  iVb = iVx2
+                  ic = ic+1
+                end if
+                done(iCn)=left_match_found.or.right_match_found
               end do
-              iniso = iniso .or.
-     &         (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &         (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-            else
-              ix=ix-1
-              ic=ic+1
-              x(ic)=real(cr(ix,iy),R4)
-              y(ic)=real(cz(ix,iy),R4)
-              do while(leftix(ix,iy).ne.ix-1)
-                ic=ic+1
-                x(ic)=real(cr(ix,iy),R4)
-                y(ic)=real(cz(ix,iy),R4)
-                iy=iy+1
-              end do
-              iy=iy-1
-              ix=ix-1
-              do while(iy.ge.-1)
-                ic=ic+1
-                x(ic)=real(cr(ix,iy),R4)
-                y(ic)=real(cz(ix,iy),R4)
-                iy=iy-1
-              end do
-            end if
-            iy=-1
-          end if
-          if(.not.iniso) then
-            ic=ic+1
-            x(ic)=real(cr(ix,iy),R4)
-            y(ic)=real(cz(ix,iy),R4)
-          else
-            ix=ix+1
-          end if
-        end do
-        do while (iniso)
-          DO IY=-1,NY
-            IC=IC+1
-            X(IC)=REAL(CR(IX,IY),R4)
-            Y(IC)=REAL(CZ(IX,IY),R4)
-          ENDDO
-          iniso=.false.
-          iy=ny
-          do while(ix.lt.nx .and. .not.iniso)
-            ix=rightix(ix,iy)
-            iniso=.false.
-            do iiso = 1, nniso
-              iniso = iniso .or.
-     &               (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &                iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
             end do
-            iniso = iniso .or.
-     &       (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-            if(.not.iniso) then
-              ic=ic+1
-              x(ic)=real(cr(ix,iy),R4)
-              y(ic)=real(cz(ix,iy),R4)
-            else
-              ix=ix-1
-            end if
-          end do
-          do iy = ny-1, -1, -1
-            ic=ic+1
-            x(ic)=real(cr(ix,iy),R4)
-            y(ic)=real(cz(ix,iy),R4)
-          end do
-          iniso = .false.
-          iy=-1
-          do while(ix.gt.-1 .and. .not.iniso)
-            iniso=.false.
-            if(iyt.eq.ny) then
-              ix=leftix(ix,iy)
-              do iiso = 1, nniso
-                iniso = iniso .or.
-     &                 (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &                  iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-              end do
-              iniso = iniso .or.
-     &         (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &         (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-            else
-              if(leftix(ix,iy).eq.ix-1) then
-                ix=leftix(ix,iy)
-                do iiso = 1, nniso
-                  iniso = iniso .or.
-     &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &              iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-                end do
-                iniso = iniso .or.
-     &           (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &           (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-              else
-                ix=ix-1
-                ic=ic+1
-                x(ic)=real(cr(ix,iy),R4)
-                y(ic)=real(cz(ix,iy),R4)
-                do while(leftix(ix,iy).ne.ix-1)
-                  ic=ic+1
-                  x(ic)=real(cr(ix,iy),R4)
-                  y(ic)=real(cz(ix,iy),R4)
-                  iy=iy+1
-                end do
-                iy=iy-1
-                ix=ix-1
-                do while(iy.ge.-1)
-                  ic=ic+1
-                  x(ic)=real(cr(ix,iy),R4)
-                  y(ic)=real(cz(ix,iy),R4)
-                  iy=iy-1
-                end do
-              end if
-              iy=-1
-            end if
-            do iiso = 1, nniso
-              iniso = iniso .or.
-     &               (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &                iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-            end do
-            iniso = iniso .or.
-     &       (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-            if(.not.iniso) then
-              ic=ic+1
-              x(ic)=real(cr(ix,iy),R4)
-              y(ic)=real(cz(ix,iy),R4)
-            else
-              ix=ix+1
-            end if
+            CALL AREDAM(MAP,X,Y,IC,2,0,1)
+            IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
           end do
         end do
-        CALL AREDAM(MAP,X,Y,IC,2,0,1)
-        IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
-cxpb Obtaining the inner contour outline of the plasma region to be plotted
-        if(iyt.eq.ny) then
-          iy=-1
-          ix=-1
-        else
-          iy=ny
-          ix=0
-        end if
-        do while(rightix(ix,iy).eq.ix+1 .and. iy.eq.-1)
-          ix=ix+1
-        end do
-        if(iy.eq.-1) ix=ix+1
-        ixl=ix
-        ic=1
-        x(ic)=real(cr(ixl,iy),R4)
-        y(ic)=real(cz(ixl,iy),R4)
-        do while(ix.ne.leftix(ixl,iy))
-          ix=rightix(ix,iy)
-          ic=ic+1
-          x(ic)=real(cr(ix,iy),R4)
-          y(ic)=real(cz(ix,iy),R4)
-        end do
-        ic=ic+1
-        x(ic)=real(cr(ixl,iy),R4)
-        y(ic)=real(cz(ixl,iy),R4)
-        CALL AREDAM(MAP,X,Y,IC,2,0,1)
-        IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
-#endif
-
-        IF(DEBUG) THEN
-          do iiso = 1, nniso
-            WRITE (*,*) 'nxiso1(',iiso,') =',nxiso1(iiso),
-     1                 ' nxiso2(',iiso,') =',nxiso2(iiso)
-            WRITE (*,*) 'nyiso1(',iiso,') =',nyiso1(iiso),
-     1                 ' nyiso2(',iiso,') =',nyiso2(iiso)
-          end do
-        ENDIF
 
         CALL CPSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
         CALL CPSETI('GIL - GROUP IDENTIFIER FOR LABELS',2)
@@ -825,7 +654,7 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
 
  5150   CONTINUE
 
-      ELSE      ! ======== plot computational domain
+      ELSE IF (mpg%isClassicalGrid.eq.1) THEN   ! ======== plot computational domain
         IC=1
         X(IC)=XLO
         Y(IC)=YLO
@@ -847,22 +676,22 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
           write(*,*) 'Y : ', Y(1:5)
         end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
-#ifdef WG_TODO
+cxpb Obtaining the computational domain contour
         IC=1
-        X(IC)=real(max(CR(-1,-1),values(1)),R4)
-        Y(IC)=real(max(CZ(-1,-1),values(3)),R4)
+        X(IC)=real(max(-1.5_R8,values(1)),R4)
+        Y(IC)=real(max(-1.5_R8,values(3)),R4)
         IC=IC+1
-        X(IC)=real(max(CR(-1,-1),values(1)),R4)
-        Y(IC)=real(min(CZ(NZ,0)+0.5_R8,values(4)),R4)
+        X(IC)=real(max(-1.5_R8,values(1)),R4)
+        Y(IC)=real(min(real(mpg%ny,R8)+0.5_R8,values(4)),R4)
         IC=IC+1
-        X(IC)=real(min(CR(NR,0)+0.5_R8,values(2)),R4)
-        Y(IC)=real(min(CZ(NZ,0)+0.5_R8,values(4)),R4)
+        X(IC)=real(min(real(mpg%nx,R8)+0.5_R8,values(2)),R4)
+        Y(IC)=real(min(real(mpg%ny,R8)+0.5_R8,values(4)),R4)
         IC=IC+1
-        X(IC)=real(min(CR(NR,0)+0.5_R8,values(2)),R4)
-        Y(IC)=real(min(CZ(-1,-1),values(3)),R4)
+        X(IC)=real(min(real(mpg%nx,R8)+0.5_R8,values(2)),R4)
+        Y(IC)=real(min(-1.5_R8,values(3)),R4)
         IC=IC+1
-        X(IC)=real(min(CR(-1,-1),values(1)),R4)
-        Y(IC)=real(min(CZ(-1,-1),values(3)),R4)
+        X(IC)=real(min(-1.5_R8,values(1)),R4)
+        Y(IC)=real(min(-1.5_R8,values(3)),R4)
         if (b2plot_debug.ge.8) then
           write(*,*) 'Computational domain data bounds : '
           write(*,*) 'X : ', X(1:5)
@@ -870,7 +699,6 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         end if
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
-#endif
 
         CALL CPSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
         CALL CPSETI('GIL - GROUP IDENTIFIER FOR LABELS',2)
@@ -879,31 +707,35 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
 
         IF(.NOT.CONTPLOT) GOTO 5152
 
-#ifdef WG_TODO
         IC=0
-        ixstrt=max(-1,min(nx,nint(values(1))))
-        iystrt=max(-1,min(ny,nint(values(3))))
-        ixend =max(-1,min(nx,nint(values(2))))
-        iyend =max(-1,min(ny,nint(values(4))))
+        ixstrt=max(-1,min(mpg%nx,nint(values(1))))
+        iystrt=max(-1,min(mpg%ny,nint(values(3))))
+        ixend =max(-1,min(mpg%nx,nint(values(2))))
+        iyend =max(-1,min(mpg%ny,nint(values(4))))
         DO IY=iystrt,iyend
           DO IX=ixstrt,ixend
             IC=IC+1
-            X(IC)=ix    ! was real(CR(IX,0),R4)
-            Y(IC)=iy    ! was real(CZ(IY,0),R4)
-            Z(IC)=real(FIELD(IX,IY),R4)
+            X(IC)=real(ix,R4)    ! was real(CR(IX,0),R4)
+            Y(IC)=real(iy,R4)    ! was real(CZ(IY,0),R4)
+            if (mpg%imapCv(ix,iy).ne.0) then
+              Z(IC)=real(FIELD(mpg%imapCv(IX,IY)),R4)
+            else
+              Z(IC)=0.0_R4
+            end if
           ENDDO
         ENDDO
         NNX=ixend-ixstrt+1
         NNY=iyend-iystrt+1
         IF(IC.NE.NNX*NNY) WRITE(*,*) 'ic <> nnx*nny',IC,NNX,NNY
-        IF (b2plot_debug.ge.8) WRITE(*,*) 'NX,NY,NNX,NNY',NX,NY,NNX,NNY
+        IF (b2plot_debug.ge.8)
+     >   WRITE(*,*) 'NX,NY,NNX,NNY',mpg%nx,mpg%ny,NNX,NNY
 C         CALL CPCNRC(z,NNX,NNX,NNY,ZLO,ZHI,0.0,1,0,0)
         CALL CPSETI('SET - DO-SET-CALL FLAG',0)
         CALL CPSETI('MAP - MAPPING FLAG',1)
-        CALL CPSETR('XC1 - X COORDINATE AT I=1', real(ixstrt))
-        CALL CPSETR('XCM - X COORDINATE AT I=M', real(ixend))
-        CALL CPSETR('YC1 - Y COORDINATE AT J=1', real(iystrt))
-        CALL CPSETR('YCN - Y COORDINATE AT J=N', real(iyend))
+        CALL CPSETR('XC1 - X COORDINATE AT I=1', real(ixstrt,R4))
+        CALL CPSETR('XCM - X COORDINATE AT I=M', real(ixend,R4))
+        CALL CPSETR('YC1 - Y COORDINATE AT J=1', real(iystrt,R4))
+        CALL CPSETR('YCN - Y COORDINATE AT J=N', real(iyend,R4))
         CALL CPRECT(z, nnx, nnx, nny, RWRK, LRWK, IWRK, LIWK)
 C Add contours to area map
         CALL CPCLAM(z, RWRK, IWRK, MAP)
@@ -934,16 +766,8 @@ C Draw Contours
 C            CALL CPCLDR(z,RWRK,IWRK)
           CALL CPCLDM(z,RWRK,IWRK,MAP,CPDRPL)
         ENDIF
-#endif
  5152   CONTINUE
 
-      ENDIF
-
-      IF(DEBUG) THEN
-        DO I=1,2
-          WRITE(DEBUGSTRING,'(I5)') I
-          CALL ARDBPA(MAP,I,DEBUGSTRING)
-        ENDDO
       ENDIF
 
       IF(LBLBR.AND.CONTPLOT.and.colprt) THEN
@@ -1006,6 +830,13 @@ C            CALL CPCLDR(z,RWRK,IWRK)
 C Draw Mesh/Separatrix if wanted
       if(wall) call data_copy(is)
       call additional_elements(nCv,physical)
+
+      IF(DEBUG) THEN
+        DO I=1,2
+          WRITE(DEBUGSTRING,'(I5)') I
+          CALL ARDBPA(MAP,I,DEBUGSTRING)
+        ENDDO
+      ENDIF
 
       call subend ()
       RETURN
