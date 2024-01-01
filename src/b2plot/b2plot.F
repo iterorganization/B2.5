@@ -5061,6 +5061,7 @@ c     assumes that bb is OK for 1d cases
         case('line')     !
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
           call line(istack(iistack))
           call pop_stack(stack_req)
         case('psx')      ! per sx
