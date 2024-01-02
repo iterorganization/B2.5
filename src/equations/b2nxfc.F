@@ -99,7 +99,7 @@
       flcb(:,1) = flub(:,1)
       cvcb(:,1) = cvsb(:,1)
 
-      if (switch%b2nxfc_iout.ne.0) then                                              !sv 17.06.02 {
+      if (switch%b2nxfc_iout.ne.0) then                                !sv 17.06.02 {
         write (charns,'(i3.3)') isb    
         call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flub_th'//charns)
         call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_flub_r'//charns)

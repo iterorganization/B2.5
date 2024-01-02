@@ -503,23 +503,23 @@
      6    'Power loss due to molecule radiation (W)',
      7    'Power loss due to molecular ion radiation (W)',
      8    'Fluid neutral temperature (eV)',
-     9    'ExB turbulent kinetic energy density (?)',
-     *    'Enstrophy (?)'/
+     9    'E\mU\dB turbulent kinetic energy (eV)',
+     *    'E\mU\dB turbulent enstrophy (s^{-2}?)'/
       data descriptions(361:370) /
-     1    'Poloidal current due to RS of kt-model (A)',
+     1    'Poloidal current due to Reynolds stress of kt-model (A)',
      2    'Radial current due to RS of kt-model (A)',
      3    'Convective poloidal fluid neutral flux (s^{-1})',
      4    'Convective radial fluid neutral flux (s^{-1})',
      5    'Conductive poloidal fluid neutral flux (s^{-1})',
      6    'Conductive radial fluid neutral flux (s^{-1})',
-     7    'Poloidal ExB turbulent energy flux (W)',
-     8    'Radial ExB turbulent energy flux (W)',
-     9    'Poloidal enstrophy flux (?)',
-     *    'Radial enstrophy flux (?)'/
+     7    'Poloidal E\mU\dB turbulent energy flux (W)',
+     8    'Radial E\mU\dB turbulent energy flux (W)',
+     9    'Poloidal E\mU\dB turbulent enstrophy flux (s^{-3}?)',
+     *    'Radial E\mU\dB turbulent enstrophy flux (s^{-3}?)'/
       data descriptions(371:380) /
      1    'Fluid neutral heat source (W)',
-     2    'ExB turbulent energy source (W)',
-     3    'Enstrophy source (?)',
+     2    'E\mU\dB turbulent energy source (W)',
+     3    'E\mU\dB turbulent enstrophy source (s^{-3}?)',
      4    'RESKT',
      5    'RESZT',
      6    'CORKT',
@@ -528,21 +528,21 @@
      9    'CORTN',
      *    '\Gv\R_{n}^{0} (m^{2}.s^{-1})'/
       data descriptions(381:390) /
-     1    'ExB turbulent energy diffusivity (m^{2}.s^{-1})',
-     2    'Enstrophy diffusivity (?)',
+     1    'E\mU\dB turbulent energy diffusivity (m^{2}.s^{-1})',
+     2    'E\mU\dB turbulent enstrophy diffusivity (m^{2}.s^{-1})',
      3    '\mtD\dfhn (W)',
      4    '\mtD\dfkt (W)',
      5    '\mtD\dfzt (?)',
      6    'Boundary fluid neutral heat source (W)',
-     7    'Boundary ExB turbulent energy source (W)',
-     8    'Boundary enstrophy source (W)',
+     7    'Boundary E\mU\dB turbulent energy source (W)',
+     8    'Boundary E\mU\dB turbulent enstrophy source (s^{-3}?)',
      9    'Recycling fluid neutral heat source (W)',
-     *    'Recycling ExB turbulent energy source (W)'/
+     *    'Recycling E\mU\dB turbulent energy source (W)'/
       data descriptions(391:399) /
-     1    'Recycling enstrophy source (?)',
+     1    'Recycling E\mU\dB turbulent enstrophy source (s^{-3}?)',
      2    'tn at previous time step (eV)',
-     3    'kt at previous time step (?)',
-     4    'zt at previous time step (?)',
+     3    'kt at previous time step (eV)',
+     4    'zt at previous time step (s^{-2}?)',
      5    'Poloidal fluid neutral particle flux (s^{-1})',
      6    'Radial fluid neutral particle flux (s^{-1})',
      7    'Poloidal fluid neutral energy flux (W)',
