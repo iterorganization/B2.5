@@ -33,7 +33,7 @@ cxpb  INTEGER NNCUT_L
 #endif
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
-      logical done(mpg%nCi+1:mpg%nCv)
+      logical, allocatable :: done(:)
 
       integer ix,iy,ixstrt,ixend,iystrt,iyend
       integer nfmtz,noz,nozm,
@@ -279,6 +279,7 @@ C Initialise Areas
         end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
 cxpb Obtaining the contour outlines of the plasma region to be plotted
+        allocate(done(mpg%nCi+1:mpg%nCv))
         done=.false.
         do while (.not.all(done))
           do iCv = mpg%nCi+1, mpg%nCv
@@ -343,6 +344,7 @@ cxpb Obtaining the contour outlines of the plasma region to be plotted
             IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
           end do
         end do
+        deallocate(done)
 
         CALL CPSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
         CALL CPSETI('GIL - GROUP IDENTIFIER FOR LABELS',2)

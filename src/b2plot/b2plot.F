@@ -85,11 +85,13 @@ c
       common /t_ratio/ ratio
 
       real (kind=R8) ::
-     1   r_ref, z_ref, s_ref(mpg%nFt), profile(mpg%nFt),
+#ifdef WG_TODO
+     1   r_ref, z_ref, s_ref(mpg%nFt),
      5   bas_vis_piece(mpg%nCv,0:nsd_local-1),
      6   uedge_c(DEF_NXD,DEF_NYD), uedge_v(DEF_NXD,DEF_NYD,1:4),
-     7   corners(DEF_NXD+1,DEF_NYD+1),
-     8   safetyfactor(mpg%nFt), shear(mpg%nFs), rave(mpg%nFt)
+     7   corners(DEF_NXD+1,DEF_NYD+1), profile(mpg%nFt),
+#endif
+     8   safetyfactor(mpg%nFt), shear(mpg%nFt), rave(mpg%nFt)
       real (kind=R8) ::                                                !cjk
      *   nuab(mpg%nCv,0:nsd_local,0:nsd_local),
      *   nua(mpg%nCv,0:nsd_local),
@@ -106,7 +108,9 @@ c
      *   deltab(mpg%nCv,0:nsd_local),
      *   deltapar(mpg%nCv,0:nsd_local),
      *   vtha(mpg%nCv,0:nsd_local), q,
+#ifdef WG_TODO
      *   zaf(0:nsd_local-1), pxf, tif,
+#endif
      9   pb0, t0
       real (kind=R8) ::                                                !cjk
      *   dn_neo(mpg%nCv,0:nsd_local),
@@ -160,7 +164,8 @@ c
       character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
-      integer iCv, iFt, iVx, is, iss, isp, is2
+      integer iCv, iCm, iCn, iCp, iFc, iFt, iFp, iFm, iVx, iVx1, iVx2
+      integer is, iss, isp, is2
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -457,8 +462,6 @@ c
       textcorner(2)=' Top left'
       textcorner(3)=' Top right'
       texttrack(0)=' Bulk'
-
-!!!      if(safetyfactor(-1) .eq. 0.0_R8) call init_q
 
       call ipgeti ('b2stbr_refl_model', refl_model)
       call ipgeti ('b2stbr_plate_model', plate_model)
@@ -1160,25 +1163,31 @@ c
      & state%dv%ne, zeff, state_ext)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)
-#ifdef WG_TODO
-      icell=0
       r0=0.0_R8
       z0=0.0_R8
-      do ix = -1, nx
-        if (on_closed_surface(ix,-1)) then
-          icell=icell+1
-          r0=r0+cr(ix,-1)
-          z0=z0+cz(ix,-1)
-        endif
-      enddo
-      if (icell.gt.0) then
-        r0=r0/icell
-        z0=z0/icell
+      t0=0.0_R8
+      iFt=0
+      do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+        iFt=iFt+1
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (mpg%cvOnClosedSurface(iCv)) then
+          do i=1,mpg%ftCvP(iFt,2)
+            r0=r0+geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            z0=z0+geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            t0=t0+
+     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+          end do
+        end if
+      end do
+      if (t0.gt.0.0_R8) then
+        r0=r0/t0
+        z0=z0/t0
       else
-        r0=cr(-1,-1)
-        z0=cz(-1,-1)
-      endif
-#endif
+        r0=geo%cvX(1)
+        z0=geo%cvY(1)
+      end if
       if (mpg%isClassicalGrid.eq.1) then
         values(1)=minval(xx)                             !xmin
         values(2)=maxval(xx)+0.5_R8                      !xmax
@@ -1371,47 +1380,71 @@ c
           enddo
         enddo
       enddo
-      do iy=-1,ny
-        rave(iy)=0.0_R8
+#endif
+      do iFt=1,mpg%nFt
+        rave(iFt)=0.0_R8
         t1=0.0_R8
         t2=0.0_R8
-        icell=0
         q=0.0_R8
-        do ix=-1,nx
-          if(on_closed_surface(ix,iy)) then
-            q=q+abs(bb(ix,iy,3)/bb(ix,iy,0))/cr(ix,iy)*hx(ix,iy)
-            t1=t1+hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))
-            t2=t2+hx(ix,iy)
-            rave(iy)=rave(iy)+sqrt((cr(ix,iy)-r0)**2+
-     &                             (cz(ix,iy)-z0)**2)
-            icell=icell+1
-          endif
-        enddo
-        q=q/2.0_R8/pi
-        if (icell.gt.0) then
-          safetyfactor(iy)=t1/t2
-          write(*,*) 'safetyfactor,q: ',safetyfactor(iy),q
-          safetyfactor(iy)=q    ! I think this is better [DPC, 2004-09-24]
-          rave(iy)=rave(iy)/icell
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if(mpg%cvOnClosedSurface(iCv)) then
+          do i=1,mpg%ftCvP(iFt,2)
+            iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            q=q+abs(geo%cvBb(iCv,3)/geo%cvBb(iCv,0))/
+     &              geo%cvX(iCv)*geo%cvHx(iCv)
+            t1=t1+geo%cvHx(iCv)*geo%cvBb(iCv,3)/abs(geo%cvBb(iCv,0))
+            t2=t2+geo%cvHx(iCv)
+            rave(iFt)=rave(iFt)+sqrt((geo%cvX(iCv)-r0)**2+
+     &                               (geo%cvY(iCv)-z0)**2)*geo%cvHx(iCv)
+          enddo
+          q=q/2.0_R8/pi
+          safetyfactor(iFt)=t1/t2
+          write(*,*) 'safetyfactor,q: ',safetyfactor(iFt),q
+          safetyfactor(iFt)=q    ! I think this is better [DPC, 2004-09-24]
+          rave(iFt)=rave(iFt)/t2
         else
-          safetyfactor(iy)=0.0_R8
+          safetyfactor(iFt)=0.0_R8
         endif
       enddo
-      do iy=-1,ny
-        if (safetyfactor(iy).eq.0.0_R8 .or. iy.gt.jsep) then
-          shear(iy) = 0.0_R8
-        else if (iy.eq.-1) then
-          shear(iy)=(safetyfactor(iy+1)-safetyfactor(iy))/
-     &     (rave(iy+1)-rave(iy))
-        elseif (iy.lt.jsep) then
-          shear(iy)=(safetyfactor(iy+1)-safetyfactor(iy-1))/
-     &     (rave(iy+1)-rave(iy-1))
-        elseif (iy.eq.jsep) then
-          shear(iy)=(safetyfactor(iy)-safetyfactor(iy-1))/
-     &     (rave(iy)-rave(iy-1))
+      do iFt=1,mpg%nFt
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (safetyfactor(iFt).eq.0.0_R8 .or.
+     &      .not.mpg%cvOnClosedSurface(iCv)) then
+          shear(iFt) = 0.0_R8
+        else if (iCv.gt.mpg%nCi) then
+          iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+          if (mpg%fcCv(iFc,1).eq.iCv) then
+            iCp=mpg%fcCv(iFc,2)
+          else
+            iCp=mpg%fcCv(iFc,1)
+          end if
+          iFp=mpg%cvFt(iCp)
+          if (iFp.gt.0)
+     >     shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFt))/
+     &      (rave(iFp)-rave(iFt))
+        else
+          iFm=0
+          iFp=0
+          do i=1,mpg%cvVxP(iCv,2)
+            iVx=mpg%cvVx(mpg%cvVxP(iCv,1)+i-1)
+            do j=1,mpg%vxCvP(iVx,2)
+              iCn=mpg%vxCv(mpg%vxCvP(iVx,1)+j-1)
+              if (mpg%cvFt(iCn).eq.iFt) cycle
+              if (mpg%cvFt(iCn).eq.iFm) cycle
+              if (mpg%cvFt(iCn).eq.iFp) cycle
+              if (iFm.eq.0) iFm = mpg%cvFt(iCn)
+              if (iFm.ne.0) iFp = mpg%cvFt(iCn)
+            end do
+          end do
+          if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1)))) then
+            shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFm))/
+     &       (rave(iFp)-rave(iFm))
+          else
+            shear(iFt)=(safetyfactor(iFt)-safetyfactor(iFm))/
+     &       (rave(iFt)-rave(iFm))
+          endif
         endif
       enddo
-#endif
 c
       lu=5
       lu_pos=0
@@ -1631,7 +1664,7 @@ c
       contains
 
       subroutine select_matrix
-      integer i, is, ix, ibc, iCv, iFt
+      integer i, j, is, ix, ibc, iCv, iFt
 #ifdef WG_TODO
       integer iy, iso
 #endif
@@ -1730,11 +1763,11 @@ c
           nz=1
           call copy(state%pl%tn,1.0_R8/ev,nz,textbl)
         case('kt')
-          description='ExB turbulent kinetic energy density (?)'
+          description='E\mU\dB turbulent kinetic energy (eV)'
           nz=1
-          call copy(state%pl%kt,1.0_R8,nz,textbl)
+          call copy(state%pl%kt,1.0_R8/ev,nz,textbl)
         case('zt')
-          description='Enstrophy (?)'
+          description='E\mU\dB turbulent enstrophy (s^{-2}?)'
           nz=1
           call copy(state%pl%zt,1.0_R8,nz,textbl)
         case('pr')
@@ -1962,25 +1995,27 @@ c
      .     state%dv%fht(1,1),mach)
           call copy(mach,1.0_R8,nz,textbl)
         case('fktx')
-          description='Poloidal ExB turbulent energy flux (W)'
+          description='Poloidal E\mU\dB turbulent energy flux (W)'
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
      .     state%dv%fkt(1,0),mach)
           call copy(mach,1.0_R8,nz,textbl)
         case('fkty')
-          description='Radial ExB turbulent energy flux (W)'
+          description='Radial E\mU\dB turbulent energy flux (W)'
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
      .     state%dv%fkt(1,1),mach)
           call copy(mach,1.0_R8,nz,textbl)
         case('fztx')
-          description='Poloidal enstrophy flux (?)'
+          description=
+     .     'Poloidal E\mU\dB turbulent enstrophy flux (s^{-3}?)'
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
      .     state%dv%fzt(1,0),mach)
           call copy(mach,1.0_R8,nz,textbl)
         case('fzty')
-          description='Radial enstrophy flux (?)'
+          description=
+     .     'Radial E\mU\dB turbulent enstrophy flux (s^{-3}?)'
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
      .     state%dv%fzt(1,1),mach)
@@ -2112,20 +2147,45 @@ c
           description='hx (m)'
           nz=1
           call copy(geo%cvHx,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case('hy')
           description='hy (m)'
           nz=1
-          call copy(hy,1.0_R8,nz,textbl)
+          do iCv=1,mpg%nCv
+            i=0
+            mach(iCv,0)=0.0_R8
+            do j=1,mpg%cvFcP(iCv,2)
+              iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+              iVx1=mpg%fcVx(iFc,1)
+              iVx2=mpg%fcVx(iFc,2)
+              if (mpg%vxFs(iVx1).ne.0.and.mpg%vxFs(iVx2).ne.0.and.
+     &            mpg%vxFs(iVx1).ne.mpg%vxFs(iVx2)) then
+                i=i+1
+                mach(iCv,0)=mach(iCv,0)+geo%fcHt(iFc)
+              end if
+            end do
+            if(i.gt.0) mach(iCv,0)=mach(iCv,0)/real(i,R8)
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case('hy1')
           description='hy1 (m) (hy corrected)'
           nz=1
-          do iy = -1, ny
-            do ix = -1, nx
-              mach(ix,iy,0)=hy1(ix,iy)
+          do iCv=1,mpg%nCv
+            i=0
+            mach(iCv,0)=0.0_R8
+            do j=1,mpg%cvFcP(iCv,2)
+              iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+              iVx1=mpg%fcVx(iFc,1)
+              iVx2=mpg%fcVx(iFc,2)
+              if (mpg%vxFs(iVx1).ne.0.and.mpg%vxFs(iVx2).ne.0.and.
+     &            mpg%vxFs(iVx1).ne.mpg%vxFs(iVx2)) then
+                i=i+1
+                mach(iCv,0)=mach(iCv,0)+geo%fcHt(iFc)*geo%fcQgam(iFc,0)
+              end if
             end do
+            if(i.gt.0) mach(iCv,0)=mach(iCv,0)/real(i,R8)
           end do
           call copy(mach,1.0_R8,nz,textbl)
+#ifdef WG_TODO
         case('sx')
           description='sx (m^{2})'
           nz=1
@@ -2789,11 +2849,11 @@ c
           nz=1
           call copy(state%psnl%po,1.0_R8,nz,textbl)
         case ('kt0')
-          description='kt at previous time step (?)'
+          description='kt at previous time step (eV)'
           nz=1
-          call copy(state%psnl%kt,1.0_R8,nz,textbl)
+          call copy(state%psnl%kt,1.0_R8/ev,nz,textbl)
         case ('zt0')
-          description='zt at previous time step (?)'
+          description='zt at previous time step (s^{-2}?)'
           nz=1
           call copy(state%psnl%zt,1.0_R8,nz,textbl)
 #ifdef WG_TODO
@@ -3186,22 +3246,23 @@ c
           endif
           call copy(mach,1.0_R8,nz,textbl)
         case ('skt')
-          description='ExB turbulent energy source (W)'
+          description='E\mU\dB turbulent energy source (W)'
           nz=1
           if(iistack.gt.0) then
             isel=ipop(istack,iistack)
             if (isel.eq.0) then
               description=  ! IGNORE
-     .         'ExB turbulent energy source, constant part (W)'
+     .         'E\mU\dB turbulent energy source, constant part (W)'
             else if (isel.eq.1) then
               description=  ! IGNORE
-     .         'ExB turbulent energy source, energy part (s^{-1})'
+     .         'E\mU\dB turbulent energy source, energy part (s^{-1})'
             else if (isel.eq.2) then
               description=  ! IGNORE
-     .         'ExB turbulent energy source, density part (?.m^{3})'
+     .         'E\mU\dB turbulent energy source, density part (W.m^{3})'
             else if (isel.eq.3) then
               description=  ! IGNORE
-     .  'ExB turbulent energy source, energy*density part (?.m^{3})'
+     .         'E\mU\dB turbulent energy source, '//
+     .         'energy*density part (m^{3}.s^{-1})'
             else
               write(*,*) 'selected value of ',isel,' out of range 0..3'
               return
@@ -3209,7 +3270,7 @@ c
             mach(:,0)=state%sr%skt(:,isel)
             write(*,*) '"skt" option with ',isel
           else
-            description='Total ExB turbulent energy source (A)'  ! IGNORE
+            description='Total E\mU\dB turbulent energy source (W)'  ! IGNORE
             mach(:,0)=state%sr%skt(:,0)+
      .                state%pl%kt(:)*state%sr%skt(:,1)+
      .                state%dv%ni(:,1)*state%sr%skt(:,2)+
@@ -3217,22 +3278,24 @@ c
           endif
           call copy(mach,1.0_R8,nz,textbl)
         case ('szt')
-          description='Enstrophy source (?)'
+          description='E\mU\dB turbulent enstrophy source (s^{-3}?)'
           nz=1
           if(iistack.gt.0) then
             isel=ipop(istack,iistack)
             if (isel.eq.0) then
               description=  ! IGNORE
-     .         'Enstrophy source, constant part (?)'
+     .    'E\mU\dB turbulent enstrophy source, constant part (s^{-3}?)'
             else if (isel.eq.1) then
               description=  ! IGNORE
-     .         'Enstrophy source, enstrophy part (s^{-1})'
+     .    'E\mU\dB turbulent enstrophy source, enstrophy part (s^{-1})'
             else if (isel.eq.2) then
               description=  ! IGNORE
-     .         'Enstrophy source, density part (?.m^{3})'
+     .         'E\mU\dB turbulent enstrophy source, '//
+     .         'density part (m^{3}.s^{-3}?)'
             else if (isel.eq.3) then
               description=  ! IGNORE
-     .         'Enstrophy source, enstrophy*density part (?.m^{3})'
+     .         'E\mU\dB turbulent enstrophy source, '//
+     .         'enstrophy*density part (m^{3}.s^{-1})'
             else
               write(*,*) 'selected value of ',isel,' out of range 0..3'
               return
@@ -3240,7 +3303,8 @@ c
             mach(:,0)=state%sr%szt(:,isel)
             write(*,*) '"szt" option with ',isel
           else
-            description='Total Enstrophy source (?)'  ! IGNORE
+            description=
+     .       'Total E\mU\dB turbulent enstrophy source (s^{-3}?)'  ! IGNORE
             mach(:,0)=state%sr%szt(:,0)+
      .                state%pl%zt(:)*state%sr%szt(:,1)+
      .                state%dv%ni(:,1)*state%sr%szt(:,2)+
@@ -3431,7 +3495,7 @@ c
         case ('ckt')
           description='CORKT'
           nz=1
-          call copy(state%dv%corkt,1.0_R8,nz,textbl)
+          call copy(state%dv%corkt,1.0_R8/ev,nz,textbl)
         case ('czt')
           description='CORZT'
           nz=1
@@ -3722,62 +3786,100 @@ c
           call b2tlnl(mpg%nCv, switch, isel,
      .     state%pl%te, state%pl%ti, state%dv%ne, state%dv%lnlam)
           call copy(state%dv%lnlam,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case ('q')
           description='q'
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              if(.not.on_closed_surface(ix,iy)) then
-                mach(ix,iy,0)=0.0_R8
-              else
-                mach(ix,iy,0)=safetyfactor(iy)
-              end if
-            end do
+          do iCv=1,mpg%nCv
+            if (mpg%cvFt(iCv).ne.0) then
+              mach(iCv,0)=safetyfactor(mpg%cvFt(iCv))
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           call copy(mach,1.0_R8,nz,textbl)
         case ('s')
           description='Shear'
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              if(.not.on_closed_surface(ix,iy)) then
-                mach(ix,iy,0)=0.0_R8
-              else
-                mach(ix,iy,0)=shear(iy)
-              end if
-            end do
+          do iCv=1,mpg%nCv
+            if (mpg%cvFt(iCv).ne.0) then
+              mach(iCv,0)=shear(mpg%cvFt(iCv))
+            else
+              mach(iCv,0)=0.0_R8
+            end if
           end do
           call copy(mach,1.0_R8,nz,textbl)
         case ('alph')
           description='\Ga\R' //
      1     ' (ratio or pressure gradient to critical ballooning value)'
           nz=1
-          write(*,*) 'WARNING: "alph" not yet generalised'
 c     assumes that bb is OK for 1d cases
           do iCv=1,mpg%nCv
             if(.not.mpg%cvOnClosedSurface(iCv)) then
               mach(iCv,0)=0.0_R8
             else
-              if (bottomiy(ix,iy).ne.-2) then
-                mach(ix,iy,0)=r0*
-     1           (pz(bottomix(ix,iy),bottomiy(ix,iy))-pz(ix,iy))/
-     .            (rave(bottomiy(ix,iy))-rave(iy))/
-     2           (bb(ix,iy,3)**2/2.0_R8/mu0)/
-     3           (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
-              else if (topiy(ix,iy).ne.ny+1) then
-                mach(ix,iy,0)=r0*
-     1           (pz(ix,iy)-pz(topix(ix,iy),topiy(ix,iy)))/
-     .           (rave(iy)-rave(topiy(ix,iy)))/
-     2           (bb(ix,iy,3)**2/2.0_R8/mu0)/
-     3           (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
+              iFt=mpg%cvFt(iCv)
+              if (iCv.gt.mpg%nCi) then
+                iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+                if (mpg%fcCv(iFc,1).eq.iCv) then
+                  iCp=mpg%fcCv(iFc,2)
+                else
+                  iCp=mpg%fcCv(iFc,1)
+                end if
+                iFp=mpg%cvFt(iCp)
+                if(iFp.gt.0) then
+                  mach(iCv,0)=r0*
+     1             (pz(iCp)-pz(iCv))/(rave(iFt)-rave(iFp))/
+     2             (geo%cvBb(iCv,3)**2/2.0_R8/mu0)/
+     3             (0.0537_R8+0.534_R8*shear(iFt)/safetyfactor(iFt)**2)
+                else
+                  mach(iCv,0)=0.0_R8
+                end if
               else
-                mach(ix,iy,0)=0.0_R8
-              endif
+                iFm=0
+                iFp=0
+                do i=1,mpg%cvVxP(iCv,2)
+                  iVx=mpg%cvVx(mpg%cvVxP(iCv,1)+i-1)
+                  do j=1,mpg%vxCvP(iVx,2)
+                    iCn=mpg%vxCv(mpg%vxCvP(iVx,1)+j-1)
+                    if (mpg%cvFt(iCn).eq.iFt) cycle
+                    if (mpg%cvFt(iCn).eq.iFm) cycle
+                    if (mpg%cvFt(iCn).eq.iFp) cycle
+                    if (iFm.eq.0) then
+                      iFm = mpg%cvFt(iCn)
+                      iCm = iCn
+                    end if
+                    if (iFm.ne.0) then
+                      iFp = mpg%cvFt(iCn)
+                      iCp = iCn
+                    end if
+                  end do
+                end do
+                if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1))))
+     >           then
+                  if (rave(iFp).lt.rave(iFm)) then
+                    mach(iCv,0)=r0*
+     1               (pz(iCp)-pz(iCv))/(rave(iFt)-rave(iFp))/
+     2               (geo%cvBb(iCv,3)**2/2.0_R8/mu0)/
+     3               (0.0537_R8+0.534_R8*shear(iFt)/
+     4                safetyfactor(iFt)**2)
+                  else
+                    mach(iCv,0)=r0*
+     1               (pz(iCm)-pz(iCv))/(rave(iFt)-rave(iFm))/
+     2               (geo%cvBb(iCv,3)**2/2.0_R8/mu0)/
+     3               (0.0537_R8+0.534_R8*shear(iFt)/
+     4                safetyfactor(iFt)**2)
+                  end if
+                else
+                  mach(iCv,0)=r0*
+     1             (pz(iCm)-pz(iCv))/(rave(iFt)-rave(iFm))/
+     2             (geo%cvBb(iCv,3)**2/2.0_R8/mu0)/
+     3             (0.0537_R8+0.534_R8*shear(iFt)/
+     4              safetyfactor(iFt)**2)
+                end if
+              end if
             endif
           enddo
           call copy(mach,1.0_R8,nz,textbl)
-#endif
         case ('d')
           description='D (m^{2}.s^{-1})'
           nz=ns
@@ -3853,12 +3955,14 @@ c     assumes that bb is OK for 1d cases
      *             (state%dv%ne(:)*sqrt(qe/state%pl%te(:)))
           call copy(mach,1.0_R8,nz,textbl)
         case ('dkt')
-          description='ExB turbulent energy diffusivity (m^{2}.s^{-1})'
+          description=
+     .     'E\mU\dB turbulent energy diffusivity (m^{2}.s^{-1})'
           nz=1
           mach(:,0)=state%co%dkt0(:)
           call copy(mach,1.0_R8,nz,textbl)
         case ('dzt')
-          description='Enstrophy diffusivity (?)'
+          description=
+     .     'E\mU\dB turbulent enstrophy diffusivity (m^{2}.s^{-1})'
           nz=1
           mach(:,0)=state%co%dzt0(:)
           call copy(mach,1.0_R8,nz,textbl)
@@ -4238,11 +4342,12 @@ c     assumes that bb is OK for 1d cases
           nz=1
           call copy(state%srw%b2stbr_sch,1.0_R8,nz,textbl)
         case ('brkt')
-          description='Recycling ExB turbulent energy source (W)'
+          description='Recycling E\mU\dB turbulent energy source (W)'
           nz=1
           call copy(state%srw%b2stbr_skt,1.0_R8,nz,textbl)
         case ('brzt')
-          description='Recycling enstrophy source (W)'
+          description=
+     .     'Recycling E\mU\dB turbulent enstrophy source (s^{-3}?)'
           nz=1
           call copy(state%srw%b2stbr_szt,1.0_R8,nz,textbl)
         case ('bcna')
@@ -4274,11 +4379,12 @@ c     assumes that bb is OK for 1d cases
           nz=1
           call copy(state%srw%b2stbc_sch,1.0_R8,nz,textbl)
         case ('bckt')
-          description='Boundary ExB turbulent energy source (W)'
+          description='Boundary E\mU\dB turbulent energy source (W)'
           nz=1
           call copy(state%srw%b2stbc_skt,1.0_R8,nz,textbl)
         case ('bczt')
-          description='Boundary enstrophy source (?)'
+          description=
+     .     'Boundary E\mU\dB turbulent enstrophy source (s^{-3}?)'
           nz=1
           call copy(state%srw%b2stbc_szt,1.0_R8,nz,textbl)
         case ('bmna')
@@ -4700,14 +4806,14 @@ c     assumes that bb is OK for 1d cases
           call copy(mach,1.0_R8,nz,textbl)
         case ('fcxviskt')
           description=
-     .     'Poloidal current due to RS of kt-model (A)'
+     .     'Poloidal current due to Reynolds stress of kt-model (A)'
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
      .      state%dv%fchviskt(1,0),mach)
           call copy(mach,1.0_R8,nz,textbl)
         case ('fcyviskt')
           description=
-     .     'Radial current due to RS of kt-model (A)'
+     .     'Radial current due to Reynolds stress of kt-model (A)'
           nz=1
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
      .      state%dv%fchviskt(1,1),mach)
@@ -4726,7 +4832,6 @@ c     assumes that bb is OK for 1d cases
           call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
      .      state%dv%fchinert(1,1),mach)
           call copy(mach,1.0_R8,nz,textbl)
-#ifdef WG_TODO
 *    neoclassical part                                               !cjk
         case ('dnneo')
           description='Neoclassical particle diffusivity D_{n} ' //
@@ -4834,11 +4939,12 @@ c     assumes that bb is OK for 1d cases
           call copy(deltapar,1.0_R8,nz,textplel)
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
-          call chang_hinton(mpg,switch,nsd_local,safetyfactor,
-     1     state%dv%ne,state%pl%te,state%pl%ti,state%pl%na,mach)
+          call chang_hinton(mpg,geo,state,state_ext,switch,nsd_local,
+     1     safetyfactor,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
+#ifdef WG_TODO
         case ('crx')
           description='Corner radial coordinate (m)'
           nz=1
@@ -5066,14 +5172,17 @@ c     assumes that bb is OK for 1d cases
           call pop_stack(stack_req)
         case('psx')      ! per sx
           stack_req=(/0,0,0,1,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           if(bad_args(stack_req)) return
           call psx
         case('psxperp')  ! per sxperp
           stack_req=(/0,0,0,1,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           if(bad_args(stack_req)) return
           call psxperp
         case('psy')      ! per sy
           stack_req=(/0,0,0,1,0,0,0/)
+          if(.not.check_classical_grid(mpg)) return
           if(bad_args(stack_req)) return
           call psy
         case('abs')      ! abs()
@@ -10985,19 +11094,24 @@ c
           call rpush(rstack,irstack,kbolt)
 #ifdef WG_TODO
         case('jxi')      ! jxi
+          if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
           call ipush(istack,iistack,jxi)
         case('jxa')      ! jxa
+          if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
           call ipush(istack,iistack,jxa)
         case('jsep')     ! jsep
+          if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
           call ipush(istack,iistack,jsep)
 #endif
         case('ixref')    ! ixref
+          if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
           call ipush(istack,iistack,ixref)
         case('iyref')    ! iyref
+          if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
           call ipush(istack,iistack,iyref)
         case('nx')       ! nx
@@ -11662,7 +11776,8 @@ c     <delta wavelength in A> nspe
         case('omp')      ! set jxa (OMP)
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
+          if(.not.check_classical_grid(mpg)) return
+          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%nx) then
             jxa = ipop(istack,iistack)
             write(*,*) 'jxa changed to ', jxa
           else
@@ -11673,7 +11788,8 @@ c     <delta wavelength in A> nspe
         case('imp')      ! set jxi (IMP)
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
+          if(.not.check_classical_grid(mpg)) return
+          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%nx) then
             jxi = ipop(istack,iistack)
             write(*,*) 'jxi changed to ', jxi
           else
@@ -11681,10 +11797,12 @@ c     <delta wavelength in A> nspe
      .       'Faulty ix = ',istack(iistack),' chosen for jxi!'
             call pop_stack(stack_req)
           endif
+#endif
         case('yref')     ! set yref
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          if(-2.le.istack(iistack).and.istack(iistack).le.ny) then
+          if(.not.check_classical_grid(mpg)) return
+          if(-2.le.istack(iistack).and.istack(iistack).le.mpg%ny) then
             iyref = ipop(istack,iistack)
             if (iyref.gt.-2) then
               write(*,*) 'iyref changed to ', iyref
@@ -11696,7 +11814,6 @@ c     <delta wavelength in A> nspe
      .       'Faulty iy = ',istack(iistack),' chosen for iyref!'
             call pop_stack(stack_req)
           endif
-#endif
         case default FLVALUE
           cflag=.false.
       END SELECT FLVALUE
@@ -11716,12 +11833,10 @@ c calculate neoclassical diagnostics
       if(rerun_neoclassical) then
         call neo_diagnostics(mpg, geo, state, ns, neo_ic,
      &   dn_neo, chi_neo, vn_neo, vw_neo)
-#ifdef WG_TODO
-        call neo_validity(ny, ns, safetyfactor,
+        call neo_validity(mpg, geo, state, ns, safetyfactor,
      &   nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
         rerun_neoclassical = .false.
-#endif
       endif
       return
       end subroutine initialize_neoclassical
