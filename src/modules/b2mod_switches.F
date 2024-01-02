@@ -575,8 +575,6 @@ c Advanced fluid neutral models
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
 
-
-
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
       s % fnb_vis_per = 0.0e0_R8
@@ -640,7 +638,6 @@ c Advanced fluid neutral models
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
       s % L_macro_AFN = 0.10_R8
-
 
       s % iout_b2wdat = 0
       s % b2sian_iout = 0
@@ -1734,7 +1731,6 @@ c b2sral
 
        call xertst (0.le.s%b2sral_style.and.s%b2sral_style.le.2,
      .  'b2sral_style should be 0, 1 or 2')
-
 
 c b2npco
        call xertst (0.lt.s%b2npco_rxg, 'faulty parameter b2npco rxg')
