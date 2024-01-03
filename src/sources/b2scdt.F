@@ -64,6 +64,10 @@
 *    ..test old state
        call b2xvsg (nCv, nap, 1, 'nap', '.gt.')
       endif
+      if (switch%b2srdt_phm0.ne.1.0_R8) then
+        write(*,*)
+     & 'Warning: b2srdt_phm0 should be 1.0 for time-dependent mode'
+      endif
 
 * ..include the contributions from dtim
 *   ..modify snadt

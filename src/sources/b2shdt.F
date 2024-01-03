@@ -73,6 +73,10 @@
        call b2xvsg (nCv, nn, 1, 'nn', '.gt.')
        call b2xvsg (nCv*ns, kinrgyp, 1, 'kinrgyp', '.ge.')
       endif
+      if (switch%b2srdt_phm3.ne.1.0_R8) then 
+        write(*,*)
+     & 'Warning: b2srdt_phm3 should be 1.0 for time-dependent mode'
+      endif
 
 *   ..modify shedt, shidt, shndt
 
