@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2shdt (nCv, nCi, ns, dtim, BoRiS,                    !srv 07.07.21
-     &  cvVol, nap, tep, tip, tnp, ne, ni, nn, kinrgyp,
-     &  switch, mpg, shedt, shidt, shndt)
+     &  cvVol, nap, tep, tip, tnp, ktp, ztp, ne, ni, nn, kinrgyp,
+     &  switch, mpg, shedt, shidt, shndt, sktdt, sztdt)
       use b2mod_types
       use b2mod_indirect
       use b2mod_numerics_namelist
@@ -22,11 +22,13 @@
       real (kind=R8) ::
      *  dtim, cvVol(nCv), nap(nCv,0:ns-1),
      &  tep(nCv), tip(nCv), tnp(nCv),
+     &  ktp(nCv), ztp(nCv),
      &  ne(nCv), ni(nCv,0:1), nn(nCv),
      &  kinrgyp(nCv,0:ns-1)
 *   ..input/output arguments
       real (kind=R8) ::
-     &  shedt(nCv,0:3), shidt(nCv,0:3), shndt(nCv,0:3)
+     &  shedt(nCv,0:3), shidt(nCv,0:3), shndt(nCv,0:3),
+     &  sktdt(nCv,0:3), sztdt(nCv,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -102,6 +104,7 @@
       enddo
 
       ! TODO B2MNDT energy equations !! tn_style !!
+      !! TODO_B2MNDT Tn source scaling?
       if (switch%tn_style.eq.2) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)
@@ -113,8 +116,28 @@
         enddo
       endif
 
-  !! TODO_B2MNDT Tn source scaling?
-  !! TODO_B2MNDT keep BORIS ??? otherwise remove kinrgy
+      if (switch%solve_keps.gt.0) then
+        do iCv = 1, nCi ! only internal cells
+          ttim=dtim*time_factor(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          sktdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ktp(iCv)
+          sktdt(iCv,1) = 0.0_R8
+          sktdt(iCv,2) = 0.0_R8
+          sktdt(iCv,3) = -1.5_R8*t0
+        enddo
+      endif
+
+      if (switch%solve_keps.gt.1) then
+        do iCv = 1, nCi ! only internal cells
+          ttim=dtim*time_factor(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          sztdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ztp(iCv)
+          sztdt(iCv,1) = 0.0_R8
+          sztdt(iCv,2) = 0.0_R8
+          sztdt(iCv,3) = -1.5_R8*t0
+        enddo
+      endif
+
 
 cdjm Store the total change in linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then
@@ -130,6 +153,8 @@ cdjm Store the total change in linearised sources for balance
         call my_out_us(70,nCv,shedt(:,k),'b2shdt_shedt'//chk)
         call my_out_us(70,nCv,shidt(:,k),'b2shdt_shidt'//chk)
         call my_out_us(70,nCv,shndt(:,k),'b2shdt_shndt'//chk)
+        call my_out_us(70,nCv,sktdt(:,k),'b2shdt_sktdt'//chk)
+        call my_out_us(70,nCv,sztdt(:,k),'b2shdt_sztdt'//chk)
        enddo
       endif                                                           !srv 11.09.09 }
 

@@ -800,10 +800,14 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
        do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        if (solvekt(ireg))
-     &   aa(mpg%cvNvP(iCv,1)) =
-     &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1) +
-     &     abs(reskt(iCv))/(switch%b2npht_rxg*(kt(iCv)+1.0e-5_R8*ev))
+        if (solvekt(ireg)) then
+         aa(mpg%cvNvP(iCv,1)) =
+     &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1)
+         if (switch%b2mndt_style.lt.2) then
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &    abs(reskt(iCv))/(switch%b2npht_rxg*(kt(iCv)+1.0e-5_R8*ev))
+         endif
+        endif
        enddo
 ! $AD II-LOOP
        do iFc = 1, nFc
@@ -948,10 +952,14 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
        do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        if (solvezt(ireg))
-     &   aa(mpg%cvNvP(iCv,1)) =
-     &    -szt(iCv,1)-szt(iCv,3)*ni(iCv,1) +
+        if (solvezt(ireg)) then
+         aa(mpg%cvNvP(iCv,1)) =
+     &    -szt(iCv,1)-szt(iCv,3)*ni(iCv,1)
+         if (switch%b2mndt_style.lt.2) then
+           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
      &     abs(reszt(iCv))/(switch%b2npht_rxg*(zt(iCv)+1.0e-5_R8*ev))
+         endif
+        endif
        enddo
 ! $AD II-LOOP
        do iFc = 1, nFc

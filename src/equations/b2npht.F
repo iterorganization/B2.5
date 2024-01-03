@@ -95,7 +95,7 @@
      6 skt_prod(nCv), skt_diss(nCv)
       character chns*3                                                  !srv 17.07.05
       real (kind=R8), save :: rxg
-      logical :: warning_i, warning_e, warning_n
+      logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgetr, b2saxpy
@@ -140,19 +140,36 @@
           warning_e = .false.
           warning_i = .false.
           warning_n = .false.
+          warning_kt = .false.
+          warning_zt = .false.
           do iCv = 1, nCv
-          warning_e = warning_e .or.
-     .      rxf*dtee(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
-          warning_i = warning_i .or.
-     .      rxf*dtei(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
-          warning_n = warning_n .or.
-     .      rxf*dten(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            warning_e = warning_e .or.
+     .        rxf*dtee(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            warning_i = warning_i .or.
+     .        rxf*dtei(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            warning_n = warning_n .or.
+     .        rxf*dten(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            if (switch%solve_keps.gt.0) then
+              warning_kt = warning_kt.or.
+     .        rxf*time_factor(iCv).ne.1.0_R8
+            endif
+            if (switch%solve_keps.gt.1) then
+              warning_zt = warning_zt.or.
+     .        rxf*time_factor(iCv).ne.1.0_R8
+            endif
           enddo
           if (warning_e) write(6,*) 'rxf*dtee*time_factor should be 1 !'
           if (warning_i) write(6,*) 'rxf*dtei*time_factor should be 1 !'
           if (warning_n) write(6,*) 'rxf*dten*time_factor should be 1 !'
+          if (warning_kt.or.warning_zt) then
+            write(6,*) 'rxf*time_factor should be 1 for k-eps !'
+          endif
+
+
           if (warning_e .or. warning_i .or. warning_n)
      .   write(6,*) 'Time derivative terms may be inacurrate !'
+          if (warning_kt .or. warning_zt)
+     .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
         else
           rxg = 1.0_R8
         endif                                                           !srv 07.07.21 }
@@ -183,6 +200,13 @@
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
       endif
+*    ..throw warning for use of time-dependent with new k-eps equations
+      if (switch%solve_keps.gt.0.and.switch%b2mndt_style.eq.2) then
+        write(6,*) 'WARNING: the time-dependent treatment of k-eps',
+     &              'equations was implemented similarly as the energy',
+     &              'equations but lacks theoretical development'
+      endif
+
 
 * ..main computation
 
@@ -196,19 +220,30 @@ c time-dependent treatment                                              !srv 07.
 *  .. calculate time-dependent source
         call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
-     &    dv%ne, dv%ni, dv%nn,
-     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt)
+     &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
+     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
+     &    sr%sktdt, sr%sztdt)
 *  .. add contribution from time-dependent source
         sr%she = sr%she+sr%shedt
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
         sr%shi = sr%shi+sr%shidt
-        sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
+        sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))* !! TODO B2MNDT depends on tn_style ?
      &                                  psnl%ti/dtim*geo%cvVol
         if (switch%tn_style.eq.2) then
           sr%shn = sr%shn+sr%shndt
           sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
      &                                    psnl%tn/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.0) then
+          sr%skt = sr%skt + sr%sktdt
+          sr%skt(:,0)=sr%skt(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                    psnl%kt/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.1) then
+          sr%szt = sr%szt + sr%sztdt
+          sr%szt(:,0)=sr%szt(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                    psnl%zt/dtim*geo%cvVol
         endif
       endif                                                              !srv 207.07.21 }
 
