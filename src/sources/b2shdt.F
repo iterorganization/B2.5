@@ -88,23 +88,32 @@
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
-        shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)             !srv 06.01.21 {
-        shidt(iCv,1) = 0.0_R8
-        shidt(iCv,2) = 0.0_R8
-        shidt(iCv,3) = -1.5_R8*t0                               !srv 06.01.21 }
-        if (BoRiS.eq.1.0_R8) then
-          do is = 0, ns-1
-            shidt(iCv,0) = shidt(iCv,0)+t0*
-     &         (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)           !srv 10.10.22 {
-            shidt(iCv,2) = shidt(iCv,2)-t0*
-     &         (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)/
-     &         ni(iCv,0)                                        !srv 10.10.22 }
-          enddo
+        if (switch%tn_style.eq.0) then
+          shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)           !srv 06.01.21 {
+          shidt(iCv,1) = 0.0_R8
+          shidt(iCv,2) = 0.0_R8
+          shidt(iCv,3) = -1.5_R8*t0                             !srv 06.01.21 }
+          if (BoRiS.eq.1.0_R8) then
+            do is = 0, ns-1
+              shidt(iCv,0) = shidt(iCv,0)+t0*
+     &           (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)         !srv 10.10.22 {
+              shidt(iCv,2) = shidt(iCv,2)-t0*
+     &           (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)/
+     &           ni(iCv,0)                                      !srv 10.10.22 }
+            enddo
+          endif
+        else
+          shidt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*tip(iCv)
+          shidt(iCv,1) = 0.0_R8
+          shidt(iCv,2) = 0.0_R8
+          shidt(iCv,3) = -1.5_R8*t0*ni(iCv,1)/ni(iCv,0)          ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+                                                                 ! when using a pure ion or separate ion-neutral energy equation
+          if (BoRiS.eq.1.0_R8) then
+            call xertst('BoRiS not allowed with tn_style.ne.0')
+          endif
         endif
       enddo
 
-      ! TODO B2MNDT energy equations !! tn_style !!
-      !! TODO_B2MNDT Tn source scaling?
       if (switch%tn_style.eq.2) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)

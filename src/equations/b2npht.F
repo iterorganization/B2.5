@@ -223,14 +223,24 @@ c time-dependent treatment                                              !srv 07.
      &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
      &    sr%sktdt, sr%sztdt)
-*  .. add contribution from time-dependent source
+*  .. add contributions from time-dependent sources
+cc If e.g. d(nT)/dt = n dT/dt + T dn/dt, then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
+cc while the second contribution corresponds to T dn/dt
         sr%she = sr%she+sr%shedt
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
-        sr%shi = sr%shi+sr%shidt
-        sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))* !! TODO B2MNDT depends on tn_style ?
+        if (switch%tn_style.eq.0) then ! default, combined ion-neutral eneregy equation
+          sr%shi = sr%shi+sr%shidt
+          sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol
-        if (switch%tn_style.eq.2) then
+        elseif (switch%tn_style.eq.1) then ! pure ion energy equation
+          sr%shi = sr%shi+sr%shidt
+          sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                  psnl%ti/dtim*geo%cvVol
+        else                               ! separate ion and neutral energy equation
+          sr%shi = sr%shi+sr%shidt
+          sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                  psnl%ti/dtim*geo%cvVol
           sr%shn = sr%shn+sr%shndt
           sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
      &                                    psnl%tn/dtim*geo%cvVol
