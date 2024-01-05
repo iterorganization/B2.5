@@ -10,8 +10,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!WG_TODO      use b2mod_balance
-!WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+      use b2mod_balance
+     & ,only : update_balance_sources_particles, balance_netcdf,      !djm Jan2017
+     &         tot_sna0to1, fna_tot                                   !djm Mar2019
       use b2mod_ad
      & , only : ncall_b2npco
 #ifndef NAGFOR
@@ -116,12 +117,12 @@
        call b2xvsg (nCv, dv%pa(1,isb), 1, 'pb', '.gt.')
        call b2xvsg (nCv, pl%na(1,isb), 1, 'nb', '.gt.')
       endif
-#ifdef WG_TODO
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_particles(nx,ny,isb,nb)
+        tot_sna0to1(:,:,isb)=sr%sna(:,:,isb)    !djm Mar2019
+        fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
+        call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
       endif
-#endif
 * ..particle balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))

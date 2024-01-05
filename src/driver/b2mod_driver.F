@@ -45,7 +45,7 @@
       use b2mod_balance !djm Jan2017
      & , only : balance_netcdf, alloc_b2mod_balance,!WG_TODO write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
-     &          balance_average!WG_TODO, update_average_balance
+     &          balance_average, update_average_balance
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
@@ -2261,11 +2261,9 @@ csw 09oct2012 set default potential already at this point (BCs)
           close(nout(7))
         endif
 !djm Jun2017
-#ifdef WG_TODO
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(state,itim,ntim)
         endif
-#endif
 #endif
 *    ..increment
         itim = itim+1
@@ -3106,20 +3104,20 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
           call tallies(ns,tim,mpg,geo,state,state_ext,switch)
         endif
       endif
-#ifdef WG_TODO
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
-         if (balance_average .ne. 0) then
-           call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
+        if (balance_average .ne. 0) then
+          call update_average_balance(state,itim,-1) ! scale quantities by 1/itim if averaged
         endif
+#ifdef WG_TODO
         call write_balance(nx,ny,ns)
+#endif
 #else
         write(*,*)
      >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
-#endif
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
