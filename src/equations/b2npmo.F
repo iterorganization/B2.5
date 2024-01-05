@@ -11,9 +11,9 @@
 !WG_TODO     1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
 !WG_TODO     2          smpr, smpt, smfr, smcf
 !WG_TODO: smof -> part of b2mod_sources
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-!WG_TODO     2          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
+     2          balance_netcdf, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -277,9 +277,9 @@
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nCv, nFc, nVx, is, switch, geo, mpg,  
      &   co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
-!WG_TODO       endif
+       if (balance_netcdf.ne.0) then
+         fmo_b2nxfv(:,:,is)=flubv                                       !djm Jan2017
+       endif
        call b2saxpy (nFc*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nCv, nFc, nVx, is, switch, geo, mpg, rob, 
@@ -313,9 +313,10 @@
 !WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
 
 cdjm Jan2017 update momentum source components for balance
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
-!WG_TODO       endif
+      if (balance_netcdf.ne.0) then
+         tot_smo0to3(:,:,is)=smb !djm Mar2019
+        call update_balance_sources_momentum(nCv,is,pl%ua(:,is),rob)
+      endif
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
@@ -323,6 +324,13 @@ cdjm Jan2017 update momentum source components for balance
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
      .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
      .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
+
+cdjm Mar2019 output the total momentum flux and source for balance
+        if (balance_netcdf.ne.0) then
+          fmo_tot(:,:,is)=dv%fmo(:,:,is)
+        endif
+
+
       endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10

@@ -12,9 +12,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2npht_shei_bal, update_balance_sources_heat,
-!WG_TODO     &          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     & , only : b2npht_shei_bal, update_balance_sources_heat,
+     &          balance_netcdf
       use b2mod_ad
      & , only : ncall_b2npht
 #ifndef NAGFOR
@@ -189,12 +189,11 @@ c make sure fhn is zero when not solving a separate neutral energy equation
         call b2saxpy (nCv, 1.0e0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
 
-#ifdef WG_TODO
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+        call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
       endif
-#endif
+
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
@@ -251,11 +250,11 @@ c residuals for separate neutral energy equation
       do iCv = mpg%nCi+1, nCv
         shei(iCv) = 0.0_R8
       enddo
-#ifdef WG_TODO
+
       if (balance_netcdf.ne.0) then
-        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                !djm Jan2017
+        b2npht_shei_bal = shei                                           !djm Jan2017
       endif
-#endif
+
 *   ..compute final resht, reshe, reshi
 !      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
 !        dv%resht = dv%reshe + dv%reshi

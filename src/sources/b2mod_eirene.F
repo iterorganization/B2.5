@@ -312,7 +312,7 @@ c not sure this is the right place
         allocate(NPTS_input(NSTRAI))
         allocate(tflux0(NSTRAI))
         if (balance_netcdf.ne.0) then !djm Jan2017
-         call alloc_b2mod_eirene_sources(nCv,ns,nstrat)
+         call alloc_b2mod_eirene_sources(nCv,ns,natm,nmol,nion,nstrat)
         endif
 
         write(*,*) 'Calling test_couple'
