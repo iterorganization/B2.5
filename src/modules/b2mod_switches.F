@@ -1862,8 +1862,8 @@ c k-enstrophy model
      &  'b2tfhi_fsigkt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fkt_hie,
      &  'b2tfhi_fkt_hie must be .ge. 0.0')
-      call xertst (0.0_R8.le.s%keps_inc,
-     &  'keps_inc must be .ge. 0.0')
+      call xertst (1.0_R8.le.s%keps_inc,
+     &  'keps_inc must be .ge. 1.0')
       call xertst (0.0_R8.le.s%keps_fac,
      &  'keps_fac must be .ge. 0.0')
       call xertst (0.le.s%b2sikt_local .and. s%b2sikt_local.le.1,
