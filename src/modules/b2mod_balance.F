@@ -2699,14 +2699,9 @@ cdjm Update ion heat sources
 
       end subroutine update_average_balance
 
-#ifdef WG_TODO
-      subroutine write_balance(nxd,nyd,nsd)
+      subroutine write_balance(nCv,nFc,nsd,geo)
 #ifndef NO_CDF
-      use b2mod_geo
-     & , only : crx,cry,hx,hy,hz,bb,vol,gs
-      use b2mod_indirect
-     & , only : leftix,leftiy,rightix,rightiy,
-     &          topix,topiy,bottomix,bottomiy
+      use b2us_geo
       use b2mod_b2cmpa
      & , only : zamin,zamax
       use b2mod_b2cmpa
@@ -2718,16 +2713,16 @@ cdjm Update ion heat sources
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nxd,nyd,nsd
+      integer nCv,nFc,nsd
+      type(geometry), intent (in)   :: geo
 #ifndef NO_CDF
 #include <netcdf.inc>
 *   ..local variables
       integer nstrad
       integer status
-      integer ncid,nxid,nyid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
-     .        eirnxid,eirnyid,eirnatmid,eirnmolid,eirnionid
+      integer ncid,nCvpid,nFcid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
+     .        eirnCvid,eirnatmid,eirnmolid,eirnionid
       integer vdims(4),idum(1)
-      integer jxi,jxa,jsep
       integer is
       character*13, allocatable :: species_name(:)
       integer use_eirene
@@ -2745,9 +2740,9 @@ cdjm Update ion heat sources
       call check_cdf_status(status)
 
 *   ..define all of the dimensions that will be used
-      status=nf_def_dim(ncid,'nx_plus2',nxd+2,nxid)
+      status=nf_def_dim(ncid,'nCv',nCv,nCvpid)
       call check_cdf_status(status)
-      status=nf_def_dim(ncid,'ny_plus2',nyd+2,nyid)
+      status=nf_def_dim(ncid,'nFc',nFc,nFcid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'1',1,n1id)
       call check_cdf_status(status)
@@ -2760,7 +2755,7 @@ cdjm Update ion heat sources
       status=nf_def_dim(ncid,'ns',nsd,nsid)
       call check_cdf_status(status)
       if (allocated(eirene_mc_papl_sna_bal)) then
-        nstrad=size(eirene_mc_papl_sna_bal,4)
+        nstrad=size(eirene_mc_papl_sna_bal,3)
       else
         nstrad=1
       endif
@@ -2769,15 +2764,13 @@ cdjm Update ion heat sources
       status=nf_def_dim(ncid,'speclng',13,specid)
       call check_cdf_status(status)
       if (allocated(dab2_av)) then
-        status=nf_def_dim(ncid,'eirnx',size(pfluxa_av,1),eirnxid)
+        status=nf_def_dim(ncid,'eirnCv',size(pfluxa_av,1),eirnCvid)
         call check_cdf_status(status)
-        status=nf_def_dim(ncid,'eirny',size(pfluxa_av,2),eirnyid)
+        status=nf_def_dim(ncid,'natm',size(pfluxa_av,2),eirnatmid)
         call check_cdf_status(status)
-        status=nf_def_dim(ncid,'natm',size(pfluxa_av,3),eirnatmid)
+        status=nf_def_dim(ncid,'nmol',size(pfluxm_av,2),eirnmolid)
         call check_cdf_status(status)
-        status=nf_def_dim(ncid,'nmol',size(pfluxm_av,3),eirnmolid)
-        call check_cdf_status(status)
-        status=nf_def_dim(ncid,'nion',size(eirene_mc_paio_sna_bal,3),
+        status=nf_def_dim(ncid,'nion',size(eirene_mc_paio_sna_bal,2),
      &                                                  eirnionid)
         call check_cdf_status(status)
       endif
@@ -2786,20 +2779,17 @@ cdjm Update ion heat sources
       status=nf_enddef(ncid)
       call check_cdf_status(status)
 
-*   ..crx, cry:
-      vdims(1)=nxid
-      vdims(2)=nyid
-      vdims(3)=n4id
-      call write_cdf_double(ncid,'crx',crx,vdims,3)
-      call write_cdf_double(ncid,'cry',cry,vdims,3)
-*   ..bb,hx,hy,hz,vol,gs,am:
-      call write_cdf_double(ncid,'bb',bb,vdims,3)
-      call write_cdf_double(ncid,'hx',hx,vdims,2)
-      call write_cdf_double(ncid,'hy',hy,vdims,2)
-      call write_cdf_double(ncid,'hz',hz,vdims,2)
-      call write_cdf_double(ncid,'vol',vol,vdims,2)
-      vdims(3)=n3id
-      call write_cdf_double(ncid,'gs',gs,vdims,3)
+*   ..cvX, cvY:
+      vdims(1)=nCvpid
+      vdims(2)=n4id
+      call write_cdf_double(ncid,'cvX',geo%cvX,vdims,1)
+      call write_cdf_double(ncid,'cvY',geo%cvY,vdims,1)
+*   ..cvBb,cvHz,cvVol,fcS,am:
+      call write_cdf_double(ncid,'cvBb',geo%cvBb,vdims,2)
+      call write_cdf_double(ncid,'cvHz',geo%cvHz,vdims,1)
+      call write_cdf_double(ncid,'cvVol',geo%cvVol,vdims,1)
+      vdims(1)=nFcid
+      call write_cdf_double(ncid,'fcS',geo%fcS,vdims,1)
       vdims(1)=nsid
       call write_cdf_double(ncid,'am',am,vdims,1)
 *   ..mp, ev:
@@ -2808,25 +2798,6 @@ cdjm Update ion heat sources
       call write_cdf_double_single(ncid,'mp',rdum,vdims(1))
       rdum(1)=ev
       call write_cdf_double_single(ncid,'ev',rdum,vdims(1))
-*   ..rightix, rightiy etc:
-      vdims(1)=nxid
-      call write_cdf_int(ncid,'leftix',leftix,vdims,2)
-      call write_cdf_int(ncid,'leftiy',leftiy,vdims,2)
-      call write_cdf_int(ncid,'rightix',rightix,vdims,2)
-      call write_cdf_int(ncid,'rightiy',rightiy,vdims,2)
-      call write_cdf_int(ncid,'topix',topix,vdims,2)
-      call write_cdf_int(ncid,'topiy',topiy,vdims,2)
-      call write_cdf_int(ncid,'bottomix',bottomix,vdims,2)
-      call write_cdf_int(ncid,'bottomiy',bottomiy,vdims,2)
-*   ..jxi, jxa, jsep:
-      call get_jsep(nxd,nyd,jxi,jxa,jsep)
-      vdims(1)=n1id
-      idum(1)=jxi
-      call write_cdf_int_single(ncid,'jxi',idum,vdims(1))
-      idum(1)=jxa
-      call write_cdf_int_single(ncid,'jxa',idum,vdims(1))
-      idum(1)=jsep
-      call write_cdf_int_single(ncid,'jsep',idum,vdims(1))
 *   ..species string:
       vdims(1)=specid
       vdims(2)=nsid
@@ -2853,354 +2824,361 @@ cdjm Update ion heat sources
       call write_cdf_int(ncid,'za',za(0:nsd-1),vdims,1)
 *   ..Arrays for particle balance:
 *     Fluxes
-      vdims(1)=nxid
-      vdims(2)=nyid
-      vdims(3)=n2id
-      vdims(4)=nsid
-      call write_cdf_double(ncid,'fna_pinch',
-     &                   fna_pinch_av,vdims,4)
-      call write_cdf_double(ncid,'fna_pll',
-     &                   fna_pll_av,vdims,4)
-      call write_cdf_double(ncid,'fna_drift',
-     &                   fna_drift_av,vdims,4)
-      call write_cdf_double(ncid,'fna_ch',
-     &                   fna_ch_av,vdims,4)
-      call write_cdf_double(ncid,'fna_nanom',
-     &                   fna_nanom_av,vdims,4)
-      call write_cdf_double(ncid,'fna_panom',
-     &                   fna_panom_av,vdims,4)
-      call write_cdf_double(ncid,'fna_pschused',
-     &                   fna_pschused_av,vdims,4)
-      call write_cdf_double(ncid,'fna_tot',
-     &                   fna_tot_av,vdims,4)
-*     Sources
+      vdims(1)=nFcid
+      vdims(2)=n2id
       vdims(3)=nsid
+      call write_cdf_double(ncid,'fna_pinch',
+     &                   fna_pinch_av,vdims,3)
+      call write_cdf_double(ncid,'fna_pll',
+     &                   fna_pll_av,vdims,3)
+      call write_cdf_double(ncid,'fna_drift',
+     &                   fna_drift_av,vdims,3)
+      call write_cdf_double(ncid,'fna_ch',
+     &                   fna_ch_av,vdims,3)
+      call write_cdf_double(ncid,'fna_nanom',
+     &                   fna_nanom_av,vdims,3)
+      call write_cdf_double(ncid,'fna_panom',
+     &                   fna_panom_av,vdims,3)
+      call write_cdf_double(ncid,'fna_pschused',
+     &                   fna_pschused_av,vdims,3)
+      call write_cdf_double(ncid,'fna_tot',
+     &                   fna_tot_av,vdims,3)
+*     Sources
+      vdims(1)=nCvpid
+      vdims(2)=nsid
       call write_cdf_double(ncid,'b2stbr_phys_sna_bal',
-     &                   b2stbr_phys_sna_bal_av,vdims,3)
+     &                   b2stbr_phys_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbr_bas_sna_bal',
-     &                   b2stbr_bas_sna_bal_av,vdims,3)
+     &                   b2stbr_bas_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbr_first_flight_sna_bal',
-     &                   b2stbr_first_flight_sna_bal_av,vdims,3)
+     &                   b2stbr_first_flight_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbc_sna_bal',
-     &                   b2stbc_sna_bal_av,vdims,3)
+     &                   b2stbc_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbm_sna_bal',
-     &                   b2stbm_sna_bal_av,vdims,3)
+     &                   b2stbm_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'ext_sna_bal',
-     &                   ext_sna_bal_av,vdims,3)
+     &                   ext_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stel_sna_ion_bal',
-     &                   b2stel_sna_ion_bal_av,vdims,3)
+     &                   b2stel_sna_ion_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stel_sna_rec_bal',
-     &                   b2stel_sna_rec_bal_av,vdims,3)
+     &                   b2stel_sna_rec_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stcx_sna_bal',
-     &                   b2stcx_sna_bal_av,vdims,3)
+     &                   b2stcx_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srsm_sna_bal',
-     &                   b2srsm_sna_bal_av,vdims,3)
+     &                   b2srsm_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srdt_sna_bal',
-     &                   b2srdt_sna_bal_av,vdims,3)
+     &                   b2srdt_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srst_sna_bal',
-     &                   b2srst_sna_bal_av,vdims,3)
+     &                   b2srst_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'tot_sna_bal',
-     &                   tot_sna_bal_av,vdims,3)
+     &                   tot_sna_bal_av,vdims,2)
 *     Residual
-      call write_cdf_double(ncid,'resco',resco_av,vdims,3)
+      call write_cdf_double(ncid,'resco',resco_av,vdims,2)
 *   ..Arrays for momentum balance:
 *     Fluxes
-      vdims(3)=n2id
-      vdims(4)=nsid
-      call write_cdf_double(ncid,'fmo_flua',fmo_flua_av,vdims,4)
-      call write_cdf_double(ncid,'fmo_cvsa',fmo_cvsa_av,vdims,4)
-      call write_cdf_double(ncid,'fmo_hybr',fmo_hybr_av,vdims,4)
-      call write_cdf_double(ncid,'fmo_b2nxfv',fmo_b2nxfv_av,vdims,4)
-      call write_cdf_double(ncid,'fmo_tot',fmo_tot_av,vdims,4)
-*     Sources
+      vdims(1)=nFcid
+      vdims(2)=n2id
       vdims(3)=nsid
+      call write_cdf_double(ncid,'fmo_flua',fmo_flua_av,vdims,3)
+      call write_cdf_double(ncid,'fmo_cvsa',fmo_cvsa_av,vdims,3)
+      call write_cdf_double(ncid,'fmo_hybr',fmo_hybr_av,vdims,3)
+      call write_cdf_double(ncid,'fmo_b2nxfv',fmo_b2nxfv_av,vdims,3)
+      call write_cdf_double(ncid,'fmo_tot',fmo_tot_av,vdims,3)
+*     Sources
+      vdims(1)=nCvpid
+      vdims(2)=nsid
       call write_cdf_double(ncid,'b2stbr_phys_smo_bal',
-     &                   b2stbr_phys_smo_bal_av,vdims,3)
+     &                   b2stbr_phys_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbr_bas_smo_bal',
-     &                   b2stbr_bas_smo_bal_av,vdims,3)
+     &                   b2stbr_bas_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbc_smo_bal',
-     &                   b2stbc_smo_bal_av,vdims,3)
+     &                   b2stbc_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbm_smo_bal',
-     &                   b2stbm_smo_bal_av,vdims,3)
+     &                   b2stbm_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'ext_smo_bal',
-     &                   ext_smo_bal_av,vdims,3)
+     &                   ext_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stel_smq_ion_bal',
-     &                   b2stel_smq_ion_bal_av,vdims,3)
+     &                   b2stel_smq_ion_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stel_smq_rec_bal',
-     &                   b2stel_smq_rec_bal_av,vdims,3)
+     &                   b2stel_smq_rec_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stcx_smq_bal',
-     &                   b2stcx_smq_bal_av,vdims,3)
+     &                   b2stcx_smq_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srsm_smo_bal',
-     &                   b2srsm_smo_bal_av,vdims,3)
+     &                   b2srsm_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srdt_smo_bal',
-     &                   b2srdt_smo_bal_av,vdims,3)
+     &                   b2srdt_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srst_smo_bal',
-     &                   b2srst_smo_bal_av,vdims,3)
+     &                   b2srst_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smoch_bal',
-     &                   b2sifr_smoch_bal_av,vdims,3)
+     &                   b2sifr_smoch_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smotf_ehxp_bal',
-     &                   b2sifr_smotf_ehxp_bal_av,vdims,3)
+     &                   b2sifr_smotf_ehxp_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smotf_cthe_bal',
-     &                   b2sifr_smotf_cthe_bal_av,vdims,3)
+     &                   b2sifr_smotf_cthe_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smotf_cthi_bal',
-     &                   b2sifr_smotf_cthi_bal_av,vdims,3)
+     &                   b2sifr_smotf_cthi_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smofrea_bal',
-     &                      b2sifr_smofrea_bal_av,vdims,3)
+     &                      b2sifr_smofrea_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smofria_bal',
-     &                      b2sifr_smofria_bal_av,vdims,3)
+     &                      b2sifr_smofria_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smotfea_bal',
-     &                      b2sifr_smotfea_bal_av,vdims,3)
+     &                      b2sifr_smotfea_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sifr_smotfia_bal',
-     &                      b2sifr_smotfia_bal_av,vdims,3)
+     &                      b2sifr_smotfia_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2siav_smovh_bal',
-     &                   b2siav_smovh_bal_av,vdims,3)
+     &                   b2siav_smovh_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2siav_smovv_bal',
-     &                   b2siav_smovv_bal_av,vdims,3)
+     &                   b2siav_smovv_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2siav_smovi_bal',
-     &                   b2siav_smovi_bal_av,vdims,3)          !som 13.08.21
+     &                   b2siav_smovi_bal_av,vdims,2)          !som 13.08.21
       call write_cdf_double(ncid,'b2sicf_smo_bal',
-     &                   b2sicf_smo_bal_av,vdims,3)
+     &                   b2sicf_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sian_smo_bal',
-     &                   b2sian_smo_bal_av,vdims,3)            !srv 25.09.17
+     &                   b2sian_smo_bal_av,vdims,2)            !srv 25.09.17
       call write_cdf_double(ncid,'b2nxdv_smo_bal',
-     &                   b2nxdv_smo_bal_av,vdims,3)
+     &                   b2nxdv_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_smogp_bal',
-     &                   b2sigp_smogp_bal_av,vdims,3)
+     &                   b2sigp_smogp_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_smogpi_bal',
-     &                   b2sigp_smogpi_bal_av,vdims,3)
+     &                   b2sigp_smogpi_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_smogpe_bal',
-     &                   b2sigp_smogpe_bal_av,vdims,3)
+     &                   b2sigp_smogpe_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_smogpgr_bal',
-     &                   b2sigp_smogpgr_bal_av,vdims,3)
+     &                   b2sigp_smogpgr_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_pstat_bal',
-     &                   b2sigp_pstat_bal_av,vdims,3)
+     &                   b2sigp_pstat_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_pstati_bal',
-     &                   b2sigp_pstati_bal_av,vdims,3)
+     &                   b2sigp_pstati_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_pstate_bal',
-     &                   b2sigp_pstate_bal_av,vdims,2)
+     &                   b2sigp_pstate_bal_av,vdims,1)
       call write_cdf_double(ncid,'tot_smo_bal',
-     &                   tot_smo_bal_av,vdims,3)
+     &                   tot_smo_bal_av,vdims,2)
 *     Residual
-      call write_cdf_double(ncid,'resmo',resmo_av,vdims,3)
+      call write_cdf_double(ncid,'resmo',resmo_av,vdims,2)
 *   ..Arrays for electron heat balance:
 *     Fluxes
-      vdims(3)=n2id
+      vdims(1)=nFcid
+      vdims(2)=n2id
       call write_cdf_double(ncid,'fhe_32',
-     &                   fhe_32_av,vdims,3)
+     &                   fhe_32_av,vdims,2)
       call write_cdf_double(ncid,'fhe_52',
-     &                   fhe_52_av,vdims,3)
+     &                   fhe_52_av,vdims,2)
       call write_cdf_double(ncid,'fhe_thermj',
-     &                   fhe_thermj_av,vdims,3)
+     &                   fhe_thermj_av,vdims,2)
       call write_cdf_double(ncid,'fhe_cond',
-     &                   fhe_cond_av,vdims,3)
+     &                   fhe_cond_av,vdims,2)
       call write_cdf_double(ncid,'fhe_dia',
-     &                   fhe_dia_av,vdims,3)
+     &                   fhe_dia_av,vdims,2)
       call write_cdf_double(ncid,'fhe_ecrb',
-     &                   fhe_ecrb_av,vdims,3)
+     &                   fhe_ecrb_av,vdims,2)
       call write_cdf_double(ncid,'fhe_strange',
-     &                   fhe_strange_av,vdims,3)
+     &                   fhe_strange_av,vdims,2)
       call write_cdf_double(ncid,'fhe_pschused',
-     &                   fhe_pschused_av,vdims,3)
+     &                   fhe_pschused_av,vdims,2)
 *     Sources
+      vdims(1)=nCvpid
       call write_cdf_double(ncid,'b2stbr_phys_she_bal',
-     &                   b2stbr_phys_she_bal_av,vdims,2)
+     &                   b2stbr_phys_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbr_bas_she_bal',
-     &                   b2stbr_bas_she_bal_av,vdims,2)
+     &                   b2stbr_bas_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbr_first_flight_she_bal',
-     &                   b2stbr_first_flight_she_bal_av,vdims,2)
+     &                   b2stbr_first_flight_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbc_she_bal',
-     &                   b2stbc_she_bal_av,vdims,2)
+     &                   b2stbc_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbm_she_bal',
-     &                   b2stbm_she_bal_av,vdims,2)
+     &                   b2stbm_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'ext_she_bal',
-     &                   ext_she_bal_av,vdims,2)
-      vdims(3)=nsid
+     &                   ext_she_bal_av,vdims,1)
+      vdims(2)=nsid
       call write_cdf_double(ncid,'b2stel_she_bal',
-     &                   b2stel_she_bal_av,vdims,3)
+     &                   b2stel_she_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srsm_she_bal',
-     &                   b2srsm_she_bal_av,vdims,2)
+     &                   b2srsm_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2srdt_she_bal',
-     &                   b2srdt_she_bal_av,vdims,2)
+     &                   b2srdt_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2srst_she_bal',
-     &                   b2srst_she_bal_av,vdims,2)
+     &                   b2srst_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_diae_bal',
-     &                   b2sihs_diae_bal_av,vdims,2)
+     &                   b2sihs_diae_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_divue_bal',
-     &                   b2sihs_divue_bal_av,vdims,2)
+     &                   b2sihs_divue_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_exbe_bal',
-     &                   b2sihs_exbe_bal_av,vdims,2)
+     &                   b2sihs_exbe_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_joule_bal',
-     &                   b2sihs_joule_bal_av,vdims,2)
+     &                   b2sihs_joule_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2npht_shei_bal',
-     &                   b2npht_shei_bal_av,vdims,2)
+     &                   b2npht_shei_bal_av,vdims,1)
 *     Residual
-      call write_cdf_double(ncid,'reshe',reshe_av,vdims,2)
+      call write_cdf_double(ncid,'reshe',reshe_av,vdims,1)
 *   ..Arrays for ion heat balance:
 *     Fluxes
-      vdims(3)=n2id
+      vdims(1)=nFcid
+      vdims(2)=n2id
       call write_cdf_double(ncid,'fhi_32',
-     &                      fhi_32_av,vdims,3)
+     &                      fhi_32_av,vdims,2)
       call write_cdf_double(ncid,'fhi_52',
-     &                      fhi_52_av,vdims,3)
+     &                      fhi_52_av,vdims,2)
       call write_cdf_double(ncid,'fhi_cond',
-     &                      fhi_cond_av,vdims,3)
+     &                      fhi_cond_av,vdims,2)
       call write_cdf_double(ncid,'fhi_dia',
-     &                   fhi_dia_av,vdims,3)
+     &                   fhi_dia_av,vdims,2)
       call write_cdf_double(ncid,'fhi_ecrb',
-     &                   fhi_ecrb_av,vdims,3)
+     &                   fhi_ecrb_av,vdims,2)
       call write_cdf_double(ncid,'fhi_strange',
-     &                   fhi_strange_av,vdims,3)
+     &                   fhi_strange_av,vdims,2)
       call write_cdf_double(ncid,'fhi_pschused',
-     &                   fhi_pschused_av,vdims,3)
+     &                   fhi_pschused_av,vdims,2)
       call write_cdf_double(ncid,'fhi_inert',
-     &                   fhi_inert_av,vdims,3)
+     &                   fhi_inert_av,vdims,2)
       call write_cdf_double(ncid,'fhi_vispar',
-     &                   fhi_vispar_av,vdims,3)
+     &                   fhi_vispar_av,vdims,2)
       call write_cdf_double(ncid,'fhi_visper',
-     &                   fhi_visper_av,vdims,3)
+     &                   fhi_visper_av,vdims,2)
       call write_cdf_double(ncid,'fhi_visq',
-     &                   fhi_visq_av,vdims,3)
+     &                   fhi_visq_av,vdims,2)
       call write_cdf_double(ncid,'fhi_anml',
-     &                   fhi_anml_av,vdims,3)
+     &                   fhi_anml_av,vdims,2)
       call write_cdf_double(ncid,'fhi_kevis',
-     &                   fhi_kevis_av,vdims,3)
+     &                   fhi_kevis_av,vdims,2)
 *     Sources
+      vdims(1)=nCvpid
       call write_cdf_double(ncid,'b2stbr_phys_shi_bal',
-     &                      b2stbr_phys_shi_bal_av,vdims,2)
+     &                      b2stbr_phys_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbr_bas_shi_bal',
-     &                      b2stbr_bas_shi_bal_av,vdims,2)
+     &                      b2stbr_bas_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbr_first_flight_shi_bal',
-     &                      b2stbr_first_flight_shi_bal_av,vdims,2)
+     &                      b2stbr_first_flight_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbc_shi_bal',
-     &                      b2stbc_shi_bal_av,vdims,2)
+     &                      b2stbc_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbm_shi_bal',
-     &                      b2stbm_shi_bal_av,vdims,2)
+     &                      b2stbm_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'ext_shi_bal',
-     &                      ext_shi_bal_av,vdims,2)
+     &                      ext_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stel_she_ion_bal',
-     &                      b2stel_she_ion_bal_av,vdims,2)
+     &                      b2stel_she_ion_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stel_she_rec_bal',
-     &                      b2stel_she_rec_bal_av,vdims,2)
+     &                      b2stel_she_rec_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stel_shi_ion_bal',
-     &                      b2stel_shi_ion_bal_av,vdims,2)
+     &                      b2stel_shi_ion_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stel_shi_rec_bal',
-     &                      b2stel_shi_rec_bal_av,vdims,2)
+     &                      b2stel_shi_rec_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stcx_shi_bal',
-     &                      b2stcx_shi_bal_av,vdims,2)
+     &                      b2stcx_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2srsm_shi_bal',
-     &                      b2srsm_shi_bal_av,vdims,2)
+     &                      b2srsm_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2srdt_shi_bal',
-     &                      b2srdt_shi_bal_av,vdims,2)
+     &                      b2srdt_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2srst_shi_bal',
-     &                      b2srst_shi_bal_av,vdims,2)
+     &                      b2srst_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_diaa_bal',
-     &                      b2sihs_diaa_bal_av,vdims,2)
+     &                      b2sihs_diaa_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_divua_bal',
-     &                      b2sihs_divua_bal_av,vdims,2)
+     &                      b2sihs_divua_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_exba_bal',
-     &                      b2sihs_exba_bal_av,vdims,2)
+     &                      b2sihs_exba_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_visa_bal',
-     &                      b2sihs_visa_bal_av,vdims,2)
+     &                      b2sihs_visa_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2sihs_fraa_bal',
-     &                      b2sihs_fraa_bal_av,vdims,2)
+     &                      b2sihs_fraa_bal_av,vdims,1)
 *     Residual
-      call write_cdf_double(ncid,'reshi',reshi_av,vdims,2)
+      call write_cdf_double(ncid,'reshi',reshi_av,vdims,1)
 *   ..Eirene sources
       if (allocated(eirene_mc_papl_sna_bal)) then
-        vdims(3)=nsid
-        vdims(4)=nstraid
-        call write_cdf_double(ncid,'eirene_mc_papl_sna_bal',
-     &                     eirene_mc_papl_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_pmpl_sna_bal',
-     &                     eirene_mc_pmpl_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_pipl_sna_bal',
-     &                     eirene_mc_pipl_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_pppl_sna_bal',
-     &                     eirene_mc_pppl_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_core_sna_bal',
-     &                     eirene_mc_core_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_mapl_smo_bal',
-     &                     eirene_mc_mapl_smo_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_mmpl_smo_bal',
-     &                     eirene_mc_mmpl_smo_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_mipl_smo_bal',
-     &                     eirene_mc_mipl_smo_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_cppv_smo_bal',
-     &                     eirene_mc_cppv_smo_bal_av,vdims,4)
-        vdims(3)=eirnatmid
-        call write_cdf_double(ncid,'eirene_mc_paat_sna_bal',
-     &                     eirene_mc_paat_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_pmat_sna_bal',
-     &                     eirene_mc_pmat_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_piat_sna_bal',
-     &                     eirene_mc_piat_sna_bal_av,vdims,4)
-        vdims(3)=eirnmolid
-        call write_cdf_double(ncid,'eirene_mc_paml_sna_bal',
-     &                     eirene_mc_paml_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_pmml_sna_bal',
-     &                     eirene_mc_pmml_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_piml_sna_bal',
-     &                     eirene_mc_piml_sna_bal_av,vdims,4)
-        vdims(3)=eirnionid
-        call write_cdf_double(ncid,'eirene_mc_paio_sna_bal',
-     &                     eirene_mc_paio_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_pmio_sna_bal',
-     &                     eirene_mc_pmio_sna_bal_av,vdims,4)
-        call write_cdf_double(ncid,'eirene_mc_piio_sna_bal',
-     &                     eirene_mc_piio_sna_bal_av,vdims,4)
+        vdims(2)=nsid
         vdims(3)=nstraid
+        call write_cdf_double(ncid,'eirene_mc_papl_sna_bal',
+     &                     eirene_mc_papl_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_pmpl_sna_bal',
+     &                     eirene_mc_pmpl_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_pipl_sna_bal',
+     &                     eirene_mc_pipl_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_pppl_sna_bal',
+     &                     eirene_mc_pppl_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_core_sna_bal',
+     &                     eirene_mc_core_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_mapl_smo_bal',
+     &                     eirene_mc_mapl_smo_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_mmpl_smo_bal',
+     &                     eirene_mc_mmpl_smo_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_mipl_smo_bal',
+     &                     eirene_mc_mipl_smo_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_cppv_smo_bal',
+     &                     eirene_mc_cppv_smo_bal_av,vdims,3)
+        vdims(2)=eirnatmid
+        call write_cdf_double(ncid,'eirene_mc_paat_sna_bal',
+     &                     eirene_mc_paat_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_pmat_sna_bal',
+     &                     eirene_mc_pmat_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_piat_sna_bal',
+     &                     eirene_mc_piat_sna_bal_av,vdims,3)
+        vdims(2)=eirnmolid
+        call write_cdf_double(ncid,'eirene_mc_paml_sna_bal',
+     &                     eirene_mc_paml_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_pmml_sna_bal',
+     &                     eirene_mc_pmml_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_piml_sna_bal',
+     &                     eirene_mc_piml_sna_bal_av,vdims,3)
+        vdims(2)=eirnionid
+        call write_cdf_double(ncid,'eirene_mc_paio_sna_bal',
+     &                     eirene_mc_paio_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_pmio_sna_bal',
+     &                     eirene_mc_pmio_sna_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_piio_sna_bal',
+     &                     eirene_mc_piio_sna_bal_av,vdims,3)
+        vdims(2)=nstraid
         call write_cdf_double(ncid,'eirene_mc_pael_sne_bal',
-     &                     eirene_mc_pael_sne_bal_av,vdims,3)
+     &                     eirene_mc_pael_sne_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_pmel_sne_bal',
-     &                     eirene_mc_pmel_sne_bal_av,vdims,3)
+     &                     eirene_mc_pmel_sne_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_eael_she_bal',
-     &                     eirene_mc_eael_she_bal_av,vdims,3)
+     &                     eirene_mc_eael_she_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_emel_she_bal',
-     &                     eirene_mc_emel_she_bal_av,vdims,3)
+     &                     eirene_mc_emel_she_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_eiel_she_bal',
-     &                     eirene_mc_eiel_she_bal_av,vdims,3)
+     &                     eirene_mc_eiel_she_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_epel_she_bal',
-     &                     eirene_mc_epel_she_bal_av,vdims,3)
+     &                     eirene_mc_epel_she_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_eapl_shi_bal',
-     &                     eirene_mc_eapl_shi_bal_av,vdims,3)
+     &                     eirene_mc_eapl_shi_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_empl_shi_bal',
-     &                     eirene_mc_empl_shi_bal_av,vdims,3)
+     &                     eirene_mc_empl_shi_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_eipl_shi_bal',
-     &                     eirene_mc_eipl_shi_bal_av,vdims,3)
+     &                     eirene_mc_eipl_shi_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_eppl_shi_bal',
-     &                     eirene_mc_eppl_shi_bal_av,vdims,3)
+     &                     eirene_mc_eppl_shi_bal_av,vdims,2)
       else
         write(*,*) 'skipping Eirene sources'
       endif
 *   ..Additional averaged quantities
-      vdims(3)=nsid
-      call write_cdf_double(ncid,'ne',ne_av,vdims,2)
-      call write_cdf_double(ncid,'na',na_av,vdims,3)
-      call write_cdf_double(ncid,'ua',ua_av,vdims,3)
-      call write_cdf_double(ncid,'po',po_av,vdims,2)
-      call write_cdf_double(ncid,'te',te_av,vdims,2)
-      call write_cdf_double(ncid,'ti',ti_av,vdims,2)
-      call write_cdf_double(ncid,'rpt',rpt_av,vdims,3)
-      call write_cdf_double(ncid,'kinrgy',kinrgy_av,vdims,3)
-      vdims(3)=n2id
-      call write_cdf_double(ncid,'fne',fne_av,vdims,3)
+      vdims(1)=nCvpid
+      vdims(2)=nsid
+      call write_cdf_double(ncid,'ne',ne_av,vdims,1)
+      call write_cdf_double(ncid,'na',na_av,vdims,2)
+      call write_cdf_double(ncid,'ua',ua_av,vdims,2)
+      call write_cdf_double(ncid,'po',po_av,vdims,1)
+      call write_cdf_double(ncid,'te',te_av,vdims,1)
+      call write_cdf_double(ncid,'ti',ti_av,vdims,1)
+      call write_cdf_double(ncid,'rpt',rpt_av,vdims,2)
+      call write_cdf_double(ncid,'kinrgy',kinrgy_av,vdims,2)
+      vdims(1)=nFcid
+      vdims(2)=n2id
+      call write_cdf_double(ncid,'fne',fne_av,vdims,2)
       if (allocated(dab2_av)) then
-        vdims(1)=eirnxid
-        vdims(2)=eirnyid
-        vdims(3)=eirnatmid
-        call write_cdf_double(ncid,'dab2',dab2_av,vdims,3)
-        call write_cdf_double(ncid,'tab2',tab2_av,vdims,3)
-        call write_cdf_double(ncid,'rfluxa',rfluxa_av,vdims,3)
-        call write_cdf_double(ncid,'refluxa',refluxa_av,vdims,3)
-        call write_cdf_double(ncid,'pfluxa',pfluxa_av,vdims,3)
-        call write_cdf_double(ncid,'pefluxa',pefluxa_av,vdims,3)
-        vdims(3)=eirnmolid
-        call write_cdf_double(ncid,'dmb2',dmb2_av,vdims,3)
-        call write_cdf_double(ncid,'tmb2',tmb2_av,vdims,3)
-        call write_cdf_double(ncid,'rfluxm',rfluxm_av,vdims,3)
-        call write_cdf_double(ncid,'refluxm',refluxm_av,vdims,3)
-        call write_cdf_double(ncid,'pfluxm',pfluxm_av,vdims,3)
-        call write_cdf_double(ncid,'pefluxm',pefluxm_av,vdims,3)
+        vdims(1)=eirnCvid
+        vdims(2)=eirnatmid
+        call write_cdf_double(ncid,'dab2',dab2_av,vdims,2)
+        call write_cdf_double(ncid,'tab2',tab2_av,vdims,2)
+        call write_cdf_double(ncid,'rfluxa',rfluxa_av,vdims,2)
+        call write_cdf_double(ncid,'refluxa',refluxa_av,vdims,2)
+        call write_cdf_double(ncid,'pfluxa',pfluxa_av,vdims,2)
+        call write_cdf_double(ncid,'pefluxa',pefluxa_av,vdims,2)
+        vdims(2)=eirnmolid
+        call write_cdf_double(ncid,'dmb2',dmb2_av,vdims,2)
+        call write_cdf_double(ncid,'tmb2',tmb2_av,vdims,2)
+        call write_cdf_double(ncid,'rfluxm',rfluxm_av,vdims,2)
+        call write_cdf_double(ncid,'refluxm',refluxm_av,vdims,2)
+        call write_cdf_double(ncid,'pfluxm',pfluxm_av,vdims,2)
+        call write_cdf_double(ncid,'pefluxm',pefluxm_av,vdims,2)
       endif
 
       status=nf_close(ncid)
@@ -3220,6 +3198,7 @@ cdjm Update ion heat sources
       return
       end subroutine write_balance
 
+#ifdef WG_TODO
       subroutine read_balance
       implicit none
 #ifndef NO_CDF
