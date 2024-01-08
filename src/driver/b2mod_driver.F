@@ -43,7 +43,7 @@
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
       use b2mod_balance !djm Jan2017
-     & , only : balance_netcdf, alloc_b2mod_balance,!WG_TODO write_balance,
+     & , only : balance_netcdf, alloc_b2mod_balance, write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
       use b2mod_equation_sources                                        !srv 26.02.18
@@ -3110,9 +3110,7 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
         if (balance_average .ne. 0) then
           call update_average_balance(state,itim,-1) ! scale quantities by 1/itim if averaged
         endif
-#ifdef WG_TODO
-        call write_balance(nx,ny,ns)
-#endif
+        call write_balance(nCv,nFc,ns,geo)
 #else
         write(*,*)
      >   'NO_CDF is set at compilation, cannot write balance.nc'
