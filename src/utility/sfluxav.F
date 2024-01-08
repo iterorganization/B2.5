@@ -18,6 +18,7 @@
 *      of the quantity quant on the flux tube with label iFt.
 *      It assumes that the flux tube is closed, i.e., inside the core
 *      or the the pedestal region.
+*      The integration is made using the trapeze rule.
 *----------------------------------------------------------------------
 *.declarations
       use b2mod_types
@@ -33,8 +34,8 @@
      *   quant(mpg%nCv), nlambda, bmax, quantn(mpg%nCv)
 *   ..local variables
       real (kind=R8) :: 
-     *   qsum, wsum
-      integer i, iFt, iCv
+     *   qp, qm, qsum, wsum
+      integer i, iFt, iCv, iCp, iCm
 *   ..procedures
       external xertst
 
@@ -45,29 +46,33 @@
 *   ..working variable quantn
       quantn=quant
       do i=1,mpg%ftCvP(iFt,2)
-       iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
-       if (mpg%cvOnclosedsurface(iCv)) then
-        quantn(iCv)=sqrt(1._R8-nlambda*geo%cvBb(iCv,3)/bmax)
-#ifdef WG_TODO
-        if (1.0_R8-nlambda*bb(topix(ix,iy),topiy(ix,iy),3)/bmax
-     &   .lt.0.0_R8)  then
-          quantn(topix(ix,iy),topiy(ix,iy))=0.0_R8
-         else
-          quantn(topix(ix,iy),topiy(ix,iy))=real(sqrt(1.0_R8-nlambda*
-     &           bb(topix(ix,iy),topiy(ix,iy),3)/bmax),R8)
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+        if (mpg%cvOnclosedsurface(iCv)) then
+          if (i.gt.1) then
+            iCm=mpg%ftCv(mpg%ftCvP(iFt,1)+i-2)
+          else
+            iCm=mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1)
+          end if
+          if (i.lt.mpg%ftCvP(iFt,2)) then
+            iCp=mpg%ftCv(mpg%ftCvP(iFt,1)+i)
+          else
+            iCp=mpg%ftCv(mpg%ftCvP(iFt,1))
+          end if
+          quantn(iCm)=sqrt(1._R8-nlambda*geo%cvBb(iCm,3)/bmax)
+          quantn(iCv)=sqrt(1._R8-nlambda*geo%cvBb(iCv,3)/bmax)
+          quantn(iCp)=sqrt(1._R8-nlambda*geo%cvBb(iCp,3)/bmax)
+          qm=(quantn(iCm)*geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .        quantn(iCv)*geo%cvHx(iCm)/geo%cvBb(iCm,0))/
+     .       (geo%cvHx(iCm)/geo%cvBb(iCm,0)+
+     .        geo%cvHx(iCv)/geo%cvBb(iCv,0))
+          qp=(quantn(iCp)*geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .        quantn(iCv)*geo%cvHx(iCp)/geo%cvBb(iCp,0))/
+     .       (geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .        geo%cvHx(iCp)/geo%cvBb(iCp,0))
+          qsum=qsum+0.5_R8*geo%cvHx(iCv)/geo%cvBb(iCv,0)*
+     .       (0.5_R8*(qm+quant(iCv))+0.5_R8*(quant(iCv)+qp))
+          wsum=wsum+geo%cvHx(iCv)/geo%cvBb(iCv,0)
         endif
-        if (1.0_R8-nlambda*bb(bottomix(ix,iy),bottomiy(ix,iy),3)/bmax
-     &   .lt.0.0_R8) then
-          quantn(bottomix(ix,iy),bottomiy(ix,iy))=0.0_R8
-         else
-          quantn(bottomix(ix,iy),bottomiy(ix,iy))=real(
-     &          sqrt(1.0_R8-nlambda*bb(bottomix(ix,iy),
-     &                                 bottomiy(ix,iy),3)/bmax),R8)
-        endif
-#endif
-        qsum=qsum+quantn(iCv)*geo%cvHx(iCv)/geo%cvBb(iCv,0)
-        wsum=wsum+geo%cvHx(iCv)/geo%cvBb(iCv,0)
-       endif
       enddo
       if(abs(wsum).lt.precision) then  ! psauter
         sfluxav=0.0_R8
