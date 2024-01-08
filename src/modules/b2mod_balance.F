@@ -3198,7 +3198,6 @@ cdjm Update ion heat sources
       return
       end subroutine write_balance
 
-#ifdef WG_TODO
       subroutine read_balance
       implicit none
 #ifndef NO_CDF
@@ -3206,7 +3205,7 @@ cdjm Update ion heat sources
       integer :: ncid, ndims, nvars, natts, unlimid, status, xtype
       integer :: ivar, idim
       integer :: len, vdims(NF_MAX_VAR_DIMS), start(NF_MAX_VAR_DIMS)
-      real (kind=R8), allocatable :: data2(:,:), data3(:,:,:),
+      real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:),
      ,                               data4(:,:,:,:)
       character*(NF_MAX_NAME) :: varname, dimname
       character*256 filename
@@ -3237,149 +3236,149 @@ c only read a subset of the data as needed by the calling routine(s)
         enddo
         select case (varname)
         case ('b2stel_she_ion_bal')
-          allocate(data2(vdims(1),vdims(2)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          allocate(data1(vdims(1)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data1)
           call check_cdf_status(status)
-          b2stel_she_ion_bal = data2
-          deallocate(data2)
+          b2stel_she_ion_bal = data1
+          deallocate(data1)
         case ('b2stel_she_rec_bal')
-          allocate(data2(vdims(1),vdims(2)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          allocate(data1(vdims(1)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data1)
           call check_cdf_status(status)
-          b2stel_she_rec_bal = data2
-          deallocate(data2)
+          b2stel_she_rec_bal = data1
+          deallocate(data1)
         case ('b2stel_shi_ion_bal')
-          allocate(data2(vdims(1),vdims(2)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          allocate(data1(vdims(1)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data1)
           call check_cdf_status(status)
-          b2stel_shi_ion_bal = data2
-          deallocate(data2)
+          b2stel_shi_ion_bal = data1
+          deallocate(data1)
         case ('b2stel_shi_rec_bal')
-          allocate(data2(vdims(1),vdims(2)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          allocate(data1(vdims(1)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data1)
           call check_cdf_status(status)
-          b2stel_shi_rec_bal = data2
-          deallocate(data2)
+          b2stel_shi_rec_bal = data1
+          deallocate(data1)
         case ('b2npht_shei_bal')
+          allocate(data1(vdims(1)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data1)
+          call check_cdf_status(status)
+          b2npht_shei_bal = data1
+          deallocate(data1)
+        case ('eirene_mc_pael_sne_bal')
           allocate(data2(vdims(1),vdims(2)))
           status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
           call check_cdf_status(status)
-          b2npht_shei_bal = data2
+          eirene_mc_pael_sne_bal = data2
           deallocate(data2)
-        case ('eirene_mc_pael_sne_bal')
-          allocate(data3(vdims(1),vdims(2),vdims(3)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
-          call check_cdf_status(status)
-          eirene_mc_pael_sne_bal = data3
-          deallocate(data3)
         case ('eirene_mc_pmel_sne_bal')
-          allocate(data3(vdims(1),vdims(2),vdims(3)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
           call check_cdf_status(status)
-          eirene_mc_pmel_sne_bal = data3
-          deallocate(data3)
+          eirene_mc_pmel_sne_bal = data2
+          deallocate(data2)
         case ('eirene_mc_eael_she_bal')
-          allocate(data3(vdims(1),vdims(2),vdims(3)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
           call check_cdf_status(status)
-          eirene_mc_eael_she_bal = data3
-          deallocate(data3)
+          eirene_mc_eael_she_bal = data2
+          deallocate(data2)
         case ('eirene_mc_emel_she_bal')
-          allocate(data3(vdims(1),vdims(2),vdims(3)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
           call check_cdf_status(status)
-          eirene_mc_emel_she_bal = data3
-          deallocate(data3)
+          eirene_mc_emel_she_bal = data2
+          deallocate(data2)
         case ('eirene_mc_eapl_shi_bal')
-          allocate(data3(vdims(1),vdims(2),vdims(3)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
           call check_cdf_status(status)
-          eirene_mc_eapl_shi_bal = data3
-          deallocate(data3)
+          eirene_mc_eapl_shi_bal = data2
+          deallocate(data2)
         case ('eirene_mc_empl_shi_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          eirene_mc_empl_shi_bal = data2
+          deallocate(data2)
+        case ('eirene_mc_papl_sna_bal')
           allocate(data3(vdims(1),vdims(2),vdims(3)))
           status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_empl_shi_bal = data3
+          eirene_mc_papl_sna_bal = data3
           deallocate(data3)
-        case ('eirene_mc_papl_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
-          call check_cdf_status(status)
-          eirene_mc_papl_sna_bal = data4
-          deallocate(data4)
         case ('eirene_mc_pmpl_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_pmpl_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_pmpl_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_paat_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_paat_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_paat_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_pmat_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_pmat_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_pmat_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_piat_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_piat_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_piat_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_paml_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_paml_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_paml_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_pmml_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_pmml_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_pmml_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_piml_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_piml_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_piml_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_paio_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_paio_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_paio_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_pmio_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_pmio_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_pmio_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_piio_sna_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_piio_sna_bal = data4
-          deallocate(data4)
+          eirene_mc_piio_sna_bal = data3
+          deallocate(data3)
         case ('eirene_mc_mapl_smo_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_mapl_smo_bal = data4
-          deallocate(data4)
+          eirene_mc_mapl_smo_bal = data3
+          deallocate(data3)
         case ('eirene_mc_mmpl_smo_bal')
-          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
-          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
           call check_cdf_status(status)
-          eirene_mc_mmpl_smo_bal = data4
-          deallocate(data4)
+          eirene_mc_mmpl_smo_bal = data3
+          deallocate(data3)
         case default
           continue
         end select
@@ -3391,7 +3390,6 @@ c only read a subset of the data as needed by the calling routine(s)
 
       return
       end subroutine read_balance
-#endif
 
 #ifndef NO_CDF
       subroutine write_cdf_double(ncid,varname,var,vdims,ndim)
