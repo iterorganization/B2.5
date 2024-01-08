@@ -50,7 +50,7 @@ c      call plinit()
       call gopks(6,0)
       if(index(devenv,'x11').ne.0.or.
      1   index(devenv,'X11').ne.0) then
-       if(b2plot_debug.ge.12) write(*,*) 'X11'
+        if(b2plot_debug.ge.12) write(*,*) 'X11'
         nwork=nwork+1
 #ifdef WINDOWS
         call gopwk(nwork,0,1)      ! X11          !srv 07.05.01

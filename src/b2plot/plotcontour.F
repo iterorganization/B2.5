@@ -15,6 +15,7 @@ C =====================================================================
       INTEGER NCV,IS,LINLOG
 cxpb  INTEGER NNCUT_L
       REAL (KIND=R8) :: CR(NCV),CZ(NCV),FIELD(NCV),ZLOD,ZHID
+      REAL (KIND=R8), ALLOCATABLE :: FVX(:)
       CHARACTER*20 FMTZ
       CHARACTER*256 STRING
       CHARACTER*20 DEBUGSTRING
@@ -26,19 +27,26 @@ cxpb  INTEGER NNCUT_L
       REAL (KIND=R4) :: XWRK(NWRK),YWRK(NWRK),RWRK(LRWK)
       INTEGER IWRK(LIWK),MAP(LMAP),IAREA(NOGRPS),IGRP(NOGRPS)
       integer irold,nerro,nerrf
-#ifdef WG_TODO
-      INTEGER NXSTRT(99),NYSTRT(99),NXEND(99),NYEND(99),NPERD(99)
-      integer iyt,k,kreg,ixl,l,iiso
-      logical iniso
-#endif
+      INTEGER LOPN,LOEN,LOTN
+      INTEGER NOPN,NOEN,NOTN
+      PARAMETER (LOPN=4)
+      PARAMETER (LOEN=5)
+      PARAMETER (LOTN=4)
+      INTEGER NPNT,NEDG,NTRI
+      REAL (KIND=R4), ALLOCATABLE :: RPNT(:)
+      INTEGER, ALLOCATABLE :: nodelist(:,:), edgelist(:,:),
+     . IEDG(:),ITRI(:),IBEG(:),IBPT(:)
+      INTEGER IPTP,IPTE,IPTT
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
       logical, allocatable :: done(:)
 
       integer ix,iy,ixstrt,ixend,iystrt,iyend
       integer nfmtz,noz,nozm,
-     .        i,ic,iCv,iCn,iFc,iVx1,iVx2,iVa,iVb
-      real rlo, rhi, zlo, zhi, zinc, zval, clv, special
+     .        i,j,k,l,ib,ic,ie,it,je,jt,
+     .        iCv,iCn,iFc,iVx,iVx1,iVx2,iVa,iVb
+      real(kind=R4) :: rlo, rhi, zlo, zhi, zinc, zval, clv, special
+      real(kind=R4) :: ctval(1000), rmax, rmin, zmax, zmin
       logical right_match_found, left_match_found
       integer lnblnk, no_available_colors
       real ceil
@@ -60,8 +68,8 @@ cxpb  INTEGER NNCUT_L
         call alloc_b2mod_b2plot_xy(LNGDEC)
         first=.false.
       endif
-      rwrk=0   ! bug in NCAR: The variable (RWRK(209)) has an undefined value.
-      z=0
+      rwrk=0.0_R4   ! bug in NCAR: The variable (RWRK(209)) has an undefined value.
+      z=0.0_R4
 
 C ========== GLOBAL OPTIONS ==========================================
 #ifdef DBG
@@ -69,23 +77,6 @@ C ========== GLOBAL OPTIONS ==========================================
 #else
       DEBUG=.false.
 #endif
-      CALL CPSETI('MAP - MAPPING FLAG',4)
-      IF(LABELS) THEN
-        CALL CPSETI('LLP - LINE LABEL POSITIONING',3)
-        IF(LALONG) CALL CPSETI('LLO - LINE LABEL ORIENTATION',1)
-      ELSE
-        CALL CPSETI('LLP - LINE LABEL POSITIONING',0)
-      ENDIF
-      IF(INTPOL) THEN
-        CALL CPSETR('T2D - TENSION OF THE 2D SPLINES',1.0)
-        CALL CPSETI('PIC - POINT INTERPOLATION FLAG',-10)
-        CALL IPOLATE(.FALSE.) ! for further plots
-        WRITE (*,*) 'using spline interpolation'
-      ELSE
-        CALL CPSETR('T2D - TENSION OF THE 2D SPLINES',0.0)
-        CALL CPSETI('PIC - POINT INTERPOLATION FLAG',-10)
-      ENDIF
-      CALL CPSETC('CFT - CONSTANT FIELD LABEL',' ')
       LBLBR=.true.
 C ====================================================================
 
@@ -130,21 +121,10 @@ C =========== Setting up Contour Levels and Labeling =================
           ZINC=(ZHI-ZLO)/(NCONT)
           if(b2plot_debug.ge.10)
      1       write (*,*) 'zlo =',zlo,' zhi =',zhi,' zinc =',zinc
-          CALL CPSETI('CLS - CONTOUR LEVEL SELECTION FLAG',0)
-          CALL CPSETI('NCL - NUMBER OF CONTOUR LEVELS',NCONT+1)
           DO I=1,NCONT+1
-            CALL CPSETI('PAI - PARAMETER ARRAY INDEX',I)
-            CALL CPSETR('CLV - CONTOUR LEVEL VALUE',ZLO+(I-1)*ZINC)
+            ctval(i)=zlo+(i-1)*zinc
             write (*,*) 'contour level',i,
      1             '=',zlo+(i-1)*zinc,'in color',i
-            CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
-            CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
-            CALL CPSETI('AIB - AREA BELOW IDENTIFIER',I)
-c              IF(NOZM.NE.0) THEN
-c               IF(MOD(I,NOZM).EQ.0)
-c     1      CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
-c             ENDIF
-            CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           ENDDO
         ELSE ! customised contouring
           write (*,*) 'CUSTOMISED CONTOURING'
@@ -162,18 +142,9 @@ C do something to avoid this
           ZINC=(ZHI-ZLO)/(NCONT)
           if(b2plot_debug.ge.10)
      1       write (*,*) 'zlo =',zlo,' zhi =',zhi,' zinc =',zinc
-          CALL CPSETI('CLS - CONTOUR LEVEL SELECTION FLAG',0)
-          CALL CPSETI('NCL - NUMBER OF CONTOUR LEVELS',NCONT+1)
           DO I=1,NCONT+1
-            CALL CPSETI('PAI - PARAMETER ARRAY INDEX',I)
-            CALL CPSETR('CLV - CONTOUR LEVEL VALUE',CLVAL(I))
+            ctval(i)=clval(i)
             write (*,*) 'contour level',i,'=',clval(i),'in color',i
-            CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
-            CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
-            CALL CPSETI('AIB - AREA BELOW IDENTIFIER',I)
-c              IF(MOD(I,NOZM).EQ.0)
-c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
-            CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           ENDDO
         ENDIF
         WRITE(STRING,'(a,3(1pg12.5,a))')
@@ -193,30 +164,16 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
-            call cpseti('CLS - CONTOUR LEVEL SELECTION FLAG',0)
-            call cpseti('NCL - NUMBER OF CONTOUR LEVELS',ncont+1)
             do i=1,ncont+1
-              call cpseti('PAI - PARAMETER ARRAY INDEX',i)
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
-              call cpsetr('CLV - CONTOUR LEVEL VALUE',zval)
-              CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
-              CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
-              CALL CPSETI('AIB - AREA BELOW IDENTIFIER',I)
-              CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
+              ctval(i)=zval
             enddo
           else
-            call cpseti('CLS - CONTOUR LEVEL SELECTION FLAG',0)
-            call cpseti('NCL - NUMBER OF CONTOUR LEVELS',ncont+1)
             do i=1,ncont+1
-              call cpseti('PAI - PARAMETER ARRAY INDEX',i)
               zval=10.0_R4**(i-1)*zlo
-              call cpsetr('CLV - CONTOUR LEVEL VALUE',zval)
-              CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
-              CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
-              CALL CPSETI('AIB - AREA BELOW IDENTIFIER',I)
-              CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
+              ctval(i)=zval
             enddo
           endif
         ELSE ! customised contouring
@@ -225,38 +182,378 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
           NCONT=NOFCLS-1
           FMTZ='(1PG9.3)'
-          CALL CPSETI('CLS - CONTOUR LEVEL SELECTION FLAG',0)
-          CALL CPSETI('NCL - NUMBER OF CONTOUR LEVELS',NCONT+1)
           DO I=1,NCONT+1
-            CALL CPSETI('PAI - PARAMETER ARRAY INDEX',I)
-            CALL CPSETR('CLV - CONTOUR LEVEL VALUE',CLVAL(I))
+            ctval(i)=clval(i)
             write (*,*) 'contour level',i,'=',clval(i),' in color',i
-            CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
-            CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
-            CALL CPSETI('AIB - AREA BELOW IDENTIFIER',I)
-c              IF(MOD(I-1,3).EQ.0)
-c     1       CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
-            CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           ENDDO
         ENDIF
         WRITE(STRING,'(a,2(1pg12.5,a))')
      1   'contoured from',ZLO,'to',ZHI
       ENDIF ! ==> end of lin/log plot <===============================
 
-      CALL CPSETC('ILT - INFORMATION LABEL TEXT STRING',
-     1 STRING(1:LNBLNK(STRING)))
-      CALL CPSETR('ILX - INFORMATION LABEL X POSITION',0.5)
-      CALL CPSETR('ILY - INFORMATION LABEL Y POSITION',0.95)
-      CALL CPSETI('ILP - INFORMATION LABEL POSITION',-3)
+      IF(PHYSICAL) THEN  ! ========== plot physical domain
 
-      SPECIAL=-1E30
-      CALL CPSETR('SPV - SPECIAL VALUE',SPECIAL)
+C Build triangle grid
+C First, set the field data
+        allocate(FVX(mpg%nVx))
+        call intvertex(mpg%nCv,mpg%nVx,mpg,geo%vxVol,field,FVX)
+        allocate(nodelist(1:mpg%nCi,1:maxval(mpg%cvVxP(:,2))))
+        allocate(edgelist(1:mpg%nCi,1:maxval(mpg%cvFcP(:,2))))
+        allocate(IBPT(1:mpg%nVx))
+        allocate(RPNT(1:mpg%nVx*LOPN))
+        i=0
+        ib=0
+        do iVx=1,mpg%nVx
+          if(mpg%vxCvP(iVx,2).eq.0) cycle
+          ib=ib+1
+          IBPT(iVx)=ib
+          i=i+1
+          RPNT(i)=real(geo%vxX(iVx),R4)
+          i=i+1
+          RPNT(i)=real(geo%vxY(iVx),R4)
+          i=i+1
+          RPNT(i)=0.0_R4
+          i=i+1
+          RPNT(i)=real(FVX(iVx),R4)
+        end do
+        NOPN=ib
+        NPNT=NOPN*LOPN
+C Second, build the list of edges
+        i=mpg%nFc
+        j=mpg%nCi
+        do iCv=1,mpg%nCi
+          i=i+(mpg%cvFcP(iCv,2)-3)
+          j=j+(mpg%cvVxP(iCv,2)-3)
+        end do
+        NOEN=i
+        NEDG=NOEN*LOEN
+        NOTN=j
+        NTRI=NOTN*LOTN
+        allocate(IEDG(NEDG))
+        allocate(IBEG(NOEN))
+        allocate(ITRI(NTRI))
+        allocate(done(1:maxval(mpg%cvFcP(1:mpg%nCi,2))))
+        do iCv=1,mpg%nCi
+cxpb We assume convex control volumes
+cxpb First we order the vertices and edges
+          done=.false.
+          iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+          iVa=mpg%fcVx(iFc,1)
+          iVb=mpg%fcVx(iFc,2)
+          nodelist(iCv,1)=iVa
+          nodelist(iCv,2)=iVb
+          edgelist(iCv,1)=iFc
+          ic=2
+          ie=1
+          done(1)=.true.
+          do while (ic.lt.mpg%cvVxP(iCv,2))
+            do k=2,mpg%cvFcP(iCv,2)
+              if(ic.eq.mpg%cvVxP(iCv,2)) cycle
+              if(done(k)) cycle
+              right_match_found=.false.
+              iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+k-1)
+              iVx1=mpg%fcVx(iFc,1)
+              iVx2=mpg%fcVx(iFc,2)
+              if (iVx1.eq.iVb) then
+                right_match_found=.true.
+                iVb=iVx2
+              else if (iVx2.eq.iVb) then
+                right_match_found=.true.
+                iVb=iVx1
+              end if
+              if (right_match_found) then
+                ic=ic+1
+                nodelist(iCv,ic)=iVb
+                ie=ie+1
+                edgelist(iCv,ie)=iFc
+                done(k)=.true.
+              end if
+            end do
+          end do
+          do k=2,mpg%cvFcP(iCv,2)
+            if(done(k)) cycle
+            iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+k-1)
+            ie=ie+1
+            edgelist(iCv,ie)=iFc
+          end do
+        end do
+        deallocate(done)
+        allocate(done(3*j))
+        done=.false.
+        i=0
+        ie=0
+        je=mpg%nFc
+cxpb Copy in the existing edges information
+cxpb For now just assign the CV number as the triangle index
+        do iCv=1,mpg%nCi
+          do k=1,mpg%cvFcP(iCv,2)
+            iFc=edgelist(iCv,k)
+            if(done(iFc)) cycle
+            ie=ie+1
+            IBEG(iFc)=ie
+            i=i+1
+            IEDG(i)=(IBPT(nodelist(iCv,k))-1)*LOPN
+            i=i+1
+            if (k.lt.mpg%cvVxP(iCv,2)) then
+              IEDG(i)=(IBPT(nodelist(iCv,k+1))-1)*LOPN
+            else
+              IEDG(i)=(IBPT(nodelist(iCv,1))-1)*LOPN
+            end if
+            if (k.lt.3) then
+              j=k
+            else if (k.eq.mpg%cvFcP(iCv,2)) then
+              j=3
+            else
+              j=2
+            end if
+            if (mpg%fcVx(iFc,1).eq.nodelist(iCv,k)) then
+              i=i+1
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
+                IEDG(i)=-1
+              else
+                IEDG(i)=(mpg%fcCv(iFc,1)-1)*LOTN+j
+              end if
+              i=i+1
+              if (mpg%fcCv(iFc,2).gt.mpg%nCi) then
+                IEDG(i)=-1
+              else
+                IEDG(i)=(mpg%fcCv(iFc,2)-1)*LOTN+j
+              end if
+            else
+              i=i+1
+              if (mpg%fcCv(iFc,2).gt.mpg%nCi) then
+                IEDG(i)=-1
+              else
+                IEDG(i)=(mpg%fcCv(iFc,2)-1)*LOTN+j
+              end if
+              i=i+1
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
+                IEDG(i)=-1
+              else
+                IEDG(i)=(mpg%fcCv(iFc,1)-1)*LOTN+j
+              end if
+            end if
+            i=i+1
+            IEDG(i)=0
+            done(iFc)=.true.
+          end do
+cxpb Now add any additional diagonals
+          do k=4,mpg%cvFcP(iCv,2)
+            je=je+1
+            ie=ie+1
+            IBEG(je)=ie
+            i=i+1
+            IEDG(i)=(IBPT(nodelist(iCv,1))-1)*LOPN
+            i=i+1
+            IEDG(i)=(IBPT(nodelist(iCv,k-1))-1)*LOPN
+            i=i+1
+            IEDG(i)=(iCv-1)*LOTN+3
+            i=i+1
+            IEDG(i)=(iCv-1)*LOTN+1
+            i=i+1
+            IEDG(i)=0
+          end do
+        end do
+cxpb Now assign the triangles
+        it=mpg%nCi
+        ie=mpg%nFc
+        do iCv=1,mpg%nCi
+          do k=3,mpg%cvFcP(iCv,2)
+            if(k.eq.3) then
+              jt=iCv
+            else
+              it=it+1
+              jt=it
+              ie=ie+1
+            end if
+            ib=(jt-1)*LOTN
+            if (k.eq.3) then
+              ITRI(ib+1)=(IBEG(edgelist(iCv,1))-1)*LOEN
+              ITRI(ib+2)=(IBEG(edgelist(iCv,k-1))-1)*LOEN
+              if (k.eq.mpg%cvFcP(iCv,2)) then
+                ITRI(ib+3)=(IBEG(edgelist(iCv,k))-1)*LOEN
+              else
+                ITRI(ib+3)=(IBEG(ie+1)-1)*LOEN
+              end if
+            else
+              ITRI(ib+1)=(IBEG(ie)-1)*LOEN
+              IEDG((IBEG(ie)-1)*LOEN+4)=ib+1
+              ITRI(ib+2)=(IBEG(edgelist(iCv,k-1))-1)*LOEN
+              if ((IBPT(nodelist(iCv,k-1))-1)*LOPN.eq.
+     .            IEDG((IBEG(edgelist(iCv,k-1))-1)*LOEN+1)) then
+                IEDG((IBEG(edgelist(iCv,k-1))-1)*LOEN+4)=ib+2
+              else
+                IEDG((IBEG(edgelist(iCv,k-1))-1)*LOEN+3)=ib+2
+              end if
+              if (k.lt.mpg%cvFcP(iCv,2)) then
+                ITRI(ib+3)=(IBEG(ie+1)-1)*LOEN
+                IEDG((IBEG(ie+1)-1)*LOEN+4)=ib+3
+              else
+                ITRI(ib+3)=(IBEG(edgelist(iCv,k))-1)*LOEN
+                if ((IBPT(nodelist(iCv,k))-1)*LOPN.eq.
+     .            IEDG((IBEG(edgelist(iCv,k))-1)*LOEN+1)) then
+                  IEDG((IBEG(edgelist(iCv,k))-1)*LOEN+4)=ib+3
+                else
+                  IEDG((IBEG(edgelist(iCv,k))-1)*LOEN+3)=ib+3
+                end if
+              endif
+            end if
+            ITRI(ib+4)=0
+            rmin = MIN(RPNT(IEDG(ITRI(ib+1)+1)+1),
+     .                 RPNT(IEDG(ITRI(ib+1)+2)+1),
+     .                 RPNT(IEDG(ITRI(ib+2)+1)+1),
+     .                 RPNT(IEDG(ITRI(ib+2)+2)+1),
+     .                 RPNT(IEDG(ITRI(ib+3)+1)+1),
+     .                 RPNT(IEDG(ITRI(ib+3)+1)+1),
+     .                 RPNT(IEDG(ITRI(ib+3)+2)+1))
+            rmax = MAX(RPNT(IEDG(ITRI(ib+1)+1)+1),
+     .                 RPNT(IEDG(ITRI(ib+1)+2)+1),
+     .                 RPNT(IEDG(ITRI(ib+2)+1)+1),
+     .                 RPNT(IEDG(ITRI(ib+2)+2)+1),
+     .                 RPNT(IEDG(ITRI(ib+3)+1)+1),
+     .                 RPNT(IEDG(ITRI(ib+3)+2)+1))
+            zmin = MIN(RPNT(IEDG(ITRI(ib+1)+1)+2),
+     .                 RPNT(IEDG(ITRI(ib+1)+2)+2),
+     .                 RPNT(IEDG(ITRI(ib+2)+1)+2),
+     .                 RPNT(IEDG(ITRI(ib+2)+2)+2),
+     .                 RPNT(IEDG(ITRI(ib+3)+1)+2),
+     .                 RPNT(IEDG(ITRI(ib+3)+2)+2))
+            zmax = MAX(RPNT(IEDG(ITRI(ib+1)+1)+2),
+     .                 RPNT(IEDG(ITRI(ib+1)+2)+2),
+     .                 RPNT(IEDG(ITRI(ib+2)+1)+2),
+     .                 RPNT(IEDG(ITRI(ib+2)+2)+2),
+     .                 RPNT(IEDG(ITRI(ib+3)+1)+2),
+     .                 RPNT(IEDG(ITRI(ib+3)+2)+2))
+            IF (rmin.gt.rhi.or.rmax.gt.rlo.or.
+     .          zmin.gt.zhi.or.zmax.le.zlo) ITRI(ib+4)=1
+          end do
+        end do
+
+c$$$C Plot mesh for debugging
+c$$$        CALL GSPLCI (11)
+c$$$        DO 101 IT=0,NTRI-LOTN,LOTN
+c$$$          CALL LINED (RPNT(IEDG(ITRI(IT+1)+1)+1),
+c$$$     +                RPNT(IEDG(ITRI(IT+1)+1)+2),
+c$$$     +                RPNT(IEDG(ITRI(IT+1)+2)+1),
+c$$$     +                RPNT(IEDG(ITRI(IT+1)+2)+2))
+c$$$          CALL LINED (RPNT(IEDG(ITRI(IT+2)+1)+1),
+c$$$     +                RPNT(IEDG(ITRI(IT+2)+1)+2),
+c$$$     +                RPNT(IEDG(ITRI(IT+2)+2)+1),
+c$$$     +                RPNT(IEDG(ITRI(IT+2)+2)+2))
+c$$$          CALL LINED (RPNT(IEDG(ITRI(IT+3)+1)+1),
+c$$$     +                RPNT(IEDG(ITRI(IT+3)+1)+2),
+c$$$     +                RPNT(IEDG(ITRI(IT+3)+2)+1),
+c$$$     +                RPNT(IEDG(ITRI(IT+3)+2)+2))
+c$$$  101   CONTINUE
+c$$$C Label the points of the mesh, in aqua.
+c$$$        CALL GSPLCI (7)
+c$$$        CALL GSLWSC (2.)
+c$$$C
+c$$$        DO 114 IPTP=0,NPNT-LOPN,LOPN
+c$$$          CALL LABLIT (IPTP/LOPN+1,.024,0.,RPNT(IPTP+1),RPNT(IPTP+2))
+c$$$  114   CONTINUE
+c$$$C Label the edges of the mesh, in deep sky blue.
+c$$$        CALL GSPLCI (6)
+c$$$        CALL GSLWSC (2.)
+c$$$C
+c$$$        DO 115 IPTE=0,NEDG-LOEN,LOEN
+c$$$          CALL LABLIT (IPTE/LOEN+1,.012,
+c$$$     +                 ATAN2(RPNT(IEDG(IPTE+2)+2)-RPNT(IEDG(IPTE+1)+2),
+c$$$     +                       RPNT(IEDG(IPTE+2)+1)-RPNT(IEDG(IPTE+1)+1)),
+c$$$     +                   .5*(RPNT(IEDG(IPTE+1)+1)+RPNT(IEDG(IPTE+2)+1)),
+c$$$     +                   .5*(RPNT(IEDG(IPTE+1)+2)+RPNT(IEDG(IPTE+2)+2)))
+c$$$C Label triangle number to the left with a negative value
+c$$$          CALL LABLIT (-(IEDG(IPTE+3)/LOTN+1),.012,
+c$$$     +                 ATAN2(RPNT(IEDG(IPTE+2)+2)-RPNT(IEDG(IPTE+1)+2),
+c$$$     +                       RPNT(IEDG(IPTE+2)+1)-RPNT(IEDG(IPTE+1)+1)),
+c$$$     +               .25*(3.*RPNT(IEDG(IPTE+1)+1)+RPNT(IEDG(IPTE+2)+1)),
+c$$$     +               .25*(3.*RPNT(IEDG(IPTE+1)+2)+RPNT(IEDG(IPTE+2)+2)))
+c$$$C Label triangle number to the right
+c$$$          CALL LABLIT ( (IEDG(IPTE+4)/LOTN+1),.012,
+c$$$     +                 ATAN2(RPNT(IEDG(IPTE+2)+2)-RPNT(IEDG(IPTE+1)+2),
+c$$$     +                       RPNT(IEDG(IPTE+2)+1)-RPNT(IEDG(IPTE+1)+1)),
+c$$$     +               .25*(RPNT(IEDG(IPTE+1)+1)+3.*RPNT(IEDG(IPTE+2)+1)),
+c$$$     +               .25*(RPNT(IEDG(IPTE+1)+2)+3.*RPNT(IEDG(IPTE+2)+2)))
+c$$$  115   CONTINUE
+c$$$C Label the triangles of the mesh, in slate blue.
+c$$$C Label any unused triangles in celeste.
+c$$$C Write the edge numbers near them.
+c$$$        CALL GSPLCI (4)
+c$$$        CALL GSLWSC (2.)
+c$$$C
+c$$$        DO 116 IPTT=0,NTRI-LOTN,LOTN
+c$$$          IF (ITRI(IPTT+4).EQ.0) THEN
+c$$$            CALL GSPLCI (4)
+c$$$          ELSE
+c$$$            CALL GSPLCI (9)
+c$$$          END IF
+c$$$          CALL LABLIT (IPTT/LOTN+1,.018,0.,
+c$$$     +                 (RPNT(IEDG(ITRI(IPTT+1)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+1)+2)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+2)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+2)+1))/6.,
+c$$$     +                 (RPNT(IEDG(ITRI(IPTT+1)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+1)+2)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+2)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+2)+2))/6.)
+c$$$          CALL LABLIT (ITRI(IPTT+1)/LOEN+1,.012,0.,
+c$$$     +              (4.*RPNT(IEDG(ITRI(IPTT+1)+1)+1)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+1)+2)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+2)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+2)+1))/12.,
+c$$$     +              (4.*RPNT(IEDG(ITRI(IPTT+1)+1)+2)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+1)+2)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+2)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+2)+2))/12.)
+c$$$          CALL LABLIT (ITRI(IPTT+2)/LOEN+1,.012,0.,
+c$$$     +                 (RPNT(IEDG(ITRI(IPTT+1)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+1)+2)+1)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+2)+1)+1)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+2)+2)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+2)+1))/12.,
+c$$$     +                 (RPNT(IEDG(ITRI(IPTT+1)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+1)+2)+2)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+2)+1)+2)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+2)+2)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+3)+2)+2))/12.)
+c$$$          CALL LABLIT (ITRI(IPTT+3)/LOEN+1,.012,0.,
+c$$$     +                 (RPNT(IEDG(ITRI(IPTT+1)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+1)+2)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+1)+1)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+2)+1)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+3)+1)+1)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+3)+2)+1))/12.,
+c$$$     +                 (RPNT(IEDG(ITRI(IPTT+1)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+1)+2)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+1)+2)+
+c$$$     +                  RPNT(IEDG(ITRI(IPTT+2)+2)+2)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+3)+1)+2)+
+c$$$     +               4.*RPNT(IEDG(ITRI(IPTT+3)+2)+2))/12.)
+c$$$  116   CONTINUE
+c$$$        CALL GSPLCI (1)
+c$$$        CALL GSLWSC (1.)
+
+C Initialize CONPAKT
+        IF (CONTPLOT)
+     >   CALL CTMESH (RPNT,NPNT,LOPN,
+     ,                IEDG,NEDG,LOEN,
+     ,                ITRI,NTRI,LOTN,
+     ,                RWRK,LRWK,IWRK,LIWK)
 
 C Initialise Areas
-      CALL ARINAM(MAP, LMAP)
-      CALL GSFAIS(1)
+        CALL ARINAM(MAP, LMAP)
+        CALL GSFAIS(1)
 
-      IF(PHYSICAL) THEN  ! ========== plot physical domain
         IC=1
         X(IC)=XLO
         Y(IC)=YLO
@@ -279,6 +576,7 @@ C Initialise Areas
         end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
 cxpb Obtaining the contour outlines of the plasma region to be plotted
+        deallocate(done)
         allocate(done(mpg%nCi+1:mpg%nCv))
         done=.false.
         do while (.not.all(done))
@@ -295,7 +593,7 @@ cxpb Obtaining the contour outlines of the plasma region to be plotted
             iVb = iVx2
             ic=2
             done(iCv)=.true.
-            do while (iVa.ne.iVb.or.(.not.(all(done))))
+            do while (.not.(iVa.eq.iVb.or.all(done)))
               do iCn = mpg%nCi+1,mpg%nCv
                 if (done(iCn)) cycle
                 left_match_found=.false.
@@ -309,32 +607,31 @@ cxpb Obtaining the contour outlines of the plasma region to be plotted
                     X(i+1)=X(i)
                     Y(i+1)=Y(i)
                   end do
-                  X(1)=real(geo%vxX(iVx1),R4)
-                  Y(1)=real(geo%vxY(iVx1),R4)
-                  iVa = iVx1
+                  X(1)=real(geo%vxX(iVx2),R4)
+                  Y(1)=real(geo%vxY(iVx2),R4)
+                  iVa = iVx2
                   ic = ic+1
                 else if (iVx1.eq.iVb) then
                   right_match_found=.true.
-                  X(ic+1)=real(geo%vxX(iVx1),R4)
-                  Y(ic+1)=real(geo%vxY(iVx1),R4)
-                  iVb = iVx1
+                  X(ic+1)=real(geo%vxX(iVx2),R4)
+                  Y(ic+1)=real(geo%vxY(iVx2),R4)
+                  iVb = iVx2
                   ic = ic+1
-                end if
-                if (iVx2.eq.iVa) then
+                else if (iVx2.eq.iVa) then
                   left_match_found=.true.
                   do i=ic,1,-1
                     X(i+1)=X(i)
                     Y(i+1)=Y(i)
                   end do
-                  X(1)=real(geo%vxX(iVx2),R4)
-                  Y(1)=real(geo%vxY(iVx2),R4)
-                  iVa = iVx2
+                  X(1)=real(geo%vxX(iVx1),R4)
+                  Y(1)=real(geo%vxY(iVx1),R4)
+                  iVa = iVx1
                   ic = ic+1
                 else if (iVx2.eq.iVb) then
                   right_match_found=.true.
-                  X(ic+1)=real(geo%vxX(iVx2),R4)
-                  Y(ic+1)=real(geo%vxY(iVx2),R4)
-                  iVb = iVx2
+                  X(ic+1)=real(geo%vxX(iVx1),R4)
+                  Y(ic+1)=real(geo%vxY(iVx1),R4)
+                  iVb = iVx1
                   ic = ic+1
                 end if
                 done(iCn)=left_match_found.or.right_match_found
@@ -346,317 +643,113 @@ cxpb Obtaining the contour outlines of the plasma region to be plotted
         end do
         deallocate(done)
 
-        CALL CPSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
-        CALL CPSETI('GIL - GROUP IDENTIFIER FOR LABELS',2)
-        CALL CPSETI('GIS - GROUP IDENTIFIER FOR VSTRIPS',6)
-        CALL CPSETI('NVS - NUMBER OF VSTRIPS',0)
+        IF(LABELS) THEN
+          CALL CTSETI('LLP - LINE LABEL POSITIONING',3)
+          IF(LALONG) CALL CTSETI('LLO - LINE LABEL ORIENTATION',1)
+        ELSE
+          CALL CTSETI('LLP - LINE LABEL POSITIONING',0)
+        ENDIF
+        IF(INTPOL) THEN
+          CALL CTSETR('T2D - TENSION OF THE 2D SPLINES',1.0)
+          CALL CTSETI('PIC - POINT INTERPOLATION FLAG',-10)
+          CALL IPOLATE(.FALSE.) ! for further plots
+          WRITE (*,*) 'using spline interpolation'
+        ELSE
+          CALL CTSETR('T2D - TENSION OF THE 2D SPLINES',0.0)
+          CALL CTSETI('PIC - POINT INTERPOLATION FLAG',-10)
+        ENDIF
+        CALL CTSETC('CFT - CONSTANT FIELD LABEL',' ')
+        CALL CTSETI('CLS - CONTOUR LEVEL SELECTION FLAG',0)
+        CALL CTSETI('NCL - NUMBER OF CONTOUR LEVELS',NCONT+1)
+        DO I=1,NCONT+1
+          CALL CTSETI('PAI - PARAMETER ARRAY INDEX',I)
+          CALL CTSETR('CLV - CONTOUR LEVEL VALUE',CTVAL(I))
+          CALL CTSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
+          CALL CTSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
+          CALL CTSETI('AIB - AREA BELOW IDENTIFIER',I)
+          CALL CTSETI('CLU - CONTOUR LEVEL USE FLAG',3)
+        END DO
+        CALL CTSETC('ILT - INFORMATION LABEL TEXT STRING',
+     1   STRING(1:LNBLNK(STRING)))
+        CALL CTSETR('ILX - INFORMATION LABEL X POSITION',0.5)
+        CALL CTSETR('ILY - INFORMATION LABEL Y POSITION',0.95)
+        CALL CTSETI('ILP - INFORMATION LABEL POSITION',-3)
+        CALL CTSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
+        CALL CTSETI('GIL - GROUP IDENTIFIER FOR LABELS',2)
+        CALL CTSETI('GIS - GROUP IDENTIFIER FOR VSTRIPS',6)
+        CALL CTSETI('NVS - NUMBER OF VSTRIPS',0)
 
-        IF(.NOT.CONTPLOT) GOTO 5150  ! skip contourplot
-
-#ifdef WG_TODO
-C ========= Initialise Data Array ===========================
-cxpb Region 1 is either the whole plasma (nncut=0 case) or
-cxpb the westernmost private region.
-        kreg=1
-        iy = -1
-        ix = -1
-        nxstrt(kreg)=-1
-        nystrt(kreg)=-1
-        do while(ix.lt.nx .and. rightix(ix,iy).eq.ix+1)
-          ix = ix+1
-        end do
-        nxend(kreg)=ix
-        nperd(kreg)=-1
-        do while(iy.lt.ny .and. rightix(ix,iy).ne.ix+1)
-          iy = iy+1
-        end do
-        if(iy.ne.ny) iy=iy-1
-        nyend(kreg)=iy
-        if(iy.eq.ny .and. ix.eq.nx) goto 5250   ! whole plasma case done
-cxpb Region 2 is the core plasma or its western half for double-null cases.
-        kreg=kreg+1
-        iy=-1
-        ix=ix+1
-        nxstrt(kreg)=ix
-        nystrt(kreg)=iy
-        do while(rightix(ix,iy).eq.ix+1)
-          ix = ix+1
-        end do
-        nxend(kreg)=ix
-        if(iyt.eq.ny) then
-          nperd(kreg)=rightix(ix,iy)
-        else
-          nperd(kreg)=-1
-        end if
-        do while(rightix(ix,iy).ne.ix+1)
-          iy = iy+1
-        end do
-        nyend(kreg)=iy-1
-cxpb Region 3 is the eastern private region for single nulls or the private
-cxpb region to the west of the isolating wall in double nulls.
-        kreg=kreg+1
-        iy=-1
-        ix=ix+1
-        nxstrt(kreg)=ix
-        nystrt(kreg)=iy
-        iniso=.false.
-        do while(ix.lt.nx .and. .not.iniso)
-          ix=ix+1
-          iniso=.false.
-          do iiso = 1, nniso
-            iniso = iniso .or.
-     &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &              iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-          end do
-          iniso = iniso .or.
-     &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &     (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-        end do
-        if(iniso) ix=ix-1
-        nxend(kreg)=ix
-        if(iyt.eq.ny) then
-          nperd(kreg)=leftix(nxstrt(kreg),iy)
-        else
-          nperd(kreg)=-1
-        end if
-        ix=nxstrt(kreg)
-        do while(leftix(ix,iy).ne.ix-1)
-          iy = iy+1
-        end do
-        nyend(kreg)=iy-1
-cxpb Region 4 is the region above region 1, i.e. the first SOL in contact with
-cxpb the westernmost plate.
-        kreg=kreg+1
-        ix=-1
-        iy=nyend(1)+1
-        nxstrt(kreg)=-1
-        nystrt(kreg)=nyend(1)+1
-        iniso=.false.
-        do while(ix.lt.nx .and. .not.iniso .and.
-     &           rightix(ix,iy).eq.ix+1)
-          ix = ix+1
-          iniso=.false.
-          do iiso=1, nniso
-            iniso = iniso .or.
-     &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &              iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-          end do
-          iniso = iniso .or.
-     &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &     (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-        end do
-        if(iniso) ix=ix-1
-        nxend(kreg)=ix
-        nperd(kreg)=-1
-        if(iniso .or. ix.eq.nx) then
-          iy=iyt
-        else
-          do while(iy.lt.ny .and. rightix(ix,iy).ne.ix+1)
-            iy = iy+1
-          end do
-          iy=iy-1
-        end if
-        nyend(kreg)=iy
-        if(iy.eq.ny .and. ix.eq.nx .and. iyt.eq.ny)
-     >   goto 5250  ! single null case done
-cxpb Region 5 in the easternmost private region for double-nulls or
-cxpb the island region for island geometries (iyt<ny case)
-        kreg=kreg+1
-        if(iyt.eq.ny) then
-          iy=-1
-          ix=nx
-          nxend(kreg)=ix
-          nystrt(kreg)=iy
-          do while(leftix(ix,iy).eq.ix-1)
-            ix=ix-1
-          end do
-          nxstrt(kreg)=ix
-          nperd(kreg)=leftix(ix,iy)
-          do while(leftix(ix,iy).ne.ix-1)
-            iy=iy+1
-          end do
-          nyend(kreg)=iy-1
-        else
-          nxstrt(kreg)=0
-          nxend(kreg)=nx
-          nystrt(kreg)=iyt+1
-          nyend(kreg)=ny-1
-          nperd(kreg)=nx
-        end if
-        if(iyt.ne.ny-1) goto 5250   ! island case done
-cxpb Region 6 is the eastern half of the private region
-        kreg=kreg+1
-        ix=ix-1
-        iy=-1
-        nxend(kreg)=ix
-        nystrt(kreg)=iy
-        do while(leftix(ix,iy).eq.ix-1)
-          ix=ix-1
-        end do
-        nxstrt(kreg)=ix
-        nperd(kreg)=leftix(ix,iy)
-        do while(leftix(ix,iy).ne.ix-1)
-          iy=iy+1
-        end do
-        nyend(kreg)=iy-1
-cxpb Region 7 is the private region on the east side of the isolating wall
-        kreg=kreg+1
-        ix=ix-1
-        iy=-1
-        nxend(kreg)=ix
-        nystrt(kreg)=iy
-        iniso=.false.
-        do while(.not.iniso)
-          ix=ix-1
-          iniso=.false.
-          do iiso = 1, nniso
-            iniso = iniso .or.
-     &       (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &        iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-          end do
-          iniso = iniso .or.
-     &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &     (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-        end do
-        ix=ix+1
-        nxstrt(kreg)=ix
-        nperd(kreg)=-1
-        ix=nxend(kreg)
-        do while(rightix(ix,iy).ne.ix+1)
-          iy=iy+1
-        end do
-        nyend(kreg)=iy-1
-cxpb Region 8 is the SOL section above region 5
-        kreg=kreg+1
-        ix=nx
-        iy=nyend(5)+1
-        iniso=.false.
-        do while(.not.iniso .and. leftix(ix,iy).eq.ix-1)
-          ix=ix-1
-          iniso=.false.
-          do iiso = 1, nniso
-            iniso = iniso .or.
-     &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &              iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-          end do
-          iniso = iniso .or.
-     &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &     (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
-        end do
-        if(iniso) ix=ix+1
-        nxstrt(kreg)=ix
-        if(iniso) then
-          nperd(kreg)=-1
-          nyend(kreg)=ny
-        else
-          nperd(kreg)=leftix(ix,iy)
-          do while(leftix(ix,iy).ne.ix-1)
-            iy=iy+1
-          end do
-          nyend(kreg)=iy-1
-        endif
-        if(nyend(5).eq.nyend(7)) goto 5250  ! Connected double null case done
-cxpb Region 9 is the missing SOL section on the western half
-        kreg=kreg+1
-        nxend(kreg)=nxend(3)
-        if(nxend(1).gt.nxend(3)) then
-          nxstrt(kreg)=nxstrt(2)
-          nystrt(kreg)=nystrt(2)+1
-          nyend(kreg)=nyend(1)
-          nperd(kreg)=leftix(nxstrt(kreg),nystrt(kreg))
-        else
-          nxstrt(kreg)=-1
-          nystrt(kreg)=nyend(4)+1
-          nyend(kreg)=ny
-          nperd(kreg)=-1
-        end if
-cxpb Region 10 is the missing SOL section in the eastern half
-        kreg=kreg+1
-        nxstrt(kreg)=nxstrt(7)
-        if(nxend(7).lt.nxend(5)) then
-          nxend(kreg)=nxend(6)
-          nystrt(kreg)=nystrt(6)+1
-          nyend(kreg)=nyend(5)
-          nperd(kreg)=leftix(nxstrt(kreg),nystrt(kreg))
-        else
-          nxend(kreg)=nx
-          nystrt(kreg)=nyend(8)+1
-          nyend(kreg)=ny
-          nperd(kreg)=-1
-        end if
-C =============================== Set up individual zones
- 5250   continue
-        do l=1,3
-          do k=1,kreg
-            ic=0
-            do iy=nystrt(k),nyend(k)
-              if (nperd(k).ne.-1) then
-                ic=ic+1
-                x(ic)= real(   cr(nperd(k),iy),R4)
-                y(ic)= real(   cz(nperd(k),iy),R4)
-                z(ic)= real(field(nperd(k),iy),R4)
-              endif
-              do ix=nxstrt(k),nxend(k)
-                ic=ic+1
-                x(ic)= real(   cr(ix,iy),R4)
-                y(ic)= real(   cz(ix,iy),R4)
-                z(ic)= real(field(ix,iy),R4)
-              enddo
-            enddo
-            nnx=nxend(k)-nxstrt(k)+1
-            if (nperd(k).ne.-1) nnx=nnx+1
-            nny=nyend(k)-nystrt(k)+1
-            if (b2plot_debug.eq.8) write(*,*) 'k, nnx, nny : ',
-     .                                         k, nnx, nny
-            call xertst (ic.eq.nnx*nny, 'ic.ne.nnx*nny')
-            CALL CPSETI('SET - DO-SET-CALL FLAG',0)
-            CALL CPRECT(z, NNX, NNX, NNY, RWRK, LRWK, IWRK, LIWK)
-            IF(L.EQ.1) THEN
-C Add contours to area map
-              CALL CPCLAM(z, RWRK, IWRK, MAP)
+        IF(CONTPLOT) THEN
+C Put contour lines in the area map
+          CALL CTCLAM(RPNT,IEDG,ITRI,RWRK,IWRK,MAP)
 C Add label boxes to area map
-              IF(LABELS) THEN
-                CALL CPLBAM(z, RWRK, IWRK, MAP)
-              ENDIF
-c            ELSEIF(L.EQ.2) THEN
-C Add label boxes to area map
-c             IF(LABELS) THEN
-c               CALL CPLBAM(z, RWRK, IWRK, MAP)
-c             ENDIF
-            ELSEIF(L.EQ.3) THEN
-C Draw Labels
-              IF(LABELS) THEN
-                CALL CPLBDR(z,RWRK,IWRK)
-              ENDIF
-C Draw Contours
-              IF(CONTOURS) THEN
-C               CALL CPCLDR(z,RWRK,IWRK)
-                CALL CPCLDM(z,RWRK,IWRK,MAP,CPDRPL)
-              ENDIF
-            ENDIF
-          ENDDO
-          IF(L.EQ.2) THEN
-C Set fill style to solid, and fill contours if COLPRT==TRUE
-            IF(COLPRT) THEN
-              call entsr(irold,1)
-              CALL ARPRAM(MAP,1,0,0)
-              if(nerro(nerrf).ne.0) then
-                call eprin
-                call errof
-                call retsr(irold)
-                call subend ()
-                return
-              endif
-              call retsr(irold)
-              CALL ARSCAM(MAP,XWRK,YWRK,NWRK,IAREA,IGRP,NOGRPS,FILL)
-            ENDIF
+          IF(LABELS) THEN
+            CALL CTLBAM(RPNT,IEDG,ITRI,RWRK,IWRK,MAP)
           ENDIF
-        ENDDO
-#endif
+C Set fill style to solid, and fill contours if COLPRT==TRUE
+          IF(COLPRT) THEN
+            call entsr(irold,1)
+            CALL ARPRAM(MAP,1,0,0)
+            if(nerro(nerrf).ne.0) then
+              call eprin
+              call errof
+              call retsr(irold)
+              call subend ()
+              return
+            endif
+            call retsr(irold)
+            CALL ARSCAM(MAP,XWRK,YWRK,NWRK,IAREA,IGRP,NOGRPS,FILL)
+          ENDIF
+        ENDIF
 
- 5150   CONTINUE
+        deallocate(RPNT)
+        deallocate(IEDG,ITRI,IBEG,IBPT)
+        deallocate(FVX)
+        deallocate(nodelist,edgelist)
 
       ELSE IF (mpg%isClassicalGrid.eq.1) THEN   ! ======== plot computational domain
+C Initialise Areas
+        CALL ARINAM(MAP, LMAP)
+        CALL GSFAIS(1)
+
+        CALL CPSETI('MAP - MAPPING FLAG',4)
+        IF(LABELS) THEN
+          CALL CPSETI('LLP - LINE LABEL POSITIONING',3)
+          IF(LALONG) CALL CPSETI('LLO - LINE LABEL ORIENTATION',1)
+        ELSE
+          CALL CPSETI('LLP - LINE LABEL POSITIONING',0)
+        ENDIF
+        IF(INTPOL) THEN
+          CALL CPSETR('T2D - TENSION OF THE 2D SPLINES',1.0)
+          CALL CPSETI('PIC - POINT INTERPOLATION FLAG',-10)
+          CALL IPOLATE(.FALSE.) ! for further plots
+          WRITE (*,*) 'using spline interpolation'
+        ELSE
+          CALL CPSETR('T2D - TENSION OF THE 2D SPLINES',0.0)
+          CALL CPSETI('PIC - POINT INTERPOLATION FLAG',-10)
+        ENDIF
+        CALL CPSETC('CFT - CONSTANT FIELD LABEL',' ')
+        CALL CPSETI('CLS - CONTOUR LEVEL SELECTION FLAG',0)
+        CALL CPSETI('NCL - NUMBER OF CONTOUR LEVELS',NCONT+1)
+        DO I=1,NCONT+1
+          CALL CPSETI('PAI - PARAMETER ARRAY INDEX',I)
+          CALL CPSETR('CLV - CONTOUR LEVEL VALUE',CTVAL(I))
+          CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
+          CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
+          CALL CPSETI('AIB - AREA BELOW IDENTIFIER',I)
+c          IF(MOD(I-1,3).EQ.0)
+c     1     CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
+          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
+        END DO
+        CALL CPSETC('ILT - INFORMATION LABEL TEXT STRING',
+     1   STRING(1:LNBLNK(STRING)))
+        CALL CPSETR('ILX - INFORMATION LABEL X POSITION',0.5)
+        CALL CPSETR('ILY - INFORMATION LABEL Y POSITION',0.95)
+        CALL CPSETI('ILP - INFORMATION LABEL POSITION',-3)
+
+        SPECIAL=-1E30
+        CALL CPSETR('SPV - SPECIAL VALUE',SPECIAL)
+
         IC=1
         X(IC)=XLO
         Y(IC)=YLO
@@ -843,3 +936,43 @@ C Draw Mesh/Separatrix if wanted
       call subend ()
       RETURN
       END SUBROUTINE PLOTCONTOUR
+
+c$$$      SUBROUTINE LABLIT (INUM,SIZE,ANGR,XPOS,YPOS)
+c$$$      use b2mod_types
+c$$$      implicit none
+c$$$      INTEGER INUM
+c$$$      REAL(KIND=R4) :: SIZE,ANGR,XPOS,YPOS
+c$$$C
+c$$$      INTEGER I
+c$$$      REAL(KIND=R4) :: RTOD
+c$$$      CHARACTER*8 CNUM
+c$$$C
+c$$$C Generate a label expressing the value of the integer INUM and place it
+c$$$C on the frame at the position (XPOS,YPOS) in the current user system,
+c$$$C using characters of size SIZE (in the fractional coordinate system),
+c$$$C and an angle of ANGR (in radians).
+c$$$C
+c$$$C Conversion factor, radians to degrees.
+c$$$C
+c$$$      DATA RTOD / 57.2957795130823_R4 /
+c$$$C
+c$$$C Encode the integer into CNUM.
+c$$$C
+c$$$      WRITE (CNUM,'(I8)') INUM
+c$$$C
+c$$$C Write the label and return.  The loop finds the first non-blank in the
+c$$$C label so that we can use sub-string notation in the call to PLCHMQ.
+c$$$C
+c$$$      DO 101 I=1,8
+c$$$        IF (CNUM(I:I).NE.' ') THEN
+c$$$          CALL PLCHMQ (XPOS,YPOS,CNUM(I:8),SIZE,RTOD*ANGR,0.)
+c$$$          RETURN
+c$$$        END IF
+c$$$  101 CONTINUE
+c$$$C
+c$$$C If no non-blank character is found, return, having done nothing.
+c$$$C
+c$$$      RETURN
+c$$$C
+c$$$      END SUBROUTINE LABLIT
+c$$$
