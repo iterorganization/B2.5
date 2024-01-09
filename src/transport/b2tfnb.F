@@ -12,9 +12,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!      use b2mod_balance                                                 !djm Jan2017
-!     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
-!     &          fna_ch, fna_pschused, balance_netcdf
+      use b2mod_balance                                                 !djm Jan2017
+     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
+     &          fna_ch, fna_pschused, balance_netcdf
       use b2mod_ad
      & , only : ncall_b2tfnb
 #ifndef NAGFOR
@@ -92,6 +92,8 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, b2xvff, intface, diff
       intrinsic abs, max, sqrt
+      real (kind=R8) :: dummy1(nFc,0:1), dummy2(nFc,0:1), 
+     *  dummy3(nFc,0:1)
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -770,6 +772,40 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
           endif
         endif
       endif                                                             !srv 05.03.16 }
+
+* ..compute variables for balance.nc 
+      if (balance.and.(balance_netcdf.ne.0)) then    !nh 08.01.24
+        fna_pinch(:,0,isb) = co%cvla(:,0,isb)*nbf
+        fna_pinch(:,1,isb) = co%cvla(:,1,isb)*nbf
+        fna_pll(:,0,isb)   = geo%fcPbs*wrk0*nbf + term
+        fna_pll(:,1,isb)   = 0.0_R8
+        if (switch%mdf_fnb.eq.0) then
+          fna_drift(:,0,isb) = (dv%vaecrb(:,0,isb) + 
+     &      dv%vadia(:,0,isb))*geo%fcS*geo%fcQalf(:,0)*nbf
+          fna_drift(:,1,isb) = (dv%vaecrb(:,1,isb) + 
+     &      dv%vadia(:,1,isb))*geo%fcS*geo%fcQalf(:,1)*nbf
+          fna_pschused(:,0,isb) = 0.0_R8
+          fna_pschused(:,1,isb) = 0.0_R8
+        else
+          fna_drift(:,0,isb) = dv%vaecrb(:,0,isb)*
+     &      geo%fcS*geo%fcQalf(:,0)*nbf
+          fna_drift(:,1,isb) = dv%vaecrb(:,1,isb)*
+     &      geo%fcS*geo%fcQalf(:,1)*nbf
+          fna_pschused(:,0,isb) = -dv%fnaPSch(:,0,isb)
+          fna_pschused(:,1,isb) = -dv%fnaPSch(:,1,isb)
+        endif       
+        fna_ch(:,0,isb)    = scur(:,0)*nbf
+        fna_ch(:,1,isb)    = scur(:,1)*nbf
+        dummy1 = 0.0_R8
+        dummy2 = 0.0_R8
+        dummy3 = 0.0_R8
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &     dummy1, co%cdna(:,:,isb), fna_nanom(:,:,isb),
+     &     dummy2, dummy3)
+        fna_panom(:,0,isb) = co%cdpa(:,0,isb)*dpb(:,0)
+        fna_panom(:,1,isb) = co%cdpa(:,1,isb)*dpb(:,1)
+      endif
+
 
       if (switch%iout_b2wdat .eq. 4) then
        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnb_th'//chns)
