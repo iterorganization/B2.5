@@ -374,12 +374,12 @@ contains
           target_west = .false.
           do i=1,nbc
             if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
-              target_east = bcene(i).eq. 3.or. &
-                    &       bcene(i).eq.12.or.bcene(i).eq.15
+              target_east = target_east.or. &
+                 &  bcene(i).eq.3.or.bcene(i).eq.12.or.bcene(i).eq.15
             end if
             if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
-              target_west = bcene(i).eq. 3.or. &
-                    &       bcene(i).eq.12.or.bcene(i).eq.15
+              target_west = target_west.or. &
+                 &  bcene(i).eq.3.or.bcene(i).eq.12.or.bcene(i).eq.15
             end if
           end do
           if(target_west) then

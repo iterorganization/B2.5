@@ -1702,7 +1702,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-				If bcene_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhe_mdf. Recommended when running cases with drifts.
+					If bcene_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhe_mdf. Recommended when running cases with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -1710,7 +1710,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-				If bceni_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhi_mdf. Recommended when running cases with drifts.
+					If bceni_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhi_mdf. Recommended when running cases with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -1718,7 +1718,7 @@
 				<default>0.01</default>
 				<type>real</type>
 				<description>
-				Under-relaxation factor used for feedback scheme in boundary condition types BCCON = 16, 19, 22, 23, 26, and 27.
+					Under-relaxation factor used for feedback scheme in boundary condition types BCCON = 16, 19, 22, 23, 26, and 27.
 				</description>
 			</switch>
 			<switch>
@@ -1726,7 +1726,7 @@
 				<default>0.01</default>
 				<type>real</type>
 				<description>
-				Under-relaxation factor used for feedback scheme in boundary condition type BCENE = 16 (with bcene_16_style.eq.1).
+					Under-relaxation factor used for feedback scheme in boundary condition type BCENE = 16 (with bcene_16_style.eq.1).
 				</description>
 			</switch>
 			<switch>
@@ -1734,7 +1734,7 @@
 				<default>0.01</default>
 				<type>real</type>
 				<description>
-				Under-relaxation factor used for feedback scheme in boundary condition types BCENI = 16 (with bceni_16_style.eq.1), 24, and 27.
+					Under-relaxation factor used for feedback scheme in boundary condition types BCENI = 16 (with bceni_16_style.eq.1), 24, and 27.
 				</description>
 			</switch>
 			<switch>
@@ -2634,7 +2634,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If '1', the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment). If '0', it is computed from the local CX rate (SOLPS5.0/5.1 treatments).
+					Integer switch to choose the expression for the ion-neutral conductivity.
+					If '1' (default), the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment).
+					If '0', it is computed from the local CX rate (SOLPS5.0/5.1 treatments).
 				</description>
 			</switch>
 			<switch>
@@ -2647,19 +2649,19 @@
 				</description>
 			</switch>
 			<switchgroup>
-			  <name>eirene_l*</name>
+				<name>eirene_l*</name>
 				<description>
 					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
 				</description>
 				<switch>
-				  <name>eirene_lhalpha</name>
-				  <default>1</default>
-				  <type>integer</type>
+					<name>eirene_lhalpha</name>
+					<default>1</default>
+					<type>integer</type>
 				</switch>
 				<switch>
-				  <name>eirene_lvib</name>
-				  <default>1</default>
-				  <type>integer</type>
+					<name>eirene_lvib</name>
+					<default>1</default>
+					<type>integer</type>
 				</switch>
 			</switchgroup>
 			<switch>
@@ -2866,35 +2868,35 @@
 				</description>
 			</switch>
 			<switch>
-			  <name>b2mndr_ids_save</name>
-			  <default>0</default>
-			  <type>integer</type>
-			  <description>
-				Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time and b2mndr_ids_av.
-				If used, an IDS time slice will be written at the end of run.
-				If negative, a single IDS will be written at the end of the run.
-				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
-			  </description>
+				<name>b2mndr_ids_save</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time and b2mndr_ids_av.
+					If used, an IDS time slice will be written at the end of run.
+					If negative, a single IDS will be written at the end of the run.
+					Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
+				</description>
 			</switch>
 			<switch>
-			  <name>b2mndr_ids_time</name>
-			  <default>0.0</default>
-			  <type>real</type>
-			  <description>
-				Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_av.
-				If non-zero, must be at least as large as the simulation timestep.
-				If used, an IDS time slice will be written at the end of run.
-				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
-			  </description>
+				<name>b2mndr_ids_time</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_av.
+					If non-zero, must be at least as large as the simulation timestep.
+					If used, an IDS time slice will be written at the end of run.
+					Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
+				</description>
 			</switch>
 			<switch>
-			  <name>b2mndr_ids_av</name>
-			  <default>0</default>
-			  <type>integer</type>
-			  <description>
-				Frequency, in number of batch averages, at which an IDS is saved containing the averaged plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_time.
-				The averaged plasma state is saved as a separate occurrence of the edge_profiles and edge_sources IDSs.
-			  </description>
+				<name>b2mndr_ids_av</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Frequency, in number of batch averages, at which an IDS is saved containing the averaged plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_time.
+					The averaged plasma state is saved as a separate occurrence of the edge_profiles and edge_sources IDSs.
+				</description>
 			</switch>
 			<switch>
 				<name>b2wdat_iout</name>
@@ -2916,6 +2918,8 @@
 			  <description>
 				If get_residuals.eq.1, then the residuals of unsolved equations will be outputted into b2ftrace. Equations are unsolved if 'b2news_no_solve' is nonzero or any elements of the solveco, solvemo, solveee, solveei, or solvepo are set to .false. .
 				By default, get_residuals.eq.0 and the residuals for unsolved equations are set to zero.
+				The residual of the total momentum equation is nonzero when all momentum equations for parallel velocities are solved together.
+				The residual of the total energy equation is nonzero when Te and Ti equations are solved together.
 			  </description>
 			</switch>
 			<switch>
@@ -3154,24 +3158,24 @@
 					If cpu.gt.0, prints out the time spent in the matrix solver.
 				</description>
 				<switch>
-				  <name>b2ux5p_cpu</name>
-				  <default>0</default>
-				  <type>integer</type>
+					<name>b2ux5p_cpu</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
-				  <name>b2ux7p_cpu</name>
-				  <default>0</default>
-				  <type>integer</type>
+					<name>b2ux7p_cpu</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
-				  <name>b2ux9p_cpu</name>
-				  <default>0</default>
-				  <type>integer</type>
+					<name>b2ux9p_cpu</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
-				  <name>b2ux11p_cpu</name>
-				  <default>0</default>
-				  <type>integer</type>
+					<name>b2ux11p_cpu</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 			</switchgroup>
 			<switchgroup>
@@ -3678,30 +3682,30 @@
 				</description>
 			</switch>
 			<switchgroup>
-			  <name>b2ux*</name>
-			  <description>
+				<name>b2ux*</name>
+				<description>
 					Number of expected nonzero matrix elements per matrix row.
-			  </description>
-			  <switch>
-				<name>b2ux5p_mult_nonzero</name>
-				<default>10</default>
-				<type>integer</type>
-			  </switch>
-			  <switch>
-				<name>b2ux7p_mult_nonzero</name>
-				<default>10</default>
-				<type>integer</type>
-			  </switch>
-			  <switch>
-				<name>b2ux9p_mult_nonzero</name>
-				<default>10</default>
-				<type>integer</type>
-			  </switch>
-			  <switch>
-				<name>b2ux11p_mult_nonzero</name>
-				<default>10</default>
-				<type>integer</type>
-			  </switch>
+				</description>
+				<switch>
+					<name>b2ux5p_mult_nonzero</name>
+					<default>10</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux7p_mult_nonzero</name>
+					<default>10</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux9p_mult_nonzero</name>
+					<default>10</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux11p_mult_nonzero</name>
+					<default>10</default>
+					<type>integer</type>
+				</switch>
 			</switchgroup>
 			<switchgroup>
 				<name>b2ux*</name>
@@ -3959,28 +3963,28 @@
 				</description>
 			</switch>
 			<switchgroup>
-			  <name>b2news_l_*bound</name>
-			  <description>
-				Flags to internally identify and isolate boundary cells to limit flows between neighbouring guard cells.
-				If l_fbound.ne.0, flows between boundary conditions cells are turned off.
-				If l_enebound.ne.0, remove non-boundary energy sources in guard cells.
-				If l_timbound.ne.0, time derivative sources are not added to guard cells.
-			  </description>
-			  <switch>
-				<name>b2news_l_fbound</name>
-				<default>0</default>
-				<type>integer</type>
-			  </switch>
-			  <switch>
-				<name>b2news_l_enebound</name>
-				<default>0</default>
-				<type>integer</type>
-			  </switch>
-			  <switch>
-				<name>b2news_l_timbound</name>
-				<default>0</default>
-				<type>integer</type>
-			  </switch>
+				<name>b2news_l_*bound</name>
+				<description>
+					Flags to internally identify and isolate boundary cells to limit flows between neighbouring guard cells.
+					If l_fbound.ne.0, flows between boundary conditions cells are turned off.
+					If l_enebound.ne.0, remove non-boundary energy sources in guard cells.
+					If l_timbound.ne.0, time derivative sources are not added to guard cells.
+				</description>
+				<switch>
+					<name>b2news_l_fbound</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2news_l_enebound</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2news_l_timbound</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
 			</switchgroup>
 			<switchgroup>
 				<name>b2news_fac*</name>
@@ -4095,10 +4099,10 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-				  If  0, the SOLPS5.0 physics model is used, by calling the b2news routine.
-				  If  1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
-				  If  2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations.
-				  If -1, corresponds to a special conversion run for SOLPS4.x data where new fluxes are not computed and equations are not solved.
+					If  0, the SOLPS5.0 physics model is used, by calling the b2news routine.
+					If  1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
+					If  2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations.
+					If -1, corresponds to a special conversion run for SOLPS4.x data where new fluxes are not computed and equations are not solved.
 				</description>
 			</switch>
 			<switch>
@@ -4446,12 +4450,12 @@
 				</switch>
 			</switchgroup>
 			<switch>
-			    <name>b2tfhe_mode_ehx</name>
-			    <default>0</default>
+				<name>b2tfhe_mode_ehx</name>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-				  Switch to choose between various discretization schemes when computing the poloidal electric field.
-				  See code for details.
+					Switch to choose between various discretization schemes when computing the poloidal electric field.
+					See code for details.
 				</description>
 			</switch>
 			<switch>
@@ -4465,12 +4469,12 @@
 				</description>
 			</switch>
 			<switch>
-			  <name>b2sigp_pressure_restriction</name>
-			  <default>1</default>
-			  <type>integer</type>
-			  <description>
-				When set to '1', a CFL-like restriction is applied to the pressure gradient term for minority ions and for neutrals species.
-			  </description>
+				<name>b2sigp_pressure_restriction</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to '1', a CFL-like restriction is applied to the pressure gradient term for minority ions and for neutrals species.
+				</description>
 			</switch>
 			<switch>
 				<name>b2xzdd_zero_dead_and_core</name>
@@ -5030,7 +5034,7 @@
 			</switch>
 			<switch>
 				<name>RECYC</name>
-				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<type>real array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their isonuclear sequence.
 					Applies to B2.5 neutral fluid species.
@@ -5040,14 +5044,14 @@
 			<switch>
 				<name>MRECYC</name>
 				<default>0.0</default>
-				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<type>real array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the parallel momentum recycling coefficients of species (is) on stratum (istra). The parallel momentum is carried back by the recycled neutrals. Applies only to B2.5 neutral fluid species.
 				</description>
 			</switch>
 			<switch>
 				<name>ERECYC</name>
-				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<type>real array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the energy recycling coefficients of species (is) on stratum (istra). Defaults to 0.3 for non-carbon species and 0.0 for carbon species. The energy is carried back by the recycled neutrals.
 					Applies only to B2.5 neutral fluid species.
@@ -5056,7 +5060,7 @@
 			<switch>
 				<name>RCION</name>
 				<default>0.0</default>
-				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<type>real array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the particle-into-ion recycling coefficients of species (is) on stratum (istra). Particles recycle into the next ionised species associated to their isonuclear sequence. Applies only to B2.5 neutral fluid species.
 				</description>
@@ -5064,7 +5068,7 @@
 			<switch>
 				<name>RECYCEIR</name>
 				<default>1.0</default>
-				<type>real*8 array of size (NSTRAT)</type>
+				<type>real array of size (NSTRAT)</type>
 				<description>
 					Multiplier to the Eirene recycling fluxes from stratum (istra). Only used if 'eirene_use_recyceir' is set to 1 (default).
 				</description>
@@ -5072,7 +5076,7 @@
 			<switch>
 				<name>USERFLUXPARM</name>
 				<default>0</default>
-				<type>real*8 array of size (NSTRAT,2)</type>
+				<type>real array of size (NSTRAT,2)</type>
 				<description>
 					The element (istra,1) contains the strength of constant gas puff strata (type 'C') for Eirene in particles/second. Its values overwrite the values provided by the FLUX variables from the strata description in block 7 of the Eirene input file.
 				</description>
@@ -5092,7 +5096,7 @@
 			<switch>
 				<name>RF_NEUT</name>
 				<default>1.0</default>
-				<type>real*8 array of size (4)</type>
+				<type>real array of size (4)</type>
 				<description>
 					Relaxation parameters multiplying the Eirene particle, parallel momentum, electron energy and ion energy sources respectively before use in B2.
 				</description>
@@ -5100,7 +5104,7 @@
 			<switch>
 				<name>PHYS_SPUT</name>
 				<default>0.0</default>
-				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<type>real array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the physical sputtering multiplier for B2.5 species (is) sputtering on the wall of stratum (istra). Must be non-zero for physical sputtering to occur. Only applies if using B2.5 fluid neutral model.
 				</description>
@@ -5108,14 +5112,14 @@
 			<switch>
 				<name>CHEM_SPUT</name>
 				<default>0.0</default>
-				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
+				<type>real array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the chemical sputtering multiplier for B2.5 species (is) sputtering on the wall of stratum (istra). Must be non-zero for chemical sputtering to occur. Only applies if using B2.5 fluid neutral model.
 				</description>
 			</switch>
 			<switch>
 				<name>EIRENE_STEP_CPU</name>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Length of CPU time devoted to Eirene calls after the first one (in s). Defaults to the value given in input.dat.
 				</description>
@@ -5123,7 +5127,7 @@
 			<switch>
 				<name>EIRENE_STEP_DT</name>
 				<default>1.0e-3</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Physical time (in s) the Eirene particles are to be followed before being passed to the time-dependent stratum.
 				</description>
@@ -5139,14 +5143,14 @@
 			<switch>
 				<name>VOLRECSTART</name>
 				<default>1.e21</default>
-				<type>real*8 array of size (NSTRAT)</type>
+				<type>real array of size (NSTRAT)</type>
 				<description>
 					Initial volume recombination rate from stratum (istra) to be used for the volume recombination scaling regulation algorithm. Rendered obsolete by 'eirene_dpc_fix'.
 				</description>
 			</switch>
 			<switch>
 				<name>VOLRECINC</name>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Maximum rate of increase of the volume recombination source strength. The volume recombination regulation scaling scheme is activated if VOLRECINC is neither 0 nor 1.
 					Rendered obsolete by 'eirene_dpc_fix'.
@@ -5155,7 +5159,7 @@
 			<switch>
 				<name>VOLRECWT</name>
 				<default>0.1</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Weight of new volume recombination strength relative to that of previous iteration in the volume recombination regulation scaling scheme.
 					Rendered obsolete by 'eirene_dpc_fix'.
@@ -5166,7 +5170,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2.5 species involved in stratum (istra).
+					Specifies the index of the first B2.5 species involved in stratum (istra) for EIRENE.
 				</description>
 			</switch>
 			<switch>
@@ -5174,7 +5178,7 @@
 				<default>ns-1</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the last B2.5 species involved in stratum (istra).
+					Specifies the index of the last B2.5 species involved in stratum (istra) for EIRENE.
 				</description>
 			</switch>
 			<switch>
@@ -5188,7 +5192,7 @@
 			<switch>
 				<name>NEUTRALS_TIME_MOD</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					When the B2.5 run simulation time, in seconds, modulo(NEUTRALS_TIME_MOD), reaches or exceeds NEUTRALS_TIME_SWITCH, reads the new namelist from NEUTRALS_FILENAME. Also switches to the new namelist if the ELM count (here time/NEUTRALS_TIME_MOD) changes. Only active if NEUTRALS_TIME_MOD is greater than 0.
 				</description>
@@ -5196,7 +5200,7 @@
 			<switch>
 				<name>NEUTRALS_TIME_SWITCH</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					If NEUTRALS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new NEUTRALS namelist is read.
 					Otherwise, B2.5 simulation time, in seconds, when to read the next NEUTRALS namelist file from NEUTRALS_FILENAME.
@@ -5325,7 +5329,7 @@
 			<switch>
 				<name>GPFC</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NATM,NSTRAT)</type>
+				<type>real array of size (NATM,NSTRAT)</type>
 				<description>
 					Specifies the fraction of Eirene atomic species (iatm) in one particle puffed from stratum (istra).
 				</description>
@@ -5352,7 +5356,7 @@
 			<switch>
 				<name>NEUT_SCL_LIM</name>
 				<default>2.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Maximum number by which Eirene neutral sources may be scaled in either direction within the ank-mods scheme. See explaining text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for details.
 				</description>
@@ -5375,7 +5379,7 @@
 			<switch>
 				<name>CHEMICAL_EROSION_REDEP_FAC</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Multiplier to the chemical sputtering coefficient of carbon for computing the rate used for redeposited carbon.
 				</description>
@@ -5391,7 +5395,7 @@
 			<switch>
 				<name>CHEMICAL_EROSION_BE_FAC_A</name>
 				<default>0.2</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					The chemical sputtering yield of carbon is multiplied by
 					(1.0-C/2*(tanh((frac-A)/B)-tanh((-A)/B)))
@@ -5401,7 +5405,7 @@
 			<switch>
 				<name>CHEMICAL_EROSION_BE_FAC_B</name>
 				<default>0.05</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					See above.
 				</description>
@@ -5409,7 +5413,7 @@
 			<switch>
 				<name>CHEMICAL_EROSION_BE_FAC_C</name>
 				<default>0.9</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					See above.
 				</description>
@@ -5456,7 +5460,7 @@
 			<switch>
 				<name>SPS_ABSR</name>
 				<default>-1.0</default>
-				<type>real*8 array of length (N_SPCSRF)</type>
+				<type>real array of length (N_SPCSRF)</type>
 				<description>
 					Particle absorption on the surface. If positive, will supercede the setting from the Eirene input file: RECYCT = 1-SPS_ABSR. Ignored if negative.
 				</description>
@@ -5464,7 +5468,7 @@
 			<switch>
 				<name>SPS_TRNO</name>
 				<default>-1.0</default>
-				<type>real*8 array of length (N_SPCSRF)</type>
+				<type>real array of length (N_SPCSRF)</type>
 				<description>
 					Surface transparency in positive direction. If positive, will supercede the setting from the Eirene input file: TRANSP(1,) = SPS_TRNO. Ignored if negative.
 				</description>
@@ -5472,7 +5476,7 @@
 			<switch>
 				<name>SPS_TRNI</name>
 				<default>-1.0</default>
-				<type>real*8 array of length (N_SPCSRF)</type>
+				<type>real array of length (N_SPCSRF)</type>
 				<description>
 					Surface transparency in negative direction. If positive, will supercede the setting from the Eirene input file: TRANSP(2,) = SPS_TRNI. If negative, the setting from SPS_TRNO is used.
 				</description>
@@ -5480,7 +5484,7 @@
 			<switch>
 				<name>SPS_MTRI</name>
 				<default>0</default>
-				<type>real*8 array of length (N_SPCSRF)</type>
+				<type>real array of length (N_SPCSRF)</type>
 				<description>
 					Surface material in Eirene notation (e.g., 1206 for C). If positive, will supercede the setting from the Eirene input file: ZNML = SPS_MTRI. Ignored if negative.
 				</description>
@@ -5495,7 +5499,7 @@
 			<switch>
 				<name>SPS_TMPR</name>
 				<default>1.e15</default>
-				<type>real*8 array of length (N_SPCSRF)</type>
+				<type>real array of length (N_SPCSRF)</type>
 				<description>
 					Surface temperature (in eV). If set larger to 1.e10, will be ignored. Otherwise, will supercede the setting from the Eirene input file: EWALL = SPS_TMPR.
 				</description>
@@ -5503,7 +5507,7 @@
 			<switch>
 				<name>SPS_SPPH</name>
 				<default>-1.0</default>
-				<type>real*8 array of length (N_SPCSRF)</type>
+				<type>real array of length (N_SPCSRF)</type>
 				<description>
 					Fudge factor for physical sputtering. If positive, will supercede the setting from the Eirene input file: RECYCS = SPS_SPPH. Ignored if negative.
 				</description>
@@ -5511,7 +5515,7 @@
 			<switch>
 				<name>SPS_SPCH</name>
 				<default>-1.0</default>
-				<type>real*8 array of length (N_SPCSRF)</type>
+				<type>real array of length (N_SPCSRF)</type>
 				<description>
 					Fudge factor for chemical sputtering. If positive, will supercede the setting from the Eirene input file: RECYCC = SPS_SPCH. Ignored if negative.
 				</description>
@@ -5583,7 +5587,7 @@
 			<switch>
 				<name>GPDATA</name>
 				<default>0.0</default>
-				<type>real*8 data of size (NGPDATA,2,NSTRAT)</type>
+				<type>real data of size (NGPDATA,2,NSTRAT)</type>
 				<description>
 					For (i,ik,istra) in (1:NGPDATA(istra),1:2,1:NSTRAT),
 					GPDATA(i,1,istra) contains the time point (i) for stratum (istra) (in s).
@@ -5600,7 +5604,7 @@
 			<switch>
 				<name>CHEMICAL_SPUTTER_YIELD</name>
 				<default>0.0</default>
-				<type>real*8 array of size (0:NLIM+NSTS)</type>
+				<type>real array of size (0:NLIM+NSTS)</type>
 				<description>
 					Passed to Eirene. Chemical sputter yield of wall surface (ilim). Element 0 corresponds to the default setting for all surfaces.
 				</description>
@@ -5608,7 +5612,7 @@
 			<switch>
 				<name>FCHAR_CHEMICAL</name>
 				<default>0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Nuclear charge of atomic species causing the sputtering. If set to its default value of 0, then the chemical sputtering switches from this block are not used and the settings from the Eirene input file are used.
 				</description>
@@ -5711,7 +5715,7 @@
 			</switch>
 			<switch>
 				<name>TARGET_TEMP</name>
-				<type>real*8 array of size (NWALL,NDEPTH)</type>
+				<type>real array of size (NWALL,NDEPTH)</type>
 				<description>
 					Contains the temperature (in Kelvin) of wall element (iwall) at depth layer (idepth).
 					If plate_option.eq.1, will be set to backplate_temp(iwall).
@@ -5730,7 +5734,7 @@
 			<switch>
 				<name>BACKPLATE_TEMP</name>
 				<default>b2stbr_plate_temp</default>
-				<type>real*8 array of size (NWALL)</type>
+				<type>real array of size (NWALL)</type>
 				<description>
 					Contains the temperature (in Kelvin) maintained by cooling at the back end of wall element (iwall).
 				</description>
@@ -5738,7 +5742,7 @@
 			<switch>
 				<name>PLATE_THICKNESS</name>
 				<default>b2stbr_plate_thick</default>
-				<type>real*8 array of size (NWALL)</type>
+				<type>real array of size (NWALL)</type>
 				<description>
 					Contains the thickness (in metres) of wall element (iwall).
 				</description>
@@ -5746,7 +5750,7 @@
 			<switch>
 				<name>COATING_THICKNESS</name>
 				<default>0</default>
-				<type>real*8 array of size (NWALL)</type>
+				<type>real array of size (NWALL)</type>
 				<description>
 					Contains the thickness (in metres) of the eventual coating on wall element (iwall).
 				</description>
@@ -5754,7 +5758,7 @@
 			<switch>
 				<name>PLATE_TIME_FACTOR</name>
 				<default>1.0</default>
-				<type>real*8 array of size (NWALL)</type>
+				<type>real array of size (NWALL)</type>
 				<description>
 					Multiplier to the time for the equations for temperature and composition evolution of wall element (iwall).
 				</description>
@@ -5762,7 +5766,7 @@
 			<switch>
 				<name>DEPOSITION</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,NTRACK)</type>
+				<type>real array of size (NWALL,NTRACK)</type>
 				<description>
 					Contains the amount of deposited material (in atoms) from species (itrack) onto wall element (iwall).
 				</description>
@@ -5770,7 +5774,7 @@
 			<switch>
 				<name>EROSION</name>
 				<default>0.0</default>
-				<type>real*8 array of size(NWALL,NTRACK)</type>
+				<type>real array of size(NWALL,NTRACK)</type>
 				<description>
 					Contains the amount of eroded material (in atoms) of species (itrack) from wall element(iwall).
 				</description>
@@ -5778,7 +5782,7 @@
 			<switch>
 				<name>CHEMICAL_SPUTTERING</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,0:NS-1)</type>
+				<type>real array of size (NWALL,0:NS-1)</type>
 				<description>
 					Contains the chemical sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2.5 species (is).
 				</description>
@@ -5786,7 +5790,7 @@
 			<switch>
 				<name>PHYSICAL_SPUTTERING</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,0:NS-1)</type>
+				<type>real array of size (NWALL,0:NS-1)</type>
 				<description>
 					Contains the physical sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2.5 species (is).
 				</description>
@@ -5794,7 +5798,7 @@
 			<switch>
 				<name>PHYSICAL_SPUTTERING_ENERGY</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,0:NS-1)</type>
+				<type>real array of size (NWALL,0:NS-1)</type>
 				<description>
 					Contains the fraction of returned energy carried by sputtered particles of species 'sput_dst' or 'sput_dst_bulk' species from wall element (iwall) caused by B2.5 species (is).
 				</description>
@@ -5802,7 +5806,7 @@
 			<switch>
 				<name>RES_SPUTTERING</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,0:NS-1)</type>
+				<type>real array of size (NWALL,0:NS-1)</type>
 				<description>
 					Contains the RES sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2.5 species (is).
 				</description>
@@ -5810,7 +5814,7 @@
 			<switch>
 				<name>THERMAL_EVAPORATION</name>
 				<default>0.0</default>
-				<type>real*8 array of size(NWALL,0:NS-1)</type>
+				<type>real array of size(NWALL,0:NS-1)</type>
 				<description>
 					Contains the rate of thermal evaporation of species (is) (in particles/second) from wall element (iwall).
 				</description>
@@ -5818,7 +5822,7 @@
 			<switch>
 				<name>BACKSCATTERING</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,0:NS-1)</type>
+				<type>real array of size (NWALL,0:NS-1)</type>
 				<description>
 					Contains the backscattering fraction for incoming B2.5 species (is) onto wall element (iwall).
 				</description>
@@ -5826,7 +5830,7 @@
 			<switch>
 				<name>BACKSCATTERING_ENERGY</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,0:NS-1)</type>
+				<type>real array of size (NWALL,0:NS-1)</type>
 				<description>
 					Contains the backscattered energy fraction for incoming B2.5 species (is) onto wall element (iwall).
 				</description>
@@ -5834,14 +5838,14 @@
 			<switch>
 				<name>PLATE_TIME</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL)</type>
+				<type>real array of size (NWALL)</type>
 				<description>
 					Indicates how much simulation time has elapsed for wall element (iwall) (in seconds).
 				</description>
 			</switch>
 			<switch>
 				<name>PLATE_AREA</name>
-				<type>real*8 array of size (NWALL)</type>
+				<type>real array of size (NWALL)</type>
 				<description>
 					Indicates the wall area (in square metres) for wall element (iwall). Defaults to the area computed from the B2.5 grid information.
 				</description>
@@ -5849,7 +5853,7 @@
 			<switch>
 				<name>MONOLAYER_DEPOSITION</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,NTRACK)</type>
+				<type>real array of size (NWALL,NTRACK)</type>
 				<description>
 					Contains the amount of deposited material (in monolayers) from species (itrack) onto wall element (iwall).
 				</description>
@@ -5857,7 +5861,7 @@
 			<switch>
 				<name>MONOLAYER_EROSION</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL,NTRACK)</type>
+				<type>real array of size (NWALL,NTRACK)</type>
 				<description>
 					Contains the amount of eroded material (in monolayers) of species (itrack) from wall element (iwall).
 				</description>
@@ -5879,7 +5883,7 @@
 			</switch>
 			<switch>
 				<name>LAYER_RELCONSTITUENTS</name>
-				<type>real*8 array of size (NWALL,6+NTRACK)</type>
+				<type>real array of size (NWALL,6+NTRACK)</type>
 				<description>
 					Contains the relative atomic abundances of the various elements present within the surface layer of wall element (iwall). Defaults to 1.0 for the first value, 0.0 otherwise.
 					Replaces LAYER_NRELCONSTITUENTS.
@@ -5912,7 +5916,7 @@
 			<switch>
 				<name>TIME</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Time point of the experimental shot being simulated.
 				</description>
@@ -5996,7 +6000,7 @@
 			<switch>
 				<name>CONPAR</name>
 				<default>0.0</default>
-				<type>real*8 array of size (0:NS-1,NBC,3)</type>
+				<type>real array of size (0:NS-1,NBC,3)</type>
 				<description>
 					Contains parameters helping to define the boundary conditions for the continuity equation of species (is). See description of BCCON below for details.
 				</description>
@@ -6004,7 +6008,7 @@
 			<switch>
 				<name>MOMPAR</name>
 				<default>0.0</default>
-				<type>real*8 array of size (0:NS-1,NBC,2)</type>
+				<type>real array of size (0:NS-1,NBC,2)</type>
 				<description>
 					Contains parameters helping to define the boundary conditions for the parallel momentum equation of species (is). See description of BCMOM below for details.
 				</description>
@@ -6012,7 +6016,7 @@
 			<switch>
 				<name>ENEPAR</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NBC,2)</type>
+				<type>real array of size (NBC,2)</type>
 				<description>
 					Contains parameters helping to define the boundary conditions for the electron energy equation. See description of BCENE below for details.
 				</description>
@@ -6020,7 +6024,7 @@
 			<switch>
 				<name>ENIPAR</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NBC,2)</type>
+				<type>real array of size (NBC,2)</type>
 				<description>
 					Contains parameters helping to define the boundary conditions for the ion energy equation. See description of BCENI below for details.
 				</description>
@@ -6028,7 +6032,7 @@
 			<switch>
 				<name>POTPAR</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NBC,2)</type>
+				<type>real array of size (NBC,2)</type>
 				<description>
 					Contains parameters helping to define the boundary conditions for the potential equation. See description of BCPOT below for details.
 				</description>
@@ -6132,7 +6136,7 @@
 						 2 : prescribe the gradient of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity gradient in s<sup>-1</sup>
 						 3 : sheath conditions, Mach number as input,
 							if MOMPAR(,,2) &lt; 0.5, then the velocity is set to exactly
-							MOMPAR(,,1) * C<sub>s,collective</sub>, otherwise the velocity is set to be at least MOMPAR(,,1) * C<sub>s,collective</sub>, species
+							MOMPAR(,,1) * C<sub>s,collective</sub>, otherwise the velocity is set to be at least MOMPAR(,,1) * C<sub>s,a</sub>, the thermal velocity of that species
 						 4 : prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup> and MOMPAR(,,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the parallel momentum flux per unit area, MOMPAR(,,1) specifies the parallel momentum flux density in N.m<sup>-2</sup>
 						 6 : prescribe the total parallel momentum flux for a constant parallel velocity [not yet available]
@@ -6259,15 +6263,15 @@
 			<switch>
 				<name>GAMMAI</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
-					Adiabatic coefficient multiplying the ion temperature when computing the plasma sound speed.
+					Adiabatic coefficient multiplying the ion temperature when computing the sound speeds.
 				</description>
 			</switch>
 			<switch>
 				<name>GAMMAE</name>
 				<default>0.5</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Secondary electron emission coefficient.
 				</description>
@@ -6298,7 +6302,7 @@
 			</switch>
 			<switch>
 				<name>NIISO</name>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 					Density of species (is) in (m-3) to impose in isolated regions.
 				</description>
@@ -6306,7 +6310,7 @@
 			<switch>
 				<name>TEISO</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Electron temperature (in eV) to impose in isolated regions.
 				</description>
@@ -6314,7 +6318,7 @@
 			<switch>
 				<name>TIISO</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Ion temperature (in eV) to impose in isolated regions.
 				</description>
@@ -6322,7 +6326,7 @@
 			<switch>
 				<name>PHIISO</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Electric potential (in V) to impose in isolated regions.
 				</description>
@@ -6371,7 +6375,7 @@
 			<switch>
 				<name>BOUNDARY_TIME_MOD</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					When the B2.5 run simulation time, in seconds, modulo(BOUNDARY_TIME_MOD), reaches or exceeds BOUNDARY_TIME_SWITCH, reads the new namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the ELM count (here time/BOUNDARY_TIME_MOD) changes. Only active if BOUNDARY_TIME_MOD is greater than 0.
 				</description>
@@ -6379,7 +6383,7 @@
 			<switch>
 				<name>BOUNDARY_TIME_SWITCH</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					If BOUNDARY_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new BOUNDARY namelist is read.
 					Otherwise, B2.5 simulation time, in seconds, when to read the next BOUNDARY namelist file from BOUNDARY_FILENAME.
@@ -6458,7 +6462,7 @@
 			<switch>
 				<name>SAVED_CBSHE_CORE</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Last value used for the core electron energy radial flux feedback.
 				</description>
@@ -6466,7 +6470,7 @@
 			<switch>
 				<name>SAVED_CBSHI_CORE</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Last value used for the core ion energy radial flux feedback.
 				</description>
@@ -6474,7 +6478,7 @@
 			<switch>
 				<name>SAVED_CBSNA_CORE</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Last value used for the core particle radial flux feedback. Corresponds to 'isfeedback' B2.5 species.
 				</description>
@@ -6482,7 +6486,7 @@
 			<switch>
 				<name>SAVED_CBSCH_CORE</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Last value used for the core radial electric current feedback.
 				</description>
@@ -6490,7 +6494,7 @@
 			<switch>
 				<name>SAVED_CBSNA_PFR1</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Last value used for the radial inner PFR boundary flux feedback. Corresponds to 'isfeedback' B2.5 species.
 				</description>
@@ -6498,7 +6502,7 @@
 			<switch>
 				<name>SAVED_CBSNA_PFR2</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Last value used for the radial outer PFR boundary flux feedback. Corresponds to 'isfeedback' B2.5 species.
 				</description>
@@ -6506,7 +6510,7 @@
 			<switch>
 				<name>SAVED_CBSNA_SOL</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Last value used for the radial particle flux feedback in the SOL. Corresponds to 'isfeedback' B2.5 species.
 				</description>
@@ -6514,7 +6518,7 @@
 			<switch>
 				<name>SAVED_NA_FEEDBACK_ACTUATOR</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NSPECIES)</type>
+				<type>real array of size (NSPECIES)</type>
 				<description>
 					Last value used for the feedback control actuator for each isonuclear sequence.
 				</description>
@@ -6531,7 +6535,7 @@
 			<switch>
 				<name>VACUUM_COMMUNICATION</name>
 				<default>0</default>
-				<type>Integer</type>
+				<type>integer</type>
 				<description>
 					If &gt; 0, allows for a
 					communication of particle fluxes across vacuum regions. This option only applies to neutrals. The density boundary condition is based on the difference between the average pressure and the local pressure.
@@ -6540,7 +6544,7 @@
 			<switch>
 				<name>VACUUM_COMMUNICATION_NREG</name>
 				<default>0</default>
-				<type>Integer array of size (NVAC)</type>
+				<type>integer array of size (NVAC)</type>
 				<description>
 					Number of communicating vacuum regions.
 				</description>
@@ -6548,7 +6552,7 @@
 			<switch>
 				<name>VACUUM_COMMUNICATION_METHOD</name>
 				<default>0</default>
-				<type>Integer array of size (NVAC)</type>
+				<type>integer array of size (NVAC)</type>
 				<description>
 					Option for resorbing the pressure difference.
 						1: Try to set a flux. Corr = (beta*ave_pressure - pressure)/temp * alpha
@@ -6559,7 +6563,7 @@
 			<switch>
 				<name>VACUUM_COMMUNICATION_IY</name>
 				<default>-2</default>
-				<type>Integer array of size (NVACREG,NVAC)</type>
+				<type>integer array of size (NVACREG,NVAC)</type>
 				<description>
 					Radial index of the ring on which the neutral pressure is computed for region IREG.
 				</description>
@@ -6567,7 +6571,7 @@
 			<switch>
 				<name>VACUUM_COMMUNICATION_IX1</name>
 				<default>-2</default>
-				<type>Integer array of size (NVACREG,NVAC)</type>
+				<type>integer array of size (NVACREG,NVAC)</type>
 				<description>
 					Poloidal lower bound of the range over which the neutral pressure is computed for region IREG.
 				</description>
@@ -6575,7 +6579,7 @@
 			<switch>
 				<name>VACUUM_COMMUNICATION_IX2</name>
 				<default>-2</default>
-				<type>Integer array of size (NVACREG,NVAC)</type>
+				<type>integer array of size (NVACREG,NVAC)</type>
 				<description>
 					Poloidal upper bound of the range over which the neutral pressure is computed for region IREG.
 				</description>
@@ -6583,7 +6587,7 @@
 			<switch>
 				<name>VACUUM_COMMUNICATION_ALPHA</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1,NVAC)</type>
+				<type>real array of size (0:NSPECIES-1,NVAC)</type>
 				<description>
 					Parameter for setting the pressure correction. See above.
 				</description>
@@ -6591,7 +6595,7 @@
 			<switch>
 				<name>VACUUM_COMMINICATION_BETA</name>
 				<default>1.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1,NVAC)</type>
+				<type>real array of size (0:NSPECIES-1,NVAC)</type>
 				<description>
 					Parameter for setting the pressure correction. See above.
 				</description>
@@ -6599,7 +6603,7 @@
 			<switch>
 				<name>NA_FEEDBACK_TARGET</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Sets the target value of the quantity associated with species (ISPECIES) for the feedback scheme defined by NA_FEEDBACK_CHOICE(ISPECIES).
 				</description>
@@ -6607,7 +6611,7 @@
 			<switch>
 				<name>NA_FEEDBACK_TIME</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Sets the time of reference (in s) for the feedback of species (ISPECIES).
 				</description>
@@ -6615,7 +6619,7 @@
 			<switch>
 				<name>NA_FEEDBACK_CHOICE</name>
 				<default>0</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Choice of quantity on which the feedback is computed:
 						0: no action
@@ -6633,7 +6637,7 @@
 			<switch>
 				<name>NA_FEEDBACK_OPTION</name>
 				<default>0</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Option for computing the new fedback quantity.
 						0: no action
@@ -6652,7 +6656,7 @@
 			<switch>
 				<name>NA_FEEDBACK_ACTUATOR</name>
 				<default>0</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Choice for the actuator used for the feedback.
 					0: no action
@@ -6664,7 +6668,7 @@
 			<switch>
 				<name>NA_FEEDBACK_ALPHA</name>
 				<default>0.001</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Factor by which the rescaling is slowed. Rescaling factor is :
 					Option 1: (1 + alpha*target/current) / (1 + alpha)
@@ -6675,7 +6679,7 @@
 			<switch>
 				<name>NA_FEEDBACK_BETA</name>
 				<default>1.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Factor by which the rescaling is slowed. See above. Options 4 and 5: Corresponds to parameter V (ffb_rtvn)
 				</description>
@@ -6683,16 +6687,15 @@
 			<switch>
 				<name>NA_FEEDBACK_CONST</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
-					Options 4 and 5: Corresponds to parameter C. If negative, C is
-						computed as the initial total particle content of the sequence.
+					Options 4 and 5: Corresponds to parameter C. If negative, C is computed as the initial total particle content of the sequence.
 				</description>
 			</switch>
 			<switch>
 				<name>NA_FEEDBACK_IX1</name>
 				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Lower poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
@@ -6700,7 +6703,7 @@
 			<switch>
 				<name>NA_FEEDBACK_IX2</name>
 				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
@@ -6708,7 +6711,7 @@
 			<switch>
 				<name>NA_FEEDBACK_IY1</name>
 				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Lower radial bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
@@ -6716,7 +6719,7 @@
 			<switch>
 				<name>NA_FEEDBACK_IY2</name>
 				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
@@ -6724,7 +6727,7 @@
 			<switch>
 				<name>NA_FEEDBACK_IB</name>
 				<default>-1</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Index of boundary condition through which the feedback is being applied.
 				</description>
@@ -6732,7 +6735,7 @@
 			<switch>
 				<name>NA_FEEDBACK_PUFF_MIN</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Minimum gas puff being applied.
 				</description>
@@ -6740,7 +6743,7 @@
 			<switch>
 				<name>NA_FEEDBACK_PUFF_MAX</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Maximum gas puff being applied.
 				</description>
@@ -6748,7 +6751,7 @@
 			<switch>
 				<name>NA_FEEDBACK_OVERSHOOT</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					If the density is larger than target*overshoot, the gas puff is turned off.
 				</description>
@@ -6777,7 +6780,7 @@
 			<switch>
 				<name>SDATA</name>
 				<default>0.0</default>
-				<type>real*8 data of size (2,NY+2,NKIND_SOURCE,0:NS)</type>
+				<type>real data of size (2,NY+2,NKIND_SOURCE,0:NS)</type>
 				<description>
 					For (i,ir,ik,is) in (1:2,1:NY+2,1:NKIND_SOURCE,0:NS),
 					SDATA(1,ir,:,:) contains the radial location of the profile point (ir).
@@ -6803,7 +6806,7 @@
 			<switch>
 				<name>XDATA</name>
 				<default>1.0</default>
-				<type>real*8 data of size (2,NY+2,NKIND_SOURCE,0:NS)</type>
+				<type>real data of size (2,NY+2,NKIND_SOURCE,0:NS)</type>
 				<description>
 					Multiplier to the poloidal source profile in the axial direction. Same convention for KIND_SOURCE as above.
 				</description>
@@ -6811,7 +6814,7 @@
 			<switch>
 				<name>DIVHEAT</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Additional divertor ion heat source (in Watts/m3)
 				</description>
@@ -6845,7 +6848,7 @@
 			<switch>
 				<name>SOURCES_TIME_MOD</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					When the B2.5 run simulation time, in seconds, modulo(SOURCES_TIME_MOD), reaches or exceeds SOURCES_TIME_SWITCH, reads the new namelist from SOURCES_FILENAME. Also switches to the new namelist if the ELM count (here time/SOURCES_TIME_MOD) changes. Only active if SOURCES_TIME_MOD is greater than 0.
 				</description>
@@ -6853,7 +6856,7 @@
 			<switch>
 				<name>SOURCES_TIME_SWITCH</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					If SOURCES_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new PROFILE namelist is read.
 					Otherwise, B2.5 simulation time, in seconds, when to read the next PROFILE namelist file from SOURCES_FILENAME.
@@ -6884,7 +6887,7 @@
 			<switch>
 				<name>TDATA</name>
 				<default>0.0</default>
-				<type>real*8 data of size (3,NY+2,NKIND_COEFF,0:NS)</type>
+				<type>real data of size (3,NY+2,NKIND_COEFF,0:NS)</type>
 				<description>
 					For (i,ir,ik,is) in (1:3,1:NY+2,1:NKIND_COEFF,0:NS), TDATA(1,ir,:,:) contains the radial location of the profile point (ir).
 					By default, these are measured at the outer midplane, as distance to the separatrix in metres. The user can change this by setting the 'set_transport_i[xy]ref' switches to choose a different location for the distance reference.
@@ -6920,7 +6923,7 @@
 			<switch>
 				<name>TRANSPORT_TIME_MOD</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), reaches or exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
 				</description>
@@ -6928,7 +6931,7 @@
 			<switch>
 				<name>TRANSPORT_TIME_SWITCH</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
 					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
@@ -6970,7 +6973,7 @@
 			<switch>
 				<name>SCALING_STRENGTH</name>
 				<default>0</default>
-				<type>real*8 array of size 10</type>
+				<type>real array of size 10</type>
 				<description>
 					See above.
 				</description>
@@ -6978,7 +6981,7 @@
 			<switch>
 				<name>SCALING_WIDTH</name>
 				<default>1/3 interval</default>
-				<type>real*8 array of size 10</type>
+				<type>real array of size 10</type>
 				<description>
 					See above. Defaults to about 1/3 of the interval over which the scaling is to be done.
 				</description>
@@ -7002,7 +7005,7 @@
 			<switch>
 				<name>ELM_TIME_BEGIN</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Time (in seconds) modulo ELM_TIME_PERIOD at which the ELM phase begins and the ELM data must be used.
 				</description>
@@ -7010,7 +7013,7 @@
 			<switch>
 				<name>ELM_TIME_END</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Time (in seconds) modulo ELM_TIME_PERIOD at which the ELM phase ends and the ELM data is no longer used.
 				</description>
@@ -7018,7 +7021,7 @@
 			<switch>
 				<name>ELM_TIME_PERIOD</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Indicates the real frequency of simulated ELMs. See above for usage.
 					If zero, no ELM profiles are used.
@@ -7052,7 +7055,7 @@
 			<switch>
 				<name>SAVED_VOLREC</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NSTRAT)</type>
+				<type>real array of size (NSTRAT)</type>
 				<description>
 					Contains the last value of the strength of volume recombination sources from stratum (istra).
 				</description>
@@ -7071,7 +7074,7 @@
 			<switch>
 				<name>DTCO</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NS-1,0:NREG)</type>
+				<type>real array of size (0:NS-1,0:NREG)</type>
 				<description>
 					Multiplier to the time used in solving the continuity equation of species (is) in region (ireg).
 				</description>
@@ -7079,7 +7082,7 @@
 			<switch>
 				<name>DTMO</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NS-1,0:NREG)</type>
+				<type>real array of size (0:NS-1,0:NREG)</type>
 				<description>
 					Multiplier to the time used in solving the parallel momentum equation of species (is) in region (ireg).
 				</description>
@@ -7087,7 +7090,7 @@
 			<switch>
 				<name>DTEE</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NREG)</type>
+				<type>real array of size (0:NREG)</type>
 				<description>
 					Multiplier to the time used in solving the electron heat equation in region (ireg).
 				</description>
@@ -7095,7 +7098,7 @@
 			<switch>
 				<name>DTEI</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NREG)</type>
+				<type>real array of size (0:NREG)</type>
 				<description>
 					Multiplier to the time used in solving the ion heat equation in region (ireg).
 				</description>
@@ -7103,7 +7106,7 @@
 			<switch>
 				<name>DTCO_SOL</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 					Multiplier to the time used in solving the continuity equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
 				</description>
@@ -7111,7 +7114,7 @@
 			<switch>
 				<name>DTMO_SOL</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NS-1,0:NREG)</type>
+				<type>real array of size (0:NS-1,0:NREG)</type>
 				<description>
 					Multiplier to the time used in solving the parallel momentum equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
 				</description>
@@ -7119,7 +7122,7 @@
 			<switch>
 				<name>DTEE_SOL</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Multiplier to the time used in solving the electron heat equation in the far SOL defined by iy >= iy_SOL_dtXX).
 				</description>
@@ -7127,7 +7130,7 @@
 			<switch>
 				<name>DTEI_SOL</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NREG)</type>
+				<type>real array of size (0:NREG)</type>
 				<description>
 					Multiplier to the time used in solving the ion heat equation in the far SOL defined by iy >= iy_SOL_dtXX.
 				</description>
@@ -7201,7 +7204,7 @@
 			<switch>
 				<name>TIME_FACTOR_REQUIRED</name>
 				<default>0.1</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Minimum time scale of evolution allowed for all equations. Only active is 'b2srsm_enable' is set to 1.
 				</description>
@@ -7209,7 +7212,7 @@
 			<switch>
 				<name>CORE_DT_SUPPRESSION</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					De-multiplier to the timestep in the core. Only active if less than 1. Should be larger than 0. Applies fully to the innermost core ring of cells (IY .eq. -1). See CORE_DT_FACTOR for further use.
 				</description>
@@ -7217,7 +7220,7 @@
 			<switch>
 				<name>CORE_DT_FACTOR</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Multiplier to the timestep in the core. Only active is less than 1. Should be larger than 0. Multiplies each successive core ring of cells (increasing IY) by CORE_DT_FACTOR, until the local time step multiplier is equal to 1.
 				</description>
@@ -7225,7 +7228,7 @@
 			<switch>
 				<name>CORR_CORE_DN</name>
 				<default>1.0</default>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
@@ -7234,7 +7237,7 @@
 			<switch>
 				<name>CORR_CORE_DT</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
@@ -7243,7 +7246,7 @@
 			<switch>
 				<name>SNA_CORR</name>
 				<default>0.0</default>
-				<type>real*8 array of size (1:NSPECIES)</type>
+				<type>real array of size (1:NSPECIES)</type>
 				<description>
 				Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
 				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
@@ -7252,7 +7255,7 @@
 			<switch>
 				<name>TAUMAX</name>
 				<default>0.05</default>
-				<type>real*8 array of size (1:NSPECIES)</type>
+				<type>real array of size (1:NSPECIES)</type>
 				<description>
 				Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
 				</description>
@@ -7276,7 +7279,7 @@
 			<switch>
 				<name>NUMERICS_TIME_MOD</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					When the B2.5 run simulation time, in seconds, modulo(NUMERICS_TIME_MOD), reaches or exceeds NUMERICS_TIME_SWITCH, reads the new namelist from NUMERICS_FILENAME. Also switches to the new namelist as the ELM count (here time/NUMERICS_TIME_MOD) changes. Only active if NUMERICS_TIME_MOD is greater than 0.
 				</description>
@@ -7284,7 +7287,7 @@
 			<switch>
 				<name>NUMERICS_TIME_SWITCH</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					If NUMERICS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new NUMERICS namelist is read.
 					Otherwise, B2.5 simulation time, in seconds, when to read the next NUMERICS namelist file from NUMERICS_FILENAME.
@@ -7318,7 +7321,7 @@
 			<switch>
 				<name>ETA_HCE_MULT</name>
 				<default>1.0</default>
-				<type>real*8 array of size (-1:NY)</type>
+				<type>real array of size (-1:NY)</type>
 				<description>
 					Used by the user specified set_transport_eta transport model. See code for details.
 				</description>
@@ -7403,56 +7406,56 @@
 			</switchgroup>
 			<switch>
 				<name>PARM_DNA</name>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 					Parameter for the density-driven particle diffusion coefficient for species (is).
 				</description>
 			</switch>
 			<switch>
 				<name>PARM_DPA</name>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 					Parameter for the pressure-driven particle diffusion coefficient for species (is).
 				</description>
 			</switch>
 			<switch>
 				<name>PARM_VLA</name>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 					Parameter for the anomalous radial pinch velocity for species (is).
 				</description>
 			</switch>
 			<switch>
 				<name>PARM_VSA</name>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 					Parameter for the viscosity for species (is).
 				</description>
 			</switch>
 			<switch>
 				<name>PARM_HCI</name>
-				<type>real*8 array of size (0:NS-1)</type>
+				<type>real array of size (0:NS-1)</type>
 				<description>
 					Parameter for the heat diffusivity coefficient for species (is).
 				</description>
 			</switch>
 			<switch>
 				<name>PARM_HCE</name>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Parameter for the electron heat diffusivity coefficient.
 				</description>
 			</switch>
 			<switch>
 				<name>PARM_SIG</name>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Parameter for the anomalous radial field-driven current conductivity.
 				</description>
 			</switch>
 			<switch>
 				<name>PARM_ALF</name>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Parameter for the anomalous radial temperature-driven current conductivity.
 				</description>
@@ -7468,7 +7471,7 @@
 			<switch>
 				<name>TRANSPORT_TIME_MOD</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), reaches or exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
 				</description>
@@ -7476,7 +7479,7 @@
 			<switch>
 				<name>TRANSPORT_TIME_SWITCH</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
 					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
@@ -7492,7 +7495,7 @@
 				<switch>
 					<name>CFLME</name>
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
-					<type>real*8</type>
+					<type>real</type>
 					<description>
 						Main multiplier to the electron heat flux limit.
 					</description>
@@ -7500,7 +7503,7 @@
 				<switch>
 					<name>CFLMI</name>
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
-					<type>real*8</type>
+					<type>real</type>
 					<description>
 						Main multiplier to the ion heat flux limit.
 					</description>
@@ -7508,7 +7511,7 @@
 				<switch>
 					<name>CFLMV</name>
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
-					<type>real*8</type>
+					<type>real</type>
 					<description>
 						Main multiplier to the viscous heat flux limit.
 					</description>
@@ -7516,7 +7519,7 @@
 				<switch>
 					<name>CFLAL</name>
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
-					<type>real*8</type>
+					<type>real</type>
 					<description>
 						Multiplier to the thermo-electric coefficient flux limit.
 					</description>
@@ -7524,7 +7527,7 @@
 				<switch>
 					<name>CFLAB</name>
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
-					<type>real*8</type>
+					<type>real</type>
 					<description>
 						Multiplier to the friction force flux limit.
 					</description>
@@ -7532,7 +7535,7 @@
 				<switch>
 				  <name>CFLME_CORE</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Limit to multiplier to the electron heat flux limit in the deep core.
 				  </description>
@@ -7540,7 +7543,7 @@
 				<switch>
 				  <name>CFLME_SOL</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Limit to multiplier to the electron heat flux limit in the far SOL.
 				  </description>
@@ -7548,7 +7551,7 @@
 				<switch>
 				  <name>CFLME_TANH_A</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the electron heat flux limit.
 				  </description>
@@ -7556,7 +7559,7 @@
 				<switch>
 				  <name>CFLME_TANH_B</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the electron heat flux limit. Must be positive.
 				  </description>
@@ -7564,7 +7567,7 @@
 				<switch>
 				  <name>CFLMI_CORE</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Limit to multiplier to the ion heat flux limit in the deep core.
 				  </description>
@@ -7572,7 +7575,7 @@
 				<switch>
 				  <name>CFLMI_SOL</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Limit to multiplier to the ion heat flux limit in the far SOL.
 				  </description>
@@ -7580,7 +7583,7 @@
 				<switch>
 				  <name>CFLMI_TANH_A</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the ion heat flux limit.
 				  </description>
@@ -7588,7 +7591,7 @@
 				<switch>
 				  <name>CFLMI_TANH_B</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the ion heat flux limit. Must be positive.
 				  </description>
@@ -7596,7 +7599,7 @@
 				<switch>
 				  <name>CFLMV_CORE</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Limit to multiplier to the viscous heat flux limit in the deep core.
 				  </description>
@@ -7604,7 +7607,7 @@
 				<switch>
 				  <name>CFLMV_SOL</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Limit to multiplier to the viscous heat flux limit in the far SOL.
 				  </description>
@@ -7612,7 +7615,7 @@
 				<switch>
 				  <name>CFLMV_TANH_A</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the viscous heat flux limit.
 				  </description>
@@ -7620,7 +7623,7 @@
 				<switch>
 				  <name>CFLMV_TANH_B</name>
 				  <default>0.0</default>
-				  <type>real*8</type>
+				  <type>real</type>
 				  <description>
 					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the viscous heat flux limit. Must be positive.
 				  </description>
@@ -7642,7 +7645,7 @@
 				<switch>
 					<name>VOUT_CNV</name>
 					<default>0.0</default>
-					<type>real*8 array of size (0:NS-1)</type>
+					<type>real array of size (0:NS-1)</type>
 					<description>
 						Value of the "blob" convection velocity for species (is) at the outer grid edge (in m/s).
 					</description>
@@ -7650,7 +7653,7 @@
 				<switch>
 					<name>PW0_CNV</name>
 					<default>1.0</default>
-					<type>real*8 array of size (0:NS-1)</type>
+					<type>real array of size (0:NS-1)</type>
 					<description>
 						Exponent in radial profile of the "blob" velocity for species (is).
 					</description>
@@ -7658,7 +7661,7 @@
 				<switch>
 					<name>PW1_CNV</name>
 					<default>5.0</default>
-					<type>real*8 array of size (0:NS-1)</type>
+					<type>real array of size (0:NS-1)</type>
 					<description>
 						First exponent in poloidal profile of the "blob" velocity for species (is).
 					</description>
@@ -7666,7 +7669,7 @@
 				<switch>
 					<name>PW2_CNV</name>
 					<default>2.0</default>
-					<type>real*8 array of size (0:NS-1)</type>
+					<type>real array of size (0:NS-1)</type>
 					<description>
 						Second exponent in a poloidal profile of the "blob" velocity for species (is).
 					</description>
@@ -7752,7 +7755,7 @@
 			<switch>
 				<name>FUSION_POWER</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Fusion power occuring in core (including neutrons, in Megawatts).
 				</description>
@@ -7760,7 +7763,7 @@
 			<switch>
 				<name>SPMP_HE_TO_D</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Ratio of He to DT pumping speeds (typically, 0.8).
 				</description>
@@ -7850,7 +7853,7 @@
 			<switch>
 				<name>SPMP_NOM</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Nominal pumping speed.
 				</description>
@@ -7858,7 +7861,7 @@
 			<switch>
 				<name>TE_DET_THRESHOLD</name>
 				<default>2.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Electron temperature at the target (in eV) which is used a threshold identifying the transition of the local magnetic flux tube to detachment. The width of the zone with Te less than TE_DET_THRESHOLD (counted from the strike point towards the SOL side) is outputted into user_SPb.trc. This distance monotonically increases with increasing of radiated power fraction or with decreasing of peak target energy loads, therefore it may be used as a measure of the degree of detachment.
 				</description>
@@ -7931,7 +7934,7 @@
 			<switch>
 				<name>SPUTTER_YIELD</name>
 				<default>0.0</default>
-				<type>real*8 array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
+				<type>real array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
 				<description>
 					Contains the chemical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the physical sputtering yield in element (:,:,:,2).
 				</description>
@@ -7939,7 +7942,7 @@
 			<switch>
 				<name>SPUTTER_YIELD2</name>
 				<default>0.0</default>
-				<type>real*8 array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
+				<type>real array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
 				<description>
 					Contains the energy chemical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the energy physical sputtering yield in element(:,:,:,2).
 				</description>
@@ -7956,7 +7959,7 @@
 			<switch>
 				<name>RESCALE_SA</name>
 				<default>1.0</default>
-				<type>real*8 array of size(0:NS-1)</type>
+				<type>real array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtsa: ionisation rates of species (is).
 				</description>
@@ -7964,7 +7967,7 @@
 			<switch>
 				<name>RESCALE_RA</name>
 				<default>1.0</default>
-				<type>real*8 array of size(0:NS-1)</type>
+				<type>real array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtra: recombination rates of species (is).
 				</description>
@@ -7972,7 +7975,7 @@
 			<switch>
 				<name>RESCALE_QA</name>
 				<default>1.0</default>
-				<type>real*8 array of size(0:NS-1)</type>
+				<type>real array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtqa: electron cooling rates of species (is).
 				</description>
@@ -7980,7 +7983,7 @@
 			<switch>
 				<name>RESCALE_CX</name>
 				<default>1.0</default>
-				<type>real*8 array of size(0:NS-1)</type>
+				<type>real array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtcx: charge exchange rates of species (is).
 				</description>
@@ -7988,7 +7991,7 @@
 			<switch>
 				<name>RESCALE_RD</name>
 				<default>1.0</default>
-				<type>real*8 array of size(0:NS-1)</type>
+				<type>real array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtrd: line radiation rates of species (is).
 				</description>
@@ -7996,7 +7999,7 @@
 			<switch>
 				<name>RESCALE_BR</name>
 				<default>1.0</default>
-				<type>real*8 array of size(0:NS-1)</type>
+				<type>real array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtbr: bremsstrahlung radiation rates of species (is).
 				</description>
@@ -8321,4 +8324,3 @@
 	To install adaptive-wrap do: M-x package-install RET adaptive-wrap RET
 	eval: (visual-line-mode t)
 -->
-

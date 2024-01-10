@@ -164,14 +164,16 @@ c*** Check the topology of the grid and the list of target edges
           itrg=0
         else if (boundary_namelist.ne.0) then
           ntrgts=0
+          target_east = .false.
+          target_west = .false.
           do i = 1, nbc
             if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
               target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                      bcene(i).eq.15
+     &                      bcene(i).eq.15 .or. target_east
             end if
             if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
-               target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                       bcene(i).eq.15
+              target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                      bcene(i).eq.15 .or. target_west
             end if
           end do
           if (target_west) then

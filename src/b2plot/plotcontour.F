@@ -279,6 +279,9 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
         IC=1
         IX=-1
         IY=-1
+        do while (region(ix,iy,0).eq.0.and.iy.lt.ny)
+          iy=iy+1
+        end do
         X(IC)=real(CR(IX,IY),R4)
         Y(IC)=real(CZ(IX,IY),R4)
         do while(iy.lt.ny .and. topiy(ix,iy).eq.iy+1)
@@ -316,13 +319,14 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
           y(ic)=real(cz(ix,iy),R4)
         end if
         do iy = iyt-1, -1, -1
+          if (region(ix,iy,0).eq.0) cycle
           ic=ic+1
           x(ic)=real(cr(ix,iy),R4)
           y(ic)=real(cz(ix,iy),R4)
         end do
         iniso = .false.
         iy=0
-        do while(ix.gt.-1 .and. .not.iniso)
+        do while(ix.gt.-1 .and. .not.iniso .and. .not.periodic_bc.eq.1)
           iniso=.false.
           if(iyt.eq.ny) then
             ix=leftix(ix,iy)
@@ -929,13 +933,6 @@ C            CALL CPCLDR(z,RWRK,IWRK)
 
       ENDIF
 
-      IF(DEBUG) THEN
-        DO I=1,2
-          WRITE(DEBUGSTRING,'(I5)') I
-          CALL ARDBPA(MAP,I,DEBUGSTRING)
-        ENDDO
-      ENDIF
-
       IF(LBLBR.AND.CONTPLOT.and.colprt) THEN
         DO I=1,NCONT+1
           LFIN(I)=choose_color(i-1,0)
@@ -996,6 +993,13 @@ C            CALL CPCLDR(z,RWRK,IWRK)
 C Draw Mesh/Separatrix if wanted
       if(wall) call data_copy(is)
       call additional_elements(nx,ny,physical)
+
+      IF(DEBUG) THEN
+        DO I=1,2
+          WRITE(DEBUGSTRING,'(I5)') I
+          CALL ARDBPA(MAP,I,DEBUGSTRING)
+        ENDDO
+      ENDIF
 
       call subend ()
       RETURN
