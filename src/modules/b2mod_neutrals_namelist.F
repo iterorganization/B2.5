@@ -797,7 +797,12 @@ c
       do is = 1, nnatmi
         call xertst(0.le.eb2atcr(is).and.eb2atcr(is).lt.ns,
      .   'faulty input eb2atcr')
-        call xertst(0.le.latmscl(is), 'faulty input latmscl')
+        if (eb2atcr(is).gt.0) then
+          call xertst(.not.lnext(eb2atcr(is)-1,eb2atcr(is)),
+     .     'eb2atcr must be the first species in sequence !')
+        end if
+        call xertst(0.le.latmscl(is).and.latmscl(is).le.nspecies,
+     .   'faulty input latmscl')
 #ifdef B25_EIRENE
         if (latmscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Atom ',is,
@@ -821,7 +826,8 @@ c
         do i = 1, nnatmi
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
-        call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
+        call xertst(0.le.lmolscl(is).and.lmolscl(is).le.nspecies,
+     .   'faulty input lmolscl')
 #ifdef B25_EIRENE
         if (lmolscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Molecule ',is,
@@ -852,7 +858,8 @@ c
 #endif
       enddo
       do is = 1, nnioni
-        call xertst(0.le.lionscl(is), 'faulty input lionscl')
+        call xertst(0.le.lionscl(is).and.lionscl(is).le.nspecies,
+     &   'faulty input lionscl')
       end do
       do is = 1, nnstsi
         call xertst (0.le.lcns(is).and.lcns(is).le.nnstsi,

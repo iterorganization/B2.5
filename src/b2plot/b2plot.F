@@ -1260,7 +1260,7 @@ c
       color_set=.true.
       call contourplot(.true.)     ! draw contour plot by default
       call nofill(.false.)         ! fill contours by default
-      call ipolate(.false.)        ! do not use splines untless wanted
+      call ipolate(.false.)        ! do not use splines unless wanted
       call clvl(.true.)            ! contour level lines plotted
       call labelon(.true.)         ! contour labels drawn
       call gridon(.false.)         ! overlayed mesh off by default
@@ -2527,7 +2527,7 @@ c
             write(*,*) 'Near SOL target:   ',sumr(1)
             write(*,*) 'Far SOL target:    ',sumr(2)
             write(*,*) 'Pressure drop (inner & outer): ',
-     1             suml(1)/sumjxa,sumr(1)+sumr(2)/sumjxa
+     1             suml(1)/sumjxa,(sumr(1)+sumr(2))/sumjxa
           else if (nnreg(0).le.7) then
             write(*,*) 'Midplane pressure: ',sumjxa
             write(*,*) 'Western target:    ',suml(1)
@@ -3553,13 +3553,13 @@ c     assumes that bb is OK for 1d cases
                 if (bottomiy(ix,iy).ne.-2) then
                   mach(ix,iy,0)=r0*
      1             (pz(bottomix(ix,iy),bottomiy(ix,iy))-pz(ix,iy))/
-     .              (rave(bottomiy(ix,iy))-rave(iy))/
+     .              (rave(iy)-rave(bottomiy(ix,iy)))/
      2             (bb(ix,iy,3)**2/2.0_R8/mu0)/
      3             (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
                 else if (topiy(ix,iy).ne.ny+1) then
                   mach(ix,iy,0)=r0*
      1             (pz(ix,iy)-pz(topix(ix,iy),topiy(ix,iy)))/
-     .             (rave(iy)-rave(topiy(ix,iy)))/
+     .             (rave(topiy(ix,iy))-rave(iy))/
      2             (bb(ix,iy,3)**2/2.0_R8/mu0)/
      3             (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
                 else
