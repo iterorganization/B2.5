@@ -195,8 +195,8 @@ for category in categories:
     fort += '.\n'
     fort += dedent(category.findtext('introduction/description'),
                    prefix='\n*    ')[:-1]
-    # Adding all parameters and switches
 
+    # Adding all parameters and switches
     for element in category:
         if element.tag == 'switch':
             text = ''
@@ -220,14 +220,12 @@ for category in categories:
                 if counter == N and element.findtext('description'):
                     text += '\n'
                     text += dedent_without_wraping(element.find('description').text)
-
                 add_to_fort(text)
-
 
         # Adding a standalone note.
         elif element.tag == 'note':
-            fort += '*\n'
-            text = dedent(element.text, prefix='\n* ')+'*\n'
+            fort += '\n*\n'
+            text = dedent(element.text, prefix='\n* ')+'*'
             fort += text
             continue
         else:
