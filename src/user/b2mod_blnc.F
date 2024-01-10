@@ -273,9 +273,9 @@ c<<<
             write(*,hlp_prt) j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
      ,                                       (hlpit_pl(i),i=1,nspecies)
-           end do
-         end do
-       end if
+          end do
+        end do
+      end if
 c>>>
 
 c*** The plasma flows across the boundaries

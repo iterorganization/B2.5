@@ -597,11 +597,11 @@ cank
             do i = 1, nbc
               if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
                 target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                        bcene(i).eq.15
+     &                        bcene(i).eq.15 .or. target_east
               end if
               if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
                 target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                        bcene(i).eq.15
+     &                        bcene(i).eq.15 .or. target_west
               end if
             end do
           else if (geometryType.eq.GEOMETRY_ANNULUS) then
