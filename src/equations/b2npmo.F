@@ -359,11 +359,13 @@ cdjm Jan2017 update momentum source components for balance
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
      .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
      .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
-        if(switch%b2mndt_style.eq.2) then                              !srv 10.10.22 {
-          dv%resmo(:,is)=dv%resmo(:,is)+
-     &      (pl%ua(:,is)-psnl%ua(:,is))*
-     &       am(is)*mp*pl%na(:,is)*sr%smodt(:,3,is)
-        endif                                                          !srv 10.10.22 }
+        if(switch%b2mndt2_temp_3.eq.1) then
+         if(switch%b2mndt_style.eq.2) then                              !srv 10.10.22 {
+           dv%resmo(:,is)=dv%resmo(:,is)+
+     &       (pl%ua(:,is)-psnl%ua(:,is))*
+     &        am(is)*mp*pl%na(:,is)*sr%smodt(:,3,is)
+         endif                                                          !srv 10.10.22 }
+        endif
       endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
@@ -488,7 +490,6 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
        endif                                                           !srv 22.05.18
       enddo
 
-csw 21feb2014, execute simultaneous corrections always
       if (solving.and.any(solvemo(0:ns-1,0:mpg%nnreg(0)))
      &                  .and.any(solvemt(0:mpg%nnreg(0)))) then        !srv 06.07.10 22.05.18
 *     ..compute simultaneous correction
