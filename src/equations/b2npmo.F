@@ -535,42 +535,26 @@ cdjm Jan2017 update momentum source components for balance
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
-     .    rob, smb, flub, flubv, co%cvsahz(:,:,is), 
-     .    dv%resmo(:,is),
-     .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
-
-cdjm Mar2019 output the total momentum flux and source for balance
-        if (balance_netcdf.ne.0) then
-          fmo_tot(:,:,is)=dv%fmo(:,:,is)
+     .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
+     .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
+        if(switch%b2mndt2_temp_3.eq.1) then
+         if(switch%b2mndt_style.eq.2) then                              !srv 10.10.22 {
+           dv%resmo(:,is)=dv%resmo(:,is)+
+     &       (pl%ua(:,is)-psnl%ua(:,is))*
+     &        am(is)*mp*pl%na(:,is)*sr%smodt(:,3,is)
+         endif                                                          !srv 10.10.22 }
         endif
-      elseif (switch%b2mndt_bdf.eq.2) then
-        if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
-     &     .or.switch%get_residuals.eq.1) then
-          dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
-     &     0.5_R8*psnl%dmodt(1:mpg%nCi,is) ! +1/2*m*V*[d(nu)/dt]_i (where i denotes the previous time-step)
-        endif
-      endif
+      endif                                                            !srv 22.05.18
 
-#ifndef FIXED_POINT
-cdjm Mar2019 output the total momentum flux and source for balance
-      if (balance_netcdf.ne.0) then
-        fmo_tot(:,:,is)=dv%fmo(:,:,is)
-      endif
-#endif
+       write (chns,'(i3.3)') is                                        !srv 18.03.10
 
-      write (chns,'(i3.3)') is                                          !srv 18.03.10
-
-      if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
-        call my_out_us(70,nCv,0,dv%resmo(1,is),
-     &  'b2npmo_resmo'//chns)
-        call my_out_us(70,nFc,1,dv%fmo(1,0,is),
-     &  'b2npmo_fmo_th'//chns)
-        call my_out_us(70,nFc,1,dv%fmo(1,1,is),
-     &  'b2npmo_fmo_r'//chns)
-        if(.not. is_neutral(is)) then
-          call my_out_us(70,nFc,1,flubv(1,0),
-     &  'b2npmo_flubv_th'//chns)
-          wrks=smbvv(:,0)+smbvv(:,1)*pl%ua(:,is)+
+       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then !srv 12.07.02 {
+         call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,0,is),'b2npmo_fmo_th'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,1,is),'b2npmo_fmo_r'//chns)
+         if(.not. is_neutral(is)) then
+            call my_out_us(70,nFc,1,flubv(1,0),'b2npmo_flubv_th'//chns)
+            wrks=smbvv(:,0)+smbvv(:,1)*pl%ua(:,is)+
      &         smbvv(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvv(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
           call my_out_us(70,nCv,0,wrks,'b2npmo_smovv'//chns)
@@ -696,15 +680,6 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
        endif                !srv 22.05.18
       enddo
 
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
-!$omp end parallel do
-#endif
-
-*     .. attribute kt_neo, resmt
-      dv%resmt  = resmt
-      co%kt_neo = kt_neo
-
-csw 21feb2014, execute simultaneous corrections always
       if (solving.and.any(solvemo(0:ns-1,0:mpg%nnreg(0)))
      &                  .and.any(solvemt(0:mpg%nnreg(0)))) then         !srv 06.07.10 22.05.18
 *     ..compute simultaneous correction
