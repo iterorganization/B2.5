@@ -512,6 +512,12 @@ c   same Eirene stratum
         end do !}
         call xertst(.not.hlp_bad_isp,
      1     'eirene_mc: error in recyceir specification')
+cxpb Add settings for 'duplicate' atomic species
+        do ls=1,nnatmi !{
+          if (ispc_ref(ls).ne.-1) cycle
+          j=eb2atcr(ls)
+          if (lnext(j,j+1)) ispc_ref(ls)=j+1
+        end do !}
 
 csw 08feb2011 l_ddt definition moved down after Eirene call when it is
 c             defined
@@ -908,18 +914,24 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-      call extend(dab2(1:nCv,1:nnatmi,1), mpg, nnatmi)
-      call extend(tab2(1:nCv,1:nnatmi,1), mpg, nnatmi)
-      call extend(dmb2(1:nCv,1:nnmoli,1), mpg, nnmoli)
-      call extend(tmb2(1:nCv,1:nnmoli,1), mpg, nnmoli)
-      call extend(dib2(1:nCv,1:nnioni,1), mpg, nnioni)
-      call extend(tib2(1:nCv,1:nnioni,1), mpg, nnioni)
-      call extend(rfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
-      call extend(rfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
-      call extend(pfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
-      call extend(pfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
-      call extend(tfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
-      call extend(tfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
+      if (nnatmi.gt.0) then
+        call extend(dab2(1:nCv,1:nnatmi,1), mpg, nnatmi)
+        call extend(tab2(1:nCv,1:nnatmi,1), mpg, nnatmi)
+        call extend(rfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
+        call extend(pfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
+        call extend(tfluxa(1:nCv,1:nnatmi,1), mpg, nnatmi)
+      end if
+      if (nnmoli.gt.0) then
+        call extend(dmb2(1:nCv,1:nnmoli,1), mpg, nnmoli)
+        call extend(tmb2(1:nCv,1:nnmoli,1), mpg, nnmoli)
+        call extend(rfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
+        call extend(pfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
+        call extend(tfluxm(1:nCv,1:nnmoli,1), mpg, nnmoli)
+      end if
+      if (nnioni.gt.0) then
+        call extend(dib2(1:nCv,1:nnioni,1), mpg, nnioni)
+        call extend(tib2(1:nCv,1:nnioni,1), mpg, nnioni)
+      end if
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
@@ -3428,14 +3440,14 @@ c$$$              recycereg(k)=recycereg(k)-edissml(ic,imol,0)
           endif
         enddo
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnatmi,'(1x,e14.7))'
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. ENEUTRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnatmi.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. ENEUTRAD : ',
      .   (SUM(eneutrad(1:nCv,iatm,0)),iatm=1,nnatmi)
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. EMOLRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnmoli.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. EMOLRAD : ',
      .   (SUM(emolrad(1:nCv,imol,0)),imol=1,nnmoli)
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. EIONRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnioni.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. EIONRAD : ',
      .   (SUM(eionrad(1:nCv,iion,0)),iion=1,nnioni)
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
