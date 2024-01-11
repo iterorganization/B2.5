@@ -13,9 +13,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
-!WG_TODO     2          b2srdt_shi0to3, balance_netcdf
+      use b2mod_balance !djm Jan2017
+     1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
+     2          b2srdt_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -56,9 +56,6 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv)
-!WG_TODO      real (kind=R8) :: !djm Jan2017
-!WG_TODO     &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
-!WG_TODO     &  shetmp(nCv,0:3), shitmp(nCv,0:3)!, shntmp(nCv,0:3)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -88,13 +85,6 @@
        call b2xvsg (nCv, kt0, 1, 'kt0', '.ge.')
        call b2xvsg (nCv, zt0, 1, 'zt0', '.ge.')
       endif
-
-cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
-!WG_TODO      snatmp = sr%sna
-!WG_TODO      smotmp = sr%smo
-!WG_TODO      shetmp = sr%she
-!WG_TODO      shitmp = sr%shi
-!!      shntmp = sr%shn
 
 * ..include the contributions from dtim
 *   ..modify snadt
@@ -235,12 +225,12 @@ cxpb  This treatment added as a fix to get the ExB runs going
       enddo
 
 cdjm Store the total change in linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srdt_sna0to1 = snadt-snatmp
-!WG_TODO        b2srdt_smo0to3 = smodt-smotmp
-!WG_TODO        b2srdt_she0to3 = shedt-shetmp
-!WG_TODO        b2srdt_shi0to3 = shidt-shitmp
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2srdt_sna0to1 = sr%snadt
+        b2srdt_smo0to3 = sr%smodt
+        b2srdt_she0to3 = sr%shedt
+        b2srdt_shi0to3 = sr%shidt
+      endif
 
       if ((switch%b2npmo_iout.eq.1.or.
      &                   switch%iout_b2wdat .eq. 4).and.lout) then      !srv 11.09.09 {

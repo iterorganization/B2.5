@@ -11,12 +11,13 @@
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
-!WG_TODO     &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
-!WG_TODO     &          b2stel_she0to3,
-!WG_TODO     &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
-!WG_TODO     &          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
+     &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
+     &          b2stel_she0to3,
+     &          b2stel_she_ion0to3, b2stel_she_rec0to3,
+     &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
+     &          balance_netcdf
 #ifdef ASTRA
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
@@ -62,11 +63,12 @@
 !WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       character chns*3!, chk*1                                          !srv 30.06.08
       real (kind=R8) ::
-     *  rf0, t0, t1, tkin, t1i, t1n
+     *  rf0, t0, t1, t2, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) ::
      *  sna0_ion(nCv,0:1,0:ns-1), sna0_rec(nCv,0:1,0:ns-1),
      *  smq0_ion(nCv,0:3,0:ns-1), smq0_rec(nCv,0:3,0:ns-1),
+     &  she0_ion(nCv,0:3),        she0_rec(nCv,0:3),
      &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3),
      &  shn0_ion(nCv,0:3),        shn0_rec(nCv,0:3)
 *   ..procedures
@@ -132,6 +134,8 @@
       call sfill (nCv*4*ns, 0.0_R8, smq0_ion, 1)
       call sfill (nCv*4*ns, 0.0_R8, smq0_rec, 1)
       call sfill (nCv*4, 0.0_R8, srw%she0, 1)
+      call sfill (nCv*4, 0.0_R8, she0_ion, 1)
+      call sfill (nCv*4, 0.0_R8, she0_rec, 1)
       call sfill (nCv*4, 0.0_R8, shi0_ion, 1)
       call sfill (nCv*4, 0.0_R8, shi0_rec, 1)
       call sfill (nCv*4, 0.0_R8, shn0_ion, 1)
@@ -165,6 +169,11 @@
            srw%rsana(iCv,is) = t0*pl%na(iCv,is)
            rsanareg(mpg%cvReg(iCv),is)=rsanareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
+*       ..compute electron energy sink
+            t2 = t0*rt%rpi(iCv,is)*ev
+            she0_ion(iCv,0) = she0_ion(iCv,0)+(1.0_R8+rf0)*t2
+            she0_ion(iCv,3) = she0_ion(iCv,3)-
+     &                          rf0*t2/(dv%ne(iCv)*pl%te(iCv))
 *       ..compute atom heat source
            t1 = t0*pl%na(iCv,is)*(1.0_R8-switch%BoRiS)*
      &        ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
@@ -289,6 +298,11 @@
            srw%rrana(iCv,is) = t0*pl%na(iCv,is)
            rranareg(mpg%cvReg(iCv),is)=rranareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
+*       ..compute electron heat source
+           t2 = t0*pl%na(iCv,is)*rt%rpi(iCv,is)*ev
+           she0_rec(iCv,0) = she0_rec(iCv,0)+(1.0_R8+rf0)*t2
+           she0_rec(iCv,0) = she0_rec(iCv,3)-
+     &                         rf0*t2/(dv%ne(iCv)*pl%te(iCv))
 *       ..compute atom heat source
            if (switch%tn_style.eq.0.or.nint(zn(is)).ne.1
      &                             .or..not.is_neutral(is-1)) then      !! combined ion-neutral, and/or non-hydrogenic (default)
@@ -395,6 +409,11 @@ c accounted for)
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
           srw%she0(iCv,3) = srw%she0(iCv,3)-
      &     (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
+          if (balance_netcdf.ne.0) then
+            b2stel_she0to3(iCv,0,is) = rf0*t0
+            b2stel_she0to3(iCv,3,is) =
+     &           -(1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
+          endif
           srw%rqahe(iCv,is) = srw%rqahe(iCv,is) + t0
           rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
@@ -524,17 +543,16 @@ c accounted for)
       endif                                                          !srv 30.06.08 11.09.09 }
 
 cdjm Jan2017 Keep linearised sources for balance
-#ifdef WG_TODO
       if (balance_netcdf.ne.0) then
         b2stel_sna_ion0to1 = sna0_ion
         b2stel_sna_rec0to1 = sna0_rec
         b2stel_smq_ion0to3 = smq0_ion
         b2stel_smq_rec0to3 = smq0_rec
-        b2stel_she0to3=srw%she0
-        b2stel_shi_ion0to3=shi0_ion
-        b2stel_shi_rec0to3=shi0_rec
+        b2stel_she_ion0to3 = she0_ion
+        b2stel_she_rec0to3 = she0_rec
+        b2stel_shi_ion0to3 = shi0_ion
+        b2stel_shi_rec0to3 = shi0_rec
       endif
-#endif
 
 * ..return
       ncall_b2stel = ncall_b2stel+1
