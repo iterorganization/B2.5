@@ -9,8 +9,10 @@
       use b2us_geo
       use b2us_map
       use b2mod_b2cmpa
-!WG_TODO      use b2mod_balance                                           !djm Jan2017
-!WG_TODO     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
+      use b2mod_balance                                           !djm Jan2017
+     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
+     &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
+     &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -36,7 +38,8 @@
      * wrk4(nCv),                                  !djm Jan2017
 #endif
      * wrk5(nCv), wrk6(nCv),                       !srv 28.03.17
-     * tb(nCv), nete(nCv)
+     * tb(nCv), nete(nCv),
+     * smbgp_b4gr(nCv,0:3)                         !djm Jul2018
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -49,10 +52,11 @@
 *.declarations
 
 *   ..local variables
-      integer iCv!, k
+      integer iCv, iFc!, k
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
-     *   t0, wrkf(nFc), wrkv(nVx)
+     *   t0, wrkf(nFc), wrkv(nVx), nbf(nFc), tbf(nFc), rzbf(nFc), 
+     *   tef(nFc)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -85,6 +89,12 @@
       else
         tb = ti
       endif
+
+* ..interpolate some variables to cell faces
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,nb,nbf)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,tb,tbf)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rzb,rzbf)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,te,tef)
 
       if (switch%b2sigp_phm0.ne.0.0_R8) then                         !srv 26.06.18
 * ..compute pressure gradient term
@@ -236,37 +246,20 @@
          wrk6(iCv) = -t0*rzb(iCv)*(nb(iCv)/ne(iCv))*wrk1(iCv)
          smbgp(iCv,0) = wrk5(iCv) + wrk6(iCv)
         enddo
-cdjm compute b2sigp_pstat0to3 on left cell face
-#ifdef WG_TODO
+cdjm compute b2sigp_pstat0to3 on cell face
         if (balance_netcdf.ne.0) then
           b2sigp_pstat0to3 = 0.0_R8
-          do iy = -1, ny
-           do ix = -1, nx
-            if(leftix(ix,iy).eq.-2.or.
-     &         bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-              b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-            else
-              t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
-              b2sigp_pstat0to3(ix,iy,0,isb) =
-     &         t0*((wrk2(leftix(ix,iy),leftiy(ix,iy))+
-     &              rzb(leftix(ix,iy),leftiy(ix,iy))*
-     &              (nb(leftix(ix,iy),leftiy(ix,iy))/
-     &              ne(leftix(ix,iy),leftiy(ix,iy)))*
-     &              wrk3(leftix(ix,iy),leftiy(ix,iy)))*hx(ix,iy)+
-     &             (wrk2(ix,iy)+rzb(ix,iy)*(nb(ix,iy)/ne(ix,iy))*
-     &              wrk3(ix,iy))*hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-            endif
-           enddo
+          b2sigp_pstati0to3 = 0.0_R8
+          b2sigp_pstate0to3 = 0.0_R8
+          do iFc = 1, nFc
+            t0 = geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
+     &        geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
+            b2sigp_pstat0to3(iFc,0,isb) = t0*(nbf(iFc)*tbf(iFc)+
+     &        rzbf(iFc)*nbf(iFc)*tef(iFc))
+            b2sigp_pstati0to3(iFc,0,isb) = t0*nbf(iFc)*tbf(iFc)
+            b2sigp_pstate0to3(iFc,0) = t0*rzbf(iFc)*nbf(iFc)*tef(iFc)
           enddo
         endif
-#endif
       else                                                            !srv 23.03.10 {
         call xertst(switch%pot_eq.eq.1,
      &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
@@ -285,37 +278,27 @@ cdjm compute b2sigp_pstat0to3 on left cell face
          wrk6(iCv) = -t0*qe*rzb(iCv)*nb(iCv)*wrk1(iCv)
          smbgp(iCv,0) = wrk5(iCv) + wrk6(iCv)
         enddo                                                         !srv 23.03.10 }
-cdjm compute b2sigp_pstat0to3 on left cell face
-#ifdef WG_TODO
+cdjm compute b2sigp_pstat0to3 on cell face
         if (balance_netcdf.ne.0) then
           b2sigp_pstat0to3 = 0.0_R8
-          do iy = -1, ny
-           do ix = -1, nx
-            if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &         bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-              b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-            else
-              t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
-              b2sigp_pstat0to3(ix,iy,0,isb) =
-     &         -t0*wrk0(ix,iy)
-     &         -t0*qe*wrk1(ix,iy)*
-     &         (rzb(ix,iy)*nb(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+
-     &          rzb(leftix(ix,iy),leftiy(ix,iy))*
-     &          nb(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/
-     &         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-            endif
-           enddo
-          enddo
+!WG_TODO          do iFc = 1,mpg%nFc
+!WG_TODO             t0=geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
+!WG_TODO      &        geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
+!WG_TODO             b2sigp_pstat0to3(iFc,0,isb) =
+!WG_TODO      &         -t0*wrk0(ix,iy)
+!WG_TODO      &         -t0*qe*wrk1(ix,iy)*
+!WG_TODO      &         (rzb(ix,iy)*nb(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+
+!WG_TODO      &          rzb(leftix(ix,iy),leftiy(ix,iy))*
+!WG_TODO      &          nb(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/
+!WG_TODO      &         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+!WG_TODO               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+!WG_TODO               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+!WG_TODO               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+!WG_TODO          enddo
         endif
-#endif
       endif                                                           !srv 02.07.08 }
 
+      smbgp_b4gr=smbgp !djm Jul2018
 cxpb apply restriction to pressure gradient for minority ions
       if (switch%b2sigp_pressure_restriction.ne.0) then
        wrk0 = nb*tb
@@ -355,9 +338,12 @@ cxpb apply restriction to pressure gradient for minority ions
       endif                                                           !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised source for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2sigp_smogp0to3(-1:nx,-1:ny,0:3,isb)=smbgp
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2sigp_smogp0to3(1:nCv,0:3,isb)=smbgp
+        b2sigp_smogpi0to3(1:nCv,0,isb)=wrk5 !djm Jul2018
+        b2sigp_smogpe0to3(1:nCv,0,isb)=wrk6 !djm Jul2018
+        b2sigp_smogpgr0to3(1:nCv,0:3,isb)=smbgp-smbgp_b4gr
+      endif
 
 * ..return
       ncall_b2sigp = ncall_b2sigp+1

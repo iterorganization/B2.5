@@ -19,10 +19,8 @@
 #endif
       use b2mod_balance !djm Jan2017
      1 , only : balance_netcdf
-#ifdef WG_TODO
      2        , b2stbm_sna0to1, b2stbm_smo0to3, b2stbm_she0to3,
      3          b2stbm_shi0to3
-#endif
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
@@ -469,10 +467,10 @@ cxpb
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
-!WG_TODO        b2stbm_sna0to1 = sna0
-!WG_TODO        b2stbm_smo0to3 = smo0
-!WG_TODO        b2stbm_she0to3 = she0
-!WG_TODO        b2stbm_shi0to3 = shi0
+        b2stbm_sna0to1 = srw%sna0
+        b2stbm_smo0to3 = srw%smo0
+        b2stbm_she0to3 = srw%she0
+        b2stbm_shi0to3 = srw%shi0
       endif
 
 * ..return

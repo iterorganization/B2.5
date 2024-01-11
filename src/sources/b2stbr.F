@@ -14,14 +14,14 @@
 !WG_TODO      use b2mod_first_flight
       use b2mod_constants
 !WG_TODO      use b2mod_neutrals_namelist
-!      use b2mod_balance !djm Jan2017
-!     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
-!     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
-!     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
-!     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
-!     &          b2stbr_first_flight_sna0to1,
-!     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
-!     &          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
+     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
+     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
+     &          b2stbr_first_flight_sna0to1,
+     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+     &          balance_netcdf
       use b2mod_subsys
 #ifdef B25_EIRENE
       use b2mod_eirene
@@ -77,12 +77,10 @@
       type (B2Average), intent(in) :: st_avg
       logical main_call
 *   ..local variables
-#ifdef WG_TODO
       real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
      &                  smotmp(nCv,0:3,0:ns-1),
      &                  shetmp(nCv,0:3),
      &                  shitmp(nCv,0:3)
-#endif
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -393,15 +391,13 @@ c   --> better solution wanted here..
        if (switch%b2stbr_neutrals_namelist.eq.1
      &                          .or. switch%use_eirene.ne.0) then
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
-#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
-          snatmp=sna0
-          smotmp=smo0
-          shetmp=she0
-          shitmp=shi0
+          snatmp=st%srw%sna0
+          smotmp=st%srw%smo0
+          shetmp=st%srw%she0
+          shitmp=st%srw%shi0
         endif
-#endif
         call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
      &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
@@ -409,15 +405,13 @@ c   --> better solution wanted here..
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
      &   main_call, new_sputter_namelist, shi0_ff, f_redep)
-#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
-          b2stbr_phys_sna0to1=sna0-snatmp
-          b2stbr_phys_smo0to3=smo0-smotmp
-          b2stbr_phys_she0to3=she0-shetmp
-          b2stbr_phys_shi0to3=shi0-shitmp
+          b2stbr_phys_sna0to1=st%srw%sna0-snatmp
+          b2stbr_phys_smo0to3=st%srw%smo0-smotmp
+          b2stbr_phys_she0to3=st%srw%she0-shetmp
+          b2stbr_phys_shi0to3=st%srw%shi0-shitmp
         endif
-#endif
        else
 #ifdef WG_TODO
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
