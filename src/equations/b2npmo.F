@@ -61,7 +61,7 @@
 !            => add again to B2Source?
       real (kind=R8) ::
      *  smcf(nCv,0:ns-1), smpr(nCv,0:ns-1), smpt(nCv,0:ns-1),
-     *  smfr(nCv,0:ns-1)
+     *  smfr(nCv,0:ns-1), ubf(nFc), robf(nFc)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -315,7 +315,10 @@
 cdjm Jan2017 update momentum source components for balance
       if (balance_netcdf.ne.0) then
          tot_smo0to3(:,:,is)=smb !djm Mar2019
-        call update_balance_sources_momentum(nCv,is,pl%ua(:,is),rob)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
+        call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
+     &    ubf,robf)
       endif
 
 *    ..compute residual

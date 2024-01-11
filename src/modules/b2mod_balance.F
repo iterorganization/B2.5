@@ -611,12 +611,12 @@
       allocate(b2sigp_smogpe_bal(nCv,0:nsd-1))
       allocate(b2sigp_smogpgr0to3(nCv,0:3,0:nsd-1))
       allocate(b2sigp_smogpgr_bal(nCv,0:nsd-1))
-      allocate(b2sigp_pstat0to3(nCv,0:3,0:nsd-1))
-      allocate(b2sigp_pstat_bal(nCv,0:nsd-1))
-      allocate(b2sigp_pstati0to3(nCv,0:3,0:nsd-1))
-      allocate(b2sigp_pstati_bal(nCv,0:nsd-1))
-      allocate(b2sigp_pstate0to3(nCv,0:3))
-      allocate(b2sigp_pstate_bal(nCv))
+      allocate(b2sigp_pstat0to3(nFc,0:3,0:nsd-1))
+      allocate(b2sigp_pstat_bal(nFc,0:nsd-1))
+      allocate(b2sigp_pstati0to3(nFc,0:3,0:nsd-1))
+      allocate(b2sigp_pstati_bal(nFc,0:nsd-1))
+      allocate(b2sigp_pstate0to3(nFc,0:3))
+      allocate(b2sigp_pstate_bal(nFc))
       allocate(tot_smo0to3(nCv,0:3,0:nsd-1))
       allocate(tot_smo_bal(nCv,0:nsd-1))
       b2stbr_phys_smo0to3=0.0_R8
@@ -720,9 +720,9 @@
       allocate(b2sigp_smogpi_bal_av(nCv,0:nsd-1))
       allocate(b2sigp_smogpe_bal_av(nCv,0:nsd-1))
       allocate(b2sigp_smogpgr_bal_av(nCv,0:nsd-1))
-      allocate(b2sigp_pstat_bal_av(nCv,0:nsd-1))
-      allocate(b2sigp_pstati_bal_av(nCv,0:nsd-1))
-      allocate(b2sigp_pstate_bal_av(nCv))
+      allocate(b2sigp_pstat_bal_av(nFc,0:nsd-1))
+      allocate(b2sigp_pstati_bal_av(nFc,0:nsd-1))
+      allocate(b2sigp_pstate_bal_av(nFc))
       allocate(tot_smo_bal_av(nCv,0:nsd-1))
       allocate(resmo_av(nCv,0:nsd-1))
 *   ..Arrays for electron heat balance:
@@ -954,7 +954,7 @@
       allocate(ti_av(nCv))
       allocate(rpt_av(nCv,0:nsd-1))
       allocate(kinrgy_av(nCv,0:nsd-1))
-      allocate(fne_av(nCv,0:1))
+      allocate(fne_av(nFc,0:1))
 
       return
       end subroutine alloc_b2mod_balance
@@ -1702,13 +1702,14 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       return
       end subroutine update_balance_sources_particles
 
-      subroutine update_balance_sources_momentum(nCv,isb,ub,rob) !djm Jan2017
+      subroutine update_balance_sources_momentum(nCv,nFc,isb,ub,rob,
+     &  ubf,robf) !djm Jan2017
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv,isb
-      real (kind=R8):: ub(nCv), rob(nCv)
+      integer nCv,nFc,isb
+      real (kind=R8):: ub(nCv), rob(nCv), ubf(nFc), robf(nFc)
 *   ..local variables
-      integer iCv,istrai,nstrad
+      integer iCv,iFc,istrai,nstrad
 *   ..procedures
       intrinsic size
 
@@ -1868,22 +1869,24 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &            b2sigp_smogpgr0to3(iCv,1,isb)*ub(iCv)+
      &            b2sigp_smogpgr0to3(iCv,2,isb)*rob(iCv)+
      &            b2sigp_smogpgr0to3(iCv,3,isb)*rob(iCv)*ub(iCv)
-          b2sigp_pstat_bal(iCv,isb)=b2sigp_pstat0to3(iCv,0,isb)+
-     &            b2sigp_pstat0to3(iCv,1,isb)*ub(iCv)+
-     &            b2sigp_pstat0to3(iCv,2,isb)*rob(iCv)+
-     &            b2sigp_pstat0to3(iCv,3,isb)*rob(iCv)*ub(iCv)
-          b2sigp_pstati_bal(iCv,isb)=b2sigp_pstati0to3(iCv,0,isb)+
-     &            b2sigp_pstati0to3(iCv,1,isb)*ub(iCv)+
-     &            b2sigp_pstati0to3(iCv,2,isb)*rob(iCv)+
-     &            b2sigp_pstati0to3(iCv,3,isb)*rob(iCv)*ub(iCv)
-          b2sigp_pstate_bal(iCv)=b2sigp_pstate0to3(iCv,0)+
-     &            b2sigp_pstate0to3(iCv,1)*ub(iCv)+
-     &            b2sigp_pstate0to3(iCv,2)*rob(iCv)+
-     &            b2sigp_pstate0to3(iCv,3)*rob(iCv)*ub(iCv)
           tot_smo_bal(iCv,isb)=tot_smo0to3(iCv,0,isb)+
      &            tot_smo0to3(iCv,1,isb)*ub(iCv)+
      &            tot_smo0to3(iCv,2,isb)*rob(iCv)+
      &            tot_smo0to3(iCv,3,isb)*rob(iCv)*ub(iCv)
+      enddo
+      do iFc = 1, nFc
+          b2sigp_pstat_bal(iFc,isb)=b2sigp_pstat0to3(iFc,0,isb)+
+     &            b2sigp_pstat0to3(iFc,1,isb)*ubf(iFc)+
+     &            b2sigp_pstat0to3(iFc,2,isb)*robf(iFc)+
+     &            b2sigp_pstat0to3(iFc,3,isb)*robf(iFc)*ubf(iFc)
+          b2sigp_pstati_bal(iFc,isb)=b2sigp_pstati0to3(iFc,0,isb)+
+     &            b2sigp_pstati0to3(iFc,1,isb)*ubf(iFc)+
+     &            b2sigp_pstati0to3(iFc,2,isb)*robf(iFc)+
+     &            b2sigp_pstati0to3(iFc,3,isb)*robf(iFc)*ubf(iFc)
+          b2sigp_pstate_bal(iFc)=b2sigp_pstate0to3(iFc,0)+
+     &            b2sigp_pstate0to3(iFc,1)*ubf(iFc)+
+     &            b2sigp_pstate0to3(iFc,2)*robf(iFc)+
+     &            b2sigp_pstate0to3(iFc,3)*robf(iFc)*ubf(iFc)
       enddo
       return
       end subroutine update_balance_sources_momentum
@@ -2945,12 +2948,14 @@ cdjm Update ion heat sources
      &                   b2sigp_smogpe_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_smogpgr_bal',
      &                   b2sigp_smogpgr_bal_av,vdims,2)
+      vdims(1)=nFcid
       call write_cdf_double(ncid,'b2sigp_pstat_bal',
      &                   b2sigp_pstat_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_pstati_bal',
      &                   b2sigp_pstati_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2sigp_pstate_bal',
      &                   b2sigp_pstate_bal_av,vdims,1)
+      vdims(1)=nCvpid
       call write_cdf_double(ncid,'tot_smo_bal',
      &                   tot_smo_bal_av,vdims,2)
 *     Residual
