@@ -127,6 +127,21 @@ c Advanced fluid neutral models
       real (kind=R8) :: L_macro_AFN
       real (kind=R8) :: neutral_sources_rescale
 
+c switches for far-sol flux limiting options
+      integer :: b2tlhe_far_sol
+      integer :: b2tlhi_far_sol
+      integer :: b2tlmv_far_sol
+
+      real (kind=R8) :: b2tlhe_ne_min
+      real (kind=R8) :: b2tlhe_ne_max
+      real (kind=R8) :: b2tlhe_cflme_min
+      real (kind=R8) :: b2tlhi_ni_min
+      real (kind=R8) :: b2tlhi_ni_max
+      real (kind=R8) :: b2tlhi_cflmi_min
+      real (kind=R8) :: b2tlmv_ni_min
+      real (kind=R8) :: b2tlmv_ni_max
+      real (kind=R8) :: b2tlmv_cflmv_min
+
 c iout switches
       integer :: iout_b2wdat
       integer :: b2sian_iout
@@ -810,6 +825,22 @@ c Advanced fluid neutral models
       s % set_ti_numerical = 0
       s % set_po_numerical = 0
 
+
+c far-sol flux limiting options
+      s % b2tlhe_far_sol = 0
+      s % b2tlhi_far_sol = 0
+      s % b2tlmv_far_sol = 0
+
+      s % b2tlhe_ne_min = 1.0e17_R8
+      s % b2tlhe_ne_max = 1.0e18_R8
+      s % b2tlhe_cflme_min = 1.0e-3_R8
+      s % b2tlhi_ni_min = 1.0e17_R8
+      s % b2tlhi_ni_max = 1.0e18_R8
+      s % b2tlhi_cflmi_min = 1.0e-3_R8
+      s % b2tlmv_ni_min = 1.0e17_R8
+      s % b2tlmv_ni_max = 1.0e18_R8
+      s % b2tlmv_cflmv_min = 1.0e-3_R8
+
 c geometry
       s % fcHz_style = 1
       s % vxHz_style = 1
@@ -1144,6 +1175,21 @@ c Advanced fluid neutral models
       call ipgetr ('auto_spatial_hyb_Kn_1', s % auto_spatial_hyb_Kn_1)
       call ipgetr ('auto_spatial_hyb_Kn_2', s % auto_spatial_hyb_Kn_2)
       call ipgetr ('L_macro_AFN', s % L_macro_AFN)
+
+c far sol flux limiting
+      call ipgeti ('b2tlhe_far_sol', s % b2tlhe_far_sol)
+      call ipgeti ('b2tlhi_far_sol', s % b2tlhi_far_sol)
+      call ipgeti ('b2tlmv_far_sol', s % b2tlmv_far_sol)
+
+      call ipgetr ('b2tlhe_ne_min', s % b2tlhe_ne_min)
+      call ipgetr ('b2tlhe_ne_max', s % b2tlhe_ne_max)
+      call ipgetr ('b2tlhe_cflme_min', s % b2tlhe_cflme_min)
+      call ipgetr ('b2tlhi_ni_min', s % b2tlhi_ni_min)
+      call ipgetr ('b2tlhi_ni_max', s % b2tlhi_ni_max)
+      call ipgetr ('b2tlhi_cflmi_min', s % b2tlhi_cflmi_min)
+      call ipgetr ('b2tlmv_ni_min', s % b2tlmv_ni_min)
+      call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
+      call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
