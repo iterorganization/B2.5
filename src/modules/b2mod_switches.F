@@ -465,6 +465,7 @@ c b2mndt
       integer :: b2mndt2_temp_1
       integer :: b2mndt2_temp_2
       integer :: b2mndt2_temp_3
+      integer :: b2mndt2_temp_4
 
 
 
@@ -985,7 +986,7 @@ c b2mndt
       s % b2mndt2_temp_1 = 1
       s % b2mndt2_temp_2 = 1
       s % b2mndt2_temp_3 = 1
-
+      s % b2mndt2_temp_4 = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1534,6 +1535,7 @@ c b2mndt
       call ipgeti ('b2mndt2_temp_1',s%b2mndt2_temp_1)
       call ipgeti ('b2mndt2_temp_2',s%b2mndt2_temp_2)
       call ipgeti ('b2mndt2_temp_3',s%b2mndt2_temp_3)
+      call ipgeti ('b2mndt2_temp_4',s%b2mndt2_temp_4)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
