@@ -220,6 +220,24 @@ c time-dependent treatment
        enddo
       endif
 
+c time-dependent treatment                                            !srv 07.07.21 {
+      if(switch%b2mndt_style.eq.2) then
+*  .. calculate time-dependent source
+       call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
+     &               pl%na, psnl%ua, switch, mpg, sr%smodt)
+*  .. add contribution from time-dependent source
+       sr%smo = sr%smo + sr%smodt
+       do is = 0, ns-1
+        if(switch%b2mndt2_temp_4.eq.1) then
+         sr%smo(:,0,is) = sr%smo(:,0,is)-am(is)*mp*geo%cvVol*geo%cvHz*
+     &           (pl%na(:,is)-psnl%na(:,is))*psnl%ua(:,is)/dtim
+        else
+         sr%smo(:,0,is) = sr%smo(:,0,is)-am(is)*mp*geo%cvVol*geo%cvHz*
+     &           (pl%na(:,is)-psnl%na(:,is))*pl%ua(:,is)/dtim
+        endif
+       enddo
+      endif                                                            !srv 07.07.21 }
+
 *   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nCv, ns, pl%na, dv%ni)
       call b2xpnn (nCv, ns, pl%na, dv%nn)
