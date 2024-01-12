@@ -526,6 +526,12 @@ c   same Eirene stratum
         end do !}
         call xertst(.not.hlp_bad_isp,
      1     'eirene_mc: error in recyceir specification')
+cxpb Add settings for 'duplicate' atomic species
+        do ls=1,nnatmi !{
+          if (ispc_ref(ls).ne.-1) cycle
+          j=eb2atcr(ls)
+          if (lnext(j,j+1)) ispc_ref(ls)=j+1
+        end do !}
 
 csw 08feb2011 l_ddt definition moved down after Eirene call when it is
 c             defined
