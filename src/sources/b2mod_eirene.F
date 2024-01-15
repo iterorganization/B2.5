@@ -2815,7 +2815,7 @@ c$$$                    endif
      &                    (1.0_R8+rf0)*t0_i/st%pl%na(ic,is)
                         eirene_mc_pppl_sna0to1(ic,1,is,istrai)=
      &                    eirene_mc_pppl_sna0to1(ic,1,is,istrai)+
-     &                    (1.0_R8+rf0)*t0_p/st%pl%na(c,is)
+     &                    (1.0_R8+rf0)*t0_p/st%pl%na(ic,is)
 c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
 c$$$                      write(*,*) 'sna0',rf0*abs(t0),
 c$$$     &                           -(t0_a+t0_m+t0_i+t0_p)*rf0
@@ -3329,16 +3329,16 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
                 if (switch%tn_style.ne.0) then
                   call xerrab('netcdf not yet for tn_style.ne.0')
                 endif
-                t0_a=sum(sei_av_eapl(ic,1:ns,istrai))*tflux(istrai)* !djm Jan2017
+                t0_a=sum(sei_av_eapl(ic,1:nfl,istrai))*tflux(istrai)* !djm Jan2017
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_m=sum(sei_av_empl(ic,1:ns,istrai))*tflux(istrai)*
+                t0_m=sum(sei_av_empl(ic,1:nfl,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_i=sum(sei_av_eipl(ic,1:ns,istrai))*tflux(istrai)*
+                t0_i=sum(sei_av_eipl(ic,1:nfl,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_p=sum(sei_av_eppl(ic,1:ns,istrai))*tflux(istrai)*
+                t0_p=sum(sei_av_eppl(ic,1:nfl,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
               endif
