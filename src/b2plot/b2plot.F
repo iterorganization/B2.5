@@ -1201,19 +1201,27 @@ c
       end if
 #ifdef B25_EIRENE
       if (ex.and.use_eirene.ne.0) then
-        values(5)=min(minval(geo%vxX),minval(xtrian))    !rmin
-        values(6)=max(maxval(geo%vxX),maxval(xtrian))    !rmax
-        values(7)=min(minval(geo%vxY),minval(ytrian))    !zmin
-        values(8)=max(maxval(geo%vxY),maxval(ytrian))    !zmax
+        values(5)=minval(xtrian)
+        values(6)=maxval(xtrian)
+        values(7)=minval(ytrian)
+        values(8)=maxval(ytrian)
       else
 #endif
-        values(5)=minval(geo%vxX)                        !rmin
-        values(6)=maxval(geo%vxX)                        !rmax
-        values(7)=minval(geo%vxY)                        !zmin
-        values(8)=maxval(geo%vxY)                        !zmax
+        values(5)= huge(1.0_R8)
+        values(6)=-huge(1.0_R8)
+        values(7)= huge(1.0_R8)
+        values(8)=-huge(1.0_R8)
 #ifdef B25_EIRENE
       end if
 #endif
+      do iVx = 1,mpg%nVx
+        if (mpg%vxCvP(iVx,2).gt.0) then
+          values(5)=min(values(5),geo%vxX(iVx))          !rmin
+          values(6)=max(values(6),geo%vxX(iVx))          !rmax
+          values(7)=min(values(7),geo%vxY(iVx))          !zmin
+          values(8)=max(values(8),geo%vxY(iVx))          !zmax
+        end if
+      end do
       values(11)=init_value                              !omin
       values(12)=init_value                              !omax
       values(13)=init_value                              !xref
@@ -1251,7 +1259,7 @@ c
       color_set=.true.
       call contourplot(.true.)     ! draw contour plot by default
       call nofill(.false.)         ! fill contours by default
-      call ipolate(.false.)        ! do not use splines untless wanted
+      call ipolate(.false.)        ! do not use splines unless wanted
       call clvl(.true.)            ! contour level lines plotted
       call labelon(.true.)         ! contour labels drawn
       call gridon(.false.)         ! overlayed mesh off by default
@@ -2216,12 +2224,25 @@ c
           description='qz1'
           nz=1
           call copy(geo%cvQgam(:,1),1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case('qc')
           description='qc'
           nz=1
-          call copy(qc,1.0_R8,nz,textbl)
-#endif
+          do iCv=1,mpg%nCv
+            i=0
+            mach(iCv,0)=0.0_R8
+            do j=1,mpg%cvFcP(iCv,2)
+              iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+              iVx1=mpg%fcVx(iFc,1)
+              iVx2=mpg%fcVx(iFc,2)
+              if (mpg%vxFs(iVx1).ne.0.and.mpg%vxFs(iVx2).ne.0.and.
+     &            mpg%vxFs(iVx1).ne.mpg%vxFs(iVx2)) then
+                i=i+1
+                mach(iCv,0)=mach(iCv,0)+geo%fcQgam(iFc,0)
+              end if
+            end do
+            if(i.gt.0) mach(iCv,0)=mach(iCv,0)/real(i,R8)
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case('mach')
           description='Mach number'
           nz=1

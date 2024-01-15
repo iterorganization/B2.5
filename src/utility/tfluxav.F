@@ -19,6 +19,7 @@
 *      It allows for a special treatment if Ift is the first flux
 *      tube outside the separatrix, otherwise it assumes the flux
 *      tube is closed.
+*      The integration is made using the trapeze rule.
 *----------------------------------------------------------------------
 *.declarations
       use b2mod_types
@@ -34,8 +35,8 @@
      *   quant(mpg%nCv)
 *   ..local variables
       real (kind=R8) :: 
-     *   qsum, wsum
-      integer i, j, iFt, iCv, iCn, iFc
+     *   qm, qp, qsum, wsum
+      integer i, j, iFt, iCv, iCn, iCm, iCp, iFc
       logical on_separatrix
 *   ..procedures
       external xertst
@@ -45,24 +46,43 @@
       qsum=0.0_R8
       wsum=0.0_R8
       do i=1,mpg%ftCvP(iFt,2)
-       iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
-       on_separatrix=.true.
-       if(.not.mpg%cvOnClosedSurface(iCv)) then
-         on_separatrix=.false.
-         do j=1,mpg%cvFcP(iCv,2)
-           if (on_separatrix) cycle
-           iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
-           if(mpg%fcCv(iFc,1).eq.iCv) then
-             iCn=mpg%fcCv(iFc,2)
-           else
-             iCn=mpg%fcCv(iFc,1)
-           endif
-           on_separatrix=mpg%cvOnClosedSurface(iCn)
-         end do
-       endif
-       if (.not.on_separatrix) cycle
-       qsum=qsum+quant(iCv)*geo%cvHx(iCv)/geo%cvBb(iCv,0)
-       wsum=wsum+geo%cvHx(iCv)/geo%cvBb(iCv,0)
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+        on_separatrix=.true.
+        if(.not.mpg%cvOnClosedSurface(iCv)) then
+          on_separatrix=.false.
+          do j=1,mpg%cvFcP(iCv,2)
+            if (on_separatrix) cycle
+            iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+            if(mpg%fcCv(iFc,1).eq.iCv) then
+              iCn=mpg%fcCv(iFc,2)
+            else
+              iCn=mpg%fcCv(iFc,1)
+            endif
+            on_separatrix=mpg%cvOnClosedSurface(iCn)
+          end do
+        endif
+        if (.not.on_separatrix) cycle
+        if (i.gt.1) then
+          iCm=mpg%ftCv(mpg%ftCvP(iFt,1)+i-2)
+        else
+          iCm=mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1)
+        end if
+        if (i.lt.mpg%ftCvP(iFt,2)) then
+          iCp=mpg%ftCv(mpg%ftCvP(iFt,1)+i)
+        else
+          iCp=mpg%ftCv(mpg%ftCvP(iFt,1))
+        end if
+        qm=(quant(iCm)*geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .      quant(iCv)*geo%cvHx(iCm)/geo%cvBb(iCm,0))/
+     .     (geo%cvHx(iCm)/geo%cvBb(iCm,0)+
+     .      geo%cvHx(iCv)/geo%cvBb(iCv,0))
+        qp=(quant(iCp)*geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .      quant(iCv)*geo%cvHx(iCp)/geo%cvBb(iCp,0))/
+     .     (geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .      geo%cvHx(iCp)/geo%cvBb(iCp,0))
+        qsum=qsum+0.5_R8*geo%cvHx(iCv)/geo%cvBb(iCv,0)*
+     .     (0.5_R8*(qm+quant(iCv))+0.5_R8*(quant(iCv)+qp))
+        wsum=wsum+geo%cvHx(iCv)/geo%cvBb(iCv,0)
       enddo
       if(abs(wsum).lt.precision) then  ! psauter
         tfluxav=0.0_R8
