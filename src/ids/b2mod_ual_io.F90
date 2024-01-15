@@ -34,7 +34,6 @@ module b2mod_ual_io
     use b2mod_version
     use b2mod_switches
 #ifdef IMAS
-#ifdef WG_TODO
     use b2mod_balance &
      & , only : eirene_mc_pael_sne_bal, eirene_mc_pmel_sne_bal, &
      &          eirene_mc_papl_sna_bal, eirene_mc_pmpl_sna_bal, &
@@ -49,7 +48,6 @@ module b2mod_ual_io
      &          b2stel_she_ion_bal, b2stel_shi_ion_bal, b2npht_shei_bal, &
      &          b2stel_she_rec_bal, b2stel_shi_rec_bal, &
      &          read_balance
-#endif
     use b2mod_diag &
      & , only : nfluids, species_list, label
 #endif
@@ -658,6 +656,8 @@ contains
      &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx,     &
      &   ismain, ismain0, dtim,                              &
      &   switch, geo, mpg, state, state_ext, state_avg, wrong_flow, .false.)
+
+        if (balance_netcdf.ne.0) call read_balance
 
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory
@@ -2799,7 +2799,26 @@ contains
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
-            if (switch%use_eirene.eq.0) then
+            if (use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                tmpCv = 0.0_IDS_real
+                do istrai = 1, size( eirene_mc_pael_sne_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_pael_sne_bal(:,istrai)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%particles,                       &
+                    &   b2CellData = tmpCv )
+                tmpCv = 0.0_IDS_real
+                do istrai = 1, size( eirene_mc_pmel_sne_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_pmel_sne_bal(:,istrai)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                    &            electrons%particles,                       &
+                    &   b2CellData = tmpCv )
+            else
                 tmpCv(:) = state%srw%b2stbr_sne(:) / geo%cvVol(:)
                 call write_cell_scalar( sources_grid, mpg,                  &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
@@ -2988,7 +3007,44 @@ contains
                     &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                     &            ion( is )%particles,                       &
                     &   b2CellData = totCv )
-                if (switch%use_eirene.eq.0) then
+                if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                  totCv(:) = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_papl_sna_bal, 3)
+                      tmpCv(:) = tmpCv(:)                                   &
+                         &       + eirene_mc_papl_sna_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_scalar( sources_grid,                     &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            ion( is )%state( js )%particles,         &
+                        &   b2CellData = tmpCv )
+                  end do
+                  call write_cell_scalar( sources_grid,                       &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            ion( is )%particles,                     &
+                        &   b2CellData = totCv )
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_pmpl_sna_bal, 3)
+                      tmpCv(:) = tmpCv(:)                                     &
+                         &       + eirene_mc_pmpl_sna_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_scalar( sources_grid,                     &
+                        &   scalar = edge_sources%source(6)%ggd( time_sind )% &
+                        &            ion( is )%state( js )%particles,         &
+                        &   b2CellData = tmpCv )
+                  end do
+                  call write_cell_scalar( sources_grid,                       &
+                      &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                      &            ion( is )%particles,                       &
+                      &   b2CellData = totCv )
+                else
                   totCv(:) = 0.0_IDS_real
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%b2stbr_sna(:,ispion(is,js)) / geo%cvVol(:)
@@ -3046,6 +3102,28 @@ contains
                     &   val = edge_profiles%ggd( time_sind )%               &
                     &         ion(is)%density,                              &
                     &   value = totCv )
+                if (balance_netcdf.ne.0) then
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size(eirene_mc_paio_sna_bal,3)
+                      tmpCv(:) = tmpCv(:)                                   &
+                         &       + eirene_mc_paio_sna_bal(:,ispion(is,js),istrai)      &
+                         &       + eirene_mc_pmio_sna_bal(:,ispion(is,js),istrai)      &
+                         &       + eirene_mc_piio_sna_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_scalar( sources_grid,                     &
+                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                        &            ion( is )%state( js )%particles,         &
+                        &   b2CellData = tmpCv )
+                  end do
+                  call write_cell_scalar( sources_grid,                       &
+                      &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
+                      &            ion( is )%particles,                       &
+                      &   b2CellData = totCv )
+                end if
               end if
             end do
 
@@ -3216,7 +3294,50 @@ contains
                       &                     momentum,                   &
                       &   b2CellData = totCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                if (switch%use_eirene.eq.0) then
+                if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_mapl_smo_bal, 3)
+                      tmpCv(:) = tmpCv(:) + &
+                         &  eirene_mc_mapl_smo_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_vector_component( sources_grid,     &
+                        &   vectorComponent = edge_sources%source(5)%   &
+                        &            ggd( time_sind )%ion( is )%        &
+                        &            state( js )%momentum,              &
+                        &   b2CellData = tmpCv,                         &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                  call write_cell_vector_component( sources_grid,       &
+                      &   vectorComponent = edge_sources%source(5)%     &
+                      &            ggd( time_sind )%ion( is )%momentum, &
+                      &   b2CellData = totCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_mmpl_smo_bal, 3)
+                      tmpCv(:) = tmpCv(:) + &
+                         &  eirene_mc_mmpl_smo_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_vector_component( sources_grid,     &
+                        &   vectorComponent = edge_sources%source(6)%   &
+                        &            ggd( time_sind )%ion( is )%        &
+                        &            state( js )%momentum,              &
+                        &   b2CellData = tmpCv,                         &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                  call write_cell_vector_component( sources_grid,         &
+                        &   vectorComponent = edge_sources%source(6)%     &
+                        &            ggd( time_sind )%ion( is )%momentum, &
+                        &   b2CellData = totCv,                           &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                else
                   totCv = 0.0_IDS_real
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%b2stbr_smo(:,ispion(is,js)) / geo%cvVol(:)
@@ -3350,10 +3471,46 @@ contains
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                 &            electrons%energy,                          &
                 &   b2CellData = tmpCv )
-            if (switch%use_eirene.eq.0) then
+            if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                tmpCv = 0.0_IDS_real
+                do is = 1, size( eirene_mc_eael_she_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_eael_she_bal(:,is)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid,                       &
+                    &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv = 0.0_IDS_real
+                do is = 1, size( eirene_mc_emel_she_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_emel_she_bal(:,is)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid,                       &
+                    &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+            else
                 tmpCv(:) = state%srw%b2stbr_she(:) / geo%cvVol(:)
                 call write_cell_scalar( sources_grid, mpg,                  &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+            end if
+            if (balance_netcdf.ne.0) then
+                tmpCv(:) = b2stel_she_ion_bal(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid,                       &
+                    &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:) = b2stel_she_rec_bal(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid,                       &
+                    &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:) = -b2npht_shei_bal(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid,                       &
+                    &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
             end if
@@ -3482,10 +3639,46 @@ contains
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                 &            total_ion_energy,                          &
                 &   b2CellData = tmpCv )
-            if (switch%use_eirene.eq.0) then
+            if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+              tmpCv = 0.0_IDS_real
+              do is = 1, size( eirene_mc_eapl_shi_bal, 2)
+                tmpCv(:) = tmpCv(:) + eirene_mc_eapl_shi_bal(:,is)
+              end do
+              tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+              tmpCv = 0.0_IDS_real
+              do is = 1, size( eirene_mc_empl_shi_bal, 2)
+                tmpCv(:) = tmpCv(:) + eirene_mc_empl_shi_bal(:,is)
+              end do
+              tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            else
               tmpCv(:) = state%srw%b2stbr_shi(:) / geo%cvVol(:)
               call write_cell_scalar( sources_grid, mpg,                  &
                   &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+            if (balance_netcdf.ne.0) then
+              tmpCv(:) = b2stel_shi_ion_bal(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+              tmpCv(:) = b2stel_shi_rec_bal(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+              tmpCv(:) = b2npht_shei_bal(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid,                       &
+                  &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             end if
@@ -3838,6 +4031,41 @@ contains
                        &                     velocity_exb,                   &
                        &   b2FaceData = flxFace(:,1),                        &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                   if (balance_netcdf.ne.0) then
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paat_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                 &
+                          &       + eirene_mc_paat_sna_bal(:,is,istrai)    &
+                          &       + eirene_mc_pmat_sna_bal(:,is,istrai)    &
+                          &       + eirene_mc_piat_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid,                   &
+                       &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paat_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_paat_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid,                   &
+                       &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_pmat_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_pmat_sna_bal(:,is,istrai)      &
+                          &       + eirene_mc_piat_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid,                   &
+                       &   scalar = edge_sources%source(6)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                   end if
                    tmpCv(:) = eneutrad(:,is,0)/ geo%cvVol(:)
                    call write_cell_scalar( sources_grid, mpg,                &
                        &   scalar = edge_sources%source(12)%                 &
@@ -3911,6 +4139,41 @@ contains
                        &                     velocity_exb,                   &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                   if (balance_netcdf.ne.0) then
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paml_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_paml_sna_bal(:,is,istrai)      &
+                          &       + eirene_mc_pmml_sna_bal(:,is,istrai)      &
+                          &       + eirene_mc_piml_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid,                   &
+                       &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paml_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_paml_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid,                   &
+                       &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_pmml_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                           &      + eirene_mc_pmml_sna_bal(:,is,istrai)      &
+                           &      + eirene_mc_piml_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid,                   &
+                       &   scalar = edge_sources%source(6)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                   end if
                 end do
 #endif
             else
