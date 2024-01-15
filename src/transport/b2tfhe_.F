@@ -87,8 +87,8 @@ csw 10oct2012
      *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc), wrkf(nFc,0:1),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
      *    fhe0_mdf(nFc,0:1), pe(nCv),
-     *    dummy(nFc,0:1), dummy2(nFc,0:1), dummy3(nFc,0:1), 
-     *    flo_chve(nFc,0:1)
+     *    dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1), 
+     *    dumm4(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
@@ -209,7 +209,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
      &  geo,mpg,pl%te,floe0_mdf,
-     &  co%chce,fhe0_mdf,dummy,dummy2)
+     &  co%chce,fhe0_mdf,dumm1,dumm2)
 
 *   ..compute fluxes
       alfe0 = co%calf(:,0)
@@ -235,28 +235,39 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 
 *   ..fluxes for balance.nc file                  !nh  Jan2024
       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-        dummy = 0.0_R8
-        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
-     &    geo,mpg,1.5e0_R8*pl%te,dv%fne_he,dummy,fhe_32,dummy2,dummy3)
+        dumm1 = 0.0_R8
+        dumm2 = 0.0_R8
+        dumm3 = 0.0_R8
+        dumm4 = 0.0_R8
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    1.5e0_R8*pl%te,sign(dv%fne_he,floe0_mdf),dumm1,dumm2,fhe_32,
+     &    dumm3)
+        fhe_32 = sign(fhe_32,dv%fne_he)
         fhe_52 = 0.0_R8
-        fhe_thermj(:,0) = -c071*dv%fch_p(:,0)/qe*switch%fch_pTe*tef + 
+        dumm4(:,0) = -c071*dv%fch_p(:,0)/qe*switch%fch_pTe
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    pl%te,sign(dumm4,floe0_mdf),dumm1,dumm2,fhe_thermj,dumm3)
+        fhe_thermj = sign(fhe_thermj,dumm4)
+        fhe_thermj(:,0) = fhe_thermj(:,0) + 
      &    switch%alfTeEh*alfe0*tefh*ehx
-        fhe_thermj(:,1) = switch%alfTeEh*co%calf(:,1)*tefh*ehy
-        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
-     &    geo,mpg,pl%te,dummy,co%chce,fhe_cond,dummy2,dummy3)
-        fhe_ecrb = 0.0_R8
-        flo_chve(:,0) = co%chve(:,0)*nef
-        flo_chve(:,1) = co%chve(:,1)*nef
-        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
-     &    geo,mpg,pl%te,flo_chve,dummy,fhe_strange,dummy2,dummy3)
+        fhe_thermj(:,1) = fhe_thermj(:,1) + 
+     &    switch%alfTeEh*co%calf(:,1)*tefh*ehy
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    pl%te,floe0_mdf,co%chce,dumm1,dumm2,fhe_cond)
         if (switch%mdf_fhe.eq.0) then
           fhe_dia(:,0) = 2.5e0_R8*fledia(:,0)*nef*tef
           fhe_dia(:,1) = 2.5e0_R8*fledia(:,1)*nef*tef
           fhe_pschused = 0.0_R8
-        else
+        else 
           fhe_dia = 0.0_R8
           fhe_pschused = -dv%fhePSch
         endif
+        fhe_ecrb = 0.0_R8
+        dumm4(:,0) = co%chve(:,0)*nef
+        dumm4(:,1) = co%chve(:,1)*nef
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    pl%te,sign(dumm4,floe0_mdf),dumm1,dumm2,fhe_strange,dumm3)
+        fhe_strange = sign(fhe_strange,dumm4)
       endif
 
 #ifdef WG_TODO

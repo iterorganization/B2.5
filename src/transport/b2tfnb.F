@@ -72,7 +72,8 @@
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
      *   wrk(nCv), wrkVx(nVx),
-     *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
+     *   zeros(nFc,0:1), dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1), 
+     *   dumm4(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
      *   ub2dia(nFc,0:1),
      *   nbcor(nVx),                                                     !srv 01.10.99 !lk 09.06.11
@@ -91,9 +92,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, b2xvff, intface, diff
-      intrinsic abs, max, sqrt
-      real (kind=R8) :: dummy1(nFc,0:1), dummy2(nFc,0:1), 
-     *  dummy3(nFc,0:1)
+      intrinsic abs, max, sqrt, sign
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -775,35 +774,50 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 
 * ..compute variables for balance.nc 
       if (balance.and.(balance_netcdf.ne.0)) then    !nh 08.01.24
-        fna_pinch(:,0,isb) = co%cvla(:,0,isb)*nbf
-        fna_pinch(:,1,isb) = co%cvla(:,1,isb)*nbf
-        fna_pll(:,0,isb)   = geo%fcPbs*wrk0*nbf + term
-        fna_pll(:,1,isb)   = 0.0_R8
-        if (switch%mdf_fnb.eq.0) then
-          fna_drift(:,0,isb) = (dv%vaecrb(:,0,isb) + 
-     &      dv%vadia(:,0,isb))*geo%fcS*geo%fcQalf(:,0)*nbf
-          fna_drift(:,1,isb) = (dv%vaecrb(:,1,isb) + 
-     &      dv%vadia(:,1,isb))*geo%fcS*geo%fcQalf(:,1)*nbf
-          fna_pschused(:,0,isb) = 0.0_R8
-          fna_pschused(:,1,isb) = 0.0_R8
-        else
-          fna_drift(:,0,isb) = dv%vaecrb(:,0,isb)*
-     &      geo%fcS*geo%fcQalf(:,0)*nbf
-          fna_drift(:,1,isb) = dv%vaecrb(:,1,isb)*
-     &      geo%fcS*geo%fcQalf(:,1)*nbf
-          fna_pschused(:,0,isb) = -dv%fnaPSch(:,0,isb)
-          fna_pschused(:,1,isb) = -dv%fnaPSch(:,1,isb)
-        endif       
-        fna_ch(:,0,isb)    = scur(:,0)*nbf
-        fna_ch(:,1,isb)    = scur(:,1)*nbf
-        dummy1 = 0.0_R8
-        dummy2 = 0.0_R8
-        dummy3 = 0.0_R8
+        dumm1 = 0.0_R8
+        dumm2 = 0.0_R8
+        dumm3 = 0.0_R8
+        dumm4 = 0.0_R8
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &     dummy1, co%cdna(:,:,isb), fna_nanom(:,:,isb),
-     &     dummy2, dummy3)
-        fna_panom(:,0,isb) = co%cdpa(:,0,isb)*dpb(:,0)
-        fna_panom(:,1,isb) = co%cdpa(:,1,isb)*dpb(:,1)
+     &    sign(co%cvla(:,:,isb),flo_mdf), dumm1, dumm2, 
+     &    fna_pinch(:,:,isb), dumm3)  
+        fna_pinch(:,:,isb) = sign(fna_pinch(:,:,isb),co%cvla(:,:,isb))     
+        dumm4(:,0) = geo%fcPbs*wrk0 
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &    sign(dumm4,flo_mdf), dumm1, dumm2, fna_pll(:,:,isb), dumm3) 
+        fna_pll(:,:,isb) = sign(fna_pll(:,:,isb),dumm4)
+        fna_pll(:,0,isb) = fna_pll(:,0,isb) + term 
+        dumm4(:,0) = drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*
+     &    geo%fcQalf(:,0)  
+        dumm4(:,1) = drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*
+     &    geo%fcQalf(:,1)   
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &     sign(dumm4,flo_mdf), dumm1, dumm2, fna_drift(:,:,isb), dumm3)
+        fna_drift(:,:,isb) = sign(fna_drift(:,:,isb),dumm4)
+        fna_drift(:,0,isb) = fna_drift(:,0,isb) + (1.0_R8-drift_hyb)*
+     &    dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
+        fna_drift(:,1,isb) = fna_drift(:,1,isb) + (1.0_R8-drift_hyb)*
+     &    dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf
+        if (switch%mdf_fnb.eq.0) then
+          fna_drift(:,0,isb) = fna_drift(:,0,isb) +
+     &      dv%vadia(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
+          fna_drift(:,1,isb) = fna_drift(:,1,isb) +
+     &      dv%vadia(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf
+          fna_pschused(:,:,isb) = 0.0_R8
+        else
+          fna_pschused(:,:,isb) = -dv%fnaPSch(:,:,isb)
+        endif
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &    sign(drift_hyb*scur,flo_mdf), dumm1, dumm2, fna_ch(:,:,isb), 
+     &    dumm3)
+        fna_ch(:,:,isb) = sign(fna_ch(:,:,isb),drift_hyb*scur)
+        fna_ch(:,0,isb) = fna_ch(:,0,isb) + (1.0_R8-drift_hyb)*
+     &    scur(:,0)*nbf
+        fna_ch(:,1,isb) = fna_ch(:,1,isb) + (1.0_R8-drift_hyb)*
+     &    scur(:,1)*nbf
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &    flo_mdf, co%cdna(:,:,isb), dumm2, dumm3, fna_nanom(:,:,isb))
+        fna_panom(:,:,isb) = -co%cdpa(:,:,isb)*dpb(:,:)
       endif
 
 
