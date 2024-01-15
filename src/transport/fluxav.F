@@ -18,6 +18,7 @@
 *      of the quantity quant on the flux tube with index iFt.
 *      It assumes that the flux tube is closed, i.e., inside the core
 *      or the the pedestal region.
+*      The integration is made using the trapeze rule.
 *----------------------------------------------------------------------
 *.declarations
       use b2mod_types
@@ -34,9 +35,9 @@
       real (kind=R8) ::
      *   quant(mpg%nCv)
 *   ..local variables
-      integer i, iCv
+      integer i, iCv, iCm, iCp
       real (kind=R8) :: 
-     *   qsum, wsum
+     *   qm, qp, qsum, wsum
 *   ..procedures
       external xertst
 
@@ -47,7 +48,26 @@
       do i=1,mpg%ftCvP(iFt,2)
         iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
         if (mpg%cvOnClosedSurface(iCv)) then
-          qsum=qsum+quant(iCv)*geo%cvHx(iCv)/geo%cvBb(iCv,0)
+          if (i.gt.1) then
+            iCm=mpg%ftCv(mpg%ftCvP(iFt,1)+i-2)
+          else
+            iCm=mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1)
+          end if
+          if (i.lt.mpg%ftCvP(iFt,2)) then
+            iCp=mpg%ftCv(mpg%ftCvP(iFt,1)+i)
+          else
+            iCp=mpg%ftCv(mpg%ftCvP(iFt,1))
+          end if
+          qm=(quant(iCm)*geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .        quant(iCv)*geo%cvHx(iCm)/geo%cvBb(iCm,0))/
+     .       (geo%cvHx(iCm)/geo%cvBb(iCm,0)+
+     .        geo%cvHx(iCv)/geo%cvBb(iCv,0))
+          qp=(quant(iCp)*geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .        quant(iCv)*geo%cvHx(iCp)/geo%cvBb(iCp,0))/
+     .       (geo%cvHx(iCv)/geo%cvBb(iCv,0)+
+     .        geo%cvHx(iCp)/geo%cvBb(iCp,0))
+          qsum=qsum+0.5_R8*geo%cvHx(iCv)/geo%cvBb(iCv,0)*
+     .       (0.5_R8*(qm+quant(iCv))+0.5_R8*(quant(iCv)+qp))
           wsum=wsum+geo%cvHx(iCv)/geo%cvBb(iCv,0)
         endif
       enddo

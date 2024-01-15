@@ -195,6 +195,7 @@
       use b2mod_b2cmpb
       use b2mod_diag
       use b2mod_time
+      use b2mod_geometry
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_user_namelist
@@ -248,28 +249,32 @@
       integer, save :: jsep, jxa, jxi, nesepm_istra, ncallfeedback
       integer, save :: fhiycore_kinetic_energy, iyped, icped
 #endif
+      integer, save :: geometryType
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
      &                 isfeedback
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
-     &  dt_prev, sum_e, sum_s, total_flux
-#ifdef WG_TODO
-     & ,flux_old, target_flux,
+     &  dt_prev, sum_e, sum_s, total_flux,
      &  fnaycore, fnaycore_alpha, fnaycurr,
      1  fheycore, fheycore_alpha, fheycurr,
      1  fhiycore, fhiycore_alpha, fhiycurr,
      2  fchycore, fchycore_alpha, fchycurr,
-     3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
+     3  nepedm_sol, nesepm_sol, nesepm, nesepm_pfr,
+     4  volrec_sol,
+     5  ndes, ndes_sol,
+     7  private_flux_puff
+#ifdef WG_TODO
+     & ,flux_old, target_flux,
      3  nesepm_alpha, nesepm_beta, nesepm_gamma, nesepm_curr,
      3  nesepm_minpuff, nesepm_maxpuff, nesepm_overshoot,
      3  nesepm_error, nesepm_error_old, nesepm_integral_error,
-     4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
+     4  volrec_alpha, volrec_beta, volrec_overshoot,
      4  volrec_curr,
-     5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
+     5  ntot, den(0:1), rcbsna(0:1),
      6  cbsnafac, cbsnainc,
-     7  private_flux_puff, private_flux_area,
+     7  private_flux_area,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
 #endif
@@ -277,21 +282,24 @@
       integer, save :: b2sral_style = 2
       character*72 message
       logical, save :: consistent
-#ifdef WG_TODO
       logical consistent_core, consistent_sol, consistent_pfr1,
-     .        consistent_pfr2, zeroslope
+     .        consistent_pfr2
+#ifdef WG_TODO
+      logical zeroslope
       save zeroslope
 #endif
-      save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save
-#ifdef WG_TODO
-     1 ,fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
+      save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save,
+     1  fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
      2  fhiycore, fhiycore_alpha, fchycore, fchycore_alpha,
-     3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
-     3  nesepm_alpha, nesepm_beta, nesepm_gamma, nesepm_error_old,
+     3  nepedm_sol, nesepm_sol, nesepm, nesepm_pfr,
+     4  volrec_sol,
+     5  ndes, ndes_sol
+#ifdef WG_TODO
+     3 ,nesepm_alpha, nesepm_beta, nesepm_gamma, nesepm_error_old,
      3  nesepm_minpuff, nesepm_maxpuff, nesepm_overshoot,
      3  nesepm_integral_error,
-     4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
-     5  ndes, ndes_sol, den, rcbsna,
+     4  volrec_alpha, volrec_beta, volrec_overshoot,
+     5  den, rcbsna,
      6  cbsnafac,
      7  private_flux_puff, private_flux_area, flux_old,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
@@ -304,24 +312,25 @@
       data ncall/0/,
      &  dtim/1.0_R8/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/,
-#ifdef WG_TODO
-     &  ncall_old/0/, ncall_gap/5/, n_flux_zero/0/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
-     2  fhiycore_kinetic_energy/0/, ncallfeedback/0/,
      2  fchycore/-1.0e30_R8/, fchycore_alpha/1.0e-1_R8/,
-     3  nesepm/0.0_R8/, nesepm_sol/0.0_R8/, nepedm_sol/0.0_R8/,
-     3  nesepm_pfr/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
+     3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm/0.0_R8/,
+     4  volrec_sol/0.0_R8/,
+     5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
+     7  nepedm_sol/0.0_R8/, private_flux_puff/0.0_R8/,
+#ifdef WG_TODO
+     &  ncall_old/0/, ncall_gap/5/, n_flux_zero/0/,
+     2  fhiycore_kinetic_energy/0/, ncallfeedback/0/,
+     3  nesepm_alpha/1.0e-3_R8/,
      3  nesepm_beta/0.0_R8/, nesepm_gamma/0.99_R8/,
      3  nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
      3  nesepm_overshoot/0.0_R8/, nesepm_error_old/0.0/,
      3  nesepm_integral_error/0.0_R8/,
      4  volrec_sol/0.0_R8/, volrec_alpha/1.0e-3_R8/,
      4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
-     5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
      6  cbsnafac/0.01_R8/,
-     7  private_flux_puff/0.0_R8/,
      l  zeroslope/.false./, nesepm_istra/-1/,
      9  save_core_flux_while_overshot/0.0_R8/,
      9  save_gas_puff_while_overshot/0.0_R8/,
@@ -611,7 +620,9 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
          call xertst (nesepm_istra.gt.0,
      &     'No "C" stratum for feedback scheme specified !')
        endif
+#endif
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
+       geometryType = geometryId( mpg, geo )
        consistent_core = fnaycore.eq.-1.0e30_R8 .and. fheycore.eq.0.0_R8
      &             .and. fhiycore.eq.0.0_R8 .and. nesepm.eq.0.0_R8
      &             .and. fchycore.eq.-1.0e30_R8
@@ -619,9 +630,11 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      &             .and. private_flux_puff.eq.0.0_R8
        consistent_pfr2 = consistent_pfr1 .or. pfrregno1.eq.pfrregno2
        consistent_sol = nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8
-     &             .and. ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8
+     &              .and. ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8
        do ib = 1, nbc
-         if (bcchar(ib).eq.'N') then
+         iFc = mpg%bcFc(mpg%bcFcP(ib,1))
+         if (boundaryAssignments(mpg%fcReg(iFc),geometryType).eq.NORTH)
+     >    then
            if(nesepm_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
      .        volrec_sol.gt.0.0_R8) then
              consistent_sol = consistent_sol .or.
@@ -631,9 +644,11 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
              consistent_sol = consistent_sol .or.
      .        bccon(isfeedback,ib).eq.12
            end if
-         else if (bcchar(ib).eq.'S') then
-           if (on_closed_surface(bc_list_x(1,ib),bc_list_y(1,ib)))
-     >      then
+         else if (boundaryAssignments(
+     .              mpg%fcReg(iFc),geometryType).eq.SOUTH) then
+           iCv = mpg%fcCv(iFc,1)
+           if (iCV.gt.mpg%nCi) iCv = mpg%fcCv(iFc,2)
+           if (mpg%cvOnClosedSurface(iCv)) then
              if (fnaycore.ne.-1.0e30_R8 .or. nesepm.gt.0.0_R8) then
                consistent_core = consistent_core .or.
      .          bccon(isfeedback,ib).eq.11
@@ -649,8 +664,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
              end if
            else
              if(ndes.gt.0.0_R8) then
-               if (mod(region(bc_list_x(1,ib),
-     >                        bc_list_y(1,ib),0),4).eq.3) then
+               if (mod(mpg%cvReg(iCv),4).eq.3) then
                  consistent_pfr1 = consistent_pfr1 .or.
      .            bccon(isfeedback,ib).eq.12
                else
@@ -660,8 +674,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
              end if
              if(nesepm_pfr.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8)
      >        then
-               if (mod(region(bc_list_x(1,ib),
-     >                        bc_list_y(1,ib),0),4).eq.3) then
+               if (mod(mpg%cvReg(iCv),4).eq.3) then
                  consistent_pfr1 = consistent_pfr1 .or.
      .            bccon(isfeedback,ib).eq.11
                else
@@ -678,7 +691,6 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      &  switch%b2stbc_boundary_namelist.lt.1
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
-#endif
       endif ! ncall.eq.0
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')

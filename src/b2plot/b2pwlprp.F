@@ -23,6 +23,7 @@ c======================================================================
       use b2mod_diag
       use b2mod_b2plot
       use b2mod_b2cmfs
+      use b2mod_geometry
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_b2plot_wall_loading
@@ -35,6 +36,7 @@ c======================================================================
       use b2mod_dimensions
       implicit none
       integer i,j,k,n
+      integer geometryType
       logical lim_cnf,target_east,target_west
 #ifdef DBG
       integer il
@@ -164,21 +166,25 @@ c*** Check the topology of the grid and the list of target edges
         end if
       end if !}
       ntrgts=2
+      geometryType = geometryId( mpg, geo )
       if(mpg%nncut.eq.0 .and. .not.lim_cnf) then
         if (mpg%periodic_bc.eq.1) then
           ntrgts=0
           itrg=0
-#ifdef WG_TODO
         else if (boundary_namelist.ne.0) then
           ntrgts=0
+          target_east = .false.
+          target_west = .false.
           do i = 1, nbc
-            if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
+            if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
+     &                             geometryType).eq.EAST) then
               target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                      bcene(i).eq.15
+     &                      bcene(i).eq.15.or. target_east
             end if
-            if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
+            if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
+     &                             geometryType).eq.WEST) then
                target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                       bcene(i).eq.15
+     &                       bcene(i).eq.15.or. target_west
             end if
           end do
           if (target_west) then
@@ -189,7 +195,6 @@ c*** Check the topology of the grid and the list of target edges
             ntrgs=ntrgs+1
             itrg(ntrgs)=2
           end if
-#endif
         else if (use_eirene.ne.0) then
           itrg=0
           if (count(ktns(:)==1).eq.0) ntrgts=ntrgts-1
