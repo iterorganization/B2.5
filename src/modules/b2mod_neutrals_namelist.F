@@ -34,7 +34,7 @@ cank }
       use b2mod_b2cmfs
       use b2mod_version
       use b2us_map
-      use b2us_geo, dumm0 => triangleArea, dumm1 => triangleCentroid
+      use b2us_geo
       use b2mod_ad
      & , only : nsdmax
 #ifdef B25_EIRENE
