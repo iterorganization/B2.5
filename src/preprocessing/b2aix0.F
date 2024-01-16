@@ -1,14 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2aix0 (ninp, nx, ny, ns)
+      subroutine b2aix0 (ninp, nCv, nFc, ns, mpg)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_version
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1)
+      integer ninp(0:2)
 *   ..output arguments (unspecified on entry)
-      integer nx, ny, ns
+      integer nCv, nFc, ns
+      type(mapping), intent(inout) :: mpg
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -21,8 +24,8 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit ninp(0) the mesh dimensions, nx and
-*     ny, and from unit ninp(1) the number of species, ns. These units
+*     This routine reads from unit ninp(0) the number of species, ns,
+*     and from ninp(1) the mesh dimensions. These units
 *     must be connected to a formatted file. The input files must be
 *     positioned properly: the first record must begin with the text
 *     '*dimens ' or '*DIMENS ', and the next record must contain the
@@ -32,14 +35,13 @@
 *
 *  5. parameters (see also routine b2cdcv)
 *
-*     ninp - (0:1) integer array.
+*     ninp - (0:2) integer array.
 *     ninp specifies the input unit numbers.
 *
-*     nx, ny - integer, output.
-*     nx and ny specify the number of interior cells along the first
-*     and the second coordinate, respectively. The total number of
-*     cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-*     It will hold that 0.le.nx and 0.le.ny.
+*     nCv, nFc - integer.
+*     nCv and nFc specify the number of control volumes and cell faces
+*     in the unstructured mesh.
+*     It will hold that 0.le.nCv and 0.le.nFc.
 *
 *     ns - integer, output.
 *     ns specifies the number of atomic species in the calculation.
@@ -50,6 +52,7 @@
 *.declarations
 
 *   ..local variables
+      integer idum(0:6)
       character id*8
 *   ..procedures
       logical streql
@@ -63,20 +66,42 @@
 *   ..test ninp
       call xertst (1.le.ninp(0).and.1.le.ninp(1),
      &  'faulty argument ninp')
-*   ..read header line for nx, ny
-      read (ninp(0),'(a8)',err=91) id
-      call xertst (streql(id,'*dimens'),
-     &  'faulty input id at *dimens for nx, ny; id='//id)
-*   ..read nx, ny
-      read (ninp(0),*,err=92) nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty input nx, ny')
 *   ..read header line for ns
-      read (ninp(1),'(a8)',err=93) id
+      read (ninp(0),'(a8)',err=93) id
       call xertst (streql(id,'*dimens'),
      &  'faulty input id at *dimens for ns; id='//id)
 *   ..read ns
-      read (ninp(1),*,err=94) ns
+      read (ninp(0),*,err=94) ns
       call xertst (1.le.ns, 'faulty input ns')
+*   ..obtain mapping/geometry dimensions from file
+      call cfverr (ninp(1), b2fgmtry_version)
+      if (b2fgmtry_version .lt. '03.002.000') then
+        call xerrab('Using old input format. Run b2us first.')
+      endif
+      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      mpg%nCi = idum(0) 
+      mpg%nCg = idum(1) 
+      mpg%nCv = idum(2)
+      mpg%nFc = idum(3)
+      mpg%nVx = idum(4)
+      mpg%nFs = idum(5)
+      mpg%nFt = idum(6)
+      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      mpg%nCmxVx = idum(0)
+      mpg%nCmxFc = idum(1)
+      mpg%nVmxCv = idum(2)
+      mpg%nVmxFc = idum(3)
+      mpg%nCmxNv = idum(4)
+      call cfruin (ninp(1),1,idum,'isClassicalGrid')
+      mpg%isClassicalGrid = idum(0)
+      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
+*   ..test basic dimensions
+      nCv = mpg%nCv
+      nFc = mpg%nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty input nCv, nFc')
 
 * ..return
       call subend ()
@@ -85,8 +110,6 @@
 *-----------------------------------------------------------------------
 *.error conditions
 
-   91 call xerrab ('error trying to read heading for nx, ny')
-   92 call xerrab ('error trying to read nx, ny')
    93 call xerrab ('error trying to read heading for ns')
    94 call xerrab ('error trying to read ns')
 

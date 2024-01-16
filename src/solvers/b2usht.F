@@ -148,6 +148,17 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..compute flo0, con0
       flo0        = floe + floi + flon
       con0(:,:,0) = cone(:,:,0) + coni(:,:,0)+ conn
+      if (switch%b2usht_iout.ne.0) then      
+       call my_out_us(70,nFc,1,flo0(1,0),'b2usht_flo0x')
+       call my_out_us(70,nFc,1,flo0(1,1),'b2usht_flo0y')
+       call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_con0xtest')
+       call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_con0ytest')
+       call my_out_us(70,nFc,1,con0(1,0,1),'b2usht_con0x10')
+       call my_out_us(70,nFc,1,con0(1,1,1),'b2usht_con0y10')
+       call my_out_us(70,nFc,1,con0(1,0,2),'b2usht_con0x20') 
+       call my_out_us(70,nFc,1,con0(1,1,2),'b2usht_con0y20') 
+      endif
+
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
@@ -177,6 +188,23 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 ! $AD II-LOOP
+
+      if (switch%b2usht_iout.ne.0) then
+       call my_out_us(70,nCv,0,she(1,1),'b2usht_she1')     
+       call my_out_us(70,nCv,0,she(1,3),'b2usht_she3')
+       call my_out_us(70,nCv,0,shi(1,1),'b2usht_shi1')     
+       call my_out_us(70,nCv,0,shi(1,3),'b2usht_shi3')
+       call my_out_us(70,nCv,0,shn(1,1),'b2usht_shn1')     
+       call my_out_us(70,nCv,0,shn(1,3),'b2usht_shn3')
+       call my_out_us(70,nCv,0,ne,'b2usht_ne')
+       call my_out_us(70,nCv,0,ni,'b2usht_ni')
+       call my_out_us(70,nCv,0,te,'b2usht_te')
+       call my_out_us(70,nCv,0,ti,'b2usht_ti')
+       call my_out_us(70,nCv,0,resht,'b2usht_resht')
+
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_tt_pre')
+      endif
+
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -281,27 +309,15 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           resht(iCv) = 0.0_R8
         endif
       enddo
-
+      if (switch%b2usht_iout.ne.0) then
+        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_tt')
+      endif 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
       endif                                                             !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0) then
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_total_aam6')
-       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_total_aam5')
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_total_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_total_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_total_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_total_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_total_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_total_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_total_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_total_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_total_aap4')
-       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_total_aap5')
-       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_total_aap6')
-#endif
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_ht_aa')
        call my_out_us(70,nCv,0,resht,'b2usht_resht')
        call my_out_us(70,nCv,0,cortt,'b2usht_cortt')
       endif
@@ -332,6 +348,24 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 ! $AD II-LOOP
+
+      if (switch%b2usht_iout.ne.0) then
+       call my_out_us(70,nCv,0,she(1,1),'b2usht_she1_te')     
+       call my_out_us(70,nCv,0,she(1,3),'b2usht_she3_te')
+       call my_out_us(70,nCv,0,te,'b2usht_te_te')
+       call my_out_us(70,nCv,0,ti,'b2usht_ti_te')
+       call my_out_us(70,nCv,0,ne,'b2usht_ne_te')
+       call my_out_us(70,nCv,0,ni,'b2usht_ni_te')
+       call my_out_us(70,nCv,0,reshe,'b2usht_reshe_te')
+       call my_out_us(70,1,0,mpg%nCmxNv,'b2usht_nCmxNv')
+
+       call my_out_us(70,nFc,1,flo0(1,0),'b2usht_floex') 
+       call my_out_us(70,nFc,1,flo0(1,1),'b2usht_floey')  
+       call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_conex')
+       call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_coney')
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te_pre')
+      endif 
+
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -433,26 +467,15 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 
+      if (switch%b2usht_iout.ne.0) then
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te')
+      endif
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
       endif                                                            !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0) then
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_he_aam6')
-       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_he_aam5')
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_he_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_he_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_he_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_he_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_he_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_he_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_he_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_he_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_he_aap4')
-       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_he_aap5')
-       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_he_aap6')
-#endif
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_he_aa')
        call my_out_us(70,nCv,0,reshe,'b2usht_reshe')
        call my_out_us(70,nCv,0,corte,'b2usht_corte')
       endif
@@ -482,6 +505,24 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 ! $AD II-LOOP
+
+      if (switch%b2usht_iout.ne.0) then
+       call my_out_us(70,nFc,1,floi(1,0),'b2usht_floix') 
+       call my_out_us(70,nFc,1,floi(1,1),'b2usht_floiy')  
+       call my_out_us(70,nFc,1,coni(1,0,0),'b2usht_conix')
+       call my_out_us(70,nFc,1,coni(1,1,0),'b2usht_coniy')
+
+       call my_out_us(70,nCv,0,shi(1,1),'b2usht_shi1_ti')     
+       call my_out_us(70,nCv,0,shi(1,3),'b2usht_shi3_ti')
+       call my_out_us(70,nCv,0,te,'b2usht_te_ti')
+       call my_out_us(70,nCv,0,ti,'b2usht_ti_ti')
+       call my_out_us(70,nCv,0,ne,'b2usht_ne_ti')
+       call my_out_us(70,nCv,0,ni,'b2usht_ni_ti')
+       call my_out_us(70,nCv,0,reshi,'b2usht_reshi_ti')
+
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_ti_pre')
+      endif
+
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -582,6 +623,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           reshi(iCv) = 0.0_R8
         endif
       enddo
+      if (switch%b2usht_iout.ne.0) then
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_ti')
+      endif
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
@@ -592,23 +636,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       enddo
       endif                                                          !srv 22.05.18
 
-
       if (switch%b2usht_iout.ne.0) then
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hi_aam6')
-       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hi_aam5')
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_hi_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_hi_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_hi_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_hi_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_hi_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_hi_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_hi_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_hi_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_hi_aap4')
-       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_hi_aap5')
-       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_hi_aap6')
-#endif
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hi_aa')
        call my_out_us(70,nCv,0,reshi,'b2usht_reshi')
        call my_out_us(70,nCv,0,corti,'b2usht_corti')
       endif
@@ -751,21 +780,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 
       if (switch%b2usht_iout.ne.0) then
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hn_aam6')
-       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hn_aam5')
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_hn_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_hn_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_hn_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_hn_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_hn_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_hn_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_hn_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_hn_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_hn_aap4')
-       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_hn_aap5')
-       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_hn_aap6')
-#endif
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hn_aa')
        call my_out_us(70,nCv,0,reshi,'b2usht_reshn')
        call my_out_us(70,nCv,0,corti,'b2usht_cortn')
       endif
@@ -899,21 +914,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       endif !solve_keps - kt
 
       if (switch%b2usht_iout.ne.0) then
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_kt_aam6')
-       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_kt_aam5')
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_kt_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_kt_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_kt_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_kt_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_kt_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_kt_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_kt_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_kt_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_kt_aap4')
-       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_kt_aap5')
-       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_kt_aap6')
-#endif
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_kt_aa')
        call my_out_us(70,nCv,0,reskt,'b2usht_reskt')
        call my_out_us(70,nCv,0,corkt,'b2usht_corkt')
       endif
@@ -1047,21 +1048,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       endif !solve_keps - enstrophy
 
       if (switch%b2usht_iout.ne.0) then
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_zt_aam6')
-       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_zt_aam5')
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_zt_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_zt_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_zt_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_zt_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_zt_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_zt_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_zt_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_zt_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_zt_aap4')
-       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_zt_aap5')
-       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_zt_aap6')
-#endif
+       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_zt_aa')
        call my_out_us(70,nCv,0,reszt,'b2usht_reszt')
        call my_out_us(70,nCv,0,corzt,'b2usht_corzt')
       endif
