@@ -359,11 +359,6 @@ cdjm Jan2017 update momentum source components for balance
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
      .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
      .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
-        if(switch%b2mndt_style.eq.2) then                              !srv 10.10.22 {
-          dv%resmo(:,is)=dv%resmo(:,is)+
-     &      (pl%ua(:,is)-psnl%ua(:,is))*
-     &       am(is)*mp*pl%na(:,is)*sr%smodt(:,3,is)
-        endif                                                          !srv 10.10.22 }
       endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
