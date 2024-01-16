@@ -127,6 +127,21 @@ c Advanced fluid neutral models
       real (kind=R8) :: L_macro_AFN
       real (kind=R8) :: neutral_sources_rescale
 
+c switches for far-sol flux limiting options
+      integer :: b2tlhe_far_sol
+      integer :: b2tlhi_far_sol
+      integer :: b2tlmv_far_sol
+
+      real (kind=R8) :: b2tlhe_ne_min
+      real (kind=R8) :: b2tlhe_ne_max
+      real (kind=R8) :: b2tlhe_cflme_min
+      real (kind=R8) :: b2tlhi_ni_min
+      real (kind=R8) :: b2tlhi_ni_max
+      real (kind=R8) :: b2tlhi_cflmi_min
+      real (kind=R8) :: b2tlmv_ni_min
+      real (kind=R8) :: b2tlmv_ni_max
+      real (kind=R8) :: b2tlmv_cflmv_min
+
 c iout switches
       integer :: iout_b2wdat
       integer :: b2sian_iout
@@ -405,6 +420,7 @@ c b2stbr
       integer :: b2stbr_b2wall_netcdf
       integer :: b2stbr_coreregno
       integer :: b2stbr_first_flight
+      integer :: bccon14_gradpar_0
       real (kind=R8) :: b2stbr_core_sources_rescale
       real (kind=R8) :: b2stbr_sput_frc
       real (kind=R8) :: b2stbr_alpha
@@ -806,6 +822,22 @@ c Advanced fluid neutral models
       s % set_ti_numerical = 0
       s % set_po_numerical = 0
 
+
+c far-sol flux limiting options
+      s % b2tlhe_far_sol = 0
+      s % b2tlhi_far_sol = 0
+      s % b2tlmv_far_sol = 0
+
+      s % b2tlhe_ne_min = 1.0e17_R8
+      s % b2tlhe_ne_max = 1.0e18_R8
+      s % b2tlhe_cflme_min = 1.0e-3_R8
+      s % b2tlhi_ni_min = 1.0e17_R8
+      s % b2tlhi_ni_max = 1.0e18_R8
+      s % b2tlhi_cflmi_min = 1.0e-3_R8
+      s % b2tlmv_ni_min = 1.0e17_R8
+      s % b2tlmv_ni_max = 1.0e18_R8
+      s % b2tlmv_cflmv_min = 1.0e-3_R8
+
 c geometry
       s % fcHz_style = 1
       s % vxHz_style = 1
@@ -911,6 +943,7 @@ c b2stbr
       s % b2stbr_b2wall_netcdf = 0
       s % b2stbr_coreregno = 1
       s % b2stbr_first_flight = 0
+      s % bccon14_gradpar_0 = 0
       s % b2stbr_core_sources_rescale = 1.0_R8
       s % b2stbr_sput_frc = 0.0_R8
       s % b2stbr_alpha = 0.25_R8
@@ -1139,6 +1172,21 @@ c Advanced fluid neutral models
       call ipgetr ('auto_spatial_hyb_Kn_1', s % auto_spatial_hyb_Kn_1)
       call ipgetr ('auto_spatial_hyb_Kn_2', s % auto_spatial_hyb_Kn_2)
       call ipgetr ('L_macro_AFN', s % L_macro_AFN)
+
+c far sol flux limiting
+      call ipgeti ('b2tlhe_far_sol', s % b2tlhe_far_sol)
+      call ipgeti ('b2tlhi_far_sol', s % b2tlhi_far_sol)
+      call ipgeti ('b2tlmv_far_sol', s % b2tlmv_far_sol)
+
+      call ipgetr ('b2tlhe_ne_min', s % b2tlhe_ne_min)
+      call ipgetr ('b2tlhe_ne_max', s % b2tlhe_ne_max)
+      call ipgetr ('b2tlhe_cflme_min', s % b2tlhe_cflme_min)
+      call ipgetr ('b2tlhi_ni_min', s % b2tlhi_ni_min)
+      call ipgetr ('b2tlhi_ni_max', s % b2tlhi_ni_max)
+      call ipgetr ('b2tlhi_cflmi_min', s % b2tlhi_cflmi_min)
+      call ipgetr ('b2tlmv_ni_min', s % b2tlmv_ni_min)
+      call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
+      call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -1438,6 +1486,7 @@ c b2stbr
      &  s % b2stbr_temperature_at_guard_cell)
       call ipgeti ('b2stbc_coreregno', s % b2stbr_coreregno)
       call ipgeti ('b2stbr_first_flight', s % b2stbr_first_flight)
+      call ipgeti ('bccon14_gradpar_0', s % bccon14_gradpar_0)
       call ipgeti ('b2stbr_sput_frac_flag', s % b2stbr_sput_frac_flag)
       call ipgeti ('b2stbr_b2wall_netcdf', s % b2stbr_b2wall_netcdf)
       call ipgetr ('b2stbr_core_sources_rescale',
