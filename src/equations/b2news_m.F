@@ -292,16 +292,6 @@ csw 01oct2012 initialize potential if necessary
       call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      & switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
 
-!! TODO_B2MNDT is this correct?
-*   ..set values for previous timestep
-      if (switch%b2mndt2_temp_1.eq.1) then
-        call b2scopy (nCv, st%dv%ne, 1, st%psnl%ne, 1)
-        call b2scopy (nCv, st%dv%ni, 1, st%psnl%ni, 1)
-        call b2scopy (ns*nCv, st%pl%ua, 1, st%psnl%ua, 1)
-      endif
-!      st%psnl%ne = st%dv%ne
-!      st%psnl%ni = st%dv%ni
-!      st%psnl%ua = st%pl%ua                                                           !srv 24.05.21
 *   ..recompute currents
       call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
      &              st%pl%po, st%dv%fchanml)
