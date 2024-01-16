@@ -130,6 +130,13 @@
 *   ..set internal parameters on first call
       if (ncall_b2npht.eq.0) then
         if(switch%b2mndt_style.eq.2) then
+*    ..throw warning for use of time-dependent with new k-eps equations
+          if (switch%solve_keps.gt.0) then
+            write(6,*) 'WARNING: the time-dependent treatment of k-eps',
+     &              'equations was implemented similarly as the energy',
+     &              'equations but lacks theoretical development'
+          endif
+*    ..make sure time-depndent equations are not altered by convergence tricks
           rxg = huge(1.0_R8)
           if (switch%b2npht_pcm0.gt.0.0_R8) then
             call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
@@ -164,8 +171,6 @@
           if (warning_kt.or.warning_zt) then
             write(6,*) 'rxf*time_factor should be 1 for k-eps !'
           endif
-
-
           if (warning_e .or. warning_i .or. warning_n)
      .   write(6,*) 'Time derivative terms may be inacurrate !'
           if (warning_kt .or. warning_zt)
@@ -200,12 +205,7 @@
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
       endif
-*    ..throw warning for use of time-dependent with new k-eps equations
-      if (switch%solve_keps.gt.0.and.switch%b2mndt_style.eq.2) then
-        write(6,*) 'WARNING: the time-dependent treatment of k-eps',
-     &              'equations was implemented similarly as the energy',
-     &              'equations but lacks theoretical development'
-      endif
+
 
 
 * ..main computation
