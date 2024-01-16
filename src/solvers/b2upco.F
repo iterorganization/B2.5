@@ -148,10 +148,6 @@
       endif                                          !srv 25.07.17 }                                           !srv 25.07.17
 *   ..compute new ub
       if (ua_solve) then
-       if(pcm0*rxf.ne.0.0_R8 .and. all(pccb0.ne.0.0_R8).and.
-     &     switch%b2mndt2_temp_0.eq.1) then
-          psnl%ua(:,isb) = ub
-       endif
        do iCv = 1, mpg%nCi ! internal cells only
 *       (note the further damping on the velocity correction)
          ireg = mpg%cvReg(iCv)
