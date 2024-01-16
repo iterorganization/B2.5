@@ -10,6 +10,7 @@
       use b2us_map
       use b2mod_math
       use b2mod_subsys
+      use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
       integer isymm

@@ -7,10 +7,7 @@
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
      .          init_geometry, calc_conn, check_geometry,
-     .          divide_by_area, split_face_flux, pitch,
-     .          triangleArea, triangleCentroid,
-     .          quadArea, quadCentroid, pentArea,
-     .          pentCentroid
+     .          divide_by_area, split_face_flux, pitch
 
       type, public :: geometry
 
@@ -1482,106 +1479,6 @@ csc   than previous face, then identify next vertex
       pitch = sqrt(g%cvBb(iCv,0)**2+g%cvBb(iCv,1)**2)/g%cvBb(iCv,3)
       return
       end function pitch
-
-***********************************************************************
-
-      !> Area of triangle given by vertex coordinates
-      function triangleArea( x0, y0, x1, y1, x2, y2 )
-      implicit none
-      real (kind=R8) :: triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-      intrinsic abs
-
-      triangleArea = 0.5_R8*abs((x1-x0)*(y2-y0) -(y1-y0)*(x2-x0))
-
-      end function triangleArea
-
-***********************************************************************
-
-      !> Coordinates of centroid of a triangle given by vertex coordinates
-      function triangleCentroid( x0, y0, x1, y1, x2, y2 )
-      implicit none
-      real (kind=R8) :: triangleCentroid(0:1)
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-
-      triangleCentroid(0) = ( x0 + x1 + x2 ) / 3.0_R8
-      triangleCentroid(1) = ( y0 + y1 + y2 ) / 3.0_R8
-      return
-      end function triangleCentroid
-
-
-***********************************************************************
-
-      !> Area of quadrangle given by vertex coordinates
-      !> The vertices must be in sequence! (=> structured or ordered)
-
-      function quadArea( x0, y0, x1, y1, x2, y2, x3, y3 )
-      implicit none
-      real (kind=R8) :: quadArea
-      real (kind=R8) ::  x0, y0, x1, y1, x2, y2, x3, y3
-      intrinsic abs
-
-      quadArea = triangleArea(x0, y0, x1, y1, x2, y2) +
-     .           triangleArea(x2, y2, x3, y3, x0, y0)
-
-      end function quadArea
-
-***********************************************************************
-
-
-      !> Coordinates of centroid of a quadrangle given by vertex coordinates
-      !> Corners are numbered in the B2 convention 2-3
-      !>                                           0-1
-      function quadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
-      implicit none
-      real (kind=R8) :: quadCentroid(0:1)
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-
-      quadCentroid = ( triangleCentroid(x0,y0,x1,y1,x3,y3) 
-     &   * triangleArea(x0,y0,x1,y1,x3,y3) 
-     &   + triangleCentroid(x0,y0,x2,y2,x3,y3) 
-     &   * triangleArea(x0,y0,x2,y2,x3,y3) ) 
-     &   / ( triangleArea(x0,y0,x1,y1,x3,y3) 
-     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
-      return
-      end function quadCentroid
-
-***********************************************************************
-
-      !> Area of a convex pentagonal cell
-      !> The vertices must be in sequence
-
-      function pentArea(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
-      implicit none
-      real (kind=R8) :: pentArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
-
-      pentArea = triangleArea(x0, y0, x1, y1, x2, y2) + 
-     .         triangleArea(x2, y2, x3, y3, x4, y4) +
-     .         triangleArea(x2, y2, x0, y0, x4, y4) 
-      
-      end function pentArea
-
-***********************************************************************
-
-      !> Centroid of convex pentagonal cell
-      !> The vertices must be in sequence      
-      function pentCentroid( x0,y0,x1,y1,x2,y2,x3,y3,x4,y4)
-      implicit none
-      real (kind=R8) :: pentCentroid(0:1)
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
-
-      pentCentroid = (triangleCentroid(x0, y0, x1, y1, x2, y2)
-     &  * triangleArea(x0, y0, x1, y1, x2, y2) 
-     &  + triangleCentroid(x2, y2, x3, y3, x4, y4) 
-     &  * triangleArea(x2, y2, x3, y3, x4, y4)  
-     &  + triangleCentroid(x2, y2, x0, y0, x4, y4)
-     &  * triangleArea(x2, y2, x0, y0, x4, y4) )
-     &  / (triangleArea(x0, y0, x1, y1, x2, y2)  
-     &  + triangleArea(x2, y2, x3, y3, x4, y4)
-     &  + triangleArea(x2, y2, x0, y0, x4, y4))
-
-      end function pentCentroid
 
 ***********************************************************************
 

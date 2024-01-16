@@ -13,6 +13,7 @@
       use b2us_map
       use b2mod_subsys
       use b2mod_dimensions
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid, istyle
