@@ -86,26 +86,29 @@
 *   ..save /b2cmpa/
       call b2wuzd (nput, version, ns, zamin, zamax, zn, am)
 *   ..save /b2cmpb/
-      idum(0) = cbirso
-      idum(1) = cbirno
-      idum(2) = cbirwe
-      idum(3) = cbirea
-      idum(4) = cbnrso
-      idum(5) = cbnrno
-      idum(6) = cbnrwe
-      idum(7) = cbnrea
-      call cfwuin (nput, 8, idum, 'cbir,cbnr')
-      call cfwure (nput, cbnrso+cbnrno+cbnrwe+cbnrea, cbrbrk, 'cbrbrk')
-      do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
-       call cfwure (nput, 8*ns, cbsna(0,0,ireg), 'cbsna')
-       call cfwure (nput, 8*ns, cbsmo(0,0,ireg), 'cbsmo')
-       call cfwure (nput, 8*ns, cbshi(0,0,ireg), 'cbshi')
-       call cfwure (nput, 8, cbshe(0,ireg), 'cbshe')
-       call cfwure (nput, 8, cbsch(0,ireg), 'cbsch')
-       call cfwure (nput, 8*ns, cbrec(0,0,ireg), 'cbrec')
-       call cfwure (nput, 8, cbmsa(0,ireg), 'cbmsa')
-       call cfwure (nput, 8*ns, cbmsb(0,0,ireg), 'cbmsb')
-      enddo
+      if (cbnrso.gt.0.and.cbnrno.gt.0.and.
+     &    cbnrwe.gt.0.and.cbnrea.gt.0) then
+       idum(0) = cbirso
+       idum(1) = cbirno
+       idum(2) = cbirwe
+       idum(3) = cbirea
+       idum(4) = cbnrso
+       idum(5) = cbnrno
+       idum(6) = cbnrwe
+       idum(7) = cbnrea
+       call cfwuin (nput, 8, idum, 'cbir,cbnr')
+       call cfwure (nput, cbnrso+cbnrno+cbnrwe+cbnrea, cbrbrk, 'cbrbrk')
+       do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
+        call cfwure (nput, 8*ns, cbsna(0,0,ireg), 'cbsna')
+        call cfwure (nput, 8*ns, cbsmo(0,0,ireg), 'cbsmo')
+        call cfwure (nput, 8*ns, cbshi(0,0,ireg), 'cbshi')
+        call cfwure (nput, 8, cbshe(0,ireg), 'cbshe')
+        call cfwure (nput, 8, cbsch(0,ireg), 'cbsch')
+        call cfwure (nput, 8*ns, cbrec(0,0,ireg), 'cbrec')
+        call cfwure (nput, 8, cbmsa(0,ireg), 'cbmsa')
+        call cfwure (nput, 8*ns, cbmsb(0,0,ireg), 'cbmsb')
+       enddo
+      endif
 *   ..save /b2cmpt/
       call cfwure (nput, 8*ns, cfdf0, 'cfdf0')
       call cfwure (nput, 8*ns, cfdna, 'cfdna')

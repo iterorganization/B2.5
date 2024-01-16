@@ -205,8 +205,6 @@ c***  Standard set-up:
 ! the structured computational domain. With fully unstructured grids this is not guaranteed.
 ! IDEA: project the cell center onto the segment and order CVs based on distance wrt one of the segment's extremes
 ! SAME FOR IMP
-      call xertst(m%isClassicalGrid.eq.1,
-     & ' OMP list need to be revised for fully unstructured grids')
       do ic=2,nomp
         if (geo%cvX(omp(ic)).lt.geo%cvX(omp(ic-1)))
      &   call xerrab('OMP LIST NOT SORTED')
@@ -407,3 +405,4 @@ c*** Set default values according to current species list
       end subroutine write_b2mod_user_namelist
 
       end module b2mod_user_namelist
+

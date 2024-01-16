@@ -253,10 +253,10 @@
         call ipgeti ('b2stbr_sputter_energy_on', sputter_energy_on)
         if(switch%use_eirene.eq.0) switch%neutral_rescale=1.0_R8
         if(switch%use_eirene.eq.0) switch%neutral_sources_rescale=1.0_R8
+#ifdef WG_TODO
         call xertst (cbirso.le.switch%b2stbr_coreregno.and.
      1   switch%b2stbr_coreregno.le.cbirso+cbnrso-1,
      2   'faulty internal parameter coreregno')
-#ifdef WG_TODO
         if (nncut.ge.2) then
           call ipgeti ('b2stbc_coreregn2', coreregn2)
           call xertst (cbirso.le.coreregn2.and.

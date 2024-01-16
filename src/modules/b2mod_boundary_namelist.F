@@ -973,6 +973,7 @@ c.. Test consistency with region boundaries
       logical, intent(in) :: dotest
       integer is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
       integer :: ian, ien
+      character*3 ss
 #ifdef WG_OUT
       logical covered, corner, guard_cell, found
 #else
@@ -990,7 +991,7 @@ c.. Test consistency with region boundaries
       integer newunit
       external newunit
 #endif
-      external find_file, xerrab
+      external find_file, xerrab, check_boundary_labels
 
       filename=boundary_filename
       boundary_time_mod = 0.0_R8
@@ -1041,6 +1042,9 @@ c.. Test consistency with region boundaries
               call find_faces (indss, inbc, nbcfc,
      >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
             end do              ! iss
+            write(ss,"(I0)") ib
+            call xertst(nbcfc.gt.0, 
+     &        'No faces found for boundary condition = '//ss)
             m%bcFcP(ib,2) = nbcfc
           else
             call xerrab ('BCCHAR /= A ')
@@ -1049,6 +1053,10 @@ c.. Test consistency with region boundaries
         close(idb)
       end if
 !      call bc_to_struct (m)
+
+      ! now check that all boundary faces are assigned to a BC
+      call check_boundary_labels(m, nBc, bcstart(1:nbc), bcend(1:nbc),
+     & .true.)
 
       if (any(bc_list_size > 0))
      .  call xerrab
@@ -1641,6 +1649,7 @@ c.. Test consistency with region boundaries
       integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
       character(1) :: lchar(nbc)
+      character*3 ss
 #ifndef F2003
       integer newunit
       external newunit
@@ -1769,6 +1778,9 @@ cwdk also need to correct for degenerate faces?
             call find_faces (indss, inbc, bcl(ib),
      >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
           end do  ! iss
+          write(ss,"(I0)") ib
+          call xertst(bcl(ib).gt.0, 
+     &      'No faces found for boundary condition = '//ss)
           m%bcFcP(ib,2) = bcl(ib)
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')
@@ -1779,6 +1791,10 @@ cwdk also need to correct for degenerate faces?
       acchar(1:nbc) = lchar(1:nbc)
       abcstart(1:nbc) = minlbl(1:nbc)
       abcend(1:nbc) = maxlbl(1:nbc)
+
+      ! now check that all boundary faces are assigned to a BC
+      call check_boundary_labels(m, nBc, abcstart(1:nbc), abcend(1:nbc),
+     & .true.)
 
       if (inbc .ne. m%nCg ) then
         write (*,*) 'inbc, nCg ',inbc,m%nCg

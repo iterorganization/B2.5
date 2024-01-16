@@ -40,6 +40,8 @@
       public :: cr, cz, hy1, sy
 
       contains
+      
+***********************************************************************
 
       subroutine alloc_b2mod_geo(nxd,nyd)
       implicit none
@@ -115,6 +117,8 @@
 
       return
       end subroutine dealloc_b2mod_geo
+
+***********************************************************************
 
       subroutine read_b2mod_geo(nx,ny,nread)
       use b2mod_math
@@ -219,6 +223,8 @@ c conn
 
       return
       end subroutine read_b2mod_geo
+
+***********************************************************************
 
       subroutine write_b2mod_geo(nwrite)
       implicit none

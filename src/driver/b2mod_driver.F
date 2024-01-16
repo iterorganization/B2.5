@@ -1972,7 +1972,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
-      CALL EIRENE_WNEUTRALS_INIT
+      if (switch%use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
         call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)

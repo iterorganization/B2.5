@@ -3715,7 +3715,7 @@ c*******************************************************************************
      &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  wrk0(nCv), vcx, dion
+     *  wrk0(nCv), vcx, dion, vnn
       integer is, k, ic, iCv
 
 *   ..subprogram start-up calls
@@ -3741,9 +3741,12 @@ c*******************************************************************************
             dion=expu(
      2        rt%rlsa(iCv,0,is)+
      3        rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
-*         ..For now, no neutral-neutral collisions inlcuded
+*         ..Collision time for n-n collisions (D-D), based on Kotov 2007
+            vnn = 5.2958e-11_R8*(KBolt*pl%tn(iCv))**0.25_R8*
+     &           pl%na(iCv,is)
+*         ..Total coefficients
             df0=(wrk0(iCv)/sqrt(am(is)))**2/
-     1           (vcx+dion*dv%ne(iCv))
+     1           (vcx+dion*dv%ne(iCv)+vnn)
             ! limit df0
             df0=max(switch%b2tqna_min_df0,
      &          min(switch%b2tqna_max_df0,df0))
@@ -3910,7 +3913,7 @@ cwdk same dna_ExB for all ion species
           if (switch%keps_alf.gt.0.0_R8) then
             alf0 = switch%keps_alf*(dna_ExB + switch%dna_min)*
      &         dv%ne(omp(icsepomp))*sqrt(qe/pl%te)*
-     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
+     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*alf0
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
           dzt0 = switch%keps_dzt*dna0(:,ismain)*pl%na(:,ismain)

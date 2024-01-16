@@ -34,7 +34,7 @@ cank }
       use b2mod_b2cmfs
       use b2mod_version
       use b2us_map
-      use b2us_geo
+      use b2us_geo, dumm0 => triangleArea, dumm1 => triangleCentroid
       use b2mod_ad
      & , only : nsdmax
 #ifdef B25_EIRENE
@@ -1291,6 +1291,7 @@ c.. Test consistency with physical edges within the computational domain
 #ifdef WG_TODO
       logical, allocatable :: old_style(:)
 #endif
+      character*3 ss
       character*16 hlp_frm
       character*260 filename
 #ifndef F2003
@@ -1378,6 +1379,9 @@ cwvu    for (advanced) spatially hybrid, might need even more.
               call find_faces (indss, instra, nrcl,
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
             end do              ! iss
+            write(ss,"(I0)") istra
+            call xertst(nrcl.gt.0, 
+     &       'No faces found for neutrals stratum = '//ss)
             m%rcFcP(istra,2) = nrcl
          elseif ((crcstra(istra) /= 'T') .and. (crcstra(istra) /= 'V')
      >     .and. (crcstra(istra) /= 'C')) then
@@ -1386,6 +1390,10 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         end do
         close(idb)
       end if
+
+      ! now check that all boundary faces are assigned to a stratum
+      call check_boundary_labels(m, nstrai, rcstart(1:nstrai),
+     & rcend(1:nstrai), .false.)
 
       if (any(rc_list_size > 0))
      .  call xerrab
@@ -2164,6 +2172,7 @@ c.. Test consistency with physical edges within the computational domain
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       integer :: minlbl(nstrat), maxlbl(nstrat)
       character(1) :: lchar(nstrat)
+      character*3 ss
       type (mapping), intent (inout) :: m
 #ifndef F2003
       integer newunit
@@ -2313,6 +2322,9 @@ cwdk also need to correct for degenerate faces?
             call find_faces (indss, instra, rcl(istra),
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
           end do  ! iss
+          write(ss,"(I0)") istra
+          call xertst(rcl(istra).gt.0, 
+     &      'No faces found for neutrals stratum = '//ss)
           m%rcFcP(istra,2) = rcl(istra)
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
@@ -2332,6 +2344,10 @@ cwdk also need to correct for degenerate faces?
       end where
       arcstart(1:nstrai) = minlbl(1:nstrai)
       arcend(1:nstrai) = maxlbl(1:nstrai)
+
+      ! now check that all boundary faces are assigned to a stratum
+      call check_boundary_labels(m, nstrai, arcstart(1:nstrai),
+     & arcend(1:nstrai), .false.)
 
       if (crcstra(nstrai) == 'T') then
         arcstart(nstrai) = 0
