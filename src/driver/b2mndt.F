@@ -359,8 +359,6 @@ ctmp.dpc
      &       st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
      &       st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
      &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
-          endif
-          if (switch%b2mndt2_temp_2.eq.1) then !! TODO_B2MNDT is this correct in 3.0.9 ???
 *   ..add to previous contributions
             call b2saxpy (nCv*2*ns, 1.0_R8, st%sr%snadt,1, st%sr%sna,1)
             call b2saxpy (nCv*4*ns, 1.0_R8, st%sr%smodt,1, st%sr%smo,1)
