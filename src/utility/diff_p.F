@@ -15,6 +15,8 @@
 *   ..output arguments
       real (kind=R8) ::
      *   dfunp(nFc)
+      integer cvs(2)
+      real (kind=R8) :: radcoef
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -50,12 +52,18 @@
 
 *   ..compute poloidal difference at faces
       do iFc = 1,nFc
+       cvs = mpg%fcCv(iFc,:)
+       if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
+            radcoef = 0.0_R8
+       else
+            radcoef = 1.0_R8
+       endif
        dfunp(iFc) = 
      &  (fun(mpg%fcCv(iFc,2))  - fun(mpg%fcCv(iFc,1)))*
      &   geo%fcQalf(iFc,0) +
      &  (funv(mpg%fcVx(iFc,2)) - funv(mpg%fcVx(iFc,1)))*
      &  (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     &   geo%fcQbet(iFc,1)
+     &   geo%fcQbet(iFc,1)*radcoef
       enddo
 
 *   ..return
