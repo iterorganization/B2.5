@@ -388,8 +388,6 @@ csw 16oct2012 init ier0
       call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
      &              st%pl%ua, st%dv%facdrift, st%dv%fchinert)
 
-     !! TODO_B2MNDT vspr? vsq ??
-
 *   ..iterate on momentum balance
       do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure

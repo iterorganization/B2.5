@@ -242,7 +242,7 @@ cwdk    For unstructured solver, start with simple reading of start-values
       call sfill (nCv*4*ns, 0.0_R8, smosm, 1)
       call sfill (nCv*4, 0.0_R8, shesm, 1)
       call sfill (nCv*4, 0.0_R8, shism, 1)
-      call sfill (nCv*2*ns, 0.0_R8, st%sr%snadt, 1)          !! TODO_B2MNDT check !!
+      call sfill (nCv*2*ns, 0.0_R8, st%sr%snadt, 1)
       call sfill (nCv*4*ns, 0.0_R8, st%sr%smodt, 1)
       call sfill (nCv*4, 0.0_R8, st%sr%shedt, 1)
       call sfill (nCv*4, 0.0_R8, st%sr%shidt, 1)
