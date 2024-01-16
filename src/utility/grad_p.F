@@ -15,8 +15,8 @@
 *   ..output arguments
       real (kind=R8) ::
      *   gfunp(nFc)
-*   ..local
-      real (kind=R8) :: funv_loc(nVx)
+      integer cvs(2)
+      real (kind=R8) :: radcoef
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -53,13 +53,19 @@
       endif
 
 *   ..compute poloidal gradients at faces
-      do iFc = 1, nFc
+      do iFc = 1,nFc
+       cvs = mpg%fcCv(iFc,:)
+       if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
+            radcoef = 0.0_R8
+       else
+            radcoef = 1.0_R8
+       endif
        gfunp(iFc) = 
      &  (fun(mpg%fcCv(iFc,2))  - fun(mpg%fcCv(iFc,1)))*
      &   geo%fcQalf(iFc,0)/(geo%fcQgam(iFc,0)*
      &  (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))) +
-     &  (funv_loc(mpg%fcVx(iFc,2)) - funv_loc(mpg%fcVx(iFc,1)))*
-     &   geo%fcQbet(iFc,1)/(geo%fcQgam(iFc,0)*geo%fcHt(iFc))
+     &  (funv(mpg%fcVx(iFc,2)) - funv(mpg%fcVx(iFc,1)))*
+     &   geo%fcQbet(iFc,1)/(geo%fcQgam(iFc,0)*geo%fcHt(iFc))*radcoef
       enddo
 
 *   ..return
