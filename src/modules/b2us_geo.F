@@ -1051,10 +1051,21 @@
       do i = 1, maxval(mpg%strDiv)
         iFc1 = mpg%divFc(mpg%divFcP(i,1))
         iFc2 = mpg%divFc(mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
-        Psi1 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))+
-     &                   gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
-        Psi2 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))+
+!nh check if the vertices belong to a flux surface
+        if ((mpg%vxFS(mpg%fcVx(iFc1,1)).ne.0).and.    
+     &    (mpg%vxFS(mpg%fcVx(iFc1,2)).ne.0)) then
+          Psi1 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))+
+     &                     gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
+        else 
+          Psi1 = 0.0_R8
+        end if
+        if ((mpg%vxFS(mpg%fcVx(iFc2,1)).ne.0).and.    
+     &    (mpg%vxFS(mpg%fcVx(iFc2,2)).ne.0)) then
+          Psi2 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))+
      &                   gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2))))
+        else 
+          Psi2 = 0.0_R8
+        end if
         if ((gm%psi_increasing .and. Psi1.gt.Psi2) .or.
      &      (.not.gm%psi_increasing .and. Psi2.gt.Psi1)) then
           allocate(old_face_list(1:mpg%divFcP(i,2)))
