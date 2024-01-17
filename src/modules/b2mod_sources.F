@@ -223,6 +223,7 @@
       subroutine dealloc_b2mod_sources
       implicit none
 
+      if (.not.allocated(sch)) return
       deallocate(sch)
       deallocate(she)
       deallocate(sne)

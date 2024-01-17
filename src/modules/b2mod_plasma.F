@@ -185,6 +185,7 @@
       subroutine dealloc_b2mod_plasma
       implicit none
 
+      if (.not.allocated(fch)) return
       deallocate(fch)
       deallocate(fch0)
       deallocate(fchp)
