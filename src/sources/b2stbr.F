@@ -26,7 +26,7 @@
 #ifdef B25_EIRENE
       use b2mod_eirene
      ,  , only : eirene_mc
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use b2mod_running_average
      & , only : run_av_get_sources
 #endif
@@ -221,22 +221,18 @@
 #endif
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
-     *          in_no_of_start_points,nx,ny,switch%in_dl)
-           do ix=-1,nx
-             do ib=-1,ny
-               if(leftix(ix,ib).eq.-2 .and. region(ix,ib,0).ne.0)
-     >          call setup_b2mod_first_flight(ix,ib,nx,ny,'W',output)
-               if(rightix(ix,ib).eq.nx+1 .and. region(ix,ib,0).ne.0)
-     >          call setup_b2mod_first_flight(ix,ib,nx,ny,'E',output)
-             enddo
+     *          in_no_of_start_points,switch%in_dl)
+           do iCv=1,nCv
+             if(leftix(ix,ib).eq.-2 .and. region(ix,ib,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'W',output)
+             if(rightix(ix,ib).eq.nx+1 .and. region(ix,ib,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'E',output)
            enddo
-           do ib=-1,nx
-             do iy=-1,ny
-               if(topiy(ib,iy).eq.ny+1 .and. region(ib,iy,0).ne.0)
-     >          call setup_b2mod_first_flight(ib,iy,nx,ny,'N',output)
-               if(bottomiy(ib,iy).eq.-2 .and. region(ib,iy,0).ne.0)
-     >          call setup_b2mod_first_flight(ib,iy,nx,ny,'S',output)
-             enddo
+           do iCv=1,nCv
+             if(topiy(ib,iy).eq.ny+1 .and. region(ib,iy,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'N',output)
+             if(bottomiy(ib,iy).eq.-2 .and. region(ib,iy,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'S',output)
            enddo
 #ifdef _OPENMP
            end_time = omp_get_wtime()
@@ -480,16 +476,14 @@ c   --> better solution wanted here..
         endif
         do is = 0, nscx-1
           if (output.ge.1) then
-            do iy=-1,ny
-              do ix=-1,nx
-                write(88,*) ix,iy,sna0(ix,iy,0,iscx(is)),
-     .                            shi0(ix,iy,0),she0(ix,iy,0)
-              enddo
-              write(88,'()')
+            do iCv=1,nCv
+              write(88,*) iCv,sna0(iCv,0,iscx(is)),
+     .                        shi0(iCv,0),she0(iCv,0)
             enddo
+            write(88,'()')
           endif
           sum_start=0.0_R8
-          sum_strti=sum(shi0_ff(:,:,is))
+          sum_strti=sum(shi0_ff(:,is))
           pfrpuff=0.0_R8
           mainpuff=0.0_R8
           corepuff=0.0_R8
@@ -497,78 +491,58 @@ c   --> better solution wanted here..
           wrk2=0.0_R8
           wrk3=0.0_R8
           ic=0
-          do ix=-1,nx
-            do ib=-1,ny
-              if((leftix(ix,ib).eq.-2 .or. rightix(ix,ib).eq.nx+1)
-     &          .and. region(ix,ib,0).ne.0) then
-                ic=ic+1
-                call process_b2mod_first_flight
-     *           (ic,ix,ib,nx,ny,ns,nscx,iscx,iscx(is),jsep,
-     *            dtim,sna0(ix,ib,0,iscx(is)),shi0_ff(ix,ib,is),
-     *            work,wrk2,wrk3,
-     *            pfrpuff,mainpuff,corepuff)
-                shi0(ix,ib,0)=shi0(ix,ib,0)-shi0_ff(ix,ib,is)
-                sum_start=sum_start+sna0(ix,ib,0,iscx(is))
-                sna0(ix,ib,0,iscx(is))=0.0_R8
-                shi0_ff(ix,ib,is)=0.0_R8
-              endif
-            enddo
+          do iCv=1,nCv
+!TODO the loop must over all edge cells
+            if((leftix(ix,ib).eq.-2 .or. rightix(ix,ib).eq.nx+1)
+     &        .and. region(ix,ib,0).ne.0) then
+              ic=ic+1
+              call process_b2mod_first_flight
+     *         (mpg,st,ic,iCv,ns,iscx(is),
+     *          dtim,sna0(iCv,0,iscx(is)),shi0_ff(iCv,is),
+     *          work,wrk2,wrk3,
+     *          pfrpuff,mainpuff,corepuff)
+              shi0(iCv,0)=shi0(iCv,0)-shi0_ff(iCv,is)
+              sum_start=sum_start+sna0(iCv,0,iscx(is))
+              sna0(iCv,0,iscx(is))=0.0_R8
+              shi0_ff(iCv,is)=0.0_R8
+            endif
           enddo
-          do ib=-1,nx
-            do iy=-1,ny
-              if((topiy(ib,iy).eq.ny+1 .or. bottomiy(ib,iy).eq.-2)
-     &          .and. region(ib,iy,0).ne.0) then
-                ic=ic+1
-                call process_b2mod_first_flight
-     *           (ic,ib,iy,nx,ny,ns,nscx,iscx,iscx(is),jsep,
-     *            dtim,sna0(ib,iy,0,iscx(is)),shi0_ff(ib,iy,is),
-     *            work,wrk2,wrk3,
-     *            pfrpuff,mainpuff,corepuff)
-                shi0(ib,iy,0)=shi0(ib,iy,0)-shi0_ff(ib,iy,is)
-                sum_start=sum_start+sna0(ib,iy,0,iscx(is))
-                sna0(ib,iy,0,iscx(is))=0.0_R8
-                shi0_ff(ib,iy,is)=0.0_R8
-              endif
-            enddo
-          enddo
-          sum_end=sum(work(:,:,:))
-          sum_ndi=sum(wrk2(:,:))
-          sum_nde=sum(wrk3(:,:))
+          sum_end=sum(work(:,:))
+          sum_ndi=sum(wrk2(:))
+          sum_nde=sum(wrk3(:))
           if(main_call)
      >     write(*,*) 'first_flight: is = ',is,
      *      pfrpuff,mainpuff,corepuff,sum_start,sum_end,
      *      sum_start-(sum_end+pfrpuff+mainpuff+corepuff),
      *      sum_strti,sum_ndi,sum_nde
           if (sum_end.ne.0.0_R8) then
-            sna0(:,:,0,iscx(is))=sna0(:,:,0,iscx(is))
-     .       +work(:,:,0)*sum_start/sum_end
-            sna0(:,:,0,iscx(is)+1)=sna0(:,:,0,iscx(is)+1)
+            sna0(:,0,iscx(is))=sna0(:,0,iscx(is))
+     .       +work(:,0)*sum_start/sum_end
+            sna0(:,0,iscx(is)+1)=sna0(:,0,iscx(is)+1)
      .       +work(:,:,1)*sum_start/sum_end
-            she0(:,:,0)=she0(:,:,0)+wrk3(:,:)*sum_start/sum_end
+            she0(:,0)=she0(:,0)+wrk3(:)*sum_start/sum_end
           endif
           if (sum_ndi.ne.0.0_R8)
-     >     shi0(:,:,0)=shi0(:,:,0)+wrk2(:,:)*sum_strti/sum_ndi
+     >     shi0(:,0)=shi0(:,0)+wrk2(:)*sum_strti/sum_ndi
           if (output.gt.1) then
-            do iy=-1,ny
-              do ix=-1,nx
-                write(89,*) ix,iy,sna0(ix,iy,0,iscx(is))
-     .                           ,shi0(ix,iy,0),she0(ix,iy,0)
-              enddo
-              write(89,'()')
+            do iCv=1,nCv
+              write(89,*) iCv,sna0(iCv,0,iscx(is))
+     .                       ,shi0(iCv,0),she0(iCv,0)
             enddo
+            write(89,'()')
           endif
           if (main_call) then
             write(*,*) 'Total first-flight-source na:', iscx(is),
-     &       sum(sna0(:,:,0,iscx(is)))
+     &       sum(sna0(:,0,iscx(is)))
             write(*,*) 'Total first-flight-source na:', iscx(is)+1,
-     &       sum(sna0(:,:,0,iscx(is)+1))
+     &       sum(sna0(:,0,iscx(is)+1))
           endif
         enddo
         if (main_call) then
           write (*,*)
-     >     'Total first-flight-source ion power=', sum(shi0(:,:,0))
+     >     'Total first-flight-source ion power=', sum(shi0(:,0))
           write (*,*)
-     >     'Total first-flight-source electron power=', sum(she0(:,:,0))
+     >     'Total first-flight-source electron power=', sum(she0(:,0))
         endif
         if (output.ge.1) then
           close(88)

@@ -52,8 +52,10 @@
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (nimp.gt.0) call output_ds_cv(geo,nimp,imp,icsepimp-1,'dsi')
-      if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsa')
+      if (nimp.gt.0)
+     & call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi')
+      if (nomp.gt.0)
+     & call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa')
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcP(i,2)) =

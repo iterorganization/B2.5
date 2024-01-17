@@ -75,7 +75,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff,
+     *          nsrfs, n1st, n2nd, n3rd, nreac, 
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -86,6 +86,7 @@
      , ,only: iunout
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_infcop
       use eirmod_extrab25
       use eirmod_wneutrals
       use b2mod_eirene
@@ -106,7 +107,9 @@
 #endif
 #ifdef IMAS
       use ids_routines  ! IGNORE
-     , ,only: imas_open_env, ids_deallocate, ids_get
+     , ,only: imas_open_env, ids_deallocate, ids_get,
+     ,        ual_begin_pulse_action, ual_open_pulse,
+     ,        HDF5_BACKEND, OPEN_PULSE, FORCE_OPEN_PULSE
       use ids_schemas   ! IGNORE
      , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
      ,        ids_radiation, ids_dataset_description, ids_equilibrium
@@ -317,7 +320,7 @@
 #else
       integer ninp(0:6), nout(0:10)
 #endif
-      integer nCv, nFc, ns, ns0
+      integer nCv, nFc, nVx, ns, ns0
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
@@ -1001,6 +1004,7 @@
 *     (done in b2mnds)
       nCv = mpg%nCv
       nFc = mpg%nFc
+      nVx = mpg%nVx
 *   ..initialise files and common
       call b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
 *   ..set internal parameters on first (and only) call
@@ -1438,7 +1442,8 @@ csw 09oct2012
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        IUNOUT=6+IFOFF
+        IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1469,6 +1474,7 @@ csw 09oct2012
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
@@ -1479,10 +1485,11 @@ csw 09oct2012
       endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
       call createB2SourceEir( nCv, ns, nstra, state % sr_eir )
@@ -1938,7 +1945,7 @@ c   --> better way doing this is necessary)
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_neutrals
-     & (mpg%nCi/2,mpg%nCi/2,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
+     & (ns,natm,nmol,nion,nstraid,nsts,sput_dst)
       natmi = 0
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
@@ -1980,9 +1987,9 @@ cxpb for neutral fluxes used in b2stbc_phys
       filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
-        call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
+        call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
@@ -1991,7 +1998,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       endif
 #else
       if (ids_save.ne.0.or.delta_ids_time.gt.0.0_R8)
-     > call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
+     > call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                         natm,nmol,nion,nlimps)
 #endif
 c new CDF movie option (1st frame at t=0)
@@ -2434,7 +2441,7 @@ c new CDF movie option
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
-     .                  geo,mpg,state,switch)
+     .                  geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
@@ -2643,12 +2650,18 @@ c new CDF movie option
      .       trim(database), shot, run
             call imas_open_env(treename, shot, run, idx,
      .       username, database, version, status)
+c$$$            call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .           username, database, version, idx )
+c$$$            call ual_open_pulse( idx, OPEN_PULSE, '', status )
             if (status.ne.0) then
               if (database.eq.'ITER') then
                 write(*,*) "Did not find ITER database IDS file."
                 write(*,*) "Checking if old ''iter'' case exists."
                 call imas_open_env(treename, shot, run, idx,
      .           username, 'iter', version, status)
+c$$$                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .               username, 'iter', version, idx )
+c$$$                call ual_open_pulse( idx, OPEN_PULSE, '', status )
                 if (status.eq.0) then
                   database = 'iter'
                   write(*,*) "Old database case found."
@@ -2657,6 +2670,9 @@ c new CDF movie option
               else if (database.eq.'iter') then
                 call imas_open_env(treename, shot, run, idx,
      .           username, 'ITER', version, status)
+c$$$                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .               username, 'ITER', version, idx )
+c$$$                call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
                 database = 'ITER'
               end if
             end if
@@ -2766,6 +2782,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     if (database.eq.'iter') database = 'ITER'
                     call imas_open_env(treename, shot, run, idx,
      .                username, database, version, status)
+c$$$                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
+c$$$     .                run, username, database, version, idx )
+c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
                   end if
                   if (continued) then
                     if (process_ids) then
@@ -3162,12 +3181,18 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      .      trim(database), shot, run
           call imas_open_env(treename, shot, run, idx,
      .      username, database, version, status)
+c$$$          call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .         username, database, version, idx )
+c$$$          call ual_open_pulse( idx, OPEN_PULSE, '', status )
           if (status.ne.0) then
             if (database.eq.'ITER') then
               write(*,*) "Did not find ITER database IDS file."
               write(*,*) "Checking if old ''iter'' case exists."
               call imas_open_env(treename, shot, run, idx,
      .         username, 'iter', version, status)
+c$$$              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .             username, 'iter', version, idx )
+c$$$              call ual_open_pulse( idx, OPEN_PULSE, '', status )
               if (status.eq.0) then
                 database = 'iter'
                 write(*,*) "Old database case found."
@@ -3176,6 +3201,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             else if (database.eq.'iter') then
               call imas_open_env(treename, shot, run, idx,
      .         username, 'ITER', version, status)
+c$$$              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
+c$$$     .             username, 'ITER', version, idx )
+c$$$              call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
               database = 'ITER'
             end if
           end if
@@ -3280,6 +3308,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (database.eq.'iter') database = 'ITER'
                   call imas_open_env(treename, shot, run, idx,
      .              username, database, version, status)
+c$$$                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
+c$$$     .                run, username, database, version, idx )
+c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
                 end if
                 if (continued) then
                   write(*,*)
@@ -3447,6 +3478,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+      CALL EIRENE_DEALLOC_INFCOP
 #else
       call dealloc_b2mod_braeir
       call destroyB2SourceEir( state % sr_eir )

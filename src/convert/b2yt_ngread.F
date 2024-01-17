@@ -84,6 +84,8 @@ c
       real (kind=R8), allocatable :: wlabsrp1(:,:)
       real (kind=R8), allocatable :: wlpump1(:,:)
       real (kind=R8), allocatable :: eneutrad1(:,:,:)
+      real (kind=R8), allocatable :: emolrad1(:,:,:)
+      real (kind=R8), allocatable :: eionrad1(:,:,:)
       real (kind=R8), allocatable :: wldna1res(:,:), wldnm1res(:,:)
       real (kind=R8), allocatable :: ewlda1res(:,:), ewldm1res(:,:)
       real (kind=R8), allocatable :: ewldea1res(:,:), ewldem1res(:,:)
@@ -139,7 +141,7 @@ C
       write(*,*) 'Writing '//trim(filename)
 C
 #ifdef WG_TODO
-      READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
+      READ (44,'(I4,2X,I4,2X,I8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
      &   .and.
      &   (streql(eirene_format,'old').or.streql(eirene_format,'new')))
@@ -152,7 +154,7 @@ C
       else
         jvftnew = max(jvft44,20160829)
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_Eir_hash()
+      WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,5i4)')
@@ -1169,6 +1171,55 @@ cank
           deallocate(eneutrad1)
         end if
 
+        if (jvft44 .ge. 20180323 .and. jvft44.ne.20200402) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+          if (nmol1.gt.0) then
+            allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+            do is = 1, nmoli
+              if (imol1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, emolrad1(0,0,imol1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'emolrad',n2*nmol1)
+            call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                           nx1,ny1,nmol1,1,1)
+            deallocate(emolrad1)
+          end if
+          if (nion1.gt.0) then
+            allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
+            do is = 1, nioni
+              if (iion1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eionrad1(0,0,iion1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'eionrad',n2*nion1)
+            call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
+     .                           nx1,ny1,nion1,1,1)
+            deallocate(eionrad1)
+          end if
+        end if
+
 !! FIXME: When changing grid size, NCL may vary and thus arrays below need re-mapping
         if(jvft44 .ge. 20080706) then
           call read_title(44)
@@ -1184,6 +1235,7 @@ cank
             IF(.NOT.ALLOCATED(wldna_res))
      >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                ewldt_res(NCL),
      .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                wldspt_res(NCL), sarea_res(NCL),
@@ -1239,6 +1291,10 @@ cank
               read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
      ,                                i=1,NCL)
+            end if
+            if (jvft44.ge.20201006) then
+              call read_title(44)
+              READ (44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
             end if
             allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
      .               ewldea1res(natm1,NCL), wldspta1res(natm1,NCL))
@@ -1343,6 +1399,10 @@ cank
               write(45,'(1p,6e13.5)') ((wlpump1res(j+k,i),j=1,npls1),
      ,                                                       i=1,ncl)
               deallocate (wlpump1res)
+            end if
+            if (jvftnew.ge.20201006) then
+              call write_title(45,'ewldt_res',ncl)
+              WRITE(45,'(6e15.7)') (ewldt_res(i),i=1,NCL)
             end if
             deallocate(wldna1res, ewlda1res, ewldea1res)
             deallocate(wldnm1res, ewldm1res, ewldem1res)
@@ -1552,6 +1612,54 @@ cank
             call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
      .                           nx1,ny1,natm1,1,1)
             deallocate(eneutrad1)
+          end if
+        end if
+        if(jvft44.ge.20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+          if (nmol1.gt.0) then
+            allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+            do is = 1, nmoli
+              if (imol1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, emolrad1(0,0,imol1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'emolrad',n2*nmol1)
+            call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                           nx1,ny1,nmol1,1,1)
+            deallocate(emolrad1)
+          end if
+          if (nion1.gt.0) then
+            allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
+            do is = 1, nioni
+              if (iion1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eionrad1(0,0,iion1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'eionrad',n2*nion1)
+            call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
+     .                           nx1,ny1,nion1,1,1)
+            deallocate(eionrad1)
           end if
         end if
       end if

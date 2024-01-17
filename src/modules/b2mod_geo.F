@@ -37,7 +37,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: abs_diff, dist, disx, disy, distc, match
-      public :: cr, cz, hy1, pit, sy
+      public :: cr, cz, hy1, sy
 
       contains
 
@@ -2186,14 +2186,6 @@ c conn
      & geom_match_dist
       return
       end function matchBottom
-
-      function pit(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      real(kind=R8) :: pit
-      pit = sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
-      return
-      end function pit
 
       function sy(ix,iy)
       use b2mod_indirect

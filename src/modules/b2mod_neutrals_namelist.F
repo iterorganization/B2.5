@@ -40,6 +40,7 @@ cank }
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_parmmod
      & , only : nlim, nsts, nlimps
 #else
@@ -259,13 +260,13 @@ csw 21feb2012
 
       contains
 
-      subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
+      subroutine alloc_b2mod_neutrals(nsd,
      &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
      & , only : is_codes
       use b2mod_b2cmpa
       implicit none
-      integer, intent(in) :: nxd, nyd, nsd,
+      integer, intent(in) :: nsd,
      &  natm_in, nmol_in, nion_in, nstra_in, nsts_in, sput_dst
       integer is, isstart, isend
       integer is0, ispecies
@@ -298,12 +299,12 @@ csw 21feb2012
       allocate(RCFE(NSTRAID))
       allocate(RCFI(NSTRAID))
       allocate(RC_LIST_SIZE(NSTRAID))
-      allocate(RC_LIST_X(2*(NXD+NYD),NSTRAID))
-      allocate(RC_LIST_Y(2*(NXD+NYD),NSTRAID))
-      allocate(RC_LIST_CHAR(2*(NXD+NYD),NSTRAID))
+      allocate(RC_LIST_X(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_LIST_Y(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_LIST_CHAR(2*(DEF_NXD+DEF_NYD),NSTRAID))
       allocate(NRCFACES(NSTRAID))
-      allocate(RC_FACES(2*(NXD+NYD),NSTRAID))
-      allocate(RC_FACE_ORI(2*(NXD+NYD),NSTRAID))
+      allocate(RC_FACES(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NSTRAID))
       allocate(TARGSP(NSTRAID,ntrack))
       allocate(CHEMSP(NSTRAID))
       allocate(TIME_DEP_PUFF(NSTRAID))
@@ -348,10 +349,6 @@ csw 21feb2012
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
 #else
-#ifdef WG_TODO
-      call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
-      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
-#endif
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write (*,*) ' natm_id,natmid ',natm_in, natmid
       call xertst (natm_in.le.NATMID, 'faulty parameter natm_in')
@@ -682,6 +679,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrat=nstrai
 #endif
         endif
+
         allocate(old_style(nstrat))
         do is = 1, nstrat
           if (rc_list_size(is).eq.0) then
@@ -1325,6 +1323,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           rcpos(nstrat)=0
           rcstart(nstrat)=0
           rcend(nstrat)=0
+          if (switch%recycle_afn.ne.0) then
+            do is = 0, ns-1
+              if (nint(zn(is)).eq.1) then
+                erecyc(is,nstrat) = 0.0_R8
+                mrecyc(is,nstrat) = 0.0_R8
+              end if
+            end do
+          end if
 #else
           nstrat=nstrai
 #endif
@@ -2322,7 +2328,9 @@ cwdk also need to correct for degenerate faces?
       subroutine rc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: istra, instra, istrac, ifc, ic1, ic2
+#ifdef WG_DEBUG
       integer :: iout, ian, ien, i
+#endif
 #ifndef F2003
       integer newunit
       external newunit
@@ -2358,6 +2366,7 @@ cwdk also need to correct for degenerate faces?
           end if
         end do
       end do
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='rc.testout')
 #else
@@ -2378,6 +2387,7 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(a,/(10f6.2))') 'rcFcOr  ',(m%rcFcOr(i),i=ian,ien)
       end do
       close (iout)
+#endif
 
       end subroutine rc_to_struct
 
@@ -2385,12 +2395,13 @@ cwdk also need to correct for degenerate faces?
 
       subroutine write_rcparms (ns, m)
       use b2mod_b2cmpa
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: istra, iout, is, i
+      integer :: ii(1)
       character(1) :: ap =''''
-      character(10) :: new_neutrals_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -2403,7 +2414,7 @@ cwdk also need to correct for degenerate faces?
       open(unit=iout,file='b2us.neutrals.parameters')
 #endif
 
-      call cfverw(iout,new_neutrals_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&NEUTRALS'
       write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_CPU = ',eirene_step_cpu
@@ -2601,8 +2612,16 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        write (iout,'(1x,a,(10(i5,a1,1x)))')
-     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,n_spcsrf)
+        ii=minloc(abs(l_spcsrf))
+        if (ii(1).eq.1) then
+          is = 0
+        else if (l_spcsrf(ii(1)).eq.0) then
+          is = ii(1)-1
+        else
+          is = size(l_spcsrf)
+        end if
+        if (is.gt.0) write (iout,'(1x,a,(10(i5,a1,1x)))')
+     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,is)
         write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))')
      .    'sps_id= ',(ap,sps_id(i),ap,',',i=1,n_spcsrf)
         write (iout,'(1x,a,(10(i5,a1,1x)))')

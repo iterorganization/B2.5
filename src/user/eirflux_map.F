@@ -19,6 +19,7 @@ c
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif
@@ -53,7 +54,7 @@ c
       subroutine b2neut_surfcheck(s,t,n,shift)
       use b2mod_types
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif
@@ -111,6 +112,7 @@ c  shift : data offset in the Eirene arrays
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif
@@ -152,6 +154,7 @@ c
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif
@@ -195,6 +198,7 @@ c
       use b2mod_constants
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif

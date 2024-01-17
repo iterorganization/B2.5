@@ -211,7 +211,6 @@ c***  Standard set-up:
      &   call xerrab('OMP LIST NOT SORTED')
       end do
 *   ..Definition of separatrix position in OMP list
-! Separatrix is defined by checking when cvReg changes value inside the OMP list
       icsepomp = 0
       ic = 1
       found = .false.

@@ -247,7 +247,7 @@ c      use b2mod_types
             if (new_files) write(93,*) r(i),f(i)
           enddo
 !          write(*,*) 'vor region_profile'
-          call region_profile(geo,kind_data,ndat,r,ndim,pr,ifa,nanf)
+          call region_profile(mpg,geo,kind_data,ndat,r,ndim,pr,ifa,nanf)
 !          write (*,*) 'ifa=',ifa
           if (ifa.eq.1) goto 99
 !          allocate (pf(1:ndim))
@@ -633,7 +633,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
 #ifdef WG_TODO
-            call region_profile(geo,1,ndat,r,ndim,pr,ifa,nfitanf)
+            call region_profile(mpg,geo,1,ndat,r,ndim,pr,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
 !           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
@@ -917,16 +917,18 @@ c*** Clear data to forget previous profiles
 
 *-----------------------------------------------------------------------
 
-      subroutine region_profile(geo,kind_data,ndat,r,ndim,pr,ifa,
+      subroutine region_profile(mpg,geo,kind_data,ndat,r,ndim,pr,ifa,
      & nfitanf)
 
       use b2mod_indirect
       use b2mod_user_namelist
      & , only : nomp, omp, icsepomp
       use b2us_geo
+      use b2us_map
       use b2mod_mwti
      & , only: output_ds_cv
       implicit none
+      type (mapping), intent(in) :: mpg
       type (geometry), intent(in) :: geo
       integer:: i,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
@@ -944,7 +946,7 @@ c*** Clear data to forget previous profiles
         if (nomp.gt.0) then
           allocate(pra(nomp))
           allocate(prdsa(nomp))
-          call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsp')
+          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp')
         end if
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif

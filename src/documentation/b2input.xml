@@ -1274,6 +1274,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tqin_csigin_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Integer switch to choose the expression for the ion-neutral conductivity.
+					If ’1’, the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment).
+					If ’0’ (default), it is computed from the local CX rate (SOLPS5.0/5.1 treatments).
+				</description>
+			</switch>
+			<switch>
 				<name>b2tstch_delta</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -3536,6 +3546,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tinnt_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Integer switch to choose the numerical treatment of the ion pressure gradient calculation for the ion-neutral current.
+					If b2tinnt_style.eq.0, then the chain rule is first applied to the product of density and temperature, and (grad n)/n is rewritten as grad(log(n)).
+					If b2tinnt_style.eq.1 (default), then the gradient of the product of density and temperature is calculated directly.
+				</description>
+			</switch>
+			<switch>
 				<name>b2ux5p_mult_nonzero</name>
 				<default>10</default>
 				<type>integer</type>
@@ -3704,6 +3724,7 @@
 					Minimal density maintained in all cells for all species.
 					It must be true that na_min is smaller than na_new, as well as any of the initial densities provided in b2ai.dat.
 					This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
+					It is also used to avoid division by 0 when calculating kinetic neutral velocities from the kinetic flux densities in b2tinnt.F.
 				</description>
 			</switch>
 			<switch>

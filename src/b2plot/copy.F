@@ -2,27 +2,25 @@ c
 
       subroutine copy(src,scale,nz,texttmp)
       use b2mod_types
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
       integer nz
       real (kind=R8) ::
-     *   src(-1:nx,-1:ny,0:nz-1),scale
+     *   src(mpg%nCv,0:nz-1),scale
       character*(*) texttmp(0:nz-1)
-c      write(*,*) 'Copying array: nx, ny, nz = ',nx,ny,nz
-c      write(*,*) 'nxd, nyd = ',nxd,nyd
+c      write(*,*) 'Copying array: nCv, nz = ',mpg%nCv,nz
 c      write(*,*) nncut
       if(iwrk .eq. wklng) call dropstackbottom()
       iwrk=iwrk+1
-      work(:,:,0:nz-1,iwrk)=src(:,:,0:nz-1)*scale
-      values(9)=minval(work(:,:,0:nz-1,iwrk))
-      values(10)=maxval(work(:,:,0:nz-1,iwrk))
+      work(:,0:nz-1,iwrk)=src(:,0:nz-1)*scale
+      values(9)=minval(work(:,0:nz-1,iwrk))
+      values(10)=maxval(work(:,0:nz-1,iwrk))
       textwk(0:nz-1,iwrk)=texttmp(0:nz-1)
-      ndim(1,iwrk)=nx
-      ndim(2,iwrk)=ny
-      ndim(3,iwrk)=nz
-c      write(*,*) src(0,0,0)*scale,work(0,0,0,iwrk),
-c     1 src(nx+1,ny+1,0)*scale,work(nx+1,ny+1,0,iwrk)
+      ndim(1,iwrk)=mpg%nCv
+      ndim(2,iwrk)=nz
+c      write(*,*) src(1,0)*scale,work(1,0,iwrk)
       return
       end subroutine copy
 
@@ -55,39 +53,34 @@ c      write(*,*) src(1,1)*scale,eirene_stack(1,0,iewrk)
       return
       end subroutine eirene_copy
 
-      subroutine eirene_coarse_copy(src,scale,nz,texttmp)
-! special mapping of an Eirene array only defined over the first NX*NY cells
+      subroutine eirene_coarse_copy(src,scale,nCv,nz,texttmp)
+! special mapping of an Eirene array only defined over the B2.5 control volumes
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_values
       use eirmod_ctrig
       use eirmod_wneutrals
-      integer nz
+      integer nCv, nz
       real (kind=R8) ::
-     *   src(nz,1:ntrii),scale
+     *   src(1:nCv,0:nz-1), scale
       character*(*) texttmp(0:nz-1)
-      integer in,ix,iy,iz
-c      write(*,*) 'Copying Eirene array: ntrii, nx, ny, nz = ',ntrii,nx,ny,nz
+      integer in, iCv, iz
+c      write(*,*) 'Copying Eirene array: ntrii, nCv, nz = ',ntrii,nCv,nz
       if(iewrk .eq. wklng) call dropeirenestackbottom()
       iewrk=iewrk+1
-      do iz = 1, nz
-        do i = 1, ntrii
-          ix = ixtri(i)
-          iy = iytri(i)
-          in = iy + (ix-1)*ny
-          if (b2_cell(ix,iy)) then
-            eirene_stack(i,iz-1,iewrk)=src(iz,in)*scale
-          else
-            eirene_stack(i,iz-1,iewrk)=0.0_R8
-          endif
-        end do
+      do i = 1, ntrii
+        iCv = ixtri(i)
+        if (iCv.gt.0) then
+          eirene_stack(i,0:nz-1,iewrk)=src(iCv,0:nz-1)*scale
+        else
+          eirene_stack(i,0:nz-1,iewrk)=0.0_R8
+        endif
       end do
       values(38)=minval(eirene_stack(1:ntrii,0:nz-1,iewrk))
       values(39)=maxval(eirene_stack(1:ntrii,0:nz-1,iewrk))
       textewk(0:nz-1,iewrk)=texttmp(0:nz-1)
       nedim(1,iewrk)=ntrii
       nedim(2,iewrk)=nz
-c      write(*,*) src(1,1)*scale,eirene_stack(1,0,iewrk)
       return
       end subroutine eirene_coarse_copy
 #endif

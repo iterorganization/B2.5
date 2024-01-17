@@ -43,7 +43,7 @@
 *       B2MX* - Auxiliaries for b2m*.
 *     B2N* - Driver routines for inner iteration.
 *       B2NEWS_ - Controls inner iteration.
-*       B2NEWS_m - Controls inner iteration for time-dependent mode.
+*       B2NEWS_M - Controls inner iteration for time-dependent mode.
 *       B2NP* - Iteration for individual equations.
 *       B2NX* - Auxiliary routines for b2n*.
 *     B2O*-B2Q* - Reserved for alternative numerical core.
