@@ -47,6 +47,8 @@
       implicit none
       integer, intent(in) :: nxd, nyd
 
+      if (b2mod_geo_allocated) return
+
       allocate(bb(-1:nxd,-1:nyd,0:3))
       allocate(crx(-1:nxd,-1:nyd,0:3))
       allocate(cry(-1:nxd,-1:nyd,0:3))
