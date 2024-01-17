@@ -7,8 +7,12 @@
 #include <DIMENSIONS.F>
 
       real (kind=R8), allocatable, save ::
-     *  work(:,:,:,:),
-     *  wrk(:),
+     *  work(:,:,:),
+     *  wrkc(:),
+     *  wrkcs(:,:),
+     *  wrkf(:),
+     *  wrkfs(:,:),
+     *  wrkv(:),
      *  vxa(:,:),
      *  vya(:,:),
      *  vza(:,:),
@@ -18,8 +22,8 @@
      *  vxi(:,:),
      *  vyi(:,:),
      *  vzi(:,:),
-     *  arrowx(:,:,:),
-     *  arrowy(:,:,:),
+     *  arrowx(:,:),
+     *  arrowy(:,:),
      *  earrowx(:,:),
      *  earrowy(:,:),
      *  p1(:,:),
@@ -27,9 +31,9 @@
      *  xx(:,:),
      *  yy(:,:),
      *  nh(:,:),
-     *  zeff(:,:),
-     *  uutraj(:,:,:),
-     *  vvtraj(:,:,:),
+     *  zeff(:),
+     *  uutraj(:,:),
+     *  vvtraj(:,:),
      *  targetx(:,:),
      *  targety(:,:),
      *  targetr(:,:),
@@ -108,7 +112,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
       integer, save ::
-     *  ndim(3,wklng),nedim(2,wklng),nwdim(2,wklng),
+     *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),ntrfrm,
      *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
 cank 960511
       integer, save ::
@@ -138,10 +142,10 @@ cank
 
       contains
 
-      subroutine alloc_b2mod_b2plot(nCv,nFc,nsd,ns_ext,wklngd,
+      subroutine alloc_b2mod_b2plot(nCv,nFc,nVx,nsd,ns_ext,wklngd,
      1 natmd,nmold,niond,nlim)
       implicit none
-      integer nCv,nFc
+      integer nCv,nFc,nVx
       integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
 #ifdef WG_TODO
@@ -166,20 +170,24 @@ cank
       call get_nxt(nx,nxtl,nxtr)
 #endif
 
-      allocate(work(1:nCv,1,0:nsw,1:wklngd))
-      allocate(wrk(1:nFc))
+      allocate(work(1:nCv,0:nsw,1:wklngd))
+      allocate(wrkc(1:nCv))
+      allocate(wrkcs(1:nCv,0:max(nsd,ns_ext)-1))
+      allocate(wrkf(1:nFc))
+      allocate(wrkfs(1:nFc,0:nsd-1))
+      allocate(wrkv(1:nVx))
       allocate(wrk_hlp(1:nCv))
       allocate(ind_hlp(1:nCv))
-      allocate(arrowx(1:nCv,1,0:nsw))
-      allocate(arrowy(1:nCv,1,0:nsw))
+      allocate(arrowx(1:nCv,0:nsw))
+      allocate(arrowy(1:nCv,0:nsw))
       allocate(p1(2,nlim))
       allocate(p2(2,nlim))
       allocate(xx(1:nCv,2))
       allocate(yy(1:nCv,2))
       allocate(nh(1:nCv,1))
-      allocate(zeff(1:nCv,1))
-      allocate(uutraj(1:nCv,1,0:nsd-1))
-      allocate(vvtraj(1:nCv,1,0:nsd-1))
+      allocate(zeff(1:nCv))
+      allocate(uutraj(1:nCv,0:nsd-1))
+      allocate(vvtraj(1:nCv,0:nsd-1))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
       allocate(textplel(0:nsd))
@@ -265,7 +273,11 @@ cank
 
       if (.not.allocated(work)) return
       deallocate(work)
-      deallocate(wrk)
+      deallocate(wrkc)
+      deallocate(wrkcs)
+      deallocate(wrkf)
+      deallocate(wrkfs)
+      deallocate(wrkv)
       deallocate(wrk_hlp)
       deallocate(ind_hlp)
       deallocate(arrowx)
@@ -302,6 +314,7 @@ cank
       subroutine dealloc_b2mod_b2plot_eirene
       implicit none
 
+      if (.not.allocated(eirene_stack)) return
       deallocate(eirene_stack)
       deallocate(triangle_area)
       deallocate(triangle_vol)
@@ -324,6 +337,7 @@ cank
       subroutine dealloc_b2mod_b2plot_wall
       implicit none
 
+      if (.not.allocated(wwrk_hlp)) return
       deallocate(wwrk_hlp)
       deallocate(twrk_hlp)
       deallocate(indt_hlp)

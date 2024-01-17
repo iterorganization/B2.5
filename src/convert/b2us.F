@@ -354,7 +354,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 #ifdef B25_EIRENE
       filename='input.dat'
       call find_file(filename,file_exists)
-      if (file_exists.and.use_eirene.ne.0) then
+      if (file_exists) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) line
         rewind(45)
@@ -400,12 +400,12 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         natm_loc = max(natm, ntm)
         if (neutrals_version.lt.'03.002.000') then
           call alloc_b2mod_neutrals
-     .     (nx, ny, ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
+     .     (ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
           call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
         else
-          call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns,
+          call alloc_b2mod_neutrals (ns,
      .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(ns, mpg, switch, .false.)
         end if

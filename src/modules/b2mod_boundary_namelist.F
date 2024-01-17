@@ -1835,12 +1835,12 @@ cwdk also need to correct for degenerate faces?
 ***********************************************************************
 
       subroutine write_bcparms (ns, m)
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: ib, iout, is
       character(1) :: ap =''''
-      character(10) :: new_boundary_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -1852,7 +1852,7 @@ cwdk also need to correct for degenerate faces?
       iout = newunit()
       open(unit=iout,file='b2us.boundary.parameters')
 #endif
-      call cfverw(iout,new_boundary_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&boundary'
       write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
@@ -2019,7 +2019,10 @@ cc BCPOT
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: ib, inbc, ibc, iFc, ic1, ic2
-      integer :: iout, ian, ien, i, j, k
+      integer :: i, j, k
+#ifdef WG_DEBUG
+      integer :: iout, ian, ien
+#endif
 #ifndef F2003
       integer newunit
       external newunit
@@ -2064,7 +2067,7 @@ cc BCPOT
           end do
         end do
       end if
-
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='bc.testout')
 #else
@@ -2083,7 +2086,7 @@ cc BCPOT
         write (iout,'(a,/(10f6.2))') 'bcCv(2) ',(m%bcFcOr(i),i=ian,ien)
       end do
       close (iout)
-
+#endif
       end subroutine bc_to_struct
 
       end module b2mod_boundary_namelist

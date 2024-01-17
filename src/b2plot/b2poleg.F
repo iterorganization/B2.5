@@ -25,8 +25,10 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,k
-      real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
+#ifdef WG_TODO
+      integer ix, k
+      real (kind=R8) :: x, y, z, hlp_je, hlp_q, hlp_qp, hlp_si
+#endif
 c----------------------------------------------------------------------
 c*** Check the ig value
 c
@@ -43,6 +45,7 @@ c
   710 format(6x,a1,9x,a4,9x,a2,10x,a2,8x,a6,6x,a6,
      ,       6x,a5,8x,a4,7x,a6/)
 c
+#ifdef WG_TODO
       x=0.0_R8
       z=0.0_R8
       do ix=0,nx-1
@@ -70,6 +73,8 @@ c
   700   format(1p,48e12.4)
       end do
       close (lun)
+#endif
+      return
 c
       contains
 

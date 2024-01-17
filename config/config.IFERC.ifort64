@@ -30,6 +30,10 @@ INCMOD   = -B
 GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
 DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
+ifdef USE_OPENMP
+FCOPTS  += -fopenmp
+LDOPTS  += -fopenmp
+endif
 else
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
@@ -37,7 +41,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2
+FCOPTS   = -O2 -xHost
 endif
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)

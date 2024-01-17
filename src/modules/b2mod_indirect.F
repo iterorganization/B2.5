@@ -385,20 +385,10 @@
       return
       end function FindLeftCell
 
-  !> Area of triangle given by vertex coordinates
-      function triangleArea( x0, y0, x1, y1, x2, y2 )
-      implicit none
-      real (kind=R8) :: triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-      intrinsic abs
-
-      triangleArea = 0.5_R8 * abs( (x1-x0)*(y2-y0) - (y1-y0)*(x2-x0) )
-
-      end function triangleArea
-
   !> Area of quadrangle given by vertex coordinates
   !> The vertices must be in sequence!
       function quadArea( x0, y0, x1, y1, x2, y2, x3, y3 )
+      use b2mod_math
       implicit none
       real (kind=R8) :: quadArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
@@ -408,21 +398,11 @@
 
       end function quadArea
 
-  !> Coordinates of centroid of a triangle given by vertex coordinates
-      function triangleCentroid( x0, y0, x1, y1, x2, y2 )
-      implicit none
-      real (kind=R8) :: triangleCentroid(0:1)
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-
-      triangleCentroid(0) = ( x0 + x1 + x2 ) / 3.0_R8
-      triangleCentroid(1) = ( y0 + y1 + y2 ) / 3.0_R8
-      return
-      end function triangleCentroid
-
   !> Coordinates of centroid of a quadrangle given by vertex coordinates
   !> Corners are numbered in the B2 convention 2-3
   !>                                           0-1
       function quadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
+      use b2mod_math
       implicit none
       real (kind=R8) :: quadCentroid(0:1)
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
@@ -442,6 +422,7 @@
   !>                                           0-1
       function averageVertex( f0, x0, y0, f1, x1, y1, 
      &                        f2, x2, y2, f3, x3, y3 )
+      use b2mod_math
       implicit none
       real (kind=R8) :: averageVertex
       real (kind=R8) :: f0, f1, f2, f3

@@ -148,6 +148,9 @@ c=======================================================================
       use b2mod_b2plot_ank
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -171,7 +174,7 @@ c
       integer lun
       parameter (lun=96)
       integer indsrf(stacklen)
-      integer i, j, im, in, is, ix, iy, iCv, k, n, nindsrf
+      integer i, j, im, in, is, iy, iCv, k, n, nindsrf
       logical found
       character frm*128, filename*256, extralabel*256
 c=======================================================================
@@ -532,13 +535,11 @@ c-----------------------------------------------------------------------
         open(unit=lun,file=filename)
         write(lun,'(2a)') '# ', trim(extralabel)
         write(lun,'(2a)') '# ', trim(graphlabel(iwrk))
-        write(lun,'(3x,a2,3x,a2,6x,a1,11x,a1,11x,a3)')
-     .   'ix','iy','x','y','z01'
-        do iy = 0, ny-1
-          do ix = 0, nx-1
-            write(lun,'(2i5,1p,3e12.4)')
-     .       ix, iy, cr(ix,iy), cz(ix,iy), work(ix,iy,0,iwrk)
-          end do
+        write(lun,'(2x,a3,6x,a1,11x,a1,11x,a3)')
+     .   'iCv','x','y','z01'
+        do iCv = 1, mpg%nCv
+          write(lun,'(i5,1p,3e12.4)')
+     .       iCv, gm%cvX(iCv), gm%cvY(iCv), work(iCv,0,iwrk)
         end do
         close(lun)
         stack_req=(/1,0,0,0,0,0,0/)

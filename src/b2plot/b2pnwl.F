@@ -16,7 +16,7 @@ c======================================================================
 #ifdef B25_EIRENE
       use eirmod_parmmod
      .   , only : natm, nmol
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       implicit none
 #include <DIMENSIONS.F>

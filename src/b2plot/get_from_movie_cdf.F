@@ -7,6 +7,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      ,   , ncv_eir => ncv
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirdiag

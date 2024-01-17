@@ -4,23 +4,17 @@
       program b2mn_opt
       use b2mod_types
       use b2mod_version
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_anomalous_transport
-      use b2mod_work
       use b2mod_ma28
-      use b2mod_indirect
-      use b2mod_geo_corner
-      use b2mod_neutrals_namelist
-      use b2mod_neutr_src_scaling
       use b2mod_ppout
       use b2mod_par_opt
       use b2mod_exp_file_names
       use b2mod_driver
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      use b2us_prep
+      use b2us_io
+      use b2mod_switches
       use b2mod_xerset
 #if ( defined(USE_MPI) && MPI_MOD > 0 )
       use mpi      ! IGNORE
@@ -130,12 +124,19 @@
 
 *   ..common blocks
 
+*   ..main data structures
+      type(mapping), save    :: mpg
+      type(geometry), save   :: geo
+      type(B2State), save    :: state
+      type(B2StateExt), save :: state_ext
+      type(B2Average), save  :: state_avg
+      type(switches), save   :: switch
 *   ..local variables
       integer ix, iy, ic
 #ifdef JET
-      integer ninp(0:6), nout(0:9), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:9), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
 #else
-      integer ninp(0:6), nout(0:8), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:8), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
 #endif
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
@@ -210,53 +211,65 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call cfverr (ninp(1), b2fgmtry_version)				 !xpb
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstati_version)				 !xpb
-*   ..obtain nx, ny from geometry file
-      if (b2fgmtry_version .lt. '03.002.000') then                       !pb
-      call cfruin (ninp(1), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
-      end if
-*   ..obtain ns from parameters file
-      call cfruin (ninp(2), 1, idum, 'ns')
-      ns = idum(0)
-      call xertst (1.le.ns, 'faulty input ns from parameters file')
-*   ..obtain nx, ny, ns0 from plasma state file
-      call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
-      ns0 = idum(2)
-      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
-     &  'faulty input nx, ny from plasma state file')
-      call xertst (1.le.ns0.and.ns0.le.ns,
-     &  'faulty input ns from plasma state file')
+*   ..obtain nCv, nFc, ns from b2fstate file
+      call cfruin (ninp(3), 3, idum, 'nCv,nFc,ns')
+      nCv = idum(0)
+      nFc = idum(1)
+      ns  = idum(2)
+      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+     &  'faulty input nCv, nFc, ns from plasma state file')
+*   ..obtain mapping/geometry dimensions from b2fgmtry file
+      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      mpg%nCi = idum(0)
+      mpg%nCg = idum(1)
+      mpg%nCv = idum(2)
+      mpg%nFc = idum(3)
+      mpg%nVx = idum(4)
+      mpg%nFs = idum(5)
+      mpg%nFt = idum(6)
+      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      mpg%nCmxVx = idum(0)
+      mpg%nCmxFc = idum(1)
+      mpg%nVmxCv = idum(2)
+      mpg%nVmxFc = idum(3)
+      mpg%nCmxNv = idum(4)
+      call cfruin (ninp(1),1,idum,'isClassicalGrid')
+      mpg%isClassicalGrid = idum(0)
+      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
+      call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
+     &  'faulty input nCv, nFc from geometry file')
+*   ..obtain ns from b2fparam file
+      call cfruin (ninp(2), 1, idum(2), 'ns')
+      call xertst (idum(2).ne.ns,
+     &  'faulty input ns from physics parameters file')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_rates(nx,ny,ns)
-      call alloc_b2mod_residuals(nx,ny,ns)
-      call alloc_b2mod_sources(nx,ny,ns)
-      call alloc_b2mod_transport(nx,ny,ns)
-      call alloc_b2mod_anomalous_transport(nx,ny,ns)
-      call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
-      call alloc_b2mod_ppout(nx,ny,ns)
+      call alloc_mapping (mpg)
+      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
+     .  mpg%nFt, mpg%nVmxCv)
+      call createB2State (nCv, nFc, ns, state)
 *   ..call driver routines
-      call b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
-      call b2mndr_1 (nout, nx, ny, ns, 0)
-      call b2mndr_2 (nout, nx, ny, ns)
+      call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg,
+     &  state, state_ext, state_avg)
+      call b2mndr_1 (nout, ns, switch, geo, mpg,
+     &  state, state_ext, state_avg, 0)
+      call b2mndr_2 (nout, ns, switch, geo, mpg,
+     &  state, state_ext, state_avg)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')  !srv 02.05.09 }
       call cfverw(nout(7), newversion)
-      call write_b2mod_geo(nout(7))
-      call write_b2mod_plasma(nout(7))
-      call write_b2mod_residuals(nout(7))
-      call write_b2mod_sources(nout(7))
-      call write_b2mod_transport(nout(7))
-      call write_b2mod_anomalous_transport(nout(7))
-      call write_b2mod_neutr_src_scaling(nout(7),nstrai)
+      idum(0) = nCv
+      idum(1) = nFc
+      idum(2) = ns
+      call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
+      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 *   ..write data for optimization
+#ifdef WG_TODO
       call write_results(nx, ny)
+#endif
 #ifdef JET
 *   ..set and write ppout
       call cfopen (nout(9),'tran','new','unformatted')
@@ -283,16 +296,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       deallocate(par_opt0, par_opt, par_opt_phys)
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_work
-      call dealloc_b2mod_ppout
-      call dealloc_b2mod_rates
-      call dealloc_b2mod_plasma
-      call dealloc_b2mod_sources
-      call dealloc_b2mod_indirect
-      call dealloc_b2mod_residuals
-      call dealloc_b2mod_transport
-      call dealloc_anomalous_transport
+      call destroyB2State (state)
+      call destroyB2StateExt (state_ext)
+      call dealloc_geometry (geo)
+      call dealloc_mapping (mpg)
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

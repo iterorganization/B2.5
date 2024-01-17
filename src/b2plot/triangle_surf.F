@@ -1,9 +1,8 @@
 c
       subroutine triangle_surf()
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
@@ -26,7 +25,7 @@ c
         call init_page(titlestring,
      1   values(5),values(6),values(7),values(8),1,.true.,.true.,
      2   .true.)
-        call plottripatch(nx,ny,ntrii,nrknot,is,xtrian,ytrian,necke,
+        call plottripatch(mpg%nCv,ntrii,nrknot,is,xtrian,ytrian,necke,
      3   eirene_stack(:,is,iewrk),
      4   values(38),values(39),linlog)
         if(earrowl .gt. 0.0_R8) call plot_trig_arrows(is)
