@@ -200,15 +200,30 @@ c time-dependent treatment                                              !srv 07.
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt)
 *  .. add contribution from time-dependent source
         sr%she = sr%she+sr%shedt
+       if(switch%b2mndt2_temp_4.eq.1) then
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
+       else
+        sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
+     &                                  pl%te/dtim*geo%cvVol
+       end
         sr%shi = sr%shi+sr%shidt
+       if(switch%b2mndt2_temp_4.eq.1) then
         sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol
+       else
+        sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
+     &                                  pl%ti/dtim*geo%cvVol
+       end
         if (switch%tn_style.eq.2) then
           sr%shn = sr%shn+sr%shndt
+         if(switch%b2mndt2_temp_4.eq.1) then
           sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
      &                                    psnl%tn/dtim*geo%cvVol
+         else
+          sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
+     &                                    pl%tn/dtim*geo%cvVol
+         end
         endif
       endif                                                              !srv 207.07.21 }
 
