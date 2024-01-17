@@ -108,9 +108,6 @@
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-#ifndef NO_IEEE
-      logical, external :: my_isnan
-#endif
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
       !$OMP THREADPRIVATE(ncall, phm1, phm2)
