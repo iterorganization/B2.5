@@ -246,6 +246,10 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         mpg%nx    = idum(0)
         mpg%ny    = idum(1)
         mpg%nncut = idum(2)
+*     ..read header for geometry
+        call cfruch (ninp(1), 120, lblgm, 'label')
+        call cfruin (ninp(1), 1, idum, 'isymm')
+        isymm = idum(0)
 *     ..allocate mapping and geometry
         call alloc_mapping (mpg)
         call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
