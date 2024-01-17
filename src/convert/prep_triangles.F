@@ -1,4 +1,4 @@
-      subroutine prep_triangles (nout, mpg, gm, nx, ny, tria_mode)
+      subroutine prep_triangles (nout, mpg, gm, tria_mode)
 
       use b2mod_types
       use b2us_map
@@ -8,7 +8,7 @@
 #endif
       implicit none
 
-      integer, intent(in) :: nout, nx, ny, tria_mode
+      integer, intent(in) :: nout, tria_mode
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
 
@@ -131,7 +131,7 @@
      .    write (*,*) 'Converting triangles'
         if (tria_mode.eq.1) 
      .    write (*,*) 'Converting triangles for void region'
-        call conv_triangles(mpg, gm, nx, ny,
+        call conv_triangles(mpg, gm,
      .    nmxnodes, nmxelem, nnodes, nelem, npnodes, npelem,
      .    xco, yco, node_vert, elem, elem_cv, trifc, neighbor,
      .    cntr, tria_mode)
