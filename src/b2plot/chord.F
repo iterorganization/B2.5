@@ -1,20 +1,20 @@
 c
-      function chord_value(nx,ny,
+      function chord_value(nCv,
      1 tt,
      2 xp,yp,zp,
      3 dxp,dyp,dzp,vector)
 
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_constants
       use b2mod_subsys
       implicit none
       
       real (kind=R8) ::
      * chord_value
-      integer nx,ny
+      integer nCv
       real (kind=R8) ::
-     * tt(-1:nx,-1:ny)
+     * tt(nCv)
       real (kind=R8) ::
      * xp,yp,zp,dxp,dyp,dzp
       logical vector
@@ -22,7 +22,7 @@ c
       real (kind=R8) ::
      * x,y,z,dl,dx,dy,dz,dbr,dbz,dbphi,dbx,dby,dbs,dotprod,
      2 phi,rt,zt
-      integer ix,iy
+      integer iCv
       logical found
 
       real (kind=R8) ::
@@ -42,7 +42,7 @@ c
 
       chord_value=0.0_R8
 
-      call chord_find(nx,ny,crx,cry,x,y,z,found,ix,iy)
+      call chord_find(mpg,geo,x,y,z,found,iCv)
 
       if(.not.found) then
         if(.not.vector.and.a0.gt.0.0_R8.and.b0.gt.0.0_R8) then
@@ -57,15 +57,17 @@ c
       endif
 
       if(vector) then
+#ifdef WG_TODO
 c in r,z,phi
         dbr=((crx(ix,iy,1)+crx(ix,iy,3))-
      .       (crx(ix,iy,2)+crx(ix,iy,0)))/2.0_R8
         dbz=((cry(ix,iy,1)+cry(ix,iy,3))-
      .       (cry(ix,iy,2)+cry(ix,iy,0)))/2.0_R8
+#endif
         dbs=sqrt(dbr**2+dbz**2)
-        dbr=dbr/dbs*pit(ix,iy)
-        dbz=dbz/dbs*pit(ix,iy)
-        dbphi=1.0*sqrt(1.0-pit(ix,iy)**2)
+        dbr=dbr/dbs*pitch(geo,iCv)
+        dbz=dbz/dbs*pitch(geo,iCv)
+        dbphi=1.0*sqrt(1.0-pitch(geo,iCv)**2)
 c in x,y,z
         phi=atan2(y,x)
         dbz=dbz
@@ -84,21 +86,21 @@ c end-assertion
         dy=dy/dl
         dz=dz/dl
         dotprod=dbx*dx+dby*dy+dbz*dz
-c       write(*,*) 'ix,iy = ',ix,iy
+c       write(*,*) 'iCv = ',iCv
 c       write(*,*) 'dl = ',dx,dy,dz
 c       write(*,*) 'bl = ',dbr,dbz,dbphi
 c       write(*,*) 'phi = ',phi
 c       write(*,*) 'bl = ',dbx,dby,dbz
 c       write(*,*) 'dl.bl = ',dotprod
-        chord_value=tt(ix,iy)*dotprod
+        chord_value=tt(iCv)*dotprod
       else
-        chord_value=tt(ix,iy)
+        chord_value=tt(iCv)
       endif
       call subend ()
       return
       end function chord_value
 c
-      function chord_integral(nx,ny,tt,npoints,
+      function chord_integral(nCv,tt,npoints,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector)
       
       use b2mod_types
@@ -107,9 +109,9 @@ c
       
       real (kind=R8) ::
      * chord_integral 
-      integer nx,ny,npoints
+      integer nCv,npoints
       real (kind=R8) ::
-     * tt(-1:nx,-1:ny)
+     * tt(nCv)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
       logical vector
@@ -123,25 +125,25 @@ c
       intrinsic sqrt
 
       call subini('chord_integral')
-      chord_integral=0.0
+      chord_integral=0.0_R8
 
       dx=xp2-xp1
       dy=yp2-yp1
       dz=zp2-zp1
       dl=sqrt(dx**2+dy**2+dz**2)
-      if(dl.eq.0.0) return
+      if(dl.eq.0.0_R8) return
       dx=dx/dl
       dy=dy/dl
       dz=dz/dl
       dl=dl/real(npoints)
 
       do i=1,npoints
-        f=real(i-0.5)/real(npoints)
-        x=xp1*(1.0-f)+xp2*f
-        y=yp1*(1.0-f)+yp2*f
-        z=zp1*(1.0-f)+zp2*f
+        f=(real(i,R8)-0.5_R8)/real(npoints,R8)
+        x=xp1*(1.0_R8-f)+xp2*f
+        y=yp1*(1.0_R8-f)+yp2*f
+        z=zp1*(1.0_R8-f)+zp2*f
         chord_integral=chord_integral+dl*
-     1   chord_value(nx,ny,tt,x,y,z,dx,dy,dz,vector)
+     1   chord_value(nCv,tt,x,y,z,dx,dy,dz,vector)
       enddo
 
 !DIAG      call chord_diagnostics      ! diag
@@ -150,40 +152,38 @@ c
       return
       end function chord_integral
 c
-      subroutine chord_compile(npoints,nx,ny,crx,cry,
+      subroutine chord_compile(npoints,mpg,geo,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector,
-     2 indchd,indix,indiy,indscl)
+     2 indchd,indCv,indscl)
 
       use b2mod_types
+      use b2us_map
+      use b2us_geo
       use b2mod_subsys
       implicit none
 
-      integer npoints,nx,ny
+      integer npoints
+      type(mapping) :: mpg
+      type(geometry) :: geo
       real (kind=R8) ::
-     * tt(-1:nx,-1:ny),score(-1:nx,-1:ny),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3)
+     * tt(mpg%nCv),score(mpg%nCv)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
-      integer indchd,indix(*),indiy(*)
+      integer indchd,indCv(*)
       real (kind=R8) ::
      * indscl(*)
       logical vector
 
       real (kind=R8) ::
      * chord_value
-      integer i,ix,iy
+      integer i,iCv
       real (kind=R8) ::
      * f,x,y,z,dl,dxp,dyp,dzp
       logical found
 
       call subini('chord_compile')
-      do iy=-1,ny
-        do ix=-1,nx
-          tt(ix,iy)=1.0_R8
-          score(ix,iy)=0.0_R8
-        enddo
-      enddo
+      tt=1.0_R8
+      score=0.0_R8
 
       dxp=xp2-xp1
       dyp=yp2-yp1
@@ -199,23 +199,20 @@ c
         x=xp1*(1.0-f)+xp2*f
         y=yp1*(1.0-f)+yp2*f
         z=zp1*(1.0-f)+zp2*f
-        call chord_find(nx,ny,crx,cry,x,y,z,found,ix,iy)
+        call chord_find(mpg,geo,x,y,z,found,iCv)
         if(found) then
-          score(ix,iy)=score(ix,iy)+dl*
-     1     chord_value(nx,ny,tt,x,y,z,dxp,dyp,dzp,vector)
+          score(iCv)=score(iCv)+dl*
+     1     chord_value(mpg%nCv,tt,x,y,z,dxp,dyp,dzp,vector)
         endif
       enddo
 
       i=0
-      do iy=-1,ny
-        do ix=-1,nx
-          if(score(ix,iy).ne.0) then
-            i=i+1
-            indix(i)=ix
-            indiy(i)=iy
-            indscl(i)=score(ix,iy)
-          endif
-        enddo
+      do iCv=1,mpg%nCv
+        if(score(iCv).ne.0.0_R8) then
+          i=i+1
+          indCv(i)=iCv
+          indscl(i)=score(iCv)
+        endif
       enddo
       indchd=i
 
@@ -223,10 +220,11 @@ c
       return
       end subroutine chord_compile
 c
-      subroutine chord_find(nx,ny,
-     1 crx,cry,xp,yp,zp,found,ixpos,iypos)
+      subroutine chord_find(mpg,geo,xp,yp,zp,found,cvpos)
 
       use b2mod_types
+      use b2us_map
+      use b2us_geo
       use b2mod_indirect
       use b2mod_subsys
       implicit none
@@ -234,16 +232,17 @@ c
 !DIAG      integer rectangles, triangles, chain      ! diag
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
 
-      integer nx,ny
-      real (kind=R8) ::
-     *   crx(-1:nx,-1:ny,0:3),cry(-1:nx,-1:ny,0:3)
+      type(mapping) :: mpg
+      type(geometry) :: geo
       real (kind=R8) ::
      *   xp,yp,zp
       logical found
-      integer ixpos,iypos
+      integer cvpos
 
+#ifdef WG_TODO
       logical inside_rectangle
-      integer i,ix,iy,icnt1,icnt2
+#endif
+      integer iCv,icnt1,icnt2
       real (kind=R8) ::
      *   x,y,z,r,rmin,rmax,zmin,zmax
 
@@ -252,18 +251,21 @@ c
       integer lngcov,lngind
       parameter(lngcov=200,lngind=500 000)
       integer covered(lngcov,lngcov),
-     1 xcov(lngind),ycov(lngind),icov(lngind),
+     1 cvcov(lngind),icov(lngind),
      2 ipos,jpos
 
 #ifdef EASY
       integer ir1,ir2,iz1,iz2
 #else
-      integer ip,irmin,irmax,izmin,izmax
-      integer next(0:3),
-     1 xmin(lngcov),xmax(lngcov),ymin,ymax
+      integer ip
+#ifdef WG_TODO
+      integer irmin,irmax,izmin,izmax
+      integer next(0:3)
       real (kind=R8) ::
      *   r1,r2,z1,z2
       data next/1,3,0,2/
+#endif
+      integer xmin(lngcov),xmax(lngcov),ymin,ymax
 #endif
 
       real (kind=R8) ::
@@ -271,31 +273,17 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external xerrab
-      save covered,rmin,rmax,zmin,zmax,first,xcov,ycov,icov,ix,iy
+      save covered,rmin,rmax,zmin,zmax,first,cvcov,icov,iCv
 
       data first/.true./
 
       call subini ('chord_find')
       if(first) then
         first=.false.
-        rmin=crx(0,0,0)
-        rmax=crx(0,0,0)
-        zmin=cry(0,0,0)
-        zmax=cry(0,0,0)
-        do i=0,3
-          do iy=-1,ny
-            do ix=-1,nx
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &           region(ix,iy,0).ne.0) then
-                rmin=min(rmin,crx(ix,iy,i))
-                rmax=max(rmax,crx(ix,iy,i))
-                zmin=min(zmin,cry(ix,iy,i))
-                zmax=max(zmax,cry(ix,iy,i))
-              endif
-            enddo
-          enddo
-        enddo
+        rmin=minval(geo%vxX)
+        rmax=maxval(geo%vxX)
+        zmin=minval(geo%vxY)
+        zmax=maxval(geo%vxY)
         write(*,*) 'rmin,rmax,zmin,zmax ',rmin,rmax,zmin,zmax
 
         do iz=1,lngcov
@@ -306,134 +294,126 @@ c
         ipos=0
         icnt2=0
 
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
+        do iCv=1,mpg%nCi
 #ifdef EASY
-              ir1=
-     1         irpos(min(crx(ix,iy,0),crx(ix,iy,1),
+#ifdef WG_TODO
+          ir1= irpos(min(crx(ix,iy,0),crx(ix,iy,1),
      2                   crx(ix,iy,2),crx(ix,iy,3)))
-              ir2=
-     1         irpos(max(crx(ix,iy,0),crx(ix,iy,1),
+          ir2= irpos(max(crx(ix,iy,0),crx(ix,iy,1),
      2                   crx(ix,iy,2),crx(ix,iy,3)))
-              iz1=
-     1         izpos(min(cry(ix,iy,0),cry(ix,iy,1),
+          iz1= izpos(min(cry(ix,iy,0),cry(ix,iy,1),
      2                   cry(ix,iy,2),cry(ix,iy,3)))
-              iz2=
-     1         izpos(max(cry(ix,iy,0),cry(ix,iy,1),
+          iz2= izpos(max(cry(ix,iy,0),cry(ix,iy,1),
      2                   cry(ix,iy,2),cry(ix,iy,3)))
-              do iz=iz1,iz2
-                do ir=ir1,ir2
-                  ipos=ipos+1
-                  if(ipos.gt.lngind) then
-                    write(*,*) ix,iy,ipos
-                    call xerrab ('increase size of {xyi}cov')
-                  endif
-                  xcov(ipos)=ix
-                  ycov(ipos)=iy
-                  icov(ipos)=0
-                  if(covered(ir,iz).eq.0) then
-                    covered(ir,iz)=ipos
-                  else
-                    jpos=covered(ir,iz)
-                    icnt1=1
-                    do while(icov(jpos).ne.0)
-                      jpos=icov(jpos)
-                      icnt1=icnt1+1
-                    enddo
-                    icov(jpos)=ipos
-                    icnt1=icnt1+1
-                    icnt2=max(icnt1,icnt2)
-                  endif
+#endif
+          do iz=iz1,iz2
+            do ir=ir1,ir2
+              ipos=ipos+1
+              if(ipos.gt.lngind) then
+                write(*,*) iCv,ipos
+                call xerrab ('increase size of {xyi}cov')
+              endif
+              cvcov(ipos)=iCv
+              icov(ipos)=0
+              if(covered(ir,iz).eq.0) then
+                covered(ir,iz)=ipos
+              else
+                jpos=covered(ir,iz)
+                icnt1=1
+                do while(icov(jpos).ne.0)
+                  jpos=icov(jpos)
+                  icnt1=icnt1+1
                 enddo
-              enddo
+                icov(jpos)=ipos
+                icnt1=icnt1+1
+                icnt2=max(icnt1,icnt2)
+              endif
+            enddo
+          enddo
 #else
-              do ip=1,lngcov
-                xmin(ip)=lngcov+1
-                xmax(ip)=0
-              enddo
-              ymin=lngcov+1
-              ymax=0
-              do ip=0,3
-                r1=crx(ix,iy,ip)
-                z1=cry(ix,iy,ip)
-                r2=crx(ix,iy,next(ip))
-                z2=cry(ix,iy,next(ip))
-                ir=irpos(r1)
-                iz=izpos(z1)
+          do ip=1,lngcov
+            xmin(ip)=lngcov+1
+            xmax(ip)=0
+          enddo
+          ymin=lngcov+1
+          ymax=0
+#ifdef WG_TODO
+          do ip=0,3
+            r1=crx(ix,iy,ip)
+            z1=cry(ix,iy,ip)
+            r2=crx(ix,iy,next(ip))
+            z2=cry(ix,iy,next(ip))
+            ir=irpos(r1)
+            iz=izpos(z1)
 c assert ir,iz is inside
-                ymin=min(ymin,iz)
-                ymax=max(ymax,iz)
-                xmin(iz)=min(xmin(iz),ir)
-                xmax(iz)=max(xmax(iz),ir)
+            ymin=min(ymin,iz)
+            ymax=max(ymax,iz)
+            xmin(iz)=min(xmin(iz),ir)
+            xmax(iz)=max(xmax(iz),ir)
 c look for intersections for integer ir
 c       write(*,*) 'r1,r2 ',r1,r2
-                irmin=irpos(min(r1,r2))
-                irmax=irpos(max(r1,r2))
+            irmin=irpos(min(r1,r2))
+            irmax=irpos(max(r1,r2))
 c       write(*,*) 'irmin,irmax ',irmin,irmax
-                do ir=irmin+1,irmax
-                  r=rpos(ir)
-                  z=z1+(z2-z1)/(r2-r1)*(r-r1)
-                  iz=izpos(z)
+            do ir=irmin+1,irmax
+              r=rpos(ir)
+              z=z1+(z2-z1)/(r2-r1)*(r-r1)
+              iz=izpos(z)
 c       write(*,*) 'ir,r,z,iz ',ir,r,z,iz
 c assert ir-1,iz and ir,iz covered
-                  ymin=min(ymin,iz)
-                  ymax=max(ymax,iz)
-                  xmin(iz)=min(xmin(iz),ir-1)
-                  xmax(iz)=max(xmax(iz),ir)
-                enddo
+              ymin=min(ymin,iz)
+              ymax=max(ymax,iz)
+              xmin(iz)=min(xmin(iz),ir-1)
+              xmax(iz)=max(xmax(iz),ir)
+            enddo
 c look for intersections for integer iz
 c       write(*,*) 'z1,z2 ',z1,z2
-                izmin=izpos(min(z1,z2))
-                izmax=izpos(max(z1,z2))
+            izmin=izpos(min(z1,z2))
+            izmax=izpos(max(z1,z2))
 c       write(*,*) 'izmin,izmax ',izmin,izmax
-                do iz=izmin+1,izmax
-                  z=zpos(iz)
-                  r=r1+(r2-r1)/(z2-z1)*(z-z1)
-                  ir=irpos(r)
+            do iz=izmin+1,izmax
+              z=zpos(iz)
+              r=r1+(r2-r1)/(z2-z1)*(z-z1)
+              ir=irpos(r)
 c         write(*,*) 'iz,z,r,ir ',iz,z,r,ir
 c assert ir,iz-1 and ir,iz covered
-                  ymin=min(ymin,iz-1)
-                  ymax=max(ymax,iz)
-                  xmin(iz-1)=min(xmin(iz-1),ir)
-                  xmax(iz-1)=max(xmax(iz-1),ir)
-                  xmin(iz)=min(xmin(iz),ir)
-                  xmax(iz)=max(xmax(iz),ir)
-                enddo
+              ymin=min(ymin,iz-1)
+              ymax=max(ymax,iz)
+              xmin(iz-1)=min(xmin(iz-1),ir)
+              xmax(iz-1)=max(xmax(iz-1),ir)
+              xmin(iz)=min(xmin(iz),ir)
+              xmax(iz)=max(xmax(iz),ir)
+            enddo
 c       write(*,*) 'ymin,ymax ',ymin,ymax
 c       write(*,*) 'xmin ',xmin
 c       write(*,*) 'xmax ',xmax
-              enddo
-              do iz=ymin,ymax
-                do ir=xmin(iz),xmax(iz)
-                  ipos=ipos+1
-                  if(ipos.gt.lngind) then
-                    write(*,*) 'ix,iy ',ix,iy
-                    call xerrab ('increase lngind')
-                  endif
-                  xcov(ipos)=ix
-                  ycov(ipos)=iy
-                  icov(ipos)=0
-                  icnt2=1
-                  if(covered(ir,iz).eq.0) then
-                    covered(ir,iz)=ipos
-                  else
-                    jpos=covered(ir,iz)
-                    icnt2=icnt2+1
-   20               if(icov(jpos).ne.0) then
-                      jpos=icov(jpos)
-                      icnt2=icnt2+1
-                      goto 20
-                    endif
-                    icov(jpos)=ipos
-                  endif
-                enddo
-              enddo
-#endif
-            endif
           enddo
+#endif
+          do iz=ymin,ymax
+            do ir=xmin(iz),xmax(iz)
+              ipos=ipos+1
+              if(ipos.gt.lngind) then
+                write(*,*) 'iCv ',iCv
+                call xerrab ('increase lngind')
+              endif
+              cvcov(ipos)=iCv
+              icov(ipos)=0
+              icnt2=1
+              if(covered(ir,iz).eq.0) then
+                covered(ir,iz)=ipos
+              else
+                jpos=covered(ir,iz)
+                icnt2=icnt2+1
+   20           if(icov(jpos).ne.0) then
+                  jpos=icov(jpos)
+                  icnt2=icnt2+1
+                  goto 20
+                endif
+                icov(jpos)=ipos
+              endif
+            enddo
+          enddo
+#endif
         enddo
 
         icnt1=0
@@ -445,8 +425,7 @@ c       write(*,*) 'xmax ',xmax
         write(*,*) 100.0*icnt1/(lngcov*lngcov),' % covered'
         write(*,*) ipos,' positions used'
         write(*,*) icnt2,' is the maximum chain length'
-        ix=0
-        iy=ny-1
+        iCv=1
 !DIAG   rectangles=0      ! diag
 !DIAG   triangles=0      ! diag
 !DIAG   chain=0      ! diag
@@ -464,30 +443,32 @@ c       write(*,*) 'xmax ',xmax
       end if
       jpos=covered(irpos(r),izpos(z))
       if(jpos.ne.0) then
+#ifdef WG_TODO
         if(inside_rectangle(r,z,
      1   crx(ix,iy,1),cry(ix,iy,1),
      2   crx(ix,iy,3),cry(ix,iy,3),
      3   crx(ix,iy,2),cry(ix,iy,2),
      4   crx(ix,iy,0),cry(ix,iy,0))) goto 2100
+#endif
       endif
 c next try the chain
       do while(jpos.ne.0)
 !DIAG   chain=chain+1      ! diag
-        ix=xcov(jpos)
-        iy=ycov(jpos)
+        iCv=cvcov(jpos)
         jpos=icov(jpos)
+#ifdef WG_TODO
         if(inside_rectangle(r,z,
      1   crx(ix,iy,1),cry(ix,iy,1),
      2   crx(ix,iy,3),cry(ix,iy,3),
      3   crx(ix,iy,2),cry(ix,iy,2),
      4   crx(ix,iy,0),cry(ix,iy,0))) goto 2100
+#endif
       enddo
       call subend ()
       return
 
  2100 continue
-      ixpos=ix
-      iypos=iy
+      cvpos=iCv
       found=.true.
       call subend ()
       return
@@ -512,7 +493,8 @@ c next try the chain
       implicit none
       integer, intent(in) :: ir
       real(kind=R8) :: rpos
-      rpos = rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
+      rpos = rmin+
+     .       real(ir-1,R8)*(rmax-rmin)/(real(lngcov,R8)*0.999999_R8)
       return
       end function rpos
 
@@ -520,7 +502,8 @@ c next try the chain
       implicit none
       integer, intent(in) :: iz
       real(kind=R8) :: zpos
-      zpos = zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
+      zpos = zmin+
+     .       real(iz-1,R8)*(zmax-zmin)/(real(lngcov,R8)*0.999999_R8)
       return
       end function zpos
 

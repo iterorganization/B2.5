@@ -5,14 +5,18 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer ix,iy,is,lnblnk
-      character*256 stmp
+#ifdef WG_TODO
+      integer ix,iy,is
       intrinsic min,max
+#endif
+      character*256 stmp
+      integer lnblnk
       external lnblnk
 
+#ifdef WG_TODO
       values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)
       values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         do iy=-1,ny
           do ix=-1,nx
             work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/gs(ix,iy,0)
@@ -21,6 +25,7 @@ c
           enddo
         enddo
       enddo
+#endif
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
@@ -32,14 +37,18 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer ix,iy,is,lnblnk
-      character*256 stmp
+#ifdef WG_TODO
+      integer ix,iy,is
       intrinsic min,max
+#endif
+      character*256 stmp
+      integer lnblnk
       external lnblnk
 
+#ifdef WG_TODO
       values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
       values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         do iy=-1,ny
           do ix=-1,nx
             work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/
@@ -49,6 +58,7 @@ c
           enddo
         enddo
       enddo
+#endif
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return

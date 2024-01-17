@@ -4,11 +4,6 @@ ifndef SOLPS_CPP
 DEFINES += -DGFORTRAN
 endif
 
-GFORTRAN_VERSION = $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
-
-GFORTRAN_MAJOR_VERSION = $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION = $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
-
 DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
 
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
@@ -19,6 +14,9 @@ LINK_MOD =
 INCMOD = -I
 
 FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
+FCOPTS += -mprefer-vector-width=512
+endif
 ifdef SOLPS_DEBUG
 FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ffpe-trap=overflow -ftrapv
 else
@@ -79,13 +77,17 @@ ifndef SOLPS_CPP
       IMAS_PKG_LIST += amns
     endif
     ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
-      ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+      ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
         IMAS_PKG_LIST += ggd
       else
-        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-          LD_GGD ?= -lggd-gfortran
+        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+          IMAS_PKG_LIST += ggd
         else
-          IMAS_PKG_LIST += imas-lowlevel
+          ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+            LD_GGD ?= -lggd-gfortran
+          else
+            IMAS_PKG_LIST += imas-lowlevel
+          endif
         endif
       endif
     endif

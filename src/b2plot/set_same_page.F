@@ -9,4 +9,4 @@
       same_page=2
       write(*,*) 'same_page set to ',same_page
       return
-      end
+      end subroutine set_same_page
