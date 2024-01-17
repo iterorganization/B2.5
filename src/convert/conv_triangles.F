@@ -1,4 +1,4 @@
-      subroutine conv_triangles (mpg, gm, nx, ny,
+      subroutine conv_triangles (mpg, gm,
      .    nmxnodes, nmxelem, nnodes, nelem, npnodes, npelem,
      .    xco, yco, node_vert, elem, elem_cv, trifc, neigh, 
      .    cntr, tria_mode)
@@ -14,15 +14,15 @@
 #endif
       implicit none
 
-      integer, intent(in) :: nx, ny, nmxnodes, nmxelem, npnodes, npelem,
+      integer, intent(in) ::nmxnodes, nmxelem, npnodes, npelem,
      .  tria_mode
       integer ::  nnodes, nelem
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
+      integer :: nx, ny
       integer :: node_vert(nmxnodes), elem(3,nmxelem), elem_cv(nmxelem),
      .  trifc(3,nmxelem), neigh(3,2,nmxelem), cntr(3,nmxelem)
       real(R8) :: xco(nmxnodes), yco(nmxnodes)
-
 
 #ifdef B25_EIRENE
       type(TAVLTree), pointer :: baum
@@ -288,6 +288,15 @@
         call xertst(ico.eq.0,'Problem with void triangles')
 
       elseif (tria_mode.eq.0) then ! assume structured format fort.35; conversion of ix,iy indexing needed
+
+        ! set size of structured grid to convert plasma triangles
+        if (mpg%isClassicalGrid == 1) then
+          nx = mpg%nx
+          ny = mpg%ny
+        else
+          call xerrab 
+     .      ('Need structured grid info to convert plasma triangles.')
+        endif
 
         allocate (ixtri(nelem_conv))
         allocate (iytri(nelem_conv))
