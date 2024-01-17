@@ -255,8 +255,9 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
      .    mpg%nFt, mpg%nVmxCv)
 *     ..read geometry and metric
         call read_b2fgmtry (ninp(1), mpg, gm)
+        switch%use_9pt_stencil = 1
+        call ipgeti ('b2mndr_use_9pt_stencil', switch%use_9pt_stencil)
         call init_geometry (mpg, gm, switch)
-
       endif
 
 *   ..obtain ns from parameters file b2fpardf
