@@ -29,6 +29,7 @@
       subroutine dealloc_anomalous_transport
       implicit none
 
+      if (.not.allocated(sig0)) return
       deallocate(sig0)
       deallocate(hce0)
       deallocate(alf0)
