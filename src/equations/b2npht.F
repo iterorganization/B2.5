@@ -368,7 +368,13 @@ cc while the second contribution corresponds to T dn/dt
           call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0,
      &     dv%fhe_mdf, dv%reshe)
         endif
-      endif                                                              !srv 22.05.18
+       if(switch%b2mndt2_temp_3.eq.1) then
+        if(switch%b2mndt_style.eq.2) then                               !srv 10.10.22 {
+          dv%reshe=dv%reshe+
+     &    (pl%te-psnl%te)*dv%ne*sr%shedt(:,3)
+        endif                                                           !srv 10.10.22 }
+       endif
+      endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then    !srv 22.05.18
         if (switch%mdf_fhi.eq.0) then
@@ -378,7 +384,13 @@ cc while the second contribution corresponds to T dn/dt
           call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
      &     dv%fhi_mdf, dv%reshi)
         endif
-      endif                                                              !srv 22.05.18
+       if(switch%b2mndt2_temp_3.eq.1) then
+        if(switch%b2mndt_style.eq.2) then                               !srv 10.10.22 {
+          dv%reshi=dv%reshi+
+     &    (pl%ti-psnl%ti)*dv%ni(:,0)*sr%shidt(:,3)
+        endif                                                           !srv 10.10.22 }
+       endif
+      endif                                                             !srv 22.05.18
       if ((switch%solve_keps.gt.0.and.any(solvkreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
         call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%kt, skt0,
@@ -398,6 +410,12 @@ c residuals for separate neutral energy equation
           call b2ursd (nCv, nFc, mpg, dv%nn, pl%tn, shn0, dv%fhn,
      &     dv%reshn)
         endif
+       if(switch%b2mndt2_temp_3.eq.1) then
+        if(switch%b2mndt_style.eq.2) then                               !srv 10.10.22 {
+          dv%reshn=dv%reshn+
+     &    (pl%tn-psnl%tn)*dv%ni(:,0)*sr%shndt(:,3) !! TODO_B2MNDT double check source scaling?
+        endif                                                           !srv 10.10.22 }
+       endif
       else
         dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
       endif
