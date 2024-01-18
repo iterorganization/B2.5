@@ -197,7 +197,7 @@ c
       CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,nsd_local,nstra)
-      call alloc_b2mod_eirbra(nCv,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nCv,nsd_local,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nCv,nFc,nVx,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)

@@ -315,7 +315,7 @@
       CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
-      call alloc_b2mod_eirbra(nCv,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nCv,ns,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
 #ifdef WG_TODO

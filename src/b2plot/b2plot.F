@@ -317,7 +317,8 @@ c
       if (use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(mpg%nCv,mpg%nFc,nsd_local,nstra)
-      call alloc_b2mod_eirbra(mpg%nCv,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_eirbra(mpg%nCv,nsd_local,natm,nmol,nion,npls,
+     &  nstra)
 #endif
       call alloc_b2mod_b2plot(mpg%nCv,mpg%nFc,mpg%nVx,
      1 nsd_local,state_ext%ns,wklng,natm,nmol,nion,nlimps)
