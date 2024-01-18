@@ -103,7 +103,9 @@
      &                  na_temp(1:ns*(nx+2)*(ny+2)),
      &                  am_sqrt(0:ns-1, 0:ns-1)
       integer :: ctr, i, j
+#if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
       logical :: do_parallel
+#endif
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
@@ -158,7 +160,9 @@
        call xertst (0.eq.icase .or. 1.eq.icase,
      &              'faulty input b2tlnl_ii')
       endif
+#if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
       do_parallel = .not. in_parallel()
+#endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
