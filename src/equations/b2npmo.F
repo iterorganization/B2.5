@@ -333,7 +333,6 @@ cdjm Mar2019 output the total momentum flux and source for balance
           fmo_tot(:,:,is)=dv%fmo(:,:,is)
         endif
 
-
       endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
