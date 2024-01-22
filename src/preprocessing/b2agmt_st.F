@@ -11,8 +11,6 @@
       use tradui_constants
       use b2mod_connectivity
       use b2mod_cellhelper
-      use b2mod_indirect
-     , ,only : quadCentroid, quadArea
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

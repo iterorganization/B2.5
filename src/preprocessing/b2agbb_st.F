@@ -5,8 +5,6 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_math
-      use b2mod_indirect
-     , ,only : AverageVertex
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
