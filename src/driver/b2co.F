@@ -216,6 +216,7 @@
       call check_switches(switch,ns)
 *   ..read geometry and mapping
       call read_b2fgmtry (ninp(1), mpg, geo)
+      call init_geometry (mpg, geo, switch)
 *   ..read initial state
       call cfverr (ninp(4), plasmastate_version)                        !xpb
       call read_b2fstate (ninp(4), nCv, nFc, ns, state)
