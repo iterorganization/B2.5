@@ -161,6 +161,93 @@
       return
       end function triangleCentroid
 
+  !> Area of quadrangle given by vertex coordinates
+  !> The vertices must be in sequence! (=> structured)
+      function quadArea( x0, y0, x1, y1, x2, y2, x3, y3 )
+      implicit none
+      real (kind=R8) :: quadArea
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
+
+      quadArea = TriangleArea(x0, y0, x1, y1, x2, y2) +
+     .           TriangleArea(x2, y2, x3, y3, x0, y0)
+
+      end function quadArea
+
+  !> Coordinates of centroid of a quadrangle given by vertex coordinates
+  !> Corners are numbered in the B2 convention 2-3
+  !>                                           0-1
+      function quadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
+      implicit none
+      real (kind=R8) :: quadCentroid(0:1)
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
+
+      quadCentroid = ( triangleCentroid(x0,y0,x1,y1,x3,y3) 
+     &   * triangleArea(x0,y0,x1,y1,x3,y3) 
+     &   + triangleCentroid(x0,y0,x2,y2,x3,y3) 
+     &   * triangleArea(x0,y0,x2,y2,x3,y3) ) 
+     &   / ( triangleArea(x0,y0,x1,y1,x3,y3) 
+     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
+      return
+      end function quadCentroid
+
+      !> Area of a convex pentagonal cell
+      !> The vertices must be in sequence
+
+      function pentArea(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
+      implicit none
+      real (kind=R8) :: pentArea
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
+
+      pentArea = triangleArea(x0, y0, x1, y1, x2, y2) + 
+     .         triangleArea(x2, y2, x3, y3, x4, y4) +
+     .         triangleArea(x2, y2, x0, y0, x4, y4)
+ 
+      return
+      end function pentArea
+
+      !> Centroid of convex pentagonal cell
+      !> The vertices must be in sequence      
+      function pentCentroid( x0,y0,x1,y1,x2,y2,x3,y3,x4,y4)
+      implicit none
+      real (kind=R8) :: pentCentroid(0:1)
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
+
+      pentCentroid = (triangleCentroid(x0, y0, x1, y1, x2, y2)
+     &  * triangleArea(x0, y0, x1, y1, x2, y2) 
+     &  + triangleCentroid(x2, y2, x3, y3, x4, y4) 
+     &  * triangleArea(x2, y2, x3, y3, x4, y4)  
+     &  + triangleCentroid(x2, y2, x0, y0, x4, y4)
+     &  * triangleArea(x2, y2, x0, y0, x4, y4) )
+     &  / (triangleArea(x0, y0, x1, y1, x2, y2)  
+     &  + triangleArea(x2, y2, x3, y3, x4, y4)
+     &  + triangleArea(x2, y2, x0, y0, x4, y4))
+
+      return
+      end function pentCentroid
+
+  !> Average of a quantity given on the vertices of
+  !> an arbitrary quadrangular cell
+  !> Corners are numbered in the B2 convention 2-3
+  !>                                           0-1
+      function averageVertex( f0, x0, y0, f1, x1, y1, 
+     &                        f2, x2, y2, f3, x3, y3 )
+      implicit none
+      real (kind=R8) :: averageVertex
+      real (kind=R8) :: f0, f1, f2, f3
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
+      real (kind=R8) :: a0, a1, a2, a3
+  
+      a0 = TriangleArea( x2, y2, x0, y0, x1, y1 )
+      a1 = TriangleArea( x0, y0, x1, y1, x3, y3 )
+      a2 = TriangleArea( x0, y0, x2, y2, x3, y3 )
+      a3 = TriangleArea( x2, y2, x3, y3, x1, y1 )
+ 
+      averageVertex = (f0*a0 + f1*a1 + f2*a2 + f3*a3) /  
+     &                (a0 + a1 + a2 + a3)
+ 
+      return
+      end function averageVertex
+
       subroutine b2mod_math_init
       implicit none
       real(kind=R8) :: machsfr
