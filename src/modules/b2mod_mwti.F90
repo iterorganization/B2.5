@@ -725,7 +725,7 @@ contains
         fetsipp(1) = fetsipp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) ireg = 11
+      if (mpg%nnreg(0).eq.8.and.nncutmax.ne.1) ireg = 11
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisipp(2) = fnisipp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesipp(2) = feesipp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -765,7 +765,7 @@ contains
         fetsapp(1) = fetsapp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7) ireg = 12
+      if (mpg%nnreg(0).ge.7.and.nncutmax.ne.1) ireg = 12
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisapp(2) = fnisapp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesapp(2) = feesapp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -799,7 +799,7 @@ contains
         fetsip(1) = fetsip(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7) ireg = 7
+      if (mpg%nnreg(0).ge.7.and.nncutmax.ne.1) ireg = 7
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisip(2) = fnisip(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesip(2) = feesip(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -833,7 +833,7 @@ contains
         fetsap(1) = fetsap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7) ireg = 6
+      if (mpg%nnreg(0).ge.7.and.nncutmax.ne.1) ireg = 6
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisap(2) = fnisap(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesap(2) = feesap(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -1117,7 +1117,9 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (nncutmax.eq.1) then
+          ireg = 0
+        elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 25
         else
           ireg = 26
@@ -1141,7 +1143,9 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (nncutmax.eq.1) then
+          ireg = 0
+        elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 19
         else
           ireg = 20
@@ -1165,7 +1169,9 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (nncutmax.eq.1) then
+          ireg = 0
+        elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 24
         else
           ireg = 25
@@ -1189,7 +1195,9 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (nncutmax.eq.1) then
+          ireg = 0
+        elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 15
         else
           ireg = 16
@@ -1213,7 +1221,9 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (nncutmax.eq.1) then
+          ireg = 0
+        elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 20
         else
           ireg = 21
