@@ -623,7 +623,10 @@ contains
 
     if (mpg%nnreg(0) == 8) then
 
-        if (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
+        if (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
+            geometryID = GEOMETRY_SN
+            return
+        elseif (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_CDN
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CDN")
