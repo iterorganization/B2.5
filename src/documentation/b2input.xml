@@ -3850,7 +3850,7 @@
 				<description>
 					Since v3.2.0, the physics model always corresponds to b2mndt_style=1 option (SOLPS5.2). Hence b2mndt_style=0 is no longer allowed.
 					If b2mndt_style=2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode.
-          B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also Tn and k-epsilon equations).
+					B2news_m uses a new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also Tn and k-epsilon equations).
 				</description>
 			</switch>
 			<switch>
