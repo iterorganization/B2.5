@@ -602,21 +602,27 @@
 			<switchgroup>
 				<name>b2mndr_id</name>
 				<description>
-					These switches serve as identification for the simulation. They can be inherited from SOLPS-GUI:
-					Run number : The number of the run. Must be positive and no more than a 4-digit integer (i.e. span from 0 to 9999).
-					Shot number : Shot number identifying the run. Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
-					Database : IMAS IDS database name (supersedes Device). Defaults to 'solps-iter' if $DEVICE if undefined. If $DEVICE is 'iter', the code internally changes it to 'ITER' to follow the IMAS convention.
-					User : The user who ran the simulation.
+					These switches serve as identification for the simulation. They can be inherited from the SOLPS-GUI:
+					IDS path : Only available if using IMAS Access Layer 5. The directory path where the IMAS data entry will be saved. Supersedes the shot and run numbers. May begin with "$HOME", "$IMASDIR", or "$SOLPSTOP", that will be parsed by the code. If it begins with a '/', is understood as an absolute path, otherwise will be prefixed with the $IMASDIR environment variable. Defaults to the last line in the 'shotnumber.history' file if present, and to $IMASDIR/${shot_number}/${run_number} otherwise or if $IMASDIR is modified from its default value by the switches below.
+					Shot number : Shot number identifying the run. Defaults to the last number found in shotnumber.history, or 0 if the file is not found. Must be positive and non-zero if an IMAS data entry is requested. If using IMAS Access Layer 4, cannot exceed 214748.
+					Run number : The number of the run. Must be positive or zero. If using IMAS Access Layer 4, limited to 5 digits (i.e. span from 0 to 99999).
+					Database : IMAS IDS database name (supersedes b2mndr_device). Defaults to 'solps-iter' if $DEVICE if undefined. If $DEVICE is 'iter', the code internally changes it to 'ITER' to follow the IMAS convention. Can be used to rebuild the IMASDIR path.
+					User : The user who ran the simulation. Can be used to rebuild the IMASDIR path.
 				</description>
 				<switch>
-					<name>b2mndr_run_number</name>
-					<default>0</default>
-					<type>integer</type>
+					<name>b2mndr_ids_path</name>
+					<default>See description</default>
+					<type>character*256</type>
 				</switch>
 				<switch>
 					<name>b2mndr_shot_number</name>
 					<type>integer</type>
 					<default>0</default>
+				</switch>
+				<switch>
+					<name>b2mndr_run_number</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2mndr_database</name>

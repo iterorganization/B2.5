@@ -19,12 +19,23 @@
 *       fne(,,) = (sum is :: rza(,,is)*fna(,,,is))-(1/qe)*fch(,,) .
 *     A contribution from external species can also be included.
 *     ------------------------------------------------------------------
-      integer n2, ix, iy, is
+      integer n2, ix, iy, is, idim
       external sfill, b2saxpy
 *     ------------------------------------------------------------------
       call subini ('b2xpfe')
       n2 = (nx+2)*(ny+2)
-      call sfill (n2*2, 0.0_R8, fne, 1)
+      do idim = 0, 1
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(ix, iy)
+!$OMP& SHARED(idim, nx, ny, fne)
+!$OMP& SCHEDULE(static)
+        do iy = -1, ny
+          do ix = -1, nx
+            fne(ix,iy,idim) = 0.0_R8
+          end do
+        end do
+!$OMP END PARALLEL DO
+      end do
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -33,6 +44,7 @@
 !$OMP& PRIVATE(ix, iy, is)
 !$OMP& SHARED(fne, fna, fa_ext, rza, za_ext, ns, ns_ext, nx, ny)
 !$OMP& SHARED(leftix, leftiy, vol, bottomix, bottomiy)
+!$OMP& SCHEDULE(static)
 #endif /* NO_OPENMP_B2XPFE */
       do iy = -1, ny
         do is = 0, ns-1

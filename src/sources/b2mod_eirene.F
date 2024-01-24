@@ -2124,6 +2124,9 @@ c              it is NOT IYSs style)
           sna_av_paml=0.0_R8
           sna_av_pmml=0.0_R8
           sna_av_piml=0.0_R8
+          sna_av_paio=0.0_R8
+          sna_av_pmio=0.0_R8
+          sna_av_piio=0.0_R8
           sni_av_papl=0.0_R8
           sni_av_pmpl=0.0_R8
           sni_av_pipl=0.0_R8
@@ -2161,6 +2164,9 @@ c              it is NOT IYSs style)
            sna_av_paml=0.0_R8
            sna_av_pmml=0.0_R8
            sna_av_piml=0.0_R8
+           sna_av_paio=0.0_R8
+           sna_av_pmio=0.0_R8
+           sna_av_piio=0.0_R8
            sni_av_papl=0.0_R8
            sni_av_pmpl=0.0_R8
            sni_av_pipl=0.0_R8
@@ -2299,6 +2305,9 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           sna_av_paml = 0.0_R8
           sna_av_pmml = 0.0_R8
           sna_av_piml = 0.0_R8
+          sna_av_paio = 0.0_R8
+          sna_av_pmio = 0.0_R8
+          sna_av_piio = 0.0_R8
           sni_av_papl = 0.0_R8
           sni_av_pmpl = 0.0_R8
           sni_av_pipl = 0.0_R8
@@ -2335,6 +2344,9 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
            sna_av_paml = sna_av_paml + sna_h_paml(:,:,:,:,ih)
            sna_av_pmml = sna_av_pmml + sna_h_pmml(:,:,:,:,ih)
            sna_av_piml = sna_av_piml + sna_h_piml(:,:,:,:,ih)
+           sna_av_paio = sna_av_paio + sna_h_paio(:,:,:,:,ih)
+           sna_av_pmio = sna_av_pmio + sna_h_pmio(:,:,:,:,ih)
+           sna_av_piio = sna_av_piio + sna_h_piio(:,:,:,:,ih)
            sni_av_papl = sni_av_papl + sni_h_papl(:,:,:,:,ih)
            sni_av_pmpl = sni_av_pmpl + sni_h_pmpl(:,:,:,:,ih)
            sni_av_pipl = sni_av_pipl + sni_h_pipl(:,:,:,:,ih)
@@ -2447,6 +2459,9 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
           sna_av_paml = sna_s_paml*dble(ih_end)
           sna_av_pmml = sna_s_pmml*dble(ih_end)
           sna_av_piml = sna_s_piml*dble(ih_end)
+          sna_av_paio = sna_s_paio*dble(ih_end)
+          sna_av_pmio = sna_s_pmio*dble(ih_end)
+          sna_av_piio = sna_s_piio*dble(ih_end)
           sni_av_papl = sni_s_papl*dble(ih_end)
           sni_av_pmpl = sni_s_pmpl*dble(ih_end)
           sni_av_pipl = sni_s_pipl*dble(ih_end)
@@ -4548,6 +4563,9 @@ c!###}
         sna_h_paml = 0.0_R8
         sna_h_pmml = 0.0_R8
         sna_h_piml = 0.0_R8
+        sna_h_paio = 0.0_R8
+        sna_h_pmio = 0.0_R8
+        sna_h_piio = 0.0_R8
         sni_h_papl = 0.0_R8
         sni_h_pmpl = 0.0_R8
         sni_h_pipl = 0.0_R8
