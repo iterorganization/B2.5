@@ -111,7 +111,6 @@ c*** Column headers:
       use eirmod_clgin
      ,   , only : iliin
 #endif
-
 #include "DIMENSIONS.F"
 
 c----------------------------------------------------------------------

@@ -443,7 +443,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                       i=1,nstsi)
         end if
 
         if(jvft44 .ge. 20170328) then
@@ -470,7 +470,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                      i=1,nstsi)
 
           do j=1,k+nplsi
             eirpump(j) = sum(wlpump(j,:))
@@ -795,17 +795,17 @@ cxpb
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,natmi),i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,natmi),
      ,                                                        i=1,nstsi)
-          k=k+nnatmi
+          k=k+natmi
           call read_title(48)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nmoli),i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nmoli),
      ,                                                        i=1,nstsi)
-          k=k+nnmoli
+          k=k+nmoli
           call read_title(48)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nioni),i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nioni),
      ,                                                        i=1,nstsi)
-          k=k+nnioni
+          k=k+nioni
           call read_title(48)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nplsi),i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nplsi),

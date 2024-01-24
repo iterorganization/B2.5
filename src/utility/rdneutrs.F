@@ -27,8 +27,9 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer kard,ldmf,is,ifl
-      real  (kind=R8) ::
+      integer, intent(in) :: kard,ldmf
+      integer :: is,ifl
+      real (kind=R8) ::
      * dummy(nlimps,*)
       logical end_of_file
       data end_of_file /.false./

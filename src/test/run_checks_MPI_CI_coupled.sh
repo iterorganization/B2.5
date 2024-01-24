@@ -12,13 +12,13 @@ MYPATH=`dirname "$0"` # path to this script, used when we calling other scripts 
 
 files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 
-#for f in $files; do 
-#   filenames="$1/$f $2/$f"; 
+#for f in $files; do
+#   filenames="$1/$f $2/$f";
 #   check_b2_output $filenames
 #done  > compare_results.log
 
 missing=0
-for f in $files; do 
+for f in $files; do
    if [ ! -f $1/$f ]; then
      echo "Error, file not found $1/$f";
      missing=$((missing+1))

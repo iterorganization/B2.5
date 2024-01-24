@@ -65,6 +65,7 @@
       allocate(tf_ton_mat(0:nnucl-1,0:nnucl-1))
       tf_ton_mat=1.0_R8
 
+      return
       end subroutine alloc_b2mod_zhco
 
       subroutine dealloc_b2mod_zhco
@@ -80,6 +81,7 @@
       deallocate(c_R_w)
       deallocate(tf_ton_mat)
 
+      return
       end subroutine dealloc_b2mod_zhco
 
       end module b2mod_b2zhco

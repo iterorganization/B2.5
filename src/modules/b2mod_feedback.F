@@ -1,7 +1,7 @@
       module b2mod_feedback
       use b2mod_types
       use b2mod_b2cmpa
-
+      implicit none
       integer, parameter :: nvac=4, nvacreg=4
 #     include "DIMENSIONS.F"
       integer NSDMAX

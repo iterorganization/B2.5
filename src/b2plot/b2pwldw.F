@@ -841,7 +841,7 @@ c                    print *,'j,js,wo = ',j,js,wo    !###
               end do !}
             end do !}
             if (ntrgts.gt.0) write(*,'(1x,a,1p,16e12.3)')
-     ,       'Scaling factors for Wn : ',(wi(itrg(i)),i=1,ntrgts)
+     ,       'Scaling factors for Wn : ', (wi(itrg(i)),i=1,ntrgts)
 
 c*** Particle fluxes and energies
             i2=0

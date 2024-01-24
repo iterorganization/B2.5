@@ -1,5 +1,6 @@
       module b2mod_optim
       use b2mod_types
+      implicit none
 #include "DIMENSIONS.F"
 
        integer :: nfunc, istyle

@@ -23,7 +23,7 @@
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      real (kind=R8) :: time(1), dummy(-1:nx, -1:ny), 
+      real (kind=R8) :: time(1), dummy(-1:nx, -1:ny),
      & dummy3(-1:nx, -1:ny, 1:ns)
       integer ix, iy, is
       integer ncall

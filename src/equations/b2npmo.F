@@ -529,16 +529,8 @@
 !$OMP& SHARED(Zhdanov_closure, Zhdanov_test, Zhdanov_visu, Zhdanov_vish)
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
-#ifndef GFORTRAN
-#ifndef PGF90
-#ifndef CRAY
+#if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
 !$OMP& COPYIN(last_solve_5)
-#else
-!$OMP& PRIVATE(last_solve_5)
-#endif
-#else
-!$OMP& PRIVATE(last_solve_5)
-#endif
 #else
 !$OMP& PRIVATE(last_solve_5)
 #endif

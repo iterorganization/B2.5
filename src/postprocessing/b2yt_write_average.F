@@ -5,7 +5,8 @@
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
      &    sna1_mean, sne1_mean, smo1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1,
+     &    e_she1, e_shi1, e_sch1)
 
       use b2mod_types
       use b2mod_version

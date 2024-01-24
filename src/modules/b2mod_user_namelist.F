@@ -1,6 +1,7 @@
       module b2mod_user_namelist
       use b2mod_types
       use b2mod_diag
+      implicit none
 #     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)

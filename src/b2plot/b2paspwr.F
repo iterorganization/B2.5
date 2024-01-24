@@ -1,4 +1,4 @@
-      subroutine b2paspwr(ic)
+      subroutine b2paspwr(nx,ny,ns,jsep,ic)
 c
 c  version : 13.08.98 13:36
 c
@@ -12,13 +12,13 @@ c======================================================================
       use b2mod_types
       use b2mod_geo
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_plasma
+      use b2mod_ipmain
       use b2mod_sources
       use b2mod_indirect
       implicit none
 c
-      integer ic
+      integer nx,ny,ns,jsep,ic
       integer lun,m_hlp,m_hlpa
       parameter (lun=96, m_hlp=9, m_hlpa=1)
       integer, save :: shot = 0, run = 0
@@ -188,8 +188,8 @@ c        print *,'hlp_frh: ',hlp_frh
 c*** Extract the case number
 
       call ipgeti('b2mndr_shot_number', shot )
-      call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
       call ipgeti('b2mndr_run_number', run )
+      call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
       call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
       if (shot.gt.0) then
         write(case_number,'(i6,a1,i5.5)') shot,'/',run

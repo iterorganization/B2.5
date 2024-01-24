@@ -211,7 +211,7 @@
               write(*,*) 'source poloidal profile. '
               write(*,*) 'KIND_DATA = 2 ignored.'
               write(*,'(a,i2,a,i3)')
-     .         'KIND_SOURCE = ', kind_source,' Species = ' ,spec
+     .         'KIND_SOURCE = ', kind_source, ' Species = ' ,spec
             endif
           enddo
           if (ndat.eq.0) goto 1
@@ -246,7 +246,7 @@
               write(*,*) 'source axial profile. '
               write(*,*) 'KIND_DATA = 1 ignored.'
               write(*,'(a,i2,a,i3)')
-     .         'KIND_SOURCE = ', kind_source,' Species = ' ,spec
+     .         'KIND_SOURCE = ', kind_source, ' Species = ' ,spec
             endif
           enddo
           xf(-1)=0.0_R8

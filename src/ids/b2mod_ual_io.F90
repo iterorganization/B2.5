@@ -112,7 +112,7 @@ module b2mod_ual_io
      &          VEC_ALIGN_PARALLEL_ID, &
      &          VEC_ALIGN_TOROIDAL_ID
 #endif
-#if GGD_MINOR_VERSION < 9
+#if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION < 2 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
      &          GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
@@ -125,16 +125,16 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
 #if GGD_MAJOR_VERSION > 0
-#if GGD_MINOR_VERSION < 10
+#if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES, GRID_SUBSET_VOLUMES
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
@@ -612,7 +612,10 @@ contains
             &   summary, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-            &   numerics, run_start_time_IN, run_end_time_IN, &
+            &   numerics, &
+#endif
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            &   run_start_time_IN, run_end_time_IN, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
@@ -649,6 +652,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics) :: numerics !< IDS designed to store
             !< run numerics data
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
@@ -963,8 +968,7 @@ contains
           &  homogeneous_time )
         call write_ids_properties( radiation%ids_properties, &
           &  homogeneous_time )
-        call write_ids_properties( description%ids_properties, &
-          &  homogeneous_time )
+        call write_ids_properties( description%ids_properties, 2 )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_properties( summary%ids_properties, &
           &  homogeneous_time )
@@ -1002,23 +1006,29 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_code( divertors%code, code_commit, code_description )
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_code( description%code, code_commit, code_description )
+#endif
         allocate( edge_transport%model(1) )
-        edge_transport%model(1)%identifier%index = 1
         allocate( edge_transport%model(1)%identifier%name(1) )
         allocate( edge_transport%model(1)%identifier%description(1) )
         if (ids_from_43.eq.0) then
           if (style.eq.0) then
+            edge_transport%model(1)%identifier%index = -2
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
           else if (style.ge.1) then
+            edge_transport%model(1)%identifier%index = -3
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
           else if (style.eq.-1) then
+            edge_transport%model(1)%identifier%index = -1
             edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
             edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           end if
           edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + BoRiS
         else
+          edge_transport%model(1)%identifier%index = -1
           edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
           edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
@@ -1047,8 +1057,10 @@ contains
         edge_transport%time(time_sind) = time
         allocate( edge_sources%time(num_time_slices) )
         edge_sources%time(time_sind) = time
+#if IMAS_MAJOR_VERSION < 4
         allocate( description%time(num_time_slices) )
         description%time(time_sind) = time
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( summary%time(num_time_slices) )
         summary%time(time_sind) = time
@@ -1086,12 +1098,12 @@ contains
           allocate( radiation%process(j)%identifier%name(1) )
           allocate( radiation%process(j)%identifier%description(1) )
         end do
+        radiation%process(1)%identifier%index = 2
         radiation%process(1)%identifier%name = 'line_radiation'
         radiation%process(1)%identifier%description = 'Line and rec. rad. from B2.5 species'
+        radiation%process(2)%identifier%index = 8
         radiation%process(2)%identifier%name = 'bremsstrahlung'
         radiation%process(2)%identifier%description = 'Bremsstrahlung from B2.5 species'
-        radiation%process(1)%identifier%index = 2
-        radiation%process(2)%identifier%index = 8
         if (use_eirene.ne.0) then
           radiation%process(3)%identifier%index = 1
           radiation%process(4)%identifier%index = 2
@@ -1115,96 +1127,72 @@ contains
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
+          allocate( edge_sources%source(is)%identifier%name(1) )
+          allocate( edge_sources%source(is)%identifier%description(1) )
         end do
 
         !! Total sources
         edge_sources%source(1)%identifier%index = 1
-        allocate( edge_sources%source(1)%identifier%name(1) )
         edge_sources%source(1)%identifier%name = "Total"
-        allocate( edge_sources%source(1)%identifier%description(1) )
         edge_sources%source(1)%identifier%description = "Total source from "//trim(source)
         !! Background sources
         edge_sources%source(2)%identifier%index = 703
-        allocate( edge_sources%source(2)%identifier%name(1) )
         edge_sources%source(2)%identifier%name = "Background"
-        allocate( edge_sources%source(2)%identifier%description(1) )
         edge_sources%source(2)%identifier%description = "External sources from "//trim(source)
         !! Prescribed sources
         edge_sources%source(3)%identifier%index = 705
-        allocate( edge_sources%source(3)%identifier%name(1) )
         edge_sources%source(3)%identifier%name = "Prescribed"
-        allocate( edge_sources%source(3)%identifier%description(1) )
         edge_sources%source(3)%identifier%description = &
             & "Boundary conditions sources from "//trim(source)
         !! Time derivatives
         edge_sources%source(4)%identifier%index = 706
-        allocate( edge_sources%source(4)%identifier%name(1) )
         edge_sources%source(4)%identifier%name = "Time derivative"
-        allocate( edge_sources%source(4)%identifier%description(1) )
         edge_sources%source(4)%identifier%description = &
             & "Time derivative sources from "//trim(source)
         !! Atomic ionization
         edge_sources%source(5)%identifier%index = 707
-        allocate( edge_sources%source(5)%identifier%name(1) )
         edge_sources%source(5)%identifier%name = "Atomic ionization"
-        allocate( edge_sources%source(5)%identifier%description(1) )
         edge_sources%source(5)%identifier%description = &
             & "Atomic ionization sources from "//trim(source)
         !! Molecular ionization
         edge_sources%source(6)%identifier%index = 708
-        allocate( edge_sources%source(6)%identifier%name(1) )
         edge_sources%source(6)%identifier%name = "Molecular ionization"
-        allocate( edge_sources%source(6)%identifier%description(1) )
         edge_sources%source(6)%identifier%description = &
             & "Molecular ionization sources from "//trim(source)
         !! Ionization
         edge_sources%source(7)%identifier%index = 709
-        allocate( edge_sources%source(7)%identifier%name(1) )
         edge_sources%source(7)%identifier%name = "Ionization"
-        allocate( edge_sources%source(7)%identifier%description(1) )
         edge_sources%source(7)%identifier%description = &
             & "Ionization sources from "//trim(source)
         !! Recombination
         edge_sources%source(8)%identifier%index = 710
-        allocate( edge_sources%source(8)%identifier%name(1) )
         edge_sources%source(8)%identifier%name = "Recombination"
-        allocate( edge_sources%source(8)%identifier%description(1) )
         edge_sources%source(8)%identifier%description = &
             & "Recombination sources from "//trim(source)
         !! Charge exchange
         edge_sources%source(9)%identifier%index = 305
-        allocate( edge_sources%source(9)%identifier%name(1) )
         edge_sources%source(9)%identifier%name = "Charge exchange"
-        allocate( edge_sources%source(9)%identifier%description(1) )
         edge_sources%source(9)%identifier%description = &
             & "Charge exchange sources from "//trim(source)
         !! Collisional equipartition
         edge_sources%source(10)%identifier%index = 11
-        allocate( edge_sources%source(10)%identifier%name(1) )
         edge_sources%source(10)%identifier%name = "Equipartition"
-        allocate( edge_sources%source(10)%identifier%description(1) )
         edge_sources%source(10)%identifier%description = &
             & "Collisional equipartition sources from "//trim(source)
         !! Ohmic
         edge_sources%source(11)%identifier%index = 7
-        allocate( edge_sources%source(11)%identifier%name(1) )
         edge_sources%source(11)%identifier%name = "Ohmic"
-        allocate( edge_sources%source(11)%identifier%description(1) )
         edge_sources%source(11)%identifier%description = &
             & "Ohmic (Joule) sources from "//trim(source)
         !! Radiation
         edge_sources%source(12)%identifier%index = 200
-        allocate( edge_sources%source(12)%identifier%name(1) )
         edge_sources%source(12)%identifier%name = "Radiation"
-        allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         !! Neutrals
         edge_sources%source(13)%identifier%index = 701
-        allocate( edge_sources%source(13)%identifier%name(1) )
         edge_sources%source(13)%identifier%name = "Neutrals"
-        allocate( edge_sources%source(13)%identifier%description(1) )
         edge_sources%source(13)%identifier%description = &
             & "Total source due to plasma-neutral interactions from "//trim(source)
 #endif
@@ -1220,7 +1208,7 @@ contains
             &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
         radiation%vacuum_toroidal_field%r0 = &
             &  edge_profiles%vacuum_toroidal_field%r0
-#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 21 && IMAS_MAJOR_VERSION == 3 )
         allocate( description%data_entry%user(1) )
         description%data_entry%user = username
         allocate( description%data_entry%machine(1) )
@@ -1233,15 +1221,27 @@ contains
         description%imas_version = version
         allocate( description%dd_version(1) )
         description%dd_version = imas_version
+#endif
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if ( present( time_step_IN ) ) &
           &  description%simulation%time_step = time_step_IN
         if ( present ( time_IN ) ) &
           &  description%simulation%time_current = time_IN
         allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         description%simulation%time_begin = run_start_time_IN
         description%simulation%time_end = run_end_time_IN
+#endif
+#if IMAS_MAJOR_VERSION > 3
+        description%type%index = 2
+        allocate( description%type%name(1) )
+        allocate( description%type%description(1) )
+        description%type%name = "simulation"
+        description%type%description = "Simulation results from "//trim(source)
+        allocate( description%machine(1) )
+        description%machine = database
+        description%pulse = shot
 #endif
 
         i=index(B25_git_version,'-')
@@ -6579,8 +6579,7 @@ contains
         call write_ids_properties( batch_sources%ids_properties, &
           &  homogeneous_time )
         if ( do_description ) then
-          call write_ids_properties( description%ids_properties, &
-            &  homogeneous_time )
+          call write_ids_properties( description%ids_properties, 2 )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call write_ids_properties( summary%ids_properties, &
             &  homogeneous_time )
@@ -6595,6 +6594,10 @@ contains
         if (do_description) &
           &  call write_ids_code( summary%code, code_commit, code_description )
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        if (do_description) &
+          &  call write_ids_code( description%code, code_commit, code_description )
+#endif
 
         !! 3. Allocate IDS.time and set it to desired values
         allocate( batch_profiles%time(num_batch_slices) )
@@ -6602,8 +6605,10 @@ contains
         allocate( batch_sources%time(num_batch_slices) )
         batch_sources%time(batch_index) = time
         if (do_description) then
+#if IMAS_MAJOR_VERSION < 4
           allocate( description%time(num_batch_slices) )
           description%time(batch_index) = time
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           allocate( summary%time(num_batch_slices) )
           summary%time(batch_index) = time
@@ -6618,13 +6623,15 @@ contains
 #endif
         allocate (batch_sources%source(1) )
         allocate (batch_sources%source(1)%ggd( num_batch_slices ) )
+#ifdef B25_EIRENE
+        allocate( batch_sources%source(1)%identifier%name(1) )
+        allocate( batch_sources%source(1)%identifier%description(1) )
         !! Total sources due to Eirene species
         batch_sources%source(1)%identifier%index = 0
-        allocate( batch_sources%source(1)%identifier%name(1) )
         batch_sources%source(1)%identifier%name = "Eirene"
-        allocate( batch_sources%source(1)%identifier%description(1) )
         batch_sources%source(1)%identifier%description = &
              &  "Total source due to Eirene species "//trim(source)
+#endif
 
         call put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -6634,6 +6641,7 @@ contains
             &  do_description, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) then
+#if IMAS_MAJOR_VERSION == 3
           allocate( description%data_entry%user(1) )
           description%data_entry%user = username
           allocate( description%data_entry%machine(1) )
@@ -6646,6 +6654,16 @@ contains
           description%imas_version = version
           allocate( description%dd_version(1) )
           description%dd_version = imas_version
+#elif IMAS_MAJOR_VERSION > 3
+          description%type%index = 2
+          allocate( description%type%name(1) )
+          allocate( description%type%description(1) )
+          description%type%name = "simulation"
+          description%type%description = "Simulation results from "//trim(source)
+          allocate( description%machine(1) )
+          description%machine = database
+          description%pulse = shot
+#endif
           if ( present( time_IN ) ) &
             &  description%simulation%time_current = time_IN
           allocate( description%simulation%workflow(1) )
@@ -8391,7 +8409,7 @@ contains
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
                      &   basegrid, iSubset, IDSmap, tmpVx )
         if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
           call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
           val(iSubset)%grid_index = ggdId
@@ -8406,7 +8424,7 @@ contains
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
                      &   basegrid, iSubset, IDSmap, tmpFace )
         if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
           call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
           val(iSubset)%grid_index = ggdId
@@ -8421,7 +8439,7 @@ contains
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                 &
                       &  basegrid, iSubset, IDSmap, value )
         if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
           call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
           val(iSubset)%grid_index = ggdId
@@ -8482,7 +8500,7 @@ contains
       iSubsetID = GRID_SUBSET_CELLS
 #else
       ndim = basegrid%grid_subset(iSubset)%dimension
-      iSubsetID =basegrid%grid_subset(iSubset)%identifier%index
+      iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
 #endif
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
@@ -8538,7 +8556,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
           &   basegrid, iSubset, IDSmap, b2CellData )
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
         scalar(iSubset)%grid_index = ggdId
@@ -8990,7 +9008,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
           &   basegrid, iSubset, IDSmap, b2VertexData )
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
         scalar(iSubset)%grid_index = ggdId
@@ -9060,7 +9078,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, IDSmap, b2FaceData)
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
         vector%grid_index = gridId
@@ -9074,7 +9092,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, IDSmap, b2FaceData)
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
         vector%grid_index = gridId
@@ -9089,7 +9107,7 @@ contains
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, gridSubsetInd, IDSmap, b2FaceData)
       if ( size( idsdata ) > 0 ) then
-#if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         call gridWriteData( vector, gridId, gridSubsetID, idsdata )
 #else
         vector%grid_index = gridId

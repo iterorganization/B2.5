@@ -1,6 +1,7 @@
       module b2mod_transport_models
       use b2mod_types
       use b2mod_version
+      implicit none
       logical, save :: transport_models_allocated=.false.
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::

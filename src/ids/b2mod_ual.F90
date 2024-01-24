@@ -13,10 +13,28 @@ module b2mod_ual
     use b2mod_types
 #ifdef IMAS
     use ids_routines &  ! IGNORE
-     & ,only: imas_open_env, imas_create_env, imas_close, &
-     &        ids_deallocate, ids_get, ids_put, ids_delete, ids_put_slice, &
-     &        ual_begin_pulse_action, ual_open_pulse, ual_close_pulse, &
-     &        HDF5_BACKEND, FORCE_CREATE_PULSE, OPEN_PULSE, CLOSE_PULSE
+     & ,only: ids_deallocate, ids_put, ids_delete, ids_put_slice, &
+     &        CLOSE_PULSE
+#if UAL_MAJOR_VERSION > 4
+    use ids_routines &  ! IGNORE
+     & ,only: imas_open, imas_close, al_build_uri_from_legacy_parameters, &
+     &        HDF5_BACKEND, MDSPLUS_BACKEND, &
+     &        FORCE_CREATE_PULSE, OPEN_PULSE, STRMAXLEN
+    use ids_schemas &     ! IGNORE
+     & , only : ids_string_length
+#elif UAL_MAJOR_VERSION == 4
+    use ids_routines &  ! IGNORE
+     & ,only: imas_open_env, imas_create_env, &
+     &        ual_begin_pulse_action, ual_open_pulse, ual_close_pulse
+# if UAL_MINOR_VERSION > 8
+    use ids_routines &  ! IGNORE
+     & ,only: HDF5_BACKEND, FORCE_CREATE_PULSE, OPEN_PULSE
+# endif
+#else
+    use ids_routines &  ! IGNORE
+     & ,only: imas_open_env, imas_create_env, &
+     &        imas_open
+#endif
     use ids_schemas &   ! IGNORE
      & ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &        ids_radiation, ids_dataset_description, ids_equilibrium
@@ -113,16 +131,15 @@ contains
             !< designed to store run data related to the divertor plates
 #endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
-            !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot   !< The shot number of the database being created
         integer, intent(in) :: run    !< The run number of the database being created
-        integer, intent(inout) :: idx !< The returned identifier to be used in the
-            !< subsequent data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
         character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
         logical, intent(in) :: new_eq_ggd
             !< database
         integer :: status
@@ -188,8 +205,6 @@ contains
         else
         !! Or open and modify existing shot/run
         !! (might work much faster than imas_create_env)
-        ! call imas_open_env(treename, shot, run, idx, username, &
-        !  database, version, status )
 
           if (new_eq_ggd) then
             write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
@@ -305,16 +320,15 @@ contains
             !< designed to store run summary data
 #endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
-            !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot   !< The shot number of the database being created
         integer, intent(in) :: run    !< The run number of the database being created
-        integer, intent(inout) :: idx !< The returned identifier to be used in the
-            !< subsequent data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
         character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
         logical, intent(in) :: do_summary, new_eq_ggd
             !< database
         integer :: status
@@ -693,12 +707,12 @@ contains
 #ifdef IMAS
         integer :: lStatus = 0
         character(32) :: lTreename = "ids"
-#if ( UAL_MAJOR_VERSION < 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION < 9 ) )
+# if ( UAL_MAJOR_VERSION < 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION < 9 ) )
         character(13) :: hlp_frm
         character(80) :: message
         integer len_of_digits
         external len_of_digits
-#endif
+# endif
 #elif defined(ITM_ENVIRONMENT_LOADED)
         character(32) :: lTreename = "euitm"
 #else
@@ -760,28 +774,44 @@ contains
         if( lDoCreate ) then
 #ifdef IMAS
             if( lUseHdf5 ) then
-# if ( UAL_MAJOR_VERSION > 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 ) )
+# if UAL_MAJOR_VERSION > 4
+                call al_build_uri_from_legacy_parameters &
+                  & ( HDF5_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
+                  &   '', uri, lStatus )
+                call imas_open( uri, FORCE_CREATE_PULSE, idx, lStatus, message )
+                call xertst ( lStatus.eq.0, trim(message) )
+# else
+#  if ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 )
                 call ual_begin_pulse_action( HDF5_BACKEND, lShot, lRun, lUser, &
-                        &    lTokamak, lDataversion, idx )
+                   &   lTokamak, lDataversion, idx )
                 call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', lStatus )
                 call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
-# else
+#  else
                 write(hlp_frm,'(a,i1,a)') &
                    &  '(a,i1,a,i',len_of_digits(UAL_MINOR_VERSION),',a)'
                 write(message,hlp_frm) &
                    &  'HDF5 backend not supported with AL v', &
                    &   UAL_MAJOR_VERSION,'.',UAL_MINOR_VERSION,'!'
-                call xerrab (message)
+                call xerrab ( trim(message) )
+#  endif
 # endif
             else
                 if( openEnv ) then
-                    call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
+# if UAL_MAJOR_VERSION > 4
+                    call al_build_uri_from_legacy_parameters &
+                        & ( MDSPLUS_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
+                        &   '', uri, lStatus )
+                    call imas_open( uri, FORCE_CREATE_PULSE, idx, lStatus, message )
+                    call xertst ( lStatus.eq.0, trim(message) )
+# else
+                    call imas_create_env( lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion,    &
                         &   lStatus)
                     call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
+# endif
                 else
 # if UAL_MAJOR_VERSION < 4
-                    call imas_create(lTreename, lShot, lRun, lRefshot, &
+                    call imas_create( lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
 # else
                     call xerrab ('Must define username!')
@@ -790,24 +820,40 @@ contains
             end if
         else
             if( lUseHdf5 ) then
-# if ( UAL_MAJOR_VERSION > 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 ) )
+# if AL_MAJOR_VERSION > 4
+                call al_build_uri_from_legacy_parameters &
+                  & ( HDF5_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
+                  &   '', uri, lStatus )
+                call imas_open ( uri, OPEN_PULSE, idx, lStatus, message )
+                call xertst ( lStatus.eq.0, trim(message) )
+# else
+#  if ( UAL_MAJOR_VERSION > 4 || ( UAL_MAJOR_VERSION == 4 && UAL_MINOR_VERSION > 8 ) )
                 call ual_begin_pulse_action( HDF5_BACKEND, lShot, lRun, lUser, &
                         &    lTokamak, lDataversion, idx )
                 call ual_open_pulse( idx, OPEN_PULSE, '', lStatus )
                 call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !')
-# else
+#  else
                 write(hlp_frm,'(a,i1,a)') &
                    &  '(a,i1,a,i',len_of_digits(UAL_MINOR_VERSION),',a)'
                 write(message,hlp_frm) &
                    &  'HDF5 backend not supported with AL v', &
                    &   UAL_MAJOR_VERSION,'.',UAL_MINOR_VERSION,'!'
-                call xerrab (message)
+                call xerrab ( trim(message) )
+#  endif
 # endif
             else
                 if( openEnv ) then
+# if AL_MAJOR_VERSION > 4
+                    call al_build_uri_from_legacy_parameters &
+                        & ( MDSPLUS_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
+                        &   '', uri, lStatus )
+                    call imas_open( uri, OPEN_PULSE, idx, lStatus, message )
+                    call xertst ( lStatus.eq.0, trim(message) )
+# else
                     call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
                         &   lTokamak, lDataversion, lStatus)
                     call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !')
+# endif
                 else
 # if UAL_MAJOR_VERSION < 4
                     call imas_open(lTreename, lShot, lRun, idx)
@@ -863,7 +909,11 @@ contains
         external xertst
 
         !! Close IDS
+# if AL_MAJOR_VERSION > 4
+        call imas_close( idx, status )
+# else
         call ual_close_pulse( idx, CLOSE_PULSE, '', status )
+# endif
         call xertst( status.eq.0, 'Error closing IMAS database !' )
 #elif defined(ITM_ENVIRONMENT_LOADED)
         call euITM_close( idx )

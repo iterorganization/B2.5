@@ -79,7 +79,6 @@ c*** Column headers:
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
-
 #include "DIMENSIONS.F"
 
 c----------------------------------------------------------------------

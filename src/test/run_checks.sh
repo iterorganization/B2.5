@@ -20,7 +20,7 @@ files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 missing=0
 for f in $files; do
    if [ ! -f $1/$f ]; then
-     echo "ERROR, file not found $1/$f";
+     echo "Error, file not found $1/$f";
      missing=$((missing+1))
    elif [ ! -f $2/$f ]; then
      echo "ERROR, file not found $2/$f";

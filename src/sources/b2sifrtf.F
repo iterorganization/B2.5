@@ -719,9 +719,6 @@ c   .... apply flux limit
      &   sqrt(mp)*am_sqrt(r,a)
       end do
       fka_new_opt = fka_new_opt*rz2_temp(ind+a+1)
-      if (fka_new_opt.eq.0.0_R8) then
-        write(*,*) 'ix,iy,a,ind', ix,iy,a,ind
-      end if
       return
       end function fka_new_opt
 

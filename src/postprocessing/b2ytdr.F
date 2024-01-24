@@ -328,7 +328,7 @@ c 2002-09-11: logic revised
       integer NATMI1, NREAC1, NREAC2, NRR1, NSTRA1, NPLSI1, NBGK1, NSKIP
       integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M
       integer size_mp, size_mt, nc, maxne, quote_count, iquote, iyear
-      integer ICRM, JPLSS, ISTRA, ISKIP
+      integer ICRM, JPLSS, ISTRAI, ISKIP
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
       integer NADVI, NADV1, NCLVI, NCLV1, NALVI, NALV1, NADSI, NADS1
@@ -1281,7 +1281,8 @@ c 2002-09-11: logic revised
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
      &    sna1_mean, sne1_mean, smo1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1,
+     &    e_she1, e_shi1, e_sch1)
       end if
 *   ..rescale transformed state (if necessary)
       neutral_rescale=1.0_R8
@@ -1351,7 +1352,8 @@ c 2002-09-11: logic revised
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
      &    sna1_mean, sne1_mean, smo1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1,
+     &    e_she1, e_shi1, e_sch1)
       end if
 
 * ..check for need to transform other input files:
@@ -8608,25 +8610,25 @@ cxpb  to see if some strata need to be removed
      .            ISCLA(NSTRAI))
         TXTSOU(1:NSTRAI) = REPEAT(" ",72)
         savestratum(0) = .true.
-        READ (IUNIN,6666) (INDSRC(ISTRA),ISTRA=1,NSTRAI)
+        READ (IUNIN,6666) (INDSRC(ISTRAI),ISTRAI=1,NSTRAI)
         READ (IUNIN,6664) ALLOC, MPTS
-        DO 712 ISTRA=1,NSTRAI
-          IF (INDSRC(ISTRA).EQ.6) THEN
-            savestratum(ISTRA) = .false.
-            DO J = 1, NTGPRT(ISTRA)
-              idum(0) = iplsbeginrange(NSPZI(ISTRA,J),NSPZE(ISTRA,J),
+        DO 712 ISTRAI=1,NSTRAI
+          IF (INDSRC(ISTRAI).EQ.6) THEN
+            savestratum(ISTRAI) = .false.
+            DO J = 1, NTGPRT(ISTRAI)
+              idum(0) = iplsbeginrange(NSPZI(ISTRAI,J),NSPZE(ISTRAI,J),
      .                                 ns-nspecies,ipls1)
-              idum(1) = iplsendrange(NSPZI(ISTRA,J),NSPZE(ISTRA,J),
+              idum(1) = iplsendrange(NSPZI(ISTRAI,J),NSPZE(ISTRAI,J),
      .                               ns-nspecies,ipls1)
-              savestratum(ISTRA) = savestratum(ISTRA) .or.
+              savestratum(ISTRAI) = savestratum(ISTRAI) .or.
      .         (idum(0).gt.0 .AND. idum(1).gt.0)
             END DO
             GOTO 712
           ENDIF
           IF (IREAD.EQ.0) THEN
-            READ (IUNIN,'(A72)') TXTSOU(ISTRA)
+            READ (IUNIN,'(A72)') TXTSOU(ISTRAI)
           ELSEIF (IREAD.EQ.1) THEN
-            READ (ZEILE,'(A72)') TXTSOU(ISTRA)
+            READ (ZEILE,'(A72)') TXTSOU(ISTRAI)
             IREAD=0
           ENDIF
   713     READ (IUNIN,'(A80)') ZEILE
@@ -8634,248 +8636,250 @@ cxpb  to see if some strata need to be removed
           IF (ZEILE(1:1) .EQ. '*') GOTO 713
           call fix_logical_input(zeile,5)
           READ (ZEILE,6665)
-     .     NLAVRP(ISTRA),NLAVRT(ISTRA),NLSYMP(ISTRA),NLSYMT(ISTRA),
-     .     NLRAY(ISTRA)
+     .     NLAVRP(ISTRAI),NLAVRT(ISTRAI),NLSYMP(ISTRAI),NLSYMT(ISTRAI),
+     .     NLRAY(ISTRAI)
           IREAD=0
-          READ (IUNIN,6666) NPTS(ISTRA),NINITL(ISTRA),NEMODS(ISTRA),
-     .                      NAMODS(ISTRA),NMINPTS(ISTRA),NPTSDEL(ISTRA),
-     .                      NRAYEN(ISTRA)
-          READ (IUNIN,66662) FLUX(ISTRA),SCALV(ISTRA),IVLSF(ISTRA),
-     .                       ISCLS(ISTRA),ISCLT(ISTRA),ISCL1(ISTRA),
-     .                       ISCL2(ISTRA),ISCL3(ISTRA),ISCLB(ISTRA),
-     .                       ISCLA(ISTRA)
-          ISCLS(ISTRA) = transform_tally(IVLSF(ISTRA).eq.1,
-     .      ISCLT(ISTRA),ISCLS(ISTRA),
+          READ (IUNIN,6666) NPTS(ISTRAI),NINITL(ISTRAI),NEMODS(ISTRAI),
+     .                      NAMODS(ISTRAI),NMINPTS(ISTRAI),
+     .                      NPTSDEL(ISTRAI),NRAYEN(ISTRAI)
+          READ (IUNIN,66662) FLUX(ISTRAI),SCALV(ISTRAI),IVLSF(ISTRAI),
+     .                       ISCLS(ISTRAI),ISCLT(ISTRAI),ISCL1(ISTRAI),
+     .                       ISCL2(ISTRAI),ISCL3(ISTRAI),ISCLB(ISTRAI),
+     .                       ISCLA(ISTRAI)
+          ISCLS(ISTRAI) = transform_tally(IVLSF(ISTRAI).eq.1,
+     .      ISCLT(ISTRAI),ISCLS(ISTRAI),
      .      iatm1,imol1,iion1,ipls1,nphoti,natmi,nmoli,nioni,nplsi,
      .      natmi1,nmol1,nion1)
           READ (IUNIN,'(A80)') ZEILE
           call fix_logical_input(zeile,5)
-          READ (ZEILE,6665) NLATM(ISTRA),NLMOL(ISTRA),
-     .                      NLION(ISTRA),NLPLS(ISTRA),
-     .                      NLPHOT(ISTRA)
-          READ (IUNIN,6666) NSPEZ(ISTRA)
-          IF (NLPLS(ISTRA)) THEN
-            savestratum(ISTRA) = .true.
-            IF (NSPEZ(ISTRA).GE.1 .AND. NSPEZ(ISTRA).LE.NPLSI) THEN
-              NSPEZ(ISTRA) = ipls1(NSPEZ(ISTRA))
-              savestratum(ISTRA) = NSPEZ(ISTRA).NE.0
-            ELSE IF (NSPEZ(ISTRA).GT.NPLSI) THEN
-              NSPEZ(ISTRA) = max(NSPEZ(ISTRA),NPLSI1+1)
+          READ (ZEILE,6665) NLATM(ISTRAI),NLMOL(ISTRAI),
+     .                      NLION(ISTRAI),NLPLS(ISTRAI),
+     .                      NLPHOT(ISTRAI)
+          READ (IUNIN,6666) NSPEZ(ISTRAI)
+          IF (NLPLS(ISTRAI)) THEN
+            savestratum(ISTRAI) = .true.
+            IF (NSPEZ(ISTRAI).GE.1 .AND. NSPEZ(ISTRAI).LE.NPLSI) THEN
+              NSPEZ(ISTRAI) = ipls1(NSPEZ(ISTRAI))
+              savestratum(ISTRAI) = NSPEZ(ISTRAI).NE.0
+            ELSE IF (NSPEZ(ISTRAI).GT.NPLSI) THEN
+              NSPEZ(ISTRAI) = max(NSPEZ(ISTRAI),NPLSI1+1)
             END IF
-          ELSE IF (NLATM(ISTRA)) THEN
-            savestratum(ISTRA) = .true.
-            IF (NSPEZ(ISTRA).GE.1 .AND. NSPEZ(ISTRA).LE.NATMI) THEN
-              NSPEZ(ISTRA) = iatm1(NSPEZ(ISTRA))
-              savestratum(ISTRA) = NSPEZ(ISTRA).NE.0
-            ELSE IF (NSPEZ(ISTRA).GT.NATMI) THEN
-              NSPEZ(ISTRA) = max(NSPEZ(ISTRA),NATMI1+1)
+          ELSE IF (NLATM(ISTRAI)) THEN
+            savestratum(ISTRAI) = .true.
+            IF (NSPEZ(ISTRAI).GE.1 .AND. NSPEZ(ISTRAI).LE.NATMI) THEN
+              NSPEZ(ISTRAI) = iatm1(NSPEZ(ISTRAI))
+              savestratum(ISTRAI) = NSPEZ(ISTRAI).NE.0
+            ELSE IF (NSPEZ(ISTRAI).GT.NATMI) THEN
+              NSPEZ(ISTRAI) = max(NSPEZ(ISTRAI),NATMI1+1)
             END IF
-          ELSE IF (NLMOL(ISTRA)) THEN
-            savestratum(ISTRA) = .true.
-            IF (NSPEZ(ISTRA).GE.1 .AND. NSPEZ(ISTRA).LE.NMOLI) THEN
-              NSPEZ(ISTRA) = imol1(NSPEZ(ISTRA))
-              savestratum(ISTRA) = NSPEZ(ISTRA).NE.0
-            ELSE IF (NSPEZ(ISTRA).GT.NMOLI) THEN
-              NSPEZ(ISTRA) = max(NSPEZ(ISTRA),NMOL1+1)
+          ELSE IF (NLMOL(ISTRAI)) THEN
+            savestratum(ISTRAI) = .true.
+            IF (NSPEZ(ISTRAI).GE.1 .AND. NSPEZ(ISTRAI).LE.NMOLI) THEN
+              NSPEZ(ISTRAI) = imol1(NSPEZ(ISTRAI))
+              savestratum(ISTRAI) = NSPEZ(ISTRAI).NE.0
+            ELSE IF (NSPEZ(ISTRAI).GT.NMOLI) THEN
+              NSPEZ(ISTRAI) = max(NSPEZ(ISTRAI),NMOL1+1)
             END IF
-          ELSE IF (NLION(ISTRA)) THEN
-            savestratum(ISTRA) = .true.
-            IF (NSPEZ(ISTRA).GE.1 .AND. NSPEZ(ISTRA).LE.NIONI) THEN
-              NSPEZ(ISTRA) = iion1(NSPEZ(ISTRA))
-              savestratum(ISTRA) = NSPEZ(ISTRA).NE.0
-            ELSE IF (NSPEZ(ISTRA).GT.NIONI) THEN
-              NSPEZ(ISTR) = max(NSPEZ(ISTRA),NION1+1)
+          ELSE IF (NLION(ISTRAI)) THEN
+            savestratum(ISTRAI) = .true.
+            IF (NSPEZ(ISTRAI).GE.1 .AND. NSPEZ(ISTRAI).LE.NIONI) THEN
+              NSPEZ(ISTRAI) = iion1(NSPEZ(ISTRAI))
+              savestratum(ISTRAI) = NSPEZ(ISTRAI).NE.0
+            ELSE IF (NSPEZ(ISTRAI).GT.NIONI) THEN
+              NSPEZ(ISTR) = max(NSPEZ(ISTRAI),NION1+1)
             END IF
           ELSE
-            savestratum(ISTRA) = .true.
+            savestratum(ISTRAI) = .true.
           END IF
           READ (IUNIN,'(A80)') ZEILE
           call fix_logical_input(zeile,5)
-          READ (ZEILE,6665) NLPNT(ISTRA),NLLNE(ISTRA),NLSRF(ISTRA),
-     .                      NLVOL(ISTRA),NLCNS(ISTRA)
+          READ (ZEILE,6665) NLPNT(ISTRAI),NLLNE(ISTRAI),NLSRF(ISTRAI),
+     .                      NLVOL(ISTRAI),NLCNS(ISTRAI)
 C  SAME FOR POINT-, LINE-, SURFACE- AND VOLUME SOURCES
-          READ (IUNIN,6666) NSRFSI(ISTRA)
-          DO 715 J=1,NSRFSI(ISTRA)
-            READ (IUNIN,6666) idum(1),INDIM(J,ISTRA),INSOR(J,ISTRA),
-     .                        INGRDA(J,ISTRA,1),INGRDE(J,ISTRA,1),
-     .                        INGRDA(J,ISTRA,2),INGRDE(J,ISTRA,2),
-     .                        INGRDA(J,ISTRA,3),INGRDE(J,ISTRA,3)
+          READ (IUNIN,6666) NSRFSI(ISTRAI)
+          DO 715 J=1,NSRFSI(ISTRAI)
+            READ (IUNIN,6666) idum(1),INDIM(J,ISTRAI),INSOR(J,ISTRAI),
+     .                        INGRDA(J,ISTRAI,1),INGRDE(J,ISTRAI,1),
+     .                        INGRDA(J,ISTRAI,2),INGRDE(J,ISTRAI,2),
+     .                        INGRDA(J,ISTRAI,3),INGRDE(J,ISTRAI,3)
             IF (streql(eirene_format,'old')) THEN
-              IF (NLSRF(ISTRA)) THEN
-                IF (INDIM(J,ISTRA).EQ.1.AND.
-     &              INGRDA(J,ISTRA,1).NE.INGRDE(J,ISTRA,1)) THEN
-                  INGRDA(J,ISTRA,2)=INGRDA(J,ISTRA,1)
-                  INGRDE(J,ISTRA,2)=INGRDE(J,ISTRA,1)
-                  INGRDA(J,ISTRA,1)=INSOR(J,ISTRA)
-                  INGRDE(J,ISTRA,1)=INSOR(J,ISTRA)
+              IF (NLSRF(ISTRAI)) THEN
+                IF (INDIM(J,ISTRAI).EQ.1.AND.
+     &              INGRDA(J,ISTRAI,1).NE.INGRDE(J,ISTRAI,1)) THEN
+                  INGRDA(J,ISTRAI,2)=INGRDA(J,ISTRAI,1)
+                  INGRDE(J,ISTRAI,2)=INGRDE(J,ISTRAI,1)
+                  INGRDA(J,ISTRAI,1)=INSOR(J,ISTRAI)
+                  INGRDE(J,ISTRAI,1)=INSOR(J,ISTRAI)
                 ENDIF
               ENDIF
             ENDIF
-            READ (IUNIN,6664) SORWGT(J,ISTRA),SORLIM(J,ISTRA),
-     .                        SORIND(J,ISTRA),SOREXP(J,ISTRA),
-     .                        SORIFL(J,ISTRA)
-            READ (IUNIN,6666) NRSOR(J,ISTRA),NPSOR(J,ISTRA),
-     .                        NTSOR(J,ISTRA),NBSOR(J,ISTRA),
-     .                        NASOR(J,ISTRA),NISOR(J,ISTRA),
-     .                        ISTOR(J,ISTRA)
-            READ (IUNIN,6664) SORAD1(J,ISTRA),SORAD2(J,ISTRA),
-     .                        SORAD3(J,ISTRA),SORAD4(J,ISTRA),
-     .                        SORAD5(J,ISTRA),SORAD6(J,ISTRA)
+            READ (IUNIN,6664) SORWGT(J,ISTRAI),SORLIM(J,ISTRAI),
+     .                        SORIND(J,ISTRAI),SOREXP(J,ISTRAI),
+     .                        SORIFL(J,ISTRAI)
+            READ (IUNIN,6666) NRSOR(J,ISTRAI),NPSOR(J,ISTRAI),
+     .                        NTSOR(J,ISTRAI),NBSOR(J,ISTRAI),
+     .                        NASOR(J,ISTRAI),NISOR(J,ISTRAI),
+     .                        ISTOR(J,ISTRAI)
+            READ (IUNIN,6664) SORAD1(J,ISTRAI),SORAD2(J,ISTRAI),
+     .                        SORAD3(J,ISTRAI),SORAD4(J,ISTRAI),
+     .                        SORAD5(J,ISTRAI),SORAD6(J,ISTRAI)
   715     CONTINUE
 C  VELOCITY SPACE DISTRIBUTION
-          READ (IUNIN,6664) SORENI(ISTRA),SORENE(ISTRA),
-     .                      SORVDX(ISTRA),SORVDY(ISTRA),SORVDZ(ISTRA)
-          READ (IUNIN,6664) SORCOS(ISTRA),SORMAX(ISTRA),
-     .                      SORCTX(ISTRA),SORCTY(ISTRA),SORCTZ(ISTRA),
-     .                      RAYFRAC(ISTRA)
+          READ (IUNIN,6664) SORENI(ISTRAI),SORENE(ISTRAI),
+     .                      SORVDX(ISTRAI),SORVDY(ISTRAI),SORVDZ(ISTRAI)
+          READ (IUNIN,6664) SORCOS(ISTRAI),SORMAX(ISTRAI),
+     .                      SORCTX(ISTRAI),SORCTY(ISTRAI),
+     .                      SORCTZ(ISTRAI),RAYFRAC(ISTRAI)
   712   CONTINUE
 cxpb  Start rewrite of block 7
         IS = 0
-        do ISTRA=1,NSTRAI
-          if (savestratum(istra)) then
+        do ISTRAI=1,NSTRAI
+          if (savestratum(istrai)) then
             is = is + 1
-            if (indsrc(istra).eq.-1.and..not.nlvol(istra)) then
+            if (indsrc(istrai).eq.-1.and..not.nlvol(istrai)) then
               indsrc(is) = 1
             else
-              indsrc(is) = indsrc(istra)
+              indsrc(is) = indsrc(istrai)
             endif
           endif
         enddo
         NSTRA1 = is
         savestratum(NSTRAI+1:NSTRA) = .true.
         WRITE(IUNOT,6666) NSTRA1
-        WRITE(IUNOT,6666) (INDSRC(ISTRA),ISTRA=1,NSTRA1)
+        WRITE(IUNOT,6666) (INDSRC(ISTRAI),ISTRAI=1,NSTRA1)
         WRITE(IUNOT,6664) ALLOC, MPTS
         IS = 0
         ISTEP = 0
-        DO 7121 ISTRA=1,NSTRAI
-          IF (.not.savestratum(ISTRA)) GOTO 7121
+        DO 7121 ISTRAI=1,NSTRAI
+          IF (.not.savestratum(ISTRAI)) GOTO 7121
           IS = IS+1
           IF (INDSRC(IS).EQ.6) THEN
             ISTEP = ISTEP + 1
             GOTO 7121
           END IF
-          WRITE(stratum_number,'(I2.2)') ISTRA
-          J = INDEX(TXTSOU(ISTRA),stratum_number)
-          IF (J.GT.0) WRITE(TXTSOU(ISTRA)(J:J+1),'(I2.2)') IS
-          WRITE(IUNOT,'(A72)') TXTSOU(ISTRA)
+          WRITE(stratum_number,'(I2.2)') ISTRAI
+          J = INDEX(TXTSOU(ISTRAI),stratum_number)
+          IF (J.GT.0) WRITE(TXTSOU(ISTRAI)(J:J+1),'(I2.2)') IS
+          WRITE(IUNOT,'(A72)') TXTSOU(ISTRAI)
           WRITE(IUNOT,6665)
-     .      NLAVRP(ISTRA),NLAVRT(ISTRA),NLSYMP(ISTRA),NLSYMT(ISTRA),
-     .      NLRAY(ISTRA)
-          WRITE(IUNOT,6666) NPTS(ISTRA),NINITL(ISTRA),NEMODS(ISTRA),
-     .                      NAMODS(ISTRA),NMINPTS(ISTRA),NPTSDEL(ISTRA),
-     .                      NRAYEN(ISTRA)
-          WRITE(IUNOT,66662) FLUX(ISTRA),SCALV(ISTRA),IVLSF(ISTRA),
-     .                       ISCLS(ISTRA),ISCLT(ISTRA),ISCL1(ISTRA),
-     .                       ISCL2(ISTRA),ISCL3(ISTRA),ISCLB(ISTRA),
-     .                       ISCLA(ISTRA)
-          WRITE(IUNOT,6665) NLATM(ISTRA),NLMOL(ISTRA),
-     .                      NLION(ISTRA),NLPLS(ISTRA),NLPHOT(ISTRA)
-          WRITE(IUNOT,6666) NSPEZ(ISTRA)
-          WRITE(IUNOT,6665) NLPNT(ISTRA),NLLNE(ISTRA),NLSRF(ISTRA),
-     .                      NLVOL(ISTRA),NLCNS(ISTRA)
+     .      NLAVRP(ISTRAI),NLAVRT(ISTRAI),NLSYMP(ISTRAI),NLSYMT(ISTRAI),
+     .      NLRAY(ISTRAI)
+          WRITE(IUNOT,6666) NPTS(ISTRAI),NINITL(ISTRAI),NEMODS(ISTRAI),
+     .                      NAMODS(ISTRAI),NMINPTS(ISTRAI),
+     .                      NPTSDEL(ISTRAI),NRAYEN(ISTRAI)
+          WRITE(IUNOT,66662) FLUX(ISTRAI),SCALV(ISTRAI),IVLSF(ISTRAI),
+     .                       ISCLS(ISTRAI),ISCLT(ISTRAI),ISCL1(ISTRAI),
+     .                       ISCL2(ISTRAI),ISCL3(ISTRAI),ISCLB(ISTRAI),
+     .                       ISCLA(ISTRAI)
+          WRITE(IUNOT,6665) NLATM(ISTRAI),NLMOL(ISTRAI),
+     .                      NLION(ISTRAI),NLPLS(ISTRAI),NLPHOT(ISTRAI)
+          WRITE(IUNOT,6666) NSPEZ(ISTRAI)
+          WRITE(IUNOT,6665) NLPNT(ISTRAI),NLLNE(ISTRAI),NLSRF(ISTRAI),
+     .                      NLVOL(ISTRAI),NLCNS(ISTRAI)
 C  SAME FOR POINT-, LINE-, SURFACE- AND VOLUME SOURCES
-          WRITE(IUNOT,6666) NSRFSI(ISTRA)
-          DO 7151 J=1,NSRFSI(ISTRA)
+          WRITE(IUNOT,6666) NSRFSI(ISTRAI)
+          DO 7151 J=1,NSRFSI(ISTRAI)
             ISTEP = ISTEP + 1
-            idum(2) = INDIM(J,ISTRA)
-            idum(3) = INSOR(J,ISTRA)
-            idum(8) = INGRDA(J,ISTRA,3)
-            idum(9) = INGRDE(J,ISTRA,3)
-            IF (INDIM(J,ISTRA).EQ.1) THEN
+            idum(2) = INDIM(J,ISTRAI)
+            idum(3) = INSOR(J,ISTRAI)
+            idum(8) = INGRDA(J,ISTRAI,3)
+            idum(9) = INGRDE(J,ISTRAI,3)
+            IF (INDIM(J,ISTRAI).EQ.1) THEN
               idum(3) = convert_eirene(non_commensurate,1,
-     .           INSOR(J,ISTRA),(INGRDA(J,ISTRA,2)+INGRDE(J,ISTRA,2))/2,
+     .           INSOR(J,ISTRAI),
+     .          (INGRDA(J,ISTRAI,2)+INGRDE(J,ISTRAI,2))/2,
      .           nx,ny,nx1,ny1,4)
               idum(4) = idum(3)
               idum(5) = idum(3)
               idum(6) = convert_eirene(non_commensurate,2,
-     .           INSOR(J,ISTRA),INGRDA(J,ISTRA,2),nx,ny,nx1,ny1,1)
+     .           INSOR(J,ISTRAI),INGRDA(J,ISTRAI,2),nx,ny,nx1,ny1,1)
               idum(7) = convert_eirene(non_commensurate,2,
-     .           INSOR(J,ISTRA),INGRDE(J,ISTRA,2),nx,ny,nx1,ny1,3)
-            ELSE IF (INDIM(J,ISTRA).EQ.2) THEN
+     .           INSOR(J,ISTRAI),INGRDE(J,ISTRAI,2),nx,ny,nx1,ny1,3)
+            ELSE IF (INDIM(J,ISTRAI).EQ.2) THEN
               idum(3) = convert_eirene(non_commensurate,2,
-     .           (INGRDA(J,ISTRA,1)+INGRDE(J,ISTRA,1))/2,INSOR(J,ISTRA),
+     .          (INGRDA(J,ISTRAI,1)+INGRDE(J,ISTRAI,1))/2,
+     .           INSOR(J,ISTRAI),
      .           nx,ny,nx1,ny1,4)
               idum(4) = convert_eirene(non_commensurate,1,
-     .           INGRDA(J,ISTRA,1),INSOR(J,ISTRA),nx,ny,nx1,ny1,0)
+     .           INGRDA(J,ISTRAI,1),INSOR(J,ISTRAI),nx,ny,nx1,ny1,0)
               idum(5) = convert_eirene(non_commensurate,1,
-     .           INGRDE(J,ISTRA,1),INSOR(J,ISTRA),nx,ny,nx1,ny1,2)
+     .           INGRDE(J,ISTRAI,1),INSOR(J,ISTRAI),nx,ny,nx1,ny1,2)
               idum(6) = idum(3)
               idum(7) = idum(3)
-            ELSE IF (INDIM(J,ISTRA).EQ.3 .OR.
-     .              (INDIM(J,ISTRA).EQ.0 .AND.
-     .               INSOR(J,ISTRA).EQ.0)) THEN
+            ELSE IF (INDIM(J,ISTRAI).EQ.3 .OR.
+     .              (INDIM(J,ISTRAI).EQ.0 .AND.
+     .               INSOR(J,ISTRAI).EQ.0)) THEN
               idum(4) = convert_eirene(non_commensurate,1,
-     .           INGRDA(J,ISTRA,1),INGRDA(J,ISTRA,2),nx,ny,nx1,ny1,0)
+     .           INGRDA(J,ISTRAI,1),INGRDA(J,ISTRAI,2),nx,ny,nx1,ny1,0)
               idum(5) = convert_eirene(non_commensurate,1,
-     .           INGRDE(J,ISTRA,1),INGRDE(J,ISTRA,2),nx,ny,nx1,ny1,2)
+     .           INGRDE(J,ISTRAI,1),INGRDE(J,ISTRAI,2),nx,ny,nx1,ny1,2)
               idum(6) = convert_eirene(non_commensurate,2,
-     .           INGRDA(J,ISTRA,1),INGRDA(J,ISTRA,2),nx,ny,nx1,ny1,1)
+     .           INGRDA(J,ISTRAI,1),INGRDA(J,ISTRAI,2),nx,ny,nx1,ny1,1)
               idum(7) = convert_eirene(non_commensurate,2,
-     .           INGRDE(J,ISTRA,1),INGRDE(J,ISTRA,2),nx,ny,nx1,ny1,3)
+     .           INGRDE(J,ISTRAI,1),INGRDE(J,ISTRAI,2),nx,ny,nx1,ny1,3)
             ELSE
-              idum(4) = INGRDA(J,ISTRA,1)
-              idum(5) = INGRDE(J,ISTRA,1)
-              idum(6) = INGRDA(J,ISTRA,2)
-              idum(7) = INGRDE(J,ISTRA,2)
+              idum(4) = INGRDA(J,ISTRAI,1)
+              idum(5) = INGRDE(J,ISTRAI,1)
+              idum(6) = INGRDA(J,ISTRAI,2)
+              idum(7) = INGRDE(J,ISTRAI,2)
             ENDIF
             rdum(0) = 0.
-            IF (SORIND(J,ISTRA).GE.100.) THEN
-              ISPEZ = B2IDEZ(NINT(SORIND(J,ISTRA)),3,3)
-              IF (NLATM(ISTRA)) THEN
+            IF (SORIND(J,ISTRAI).GE.100.) THEN
+              ISPEZ = B2IDEZ(NINT(SORIND(J,ISTRAI)),3,3)
+              IF (NLATM(ISTRAI)) THEN
                 rdum(0) = 100. * IATM1(ISPEZ)
-              ELSE IF (NLMOL(ISTRA)) THEN
+              ELSE IF (NLMOL(ISTRAI)) THEN
                 rdum(0) = 100. * IMOL1(ISPEZ)
-              ELSE IF (NLION(ISTRA)) THEN
+              ELSE IF (NLION(ISTRAI)) THEN
                 rdum(0) = 100. * IION1(ISPEZ)
-              ELSE IF (NLPLS(ISTRA)) THEN
+              ELSE IF (NLPLS(ISTRAI)) THEN
                 rdum(0) = 100. * IPLS1(ISPEZ)
-              ELSE IF (NLPHOT(ISTRA)) THEN
+              ELSE IF (NLPHOT(ISTRAI)) THEN
                 rdum(0) = 100. * ISPEZ
               ENDIF
             ENDIF
-            IF (NLVOL(ISTRA)) THEN
+            IF (NLVOL(ISTRAI)) THEN
               rdum(1) = 0.
-              DO ISPEZ = 1, NSPEZ(ISTRA)
+              DO ISPEZ = 1, NSPEZ(ISTRAI)
                 rdum(1) = rdum(1) + NRCP1(ISPEZ)
               ENDDO
-              SORIND(J,ISTRA) = rdum(0) + rdum(1)
+              SORIND(J,ISTRAI) = rdum(0) + rdum(1)
             ELSE
-              IF(INDIM(J,ISTRA).NE.0) THEN
-                SORIND(J,ISTRA) = rdum(0) + ISTEP
+              IF(INDIM(J,ISTRAI).NE.0) THEN
+                SORIND(J,ISTRAI) = rdum(0) + ISTEP
               ELSE
-                SORIND(J,ISTRA) = rdum(0)
+                SORIND(J,ISTRAI) = rdum(0)
               ENDIF
             ENDIF
             WRITE(IUNOT,6666) ISTEP,idum(2:9)
-            WRITE(IUNOT,6664) SORWGT(J,ISTRA),SORLIM(J,ISTRA),
-     .                        SORIND(J,ISTRA),SOREXP(J,ISTRA),
-     .                        SORIFL(J,ISTRA)
-            IF (NRSOR(J,ISTRA).GT.0) THEN
+            WRITE(IUNOT,6664) SORWGT(J,ISTRAI),SORLIM(J,ISTRAI),
+     .                        SORIND(J,ISTRAI),SOREXP(J,ISTRAI),
+     .                        SORIFL(J,ISTRAI)
+            IF (NRSOR(J,ISTRAI).GT.0) THEN
               idum(1) = convert_eirene(non_commensurate,1,
-     .         NRSOR(J,ISTRA),NPSOR(J,ISTRA),nx,ny,nx1,ny1,4)
+     .         NRSOR(J,ISTRAI),NPSOR(J,ISTRAI),nx,ny,nx1,ny1,4)
             ELSE
-              idum(1) = NRSOR(J,ISTRA)
+              idum(1) = NRSOR(J,ISTRAI)
             ENDIF
-            IF (NPSOR(J,ISTRA).GT.0) THEN
+            IF (NPSOR(J,ISTRAI).GT.0) THEN
               idum(2) = convert_eirene(non_commensurate,2,
-     .         NRSOR(J,ISTRA),NPSOR(J,ISTRA),nx,ny,nx1,ny1,4)
+     .         NRSOR(J,ISTRAI),NPSOR(J,ISTRAI),nx,ny,nx1,ny1,4)
             ELSE
-              idum(2) = NPSOR(J,ISTRA)
+              idum(2) = NPSOR(J,ISTRAI)
             ENDIF
-            WRITE(IUNOT,6666) idum(1:2),NTSOR(J,ISTRA),NBSOR(J,ISTRA),
-     .                        NASOR(J,ISTRA),NISOR(J,ISTRA),
-     .                        ISTOR(J,ISTRA)
-            WRITE(IUNOT,6664) SORAD1(J,ISTRA),SORAD2(J,ISTRA),
-     .                        SORAD3(J,ISTRA),SORAD4(J,ISTRA),
-     .                        SORAD5(J,ISTRA),SORAD6(J,ISTRA)
+            WRITE(IUNOT,6666) idum(1:2),NTSOR(J,ISTRAI),NBSOR(J,ISTRAI),
+     .                        NASOR(J,ISTRAI),NISOR(J,ISTRAI),
+     .                        ISTOR(J,ISTRAI)
+            WRITE(IUNOT,6664) SORAD1(J,ISTRAI),SORAD2(J,ISTRAI),
+     .                        SORAD3(J,ISTRAI),SORAD4(J,ISTRAI),
+     .                        SORAD5(J,ISTRAI),SORAD6(J,ISTRAI)
  7151     CONTINUE
 C  VELOCITY SPACE DISTRIBUTION
-          WRITE(IUNOT,6664) SORENI(ISTRA),SORENE(ISTRA),
-     .                      SORVDX(ISTRA),SORVDY(ISTRA),SORVDZ(ISTRA)
-          WRITE(IUNOT,6664) SORCOS(ISTRA),SORMAX(ISTRA),
-     .                      SORCTX(ISTRA),SORCTY(ISTRA),SORCTZ(ISTRA),
-     .                      RAYFRAC(ISTRA)
+          WRITE(IUNOT,6664) SORENI(ISTRAI),SORENE(ISTRAI),
+     .                      SORVDX(ISTRAI),SORVDY(ISTRAI),SORVDZ(ISTRAI)
+          WRITE(IUNOT,6664) SORCOS(ISTRAI),SORMAX(ISTRAI),
+     .                      SORCTX(ISTRAI),SORCTY(ISTRAI),
+     .                      SORCTZ(ISTRAI),RAYFRAC(ISTRAI)
  7121   CONTINUE
         deallocate (INDSRC)
         deallocate (TXTSOU)
@@ -9142,13 +9146,13 @@ cxpb Read first, transform and rewrite
             call fix_logical_input(zeile,k-kmod*60)
             READ (ZEILE,6665) (nlpbls(i),i=kmod*60+1,k)
           END IF
-          ISTRA = 0
+          ISTRAI = 0
           nlpbl1(1:k) = .false.
           DO j = 1, nstrai
-            IF (savestratum(j)) istra = istra+1
+            IF (savestratum(j)) istrai = istrai+1
             DO i = 1, natmi
               IF (iatm1(i).NE.0 .AND. savestratum(j))
-     .          nlpbl1(natm*(istra-1)+iatm1(i))=nlpbls(natm*(j-1)+i)
+     .          nlpbl1(natm*(istrai-1)+iatm1(i))=nlpbls(natm*(j-1)+i)
             END DO
           END DO
           WRITE(IUNOT,6665) nlpbl1(1:k)
@@ -9556,11 +9560,11 @@ cxpb Read first, transform and rewrite
         END DO
         TRCSR1=.false.
         TRCSR1(0)=TRCSRC(0)
-        istra = 0
+        istrai = 0
         do J = 1, NSTRA
           if (savestratum(j)) then
-            istra = istra+1
-            TRCSR1(istra) = TRCSRC(J)
+            istrai = istrai+1
+            TRCSR1(istrai) = TRCSRC(J)
           endif
         enddo
         WRITE(IUNOT,6665) (TRCSR1(J),J=0,NSTRA1+1)
@@ -9860,7 +9864,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
 *** 12. DATA FOR DIAGNOSTIC MODULE
  1205   CONTINUE
  1210   READ (IUNIN,'(A80)') ZEILE
-        IREAD=0
+        IREAD = 0
         IF (ZEILE(1:1) .EQ. '*') THEN
           WRITE(IUNOT,'(A80)') ZEILE
           GOTO 1210

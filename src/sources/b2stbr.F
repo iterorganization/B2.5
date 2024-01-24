@@ -37,8 +37,9 @@
       use b2mod_eirene
      ,  , only : eirene_mc
       use b2mod_sources
-     , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
-     ,          sne0_eir_tot, sch0_eir_tot, ext_sna
+     , , only : sna0_eir_tot, smo0_eir_tot,
+     ,          she0_eir_tot, shi0_eir_tot, sne0_eir_tot, sch0_eir_tot,
+     ,          ext_sna
       use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
@@ -515,7 +516,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
        if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           smotmp=smo0
           shetmp=she0
@@ -544,7 +545,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
        else
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           smotmp=smo0
           shetmp=she0
@@ -575,7 +576,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 
       if(first_flight.ne.0) then
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           shetmp=she0
           shitmp=shi0
@@ -717,8 +718,8 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
         call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,             !srv 29.04.10 {
-     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
-     &                 main_call)
+     &                 sna0_eir, smo0_eir,
+     &                 she0_eir, shi0_eir, main_call)
 
 *   ..main part of implementation of method of effective sources (ES)
         if (sum(sna_corr) .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
@@ -881,8 +882,9 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 
 *       compute total Eirene sources for averaging
 cwdk only total Eirene source are averaged!
-cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
-cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot,
+cwdk       she0_eir_tot and shi0_eir_tot now available,
+cwdk       might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
         do is = 0, ns-1
           sna0_eir_tot(:,:,is) = sna0_eir(:,:,0,is) +
