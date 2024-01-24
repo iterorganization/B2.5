@@ -23,7 +23,7 @@
       external xerrab
 *     ------------------------------------------------------------------
 #if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
-      do_parallel = (.not. in_parallel()) .and. (n > 16384)
+      do_parallel = (.not. in_parallel())
 #endif
 #ifdef WITH_FTIMINGS
       call timer%start("sfill")

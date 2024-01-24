@@ -628,7 +628,7 @@ c-----------------------------------------------------------------------
         close(lun)
 c-----------------------------------------------------------------------
       else if(ig.ge.1000) then
-        call b2paspwr(ig-1000)
+        call b2paspwr(nx,ny,ns,jsep,ig-1000)
       else if(ig.gt.ny) then
         call b2phel(lun)
       else if(ig.ge.0) then

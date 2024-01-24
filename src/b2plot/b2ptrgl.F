@@ -612,7 +612,7 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
           wtttrg(iy,itrg(j))=wpttrg(iy,itrg(j))+wrdtrg(iy,itrg(j),0)
         end do !}
       end do !}
-      write(*,'(1x,a,1p,16e12.3)')
+      if (ntrgts.gt.0) write(*,'(1x,a,1p,16e12.3)')
      -           'Scaling factors for Wn : ',(wi(itrg(i)),i=1,ntrgts)
 
       nclm_ld=21
