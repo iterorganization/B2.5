@@ -41,6 +41,8 @@
 
       subroutine alloc_b2mod_ma28
 
+      if (allocated(r1)) return
+
       write(*,*) 'Allocating space for b2mod_ma28'
       write(*,*) 'nnd = ',nnd
       write(*,*) 'n_nonzeros = ',n_nonzeros
