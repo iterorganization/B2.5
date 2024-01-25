@@ -254,7 +254,7 @@ program b2_ual_write_b2mod
     use b2mod_main &
      & , only : b2mn_init, b2mn_step, b2mn_fin
     use b2mod_driver &
-     & , only : idx, imas_version, continued, &
+     & , only : idx, dtim, imas_version, continued, &
      &          shot, run, username, database, version, &
      &          description, old_imas_version, &
      &          old_description, old_edge_profiles, equilibrium, &

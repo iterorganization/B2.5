@@ -62,21 +62,26 @@
 program b2_ual_rewrite
 
     use b2mod_main &
-     & , only : b2mn_init
+     & , only : ns, &
+     &          b2mn_init
     use b2mod_driver &
-     & , only : idx, &
+     & , only : idx, dtim, &
      &          shot, run, username, database, version, &
      &          old_description, equilibrium, &
      &          old_imas_version, imas_version, new_eq_ggd, &
      &          description, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          batch_profiles, batch_sources
+    use b2mod_time
+    use b2mod_version
     use b2mod_switches
     use b2mod_grid_mapping
+    use b2us_io
     use b2us_geo
     use b2us_map
     use b2us_plasma
     use b2mod_solpstop
+    use b2mod_numerics_namelist
     use ids_routines &  ! IGNORE
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
