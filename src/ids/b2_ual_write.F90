@@ -79,6 +79,7 @@ program b2_ual_write
     use b2mod_solpstop
     use b2mod_grid_mapping
     use b2mod_numerics_namelist
+    use b2us_io
     use b2us_geo
     use b2us_map
     use b2us_plasma
