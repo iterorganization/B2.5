@@ -206,7 +206,7 @@ C------FILE NAME--------------------------------------------------------
 C
       SEQUA = elements(IZ0)
       call lower_case(SEQUA)                                 !srv 14.10.13
-   10 IF (SEQUA(2:2).EQ.' ') THEN
+      IF (SEQUA(2:2).EQ.' ') THEN
         LEN=1
       ELSE
         LEN=2
@@ -386,7 +386,7 @@ C
 C
 C-----------------------------------------------------------------------
 C
- 1000 FORMAT('FILE = ',1A30)
+C1000 FORMAT('FILE = ',1A30)
  1010 FORMAT(5I5)
  1020 FORMAT(1A80)
  1040 FORMAT(8F10.5)

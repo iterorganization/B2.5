@@ -125,8 +125,7 @@ contains
     integer iy, ix, ic, ixtl, ixtr, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
-         iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
-         nya, nyi, nybl, nybr, nytl, nytr, nc
+         iyaend, iyiend, iylend, iyrend, iytlend, iytrend, nc
 
     !   ..procedures
     external xertst, ipgeti, batch_average
@@ -135,6 +134,7 @@ contains
     integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
+    integer, save :: nya, nyi, nybl, nybr, nytl, nytr
     integer imap(maxvdims), iret, iatm
     integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
@@ -161,8 +161,7 @@ contains
     !   ..initialisation
     save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
-         iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nc, nya, nyi, nybl, nybr, nytl, nytr
+         iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, nc
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
@@ -200,16 +199,20 @@ contains
         enddo
         call output_ds(ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
         call output_ds(ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
+#ifndef NO_CDF
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
         nytl = 0
         nytr = 0
+#endif
       endif
+#ifndef NO_CDF
       nybl = iylend  - iylstrt  + 1
       nybr = iyrend  - iyrstrt  + 1
       nya  = iyaend  - iyastrt  + 1
       nyi  = iyiend  - iyistrt  + 1
+#endif
       nc = max(nncut,1)
       ! Target areas
       open(99,file='dsL')

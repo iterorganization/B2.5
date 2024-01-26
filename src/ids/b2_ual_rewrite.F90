@@ -324,6 +324,7 @@ program b2_ual_rewrite
     call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
     call xertst( 0.le.new_run.and.new_run.le.99999, 'Invalid new run number')
 #endif
+    call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
     call xertst( new_run.ge.run, 'New run number must be larger than old one!')
     if (index(imasdir,trim(username)).eq.0) then

@@ -351,7 +351,7 @@ c 2002-09-11: logic revised
       integer NPRCSF, IPRCSF
       integer NTARG1, ISTEP
       integer MAXPOL, MAXTOR, MAXADD
-      integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
+      integer NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
       integer iplsbeginrange, iplsendrange
@@ -9176,7 +9176,7 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,NSIGI_SPC
         else
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,
-     .                      NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+     .                      idum(0),idum(1),NSIGI_SPC
         endif
         allocate (IGH(NSIGVI), IIH(NSIGVI))
         allocate (IGHW(NSIGSI), IIHW(NSIGSI))
@@ -10057,7 +10057,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .           'increase size of ZEILEN in b2ytdr!')
                 JLINE = ILINE + 1
                 READ (IUNIN,'(A80)') ZEILEN(JLINE)
-                READ (ZEILEN(JLINE),'(3I6,1X,A6)')
+                READ (ZEILEN(JLINE),'(3I6)')
      .                               ISL, ITP, IRATIO
                 IF (IRATIO.GT.0) THEN
                   JLINE = JLINE + 1
@@ -10088,16 +10088,16 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
                     IRC1 = 0
                   END IF
                   IF (ITP.EQ.1) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IATM1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.2) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IMOL1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.3) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IION1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.4) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IPLS1(ISL), ITP, IRATIO
                   END IF
                   ILINE = JLINE

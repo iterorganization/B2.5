@@ -176,13 +176,13 @@ program b2_ual_write
 #endif
     call ipgetc('b2mndr_device', database )
     call ipgetc('b2mndr_database', database )
-    call xertst( .not.streql(database,' '), 'Database not defined !')
     not_default = not_default.or. &
        &         (.not.streql(database, device_env).and. &
        &          .not.streql(database,'solps-iter'))
 #if AL_MAJOR_VERSION > 4
     imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)
 #else
+    treename = 'ids'
     imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)//'/0'
 #endif
 #ifdef NO_GETENV
@@ -217,22 +217,12 @@ program b2_ual_write
     call read_b2mod_transport(56)
 
     call ipgeti('b2mndr_shot_number', shot )
-    if (shot.gt.0) then
-      write(shot_string,'(i8)') shot
-      call strip_spaces(shot_string)
-    end if
     call ipgeti('b2mndr_run_number', run )
-    if (run.ge.0) then
-      write(run_string,'(i5)') run
-      call strip_spaces(run_string)
-    end if
     path = ' '
     absolute_path = .false.
 #if AL_MAJOR_VERSION > 4
     call ipgetc('b2mndr_ids_path', path )
     not_default = not_default.or..not.streql(path,' ')
-#else
-    treename = 'ids'
 #endif
     call strip_spaces(path)
     if (.not.streql(path,' ')) absolute_path = path(1:1).eq.'/'
