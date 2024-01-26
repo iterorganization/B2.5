@@ -4,7 +4,9 @@
 !$      use omp_lib       ! IGNORE
 #endif
       implicit none
+
       contains
+
       logical function in_parallel()
       in_parallel = .false.
 !$      in_parallel = OMP_IN_PARALLEL()

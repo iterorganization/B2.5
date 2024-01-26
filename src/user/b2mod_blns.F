@@ -111,7 +111,6 @@ c*** Column headers:
       use eirmod_clgin
      ,   , only : iliin
 #endif
-#include "DIMENSIONS.F"
 
 c----------------------------------------------------------------------
 c*** debug_flags usage:
@@ -122,6 +121,7 @@ c***  94, 95 : more detailed output for strata (94) to (95)
 c----------------------------------------------------------------------
 
       implicit none
+#include "DIMENSIONS.F"
 c
       integer nx, ny, ns
       real (kind=R8) :: dtim

@@ -147,8 +147,25 @@ program b2_ual_rewrite
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
+    username = usrnam()
+    call ipgetc('b2mndr_user', username )
+    database = 'solps-iter'
     write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
+#ifndef NO_GETENV
+    device_env = ' '
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+#else
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+#endif
+    if (.not.streql(device_env,' ')) database = device_env
+    if (streql(database,'iter')) database = 'ITER'
+#endif
+    call ipgetc('b2mndr_device', database )
+    call ipgetc('b2mndr_database', database )
+    call xertst( .not.streql(database,' '), 'Database not defined !')
     same_run_number = .true.
     write (*,*) 'Starting b2mn init'
     call b2mn_init
@@ -179,29 +196,18 @@ program b2_ual_rewrite
       write(new_run_string,'(i5)') new_run
       call strip_spaces(new_run_string)
     end if
-    username = usrnam()
-    call ipgetc('b2mndr_user', username )
-    database = 'solps-iter'
 #ifdef NO_GETENV
     write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.', &
                                          & IMAS_MINOR_VERSION,'.', &
                                          & IMAS_MICRO_VERSION
 #else
-    device_env = ' '
 #ifdef USE_PXFGETENV
-    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
-    call get_environment_variable('DEVICE', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
     call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
-    if (.not.streql(device_env,' ')) database = device_env
-    if (streql(database,'iter')) database = 'ITER'
 #endif
-    call ipgetc('b2mndr_device', database )
-    call ipgetc('b2mndr_database', database )
     ! Check for optional command line arguments
     ! which will supersede input from b2mn.dat if present
     narg = command_argument_count()
@@ -237,9 +243,9 @@ program b2_ual_rewrite
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
     call xertst( 0.le.new_run.and.new_run.le.99999, 'Invalid new run number')
-    call xertst( new_run.ge.run, 'New run number must be larger than old one!')
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
+    call xertst( new_run.ge.run, 'New run number must be larger than old one!')
 
     write(0,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)

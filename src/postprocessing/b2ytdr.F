@@ -223,9 +223,10 @@ c 2002-09-11: logic revised
      . e_na(:,:,:), e_te(:,:), e_ti(:,:),
      . e_ua(:,:,:), e_po(:,:),
      . sna_mean(:,:,:), sne_mean(:,:),
-     . smo_mean(:,:,:), she_mean(:,:),
-     . shi_mean(:,:), sch_mean(:,:),
-     . e_sna(:,:,:), e_sne(:,:), e_smo(:,:,:),
+     . smo_mean(:,:,:),
+     . she_mean(:,:), shi_mean(:,:), sch_mean(:,:),
+     . e_sna(:,:,:), e_sne(:,:),
+     . e_smo(:,:,:),
      . e_she(:,:), e_shi(:,:), e_sch(:,:)
       real (kind=R8), allocatable ::
      . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
@@ -233,9 +234,10 @@ c 2002-09-11: logic revised
      . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
      . e_ua1(:,:,:), e_po1(:,:),
      . sna1_mean(:,:,:), sne1_mean(:,:),
-     . smo1_mean(:,:,:), she1_mean(:,:),
-     . shi1_mean(:,:), sch1_mean(:,:),
-     . e_sna1(:,:,:), e_sne1(:,:), e_smo1(:,:,:),
+     . smo1_mean(:,:,:),
+     . she1_mean(:,:), shi1_mean(:,:), sch1_mean(:,:),
+     . e_sna1(:,:,:), e_sne1(:,:),
+     . e_smo1(:,:,:),
      . e_she1(:,:), e_shi1(:,:), e_sch1(:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
@@ -349,7 +351,7 @@ c 2002-09-11: logic revised
       integer NPRCSF, IPRCSF
       integer NTARG1, ISTEP
       integer MAXPOL, MAXTOR, MAXADD
-      integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
+      integer NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
       integer iplsbeginrange, iplsendrange
@@ -9061,7 +9063,7 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,NSIGI_SPC
         else
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,
-     .                      NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+     .                      idum(0),idum(1),NSIGI_SPC
         endif
         allocate (IGH(NSIGVI), IIH(NSIGVI))
         allocate (IGHW(NSIGSI), IIHW(NSIGSI))

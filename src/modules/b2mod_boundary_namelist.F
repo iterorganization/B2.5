@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_version
+      implicit none
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2

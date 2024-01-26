@@ -109,7 +109,9 @@
 #endif
 #ifdef IMAS
       use ids_routines  ! IGNORE
-     , , only : imas_open_env, ids_deallocate, ids_get
+     , , only : imas_open_env
+      use ids_routines  ! IGNORE
+     , , only : ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
      , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
      ,          ids_radiation, ids_dataset_description, ids_equilibrium
@@ -240,7 +242,8 @@
 #endif
       integer :: batch_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
-      character username*24, database*24, treename*24, version*24
+      character treename*24
+      character username*24, database*24, version*24
       character old_imas_version*132, imas_version*132
       logical new_eq_ggd
 #endif
@@ -1417,11 +1420,6 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        end if
        if (ids_save.ne.0 .or. ids_av.gt.0 .or. delta_ids_time.gt.0.0_R8)
      .  then
-         call ipgeti('b2mndr_shot_number', shot )
-         call xertst( 0.le.shot.and.shot.le.214748,
-     .    'Invalid shot number')
-         call ipgeti('b2mndr_run_number', run )
-         call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
          username = usrnam()
          call ipgetc('b2mndr_user', username )
          call xertst( .not.streql(username,' '),
@@ -1456,6 +1454,11 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          call ipgetc('b2mndr_database', database )
          call xertst( .not.streql(database,' '),
      .    'Database not defined !')
+         call ipgeti('b2mndr_shot_number', shot )
+         call ipgeti('b2mndr_run_number', run )
+         call xertst( 0.le.shot.and.shot.le.214748,
+     .    'Invalid shot number')
+         call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
        end if
 #else
        if (ids_save.ne.0 .or. ids_av.gt.0 .or. delta_ids_time.gt.0.0_R8)
@@ -3049,7 +3052,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call subini ('b2mndr_2')
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
-      if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
+      if(quitexist_) write(*,*) 'stopping because _quit seen'            !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
      1 write(*,'(1x,a,1p,2(e12.5,1x))')
      . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu

@@ -51,10 +51,10 @@
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
 #endif
+      implicit none
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
-      implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
@@ -554,7 +554,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
         call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
      &   hx, gs,
      &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
      &   neutral_sources_rescale, core_sources_rescale,
@@ -1384,10 +1384,10 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_subsys
+      implicit none
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
-      implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: nx, ny, ns
       real (kind=R8), intent(in) :: BoRiS

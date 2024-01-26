@@ -140,7 +140,7 @@
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
-
+*   ..initialisation
       save ncall
       data ncall/0/
 

@@ -79,7 +79,6 @@ c*** Column headers:
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
-#include "DIMENSIONS.F"
 
 c----------------------------------------------------------------------
 c*** debug_flags usage:
@@ -90,6 +89,7 @@ c***  94, 95 : more detailed output for strata (94) to (95)
 c----------------------------------------------------------------------
 
       implicit none
+#include "DIMENSIONS.F"
 
       integer nx, ny, ns
 

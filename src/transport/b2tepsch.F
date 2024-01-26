@@ -57,8 +57,11 @@
        end if
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       end if
-*   ..test nx, ny
+*   ..test input
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 
       fhePSch = 0.0e0_R8                                                 !srv 13.10.06
       cone    = 0.0e0_R8                                                 !srv 02.01.07

@@ -101,7 +101,6 @@ c*** Column headers:
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
-#include "DIMENSIONS.F"
 c
 c  version : 19.07.2001 18:46
 c
@@ -110,6 +109,7 @@ c*** Computes the global particle flows across the boundaries in
 c*** B2-Eirene and the global particle balance in B2
 c----------------------------------------------------------------------
       implicit none
+#include "DIMENSIONS.F"
 c
       integer nx, ny, ns
       real (kind=R8) :: dtim

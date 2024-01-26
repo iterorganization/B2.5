@@ -1,11 +1,12 @@
 c
-      subroutine process_eirene_chords_boxcar(filename)
+      subroutine process_eirene_chords_boxcar
+#ifdef B25_EIRENE
+     . (filename)
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
-#ifdef B25_EIRENE
       use b2mod_subsys
       use eirmod_ctrig
       implicit none

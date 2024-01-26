@@ -118,8 +118,11 @@
       call subini ('b2tfrn')
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
+*   ..test input
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tfrn_iout', iout)

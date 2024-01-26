@@ -602,10 +602,10 @@
 			<switchgroup>
 				<name>b2mndr_id</name>
 				<description>
-					These switches serve as identification for the simulation. They can be inherited from SOLPS-GUI:
-					Run number : The number of the run. Must be positive and no more than a 4-digit integer (i.e. span from 0 to 9999).
+					These switches serve as identification for the simulation. They can be inherited from the SOLPS-GUI:
 					Shot number : Shot number identifying the run. Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
-					Database : IMAS IDS database name (supersedes Device). Defaults to 'solps-iter' if $DEVICE if undefined. If $DEVICE is 'iter', the code internally changes it to 'ITER' to follow the IMAS convention.
+					Run number : The number of the run. Must be positive and no more than a 4-digit integer (i.e. span from 0 to 9999).
+					Database : IMAS IDS database name (supersedes b2mndr_device). Defaults to 'solps-iter' if $DEVICE if undefined. If $DEVICE is 'iter', the code internally changes it to 'ITER' to follow the IMAS convention.
 					User : The user who ran the simulation.
 				</description>
 				<switch>

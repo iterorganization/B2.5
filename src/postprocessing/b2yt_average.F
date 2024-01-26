@@ -193,7 +193,7 @@
       call cfrure (99, n2,    ti_mean, 'ti_mean')
       call cfrure (99, n2,    po_mean, 'po_mean')
       call cfrure (99, n2*ns, ua_mean, 'ua_mean')
-      
+
       if (b2faveri_version.ge.'03.000.008') then
         call cfrure (99, n2*ns, sna_mean, 'sna_mean')
         call cfrure (99, n2,    sne_mean, 'sne_mean')

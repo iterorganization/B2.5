@@ -604,8 +604,8 @@ contains
 
     end subroutine new_ids_edge
 
-    subroutine new_batch_edge( idx, batch_profiles, batch_sources, &
-            &   equilibrium, &
+    subroutine new_batch_edge( idx, &
+            &   batch_profiles, batch_sources, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -820,7 +820,7 @@ contains
             end if
         else
             if( lUseHdf5 ) then
-# if AL_MAJOR_VERSION > 4
+# if UAL_MAJOR_VERSION > 4
                 call al_build_uri_from_legacy_parameters &
                   & ( HDF5_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
                   &   '', uri, lStatus )
@@ -843,7 +843,7 @@ contains
 # endif
             else
                 if( openEnv ) then
-# if AL_MAJOR_VERSION > 4
+# if UAL_MAJOR_VERSION > 4
                     call al_build_uri_from_legacy_parameters &
                         & ( MDSPLUS_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
                         &   '', uri, lStatus )
@@ -909,7 +909,7 @@ contains
         external xertst
 
         !! Close IDS
-# if AL_MAJOR_VERSION > 4
+# if UAL_MAJOR_VERSION > 4
         call imas_close( idx, status )
 # else
         call ual_close_pulse( idx, CLOSE_PULSE, '', status )

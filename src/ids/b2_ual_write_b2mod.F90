@@ -393,7 +393,7 @@ program b2_ual_write_b2mod
             end select
         end do
     end if
-    if (narg.lt.2) then
+    if (narg.lt.4) then
         write(0,*) "ERROR! In order to run b2_ual_write_b2mod&
             & input IMAS data entry&
             & user, database, version, shot and run variables must&
@@ -528,7 +528,8 @@ program b2_ual_write_b2mod
              &      ' -so ',shot,' -ro ',run,                &
              &      ' -d ',trim(database),' -u ',trim(username)
 #endif
-            if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
+            if (database.eq.'iter') &
+             & systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else

@@ -105,6 +105,8 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
+*   ..test values of ua
+       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
       endif
 *   ..compute nirm (atom density weighted by 1/sqrt(am))
       call b2xpnr (nx, ny, ns, am, na, nirm)

@@ -1,5 +1,6 @@
       module b2mod_b2cmpa
       use b2mod_types
+      implicit none
 #include "DIMENSIONS.F"
 *     (/b2cmpa/ contains basic physics parameters)
 * DPC: constant declaration now in b2mod_constants

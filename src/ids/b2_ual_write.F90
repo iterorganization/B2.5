@@ -138,8 +138,36 @@ program b2_ual_write
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
+    username = usrnam()
+    call ipgetc('b2mndr_user', username )
+    database = 'solps-iter'
     write(version,'(i1)') IMAS_MAJOR_VERSION
+#ifndef NO_GETENV
+    device_env = ' '
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+#else
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+#endif
+    if (.not.streql(device_env,' ')) database = device_env
+    if (streql(database,'iter')) database = 'ITER'
+#endif
+    call ipgetc('b2mndr_device', database )
+    call ipgetc('b2mndr_database', database )
     treename = 'ids'
+#ifdef NO_GETENV
+    write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.', &
+                                         & IMAS_MINOR_VERSION,'.', &
+                                         & IMAS_MICRO_VERSION
+#else
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
+#else
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
+#endif
+#endif
     write(*,*) 'Starting b2mn init'
     call b2mn_init
     ! call b2mn_step(0)
@@ -158,29 +186,7 @@ program b2_ual_write
 
     call ipgeti('b2mndr_shot_number', shot )
     call ipgeti('b2mndr_run_number', run )
-    username = usrnam()
-    call ipgetc('b2mndr_user', username )
-    database = 'solps-iter'
-#ifdef NO_GETENV
-    write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.', &
-                                         & IMAS_MINOR_VERSION,'.', &
-                                         & IMAS_MICRO_VERSION
-#else
-    device_env = ' '
-#ifdef USE_PXFGETENV
-    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
-    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
-#else
-    call get_environment_variable('DEVICE', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
-    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
-#endif
-    if (.not.streql(device_env,' ')) database = device_env
-    if (streql(database,'iter')) database = 'ITER'
-#endif
-    call ipgetc('b2mndr_device', database )
-    call ipgetc('b2mndr_database', database )
+
     ! Check for optional command line arguments
     ! which will supersede input from b2mn.dat if present
     narg = command_argument_count()
@@ -286,7 +292,8 @@ program b2_ual_write
             idx = 0
 !xpb Copy the IDS to a temporary location with the new DD and then bring it back
             tmp_run = run
-            if (database.ne.'iter') tmp_run = run + 1000
+            if (database.ne.'iter') &
+              & tmp_run = run + 1000
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')  &
               & 'idscp --setDatasetVersion'//                 &
@@ -299,7 +306,8 @@ program b2_ual_write
               &      ' -so ',shot,' -ro ',tmp_run,            &
               &      ' -d ',trim(database),' -u ',trim(username)
 #endif
-            if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
+            if (database.eq.'iter') &
+              & systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
