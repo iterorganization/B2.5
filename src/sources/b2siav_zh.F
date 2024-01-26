@@ -95,6 +95,12 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2siav_zh')
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.isb.and.isb.lt.ns, 'faulty argument isb')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2siav_addvis', addvis)                        !srv 23.07.99

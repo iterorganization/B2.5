@@ -37,7 +37,7 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, ix, iy, bottomdelta1, ixref
+      integer n2, ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
       integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 }
@@ -55,6 +55,16 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2trsc')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..extensive tests on first few calls
+      if (ncall.lt.3) then
+*    ..test sign
+       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
+       call b2xvsg (n2, te, 1, 'te', '.gt.')
+      endif
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)

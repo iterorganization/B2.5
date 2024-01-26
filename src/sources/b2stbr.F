@@ -560,7 +560,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
         call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
      &   hx, gs,
      &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
      &   neutral_sources_rescale, core_sources_rescale,

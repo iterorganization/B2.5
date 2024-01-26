@@ -11,6 +11,9 @@
 
       call subini ('test_couple')
       error=.false.
+      error=error.or.nxdd_b2.le.0.or.nydd_b2.le.0.or.nstra_b2.lt.0 &
+     &           .or.nfl_b2 .le.0.or.natm_b2.lt.0.or.nmol_b2.lt.0  &
+     &           .or.nion_b2.lt.0.or.nlimps_b2.lt.0
 #ifdef B25_EIRENE
       if(nxdd_b2.ne.ndx) then
         write(*,*) 'NXDD(B2) <> NDX(EIRENE) ',nxdd_b2,ndx

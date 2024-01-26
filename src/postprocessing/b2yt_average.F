@@ -47,8 +47,8 @@
      . smr_mean(-1:nx,-1:ny,0:ns-1), smd_mean(-1:nx,-1:ny,0:ns-1),
      . shi_mean(-1:nx,-1:ny), sch_mean(-1:nx,-1:ny),
      . e_sna(-1:nx,-1:ny,0:ns-1), e_sne(-1:nx,-1:ny),
-     . e_smo(-1:nx,-1:ny,0:ns-1), e_smr(-1:nx,-1:ny,0:ns-1),
-     . e_smd(-1:nx,-1:ny,0:ns-1),
+     . e_smo(-1:nx,-1:ny,0:ns-1),
+     . e_smr(-1:nx,-1:ny,0:ns-1), e_smd(-1:nx,-1:ny,0:ns-1),
      . e_she(-1:nx,-1:ny), e_shi(-1:nx,-1:ny),
      . e_sch(-1:nx,-1:ny)
       logical flip

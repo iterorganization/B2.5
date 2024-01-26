@@ -804,7 +804,7 @@ C
       IF(NY2.LT.NY)  GO TO 20
       RETURN
 C
-  202 FORMAT (6X,'|')
+CC202 FORMAT (6X,'|')
   203 FORMAT (' IY = | ',40I4)
   204 FORMAT ('  IX  |',/,1X,172('-'),/,'  IX  |')
   205 FORMAT (1X,I4,' | ',40I4)

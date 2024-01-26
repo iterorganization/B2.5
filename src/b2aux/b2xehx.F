@@ -66,7 +66,7 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of ne, te, csig
+*    ..test sign of ne, te
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
       endif

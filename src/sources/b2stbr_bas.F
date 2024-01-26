@@ -4,7 +4,7 @@
       subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
      &  hx, gs,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &  sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  coreregno, coreregn2, output,
      &  neutral_sources_rescale, core_sources_rescale,
@@ -63,7 +63,7 @@
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1),
+     &  sch0(-1:nx,-1:ny,0:3),
      &  shi0_ff(-1:nx,-1:ny,0:nscx-1),
      &  tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1),
      &  thevp(0:ns-1), thvpe(0:ns-1), trese(0:ns-1), tresn(0:ns-1),
@@ -149,6 +149,8 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
       endif
+*   ..test values of ua
+      call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
 *   ..test edge values of fluxes
       do is = 0, ns-1
        call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')

@@ -1179,12 +1179,10 @@ c     OUTPUT:
       integer ncnct
       integer izpmin(0:nc), izpmax(0:nc)
 c     LOCAL VARIABLES:
-      real (kind=R8) ::
-     *   loc_te(0:rtnt,0:rtnn), loc_ne(0:rtnt,0:rtnn)
 c     read in data
       integer ic, itnt, itnn
 
-#if ( defined(IMAS) && defined(AMNS) )
+#if ( ( defined(IMAS) && defined(AMNS) ) || ( defined(ITM) && defined(GOT_AMNSPROTO) ) )
       type (amns_handle_type), save :: amns
       type (amns_handle_rx_type) ::
      &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
@@ -1194,18 +1192,10 @@ c     read in data
       type (amns_reactants_type) :: species(0:nc)
       type (amns_query_type) :: query
       type (amns_answer_type) :: answer
-#elif ( defined(ITM) && defined(GOT_AMNSPROTO) )
-      type (amns_handle_type), save :: amns
-      type (amns_handle_rx_type) ::
-     &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
-     &    amns_lr(0:nc), amns_ze(0:nc), amns_ze2(0:nc), amns_eip(0:nc)
-      type (amns_reaction_type) :: rc_rx, ei_rx, cx_rx, br_rx,
-     &     lr_rx, ze_rx, ze2_rx, eip_rx
-      type (amns_reactants_type) :: species(0:nc)
-      type (amns_query_type) :: query
-      type (amns_answer_type) :: answer
-#endif
       character (len=80) :: format
+      real (kind=R8) ::
+     *   loc_te(0:rtnt,0:rtnn), loc_ne(0:rtnt,0:rtnn)
+#endif
 
 *   ..subprogram start-up calls
       call subini ('ratamns')
@@ -1213,8 +1203,10 @@ c     read in data
 cxpb Zero masses are required for older AMNS versions
       call xertst (0.0_R8.le.am0,'faulty neutral CX species mass!')
       call xertst (0.0_R8.le.am1,'faulty reactant species mass!')
+#if ( ( defined(IMAS) && defined(AMNS) ) || ( defined(ITM) && defined(GOT_AMNSPROTO) ) )
       format=
      & '(''ZN = '',f5.2,'', IS = '',i3,'', RX = '',a,'', SRC = '',a)'
+#endif
 #ifdef IMAS
 #ifdef AMNS
       write(*,*) 'IMAS AMNS data used (via UAL)'
@@ -1387,12 +1379,14 @@ cxpb Zero masses are required for older AMNS versions
       call xerrab ('No ITM-AMNS data available')
 #endif
 #endif
+#if ( ( defined(IMAS) && defined(AMNS) ) || ( defined(ITM) && defined(GOT_AMNSPROTO) ) )
       do itnn=0, rtnn
          do itnt=0, rtnt
             loc_te(itnt, itnn) = rtt(itnt)
             loc_ne(itnt, itnn) = rtn(itnn)
          enddo
       enddo
+#endif
       do ic = 0, nc
          izpmin(ic) = ic
          izpmax(ic) = ic

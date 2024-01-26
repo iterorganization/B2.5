@@ -166,6 +166,8 @@
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
+*   ..test values of ua
+       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
       endif
 
 * ..compute transport coefficients

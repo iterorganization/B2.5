@@ -3328,7 +3328,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call subini ('b2mndr_2')
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
-      if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
+      if(quitexist_) write(*,*) 'stopping because _quit seen'            !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
      1 write(*,'(1x,a,1p,2(e12.5,1x))')
      . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu

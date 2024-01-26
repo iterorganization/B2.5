@@ -53,6 +53,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sian')
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.isb, 'faulty argument isb')
+      call xertst (0.le.ismain, 'faulty argument ismain')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2sian_phm0', phm0)

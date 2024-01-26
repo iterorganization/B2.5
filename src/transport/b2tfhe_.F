@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol,            !srv 23.11.10 19.02.21
+      subroutine b2tfhe_ (nx, ny, ns, facdrift, vol,                     !srv 23.11.10 19.02.21
      1 hx, hy, qc, qs, te, po, ne, na, vedia, fne, chce, chve, calf,     !srv 17.05.99
      & chvemx, cdde, fch_p, fchstoch,                                    !srv 17.05.99 11.07.99 !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, balance)                       !djm Jan2017
@@ -96,7 +96,7 @@ csw 10oct2012
      *    fledia(-1:nx,-1:ny,0:1,0:1), vdia_par,                         !srv 22.11.99 25.01.02
      &    ehx_(-1:nx,-1:ny,0:1), ehy_(-1:nx,-1:ny,0:1),                  !srv 13.01.17
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                           !srv 13.01.17
-      real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
+      real (kind=R8) :: facdriftm                                        !srv 23.12.19
       real (kind=R8) ::
      *    wrk0(-1:nx,-1:ny), pe(-1:nx,-1:ny),
      *    dter(-1:nx,-1:ny,0:1), dpor(-1:nx,-1:ny,0:1),
@@ -174,7 +174,6 @@ csw 10oct2012
       endif
 
       facdriftm = maxval(facdrift)
-      fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 
       fledia = 0.0_R8                                                    !srv 25.01.02 {
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
