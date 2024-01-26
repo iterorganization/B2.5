@@ -232,6 +232,7 @@ c first deal with the time vector
      &           'increase size of strmax in b2cdftallies2mds')
             allocate(str1(dimsize(2)))
 #endif
+            str1 = ' '
             do i2=1, dimsize(2)
               str1(i2)=''
               do i1=1,dimsize(1)
