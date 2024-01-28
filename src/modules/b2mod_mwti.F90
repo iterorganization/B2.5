@@ -39,7 +39,10 @@ module b2mod_mwti
 contains
 
 #ifndef SOLPS4_3
-  subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
+  subroutine b2mwti (itim, tim, &
+#ifndef NO_CDF
+                     ntim, b2time, ntim_batch, &
+#endif
                      nx, ny, ns, ismain, ismain0, BoRiS, &
                      lwti, lwav, luav)
     use b2mod_geo
@@ -62,15 +65,15 @@ contains
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
-    integer, Intent(In) :: itim, ntim, b2time, ntim_batch, &
-                           nx, ny, ns, ismain, ismain0
-    real (kind=R8), Intent(In) :: tim, BoRiS
-    logical, Intent(In) :: lwti, lwav, luav
+    integer, intent(in) :: itim, nx, ny, ns, ismain, ismain0
+    real (kind=R8), intent(in) :: tim, BoRiS
+    logical, intent(in) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
 #ifndef NO_CDF
-#     include <netcdf.inc>
+    integer, intent(in) :: ntim, b2time, ntim_batch
+#   include <netcdf.inc>
 #endif
     !-----------------------------------------------------------------------
     !.documentation
@@ -175,6 +178,9 @@ contains
     call xertst (1.le.ns, 'faulty argument ns')
     call xertst (0.le.ismain.and.ismain.lt.ns, &
          'invalid main plasma species index ismain')
+    call xertst (0.le.ismain0.and.ismain0.lt.ns.and. &
+         (is_neutral(ismain0).or.ismain0.eq.ismain), &
+         'invalid main neutral species index ismain0')
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
       !   ..test state

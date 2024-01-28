@@ -192,13 +192,13 @@ c*** Transfer the data to the plotting routines
 c=======================================================================
       end subroutine clvp
 
-      subroutine eclvp(npplvp,npplvm)
+      subroutine eclvp
+#ifdef B25_EIRENE
+     . (npplvp,npplvm)
       use b2mod_types
       use b2mod_wall
       use b2mod_b2plot
-#ifdef B25_EIRENE
       use eirmod_ctrig
-#endif
 
 c version : 04.02.2002 17:40
 
@@ -220,7 +220,6 @@ c*** The data dimensions must be ntrii, and 1, respectively.
 
       implicit none
       integer npplvp,npplvm
-#ifdef B25_EIRENE
       integer i,j,k,l,m,kk,ll,mm,nn,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,e_hlp
 c=======================================================================
