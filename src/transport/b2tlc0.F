@@ -1,18 +1,16 @@
-      subroutine b2tlc0 (nx, ny, ns, hx, hy, vol, gs, qc, qs,
+      subroutine b2tlc0 (nx, ny, ns, hx, hy, gs, qc, qs,
      &  na, te, ti, cdpa, flc)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_rates
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  gs(-1:nx,-1:ny,0:2),
      *  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny)

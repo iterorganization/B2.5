@@ -1198,7 +1198,7 @@ c add particle of species is in cell (ix,iy)
         enddo
       enddo
 c at this point we might still need to add either "nadd" or "ikilled" particles
- 3000 continue
+c3000 continue
       phase1=.false.
       if (b2plot_debug.ge.8)
      . write(*,5000) 3000,killval,addval,phase1,ikilled,nadd

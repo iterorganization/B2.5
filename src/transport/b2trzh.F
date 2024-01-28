@@ -130,7 +130,6 @@
      &  hci0_al(-1:nx,-1:ny,0:nspecies-1),
      &  hciB_al_nofl(0:nspecies-1),
      &  hciB_al(0:nspecies-1),
-     &  hci0_a_nofl(-1:nx,-1:ny,0:ns-1),
      &  hci0_a(-1:nx,-1:ny,0:ns-1),
      &  c_hw(0:nspecies-1,0:nspecies-1),c_rw(0:nspecies-1,0:nspecies-1),
      &  c_hwA(0:nspecies-1,0:nspecies-1),
@@ -511,14 +510,9 @@
      &     hciB_al(0:nspecies-1)*(I_al(0:nspecies-1)-1.0_R8))
 
 *   ..ion heat conductivity for each charge state
-          hci0_a_nofl(ix,iy,0:ns-1) = 0.0_R8
           hci0_a(ix,iy,0:ns-1) = 0.0_R8
           do i = 0, nspecies-1
             do iz= 1, znnucl_int(i)
-              hci0_a_nofl(ix,iy,nucl2s(i,iz)) =
-     &         na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
-     &        (hci0_al_nofl(ix,iy,i)+zhcscorr*hciB_al_nofl(i)*
-     &        (z2n_xy(ix,iy,i)/(nal(ix,iy,i)*iz**2)-1.0_R8))
               hci0_a(ix,iy,nucl2s(i,iz)) =
      &         na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
      &        (hci0_al(ix,iy,i)+zhcscorr*hciB_al(i)*

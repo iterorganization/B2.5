@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tinnt (nx, ny, ns, nscx, ismain, ismain0, iscx,
+      subroutine b2tinnt (nx, ny, ns, nscx, iscx,
      &       facdrift, fac_ExB,
      &       vol, gs, hx, hy, qz, qc, qs, bb,                           !srv 08.07.09 { !srv 20.10.177 !som 04.11.21
      &       te, po, ti, na, fna, csigin, fchin)                        !srv 08.03.99 16.06.09
@@ -22,7 +22,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, ismain, ismain0, iscx(0:nscxmax-1)      !som 04.11.21
+      integer nx, ny, ns, nscx, iscx(0:nscxmax-1)                       !som 04.11.21
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                     !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
@@ -52,7 +52,7 @@
       integer, save :: use_eirene, area_fix
       integer, save :: fchin_in_core = 0                                !srv 16.11.17
       integer, save :: no_current = 0
-      integer n2, ix, iy, is, is0, ia, iamain, k                        !som 04.11.21
+      integer n2, ix, iy, is, is0, ia, k                                !som 04.11.21
 #ifdef B25_EIRENE
       integer im
 #endif

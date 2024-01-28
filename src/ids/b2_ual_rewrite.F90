@@ -432,7 +432,6 @@ program b2_ual_rewrite
         if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) &
           &  write(0,*) 'IDS file will be moved to ITER database.'
         call close_ual(idx)
-        idx = 0
 ! Copy the IDS to a temporary location with the new DD and then bring it back
         tmp_run = run
         if (new_run.eq.run .and. database.ne.'iter' .and. &
@@ -476,7 +475,7 @@ program b2_ual_rewrite
      &        ' -d ',trim(database),' -u ',trim(username)
 #endif
         if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) &
-          & systemarg = trim(systemarg)//' -do ITER'
+     &   systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
         call system(systemarg, status, ierror)
 #else
@@ -498,7 +497,6 @@ program b2_ual_rewrite
 #endif
       else if (.not.same_run_number) then
         call close_ual(idx)
-        idx = 0
 #if AL_MAJOR_VERSION > 4
         uri = 'imas:mdsplus?path='//trim(new_path)
         call imas_open( uri, OPEN_PULSE, idx, status, message )
@@ -609,7 +607,6 @@ program b2_ual_rewrite
 #endif
         &   description )
     call close_ual(idx)
-    idx = 0
 
 end program b2_ual_rewrite
 

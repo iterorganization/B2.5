@@ -1318,8 +1318,11 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  summary, &
 #endif
-            &  edge_profiles, database, time_sind, time_slice_value, &
-            &  .true., new_eq_ggd )
+            &  edge_profiles, database, &
+#if AL_MAJOR_VERSION > 4
+            &  time_sind, &
+#endif
+            &  time_slice_value, .true., new_eq_ggd )
         allocate( radiation%vacuum_toroidal_field%b0( num_time_slices ) )
         radiation%vacuum_toroidal_field%b0( time_sind ) = &
             &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
@@ -7020,8 +7023,11 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  summary, &
 #endif
-            &  batch_profiles, database, batch_index, time, &
-            &  do_description, new_eq_ggd )
+            &  batch_profiles, database, &
+#if AL_MAJOR_VERSION > 4
+            &  batch_index, &
+#endif
+            &  time, do_description, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) then
 #if IMAS_MAJOR_VERSION == 3
@@ -7737,8 +7743,11 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
        &  summary, &
 #endif
-       &  edgeprof, database, time_sind, time_slice_value, &
-       &  do_summary_data, new_eq_ggd )
+       &  edgeprof, database, &
+#if AL_MAJOR_VERSION > 4
+       &  time_sind, &
+#endif
+       &  time_slice_value, do_summary_data, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     use b2mod_ual_io_grid &
        & , only: GGD_copy_AoS3Root_to_Dynamic
@@ -7753,8 +7762,10 @@ contains
     type (ids_edge_profiles) :: edgeprof !< IDS designed to store
             !< edge profiles data
     character(len=24), intent(in) :: database
+#if AL_MAJOR_VERSION > 4
     integer, intent(in) :: time_sind     !< Corresponding time slice index
                                          !< in edge_profiles IDS
+#endif
     real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
     logical, intent(in) :: do_summary_data
     logical, intent(out) :: new_eq_ggd

@@ -48,8 +48,8 @@
       integer, save :: inert_all_ions = 1
       integer, save :: use_9pt_stencil = 1
       integer, save :: guard_flows
-      real (kind=R8) ::
-     &  fch_inert, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
+      real (kind=R8) :: fch_inert, dOnedBsq(-1:nx,-1:ny,0:1,0:1)
+!     real (kind=R8) :: wght(-1:nx,-1:ny)
       save ncall, fch_inert
 *   ..procedures
       external xertst
@@ -87,7 +87,7 @@ c Drift terms
 
 *       compute differences of OnedBsq on cell faces
         call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
-        wght = 1.0_R8
+!        wght = 1.0_R8
 !        call diff_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
 !     .    dOnedBsq(-1,-1,0,0))
 !        call diff_r(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,

@@ -26,7 +26,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
+     &   facdrift(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny),                                               !srv 11.07.99 18.01.02
      1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      2   qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),

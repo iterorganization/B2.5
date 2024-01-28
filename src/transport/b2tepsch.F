@@ -12,7 +12,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain                                         !srv 19.02.21
+      integer nx, ny, ns                                                 !srv 19.02.21
       real (kind=R8) ::
      &  facdrift(-1:nx,-1:ny), cdde(-1:nx,-1:ny,0:1,0:1),                !som 03.11.21
      &  te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
@@ -35,7 +35,8 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, is, ixl, iyl, ixb, iyb
+      integer ix, iy, ixl, iyl, ixb, iyb
+!     integer is
       integer, save :: ncall = 0
       integer, save :: PSch_style
       integer, save :: use_9pt_stencil = 1

@@ -54,8 +54,9 @@
       real (kind=R8) ::
      &  vis_par
       real (kind=R8) ::
-     *   dvpar(-1:nx,-1:ny), wght(-1:nx,-1:ny),
+     *   dvpar(-1:nx,-1:ny),
      *   wrk0(-1:nx,-1:ny), gOnedBsq(-1:nx,-1:ny,0:1,0:1)
+!     real (kind=R8) :: wght(-1:nx,-1:ny)
       save ncall, vis_par
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
       integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
@@ -105,7 +106,7 @@ c Drift terms
      &   no_current.eq.0) then
 *      compute gradients of OnedBsq on cell faces
        call grad(nx, ny, hx, hy, vol, qz, qs, OnedBsq, gOnedBsq)
-       wght = 1.0_R8
+!       wght = 1.0_R8
 !       call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
 !     .    gOnedBsq(-1,-1,0,0))
 !       call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc,

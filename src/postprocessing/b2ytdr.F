@@ -11157,7 +11157,7 @@ cxpb as they no longer necessarily point to the same species
         write(99,'(1x,a,i2,a)') 'NSTRAI=', nstrai1,','
         if (eirene_step_cpu.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_CPU=',eirene_step_cpu,','
-        write(99,'(1x,a,1pg10.3,a)')
+        if (eirene_step_dt.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_DT= ',eirene_step_dt,','
         if (eirene_mod.gt.1)
      >   write(99,'(1x,a,i2,a)') 'EIRENE_MOD=', eirene_mod,','

@@ -120,6 +120,15 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfch')
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'invalid main plasma species index ismain')
+      call xertst (0.le.ismain0.and.ismain0.lt.ns.and.
+     & (is_neutral(ismain0).or.ismain0.eq.ismain),
+     . 'invalid main neutral species index ismain0')
+*   ..set internal parameters on first call
       if (ncall.eq.0) then                                              !xpb
        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)                  !xpb
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)                  !xpb
@@ -205,7 +214,7 @@ c Drift terms
       facdriftm = maxval(facdrift)                                       !srv 23.12.19
       fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, nscx, ismain, ismain0, iscx,
+      call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, qz, qc, qs, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09

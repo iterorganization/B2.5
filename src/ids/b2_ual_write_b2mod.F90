@@ -631,7 +631,6 @@ program b2_ual_write_b2mod
             if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) &
                &  write(*,*) 'IDS file will be moved to ITER database.'
             call close_ual(idx)
-            idx = 0
 !xpb Copy the IDS to a temporary location with the new DD and then bring it back
             tmp_run = run
             if (database.ne.'iter'.and.index(ids_path,'imasdb/iter').eq.0) then
@@ -772,7 +771,6 @@ program b2_ual_write_b2mod
 #endif
         &   description )
     call close_ual(idx)
-    idx = 0
 
     write(0,*) " Running b2mn_fin"
     call b2mn_fin

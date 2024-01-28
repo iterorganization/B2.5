@@ -41,8 +41,8 @@
 *   ..local variables
       integer n2, ix, iy
       integer, save :: ncall = 0
-      real (kind=R8) ::
-     &  facdriftm, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
+      real (kind=R8) :: facdriftm, dOnedBsq(-1:nx,-1:ny,0:1,0:1)
+!     real (kind=R8) :: wght(-1:nx,-1:ny)
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
       integer, save :: drift_style                                       !IYS 11.02.2020
       integer, save :: no_current = 0
@@ -101,7 +101,7 @@
      &                        .and. no_current.eq.0) then                !srv 16.10.17
 *       compute differences of OnedBsq on cell faces
         call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
-        wght = 1.0_R8
+!        wght = 1.0_R8
 !        call diff_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
 !     .    dOnedBsq(-1,-1,0,0))
 !        call diff_r(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
