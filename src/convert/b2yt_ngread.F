@@ -16,12 +16,15 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ngread(nwrite, solps_version, eirene_format,
+      subroutine b2yt_ngread
+#ifdef B25_EIRENE
+     .(nwrite, solps_version, eirene_format,
      . nx1, ny1, natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1,
      . nfla, no_sputtering, savestratum, non_commensurate, flip,
      . e_bundle_contr, jsep1, region1,
      . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
      . hx, hy, qc, hxx, hyy, qc1, gs1)
+#endif
 c
 c  version : 06.11.97 22:11
 c
@@ -39,6 +42,7 @@ c
 #endif
       implicit none
 
+#ifdef B25_EIRENE
 *  -- INPUT ARGUMENTS --
       integer nx1,ny1,natm1,nmol1,nion1,npls1,nfla,non_commensurate
       integer iatm1(natm), imol1(nmol), iion1(nion), ipls1(npls)
@@ -55,6 +59,7 @@ c
       character*4 solps_version
       character*8 eirene_format
       logical flip, savestratum(0:nstraid), no_sputtering
+#endif
 
 *  -- LOCAL SCALARS --
       integer is, nplsi

@@ -902,7 +902,7 @@ contains
     !! can be used instead (that routine also writes the set data to IDS and then
     !! closes the IDS)
     subroutine close_ual(idx)
-        integer, intent(in) :: idx  !< The returned identifier to be used in the
+        integer, intent(inout) :: idx  !< The returned identifier to be used in the
                                     !< subsequent data access operation
 #ifdef IMAS
         integer :: status
@@ -918,6 +918,8 @@ contains
 #elif defined(ITM_ENVIRONMENT_LOADED)
         call euITM_close( idx )
 #endif
+        idx = 0
+
     end subroutine close_ual
 
 end module b2mod_ual

@@ -2455,7 +2455,10 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+        call b2mwti(itim,tim,
+#ifndef NO_CDF
+     .              ntim,b2time,ntim_batch,
+#endif
      .              nx,ny,ns,ismain,ismain0,
      .              BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
@@ -2774,7 +2777,6 @@ c new CDF movie option
                     if (database.eq.'iter') write(*,*)
      &               'IDS file will be moved to ITER database.'
                     call close_ual(idx)
-                    idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     tmp_run = run
                     if (database.ne.'iter') tmp_run = run + 1000
@@ -3154,7 +3156,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+          call b2mwti(itim,tim,
+#ifndef NO_CDF
+     *                ntim,b2time,ntim_batch,
+#endif
      *                nx,ny,ns,ismain,ismain0,
      *                BoRiS,.true.,.false.,.false.)
         endif
@@ -3298,7 +3303,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (database.eq.'iter') write(*,*)
      &             'IDS file will be moved to ITER database.'
                   call close_ual(idx)
-                  idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   tmp_run = run
                   if (database.ne.'iter') tmp_run = run + 1000
@@ -3446,7 +3450,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      description )
         call close_ual(idx)
-        idx = 0
 #endif
       end if
 

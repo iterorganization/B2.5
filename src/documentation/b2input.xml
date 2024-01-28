@@ -5052,17 +5052,18 @@
 			</switch>
 			<switch>
 				<name>EIRENE_STEP_CPU</name>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Length of CPU time devoted to Eirene calls after the first one (in s). Defaults to the value given in input.dat.
+					Length of CPU time devoted to Eirene calls after the first one (in s). If zero, the value given in the Eirene input file will be used.
 				</description>
 			</switch>
 			<switch>
 				<name>EIRENE_STEP_DT</name>
-				<default>1.0e-3</default>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Physical time (in s) the Eirene particles are to be followed before being passed to the time-dependent stratum.
+					Physical time (in s) the Eirene particles are to be followed before being passed to the time-dependent stratum. If zero, the value given by DTIMV in block 13 of the Eirene input file will be used.
 				</description>
 			</switch>
 			<switch>

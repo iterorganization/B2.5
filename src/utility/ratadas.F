@@ -1180,7 +1180,7 @@ c     OUTPUT:
       integer izpmin(0:nc), izpmax(0:nc)
 c     LOCAL VARIABLES:
 c     read in data
-      integer ic, itnt, itnn
+      integer ic
 
 #if ( ( defined(IMAS) && defined(AMNS) ) || ( defined(ITM) && defined(GOT_AMNSPROTO) ) )
       type (amns_handle_type), save :: amns
@@ -1192,6 +1192,7 @@ c     read in data
       type (amns_reactants_type) :: species(0:nc)
       type (amns_query_type) :: query
       type (amns_answer_type) :: answer
+      integer itnt, itnn
       character (len=80) :: format
       real (kind=R8) ::
      *   loc_te(0:rtnt,0:rtnn), loc_ne(0:rtnt,0:rtnn)

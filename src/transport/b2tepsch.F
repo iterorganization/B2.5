@@ -34,7 +34,8 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, is, ixl, iyl, ixb, iyb
+      integer ix, iy, ixl, iyl, ixb, iyb
+!     integer is
       integer, save :: ncall = 0
       integer, save :: PSch_style
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
