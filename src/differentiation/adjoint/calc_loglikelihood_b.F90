@@ -131,7 +131,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, xx, yy, ss, lll, lllb, &
       END DO
       CALL PUSHINTEGER4(ad_from)
     END DO
-! perform solve C*invC_z = zz and get log-determinant
+! solve C*invC_z = zz and get log-determinant
     CALL SOLVE_COVARIANCE(nn, zz, cc, invc_z, ldetc, uu, icf)
 ! multiply invC_z = z'*invC_z
     CALL PUSHREAL8ARRAY(invc_z, r8*nn/8)
@@ -309,7 +309,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, xx, yy, ss, lll, isigma, &
         ind = ind - 1
       END DO
     END DO
-! perform solve C*invC_z = zz and get log-determinant
+! solve C*invC_z = zz and get log-determinant
     CALL SOLVE_COVARIANCE(nn, zz, cc, invc_z, ldetc, uu, icf)
 ! multiply invC_z = z'*invC_z
     invc_z = invc_z*zz
