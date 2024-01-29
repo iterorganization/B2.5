@@ -980,18 +980,18 @@ CONTAINS
 !   variations   of useful results: enepar conpar potpar enipar
 !                userfluxparm fb_target fb_prev fb_current fb_const
 !                charge_frac saved_fb_actuator fb_rescale *(psnc.na)
-!                *(psnc.ne) *(psnc.ni) *(psnc.fna) *(psnc.kinrgy)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy)
-!                *(dv.ne) *(pl.na)
+!                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fna)
+!                *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch)
+!                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
+!                *(pl.na)
 !   with respect to varying inputs: enepar conpar potpar enipar
 !                userfluxparm fb_target fb_prev fb_current fb_const
 !                charge_frac saved_fb_actuator fb_rescale *(psnc.na)
-!                *(psnc.ne) *(psnc.ni) *(psnc.fna) *(psnc.kinrgy)
-!                *(dv.fch) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
-!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir)
-!                *(dv.fhe) *(dv.fhi) *(dv.kinrgy) *(dv.ne) *(dv.ni)
-!                *(rt.rza) *(pl.na)
+!                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fch)
+!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
+!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir) *(dv.fhe)
+!                *(dv.fhi) *(dv.kinrgy) *(dv.ne) *(dv.ni) *(rt.rza)
+!                *(pl.na)
 !   Plus diff mem management of: psnc.na:in psnc.ne:in psnc.ni:in
 !                psnc.fna:in psnc.kinrgy:in dv.fch:in dv.fna:in
 !                dv.fna_mdf:in dv.fna_52:in dv.fna_32:in dv.fna_nodrift:in
@@ -2013,7 +2013,6 @@ CONTAINS
             DO nd=1,nbdirs
               psncd%na(nd, :, :) = pld%na(nd, :, :)
               psncd%ne(nd, :) = dvd%ne(nd, :)
-              psncd%fna(nd, :, :, :) = dvd%fna(nd, :, :, :)
               psncd%kinrgy(nd, :, :) = dvd%kinrgy(nd, :, :)
             END DO
             psnc%na = pl%na

@@ -521,10 +521,10 @@ CONTAINS
 !  Differentiation of b2mn_step in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
 !                tdata j
-!   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar b2recyc *rtlsa *rtlcx *rtlqa *rtlra
-!                tdata parm_hce parm_hci parm_vla parm_vsa parm_alf
-!                parm_dpa parm_sig parm_dna corr_length sigma shift
+!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
+!                enepar conpar enkpar potpar mompar enipar b2recyc
+!                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
+!                parm_sig parm_dna tdata corr_length sigma shift
 !                *par_opt_phys mean switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
 !                switch.keps_visc switch.keps_dkt switch.keps_dzt
@@ -534,15 +534,15 @@ CONTAINS
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   RW status of diff variables: *b2voloncf:(loc) *b2data:(loc)
+!   RW status of diff variables: *rtlsa:in *rtlcx:in *rtlqa:in
+!                *rtlra:in cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:in-out conpar:in-out
 !                enkpar:in potpar:in-out mompar:in enipar:in-out
-!                b2recyc:in userfluxparm:(loc) cutlo:(loc) *rtlsa:in
-!                *rtlcx:in *rtlqa:in *rtlra:in tdata:in-out cfvla:(loc)
-!                cfvsa:(loc) cfalf:(loc) cfdpa:(loc) cfsig:(loc)
-!                cfdna:(loc) cfhce:(loc) cfhci:(loc) parm_hce:in
-!                parm_hci:in parm_vla:in parm_vsa:in parm_alf:in
-!                parm_dpa:in parm_sig:in parm_dna:in corr_length:in
+!                b2recyc:in userfluxparm:(loc) cfvla:(loc) cfvsa:(loc)
+!                cfalf:(loc) cfdpa:(loc) cfsig:(loc) cfdna:(loc)
+!                cfhce:(loc) cfhci:(loc) parm_hce:in parm_hci:in
+!                parm_vla:in parm_vsa:in parm_alf:in parm_dpa:in
+!                parm_sig:in parm_dna:in tdata:in-out corr_length:in
 !                sigma:in shift:in *par_opt_phys:in mean:in int4l:(loc)
 !                int1l:(loc) int2l:(loc) int3l:(loc) int0l:(loc)
 !                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
@@ -559,147 +559,104 @@ CONTAINS
 !                switch.b2tfhe_vis_kt:in switch.b2tqna_ballooning:in
 !                switch.b2tqna_ballooning_rescale:in state.pl.na:(loc)
 !                *(state.pl.na):(loc) state.pl.ua:(loc) *(state.pl.ua):(loc)
-!                state.pl.po:(loc) *(state.pl.po):(loc) state.pl.te:(loc)
-!                *(state.pl.te):(loc) state.pl.ti:(loc) *(state.pl.ti):(loc)
-!                state.pl.tn:(loc) *(state.pl.tn):(loc) state.pl.kt:(loc)
-!                *(state.pl.kt):(loc) state.pl.zt:(loc) *(state.pl.zt):(loc)
-!                state.co.csig:(loc) *(state.co.csig):(loc) state.co.calf:(loc)
-!                *(state.co.calf):(loc) state.co.csig_an:(loc)
-!                *(state.co.csig_an):(loc) state.co.calf_an:(loc)
-!                state.co.csig_cl:(loc) state.co.calf_cl:(loc)
+!                state.pl.po:(loc) *(state.pl.po):(loc) *(state.pl.te):(loc)
+!                *(state.pl.ti):(loc) *(state.pl.tn):(loc) *(state.pl.kt):(loc)
+!                *(state.pl.zt):(loc) state.co.csig:(loc) *(state.co.csig):(loc)
+!                state.co.calf:(loc) *(state.co.calf):(loc) *(state.co.csig_an):(loc)
 !                state.co.csigin:(loc) *(state.co.csigin):(loc)
 !                state.co.chve:(loc) state.co.chce:(loc) *(state.co.chce):(loc)
-!                state.co.chce_exb:(loc) *(state.co.chce_exb):(loc)
-!                state.co.chvi:(loc) state.co.chci:(loc) *(state.co.chci):(loc)
-!                state.co.chci_exb:(loc) *(state.co.chci_exb):(loc)
-!                state.co.chcn:(loc) *(state.co.chcn):(loc) state.co.cdkt:(loc)
-!                *(state.co.cdkt):(loc) state.co.cdzt:(loc) *(state.co.cdzt):(loc)
-!                state.co.chvemx:(loc) *(state.co.chvemx):(loc)
-!                state.co.chvimx:(loc) *(state.co.chvimx):(loc)
-!                state.co.cvla:(loc) *(state.co.cvla):(loc) state.co.cdna:(loc)
-!                *(state.co.cdna):(loc) state.co.cdna_exb:(loc)
-!                *(state.co.cdna_exb):(loc) state.co.cdpa:(loc)
-!                *(state.co.cdpa):(loc) state.co.cvsa:(loc) *(state.co.cvsa):(loc)
-!                state.co.cvlahz:(loc) *(state.co.cvlahz):(loc)
-!                state.co.cdnahz:(loc) state.co.cdpahz:(loc) *(state.co.cdpahz):(loc)
-!                state.co.cvsahz:(loc) *(state.co.cvsahz):(loc)
-!                state.co.cddi:(loc) *(state.co.cddi):(loc) state.co.cvsahz_cl:(loc)
-!                *(state.co.cvsahz_cl):(loc) state.co.chcb:(loc)
-!                *(state.co.chcb):(loc) state.co.cvsa_an:(loc)
-!                state.co.cvmahz:(loc) state.co.cvsahz_eff:(loc)
+!                *(state.co.chce_exb):(loc) state.co.chvi:(loc)
+!                state.co.chci:(loc) *(state.co.chci):(loc) *(state.co.chci_exb):(loc)
+!                *(state.co.chcn):(loc) state.co.cdkt:(loc) *(state.co.cdkt):(loc)
+!                *(state.co.cdzt):(loc) *(state.co.chvemx):(loc)
+!                *(state.co.chvimx):(loc) *(state.co.cvla):(loc)
+!                *(state.co.cdna):(loc) *(state.co.cdna_exb):(loc)
+!                *(state.co.cdpa):(loc) *(state.co.cvsa):(loc)
+!                *(state.co.cvlahz):(loc) *(state.co.cdpahz):(loc)
+!                *(state.co.cvsahz):(loc) *(state.co.cddi):(loc)
+!                *(state.co.cvsahz_cl):(loc) *(state.co.chcb):(loc)
 !                *(state.co.cvsahz_eff):(loc) state.co.cthe:(loc)
-!                state.co.cthi:(loc) state.co.cvsa_cl:(loc) *(state.co.cvsa_cl):(loc)
-!                state.co.ceqp:(loc) *(state.co.ceqp):(loc) state.co.fllim0fhi:(loc)
-!                state.co.fllimvisc:(loc) state.co.fllim0fna:(loc)
-!                state.co.vsaf_cl:(loc) *(state.co.vsaf_cl):(loc)
-!                state.co.sig0:(loc) *(state.co.sig0):(loc) state.co.hce0:(loc)
-!                *(state.co.hce0):(loc) state.co.hci0:(loc) *(state.co.hci0):(loc)
-!                state.co.hcn0:(loc) *(state.co.hcn0):(loc) state.co.alf0:(loc)
-!                *(state.co.alf0):(loc) state.co.dkt0:(loc) *(state.co.dkt0):(loc)
-!                state.co.dzt0:(loc) *(state.co.dzt0):(loc) state.co.dna_exb:(loc)
+!                state.co.cthi:(loc) *(state.co.cvsa_cl):(loc)
+!                *(state.co.ceqp):(loc) state.co.fllim0fhi:(loc)
+!                *(state.co.vsaf_cl):(loc) state.co.sig0:(loc)
+!                *(state.co.sig0):(loc) state.co.hce0:(loc) *(state.co.hce0):(loc)
+!                state.co.hci0:(loc) *(state.co.hci0):(loc) state.co.hcn0:(loc)
+!                *(state.co.hcn0):(loc) state.co.alf0:(loc) *(state.co.alf0):(loc)
+!                state.co.dkt0:(loc) *(state.co.dkt0):(loc) state.co.dzt0:(loc)
+!                *(state.co.dzt0):(loc) state.co.dna_exb:(loc)
 !                *(state.co.dna_exb):(loc) state.co.hce_exb:(loc)
 !                *(state.co.hce_exb):(loc) state.co.hci_exb:(loc)
 !                *(state.co.hci_exb):(loc) state.co.dpa0:(loc)
 !                *(state.co.dpa0):(loc) state.co.dna0:(loc) *(state.co.dna0):(loc)
 !                state.co.vsa0:(loc) *(state.co.vsa0):(loc) state.co.hcib:(loc)
 !                *(state.co.hcib):(loc) state.co.vla0:(loc) *(state.co.vla0):(loc)
-!                state.co.vma0:(loc) state.co.kt_neo:(loc) state.co.alfx_c:(loc)
-!                *(state.co.alfx_c):(loc) state.co.sigx_c:(loc)
-!                *(state.co.sigx_c):(loc) state.co.sigx_kt:(loc)
-!                *(state.co.sigx_kt):(loc) state.co.hcix_c:(loc)
-!                *(state.co.hcix_c):(loc) state.co.fllim_ki:(loc)
-!                *(state.co.fllim_ki):(loc) state.co.fllim_ke:(loc)
-!                *(state.co.fllim_ke):(loc) state.co.fllim_al:(loc)
-!                *(state.co.fllim_al):(loc) state.co.fllim_al_c:(loc)
-!                *(state.co.fllim_al_c):(loc) state.co.fllim_ki_c:(loc)
-!                *(state.co.fllim_ki_c):(loc) state.co.f_luc_ke:(loc)
-!                *(state.co.f_luc_ke):(loc) state.co.f_luc_ki:(loc)
-!                *(state.co.f_luc_ki):(loc) state.co.f_luc_et:(loc)
-!                *(state.co.f_luc_et):(loc) state.co.f_luc_sg:(loc)
-!                *(state.co.f_luc_sg):(loc) state.co.f_luc_al:(loc)
-!                *(state.co.f_luc_al):(loc) state.co.cssb:(loc)
+!                state.co.vma0:(loc) *(state.co.alfx_c):(loc) *(state.co.sigx_c):(loc)
+!                *(state.co.sigx_kt):(loc) *(state.co.hcix_c):(loc)
+!                state.co.fllim_ki:(loc) *(state.co.fllim_ki):(loc)
+!                state.co.fllim_ke:(loc) *(state.co.fllim_ke):(loc)
+!                state.co.fllim_al:(loc) *(state.co.fllim_al):(loc)
+!                state.co.fllim_al_c:(loc) *(state.co.fllim_al_c):(loc)
+!                *(state.co.fllim_ki_c):(loc) *(state.co.f_luc_ke):(loc)
+!                *(state.co.f_luc_ki):(loc) *(state.co.f_luc_et):(loc)
+!                *(state.co.f_luc_sg):(loc) *(state.co.f_luc_al):(loc)
 !                *(state.co.cssb):(loc) state.dv.fch:(loc) *(state.dv.fch):(loc)
-!                state.dv.fch_p:(loc) *(state.dv.fch_p):(loc) state.dv.fchdia:(loc)
-!                *(state.dv.fchdia):(loc) state.dv.fchin:(loc)
-!                *(state.dv.fchin):(loc) state.dv.fchvispar:(loc)
-!                *(state.dv.fchvispar):(loc) state.dv.fchvisper:(loc)
-!                *(state.dv.fchvisper):(loc) state.dv.fchvisq:(loc)
-!                *(state.dv.fchvisq):(loc) state.dv.fchinert:(loc)
-!                *(state.dv.fchinert):(loc) state.dv.fchanml:(loc)
-!                *(state.dv.fchanml):(loc) state.dv.fchviskt:(loc)
-!                *(state.dv.fchviskt):(loc) state.dv.fch_pi_c:(loc)
-!                *(state.dv.fch_pi_c):(loc) state.dv.fch_pi_f:(loc)
+!                *(state.dv.fch_p):(loc) *(state.dv.fchdia):(loc)
+!                *(state.dv.fchin):(loc) *(state.dv.fchvispar):(loc)
+!                *(state.dv.fchvisper):(loc) *(state.dv.fchvisq):(loc)
+!                *(state.dv.fchinert):(loc) *(state.dv.fchanml):(loc)
+!                *(state.dv.fchviskt):(loc) *(state.dv.fch_pi_c):(loc)
 !                *(state.dv.fch_pi_f):(loc) state.dv.fni_32:(loc)
 !                state.dv.fni_52:(loc) state.dv.fni:(loc) state.dv.fni_he:(loc)
 !                *(state.dv.fni_he):(loc) state.dv.fna:(loc) *(state.dv.fna):(loc)
 !                state.dv.fna_mdf:(loc) *(state.dv.fna_mdf):(loc)
 !                state.dv.fna_52:(loc) state.dv.fna_32:(loc) *(state.dv.fna_32):(loc)
-!                state.dv.fna_53:(loc) *(state.dv.fna_53):(loc)
-!                state.dv.fna_52nd:(loc) state.dv.fna_32nd:(loc)
-!                state.dv.fna_nodrift:(loc) state.dv.fna_he:(loc)
-!                *(state.dv.fna_he):(loc) state.dv.fnapsch:(loc)
-!                *(state.dv.fnapsch):(loc) state.dv.fna_fcor:(loc)
-!                *(state.dv.fna_fcor):(loc) state.dv.fna_eir:(loc)
-!                *(state.dv.fna_eir):(loc) state.dv.fna_exb:(loc)
-!                *(state.dv.fna_exb):(loc) state.dv.fmo:(loc) *(state.dv.fmo):(loc)
+!                *(state.dv.fna_53):(loc) state.dv.fna_nodrift:(loc)
+!                state.dv.fna_he:(loc) *(state.dv.fna_he):(loc)
+!                state.dv.fnapsch:(loc) *(state.dv.fnapsch):(loc)
+!                state.dv.fna_fcor:(loc) *(state.dv.fna_fcor):(loc)
+!                state.dv.fna_eir:(loc) *(state.dv.fna_eir):(loc)
+!                *(state.dv.fna_exb):(loc) *(state.dv.fmo):(loc)
 !                state.dv.fne:(loc) state.dv.fne_he:(loc) *(state.dv.fne_he):(loc)
-!                state.dv.fne_32:(loc) state.dv.fne_52:(loc) state.dv.fne_eir:(loc)
-!                state.dv.fne_53:(loc) *(state.dv.fne_53):(loc)
-!                state.dv.fhe:(loc) *(state.dv.fhe):(loc) state.dv.fhe_mdf:(loc)
-!                *(state.dv.fhe_mdf):(loc) state.dv.fhepsch:(loc)
-!                *(state.dv.fhepsch):(loc) state.dv.fhe_eir:(loc)
-!                state.dv.fhe_exb:(loc) *(state.dv.fhe_exb):(loc)
-!                state.dv.fhi:(loc) *(state.dv.fhi):(loc) state.dv.fhi_mdf:(loc)
-!                *(state.dv.fhi_mdf):(loc) state.dv.fhipsch:(loc)
-!                *(state.dv.fhipsch):(loc) state.dv.fhi_eir:(loc)
-!                state.dv.fhi_exb:(loc) *(state.dv.fhi_exb):(loc)
-!                state.dv.fnn:(loc) *(state.dv.fnn):(loc) state.dv.fnn_32:(loc)
-!                state.dv.fnn_52:(loc) state.dv.fhn:(loc) *(state.dv.fhn):(loc)
-!                state.dv.fhm:(loc) *(state.dv.fhm):(loc) state.dv.fhp:(loc)
-!                *(state.dv.fhp):(loc) state.dv.fhj:(loc) *(state.dv.fhj):(loc)
-!                state.dv.fht:(loc) *(state.dv.fht):(loc) state.dv.fkt:(loc)
-!                *(state.dv.fkt):(loc) state.dv.fzt:(loc) *(state.dv.fzt):(loc)
+!                state.dv.fne_32:(loc) state.dv.fne_52:(loc) state.dv.fne_53:(loc)
+!                *(state.dv.fne_53):(loc) *(state.dv.fhe):(loc)
+!                *(state.dv.fhe_mdf):(loc) *(state.dv.fhepsch):(loc)
+!                *(state.dv.fhe_exb):(loc) *(state.dv.fhi):(loc)
+!                *(state.dv.fhi_mdf):(loc) *(state.dv.fhipsch):(loc)
+!                *(state.dv.fhi_exb):(loc) state.dv.fnn:(loc) *(state.dv.fnn):(loc)
+!                state.dv.fnn_32:(loc) state.dv.fnn_52:(loc) *(state.dv.fhn):(loc)
+!                *(state.dv.fhm):(loc) *(state.dv.fhp):(loc) *(state.dv.fhj):(loc)
+!                *(state.dv.fht):(loc) *(state.dv.fkt):(loc) *(state.dv.fzt):(loc)
 !                state.dv.kinrgy:(loc) *(state.dv.kinrgy):(loc)
-!                state.dv.conc:(loc) *(state.dv.conc):(loc) state.dv.flob:(loc)
-!                *(state.dv.flob):(loc) state.dv.floe:(loc) *(state.dv.floe):(loc)
-!                state.dv.floi:(loc) *(state.dv.floi):(loc) state.dv.floe_noc:(loc)
-!                state.dv.floi_noc:(loc) state.dv.flon:(loc) *(state.dv.flon):(loc)
-!                state.dv.flokt:(loc) *(state.dv.flokt):(loc) state.dv.flozt:(loc)
-!                *(state.dv.flozt):(loc) state.dv.conn:(loc) *(state.dv.conn):(loc)
-!                state.dv.conkt:(loc) *(state.dv.conkt):(loc) state.dv.conzt:(loc)
-!                *(state.dv.conzt):(loc) state.dv.conb:(loc) *(state.dv.conb):(loc)
-!                state.dv.cone:(loc) *(state.dv.cone):(loc) state.dv.coni:(loc)
-!                *(state.dv.coni):(loc) state.dv.resmo:(loc) *(state.dv.resmo):(loc)
-!                state.dv.resco:(loc) *(state.dv.resco):(loc) state.dv.respo:(loc)
-!                *(state.dv.respo):(loc) state.dv.reshe:(loc) *(state.dv.reshe):(loc)
-!                state.dv.reshi:(loc) *(state.dv.reshi):(loc) state.dv.resht:(loc)
+!                *(state.dv.conc):(loc) *(state.dv.flob):(loc)
+!                *(state.dv.floe):(loc) *(state.dv.floi):(loc)
+!                *(state.dv.flon):(loc) *(state.dv.flokt):(loc)
+!                *(state.dv.flozt):(loc) *(state.dv.conn):(loc)
+!                *(state.dv.conkt):(loc) *(state.dv.conzt):(loc)
+!                *(state.dv.conb):(loc) *(state.dv.cone):(loc)
+!                *(state.dv.coni):(loc) *(state.dv.resmo):(loc)
+!                *(state.dv.resco):(loc) *(state.dv.respo):(loc)
+!                *(state.dv.reshe):(loc) *(state.dv.reshi):(loc)
 !                *(state.dv.resht):(loc) state.dv.resmt:(loc) *(state.dv.resmt):(loc)
-!                state.dv.reshn:(loc) *(state.dv.reshn):(loc) state.dv.reskt:(loc)
-!                *(state.dv.reskt):(loc) state.dv.reszt:(loc) *(state.dv.reszt):(loc)
-!                state.dv.corua:(loc) *(state.dv.corua):(loc) state.dv.corpa:(loc)
-!                *(state.dv.corpa):(loc) state.dv.corut:(loc) *(state.dv.corut):(loc)
-!                state.dv.corpo:(loc) *(state.dv.corpo):(loc) state.dv.cortt:(loc)
-!                *(state.dv.cortt):(loc) state.dv.corte:(loc) *(state.dv.corte):(loc)
-!                state.dv.corti:(loc) *(state.dv.corti):(loc) state.dv.cortn:(loc)
-!                *(state.dv.cortn):(loc) state.dv.corkt:(loc) *(state.dv.corkt):(loc)
-!                state.dv.corzt:(loc) *(state.dv.corzt):(loc) state.dv.pcca:(loc)
-!                *(state.dv.pcca):(loc) state.dv.pccm:(loc) *(state.dv.pccm):(loc)
-!                state.dv.ne:(loc) *(state.dv.ne):(loc) state.dv.ni:(loc)
-!                *(state.dv.ni):(loc) state.dv.nn:(loc) *(state.dv.nn):(loc)
-!                state.dv.ue:(loc) *(state.dv.ue):(loc) state.dv.ne2:(loc)
-!                *(state.dv.ne2):(loc) state.dv.pa:(loc) *(state.dv.pa):(loc)
-!                state.dv.pz:(loc) *(state.dv.pz):(loc) state.dv.lnlam:(loc)
+!                *(state.dv.reshn):(loc) *(state.dv.reskt):(loc)
+!                *(state.dv.reszt):(loc) state.dv.corua:(loc) *(state.dv.corua):(loc)
+!                state.dv.corpa:(loc) *(state.dv.corpa):(loc) state.dv.corut:(loc)
+!                *(state.dv.corut):(loc) state.dv.corpo:(loc) *(state.dv.corpo):(loc)
+!                state.dv.cortt:(loc) *(state.dv.cortt):(loc) state.dv.corte:(loc)
+!                *(state.dv.corte):(loc) state.dv.corti:(loc) *(state.dv.corti):(loc)
+!                state.dv.cortn:(loc) *(state.dv.cortn):(loc) state.dv.corkt:(loc)
+!                *(state.dv.corkt):(loc) state.dv.corzt:(loc) *(state.dv.corzt):(loc)
+!                *(state.dv.pcca):(loc) *(state.dv.pccm):(loc)
+!                *(state.dv.ne):(loc) state.dv.ni:(loc) *(state.dv.ni):(loc)
+!                state.dv.nn:(loc) *(state.dv.nn):(loc) *(state.dv.ue):(loc)
+!                *(state.dv.ne2):(loc) *(state.dv.pa):(loc) *(state.dv.pz):(loc)
 !                *(state.dv.lnlam):(loc) state.dv.uadia:(loc) state.dv.vadia:(loc)
 !                *(state.dv.vadia):(loc) state.dv.wadia:(loc) *(state.dv.wadia):(loc)
 !                state.dv.vaecrb:(loc) *(state.dv.vaecrb):(loc)
-!                state.dv.vedia:(loc) *(state.dv.vedia):(loc) state.dv.wedia:(loc)
-!                state.dv.veecrb:(loc) *(state.dv.veecrb):(loc)
-!                state.dv.facdrift:(loc) state.dv.fac_exb:(loc)
-!                state.dv.fac_vis:(loc) state.sr.sch:(loc) *(state.sr.sch):(loc)
-!                state.sr.she:(loc) *(state.sr.she):(loc) state.sr.shi:(loc)
-!                *(state.sr.shi):(loc) state.sr.sne:(loc) state.sr.shn:(loc)
-!                *(state.sr.shn):(loc) state.sr.skt:(loc) *(state.sr.skt):(loc)
-!                state.sr.szt:(loc) state.sr.smo:(loc) *(state.sr.smo):(loc)
+!                *(state.dv.vedia):(loc) *(state.dv.veecrb):(loc)
+!                state.sr.sch:(loc) *(state.sr.sch):(loc) state.sr.she:(loc)
+!                *(state.sr.she):(loc) state.sr.shi:(loc) *(state.sr.shi):(loc)
+!                state.sr.sne:(loc) state.sr.shn:(loc) *(state.sr.shn):(loc)
+!                *(state.sr.skt):(loc) state.sr.smo:(loc) *(state.sr.smo):(loc)
 !                state.sr.smq:(loc) *(state.sr.smq):(loc) state.sr.sna:(loc)
 !                *(state.sr.sna):(loc) state.sr.skt_diss:(loc)
 !                state.sr.skt_prod:(loc) state.srw.sch0:(loc) *(state.srw.sch0):(loc)
@@ -708,57 +665,31 @@ CONTAINS
 !                *(state.srw.shn0):(loc) state.srw.skt0:(loc) *(state.srw.skt0):(loc)
 !                state.srw.szt0:(loc) state.srw.smo0:(loc) *(state.srw.smo0):(loc)
 !                state.srw.smq0:(loc) *(state.srw.smq0):(loc) state.srw.sna0:(loc)
-!                *(state.srw.sna0):(loc) state.srw.b2stbm_sch:(loc)
-!                state.srw.b2stbm_she:(loc) state.srw.b2stbm_shi:(loc)
-!                state.srw.b2stbm_sne:(loc) state.srw.b2stbm_smo:(loc)
-!                state.srw.b2stbm_sna:(loc) state.rt.rlcx:(loc)
-!                *(state.rt.rlcx):(loc) state.rt.rlqa:(loc) *(state.rt.rlqa):(loc)
-!                state.rt.rlrd:(loc) *(state.rt.rlrd):(loc) state.rt.rlbr:(loc)
-!                *(state.rt.rlbr):(loc) state.rt.rlra:(loc) *(state.rt.rlra):(loc)
-!                state.rt.rlsa:(loc) *(state.rt.rlsa):(loc) state.rt.rlza:(loc)
-!                *(state.rt.rlza):(loc) state.rt.rlz2:(loc) *(state.rt.rlz2):(loc)
-!                state.rt.rlpt:(loc) *(state.rt.rlpt):(loc) state.rt.rlpi:(loc)
-!                *(state.rt.rlpi):(loc) state.rt.rlqr:(loc) *(state.rt.rlqr):(loc)
-!                state.rt.rza:(loc) *(state.rt.rza):(loc) state.rt.rz2:(loc)
-!                *(state.rt.rz2):(loc) state.rt.rpt:(loc) *(state.rt.rpt):(loc)
-!                state.rt.rpi:(loc) *(state.rt.rpi):(loc) state.rtw.rsa:(loc)
-!                *(state.rtw.rsa):(loc) state.rtw.rra:(loc) *(state.rtw.rra):(loc)
-!                state.rtw.rqa:(loc) *(state.rtw.rqa):(loc) state.rtw.rrd:(loc)
-!                state.rtw.rbr:(loc) state.rtw.rcx:(loc) *(state.rtw.rcx):(loc)
-!                state.rtw.rqr:(loc) *(state.rtw.rqr):(loc) state.psnl.na:(loc)
-!                state.psnl.ua:(loc) state.psnl.po:(loc) state.psnl.te:(loc)
-!                state.psnl.ti:(loc) state.psnl.tn:(loc) state.psnl.kt:(loc)
-!                state.psnl.zt:(loc) state.psnl.ne:(loc) state.psnl.ni:(loc)
-!                state.psnl.fch:(loc) state.psnl.fna:(loc) state.psnl.fhi:(loc)
-!                state.psnl.fhe:(loc) state.psnl.fkt:(loc) state.psnl.fzt:(loc)
-!                state.psnl.kinrgy:(loc) state.psnc.na:(loc) *(state.psnc.na):(loc)
-!                state.psnc.ua:(loc) *(state.psnc.ua):(loc) state.psnc.po:(loc)
-!                *(state.psnc.po):(loc) state.psnc.te:(loc) *(state.psnc.te):(loc)
-!                state.psnc.ti:(loc) *(state.psnc.ti):(loc) state.psnc.tn:(loc)
-!                *(state.psnc.tn):(loc) state.psnc.kt:(loc) *(state.psnc.kt):(loc)
-!                state.psnc.zt:(loc) *(state.psnc.zt):(loc) state.psnc.ne:(loc)
+!                *(state.srw.sna0):(loc) *(state.rt.rlcx):(loc)
+!                *(state.rt.rlqa):(loc) *(state.rt.rlrd):(loc)
+!                *(state.rt.rlbr):(loc) *(state.rt.rlra):(loc)
+!                *(state.rt.rlsa):(loc) *(state.rt.rlza):(loc)
+!                *(state.rt.rlz2):(loc) *(state.rt.rlpt):(loc)
+!                *(state.rt.rlpi):(loc) *(state.rt.rlqr):(loc)
+!                *(state.rt.rza):(loc) *(state.rt.rz2):(loc) *(state.rt.rpt):(loc)
+!                *(state.rt.rpi):(loc) *(state.rtw.rsa):(loc) *(state.rtw.rra):(loc)
+!                *(state.rtw.rqa):(loc) *(state.rtw.rcx):(loc)
+!                *(state.rtw.rqr):(loc) state.psnl.na:(loc) state.psnc.na:(loc)
+!                *(state.psnc.na):(loc) *(state.psnc.ua):(loc)
+!                *(state.psnc.te):(loc) *(state.psnc.ti):(loc)
+!                *(state.psnc.tn):(loc) *(state.psnc.kt):(loc)
 !                *(state.psnc.ne):(loc) state.psnc.ni:(loc) *(state.psnc.ni):(loc)
-!                state.psnc.nn:(loc) *(state.psnc.nn):(loc) state.psnc.fch:(loc)
-!                *(state.psnc.fch):(loc) state.psnc.fna:(loc) *(state.psnc.fna):(loc)
-!                state.psnc.fhi:(loc) *(state.psnc.fhi):(loc) state.psnc.fhe:(loc)
-!                *(state.psnc.fhe):(loc) state.psnc.fkt:(loc) *(state.psnc.fkt):(loc)
-!                state.psnc.fzt:(loc) *(state.psnc.fzt):(loc) state.psnc.kinrgy:(loc)
-!                *(state.psnc.kinrgy):(loc) state.diag.aresco:(loc)
-!                state.diag.aresmo:(loc) state.diag.acorpa:(loc)
-!                state.diag.acorua:(loc) state.diag.rescoreg:(loc)
-!                state.diag.resmoreg:(loc) state.diag.reshereg:(loc)
-!                state.diag.reshireg:(loc) (global)cfnorm[1:nncf]:(loc)
-!                (global)vold[1:nncf]:(loc)
+!                state.psnc.nn:(loc) *(state.psnc.nn):(loc) *(state.psnc.kinrgy):(loc)
+!                (global)cfnorm[1:nncf]:(loc) (global)vold[1:nncf]:(loc)
 !   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
 !                b2voloncf:in b2data:in b2dataoncf:in par_opt_phys:in
 !                mpg.bcfcor:in mpg.rcfcor:in mpg.cffcor:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.cveb:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.fcbzb:in geo.fceb:in geo.vxbb:in
-!                geo.vxx:in geo.vxy:in geo.vxhz:in geo.vxvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
+!                geo.fcbzb:in geo.vxbb:in geo.vxhz:in geo.vxvol:in
 !                geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in geo.fteps:in
 !                geo.ftbbav2:in state_ext.am:in state_ext.ne:in
 !                state_ext.ne2:in state_ext.ue:in state_ext.za:in
@@ -817,29 +748,28 @@ CONTAINS
 !                state.dv.floe_noc:in state.dv.floi_noc:in state.dv.flon:in
 !                state.dv.flokt:in state.dv.flozt:in state.dv.conn:in
 !                state.dv.conkt:in state.dv.conzt:in state.dv.conb:in
-!                state.dv.cone:in state.dv.coni:in state.dv.fllime:in
-!                state.dv.fllimi:in state.dv.resmo:in state.dv.resco:in
-!                state.dv.respo:in state.dv.reshe:in state.dv.reshi:in
-!                state.dv.resht:in state.dv.resmt:in state.dv.reshn:in
-!                state.dv.reskt:in state.dv.reszt:in state.dv.corua:in
-!                state.dv.corpa:in state.dv.corut:in state.dv.corpo:in
-!                state.dv.cortt:in state.dv.corte:in state.dv.corti:in
-!                state.dv.cortn:in state.dv.corkt:in state.dv.corzt:in
-!                state.dv.pcca:in state.dv.pccm:in state.dv.ne:in
-!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in
-!                state.dv.ne2:in state.dv.pa:in state.dv.pz:in
-!                state.dv.lnlam:in state.dv.uadia:in state.dv.vadia:in
-!                state.dv.wadia:in state.dv.vaecrb:in state.dv.vedia:in
-!                state.dv.wedia:in state.dv.veecrb:in state.dv.facdrift:in
-!                state.dv.fac_exb:in state.dv.fac_vis:in state.sr.sch:in
-!                state.sr.she:in state.sr.shi:in state.sr.sne:in
-!                state.sr.shn:in state.sr.skt:in state.sr.szt:in
-!                state.sr.smo:in state.sr.smq:in state.sr.sna:in
-!                state.sr.skt_diss:in state.sr.skt_prod:in state.srw.sch0:in
-!                state.srw.she0:in state.srw.shi0:in state.srw.sne0:in
-!                state.srw.shn0:in state.srw.skt0:in state.srw.szt0:in
-!                state.srw.smo0:in state.srw.smq0:in state.srw.sna0:in
-!                state.srw.b2stbm_sch:in state.srw.b2stbm_she:in
+!                state.dv.cone:in state.dv.coni:in state.dv.resmo:in
+!                state.dv.resco:in state.dv.respo:in state.dv.reshe:in
+!                state.dv.reshi:in state.dv.resht:in state.dv.resmt:in
+!                state.dv.reshn:in state.dv.reskt:in state.dv.reszt:in
+!                state.dv.corua:in state.dv.corpa:in state.dv.corut:in
+!                state.dv.corpo:in state.dv.cortt:in state.dv.corte:in
+!                state.dv.corti:in state.dv.cortn:in state.dv.corkt:in
+!                state.dv.corzt:in state.dv.pcca:in state.dv.pccm:in
+!                state.dv.ne:in state.dv.ni:in-out state.dv.nn:in-out
+!                state.dv.ue:in state.dv.ne2:in state.dv.pa:in
+!                state.dv.pz:in state.dv.lnlam:in state.dv.uadia:in
+!                state.dv.vadia:in state.dv.wadia:in state.dv.vaecrb:in
+!                state.dv.vedia:in state.dv.wedia:in state.dv.veecrb:in
+!                state.dv.facdrift:in state.dv.fac_exb:in state.dv.fac_vis:in
+!                state.sr.sch:in state.sr.she:in state.sr.shi:in
+!                state.sr.sne:in state.sr.shn:in state.sr.skt:in
+!                state.sr.szt:in state.sr.smo:in state.sr.smq:in
+!                state.sr.sna:in state.sr.skt_diss:in state.sr.skt_prod:in
+!                state.srw.sch0:in state.srw.she0:in state.srw.shi0:in
+!                state.srw.sne0:in state.srw.shn0:in state.srw.skt0:in
+!                state.srw.szt0:in state.srw.smo0:in state.srw.smq0:in
+!                state.srw.sna0:in state.srw.b2stbm_sch:in state.srw.b2stbm_she:in
 !                state.srw.b2stbm_shi:in state.srw.b2stbm_sne:in
 !                state.srw.b2stbm_smo:in state.srw.b2stbm_sna:in
 !                state.rt.rlcx:in state.rt.rlqa:in state.rt.rlrd:in

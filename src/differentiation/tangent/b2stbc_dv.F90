@@ -5,15 +5,15 @@
 !   variations   of useful results: enepar conpar potpar enipar
 !                userfluxparm fb_target fb_prev fb_current fb_const
 !                charge_frac saved_fb_actuator fb_rescale *(psnc.na)
-!                *(psnc.ne) *(psnc.ni) *(psnc.fna) *(psnc.kinrgy)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy)
-!                *(dv.ne) *(srw.sch0) *(srw.she0) *(srw.shi0) *(srw.shn0)
+!                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fna)
+!                *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch)
+!                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
+!                *(srw.sch0) *(srw.she0) *(srw.shi0) *(srw.shn0)
 !                *(srw.skt0) *(srw.smo0) *(srw.sna0) *(pl.na)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm fb_target fb_prev fb_current
 !                fb_const charge_frac saved_fb_actuator fb_rescale
-!                *(psnc.na) *(psnc.ne) *(psnc.ni) *(psnc.fna) *(psnc.kinrgy)
+!                *(psnc.na) *(psnc.ne) *(psnc.ni) *(psnc.kinrgy)
 !                *(dv.fch) *(dv.fch_p) *(dv.fchdia) *(dv.fchin)
 !                *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
 !                *(dv.fchinert) *(dv.fchviskt) *(dv.fna) *(dv.fna_mdf)

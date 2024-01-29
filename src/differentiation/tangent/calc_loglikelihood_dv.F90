@@ -176,7 +176,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, xx, yy, ss, lll, llld, &
         ind = ind - 1
       END DO
     END DO
-! perform solve C*invC_z = zz and get log-determinant
+! solve C*invC_z = zz and get log-determinant
     CALL SOLVE_COVARIANCE_DV(nn, zz, zzd, cc, ccd, invc_z, invc_zd, &
 &                      ldetc, ldetcd, uu, icf, nbdirs)
 ! multiply invC_z = z'*invC_z
@@ -315,7 +315,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, xx, yy, ss, lll, isigma, &
         ind = ind - 1
       END DO
     END DO
-! perform solve C*invC_z = zz and get log-determinant
+! solve C*invC_z = zz and get log-determinant
     CALL SOLVE_COVARIANCE(nn, zz, cc, invc_z, ldetc, uu, icf)
 ! multiply invC_z = z'*invC_z
     invc_z = invc_z*zz

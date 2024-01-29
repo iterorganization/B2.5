@@ -27,7 +27,7 @@ MODULE B2MOD_AD_DIFFV
   INTEGER :: cvregmax
   PARAMETER (cvregmax=8)
   INTEGER :: nncf
-  PARAMETER (nncf=8)
+  PARAMETER (nncf=def_ncf)
 !
   CHARACTER(len=7), SAVE :: my_out_folder
   CHARACTER(len=256), SAVE :: filename_b2w
