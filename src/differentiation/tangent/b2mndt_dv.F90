@@ -60,7 +60,7 @@
 !                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
 !                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
 !                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn)
-!                *(st.psnc.fna) *(st.psnc.kinrgy)
+!                *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar b2recyc userfluxparm cfvla cfvsa
 !                cfalf cfdpa cfsig cfdna cfhce cfhci parm_hce parm_hci
@@ -131,9 +131,9 @@
 !                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
 !                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
 !                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
-!                *(st.psnc.nn) *(st.psnc.fna) *(st.psnc.kinrgy)
-!                (global)*rtlsa[_:_,_:_,_:_] (global)*rtlcx[_:_,_:_,_:_]
-!                (global)*rtlqa[_:_,_:_,_:_] (global)*rtlra[_:_,_:_,_:_]
+!                *(st.psnc.nn) *(st.psnc.kinrgy) (global)*rtlsa[_:_,_:_,_:_]
+!                (global)*rtlcx[_:_,_:_,_:_] (global)*rtlqa[_:_,_:_,_:_]
+!                (global)*rtlra[_:_,_:_,_:_]
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in

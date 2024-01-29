@@ -40,7 +40,7 @@
       do ii = 1, n
         dd(ii) = U(ii + (ii-1)*ii/2)
       end do
-      ! log(detC) = log(PROD(U_ii**22))
+      ! log(detC) = log(PROD(U_ii**2))
       LdetC = sum(2.0_R8*log(dd))
       
       call subend ()

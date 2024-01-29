@@ -2736,10 +2736,10 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
 &           temp7*dna_exbd(nd, :)+(switch%dna_min+dna_exb)*dvd%ne(nd, &
 &           omp(icsepomp)))+(switch%dna_min+dna_exb)*temp7*(result13*&
 &           switchd%keps_alf(nd)+switch%keps_alf*result13d(nd, :))) + (&
-&           1.0_R8-switch%keps_fac)*sig0d(nd, :)
+&           1.0_R8-switch%keps_fac)*alf0d(nd, :)
         END DO
         alf0 = switch%keps_fac*((switch%dna_min+dna_exb)*temp7*(switch%&
-&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*sig0
+&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*alf0
       END IF
       DO nd=1,nbdirs
         dkt0d(nd, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd%&
@@ -2947,7 +2947,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
         result13 = SQRT(arg13(:))
         alf0 = switch%keps_alf*(dna_exb+switch%dna_min)*dv%ne(omp(&
 &         icsepomp))*result13*switch%keps_fac + (1.0_R8-switch%keps_fac)&
-&         *sig0
+&         *alf0
       END IF
       dkt0 = switch%keps_dkt*dna0(:, ismain)*pl%na(:, ismain)
       dzt0 = switch%keps_dzt*dna0(:, ismain)*pl%na(:, ismain)
