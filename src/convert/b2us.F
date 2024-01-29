@@ -211,7 +211,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call cfwuin (nout(1), 1, idum, 'isymm')
           idum(0) = mpg%nCv
           idum(1) = mpg%nFc
-          idum(2) = ns
 
 *       ..write actual geometry info
           call write_b2fgmtry (nout(1), mpg, gm)
@@ -358,6 +357,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 
 *       ..write header for stati file
           call cfverw (nout(2), newversion)
+          idum(0) = mpg%nCv
+          idum(1) = mpg%nFc
           call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
           call cfwuch (nout(2), 120, lblps, 'label')
           call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
