@@ -63,31 +63,54 @@
 
 program b2_ual_write
 
-    use b2mod_geo
-    use b2mod_main
-    use b2mod_driver
-    use b2mod_plasma
-    use b2mod_sources
+    use b2mod_main &
+     & , only : b2mn_init
+    use b2mod_driver &
+     & , only : idx, dtim, continued, &
+     &          shot, run, username, database, version, &
+     &          old_description, old_edge_profiles, equilibrium, &
+     &          old_imas_version, old_start_time, old_end_time, &
+     &          description, imas_version, ids_end_time, new_eq_ggd, &
+     &          edge_profiles, edge_sources, edge_transport, radiation, &
+     &          batch_profiles, batch_sources
+    use b2mod_time
     use b2mod_switches
-    use b2mod_transport
+    use b2mod_version
+    use b2mod_solpstop
     use b2mod_grid_mapping
+    use b2mod_numerics_namelist
+    use b2us_io
     use b2us_geo
     use b2us_map
     use b2us_plasma
     use b2mod_ual    &
-     & , only : put_ids_edge, b25_process_ids, &
+     & , only : put_ids_edge, dealloc_ids_edge, dealloc_batch_edge, &
+     &          b25_process_ids, close_ual, &
      &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use b2mod_ual    &
      & , only : ids_summary
+    use b2mod_driver &
+     & , only : summary
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use b2mod_ual    &
      & , only : ids_divertors
+    use b2mod_driver &
+     & , only : divertors
 #endif
+    use ids_routines &  ! IGNORE
+     & , only : imas_open_env
+    use b2mod_driver &
+     & , only : treename
+    use ids_routines &  ! IGNORE
+     & , only : ids_get, ids_deallocate
+    use ids_schemas  &  ! IGNORE
+     & , only : IDS_real, IDS_REAL_INVALID
 #ifdef B25_EIRENE
+    use eirmod_parmmod
     use eirmod_comusr
     use eirmod_extrab25
 #endif
@@ -113,16 +136,17 @@ program b2_ual_write
     character(len=24) :: shot_string
     character(len=24) :: run_string
     character(len=24) :: argName
-    integer narg, cptArg
+    integer narg, cptArg, status, tmp_run, time_slice_index
     integer idum(0:2)
     character*16 usrnam
+    character*256 systemarg
     external usrnam
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
     write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
-    write (*,*) 'Starting b2mn init'
+    write(*,*) 'Starting b2mn init'
     call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
     ! call b2mn_step(0)
 #ifdef B25_EIRENE
@@ -192,22 +216,23 @@ program b2_ual_write
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
 
-    write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
+    write(0,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    write (0,*) "Checking if IMAS data-entry already exists : ", trim(database), shot, run
+    write(0,'(2a,2i8)') "Checking if IMAS data entry already exists : ", &
+      &  trim(database), shot, run
     call imas_open_env(treename, shot, run, idx, username, database, version, status)
     if (status.ne.0) then
       if (database.eq.'ITER') then
-        write(*,*) "Did not find ITER database IDS file."
-        write(*,*) "Checking if old ''iter'' case exists."
+        write(0,*) "Did not find ITER database IDS file."
+        write(0,*) "Checking if old ''iter'' case exists."
         call imas_open_env(treename, shot, run, idx, username, 'iter', version, status)
         if (status.eq.0) then
           database = 'iter'
-          write(*,*) "Old database case found."
-          write(*,*) "Will be rewritten in new location."
+          write(0,*) "Old database case found."
+          write(0,*) "Will be rewritten in new location."
         end if
       else if (database.eq.'iter') then
         call imas_open_env(treename, shot, run, idx, username, 'ITER', version, status)
@@ -216,11 +241,11 @@ program b2_ual_write
     end if
     !! If this is a time continuation run, append the new data to the IDS
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
+      write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
       if ( status.ne.0 ) then
-        write (0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
+        write(0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
         idx = 0
         continued = .false.
       else
@@ -236,13 +261,15 @@ program b2_ual_write
         old_imas_version = 'x.xx.x'
         call ids_get( idx, "dataset_description", old_description, status)
         if ( status.ne.0 ) then
-          write (0,*) 'Error opening old dataset_description IDS !'
-        else if (associated(old_description%dd_version)) then
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+          write(0,*) 'Error opening old dataset_description IDS !'
+        else if (associated(old_description%ids_properties% &
+                        &   version_put%data_dictionary)) then
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
           old_start_time = old_description%simulation%time_begin
           old_end_time = old_description%simulation%time_end
 #endif
-          old_imas_version = old_description%dd_version(1)
+          old_imas_version = old_description%ids_properties% &
+                          &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
         end if
         continued = run_start_time.eq.IDS_REAL_INVALID .and. &
@@ -253,31 +280,31 @@ program b2_ual_write
         if (continued.or.database.eq.'iter') then
           if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
             if (.not.streql(old_imas_version,imas_version)) then
-              write(*,*) &
-               & 'Old IMAS data-entry was written using Data Dictionary version '// &
+              write(0,*) &
+               & 'Old IMAS data entry was written using Data Dictionary version '// &
                &  trim(old_imas_version)//'.'
-              write(*,*) &
+              write(0,*) &
                & 'Recreating using Data Dictionary version '// &
                &  trim(imas_version)//'.'
             end if
             if (database.eq.'iter') &
-              &  write(*,*) 'IDS file will be moved to ITER database.'
+              &  write(0,*) 'IDS file will be moved to ITER database.'
             call close_ual(idx)
             idx = 0
 !xpb Copy the IDS to a temporary location with the new DD and then bring it back
             tmp_run = run
             if (database.ne.'iter') tmp_run = run + 1000
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
-            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-               & 'idscp --setDatasetVersion'//                 &
-               &       ' -si ',shot,' -ri ',run,               &
-               &       ' -so ',shot,' -ro ',tmp_run,           &
-               &       ' -d ',trim(database),' -u ',trim(username)
+            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')  &
+              & 'idscp --setDatasetVersion'//                 &
+              &       ' -si ',shot,' -ri ',run,               &
+              &       ' -so ',shot,' -ro ',tmp_run,           &
+              &       ' -d ',trim(database),' -u ',trim(username)
 #else
-            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-               & 'idscp -si ',shot,' -ri ',run,                &
-               &      ' -so ',shot,' -ro ',tmp_run,            &
-               &      ' -d ',trim(database),' -u ',trim(username)
+            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')  &
+              & 'idscp -si ',shot,' -ri ',run,                &
+              &      ' -so ',shot,' -ro ',tmp_run,            &
+              &      ' -d ',trim(database),' -u ',trim(username)
 #endif
             if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
@@ -309,7 +336,7 @@ program b2_ual_write
              &                 username, database, version, status)
           end if
           if (continued) then
-            write (0,*) "Appending a new time slice at t = ", tim, " s."
+            write(0,*) "Appending a new time slice at t = ", tim, " s."
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
@@ -320,7 +347,10 @@ program b2_ual_write
              &  summary, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-             &  numerics, old_start_time, run_end_time, &
+             &  numerics, &
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+            &   old_start_time, run_end_time, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
              &  divertors, &
@@ -333,7 +363,7 @@ program b2_ual_write
         end if
       end if
     else
-      write (0,*) "No previous IMAS data-entry found, a new one will be created"
+      write(0,*) "No previous IMAS data entry found, a new one will be created"
       idx = 0
       if (database.eq.'iter') database = 'ITER'
     end if
@@ -345,7 +375,10 @@ program b2_ual_write
          &  summary, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-         &  numerics, run_start_time, run_end_time, &
+         &  numerics, &
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+         &  run_start_time, run_end_time, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
          &  divertors, &
