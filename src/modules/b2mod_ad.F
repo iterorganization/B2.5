@@ -10,7 +10,7 @@
       integer CVREGMAX
       parameter (CVREGMAX=8)
       integer nncf
-      parameter (nncf=8)
+      parameter (nncf=DEF_NCF)
 
       character(7), save :: my_out_folder
 #ifdef WG_DEBUG

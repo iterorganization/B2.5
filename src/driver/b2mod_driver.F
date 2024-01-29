@@ -1994,14 +1994,15 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
-! The 'FIXED_POINT' compilation option here and below transforms the time-stepping loop into
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are 
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
 ! $AD FP-LOOP "state"
-      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
+      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim) .and.
+     &          (.not.quit))
 #else
     1 continue
 #endif
@@ -2317,6 +2318,7 @@ c new CDF movie option
      .                  geo,mpg,state,switch)
         endif
 *    ..loop
+#endif
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
 #ifdef _OPENMP
@@ -2349,7 +2351,6 @@ c new CDF movie option
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
         end if
-#endif
         res_max = 0.0_R8
         do is = 0, ns-1
           if (any(solveco(is,:)))
@@ -2379,10 +2380,13 @@ c new CDF movie option
      &        (state%diag%aresco(ismain)*
      &                           min_aresco).le.(min_aresco*min_aresco)  !jwk
         endif                                                            !jwk
-        quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
+#endif
+        quit=quitexist_.or.quitexist.or.                                 !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &       b2mndr_elapsed.gt.0.0_R8).or.
+     &       b2mndr_elapsed.gt.0.0_R8)
+#ifndef FIXED_POINT
+     &      .or. quit_residual.or.
      2      (etim.gt.switch%b2mndr_stim.and.tim.ge.etim.and.
      &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
@@ -2516,9 +2520,9 @@ c new CDF movie option
 #endif
 #ifdef FIXED_POINT
         write(*,*) 'MAX RESIDUAL ',res_max
+        primal_iterations = itim
 *   ..end loop
       end do
-      primal_iterations = itim
 *   ..call cost function
       call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
      &    state_ext, switch%BoRiS, J)
