@@ -12,7 +12,8 @@
 !
 !
 !
-SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb)
+SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb, &
+& ncoss)
   USE B2MOD_TYPES
   USE B2MOD_INDIRECT
   USE B2US_MAP_DIFFV
@@ -21,12 +22,12 @@ SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb)
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: indss, ndfc, idb
-  INTEGER, INTENT(INOUT) :: inbc, bcl
+  INTEGER, INTENT(INOUT) :: inbc, bcl, ncoss
   INTEGER, INTENT(INOUT) :: fc(ndfc)
   REAL(r8), INTENT(INOUT) :: fcor(ndfc)
   TYPE(MAPPING), INTENT(INOUT) :: m
 !
-  INTEGER :: ncoss, icoss, ifc1, i, imn, imx, ncout, istart
+  INTEGER :: icoss, ifc1, i, imn, imx, ncout, istart
   INTEGER, ALLOCATABLE :: fcss(:), indfc(:)
   LOGICAL, ALLOCATABLE :: lout(:)
   LOGICAL, ALLOCATABLE :: lfchit(:)

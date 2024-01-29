@@ -902,12 +902,13 @@ CONTAINS
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: md0
     LOGICAL, INTENT(IN) :: dotest
     INTEGER :: is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
-    INTEGER :: ian, ien
+    INTEGER :: ian, ien, nfaces
+    CHARACTER(len=3) :: ss
 !
     LOGICAL :: file_ok, todo, assigned
     LOGICAL, ALLOCATABLE :: done(:)
     CHARACTER(len=260) :: filename
-    EXTERNAL FIND_FILE, XERRAB
+    EXTERNAL FIND_FILE, XERRAB, CHECK_BOUNDARY_LABELS_NODIFF
     EXTERNAL XERRAB_DV
     INTRINSIC TRIM
     INTRINSIC COUNT
@@ -940,6 +941,7 @@ CONTAINS
     acchar = bcchar
     abcstart = bcstart
     abcend = bcend
+! now check that all boundary faces are assigned to a BC
 !
     IF (nbc .GT. 0) THEN
 !
@@ -959,8 +961,12 @@ CONTAINS
             indss = bcstart(ib) + iss - 1
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
+            nfaces = 0
             CALL FIND_FACES_NODIFF(indss, inbc, nbcfc, m%mxnbc, m%bcfc, &
-&                            m%bcfcor, m, idb)
+&                            m%bcfcor, m, idb, nfaces)
+            WRITE(ss, '(I0)') indss
+            CALL XERTST(nfaces .GT. 0, &
+&                 'No faces found for boundary face label = '//ss)
           END DO
 ! iss
           m%bcfcp(ib, 2) = nbcfc
@@ -971,6 +977,9 @@ CONTAINS
       CLOSE(idb) 
     END IF
 !      call bc_to_struct (m)
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nbc, bcstart(1:nbc), bcend(1:&
+&                               nbc), .true.)
 !
     IF (ANY(bc_list_size .GT. 0)) CALL XERRAB(&
 &                  'read_b2mod_boundary_namelist_us -- bc_list_size > 0'&
@@ -1066,12 +1075,13 @@ CONTAINS
     TYPE(MAPPING), INTENT(INOUT) :: m
     LOGICAL, INTENT(IN) :: dotest
     INTEGER :: is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
-    INTEGER :: ian, ien
+    INTEGER :: ian, ien, nfaces
+    CHARACTER(len=3) :: ss
 !
     LOGICAL :: file_ok, todo, assigned
     LOGICAL, ALLOCATABLE :: done(:)
     CHARACTER(len=260) :: filename
-    EXTERNAL FIND_FILE, XERRAB
+    EXTERNAL FIND_FILE, XERRAB, CHECK_BOUNDARY_LABELS_NODIFF
     INTRINSIC TRIM
     INTRINSIC COUNT
     INTRINSIC ANY
@@ -1096,6 +1106,7 @@ CONTAINS
     acchar = bcchar
     abcstart = bcstart
     abcend = bcend
+! now check that all boundary faces are assigned to a BC
 !
     IF (nbc .GT. 0) THEN
 !
@@ -1115,8 +1126,12 @@ CONTAINS
             indss = bcstart(ib) + iss - 1
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
+            nfaces = 0
             CALL FIND_FACES_NODIFF(indss, inbc, nbcfc, m%mxnbc, m%bcfc, &
-&                            m%bcfcor, m, idb)
+&                            m%bcfcor, m, idb, nfaces)
+            WRITE(ss, '(I0)') indss
+            CALL XERTST(nfaces .GT. 0, &
+&                 'No faces found for boundary face label = '//ss)
           END DO
 ! iss
           m%bcfcp(ib, 2) = nbcfc
@@ -1127,6 +1142,9 @@ CONTAINS
       CLOSE(idb) 
     END IF
 !      call bc_to_struct (m)
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nbc, bcstart(1:nbc), bcend(1:&
+&                               nbc), .true.)
 !
     IF (ANY(bc_list_size .GT. 0)) CALL XERRAB(&
 &                  'read_b2mod_boundary_namelist_us -- bc_list_size > 0'&
@@ -1375,7 +1393,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: nx, ny, ns
     TYPE(MAPPING), INTENT(INOUT) :: m
     TYPE(GEOMETRY), INTENT(INOUT) :: g
-    INTEGER :: ib, ibc, is, inbc, noss, iss, indss, i, ifc, icv, idb
+    INTEGER :: ib, ibc, is, inbc, noss, iss, indss, i, ifc, icv, idb, &
+&   nfaces
     INTEGER :: bcs(nbc), bce(nbc), bcl(nbc)
     INTEGER :: minlbl(nbc), maxlbl(nbc)
     INTEGER, ALLOCATABLE :: ifchit(:)
@@ -1529,7 +1548,7 @@ CONTAINS
           WRITE(*, *) ' surface index ', indss
 !  find all faces belonging to surface structure INDSS
           CALL FIND_FACES_NODIFF(indss, inbc, bcl(ib), m%mxnbc, m%bcfc, &
-&                          m%bcfcor, m, idb)
+&                          m%bcfcor, m, idb, nfaces)
         END DO
 ! iss
         m%bcfcp(ib, 2) = bcl(ib)
@@ -1541,7 +1560,11 @@ CONTAINS
 !
     acchar(1:nbc) = lchar(1:nbc)
     abcstart(1:nbc) = minlbl(1:nbc)
+! now check that all boundary faces are assigned to a BC
     abcend(1:nbc) = maxlbl(1:nbc)
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nbc, abcstart(1:nbc), abcend(1:&
+&                               nbc), .true.)
 !
     IF (inbc .NE. m%ncg) THEN
       WRITE(*, *) 'inbc, nCg ', inbc, m%ncg

@@ -57,7 +57,7 @@
 !                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza) *(st.rt.rz2)
 !                *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra)
 !                *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.fna) *(st.psnc.kinrgy)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm cfvla cfvsa cfalf cfdpa
 !                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
@@ -128,8 +128,7 @@
 !                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
 !                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
 !                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
-!                *(st.psnc.nn) *(st.psnc.fna) *(st.psnc.kinrgy)
-!                (global)b2recyc[1:nstraid,0:nsdmax-1]
+!                *(st.psnc.nn) *(st.psnc.kinrgy) (global)b2recyc[1:nstraid,0:nsdmax-1]
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in

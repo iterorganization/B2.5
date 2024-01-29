@@ -2,11 +2,10 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2usr_cost_function in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *b2voloncf *b2data *b2dataoncf
-!                j
-!   with respect to varying inputs: *b2voloncf *b2data *b2dataoncf
-!                corr_length sigma shift *par_opt_phys mean *(st.pl.na)
-!                *(st.pl.te) *(st.pl.ti) *(st.dv.fht) *(st.dv.ne)
+!   variations   of useful results: j
+!   with respect to varying inputs: corr_length sigma shift *par_opt_phys
+!                mean *(st.pl.na) *(st.pl.te) *(st.pl.ti) *(st.dv.fht)
+!                *(st.dv.ne)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
 !                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
@@ -124,6 +123,11 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   DO nd=1,nbdirsmax
     voldd(nd, :) = 0.D0
   END DO
+  IF (ALLOCATED(b2voloncfd)) THEN
+    DO nd=1,nbdirsmax
+      b2voloncfd(nd, :, :) = 0.D0
+    END DO
+  END IF
   DO icf=1,ncf
     IF (cfread(icf)) THEN
       ic1 = mpg%cfregp(icf, 1)
@@ -146,6 +150,11 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         b2datad(nd, 1:n1) = 0.D0
       END DO
       b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      IF (ALLOCATED(b2datad)) THEN
+        DO nd=1,nbdirsmax
+          b2datad(nd, :) = 0.D0
+        END DO
+      END IF
       CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &                b2data(1:n1), b2datad(:, 1:n1), b2voloncf(icf, 1:n2), &
 &                b2voloncfd(:, icf, 1:n2), curr_shift, curr_shiftd, &
@@ -167,6 +176,16 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 !
   j = 0.0_R8
   IF (ncf .GT. 0) THEN
+    IF (ALLOCATED(b2datad)) THEN
+      DO nd=1,nbdirsmax
+        b2datad(nd, :) = 0.D0
+      END DO
+    END IF
+    IF (ALLOCATED(b2dataoncfd)) THEN
+      DO nd=1,nbdirsmax
+        b2dataoncfd(nd, :) = 0.D0
+      END DO
+    END IF
     DO nd=1,nbdirsmax
       jd(nd, :) = 0.D0
     END DO

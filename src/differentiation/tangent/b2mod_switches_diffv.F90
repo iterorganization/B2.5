@@ -2075,7 +2075,7 @@ CONTAINS
 &         'b2tfhi_fsigkt must be .ge. 0.0')
     CALL XERTST(0.0_R8 .LE. s%b2tfhi_fkt_hie, &
 &         'b2tfhi_fkt_hie must be .ge. 0.0')
-    CALL XERTST(0.0_R8 .LE. s%keps_inc, 'keps_inc must be .ge. 0.0')
+    CALL XERTST(1.0_R8 .LE. s%keps_inc, 'keps_inc must be .ge. 1.0')
     CALL XERTST(0.0_R8 .LE. s%keps_fac, 'keps_fac must be .ge. 0.0')
     CALL XERTST(0 .LE. s%b2sikt_local .AND. s%b2sikt_local .LE. 1, &
 &         'b2sikt_local must be either 0 or 1')

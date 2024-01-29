@@ -1102,9 +1102,10 @@ CONTAINS
     INTEGER :: ns
     LOGICAL :: dotest
     INTEGER :: is, ist, ix, istra, i, j, k, n, ii(1), itrack, noss, &
-&   instra, iss, indss, idb, nrcl
+&   instra, iss, indss, idb, nrcl, nfaces
     REAL(kind=r8) :: hlp
     LOGICAL :: file_ok
+    CHARACTER(len=3) :: ss
     CHARACTER(len=16) :: hlp_frm
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE
@@ -1147,6 +1148,7 @@ CONTAINS
       CALL XERTST(.NOT.dotest, &
 &           'Did not find expected b2.neutrals.parameters file!')
     END IF
+! now check that all boundary faces are assigned to a stratum
     IF (nstrai .GT. 0) THEN
 !xpb  In Eirene facelift the time stratum is handled separately
 !xpb  On the B2 side, use nstrat as nstrai + the time stratum
@@ -1175,10 +1177,14 @@ CONTAINS
           noss = rcend(istra) - rcstart(istra) + 1
           DO iss=1,noss
             indss = rcstart(istra) + iss - 1
+            nfaces = 0
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
             CALL FIND_FACES_NODIFF(indss, instra, nrcl, m%mxnrc, m%rcfc&
-&                            , m%rcfcor, m, idb)
+&                            , m%rcfcor, m, idb, nfaces)
+            WRITE(ss, '(I0)') indss
+            CALL XERTST(nfaces .GT. 0, &
+&                 'No faces found for neutrals face label = '//ss)
           END DO
 ! iss
           m%rcfcp(istra, 2) = nrcl
@@ -1189,6 +1195,9 @@ CONTAINS
       END DO
       CLOSE(idb) 
     END IF
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nstrai, rcstart(1:nstrai), &
+&                               rcend(1:nstrai), .false.)
 !
     IF (ANY(rc_list_size .GT. 0)) CALL XERRAB(&
 &                        'read_neutrals_namelist_us -- rc_list_size > 0'&
@@ -1489,9 +1498,10 @@ CONTAINS
     INTEGER :: ns
     LOGICAL :: dotest
     INTEGER :: is, ist, ix, istra, i, j, k, n, ii(1), itrack, noss, &
-&   instra, iss, indss, idb, nrcl
+&   instra, iss, indss, idb, nrcl, nfaces
     REAL(kind=r8) :: hlp
     LOGICAL :: file_ok
+    CHARACTER(len=3) :: ss
     CHARACTER(len=16) :: hlp_frm
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE
@@ -1522,6 +1532,7 @@ CONTAINS
       CALL XERTST(.NOT.dotest, &
 &           'Did not find expected b2.neutrals.parameters file!')
     END IF
+! now check that all boundary faces are assigned to a stratum
     IF (nstrai .GT. 0) THEN
 !xpb  In Eirene facelift the time stratum is handled separately
 !xpb  On the B2 side, use nstrat as nstrai + the time stratum
@@ -1550,10 +1561,14 @@ CONTAINS
           noss = rcend(istra) - rcstart(istra) + 1
           DO iss=1,noss
             indss = rcstart(istra) + iss - 1
+            nfaces = 0
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
             CALL FIND_FACES_NODIFF(indss, instra, nrcl, m%mxnrc, m%rcfc&
-&                            , m%rcfcor, m, idb)
+&                            , m%rcfcor, m, idb, nfaces)
+            WRITE(ss, '(I0)') indss
+            CALL XERTST(nfaces .GT. 0, &
+&                 'No faces found for neutrals face label = '//ss)
           END DO
 ! iss
           m%rcfcp(istra, 2) = nrcl
@@ -1564,6 +1579,9 @@ CONTAINS
       END DO
       CLOSE(idb) 
     END IF
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nstrai, rcstart(1:nstrai), &
+&                               rcend(1:nstrai), .false.)
 !
     IF (ANY(rc_list_size .GT. 0)) CALL XERRAB(&
 &                        'read_neutrals_namelist_us -- rc_list_size > 0'&
@@ -1965,10 +1983,12 @@ CONTAINS
     USE B2MOD_INDIRECT
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nx, ny, ns, istra, istrac, instra, noss, iss, indss, idb
+    INTEGER :: nx, ny, ns, istra, istrac, instra, noss, iss, indss, idb&
+&   , nfaces
     INTEGER :: rcs(nstrat), rce(nstrat), rcl(nstrat)
     INTEGER :: minlbl(nstrat), maxlbl(nstrat)
     CHARACTER(len=1) :: lchar(nstrat)
+    CHARACTER(len=3) :: ss
     TYPE(MAPPING), INTENT(INOUT) :: m
     TYPE(GEOMETRY), INTENT(INOUT) :: g
     INTRINSIC COUNT
@@ -2148,10 +2168,14 @@ CONTAINS
         noss = rcend(istra) - rcstart(istra) + 1
         DO iss=1,noss
           indss = rcstart(istra) + iss - 1
+          nfaces = 0
           WRITE(*, *) ' surface index ', indss
 !  find all faces belonging to surface structure INDSS
           CALL FIND_FACES_NODIFF(indss, instra, rcl(istra), m%mxnrc, m%&
-&                          rcfc, m%rcfcor, m, idb)
+&                          rcfc, m%rcfcor, m, idb, nfaces)
+          WRITE(ss, '(I0)') indss
+          CALL XERTST(nfaces .GT. 0, &
+&               'No faces found for neutrals face label = '//ss)
         END DO
 ! iss
         m%rcfcp(istra, 2) = rcl(istra)
@@ -2170,7 +2194,11 @@ CONTAINS
     result1 = HUGE(1)
     WHERE (maxlbl .EQ. -result1) maxlbl = 0
     arcstart(1:nstrai) = minlbl(1:nstrai)
+! now check that all boundary faces are assigned to a stratum
     arcend(1:nstrai) = maxlbl(1:nstrai)
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nstrai, arcstart(1:nstrai), &
+&                               arcend(1:nstrai), .false.)
 !
     IF (crcstra(nstrai) .EQ. 'T') THEN
       arcstart(nstrai) = 0
