@@ -188,10 +188,11 @@ CONTAINS
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
 &   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean&
-&   , curr_ind
+&   , curr_ind, nfaces
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
     CHARACTER(len=1) :: str
+    CHARACTER(len=3) :: ss
     CHARACTER(len=256) :: cffile, filename
     REAL(kind=r8) :: dummy
     EXTERNAL FIND_FILE
@@ -452,13 +453,18 @@ CONTAINS
               noss = cfend(icf) - cfstart(icf) + 1
               DO iss=1,noss
                 indss = cfstart(icf) + iss - 1
+                nfaces = 0
                 WRITE(*, *) ' Defining cost function ', icf
                 WRITE(*, *) ' surface label ', indss
 ! find all faces belonging to surface structure INDSS
                 CALL FIND_FACES_NODIFF(indss, incf, ncffc, m%mxncf, m%&
-&                                cfreg, m%cffcor, m, idb)
+&                                cfreg, m%cffcor, m, idb, nfaces)
+                WRITE(ss, '(I0)') indss
+                CALL XERTST(nfaces .GT. 0, &
+&                     'No faces found for cost function face label = '//&
+&                     ss)
               END DO
-! iss	
+! iss
               m%cfregp(icf, 2) = ncffc
 ! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
               IF (m%cfoncv(icf)) THEN
@@ -1043,10 +1049,11 @@ CONTAINS
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
 &   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean&
-&   , curr_ind
+&   , curr_ind, nfaces
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
     CHARACTER(len=1) :: str
+    CHARACTER(len=3) :: ss
     CHARACTER(len=256) :: cffile, filename
     REAL(kind=r8) :: dummy
     EXTERNAL FIND_FILE
@@ -1303,13 +1310,18 @@ CONTAINS
               noss = cfend(icf) - cfstart(icf) + 1
               DO iss=1,noss
                 indss = cfstart(icf) + iss - 1
+                nfaces = 0
                 WRITE(*, *) ' Defining cost function ', icf
                 WRITE(*, *) ' surface label ', indss
 ! find all faces belonging to surface structure INDSS
                 CALL FIND_FACES_NODIFF(indss, incf, ncffc, m%mxncf, m%&
-&                                cfreg, m%cffcor, m, idb)
+&                                cfreg, m%cffcor, m, idb, nfaces)
+                WRITE(ss, '(I0)') indss
+                CALL XERTST(nfaces .GT. 0, &
+&                     'No faces found for cost function face label = '//&
+&                     ss)
               END DO
-! iss	
+! iss
               m%cfregp(icf, 2) = ncffc
 ! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
               IF (m%cfoncv(icf)) THEN
