@@ -3101,13 +3101,12 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         WHERE (.NOT.temp8 .EQ. 0.D0) plb%te = plb%te - temp8*switch%&
 &           keps_alf*(switch%dna_min+dna_exb)*temp1*switch%keps_fac*&
 &           alf0b/(pl%te*2.0*temp9)
-        sig0b = sig0b + (1.0_R8-switch%keps_fac)*alf0b
+        alf0b = (1.0_R8-switch%keps_fac)*alf0b
         switchb%keps_alf = switchb%keps_alf + SUM((switch%dna_min+&
 &         dna_exb)*tempb2)*temp1
         dna_exbb = dna_exbb + switch%keps_alf*temp1*tempb2
         dvb%ne(omp(icsepomp)) = dvb%ne(omp(icsepomp)) + SUM((switch%&
 &         dna_min+dna_exb)*tempb2)*switch%keps_alf
-        alf0b = 0.D0
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
@@ -3413,7 +3412,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 &         1.0_R8-switch%keps_fac)*sig0
       IF (switch%keps_alf .GT. 0.0_R8) alf0 = switch%keps_alf*(dna_exb+&
 &         switch%dna_min)*dv%ne(omp(icsepomp))*SQRT(qe/pl%te)*switch%&
-&         keps_fac + (1.0_R8-switch%keps_fac)*sig0
+&         keps_fac + (1.0_R8-switch%keps_fac)*alf0
       dkt0 = switch%keps_dkt*dna0(:, ismain)*pl%na(:, ismain)
       dzt0 = switch%keps_dzt*dna0(:, ismain)*pl%na(:, ismain)
     END IF

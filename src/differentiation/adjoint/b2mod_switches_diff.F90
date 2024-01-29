@@ -537,6 +537,7 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: b2stbc_feedback
       INTEGER :: med_style
       INTEGER :: b2optim_save_states
+      INTEGER :: b2optim_read_diff_state
   END TYPE SWITCHES
   TYPE, PUBLIC :: SWITCHES_DIFF
       REAL(kind=r8) :: fhe_vis_par
@@ -1145,6 +1146,7 @@ CONTAINS
 !
 ! Optimization
     s%b2optim_save_states = 0
+    s%b2optim_read_diff_state = 0
 !
     RETURN
   END SUBROUTINE SET_DEFAULTS_SWITCHES
@@ -1743,6 +1745,7 @@ CONTAINS
 !
 ! Optimization
     CALL IPGETI('b2optim_save_states', s%b2optim_save_states)
+    CALL IPGETI('b2optim_read_diff_state', s%b2optim_read_diff_state)
 !
     RETURN
   END SUBROUTINE READ_SWITCHES
@@ -2067,7 +2070,7 @@ CONTAINS
 &         'b2tfhi_fsigkt must be .ge. 0.0')
     CALL XERTST(0.0_R8 .LE. s%b2tfhi_fkt_hie, &
 &         'b2tfhi_fkt_hie must be .ge. 0.0')
-    CALL XERTST(0.0_R8 .LE. s%keps_inc, 'keps_inc must be .ge. 0.0')
+    CALL XERTST(1.0_R8 .LE. s%keps_inc, 'keps_inc must be .ge. 1.0')
     CALL XERTST(0.0_R8 .LE. s%keps_fac, 'keps_fac must be .ge. 0.0')
     CALL XERTST(0 .LE. s%b2sikt_local .AND. s%b2sikt_local .LE. 1, &
 &         'b2sikt_local must be either 0 or 1')
@@ -2176,6 +2179,8 @@ CONTAINS
 ! Optimization
     CALL XERTST(s%b2optim_save_states .GE. 0, &
 &         'faulty parameter b2optim_save_states')
+    CALL XERTST(s%b2optim_read_diff_state .GE. 0, &
+&         'faulty parameter b2optim_read_diff_state')
 !
     RETURN
   END SUBROUTINE CHECK_VALUES_SWITCHES

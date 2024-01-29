@@ -116,12 +116,13 @@ MODULE B2MOD_DRIVER_DIFF
   INTEGER, SAVE :: boundary_sources=0
   INTEGER, SAVE :: equation_sources=0
   REAL(kind=r4) :: cpuval, cpustart, cpuinit
-  REAL(kind=r4) :: cpustartb, cpustartb0
+  REAL(kind=r4) :: cpuvalb, cpustartb, cpuinitb
   REAL(kind=r8) :: na_min, na_new, dtim, etim, b2mndr_cpu, &
 & b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit, density_rescale&
 & , ne_wanted, ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, &
 & factor, ixfb, iyfb, ax, ay
-  REAL(kind=r8) :: na_minb, na_newb, dtimb, dtimb0
+  REAL(kind=r8) :: na_minb, na_newb, dtimb, dtimb0, etimb, b2mndr_cpub, &
+& b2mndr_elapsedb, elapsedinitb
 !WG_TODO      real (kind=R8), allocatable ::
 !WG_TODO     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
 !WG_TODO     *  rza0(:,:), rz20(:,:), rpt0(:,:), rpi0(:,:)
@@ -1985,7 +1986,7 @@ MODULE B2MOD_DRIVER_DIFF
 &     kt_eps, zt_eps, sput_frc, sput_phys, delta_min, dt_change_inc, &
 &     delta_max, dt_change_dec, no_solve, dt_min, dt_max, te_hot, &
 &     ne_hot_frac, external_species, b2mndr_elapsed
-  SAVE dtimb, na_minb, na_newb
+  SAVE dtimb, etimb, na_minb, na_newb, b2mndr_cpub, b2mndr_elapsedb
   SAVE delta_cdfmovie_time, save_cdfmovie_time
   SAVE delta_plasma_time, save_plasma_time
   SAVE min_areshe, min_areshi, min_aresco, res_quit, res_max
@@ -5140,11 +5141,11 @@ CONTAINS
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
 !                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
-!                parm_sig parm_dna tdata sigma shift *par_opt_phys
-!                mean j switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                parm_sig parm_dna tdata corr_length sigma shift
+!                *par_opt_phys mean j switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
@@ -5159,8 +5160,8 @@ CONTAINS
 !                cfdna:(loc) cfhce:(loc) cfhci:(loc) parm_hce:out
 !                parm_hci:out parm_vla:out parm_vsa:out parm_alf:out
 !                parm_dpa:out parm_sig:out parm_dna:out tdata:out
-!                sigma:out shift:out *par_opt_phys:out mean:out
-!                int4l:(loc) int1l:(loc) int2l:(loc) int3l:(loc)
+!                corr_length:out sigma:out shift:out *par_opt_phys:out
+!                mean:out int4l:(loc) int1l:(loc) int2l:(loc) int3l:(loc)
 !                int0l:(loc) fb_target:(loc) fb_prev:(loc) fb_current:(loc)
 !                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
 !                fb_rescale:(loc) j:in-zero geo.cvbb:(loc) switch.keps_cd:out
@@ -5451,8 +5452,18 @@ CONTAINS
     INTRINSIC CPU_TIME
     EXTERNAL EPOCH_SECONDS
     REAL(kind=r8) :: EPOCH_SECONDS
-    INTRINSIC ANY
+    INTRINSIC REAL
     INTRINSIC MAX
+    INTRINSIC MIN
+    INTRINSIC ANY
+    REAL(r8) :: x1
+    REAL(r8) :: y1
+    REAL(kind=r8) :: y2
+    REAL(kind=r8) :: y3
+    REAL(r8) :: y4
+    REAL(r8) :: min1
+    REAL(kind=r8) :: min2
+    REAL(kind=r8) :: min3
     INTEGER :: branch
     INTEGER :: ITERCOUNT
     REAL(kind=r8) :: cumul
@@ -5469,26 +5480,28 @@ CONTAINS
 !   ..no error so far
 !   ..initialise counters
     itim = 0
+    cpuval = 0.0
     stack_ptr = 0
     quit = .false.
 !srv 13.04.11
 !jwk
     res_max = 10.0_R8*res_quit
-    elapsedval = 0.0_R8
-    elapsedinit=epoch_seconds()
+    elapsedinit = EPOCH_SECONDS()
+    call cpu_time(cpuinit)
 !wdk  set some integers
     ncv = mpg%ncv
     nfc = mpg%nfc
     nvx = mpg%nvx
 !
     WRITE(*, *) 'b2mndr_1, start: nCv = ', ncv
-! The 'FIXED_POINT' compilation option here and below transforms the time-stepping loop into
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the 1 version some parts of the standard time-stepping are 
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim .AND. (.NOT.QUIT))
+    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim .AND. (.NOT.&
+&             quit))
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &     'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr&
 &     , quit
@@ -5547,12 +5560,78 @@ CONTAINS
 &                  ismain0, state%rt%nscx, state%rt%nscxmax, state%rt%&
 &                  iscx, itim, dtim, ntim, switch, geo, mpg, state, &
 &                  state_ext, ierr)
+!     manually inserted call to cost function, for output purposes only
+      call b2usr_cost_function_nodiff(ncv, nfc, nvx, ns, geo, mpg, state,&
+&                             state_ext, switch%boris, j)
+      do icf=1,ncf
+        write(ss, '(I1)') icf
+        write(*, *) 'Cost function value '//ss//': ', j(icf)
+      end do
 !    ..increment
       itim = itim + 1
       itim_plas = itim_plas + 1
       IF (no_solve .LE. 0) tim = tim + dtim
       WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, &
 &     ' TIME ', tim, ' NTIM ', ntim, ' DTIM ', dtim
+!srv 18.05.09 13.04.11
+      INQUIRE(file='_quit', exist=quitexist_) 
+      INQUIRE(file='.quit', exist=quitexist) 
+      CALL CPU_TIME(cpuval)
+      elapsedval = EPOCH_SECONDS()
+      IF (b2mndr_cpu .GT. 0.0_R8) THEN
+        x1 = (ntim-itim)*REAL(cpuval-cpustart, r8)
+        y4 = b2mndr_cpu - REAL(cpuval - cpuinit, r8)
+        IF (0.0_R8 .LT. y4) THEN
+          y1 = y4
+        ELSE
+          y1 = 0.0_R8
+        END IF
+        IF (x1 .GT. y1) THEN
+          min1 = y1
+        ELSE
+          min1 = x1
+        END IF
+!srv 18.05.09
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining CPU time (s) =', min1
+      ELSE IF (b2mndr_elapsed .GT. 0.0_R8) THEN
+        IF (0.0_R8 .LT. b2mndr_elapsed - (elapsedval-elapsedinit)) THEN
+          y2 = b2mndr_elapsed - (elapsedval-elapsedinit)
+        ELSE
+          y2 = 0.0_R8
+        END IF
+        IF ((ntim-itim)*(elapsedval-elapsedstart) .GT. y2) THEN
+          min2 = y2
+        ELSE
+          min2 = (ntim-itim)*(elapsedval-elapsedstart)
+        END IF
+!srv 18.05.09
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining elapsed time (s) =', min2
+      ELSE IF (etim .NE. 0.0_R8 .AND. etim .GT. switch%b2mndr_stim) THEN
+        IF (0.0_R8 .LT. (etim-tim)/dtim - (elapsedval-elapsedstart)) &
+&       THEN
+          y3 = (etim-tim)/dtim - (elapsedval-elapsedstart)
+        ELSE
+          y3 = 0.0_R8
+        END IF
+        IF ((ntim-itim)*(elapsedval-elapsedstart) .GT. y3) THEN
+          min3 = y3
+        ELSE
+          min3 = (ntim-itim)*(elapsedval-elapsedstart)
+        END IF
+!srv 18.05.09
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining elapsed time (s) =', min3
+      ELSE
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining elapsed time (s) =', (ntim-itim)*(&
+&       elapsedval-elapsedstart)
+      END IF
       res_max = 0.0_R8
       DO is=0,ns-1
         IF (ANY(solveco(is, :))) THEN
@@ -5612,19 +5691,19 @@ CONTAINS
           res_max = res_max
         END IF
       END IF
+!jwk !srv 13.04.11
+      quit = ((quitexist_ .OR. quitexist) .OR. (cpuval - cpuinit .GT. &
+&       b2mndr_cpu .AND. b2mndr_cpu .GT. 0.0_R8)) .OR. (elapsedval - &
+&       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
+&       )
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      elapsedval=epoch_seconds()
-      inquire(file='_quit',exist=quitexist_)
-      inquire(file='.quit',exist=quitexist)
-      quit = quitexist_.or.quitexist
-      quit = quit .or. (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.&
-     &                b2mndr_elapsed.gt.0.0_R8)
+      primal_iterations = itim
     END DO
-    primal_iterations = itim
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &   'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr, &
 &   quit
 !
+    elapsedstart = EPOCH_SECONDS()
 !
 !
 !    ..guess the next state
@@ -6438,9 +6517,6 @@ CONTAINS
     WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, ' TIME '&
 &   , tim, ' NTIM ', ntim, ' DTIM ', dtim
     WRITE(*, *) 'MAX RESIDUAL ', res_max
-      inquire(file='_quit',exist=quitexist_)
-      inquire(file='.quit',exist=quitexist)
-      quit = quitexist_.or.quitexist
 !   ..end loop
 !   ..call cost function
     IF (ALLOCATED(b2dataoncf)) THEN
@@ -6754,7 +6830,6 @@ CONTAINS
     state_extb0 = state_extb
     switchb0 = switchb
     stateb = stateb1
-    cpustartb0 = cpustartb
     res_quitb0 = res_quitb
     dtimb0 = dtimb
     toldb0 = toldb
@@ -7940,15 +8015,31 @@ CONTAINS
       stateb1%update%kt = stateb1%update%kt + stateb%update%kt
       stateb1%update%zt = stateb1%update%zt + stateb%update%zt
       call calc_res_fp_diff(nCv, ns, stateb1, stateb0, cumul)
-      ITERCOUNT = ITERCOUNT + 1
-      write(*,*) 'GRADIENT ITERATION ',ITERCOUNT
-      write(*,*) 'GRADIENT MAX RES ',cumul
+      call cpu_time(cpuval)
       elapsedval=epoch_seconds()
       inquire(file='_quit',exist=quitexist_)
       inquire(file='.quit',exist=quitexist)
-      quit = quitexist_.or.quitexist
-      quit = quit .or. (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.&
-     &                b2mndr_elapsed.gt.0.0_R8)
+      quit = ((quitexist_ .OR. quitexist) .OR. (cpuval - cpuinit .GT. &
+&       b2mndr_cpu .AND. b2mndr_cpu .GT. 0.0_R8)) .OR. (elapsedval - &
+&       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8)
+      ITERCOUNT = ITERCOUNT + 1
+      write(*,*) 'GRADIENT ITERATION ',ITERCOUNT
+      write(*,*) 'GRADIENT MAX RES ',cumul
+      if (b2mndr_cpu.gt.0.0_R8) then
+        write(*,'(1x,3(a,es11.3))') 'adj-step-cpu =',cpuval-cpustart,' elapsed ',&
+&       elapsedval-elapsedstart,' estimated remaining CPU time (s) =',&
+&       min((ntim-itim)*real(cpuval-cpustart,R8),max(0.0_R8,b2mndr_cpu-&
+&       real(cpuval-cpuinit,R8)))
+      else if (b2mndr_elapsed.gt.0.0_R8) then
+        write(*,'(1x,3(a,es11.3))') 'adj-step-cpu =',cpuval-cpustart,' elapsed ',&
+&       elapsedval-elapsedstart,' estimated remaining elapsed time (s) =',&
+&       min((ntim-itim)*(elapsedval-elapsedstart),max(0.0_R8,b2mndr_elapsed-&
+&       (elapsedval-elapsedinit)))
+      else
+        write(*,'(1x,3(a,es11.3))') 'adj-step-cpu =',cpuval-cpustart,' elapsed ',&
+&       elapsedval-elapsedstart,' estimated remaining elapsed time (s) =',&
+&       (ntim-itim)*(elapsedval-elapsedstart)
+      end if
       call set_adj_gradient(npar_opt,dummygrad,switchb)
       CALL ADSTACK_RESETREPEAT()
     END DO
@@ -7958,7 +8049,6 @@ CONTAINS
     state_extb = state_extb0
     geob = geob0
     mpgb = mpgb0
-    cpustartb = cpustartb0
     res_quitb = res_quitb0
     dtimb = dtimb0
     toldb = toldb0
@@ -8783,8 +8873,18 @@ CONTAINS
     INTRINSIC CPU_TIME
     EXTERNAL EPOCH_SECONDS
     REAL(kind=r8) :: EPOCH_SECONDS
-    INTRINSIC ANY
+    INTRINSIC REAL
     INTRINSIC MAX
+    INTRINSIC MIN
+    INTRINSIC ANY
+    REAL(r8) :: x1
+    REAL(r8) :: y1
+    REAL(kind=r8) :: y2
+    REAL(kind=r8) :: y3
+    REAL(r8) :: y4
+    REAL(r8) :: min1
+    REAL(kind=r8) :: min2
+    REAL(kind=r8) :: min3
 !
     CALL SUBINI('b2mndr_1')
 !   ..no error so far
@@ -8812,13 +8912,14 @@ CONTAINS
     nvx = mpg%nvx
 !
     WRITE(*, *) 'b2mndr_1, start: nCv = ', ncv
-! The 'FIXED_POINT' compilation option here and below transforms the time-stepping loop into
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the 1 version some parts of the standard time-stepping are 
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim)
+    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim .AND. (.NOT.&
+&             quit))
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &     'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr&
 &     , quit
@@ -8877,12 +8978,78 @@ CONTAINS
 &                  ismain0, state%rt%nscx, state%rt%nscxmax, state%rt%&
 &                  iscx, itim, dtim, ntim, switch, geo, mpg, state, &
 &                  state_ext, ierr)
+!     manually inserted call to cost function, for output purposes only
+      call b2usr_cost_function_nodiff(ncv, nfc, nvx, ns, geo, mpg, state,&
+&                             state_ext, switch%boris, j)
+      do icf=1,ncf
+        write(ss, '(I1)') icf
+        write(*, *) 'Cost function value '//ss//': ', j(icf)
+      end do
 !    ..increment
       itim = itim + 1
       itim_plas = itim_plas + 1
       IF (no_solve .LE. 0) tim = tim + dtim
       WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, &
 &     ' TIME ', tim, ' NTIM ', ntim, ' DTIM ', dtim
+!srv 18.05.09 13.04.11
+      INQUIRE(file='_quit', exist=quitexist_) 
+      INQUIRE(file='.quit', exist=quitexist) 
+      CALL CPU_TIME(cpuval)
+      elapsedval = EPOCH_SECONDS()
+      IF (b2mndr_cpu .GT. 0.0_R8) THEN
+        x1 = (ntim-itim)*REAL(cpuval-cpustart, r8)
+        y4 = b2mndr_cpu - REAL(cpuval - cpuinit, r8)
+        IF (0.0_R8 .LT. y4) THEN
+          y1 = y4
+        ELSE
+          y1 = 0.0_R8
+        END IF
+        IF (x1 .GT. y1) THEN
+          min1 = y1
+        ELSE
+          min1 = x1
+        END IF
+!srv 18.05.09
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining CPU time (s) =', min1
+      ELSE IF (b2mndr_elapsed .GT. 0.0_R8) THEN
+        IF (0.0_R8 .LT. b2mndr_elapsed - (elapsedval-elapsedinit)) THEN
+          y2 = b2mndr_elapsed - (elapsedval-elapsedinit)
+        ELSE
+          y2 = 0.0_R8
+        END IF
+        IF ((ntim-itim)*(elapsedval-elapsedstart) .GT. y2) THEN
+          min2 = y2
+        ELSE
+          min2 = (ntim-itim)*(elapsedval-elapsedstart)
+        END IF
+!srv 18.05.09
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining elapsed time (s) =', min2
+      ELSE IF (etim .NE. 0.0_R8 .AND. etim .GT. switch%b2mndr_stim) THEN
+        IF (0.0_R8 .LT. (etim-tim)/dtim - (elapsedval-elapsedstart)) &
+&       THEN
+          y3 = (etim-tim)/dtim - (elapsedval-elapsedstart)
+        ELSE
+          y3 = 0.0_R8
+        END IF
+        IF ((ntim-itim)*(elapsedval-elapsedstart) .GT. y3) THEN
+          min3 = y3
+        ELSE
+          min3 = (ntim-itim)*(elapsedval-elapsedstart)
+        END IF
+!srv 18.05.09
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining elapsed time (s) =', min3
+      ELSE
+        WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
+&       , ' elapsed ', elapsedval - elapsedstart, &
+&       ' estimated remaining elapsed time (s) =', (ntim-itim)*(&
+&       elapsedval-elapsedstart)
+      END IF
       res_max = 0.0_R8
       DO is=0,ns-1
         IF (ANY(solveco(is, :))) THEN
@@ -8942,13 +9109,15 @@ CONTAINS
           res_max = res_max
         END IF
       END IF
+!jwk !srv 13.04.11
+      quit = ((quitexist_ .OR. quitexist) .OR. (cpuval - cpuinit .GT. &
+&       b2mndr_cpu .AND. b2mndr_cpu .GT. 0.0_R8)) .OR. (elapsedval - &
+&       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
+&       )
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      inquire(file='_quit',exist=quitexist_)
-      inquire(file='.quit',exist=quitexist)
-      quit = quitexist_.or.quitexist
+      primal_iterations = itim
     END DO
 !   ..end loop
-    primal_iterations = itim
 !   ..call cost function
     CALL B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, state, &
 &                             state_ext, switch%boris, j)
