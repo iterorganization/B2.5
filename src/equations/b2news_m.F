@@ -410,8 +410,7 @@ c   extra call at this place within internal iteration)
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nCv, nFc, nVx, ns,
      &    nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &    switch, geo, mpg, st, st_ext, wrong_flow, .false.)
-
+     &    switch, geo, mpg, st, st_ext, st_avg, wrong_flow, .false.)
 #ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
@@ -460,9 +459,9 @@ c   extra call at this place within internal iteration)
      &    .false.)
 
 *     ..stabilise the source coefficients                                !xpb
-        call b2srst (nCv, ns, switch, mpg,
-     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, !srv 01.07.08
-     &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)    !srv 23.07.21
+        call b2srst (nCv, ns, switch,
+     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po,    !srv 01.07.08
+     &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)       !srv 23.07.21
       endif
 
 *   ..compute ue, electron parallel velocity
@@ -476,9 +475,9 @@ c   extra call at this place within internal iteration)
       wrk0 = wrk0/st%dv%ne                                                  !srv 05.03.11
       if(switch%b2news_iout.ne.0) then                                                 !srv 05.07.17
         call b2xzef(nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff,
-     &       st_ext)
-        call b2xpic (nCv, ns, mpg, qe, st%rt%rza, geo%cvBb,
-     &    st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
+     &   st_ext)
+        call b2xpic (nCv, ns, qe, st%rt%rza, geo%cvBb,
+     &   st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
         call b2xpif (nCv, nFc, switch, geo, mpg, st%dv%fch_pi_c,
      &   st%dv%fch_pi_f)
         call my_out_us(70,nCv,0,st%dv%fch_pi_c,'b2news__fch_pi_c')
@@ -647,13 +646,11 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute heat fluxes
       call b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg,                 !srv 29.01.20
      &  st%pl, st%dv, st%co, st%rt, st_ext, .true.)                      !djm Jan2017
-
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,          !srv 13.10.06
-     &  st%pl, st%dv, st%co, st%rt, .true.)                              !djm Jan2017
-      st%dv%floi_noc = st%dv%floi                                       !srv 24.10.02
-      st%dv%floe_noc = st%dv%floe                                       !srv 24.10.02
-
+     &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
+      st%dv%floi_noc = st%dv%floi                                        !srv 24.10.02
+      st%dv%floe_noc = st%dv%floe                                        !srv 24.10.02
       call b2xpen (nCv, nFc, ns, mpg,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,

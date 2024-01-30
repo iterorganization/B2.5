@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2smdt (nCv, nCi, ns, dtim, hz,          !srv 09.01.01 01.07.08
-     &  cvVol, na, uap, switch, mpg, smodt)              !srv 11.09.09
+      subroutine b2smdt (nCv, nCi, ns, dtim, hz,                     !srv 09.01.01 01.07.08
+     &  cvVol, na, uap, switch, mpg, smodt)                          !srv 11.09.09
       use b2mod_types
       use b2mod_indirect
       use b2mod_numerics_namelist
@@ -45,7 +45,7 @@
       external xertst, ipgetr
       external b2xvsg
 *   ..initialisation
-      data ncall/0/                                       !xpb
+      data ncall/0/                                                  !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -53,7 +53,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2smdt')
-
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
@@ -72,11 +71,11 @@
       do is = 0, ns-1
         do iCv = 1, nCi !only internal cells
             ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
-            t0 = (switch%b2srdt_phm1/ttim)*cvVol(iCv)*hz(iCv)                        !srv 09.01.01
-            smodt(iCv,0,is) = t0*am(is)*mp*uap(iCv,is)*na(iCv,is) !srv 06.01.21 {
+            t0 = (switch%b2srdt_phm1/ttim)*cvVol(iCv)*hz(iCv)        !srv 09.01.01
+            smodt(iCv,0,is) = t0*am(is)*mp*uap(iCv,is)*na(iCv,is)    !srv 06.01.21 {
             smodt(iCv,1,is) = 0.0_R8
             smodt(iCv,2,is) = 0.0_R8
-            smodt(iCv,3,is) = -t0                                      !srv 06.01.21 }
+            smodt(iCv,3,is) = -t0                                    !srv 06.01.21 }
         enddo
        enddo
 
@@ -92,11 +91,11 @@ cdjm Store the total change in linearised sources for balance
         write (chns,'(i3.3)') is
         do k=0,3
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,smodt(:,k,is),
+         call my_out_us(70,nCv,0,smodt(:,k,is),
      &                       'b2smdt_smodt'//chk//chns)
         enddo
        enddo
-      endif                                                           !srv 11.09.09 }
+      endif                                                          !srv 11.09.09 }
 
 * ..return
       ncall = ncall+1
