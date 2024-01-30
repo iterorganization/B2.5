@@ -24,6 +24,8 @@ C
      . e_bundle_contr, jsep1, region1,
      . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
      . hx, hy, qc, hxx, hyy, qc1)
+#else
+     .(ns)
 #endif
 c
 c  version : 06.11.97 22:11
@@ -63,6 +65,8 @@ c
       character*4 solps_version
       character*8 eirene_format
       logical savestratum(0:nstraid), no_sputtering
+#else
+      integer ns
 #endif
 
 *  -- LOCAL SCALARS --

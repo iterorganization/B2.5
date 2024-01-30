@@ -6,6 +6,7 @@
       use b2mod_subsys
       use b2us_map
       use b2us_geo
+      use b2mod_b2cmpa
       use b2mod_user_namelist
      , , only : nimp, imp, icsepimp,
      ,          nomp, omp, icsepomp
