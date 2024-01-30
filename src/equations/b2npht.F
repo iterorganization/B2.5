@@ -126,7 +126,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2npht')
-
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+*   ..test rxf
+      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall_b2npht.eq.0) then
         if(switch%b2mndt_style.eq.2) then
@@ -179,10 +182,6 @@
           rxg = 1.0_R8
         endif                                                           !srv 07.07.21 }
       endif
-*   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then
 *    ..test sign of transport coefficients
@@ -206,8 +205,6 @@
        call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
       endif
 
-
-
 * ..main computation
 
 c make sure fhn is zero when not solving a separate neutral energy equation
@@ -218,7 +215,7 @@ c make sure fhn is zero when not solving a separate neutral energy equation
 c time-dependent treatment                                              !srv 07.07.21 {
       if(switch%b2mndt_style.eq.2) then
 *  .. calculate time-dependent source
-        call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
+        call b2shdt (nCv, mpg%nCi, ns, dtim,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
      &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,

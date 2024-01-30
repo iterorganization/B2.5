@@ -7,7 +7,6 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_switches
-      use b2us_map
       use b2us_plasma
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,

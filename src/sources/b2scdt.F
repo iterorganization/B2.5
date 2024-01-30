@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2scdt (nCv, nCi, isb, dtim,      !srv 07.07.21
+      subroutine b2scdt (nCv, nCi, isb, dtim,                        !srv 07.07.21
      &  cvVol, nap, switch, mpg, snadt)
       use b2mod_types
       use b2mod_indirect
@@ -90,7 +90,7 @@
         write (chns,'(i3.3)') isb
         do k=0,1
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,snadt(:,k),
+         call my_out_us(70,nCv,0,snadt(:,k),
      &                       'b2scdt_snadt'//chk//chns)
         enddo
       endif                                                           !srv 11.09.09 }
