@@ -49,6 +49,13 @@
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'
 
+      call xertst (1.le.ns, 'faulty parameter ns')
+      call xertst (0.le.nnmoli, 'faulty parameter nnmoli')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty parameter ismain')
+      call xertst (0.le.ismain0.and.ismain0.lt.ns.and.
+     & (is_neutral(ismain0).or.ismain0.eq.ismain),
+     & 'faulty parameter ismain0')
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
