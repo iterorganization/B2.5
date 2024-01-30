@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2shdt (nCv, nCi, ns, dtim, BoRiS,                    !srv 07.07.21
+      subroutine b2shdt (nCv, nCi, ns, dtim,
      &  cvVol, nap, tep, tip, tnp, ktp, ztp, ne, ni, nn, kinrgyp,
      &  switch, mpg, shedt, shidt, shndt, sktdt, sztdt)
       use b2mod_types
@@ -18,7 +18,7 @@
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      integer nCv, nCi, ns, BoRiS
+      integer nCv, nCi, ns
       real (kind=R8) ::
      *  dtim, cvVol(nCv), nap(nCv,0:ns-1),
      &  tep(nCv), tip(nCv), tnp(nCv),
@@ -59,7 +59,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2shdt')
-
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
@@ -75,7 +74,7 @@
       endif
       if (switch%b2srdt_phm3.ne.1.0_R8) then 
         write(*,*)
-     & 'Warning: b2srdt_phm3 should be 1.0 for time-dependent mode'
+     &   'Warning: b2srdt_phm3 should be 1.0 for time-dependent mode'
       endif
 
 *   ..modify shedt, shidt, shndt
@@ -97,7 +96,7 @@
           shidt(iCv,1) = 0.0_R8
           shidt(iCv,2) = 0.0_R8
           shidt(iCv,3) = -1.5_R8*t0                             !srv 06.01.21 }
-          if (BoRiS.eq.1.0_R8) then
+          if (switch%BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(iCv,0) = shidt(iCv,0)+t0*
      &           (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)         !srv 10.10.22 {
@@ -112,9 +111,8 @@
           shidt(iCv,2) = 0.0_R8
           shidt(iCv,3) = -1.5_R8*t0*ni(iCv,1)/ni(iCv,0)          ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
                                                                  ! when using a pure ion or separate ion-neutral energy equation
-          if (BoRiS.eq.1.0_R8) then
-            call xertst('BoRiS not allowed with tn_style.ne.0')
-          endif
+          call xertst (switch%BoRiS.eq.0.0_R8,
+     &     'BoRiS switch usage not allowed with tn_style.ne.0')
         endif
       enddo
 
@@ -151,7 +149,6 @@
         enddo
       endif
 
-
 cdjm Store the total change in linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then
 !WG_TODO        b2srdt_she0to3 = shedt
@@ -163,11 +160,11 @@ cdjm Store the total change in linearised sources for balance
       if (switch%b2shdt_iout.eq.1) then
        do k=0,3
         write (chk,'(i1)') k
-        call my_out_us(70,nCv,shedt(:,k),'b2shdt_shedt'//chk)
-        call my_out_us(70,nCv,shidt(:,k),'b2shdt_shidt'//chk)
-        call my_out_us(70,nCv,shndt(:,k),'b2shdt_shndt'//chk)
-        call my_out_us(70,nCv,sktdt(:,k),'b2shdt_sktdt'//chk)
-        call my_out_us(70,nCv,sztdt(:,k),'b2shdt_sztdt'//chk)
+        call my_out_us(70,nCv,0,shedt(:,k),'b2shdt_shedt'//chk)
+        call my_out_us(70,nCv,0,shidt(:,k),'b2shdt_shidt'//chk)
+        call my_out_us(70,nCv,0,shndt(:,k),'b2shdt_shndt'//chk)
+        call my_out_us(70,nCv,0,sktdt(:,k),'b2shdt_sktdt'//chk)
+        call my_out_us(70,nCv,0,sztdt(:,k),'b2shdt_sztdt'//chk)
        enddo
       endif                                                           !srv 11.09.09 }
 
