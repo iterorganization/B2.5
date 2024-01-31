@@ -104,6 +104,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2npco')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+*   ..test rxf
+      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall_b2npco.eq.0) then
         if(switch%b2mndt_style.eq.2) then
@@ -128,11 +132,6 @@
           rxg = switch%b2npco_rxg
         endif
       endif
-
-*   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall_b2npco.lt.3) then
 *    ..test sign of conb
@@ -160,7 +159,6 @@ cdjm Jan2017 update particle source components for balance
 *  .. add contribution from time-dependent source
         sr%sna(:,:,isb) = sr%sna(:,:,isb) + sr%snadt(:,:,isb)
       endif                                                             !srv 07.07.21 }
-
 
 * ..particle balance
 *   ..compute residual

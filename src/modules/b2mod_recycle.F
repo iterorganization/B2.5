@@ -700,7 +700,6 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
-
 c     Interpolate tables to find recycling values
 c       Isothermal speed of sound and Mach number
       cs = sqrt(2.0_R8*tif/mn)
@@ -713,7 +712,7 @@ c       Shpottau value: sheath_potential devided by tau (Ti/Te)
       tab = rc1(:,:,:,is,it)
       rc1i = intp_3dtable(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh,ip1,ip2,ip3)
-      rc1i = max(rc1i,0.0_R8)! Make sure thy don't become negative when extrapolating
+      rc1i = max(rc1i,0.0_R8)! Make sure they do not become negative when extrapolating
 
       ff = rmx1(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
       rmx1i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
@@ -859,7 +858,7 @@ c     Initialize/calculate some variables
       pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
       pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-      upf = pl%ua(iCn,isi)!! We use iCn instead of iCv because EIRENE doesn't see the value in the guard cell and the difference can be large.
+      upf = pl%ua(iCn,isi)!! We use iCn instead of iCv because EIRENE does not see the value in the guard cell and the difference can be large.
       ux = upf*pit2
       uy = -sina*isign*upf*pit
       uz = -cosa*isign*upf*pit
@@ -901,7 +900,6 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
-
 c     Interpolate tables to find recycling values
 c       Isothermal speed of sound and Mach number
       cs = sqrt(2.0_R8*tif/mn)
@@ -914,7 +912,7 @@ c       Interpolate
       tab = rc1(:,:,ispt,is,it)
       rc1i = intp_2dtable(tab,M,T,dM,dT,nM,nT,
      & Mj,tifev,ilM,ilT,ip1,ip2)
-      rc1i = max(rc1i,0.0_R8) ! Make sure thy don't become negative when extrapolating
+      rc1i = max(rc1i,0.0_R8) ! Make sure they do not become negative when extrapolating
       tab = rc2(:,:,ispt,is,it)
       rc2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
      & Mj,tifev,ilM,ilT)

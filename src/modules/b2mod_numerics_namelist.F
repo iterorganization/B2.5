@@ -122,7 +122,7 @@
       if (switch%recycle_afn.ne.1) then !! default, use total momentum equation
         solvemt=.true.
       else
-        solvemt=.false.                 !! in case of KUL fluid neutrals, don't use total momentum equation
+        solvemt=.false.                 !! in case of KUL fluid neutrals, do not use total momentum equation
       endif
       solvepo=.true.
       add_te_corr_to_po=.true.                                     ! IYS 21.09.2018
@@ -132,7 +132,7 @@
       solveet=.true.
       solvekt=.true.
       solvezt=.true.
-      if (switch%b2mndt_style.eq.2) then !! don't solve total momentum and energy equation in time-dependent mode
+      if (switch%b2mndt_style.eq.2) then !! do not solve total momentum and energy equation in time-dependent mode
         solveet=.false.
         solvemt=.false.
       endif
