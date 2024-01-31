@@ -349,7 +349,6 @@ csw 16oct2012 init ier0
         do iCv = 1, nCv
           st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)    !srv 24.04.09
         enddo
-
 *    ..re-compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain,
      &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
@@ -358,7 +357,6 @@ csw 16oct2012 init ier0
       call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
      &    st%dv%fac_ExB, st%dv%ne, st%pl%te, st%pl%po,
      &    st%dv%vedia, st%dv%veecrb)
-
 *   ..re-compute ne, nn, ni, lnlam
       call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%dv%ne)
       call nancheck(nCv, st%dv%ne, 'b2news(ne): after call to b2xpne')
@@ -367,7 +365,6 @@ csw 16oct2012 init ier0
       call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%dv%ne2)  !srv 11.07.99
       call b2xppz (nCv, ns, st%dv%ne, st%pl%na, st%pl%te, st%pl%ti,
      &             st%dv%pz, st_ext)                                     !srv 18.01.02
-
 *   ..compute ceqp                                                       !srv 03.07.03 {
       call b2xpnm (nCv, ns, st%rt%rz2, am, st%pl%na, wrk0)
       call b2treq (nCv, switch, geo%cvVol, st%pl%te, st%pl%ti, st%dv%ne,
@@ -398,9 +395,8 @@ csw 16oct2012 init ier0
      &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))                      !srv 01.10.99
 *    ..compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain,
-     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)         !djm Jan2017
-      enddo                                                             !srv 01.10.99
-
+     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)        !djm Jan2017
+      enddo                                                              !srv 01.10.99
 *      ..compute electron drift velocities
       call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
      &    st%dv%fac_ExB, st%dv%ne, st%pl%te, st%pl%po, st%dv%vedia,
@@ -662,7 +658,6 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
       st%dv%ue = st%dv%ue/st%dv%ne                                       !srv 05.03.11
 !lkw20.03.2023}
-
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ncall_b2news_, ismain, b2news_solving, solveee, solveei,         !srv 22.05.18
@@ -713,7 +708,7 @@ c   recompute particle fluxes
 csw 06dec2012 finally re-evaluate particle fluxes
 c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
       if(switch%re_eval_prtls_fluxes.eq.1.or.
-     &                                      switch%use_eirene.ne.0) then !srv 28.06.13 {
+     &                                      switch%use_eirene.ne.0) then  !srv 28.06.13 {
         do is=0,ns-1
           do iCv = 1, nCv
             st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)  !srv 24.04.09

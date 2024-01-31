@@ -1652,7 +1652,7 @@ c mdf_fnb
       endif
 
 c pot_eq
-c pot_eq = 0: don't solve pot. eq.;
+c pot_eq = 0: do not solve pot. eq.;
 c pot_eq = 1: solve (default)
 c pot_eq = 2: pot. = 3.1*Te/qe
       if (s%pot_eq.lt.0.or.s%pot_eq.gt.2) then  !srv 16.07.12 27.02.13
