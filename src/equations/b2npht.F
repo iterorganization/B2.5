@@ -221,12 +221,13 @@ c time-dependent treatment                                              !srv 07.
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
      &    sr%sktdt, sr%sztdt)
 *  .. add contributions from time-dependent sources
-cc If e.g. d(nT)/dt = n dT/dt + T dn/dt, then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
+cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
+cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
 cc while the second contribution corresponds to T dn/dt
         sr%she = sr%she+sr%shedt
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
-        if (switch%tn_style.eq.0) then ! default, combined ion-neutral eneregy equation
+        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral eneregy equation
           sr%shi = sr%shi+sr%shidt
           sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol
@@ -443,7 +444,8 @@ c residuals for separate neutral energy equation
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
 
-      if (switch % tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0) or pure ion (tn_style.eq.1) energy equation,
+      if (switch % tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0)
+                                        !! or pure ion (tn_style.eq.1) energy equation,
         pl%tn = pl%ti                   !! tn must be exactly equal to ti.
       endif
 
@@ -465,7 +467,6 @@ c residuals for separate neutral energy equation
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
       end if
-
 
 * ..return
       ncall_b2npht = ncall_b2npht+1
