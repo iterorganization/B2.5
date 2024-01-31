@@ -286,8 +286,8 @@ c The b2mod_switches is mainly intended for switches that are used in
 c different functions/subroutines to reduce code duplication
 c and to centralize consistency checks on the switches.
 
-c read main switch afn to correctly set the corresponding default switches
-      call read_switch_afn(switch)
+c read main model switches to correctly set the corresponding defaults
+      call read_first_switches(switch)
 c load default values of switches
       call set_defaults_switches(switch,ns)
 c overwrite with values provided in b2mn.dat

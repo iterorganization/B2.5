@@ -16,10 +16,9 @@ c consistency checks for combinations of different switches (check_consistency_s
      .          read_switches, set_defaults_switches,
      .          check_switches, check_values_switches,
      .          check_consistency_switches,
-     .          read_switch_afn
+     .          read_first_switches
 
       type, public :: switches
-
 
       integer :: get_residuals !srv 22.05.18
       integer :: mdf_fhe       !srv 13.10.06
@@ -183,8 +182,7 @@ c iout switches
       integer :: b2smdt_iout
       integer :: b2shdt_iout
 
-
-c style  switches
+c style switches
       integer :: b2sicf_style
       integer :: b2sigp_style
       integer :: b2sigp_pressure_restriction
@@ -528,7 +526,6 @@ c Med
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
 
-
       s % get_residuals = 0
       s % mdf_fhe = 0
       s % mdf_fhi = 0
@@ -579,8 +576,6 @@ c Advanced fluid neutral models
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
-
-
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
@@ -645,7 +640,6 @@ c Advanced fluid neutral models
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
       s % L_macro_AFN = 0.10_R8
-
 
       s % iout_b2wdat = 0
       s % b2sian_iout = 0
@@ -772,24 +766,34 @@ c Advanced fluid neutral models
       s % b2stbc_phm1 = 1.0e0_R8
       s % b2stbc_phm2 = 1.0e0_R8
 
-      s% b2npco_pcm0 = 1.0e0_R8
-      s% b2npco_pcm1 = 1.0e0_R8
-      s% b2npht_pcm0 = 1.0e0_R8
-      s% b2npht_pcm1 = 1.0e0_R8
+      if ( s % b2mndt_style.eq.2 ) then
+        s % b2npco_rxg =  huge(1.0e0_R8)
+        s % b2npht_rxg =  huge(1.0e0_R8)
+        s % b2npmo_rxg =  huge(1.0e0_R8)
+        s % b2npco_pcm0 = 0.0e0_R8
+        s % b2npco_pcm1 = 0.0e0_R8
+        s % b2npht_pcm0 = 0.0e0_R8
+        s % b2npht_pcm1 = 0.0e0_R8
+      else
+        s % b2npco_rxg =  1.0e0_R8
+        s % b2npht_rxg =  1.0e0_R8
+        s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
+        s % b2npco_pcm0 = 1.0e0_R8
+        s % b2npco_pcm1 = 1.0e0_R8
+        s % b2npht_pcm0 = 1.0e0_R8
+        s % b2npht_pcm1 = 1.0e0_R8
+      end if
 
-      s % b2stcx_rg0  = 1.0e0_R8
-      s % b2npco_rxg =  1.0e0_R8
-      s % b2npht_rxg =  1.0e0_R8
-      s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
       s % xfm0       =  1.0e0_R8
       s % xfm1       =  1.0e0_R8
       s % xfm2       =  1.0e0_R8
       s % xfm3       =  1.0e0_R8
-      s % b2stel_rxm0=  0.0e0_R8
-      s % b2stel_rxm1=  0.0e0_R8
-      s % b2stel_rxm2=  0.0e0_R8
-      s % b2stel_rxm3=  0.0e0_R8
-      s % b2stel_rxm4=  0.0e0_R8
+      s % b2stcx_rg0 =  1.0e0_R8
+      s % b2stel_rxm0 = 0.0e0_R8
+      s % b2stel_rxm1 = 0.0e0_R8
+      s % b2stel_rxm2 = 0.0e0_R8
+      s % b2stel_rxm3 = 0.0e0_R8
+      s % b2stel_rxm4 = 0.0e0_R8
       s % b2stel_rg0 =  1.0e0_R8
       s % b2stel_rg1 =  1.0e0_R8
 
@@ -972,11 +976,14 @@ c b2mndt
       s % nstg_areshe = 0.0_R8
       s % nstg_areshi = 0.0_R8
       s % BoRiS = 0.0_R8
-      s % b2mndt_rxf = 0.5_R8
+      if (s % b2mndt_style.eq.2) then
+        s % b2mndt_rxf = 1.0_R8
+      else
+        s % b2mndt_rxf = 0.5_R8
+      end if
       s % facvis_start = 0.0_R8
       s % facdrift_start = 0.0_R8
       s % facExB_start = 0.0_R8
-      s % b2mndt_style = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1207,7 +1214,6 @@ c iout switches
       call ipgeti ('b2smdt_iout', s % b2smdt_iout)
       call ipgeti ('b2shdt_iout', s % b2shdt_iout)
 
-
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)
       call ipgeti ('b2sigp_style', s % b2sigp_style)
@@ -1244,7 +1250,6 @@ c style/mode switches
       call ipgeti ('b2tfnb_drift_style', s % fnb_drift_style)       !srv 21.06.08f
       call ipgeti ('b2sifr_styl0', s % b2sifr_styl0)
       call ipgeti ('b2tqin_csigin_style', s % b2tqin_csigin_style)
-
 
 c phm switches
       call ipgetr ('b2sian_phm0', s % b2sian_phm0)
@@ -1283,7 +1288,6 @@ c phm switches
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
       call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
-
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1373,7 +1377,6 @@ c Eirene coupling
       call ipgetr ('eirene_ua_max', s % eir_ua_max)
       call ipgetr ('b2mndr_rescale_neutrals_sources',
      &                s % neutral_sources_rescale)
-
 
 c k-enstrophy model
       call ipgeti ('b2mndr_solve_keps',s % solve_keps)
@@ -1522,13 +1525,11 @@ c b2mndt
       call ipgetr ('b2news_facExB_start',   s%facExB_start)
       call ipgetr ('b2news_facdrift_start', s%facdrift_start)
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
-      call ipgeti ('b2mndt_style',s%b2mndt_style)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
       call ipgetr ('b2mndr_stim', s%b2mndr_stim)
       call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
-
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
@@ -1573,19 +1574,21 @@ c Med
 
 ***********************************************************************
 
-      subroutine read_switch_afn (s)
+      subroutine read_first_switches (s)
 
       implicit none
       type (switches), intent (inout) :: s
       external ipgeti
 
-cnh   Default value
+cnh   Default values
       s % afn = 0
+      s % b2mndt_style = 1
 
       call ipgeti ('b2mn_afn', s % afn) !nh  24.05.23 main switch for AFN model
+      call ipgeti ('b2mndt_style', s % b2mndt_style)  ! main physics model switch
 
       return
-      end subroutine read_switch_afn
+      end subroutine read_first_switches
 
 ***********************************************************************
 
@@ -1748,7 +1751,6 @@ c b2sral
 
        call xertst (0.le.s%b2sral_style.and.s%b2sral_style.le.2,
      .  'b2sral_style should be 0, 1 or 2')
-
 
 c b2npco
        call xertst (0.lt.s%b2npco_rxg, 'faulty parameter b2npco rxg')
