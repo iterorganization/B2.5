@@ -2339,7 +2339,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fchinert_b(-1,-1,0),
      &                           'b2tfnb_fchinert_bx'//chns)
        call my_out(70,nx,ny,fchinert_b(-1,-1,1),
-     &                           'b2tfnb_fchin_by'//chns)
+     &                           'b2tfnb_fchinert_by'//chns)
        call my_out(70,nx,ny,fchin_b(-1,-1,0),
      &                           'b2tfnb_fchin_bx'//chns)
        call my_out(70,nx,ny,fchin_b(-1,-1,1),

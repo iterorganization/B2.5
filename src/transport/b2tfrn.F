@@ -341,8 +341,8 @@ csw 30sep2013, added check for no_hybr
            if (.not.is_neutral(is)) then                                 !srv 08.09.21
             scur =
      &        (fchvispar_a(ix,iy,1,is)+fchinert_a(ix,iy,1,is)+
-     &         vis_q*fchvisq_a(ix,iy,1,is)+fchanml_a(ix,iy,1,is)       !srv 02.10.17 08.09.21
-     &         +fchin_a(ix,iy,1,is)) * ycur / (rza(ix,iy,is)*qe*
+     &         vis_q*fchvisq_a(ix,iy,1,is)+fchanml_a(ix,iy,1,is)+        !srv 02.10.17 08.09.21
+     &         fchin_a(ix,iy,1,is))*ycur/(rza(ix,iy,is)*qe*
      &        (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &         na(ix,iy,is))/2.0_R8)
             vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/
@@ -390,8 +390,8 @@ csw 30sep2013, added check for no_hybr
            if(.not.is_neutral(is)) then                                  !srv 20.09.06 08.09.21
             scur =
      &       (fchinert_a(ix,iy,1,is)+fchvispar_a(ix,iy,1,is)+
-     &        fchanml_a(ix,iy,1,is)+vis_q*fchvisq_a(ix,iy,1,is)+       !srv 02.10.17
-     &        fchin_a(ix,iy,1,is)) * ycur/(rza(ix,iy,is)*qe*
+     &        fchanml_a(ix,iy,1,is)+vis_q*fchvisq_a(ix,iy,1,is)+         !srv 02.10.17
+     &        fchin_a(ix,iy,1,is))*ycur/(rza(ix,iy,is)*qe*
      &       (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/
      &        2.0_R8)
             vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/

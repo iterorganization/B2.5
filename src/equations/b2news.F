@@ -407,7 +407,7 @@
      &                fchvisq_a, fchvisq)
         call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, bb,                           
+     &              vol, gs, hx, hy, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
@@ -579,7 +579,7 @@ cxpb
      &                fchvisq_a, fchvisq)
         call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, bb,                           
+     &              vol, gs, hx, hy, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
 *     ..iterate on particle balance
@@ -910,7 +910,7 @@ cxpb
      &           fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &           fna_mdf, fhe_mdf, fhi_mdf,
      &           fna_fcor, fna_nodrift, fna_he, fhe, fhi, fhm, fht,      !srv 13.10.06 25.12.06 23.10.09
-     &           fnaPSch, fhePSch, fhiPSch, fch, fchanml_a, fchinert_a, 
+     &           fnaPSch, fhePSch, fhiPSch, fch, fchanml_a, fchinert_a,
      &           fchvispar_a, fchvisper_a, fchvisq_a, fchin_a,           !srv 08.09.21
      &           fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,    !srv 21.10.02
      &           fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,

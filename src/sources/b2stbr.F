@@ -1216,8 +1216,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
 !        enddo
          call my_out(70,nx,ny,b2stbr_smo(-1,-1,is),'b2stbr_smo'//chns)
-!       call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
-!       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
+!        call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
+!        call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
 #ifdef B25_EIRENE
         else
          if(.not.is_neutral(is) .and. iout_b2wdat.eq.4) then
