@@ -47,8 +47,8 @@
      . smr_mean(-1:nx,-1:ny,0:ns-1), smd_mean(-1:nx,-1:ny,0:ns-1),
      . shi_mean(-1:nx,-1:ny), sch_mean(-1:nx,-1:ny),
      . e_sna(-1:nx,-1:ny,0:ns-1), e_sne(-1:nx,-1:ny),
-     . e_smo(-1:nx,-1:ny,0:ns-1), e_smr(-1:nx,-1:ny,0:ns-1),
-     . e_smd(-1:nx,-1:ny,0:ns-1),
+     . e_smo(-1:nx,-1:ny,0:ns-1),
+     . e_smr(-1:nx,-1:ny,0:ns-1), e_smd(-1:nx,-1:ny,0:ns-1),
      . e_she(-1:nx,-1:ny), e_shi(-1:nx,-1:ny),
      . e_sch(-1:nx,-1:ny)
       logical flip
@@ -203,7 +203,7 @@
       call cfrure (99, n2,    ti_mean, 'ti_mean')
       call cfrure (99, n2,    po_mean, 'po_mean')
       call cfrure (99, n2*ns, ua_mean, 'ua_mean')
-      
+
       if (b2faveri_version.ge.'03.000.008') then
         call cfrure (99, n2*ns, sna_mean, 'sna_mean')
         call cfrure (99, n2,    sne_mean, 'sne_mean')

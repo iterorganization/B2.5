@@ -47,7 +47,7 @@ c
         yvalues(1)=0.5_R8*(yvalue(1)+yvalue(2))
         yvalues(inpts)=0.5_R8*(yvalue(inpts)+yvalue(inpts-1))
         do i=2,inpts-1
-           yvalues(i)=(yvalue(i-1)+yvalue(i)+yvalue(i+1))/3.0_R8
+          yvalues(i)=(yvalue(i-1)+yvalue(i)+yvalue(i+1))/3.0_R8
         enddo
         xmin=xvalues(1)
         xmax=xvalues(1)

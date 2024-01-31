@@ -271,7 +271,7 @@
 *       ..compute electron energy sink
             t2 = t0*rpi(ix,iy,is)*ev
             she0_ion(ix,iy,0) = she0_ion(ix,iy,0)+(1.0_R8+rf0)*t2
-            she0_ion(ix,iy,3) = shi0_ion(ix,iy,3)-
+            she0_ion(ix,iy,3) = she0_ion(ix,iy,3)-
      &                          rf0*t2/(ne(ix,iy)*te(ix,iy))
 *       ..compute atom heat source
             t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*

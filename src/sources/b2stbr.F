@@ -560,7 +560,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
         call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
      &   hx, gs,
      &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
      &   neutral_sources_rescale, core_sources_rescale,
@@ -839,7 +839,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
             end if
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
- !           t1(k) = t01(k)
+!           t1(k) = t01(k)
             t(k) = 1.0_R8 +
      &              max( min( taumax(k),t1(k) ), -taumax(k) )
             if ( iout .ne. 0 )
@@ -854,7 +854,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
             do ix = -1, nx
              do iy = -1, ny
-              if (do_sna_corr_core(k) .or. 
+              if (do_sna_corr_core(k) .or.
      &                (.not. on_closed_surface(ix,iy))) then
                 sna0_eir(ix,iy,0,is) = sna0_eir(ix,iy,0,is)*t(k)
                 sna0_eir(ix,iy,1,is) = sna0_eir(ix,iy,1,is)*t(k)

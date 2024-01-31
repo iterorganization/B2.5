@@ -164,14 +164,16 @@ c*** Check the topology of the grid and the list of target edges
           itrg=0
         else if (boundary_namelist.ne.0) then
           ntrgts=0
+          target_east = .false.
+          target_west = .false.
           do i = 1, nbc
             if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
               target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                      bcene(i).eq.15
+     &                      bcene(i).eq.15 .or. target_east
             end if
             if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
-               target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                       bcene(i).eq.15
+              target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                      bcene(i).eq.15 .or. target_west
             end if
           end do
           if (target_west) then
@@ -800,32 +802,40 @@ c*** The zone starts from a target: reset counters and insert the target
 c*** Limiter configuration. Add first the CW target face
                           do i=1,nytg !{
                             luwrk(i)=lppp+i
-                            do iss=1,nsts !{
-                              if (eirdiag_nds_typ(iss).ne.2) cycle
-                              if (eirdiag_nds_srf(iss).ne.
+                            if (use_eirene.ne.0) then !{
+                              do iss=1,nsts !{
+                                if (eirdiag_nds_typ(iss).ne.2) cycle
+                                if (eirdiag_nds_srf(iss).ne.
      .                                               ltrgpos(1)+1) cycle
-                              if (eirdiag_nds_start(iss).gt.i) cycle
-                              if (eirdiag_nds_end(iss).lt.i) cycle
-                              ind=eirdiag_nds_ind(iss)
-                              ias=ind+1-(eirdiag_nds_start(iss)-1)
-                              lewrk(i)=nlim+ias+(i-1)
-                            end do !}
+                                if (eirdiag_nds_start(iss).gt.i) cycle
+                                if (eirdiag_nds_end(iss).lt.i) cycle
+                                ind=eirdiag_nds_ind(iss)
+                                ias=ind+1-(eirdiag_nds_start(iss)-1)
+                                lewrk(i)=nlim+ias+(i-1)
+                              end do !}
+                            else !}{
+                              lewrk(i)=0
+                            end if !}
                           end do !}
                           kn=kn+nytg
                         end if !}
                         k=it(ke)
                         do i=1,nytg !{
                           luwrk(kn+i)=lppp+nytg*(k-1)+i
-                          do iss=1,nsts !{
-                            if (eirdiag_nds_typ(iss).ne.2) cycle
-                            if (eirdiag_nds_srf(iss).ne.
+                          if (use_eirene.ne.0) then !{
+                            do iss=1,nsts !{
+                              if (eirdiag_nds_typ(iss).ne.2) cycle
+                              if (eirdiag_nds_srf(iss).ne.
      .                                           ltrgpos(k)+1) cycle
-                            if (eirdiag_nds_start(iss).gt.i) cycle
-                            if (eirdiag_nds_end(iss).lt.i) cycle
-                            ind=eirdiag_nds_ind(iss)
-                            ias=ind+1-(eirdiag_nds_start(iss)-1)
-                            lewrk(kn+i)=nlim+ias+(i-1)
-                          end do !}
+                              if (eirdiag_nds_start(iss).gt.i) cycle
+                              if (eirdiag_nds_end(iss).lt.i) cycle
+                              ind=eirdiag_nds_ind(iss)
+                              ias=ind+1-(eirdiag_nds_start(iss)-1)
+                              lewrk(kn+i)=nlim+ias+(i-1)
+                            end do !}
+                          else !}{
+                            lewrk(kn+i)=0
+                          end if !}
                         end do !}
                         kn=kn+nytg
                         kke=-kke
@@ -843,32 +853,40 @@ c*** Limiter configuration. Add first the CW target face
                         if(j.ne.n .or. k.eq.kke) then !{
                           do i=1,nytg !{
                             luwrk(kn+i)=lppp+nytg*(k-1)+i
-                            do iss=1,nsts !{
-                              if (eirdiag_nds_typ(iss).ne.2) cycle
-                              if (eirdiag_nds_srf(iss).ne.
-     .                                             ltrgpos(k)+1) cycle
-                              if (eirdiag_nds_start(iss).gt.i) cycle
-                              if (eirdiag_nds_end(iss).lt.i) cycle
-                              ind=eirdiag_nds_ind(iss)
-                              ias=ind+1-(eirdiag_nds_start(iss)-1)
-                              lewrk(kn+i)=nlim+ias+(i-1)
-                            end do !}
-                          end do !}
-                          kn=kn+nytg
-                          if(lim_cnf) then !{
-c*** Limiter configuration. Add the CCW target face
-                            do i=1,nytg !{
-                              luwrk(kn+i)=lppp+nytg+i
+                            if (use_eirene.ne.0) then !{
                               do iss=1,nsts !{
                                 if (eirdiag_nds_typ(iss).ne.2) cycle
                                 if (eirdiag_nds_srf(iss).ne.
-     .                                               ltrgpos(2)+1) cycle
+     .                                             ltrgpos(k)+1) cycle
                                 if (eirdiag_nds_start(iss).gt.i) cycle
                                 if (eirdiag_nds_end(iss).lt.i) cycle
                                 ind=eirdiag_nds_ind(iss)
                                 ias=ind+1-(eirdiag_nds_start(iss)-1)
                                 lewrk(kn+i)=nlim+ias+(i-1)
                               end do !}
+                            else !}{
+                              lewrk(kn+i)=0
+                            end if !}
+                          end do !}
+                          kn=kn+nytg
+                          if(lim_cnf) then !{
+c*** Limiter configuration. Add the CCW target face
+                            do i=1,nytg !{
+                              luwrk(kn+i)=lppp+nytg+i
+                              if (use_eirene.ne.0) then !{
+                                do iss=1,nsts !{
+                                  if (eirdiag_nds_typ(iss).ne.2) cycle
+                                  if (eirdiag_nds_srf(iss).ne.
+     .                                               ltrgpos(2)+1) cycle
+                                  if (eirdiag_nds_start(iss).gt.i) cycle
+                                  if (eirdiag_nds_end(iss).lt.i) cycle
+                                  ind=eirdiag_nds_ind(iss)
+                                  ias=ind+1-(eirdiag_nds_start(iss)-1)
+                                  lewrk(kn+i)=nlim+ias+(i-1)
+                                end do !}
+                              else !}{
+                                lewrk(kn+i)=0
+                              end if !}
                             end do !}
                             kn=kn+nytg
                           end if !}
@@ -929,15 +947,15 @@ c                print *,'il,kn = ',il,kn                  !###
             end if !} il.eq.1
           end if !} kk.gt.0
         end if !} n.gt.0
+       end do !}
+#ifdef DBG
+      print *,'After correction. nwldprt =',nwldprt
+      print '(a,(20i4))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+      do il=1,nwldprt !{
+       print '(a,i4,1x,a/(20i4))','lwldlis :',il,pltzlbl(il),
+     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
       end do !}
-c!###{
-c      print *,'After correction. nwldprt =',nwldprt
-c      print '(a,(20i4))','nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt !{
-c       print '(a,i4,1x,a/(20i4))','lwldlis :',il,pltzlbl(il),
-c     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
-c      end do !}
-c!###}
+#endif
 
       do il=2,nwldprt
 c*** Store original plot zones to be used for substituting proper elements inside targets

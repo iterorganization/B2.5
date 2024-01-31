@@ -101,7 +101,7 @@ module b2mod_ual_io
     use ids_grid_subgrid  &     ! IGNORE
      & , only : findGridSubsetByName
     use ids_grid_structured &   ! IGNORE
-     & , only : GridWriteData
+     & , only : gridWriteData
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,       &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
@@ -114,7 +114,7 @@ module b2mod_ual_io
      &          VEC_ALIGN_PARALLEL_ID, &
      &          VEC_ALIGN_TOROIDAL_ID
 #endif
-#if GGD_MINOR_VERSION < 9
+#if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION < 2 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
      &          GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
@@ -127,16 +127,16 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
 #if GGD_MAJOR_VERSION > 0
-#if GGD_MINOR_VERSION < 10
+#if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES, GRID_SUBSET_VOLUMES
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
@@ -176,6 +176,25 @@ module b2mod_ual_io
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
+#if AL_MAJOR_VERSION < 5
+    use imas_midplane_identifier &     ! IGNORE
+     & , only : midplane_identifier
+    use imas_neutrals_identifier &     ! IGNORE
+     & , only : neutrals_identifier
+    use imas_radiation_identifier &    ! IGNORE
+     & , only : radiation_identifier
+    use imas_edge_source_identifier &  ! IGNORE
+     & , only : edge_source_identifier
+#else
+    use al_midplane_identifier &       ! IGNORE
+     & , only : midplane_identifier
+    use al_neutrals_identifier &       ! IGNORE
+     & , only : neutrals_identifier
+    use al_radiation_identifier &      ! IGNORE
+     & , only : radiation_identifier
+    use al_edge_source_identifier &    ! IGNORE
+     & , only : edge_source_identifier
+#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     use ids_utilities &   ! IGNORE
@@ -374,12 +393,12 @@ contains
           target_west = .false.
           do i=1,nbc
             if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
-              target_east = bcene(i).eq. 3.or. &
-                    &       bcene(i).eq.12.or.bcene(i).eq.15
+              target_east = target_east.or. &
+                 &  bcene(i).eq.3.or.bcene(i).eq.12.or.bcene(i).eq.15
             end if
             if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
-              target_west = bcene(i).eq. 3.or. &
-                    &       bcene(i).eq.12.or.bcene(i).eq.15
+              target_west = target_west.or. &
+                 &  bcene(i).eq.3.or.bcene(i).eq.12.or.bcene(i).eq.15
             end if
           end do
           if(target_west) then
@@ -614,7 +633,10 @@ contains
             &   summary, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-            &   numerics, run_start_time_IN, run_end_time_IN, &
+            &   numerics, &
+#endif
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            &   run_start_time_IN, run_end_time_IN, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
@@ -651,6 +673,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics) :: numerics !< IDS designed to store
             !< run numerics data
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
@@ -716,9 +740,9 @@ contains
         integer :: nscx, iscx(0:nscxmax-1)
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
-        real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
-        real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
-        real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+        real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
+        real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
+        real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
         real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
@@ -965,8 +989,7 @@ contains
           &  homogeneous_time )
         call write_ids_properties( radiation%ids_properties, &
           &  homogeneous_time )
-        call write_ids_properties( description%ids_properties, &
-          &  homogeneous_time )
+        call write_ids_properties( description%ids_properties, 2 )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_properties( summary%ids_properties, &
           &  homogeneous_time )
@@ -1004,23 +1027,29 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_code( divertors%code, code_commit, code_description )
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_code( description%code, code_commit, code_description )
+#endif
         allocate( edge_transport%model(1) )
-        edge_transport%model(1)%identifier%index = 1
         allocate( edge_transport%model(1)%identifier%name(1) )
         allocate( edge_transport%model(1)%identifier%description(1) )
         if (ids_from_43.eq.0) then
           if (style.eq.0) then
+            edge_transport%model(1)%identifier%index = -2
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
           else if (style.ge.1) then
+            edge_transport%model(1)%identifier%index = -3
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
           else if (style.eq.-1) then
+            edge_transport%model(1)%identifier%index = -1
             edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
             edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           end if
           edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + BoRiS
         else
+          edge_transport%model(1)%identifier%index = -1
           edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
           edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
@@ -1049,8 +1078,10 @@ contains
         edge_transport%time(time_sind) = time
         allocate( edge_sources%time(num_time_slices) )
         edge_sources%time(time_sind) = time
+#if IMAS_MAJOR_VERSION < 4
         allocate( description%time(num_time_slices) )
         description%time(time_sind) = time
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( summary%time(num_time_slices) )
         summary%time(time_sind) = time
@@ -1088,12 +1119,21 @@ contains
           allocate( radiation%process(j)%identifier%name(1) )
           allocate( radiation%process(j)%identifier%description(1) )
         end do
+        radiation%process(1)%identifier%index = 2
         radiation%process(1)%identifier%name = 'line_radiation'
         radiation%process(1)%identifier%description = 'Line and rec. rad. from B2.5 species'
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+        radiation%process(2)%identifier%index = &
+          &  radiation_identifier%bremsstrahlung
+        radiation%process(2)%identifier%name = &
+          &  radiation_identifier%name( radiation_identifier%bremsstrahlung )
+        radiation%process(2)%identifier%description = &
+          &  radiation_identifier%description( radiation_identifier%bremsstrahlung )
+#else
+        radiation%process(2)%identifier%index = 8
         radiation%process(2)%identifier%name = 'bremsstrahlung'
         radiation%process(2)%identifier%description = 'Bremsstrahlung from B2.5 species'
-        radiation%process(1)%identifier%index = 2
-        radiation%process(2)%identifier%index = 8
+#endif
         if (use_eirene.ne.0) then
           radiation%process(3)%identifier%index = 1
           radiation%process(4)%identifier%index = 2
@@ -1117,112 +1157,171 @@ contains
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
+          allocate( edge_sources%source(is)%identifier%name(1) )
+          allocate( edge_sources%source(is)%identifier%description(1) )
         end do
 
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+        !! Total sources
+        edge_sources%source(1)%identifier%index = edge_source_identifier%total
+        edge_sources%source(1)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%total )
+        edge_sources%source(1)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%total )
+        !! Background sources
+        edge_sources%source(2)%identifier%index = edge_source_identifier%background
+        edge_sources%source(2)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%background )
+        edge_sources%source(2)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%background )
+        !! Prescribed sources
+        edge_sources%source(3)%identifier%index = edge_source_identifier%prescribed
+        edge_sources%source(3)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%prescribed )
+        edge_sources%source(3)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%prescribed )
+        !! Time derivatives
+        edge_sources%source(4)%identifier%index = edge_source_identifier%time_derivative
+        edge_sources%source(4)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%time_derivative )
+        edge_sources%source(4)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%time_derivative )
+        !! Atomic ionization
+        edge_sources%source(5)%identifier%index = edge_source_identifier%atomic_ionization
+        edge_sources%source(5)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%atomic_ionization )
+        edge_sources%source(5)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%atomic_ionization )
+        !! Molecular ionization
+        edge_sources%source(6)%identifier%index = edge_source_identifier%molecular_ionization
+        edge_sources%source(6)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%molecular_ionization )
+        edge_sources%source(6)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%molecular_ionization )
+        !! Ionization
+        edge_sources%source(7)%identifier%index = edge_source_identifier%ionization
+        edge_sources%source(7)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%ionization )
+        edge_sources%source(7)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%ionization )
+        !! Recombination
+        edge_sources%source(8)%identifier%index = edge_source_identifier%recombination
+        edge_sources%source(8)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%recombination )
+        edge_sources%source(8)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%recombination )
+        !! Charge exchange
+        edge_sources%source(9)%identifier%index = edge_source_identifier%charge_exchange
+        edge_sources%source(9)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%charge_exchange )
+        edge_sources%source(9)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%charge_exchange )
+        !! Collisional equipartition
+        edge_sources%source(10)%identifier%index = edge_source_identifier%collisional_equipartition
+        edge_sources%source(10)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%collisional_equipartition )
+        edge_sources%source(10)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%collisional_equipartition )
+        !! Ohmic
+        edge_sources%source(11)%identifier%index = edge_source_identifier%ohmic
+        edge_sources%source(11)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%ohmic )
+        edge_sources%source(11)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%ohmic )
+        !! Radiation
+        edge_sources%source(12)%identifier%index = edge_source_identifier%radiation
+        edge_sources%source(12)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%radiation )
+        edge_sources%source(12)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%radiation )
+#if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
+        !! Neutrals
+        edge_sources%source(13)%identifier%index = edge_source_identifier%neutrals
+        edge_sources%source(13)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%neutrals )
+        edge_sources%source(13)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+#endif
+#else
         !! Total sources
         edge_sources%source(1)%identifier%index = 1
-        allocate( edge_sources%source(1)%identifier%name(1) )
         edge_sources%source(1)%identifier%name = "Total"
-        allocate( edge_sources%source(1)%identifier%description(1) )
         edge_sources%source(1)%identifier%description = "Total source from "//trim(source)
         !! Background sources
         edge_sources%source(2)%identifier%index = 703
-        allocate( edge_sources%source(2)%identifier%name(1) )
         edge_sources%source(2)%identifier%name = "Background"
-        allocate( edge_sources%source(2)%identifier%description(1) )
         edge_sources%source(2)%identifier%description = "External sources from "//trim(source)
         !! Prescribed sources
         edge_sources%source(3)%identifier%index = 705
-        allocate( edge_sources%source(3)%identifier%name(1) )
         edge_sources%source(3)%identifier%name = "Prescribed"
-        allocate( edge_sources%source(3)%identifier%description(1) )
         edge_sources%source(3)%identifier%description = &
             & "Boundary conditions sources from "//trim(source)
         !! Time derivatives
         edge_sources%source(4)%identifier%index = 706
-        allocate( edge_sources%source(4)%identifier%name(1) )
         edge_sources%source(4)%identifier%name = "Time derivative"
-        allocate( edge_sources%source(4)%identifier%description(1) )
         edge_sources%source(4)%identifier%description = &
             & "Time derivative sources from "//trim(source)
         !! Atomic ionization
         edge_sources%source(5)%identifier%index = 707
-        allocate( edge_sources%source(5)%identifier%name(1) )
         edge_sources%source(5)%identifier%name = "Atomic ionization"
-        allocate( edge_sources%source(5)%identifier%description(1) )
         edge_sources%source(5)%identifier%description = &
             & "Atomic ionization sources from "//trim(source)
         !! Molecular ionization
         edge_sources%source(6)%identifier%index = 708
-        allocate( edge_sources%source(6)%identifier%name(1) )
         edge_sources%source(6)%identifier%name = "Molecular ionization"
-        allocate( edge_sources%source(6)%identifier%description(1) )
         edge_sources%source(6)%identifier%description = &
             & "Molecular ionization sources from "//trim(source)
         !! Ionization
         edge_sources%source(7)%identifier%index = 709
-        allocate( edge_sources%source(7)%identifier%name(1) )
         edge_sources%source(7)%identifier%name = "Ionization"
-        allocate( edge_sources%source(7)%identifier%description(1) )
         edge_sources%source(7)%identifier%description = &
             & "Ionization sources from "//trim(source)
         !! Recombination
         edge_sources%source(8)%identifier%index = 710
-        allocate( edge_sources%source(8)%identifier%name(1) )
         edge_sources%source(8)%identifier%name = "Recombination"
-        allocate( edge_sources%source(8)%identifier%description(1) )
         edge_sources%source(8)%identifier%description = &
             & "Recombination sources from "//trim(source)
         !! Charge exchange
         edge_sources%source(9)%identifier%index = 305
-        allocate( edge_sources%source(9)%identifier%name(1) )
         edge_sources%source(9)%identifier%name = "Charge exchange"
-        allocate( edge_sources%source(9)%identifier%description(1) )
         edge_sources%source(9)%identifier%description = &
             & "Charge exchange sources from "//trim(source)
         !! Collisional equipartition
         edge_sources%source(10)%identifier%index = 11
-        allocate( edge_sources%source(10)%identifier%name(1) )
         edge_sources%source(10)%identifier%name = "Equipartition"
-        allocate( edge_sources%source(10)%identifier%description(1) )
         edge_sources%source(10)%identifier%description = &
             & "Collisional equipartition sources from "//trim(source)
         !! Ohmic
         edge_sources%source(11)%identifier%index = 7
-        allocate( edge_sources%source(11)%identifier%name(1) )
         edge_sources%source(11)%identifier%name = "Ohmic"
-        allocate( edge_sources%source(11)%identifier%description(1) )
         edge_sources%source(11)%identifier%description = &
             & "Ohmic (Joule) sources from "//trim(source)
         !! Radiation
         edge_sources%source(12)%identifier%index = 200
-        allocate( edge_sources%source(12)%identifier%name(1) )
         edge_sources%source(12)%identifier%name = "Radiation"
-        allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         !! Neutrals
         edge_sources%source(13)%identifier%index = 701
-        allocate( edge_sources%source(13)%identifier%name(1) )
         edge_sources%source(13)%identifier%name = "Neutrals"
-        allocate( edge_sources%source(13)%identifier%description(1) )
         edge_sources%source(13)%identifier%description = &
             & "Total source due to plasma-neutral interactions from "//trim(source)
+#endif
 #endif
 
         call put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  summary, &
 #endif
-            &  edge_profiles, database, time_slice_value, &
+            &  edge_profiles, database, time_sind, time_slice_value, &
             &  .true., new_eq_ggd )
         allocate( radiation%vacuum_toroidal_field%b0( num_time_slices ) )
         radiation%vacuum_toroidal_field%b0( time_sind ) = &
             &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
         radiation%vacuum_toroidal_field%r0 = &
             &  edge_profiles%vacuum_toroidal_field%r0
-#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 21 && IMAS_MAJOR_VERSION == 3 )
         allocate( description%data_entry%user(1) )
         description%data_entry%user = username
         allocate( description%data_entry%machine(1) )
@@ -1235,15 +1334,27 @@ contains
         description%imas_version = version
         allocate( description%dd_version(1) )
         description%dd_version = imas_version
+#endif
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if ( present( time_step_IN ) ) &
           &  description%simulation%time_step = time_step_IN
         if ( present ( time_IN ) ) &
           &  description%simulation%time_current = time_IN
         allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         description%simulation%time_begin = run_start_time_IN
         description%simulation%time_end = run_end_time_IN
+#endif
+#if IMAS_MAJOR_VERSION > 3
+        description%type%index = 2
+        allocate( description%type%name(1) )
+        allocate( description%type%description(1) )
+        description%type%name = "simulation"
+        description%type%description = "Simulation results from "//trim(source)
+        allocate( description%machine(1) )
+        description%machine = database
+        description%pulse = shot
 #endif
 
         i=index(B25_git_version,'-')
@@ -1601,76 +1712,76 @@ contains
               &  recycled_flux(1) )
             if (ntrgts.eq.2) then
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_flux_peak, &
-                & power_flux_peak(2) )
+                &  divertors%divertor(2)%target(1)%power_flux_peak, &
+                &  power_flux_peak(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%flux_expansion, &
-                & flux_expansion(2) )
+                &  divertors%divertor(2)%target(1)%flux_expansion, &
+                &  flux_expansion(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%wetted_area, &
-                & wetted_area(2) )
+                &  divertors%divertor(2)%target(1)%wetted_area, &
+                &  wetted_area(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%wetted_area, &
-                & wetted_area(2) )
+                &  divertors%divertor(2)%wetted_area, &
+                &  wetted_area(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_incident_fraction, &
-                & 1.0_IDS_real )
+                &  divertors%divertor(2)%target(1)%power_incident_fraction, &
+                &  1.0_IDS_real )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_incident, &
-                & power_incident(2) )
+                &  divertors%divertor(2)%target(1)%power_incident, &
+                &  power_incident(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_incident, &
-                & power_incident(2) )
+                &  divertors%divertor(2)%power_incident, &
+                &  power_incident(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_conducted, &
-                & power_conducted(2) )
+                &  divertors%divertor(2)%target(1)%power_conducted, &
+                &  power_conducted(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_conducted, &
-                & power_conducted(2) )
+                &  divertors%divertor(2)%power_conducted, &
+                &  power_conducted(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_convected, &
-                & power_convected(2) )
+                &  divertors%divertor(2)%target(1)%power_convected, &
+                &  power_convected(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_convected, &
-                & power_convected(2) )
+                &  divertors%divertor(2)%power_convected, &
+                &  power_convected(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_radiated, &
-                & power_radiated(2) )
+                &  divertors%divertor(2)%target(1)%power_radiated, &
+                &  power_radiated(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_radiated, &
-                & power_radiated(2) )
+                &  divertors%divertor(2)%power_radiated, &
+                &  power_radiated(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_neutrals, &
-                & power_neutrals(2) )
+                &  divertors%divertor(2)%target(1)%power_neutrals, &
+                &  power_neutrals(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_neutrals, &
-                & power_neutrals(2) )
+                &  divertors%divertor(2)%power_neutrals, &
+                &  power_neutrals(2) )
               u = idir(2)*sum(fhp(ifpos(2),:,0,:))
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_recombination_plasma, u )
+                &  divertors%divertor(2)%target(1)%power_recombination_plasma, u )
               call write_timed_value( &
-                & divertors%divertor(2)%power_recombination_plasma, u )
+                &  divertors%divertor(2)%power_recombination_plasma, u )
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_recombination_neutrals, &
-                & power_recomb_neutrals(2) )
+                &  divertors%divertor(2)%target(1)%power_recombination_neutrals, &
+                &  power_recomb_neutrals(2) )
               call write_timed_value( &
-                & divertors%divertor(2)%power_recombination_neutrals, &
-                & power_recomb_neutrals(2) )
+                &  divertors%divertor(2)%power_recombination_neutrals, &
+                &  power_recomb_neutrals(2) )
               u = idir(2)*sum(fhj(ifpos(2),:,0))
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%power_currents, u )
+                &  divertors%divertor(2)%target(1)%power_currents, u )
               call write_timed_value( &
-                & divertors%divertor(2)%power_currents, u )
+                &  divertors%divertor(2)%power_currents, u )
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
               u = idir(2)*sum(fch(ifpos(2),:,0))
               call write_timed_value( &
-                & divertors%divertor(2)%target(1)%current_incident, u )
+                &  divertors%divertor(2)%target(1)%current_incident, u )
               call write_timed_value( &
-                & divertors%divertor(2)%current_incident, u )
+                &  divertors%divertor(2)%current_incident, u )
 #endif
               call write_timed_value( &
-                & divertors%divertor(2)%particle_flux_recycled_total, &
-                & recycled_flux(2) )
+                &  divertors%divertor(2)%particle_flux_recycled_total, &
+                &  recycled_flux(2) )
             end if
           end if
         case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
@@ -2125,6 +2236,17 @@ contains
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#if AL_MAJOR_VERSION > 4
+        allocate( edge_transport%grid_ggd( time_sind )%path(1) )
+        edge_transport%grid_ggd( time_sind )%path = &
+            &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+        allocate( edge_sources%grid_ggd( time_sind )%path(1) )
+        edge_sources%grid_ggd( time_sind )%path = &
+            &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+        allocate( radiation%grid_ggd( time_sind )%path(1) )
+        radiation%grid_ggd( time_sind )%path = &
+            &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+#else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   edge_transport%grid_ggd( time_sind ),                       &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
@@ -2144,6 +2266,7 @@ contains
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#endif
 #endif
 #endif
 #else
@@ -2964,11 +3087,20 @@ contains
                    &      neutral_type%name(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%description(1) )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
+                   &      neutrals_identifier%thermal
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
+                   &      neutrals_identifier%name( neutrals_identifier%thermal )
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
+                   &      neutrals_identifier%description( neutrals_identifier%thermal )
+#else
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                    &     "Thermal"
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     "Fluid neutral species from B2.5"
+#endif
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%label(1) )
@@ -2996,11 +3128,20 @@ contains
                      &      neutral_type%name(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
                      &      neutral_type%description(1) )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
+                     &      neutrals_identifier%thermal
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
+                     &      neutrals_identifier%name( neutrals_identifier%thermal )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
+                     &      neutrals_identifier%description( neutrals_identifier%thermal )
+#else
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                      &     "Thermal"
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                      &     "Fluid neutral species from B2.5"
+#endif
                end do
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%label(1) )
@@ -3026,11 +3167,20 @@ contains
                    &      neutral_type%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%description(1) )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
+                   &      neutrals_identifier%thermal
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
+                   &      neutrals_identifier%name( neutrals_identifier%thermal )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
+                   &      neutrals_identifier%description( neutrals_identifier%thermal )
+#else
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                    &     "Thermal"
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     "Fluid neutral species from B2.5"
+#endif
             end do
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             allocate( radiation%process(1)%ggd( time_sind )%neutral( nneut ) )
@@ -3059,11 +3209,20 @@ contains
                    &     neutral_type%name(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &     neutral_type%description(1) )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
+                   &     neutrals_identifier%thermal
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
+                   &     neutrals_identifier%name( neutrals_identifier%thermal )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
+                   &     neutrals_identifier%description( neutrals_identifier%thermal )
+#else
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                    &     "Thermal"
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     "Fluid neutral species from B2.5"
+#endif
             end do
 #endif
         end if
@@ -3380,11 +3539,20 @@ contains
             transport_grid = edge_transport%ggd( time_sind )%grid
             sources_grid = edge_sources%ggd( time_sind )%grid
 #else
+#if AL_MAJOR_VERSION < 5
             edge_grid = edge_profiles%grid_ggd( time_sind )
             transport_grid = edge_transport%grid_ggd( time_sind )
             sources_grid = edge_sources%grid_ggd( time_sind )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             radiation_grid = radiation%grid_ggd( time_sind )
+#endif
+#else
+            edge_grid = edge_profiles%grid_ggd( time_sind )
+            transport_grid = edge_profiles%grid_ggd( time_sind )
+            sources_grid = edge_profiles%grid_ggd( time_sind )
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            radiation_grid = edge_profiles%grid_ggd( time_sind )
+#endif
 #endif
 #endif
             !! ne: Electron density
@@ -6595,8 +6763,7 @@ contains
         call write_ids_properties( batch_sources%ids_properties, &
           &  homogeneous_time )
         if ( do_description ) then
-          call write_ids_properties( description%ids_properties, &
-            &  homogeneous_time )
+          call write_ids_properties( description%ids_properties, 2 )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call write_ids_properties( summary%ids_properties, &
             &  homogeneous_time )
@@ -6611,6 +6778,10 @@ contains
         if (do_description) &
           &  call write_ids_code( summary%code, code_commit, code_description )
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        if (do_description) &
+          &  call write_ids_code( description%code, code_commit, code_description )
+#endif
 
         !! 3. Allocate IDS.time and set it to desired values
         allocate( batch_profiles%time(num_batch_slices) )
@@ -6618,8 +6789,10 @@ contains
         allocate( batch_sources%time(num_batch_slices) )
         batch_sources%time(batch_index) = time
         if (do_description) then
+#if IMAS_MAJOR_VERSION < 4
           allocate( description%time(num_batch_slices) )
           description%time(batch_index) = time
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           allocate( summary%time(num_batch_slices) )
           summary%time(batch_index) = time
@@ -6634,22 +6807,34 @@ contains
 #endif
         allocate (batch_sources%source(1) )
         allocate (batch_sources%source(1)%ggd( num_batch_slices ) )
+#ifdef B25_EIRENE
+        allocate( batch_sources%source(1)%identifier%name(1) )
+        allocate( batch_sources%source(1)%identifier%description(1) )
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+        !! Neutrals
+        batch_sources%source(1)%identifier%index = edge_source_identifier%neutrals
+        batch_sources%source(1)%identifier%name = &
+          &  edge_source_identifier%name( edge_source_identifier%neutrals )
+        batch_sources%source(1)%identifier%description = &
+          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+#else
         !! Total sources due to Eirene species
         batch_sources%source(1)%identifier%index = 0
-        allocate( batch_sources%source(1)%identifier%name(1) )
         batch_sources%source(1)%identifier%name = "Eirene"
-        allocate( batch_sources%source(1)%identifier%description(1) )
         batch_sources%source(1)%identifier%description = &
              &  "Total source due to Eirene species "//trim(source)
+#endif
+#endif
 
         call put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  summary, &
 #endif
-            &  batch_profiles, database, time, &
+            &  batch_profiles, database, batch_index, time, &
             &  do_description, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) then
+#if IMAS_MAJOR_VERSION == 3
           allocate( description%data_entry%user(1) )
           description%data_entry%user = username
           allocate( description%data_entry%machine(1) )
@@ -6662,6 +6847,16 @@ contains
           description%imas_version = version
           allocate( description%dd_version(1) )
           description%dd_version = imas_version
+#elif IMAS_MAJOR_VERSION > 3
+          description%type%index = 2
+          allocate( description%type%name(1) )
+          allocate( description%type%description(1) )
+          description%type%name = "simulation"
+          description%type%description = "Simulation results from "//trim(source)
+          allocate( description%machine(1) )
+          description%machine = database
+          description%pulse = shot
+#endif
           if ( present( time_IN ) ) &
             &  description%simulation%time_current = time_IN
           allocate( description%simulation%workflow(1) )
@@ -6705,12 +6900,18 @@ contains
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#if AL_MAJOR_VERSION > 4
+        allocate( batch_sources%grid_ggd( batch_index )%path(1) )
+        batch_sources%grid_ggd( batch_index )%path = &
+            &   "#batch_profiles/grid_ggd("//int2str(batch_index)//")"
+#else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_sources%grid_ggd( batch_index ),                      &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#endif
 #endif
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -6893,8 +7094,13 @@ contains
           batch_grid = batch_profiles%ggd( batch_index )%grid
           sources_grid = batch_sources%ggd( batch_index )%grid
 #else
+#if AL_MAJOR_VERSION < 5
           batch_grid = batch_profiles%grid_ggd( batch_index )
           sources_grid = batch_sources%grid_ggd( batch_index )
+#else
+          batch_grid = batch_profiles%grid_ggd( batch_index )
+          sources_grid = batch_profiles%grid_ggd( batch_index )
+#endif
 #endif
           !! sne: Electron particle sources
           tmpCv(:,:) = sne_mean(:,:) / vol(:,:)
@@ -7341,7 +7547,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
        &  summary, &
 #endif
-       &  edgeprof, database, time_slice_value, &
+       &  edgeprof, database, time_sind, time_slice_value, &
        &  do_summary_data, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     use b2mod_ual_io_grid &
@@ -7357,6 +7563,8 @@ contains
     type (ids_edge_profiles) :: edgeprof !< IDS designed to store
             !< edge profiles data
     character(len=24), intent(in) :: database
+    integer, intent(in) :: time_sind     !< Corresponding time slice index
+                                         !< in edge_profiles IDS
     real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
     logical, intent(in) :: do_summary_data
     logical, intent(out) :: new_eq_ggd
@@ -7621,8 +7829,14 @@ contains
               &   bottomiy, nnreg, topcut, region, cflags,                    &
               &   INCLUDE_GHOST_CELLS, vol, gs, qc )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
+#if AL_MAJOR_VERSION > 4
+            allocate( equilibrium%grids_ggd( slice_index )%grid(1)%path(1) )
+            equilibrium%grids_ggd( slice_index )%grid(1)%path = &
+              &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+#else
             call GGD_copy_AoS3Root_to_Dynamic( eq_grid, &
               &   equilibrium%grids_ggd( slice_index )%grid(1) )
+#endif
 #else
             equilibrium%grids_ggd( slice_index )%grid(1) = eq_grid
 #endif
@@ -8242,6 +8456,10 @@ contains
     midplane%index = midplane_id
     allocate( midplane%name(1) )
     allocate( midplane%description(1) )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+    midplane%name = midplane_identifier%name( midplane_id )
+    midplane%description = midplane_identifier%description( midplane_id )
+#else
     select case (midplane_id)
     case (1)
       midplane%name = 'magnetic_axis'
@@ -8257,6 +8475,7 @@ contains
       midplane%description = &
          &  'Location specified by GGD outer midplane grid subset'
     end select
+#endif
     return
 
     end subroutine write_ids_midplane
@@ -8406,30 +8625,50 @@ contains
       case ( 1 ) !< Grid subset consists of nodes
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
                      &   basegrid, iSubset, IDSmap, tmpVx )
-#if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+        if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
       case ( 2 ) !< Grid subset consists of faces
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
                      &   basegrid, iSubset, IDSmap, tmpFace )
-#if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+        if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
       case ( 3 ) !< Grid subset consists of cells
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                 &
                       &  basegrid, iSubset, IDSmap, value )
-#if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+        if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
+      case ( 4 ) !< Grid subset consists of volumes
+        call xerrab( 'Case for volumetric grid subsets not yet coded !')
       case default
         call xerrab( 'Unknown grid subset '//int2str(iSubset)// &
             &        ' dimension : '//int2str(ndim) )
@@ -8474,71 +8713,77 @@ contains
 
     do iSubset = 1, nSubsets
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-       ndim = 3
-       iSubsetID = GRID_SUBSET_CELLS
+      ndim = 3
+      iSubsetID = GRID_SUBSET_CELLS
 #else
-       ndim = basegrid%grid_subset(iSubset)%dimension
-       iSubsetID =basegrid%grid_subset(iSubset)%identifier%index
+      ndim = basegrid%grid_subset(iSubset)%dimension
+      iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
 #endif
-       if (ndim.eq.IDS_INT_INVALID) then
-         select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_MAGNETIC_AXIS,               &
-             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_INNER_STRIKEPOINT,           &
-             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-           ndim = 1
-         case( GRID_SUBSET_EDGES, &
-             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, &
-             & GRID_SUBSET_OUTER_MIDPLANE, &
-             & GRID_SUBSET_SECOND_SEPARATRIX, &
-             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
-           ndim = 2
-         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-           ndim = 3
-         case( GRID_SUBSET_VOLUMES )
-           ndim = 4
-         end select
-       end if
-       if (ndim.ne.3) cycle
+      if (ndim.eq.IDS_INT_INVALID) then
+        select case (iSubsetID)
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+          ndim = 1
+        case( GRID_SUBSET_EDGES, &
+            & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+            & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+            & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+            & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+            & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+            & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_FULL_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, &
+            & GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_SECOND_SEPARATRIX, &
+            & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+            & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+            & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+            & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+            & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+            & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+            & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+          ndim = 2
+        case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+            & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+            & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+            & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+          ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
+        end select
+      end if
+      if (ndim.ne.3) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
           &   basegrid, iSubset, IDSmap, b2CellData )
-#if GGD_MINOR_VERSION > 8
-       call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-       call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
+        scalar(iSubset)%grid_index = ggdId
+        call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
 #endif
-       deallocate(idsdata)
+      else
+        scalar(iSubset)%grid_index = ggdId
+        scalar(iSubset)%grid_subset_index = iSubsetID
+      end if
+      deallocate(idsdata)
     end do
 
     return
@@ -8649,8 +8894,13 @@ contains
       if (ndim.ne.3) cycle
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(           &
                    &   basegrid, iSubset, IDSmap, b2CellData )
-      call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
-          &   ggdID, iSubsetID, vectorID, idsdata )
+      if ( size(idsdata) > 0 ) then
+        call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
+            &   ggdID, iSubsetID, vectorID, idsdata )
+      else
+        vectorComponent(iSubset)%grid_index = ggdId
+        vectorComponent(iSubset)%grid_subset_index = iSubsetID
+      end if
       deallocate(idsdata)
     end do
 
@@ -8868,8 +9118,13 @@ contains
       if (ndim.ne.2) cycle
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS( &
                    &   basegrid, iSubset, IDSmap, b2FaceData )
-      call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
+      if ( size(idsdata) > 0 ) then
+        call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
                    &   ggdID, iSubsetID, vectorID, idsdata )
+      else
+        vectorComponent(iSubset)%grid_index = ggdId
+        vectorComponent(iSubset)%grid_subset_index = iSubsetID
+      end if
       deallocate(idsdata)
     end do
 
@@ -8911,70 +9166,76 @@ contains
 
     do iSubset = 1, nSubsets
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-       ndim = 3
-       iSubsetID = GRID_SUBSET_CELLS
+      ndim = 3
+      iSubsetID = GRID_SUBSET_CELLS
 #else
-       ndim = basegrid%grid_subset(iSubset)%dimension
-       iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
+      ndim = basegrid%grid_subset(iSubset)%dimension
+      iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
 #endif
-       if (ndim.eq.IDS_INT_INVALID) then
-         select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_MAGNETIC_AXIS,               &
-             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_INNER_STRIKEPOINT,           &
-             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-           ndim = 1
-         case( GRID_SUBSET_EDGES, &
-             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
-             & GRID_SUBSET_SECOND_SEPARATRIX, &
-             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
-           ndim = 2
-         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-           ndim = 3
-         case( GRID_SUBSET_VOLUMES )
-           ndim = 4
-         end select
-       end if
-       if (ndim.ne.1) cycle
+      if (ndim.eq.IDS_INT_INVALID) then
+        select case (iSubsetID)
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+          ndim = 1
+        case( GRID_SUBSET_EDGES, &
+            & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+            & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+            & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+            & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+            & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+            & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_FULL_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_SECOND_SEPARATRIX, &
+            & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+            & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+            & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+            & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+            & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+            & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+            & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+          ndim = 2
+        case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+            & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+            & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+            & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+          ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
+        end select
+      end if
+      if (ndim.ne.1) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
           &   basegrid, iSubset, IDSmap, b2VertexData )
-#if GGD_MINOR_VERSION > 8
-       call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-       call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
+        scalar(iSubset)%grid_index = ggdId
+        call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
 #endif
-       deallocate(idsdata)
+      else
+        scalar(iSubset)%grid_index = ggdId
+        scalar(iSubset)%grid_subset_index = iSubsetID
+      end if
+      deallocate(idsdata)
     end do
 
     return
@@ -9033,28 +9294,46 @@ contains
       !! Fill in vector component data
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, IDSmap, b2FaceData)
-#if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
-      call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = GRID_SUBSET_Y_ALIGNED_EDGES
+      end if
       deallocate(idsdata)
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, IDSmap, b2FaceData)
-#if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
-      call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = GRID_SUBSET_X_ALIGNED_EDGES
+      end if
       deallocate(idsdata)
     else
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                &   basegrid, gridSubsetInd, IDSmap, b2FaceData)
-#if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, gridSubsetID, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( vector, gridId, gridSubsetID, idsdata )
 #else
-      call gridWriteData( vector, gridSubsetID, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, gridSubsetID, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = gridSubsetID
+      end if
       deallocate(idsdata)
     end if
 
@@ -9648,7 +9927,8 @@ contains
       allocate(values(5))
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, B2_SUBGRID_CELLS, &
                &  CPOmap, value )
-      call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
       tmpFace = 0.0_ITM_R8
       do i = TO_SELF, TO_TOP
@@ -9657,21 +9937,25 @@ contains
       call value_on_faces(nx,ny,weight,value,tmpFace)
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, &
                & iSgCore, CPOmap, tmpFace )
-      call gridWriteData( values(2), iSgCore, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( CPOmap%b2nx, CPOmap%b2ny, &
                & VX_LOWERLEFT, value )
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & iSgInnerMidplane, CPOmap, tmpVx )
-      call gridWriteData( values(3), iSgInnerMidplane, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & iSgOuterMidplane, CPOmap, tmpVx )
-      call gridWriteData( values(4), iSgOuterMidplane, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(4), iSgOuterMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & B2_SUBGRID_NODES, CPOmap, tmpVx )
-      call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
       deallocate(cpodata)
       allocate( fluxes(2) )
       call write_face_vector( fluxes(1), flux )
@@ -9689,7 +9973,8 @@ contains
       allocate(scalar(1))
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, &
                & B2_SUBGRID_CELLS, CPOmap, b2CellData )
-      call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
     end subroutine write_cell_scalar
 
@@ -9720,7 +10005,8 @@ contains
       do i = 1, dim
          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
                   & B2_SUBGRID_CELLS, CPOmap, vecdata(:,:,i-1))
-         call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
+         if ( size(cpodata) > 0 ) &
+            & call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
          deallocate(cpodata)
       end do
 
@@ -9749,11 +10035,13 @@ contains
 !!$          ! Fill in vector component data
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & B2_SUBGRID_EDGES_Y, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
 !!$          deallocate(cpodata)
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & B2_SUBGRID_EDGES_X, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
 !!$          deallocate(cpodata)
 !!$      else
 !!$          allocate(vector%comp(1))
@@ -9765,7 +10053,8 @@ contains
 !!$
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & subgridInd, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(1), subgridInd, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(1), subgridInd, cpodata )
 !!$          deallocate(cpodata)
 !!$      end if
 
@@ -9833,7 +10122,6 @@ contains
 
             e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
 
-
             !! radial direction
             !! Try to find top neighbour
             dir = 1.0
@@ -9867,12 +10155,10 @@ contains
 
             e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
 
-
             !! toroidal direction
             e3(ix,iy,1) = 0.0   !! R
             e3(ix,iy,2) = 1.0   !! phi
             e3(ix,iy,3) = 0.0   !! Z
-
 
             !! make unit vectors
             e1(ix,iy,:) = unitVector(e1(ix,iy,:))

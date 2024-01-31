@@ -1001,7 +1001,7 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB,               !srv 09.01.20 19.02.21
+      call b2tfhe_ (nx, ny, ns, ismain, facdrift,                        !srv 09.01.20 19.02.21
      & vol, hx,                                                          !srv 29.01.20
      1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 17.05.99 11.07.99
      & chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21

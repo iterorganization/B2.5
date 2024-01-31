@@ -173,7 +173,7 @@ cank
       allocate(p1(2,nlim))
       allocate(p2(2,nlim))
       allocate(xx(-1:nx,2))
-      allocate(yy(-1:ny,2))     
+      allocate(yy(-1:ny,2))
       allocate(nh(-1:nxd,-1:nyd))
       allocate(psi(-1:nxd,-1:nyd))
       allocate(fbz(-1:nxd,-1:nyd))

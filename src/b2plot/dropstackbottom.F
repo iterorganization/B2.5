@@ -13,8 +13,8 @@
         do is = 0,ndim(3,i)-1
           do iy = -1,ndim(2,i)
             do ix = -1,ndim(1,i)
-              work(ixx(ix,iy),iyy(ix,iy),is,i-1) = 
-     .         work(ixx(ix,iy),iyy(ix,iy),is,i) 
+              work(ixx(ix,iy),iyy(ix,iy),is,i-1) =
+     .         work(ixx(ix,iy),iyy(ix,iy),is,i)
             end do
           end do
           textwk(is,i-1) = textwk(is,i)

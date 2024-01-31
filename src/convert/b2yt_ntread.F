@@ -16,8 +16,10 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(nwrite,
-     &  natm1, iatm1, nmol1, imol1, nion1, iion1)
+      subroutine b2yt_ntread
+#ifdef B25_EIRENE
+     & (nwrite, natm1, iatm1, nmol1, imol1, nion1, iion1)
+#endif
 c
 c  version : 06.11.97 22:11
 c
@@ -37,13 +39,13 @@ c
       use b2mod_subsys
       implicit none
 
+#ifdef B25_EIRENE
 *  -- INPUT ARGUMENTS --
       integer nwrite
       integer natm1, nmol1, nion1
       integer iatm1(natm), imol1(nmol), iion1(nion)
 
 *  -- LOCAL SCALARS --
-#ifdef B25_EIRENE
       integer jvft46
       integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
@@ -169,9 +171,9 @@ C
      . ' Dimensions in ',fort_lc,'46 =   ',ntrii,natmi,nmoli,nioni
       write(*,'(3a,4i6)')
      . ' Dimensions in ',fort_lc,'46.2 = ',ntrii,natm1,nmol1,nion1
-      call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
-      call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
-      call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
+      call xertst(natmi .le. natm, 'NTREAD: NATMI > NATM')
+      call xertst(nmoli .le. nmol, 'NTREAD: NMOLI > NMOL')
+      call xertst(nioni .le. nion, 'NTREAD: NIONI > NION')
       allocate(field1(max(1,natm1,nmol1,nion1),ntrii))
 
 c

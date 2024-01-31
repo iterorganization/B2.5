@@ -38,11 +38,15 @@ cank }
 #ifndef SOLPS4_3
       use eirmod_extrab25
       use eirmod_parmmod
+      use eirmod_comusr
+     , , only : ntime
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
       use eirdiag   ! IGNORE
       use ceirsrt   ! IGNORE
+      use comusr    ! IGNORE
+     , , only : ntime
 #endif
       use eirmod_solps
 #else
@@ -200,14 +204,14 @@ csw 21feb2012
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
-     .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case 
+     .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case
 
       contains
 
       subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
      &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_b2cmpa
       implicit none
       integer, intent(in) :: nxd, nyd, nsd,
@@ -342,7 +346,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       issput_chemical=0
 #endif
       eirene_step_cpu=0.0_R8
-      eirene_step_dt=1.0e-3_R8
+      eirene_step_dt=0.0_R8
       eirene_mod=1
       volrecstart(:)=1.0e21_R8
       volrecinc=0.0_R8
@@ -559,11 +563,15 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrat=nstrai+1
         else
 #ifdef B25_EIRENE
-          nstrat=nstrai+1
-          crcstra(nstrat)='T'
-          rcpos(nstrat)=0
-          rcstart(nstrat)=0
-          rcend(nstrat)=0
+          if (ntime.ge.1) then
+            nstrat=nstrai+1
+            crcstra(nstrat)='T'
+            rcpos(nstrat)=0
+            rcstart(nstrat)=0
+            rcend(nstrat)=0
+          else
+            nstrat=nstrai
+          endif
 #else
           nstrat=nstrai
 #endif
@@ -594,14 +602,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
 c
       if(chemical_erosion_redep_fac.ne.1.0_R8)
      * write(*,*)
-     1 'Note: chemical_erosion_redep_fac = ',
-     2 chemical_erosion_redep_fac
+     1  'Note: chemical_erosion_redep_fac = ',
+     2   chemical_erosion_redep_fac
       if(chemical_erosion_be_fac)
      1 write(*,*) 'Note: suppression of chemical sputtering by Be ',
-     2 'is active with parameters ',
-     3 chemical_erosion_be_fac_a,
-     4 chemical_erosion_be_fac_b,
-     5 chemical_erosion_be_fac_c
+     2  'is active with parameters ',
+     3   chemical_erosion_be_fac_a,
+     4   chemical_erosion_be_fac_b,
+     5   chemical_erosion_be_fac_c
 c
       do istra = 1, nstrat
         do is = 1, nnatmi
@@ -630,7 +638,7 @@ c
 #endif
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt,
+      call xertst (0.0_R8.le.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')
@@ -792,7 +800,12 @@ c
       do is = 1, nnatmi
         call xertst(0.le.eb2atcr(is).and.eb2atcr(is).lt.ns,
      .   'faulty input eb2atcr')
-        call xertst(0.le.latmscl(is), 'faulty input latmscl')
+        if (eb2atcr(is).gt.0) then
+          call xertst(.not.lnext(eb2atcr(is)-1,eb2atcr(is)),
+     .     'eb2atcr must be the first species in sequence !')
+        end if
+        call xertst(0.le.latmscl(is).and.latmscl(is).le.nspecies,
+     .   'faulty input latmscl')
 #ifdef B25_EIRENE
         if (latmscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Atom ',is,
@@ -816,7 +829,8 @@ c
         do i = 1, nnatmi
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
-        call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
+        call xertst(0.le.lmolscl(is).and.lmolscl(is).le.nspecies,
+     .   'faulty input lmolscl')
 #ifdef B25_EIRENE
         if (lmolscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Molecule ',is,
@@ -847,7 +861,8 @@ c
 #endif
       enddo
       do is = 1, nnioni
-        call xertst(0.le.lionscl(is), 'faulty input lionscl')
+        call xertst(0.le.lionscl(is).and.lionscl(is).le.nspecies,
+     &   'faulty input lionscl')
       end do
       do is = 1, nnstsi
         call xertst (0.le.lcns(is).and.lcns(is).le.nnstsi,

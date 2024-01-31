@@ -53,9 +53,12 @@ c
       do i=1,npointsl
         ro=r
         zo=z
-        x=x1*real(npointsl-i)/real(npointsl)+x2*real(i)/real(npointsl)
-        y=y1*real(npointsl-i)/real(npointsl)+y2*real(i)/real(npointsl)
-        z=z1*real(npointsl-i)/real(npointsl)+z2*real(i)/real(npointsl)
+        x=x1*real(npointsl-i,R8)/real(npointsl,R8)+
+     .    x2*real(i,R8)/real(npointsl,R8)
+        y=y1*real(npointsl-i,R8)/real(npointsl,R8)+
+     .    y2*real(i,R8)/real(npointsl,R8)
+        z=z1*real(npointsl-i,R8)/real(npointsl,R8)+
+     .    z2*real(i,R8)/real(npointsl,R8)
         r=sqrt(x**2+y**2)
         r=r+rshift
         z=z+zshift
