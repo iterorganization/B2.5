@@ -475,7 +475,7 @@ program b2_ual_rewrite
      &        ' -d ',trim(database),' -u ',trim(username)
 #endif
         if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) &
-          & systemarg = trim(systemarg)//' -do ITER'
+     &   systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
         call system(systemarg, status, ierror)
 #else

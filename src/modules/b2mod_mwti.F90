@@ -173,7 +173,7 @@ contains
     ! ..preliminaries
     !   ..subprogram start-up calls
     call subini ('b2mwti')
-    !     ..test nx, ny
+    !     ..test input
     call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
     call xertst (1.le.ns, 'faulty argument ns')
     call xertst (0.le.ismain.and.ismain.lt.ns, &

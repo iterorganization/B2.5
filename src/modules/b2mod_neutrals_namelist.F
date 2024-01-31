@@ -204,7 +204,7 @@ csw 21feb2012
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
-     .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case 
+     .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case
 
       contains
 
