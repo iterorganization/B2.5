@@ -1261,13 +1261,13 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2tint_kinetic</name>
+				<name>b2tinnt_kinetic</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Integer switch to activate the usage of kinetic vectorial momentum sources due to ion-neutral friction computed basing on Eirene tallies. 
-                                        If b2tint_kinetic.eq.0 (default), then the friction force is computed basing on explicit expression for cross-section and ion drift velocities. However, the CX cross-section is available for hydrogenic isotopes only, the expression might not be fully valid for arbitrary plasma composition, and the current is assumed to be carried by electrons, i.e. no contribution to ion flux is computed.
-                                        If b2tint_kinetic.eq.1, then the friction force is computed basing on vectorial momentum sources coming from Eirene. These are species-resolved, so the contribution from this current to the ion flux is computed and transferred to particle balance equations for each species separately. The switch is meaningful for coupled mode only and requires 'use_eirene' to be set to '1', otherwise default approach is applied.
+					Integer switch to activate the usage of kinetic vectorial momentum sources due to ion-neutral friction computed based on Eirene tallies.
+					If b2tinnt_kinetic.eq.0 (default), then the friction force is computed from explicit expressions for CX cross-section and ion drift velocities. However, the CX cross-section is available for hydrogen isotopes only, the expression might not be fully valid for arbitrary plasma composition, and the current is assumed to be carried by electrons, i.e. no contribution to ion flux is computed.
+					If b2tinnt_kinetic.eq.1, then the friction force is computed from vectorial momentum sources coming from Eirene. These are species-resolved, so the contribution from this current to the ion flux is computed and transferred to the particle balance equations for each species separately. The switch is meaningful for coupled mode only and requires 'use_eirene' to be set to '1', otherwise the default approach is applied.
 				</description>
 			</switch>
 			<switch>

@@ -382,7 +382,7 @@ csw 01oct2012 initialize potential if necessary
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 02.11.21
      &              po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
-      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
@@ -390,7 +390,6 @@ csw 01oct2012 initialize potential if necessary
      &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, hz, qz, qc, bb,                           
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
-
 
 *     ..iterate on particle balance
 
