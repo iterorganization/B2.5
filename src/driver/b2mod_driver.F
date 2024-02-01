@@ -2395,7 +2395,10 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+        call b2mwti(itim,tim,
+#ifndef NO_CDF
+     .         ntim,b2time,ntim_batch,
+#endif
      .         nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      .         state%pl,state%dv,state%co,state%rt,state%srw,
      .         state_ext,ismain,ismain0,lwti,lwav,.true.)
@@ -3107,7 +3110,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+          call b2mwti(itim,tim,
+#ifndef NO_CDF
+     *           ntim,b2time,ntim_batch,
+#endif
      *           nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      *           state%pl,state%dv,state%co,state%rt,state%srw,
      *           state_ext,ismain,ismain0,.true.,.false.,.false.)
