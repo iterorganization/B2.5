@@ -290,7 +290,6 @@ program b2_ual_write
             if (database.eq.'iter') &
               &  write(0,*) 'IDS file will be moved to ITER database.'
             call close_ual(idx)
-            idx = 0
 !xpb Copy the IDS to a temporary location with the new DD and then bring it back
             tmp_run = run
             if (database.ne.'iter') tmp_run = run + 1000
@@ -410,7 +409,6 @@ program b2_ual_write
 #endif
         &   radiation )
     call close_ual(idx)
-    idx = 0
 
 end program b2_ual_write
 

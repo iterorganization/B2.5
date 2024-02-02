@@ -84,15 +84,15 @@ contains
     type (B2Coeff), intent (in) :: co
     type (B2Rates), intent (in) :: rt
     type (B2StateExt), intent (in) :: ext
-    integer, intent(in) :: itim, ntim, b2time, ntim_batch, &
-                           nCv, nFc, ns, nncutmax, ismain, ismain0
+    integer, intent(in) :: itim, nCv, nFc, ns, nncutmax, ismain, ismain0
     real (kind=R8), intent(in) :: tim
     logical, intent(in) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
 #ifndef NO_CDF
-#     include <netcdf.inc>
+    integer, intent(in) :: ntim, b2time, ntim_batch
+#   include <netcdf.inc>
 #endif
     !-----------------------------------------------------------------------
     !.documentation

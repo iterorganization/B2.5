@@ -36,14 +36,14 @@ cxpb  INTEGER NNCUT_L
       REAL (KIND=R4), ALLOCATABLE :: RPNT(:)
       INTEGER, ALLOCATABLE :: nodelist(:,:), edgelist(:,:),
      . IEDG(:),ITRI(:),IBEG(:),IBPT(:)
-      INTEGER IPTP,IPTE,IPTT
+c$$$      INTEGER IPTP,IPTE,IPTT
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
       logical, allocatable :: done(:)
 
       integer ix,iy,ixstrt,ixend,iystrt,iyend
       integer nfmtz,noz,nozm,
-     .        i,j,k,l,ib,ic,ie,it,je,jt,
+     .        i,j,k,ib,ic,ie,it,je,jt,
      .        iCv,iCn,iFc,iVx,iVx1,iVx2,iVa,iVb
       real(kind=R4) :: rlo, rhi, zlo, zhi, zinc, zval, clv, special
       real(kind=R4) :: ctval(1000), rmax, rmin, zmax, zmin

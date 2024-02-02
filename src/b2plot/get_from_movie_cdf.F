@@ -31,6 +31,8 @@
       call subini ('get_from_movie_cdf')
       call xertst (0.lt.ncidcdf, 'faulty input ncidcdf')
       call xertst (0.le.istep, 'faulty input istep')
+      call xertst (1.le.nCv, 'faulty input nCv')
+      call xertst (1.le.ns, 'faulty input ns')
 #ifndef NO_CDF
       start(1)=istep
       count(1)=1

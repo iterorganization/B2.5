@@ -82,7 +82,7 @@ csw 10oct2012
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
      &    zeff(nCv)                                                      !srv 13.01.17
-      real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
+      real (kind=R8) :: facdriftm                                        !srv 23.12.19
       real (kind=R8) ::
      *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc), wrkf(nFc,0:1),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
@@ -136,8 +136,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 
       wght = 1.0_R8
 
-      facdriftm = maxval(dv%facdrift)
-      fac_ExBm  = maxval(dv%fac_ExB)                                     !srv 23.12.19
+      facdriftm    = maxval(dv%facdrift)
       dv%fhePSch   = 0.0_R8
       fchstoch     = 0.0_R8
       csig_stoch   = 0.0_R8
