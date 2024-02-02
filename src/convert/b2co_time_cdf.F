@@ -1,5 +1,8 @@
-      subroutine b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     & tim, batch_only)
+      subroutine b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     & , tim, batch_only
+#endif
+     & )
       use b2mod_types
       use b2mod_mwti
       use b2mod_cdf
@@ -13,12 +16,12 @@
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
+      real (kind=R8) :: tim
+      logical :: batch_only
 #endif
       type (mapping), intent(in) :: mpg
       type (geometry), intent(in) :: geo
       integer ns, ismain, ismain0, nnmoli
-      real (kind=R8) :: tim
-      logical :: batch_only
       integer :: i
       integer, save :: write_2d = 0, ntim_batch = 500
       integer, allocatable :: fclist(:)

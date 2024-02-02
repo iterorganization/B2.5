@@ -292,7 +292,6 @@ program b2_ual_rewrite
         if (database.eq.'iter') &
           &  write(0,*) 'IDS file will be moved to ITER database.'
         call close_ual(idx)
-        idx = 0
 ! Copy the IDS to a temporary location with the new DD and then bring it back
         tmp_run = run
         if (new_run.eq.run .and. database.ne.'iter') then
@@ -341,7 +340,6 @@ program b2_ual_rewrite
         call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
       else if (.not.same_run_number) then
         call close_ual(idx)
-        idx = 0
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
         if ( status.ne.0 .or. idx.eq.0 .or. database.eq.'iter') then ! New run IDS must be created
@@ -419,7 +417,6 @@ program b2_ual_rewrite
 #endif
         &   radiation )
     call close_ual(idx)
-    idx = 0
 
 end program b2_ual_rewrite
 

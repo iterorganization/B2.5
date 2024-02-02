@@ -2727,7 +2727,6 @@ c new CDF movie option
                     if (database.eq.'iter') write(*,*)
      &               'IDS file will be moved to ITER database.'
                     call close_ual(idx)
-                    idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     tmp_run = run
                     if (database.ne.'iter') tmp_run = run + 1000
@@ -3260,7 +3259,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (database.eq.'iter') write(*,*)
      &             'IDS file will be moved to ITER database.'
                   call close_ual(idx)
-                  idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   tmp_run = run
                   if (database.ne.'iter') tmp_run = run + 1000
@@ -3407,7 +3405,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      radiation )
         call close_ual(idx)
-        idx = 0
 #endif
       end if
 

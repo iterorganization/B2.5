@@ -70,7 +70,8 @@
      &   rdiv                                                            !srv 05.03.16
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
-     *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
+     *   wrk6(nFc), wrk8(nFc),
+!    *   wrk5(nFc), wrk7(nFc,0:1),
      *   wrk(nCv), wrkVx(nVx),
      *   zeros(nFc,0:1), dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1), 
      *   dumm4(nFc,0:1), zeros1(nFc,0:1)

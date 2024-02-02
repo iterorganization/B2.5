@@ -391,8 +391,11 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     .                       tim, .false.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     .                     , tim, .false.
+#endif
+     .                      )
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -404,8 +407,11 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     .                       tim, .true.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     .                     , tim, .true.
+#endif
+     .                      )
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -417,7 +423,10 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_wall_cdf(tim)
+          call b2co_wall_cdf
+#ifndef NO_CDF
+     .     (tim)
+#endif
           write(*,*) 'Returned from b2co_wall_cdf'
         else
           write(*,*) 'Skipped calling b2co_wall_cdf because '//
@@ -430,7 +439,10 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_tally_cdf(ns, mpg, tim)
+          call b2co_tally_cdf
+#ifndef NO_CDF
+     .     (ns, mpg, tim)
+#endif
           write(*,*) 'Returned from b2co_tally_cdf'
         else
           write(*,*) 'Skipped calling b2co_tally_cdf because '//
@@ -443,7 +455,10 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_movies_cdf(nCv, ns, nnatmi, nnmoli, tim)
+          call b2co_movies_cdf
+#ifndef NO_CDF
+     .     (nCv, ns, nnatmi, nnmoli, tim)
+#endif
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//

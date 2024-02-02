@@ -17,10 +17,12 @@
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+#ifdef WG_TODO
      &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
      &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+#endif
      &          balance_netcdf
       use b2mod_subsys
 #ifdef B25_EIRENE
@@ -425,7 +427,7 @@ c   --> better solution wanted here..
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
      &   na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &   switch%b2stbr_coreregno, coreregn2, output,
      &   switch%neutral_sources_rescale,
