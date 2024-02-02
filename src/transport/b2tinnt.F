@@ -312,7 +312,7 @@
      &                       sec(-1,-1),work(-1,-1,1,is))
           sec(-1:nx,-1:ny) = smd0_eir_tot(-1:nx,-1:ny,is)
      &                             / hz(-1:nx,-1:ny) / vol(-1:nx,-1:ny)
-          call intfacev(nx, ny, bottomix, bottomiy, vol,
+          call intfaceh(nx,ny,leftix,leftiy,vol,
      &                       sec(-1,-1),work(-1,-1,0,is))
 ! HERE:
 !   work(:,:,1,is) is the y-component of momentum source density
@@ -324,12 +324,18 @@
      &         .and. topiy(ix,iy).ne.ny+1) 
      &       fchin_a(ix,iy,0,is) = gs(ix,iy,0) * (
      & qc(ix,iy) * wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2 * work(ix,iy,1,is) -
-     &  sqrt(1.0_R8 - qc(ix,iy)**2) * work(ix,iy,0,is) / wbbv(ix,iy,3) )
+     &  sqrt(1.0_R8 - qc(ix,iy)**2) * work(ix,iy,0,is) / wbbl(ix,iy,3) )
+            fchin(ix,iy,0) = fchin(ix,iy,0) + fchin_a(ix,iy,0,is)
+           enddo
+          enddo
+          call intfacev(nx,ny,bottomix,bottomiy,vol,
+     &                       sec(-1,-1),work(-1,-1,0,is))
+          do ix=-1,nx
+           do iy=-1,ny
             if (leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
      &         .and. rightix(ix,iy).ne.nx+1)
      &       fchin_a(ix,iy,1,is) = gs(ix,iy,1) *
      &                                work(ix,iy,0,is) / wbbv(ix,iy,3)  ! Mind the sign!!!!
-            fchin(ix,iy,0) = fchin(ix,iy,0) + fchin_a(ix,iy,0,is)
             fchin(ix,iy,1) = fchin(ix,iy,1) + fchin_a(ix,iy,1,is)
            enddo
           enddo
