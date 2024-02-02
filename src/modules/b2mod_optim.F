@@ -78,5 +78,4 @@
      &       b_js_outer_upper_mod(-1:ny), c_js_outer_upper_mod(-1:ny),
      &       d_js_outer_upper_mod(-1:ny)
 
-
       end module b2mod_optim

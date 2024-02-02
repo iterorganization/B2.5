@@ -13,7 +13,7 @@
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine rdneutrs(kard,dummy,ldmf)
+      subroutine rdneutrs(kard,dummy,ldmf,extra_time)
 c
 c*** reads the surface data
 c
@@ -29,9 +29,14 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer kard,ldmf,is,ifl
-      real  (kind=R8) ::
+      integer, intent(in) :: kard,ldmf
+      integer :: is,ifl
+      real (kind=R8) ::
      * dummy(nlimps,*)
+      logical, intent(in), optional :: extra_time
+      ! If extra_time is present and true, there is an extra field
+      ! for a superfluous time horizon non-standard surface,
+      ! not to be read
       logical end_of_file
       data end_of_file /.false./
       save end_of_file
@@ -45,6 +50,11 @@ c
      1   (dummy(is,ifl),is=1,nlimi)
         if(nstsi.gt.0) read(kard,910,end=10)
      1   (dummy(is+nlim,ifl),is=1,nstsi)
+        if(present(extra_time)) then
+          if(extra_time) then
+            if(mod(nstsi,5).eq.0) read(kard,'()',end=10)
+          end if
+        end if
       enddo
   910 format(5e16.8)
       return

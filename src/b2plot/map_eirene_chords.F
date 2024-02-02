@@ -1,5 +1,8 @@
 c
-      subroutine map_eirene_chords(filename)
+      subroutine map_eirene_chords
+#ifdef B25_EIRENE
+     . (filename)
+#endif
 
       use b2mod_types
       use b2mod_geo
@@ -11,9 +14,9 @@ c
 #endif
       implicit none
 
+#ifdef B25_EIRENE
       character*(*) filename
 
-#ifdef B25_EIRENE
       real (kind=R8) :: wrkarr(ntrii)
       character*80 dataname,ccol
       logical open_file,found
@@ -44,9 +47,12 @@ c
         yo=y
         zo=z
         ro=r
-        x=x1*real(npoints-i)/real(npoints)+x2*real(i)/real(npoints)
-        y=y1*real(npoints-i)/real(npoints)+y2*real(i)/real(npoints)
-        z=z1*real(npoints-i)/real(npoints)+z2*real(i)/real(npoints)
+        x=x1*real(npoints-i,R8)/real(npoints,R8)+
+     .    x2*real(i,R8)/real(npoints,R8)
+        y=y1*real(npoints-i,R8)/real(npoints,R8)+
+     .    y2*real(i,R8)/real(npoints,R8)
+        z=z1*real(npoints-i,R8)/real(npoints,R8)+
+     .    z2*real(i,R8)/real(npoints,R8)
         r=sqrt(x**2+y**2)
         call chord_tria_find(ntrii,nrknot,necke,xtrian,ytrian,
      1     (x+xo)/2.0_R8,(y+yo)/2.0_R8,(z+zo)/2.0_R8,

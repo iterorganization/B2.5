@@ -60,8 +60,17 @@ ifndef SOLPS_CPP
     GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
     GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
     GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-    ifeq ($(shell test ${AL_MAJOR_VERSION} -lt 5; echo $$?),0)
+    ifeq ($(shell test ${AL_MAJOR_VERSION} -ge 5; echo $$?),0)
+      IMAS_PKG_LIST += al-fortran al-identifiers-fortran
+    else
       IMAS_PKG_LIST += imas-pgi
+      ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
+        IMAS_PKG_LIST += imas-identifiers-pgi
+      else
+        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 31; echo $$?),0)
+          IMAS_PKG_LIST += imas-identifiers-pgi
+        endif
+      endif
     endif
     ifdef AMNS_PREFIX
       DEFINE += -DAMNS

@@ -30,6 +30,7 @@
 !!      character(len=24) :: version    !< Major version of the IMAS IDS database
 !!      integer :: idx    !< The returned identifier to be used in the subsequent
 !!        !< data access operation
+!!      character(len=256) :: path      !< Directory path of the IMAS data entry
 !!      integer :: shot   !< The shot number of the database being created
 !!      integer :: run    !< The run number of the database being created
 !!      integer :: status !< Returned status for UAL commands
@@ -61,31 +62,68 @@
 
 program b2_ual_rewrite
 
-    use b2mod_main
-    use b2mod_driver
+    use b2mod_main &
+     & , only : nx, ny, ns, &
+     &          b2mn_init
+    use b2mod_driver &
+     & , only : idx, ids_path, &
+     &          shot, run, username, database, version, &
+     &          old_description, equilibrium, &
+     &          old_imas_version, imas_version, new_eq_ggd, &
+     &          description, &
+     &          edge_profiles, edge_sources, edge_transport, radiation, &
+     &          batch_profiles, batch_sources
+    use b2mod_geo
+    use b2mod_time
+    use b2mod_plasma
+    use b2mod_sources
+    use b2mod_version
+    use b2mod_solpstop
+    use b2mod_residuals
+    use b2mod_transport
     use b2mod_grid_mapping
+    use b2mod_numerics_namelist
     use ids_routines &  ! IGNORE
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual &
-     & , only : new_ids_edge, delete_ids_edge
+     & , only : new_ids_edge, delete_ids_edge, &
+     &          dealloc_ids_edge, dealloc_batch_edge, close_ual
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
+    use b2mod_driver &
+     & , only : summary
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
+    use b2mod_driver &
+     & , only : numerics
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_divertors
+    use b2mod_driver &
+     & , only : divertors
+#endif
+    use ids_routines &  ! IGNORE
+     & , only : ids_get, ids_deallocate
+#if AL_MAJOR_VERSION > 4
+    use ids_routines &  ! IGNORE
+     & , only : imas_open, OPEN_PULSE, FORCE_CREATE_PULSE, STRMAXLEN
+#else
+    use ids_routines &  ! IGNORE
+     & , only : imas_open_env
+    use b2mod_driver &
+     & , only : treename
 #endif
 #ifdef B25_EIRENE
+    use eirmod_parmmod
     use eirmod_comusr
     use eirmod_extrab25
 #endif
@@ -99,6 +137,7 @@ program b2_ual_rewrite
 #endif
 #endif
     logical streql
+    intrinsic index
     external ipgeti, streql
 
     !! Local variables
@@ -106,16 +145,62 @@ program b2_ual_rewrite
     character(len=24) :: run_string
     character(len=24) :: new_run_string
     character(len=24) :: argName
-    integer narg, cptArg, new_run
-    character*16 usrnam
-    logical same_run_number
+    integer narg, cptArg, l, m, new_run, status, tmp_run
+    character*16 usrnam, run_user
+    character*256 path, new_path, imasdir, home_dir, systemarg
+    logical same_run_number, absolute_path, not_default
+#if AL_MAJOR_VERSION > 4
+    character(len=STRMAXLEN) :: uri
+    character(len=:), allocatable :: message
+#endif
     data new_run / 0 /
-    external usrnam
+    integer lnblnk, len_of_digits
+    external usrnam, len_of_digits
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
+    run_user = usrnam()
+    call ipgetc('b2mndr_user', run_user )
+    call xertst( .not.streql(run_user,' '), 'User name not defined !')
+    not_default = .not.streql(run_user, usrnam())
+    username = run_user
+    home_dir = '/home/'//trim(run_user)
+    database = 'solps-iter'
     write(version,'(i1)') IMAS_MAJOR_VERSION
-    treename = 'ids'
+#ifndef NO_GETENV
+    device_env = ' '
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('HOME', 0, home_dir, lenval, ierror)
+    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+#else
+    call get_environment_variable('HOME', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('HOME', value=home_dir)
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+#endif
+    if (.not.streql(device_env,' ')) database = device_env
+    if (streql(database,'iter')) database = 'ITER'
+#endif
+    call ipgetc('b2mndr_device', database )
+    call ipgetc('b2mndr_database', database )
+    call xertst( .not.streql(database,' '), 'Database not defined !')
+    not_default = not_default.or. &
+       &         (.not.streql(database, device_env).and. &
+       &          .not.streql(database,'solps-iter'))
+#if AL_MAJOR_VERSION > 4
+    imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)
+#else
+    imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)//'/0'
+#endif
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
+#else
+    call get_environment_variable('IMASDIR', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMASDIR',value=imasdir)
+#endif
+#endif
+    ids_path = ' '
     same_run_number = .true.
     write (*,*) 'Starting b2mn init'
     call b2mn_init
@@ -139,42 +224,71 @@ program b2_ual_rewrite
       call strip_spaces(shot_string)
     end if
     call ipgeti('b2mndr_run_number', run )
-    if (run.gt.0) then
+    if (run.ge.0) then
       write(run_string,'(i5)') run
       call strip_spaces(run_string)
       new_run = run
       write(new_run_string,'(i5)') new_run
       call strip_spaces(new_run_string)
     end if
-    username = usrnam()
-    call ipgetc('b2mndr_user', username )
-    database = 'solps-iter'
+    path = ' '
+    absolute_path = .false.
+#if AL_MAJOR_VERSION > 4
+    call ipgetc('b2mndr_ids_path', path )
+    not_default = not_default.or..not.streql(path,' ')
+#endif
+    call strip_spaces(path)
+    if (.not.streql(path,' ')) absolute_path = path(1:1).eq.'/'
 #ifdef NO_GETENV
     write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.', &
                                          & IMAS_MINOR_VERSION,'.', &
                                          & IMAS_MICRO_VERSION
 #else
-    device_env = ' '
 #ifdef USE_PXFGETENV
-    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
-    call get_environment_variable('DEVICE', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
     call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
-    if (.not.streql(device_env,' ')) database = device_env
-    if (streql(database,'iter')) database = 'ITER'
 #endif
-    call ipgetc('b2mndr_device', database )
-    call ipgetc('b2mndr_database', database )
     ! Check for optional command line arguments
     ! which will supersede input from b2mn.dat if present
     narg = command_argument_count()
     do cptArg = 1, narg
       call get_command_argument( cptArg, argName )
       select case( adjustl( argName ) )
+#if AL_MAJOR_VERSION > 4
+        case("--path","-p")
+          call get_command_argument( cptArg + 1, path )
+          !! Parse HOME and SOLPSTOP and remove IMASDIR prefix if present
+          l=index(path,'$HOME')
+          if (l.gt.0) then
+            ids_path = trim(home_dir)//trim(path(l+5:256))
+            path = ids_path
+          end if
+          l=index(path,'$SOLPSTOP')
+          if (l.gt.0) then
+            ids_path = trim(solpstop())//trim(path(l+9:256))
+            path = ids_path
+          end if
+          l=index(path,'$HOMEDIR')
+          if (l.gt.0) then
+            ids_path = trim(imasdir)//trim(path(l+8:256))
+            path = ids_path
+          end if
+          l=index(path,trim(imasdir))
+          if (l.eq.0) then
+            m=index(path,'/')
+          else
+            m=index(path(l+lnblnk(imasdir):256),'/')
+          end if
+          absolute_path = l.eq.1.or.(l.eq.0.and.m.eq.1)
+          if (absolute_path) then
+            ids_path = path
+          else if (l.eq.0) then
+            ids_path = trim(imasdir)//'/'//trim(path)
+          end if
+#endif
         case("--shot","-s")
           call get_command_argument( cptArg + 1, shot_string )
           !! Transform dummy string variable to integer
@@ -201,55 +315,127 @@ program b2_ual_rewrite
       end select
     end do
 
+#if AL_MAJOR_VERSION > 4
+    call xertst( 0.le.shot, 'Invalid shot number')
+    call xertst( 0.le.run, 'Invalid run number')
+    call xertst( 0.le.new_run, 'Invalid new run number')
+#else
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
     call xertst( 0.le.new_run.and.new_run.le.99999, 'Invalid new run number')
-    call xertst( new_run.ge.run, 'New run number must be larger than old one!')
+#endif
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
+    call xertst( new_run.ge.run, 'New run number must be larger than old one!')
+    if (index(imasdir,trim(username)).eq.0) then
+      l=index(imasdir,trim(run_user))
+      m=index(imasdir(l+lnblnk(run_user):256),'/')
+      write(imasdir,'(a)') imasdir(1:l)//trim(username)//trim(imasdir(m+l:256))
+    end if
+    if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
+      l=index(imasdir,'imasdb/')
+      m=index(imasdir(l+7:256),'/')
+      write(imasdir,'(a)') imasdir(1:l+6)//trim(database)//trim(imasdir(m+l+6:256))
+    end if
+    if (.not.streql(version,int2str(IMAS_MAJOR_VERSION))) then
+      l=lnblnk(version)
+      m=lnblnk(imasdir)
+#if AL_MAJOR_VERSION > 4
+      if (.not.streql(imasdir(m:m),version)) &
+        & write(imasdir,'(a)') imasdir(1:m-1)//trim(version)
+#else
+      if (.not.streql(imasdir(m-2:m-2),version)) &
+        & write(imasdir,'(a)') imasdir(1:m-3)//trim(version)//'/'//int2str(run/10000)
+    else if (run.ge.10000) then
+      m=lnblnk(imasdir)
+      write(imasdir,'(a)') imasdir(1:m-1)//int2str(run/10000)
+#endif
+    end if
+    if (streql(path,' ')) then
+#if AL_MAJOR_VERSION > 4
+      call xertst( 0.lt.shot, 'Invalid shot number !')
+      ids_path = trim(imasdir)//'/'//int2str(shot)//'/'//int2str(run)
+      new_path = trim(imasdir)//'/'//int2str(shot)//'/'//int2str(new_run)
+#else
+      ids_path = imasdir
+      new_path = imasdir(1:lnblnk(imasdir)-1)//int2str(new_run/10000)
+#endif
+    else if (.not.absolute_path) then
+      ids_path = trim(imasdir)//'/'//trim(path)
+      if (new_run.gt.0.and.index(path,int2str(run)).gt.0) then
+        l=len_of_digits(run)
+        new_path = trim(imasdir)//'/'//path(1:lnblnk(path)-l)//int2str(new_run)
+      else
+        new_path = ids_path
+      end if
+    else
+      ids_path = path
+      if (new_run.gt.0.and.index(path,int2str(run)).gt.0) then
+        l=len_of_digits(run)
+        new_path = path(1:lnblnk(path)-l)//int2str(new_run)
+      else
+        new_path = ids_path
+      end if
+    end if
 
-    write(*,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
+#if AL_MAJOR_VERSION > 4
+    write(0,'(6a)') 'Path: ', trim(ids_path), &
         & ' User: ', trim(username), ' Database: ', trim(database)
-    if (.not.same_run_number) then
-      write(*,'(a,i5)') ' will be rewritten with run number ',new_run
+#else
+    write(0,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
+        & ' User: ', trim(username), ' Database: ', trim(database)
+#endif
+    if (.not.same_run_number.and.new_run.gt.0) then
+      write(0,'(a,i5)') ' will be rewritten with run number ',new_run
       if (database.eq.'iter') write(*,'(a)') ' in ITER database'
     else if (database.eq.'iter') then
-      write(*,'(a)') ' will be rewritten in ITER database'
+      write(0,'(a)') ' will be rewritten in ITER database'
     end if
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    write (0,*) "Checking if IMAS data-entry already exists : ", trim(database), shot, run
+#if AL_MAJOR_VERSION > 4
+    write(0,'(2a)') "Checking if IMAS data entry already exists : ", &
+      &  trim(ids_path)
+    uri = 'imas:mdsplus?path='//trim(ids_path)
+    call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
+    write(0,'(2a,2i8)') &
+      & "Checking if IMAS data entry already exists : ", &
+      &  trim(database), shot, run
     call imas_open_env(treename, shot, run, idx, &
       &                username, database, version, status)
+#endif
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
-      call ids_get( idx, "equilibrium", equilibrium, status)
+      write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
+      call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
-      call ids_get( idx, "dataset_description", old_description, status)
+      call ids_get( idx, "dataset_description", old_description, status )
       old_imas_version = 'x.xx.x'
       if ( status.ne.0 ) then
-        write (0,*) 'Error opening old dataset_description IDS !'
-      else if (associated(old_description%dd_version)) then
-        old_imas_version = old_description%dd_version(1)
+        write(0,*) 'Error opening old dataset_description IDS !'
+      else if (associated(old_description%ids_properties% &
+                      &   version_put%data_dictionary)) then
+        old_imas_version = old_description%ids_properties% &
+                      &   version_put%data_dictionary(1)
       end if
       call ids_deallocate( old_description )
       if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
         if (.not.streql(old_imas_version,imas_version)) then
-          write(*,*) &
-            & 'Old IMAS data-entry was written using Data Dictionary version '// &
+          write(0,*) &
+            & 'Old IMAS data entry was written using Data Dictionary version '// &
             &  trim(old_imas_version)//'.'
-          write(*,*) &
+          write(0,*) &
             & 'Recreating using Data Dictionary version '// &
             &  trim(imas_version)//'.'
         end if
-        if (database.eq.'iter') &
-          &  write(*,*) 'IDS file will be moved to ITER database.'
+        if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) &
+          &  write(0,*) 'IDS file will be moved to ITER database.'
         call close_ual(idx)
-        idx = 0
 ! Copy the IDS to a temporary location with the new DD and then bring it back
         tmp_run = run
-        if (new_run.eq.run .and. database.ne.'iter') then
+        if (new_run.eq.run .and. database.ne.'iter' .and. &
+     &      index(new_path,'imasdb/iter').eq.0) then
           tmp_run = run + 1000
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
           write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
@@ -263,13 +449,18 @@ program b2_ual_rewrite
      &          ' -so ',shot,' -ro ',tmp_run,              &
      &          ' -d ',trim(database),' -u ',trim(username)
 #endif
-          if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
+          if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) &
+     &     systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
           call system(systemarg, status, ierror)
 #else
           call system(systemarg)
 #endif
           if (database.eq.'iter') database = 'ITER'
+          if (index(new_path,'imasdb/iter').gt.0) then
+            l=index(new_path,'imasdb/iter')
+            write(new_path(l+7:l+10),'(a4)') 'ITER'
+          end if
         end if
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
         write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
@@ -283,36 +474,72 @@ program b2_ual_rewrite
      &        ' -so ',shot,' -ro ',new_run,              &
      &        ' -d ',trim(database),' -u ',trim(username)
 #endif
-        if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
+        if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) &
+     &   systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
         call system(systemarg, status, ierror)
 #else
         call system(systemarg)
 #endif
         if (database.eq.'iter') database = 'ITER'
+        if (index(new_path,'imasdb/iter').gt.0) then
+          l=index(new_path,'imasdb/iter')
+          write(new_path(l+7:l+10),'(a4)') 'ITER'
+        end if
+#if AL_MAJOR_VERSION > 4
+        uri = 'imas:mdsplus?path='//trim(new_path)
+        call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
+        call xertst ( status.eq.0, trim(message) )
+#else
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status )
         call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
+#endif
       else if (.not.same_run_number) then
         call close_ual(idx)
-        idx = 0
+#if AL_MAJOR_VERSION > 4
+        uri = 'imas:mdsplus?path='//trim(new_path)
+        call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
-        if ( status.ne.0 .or. idx.eq.0 .or. database.eq.'iter') then ! New run IDS must be created
+#endif
+        if ( status.ne.0 .or. idx.eq.0 .or. database.eq.'iter' .or. &
+          &  index(new_path,'imasdb/iter').gt.0) then ! New run IDS must be created
           idx = 0
           if (database.eq.'iter') database = 'ITER'
+          if (index(new_path,'imasdb/iter').gt.0) then
+            l=index(new_path,'imasdb/iter')
+            write(new_path(l+7:l+10),'(a4)') 'ITER'
+          end if
+#if AL_MAJOR_VERSION > 4
+          uri = 'imas:mdsplus?path='//trim(new_path)
+          call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
+          call xertst( status.eq.0, trim(message) )
+#else
           call imas_create_env(treename, shot, new_run, 0, 0, idx, &
             &                  username, database, version, status )
           call xertst( status.eq.0, 'Error creating new IDS file !')
+#endif
         end if
       end if
     else
-      write (0,*) "No previous IMAS data-entry found, a new one will be created"
+      write(0,*) "No previous IMAS data entry found, a new one will be created"
       idx = 0
       if (database.eq.'iter') database = 'ITER'
+      if (index(new_path,'imasdb/iter').gt.0) then
+        l=index(new_path,'imasdb/iter')
+        write(new_path(l+7:l+10),'(a4)') 'ITER'
+      end if
+#if AL_MAJOR_VERSION > 4
+      uri = 'imas:mdsplus?path='//trim(new_path)
+      call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
+      call xertst( status.eq.0, trim(message) )
+#else
       call imas_create_env(treename, shot, run, 0, 0, idx, &
         &                  username, database, version, status )
       call xertst( status.eq.0, 'Error creating new IDS !')
+#endif
     end if
     !! Create/Write the set data to IDSs
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
@@ -321,7 +548,10 @@ program b2_ual_rewrite
       &  summary, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-      &  numerics, run_start_time, run_end_time, &
+      &  numerics, &
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &   run_start_time, run_end_time, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       &  divertors, &
@@ -340,10 +570,13 @@ program b2_ual_rewrite
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        &   uri, &
+#endif
         &   idx, new_eq_ggd )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
-    write(*,*) trim(systemarg)
+    write(0,*) trim(systemarg)
 #ifdef NAGFOR
     call system(systemarg, status, ierror)
 #else
@@ -353,7 +586,7 @@ program b2_ual_rewrite
 ! Add superceding information to .yaml file
       systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
         &  trim(run_string)//' '//trim(new_run_string)
-      write(*,*) trim(systemarg)
+      write(0,*) trim(systemarg)
 #ifdef NAGFOR
       call system(systemarg, status, ierror)
 #else
@@ -374,7 +607,6 @@ program b2_ual_rewrite
 #endif
         &   description )
     call close_ual(idx)
-    idx = 0
 
 end program b2_ual_rewrite
 

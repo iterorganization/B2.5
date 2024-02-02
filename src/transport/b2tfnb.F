@@ -1194,7 +1194,8 @@ csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
              fna_pschused(ix,iy,0,isb) = 0.0_R8
              fna_panom(ix,iy,0,isb) = -cdpb(ix,iy,0)*
      &        (pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
-             fna_ch(ix,iy,0,isb) = scur
+             fna_ch(ix,iy,0,isb) = scur*(nb(leftix(ix,iy),leftiy(ix,iy)) 
+     &         + nb(ix,iy))/2.0_R8
            endif
            fnb_nodrift(ix,iy,0) = flo_nodrift * t3-
      &      con_nodrift*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
@@ -2338,7 +2339,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fchinert_b(-1,-1,0),
      &                           'b2tfnb_fchinert_bx'//chns)
        call my_out(70,nx,ny,fchinert_b(-1,-1,1),
-     &                           'b2tfnb_fchin_by'//chns)
+     &                           'b2tfnb_fchinert_by'//chns)
        call my_out(70,nx,ny,fchin_b(-1,-1,0),
      &                           'b2tfnb_fchin_bx'//chns)
        call my_out(70,nx,ny,fchin_b(-1,-1,1),

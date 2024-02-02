@@ -387,7 +387,7 @@ csw 01oct2012 initialize potential if necessary
      &             fchvisq_a, fchvisq)
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, bb,                           
+     &              vol, gs, hx, hy, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
 *   ..iterate on momentum balance
@@ -602,7 +602,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &             fchvisq_a, fchvisq)
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, bb,                           
+     &              vol, gs, hx, hy, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
 *     ..iterate on particle balance
@@ -1001,7 +1001,7 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB,               !srv 09.01.20 19.02.21
+      call b2tfhe_ (nx, ny, ns, ismain, facdrift,                        !srv 09.01.20 19.02.21
      & vol, hx,                                                          !srv 29.01.20
      1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 17.05.99 11.07.99
      & chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21

@@ -20,6 +20,7 @@
       use b2mod_file
       use b2mod_batch
       use b2mod_b2cmpa
+      use b2mod_tallies
       use b2mod_running_average
       use b2mod_external
       use b2mod_neoclassical
@@ -87,6 +88,17 @@
      *  rxf, BoRiS
       real (kind=R8) ::
      *  nstg_areshe, nstg_areshi, nstg_aresco
+      real (kind=R8) ::
+     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
+     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
+     &  rbr(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8) ::
+     *  she0(-1:nx,-1:ny,0:3),
+     1  sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),
+     2  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1),
+     3  smq0_ion(-1:nx,-1:ny,0:3,0:ns-1),
+     4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1),
+     5  shi0_ion(-1:nx,-1:ny,0:3), shi0_rec(-1:nx,-1:ny,0:3)
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt, nsmin, nsmax,        !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
      *  nstg_areshe, nstg_areshi, nstg_aresco
@@ -285,6 +297,10 @@ c therefore initialise here
 *    ..compute log-log electron rate coefficients
         call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &   rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+*   ..compute electron rate coefficients
+        call b2sqel (nx, ny, ns, ismain, ev, te,
+     &   rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
+     &   rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *    ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
          call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
@@ -329,28 +345,51 @@ ctmp.dpc
      &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
 !          if(style.gt.0) then                                           !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, ismain,                            !srv 20.09.06 }!som 02.11.21
+          call b2tanml (nx, ny, ns, ismain,                              !srv 20.09.06 }!som 02.11.21
      &        csig_an, po, ne, na, fchanml_a, fchanml)                   !srv 08.09.21
-            call b2tvspa (nx, ny, ns, ismain, bb,                        !srv 20.09.06 { 19.02.21
+          call b2tvspa (nx, ny, ns, ismain, bb,                          !srv 20.09.06 { 19.02.21
      &        na, ua, cvsa_cl, cvsa_drho, fac_vis,
      &        fchvispar_a, fchvispar)                                    !som 18.08.21
-            call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
+          call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
      &                    na, ua, facdrift, fchinert_a, fchinert)        !srv 08.09.21
-            call b2tvspr (nx, ny, ns, ismain, fac_vis,                   !srv 10.10.17 19.02.21
+          call b2tvspr (nx, ny, ns, ismain, fac_vis,                     !srv 10.10.17 19.02.21
      &                    vol, po, ti, na,
      &                    avisper_a, bvisper_a, cvisper_a,
      &                    fchvisper_a, fchvisper)
-            call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
+          call b2tvsq (nx, ny, ns, ismain, fac_vis,                      !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
-            call b2tinnt (nx, ny, ns, nscx, iscx,
+          call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, bb,                           
+     &              vol, gs, hx, hy, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18
+*      ..compute sources due to electron-atom processes
+*       (to provide b2brem to Eirene)
+          call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz,
+     &      na, ua, wadia, vadia, vaecrb, te, ti, po, ne, ni,
+     &      facdrift, fac_ExB,
+     &      rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi,
+     &      rlsa, rlra, rlqa,
+     &      sna0_ion, sna0_rec, smq0_ion, smq0_rec,
+     &      she0, shi0_ion, shi0_rec)
+*      ..compute temperature equilibration term for Eirene
+          call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
+          call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)
+          b2qie=0.0_R8
+          do iy=-1,ny
+            do ix=-1,nx
+              if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+                b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+
+     &            ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
+     &           (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
+              end if
+            end do
+          end do
+          b2qie(0)=sum(b2qie(1:nnreg(0)))
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
@@ -398,18 +437,19 @@ ctmp.dpc
 *       (smq is inherently stable.)                                      !srv 07.07.21 }
 *     ..include contributions due to timestep
 *     .. contributions due to timestep when style.eq.2 will be done in corresponding subroutines
-          if(style.ne.2)                                                 !srv 07.07.21
-     &    call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
-     &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)            !srv 11.09.09
+          if(style.ne.2) then                                            !srv 07.07.21
+           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,        !srv 09.01.01 01.07.08
+     &      vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
+     &      na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
+     &      snadt, smodt, shedt, shidt, schdt, snedt, .false.)           !srv 11.09.09
 *   ..add to previous contributions
-          call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
-          call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
-          call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
-          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
-          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
-          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
+           call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+           call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+           call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
+           call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+           call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                 !srv 11.09.09 }
+          endif
 *     ..stabilise the source coefficients
           if(style.ne.2 .and. use_b2srst.eq.1)                           !srv 07.07.21
      &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08

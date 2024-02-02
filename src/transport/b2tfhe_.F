@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB, vol,    !srv 23.11.10 19.02.21
+      subroutine b2tfhe_ (nx, ny, ns, ismain, facdrift, vol,             !srv 23.11.10 19.02.21
      1 hx, te, po, ne, na, vedia, fne, chce, chve, calf,                 !srv 17.05.99
      & chvemx, cdde, fch_p, fchstoch,                                    !srv 17.05.99 11.07.99 !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, balance)                       !djm Jan2017
@@ -26,7 +26,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !srv 19.02.21
       real (kind=R8) ::
-     &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
+     &   facdrift(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny),                                               !srv 11.07.99 18.01.02
      1   hx(-1:nx,-1:ny),
      &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
@@ -93,7 +93,7 @@ csw 10oct2012
      *    fledia(-1:nx,-1:ny,0:1), vdia_par,                             !srv 22.11.99 25.01.02
      &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny),                          !srv 13.01.17
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                           !srv 13.01.17
-      real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
+      real (kind=R8) :: facdriftm                                        !srv 23.12.19
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
 
@@ -165,7 +165,6 @@ csw 10oct2012
       endif
 
       facdriftm = maxval(facdrift)
-      fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 
       fledia = 0.0_R8                                                    !srv 25.01.02 {
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07

@@ -33,7 +33,7 @@ c
       enddo
 
       return
-      end
+      end subroutine sumx
 c
       subroutine sumt()
       use b2mod_types
@@ -66,7 +66,7 @@ c
       enddo
 
       return
-      end
+      end subroutine sumt
 c
       subroutine sumw()
       use b2mod_types
@@ -99,7 +99,7 @@ c
       enddo
 
       return
-      end
+      end subroutine sumw
 c
       subroutine intx()
       use b2mod_types
@@ -197,7 +197,7 @@ c
       enddo
 
       return
-      end
+      end subroutine intx
 c
       subroutine intw()
       use b2mod_types
@@ -234,7 +234,7 @@ c
       enddo
 
       return
-      end
+      end subroutine intw
 c
       subroutine intwstar()
 c same as intw but no account of segments
@@ -269,4 +269,4 @@ c
       enddo
 
       return
-      end
+      end subroutine intwstar

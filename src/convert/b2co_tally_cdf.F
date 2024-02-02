@@ -38,6 +38,8 @@
       call subini ('b2co_tally_cdf')
       write(*,*) 'b2co_tally_cdf ...'
 
+*   ..test input
+      call xertst (0.lt.ns, 'faulty argument ns')
 #ifndef NO_CDF
 c access the b2tallies.nc file
       filename='b2tallies.nc'

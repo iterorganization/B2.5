@@ -213,7 +213,7 @@
       external xerrab
 *     ------------------------------------------------------------------
 #if ( !defined(NO_OPENMP_MYBLAS) || defined(WITH_FTIMINGS) )
-      do_parallel =  (.not. in_parallel()) .and. (n > 7000)
+      do_parallel =  (.not. in_parallel())
 #endif
 #ifdef WITH_FTIMINGS
       call timer%start("b2saxpy")

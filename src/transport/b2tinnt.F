@@ -32,10 +32,10 @@
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1),
      & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny),
-     & fchin_a(-1:nx,-1:ny,0:1,0:ns-1), hz(-1:nx,-1:ny)
+     & hz(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fchin(-1:nx,-1:ny,0:1)
+     & fchin(-1:nx,-1:ny,0:1), fchin_a(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -106,13 +106,15 @@
 #ifdef B25_EIRENE
           if (use_eirene.eq.0) then
             write(*,*) ' USE_KINETIC == 1 while USE_EIRENE == 0!!!'
-            call xerrab 
+            call xerrab
      & ('Impossible to use kinetic momentum sources for fluid neutrals')
           endif
 #else
-         call xerrab ('b2tinnt not compiled with the B25_EIRENE option')
+          call xerrab
+     &     ('b2tinnt not compiled with the B25_EIRENE option')
 #endif
-         if (style.eq.0) call xerrab ('b2tinnt_style =0 is obsolete '//
+          if (style.eq.0)
+     &     call xerrab ('b2tinnt_style = 0 is obsolete '//
      &      'and not compatible with b2tinnt_kinetic = 1')
         endif
       endif
@@ -121,7 +123,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       fchin     = 0.0e0_R8                                              !srv 09.07.99
-      fchin_a = 0.0_R8                                                  !IYS 17.10.2023
+      fchin_a   = 0.0_R8                                                !IYS 17.10.2023
       facdriftm = maxval(facdrift)                                      !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
@@ -141,11 +143,11 @@
          enddo
        endif
        if (use_eirene.ne.0) then
-!        fchin = 0.0e0_R8                                              
+!        fchin = 0.0e0_R8
 
-        if (use_kinetic .eq. 0) then                                     !srv 15.02.11 {
+        if (use_kinetic.eq.0) then                                      !srv 15.02.11 {
 *   ..calculate section
-         do is0 = 0, ns-1                                                !som 04.11.21 {
+         do is0 = 0, ns-1                                               !som 04.11.21 {
           if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
 *   ..identify matching CX rate
            k = 0
@@ -168,7 +170,7 @@
             enddo
            end do
 *   ..get fluxes in the cell centre
-           fnac(:,:,:,is0) = fnan(:,:,:,is0)                             !som 04.11.21
+           fnac(:,:,:,is0) = fnan(:,:,:,is0)                            !som 04.11.21
 *   ..interpolate fluxes in the cell face
            call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,is0),
      &                                          fnal(-1,-1,0,is0))      !som 04.11.21
@@ -297,18 +299,18 @@
             endif
            enddo ! is
           endif
-         enddo ! is0                                                     !som 04.11.21 }
+         enddo ! is0                                                    !som 04.11.21 }
 
 #ifdef B25_EIRENE
-        else !if (use_kinetic .eq. 1) then                               !IYS 17.10.2023
+        else !if (use_kinetic .eq. 1) then                              !IYS 17.10.2023
 
-         do is = 0,ns-1  
+         do is = 0,ns-1
 ! interpolate kinetic momentum source densities to cell faces
-          sec(-1:nx,-1:ny) = smr0_eir_tot(-1:nx,-1:ny,is) 
+          sec(-1:nx,-1:ny) = smr0_eir_tot(-1:nx,-1:ny,is)
      &                             / hz(-1:nx,-1:ny) / vol(-1:nx,-1:ny)
           call intfaceh(nx,ny,leftix,leftiy,vol,
-     &                       sec(-1,-1),work(-1,-1,1,is))      
-          sec(-1:nx,-1:ny) = smd0_eir_tot(-1:nx,-1:ny,is) 
+     &                       sec(-1,-1),work(-1,-1,1,is))
+          sec(-1:nx,-1:ny) = smd0_eir_tot(-1:nx,-1:ny,is)
      &                             / hz(-1:nx,-1:ny) / vol(-1:nx,-1:ny)
           call intfacev(nx, ny, bottomix, bottomiy, vol,
      &                       sec(-1,-1),work(-1,-1,0,is))      
@@ -321,10 +323,10 @@
 !   work(:,:,2,is) is the DIAMAGNETIC component of momentum source density (interpolated to the left cell face),
 !                  and the sign convention should be EIRENE-compatible
           do ix=-1,nx
-           do iy=-1,ny 
+           do iy=-1,ny
             if (leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
      &         .and. topiy(ix,iy).ne.ny+1) 
-     &            fchin_a(ix,iy,0,is) = gs(ix,iy,0) * ( 
+     &       fchin_a(ix,iy,0,is) = gs(ix,iy,0) * (
      & qc(ix,iy) * wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2 * work(ix,iy,1,is) -
      &  sqrt(1 - qc(ix,iy)**2) * work(ix,iy,2,is) / wbbl(ix,iy,3) )
             if (leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
@@ -332,7 +334,6 @@
      &            fchin_a(ix,iy,1,is) =  gs(ix,iy,1) * 
      &                                 work(ix,iy,0,is) / wbbv(ix,iy,3)  ! Mind the sign!!!!
             fchin(ix,iy,0) = fchin(ix,iy,0) + fchin_a(ix,iy,0,is)
-            fchin(ix,iy,1) = fchin(ix,iy,1) + fchin_a(ix,iy,1,is)
            enddo
           enddo
          enddo

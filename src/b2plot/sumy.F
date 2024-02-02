@@ -33,7 +33,7 @@ c
       enddo
 
       return
-      end
+      end subroutine sumy
 c
       subroutine inty()
       use b2mod_types
@@ -51,7 +51,7 @@ c apply operator
 c
       do is=0,ndim(3,iwrk)-1
         do ix=-1,nx
-          do iy=1,ny
+          do iy=0,ny
             work(ix,iy,is,iwrk)=work(ix,iy-1,is,iwrk)+
      1       work(ix,iy,is,iwrk)
           enddo
@@ -67,4 +67,4 @@ c
       enddo
 
       return
-      end
+      end subroutine inty

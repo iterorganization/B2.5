@@ -356,6 +356,7 @@ cxpb overwrite the defaults with the namelist data
       allocate(iffboundy(-1:nxd,-1:nyd))
       allocate(ifenebound(-1:nxd,-1:nyd))
       allocate(iftimbound(-1:nxd,-1:nyd))
+
       nbc=0
       ncbs=0
       lcbs=0
