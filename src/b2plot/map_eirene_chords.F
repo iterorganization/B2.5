@@ -1,5 +1,8 @@
 c
-      subroutine map_eirene_chords(filename)
+      subroutine map_eirene_chords
+#ifdef B25_EIRENE
+     . (filename)
+#endif
 
       use b2mod_types
       use b2mod_geo
@@ -11,9 +14,9 @@ c
 #endif
       implicit none
 
+#ifdef B25_EIRENE
       character*(*) filename
 
-#ifdef B25_EIRENE
       real (kind=R8) :: wrkarr(ntrii)
       character*80 dataname,ccol
       logical open_file,found

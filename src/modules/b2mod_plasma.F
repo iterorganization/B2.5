@@ -47,7 +47,8 @@
      &  fchinert_a(:,:,:,:,:),
      &  fchvispar_a(:,:,:,:,:),
      &  fchvisper_a(:,:,:,:,:),
-     &  fchvisq_a(:,:,:,:,:)                                             !srv 08.09.21 }
+     &  fchvisq_a(:,:,:,:,:),                                            !srv 08.09.21 }
+     &  fchin_a(:,:,:,:,:)                                               !IYS 17.10.2023
       real (kind=R8), allocatable, save ::
      *  facdrift(:,:), fac_ExB(:,:), fac_vis(:,:)
 
@@ -178,6 +179,7 @@
       allocate(fchvispar_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fchvisper_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fchvisq_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 08.09.21 }
+      allocate(fchin_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))               !IYS 17.10.2023
       allocate(vadia(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                 !xpb
       vadia=0.0_R8
       allocate(vedia(-1:nxd,-1:nyd,0:1,0:1))                         !xpb
@@ -281,6 +283,7 @@
       deallocate(fchvispar_a)
       deallocate(fchvisper_a)
       deallocate(fchvisq_a)                         !srv 08.09.21 }
+      deallocate(fchin_a)                           !IYS 17.10.2023
       deallocate(vadia)
       deallocate(vedia)
       deallocate(wadia)

@@ -3,14 +3,14 @@
 
       subroutine b2tfch_ (nx, ny, ns, nscx, ismain, ismain0, iscx,       !srv 09.01.20 {
      & facdrift, fac_ExB, fac_vis,
-     1 vol, gs, hx, hy, qs, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
+     1 vol, gs, hx, hy, hz, qs, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
      1 ti, ni, na, fna, uadia, ua,
      1 csig, csigin, csig_stoch,                                         !srv 24.08.21
      & chci, calf, cvsa_cl, cvsa_drho,                                   !som 18.08.21
      & chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                    !som 20.10.21
      & conc, avisper_a, bvisper_a, cvisper_a,
      & fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,       !srv 08.09.21
-     & fch, fch_p, fchdia, fchin,
+     & fchin_a, fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -40,8 +40,9 @@
      &   cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),  !som 20.10.21
      &   cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                 !som 20.10.21
      &   lnlam(-1:nx,-1:ny), qs(-1:nx,-1:ny,0:1),                        !srv 13.10.06 01.07.09
-     1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1   qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
+     1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
+     1   qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
+     1   bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2   ni(-1:nx,-1:ny), facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny)
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny,0:1,0:1)                  !lk 31.01.08 { 24.08.21
@@ -49,6 +50,7 @@
       real (kind=R8) ::
      &   fchanml_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !srv 08.09.21 {
      &   fchinert_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &   fchin_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &   fchvispar_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &   fchvisper_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &   fchvisq_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !srv 08.09.21 }
@@ -172,8 +174,8 @@
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, qz, qc, qs, bb,
-     &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
+     &              vol, gs, hx, hy, hz, qz, qc, qs, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !srv 11.05.09, IYS 17.10.2023
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
@@ -442,6 +444,10 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
      &                      'b2tfch__fchvisq_ax'//chns)
         call my_out(70,nx,ny,fchvisq_a(-1,-1,1,1,is),
      &                      'b2tfch__fchvisq_ay'//chns)
+        call my_out(70,nx,ny,fchin_a(-1,-1,0,0,is),
+     &                      'b2tfch__fchin_ax'//chns)                    !IYS 17.10.2023
+        call my_out(70,nx,ny,fchin_a(-1,-1,1,1,is),
+     &                      'b2tfch__fchin_ay'//chns)                    !IYS 17.10.2023
         enddo
        endif                                                             !srv 08.09.21 }
 

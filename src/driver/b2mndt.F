@@ -372,6 +372,10 @@ ctmp.dpc
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
+          call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
+     &              vol, gs, hx, hy, hz, qz, qc, qs, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18
@@ -411,9 +415,9 @@ ctmp.dpc
           cor_ee=0.0_R8
           cor_ei=0.0_R8
 *     ..compute source linearisation
-         wrong_flow = .false.
-         main_call = ntim.ne.0
-         call b2sral (nx, ny, ns,
+          wrong_flow = .false.
+          main_call = ntim.ne.0
+          call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
      &     vol, hx, hy, hz, qz, qc, qs, gs, pbs, bb, lnlam,              !srv 09.01.01
@@ -424,64 +428,64 @@ ctmp.dpc
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &     fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,   !srv 08.09.21
-     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
+     &     fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 18.08.21
      &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
-     &     cvla, chce, chve, chci, chvi, calf,                           !xpb
+     &     cvla, chce, chve, chci, chvi, calf, csigin,                   !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, main_call)
-         if(wrong_flow) write(*,*)
+          if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
-         call b2srsm (nx, ny, ns,
+          call b2srsm (nx, ny, ns,
      &     dtim, vol, na, ua, te, ti, ne, ni,
      &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
 *     ..stabilise the source coefficients                                !srv 07.07.21 {
-         if(style.eq.2 .and. use_b2srst.eq.1)
-     &    call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !srv 01.07.08
+          if(style.eq.2 .and. use_b2srst.eq.1)
+     &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
      &      ni, sna, smo, she, shi, sch, sne)
 *       (smq is inherently stable.)                                      !srv 07.07.21 }
 *     ..include contributions due to timestep
 *     .. contributions due to timestep when style.eq.2 will be done in corresponding subroutines
-         if(style.ne.2) then                                             !srv 07.07.21
-          call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
-     &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)            !srv 11.09.09
+          if(style.ne.2) then                                            !srv 07.07.21
+           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,        !srv 09.01.01 01.07.08
+     &      vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
+     &      na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
+     &      snadt, smodt, shedt, shidt, schdt, snedt, .false.)           !srv 11.09.09
 *   ..add to previous contributions
-          call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
-          call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
-          call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
-          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
-          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
-          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
-         endif
-         if(equation_sources.ne.0) then                                  !srv 26.02.18 {
-           do iy = -1,ny
-             do ix = -1,nx
-               sna(ix,iy,0:1,0:ns-1) = sna(ix,iy,0:1,0:ns-1)+
+           call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+           call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+           call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
+           call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+           call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                 !srv 11.09.09 }
+          endif
+          if(equation_sources.ne.0) then                                 !srv 26.02.18 {
+            do iy = -1,ny
+              do ix = -1,nx
+                sna(ix,iy,0:1,0:ns-1) = sna(ix,iy,0:1,0:ns-1)+
      &                        vol(ix,iy)*art_sna(ix,iy,0:1,0:ns-1)
-               smo(ix,iy,0:3,0:ns-1) = smo(ix,iy,0:3,0:ns-1)+
+                smo(ix,iy,0:3,0:ns-1) = smo(ix,iy,0:3,0:ns-1)+
      &              vol(ix,iy)*hz(ix,iy)*art_smo(ix,iy,0:3,0:ns-1)
-               she(ix,iy,0:3)=she(ix,iy,0:3)+
+                she(ix,iy,0:3)=she(ix,iy,0:3)+
      &                        vol(ix,iy)*art_she(ix,iy,0:3)
-               shi(ix,iy,0:3)=shi(ix,iy,0:3)+
+                shi(ix,iy,0:3)=shi(ix,iy,0:3)+
      &                        vol(ix,iy)*art_shi(ix,iy,0:3)
-               sch(ix,iy,0:3)=sch(ix,iy,0:3)+
+                sch(ix,iy,0:3)=sch(ix,iy,0:3)+
      &                        vol(ix,iy)*art_sch(ix,iy,0:3)
-             enddo
-           enddo
-         endif                                                           !srv 26.02.18 }
+              enddo
+            enddo
+          endif                                                          !srv 26.02.18 }
 *     ..stabilise the source coefficients
-         if(style.ne.2 .and. use_b2srst.eq.1)                            !srv 07.07.21
+          if(style.ne.2 .and. use_b2srst.eq.1)                           !srv 07.07.21
      &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
      &      ni, sna, smo, she, shi, sch, sne)
 *       (smq is inherently stable.)
 *     ..inner iteration
-         istg(2) = 0
-    3    if (istg(2).lt.nstg(2) .and. .not.quit_residual) then
+          istg(2) = 0
+    3     if (istg(2).lt.nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
            if(style.eq.0) then                                           !srv 01.07.08
@@ -599,7 +603,7 @@ ctmp.dpc
      &          cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),              !srv 09.01.01 15.12.05 13.10.06
      &          fchvispar_a(-1,-1,0,0,is), fchvisper_a(-1,-1,0,0,is),    !srv 08.09.21
      &          fchinert_a(-1,-1,0,0,is), fchanml_a(-1,-1,0,0,is),
-     &          fchvisq_a(-1,-1,0,0,is),                                 !srv 20.09.06
+     &          fchvisq_a(-1,-1,0,0,is), fchin_a(-1,-1,0,0,is),          !srv 20.09.06, IYS 17.10.2023
      &          fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
      &          fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),
      &          fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),

@@ -141,6 +141,12 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nph9')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test rxf
+      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
@@ -182,12 +188,6 @@
        call ipgeti ('b2nph9_style', style)                              !srv 09.07.08
        call ipgeti ('get_residuals', get_residuals)                     !srv 22.05.18
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
@@ -229,6 +229,11 @@
 *    ..test edge values of the fluxes
        call b2xvff (nx, ny, fhe, 'fhe')
        call b2xvff (nx, ny, fhi, 'fhi')
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(uadia)),
+     &               maxval(abs(vadia)),maxval(abs(wadia)),
+     &               maxval(abs(vaecrb))).lt.c,
+     &  'Supra-luminal velocities !')
       endif
 
 * ..main computation

@@ -6,7 +6,7 @@
      &  vol, hx, hy, qz, gs, qc, qs, bb, pbs,
      &  ua, na, ne, te, ti, po, fch_p,
      &  fchvispar_a, fchvisper_a, fchinert_a, fchanml_a, fchvisq_a,      !srv 20.09.06 08.09.21
-     &  fne, cvla, cdna, cdpa, chce, chci,
+     &  fchin_a, fne, cvla, cdna, cdpa, chce, chci,                      !IYS 17.10.2023
      &  veecrb, vaecrb, wadia, ve, wedia,                                !srv 05.06.18
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
@@ -33,6 +33,7 @@
      &  fchvisper_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fchvisq_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fchanml_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fchin_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                             !IYS 17.10.2023
      &  ua(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1),
      &  fne(-1:nx,-1:ny,0:1,0:1),
      &  cvla(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -223,13 +224,13 @@ csw 30sep2013, added check for no_hybr
           if (.not.is_neutral(is)) then                                  !srv 08.09.21
            scur =
      &      (fchinert_a(ix,iy,0,0,is)+fchvispar_a(ix,iy,0,0,is)+
-     &       vis_per*fchvisper_a(ix,iy,0,0,is)                           !srv 02.10.17
+     &       vis_per*fchvisper_a(ix,iy,0,0,is)+fchin_a(ix,iy,0,0,is)     !srv 02.10.17
      &      +fchanml_a(ix,iy,0,0,is)+vis_q*fchvisq_a(ix,iy,0,0,is))*     !srv 02.10.17
      &       xcur/(rza(ix,iy,is)*qe*
      &      (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
            scur9 =
      &      (fchinert_a(ix,iy,0,1,is)+fchvispar_a(ix,iy,0,1,is)
-     &       +vis_per*fchvisper_a(ix,iy,0,1,is)
+     &       +vis_per*fchvisper_a(ix,iy,0,1,is)+fchin_a(ix,iy,0,1,is)
      &       +fchanml_a(ix,iy,0,1,is)+vis_q*fchvisq_a(ix,iy,0,1,is))*
      &        ycur/(rza(ix,iy,is)*qe*
      &       (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
@@ -368,8 +369,8 @@ csw 30sep2013, added check for no_hybr
            if (.not.is_neutral(is)) then                                 !srv 08.09.21
             scur =
      &        (fchvispar_a(ix,iy,1,1,is)+fchinert_a(ix,iy,1,1,is)+
-     &         vis_q*fchvisq_a(ix,iy,1,1,is)+fchanml_a(ix,iy,1,1,is))*  !srv 02.10.17 08.09.21
-     &         ycur/(rza(ix,iy,is)*qe*
+     &         vis_q*fchvisq_a(ix,iy,1,1,is)+fchanml_a(ix,iy,1,1,is)+     !srv 02.10.17 08.09.21
+     &         fchin_a(ix,iy,1,1,is))*ycur/(rza(ix,iy,is)*qe*
      &        (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &         na(ix,iy,is))/2.0_R8)
             vsprcur=vis_per*fchvisper_a(ix,iy,1,1,is)/
@@ -417,8 +418,8 @@ csw 30sep2013, added check for no_hybr
            if(.not.is_neutral(is)) then                                  !srv 20.09.06 08.09.21
             scur =
      &       (fchinert_a(ix,iy,1,1,is)+fchvispar_a(ix,iy,1,1,is)+
-     &        fchanml_a(ix,iy,1,1,is)+vis_q*fchvisq_a(ix,iy,1,1,is))*    !srv 02.10.17
-     &        ycur/(rza(ix,iy,is)*qe*
+     &        fchanml_a(ix,iy,1,1,is)+vis_q*fchvisq_a(ix,iy,1,1,is)+     !srv 02.10.17
+     &        fchin_a(ix,iy,1,1,is))*ycur/(rza(ix,iy,is)*qe*
      &       (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/
      &        2.0_R8)
             vsprcur=vis_per*fchvisper_a(ix,iy,1,1,is)/
@@ -948,6 +949,10 @@ csw 18feb2014 remove fluxes between guard cells
      &                 'b2tfrn_fchinert_ax'//chns)
           call my_out(70,nx,ny,fchinert_a(-1,-1,1,1,is),
      &                 'b2tfrn_fchinert_ay'//chns)
+          call my_out(70,nx,ny,fchin_a(-1,-1,0,0,is),
+     &                 'b2tfrn_fchin_ax'//chns)
+          call my_out(70,nx,ny,fchin_a(-1,-1,1,1,is),
+     &                 'b2tfrn_fchin_ay'//chns)
           call my_out(70,nx,ny,fchanml_a(-1,-1,0,0,is),
      &                 'b2tfrn_fchanml_ax'//chns)
           call my_out(70,nx,ny,fchanml_a(-1,-1,1,1,is),

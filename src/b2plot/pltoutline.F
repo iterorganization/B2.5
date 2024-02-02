@@ -150,7 +150,10 @@ c           call lined_d(brx+uu1,bzy+vv1,brx+uu2,bzy+vv2)
       return
       end subroutine plot_arrows
 c
-      subroutine plot_trig_arrows(is)
+      subroutine plot_trig_arrows
+#ifdef B25_EIRENE
+     . (is)
+#endif
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_debug
@@ -158,8 +161,8 @@ c
       use eirmod_ctrig
 #endif
       implicit none
-      integer is
 #ifdef B25_EIRENE
+      integer is
       integer i
       real (kind=R8) ::
      * fmax,fmay,fmmax,dfx,dfy,uuu,vvv,r,sb,cb,rl,rd,brx,bzy,

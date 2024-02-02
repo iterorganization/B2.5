@@ -231,6 +231,9 @@
        implicit none
        integer nx, ny, ns
 
+       call xertst(0.le.nx.and.0.le.ny, 'faulty parameters nx, ny')
+       call xertst(1.le.ns, 'faulty parameter ns')
+
       end subroutine calc_err_transport
 
       subroutine calc_err_cc(nx, ny, nmvar, var, exact_var, scl)

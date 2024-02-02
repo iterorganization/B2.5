@@ -360,11 +360,11 @@
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &     fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,   !srv 08.09.21
-     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
+     &     fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, !srv 21.10.02, IYS 17.10.2023
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 20.10.21
      &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
-     &     cvla, chce, chve, chci, chvi, calf,                           !xpb
+     &     cvla, chce, chve, chci, chvi, calf, csigin,                   !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, .false.)
@@ -405,6 +405,10 @@
      &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
      &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
      &                fchvisq_a, fchvisq)
+        call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
+     &              vol, gs, hx, hy, hz, qz, qc, qs, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xprz (nx, ny, ns, mp, am, na, rz)
@@ -426,8 +430,8 @@
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
-!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
-!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq, fchvispar_a, fchin)
+!$OMP& SHARED(fchvisper_a, fchinert_a, fchanml_a, fchvisq_a, fchin_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna)
@@ -449,7 +453,7 @@
      &    cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),                    !srv 09.01.01 15.12.05
      &    fchvispar_a(-1,-1,0,0,is), fchvisper_a(-1,-1,0,0,is),          !srv 08.09.21
      &    fchinert_a(-1,-1,0,0,is), fchanml_a(-1,-1,0,0,is),
-     &    fchvisq_a(-1,-1,0,0,is),                                       !srv 20.09.06
+     &    fchvisq_a(-1,-1,0,0,is), fchin_a(-1,-1,0,0,is),                !srv 20.09.06, IYS 17.10.2023
      &    fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
      &    fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),                  !srv 01.10.99 21.01.00
      &    fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),                  !srv 13.10.06
@@ -478,11 +482,11 @@
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
-     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
-     &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &    fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,  !srv 21.10.02
+     &    fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
      &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
-     &    cvla, chce, chve, chci, chvi, calf,                            !xpb
+     &    cvla, chce, chve, chci, chvi, calf, csigin,                    !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
@@ -573,6 +577,10 @@ cxpb
      &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
      &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
      &                fchvisq_a, fchvisq)
+        call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
+     &              vol, gs, hx, hy, hz, qz, qc, qs, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
 *     ..iterate on particle balance
 #ifndef NO_OPENMP_B2NEWS_LOOP2
@@ -599,8 +607,8 @@ cxpb
 !$OMP& SHARED(cssb, vaecrb, vadia, wadia)
 !$OMP& SHARED(bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
-!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
-!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq, fchvispar_a, fchin)
+!$OMP& SHARED(fchvisper_a, fchinert_a, fchanml_a, fchvisq_a, fchin_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
@@ -678,7 +686,7 @@ cxpb
      &     cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),                   !srv 09.01.01 15.12.05
      &     fchvispar_a(-1,-1,0,0,is), fchvisper_a(-1,-1,0,0,is),         !srv 08.09.21
      &     fchinert_a(-1,-1,0,0,is), fchanml_a(-1,-1,0,0,is),
-     &     fchvisq_a(-1,-1,0,0,is),                                      !srv 20.09.06
+     &     fchvisq_a(-1,-1,0,0,is), fchin_a(-1,-1,0,0,is),               !srv 20.09.06, IYS 17.10.2023
      &     fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),                 !xpb
      &     fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),                 !srv 01.10.99 21.01.00
      &     fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),                 !srv 13.10.06
@@ -793,7 +801,7 @@ cxpb
      &       cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),                 !srv 09.01.01 15.12.05
      &       fchvispar_a(-1,-1,0,0,is), fchvisper_a(-1,-1,0,0,is),       !srv 08.09.21
      &       fchinert_a(-1,-1,0,0,is), fchanml_a(-1,-1,0,0,is),
-     &       fchvisq_a(-1,-1,0,0,is),                                    !srv 20.09.06
+     &       fchvisq_a(-1,-1,0,0,is), fchin_a(-1,-1,0,0,is),             !srv 20.09.06, IYS 17.10.2023
      1       fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),               !xpb
      &       fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),               !srv 01.10.99 21.01.00
      &       fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),               !srv 13.10.06
@@ -864,17 +872,17 @@ cxpb
      &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns, nscx, ismain, ismain0, iscx,
      1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
-     1         vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam,  !xpb
-     1         pz, ti, ni(-1,-1,1), na, fna, uadia, ua, fne_32, fne_52,  !xpb
-     &         csig, csigin, csig_stoch, chce, chve, chci,               !srv 24.08.21
-     &         calf, chvemx, cvsa_cl, cvsa_drho,                         !som 18.08.21
+     1         vol, gs, hx, hy, hz, qz, qc, qs, bb, te, po, ne, ne2,     !xpb
+     1         lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,           !xpb
+     &         fne_32, fne_52, csig, csigin, csig_stoch, chce, chve,     !srv 24.08.21
+     &         chci, calf, chvemx, cvsa_cl, cvsa_drho,                   !som 18.08.21
      &         chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,            !som 20.10.21
      &         fch, conc, fchstoch, fchdia,                              !srv 17.12.13 16.10.17
      &         fch_p, fchvispar, fchvisq, fchin, fchinert,
      &         fch_32, fch_52,
      &         avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl,      !srv 25.11.08
      1         fchanml_a, fchinert_a, fchvispar_a,
-     &         fchvisper_a, fchvisq_a)                                   !srv 08.09.21
+     &         fchvisper_a, fchvisq_a, fchin_a)                          !srv 08.09.21, IYS 17.10.2023
               call b2tfhe (nx, ny, ns, guard_flows, facdrift,
      1         BoRiS, vol, hx, hy, qs, te, po, ne, na, vedia,            !xpb  !srv 13.01.17
      &         veecrb, fne_32, fne_52, fch_p, csig, chce, chve, calf,    !xpb
@@ -902,13 +910,13 @@ cxpb
      &           fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &           fna_mdf, fhe_mdf, fhi_mdf,
      &           fna_fcor, fna_nodrift, fna_he, fhe, fhi, fhm, fht,      !srv 13.10.06 25.12.06 23.10.09
-     &           fnaPSch, fhePSch, fhiPSch, fch, fchanml_a,
-     &           fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,        !srv 08.09.21
+     &           fnaPSch, fhePSch, fhiPSch, fch, fchanml_a, fchinert_a,
+     &           fchvispar_a, fchvisper_a, fchvisq_a, fchin_a,           !srv 08.09.21
      &           fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,    !srv 21.10.02
      &           fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &           cdna, cdpa, cvsa_cl, cvsa_drho,                         !som 20.10.21
      &           chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,          !som 20.10.21
-     &           cvla, chce, chve, chci, chvi, calf,
+     &           cvla, chce, chve, chci, chvi, calf, csigin,
      &           rlsa, rlra, rlqa, rlcx, rlrd,
      &           rlbr, rlza, rlz2, rlpt, rlpi,
      &           rza, rz2, rpt, rpi,
@@ -1020,8 +1028,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
-!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
-!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq, fchvispar_a, fchin)
+!$OMP& SHARED(fchvisper_a, fchinert_a, fchanml_a, fchvisq_a, fchin_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna)
@@ -1045,7 +1053,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),           !srv 15.12.05
      &             fchvispar_a(-1,-1,0,0,is), fchvisper_a(-1,-1,0,0,is), !srv 08.09.21
      &             fchinert_a(-1,-1,0,0,is), fchanml_a(-1,-1,0,0,is),
-     &             fchvisq_a(-1,-1,0,0,is),                              !srv 20.09.06
+     &             fchvisq_a(-1,-1,0,0,is), fchin_a(-1,-1,0,0,is),       !srv 20.09.06, IYS 17.10.2023
      &             fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
      &             fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),         !srv 01.10.99 21.01.00
      &             fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),         !srv 13.10.06
@@ -1122,15 +1130,16 @@ c     with diamagnetic drift part                                        !xpb
         call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns, nscx, ismain, ismain0, iscx,
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
-     1   vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,    !xpb
-     1   ti, ni(-1,-1,1), na, fna, uadia,                                !xpb
+     1   vol, gs, hx, hy, hz, qz, qc, qs, bb, te, po, ne, ne2, lnlam,    !xpb
+     1   pz, ti, ni(-1,-1,1), na, fna, uadia,                            !xpb
      &   ua, fne_32, fne_52, csig, csigin, csig_stoch,
      &   chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,             !srv 24.08.21 !som 18.08.21
      &   chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                  !som 20.10.21
      &   fch, conc, fchstoch, fchdia,                                    !srv 17.12.13 16.10.17
      &   fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,     !srv 25.11.08
      1   avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl,
-     &   fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)     !srv 08.09.21
+     &   fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,     !srv 08.09.21
+     &   fchin_a)                                                        !IYS 17.10.2023
         call b2tfhe (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
      1   vol, hx, hy, qs, te, po, ne, na, vedia, veecrb,                 !srv 13.01.17
      1   fne_32, fne_52, fch_p,

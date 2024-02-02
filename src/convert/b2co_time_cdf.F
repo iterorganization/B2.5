@@ -1,4 +1,8 @@
-      subroutine b2co_time_cdf(nx, ny, ns, tim, batch_only)
+      subroutine b2co_time_cdf(nx, ny, ns
+#ifndef NO_CDF
+     , , tim, batch_only
+#endif
+     . )
       use b2mod_types
       use b2mod_geo
       use b2mod_mwti
@@ -10,13 +14,13 @@
 #     include <netcdf.inc>
 #endif
       integer nx, ny, ns
-      real (kind=R8) :: tim
-      logical :: batch_only
       integer :: jxi, jxa, jsep
       integer :: iylstrt, iyistrt, iyastrt, iyrstrt,
      1           iylend,  iyiend,  iyaend,  iyrend
       integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
 #ifndef NO_CDF
+      real (kind=R8) :: tim
+      logical :: batch_only
 #ifndef NO_GETENV
       integer lenval, ierror
 #ifndef USE_PXFGETENV

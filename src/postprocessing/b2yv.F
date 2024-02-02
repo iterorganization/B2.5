@@ -49,7 +49,6 @@
       integer status
       character(AV_MAX_LABEL_LEN) :: axis1 = 'X', axis2 = 'Y', axis3
 #else
-      character*1 :: axis1 = 'X', axis2 = 'Y'
       character*40 :: axis3
 #endif
 

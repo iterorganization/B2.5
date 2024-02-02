@@ -59,7 +59,6 @@
       integer, intent(inout):: istyle
       logical :: ex
       integer :: nr, nz
-      real (kind=R8) :: r_max
       real (kind=R8), allocatable :: mr(:) !!@param starting positions in radial direction
       real (kind=R8), allocatable :: mz(:) !!@param starting positions in axial direction
       real (kind=R8), allocatable :: mz_unit(:) !!@param normalized distribution of axial positions on a magnetic field line
@@ -84,10 +83,6 @@
       allocate(mz_unit(0:nx))
       allocate(cr(0:ny-1))
       allocate(cz(0:nx-1))
-
-*     determine the maximum value r_max an r-coordinate of mesh point may get
-*     (equals the inner radius of the smallest coil)
-      r_max = minval(r1(0:ncoil-1))
 
 * read r and z distribution files.
       call read_first_line(fn_z, nz)
@@ -479,9 +474,8 @@
       use b2mod_ld_namelist
       IMPLICIT NONE
       CHARACTER*(*) FN
-      CHARACTER*1 S1,S2
       INTEGER ix, iy, is, col, cntr, row
-      real (kind=R8) :: bToroidal, one, cr, cz
+      real (kind=R8) :: bToroidal, cr, cz
       real (kind=R8) :: b(0:1) !B-field (Br, Bz)
 
       ! mesh(0:nx,0:ny,0:1) contains nodes of computational grid
@@ -507,11 +501,8 @@
 
 * write the mesh to the output in 3 formats
 * .ASCII has been validated, other formats might be incorrect
-      S1='='
-      S2='-'
       ! assuming zero toroidal field everywhere
       bToroidal = bTor
-      one = 1.0_R8
       OPEN(UNIT=17,FILE=FN//'.ASCII',STATUS='UNKNOWN')
 
       WRITE(17,'(I3,I3)') nx, ny      !RW + 2 guard cells

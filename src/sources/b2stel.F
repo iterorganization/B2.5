@@ -5,7 +5,8 @@
      & BoRiS, bb, vol, hx, hy, hz, na, ua,                              !srv 09.01.01
      & wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,     !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa,
-     & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09
+     & sna0_ion, sna0_rec, smq0_ion, smq0_rec,
+     & she0, shi0_ion, shi0_rec)                                        !srv 11.09.09
       use b2mod_types
       use b2mod_diag
       use b2mod_tallies
@@ -175,12 +176,17 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(wadia)),
+     &               maxval(abs(vadia)),maxval(abs(vaecrb))).lt.c,
+     &  'Supra-luminal velocities !')
 *   ..test facdrift, fac_ExB
-      call xertst (0.0_R8.le.minval(facdrift) .and.
+       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
-      call xertst (0.0_R8.le.minval(fac_ExB) .and.
+       call xertst (0.0_R8.le.minval(fac_ExB) .and.
      &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
 *    ..test rate coefficients
+       call b2xvsg (n2*ns, rz2, 1, 'rz2', '.ge.')
        do is = 0, ns-2
         if (.not.lnext(is,is+1)) then
          call xertst (samax(n2,rsa(-1,-1,is),1).eq.0.0_R8,
