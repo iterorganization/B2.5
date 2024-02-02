@@ -67,7 +67,7 @@
      *   fnac(-1:nx,-1:ny,0:1,0:ns-1), vntrc(-1:nx,-1:ny,0:1),          !srv 08.07.09
      *   vntrl(-1:nx,-1:ny), vntrb(-1:nx,-1:ny),
      *   til(-1:nx,-1:ny), tib(-1:nx,-1:ny),
-     *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
+     *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:2,0:ns-1),
      *   fnal(-1:nx,-1:ny,0:1,0:ns-1),
      *   fnav(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
@@ -312,9 +312,13 @@
      &                             / hz(-1:nx,-1:ny) / vol(-1:nx,-1:ny)
           call intfacev(nx, ny, bottomix, bottomiy, vol,
      &                       sec(-1,-1),work(-1,-1,0,is))      
+          call intfaceh(nx,ny,leftix,leftiy,vol,
+     &                       sec(-1,-1),work(-1,-1,2,is))      
 ! HERE:
-!   work(:,:,1,is) is the y-component of momentum source density
-!   work(:,:,0,is) is the DIAMAGNETIC component of momentum source density,
+!   work(:,:,1,is) is the y-component of momentum source density (interpolated to the left cell face)
+!   work(:,:,0,is) is the DIAMAGNETIC component of momentum source density (interpolated to the bottom cell face),
+!                  and the sign convention should be EIRENE-compatible
+!   work(:,:,2,is) is the DIAMAGNETIC component of momentum source density (interpolated to the left cell face),
 !                  and the sign convention should be EIRENE-compatible
           do ix=-1,nx
            do iy=-1,ny 
@@ -322,7 +326,7 @@
      &         .and. topiy(ix,iy).ne.ny+1) 
      &            fchin_a(ix,iy,0,is) = gs(ix,iy,0) * ( 
      & qc(ix,iy) * wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2 * work(ix,iy,1,is) -
-     &  sqrt(1 - qc(ix,iy)**2) * work(ix,iy,0,is) / wbbv(ix,iy,3) )
+     &  sqrt(1 - qc(ix,iy)**2) * work(ix,iy,2,is) / wbbl(ix,iy,3) )
             if (leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
      &         .and. rightix(ix,iy).ne.nx+1) 
      &            fchin_a(ix,iy,1,is) =  gs(ix,iy,1) * 
