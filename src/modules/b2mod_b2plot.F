@@ -3,8 +3,8 @@
       use b2mod_types
       use b2mod_layer
      . , only : ntrack
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
 
       real (kind=R8), allocatable, save ::
      *  work(:,:,:),
@@ -30,7 +30,7 @@
      *  p2(:,:),
      *  xx(:,:),
      *  yy(:,:),
-     *  nh(:,:),
+     *  nh(:),
      *  zeff(:),
      *  uutraj(:,:),
      *  vvtraj(:,:),
@@ -50,6 +50,13 @@
 
       integer, allocatable, save ::
      *  ind_hlp(:), indt_hlp(:)
+
+      integer, allocatable, save ::
+     *  cvIx(:), cvIy(:), fcxIx(:), fcxIy(:), fcyIx(:), fcyIy(:),
+     *  vxIx(:), vxIy(:)
+
+      real (kind=R8), allocatable, save ::
+     *  dsimp(:), dsomp(:), wdimp(:), wdomp(:)
 
       real (kind=R8), allocatable, save ::
      *  eirene_stack(:,:,:),
@@ -113,19 +120,21 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
      * nidim,linlog,wlinlog,tlinlog,trglinlog
       integer, save ::
      *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),ntrfrm,
-     *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
+     *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average,
+     *  ixref,iyref
 cank 960511
       integer, save ::
      *  nlimi,nstsi,natmi,nmoli,nioni,nlim1
 cank
       integer, save ::
-     *  mcol,scol,vcol,ocol,ecol,acol,zcol,y_transform_l,
+     *  mcol,scol,vcol,ocol,ecol,fcol,acol,zcol,y_transform_l,
      *  dcol,wcol,tcol,hcol,gcol,bcol,xcol,lfsz,expsymbol
 
       logical, save ::
      *  writing_to_file,color_set,use_compile,
+     *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,plot_vs_rmaj,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,plotting_sep,expline
+     *  xparallel,plotting_sep,bold,expline
 
       character*256, save ::
      *  graphlabel(wklng),
@@ -135,8 +144,7 @@ cank
       character*80, save ::
      *  b2version
 
-      integer, save :: nx, ny, ns, nsw, jxa, jxi, jsep, ixref, iyref,
-     *  nxtr, nxtl
+      integer, save :: nsw
 
       integer, save :: neo_ic
 
@@ -152,23 +160,7 @@ cank
       external get_jsep, get_nxt, ipgeti, xertst
 #endif
 
-      nx=nCv
-      ny=1
-      ns=nsd
       nsw=max(nsd+3,(nsd+1)*(nsd+1)-1,ns_ext)
-
-#ifdef WG_TODO
-      call get_jsep(nx,ny,jxi,jxa,jsep)
-      ixref=jxa
-      iyref=jsep
-      call ipgeti ('set_transport_ixref', ixref)
-      call xertst (-1.le.ixref.and.ixref.le.nxd,
-     1   'faulty argument set_transport_ixref')
-      call ipgeti ('set_transport_iyref', iyref)
-      call xertst (-1.le.iyref.and.iyref.le.nyd,
-     1   'faulty argument set_transport_iyref')
-      call get_nxt(nx,nxtl,nxtr)
-#endif
 
       allocate(work(1:nCv,0:nsw,1:wklngd))
       allocate(wrkc(1:nCv))
@@ -184,10 +176,18 @@ cank
       allocate(p2(2,nlim))
       allocate(xx(1:nCv,2))
       allocate(yy(1:nCv,2))
-      allocate(nh(1:nCv,1))
+      allocate(nh(1:nCv))
       allocate(zeff(1:nCv))
       allocate(uutraj(1:nCv,0:nsd-1))
       allocate(vvtraj(1:nCv,0:nsd-1))
+      allocate(cvIx(1:nCv))
+      allocate(cvIy(1:nCv))
+      allocate(fcxIx(1:nFc))
+      allocate(fcxIy(1:nFc))
+      allocate(fcyIx(1:nFc))
+      allocate(fcyIy(1:nFc))
+      allocate(vxIx(1:nVx))
+      allocate(vxIy(1:nVx))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
       allocate(textplel(0:nsd))
@@ -206,13 +206,13 @@ cank
       allocate(texttargsp(ntrack))
 #else
       call xertst(natmd .le.DEF_NATM,
-     . 'increase size of DEF_NATM in DIMENSIONS.F')
+     . 'increase size of DEF_NATM in b2mod_dimensions')
       call xertst(nmold .le.DEF_NMOL,
-     . 'increase size of DEF_NMOL in DIMENSIONS.F')
+     . 'increase size of DEF_NMOL in b2mod_dimensions')
       call xertst(niond .le.DEF_NION,
-     . 'increase size of DEF_NION in DIMENSIONS.F')
+     . 'increase size of DEF_NION in b2mod_dimensions')
       call xertst(nsd   .le.DEF_NPLS,
-     . 'increase size of DEF_NPLS in DIMENSIONS.F')
+     . 'increase size of DEF_NPLS in b2mod_dimensions')
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif
@@ -290,6 +290,14 @@ cank
       deallocate(zeff)
       deallocate(uutraj)
       deallocate(vvtraj)
+      deallocate(cvIx)
+      deallocate(cvIy)
+      deallocate(fcxIx)
+      deallocate(fcxIy)
+      deallocate(fcyIx)
+      deallocate(fcyIy)
+      deallocate(vxIx)
+      deallocate(vxIy)
 #ifndef PSR
       deallocate(textpl)
       deallocate(textplel)
@@ -376,57 +384,5 @@ cank
 
       return
       end subroutine write_b2mod_b2plot
-
-      function ix_e2b(ixe)
-      use b2mod_indirect
-      implicit none
-      integer ix_e2b
-      integer ixe
-      integer ic, i
-
-      if (ixe.eq.-1 .or. ixe.eq.0) then
-        ix_e2b = -2
-      else
-        i = 1
-        ix_e2b = 0
-        do while (i.lt.ixe)
-          i = i + 1
-          ix_e2b = ix_e2b + 1
-          do ic = 1, nncut
-            if (ix_e2b.eq.leftcut(ic)) i = i + 1
-            if (ix_e2b.eq.rightcut(ic)) i = i + 1
-          end do
-          if (nncut.eq.2 .and. ix_e2b.eq.nxtr) i = i + 1
-        end do
-      end if
-      return
-      end function ix_e2b
-
-      function ix_b2e(ixb)
-      use b2mod_indirect
-      implicit none
-      integer ix_b2e
-      integer ixb
-      integer i
-
-      if (ixb.eq.-2) then
-        ix_b2e = -1
-      else if (ixb.gt.nx) then
-        ix_b2e = -1
-      else if (ixb.eq.-1 .or. ixb.eq.nx) then
-        ix_b2e = -1
-      else if (nncut.eq.2 .and.
-     .        (ixb.ge.nxtl .and. ixb.le.nxtr)) then
-        ix_b2e = -1
-      else
-        ix_b2e = ixb + 1
-        do i = 1, nncut
-          if (ixb.ge.leftcut(i)) ix_b2e = ix_b2e + 1
-          if (ixb.ge.rightcut(i)) ix_b2e = ix_b2e + 1
-        end do
-        if (nncut.eq.2 .and. ixb.gt.nxtr) ix_b2e = ix_b2e + 1
-      end if
-      return
-      end function ix_b2e
 
       end module b2mod_b2plot

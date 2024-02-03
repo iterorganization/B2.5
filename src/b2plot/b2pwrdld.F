@@ -13,11 +13,11 @@ c======================================================================
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
       use b2us_data
+      use b2mod_dimensions
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
       implicit none
-#     include "DIMENSIONS.F"
 #     include "rdload.inc"
       integer iatm,imol,iion
       integer i,j,k,l,m,is,iCv,n_hlperr,
@@ -40,6 +40,7 @@ c*** in rlcomp. That is, we make a "structure" polygon, which is closed,
 c*** and the target list referring to the segments of this polygon.
 c
       lrdlsp=.false.
+      lrdlcr=.false.
       do i=1,nsgmx !{
         luwrk(i)=0
       end do !}
@@ -63,6 +64,8 @@ c
       print '(20i4)',(lbnd(i),i=1,nplgs)
       print *,'luwrk:'
       print '(20i4)',(luwrk(i),i=1,nsgmx)
+      print *,'lewrk:'
+      print '(20i4)',(lewrk(i),i=1,nsgmx)
 #endif
 
       k=0
@@ -85,7 +88,7 @@ c
       ntrg=k
 #ifdef DBG
        print *,'Shadowing structure: ',
-     ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
+     ,          nplgs,nbndry,nwldlis(1),lwldlis(1,1)
        print '(20i4)',(lbnd(i),i=1,nplgs)
        print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
        print '(a,12i5)','Radiation target ',ntrg,
@@ -283,6 +286,7 @@ c*** Calculate the radiation load from the core sources
             wldrdlsp(l,is)=radld(k)/segm_area(l)
           end if !}
         end do !}
+        lrdlcr=.true.
       end if !}
       return
 c======================================================================

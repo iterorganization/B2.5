@@ -1,5 +1,8 @@
       module b2mod_layer
       use b2mod_types
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
       integer nwall, ntrack, nalloys
@@ -8,14 +11,13 @@
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: layer_nconstituents(:)
       integer, allocatable :: layer_nzconstituents(:,:)
-      real (kind=R8), allocatable :: layer_nrelconstituents(:,:)
+      real (kind=R8), allocatable :: layer_relconstituents(:,:)
 #else
-#     include "DIMENSIONS.F"
       parameter(
      . nwall = 2*(DEF_NXD+2)+(DEF_NCUT+2)*(DEF_NYD+2)+DEF_NLIM+DEF_NSTS)
       integer layer_nconstituents(nwall)
       integer layer_nzconstituents(nwall,6+ntrack)
-      real (kind=R8) :: layer_nrelconstituents(nwall,6+ntrack)
+      real (kind=R8) :: layer_relconstituents(nwall,6+ntrack)
 #endif
       real (kind=R8), allocatable :: layer_thickness(:)
       real (kind=R8), allocatable :: layer_mass_density(:)
@@ -98,7 +100,7 @@
       nwall = 2*(nx+2)+max(nncut,2)*(ny+2)+nlim+nsts
       allocate(layer_nconstituents(nwall))
       allocate(layer_nzconstituents(nwall,6+ntrack))
-      allocate(layer_nrelconstituents(nwall,6+ntrack))
+      allocate(layer_relconstituents(nwall,6+ntrack))
 #endif
       allocate(layer_thickness(nwall))
       allocate(layer_mass_density(nwall))
@@ -109,7 +111,7 @@
       layer_alloys = ' '
       layer_nconstituents = 0
       layer_nzconstituents = 0
-      layer_nrelconstituents = 0.0_R8
+      layer_relconstituents = 0.0_R8
 
       return
 
@@ -120,7 +122,7 @@
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(layer_nconstituents)
       deallocate(layer_nzconstituents)
-      deallocate(layer_nrelconstituents)
+      deallocate(layer_relconstituents)
 #endif
       deallocate(layer_thickness)
       deallocate(layer_mass_density)

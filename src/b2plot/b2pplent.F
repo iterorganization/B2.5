@@ -54,13 +54,17 @@ c*** Local variables
       real (kind=R8) :: sga,bgd,sgd,sgb
       real (kind=R8) :: initparm(10), r0rad
       real (kind=R8) :: q_tmp(nnr,nnz)
+#ifdef WG_TODO
       real (kind=R8), allocatable :: qpr_tmp(:), qpz_tmp(:)
+#endif
       real (kind=R8) :: r,z,bq,dr,dz,qmx,qmn,rmp,ztp,ztt,pwr_tot
       logical found
 c----------------------------------------------------------------------
 c*** Calculate the coefficients for radiation profiles
 c
+#ifdef WG_TODO
       allocate(qpr_tmp(0:ny-1),qpz_tmp(0:nx-1))
+#endif
       stack_req=(/0,11,0,0,0,0,0/)
       if (bad_args(stack_req)) return
       r0rad=rpop(rstack,irstack)
@@ -158,12 +162,10 @@ c
         ztt=ztt+hx(i,j)
       end do
       sgb=sgb/ztt
-#endif
 c
 c*** ... and then the poloidal profiles
 c
       qpz_tmp(jtp)=1.0_R8
-#ifdef WG_TODO
       j=jsep+1
       ztt=hx(jtp,j)*0.5_R8
       do i=jtp+1,nx-1
@@ -245,7 +247,9 @@ c
         write(lun,'(1p,8e15.6)') (q_tmp(i,k),i=1,nnr)
       end do
       close(lun)
+#ifdef WG_TODO
       deallocate(qpr_tmp,qpz_tmp)
+#endif
       return
 
       contains

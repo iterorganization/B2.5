@@ -10,8 +10,8 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+      use b2mod_balance                                                 !djm Jan2017
+     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
       use b2mod_ad
      & , only : ncall_b2siav
 #ifndef NAGFOR
@@ -302,10 +302,10 @@
       endif                                                             !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2siav_smovh0to3(-1:nx,-1:ny,0:3,isb)=smbvh
-!WG_TODO        b2siav_smovv0to3(-1:nx,-1:ny,0:3,isb)=smbvv
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2siav_smovh0to3(1:nCv,0:3,isb)=smbvh
+        b2siav_smovv0to3(1:nCv,0:3,isb)=smbvv
+      endif
 
 * ..return
       ncall_b2siav = ncall_b2siav+1

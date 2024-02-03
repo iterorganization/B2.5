@@ -2150,7 +2150,7 @@
                     ! Only consider y-faces with non-positive fcLbl. Assumption:
                     ! - if 0: 'regular', internal aligned face
                     ! - if negative: a flux-aligned boundary (PF/Core/North)
-                    ! - if positive: a solid boundary => take out of flux surface (even if still field aligned by coincidence)
+                    ! - if positive: a solid boundary => take out of flux surface (even if still field-aligned by coincidence)
                     if (m%fcLbl(iFcy).le.0) then
                       if (istrts.eq.-1) then
                         iFs = iFs + 1
@@ -2196,7 +2196,6 @@
 
 !     Create b2.user.parameters file with definition of outer/inner midplanes
       call conv_midplane(nx,ny)
-
 
       ! Identify corner coordinates/vertices
       icount = 0
@@ -4743,6 +4742,7 @@
 
         ! For now, only create a dummy external state.
         ! Functionality from b2mod_external to be carried over!
+        call xertst ( 0.le.nx.and.0.le.ny, 'faulty parameter nx, ny' )
         call createB2StateExt( nCv, nFc, ns, st_ext )
 
       end subroutine prep_plasma_ext

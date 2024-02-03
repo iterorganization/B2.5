@@ -111,42 +111,42 @@
       return
       end subroutine mds_put_int
 
-      subroutine mds_put_int_rz(node_name,nx,ny,data)
+      subroutine mds_put_int_us(node_name,n,data)
       use b2mod_types
       use b2mod_mdsplus
       implicit none
       character*(*) :: node_name
-      integer :: nx, ny, data(nx,ny)
+      integer :: n, data(n)
 
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
       character :: tdi*(172)
-      integer, allocatable :: i2d(:,:)
+      integer, allocatable :: i1d(:)
 
-      allocate(i2d(nx,ny))
-      i2d=data
+      allocate(i1d(n))
+      i1d=data
       tdi='$'
 
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
-      status=mdsput2_i2d(
+      status=mdsput2_i1d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_long,nx,ny,0),i2d,0)
+     * descr2_i1(idtype_long,n,0),i1d,0)
 #else
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_long,nx,ny,0),i2d,0)
+     * descr2(idtype_long,n,0),i1d,0)
 #endif
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
-      deallocate(i2d)
+      deallocate(i1d)
 #else
-      call xerrab('mds_put_int_rz: ' //
+      call xerrab('mds_put_int_us: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
       return
-      end subroutine mds_put_int_rz
+      end subroutine mds_put_int_us
 
       subroutine mds_put_int_ns(node_name,ns,data)
       use b2mod_types
@@ -252,22 +252,22 @@
       return
       end subroutine mds_put_double_ns
 
-      subroutine mds_put_double_rz(node_name,units,nx,ny,data,dirsuffix)
+      subroutine mds_put_double_us(node_name,units,n,data,dirsuffix)
       use b2mod_types
       use b2mod_mdsplus
       implicit none
       character*(*) :: node_name, units, dirsuffix
-      integer :: nx, ny
-      real (kind=R8) :: data(nx,ny)
+      integer :: n
+      real (kind=R8) :: data(n)
 
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
       character :: tdi*(172)
-      real(kind=R8), allocatable :: d2d(:,:)
+      real(kind=R8), allocatable :: d1d(:)
 
-      allocate(d2d(nx,ny))
-      d2d=data
+      allocate(d1d(n))
+      d1d=data
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
      2 '"),,\TOP.SNAPSHOT.GRID:CR' // trim(dirsuffix) //
@@ -275,42 +275,42 @@
      4 ')'
 
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
-      status=mdsput2_d2d(
+      status=mdsput2_d1d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx,ny,0),d2d,0)
+     * descr2_i1(idtype_double,n,0),d1d,0)
 #else
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx,ny,0),d2d,0)
+     * descr2(idtype_double,n,0),d1d,0)
 #endif
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
-      deallocate(d2d)
+      deallocate(d1d)
 #else
-      call xerrab('mds_put_double_rz: ' //
+      call xerrab('mds_put_double_us: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
       return
-      end subroutine mds_put_double_rz
+      end subroutine mds_put_double_us
 
-      subroutine mds_put_double_rzns(node_name,units,nx,ny,ns,
+      subroutine mds_put_double_usns(node_name,units,n,ns,
      1 data,nsindex,dirsuffix)
       use b2mod_types
       use b2mod_mdsplus
       implicit none
       character*(*) :: node_name, units, nsindex, dirsuffix
-      integer :: nx, ny, ns
-      real (kind=R8) :: data(nx,ny,ns)
+      integer :: n, ns
+      real (kind=R8) :: data(n,ns)
 
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
       character :: tdi*(172)
-      real (kind=R8), allocatable :: d3d(:,:,:)
+      real (kind=R8), allocatable :: d2d(:,:)
 
-      allocate(d3d(nx,ny,ns))
-      d3d=data
+      allocate(d2d(n,ns))
+      d2d=data
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
      2 '"),,\TOP.SNAPSHOT.GRID:CR' // trim(dirsuffix) //
@@ -321,40 +321,40 @@
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
-      status=mdsput2_d3d(
+      status=mdsput2_d2d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2_i3(idtype_double,nx,ny,ns,0),d3d,0)
+     * descr2_i2(idtype_double,n,ns,0),d2d,0)
 #else
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx,ny,ns,0),d3d,0)
+     * descr2(idtype_double,n,ns,0),d2d,0)
 #endif
       call mds_err_msg(status)
-      deallocate(d3d)
+      deallocate(d2d)
 #else
-      call xerrab('mds_put_double_rzns: ' //
+      call xerrab('mds_put_double_usns: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
       return
-      end subroutine mds_put_double_rzns
+      end subroutine mds_put_double_usns
 
-      subroutine mds_put_double_rzdns(node_name,units,nx,ny,nd,ns,
+      subroutine mds_put_double_usdns(node_name,units,n,nd,ns,
      1 data,dirindex,nsindex,dirsuffix)
       use b2mod_types
       use b2mod_mdsplus
       implicit none
       character*(*) :: node_name, units, dirindex, nsindex, dirsuffix
-      integer :: nx, ny, nd, ns
-      real (kind=R8) :: data(nx,ny,nd,ns)
+      integer :: n, nd, ns
+      real (kind=R8) :: data(n,nd,ns)
 
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
       character :: tdi*(172)
-      real (kind=R8), allocatable :: d4d(:,:,:,:)
+      real (kind=R8), allocatable :: d3d(:,:,:)
 
-      allocate(d4d(nx,ny,nd,ns))
-      d4d=data
+      allocate(d3d(n,nd,ns))
+      d3d=data
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
      2 '"),,\TOP.SNAPSHOT.GRID:CR' // trim(dirsuffix) //
@@ -367,22 +367,22 @@
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
-      status=mdsput2_d4d(
+      status=mdsput2_d3d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2_i4(idtype_double,nx,ny,nd,ns,0),d4d,0)
+     * descr2_i3(idtype_double,n,nd,ns,0),d3d,0)
 #else
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx,ny,nd,ns,0),d4d,0)
+     * descr2(idtype_double,n,nd,ns,0),d3d,0)
 #endif
       call mds_err_msg(status)
-      deallocate(d4d)
+      deallocate(d3d)
 #else
-      call xerrab('mds_put_double_rzdns: ' //
+      call xerrab('mds_put_double_usdns: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
       return
-      end subroutine mds_put_double_rzdns
+      end subroutine mds_put_double_usdns
 
       subroutine mds_err_msg(status)
       use b2mod_mdsplus

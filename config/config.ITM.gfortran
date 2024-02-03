@@ -41,17 +41,17 @@ GGD_VERSION ?= `pkg-config ggd --modversion`
 else
 GGD_VERSION ?= '0.0.0'
 endif
-LD_UAL += -lstdc++
+LD_AL += -lstdc++
 else
-UAL_MAJOR_VERSION = 0
-UAL_MINOR_VERSION = 0
-UAL_MICRO_VERSION = 0
+AL_MAJOR_VERSION = 0
+AL_MINOR_VERSION = 0
+AL_MICRO_VERSION = 0
 IMAS_MAJOR_VERSION = 0
 IMAS_MINOR_VERSION = 0
 IMAS_MICRO_VERSION = 0
 ifdef ITM_ENVIRONMENT_LOADED
 INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_gfortran_6.1 -I${ITM_GGD_HOME}/include/amd64_gfortran_6.1 -I${UAL_INCLUDE}/amd64_gfortran -I${ITM_ITMCONSTANTS_DIR}/include/amd64_gfortran_6.1 -I${ITM_ITMASSERT_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_gfortran_6.1
-IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_gfortran
+IMASLIBS = ${LD_AL} -lUALFORTRANInterface_gfortran
 endif
 endif
 

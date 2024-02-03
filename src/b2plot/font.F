@@ -7,4 +7,4 @@ c
       CALL PCSETI('CC(0)',1)    ! =====>  in black
 #endif
       return
-      end
+      end subroutine font

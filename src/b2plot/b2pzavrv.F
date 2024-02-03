@@ -18,6 +18,9 @@ c----------------------------------------------------------------------
       use b2us_map
       use b2us_geo
       use b2us_plasma
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer, intent(in) :: lun
       type(mapping), intent(in) :: mpg

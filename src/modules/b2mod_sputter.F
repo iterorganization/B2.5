@@ -5,6 +5,9 @@
       use b2mod_layer
       use b2mod_ad
      & , only : nsdmax
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
       integer, save :: sput_dst, sput_dst2, sput_dst3
       integer, save :: target_intcode(3+6), target_index(92)
@@ -34,7 +37,6 @@
       real (kind=R8), allocatable, save ::
      *  sputter_yield(:,:,:,:), sputter_yield2(:,:,:,:)
 #else
-#     include "DIMENSIONS.F"
       integer nxmax, nymax
       parameter (NXMAX=DEF_NXD,NYMAX=DEF_NYD)
       real (kind=R8), save ::

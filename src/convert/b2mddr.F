@@ -503,15 +503,13 @@ cdpc        endif
       else
         write(*,*) 'Skipped calling b2cdf2mds because timedep=F'
       endif
-#ifdef WG_TODO
       if(snapshot) then
         write(*,*) 'Calling b2mds'
-        call b2mds(nx,ny,ns,in_jxi,in_jxa,in_jsep,switch%BoRiS)
+        call b2mds(mpg,geo,state,state_ext,ns,switch)
         write(*,*) 'Returned from b2mds'
       else
         write(*,*) 'Skipped calling b2mds because snapshot=F'
       endif
-#endif
       if(tallies) then
         filename='b2tallies.nc'
         call find_file(filename,file_exists)

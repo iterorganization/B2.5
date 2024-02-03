@@ -1,5 +1,6 @@
       subroutine b2pwrldw
       use b2mod_b2plot_wall_loading
+      use b2mod_dimensions
 c
 c  version : 06.09.97 21:35
 c
