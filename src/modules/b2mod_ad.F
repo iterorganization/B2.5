@@ -1,6 +1,6 @@
       module b2mod_ad
       use b2mod_types
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
       implicit none
 !     This module is intended to collect variables within B2.5 which need to be 'visible'
 !     to calling routines as required by adjoint AD with Tapenade

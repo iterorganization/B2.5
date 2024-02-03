@@ -7,19 +7,13 @@
       use carre_constants
       use b2mod_ad
      & , only : nsdmax
+      use b2mod_dimensions
       implicit none
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2
 c*  ncbs          : number of these boundary segments
 cank }
-#     include "DIMENSIONS.F"
-#ifndef DEF_NBC
-#define DEF_NBC 20
-#endif
-#ifndef DEF_NISO
-#define DEF_NISO 10
-#endif
       integer NBCD, NNISOD
       parameter (NBCD=DEF_NBC,NNISOD=DEF_NISO)
 #ifdef ALLOCATE_AND_NAMELIST
@@ -145,13 +139,11 @@ csw 18feb2014 added for correct implementation of boundary conditions
       logical catch_up
       external xertst
 
-!WG_TODO need to clean up here;
-!WG_TODO for now: call alloc_b2mod_boundary with dummy nx=1,ny=1;
-      call alloc_b2mod_boundary(1,1,ns,nbcd,nnisod)
+      call alloc_b2mod_boundary(DEF_NXD,DEF_NYD,ns,nbcd,nnisod)
       call read_b2mod_boundary_namelist(ns, mpg, .true.)
-      call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+      call xertst (nbc.le.nbcd, 'increase DEF_NBC in b2mod_dimensions')
       call xertst (nniso.le.nnisod,
-     1     'increase DEF_NISO in DIMENSIONS.F')
+     1     'increase DEF_NISO in b2mod_dimensions')
       call write_b2mod_boundary_namelist
       if(boundary_time_mod.gt.0.0_R8) then
          bc_elm_count=int(tim/boundary_time_mod)
@@ -170,9 +162,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
         write(*,*) 'b2stbc: catching up ...'
         call read_b2mod_boundary_namelist(ns, mpg, .true.)
         call xertst (nbc.le.nbcd,
-     1           'increase DEF_NBC in DIMENSIONS.F')
+     1           'increase DEF_NBC in b2mod_dimensions')
         call xertst (nniso.le.nnisod,
-     1           'increase DEF_NISO in DIMENSIONS.F')
+     1           'increase DEF_NISO in b2mod_dimensions')
         call write_b2mod_boundary_namelist
         if(boundary_time_mod.gt.0.0_R8) then
           catch_up=boundary_time_switch.gt.0.0_R8.and.
@@ -268,9 +260,10 @@ csw 18feb2014 added for correct implementation of boundary conditions
         if(boundary_time_mod.gt.0.0_R8)
      >   bc_elm_count=int(tim/boundary_time_mod)
         call read_b2mod_boundary_namelist(ns, mpg, .true.)
-        call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+        call xertst (nbc.le.nbcd,
+     .                         'increase DEF_NBC in b2mod_dimensions')
         call xertst (nniso.le.nnisod,
-     .                           'increase DEF_NISO in DIMENSIONS.F')
+     .                         'increase DEF_NISO in b2mod_dimensions')
         call write_b2mod_boundary_namelist
       endif
       return

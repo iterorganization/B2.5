@@ -3,27 +3,32 @@ c
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_values
+      use b2us_data
       implicit none
-      integer is
-#ifdef WG_TODO
-      integer ix,iy
-#endif
+      integer iCv,iC1,is,ix,iy
 c
 c apply operator
 c
+      if(mpg%isClassicalGrid.eq.0) return
       do is=0,ndim(2,iwrk)-1
-#ifdef WG_TODO
-        do iy=-1,ny
-          do ix=0,nx
-            work(-1,iy,is,iwrk)=work(-1,iy,is,iwrk)+work(ix,iy,is,iwrk)
+        do iy=-1,mpg%ny
+          iC1=0
+          do ix=-1,mpg%nx
+            iCv=mpg%imapCv(ix,iy)
+            if (iCv.eq.0) cycle
+            if (iC1.eq.0) then
+              iC1 = iCv
+            else
+              work(iC1,is,iwrk)=work(iC1,is,iwrk)+work(iCv,is,iwrk)
+            endif
+          enddo
+          if (iC1.eq.0) cycle
+          do ix=-1,mpg%nx
+            iCv=mpg%imapCv(ix,iy)
+            if (iCv.eq.0) cycle
+            work(iCv,is,iwrk)=work(iC1,is,iwrk)
           enddo
         enddo
-        do iy=-1,ny
-          do ix=0,nx
-            work(ix,iy,is,iwrk)=work(-1,iy,is,iwrk)
-          enddo
-        enddo
-#endif
       enddo
       values(9)=minval(work(:,0:ndim(2,iwrk)-1,iwrk))
       values(10)=maxval(work(:,0:ndim(2,iwrk)-1,iwrk))
@@ -100,97 +105,57 @@ c
       subroutine intx()
       use b2mod_types
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_b2plot_values
+      use b2us_data
       implicit none
-#ifdef WG_TODO
-      integer ix,ixl,ixr,iy,is
-      intrinsic min, max
+      integer i,iCv,iCp,iFt,is
 c
 c apply operator
 c
       do is=0,ndim(2,iwrk)-1
-        do iy=-1,ny
-          if(nnreg(0).le.5 .or. iy.gt.jsep) then
-            do ix = 0, nx
-              ixl=leftix(ix,iy)
-              ixr=rightix(ix,iy)
-              if(ixl.eq.ix-1)
-     1         work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1                            work(ixl,iy,is,iwrk)
-              if(ixr.lt.ix) exit
-            enddo
-            ixl=ixr
-            do ix = nx-1, ixl, -1
-              ixr=rightix(ix,iy)
-              if(ixr.eq.0 .or. ixr.eq.-1) exit
-              if(ixr.eq.ix+1)
-     1         work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1                            work(ixr,iy,is,iwrk)
-              if(leftix(ix,iy).lt.ix-1) exit
-            enddo
-          else
-            ix=0
-            do while (leftix(ix,iy).eq.ix-1 .and. ix.lt.nx)
-              work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1         work(leftix(ix,iy),leftiy(ix,iy),is,iwrk)
-              ix=ix+1
-            enddo
-            ix=ix+1     
-            do while (leftix(ix,iy).eq.ix-1 .and. ix.lt.nx)
-              work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1         work(leftix(ix,iy),leftiy(ix,iy),is,iwrk)
-              ix=ix+1
-            enddo
-            ixr=ix
-            do while (rightix(ixr,iy).ne.nx+1)
-              ixr=ixr+1
-            enddo
-            ix=ixr-1
-            do while (rightix(ix,iy).eq.ix+1 .and. ix.gt.-1)
-              work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1         work(rightix(ix,iy),rightiy(ix,iy),is,iwrk)
-              ix=ix-1
-            enddo
-            ixl=ixr
-            do while (leftix(ixl,iy).ne.-2)
-              ixl=ixl+1
-            enddo
-            ix=ixl+1   
-            do while (leftix(ix,iy).eq.ix-1 .and. ix.lt.nx)
-              work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1         work(leftix(ix,iy),leftiy(ix,iy),is,iwrk)
-              ix=ix+1
-            enddo
-            ix=ix+1     
-            do while (leftix(ix,iy).eq.ix-1 .and. ix.lt.nx)
-              work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1         work(leftix(ix,iy),leftiy(ix,iy),is,iwrk)
-              ix=ix+1
-            enddo
-            ix=nx
-            do while (rightix(ix,iy).eq.ix+1 .and. ix.gt.-1)
-              work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1         work(rightix(ix,iy),rightiy(ix,iy),is,iwrk)
-              ix=ix-1
-            enddo
-          endif
-        enddo
-      enddo
-      values(9)=work(-1,-1,0,iwrk)
-      values(10)=work(-1,-1,0,iwrk)
-      do is=0,ndim(2,iwrk)-1
-        do iy=-1,ny
-          do ix=-1,nx
-            values(9)=min(values(9),work(ix,iy,is,iwrk))
-            values(10)=max(values(10),work(ix,iy,is,iwrk))
+        do iFt=1,mpg%nFt
+          do i = 2, mpg%ftCvP(iFt,2)
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            iCp = mpg%ftCv(mpg%ftCvP(iFt,1)+i-2)
+            work(iCv,is,iwrk)=work(iCv,is,iwrk)+work(iCp,is,iwrk)
           enddo
         enddo
       enddo
-#endif
+      values(9)=minval(work(:,0:ndim(2,iwrk)-1,iwrk))
+      values(10)=maxval(work(:,0:ndim(2,iwrk)-1,iwrk))
 
       return
       end subroutine intx
+c
+      subroutine sumft()
+      use b2mod_types
+      use b2mod_b2plot
+      use b2mod_b2plot_values
+      use b2us_data
+      implicit none
+      integer i,iCv,iCp,iFt,is
+c
+c apply operator
+c
+      do is=0,ndim(2,iwrk)-1
+        do iFt=1,mpg%nFt
+          do i = 2, mpg%ftCvP(iFt,2)
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            iCp = mpg%ftCv(mpg%ftCvP(iFt,1)+i-2)
+            work(iCv,is,iwrk)=work(iCv,is,iwrk)+work(iCp,is,iwrk)
+          enddo
+          iCp = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1)
+          do i = 1, mpg%ftCvP(iFt,2)-1
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            work(iCv,is,iwrk)=work(iCp,is,iwrk)
+          enddo
+        enddo
+      enddo
+      values(9)=minval(work(:,0:ndim(2,iwrk)-1,iwrk))
+      values(10)=maxval(work(:,0:ndim(2,iwrk)-1,iwrk))
+
+      return
+      end subroutine sumft
 c
       subroutine intw()
       use b2mod_types

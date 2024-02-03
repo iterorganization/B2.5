@@ -64,7 +64,7 @@ c      write(*,*) src(1,1)*scale,eirene_stack(1,0,iewrk)
       real (kind=R8) ::
      *   src(1:nCv,0:nz-1), scale
       character*(*) texttmp(0:nz-1)
-      integer in, iCv, iz
+      integer iCv
 c      write(*,*) 'Copying Eirene array: ntrii, nCv, nz = ',ntrii,nCv,nz
       if(iewrk .eq. wklng) call dropeirenestackbottom()
       iewrk=iewrk+1

@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_ad
      & , only : nsdmax, cvregmax
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -27,7 +30,6 @@
      *   last_solve_9(:),
      *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
 #else
-#     include "DIMENSIONS.F"
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtee(0:CVREGMAX)

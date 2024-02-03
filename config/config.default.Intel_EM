@@ -16,7 +16,7 @@ endif
 
 # The version relying on Intel Fortran
 
-EQUIVS   = -Dsdot=ddot -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
+EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
 DEFINES += -DUSE_CDF_B2STIME -DNO_LONG_LINES # -DNO_CDF
 
 ifndef SOLPS_CPP

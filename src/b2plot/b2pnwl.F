@@ -14,12 +14,10 @@ c======================================================================
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
-      use eirmod_parmmod
-     .   , only : natm, nmol
       use eirmod_wneutrals
 #endif
+      use b2mod_dimensions
       implicit none
-#include <DIMENSIONS.F>
       integer iret
 c*** Local variables
 c
@@ -36,12 +34,15 @@ c*** and for the power flux.
       integer il,is,i,ii,ia,ib,idir,j,js,k,ic,ias,iss
       character*74 hlp_frm
       real (kind=R8) ::
-     *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
-     ,     wwj(natm+nmol),wwe(natm+nmol)
+     *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,wwy(4),
+     ,     wwj(DEF_NATM+DEF_NMOL),wwe(DEF_NATM+DEF_NMOL)
+      real (kind=R8) :: hlp_w(4),hlp_p(4),hlp_s(4)
+      real (kind=R8), allocatable :: hlp_a(:,:),hlp_e(:,:),
+     ,                               hlp_m(:,:),hlp_f(:,:)
       real (kind=R8) :: width
       data width /1.0_R8/
       save width
-      character*8 text_an(natm),text_mn(nmol)
+      character*8 text_an(DEF_NATM),text_mn(DEF_NMOL)
       logical streql
       external streql, ipgetr
 c----------------------------------------------------------------------
@@ -56,53 +57,7 @@ c*** Read the data from dg files
       iret=0
       call b2pinp(iret)
       if (iret.eq.1) goto 999
-c
-c*** Convert the input wall coordinates into double precision
-c*** and scale them to meters.
-c*** We have now two sets of the wall segments, one saved by Eirene
-c*** and (another) one read from dg file. Only the segments which are
-c*** identical in both sets are to be used for plotting, the rest
-c*** will be filled with the value representing zero in the list-
-c*** sorting routine b2pwsrt. The reference distance along the wall
-c*** will however be calculated from the geometry read from dg file.
-c*** This should allow one to have the same reference frame for the
-c*** radiation and neutral wall load.
-c
-      do i=1,lppp
-        pp1(1,i)=0.001e0_R8*ppp1(1,i)
-        pp1(2,i)=0.001e0_R8*ppp1(2,i)
-        pp2(1,i)=0.001e0_R8*ppp2(1,i)
-        pp2(2,i)=0.001e0_R8*ppp2(2,i)
-      end do
-cc%%%
-c      print *,'After b2pinp',nwldprt
-c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
-c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
-cc%%%
-c*** Then sort the target lists
-c*** The shadowing structure must be closed, therefore it starts from
-c*** an arbitrary point.
-
-      lwldstrt(1)=iabs(lwldlis(1,1))
-      call b2pwsrt(iret)
-      if (iret.ne.0) goto 999
-cc<<<
-c      print *,'After b2pwsrt',nwldprt
-c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
-c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,i5/(5x,15i5))','leirlis :',il,
-c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
-c      end do
-cc>>>
+      call b2pwlprp
 c*** ... and produce the output file
       do i=1,natmi
         text_an(i)=textan(i-1)(2:8)
@@ -250,7 +205,6 @@ c*** Calculate the net and gross erosion
                   ias=eirdiag_nds_ind(iss)+(nytg-js+1)
                 end if
               end do
-              write(*,*) 'j,js,ias : ' , j,js,ias
               wwk=0.0_R8
               wwp=0.0_R8
               k=0
@@ -344,36 +298,91 @@ c        write(lun,'(1p,e16.3)') a
 c        close(lun)
 c      end if
       write(*,*) '*** Target loading with neutrals ***'
-      write(*,700) 'Total power released',
-     ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0),
-     ,              wldnek(nlim+ltns(2),0)+wldnep(nlim+ltns(2),0)
-      write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
-     ,                                      wldnep(nlim+ltns(2),0)
+      allocate(hlp_a(ntrgsx,natmi))
+      allocate(hlp_e(ntrgsx,natmi))
+      allocate(hlp_m(ntrgsx,nmoli))
+      allocate(hlp_f(ntrgsx,nmoli))
+      hlp_a=0.0_R8
+      hlp_m=0.0_R8
+      hlp_e=0.0_R8
+      hlp_f=0.0_R8
+      hlp_w=0.0_R8
+      hlp_p=0.0_R8
+      do k=1,ntns
+        if (ktns(k).eq.0) cycle
+        if (itrg(ktns(k)).eq.0) cycle
+        hlp_w(itrg(ktns(k))) = hlp_w(itrg(ktns(k)))+
+     .                   wldnek(nlim+ltns(k),0)+wldnep(nlim+ltns(k),0)
+        hlp_p(itrg(ktns(k))) = hlp_p(itrg(ktns(k)))+
+     .                   wldnep(nlim+ltns(k),0)
+        do i=1,natmi
+          hlp_a(itrg(ktns(k)),i) = hlp_a(itrg(ktns(k)),i)+
+     .                   wldna(nlim+ltns(k),i,0)
+          hlp_e(itrg(ktns(k)),i) = hlp_e(itrg(ktns(k)),i)+
+     .                   ewlda(nlim+ltns(k),i,0)*wldna(nlim+ltns(k),i,0)
+        end do
+        do i=1,nmoli
+          hlp_m(itrg(ktns(k)),i) = hlp_m(itrg(ktns(k)),i)+
+     .                   wldnm(nlim+ltns(k),i,0)
+          hlp_f(itrg(ktns(k)),i) = hlp_f(itrg(ktns(k)),i)+
+     .                   ewldm(nlim+ltns(k),i,0)*wldnm(nlim+ltns(k),i,0)
+        end do
+      end do
+      do k=1,ntrgts
+        if (itrg(k).eq.0) cycle
+        do i=1,natmi
+          if (hlp_a(itrg(k),i).ne.0.0_R8)
+     >     hlp_e(itrg(k),i) = hlp_e(itrg(k),i)/hlp_a(itrg(k),i)
+        end do
+        do i=1,nmoli
+          if (hlp_m(itrg(k),i).ne.0.0_R8)
+     >     hlp_f(itrg(k),i) = hlp_f(itrg(k),i)/hlp_m(itrg(k),i)
+        end do
+      end do
+      write(*,700) 'Total power released',(hlp_w(itrg(i)),i=1,ntrgts)
+      write(*,700) 'incl. potential energy',
+     ,                                    (hlp_p(itrg(i)),i=1,ntrgts)
       do i=1,natmi
         write(*,710) text_an(i),' atom flux',
-     ,               wldna(nlim+ltns(1),i,0),wldna(nlim+ltns(2),i,0)
+     ,                                    (hlp_a(itrg(k),i),k=1,ntrgts)
         write(*,710) text_an(i),' average energy',
-     ,               ewlda(nlim+ltns(1),i,0),ewlda(nlim+ltns(2),i,0)
+     ,                                    (hlp_e(itrg(k),i),k=1,ntrgts)
+      end do
+      do i=1,nmoli
+        write(*,710) text_mn(i),' molecule flux',
+     ,                                    (hlp_m(itrg(k),i),k=1,ntrgts)
+        write(*,710) text_mn(i),' average energy',
+     ,                                    (hlp_f(itrg(k),i),k=1,ntrgts)
       end do
       if(ic .gt. 0) then
-        wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
-     .      -wldna(nlim+ltns(1),ic,0)
-        wwyg=wldra(nlim+ltns(2),ic,0)+wldpa(nlim+ltns(2),ic,0)
-     .      -wldna(nlim+ltns(2),ic,0)
-        do i=1,nmoli
-          if (mlcmp(ic,i).gt.0) then
-            wwyn=wwyn+mlcmp(ic,i)*(wldrm(nlim+ltns(1),i,0)
-     .                            +wldpm(nlim+ltns(1),i,0)
-     .                            -wldnm(nlim+ltns(1),i,0))
-            wwyg=wwyg+mlcmp(ic,i)*(wldrm(nlim+ltns(2),i,0)
-     .                            +wldpm(nlim+ltns(2),i,0)
-     .                            -wldnm(nlim+ltns(2),i,0))
-          end if
+        wwy=0.0_R8
+        hlp_s=0.0_R8
+        do k=1,ntns
+          if (ktns(k).eq.0) cycle
+          if (itrg(ktns(k)).eq.0) cycle
+          wwy(itrg(ktns(k)))=wwy(itrg(ktns(k)))+
+     .                 wldra(nlim+ltns(k),ic,0)+wldpa(nlim+ltns(k),ic,0)
+     .                -wldna(nlim+ltns(k),ic,0)
+          do i=1,nmoli
+            if (mlcmp(ic,i).gt.0) then
+              wwy(itrg(ktns(k)))=wwy(itrg(ktns(k)))+mlcmp(ic,i)*
+     .                            (wldrm(nlim+ltns(k),i,0)
+     .                            +wldpm(nlim+ltns(k),i,0)
+     .                            -wldnm(nlim+ltns(k),i,0))
+            end if
+          end do
+          hlp_s(itrg(ktns(k))) = hlp_s(itrg(ktns(k)))+
+     .                          wldspt(nlim+ltns(k),0)
         end do
-        write(*,700) 'Net   C erosion',wwyn,wwyg
-        write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
-     .                                 wldspt(nlim+ltns(2),0)
+        write(*,700) 'Net   C erosion',(wwy(itrg(i)),i=1,ntrgts)
+        write(*,700) 'Gross C erosion',(hlp_s(itrg(i)),i=1,ntrgts)
       end if
+      deallocate(hlp_a,hlp_e,hlp_m,hlp_f)
+c
+c*** Calculate the load
+c
+      call b2pwrdld
+
   700 format(1x,a22,':',1p,4e14.3)
   710 format(1x,a2,a20,':',1p,4e14.3)
       return
@@ -406,9 +415,9 @@ c
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
       integer iret
-#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #endif

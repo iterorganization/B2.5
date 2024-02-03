@@ -8,8 +8,6 @@
       use b2mod_sputter
       use b2mod_diag
       use b2mod_b2plot
-!      use b2mod_external
-!      use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
@@ -47,8 +45,8 @@
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -80,7 +78,7 @@
 #endif
 #endif
 #endif
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns0, idum(0:9), io, is
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io, is
       integer iflag
 #if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
@@ -317,7 +315,7 @@
       CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
-      call alloc_b2mod_eirbra(nCv,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nCv,ns,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
 #ifdef WG_TODO
@@ -353,7 +351,7 @@
 #endif
         if (file_exists) then
           open(unit=44,file=filename)
-          call ngread(mpg,switch,ismain,iflag)
+          call ngread(mpg,geo,ns,switch,ismain,iflag)
           nnatmi = natmi
           nnmoli = nmoli
         else
@@ -393,8 +391,11 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     .                       tim, .false.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     .                     , tim, .false.
+#endif
+     .                      )
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -406,8 +407,11 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     .                       tim, .true.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     .                     , tim, .true.
+#endif
+     .                      )
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -419,7 +423,10 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_wall_cdf(tim)
+          call b2co_wall_cdf
+#ifndef NO_CDF
+     .     (tim)
+#endif
           write(*,*) 'Returned from b2co_wall_cdf'
         else
           write(*,*) 'Skipped calling b2co_wall_cdf because '//
@@ -432,7 +439,10 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_tally_cdf(ns, mpg, tim)
+          call b2co_tally_cdf
+#ifndef NO_CDF
+     .     (ns, mpg, tim)
+#endif
           write(*,*) 'Returned from b2co_tally_cdf'
         else
           write(*,*) 'Skipped calling b2co_tally_cdf because '//
@@ -445,7 +455,10 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_movies_cdf(nCv, ns, nnatmi, nnmoli, tim)
+          call b2co_movies_cdf
+#ifndef NO_CDF
+     .     (nCv, ns, nnatmi, nnmoli, tim)
+#endif
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//

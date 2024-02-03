@@ -1,8 +1,8 @@
       subroutine b2pinp(iret)
       use b2mod_types
+      use b2mod_dimensions
       implicit none
       integer iret
-#include <DIMENSIONS.F>
 c
 c  version : 11.11.97 21:29
 c
@@ -57,6 +57,7 @@ c======================================================================
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
+      use b2mod_dimensions
       implicit none
 c
 c*** Reads the data from dg output file

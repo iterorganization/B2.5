@@ -1,19 +1,18 @@
 c
       subroutine spect
       use b2mod_types
-      use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_elements
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_b2plot
+      use b2us_data
       implicit none
       real (kind=R8) ::
-     * dtev((nx+2)*(ny+2)),
-     1 ddens((nx+2)*(ny+2)),
-     2 drcofi((nx+2)*(ny+2)),dspec(-1:nx,-1:ny,0:ns-1)
+     * dtev(mpg%nCv),ddens(mpg%nCv),drcofi(mpg%nCv),
+     * dspec(mpg%nCv,0:state%ns-1)
       integer ifail,iz0,iz1,iclass,itmax,ievcut,
      1 itdimd,itmaxd,idmaxd,izmaxd,
-     2 ix,iy,is
+     2 iCv,is
       parameter(itdimd=40)
       real (kind=R8) ::
      *   dtevd(itdimd),ddensd(itdimd),zdata(itdimd),
@@ -25,18 +24,15 @@ c
       character year*2, TITLF*80
       data    year   /'03'/
 
-      itmax=0
-      do iy=-1,ny
-        do ix=-1,nx
-          itmax=itmax+1
-          dtev(itmax)=log10(te(ix,iy)/ev)
-          ddens(itmax)=log10(ne(ix,iy))-6.0_R8
-        enddo
+      do iCv=1,mpg%nCv
+        dtev(iCv)=log10(state%pl%te(iCv)/ev)
+        ddens(iCv)=log10(state%dv%ne(iCv))-6.0_R8
       enddo
+      itmax=mpg%nCv
 
       ifail=0
       dspec=0.0_R8
-      do is=0,ns-1
+      do is=0,state%ns-1
         iz0=nint(zn(is))
         iz1=partition_number(is)+1  ! was nint(za(is))+1
         if (iz1.eq.iz0+1) cycle     ! avoid fully stripped ions
@@ -61,30 +57,24 @@ C
      >     '  ifail = 1: no datafile for dhdata available',/,
      >     '        = 2: dimension itdimd too small',/,
      >     '  for species, nuclear charge, partition =',3i3,/)
-          do iy=-1,ny
-            do ix=-1,nx
-              dspec(ix,iy,is)=0.0_R8
-            enddo
+          do iCv=1,mpg%nCv
+            dspec(iCv,is)=0.0_R8
           enddo
         else
-          itmax=0
           zmin=drcofi(1)
           zmax=drcofi(1)
-          do iy=-1,ny
-            do ix=-1,nx
-              itmax=itmax+1
-              zmin=min(zmin,drcofi(itmax))
-              zmax=max(zmax,drcofi(itmax))
-              dspec(ix,iy,is)=ne(ix,iy)*na(ix,iy,is)*
+          do iCv=1,mpg%nCv
+            zmin=min(zmin,drcofi(iCv))
+            zmax=max(zmax,drcofi(iCv))
+            dspec(iCv,is)=state%dv%ne(iCv)*state%pl%na(iCv,is)*
      1         1.0e-6_R8*10.0_R8**drcofi(itmax)/4.0_R8/pi
-            enddo
           enddo
           write(*,*) 'is,zmin,zmax ',is,zmin,zmax
           if (iz1.eq.iz0) write(*,'()')
         endif
 
       enddo
-      call copy(dspec,1.0_R8,ns,textpl)
+      call copy(dspec,1.0_R8,state%ns,textpl)
       call customise_label('Diagnostic line emission from ADAS'//
      1 ' (photons.m^{-3}.sr^{-1}.s^{-1})',graphlabel(iwrk))
       return
@@ -3052,22 +3042,22 @@ C-----------------------------------------------------------------------
 
       subroutine CalculateEmissivity(is,iwl,idwl)
       use b2mod_types
-      use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_elements
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_b2plot
+      use b2us_data
       implicit none
 
       real (kind=R8) ::
      *   wl,dwl
-      integer ix,iy,is
+      integer iCv,is
       integer ic,nc,nz,iwl,idwl
       integer, allocatable, save :: iae(:),iar(:),iac(:)
       real (kind=R8) ::
      *   lNe(1),lNi(1),lNi1(1),lNH(1),lTe(1),e(1),p(1)
       real (kind=R8) ::
-     *   ea(-1:nx,-1:ny)
+     *   ea(1:mpg%nCv)
       integer err
       integer len_of_digits
       character extension*3,filename*256,MIE*2,MIR*2,MIC*2,stmp*256
@@ -3094,32 +3084,30 @@ c     calculating the emissivity
       call InitADAS(ic,nc,
      &              extension,filename,mie,mir,mic,err)
       if (err .eq. 0) then
-         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
-         if (err .eq. 1) then
+        call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+        if (err .eq. 1) then
 c  try again in the case where local files were used and
 c  a standard database file may be present
-           call InitADAS(ic,nc,
-     &                   extension,filename,mie,mir,mic,err)
-           call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
-         end if
-         do ix=-1,nx
-            do iy=-1,ny
-               lNe(1)=NE(ix,iy)/1.0e6_R8
-               lNi(1)=NA(ix,iy,is)/1.0e6_R8
-               lNi1(1)=NA(ix,iy,is+1)/1.0e6_R8
-               lNH(1)=NH(ix,iy)/1.0e6_R8
-               lTe(1)=TE(ix,iy)/eV
-               call GetEmissivity(nz,iae,iar,iac,
-     &          lNe(1),lNi(1),lNi1(1),lNH(1),lTe(1),1,e(1),p(1))
-               ea(ix,iy)=e(1)/(4.0_R8*PI)*1.0e6_R8
-            enddo
-         enddo
+          call InitADAS(ic,nc,
+     &                  extension,filename,mie,mir,mic,err)
+          call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+        end if
+        do iCv=1,mpg%nCv
+          lNe(1)=state%dv%ne(iCv)/1.0e6_R8
+          lNi(1)=state%pl%na(iCv,is)/1.0e6_R8
+          lNi1(1)=state%pl%na(iCv,is+1)/1.0e6_R8
+          lNH(1)=NH(iCv)/1.0e6_R8
+          lTe(1)=state%pl%te(iCv)/eV
+          call GetEmissivity(nz,iae,iar,iac,
+     &     lNe(1),lNi(1),lNi1(1),lNH(1),lTe(1),1,e(1),p(1))
+          ea(iCv)=e(1)/(4.0_R8*PI)*1.0e6_R8
+        enddo
       endif
       call copy(ea,1.0_R8,1,textbl)
       write(hlp_frm,'(a,i2,a,i2,a)')
      & '(a,i',len_of_digits(iwl),',a,i',len_of_digits(idwl),',a)'
       write(textwvl,hlp_frm) '(',iwl,'\mS\d',idwl,' A)'
-      if(is.lt.ns) then
+      if(is.lt.state%ns) then
         stmp='Emissivity '//trim(textwvl)//
      &       ' in photons/(m^{3} sr s)'//textpl(is)
       else
