@@ -11,9 +11,8 @@ C
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-
+      use b2mod_dimensions
       IMPLICIT NONE
-#     include <DIMENSIONS.F>
 
       integer nx, ny, ns, nxtl, nxtr
       real (kind=R8) :: BoRiS

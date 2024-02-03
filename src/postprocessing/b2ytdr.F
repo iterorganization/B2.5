@@ -7,7 +7,7 @@ c 2002-09-11: logic revised
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ytdr (ninp, nout, nx1, ny1)
+      subroutine b2ytdr (ninp, nout, ns, nx, ny, nx1, ny1)
 #ifdef NO_OPT
 #ifdef CRAY
 !DIR$ OPTIMIZE (-O0 -hfp0)
@@ -22,7 +22,7 @@ c 2002-09-11: logic revised
       use b2mod_wall
       use b2mod_wall2
       use b2mod_plasma
-     , ,zt0 => zt
+     , , zt0 => zt
       use b2mod_sources
       use b2mod_version
       use b2mod_sputter
@@ -44,43 +44,41 @@ c 2002-09-11: logic revised
       use b2mod_b2cmfs
       use b2mod_ppout
       use b2mod_b2plot
-     , ,only: nx, ny, ns, wklng, ntrfrm,
-     ,        ixref, iyref,
-     ,        jsep, jxa, jxi, nxtl, nxtr,
-     ,        natmi, nmoli, nioni,
-     ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     , , only : wklng,
+     ,          natmi, nmoli, nioni,
+     ,          alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
       use b2mod_par_opt
      , , x0_opt => x0
       use b2mod_work
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     *   , ncv_eir => ncv
+     * , ncv_eir => ncv
       use eirmod_braeir
       use eirmod_cinit
      , , tio => ti0, til => ti1, teo => te0, tel => te1
       use eirmod_ctrig
       use eirmod_comusr
-     , ,only: NMASSA, NCHARA,
-     ,        eirene_alloc_comusr, eirene_dealloc_comusr
+     , , only : NMASSA, NCHARA,
+     ,          eirene_alloc_comusr, eirene_dealloc_comusr
       use eirmod_comprt
      , , istr => istra
       use eirmod_coutau
-     , ,only: eirene_alloc_coutau, eirene_dealloc_coutau
+     , , only : eirene_alloc_coutau, eirene_dealloc_coutau
       use eirmod_ccoupl
       use eirmod_cestim
       use eirmod_ctrcei
       use eirmod_eirbra
       use eirmod_infcop
       use eirmod_wneutrals
-     , ,only: eirene_wneutrals_init, eirene_wneutrals_dealloc
+     , , only : eirene_wneutrals_init, eirene_wneutrals_dealloc
       use eirmod_extrab25
-     , ,only: lkindp, lkindm, lkindi, texta,
-     ,        eirene_extrab25_eirpbls_init
+     , , only : lkindp, lkindm, lkindi, texta,
+     ,          eirene_extrab25_eirpbls_init
       use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
-     , ,only : nlimi, nstsi
+     , , only : nlimi, nstsi, ntrfrm
 #else
       use b2mod_braeir
 #endif
@@ -89,11 +87,11 @@ c 2002-09-11: logic revised
       use b2us_map
       use b2us_geo
       use b2mod_switches
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:8), nout(0:6), nx1, ny1
+      integer ninp(0:8), nout(0:6), ns, nx, ny, nx1, ny1
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -174,7 +172,7 @@ c 2002-09-11: logic revised
       integer nbc1, ndat, nds(ns-1)
       integer nCv, nFc, nVx
       integer boundary_namelist, neutrals_namelist, use_eirene
-      integer numerics_namelist
+      integer numerics_namelist, style_b2mndt
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
@@ -182,12 +180,13 @@ c 2002-09-11: logic revised
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
-      integer ixref1, iyref1
+      integer ixref, iyref, ixref1, iyref1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
       integer mw_jxa1, mw_jsep1, iyped1
+      integer jsep, jxi, jxa, nxtl, nxtr
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
       integer indx, indy, indx1, indy1
       integer coriolis, lhalpha
@@ -233,9 +232,10 @@ c 2002-09-11: logic revised
      . e_na(:,:,:), e_te(:,:), e_ti(:,:),
      . e_ua(:,:,:), e_po(:,:),
      . sna_mean(:,:,:), sne_mean(:,:),
-     . smo_mean(:,:,:), she_mean(:,:),
-     . shi_mean(:,:), sch_mean(:,:),
-     . e_sna(:,:,:), e_sne(:,:), e_smo(:,:,:),
+     . smo_mean(:,:,:),
+     . she_mean(:,:), shi_mean(:,:), sch_mean(:,:),
+     . e_sna(:,:,:), e_sne(:,:),
+     . e_smo(:,:,:),
      . e_she(:,:), e_shi(:,:), e_sch(:,:)
       real (kind=R8), allocatable ::
      . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
@@ -243,9 +243,10 @@ c 2002-09-11: logic revised
      . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
      . e_ua1(:,:,:), e_po1(:,:),
      . sna1_mean(:,:,:), sne1_mean(:,:),
-     . smo1_mean(:,:,:), she1_mean(:,:),
-     . shi1_mean(:,:), sch1_mean(:,:),
-     . e_sna1(:,:,:), e_sne1(:,:), e_smo1(:,:,:),
+     . smo1_mean(:,:,:),
+     . she1_mean(:,:), shi1_mean(:,:), sch1_mean(:,:),
+     . e_sna1(:,:,:), e_sne1(:,:),
+     . e_smo1(:,:,:),
      . e_she1(:,:), e_shi1(:,:), e_sch1(:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
@@ -277,7 +278,7 @@ c 2002-09-11: logic revised
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
-      integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
+      integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
@@ -354,7 +355,7 @@ c 2002-09-11: logic revised
       integer NPRCSF, IPRCSF
       integer NTARG1, ISTEP
       integer MAXPOL, MAXTOR, MAXADD
-      integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
+      integer NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
@@ -524,7 +525,7 @@ c 2002-09-11: logic revised
       character*9, allocatable :: TDMREACTION(:,:), TDMREACTION1(:,:)
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
 #endif
-      character*10, allocatable :: species_name(:)
+      character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
@@ -589,7 +590,8 @@ c 2002-09-11: logic revised
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
-      data boundary_namelist/0/, neutrals_namelist/0/, use_eirene/0/
+      data boundary_namelist/0/, neutrals_namelist/0/
+      data use_eirene/0/, style_b2mndt/1/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -610,9 +612,9 @@ c 2002-09-11: logic revised
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
       namelist /transport/ ndata, tdata, addspec,
-     1   transport_ip_filename, transport_ip_time_mod, 
-     2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end, 
-     3   scaling_strength, region_flags, no_pflux, poloidal_scaling, 
+     1   transport_ip_filename, transport_ip_time_mod,
+     2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end,
+     3   scaling_strength, region_flags, no_pflux, poloidal_scaling,
      4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
      5   elm_ix_begin, elm_ix_end, no_div
       namelist /atomic_physics_rescale/
@@ -892,8 +894,8 @@ c 2002-09-11: logic revised
       NPLSI = NPLS
       NMOLI = NMOL
       NIONI = NION
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRIG
       CALL EIRENE_ALLOC_CESTIM(1)
@@ -928,7 +930,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2ytdr_ns', ns1)
       call xertst (0.lt.ns1, 'faulty input ns1')
       call xertst (DEF_NSD.ge.ns1,
-     . 'increase size of DEF_NSD in DIMENSIONS.F')
+     . 'increase size of DEF_NSD in b2mod_dimensions')
       call ipgeti ('b2ytdr_non_commensurate', non_commensurate)
       if (non_commensurate.eq.1 .or. nx.ne.nx1 .or. ny.ne.ny1) then
         same_grid = .false.
@@ -1036,9 +1038,8 @@ c 2002-09-11: logic revised
       call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
-      nxm=max(nx,nx1)
       nym=max(ny,ny1)
-!WG_TODO      call alloc_input_profile(nxm,nym,nsm)
+      call alloc_input_profile(nCv,nsm)
       allocate(am1(0:ns1-1))
       allocate(zn1(0:ns1-1))
       allocate(zamin1(0:ns1-1))
@@ -1274,7 +1275,8 @@ c 2002-09-11: logic revised
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
      &    sna1_mean, sne1_mean, smo1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1,
+     &    e_she1, e_shi1, e_sch1)
       end if
 *   ..rescale transformed state (if necessary)
       neutral_rescale=1.0_R8
@@ -1344,7 +1346,8 @@ c 2002-09-11: logic revised
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
      &    sna1_mean, sne1_mean, smo1_mean,
      &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &    e_sna1, e_sne1, e_smo1,
+     &    e_she1, e_shi1, e_sch1)
       end if
 
 * ..check for need to transform other input files:
@@ -1398,7 +1401,11 @@ c 2002-09-11: logic revised
       call ipgeti ('b2mwti_ismain0', ismain0)
       call ipgeti ('b2news_nsmin', nsmin)
       call ipgeti ('b2news_nsmax', nsmax)
-      ixfb=rratio(5*nx,8)
+      if (geo%LSN) then
+        ixfb=rratio(5*nx,8)
+      else
+        ixfb=rratio(3*nx,8)
+      end if
       iyfb=rratio(ny,2)
       isfb=ismain
       call ipgetr ('b2mndr_ixfb', ixfb)
@@ -1447,6 +1454,7 @@ c 2002-09-11: logic revised
       if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
+      call ipgeti ('b2mndt_style', style_b2mndt)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1461,10 +1469,11 @@ c 2002-09-11: logic revised
       if (sputter_namelist_used.or.wall_namelist_used)
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
-#ifdef WG_TODO
-      if (numerics_namelist.ge.1) 
-     >  call alloc_b2mod_numerics((nx+2)*(ny+2), ns, nnreg)
-#endif
+      call alloc_b2mod_numerics(nCv, ns, nnreg, switch)
+      if(style_b2mndt.eq.2) then
+        solvemt=.false.
+        solveet=.false.
+      endif
       filename='b2.neutrals.parameters'
       call find_file(filename,todo)
       filename='b2.feedback_save.parameters'
@@ -1478,7 +1487,7 @@ c 2002-09-11: logic revised
      .   (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
         call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
-     .   'Increase DEF_NSTRA in DIMENSIONS.F')
+     .   'Increase DEF_NSTRA in b2mod_dimensions')
         ib1 = 0
         nstrai1 = 0
         nstrat1 = 0
@@ -1987,9 +1996,9 @@ c 2002-09-11: logic revised
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((boundary_namelist.eq.1.or.todo).and..not.found)
        call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+       call xertst (nbc.le.nbcd, 'increase DEF_NBC in b2mod_dimensions')
        call xertst (nniso.le.nnisod,
-     .  'increase DEF_NISO in DIMENSIONS.F')
+     .  'increase DEF_NISO in b2mod_dimensions')
        if (same_bundling.and.same_grid) then
         if (first_pass) then
           write(nout(5),'(a)') 'b2.boundary.parameters'
@@ -2095,7 +2104,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1 .and. bcpos1(ib).ne.-2) then  ! must duplicate the X b.c.
               nbc1 = nbc1 + ib2-ib1
               call xertst (nbc1.le.nbcd,
-     .         'increase DEF_NBC in DIMENSIONS.F')
+     .         'increase DEF_NBC in b2mod_dimensions')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
@@ -2220,7 +2229,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1) then  ! must duplicate the Y b.c.
               nbc1 = nbc1 + ib2-ib1
               call xertst (nbc1.le.nbcd,
-     .         'increase DEF_NBC in DIMENSIONS.F')
+     .         'increase DEF_NBC in b2mod_dimensions')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
@@ -2892,7 +2901,7 @@ cxpb We must ensure we have not already listed this additional species
       filename='b2.transport_models_save.parameters'
       call find_file(filename,todo)
       if (todo .and. (ny.ne.ny1 .or. non_commensurate.eq.1)) then
-        call alloc_b2mod_transport_models(nx,ny,nsm)
+        call alloc_b2mod_transport_models(mpg%nFs,nsm)
         call read_b2mod_transport_models(99,'    ',todo)
         allocate(dsa(-1:ny), deta(-1:ny), dsa1(-1:ny1))
         allocate(eta_hce_mult1(-1:ny1))
@@ -3505,12 +3514,8 @@ cxpb This will need to be checked !!!
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
-#ifdef WG_TODO
-        if (numerics_namelist.eq.0) 
-     >   call alloc_b2mod_numerics((nx+2)*(ny+2),ns,nnreg)
-        call read_b2mod_numerics_namelist((nx+2)*(ny+2),ns,nsmin,nsmax,
-     >    nnreg,on_closed_surface)
-#endif
+        call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     >    nnreg,mpg%cvOnClosedSurface,style_b2mndt)
         if (same_bundling) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
@@ -3586,6 +3591,12 @@ cxpb This will need to be checked !!!
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nnreg(0)+1,'l1,a)'
           todo = .false.
           do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solvemt(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .      'SOLVEMT=',(solvemt(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
             todo = todo .or. .not.solvepo(ireg)
           enddo
           if (todo) write(99,hlp_frm)
@@ -3602,6 +3613,12 @@ cxpb This will need to be checked !!!
           enddo
           if (todo) write(99,hlp_frm)
      .     'SOLVEEI=',(solveei(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solveet(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEET=',(solveet(ireg),ireg=0,nnreg(0)),','
           if(numerics_time_mod.gt.0.0_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_MOD=',numerics_time_mod,','
@@ -8756,7 +8773,7 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,NSIGI_SPC
         else
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,
-     .                      NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+     .                      idum(0),idum(1),NSIGI_SPC
         endif
         allocate (IGH(NSIGVI), IIH(NSIGVI))
         allocate (IGHW(NSIGSI), IIHW(NSIGSI))
@@ -10337,7 +10354,7 @@ cxpb  Convert fort.44 file if needed
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
-          call b2yt_ngread(solps_version, eirene_format,
+          call b2yt_ngread(solps_version, eirene_format, nx, ny, ns,
      &     nx1, ny1, natmi1, iatm1, nmol1, imol1, nion1, iion1,
      &     ns1-nspecies1, ipls1, npls,
      &     no_sputtering, savestratum, non_commensurate,
@@ -10737,7 +10754,7 @@ cxpb as they no longer necessarily point to the same species
         write(99,'(1x,a,i2,a)') 'NSTRAI=', nstrai1,','
         if (eirene_step_cpu.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_CPU=',eirene_step_cpu,','
-        write(99,'(1x,a,1pg10.3,a)')
+        if (eirene_step_dt.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_DT= ',eirene_step_dt,','
         if (eirene_mod.gt.1)
      >   write(99,'(1x,a,i2,a)') 'EIRENE_MOD=', eirene_mod,','
@@ -11202,7 +11219,7 @@ cxpb as they no longer necessarily point to the same species
          call find_file(filename,todo)
          call read_neutrals_namelist(nx, ny, ns, .false.)
          call xertst (nstrai.le.nstraid,
-     >      'Increase DEF_NSTRA in DIMENSIONS.F')
+     >      'Increase DEF_NSTRA in b2mod_dimensions')
          call find_file(new_filename,found)
          if (found) write(6,*) trim(new_filename), ' already present!'
        else
@@ -12159,7 +12176,7 @@ cxpb as they no longer necessarily point to the same species
       call dealloc_b2mod_b2cmrc
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
-!WG_TODO      call dealloc_input_profile
+      call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
@@ -12743,6 +12760,7 @@ c       = 4 : center
       subroutine de_bundle(ns, zn, am, zamin, zamax,
      *   is0, ic, bundle_contr, zn0, am0, zamin0, zamax0)
       use b2mod_types
+      use b2mod_dimensions
       implicit none
 *   ..arguments for input bundles (unchanged upon exit)
       integer ns
@@ -12784,6 +12802,7 @@ cxpb basic species 'ic'
      *   ns, is0, bundle_contr, zn0, am0, zamin0, zamax0,
      *   ns1, is1, bundle_frac, zn1, am1, zamin1, zamax1)
       use b2mod_types
+      use b2mod_dimensions
       implicit none
 *   ..arguments for input de-bundled data (unchanged upon exit)
       integer ns

@@ -17,7 +17,7 @@ c
         tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
      1   textwk(is,iwrk)
         call customise_label(tmpstring,titlestring)
-        if(typeofplot .ge. 2) then
+        if(typeofplot .ge. 2 .and. mpg%isClassicalGrid .eq. 1) then
           if(b2plot_debug.ge.7) write(*,*) 'computational domain'
           call init_page(titlestring,
      1     values(1),values(2),values(3),values(4),1,.false.,.true.,

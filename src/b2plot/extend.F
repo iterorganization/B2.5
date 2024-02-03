@@ -1,7 +1,6 @@
 
       subroutine extend(field,mpg,ns)
       use b2mod_types
-      use b2mod_indirect
       use b2us_map
       implicit none
       integer, intent(in) :: ns

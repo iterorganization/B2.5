@@ -10,15 +10,18 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-      use b2mod_numerics_namelist                                     !srv 07.07.21 {
-     & , only : dtco, time_factor                                     !srv 07.07.21 }
-!WG_TODO      use b2mod_balance
-!WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+      use b2mod_numerics_namelist                                        !srv 07.07.21 {
+     & , only : dtco, time_factor                                        !srv 07.07.21 }
+      use b2mod_balance
+     & ,only : update_balance_sources_particles, balance_netcdf,         !djm Jan2017
+     &         tot_sna0to1, fna_tot                                      !djm Mar2019
+      use b2mod_ad
+     & , only : ncall_b2npco
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2npco, ncall_b2upco, ncall_b2usco, my_out_folder,
+     & , only : ncall_b2upco, ncall_b2usco, my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                               !srv 27.06.21
 #endif
@@ -145,12 +148,12 @@
        call b2xvsg (nCv, dv%pa(1,isb), 1, 'pb', '.gt.')
        call b2xvsg (nCv, pl%na(1,isb), 1, 'nb', '.gt.')
       endif
-#ifdef WG_TODO
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_particles(nx,ny,isb,nb)
+        tot_sna0to1(:,:,isb)=sr%sna(:,:,isb)    !djm Mar2019
+        fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
+        call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
       endif
-#endif
 
       if(switch%b2mndt_style.eq.2) then                                 !srv 07.07.21 {
 *  .. calculate time-dependent source

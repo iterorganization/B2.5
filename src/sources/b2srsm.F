@@ -13,9 +13,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
-!WG_TODO     2          b2srsm_shi0to3, balance_netcdf
+      use b2mod_balance !djm Jan2017
+     1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
+     2          b2srsm_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -58,10 +58,10 @@
       integer diagno
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
+#endif
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)
-#endif
 *   ..procedures
       external xertst, ipgeti, b2xvsg
 #ifdef WG_TODO
@@ -87,9 +87,11 @@
       do is = 0, 1
         call b2xvsg (nCv, ni(1,is), 1, 'ni', '.gt.')
       enddo
+      call b2xvsg (nCv, nn, 1, 'nn', '.gt.')
       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+      call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
 *   ..obtain input
       if (ncall_b2srsm.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -101,10 +103,10 @@ c        call ipgeti ('b2srsm_diagno', diagno)
       endif
 
 cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
-!WG_TODO      snatmp = sr%sna
-!WG_TODO      smotmp = sr%smo
-!WG_TODO      shetmp = sr%she
-!WG_TODO      shitmp = sr%shi
+      snatmp = sr%sna
+      smotmp = sr%smo
+      shetmp = sr%she
+      shitmp = sr%shi
 
       if(switch%b2srsm_enable.ne.0) then
         call xerrab ('b2srsm not adapted for WG')
@@ -321,12 +323,12 @@ c check electron particle number
       endif
 
 cdjm Store the total change in linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srsm_sna0to1 = sr%sna-snatmp
-!WG_TODO        b2srsm_smo0to3 = sr%smo-smotmp
-!WG_TODO        b2srsm_she0to3 = sr%she-shetmp
-!WG_TODO        b2srsm_shi0to3 = sr%shi-shitmp
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2srsm_sna0to1 = sr%sna-snatmp
+        b2srsm_smo0to3 = sr%smo-smotmp
+        b2srsm_she0to3 = sr%she-shetmp
+        b2srsm_shi0to3 = sr%shi-shitmp
+      endif
 
 #ifdef WG_TODO
       if (switch%b2npmo_iout.eq.1) then                                     !srv 11.09.09 {

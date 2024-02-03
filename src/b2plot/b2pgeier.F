@@ -8,9 +8,8 @@ c=======================================================================
       use b2mod_types
       use b2mod_diag
       use b2mod_b2cmpa
-      use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_b2plot_wall_loading
+      use b2us_data
       implicit none
       integer lun
 
@@ -29,17 +28,19 @@ c*** Determine topology and calculate some indices
       call b2pwinp
 c      print *,'After b2pwinp: ntrgts,lytg,nytg,lrdlsp = ',  !###
 c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
-      allocate(hlp_flx(0:ny-1,0:ns-1,ntrgsx))
+      allocate(hlp_flx(mpg%nFc,0:state%ns-1,ntrgsx))
 
       l=1
       u=-1
       do j=1,ntrgts !{
         k=ltrgpos(j)
+#ifdef WG_TODO
         do iy=lytg,ny-1 !{
-          do is=0,ns-1 !{
+          do is=0,state%ns-1 !{
             hlp_flx(iy,is,j)=fna(k+1-l,iy,0,0,is)*u
           end do !}
         end do !}
+#endif
         l=1-l
         u=-u
       end do !}
@@ -48,18 +49,20 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
         jj=j
         if(j.eq.ntrgts) jj=ntrgsx
         open(lun,file=ftrg(jj))
-        write(fmt_peak,'(a,i3,a)') '(a,5x,',ns,'(a2,i2.2,8x))'
+        write(fmt_peak,'(a,i3,a)') '(a,5x,',state%ns,'(a2,i2.2,8x))'
 c        print *,trim(fmt_peak)  !###
         write(lun,740) 'Ion fluxes on the target - ',
      ,      trim(trg_label(jj)),trim(label)
         write(lun,fmt_peak) '# cell',
      ,    ((trim(species_list(is)),i,i=0,nfluids(is)),
      ,                                               is=1,nspecies)
-        write(fmt_peak,'(a,i3,a)') '(2x,i4,1p,',ns,'(e12.4))'
+        write(fmt_peak,'(a,i3,a)') '(2x,i4,1p,',state%ns,'(e12.4))'
 c        print *,trim(fmt_peak)  !###
+#ifdef WG_TODO
         do iy=lytg,ny-1 !{
-          write(lun,fmt_peak) iy,(hlp_flx(iy,is,j),is=0,ns-1)
+          write(lun,fmt_peak) iy,(hlp_flx(iy,is,j),is=0,state%ns-1)
         end do !}
+#endif
         close (lun)
       end do !}
       deallocate(hlp_flx)

@@ -8,13 +8,13 @@
 module b2mod_connectivity
 
     use b2mod_types
+    use b2mod_dimensions
     use carre_constants
     use b2mod_cellhelper
     use logging
     use helper
 
     implicit none
-#include "DIMENSIONS.F"
 
     integer, parameter :: NO_CONNECTIVITY = huge(0) !< Constant to mark in
         !< connectivity arrays that no connectivity available

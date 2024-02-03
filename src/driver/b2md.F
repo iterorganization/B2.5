@@ -3,8 +3,10 @@
 
       program b2md
       use b2mod_types
+      use b2mod_ppout
       use b2mod_version
       use b2mod_xerset
+      use b2mod_dimensions
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -136,8 +138,8 @@
       call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from b2fstate file')
 *   ..obtain ns from parameters file
-      call cfruin (ninp(2), 1, idum(2), 'ns')
-      call xertst (idum(2).eq.ns,
+      call cfruin (ninp(2), 1, idum, 'ns')
+      call xertst (idum(0).eq.ns,
      &  'faulty input ns from physics parameters file')
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
@@ -174,6 +176,7 @@
 *   ..read plasma state
       call read_b2fplasma(ninp(4), nCv, nFc, ns, state)
 *   ..call principal driver routine
+      call alloc_b2mod_ppout(DEF_NXD, DEF_NYD, ns)
       call b2mddr (ninp, nout, ns, mpg, geo, state, state_ext)
 *   ..close files
       do io=0,size(ninp)-1
@@ -186,6 +189,7 @@
       enddo
 
 * ..end of computation
+      call dealloc_b2mod_ppout
       call destroyB2State (state)
       call destroyB2StateExt (state_ext)
       call dealloc_geometry (geo)

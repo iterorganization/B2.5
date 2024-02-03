@@ -29,7 +29,6 @@
 *   ..local variables
       integer is, idum(0:9), k, ismain
       integer external_species
-      integer itim, itcnt
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
 *   ..initialisation
@@ -119,8 +118,6 @@
    10 if (.not.cfendf(ninp(6))) then
 *    ..get itim, itcnt
        call cfruin (ninp(6), 2, idum, 'itim,itcnt')
-       itim = idum(0)
-       itcnt = idum(1)
 *    ..get residuals and corrections
        call cfrure (ninp(6), mpg%nCv*ns, state%dv%resco, 'resco')
        call cfrure (ninp(6), mpg%nCv*ns, state%dv%corpa, 'corpa')

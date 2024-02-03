@@ -1,23 +1,25 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_diagnostics(nx, ny, ns, ic,
+      subroutine neo_diagnostics(mpg, geo, state, ns, ic,
      &  dn_neo, chi_neo, vn_neo, vw_neo)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_ranges
-      use b2mod_rates
       use b2mod_neoclassical
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_subsys
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2State), intent(in) :: state
+      integer ns
 *   ..set the contribution ic
 *     0 --- classical particle flux
 *     1 --- banana plateau contribution
@@ -29,8 +31,8 @@
       integer ic
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   dn_neo(-1:nx,-1:ny,0:ns), chi_neo(-1:nx,-1:ny,0:ns),
-     &   vn_neo(-1:nx,-1:ny,0:ns), vw_neo(-1:nx,-1:ny,0:ns)
+     *   dn_neo(mpg%nCv,0:ns), chi_neo(mpg%nCv,0:ns),
+     &   vn_neo(mpg%nCv,0:ns), vw_neo(mpg%nCv,0:ns)
 
 *     nints=number of intervals for integration
       integer nints
@@ -54,47 +56,46 @@
 *
 *     This routine computes the following neoclassical transport
 *     coefficients
-*     
+*
 *     - dn_neo:  particle transport coefficients for grad(na).
 *     - chi_neo: heat conductivity
 *     - vn_neo:  particle pinch velocity
 *     - vw_neo:  heat pinch velocity
 *-----------------------------------------------------------------------
 *   ..local variables
-      integer n2, ix, iy, is, is2, ixref, iyref
-      save ixref, iyref
+      integer iCv, iCm, iCn, iFc, iFt, iFm, iFp, iVx, iVx1, iVx2
+      integer i, j, is, is2
 *   ..local variables for neoclassical transport
-      integer :: istate,ispecies,ishift
+      integer :: istate, ispecies
       integer :: isorth(0:ns,0:nzdecl-1), nclh(0:ns), nslh
       real (kind=R8) ::
      *   zah(0:ns-1), amh(0:ns-1), t(0:ns),
      &   den(0:ns,0:nzdecl-1), ds(0:ns,0:nzdecl-1,2),
      &   denl(0:ns,0:nzdecl-1), tl(0:ns),
      &   denr(0:ns,0:nzdecl-1), tr(0:ns),
-     &   vtn(0:ns,0:nzdecl-1,-1:ny),
-     &   kappa(0:ns,0:nzdecl-1,-1:ny),
-     &   vw(0:ns,0:nzdecl-1,-1:ny),
-     &   dfhcb, dfhce, hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
-     &   cellface(0:ns,0:nzdecl-1,-1:ny,1:5)
+     &   vtn(0:ns,0:nzdecl-1,mpg%nFt),
+     &   kappa(0:ns,0:nzdecl-1,mpg%nFt),
+     &   vw(0:ns,0:nzdecl-1,mpg%nFt),
+     &   dfhcb, dfhce, hthet(mpg%nCv), quant(mpg%nCv),
+     &   flux_width(mpg%nFt)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy
       parameter (epsn=1.e-3)
       real (kind=R8) ::
-     *   thet, ilpb, hxface, ilp(-1:ny), bmax, nlambda, nfactor,
-     &   hxpface, hxnface, eparr, rho, prefactor, postfactor
+     *   thet, ilpb, ilp(mpg%nFt), bmax, nlambda, nfactor,
+     &   eparr, rho, rhomax, hy1
       save eparr
       real (kind=R8) ::
      *   fluxav, sfluxav, tfluxav
-      logical closedf(0:ny)
 *   ..for consistency check
       real (kind=R8) ::
-     *   densav(0:ns,0:nzdecl-1,-1:ny),
-     &   gradnsav(0:ns,0:nzdecl-1,-1:ny),
-     &   tforce(0:ns,0:nzdecl-1,1:2,-1:ny)
+     *   densav(0:ns,0:nzdecl-1,mpg%nFt),
+     &   gradnsav(0:ns,0:nzdecl-1,mpg%nFt),
+     &   tforce(0:ns,0:nzdecl-1,1:2,mpg%nFt)
 
 *   ..procedures
-      external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav, 
+      external xertst, b2xvsg, fluxav, sfluxav,
      &         tfluxav, neodv, neochi
 
 *   ..subprogram start-up calls
@@ -113,45 +114,17 @@
      1 write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
       if(ic.eq.4)
      1 write(*,*) '  NEOART: all'
-      if(nnreg(0).eq.4) then
-        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
-        iyref=2*topcut(1)/3
-      elseif(nnreg(0).eq.5) then
-        ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
-        iyref=2*topcut(1)/3
-      elseif(nnreg(0).eq.7) then
-        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
-        iyref=2*topcut(1)/3
-      elseif(nnreg(0).eq.8) then
-        ixref=(rightcut(1)+rightcut(2))/2
-        iyref=2*min(topcut(1),topcut(2))/3
-      elseif(nnreg(0).eq.2) then
-        ixref=nx/2
-        iyref=2*topcut(1)/3
-      else
-        ixref=nx/2
-        iyref=ny/2
-      endif
-      call ipgeti ('set_transport_ixref', ixref)
-      call xertst (-1.le.ixref.and.ixref.le.nx,
-     1   'faulty argument set_transport_ixref')
-      call ipgeti ('set_transport_iyref', iyref)
-      call xertst (-1.le.iyref.and.iyref.le.ny,
-     1   'faulty argument set_transport_iyref')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
 *   ..test bb
-      call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
+      call b2xvsg (mpg%nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *   ..test state
-      call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-      call b2xvsg (n2, te, 1, 'te', '.gt.')
-      call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-      call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-      call b2xvsg (n2, ne, 1, 'ne', '.gt.')
+      call b2xvsg (mpg%nCv*ns, state%pl%na, 1, 'na', '.gt.')
+      call b2xvsg (mpg%nCv, state%pl%te, 1, 'te', '.gt.')
+      call b2xvsg (mpg%nCv, state%pl%ti, 1, 'ti', '.gt.')
+      call b2xvsg (mpg%nCv*2, state%dv%ni, 1, 'ni', '.gt.')
+      call b2xvsg (mpg%nCv, state%dv%ne, 1, 'ne', '.gt.')
 
 *   ..main
 
@@ -175,21 +148,21 @@
      > write(*,*) 'Loop voltage: eparr =', eparr
 
 *   ..initialize geometric parameters
-      do iy=-1,ny
-        bav_(iy)=0.0_R8
-        b2av_(iy)=0.0_R8
-        bi2a_(iy)=0.0_R8
-        rbt_(iy)=0.0_R8
-        bgradp_(iy)=0.0_R8
-        dpsidr_(iy)=0.0_R8
-        rnq_(iy)=0.0_R8
-        fc_(iy)=0.0_R8
-        gclass_(iy)=0.0_R8
+      do iFt=1,mpg%nFt
+        bav_(iFt)=0.0_R8
+        b2av_(iFt)=0.0_R8
+        bi2a_(iFt)=0.0_R8
+        rbt_(iFt)=0.0_R8
+        bgradp_(iFt)=0.0_R8
+        dpsidr_(iFt)=0.0_R8
+        rnq_(iFt)=0.0_R8
+        fc_(iFt)=0.0_R8
+        gclass_(iFt)=0.0_R8
         do is=1,mmx
-          fm_(is,iy)=0.0_R8
+          fm_(is,iFt)=0.0_R8
         enddo
-        r2i_(iy)=0.0_R8
-        rho_(iy)=0.0_R8
+        r2i_(iFt)=0.0_R8
+        rho_(iFt)=0.0_R8
       enddo
 
 *   ..split species into species and charge states
@@ -304,7 +277,7 @@
         endif
       enddo
       nsl=nslh
-            
+
 *   ..mass
       do ispecies=0,nsl-1
         m(ispecies)=am(isort(ispecies,0))*mp
@@ -319,294 +292,264 @@
 *   ..calculate generalized poloidal angle theta
 *      default value 0 for grid points outside the core and on
 *      the inner boundary
-      do iy=-1,ny
-        do ix=-1,nx
-          theta(ix,iy)=0.0_R8
-        enddo
-      enddo
+      theta=0.0_R8
 
-*    ..determine closed field lines
-      do iy=0,ny
-        closedf(iy)=.false.
-        ix=rightix(ixref,iy)
-        do while (ix.ne.ixref.and.ix.ge.-1.and.ix.le.nx)
-          ix=rightix(ix,iy)
-        enddo
-        if (ix.eq.ixref) closedf(iy)=.true.
-      enddo
-
-      do iy=0,ny
-        if(closedf(iy)) then
-          thet=0.0_R8
-          ilp(iy)=0.0_R8
-          do ix=ixref,-1,-1
-            if (on_closed_surface(ix,iy)) then
-              theta(ix,iy)=thet
-              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
-     &               vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
-     &              (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-              hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
-     &                hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &                bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &                vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &                bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
-     &                hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &                (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &                bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &                vol(leftix(ix,iy),leftiy(ix,iy)))
-              hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
-     &                hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &                bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &                vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &                bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
-     &                hx(rightix(ix,iy),rightiy(ix,iy)))/
-     &                (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &                bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &                vol(rightix(ix,iy),rightiy(ix,iy)))
-              thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
-     &             ((hxpface+hxnface)/2.0_R8+hxface)
-              ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
-     &                bb(ix,iy,0)
-            endif
+*    ..determine poloidal angle
+      do iFt=1,mpg%nFt
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if(mpg%cvOnClosedSurface(iCv)) then
+          iCm=iCv
+          thet=0.5_R8*geo%cvBb(iCv,3)/geo%cvBb(iCv,0)*geo%cvHx(iCv)
+          ilp(iFt)=geo%cvBb(iCv,0)*geo%cvHx(iCv)
+          do i=2,mpg%ftCvP(iFt,2)
+            iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            iCn=mpg%ftCv(mpg%ftCvP(iFt,1)+i-2)
+            if(geo%cvX(iCv).gt.geo%cvX(iCm)) iCm=iCv
+            thet=thet
+     .       +0.5_R8*geo%cvBb(iCn,3)/geo%cvBb(iCn,0)*geo%cvHx(iCn)
+     .       +0.5_R8*geo%cvBb(iCv,3)/geo%cvBb(iCv,0)*geo%cvHx(iCv)
+            theta(iCv)=thet
+            ilp(iFt)=ilp(iFt)+geo%cvBb(iCv,0)*geo%cvHx(iCv)
           enddo
-          do ix=nx,ixref+1,-1
-            if (on_closed_surface(ix,iy)) then
-              theta(ix,iy)=thet
-              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
-     &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
-     &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-              hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
-     &              hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
-     &              hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &              (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(leftix(ix,iy),leftiy(ix,iy)))
-               hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
-     &              hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
-     &              hx(rightix(ix,iy),rightiy(ix,iy)))/
-     &              (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(rightix(ix,iy),rightiy(ix,iy)))
-              thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
-     &           ((hxpface+hxnface)/2.0_R8+hxface)
-              ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
-     &              bb(ix,iy,0)
-            endif
-          enddo
-          theta(ixref,iy)=thet
+          thet=thet
+     .       +0.5_R8*geo%cvBb(iCv,3)/geo%cvBb(iCv,0)*geo%cvHx(iCv)
           ilpb=thet
-          do ix=-1,nx
-            if (on_closed_surface(ix,iy)) then
-              theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
-            endif
+          do i=1,mpg%ftCvP(iFt,2)
+            iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            theta(iCv)=theta(iCv)-theta(iCm)
+            theta(iCv)=2.0_R8*pi*mod(theta(iCv)/ilpb,1.0_R8)
+            if (theta(iCv).lt.0.0_R8) theta(iCv)=theta(iCv)+2.0_R8*pi
           enddo
+          is=0
+          flux_width(iFt)=0.0_R8
+          do i=1,mpg%cvFcP(iCm,2)
+            iFc=mpg%cvFc(mpg%cvFcP(iCm,1)+i-1)
+            iVx1=mpg%fcVx(iFc,1)
+            iVx2=mpg%fcVx(iFc,2)
+            if (mpg%vxFs(iVx1).ne.0.and.mpg%vxFs(iVx2).ne.0.and.
+     &          mpg%vxFs(iVx1).ne.mpg%vxFs(iVx2)) then
+              is=is+1
+              flux_width(iFt)=flux_width(iFt)+
+     &          geo%fcHt(iFc)*geo%fcQgam(iFc,0)
+            end if
+          end do
+          if(is.gt.0) flux_width(iFt)=flux_width(iFt)/real(is,R8)
         endif
       enddo
 
 *   ..calculate geometric parameters
 
-*   ..loop over flux surfaces
-      do iy=0,ny
+      rhomax=0.0_R8
+*   ..loop over flux tubes
+      do iFt=1,mpg%nFt
 
-*   ..calculate neoclassical transport only for closed flux surfaces
+*   ..calculate neoclassical transport only for closed flux tubes
 
-*   ..calculate the connection length
-        conn(iy)=0.0_R8
-        do ix=-1,nx
-          if(on_closed_surface(ix,iy)) conn(iy)=conn(iy)+
-     1         hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))
-        enddo
+        iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (mpg%cvOnClosedSurface(iCv)) then
+          iCm=iCv
+          bmax=geo%cvBb(iCv,3)
+          do i=2,mpg%ftCvP(iFt,2)
+            iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+            if(geo%cvX(iCv).gt.geo%cvX(iCm)) iCm=iCv
+            bmax=max(bmax,geo%cvBb(iCv,3))
+          end do
 
-        if (closedf(iy)) then
+*   ..flux averages
 
-*   ..flux surface averages
+          quant(:)=geo%cvBb(:,3)
+          bav_(iFt)=fluxav(quant,mpg,geo,iFt)
+          quant(:)=geo%cvBb(:,3)**2
+          b2av_(iFt)=fluxav(quant,mpg,geo,iFt)
+          quant(:)=1.0_R8/geo%cvBb(:,3)**2
+          bi2a_(iFt)=fluxav(quant,mpg,geo,iFt)
+          quant(:)=geo%cvBb(:,2)*geo%cvX(:)
+          rbt_(iFt)=fluxav(quant,mpg,geo,iFt)
+          bgradp_(iFt)=2.0_R8*pi/(bav_(iFt)*ilp(iFt))
+          dpsidr_(iFt)=geo%cvBb(iCm,0)*geo%cvX(iCm)
+          rnq_(iFt)=geo%ftConn(iFt)/(2.0_R8*pi)
 
-          quant(:,:)=bb(:,:,3)
-          bav_(iy)=fluxav(quant,bb,hx,vol,nx,ny,iy)
-          quant(:,:)=bb(:,:,3)**2
-          b2av_(iy)=fluxav(quant,bb,hx,vol,nx,ny,iy)
-          quant(:,:)=1.0_R8/bb(:,:,3)**2
-          bi2a_(iy)=fluxav(quant,bb,hx,vol,nx,ny,iy)
-          quant(:,:)=bb(:,:,2)*(crx(:,:,0)+crx(:,:,1)+
-     &                          crx(:,:,2)+crx(:,:,3))/4.0_R8
-          rbt_(iy)=fluxav(quant,bb,hx,vol,nx,ny,iy)
-          bgradp_(iy)=2.0_R8*pi/(bav_(iy)*ilp(iy))
-          dpsidr_(iy)=bb(ixref,iy,0)*(crx(ixref,iy,0)+
-     &                                crx(ixref,iy,2))/2.0_R8
-          rnq_(iy)=conn(iy)/(2.0_R8*pi)
-
-          bmax=0.0_R8
-          do ix=-1,nx
-            if (on_closed_surface(ix,iy)) then
-              if (bb(ix,iy,3).gt.bmax) then
-                bmax=bb(ix,iy,3)
-              endif
-            endif
-          enddo
           nlambda=1.0_R8/nints
 
-          fc_(iy)=0.0_R8
+          fc_(iFt)=0.0_R8
           do is2=0,nints
             if ((is2.eq.0).or.(is2.eq.nints)) then
               nfactor=0.5_R8
             else
               nfactor=1.0_R8
             endif
-            quant(:,:)=bb(:,:,3)
-            fc_(iy)=fc_(iy)+is2*nlambda/sfluxav(quant,bb,hx,vol,
-     &              nx,ny,iy,is2*nlambda,bmax)*nlambda*nfactor
+            quant(:)=geo%cvBb(:,3)
+            fc_(iFt)=fc_(iFt)+is2*nlambda/
+     &       sfluxav(quant,mpg,geo,iFt,is2*nlambda,bmax)*nlambda*nfactor
           enddo
-          fc_(iy)=0.75_R8*b2av_(iy)/bmax**2*fc_(iy)
-          quant(:,:)=((crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+
-     &                 crx(:,:,3))/4.0_R8*bb(:,:,0)/bb(:,:,3))**2
-          gclass_(iy)=fluxav(quant,bb,hx,vol,nx,ny,iy)
+          fc_(iFt)=0.75_R8*b2av_(iFt)/bmax**2*fc_(iFt)
+          quant(:)=(geo%cvX(:)*geo%cvBb(:,0)/geo%cvBb(:,3))**2
+          gclass_(iFt)=fluxav(quant,mpg,geo,iFt)
 
           do is2=1,mmx
-            do is=-1,ny
-              do ix=-1,nx
-                hthet(ix,is)=is2*theta(ix,iy)
-              enddo
-            enddo
-            quant(:,:)=cos(hthet(:,:))*bb(:,:,3)*log(bb(:,:,3))
-            cosbl(is2)=fluxav(quant,bb,hx,vol,nx,ny,iy)
-            quant(:,:)=cos(hthet(:,:))*bb(:,:,3)**2
-            cosb2(is2)=fluxav(quant,bb,hx,vol,nx,ny,iy)
-            quant(:,:)=sin(hthet(:,:))*bb(:,:,3)*log(bb(:,:,3))
-            sinbl(is2)=fluxav(quant,bb,hx,vol,nx,ny,iy)
-            quant(:,:)=sin(hthet(:,:))*bb(:,:,3)**2
-            sinb2(is2)=fluxav(quant,bb,hx,vol,nx,ny,iy)
+            hthet(:)=is2*theta(:)
+            quant(:)=cos(hthet(:))*geo%cvBb(:,3)*log(geo%cvBb(:,3))
+            cosbl(is2)=fluxav(quant,mpg,geo,iFt)
+            quant(:)=cos(hthet(:))*geo%cvBb(:,3)**2
+            cosb2(is2)=fluxav(quant,mpg,geo,iFt)
+            quant(:)=sin(hthet(:))*geo%cvBb(:,3)*log(geo%cvBb(:,3))
+            sinbl(is2)=fluxav(quant,mpg,geo,iFt)
+            quant(:)=sin(hthet(:))*geo%cvBb(:,3)**2
+            sinb2(is2)=fluxav(quant,mpg,geo,iFt)
           enddo
           do is2=1,mmx
-            fm_(is2,iy)=2.0_R8*(is2*bgradp_(iy))**2/
-     &                (b2av_(iy)*bav_(iy))*
+            fm_(is2,iFt)=2.0_R8*(is2*bgradp_(iFt))**2/
+     &                (b2av_(iFt)*bav_(iFt))*
      &                (cosb2(is2)*cosbl(is2)+sinb2(is2)*sinbl(is2))
           enddo
-          quant(:,:)=(4.0_R8/
-     &      (crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3)))**2
-          r2i_(iy)=fluxav(quant,bb,hx,vol,nx,ny,iy)
+          quant(:)=(1.0_R8/geo%cvX(:))**2
+          r2i_(iFt)=fluxav(quant,mpg,geo,iFt)
 
-*    ..flux surface label
-          rho_(iy)=(crx(ixref,iy,0)+crx(ixref,iy,2))/2.0_R8
+*    ..flux tube label
+          rho_(iFt)=geo%cvX(iCm)
 
-        else
+          do i=1,mpg%cvVxP(iCm,2)
+            rhomax=max(rhomax,geo%vxX(mpg%cvVx(mpg%cvVxP(iCm,1)+i-1)))
+          end do
+
         endif
 
       enddo
 
-
 *   ..now calculate the neoclassical transport
 
-*   ..loop over flux surfaces
-       do iy=0,ny
+*   ..loop over flux tubes
+       do iFt=1,mpg%nFt
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (iCv.gt.mpg%nCi) cycle
 
-*   ..calculate neoclassical transport only for closed flux surfaces
-        if (closedf(iy)) then
+*   ..calculate neoclassical transport only for closed flux tubes
+        if (mpg%cvOnClosedSurface(iCv)) then
+          iFm=0
+          iFp=0
+          do i=1,mpg%cvVxP(iCv,2)
+            iVx=mpg%cvVx(mpg%cvVxP(iCv,1)+i-1)
+            do j=1,mpg%vxCvP(iVx,2)
+              iCn=mpg%vxCv(mpg%vxCvP(iVx,1)+j-1)
+              if (mpg%cvFt(iCn).eq.iFt) cycle
+              if (mpg%cvFt(iCn).eq.iFm) cycle
+              if (mpg%cvFt(iCn).eq.iFp) cycle
+              if (iFm.eq.0) then
+                if (rho_(mpg%cvFt(iCn)).lt.rho_(iFt)) iFm=mpg%cvFt(iCn)
+              end if
+              if (iFp.eq.0) then
+                if (rho_(mpg%cvFt(iCn)).ne.0.0_R8) then
+                  if (rho_(mpg%cvFt(iCn)).gt.rho_(iFt))
+     >             iFp=mpg%cvFt(iCn)
+                else if (mod(mpg%cvReg(iCn),4).eq.2) then
+                  iFp=mpg%cvFt(iCn)
+                end if
+              end if
+            end do
+          end do
 
-*   ..flux surfaces averages
+*   ..flux averages
 *     temperatures in keV, densities in 10^19 m^-3
           do ispecies=0,nsl-2
-            t(ispecies)=fluxav(ti,bb,hx,vol,nx,ny,iy)/
+            t(ispecies)=fluxav(state%pl%ti,mpg,geo,iFt)/
      &                  (1.0e3_R8*ev)
-            tl(ispecies)=fluxav(ti,bb,hx,vol,nx,ny,bottomiy(ixref,iy))/
+            tl(ispecies)=fluxav(state%pl%ti,mpg,geo,iFm)/
      &                  (1.0e3_R8*ev)
-            tr(ispecies)=tfluxav(ti,bb,hx,vol,nx,ny,iy)/
+            tr(ispecies)=tfluxav(state%pl%ti,mpg,geo,iFp)/
      &                  (1.0e3_R8*ev)
             do istate=0,ncl(ispecies)-1
-              quant(:,:)=na(:,:,isort(ispecies,istate))
+              quant(:)=state%pl%na(:,isort(ispecies,istate))
               den(ispecies,istate)=
-     &          fluxav(quant,bb,hx,vol,nx,ny,iy)/1.0e19_R8
+     &          fluxav(quant,mpg,geo,iFt)/1.0e19_R8
               denl(ispecies,istate)=
-     &          fluxav(quant,bb,hx,vol,nx,ny,bottomiy(ixref,iy))/
+     &          fluxav(quant,mpg,geo,iFm)/
      &          1.0e19_R8
               denr(ispecies,istate)=
-     &          tfluxav(quant,bb,hx,vol,nx,ny,iy)/1.0e19_R8
-              quant(:,:)=rza(:,:,isort(ispecies,istate))
-              zsp(ispecies,istate)=fluxav(quant,bb,hx,vol,nx,ny,iy)
+     &          tfluxav(quant,mpg,geo,iFp)/1.0e19_R8
+              quant(:)=state%rt%rza(:,isort(ispecies,istate))
+              zsp(ispecies,istate)=fluxav(quant,mpg,geo,iFt)
             enddo
           enddo
-          t(nsl-1)=fluxav(te,bb,hx,vol,nx,ny,iy)/(1.0e3_R8*ev)
-          den(nsl-1,0)=fluxav(ne,bb,hx,vol,nx,ny,iy)/1.0e19_R8
-          tl(nsl-1)=fluxav(te,bb,hx,vol,nx,ny,bottomiy(ixref,iy))/
-     &               (1.e3_R8*ev)
-          denl(nsl-1,0)=fluxav(ne,bb,hx,vol,nx,ny,bottomiy(ixref,iy))/
-     &                1.e19_R8
-          tr(nsl-1)=tfluxav(te,bb,hx,vol,nx,ny,iy)/(1.0e3_R8*ev)
-          denr(nsl-1,0)=tfluxav(ne,bb,hx,vol,nx,ny,iy)/1.0e19_R8
-
+          t(nsl-1)=fluxav(state%pl%te,mpg,geo,iFt)/(1.0e3_R8*ev)
+          den(nsl-1,0)=fluxav(state%dv%ne,mpg,geo,iFt)/1.0e19_R8
+          tl(nsl-1)=fluxav(state%pl%te,mpg,geo,iFm)/(1.e3_R8*ev)
+          denl(nsl-1,0)=fluxav(state%dv%ne,mpg,geo,iFm)/1.e19_R8
+          tr(nsl-1)=tfluxav(state%pl%te,mpg,geo,iFp)/(1.0e3_R8*ev)
+          denr(nsl-1,0)=tfluxav(state%dv%ne,mpg,geo,iFp)/1.0e19_R8
 
 *   ..thermodynamic forces
           do ispecies=0,nsl-1
             do istate=0,ncl(ispecies)-1
-              ds(ispecies,istate,1)=(log(denr(ispecies,istate)*
+              if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1))))
+     >         then
+                ds(ispecies,istate,1)=(log(denr(ispecies,istate)*
      &           tr(ispecies))-log(denl(ispecies,istate)*
-     &           tl(ispecies)))/(hy1(bottomix(ixref,iy),
-     &           bottomiy(ixref,iy))+hy1(ixref,iy))
-              ds(ispecies,istate,2)=(log(tr(ispecies))-
-     &           log(tl(ispecies)))/(hy1(bottomix(ixref,iy),
-     &           bottomiy(ixref,iy))+hy1(ixref,iy))
-
+     &           tl(ispecies)))/(rho_(iFp)-rho_(iFm))
+                ds(ispecies,istate,2)=(log(tr(ispecies))-
+     &           log(tl(ispecies)))/(rho_(iFp)-rho_(iFm))
+              else
+                ds(ispecies,istate,1)=(log(denr(ispecies,istate)*
+     &           tr(ispecies))-log(denl(ispecies,istate)*
+     &           tl(ispecies)))/(rhomax-rho_(iFm))
+                ds(ispecies,istate,2)=(log(tr(ispecies))-
+     &           log(tl(ispecies)))/(rhomax-rho_(iFm))
+              endif
 
 *   ..for consistency check
-              densav(ispecies,istate,iy)=den(ispecies,istate)
-              gradnsav(ispecies,istate,iy)=den(ispecies,istate)*
+              densav(ispecies,istate,iFt)=den(ispecies,istate)
+              gradnsav(ispecies,istate,iFt)=den(ispecies,istate)*
      &            (ds(ispecies,istate,1)-ds(ispecies,istate,2))
-              tforce(ispecies,istate,1,iy)=ds(ispecies,istate,1)
-              tforce(ispecies,istate,2,iy)=ds(ispecies,istate,2)
+              tforce(ispecies,istate,1,iFt)=ds(ispecies,istate,1)
+              tforce(ispecies,istate,2,iFt)=ds(ispecies,istate,2)
             enddo
           enddo
 
-*   ..recover geometric parameters for the flux surface iy
-          bav=bav_(iy)
-          b2av=b2av_(iy)
-          bi2a=bi2a_(iy)
-          rbt=rbt_(iy)
-          bgradp=bgradp_(iy)
-          dpsidr=dpsidr_(iy)
-          rnq=rnq_(iy)
-          fc=fc_(iy)
-          gclass=gclass_(iy)
+*   ..recover geometric parameters for the flux tube iFt
+          bav=bav_(iFt)
+          b2av=b2av_(iFt)
+          bi2a=bi2a_(iFt)
+          rbt=rbt_(iFt)
+          bgradp=bgradp_(iFt)
+          dpsidr=dpsidr_(iFt)
+          rnq=rnq_(iFt)
+          fc=fc_(iFt)
+          gclass=gclass_(iFt)
           do is2=1, mmx
-            fm(is2)=fm_(is2,iy)
+            fm(is2)=fm_(is2,iFt)
           enddo
-          r2i=r2i_(iy)
-          rho=rho_(iy)
+          r2i=r2i_(iFt)
+          rho=rho_(iFt)
 
 *    ..calculate the diffusion coefficients
           call neodv(ns,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
-     &               epsn,dd(:,:,iy),vvn(:,:,iy),vtn(:,:,iy))
+     &               epsn,dd(:,:,iFt),vvn(:,:,iFt),vtn(:,:,iFt))
 
 *    ..calculate the heat conduction coefficients
           call neochi(ns,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
-     &                epsn,kappa(:,:,iy),chi(:,:,iy),vw(:,:,iy))
+     &                epsn,kappa(:,:,iFt),chi(:,:,iFt),vw(:,:,iFt))
 
 *    ..calculate thermal conductivity and heat pinch from
 *        q(i,j) = - kappa(i,j)*grad.T(i) + vw(i,j)*T(i)
 *               = - kappa(i,j)*grad.T(i) + den(i,j)*vwt(i,j)*T(i)
           do ispecies=0, nsl-1
             do istate=0, ncl(ispecies)-1
-              vwt(ispecies,istate,iy)=vw(ispecies,istate,iy)/
+              vwt(ispecies,istate,iFt)=vw(ispecies,istate,iFt)/
      &                                (den(ispecies,istate)*1e19)
            enddo
           enddo
 
-         else
+        else
           do ispecies=0,nsl-1
             do istate=0,ncl(ispecies)-1
-              dd(ispecies,istate,iy)=0._R8
-              vvn(ispecies,istate,iy)=0._R8
-              chi(ispecies,istate,iy)=0._R8
-              kappa(ispecies,istate,iy)=0._R8
-              vwt(ispecies,istate,iy)=0._R8
-              densav(ispecies,istate,iy)=0._R8
-              gradnsav(ispecies,istate,iy)=0._R8
-              tforce(ispecies,istate,1,iy)=0._R8
-              tforce(ispecies,istate,2,iy)=0._R8
+              dd(ispecies,istate,iFt)=0.0_R8
+              vvn(ispecies,istate,iFt)=0.0_R8
+              chi(ispecies,istate,iFt)=0.0_R8
+              kappa(ispecies,istate,iFt)=0.0_R8
+              vwt(ispecies,istate,iFt)=0.0_R8
+              densav(ispecies,istate,iFt)=0.0_R8
+              gradnsav(ispecies,istate,iFt)=0.0_R8
+              tforce(ispecies,istate,1,iFt)=0.0_R8
+              tforce(ispecies,istate,2,iFt)=0.0_R8
             enddo
           enddo
         endif
@@ -614,115 +557,31 @@
        enddo
 
 *    ..set transport coefficients on boundary by symmetric condition
-       do ispecies=0,nsl-1
+       do iFt=1,mpg%nFt
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (iCv.le.mpg%nCi) cycle
+        iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+        if (mpg%fcCv(iFc,1).eq.iCv) then
+          iCn=mpg%fcCv(iFc,2)
+        else
+          iCn=mpg%fcCv(iFc,1)
+        endif
+        if(.not.mpg%cvOnClosedSurface(iCn)) cycle
+        iFp=mpg%cvFt(iCn)
+
+        do ispecies=0,nsl-1
          do istate=0,ncl(ispecies)-1
-           densav(ispecies,istate,-1)=densav(ispecies,istate,0)
-           gradnsav(ispecies,istate,-1)=gradnsav(ispecies,istate,0)
-           tforce(ispecies,istate,1,-1)=tforce(ispecies,istate,1,0)
-           tforce(ispecies,istate,2,-1)=tforce(ispecies,istate,2,0)
-           dd(ispecies,istate,-1)=dd(ispecies,istate,0)
-           vvn(ispecies,istate,-1)=vvn(ispecies,istate,0)
-           chi(ispecies,istate,-1)=chi(ispecies,istate,0)
-           kappa(ispecies,istate,-1)=kappa(ispecies,istate,0)
-           vwt(ispecies,istate,-1)=vwt(ispecies,istate,0)
+           densav(ispecies,istate,iFt)=densav(ispecies,istate,iFp)
+           gradnsav(ispecies,istate,iFt)=gradnsav(ispecies,istate,iFp)
+           tforce(ispecies,istate,1,iFt)=tforce(ispecies,istate,1,iFp)
+           tforce(ispecies,istate,2,iFt)=tforce(ispecies,istate,2,iFp)
+           dd(ispecies,istate,iFt)=dd(ispecies,istate,iFp)
+           vvn(ispecies,istate,iFt)=vvn(ispecies,istate,iFp)
+           chi(ispecies,istate,iFt)=chi(ispecies,istate,iFp)
+           kappa(ispecies,istate,iFt)=kappa(ispecies,istate,iFp)
+           vwt(ispecies,istate,iFt)=vwt(ispecies,istate,iFp)
          enddo
-       enddo
-
-*    ..calculate the transport coefficients on cell centers
-       do iy=-1,ny
-         do ispecies=0,nsl-1
-           do istate=0,ncl(ispecies)-1
-             cellface(ispecies,istate,iy,1)=dd(ispecies,istate,iy)
-             cellface(ispecies,istate,iy,2)=vvn(ispecies,istate,iy)
-             cellface(ispecies,istate,iy,3)=chi(ispecies,istate,iy)
-             cellface(ispecies,istate,iy,4)=kappa(ispecies,istate,iy)
-             cellface(ispecies,istate,iy,5)=vwt(ispecies,istate,iy)
-           enddo
-         enddo
-       enddo
-
-       do iy=0,ny
-         if (on_closed_surface(ixref,iy)) then
-           if (iy.eq.ny) then
-             prefactor=-hy1(ixref,iy)/(2.0_R8*
-     &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
-             postfactor=1.0_R8+hy1(ixref,iy)/(2.0_R8*
-     &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
-             ishift=bottomiy(ixref,iy)
-            else
-             if (on_closed_surface(topix(ixref,iy),topiy(ixref,iy)))
-     >        then
-               prefactor=0.5_R8
-               postfactor=0.5_R8
-               ishift=iy
-              else
-               prefactor=-hy1(ixref,iy)/(2.0_R8*
-     &                    hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
-               postfactor=1.0_R8+hy1(ixref,iy)/(2.0_R8*
-     &                    hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
-               ishift=bottomiy(ixref,iy)
-             endif
-           endif
-           do ispecies=0, nsl-1
-             do istate=0, ncl(ispecies)-1
-               dd(ispecies,istate,iy)=cellface(ispecies,istate,
-     &           ishift,1)*prefactor+cellface(ispecies,istate,
-     &           topiy(ixref,ishift),1)*postfactor
-               vvn(ispecies,istate,iy)=cellface(ispecies,istate,
-     &           ishift,2)*prefactor+cellface(ispecies,istate,
-     &           topiy(ixref,ishift),2)*postfactor
-               chi(ispecies,istate,iy)=cellface(ispecies,istate,
-     &           ishift,3)*prefactor+cellface(ispecies,istate,
-     &           topiy(ixref,ishift),3)*postfactor
-               kappa(ispecies,istate,iy)=cellface(ispecies,istate,
-     &           ishift,4)*prefactor+cellface(ispecies,istate,
-     &           topiy(ixref,ishift),4)*postfactor
-               vwt(ispecies,istate,iy)=cellface(ispecies,istate,
-     &           ishift,5)*prefactor+cellface(ispecies,istate,
-     &           topiy(ixref,ishift),5)*postfactor
-             enddo
-           enddo
-         endif
-       enddo
-
-*     ..calculate transport coefficients at inner boundary by
-*       a mixture of extrapolation and symmetry
-       prefactor=0.5_R8*
-     &  (hy1(ixref,-1)+hy1(topix(ixref,-1),topiy(ixref,-1)))/
-     &  (hy1(topix(ixref,-1),topiy(ixref,-1))+
-     &   hy1(topix(topix(ixref,-1),topiy(ixref,-1)),
-     &       topiy(topix(ixref,-1),topiy(ixref,-1))))
-       do ispecies=0,nsl-1
-         do istate=0,ncl(ispecies)-1
-           if (on_closed_surface(ixref,-1)) then
-             dd(ispecies,istate,-1)=dd(ispecies,istate,
-     &          topiy(ixref,-1))+prefactor*(dd(ispecies,istate,
-     &          topiy(ixref,-1))-dd(ispecies,istate,
-     &          topiy(topix(ixref,-1),topiy(ixref,-1))))
-             vvn(ispecies,istate,-1)=vvn(ispecies,istate,
-     &          topiy(ixref,-1))+prefactor*(vvn(ispecies,istate,
-     &          topiy(ixref,-1))-vvn(ispecies,istate,
-     &          topiy(topix(ixref,-1),topiy(ixref,-1))))
-             chi(ispecies,istate,-1)=chi(ispecies,istate,
-     &          topiy(ixref,-1))+prefactor*(chi(ispecies,istate,
-     &          topiy(ixref,-1))-chi(ispecies,istate,
-     &          topiy(topix(ixref,-1),topiy(ixref,-1))))
-             kappa(ispecies,istate,-1)=kappa(ispecies,istate,
-     &          topiy(ixref,-1))+prefactor*(kappa(ispecies,istate,
-     &          topiy(ixref,-1))-kappa(ispecies,istate,
-     &          topiy(topix(ixref,-1),topiy(ixref,-1))))
-             vwt(ispecies,istate,-1)=vwt(ispecies,istate,
-     &          topiy(ixref,-1))+prefactor*(vwt(ispecies,istate,
-     &          topiy(ixref,-1))-vwt(ispecies,istate,
-     &          topiy(topix(ixref,-1),topiy(ixref,-1))))
-            else
-             dd(ispecies,istate,-1)=0.0_R8
-             vvn(ispecies,istate,-1)=0.0_R8
-             chi(ispecies,istate,-1)=0.0_R8
-             kappa(ispecies,istate,-1)=0.0_R8
-             vwt(ispecies,istate,-1)=0.0_R8
-           endif
-         enddo
+        enddo
        enddo
 
 *    ..determine the neoclassical contribution to the transport coefficients
@@ -734,54 +593,67 @@
 *       coefficients: dn_neo, chi_neo, vn_neo, and vw_neo
 
 *    ..initialize transport coefficients
-      dn_neo(:,:,:)=0.0_R8
-      chi_neo(:,:,:)=0.0_R8
-      vn_neo(:,:,:)=0.0_R8
-      vw_neo(:,:,:)=0.0_R8
+      dn_neo(:,:)=0.0_R8
+      chi_neo(:,:)=0.0_R8
+      vn_neo(:,:)=0.0_R8
+      vw_neo(:,:)=0.0_R8
 
-      do ix=-1,nx
-       do iy=-1,ny
-        if (on_closed_surface(ix,iy)) then
+      do iCv=1,mpg%nCv
+        if (mpg%cvOnClosedSurface(iCv)) then
+         iFt=mpg%cvFt(iCv)
+         is=0
+         hy1=0.0_R8
+         do i=1,mpg%cvFcP(iCv,2)
+           iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+           iVx1=mpg%fcVx(iFc,1)
+           iVx2=mpg%fcVx(iFc,2)
+           if (mpg%vxFs(iVx1).ne.0.and.mpg%vxFs(iVx2).ne.0.and.
+     &         mpg%vxFs(iVx1).ne.mpg%vxFs(iVx2)) then
+             is=is+1
+             hy1=hy1+geo%fcHt(iFc)*geo%fcQgam(iFc,0)
+          end if
+         end do
+         if(is.gt.0) hy1=hy1/real(is,R8)
          do ispecies=0,nsl-2
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)
-           dn_neo(ix,iy,is)=dd(ispecies,istate,iy)*
-     &                      (hy1(ix,iy)/hy1(ixref,iy))**2
-           vn_neo(ix,iy,is)=vvn(ispecies,istate,iy)*
-     &                      (hy1(ix,iy)/hy1(ixref,iy))
-           dfhcb=chi(ispecies,istate,iy)*
-     &           (hy1(ix,iy)/hy1(ixref,iy))**2
-           chi_neo(ix,iy,is)=dfhcb
-           vw_neo(ix,iy,is)=vwt(ispecies,istate,iy)*
-     &                      (hy1(ix,iy)/hy1(ixref,iy))
+           dn_neo(iCv,is)=dd(ispecies,istate,iFt)*
+     &                      (hy1/flux_width(iFt))**2
+           vn_neo(iCv,is)=vvn(ispecies,istate,iFt)*
+     &                      (hy1/flux_width(iFt))
+           dfhcb=chi(ispecies,istate,iFt)*
+     &                      (hy1/flux_width(iFt))**2
+           chi_neo(iCv,is)=dfhcb
+           vw_neo(iCv,is)=vwt(ispecies,istate,iFt)*
+     &                      (hy1/flux_width(iFt))
           enddo
          enddo
-         dfhce=chi(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))**2
-         if (dfhce.lt.0) then
-           write(*,*) 'dfhce(',ix,',',iy,')=',dfhce
+         dfhce=chi(nsl-1,0,iFt)*(hy1/flux_width(iFt))**2
+         if (dfhce.lt.0.0_R8) then
+           write(*,*) 'dfhce(',iCv,')=',dfhce
          endif
-         dn_neo(ix,iy,ns)=dd(nsl-1,0,iy)*
-     &                    (hy1(ix,iy)/hy1(ixref,iy))**2
-         vn_neo(ix,iy,ns)=vvn(nsl-1,0,iy)*
-     &                    (hy1(ix,iy)/hy1(ixref,iy))
-         chi_neo(ix,iy,ns)=dfhce
-         vw_neo(ix,iy,ns)=vwt(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))
+         dn_neo(iCv,ns)=dd(nsl-1,0,iFt)*
+     &                    (hy1/flux_width(iFt))**2
+         vn_neo(iCv,ns)=vvn(nsl-1,0,iFt)*
+     &                    (hy1/flux_width(iFt))
+         chi_neo(iCv,ns)=dfhce
+         vw_neo(iCv,ns)=vwt(nsl-1,0,iFt)*(hy1/flux_width(iFt))
 
 *   ..set transport to zero in the SOL and divertor regions
-        elseif (.not.on_closed_surface(ix,iy)) then
+        elseif (.not.mpg%cvOnClosedSurface(iCv)) then
          do ispecies=0,nsl-1
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)
-           dn_neo(ix,iy,is)=0.0_R8
-           vn_neo(ix,iy,is)=0.0_R8
-           chi_neo(ix,iy,is)=0.0_R8
-           vw_neo(ix,iy,is)=0.0_R8
+           dn_neo(iCv,is)=0.0_R8
+           vn_neo(iCv,is)=0.0_R8
+           chi_neo(iCv,is)=0.0_R8
+           vw_neo(iCv,is)=0.0_R8
           enddo
          enddo
         endif
 
-       enddo
       enddo
+
 *   ..return
       call subend ()
       return

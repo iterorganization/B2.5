@@ -4,8 +4,8 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=357,nfns=205,nsparameters=32,nelabels=36,
-     *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
+      parameter(nlabels=399,nfns=217,nsparameters=34,nelabels=36,
+     *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
      * dimensions(nlabels), wdimensions(nwlabels), edimensions(nelabels)
@@ -98,9 +98,17 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:357) /
+      data labels(351:399) /
      1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      ,
-     2  'molrad'  , 'ionrad'  /
+     2  'molrad'  , 'ionrad'  , 'tn'      , 'kt'      , 'zt'      ,
+     3  'fcxviskt', 'fcyviskt', 'fnnx32'  , 'fnny32'  , 'fnnx52'  ,
+     4  'fnny52'  , 'fktx'    , 'fkty'    , 'fztx'    , 'fzty'    ,
+     5  'shn'     , 'skt'     , 'szt'     , 'rkt'     , 'rzt'     ,
+     6  'ckt'     , 'czt'     , 'ren'     , 'ctn'     , 'kyn0'    ,
+     7  'dkt'     , 'dzt'     , 'dfhn'    , 'dfkt'    , 'dfzt'    ,
+     8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
+     9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
+     *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -486,14 +494,60 @@
      8    'Thermo-electric classical flux limit factor',
      9    'Thermo-electric coefficient limit factor',
      *    'Eirene atomic species index'/
-      data descriptions(351:357) /
+      data descriptions(351:360) /
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
      4    'Toroidal magnetic flux function (Wb/m)',
      5    'Plasma pressure (Pa)',
      6    'Power loss due to molecule radiation (W)',
-     7    'Power loss due to molecular ion radiation (W)'/
+     7    'Power loss due to molecular ion radiation (W)',
+     8    'Fluid neutral temperature (eV)',
+     9    'E\mU\dB turbulent kinetic energy (eV)',
+     *    'E\mU\dB turbulent enstrophy (s^{-2}?)'/
+      data descriptions(361:370) /
+     1    'Poloidal current due to Reynolds stress of kt-model (A)',
+     2    'Radial current due to RS of kt-model (A)',
+     3    'Convective poloidal fluid neutral flux (s^{-1})',
+     4    'Convective radial fluid neutral flux (s^{-1})',
+     5    'Conductive poloidal fluid neutral flux (s^{-1})',
+     6    'Conductive radial fluid neutral flux (s^{-1})',
+     7    'Poloidal E\mU\dB turbulent energy flux (W)',
+     8    'Radial E\mU\dB turbulent energy flux (W)',
+     9    'Poloidal E\mU\dB turbulent enstrophy flux (s^{-3}?)',
+     *    'Radial E\mU\dB turbulent enstrophy flux (s^{-3}?)'/
+      data descriptions(371:380) /
+     1    'Fluid neutral heat source (W)',
+     2    'E\mU\dB turbulent energy source (W)',
+     3    'E\mU\dB turbulent enstrophy source (s^{-3}?)',
+     4    'RESKT',
+     5    'RESZT',
+     6    'CORKT',
+     7    'CORZT',
+     8    'RESEN',
+     9    'CORTN',
+     *    '\Gv\R_{n}^{0} (m^{2}.s^{-1})'/
+      data descriptions(381:390) /
+     1    'E\mU\dB turbulent energy diffusivity (m^{2}.s^{-1})',
+     2    'E\mU\dB turbulent enstrophy diffusivity (m^{2}.s^{-1})',
+     3    '\mtD\dfhn (W)',
+     4    '\mtD\dfkt (W)',
+     5    '\mtD\dfzt (?)',
+     6    'Boundary fluid neutral heat source (W)',
+     7    'Boundary E\mU\dB turbulent energy source (W)',
+     8    'Boundary E\mU\dB turbulent enstrophy source (s^{-3}?)',
+     9    'Recycling fluid neutral heat source (W)',
+     *    'Recycling E\mU\dB turbulent energy source (W)'/
+      data descriptions(391:399) /
+     1    'Recycling E\mU\dB turbulent enstrophy source (s^{-3}?)',
+     2    'tn at previous time step (eV)',
+     3    'kt at previous time step (eV)',
+     4    'zt at previous time step (s^{-2}?)',
+     5    'Poloidal fluid neutral particle flux (s^{-1})',
+     6    'Radial fluid neutral particle flux (s^{-1})',
+     7    'Poloidal fluid neutral energy flux (W)',
+     8    'Radial fluid neutral energy flux (W)',
+     9    'Flux tube number'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -571,9 +625,17 @@
      8    0,      0,      2,      2,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      2/
-      data dimensions(351:357) /
+      data dimensions(351:399) /
      1    1,      1,      1,      1,      1,
-     2    2,      2/
+     2    2,      2,      1,      1,      1,
+     3    1,      1,      1,      1,      1,
+     4    1,      1,      1,      1,      1,
+     5    1,      1,      1,      1,      1,
+     6    1,      1,      1,      1,      1,
+     7    1,      1,      1,      1,      1,
+     8    1,      1,      1,      1,      1,
+     9    1,      1,      1,      1,      1,
+     *    1,      1,      1,      1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -618,9 +680,11 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:205) /
-     1 'trigmesh', 'earox', 'earoy', 'earow',
-     2 'glsz' /
+      data fns(201:217) /
+     1 'trigmesh', 'earox', 'earoy', 'earow', 'nice' ,
+     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   , 'etal'  ,
+     3 'fcol' , 'bold' , 'rmaj' , 'f.imp'  , 'f.omp' ,
+     4 'f.t'  , 'sumft'/
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',
@@ -802,17 +866,17 @@
      5 'trgtemp' , 'trgwsel' , 'rtrgmmi' , 'rtrgmma' , 'trglt'   ,
      6 'trgle'   , 'trgeq'   , 'trgne'   , 'trggt'   , 'trgge'   ,
      7 'trglog'  , 'trgln'   , 'trgsqrt' , 'trgexp'  , 'trgchs'  ,
-     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgl'    ,
-     9 'trgsurf' , 'kappa_ab', 'kappa'   , 'dkappadt', 'kappap'  , 
-     * 'kappapdt', 'cp'      , 'trgwidth', 'trgdepth', 'trgdup'  , 
-     1 'trgswap' , 'trgover' , 'trgmmin' , 'trgmmax' , 'trgr1'   , 
-     2 'trgr2'   , 'trgz1'   , 'trgz2'   , 'trgnorth', 'trgsouth', 
-     3 'trgwest' , 'trgeast' , 'trgseg'  , 'itrglt'  , 'itrgeq'  , 
-     4 'itrggt'  , 'trgm+'   , 'trgm-'   , 'trgm*'   , 'trgm/'   ,
-     5 'trgvol'  , 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  ,
-     6 'ztrggt'  , 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' ,
-     7 'trglist' , 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  ,
-     8 'itrgge'  , 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
+     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgsurf' ,
+     9 'kappa_ab', 'kappa'   , 'dkappadt', 'kappap'  , 'kappapdt',
+     * 'cp'      , 'trgwidth', 'trgdepth', 'trgdup'  , 'trgswap' ,
+     1 'trgover' , 'trgmmin' , 'trgmmax' , 'trgr1'   , 'trgr2'   ,
+     2 'trgz1'   , 'trgz2'   , 'trgnorth', 'trgsouth', 'trgwest' ,
+     3 'trgeast' , 'trgseg'  , 'itrglt'  , 'itrgeq'  , 'itrggt'  ,
+     4 'trgm+'   , 'trgm-'   , 'trgm*'   , 'trgm/'   , 'trgvol'  ,
+     5 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  , 'ztrggt'  ,
+     6 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' , 'trglist' ,
+     7 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  , 'itrgge'  ,
+     8 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
       data elabels /
      1 'pdena'   , 'pdenm'   , 'pdeni'   , 'edena'   , 'edenm'   ,
      2 'edeni'   , 'vxdena'  , 'vxdenm'  , 'vxdeni'  , 'vydena'  ,
@@ -878,7 +942,7 @@
      4 'uedgegrd', 'expf' , 'outp', 'pdev'    , 'mprt',
      5 'mtab'    , 'amju' , 'adas', 'wallblbl', 'trgblbl',
      6 'glbl'    , 'wlbl' , 'tlbl', 'wslbl'   , 'tranprof',
-     7 'elbl'    , 'eslbl'/
+     7 'elbl'    , 'eslbl', 'xlab', 'ylab'/
       data constant_name /
      1 'me'    ,'mp' , 'ev'  , 'qe'   , 'mu0',
      2 'eps0'  ,'pi' , 'c'   , 'avogr', 'kbolt'/

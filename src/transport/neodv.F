@@ -93,7 +93,6 @@ c     calculate the drift contribution
         enddo
       enddo
 
-
 c     set the epar to zero for the time being
       eparn = 0.
 c     loop over the species 
@@ -130,7 +129,6 @@ c       including the eparr
       call neoart(nsl,ncl,nsdecl,nzdecl,zsp,m,t,den,ds,rho,epsn,
      +            nreg,sigma,nleg,nenergy,ncof,
      +            neogeo,neofrc,ic,eparr,coeff)
-
 
 c     loop over the species 
       do i = 0, nsl-1

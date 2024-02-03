@@ -14,14 +14,16 @@
 !WG_TODO      use b2mod_first_flight
       use b2mod_constants
 !WG_TODO      use b2mod_neutrals_namelist
-!      use b2mod_balance !djm Jan2017
-!     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
-!     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
-!     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
-!     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
-!     &          b2stbr_first_flight_sna0to1,
-!     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
-!     &          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
+     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+#ifdef WG_TODO
+     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
+     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
+     &          b2stbr_first_flight_sna0to1,
+     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+#endif
+     &          balance_netcdf
       use b2mod_subsys
 #ifdef B25_EIRENE
       use b2mod_eirene
@@ -39,9 +41,7 @@
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
 #endif
-#ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
-#endif
+      use b2mod_dimensions
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -79,12 +79,10 @@
       type (B2Average), intent(in) :: st_avg
       logical main_call
 *   ..local variables
-#ifdef WG_TODO
       real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
      &                  smotmp(nCv,0:3,0:ns-1),
      &                  shetmp(nCv,0:3),
      &                  shitmp(nCv,0:3)
-#endif
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -293,7 +291,7 @@
           call read_neutrals_namelist(nx, ny, ns, .true.)
           new_sputter_namelist=.true.
           call xertst (nstrat.le.nstraid,
-     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+     &     'Increase DEF_NSTRA in b2mod_dimensions')
           call write_b2mod_neutrals_namelist
         endif
 #endif
@@ -395,15 +393,13 @@ c   --> better solution wanted here..
        if (switch%b2stbr_neutrals_namelist.eq.1
      &                          .or. switch%use_eirene.ne.0) then
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
-#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
-          snatmp=sna0
-          smotmp=smo0
-          shetmp=she0
-          shitmp=shi0
+          snatmp=st%srw%sna0
+          smotmp=st%srw%smo0
+          shetmp=st%srw%she0
+          shitmp=st%srw%shi0
         endif
-#endif
         call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
      &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
@@ -411,20 +407,18 @@ c   --> better solution wanted here..
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
      &   main_call, new_sputter_namelist, shi0_ff, f_redep)
-#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
-          b2stbr_phys_sna0to1=sna0-snatmp
-          b2stbr_phys_smo0to3=smo0-smotmp
-          b2stbr_phys_she0to3=she0-shetmp
-          b2stbr_phys_shi0to3=shi0-shitmp
+          b2stbr_phys_sna0to1=st%srw%sna0-snatmp
+          b2stbr_phys_smo0to3=st%srw%smo0-smotmp
+          b2stbr_phys_she0to3=st%srw%she0-shetmp
+          b2stbr_phys_shi0to3=st%srw%shi0-shitmp
         endif
-#endif
        else
 #ifdef WG_TODO
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           smotmp=smo0
           shetmp=she0
@@ -433,7 +427,7 @@ c   --> better solution wanted here..
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
      &   na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &   switch%b2stbr_coreregno, coreregn2, output,
      &   switch%neutral_sources_rescale,
@@ -460,7 +454,7 @@ c   --> better solution wanted here..
       if(switch%b2stbr_first_flight.ne.0) then
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           shetmp=she0
           shitmp=shi0
@@ -598,8 +592,9 @@ c   --> better solution wanted here..
 
 *       compute total Eirene sources for averaging
 cwdk only total Eirene source are averaged!
-cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
-cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot,
+cwdk       she0_eir_tot and shi0_eir_tot now available,
+cwdk       might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
         do is = 0, ns-1
           st%srw%sna0_eir_tot(:,is) = sna0_eir(:,0,is) +
@@ -666,17 +661,17 @@ cwdk these are now put back into the constant part of the sources (0-component)
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,0,is)+
      &             sna0_eir(:,1,is)*st%pl%na(:,is)
-              call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
+              call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
             endif
           enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*st%pl%te(:,:)+she0_eir(:,:,2)*st%dv%ne+
      &     she0_eir(:,:,3)*st%dv%ne*st%pl%te
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
+          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*st%pl%ti+shi0_eir(:,:,2)*st%dv%ni(:,:,0)+
      &     shi0_eir(:,:,3)*st%dv%ni(:,:,0)*st%pl%ti
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
+          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
         do ia = 1, nnatmi
@@ -1119,9 +1114,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
-#ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
-#endif
+      use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: ns
@@ -1221,7 +1214,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 
       call read_neutrals_namelist(ns, mpg, switch, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
-     &   'Increase DEF_NSTRA in DIMENSIONS.F')
+     &   'Increase DEF_NSTRA in b2mod_dimensions')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
       if(neutrals_time_mod.gt.0.0_R8) then
@@ -1242,7 +1235,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
         call read_neutrals_namelist(ns, mpg, switch, .true.)
         new_sputter_namelist=.true.
         call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
+     &       'Increase DEF_NSTRA in b2mod_dimensions')
         call write_b2mod_neutrals_namelist
         if(neutrals_time_mod.gt.0.0_R8) then
           catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch

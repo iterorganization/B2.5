@@ -7,17 +7,13 @@ c
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
       implicit none
-#ifdef WG_TODO
-      real (kind=R8) ::
-     *   x1,x2,y1,y2
-#endif
       integer lnblnk,iFc
       character*500 plotlabel
       external lnblnk
 
       if(b2plot_debug.ge.7) write(*,*) 'typeofplot = ',typeofplot
 
-      if(typeofplot .ge. 2) then
+      if(typeofplot .ge. 2 .and. mpg%isClassicalGrid .eq. 1) then
         if(b2plot_debug.ge.7) write(*,*) 'computational domain'
         plotlabel='Computational mesh'
         call init_page(plotlabel(1:lnblnk(plotlabel)),
@@ -29,22 +25,20 @@ c
           call gsplci(mcol)
 #endif
         endif
-#ifdef WG_TODO
-        do ix=-1,nx+1
-          x1=ix-0.5_R8
-          x2=ix-0.5_R8
-          y1=-1-0.5_R8
-          y2=ny+0.5_R8
-          call lined_d(x1,y1,x2,y2)
+        do iFc=1,mpg%nFc
+          if(fcxIx(iFc).ne.-2.and.fcxIy(iFc).ne.-2) then
+            call lined_d(real(fcxIx(iFc),R8)-0.5_R8,
+     &                   real(fcxIy(iFc),R8)-0.5_R8,
+     &                   real(fcxIx(iFc),R8)-0.5_R8,
+     &                   real(fcxIy(iFc),R8)+0.5_R8)
+          endif
+          if(fcyIx(iFc).ne.-2.and.fcyIy(iFc).ne.-2) then
+            call lined_d(real(fcyIx(iFc),R8)-0.5_R8,
+     &                   real(fcyIy(iFc),R8)-0.5_R8,
+     &                   real(fcyIx(iFc),R8)+0.5_R8,
+     &                   real(fcyIy(iFc),R8)-0.5_R8)
+          endif
         enddo
-        do iy=-1,ny+1
-          x1=-1-0.5_R8
-          x2=nx+0.5_R8
-          y1=iy-0.5_R8
-          y2=iy-0.5_R8
-          call lined_d(x1,y1,x2,y2)
-        enddo
-#endif
         if(mcol .gt. 1) then
 #ifndef PLPLOT
           call lastd

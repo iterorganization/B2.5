@@ -7,8 +7,8 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : fmo_flua, fmo_cvsa, balance_netcdf
+      use b2mod_balance                                                         !djm Jan2017
+     & , only : fmo_flua, fmo_cvsa, fmo_hybr, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -69,6 +69,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
      *   flf(nFc,0:1), flv(nFc,0:1),
      *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
       real (kind=R8), parameter :: eps = 1.0e-60_R8
+      real (kind=R8) :: ubv(nVx), dub(nFc,0:1)
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, calcflow, calccoef
@@ -104,10 +105,12 @@ cwdk store effective viscosity, for use in viscous heating
       call diff(nCv, nFc, nVx, 0, geo, mpg, ub, wrkv, wrkf)
       cvsb_eff  = -flv/(wrkf + eps)
 
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        fmo_cvsa(:,:,isb)=flv
-!WG_TODO        fmo_flua(:,:,isb)=flf
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        fmo_flua(:,:,isb)=flf
+        call diff(nCv,nFc,nVx,0,geo,mpg,ub,ubv,dub)
+        fmo_cvsa(:,:,isb)=-cvsb*dub
+        fmo_hybr(:,:,isb)=fmb-fmo_cvsa(:,:,isb)
+      endif
 
       if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
        write (chns,'(i3.3)') isb

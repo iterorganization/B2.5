@@ -1,6 +1,7 @@
       module b2mod_b2cmpa
       use b2mod_types
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
+      implicit none
 *     (/b2cmpa/ contains basic physics parameters)
 * DPC: constant declaration now in b2mod_constants
       integer nsdecl
@@ -130,7 +131,7 @@ c     It is not allowed to bundle neutral and charged states together.
       implicit none
       integer, intent(in) :: is, js
       lnext = zamax(is).lt.zamin(js).and.
-     & nint(zn(is)).eq.nint(zn(js)).and.
+     &  nint(zn(is)).eq.nint(zn(js)).and.
      &  abs(am(is)-am(js)).lt.amtol.and.is.ne.js
       return
       end function lnext

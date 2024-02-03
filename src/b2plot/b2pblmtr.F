@@ -15,8 +15,8 @@ c*** cell count starts from the target PFR corner
 c-----------------------------------------------------------------------
       use b2mod_types
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_b2cmpa
+      use b2mod_b2plot
       use b2mod_elements
       use b2mod_constants
       use b2mod_neutrals_namelist
@@ -47,8 +47,8 @@ c
       allocate(hlp_al(nspecies),hlp_rad(nspecies))
       if (nmoli.gt.0) allocate(hlp_mn(0:nmoli-1))
       if (nioni.gt.0) allocate(hlp_in(0:nioni-1))
-      allocate(hlp_ni(0:ns-1))
-      allocate(hlp_is(0:ns-1))
+      allocate(hlp_ni(0:st%ns-1))
+      allocate(hlp_is(0:st%ns-1))
       do j=1,nspecies !{
         hlp_al(j)='rad_'//elements(nfluids(j))
         if(nfluids(j).eq.1) then !{
@@ -59,7 +59,7 @@ c
           end if !}
         end if !}
       end do !}
-      do is=0,ns-1 !{
+      do is=0,st%ns-1 !{
         call species(is,species_name,.false.)
         hlp_is(is)='n_'//species_name(2:9)
       enddo !}
@@ -91,45 +91,45 @@ c
       if (nmoli.gt.0 .and. nioni.gt.0) then
         write(hlp_frmr,'(a,i3,a,i2,a,i2,a,i3,a)')
      ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
-     .    ns,'(1x,a10,1x),',nmoli,'(1x,a9,2x),',
+     .    st%ns,'(1x,a10,1x),',nmoli,'(1x,a9,2x),',
      ,    nioni,'(1x,a9,2x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
         write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
-     ,   (hlp_is(i),i=0,ns-1),(hlp_mn(i),i=0,nmoli-1),
+     ,   (hlp_is(i),i=0,st%ns-1),(hlp_mn(i),i=0,nmoli-1),
      ,   (hlp_in(i),i=0,nioni-1),
      ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
       else if (nmoli.gt.0 .and. nioni.eq.0) then
         write(hlp_frmr,'(a,i3,a,i2,a,i3,a)')
      ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
-     .    ns,'(1x,a10,1x),',
+     .    st%ns,'(1x,a10,1x),',
      ,    nmoli,'(1x,a9,2x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
         write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
-     ,   (hlp_is(i),i=0,ns-1),(hlp_mn(i),i=0,nmoli-1),
+     ,   (hlp_is(i),i=0,st%ns-1),(hlp_mn(i),i=0,nmoli-1),
      ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
       else if (nmoli.eq.0 .and. nioni.gt.0) then
         write(hlp_frmr,'(a,i3,a,i2,a,i3,a)')
      ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
-     .    ns,'(1x,a10,1x),',
+     .    st%ns,'(1x,a10,1x),',
      ,    nioni,'(1x,a9,2x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
         write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
-     ,   (hlp_is(i),i=0,ns-1),
+     ,   (hlp_is(i),i=0,st%ns-1),
      ,   (hlp_in(i),i=0,nioni-1),
      ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
       else if (nmoli.eq.0 .and. nioni.eq.0) then
         write(hlp_frmr,'(a,i3,a,i3,a)')
      ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
-     .    ns,'(1x,a10,1x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
+     .    st%ns,'(1x,a10,1x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
         write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
-     ,   (hlp_is(i),i=0,ns-1),
+     ,   (hlp_is(i),i=0,st%ns-1),
      ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
       end if
       write(hlp_frmr,'(a,i3,a)')
-     , '(1x,1p,i6,',7+ns+nmoli+nioni+nspecies,'e12.4)'
+     , '(1x,1p,i6,',7+st%ns+nmoli+nioni+nspecies,'e12.4)'
 
       do iCv=1,mpg%nCi !{
         hlp_brm=0.0_R8
         hlp_rad=0.0_R8
         hlp_ni=0.0_R8
-        do is=0,ns-1
+        do is=0,st%ns-1
           i=b2espcr(is)
           hlp_brm=hlp_brm+st%srw%rqbrm(iCv,is)
           hlp_rad(i)=hlp_rad(i)+st%srw%rqrad(iCv,is)
@@ -142,7 +142,6 @@ c
           i=eb2atcr(is)
           hlp_ni(i)=hlp_ni(i)+dab2(iCv,is,1)
         end do !}
-#ifdef WG_TODO
         do is=1,nmoli !{
           i=lmolscl(is)
           if (i.eq.0) cycle
@@ -153,7 +152,6 @@ c
           if (i.eq.0) cycle
           hlp_rad(i)=hlp_rad(i)-eionrad(iCv,is,0)
         end do !}
-#endif
         hlp=hlp_brm
         do i=1,nspecies !{
           hlp=hlp+hlp_rad(i)
@@ -162,7 +160,7 @@ c
           write (lun,hlp_frmr) iCv,
      ,     gm%cvX(iCv),gm%cvY(iCv),st%pl%te(iCv)/ev,st%pl%ti(iCv)/ev,
      ,     st%dv%ne(iCv),
-     ,    (hlp_ni(is),is=0,ns-1),(dmb2(iCv,is,1),is=1,nmoli),
+     ,    (hlp_ni(is),is=0,st%ns-1),(dmb2(iCv,is,1),is=1,nmoli),
      ,    (dib2(iCv,is,1),is=1,nioni),
      ,     1.0e-6_R8*hlp/gm%cvVol(iCv),
      ,    (1.0e-6_R8*hlp_rad(i)/gm%cvVol(iCv),i=1,nspecies),
@@ -171,7 +169,7 @@ c
           write (lun,hlp_frmr) iCv,
      ,     gm%cvX(iCv),gm%cvY(iCv),st%pl%te(iCv)/ev,st%pl%ti(iCv)/ev,
      ,     st%dv%ne(iCv),
-     ,    (hlp_ni(is),is=0,ns-1),(dmb2(iCv,is,1),is=1,nmoli),
+     ,    (hlp_ni(is),is=0,st%ns-1),(dmb2(iCv,is,1),is=1,nmoli),
      ,     1.0e-6_R8*hlp/gm%cvVol(iCv),
      ,    (1.0e-6_R8*hlp_rad(i)/gm%cvVol(iCv),i=1,nspecies),
      ,     1.0e-6_R8*hlp_brm/gm%cvVol(iCv)
@@ -179,7 +177,7 @@ c
           write (lun,hlp_frmr) iCv,
      ,     gm%cvX(iCv),gm%cvY(iCv),st%pl%te(iCv)/ev,st%pl%ti(iCv)/ev,
      ,     st%dv%ne(iCv),
-     ,    (hlp_ni(is),is=0,ns-1),
+     ,    (hlp_ni(is),is=0,st%ns-1),
      ,    (dib2(iCv,is,1),is=1,nioni),
      ,     1.0e-6_R8*hlp/gm%cvVol(iCv),
      ,    (1.0e-6_R8*hlp_rad(i)/gm%cvVol(iCv),i=1,nspecies),
@@ -188,7 +186,7 @@ c
           write (lun,hlp_frmr) iCv,
      ,     gm%cvX(iCv),gm%cvY(iCv),st%pl%te(iCv)/ev,st%pl%ti(iCv)/ev,
      ,     st%dv%ne(iCv),
-     ,    (hlp_ni(is),is=0,ns-1),
+     ,    (hlp_ni(is),is=0,st%ns-1),
      ,     1.0e-6_R8*hlp/gm%cvVol(iCv),
      ,    (1.0e-6_R8*hlp_rad(i)/gm%cvVol(iCv),i=1,nspecies),
      ,     1.0e-6_R8*hlp_brm/gm%cvVol(iCv)

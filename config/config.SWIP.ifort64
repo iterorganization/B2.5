@@ -62,9 +62,15 @@ ifeq (${FC},mpif90)
   COMPILER_REDEF = yes
   ifdef IMAS_VERSION
     ifndef SOLPS_CPP
-      UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-      UAL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
-      UAL_MICRO_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+      ifdef AL_VERSION
+        AL_MAJOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f1 )
+        AL_MINOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f2 )
+        AL_MICRO_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+      else
+        AL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+        AL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
+        AL_MICRO_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+      endif
       IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
       IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
       IMAS_MICRO_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f3 )
@@ -72,7 +78,9 @@ ifeq (${FC},mpif90)
       GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
       GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
     endif
-    IMAS_PKG_LIST = imas-gfortran
+    ifeq ($(shell test ${AL_MAJOR_VERSION} -lt 5; echo $$?),0)
+      IMAS_PKG_LIST = imas-gfortran
+    endif
     ifeq ($(shell test ${IMAS_MAJOR_VERSION} -lt 4; echo $$?),0)
       ifeq ($(shell test ${IMAS_MINOR_VERSION} -lt 17; echo $$?),0)
         ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)

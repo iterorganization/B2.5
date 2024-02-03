@@ -1,10 +1,7 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm,
      &                           pl, dv)
       use b2mod_types
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_switches
-      use b2mod_geo
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
@@ -61,8 +58,8 @@
      &  vadiac(nCv,0:1,0:ns-1)
       real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:ns-1),
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
-      integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2,
-     &           iv1, iv2, icp
+      integer :: ic, iFc, ian, ien, ntrgdat, ifl, i, istra, ic2,
+     &           iv1, iv2, iCp
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww,
      1 pvxs, pvys, puxs, puys
       real (kind=R8) :: wght(nFc,2)
@@ -213,7 +210,7 @@ c Initialization
      .                        nafsqalf(1:nFc,1,is)
           do ic = mpg%nCi+1, nCv   ! loop over all guard cells
             iFc = mpg%cvFc(mpg%cvFcP(ic,1))
-            icp = mpg%fcCv(ifc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
+            iCp = mpg%fcCv(iFc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
             fna_tmp(iFc,is) = dv%fna(iFc,1,is)/
      .                       (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
      .                        pl%na(ic,is)+1.E-30_R8)

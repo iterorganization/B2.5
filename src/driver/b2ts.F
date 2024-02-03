@@ -144,8 +144,8 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
       call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from b2fparam file
-      call cfruin (ninp(2), 1, idum(2), 'ns')
-      call xertst (idum(2).ne.ns,
+      call cfruin (ninp(2),1,idum,'ns')
+      call xertst (idum(0).eq.ns,
      &  'faulty input ns from physics parameters file')
 *   ..call principal driver routine
       call alloc_mapping (mpg)

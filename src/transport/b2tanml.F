@@ -48,8 +48,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tanml')
-*   ..test nCv, nFc
+*   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (1.le.ns, 'faulty argument ns')
 
       if(switch%no_current.ne.0.or.
      &   switch%fch_anomalous.eq.0.0e0_R8) then                         !srv 27.02.13

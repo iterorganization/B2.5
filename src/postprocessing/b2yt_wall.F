@@ -7,7 +7,7 @@
       use b2mod_layer
       use b2mod_b2cmpb
       use b2mod_subsys
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
       implicit none
       integer nncut1, nx1, ny1, nncut, nx, ny, nlim, nsts
       integer ix, iy, ixn, iyn, is, ibnd, ibnd1, idir, ireg,
@@ -271,7 +271,7 @@ cxpb lb and ub are lower and upper interval bounds
       use b2mod_b2cmpa
       use b2mod_sputter
       use b2mod_subsys
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
       implicit none
 
       integer ns, ns1, natm, natm1, nmol, nmol1, nion, nion1

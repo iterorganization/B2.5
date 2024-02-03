@@ -1,4 +1,7 @@
-      subroutine b2co_tally_cdf(ns, mpg, tim)
+      subroutine b2co_tally_cdf
+#ifndef NO_CDF
+     . (ns, mpg, tim)
+#endif
       use b2mod_types
       use b2mod_geo
       use b2mod_tallies
@@ -7,11 +10,9 @@
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
-#endif
       integer ns
       type (mapping), intent(in) :: mpg
       real (kind=R8) :: tim
-#ifndef NO_CDF
 #ifndef NO_GETENV
       integer lenval, ierror
 #ifndef USE_PXFGETENV

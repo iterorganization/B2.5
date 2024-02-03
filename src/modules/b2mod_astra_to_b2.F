@@ -42,14 +42,16 @@
        real (kind=R8), allocatable, save :: inv_hi_astra(:)   ! inverse Kaveeva ions heat conduct.  [s/m**2]
 
        real (kind=R8), allocatable, save :: bbaverage2(:)     ! 
-       real (kind=R8), allocatable, save :: sheNB_astra(:,:,:)
-       real (kind=R8), allocatable, save :: shiNB_astra(:,:,:)
+       real (kind=R8), allocatable, save :: sheNB_astra(:,:)
+       real (kind=R8), allocatable, save :: shiNB_astra(:,:)
 
        contains
 
-       subroutine alloc_b2mod_astra_to_b2(nxd, nyd)
+       subroutine alloc_b2mod_astra_to_b2(mpg, nxd, nyd)
+       use b2us_map
        implicit none
-       integer nxd, nyd
+       type(mapping), intent(in) :: mpg
+       integer, intent(in) :: nxd, nyd
 
        allocate (Rmaj_astra(-1:nyd))
        allocate (Rmajc_astra(-1:nyd))
@@ -78,8 +80,8 @@
        allocate (PiNB_astra(-1:nyd))
        allocate (bbaverage2(-1:nyd))
        allocate (inv_hi_astra(-1:nyd))
-       allocate (sheNB_astra(-1:nxd,-1:nyd,0:3))
-       allocate (shiNB_astra(-1:nxd,-1:nyd,0:3))
+       allocate (sheNB_astra(mpg%nCv,0:3))
+       allocate (shiNB_astra(mpg%nCv,0:3))
 
        Rmaj_astra     = 0.0_R8
        Rmajc_astra    = 0.0_R8

@@ -1,9 +1,11 @@
-      subroutine cdfmovie(ncid,nCv,ns,geo,state,switch)
+      subroutine cdfmovie
+#ifndef NO_CDF
+     . (ncid,nCv,ns,geo,state,switch)
       use b2mod_types
       use b2mod_time
       use b2us_geo
       use b2us_plasma
-#ifndef NO_CDF
+      use b2mod_dimensions
       use b2mod_movies
       use b2mod_constants
 #ifdef B25_EIRENE
@@ -14,7 +16,6 @@
 #else
       use b2mod_eirdiag
 #endif
-#endif
       use b2mod_switches
       use b2mod_subsys
       implicit none
@@ -22,7 +23,6 @@
       type (geometry), intent(in) :: geo
       type (B2State), intent(in) :: state
       type (switches), intent(in) :: switch
-#ifndef NO_CDF
 #     include <netcdf.inc>
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
@@ -127,13 +127,6 @@
 * ..return
       ncall = ncall+1
       call subend ()
-#else
-#     include <DIMENSIONS.F>
-*  ..procedures
-      external xertst
-
-      call xertst (0.lt.nCv, 'faulty input nCv')
-      call xertst (0.lt.ns.and.ns.le.DEF_NSD, 'faulty input ns')
 #endif
       return
       end subroutine cdfmovie
