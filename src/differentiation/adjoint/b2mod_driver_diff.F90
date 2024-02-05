@@ -5452,6 +5452,7 @@ CONTAINS
     INTRINSIC CPU_TIME
     EXTERNAL EPOCH_SECONDS
     REAL(kind=r8) :: EPOCH_SECONDS
+    INTRINSIC MOD
     INTRINSIC REAL
     INTRINSIC MAX
     INTRINSIC MIN
@@ -5573,6 +5574,34 @@ CONTAINS
       IF (no_solve .LE. 0) tim = tim + dtim
       WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, &
 &     ' TIME ', tim, ' NTIM ', ntim, ' DTIM ', dtim
+      lwti = .false.
+      lwav = .false.
+      IF (b2time .GT. 0) THEN
+        IF (MOD(itim, b2time) .EQ. 0 .OR. itim .EQ. 1) lwti = .true.
+      END IF
+      IF (ntim_batch .GT. 0) THEN
+        IF (MOD(itim, ntim_batch) .EQ. 0) lwav = .true.
+      END IF
+      CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, ns, geo, mpg&
+&           , switch, state%pl, state%dv, state%co, ismain, ismain0, &
+&           lwti, lwav, .true.)
+      IF (ibatch_av_all .GT. 0 .AND. lwav) THEN
+        edition_batch = edition_batch + 1
+        WRITE(batch_name, '(a18,i4.4)') 'batch_av/batch_av.', &
+&       edition_batch
+        CALL BATCH_AV_ALL_SAVE(batch_name, ncv, ns)
+        WRITE(*, *) 'Saved ', batch_name
+      END IF
+      IF (iav_run .GT. 0 .AND. ntim_run .GT. 0) THEN
+        lrav = MOD(itim, ntim_run) .EQ. 0
+        WRITE(*, *) ' itim,ntim_batch,lrav ', itim, ntim_run, lrav
+        IF (lrav) THEN
+          edition_run = edition_run + 1
+          WRITE(run_av_name, '(a14,i4.4)') 'run_av/run_av.', edition_run
+          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false.)
+          WRITE(*, *) 'Saved ', run_av_name
+        END IF
+      END IF
 !srv 18.05.09 13.04.11
       INQUIRE(file='_quit', exist=quitexist_) 
       INQUIRE(file='.quit', exist=quitexist) 
@@ -8873,6 +8902,7 @@ CONTAINS
     INTRINSIC CPU_TIME
     EXTERNAL EPOCH_SECONDS
     REAL(kind=r8) :: EPOCH_SECONDS
+    INTRINSIC MOD
     INTRINSIC REAL
     INTRINSIC MAX
     INTRINSIC MIN
@@ -8991,6 +9021,34 @@ CONTAINS
       IF (no_solve .LE. 0) tim = tim + dtim
       WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, &
 &     ' TIME ', tim, ' NTIM ', ntim, ' DTIM ', dtim
+      lwti = .false.
+      lwav = .false.
+      IF (b2time .GT. 0) THEN
+        IF (MOD(itim, b2time) .EQ. 0 .OR. itim .EQ. 1) lwti = .true.
+      END IF
+      IF (ntim_batch .GT. 0) THEN
+        IF (MOD(itim, ntim_batch) .EQ. 0) lwav = .true.
+      END IF
+      CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, ns, geo, mpg&
+&           , switch, state%pl, state%dv, state%co, ismain, ismain0, &
+&           lwti, lwav, .true.)
+      IF (ibatch_av_all .GT. 0 .AND. lwav) THEN
+        edition_batch = edition_batch + 1
+        WRITE(batch_name, '(a18,i4.4)') 'batch_av/batch_av.', &
+&       edition_batch
+        CALL BATCH_AV_ALL_SAVE(batch_name, ncv, ns)
+        WRITE(*, *) 'Saved ', batch_name
+      END IF
+      IF (iav_run .GT. 0 .AND. ntim_run .GT. 0) THEN
+        lrav = MOD(itim, ntim_run) .EQ. 0
+        WRITE(*, *) ' itim,ntim_batch,lrav ', itim, ntim_run, lrav
+        IF (lrav) THEN
+          edition_run = edition_run + 1
+          WRITE(run_av_name, '(a14,i4.4)') 'run_av/run_av.', edition_run
+          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false.)
+          WRITE(*, *) 'Saved ', run_av_name
+        END IF
+      END IF
 !srv 18.05.09 13.04.11
       INQUIRE(file='_quit', exist=quitexist_) 
       INQUIRE(file='.quit', exist=quitexist) 
