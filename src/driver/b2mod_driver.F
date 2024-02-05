@@ -2268,6 +2268,7 @@ c new CDF movie option
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
 #endif
+#endif
         lwti = .false.
         lwav = .false.
         if(b2time.gt.0) then
@@ -2297,6 +2298,7 @@ c new CDF movie option
              write(*,*) 'Saved ',run_av_name
           end if
         end if
+#ifndef FIXED_POINT
 #ifdef WG_TODO
 *    ..tallies
         if(tally.gt.0) then
