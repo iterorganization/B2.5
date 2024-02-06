@@ -8,8 +8,8 @@
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_balance !djm Jan2017
-     1 , only : b2srdt_sna0to1, balance_netcdf
+!WG_TODO      use b2mod_balance !djm Jan2017
+!WG_TODO     1 , only : b2srdt_sna0to1, balance_netcdf
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
@@ -17,7 +17,6 @@
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      logical(1) :: lout                                             !srv 16.07.10
       integer nCv, nCi, isb                                          !srv 01.07.08
       real (kind=R8) ::
      *  dtim, cvVol(nCv), nap(nCv)
