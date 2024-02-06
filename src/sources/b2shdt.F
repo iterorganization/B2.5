@@ -9,8 +9,8 @@
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_balance !djm Jan2017
-     1 , only : b2srdt_she0to3, b2srdt_shi0to3, balance_netcdf
+!WG_TODO      use b2mod_balance !djm Jan2017
+!WG_TODO     1 , only : b2srdt_she0to3, b2srdt_shi0to3, balance_netcdf
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
