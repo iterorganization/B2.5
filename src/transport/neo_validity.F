@@ -364,7 +364,7 @@ c     conversion of constants to CGS units
      3 safetyfactor(mpg%nFt),
      2 transport(mpg%nCv,0:ns-1)
 
-      integer iCv,iFt,i,is,icmin,icmax,is_fuel
+      integer iCv,iFt,i,is,icmax,is_fuel
       real (kind=R8) :: crmin,crmax,czmin,czmax,
      2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
@@ -380,7 +380,6 @@ c     conversion of constants to CGS units
         iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
         if(.not.mpg%cvOnClosedSurface(iCv)) cycle
         if (b2plot_debug.ge.8) write(*,*) 'iFt: ',iFt
-        icmin=1
         icmax=1
         crmin=geo%cvX(iCv)
         crmax=crmin
@@ -388,7 +387,6 @@ c     conversion of constants to CGS units
         czmax=czmin
         do i=2,mpg%ftCvP(iFt,2)
           iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
-          if(geo%cvX(iCv).lt.crmin) icmin=iCv
           if(geo%cvX(iCv).gt.crmax) icmax=iCv
           crmin=min(crmin,geo%cvX(iCv))
           crmax=max(crmax,geo%cvX(iCv))

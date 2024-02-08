@@ -129,11 +129,6 @@
      &  snasm(nCv,0:1,0:ns-1),                                           !xpb
      &  smosm(nCv,0:3,0:ns-1),                                           !xpb
      &  shesm(nCv,0:3), shism(nCv,0:3)!WG_TODO,                          !xpb
-!WG_TODO     &  snadt(-1:nx,-1:ny,0:1,0:ns-1),                           !xpb
-!WG_TODO     &  smodt(-1:nx,-1:ny,0:3,0:ns-1),                           !xpb
-!WG_TODO     &  shedt(-1:nx,-1:ny,0:3), shidt(-1:nx,-1:ny,0:3),          !xpb
-!WG_TODO     &  schdt(-1:nx,-1:ny,0:3),                                  !xpb
-!WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 *   ..procedures
       real (kind=R8) ::
      *  b2sasum, samax
@@ -176,6 +171,9 @@
        if(boundary_sources.ne.0) call read_boundary_sources(nCv, ns)    !srv 26.02.18 }
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
+       if (switch%b2mndt_style.eq.2) then
+         write(*,*) 'Running in time-dependent mode'
+       endif
        if (switch%b2stbc_boundary_namelist.ge.1) then
 !WG_TODO         call initialize_b2mod_boundary(ns,mpg,tim)
        else
@@ -241,12 +239,12 @@ cwdk    For unstructured solver, start with simple reading of start-values
       call sfill (nCv*4*ns, 0.0_R8, smosm, 1)
       call sfill (nCv*4, 0.0_R8, shesm, 1)
       call sfill (nCv*4, 0.0_R8, shism, 1)
-!WG_TODO      call sfill (n2*2*ns, 0.0_R8, snadt, 1)
-!WG_TODO      call sfill (n2*4*ns, 0.0_R8, smodt, 1)
-!WG_TODO      call sfill (n2*4, 0.0_R8, shedt, 1)
-!WG_TODO      call sfill (n2*4, 0.0_R8, shidt, 1)
-!WG_TODO      call sfill (n2*4, 0.0_R8, schdt, 1)
-!WG_TODO      call sfill (n2*2, 0.0_R8, snedt, 1)
+      call sfill (nCv*2*ns, 0.0_R8, st%sr%snadt, 1)
+      call sfill (nCv*4*ns, 0.0_R8, st%sr%smodt, 1)
+      call sfill (nCv*4, 0.0_R8, st%sr%shedt, 1)
+      call sfill (nCv*4, 0.0_R8, st%sr%shidt, 1)
+      call sfill (nCv*4, 0.0_R8, st%sr%shndt, 1)
+
 *   ..compute ni0
       call b2xpni (nCv, ns, st%psnc%na, st%psnc%ni)
       call b2xpnn (nCv, ns, st%psnc%na, st%psnc%nn)
@@ -340,23 +338,29 @@ ctmp.dpc
 !WG_TODO          call b2srsm (nx, ny, ns,
 !WG_TODO     &     dtim, vol, na, ua, te, ti, ne, ni,
 !WG_TODO     &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
+*     ..stabilise the source coefficients                                !srv 07.07.21 {
+          if(switch%b2mndt_style.eq.2 .and. use_b2srst.eq.1)
+     &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,            !srv 01.07.08
+     &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
+     &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
+*       (smq is inherently stable.)                                      !srv 07.07.21 }
 *     ..include contributions due to timestep
-          call b2srdt (nCv, ns, dtim, switch, geo, mpg,
-     &     st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti,
-     &     st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%nn,
-     &     st%psnc%kinrgy,
-     &     st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
-     &     st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
-     &     st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
+          if (switch%b2mndt_style.ne.2) then
+*     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)
+            call b2srdt (nCv, ns, dtim, switch, geo, mpg,
+     &       st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti,
+     &       st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%nn,
+     &       st%psnc%kinrgy,
+     &       st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
+     &       st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
+     &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
 *   ..add to previous contributions
-!WG_TODO This is already done in b2srdt
-!WG_TODO Still need *dt-arrays for output?
-!WG_TODO          call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
-!WG_TODO          call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
-!WG_TODO          call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
-!WG_TODO          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
-!WG_TODO          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
-!WG_TODO          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
+            call b2saxpy (nCv*2*ns, 1.0_R8, st%sr%snadt,1, st%sr%sna,1)
+            call b2saxpy (nCv*4*ns, 1.0_R8, st%sr%smodt,1, st%sr%smo,1)
+            call b2saxpy (nCv*4, 1.0_R8, st%sr%shedt,1, st%sr%she,1)
+            call b2saxpy (nCv*4, 1.0_R8, st%sr%shidt,1, st%sr%shi,1)
+            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
+          endif
           if(equation_sources.ne.0) then                                 !srv 26.02.18 {
             do iCv = 1,nCv
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
@@ -372,7 +376,7 @@ ctmp.dpc
             enddo
           endif                                                          !srv 26.02.18 }
 *     ..stabilise the source coefficients
-          if(use_b2srst.eq.1)
+          if(switch%b2mndt_style.ne.2.and.use_b2srst.eq.1)
      &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,            !srv 01.07.08
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
      &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
@@ -384,9 +388,17 @@ ctmp.dpc
 #ifdef WG_TODO
             ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
 #endif
-            call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
-     &       nscxmax, ismain, ismain0, dtim, switch,
-     &       geo, mpg, st, st_ext, st_avg, ier0)
+            if (switch%b2mndt_style.eq.1) then
+              call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
+     &         nscxmax, ismain, ismain0, dtim, switch,
+     &         geo, mpg, st, st_ext, st_avg, ier0)
+            elseif (switch%b2mndt_style.eq.2) then
+              call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
+     &         nscxmax, ismain, ismain0, dtim, switch,
+     &         geo, mpg, st, st_ext, st_avg, ier0)
+            else
+              call xerrab('b2mndt_style should be 1 or 2')
+            endif
             flush(6)
 #ifdef WG_TODO
 ! ier0 seems not appearing anymore in b2news. Additionally, irreducible loops should be avoided for Adjoint AD
@@ -523,8 +535,9 @@ ctmp.dpc
             call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &       ncall_b2news_, ismain, solving, solveee, solveei,           !srv 22.05.18
      &       solveen, solveet, solvepo, solvemo, solvekt, solvezt,
-     &       switch%b2mndt_rxf,
-     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)
+     &       switch%b2mndt_rxf, dtim,
+     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw,
+     &       st%psnc, st%psnl, st_ext, ier0)
           endif
 *     ..end intermediate iteration
           istg(1) = istg(1)+1

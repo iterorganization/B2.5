@@ -17,7 +17,8 @@
      &  e_na1, e_te1, e_ti1, e_ua1, e_po1,
      &  sna1_mean, sne1_mean, smo1_mean,
      &  she1_mean, shi1_mean, sch1_mean,
-     &  e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+     &  e_sna1, e_sne1, e_smo1,
+     &  e_she1, e_shi1, e_sch1)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_version
@@ -93,16 +94,20 @@
 *
 *     nx, ny, ns, nx1, ny1 - integers, input.
 *     na_mean, te_mean, ti_mean, ua_mean, po_mean,
-*     sna_mean, sne_mean, smo_mean, she_mean, shi_mean, sch_mean,
+*     sna_mean, sne_mean, smo_mean, she_mean,
+*     shi_mean, sch_mean,
 *     e_na, e_te, e_ti, e_ua, e_po,
-*     e_sna, e_sne, e_smo, e_she, e_shi, e_sch - real*8 arrays, input.
+*     e_sna, e_sne, e_smo,
+*     e_she, e_shi, e_sch - real*8 arrays, input.
 *     See the calling routine for description.
 *
 *     ne1, na1, ua1, uadia1, te1, ti1, po1 - real*8 arrays, output.
 *     na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
-*     sna1_mean, sne1_mean, smo1_mean, she1_mean, shi1_mean, sch1_mean,
+*     sna1_mean, sne1_mean, smo1_mean,
+*     she1_mean, shi1_mean, sch1_mean,
 *     e_na1, e_te1, e_ti1, e_ua1, e_po1,
-*     e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1 - real*8 arrays, output.
+*     e_sna1, e_sne1, e_smo1,
+*     e_she1, e_shi1, e_sch1 - real*8 arrays, output.
 *     Transformed averaged plasma state.
 *
 *     (parameters in common:)

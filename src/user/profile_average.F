@@ -11,23 +11,23 @@
 
       integer, intent(in) :: itim, ntim_batch, nx, ny, ns
       logical, intent(in) :: laststep
- 
+
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:,:), te_mean(:,:),
      .                             ti_mean(:,:), ua_mean(:,:,:),
      .                             po_mean(:,:), kt_mean(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             e_na(:,:,:), e_te(:,:),
      .                             e_ti(:,:), e_ua(:,:,:),
      .                             e_po(:,:), e_kt(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             sna_mean(:,:,:),
      .                             sne_mean(:,:),
      .                             smo_mean(:,:,:),
      .                             she_mean(:,:),
      .                             shi_mean(:,:),
      .                             sch_mean(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             e_sna(:,:,:),
      .                             e_sne(:,:),
      .                             e_smo(:,:,:),
@@ -55,8 +55,8 @@
          naver = 0
          ntotdt = 0
          allocate (na_mean(-1:nx,-1:ny,0:ns-1))
-         allocate (ua_mean(-1:nx,-1:ny,0:ns-1))      
-         allocate (te_mean(-1:nx,-1:ny))        
+         allocate (ua_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (te_mean(-1:nx,-1:ny))
          allocate (ti_mean(-1:nx,-1:ny))
          allocate (po_mean(-1:nx,-1:ny))
          allocate (kt_mean(-1:nx,-1:ny))
@@ -105,7 +105,7 @@
          e_shi = 0.0_R8
          e_sch = 0.0_R8
          e_smo = 0.0_R8
-         
+
          iun = 3
          open (unit=iun,file='aver.dat',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=io)
@@ -114,7 +114,7 @@
             call cfverr (iun, b2faveri_version)
             call cfruin (iun, 3, idum, 'nx,ny,ns')
             call cfruch (iun, 120, lbli, 'label')
-            call b2ruzd (iun, b2faveri_version, ns, 
+            call b2ruzd (iun, b2faveri_version, ns,
      &         zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
 
             if (iaver_restart > 0) then
@@ -218,7 +218,7 @@
         call batch_average_sq (n2,    shi, e_shi, itp, ntim_batch)
         call batch_average_sq (n2,    sch, e_sch, itp, ntim_batch)
         call batch_average_sq (n2*ns, smo, e_smo, itp, ntim_batch)
-        
+
 !        gnew = 1.0_R8 / naver
 !        gold = (naver - 1) * gnew
 
@@ -291,7 +291,7 @@
 
 *   ..get label
         call b2xxid ('b2mn', lble(1:60))
-        lble(61:120) = 
+        lble(61:120) =
      *  '                                                            '
 
 *   ..write header
@@ -322,27 +322,27 @@
         call cfwure (iun, n2,    shi_mean, 'shi_mean')
         call cfwure (iun, n2,    sch_mean, 'sch_mean')
         call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_te(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_ti(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_po(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_sna(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_sne(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_she(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_shi(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_sch(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .       (((e_smo(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 
         close(iun)

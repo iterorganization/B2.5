@@ -17,10 +17,12 @@
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+#ifdef WG_TODO
      &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
      &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+#endif
      &          balance_netcdf
       use b2mod_subsys
 #ifdef B25_EIRENE
@@ -416,7 +418,7 @@ c   --> better solution wanted here..
 #ifdef WG_TODO
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           smotmp=smo0
           shetmp=she0
@@ -425,7 +427,7 @@ c   --> better solution wanted here..
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
      &   na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &   switch%b2stbr_coreregno, coreregn2, output,
      &   switch%neutral_sources_rescale,
@@ -452,7 +454,7 @@ c   --> better solution wanted here..
       if(switch%b2stbr_first_flight.ne.0) then
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           shetmp=she0
           shitmp=shi0
@@ -590,8 +592,9 @@ c   --> better solution wanted here..
 
 *       compute total Eirene sources for averaging
 cwdk only total Eirene source are averaged!
-cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
-cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot,
+cwdk       she0_eir_tot and shi0_eir_tot now available,
+cwdk       might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
         do is = 0, ns-1
           st%srw%sna0_eir_tot(:,is) = sna0_eir(:,0,is) +

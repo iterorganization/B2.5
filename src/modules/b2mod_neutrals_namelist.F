@@ -431,7 +431,7 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       issput_chemical=0
 #endif
       eirene_step_cpu=0.0_R8
-      eirene_step_dt=1.0e-3_R8
+      eirene_step_dt=0.0_R8
       eirene_mod=1
       volrecstart(:)=1.0e21_R8
       volrecinc=0.0_R8
@@ -776,7 +776,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt,
+      call xertst (0.0_R8.le.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')
@@ -1488,7 +1488,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt,
+      call xertst (0.0_R8.le.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')

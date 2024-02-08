@@ -278,7 +278,7 @@ c 2002-09-11: logic revised
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
-      integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
+      integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
@@ -355,7 +355,7 @@ c 2002-09-11: logic revised
       integer NPRCSF, IPRCSF
       integer NTARG1, ISTEP
       integer MAXPOL, MAXTOR, MAXADD
-      integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
+      integer NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
@@ -1038,7 +1038,6 @@ c 2002-09-11: logic revised
       call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
-      nxm=max(nx,nx1)
       nym=max(ny,ny1)
       call alloc_input_profile(nCv,nsm)
       allocate(am1(0:ns1-1))
@@ -3516,7 +3515,7 @@ cxpb This will need to be checked !!!
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
-     >    nnreg,mpg%cvOnClosedSurface)
+     >    nnreg,mpg%cvOnClosedSurface,style_b2mndt)
         if (same_bundling) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
@@ -8774,7 +8773,7 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,NSIGI_SPC
         else
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,
-     .                      NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+     .                      idum(0),idum(1),NSIGI_SPC
         endif
         allocate (IGH(NSIGVI), IIH(NSIGVI))
         allocate (IGHW(NSIGSI), IIHW(NSIGSI))
@@ -10755,7 +10754,7 @@ cxpb as they no longer necessarily point to the same species
         write(99,'(1x,a,i2,a)') 'NSTRAI=', nstrai1,','
         if (eirene_step_cpu.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_CPU=',eirene_step_cpu,','
-        write(99,'(1x,a,1pg10.3,a)')
+        if (eirene_step_dt.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_DT= ',eirene_step_dt,','
         if (eirene_mod.gt.1)
      >   write(99,'(1x,a,i2,a)') 'EIRENE_MOD=', eirene_mod,','
