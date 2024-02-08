@@ -124,7 +124,7 @@
       if (switch%recycle_afn.ne.1) then !! default, use total momentum equation
         solvemt=.true.
       else
-        solvemt=.false.                 !! in case of KUL fluid neutrals, don't use total momentum equation
+        solvemt=.false.                 !! in case of KUL fluid neutrals, do not use total momentum equation
       endif
       solvepo=.true.
       add_te_corr_to_po=.true.                                     ! IYS 21.09.2018
@@ -134,6 +134,10 @@
       solveet=.true.
       solvekt=.true.
       solvezt=.true.
+      if (switch%b2mndt_style.eq.2) then !! do not solve total momentum and energy equation in time-dependent mode
+        solveet=.false.
+        solvemt=.false.
+      endif
       last_solve_5=.true.
       last_solve_9=.true.
       numerics_filename='b2.numerics.parameters'
@@ -177,12 +181,12 @@
       end subroutine dealloc_b2mod_numerics
 
       subroutine read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,nnreg,
-     .  cvOnClosedSurface)
+     .  cvOnClosedSurface,b2mndt_style)
       implicit none
 
       integer nCv,ns,nsmin,nsmax,nnreg(0:1)
       logical :: file_ok, cvOnClosedSurface(nCv)
-      integer iCv, is, ireg
+      integer iCv, is, ireg, b2mndt_style
       real (kind=R8) :: ttf
       character*260 filename
 
@@ -203,9 +207,15 @@
         do ireg = 0, nnreg(0)                                     !srv 22.05.18 {
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
+          if (solveet(ireg).and.b2mndt_style.eq.2) then
+            call xerrab('time-dependent mode requires solveet=false')
+          endif
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
+          if (solvemt(ireg).and.b2mndt_style.eq.2) then
+            call xerrab('time-dependent mode requires solvemt=false')
+          endif
         end do                                                    !srv 22.05.18 }
       else
         call xerrab ('No '//trim(filename))

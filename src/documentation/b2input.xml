@@ -615,14 +615,14 @@
 					User : The user who ran the simulation.
 				</description>
 				<switch>
-					<name>b2mndr_run_number</name>
-					<default>0</default>
-					<type>integer</type>
-				</switch>
-				<switch>
 					<name>b2mndr_shot_number</name>
 					<type>integer</type>
 					<default>0</default>
+				</switch>
+				<switch>
+					<name>b2mndr_run_number</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2mndr_database</name>
@@ -3843,8 +3843,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If  1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
-					If  2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations.
+					If 0, refers to the obsolete SOLPS5.0 physics model, no longer supported.
+					If 1, the SOLPS5.2 physics model is used, and b2news_ is called to compute the new plasma state. (default)
+					If 2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses a different order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also the Tn and k-epsilon equations, if requested).
 				</description>
 			</switch>
 			<switch>
@@ -4030,7 +4031,7 @@
 			</switch>
 			<switch>
 				<name>b2mndt_rxf</name>
-				<default>0.5</default>
+				<default>See description</default>
 				<type>real</type>
 				<description>
 					Main under-relaxation parameter.
@@ -4777,7 +4778,7 @@
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their isonuclear sequence.
 					Applies to B2.5 neutral fluid species.
-					If B2RECYC is not explicitly specified, the values from RECYC will be taken. 
+					If B2RECYC is not explicitly specified, the values from RECYC will be taken.
 				</description>
 			</switch>
 			<switch>
@@ -4844,8 +4845,8 @@
 				<name>STRASCLFL</name>
 				<default>1.0</default>
 				<type>real array of length (NSTRAT)</type>
-				<description> 
-					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.     
+				<description>
+					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.
 				</description>
 			</switch>
 			<switch>
@@ -4877,15 +4878,15 @@
 				<name>MOL</name>
 				<default>0</default>
 				<type>integer array of length (NSTRAT)</type>
-				<description> 
-					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.    
+				<description>
+					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.
 				</description>
 			</switch>
 			<switch>
 				<name>HYB_TYPE</name>
 				<default>'M'</default>
 				<type>character*1 array of length (NSTRAT)</type>
-				<description> 
+				<description>
 					When HYB_TYPE='A', possibility to have automatic switching between fluid and kinetic recycling for the stratum for the advanced hybrid model. See description of use_auto_spatial_hyb. HYB_TYPE should be 'M' for all strata for multispecies simulations (ns &gt; 1).
 				</description>
 			</switch>
@@ -4923,17 +4924,18 @@
 			</switch>
 			<switch>
 				<name>EIRENE_STEP_CPU</name>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Length of CPU time devoted to Eirene calls after the first one (in s). Defaults to the value given in input.dat.
+					Length of CPU time devoted to Eirene calls after the first one (in s). If zero, the value given in the Eirene input file will be used.
 				</description>
 			</switch>
 			<switch>
 				<name>EIRENE_STEP_DT</name>
-				<default>1.0e-3</default>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Physical time (in s) the Eirene particles are to be followed before being passed to the time-dependent stratum.
+					Physical time (in s) the Eirene particles are to be followed before being passed to the time-dependent stratum. If zero, the value given by DTIMV in block 13 of the Eirene input file will be used.
 				</description>
 			</switch>
 			<switch>
@@ -4974,7 +4976,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model. 
+					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
 					If not specified, B2SPECIES_START = SPECIES_START.
 				</description>
 			</switch>

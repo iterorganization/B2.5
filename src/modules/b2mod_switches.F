@@ -16,10 +16,9 @@ c consistency checks for combinations of different switches (check_consistency_s
      .          read_switches, set_defaults_switches,
      .          check_switches, check_values_switches,
      .          check_consistency_switches,
-     .          read_switch_afn
+     .          read_first_switches
 
       type, public :: switches
-
 
       integer :: get_residuals !srv 22.05.18
       integer :: mdf_fhe       !srv 13.10.06
@@ -194,8 +193,11 @@ c iout switches
       integer :: eirene_mc_iout
       integer :: b2siav_iout
       integer :: b2mndr_iout
+      integer :: b2scdt_iout
+      integer :: b2smdt_iout
+      integer :: b2shdt_iout
 
-c style  switches
+c style switches
       integer :: b2sicf_style
       integer :: b2sigp_style
       integer :: b2sigp_pressure_restriction
@@ -473,6 +475,7 @@ c b2mndt
       real (kind=R8) :: facvis_start
       real (kind=R8) :: facdrift_start
       real (kind=R8) :: facExB_start
+      integer :: b2mndt_style
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -538,7 +541,6 @@ c Med
       implicit none
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
-
 
       s % get_residuals = 0
       s % mdf_fhe = 0
@@ -706,6 +708,9 @@ c Advanced fluid neutral models
       s % eirene_mc_iout = 0
       s % b2siav_iout = 0
       s % b2mndr_iout = 0
+      s % b2scdt_iout = 0
+      s % b2smdt_iout = 0
+      s % b2shdt_iout = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -777,24 +782,34 @@ c Advanced fluid neutral models
       s % b2stbc_phm1 = 1.0e0_R8
       s % b2stbc_phm2 = 1.0e0_R8
 
-      s% b2npco_pcm0 = 1.0e0_R8
-      s% b2npco_pcm1 = 1.0e0_R8
-      s% b2npht_pcm0 = 1.0e0_R8
-      s% b2npht_pcm1 = 1.0e0_R8
+      if ( s % b2mndt_style.eq.2 ) then
+        s % b2npco_rxg =  huge(1.0e0_R8)
+        s % b2npht_rxg =  huge(1.0e0_R8)
+        s % b2npmo_rxg =  huge(1.0e0_R8)
+        s % b2npco_pcm0 = 0.0e0_R8
+        s % b2npco_pcm1 = 0.0e0_R8
+        s % b2npht_pcm0 = 0.0e0_R8
+        s % b2npht_pcm1 = 0.0e0_R8
+      else
+        s % b2npco_rxg =  1.0e0_R8
+        s % b2npht_rxg =  1.0e0_R8
+        s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
+        s % b2npco_pcm0 = 1.0e0_R8
+        s % b2npco_pcm1 = 1.0e0_R8
+        s % b2npht_pcm0 = 1.0e0_R8
+        s % b2npht_pcm1 = 1.0e0_R8
+      end if
 
-      s % b2stcx_rg0  = 1.0e0_R8
-      s % b2npco_rxg =  1.0e0_R8
-      s % b2npht_rxg =  1.0e0_R8
-      s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
       s % xfm0       =  1.0e0_R8
       s % xfm1       =  1.0e0_R8
       s % xfm2       =  1.0e0_R8
       s % xfm3       =  1.0e0_R8
-      s % b2stel_rxm0=  0.0e0_R8
-      s % b2stel_rxm1=  0.0e0_R8
-      s % b2stel_rxm2=  0.0e0_R8
-      s % b2stel_rxm3=  0.0e0_R8
-      s % b2stel_rxm4=  0.0e0_R8
+      s % b2stcx_rg0 =  1.0e0_R8
+      s % b2stel_rxm0 = 0.0e0_R8
+      s % b2stel_rxm1 = 0.0e0_R8
+      s % b2stel_rxm2 = 0.0e0_R8
+      s % b2stel_rxm3 = 0.0e0_R8
+      s % b2stel_rxm4 = 0.0e0_R8
       s % b2stel_rg0 =  1.0e0_R8
       s % b2stel_rg1 =  1.0e0_R8
 
@@ -994,7 +1009,11 @@ c b2mndt
       s % nstg_areshe = 0.0_R8
       s % nstg_areshi = 0.0_R8
       s % BoRiS = 0.0_R8
-      s % b2mndt_rxf = 0.5_R8
+      if (s % b2mndt_style.eq.2) then
+        s % b2mndt_rxf = 1.0_R8
+      else
+        s % b2mndt_rxf = 0.5_R8
+      end if
       s % facvis_start = 0.0_R8
       s % facdrift_start = 0.0_R8
       s % facExB_start = 0.0_R8
@@ -1239,6 +1258,9 @@ c iout switches
       call ipgeti('copy_background_iout', s%copy_background_iout)   !srv 14.07.10
       call ipgeti ('eirene_mc_iout', s % eirene_mc_iout)
       call ipgeti ('b2mndr_iout', s % b2mndr_iout)
+      call ipgeti ('b2scdt_iout', s % b2scdt_iout)
+      call ipgeti ('b2smdt_iout', s % b2smdt_iout)
+      call ipgeti ('b2shdt_iout', s % b2shdt_iout)
 
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)
@@ -1277,7 +1299,6 @@ c style/mode switches
       call ipgeti ('b2sifr_styl0', s % b2sifr_styl0)
       call ipgeti ('b2tqin_csigin_style', s % b2tqin_csigin_style)
 
-
 c phm switches
       call ipgetr ('b2sian_phm0', s % b2sian_phm0)
       call ipgetr ('b2sicf_phm0', s % b2sicf_phm0)
@@ -1315,7 +1336,6 @@ c phm switches
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
       call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
-
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1405,7 +1425,6 @@ c Eirene coupling
       call ipgetr ('eirene_ua_max', s % eir_ua_max)
       call ipgetr ('b2mndr_rescale_neutrals_sources',
      &                s % neutral_sources_rescale)
-
 
 c k-enstrophy model
       call ipgeti ('b2mndr_solve_keps',s % solve_keps)
@@ -1561,7 +1580,6 @@ c b2mndr
       call ipgetr ('b2mndr_stim', s%b2mndr_stim)
       call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
 
-
 c b2ag
       call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
       call ipgetr ('b2agfs_geom_match_dist', s%geom_match_dist)
@@ -1605,19 +1623,21 @@ c Med
 
 ***********************************************************************
 
-      subroutine read_switch_afn (s)
+      subroutine read_first_switches (s)
 
       implicit none
       type (switches), intent (inout) :: s
       external ipgeti
 
-cnh   Default value
+cnh   Default values
       s % afn = 0
+      s % b2mndt_style = 1
 
       call ipgeti ('b2mn_afn', s % afn) !nh  24.05.23 main switch for AFN model
+      call ipgeti ('b2mndt_style', s % b2mndt_style)  ! main physics model switch
 
       return
-      end subroutine read_switch_afn
+      end subroutine read_first_switches
 
 ***********************************************************************
 
@@ -1681,7 +1701,7 @@ c mdf_fnb
       endif
 
 c pot_eq
-c pot_eq = 0: don't solve pot. eq.;
+c pot_eq = 0: do not solve pot. eq.;
 c pot_eq = 1: solve (default)
 c pot_eq = 2: pot. = 3.1*Te/qe
       if (s%pot_eq.lt.0.or.s%pot_eq.gt.2) then  !srv 16.07.12 27.02.13
@@ -2032,6 +2052,8 @@ c b2mndt
      &  'faulty internal parameter nstg_aresco')
       call xertst (0.0_R8.le.s%b2mndt_rxf.and.s%b2mndt_rxf.le.1.0_R8,
      &  'faulty internal parameter rxf')
+      call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
+     &  'b2mndt_style should be 1 or 2')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
@@ -2113,7 +2135,7 @@ c      endif
       endif
 
       if(s%use_auto_spatial_hyb.ne.0.and.s%recycle_afn.eq.0) then
-        call xerrab('automatic spatial hybrid needs KUL neutral BCs')
+        call xerrab('automatic spatial hybrid needs AFN neutral BCs')
       endif
 
 c k-enstrophy model
@@ -2125,6 +2147,10 @@ c k-enstrophy model
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
+
+      if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
+        call xerrab('time-dependent mode requires rxf = 1.0')
+      endif
 
       return
       end subroutine check_consistency_switches

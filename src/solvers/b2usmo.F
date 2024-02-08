@@ -98,7 +98,12 @@
      &    smb(iCv,3)*rob(iCv)+
      &    switch%cfc0*geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb*rob(iCv)
-         aa(mpg%cvNvP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
+         aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
+         if (switch%b2mndt_style.lt.2) then
+           aa(mpg%cvNvP(iCv,1)) = aad0(iCv) +abs(resmb(iCv))/(rxg*csb1)
+         else
+           aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
+         endif
         else
          aa(mpg%cvNvP(iCv,1)) = 1.0_R8
          aad0(iCv) = 0.0_R8

@@ -1,17 +1,16 @@
 c
-      subroutine process_eirene_chord_slice(filename)
+      subroutine process_eirene_chord_slice
+#ifdef B25_EIRENE
+     . (filename)
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
-#ifdef B25_EIRENE
       use b2mod_subsys
       use eirmod_ctrig
-#endif
       implicit none
       character*(*) filename
-#ifdef B25_EIRENE
       character*80 dataname
       character*256 extralabel,titlestring,tmpstring
       logical open_file,vector

@@ -61,36 +61,63 @@
 
 program b2_ual_rewrite
 
-    use b2mod_main
-    use b2mod_driver
+    use b2mod_main &
+     & , only : ns, &
+     &          b2mn_init
+    use b2mod_driver &
+     & , only : idx, dtim, &
+     &          shot, run, username, database, version, &
+     &          old_description, equilibrium, &
+     &          old_imas_version, imas_version, new_eq_ggd, &
+     &          description, &
+     &          edge_profiles, edge_sources, edge_transport, radiation, &
+     &          batch_profiles, batch_sources
+    use b2mod_time
+    use b2mod_version
     use b2mod_switches
     use b2mod_grid_mapping
+    use b2us_io
     use b2us_geo
     use b2us_map
     use b2us_plasma
+    use b2mod_solpstop
+    use b2mod_numerics_namelist
     use ids_routines &  ! IGNORE
-     & , only : imas_create_env, ual_open_pulse, &
-     &          CREATE_PULSE
+     & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual &
-     & , only : new_ids_edge, delete_ids_edge
+     & , only : new_ids_edge, delete_ids_edge, &
+     &          dealloc_ids_edge, dealloc_batch_edge, close_ual
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
+    use b2mod_driver &
+     & , only : summary
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
+    use b2mod_driver &
+     & , only : numerics
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_divertors
+    use b2mod_driver &
+     & , only : divertors
 #endif
+    use ids_routines &  ! IGNORE
+     & , only : ids_get, ids_deallocate
+    use ids_routines &  ! IGNORE
+     & , only : imas_open_env
+    use b2mod_driver &
+     & , only : treename
 #ifdef B25_EIRENE
+    use eirmod_parmmod
     use eirmod_comusr
     use eirmod_extrab25
 #endif
@@ -118,9 +145,10 @@ program b2_ual_rewrite
     character(len=24) :: run_string
     character(len=24) :: new_run_string
     character(len=24) :: argName
-    integer narg, cptArg, new_run
+    integer narg, cptArg, new_run, status, tmp_run
     integer idum(0:2)
     character*16 usrnam
+    character*256 systemarg
     logical same_run_number
     data new_run / 0 /
     external usrnam
@@ -153,7 +181,7 @@ program b2_ual_rewrite
       call strip_spaces(shot_string)
     end if
     call ipgeti('b2mndr_run_number', run )
-    if (run.gt.0) then
+    if (run.ge.0) then
       write(run_string,'(i5)') run
       call strip_spaces(run_string)
       new_run = run
@@ -222,48 +250,48 @@ program b2_ual_rewrite
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
 
-    write(*,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
+    write(0,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)
-    if (.not.same_run_number) then
-      write(*,'(a,i5)') ' will be rewritten with run number ',new_run
+    if (.not.same_run_number.and.new_run.gt.0) then
+      write(0,'(a,i5)') ' will be rewritten with run number ',new_run
       if (database.eq.'iter') write(*,'(a)') ' in ITER database'
     else if (database.eq.'iter') then
-      write(*,'(a)') ' will be rewritten in ITER database'
+      write(0,'(a)') ' will be rewritten in ITER database'
     end if
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    write (0,*) "Checking if IMAS data-entry already exists : ", trim(database), shot, run
+    write(0,'(2a,2i8)') &
+      & "Checking if IMAS data entry already exists : ", &
+      &  trim(database), shot, run
     call imas_open_env(treename, shot, run, idx, &
       &                username, database, version, status)
-!!$    call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, database, &
-!!$        &  version, idx )
-!!$    call ual_open_pulse( idx, OPEN_PULSE, '', status )
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
+      write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       call ids_get( idx, "dataset_description", old_description, status )
       old_imas_version = 'x.xx.x'
       if ( status.ne.0 ) then
-        write (0,*) 'Error opening old dataset_description IDS !'
-      else if (associated(old_description%dd_version)) then
-        old_imas_version = old_description%dd_version(1)
+        write(0,*) 'Error opening old dataset_description IDS !'
+      else if (associated(old_description%ids_properties% &
+                      &   version_put%data_dictionary)) then
+        old_imas_version = old_description%ids_properties% &
+                      &   version_put%data_dictionary(1)
       end if
       call ids_deallocate( old_description )
       if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
         if (.not.streql(old_imas_version,imas_version)) then
-          write(*,*) &
-            & 'Old IMAS data-entry was written using Data Dictionary version '// &
+          write(0,*) &
+            & 'Old IMAS data entry was written using Data Dictionary version '// &
             &  trim(old_imas_version)//'.'
-          write(*,*) &
+          write(0,*) &
             & 'Recreating using Data Dictionary version '// &
             &  trim(imas_version)//'.'
         end if
         if (database.eq.'iter') &
-          &  write(*,*) 'IDS file will be moved to ITER database.'
+          &  write(0,*) 'IDS file will be moved to ITER database.'
         call close_ual(idx)
-        idx = 0
 ! Copy the IDS to a temporary location with the new DD and then bring it back
         tmp_run = run
         if (new_run.eq.run .and. database.ne.'iter') then
@@ -309,38 +337,25 @@ program b2_ual_rewrite
         if (database.eq.'iter') database = 'ITER'
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status )
-!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
-!!$            & database, version, idx )
-!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
       else if (.not.same_run_number) then
         call close_ual(idx)
-        idx = 0
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
-!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
-!!$            & database, version, idx )
-!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         if ( status.ne.0 .or. idx.eq.0 .or. database.eq.'iter') then ! New run IDS must be created
           idx = 0
           if (database.eq.'iter') database = 'ITER'
-!!$          call imas_create_env(treename, shot, new_run, 0, 0, idx, &
-!!$            &                  username, database, version, status )
-          call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
-              & database, version, idx )
-          call ual_open_pulse( idx, CREATE_PULSE, '', status )
+          call imas_create_env(treename, shot, new_run, 0, 0, idx, &
+            &                  username, database, version, status )
           call xertst( status.eq.0, 'Error creating new IDS file !')
         end if
       end if
     else
-      write (0,*) "No previous IMAS data-entry found, a new one will be created"
+      write(0,*) "No previous IMAS data entry found, a new one will be created"
       idx = 0
       if (database.eq.'iter') database = 'ITER'
       call imas_create_env(treename, shot, run, 0, 0, idx, &
         &                  username, database, version, status )
-!!$      call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
-!!$          & database, version, idx )
-!!$      call ual_open_pulse( idx, CREATE_PULSE, '', status )
       call xertst( status.eq.0, 'Error creating new IDS !')
     end if
     !! Create/Write the set data to IDSs
@@ -351,7 +366,10 @@ program b2_ual_rewrite
       &  summary, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-      &  numerics, run_start_time, run_end_time, &
+      &  numerics, &
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &   run_start_time, run_end_time, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       &  divertors, &
@@ -373,7 +391,7 @@ program b2_ual_rewrite
         &   idx, new_eq_ggd )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
-    write(*,*) trim(systemarg)
+    write(0,*) trim(systemarg)
 #ifdef NAGFOR
     call system(systemarg, status, ierror)
 #else
@@ -383,7 +401,7 @@ program b2_ual_rewrite
 ! Add superceding information to .yaml file
       systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
         &  trim(run_string)//' '//trim(new_run_string)
-      write(*,*) trim(systemarg)
+      write(0,*) trim(systemarg)
 #ifdef NAGFOR
       call system(systemarg, status, ierror)
 #else
@@ -399,7 +417,6 @@ program b2_ual_rewrite
 #endif
         &   radiation )
     call close_ual(idx)
-    idx = 0
 
 end program b2_ual_rewrite
 
