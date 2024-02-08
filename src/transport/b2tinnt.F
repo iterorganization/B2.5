@@ -88,6 +88,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tinnt')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tinnt_iout', iout)
@@ -118,10 +122,7 @@
      &      'and not compatible with b2tinnt_kinetic = 1')
         endif
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+
       fchin     = 0.0e0_R8                                              !srv 09.07.99
       fchin_a   = 0.0_R8                                                !IYS 17.10.2023
       facdriftm = maxval(facdrift)                                      !srv 20.10.17

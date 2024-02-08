@@ -719,7 +719,6 @@ C     and the lines that make up the walls. But we do not know if they
 C     are inside the walls of the cells or on the outer part of the
 C     line making up the cell.
 
-
       if(((r13 .le. crx(ii,jj,3))  .and.  (r13 .ge. crx(ii,jj,1))) .or.
      +   ((r13 .ge. crx(ii,jj,3))  .and.  (r13 .le. crx(ii,jj,1)))) then
         d = r13 + vr
