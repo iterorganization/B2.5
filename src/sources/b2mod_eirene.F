@@ -2645,7 +2645,7 @@ c   and apply linearisation
       enddo !}
       if (balance_netcdf.ne.0) then
         eirene_mc_pael_sne0to1 = 0.0_R8 !djm Jan2017
-        eirene_mc_papl_sna0to1 = 0.0_R8 
+        eirene_mc_papl_sna0to1 = 0.0_R8
         eirene_mc_pmel_sne0to1 = 0.0_R8
         eirene_mc_pmpl_sna0to1 = 0.0_R8
         eirene_mc_pipl_sna0to1 = 0.0_R8
@@ -3311,7 +3311,7 @@ csw 26feb2014 averaging
 c              t0=sei(ic,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0 = 0.0_R8       !! will go to shi0
-              t0n = 0.0_R8      !! will go to shn0 
+              t0n = 0.0_R8      !! will go to shn0
               do is=0,ns-1
                 if (is_neutral(is).and.lneustra) then
                   t0n = t0n + sei_av(ic,fluids_list(is),istrai)*
@@ -4250,7 +4250,7 @@ c!###}
       allocate(smo_h(size(smo,1),
      .               size(smo,2), size(smo,3), nhistd))
       allocate(see_h(size(see,1), size(see,2), nhistd))
-      allocate(sei_h(size(sei,1), 
+      allocate(sei_h(size(sei,1),
      .               size(sei,2), size(sei,3), nhistd))
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sna_h_paat(size(sni,1),
@@ -4287,7 +4287,7 @@ c!###}
      .                    size(smo,2), size(smo,3), nhistd))
         allocate(smo_h_cppv(size(smo,1),
      .                    size(smo,2), size(smo,3), nhistd))
-        allocate(sne_h_pael(size(see,1), 
+        allocate(sne_h_pael(size(see,1),
      .                    size(see,2), nhistd))
         allocate(sne_h_pmel(size(see,1),
      .                    size(see,2), nhistd))
@@ -4295,13 +4295,13 @@ c!###}
         allocate(see_h_emel(size(see,1), size(see,2), nhistd))
         allocate(see_h_eiel(size(see,1), size(see,2), nhistd))
         allocate(see_h_epel(size(see,1), size(see,2), nhistd))
-        allocate(sei_h_eapl(size(sei,1), 
+        allocate(sei_h_eapl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
-        allocate(sei_h_empl(size(sei,1), 
+        allocate(sei_h_empl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
-        allocate(sei_h_eipl(size(sei,1), 
+        allocate(sei_h_eipl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
-        allocate(sei_h_eppl(size(sei,1), 
+        allocate(sei_h_eppl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
       endif
       allocate(pfluxa_h(size(pfluxa,1),size(pfluxa,2),1,nhistd))
@@ -4414,7 +4414,7 @@ c!###}
       allocate(smo_s(size(smo,1),
      .               size(smo,2), size(smo,3)))
       allocate(see_s(size(see,1), size(see,2)))
-      allocate(sei_s(size(sei,1), 
+      allocate(sei_s(size(sei,1),
      .               size(sei,2), size(sei,3)))
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sna_s_paat(size(sni,1),
@@ -4459,13 +4459,13 @@ c!###}
         allocate(see_s_emel(size(see,1), size(see,2)))
         allocate(see_s_eiel(size(see,1), size(see,2)))
         allocate(see_s_epel(size(see,1), size(see,2)))
-        allocate(sei_s_eapl(size(sei,1), 
+        allocate(sei_s_eapl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
-        allocate(sei_s_empl(size(sei,1), 
+        allocate(sei_s_empl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
-        allocate(sei_s_eipl(size(sei,1), 
+        allocate(sei_s_eipl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
-        allocate(sei_s_eppl(size(sei,1), 
+        allocate(sei_s_eppl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
       endif
       allocate(pfluxa_s(size(pfluxa,1),size(pfluxa,2),1))

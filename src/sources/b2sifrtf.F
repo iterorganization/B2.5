@@ -114,6 +114,7 @@
 *    ..test sign of na, ni, ti, ne, ne2
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
        call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, ne2, 1, 'ne2', '.gt.')

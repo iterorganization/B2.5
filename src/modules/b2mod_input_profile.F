@@ -423,7 +423,7 @@ cdjm Jan2017 Keep linearised sources for balance
         if (maxval(nsdata).gt.0) close(93)
         if (maxval(nsdata).gt.0) close(94)
         if (maxval(nxdata).gt.0) close(95)
-        if (maxval(nsdata).gt.0) close(96)
+        if (maxval(nxdata).gt.0) close(96)
         new_files = .false.
       end if
 

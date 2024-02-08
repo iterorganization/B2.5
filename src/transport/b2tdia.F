@@ -50,6 +50,9 @@
 *   ..test nCv, nFc, ns
        call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
        call xertst (1.le.ns, 'faulty argument ns')
+*   ..test velocities
+       call xertst (maxval(abs(uadia)).lt.c,
+     &  'Supra-luminal velocities!')
       endif
       
       facdriftm = maxval(facdrift)

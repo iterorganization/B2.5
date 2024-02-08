@@ -19,7 +19,7 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
       real (kind=R8) ::
      *   rxg, nb(nCv), pb(nCv), snbv(nCv), flob(nFc,0:1),
      &   conb(nFc,0:1,0:4), rescb(nCv)
@@ -37,7 +37,7 @@
 *  1. purpose
 *
 *     B2USCO computes a correction towards the solution of the
-*     continuity equation for one atomic species on an unstructured 
+*     continuity equation for one atomic species on an unstructured
 *     mesh.
 *
 *-----------------------------------------------------------------------
@@ -107,8 +107,13 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
       do iCv = 1, nCv
         ireg  = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-          aa(mpg%cvNvP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv)+         !srv 13.10.06 {
-     &     abs(rescb(iCv))/(rxg*pb(iCv)))*rscal(pb(iCv))              !srv 13.10.06 }
+          if (switch%b2mndt_style.lt.2) then                          !srv 13.10.06 {
+            aa(mpg%cvNvP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv)+
+     &       abs(rescb(iCv))/(rxg*pb(iCv)))*rscal(pb(iCv))
+          else
+            aa(mpg%cvNvP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv))*
+     &          rscal(pb(iCv))
+          endif                                                       !srv 13.10.06 }
         else
           aa(mpg%cvNvP(iCv,1)) = rscal(pb(iCv))
         endif
@@ -121,22 +126,22 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
         t1 = - 0.5_R8*flob(iFc,0) - conb(iFc,0,0) - conb(iFc,0,2)
         t2 =   0.5_R8*flob(iFc,0) - conb(iFc,0,0) - conb(iFc,0,1)
         if (solvereg(mpg%cvReg(iCv1))) then
-         aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - 
-     &     t1*rscal(pb(iCv1))          
+         aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) -
+     &     t1*rscal(pb(iCv1))
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) + 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2*rscal(pb(iCv2))
          end where
         endif
         if (solvereg(mpg%cvReg(iCv2))) then
-         aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - 
+         aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) -
      &     t2*rscal(pb(iCv2))
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) + 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
      &     t1*rscal(pb(iCv1))
          end where
         endif
@@ -161,8 +166,8 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1*rscal(pb(iCv))
           end where
          enddo
@@ -172,8 +177,8 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2*rscal(pb(iCv))
           end where
         enddo
@@ -186,8 +191,8 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) + 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
      &     t3*t1*rscal(pb(iCv))
          end where
         enddo
@@ -197,15 +202,15 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) - 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) -
      &     t3*t2*rscal(pb(iCv))
          end where
         enddo
        endif
       enddo
 *   ..check for empty matrix lines and replace with dummy equation
-! $AD II-LOOP      
+! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)

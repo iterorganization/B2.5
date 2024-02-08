@@ -29,7 +29,7 @@
 *   ..local variables
       integer i, ix, iy, ixl, ixr, iyl, iyr, jxi, jxa, jsep
       integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
-     *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
+     *  ixleft(nncutmax,-1:ny),
      *  isnum(nncutmax,-1:ny)
       real (kind=R8) :: hz(-1:nx,-1:ny),
      *                  hzl(-1:nx,-1:ny),    ! hz at the left cell face
@@ -77,7 +77,6 @@
       isnum = 0
       ntubes = 0
       ixleft = -2
-      ixright = -2
       do iy = -1, ny
         do ix = -1, nx
           if (region(ix,iy,0).eq.0) cycle
@@ -93,7 +92,6 @@
           ixl = ix
           ixleft(iseg(ix,iy),iy) = ix
           ixr = ix
-          ixright(iseg(ix,iy),iy) = ix
    20     continue
           if (leftix(ixl,iy).ne.-2.and.leftiy(ixl,iy).eq.iy) then
             ixl = leftix(ixl,iy)
@@ -122,7 +120,6 @@
             else if (iyr.eq.iy) then
               iseg(ixr,iyr) = iseg(ix,iy)
               isnum(iseg(ix,iy),iy) = isnum(iseg(ix,iy),iy) + 1
-              if (rightix(ixr,iy).eq.nx+1) ixright(iseg(ix,iy),iy) = ixr
             else
               goto 40
             end if

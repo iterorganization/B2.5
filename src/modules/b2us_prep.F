@@ -2197,7 +2197,6 @@
 !     Create b2.user.parameters file with definition of outer/inner midplanes
       call conv_midplane(nx,ny)
 
-
       ! Identify corner coordinates/vertices
       icount = 0
       allocate(icornvx(size(m%icornVx)))
@@ -4743,6 +4742,7 @@
 
         ! For now, only create a dummy external state.
         ! Functionality from b2mod_external to be carried over!
+        call xertst ( 0.le.nx.and.0.le.ny, 'faulty parameter nx, ny' )
         call createB2StateExt( nCv, nFc, ns, st_ext )
 
       end subroutine prep_plasma_ext

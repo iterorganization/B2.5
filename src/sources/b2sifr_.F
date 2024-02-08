@@ -12,7 +12,7 @@
       use b2mod_b2cmpa
       use b2mod_balance                                                 !djm Jan2017
      &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
-     &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3, 
+     &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
      &              balance_netcdf
       use b2mod_switches
       use b2us_geo
@@ -209,8 +209,8 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
      &    +switch%b2sifr_phm3*cthi(iCv,isb)*delti*
      &    (ne(iCv)-st_ext%ne(iCv)))*
      &    geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*geo%cvHz(iCv)  !srv 01.07.05
-         smprb(iCv) = smprb(iCv) + 
-     &        t0*switch%b2sifr_phm1*ehxp(iCv)*geo%cvHz(iCv) 
+         smprb(iCv) = smprb(iCv) +
+     &        t0*switch%b2sifr_phm1*ehxp(iCv)*geo%cvHz(iCv)
          smptb(iCv) = smptb(iCv) - t0*geo%cvHz(iCv)*
      &        (switch%b2sifr_phm2*cthe(iCv,isb)*delte*ne(iCv)
      &        +switch%b2sifr_phm3*cthi(iCv,isb)*delti*

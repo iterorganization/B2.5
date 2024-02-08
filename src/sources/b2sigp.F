@@ -55,7 +55,7 @@
       integer iCv, iFc!, k
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
-     *   t0, wrkf(nFc), wrkv(nVx), nbf(nFc), tbf(nFc), rzbf(nFc), 
+     *   t0, wrkf(nFc), wrkv(nVx), nbf(nFc), tbf(nFc), rzbf(nFc),
      *   tef(nFc)
 *   ..procedures
       external xertst

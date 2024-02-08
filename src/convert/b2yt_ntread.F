@@ -16,8 +16,10 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(
-     &  mpg, natm1, iatm1, nmol1, imol1, nion1, iion1)
+      subroutine b2yt_ntread
+#ifdef B25_EIRENE
+     & (mpg, natm1, iatm1, nmol1, imol1, nion1, iion1)
+#endif
 c
 c  version : 06.11.97 22:11
 c
@@ -44,13 +46,13 @@ c
       use b2us_map
       implicit none
 
+#ifdef B25_EIRENE
 *  -- INPUT ARGUMENTS --
       type(mapping), intent(in) :: mpg
       integer natm1, nmol1, nion1
       integer iatm1(natm), imol1(nmol), iion1(nion)
 
 *  -- LOCAL SCALARS --
-#ifdef B25_EIRENE
       integer jvft46
       integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width

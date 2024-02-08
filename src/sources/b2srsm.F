@@ -87,9 +87,11 @@
       do is = 0, 1
         call b2xvsg (nCv, ni(1,is), 1, 'ni', '.gt.')
       enddo
+      call b2xvsg (nCv, nn, 1, 'nn', '.gt.')
       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+      call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
 *   ..obtain input
       if (ncall_b2srsm.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
