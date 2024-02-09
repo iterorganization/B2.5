@@ -6,7 +6,7 @@ C     This routine is used to plot trajectories of particles using the
 C     velocity fields uu and vv. To call this routine
 C     one must specify at least 8 parameters: ixmin, iymin, ixmax, iymax,
 C     # of particles, 1 or 0 for movie or lines, species indices (at least
-C     one), and last but not least the total number of species indices one 
+C     one), and last but not least the total number of species indices one
 C     has given in the step before. A valid call could be:
 C     0 0 95 35 100 0 0 1 traj
 C     This should plot the trajectories of 100 particles which start
@@ -14,7 +14,7 @@ C     in any of the cells between cell (0,0) (southwest corner) and
 C     cell (95,35) (northeast corner) as lines for hydrogen (0=H).
 C     Note that the cell and species indices start at zero!
 C     The number of time steps (plots) is given by the "t_#p" command.
-C     The total flight time of the particles is given by the "t_pt" command. 
+C     The total flight time of the particles is given by the "t_pt" command.
 C     The velocity fields uu and vv can be overwritten using the
 C     "uuse" and "vvse" commands. Their defaults values are ua and fna/na/sy
 C     respectively. If the number of particles is positive, then the
@@ -55,20 +55,20 @@ c     PLOTTING TRAJECTORIES
 c     -------------------------------------------------------------------------
 
       subroutine caltraj(iarg,specnum)
-     
+
       use b2mod_types
-      use b2mod_geo
-      use b2mod_plasma
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
+      use b2us_data
 #ifndef NO_CDF
       use b2mod_cdf
 #endif
+      use b2mod_dimensions
       implicit none
 
 c     INPUT
-      integer iarg(1:ns+7)              !parameters
+      integer iarg(1:state%ns+7)        !parameters
       integer specnum                   !location of the number of species
 
 c     the traj common
@@ -77,31 +77,38 @@ c     the traj common
       logical ratio
       common /t_ratio/ ratio
 
-      real (kind=R8) ::
-     1 warr(-1:nx,-1:ny,0:ns-1)         !the stack
+      real (kind=R8), allocatable ::
+     1 warr(:,:)                        !the stack
 
       real (kind=R8) ::
      *   globaltime                     !plottime
 
 c                                       !number of particles per cell
+#ifdef WG_TODO
       integer ialt,jalt                 !position in computational domain
+#endif
       integer ipx(1:npart),ipy(1:npart),ips(1:npart)
       integer ipx_start(1:npart),ipy_start(1:npart)
       real (kind=R8) ::
      *   p_r(1:npart),p_z(1:npart)
       real (kind=R8) ::
      *   p_r_start(1:npart),p_z_start(1:npart)
+#ifdef WG_TODO
       real (kind=R8) ::
      *   clr(-1:nx,-1:ny,1:4),          !coordinates of centers of cell borders
      +   clz(-1:nx,-1:ny,1:4)
+#endif
 
       real (kind=R8) ::
      *   deltat                         !timestep between plots
-      logical ls_active(0:ns-1)         !species active?
-      integer isclvl(0:ns-1)
-      character*16 texttraj(1:ns)
+      logical ls_active(0:state%ns-1)   !species active?
+      integer isclvl(0:state%ns-1),iscol(0:state%ns-1)
+      character*19 texttraj(1:state%ns)
 
-      integer zaehler,zaehler2,ip,randzaehler
+      integer ip,randzaehler,zaehler
+#ifdef WG_TODO
+      integer zaehler2
+#endif
 
       integer counter
 
@@ -130,14 +137,17 @@ c                                       !number of particles per cell
 #     include <netcdf.inc>
       character rw*5
       integer ncid,imap(maxvdims),iret
-      integer itstep,ntstep,ix,iy
+      integer itstep,ntstep,iCv
+      real (kind=R8), allocatable :: lwarr(:,:)
       real (kind=R8) ::
-     *   lwarr(-1:nx,-1:ny,0:ns-1),
      1   starttime, tstepn(1), dumarr(1)
 #endif
 
       oocol=-1
+      iscol=-1
+      allocate(warr(mpg%nCv,0:state%ns-1))
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
+      allocate(lwarr(mpg%nCv,0:state%ns-1))
       if(moviename .eq. ' ') then
 #endif
 c     Getting the values for globaltime and deltat
@@ -149,7 +159,7 @@ c     Getting the values for globaltime and deltat
         rw='read'
         iret = nf_open(moviename,NCNOWRIT,ncid)
         imap(1)=1
-        imap(2)=nx+2
+        imap(2)=1
         call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
         ntstep = nint(tstepn(1))
         nplot=ntstep+1
@@ -172,7 +182,7 @@ c     writing callup information
       else
          if (b2plot_debug.ge.2) write(*,*) 'TRAJECTORIES'
       endif
-      if(iarg(1) .eq. 0 .or. iarg(2) .eq. 0 .or. 
+      if(iarg(1) .eq. 0 .or. iarg(2) .eq. 0 .or.
      1   iarg(3) .eq. 0 .or. iarg(4) .eq. 0) then
         destmode=2
       else
@@ -181,38 +191,39 @@ c     writing callup information
       if (b2plot_debug.ge.8) write(*,*) 'Set destmode to ',destmode
       if(iarg(1) .le. 0) iarg(1)=0
       if(iarg(2) .le. 0) iarg(2)=0
-      if(iarg(3) .eq. 0 .or. iarg(3) .ge. nx) iarg(3)=nx-1
-      if(iarg(4) .eq. 0 .or. iarg(4) .ge. ny) iarg(4)=ny-1
+      if(iarg(3) .eq. 0 .or. iarg(3) .ge. DEF_NXD) iarg(3)=DEF_NXD-1
+      if(iarg(4) .eq. 0 .or. iarg(4) .ge. DEF_NYD) iarg(4)=DEF_NYD-1
       if (b2plot_debug.ge.2)
      + write(*,*) 'plottime in seconds (default=5.0e-4): ', globaltime
-      if (b2plot_debug.ge.2) 
+      if (b2plot_debug.ge.2)
      + write(*,*) 'number of plots (default=10): ', nplot
 
 c     getting the species numbers
-      do is=0,ns-1
+      do is=0,state%ns-1
         ls_active(is)=.false.
       enddo
       do zaehler=0,iarg(specnum)-1
+        iscol(iarg(7+zaehler))=zaehler+1
         ls_active(iarg(7+zaehler))=.true.
         texttraj(zaehler+1)=textpl(iarg(7+zaehler))
       enddo
 
 c     find weighting function for the particle positions
       if (iarg(5) .gt. 0) then      !default: weighting with volume
-        if (b2plot_debug.ge.1) 
+        if (b2plot_debug.ge.1)
      >   write(*,*) 'weighting randomiser with volume'
-        call weightarray(warr,vol,
+        call weightarray(warr,geo%cvVol,
      1         ls_active,iarg(1),iarg(3),iarg(2),iarg(4),1)
       else if (iwrk .gt. 0) then    !user-defined weighting
-        if (b2plot_debug.ge.1) 
+        if (b2plot_debug.ge.1)
      >   write(*,*) 'weighting randomiser user defined'
-        call weightarray(warr,work(-1,-1,0,iwrk),
-     1   ls_active,iarg(1),iarg(3),iarg(2),iarg(4),ndim(3,iwrk))
+        call weightarray(warr,work(1,0,iwrk),
+     1   ls_active,iarg(1),iarg(3),iarg(2),iarg(4),ndim(2,iwrk))
       endif
 
 c     initialising the randomiser
 #ifndef NAG22
-      call g05cbf(1000)       
+      call g05cbf(1000)
 #else
       IGEN=0
       ISEED(1)=1000
@@ -221,7 +232,7 @@ c     initialising the randomiser
 
 c     open the Plot-Screen
       tmpstring='Trajectories'
-      if (iarg(specnum).eq.1) 
+      if (iarg(specnum).eq.1)
      > tmpstring=tmpstring(1:lnblnk(tmpstring))//
      +           texttraj(1)(1:lnblnk(texttraj(1)))
       call customise_label(tmpstring,titlestring)
@@ -237,13 +248,8 @@ c     generate beginning positions
       if(moviename .ne. ' ') then
         write(*,*) 'moviename = ',moviename
         if (b2plot_debug.ge.1) write(*,*) 'Changing weighting'
-        do is=0,ns-1
-          do iy=-1,ny
-            do ix=-1,nx
-              warr(ix,iy,is)=
-     1         warr(ix,iy,is)/na(ix,iy,is)*lwarr(ix,iy,is)
-            enddo
-          enddo
+        do is=0,state%ns-1
+          warr(:,is)=warr(:,is)/state%pl%na(:,is)*lwarr(:,is)
         enddo
       endif
 #endif
@@ -263,6 +269,7 @@ c     generate beginning positions
 C-----Producing the arrays of side middle-points. The arrays are named
 C     clr (center line radial) and clz (center line z) respectively.
 
+#ifdef WG_TODO
       do zaehler=-1,nx
         do zaehler2=-1,ny
           clr(zaehler,zaehler2,1)=crx(zaehler,zaehler2,1)+
@@ -283,6 +290,7 @@ C     clr (center line radial) and clz (center line z) respectively.
      +            (cry(zaehler,zaehler2,1)-cry(zaehler,zaehler2,0))/2.
         enddo
       enddo
+#endif
 
 c     initialise graphics
 
@@ -290,7 +298,7 @@ c     initialise graphics
       call gsplci(1)
       if(iarg(specnum) .eq. 1 .and. iarg(6) .eq. 0) then  ! 1 species and trajectories
         call data_copy(iarg(7))
-        call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted
+        call additional_elements(mpg%nCv,.true.) !draws mesh/separatrix/etc... if wanted
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
         if(moviename .eq. ' ') then
 #endif
@@ -302,18 +310,18 @@ c     initialise graphics
 #endif
       else
         call data_copy(0)
-        call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted 
+        call additional_elements(mpg%nCv,.true.) !draws mesh/separatrix/etc... if wanted
         call specieslblbar(iarg(specnum),isclvl,texttraj)
       endif
       call GFLAS2                              ! sv 27.02.01
       call GFLAS3(1)
 
-C Now we start.:) All particles are calculated and plotted until they 
+C Now we start.:) All particles are calculated and plotted until they
 C reach the wall or their total time runs out (particle life). Each particle
 C is always advanced one timestep deltaT before the next particle is
 C calculated. Some particles die, because there occurred an error. If
 C this was the case, the new position of the particle in the computational
-C domain is set to be ix=-1,iy=-1 (ii,jj), in which case they are not 
+C domain is set to be ix=-1,iy=-1 (ii,jj), in which case they are not
 C processed any further.
 
 c     MOVIE:
@@ -323,13 +331,13 @@ c     are represented by dots
 
 c     The density of the plotted particles in the cells should be constant.
 c     REFILLING: see subroutine calcweigher
-c     DESTROYING: mode 1: If particles cross the core boundary, they are 
-c                         destroyed if the integral number of particles on 
+c     DESTROYING: mode 1: If particles cross the core boundary, they are
+c                         destroyed if the integral number of particles on
 c                         the side they entered is bigger than at beginning.
 c                 mode 2: If a particle enters a cell in which there are more
 c                         particles than at beginning, it is destroyed.
 
-      if (iarg(6) .eq. 1) then 
+      if (iarg(6) .eq. 1) then
         do ip=1,np        !draw initial positions on screen
           call lastd
           call gsplci(ips(ip)+1)
@@ -348,33 +356,33 @@ c                         particles than at beginning, it is destroyed.
             dumarr(1)=currtime
             call rwcdf_settime('time',itstep)
             call rwcdf(rw,ncid,'time',imap,dumarr,iret)
-            if (b2plot_debug.ge.2) 
+            if (b2plot_debug.ge.2)
      .       write(*,*) 'Processing from ',starttime,' to ',currtime
             deltat=currtime-starttime
             starttime=currtime
             globaltime=globaltime-deltat
             if(itstep .eq. ntstep) then
-              if (b2plot_debug.ge.2) 
+              if (b2plot_debug.ge.2)
      .         write(*,*) 'Last step: globaltime = ',globaltime
               globaltime=0.0_R8
             endif
             imap(1)=1
-            imap(2)=nx+2
-            call rwcdf(rw,ncid,'ua',imap,ua,iret)
-            call rwcdf(rw,ncid,'fna',imap,fna,iret)
+            imap(2)=1
+            call rwcdf(rw,ncid,'ua',imap,state%pl%ua,iret)
+            call rwcdf(rw,ncid,'fna',imap,state%dv%fna,iret)
             call rwcdf(rw,ncid,'na',imap,lwarr,iret)
-            do is=0,ns-1
-              do ix=-1,nx
-                do iy=-1,ny
-                  uutraj(ix,iy,is)=ua(ix,iy,is)
-                  vvtraj(ix,iy,is)=fna(ix,iy,1,1,is)
+            do is=0,state%ns-1
+              do iCv=1,mpg%nCv
+                uutraj(iCv,is)=state%pl%ua(iCv,is)
+#ifdef WG_TODO
+                vvtraj(ix,iy,is)=fna(ix,iy,1,1,is)
      .             /na(ix,iy,is)/gs(ix,iy,1)
-                end do
+#endif
               end do
             end do
           endif
 #endif
-          if (b2plot_debug.ge.2) 
+          if (b2plot_debug.ge.2)
      .     write(*,*)'plotnumber: ',counter,'(of ',nplot,')'
           call end_page
           call lastd
@@ -385,6 +393,7 @@ c                         particles than at beginning, it is destroyed.
      +     values(7),values(8),1,.true.,.true.,.true.)
           call gflas3(1)
           call cpu_time(cpu_start)
+#ifdef WG_TODO
           do ip=1,np
             call lastd
             call gsplci(ips(ip)+1)
@@ -400,6 +409,7 @@ c                         particles than at beginning, it is destroyed.
               call lined_d(p_r(ip),p_z(ip),p_r(ip),p_z(ip))
             endif
           enddo                 ! ip
+#endif
           call cpu_time(cpu_end)
           if (b2plot_debug.ge.8) write(*,'(a,f6.3,a)')
      1     'Advancing particles took ',
@@ -408,13 +418,8 @@ c                         particles than at beginning, it is destroyed.
           if(destmode .eq. 2) then
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
             if(moviename .ne. ' ') then
-              do is=0,ns-1
-                do iy=-1,ny
-                  do ix=-1,nx
-                    warr(ix,iy,is)=
-     1               warr(ix,iy,is)/na(ix,iy,is)*lwarr(ix,iy,is)
-                  enddo
-                enddo
+              do is=0,state%ns-1
+                warr(:,is)=warr(:,is)/state%pl%na(:,is)*lwarr(:,is)
               enddo
             endif
 #endif
@@ -426,8 +431,9 @@ c                         particles than at beginning, it is destroyed.
      2       cpu_end-cpu_start,
      3       ' cpu-seconds'
           else
+#ifdef WG_TODO
             do ip=1,np
-              if(ipx(ip) .lt. 0 .or. ipx(ip) .gt. nx-1 .or. 
+              if(ipx(ip) .lt. 0 .or. ipx(ip) .gt. nx-1 .or.
      1           ipy(ip) .lt. 0 .or. ipy(ip) .gt. ny-1) then
                 ipx(ip)=ipx_start(ip)
                 ipy(ip)=ipy_start(ip)
@@ -435,14 +441,15 @@ c                         particles than at beginning, it is destroyed.
                 p_z(ip)=p_z_start(ip)
               endif
             enddo
+#endif
           endif
         enddo                   ! number of plots
-    
+
 c     TRAJECTORIES:
 
       else                      ! Draw Lines
         randzaehler=0
-        do while ((randzaehler .lt. np) .and. 
+        do while ((randzaehler .lt. np) .and.
      +   (globaltime .gt. 0.0_R8))
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
           if(moviename .eq. ' ') then
@@ -456,28 +463,28 @@ c     TRAJECTORIES:
             dumarr(1)=currtime
             call rwcdf_settime('time',itstep)
             call rwcdf(rw,ncid,'time',imap,dumarr,iret)
-            if (b2plot_debug.ge.2) 
+            if (b2plot_debug.ge.2)
      .       write(*,*) 'Processing from ',starttime,' to ',currtime
             deltat=currtime-starttime
             starttime=currtime
             globaltime=globaltime-deltat
             if(itstep .eq. ntstep) then
-              if (b2plot_debug.ge.2) 
+              if (b2plot_debug.ge.2)
      .         write(*,*) 'Last step: globaltime = ',globaltime
               globaltime=0.0_R8
             endif
             imap(1)=1
-            imap(2)=nx+2
-            call rwcdf(rw,ncid,'ua',imap,ua,iret)
-            call rwcdf(rw,ncid,'na',imap,na,iret)
-            call rwcdf(rw,ncid,'fna',imap,fna,iret)
-            do is=0,ns-1
-              do ix=-1,nx
-                do iy=-1,ny
-                  uutraj(ix,iy,is)=ua(ix,iy,is)
-                  vvtraj(ix,iy,is)=fna(ix,iy,1,1,is)
-     .             /na(ix,iy,is)/gs(ix,iy,1)
-                end do
+            imap(2)=1
+            call rwcdf(rw,ncid,'ua',imap,state%pl%ua,iret)
+            call rwcdf(rw,ncid,'na',imap,state%pl%na,iret)
+            call rwcdf(rw,ncid,'fna',imap,state%dv%fna,iret)
+            do is=0,state%ns-1
+              do iCv=1,mpg%nCv
+                uutraj(iCv,is)=state%pl%ua(iCv,is)
+#ifdef WG_TODO
+                vvtraj(ix,iy,is)=fna(ix,iy,1,1,is)
+     .           /na(ix,iy,is)/gs(ix,iy,1)
+#endif
               end do
             end do
           endif
@@ -491,8 +498,9 @@ c     TRAJECTORIES:
             endif
           endif
           randzaehler=0
+#ifdef WG_TODO
           do ip=1,np
-            if (ipy(ip).gt.ny-1 .or. ipy(ip).lt.0 .or.  
+            if (ipy(ip).gt.ny-1 .or. ipy(ip).lt.0 .or.
      +          ipx(ip).gt.nx-1 .or. ipx(ip).lt.0) then
               randzaehler=randzaehler+1
             else
@@ -501,8 +509,8 @@ c     TRAJECTORIES:
               call trajectories(p_r(ip),p_z(ip),ipx(ip),
      +         ipy(ip),ips(ip),deltat,clr,clz)
               if(iarg(specnum).ne.1) then
-                icol=ips(ip)+1
-                if(icol.ne.oocol .and. color_set) then
+                icol=iscol(ips(ip))
+                if(icol.ne.oocol .and. icol.ne.-1 .and. color_set) then
                   call lastd
                   call gsplci(icol)
                   oocol=icol
@@ -511,6 +519,7 @@ c     TRAJECTORIES:
               call lined_d(rrold,zrold,p_r(ip),p_z(ip))
             endif
           enddo         !ip
+#endif
         enddo           !randzaehler
       endif
 
@@ -523,20 +532,20 @@ c     close Plot-Screen
 
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       iret = nf_close(ncid)
+      deallocate(lwarr)
 #endif
+      deallocate(warr)
       return
       end subroutine caltraj
 
 c     -----------------------------------------------------------------------
 c     CALCULATING NEW POSITIONS
 c     -----------------------------------------------------------------------
-
+#ifdef WG_TODO
       subroutine trajectories(rre,zre,ii,jj,l,deltat,clr,clz)
-      
+
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_b2plot_debug
       implicit none
 
@@ -545,14 +554,14 @@ C      rre/zre real coordinates of the particle
 C      rxy and zxy intersection points with the walls
 C      d variable needed to check through which wall the particle goes
 C      wall: holds through which wall it goes (11=corner 1, 13 wall 13..)
-C      Neighbourhood arrays to determine into which cell the 
+C      Neighbourhood arrays to determine into which cell the
 C      particle moves.
 C      vr,vz reale transformierte (in physical domain) Geschwindigkeiten
 
       real (kind=R8) ::
      *   tpart,deltat,timerun
       real (kind=R8) ::
-     *   vr,vz      
+     *   vr,vz
       real (kind=R8) ::
      *   rre,zre, radvance, zadvance
       real (kind=R8) ::
@@ -561,25 +570,25 @@ C      vr,vz reale transformierte (in physical domain) Geschwindigkeiten
      *   clr(-1:nx,-1:ny,1:4),clz(-1:nx,-1:ny,1:4)
       integer ii,jj,l,iold,jold
       integer wall,schritte
-      logical laufende         
+      logical laufende
       logical inside_rectangle
 
-C     Initial configuration. Particle time is counted downwards, 
+C     Initial configuration. Particle time is counted downwards,
 C     therefore is set to be deltaT here.
-       
+
       vr=0.0_R8
       vz=0.0_R8
       laufende = .false.
       tpart = deltat
       schritte=0
 
-      do while(.not.laufende)            
+      do while(.not.laufende)
          schritte=schritte+1
 
 C     The velocities need to be transformed from the computational
 C     to the real domain.
 
-         call veloctrans(ii,jj,l,vr,vz,clr,clz)    
+         call veloctrans(ii,jj,l,vr,vz,clr,clz)
 
 C      OK, first calculate the time the particle needs to hit a "wall"
 C      That is, at first one has to know, which wall it is going to hit!
@@ -595,10 +604,10 @@ C      much time the particle is going to need to reach the wall.
 C      Now let us see if it makes it to the wall before having to
 C      be plotted, that is, before the time tpart runs out, which is
 C      counted down from deltaT
- 
+
          timerun=MIN(tdist,tpart)
- 
-         if (timerun .eq. tpart) then 
+
+         if (timerun .eq. tpart) then
             tpart = deltaT
             laufende=.true.
          else
@@ -637,13 +646,13 @@ C        bit into the next cell.
 CXPB     deltar and deltaz are normally zero, except when crossing periodicity
 CXPB     boundaries, then they translate the particle to the spatial
 CXPB     location of the next computational cell.
-         
+
          radvance=vr*MAX(timerun,1.0e-6_R8)*0.01_R8
          zadvance=vz*MAX(timerun,1.0e-6_R8)*0.01_R8
-               
+
          rre = rre + vr*timerun + radvance
          zre = zre + vz*timerun + zadvance
-         
+
          do while(
      1    .not. inside_rectangle(rre,zre,crx(ii,jj,1),cry(ii,jj,1),
      2         crx(ii,jj,3),cry(ii,jj,3),crx(ii,jj,2),cry(ii,jj,2),
@@ -651,7 +660,7 @@ CXPB     location of the next computational cell.
            radvance=radvance*0.5_R8
            zadvance=zadvance*0.5_R8
            if (Max(Abs(radvance),Abs(zadvance)) .lt. 1.0e-20_R8) then
-             if (b2plot_debug.ge.1) 
+             if (b2plot_debug.ge.1)
      .        write(*,*)'Particle had to be killed.'
              if (b2plot_debug.ge.1) write(*,*)'No Problem. (?)'
              ii=-1
@@ -661,13 +670,13 @@ CXPB     location of the next computational cell.
            rre = rre - radvance
            zre = zre - zadvance
          enddo
-       
+
  1000    continue
 
          if(schritte .eq. 10000) then
-           if (b2plot_debug.ge.1) 
+           if (b2plot_debug.ge.1)
      .      write(*,*) 'Particle had to be killed to save time.'
-           if (b2plot_debug.ge.1) 
+           if (b2plot_debug.ge.1)
      .      write(*,*) 'A new one will be created to take its place.'
            ii=-1
            jj=-1
@@ -688,9 +697,8 @@ c     CALCULATING THE INTERSECTION WITH THE CELL WALL
 c     -------------------------------------------------------------------------
 
       subroutine intersection(wall,tdist,vz,vr,rre,zre,ii,jj,laufende)
-      
+
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot_debug
       implicit none
 
@@ -706,22 +714,22 @@ c     -------------------------------------------------------------------------
       error=.true.
 
 C     Calculate the slope, that is the a in y=ax+b
-      
+
       call schnittpunktzweierlinien(vr,vz,rre,zre,ii,jj,r13,z13,1,3)
       call schnittpunktzweierlinien(vr,vz,rre,zre,ii,jj,r32,z32,3,2)
       call schnittpunktzweierlinien(vr,vz,rre,zre,ii,jj,r20,z20,2,0)
       call schnittpunktzweierlinien(vr,vz,rre,zre,ii,jj,r01,z01,0,1)
- 
-C     Now we know the intersection between the path of the particle 
-C     and the lines that make up the walls. But we do not know if they 
-C     are inside the walls of the cells or on the outer part of the 
-C     line making up the cell.
- 
 
-      if(((r13 .le. crx(ii,jj,3))  .and.  (r13 .ge. crx(ii,jj,1))) .or. 
+C     Now we know the intersection between the path of the particle
+C     and the lines that make up the walls. But we do not know if they
+C     are inside the walls of the cells or on the outer part of the
+C     line making up the cell.
+
+
+      if(((r13 .le. crx(ii,jj,3))  .and.  (r13 .ge. crx(ii,jj,1))) .or.
      +   ((r13 .ge. crx(ii,jj,3))  .and.  (r13 .le. crx(ii,jj,1)))) then
         d = r13 + vr
-        if (((r13 .le. d)  .and.  (r13 .ge. (rre )))  .or. 
+        if (((r13 .le. d)  .and.  (r13 .ge. (rre )))  .or.
      +      ((r13 .ge. d)  .and.  (r13 .le. (rre )))) then
           wall=13
           error=.false.
@@ -729,10 +737,10 @@ C     line making up the cell.
      +                 ABS(z13-zre)/ABS(vz+1.0e-20_R8))
         endif
       endif
-      if(((r32 .le. crx(ii,jj,3))  .and.  (r32 .ge. crx(ii,jj,2))) .or. 
+      if(((r32 .le. crx(ii,jj,3))  .and.  (r32 .ge. crx(ii,jj,2))) .or.
      +   ((r32 .ge. crx(ii,jj,3))  .and.  (r32 .le. crx(ii,jj,2)))) then
         d = z32 + vz
-        if (((z32 .le. d)  .and.  (z32 .ge. (zre)))  .or. 
+        if (((z32 .le. d)  .and.  (z32 .ge. (zre)))  .or.
      +      ((z32 .ge. d)  .and.  (z32 .le. (zre)))) then
           wall=32
           error=.false.
@@ -740,10 +748,10 @@ C     line making up the cell.
      +                 ABS(z32-zre)/ABS(vz+1.0e-20_R8))
         endif
       endif
-      if(((z20 .le. cry(ii,jj,2))  .and.  (z20 .ge. cry(ii,jj,0)))  .or. 
+      if(((z20 .le. cry(ii,jj,2))  .and.  (z20 .ge. cry(ii,jj,0)))  .or.
      +   ((z20 .ge. cry(ii,jj,2))  .and.  (z20 .le. cry(ii,jj,0)))) then
         d = r20 + vr
-        if (((r20 .le. d)  .and.  (r20 .ge. (rre )))  .or. 
+        if (((r20 .le. d)  .and.  (r20 .ge. (rre )))  .or.
      +      ((r20 .ge. d)  .and.  (r20 .le. (rre )))) then
           wall=20
           error=.false.
@@ -751,10 +759,10 @@ C     line making up the cell.
      +                 ABS(z20-zre)/ABS(vz+1.0e-20_R8))
         endif
       endif
-      if(((r01 .le. crx(ii,jj,1))  .and.  (r01 .ge. crx(ii,jj,0)))  .or. 
+      if(((r01 .le. crx(ii,jj,1))  .and.  (r01 .ge. crx(ii,jj,0)))  .or.
      +   ((r01 .ge. crx(ii,jj,1))  .and.  (r01 .le. crx(ii,jj,0)))) then
         d = z01 + vz
-        if (((z01 .le. d)  .and.  (z01 .ge. (zre)))  .or. 
+        if (((z01 .le. d)  .and.  (z01 .ge. (zre)))  .or.
      +      ((z01 .ge. d)  .and.  (z01 .le. (zre)))) then
           wall=01
           error=.false.
@@ -768,7 +776,7 @@ C passes through one of them.
 
        if (r13 .eq. r01) then
            d = z01 + vz
-           if (((z01 .le. d)  .and.  (z01 .ge. (zre)) ) .or. 
+           if (((z01 .le. d)  .and.  (z01 .ge. (zre)) ) .or.
      +         ((z01 .ge. d)  .and.  (z01 .le. (zre)))) then
               error=.false.
                wall=11
@@ -778,7 +786,7 @@ C passes through one of them.
        endif
        if (r32 .eq. r13) then
           d = z13 + vz
-          if (((z13 .le. d)  .and.  (z13 .ge. (zre)))  .or. 
+          if (((z13 .le. d)  .and.  (z13 .ge. (zre)))  .or.
      +        ((z13 .ge. d)  .and.  (z13 .le. (zre)))) then
               wall=33
               error=.false.
@@ -788,7 +796,7 @@ C passes through one of them.
        endif
        if (r20 .eq. r32) then
           d = z32 + vz
-          if (((z32 .le. d)  .and.  (z32 .ge. (zre)))  .or. 
+          if (((z32 .le. d)  .and.  (z32 .ge. (zre)))  .or.
      +        ((z32 .ge. d)  .and.  (z32 .le. (zre)))) then
               wall=22
               error=.false.
@@ -798,7 +806,7 @@ C passes through one of them.
        endif
        if (r01 .eq. r20) then
           d = z20 + vz
-          if (((z20 .le. d)  .and.  (z20 .ge. (zre)))  .or. 
+          if (((z20 .le. d)  .and.  (z20 .ge. (zre)))  .or.
      +        ((z20 .ge. d)  .and.  (z20 .le. (zre)))) then
               wall=00
               error=.false.
@@ -808,17 +816,17 @@ C passes through one of them.
        endif
 
        if (error) then
-         if (b2plot_debug.ge.1) 
+         if (b2plot_debug.ge.1)
      .    write(*,*)'Error while looking for a wall to cross'
          laufende = .true.
          tdist=0.0_R8
        endif
- 
+
 C      Through one of the walls or corners it has to go! :)
 C
       return
       end subroutine intersection
-
+#endif
 c------------------------------------------------------------------------------
 c     CALCULATE THE INTERSECTION OF TWO LINES
 c------------------------------------------------------------------------------
@@ -831,8 +839,9 @@ C     (vr,vz) and b) by two points (e1,e2), which are two corners of
 C     the cell (ii,jj).
 
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot_debug
+      use b2us_data
+      use b2mod_dimensions
       implicit none
 
       integer e1,e2,ii,jj
@@ -854,32 +863,36 @@ C     could lead to numerical problems (?).
          if (b2plot_debug.ge.2400) write(*,*)'a1: ',a1,'   b1: ',b1
       else
          einssenk=.true.
-      endif   
-   
+      endif
+
+#ifdef WG_TODO
       if (crx(ii,jj,e2) .ne. crx(ii,jj,e1)) then
         a2 = (cry(ii,jj,e2)-cry(ii,jj,e1))/(crx(ii,jj,e2)-crx(ii,jj,e1))
         b2 = -a2*crx(ii,jj,e1)+cry(ii,jj,e1)
       else
         zweisenk=.true.
-      endif      
- 
+      endif
+#endif
+
       if ((.not.einssenk) .and. (.not.zweisenk)) then
          if (a1 .ne. a2) then
             x = (b2-b1)/(a1-a2)
             y = a1*x + b1
-         else 
+         else
             x = 10000000000.0_R8
             y = 10000000000.0_R8
-C           There is no intersection point. Therefore I set 
-C           it to be very large. The upper program will recognise this 
+C           There is no intersection point. Therefore I set
+C           it to be very large. The upper program will recognise this
 C           as being outside the cell.
          endif
       else if (einssenk .and. (.not.zweisenk)) then
          x = rre
          y = x*a2 + b2
       else if (zweisenk .and. (.not.einssenk)) then
+#ifdef WG_TODO
          x = crx(ii,jj,e1)
          y = x*a1 + b1
+#endif
       else
          x = 2000000000.0_R8
          y = 2000000000.0_R8
@@ -893,6 +906,7 @@ c     --------------------------------------------------------------------------
 c     TRANSFORM VELOCITIES
 c     -----------------------------------------------------------------------------------
 
+#ifdef WG_TODO
       subroutine veloctrans(ii,jj,l,vr,vz,clr,clz)
 
       use b2mod_types
@@ -901,12 +915,12 @@ c     --------------------------------------------------------------------------
 
       integer ii,jj,l
       real (kind=R8) ::
-     *   vr,vz       
+     *   vr,vz
       real (kind=R8) ::
      *   rechvv(1:2),rechuu(1:2),betrag
       real (kind=R8) ::
      *   clr(-1:nx,-1:ny,1:4),clz(-1:nx,-1:ny,1:4)
-       
+
 C Projection of the vvtraj upon the axis of the cell (side middle points)
 
       betrag=sqrt(((clr(ii,jj,2)-clr(ii,jj,4))**2+
@@ -915,10 +929,9 @@ C Projection of the vvtraj upon the axis of the cell (side middle points)
      +               vvtraj(ii,jj,l)
       rechvv(2)=(1/betrag)*(clz(ii,jj,2)-clz(ii,jj,4))*
      +               vvtraj(ii,jj,l)
-      
-      
+
 C Projection of the uutraj upon the axis of the cell (side middle points)
- 
+
       betrag=sqrt((clr(ii,jj,1)-clr(ii,jj,3))**2 +
      +                (clz(ii,jj,1)-clz(ii,jj,3))**2)
       rechuu(1)=(1/betrag)*(clr(ii,jj,1)-clr(ii,jj,3))*
@@ -926,12 +939,12 @@ C Projection of the uutraj upon the axis of the cell (side middle points)
       rechuu(2)=(1/betrag)*(clz(ii,jj,1)-clz(ii,jj,3))*
      +              uutraj(ii,jj,l)
 
-
       vr=rechvv(1)+rechuu(1)
       vz=rechvv(2)+rechuu(2)
 
       return
       end subroutine veloctrans
+#endif
 
 c     --------------------------------------------------------------------------------------
 c     CALCULATE THE WEIGHT ARRAY FROM THE WEIGHER
@@ -940,53 +953,55 @@ c     --------------------------------------------------------------------------
       subroutine weightarray(warr,warr_in,ls_active,ix1,ix2,iy1,iy2,nd)
 
       use b2mod_types
-      use b2mod_b2plot
       use b2mod_b2plot_debug
+      use b2us_data
       implicit none
 
-      integer ix,iy,is,nd,ix1,ix2,iy1,iy2
-      logical ls_active(0:ns-1)
+      integer iCv,is,nd,ix1,ix2,iy1,iy2
+      logical ls_active(0:state%ns-1)
       real (kind=R8) ::
-     *      warr_in(-1:nx,-1:ny,0:nd-1),warr(-1:nx,-1:ny,0:ns-1)
+     * warr_in(1:mpg%nCv,0:nd-1),warr(1:mpg%nCv,0:state%ns-1)
 
-      do is=0,ns-1
-        do ix=-1,nx
-          do iy=-1,ny
-            warr(ix,iy,is)=0.0_R8
-          enddo
+      do is=0,state%ns-1
+        do iCv=1,mpg%nCv
+          warr(iCv,is)=0.0_R8
         enddo
       enddo
 
-      if (nd .eq. ns) then
-        do is=0,ns-1
+      if (nd .eq. state%ns) then
+        do is=0,state%ns-1
           if(ls_active(is)) then
+#ifdef WG_TODO
             do ix=ix1,ix2
               do iy=iy1,iy2
                 warr(ix,iy,is)=warr_in(ix,iy,is)
               enddo
             enddo
+#endif
           endif
         enddo
       else if (nd .eq. 1) then
-        do is=0,ns-1
+        do is=0,state%ns-1
           if(ls_active(is)) then
-            if (b2plot_debug.ge.2) 
+            if (b2plot_debug.ge.2)
      .       write(*,*) 'Allocating for species ',is,' for ',
-     1       ix1,' <= ix <= ',ix2,' and ',iy1,' <= iy <= ',iy2
-            if (b2plot_debug.ge.2) write(*,*) 'nx,ny,ns=',nx,ny,ns
+     1        ix1,' <= ix <= ',ix2,' and ',iy1,' <= iy <= ',iy2
+#ifdef WG_TODO
+            if (b2plot_debug.ge.2) write(*,*) 'nx,ny,ns=',nx,ny,state%ns
             do ix=ix1,ix2
               do iy=iy1,iy2
                 warr(ix,iy,is)=warr_in(ix,iy,0)
               enddo
             enddo
+#endif
           endif
         enddo
       else
         write(*,*)
      1   'Source function does not have the right size, try again.'
         return
-      endif 
-       
+      endif
+
       return
       end subroutine weightarray
 
@@ -1008,20 +1023,20 @@ c     see file b2plot.F, initialisation of values(...) )
 c
       subroutine allocate_particles(warr,ipx,ipy,ips,p_r,p_z,nps,np)
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
+      use b2us_data
       implicit none
 
       integer nps,np,ipx(np),ipy(np),ips(np)
       real (kind=R8) ::
-     *   warr(-1:nx,-1:ny,0:ns-1),swarr
+     *   warr(1:mpg%nCv,0:state%ns-1),swarr
       real (kind=R8) ::
      *   p_r(np),p_z(np)
-      integer iwarr(-1:nx,-1:ny,0:ns-1)
-      integer index_arr(-1:nx,-1:ny,0:ns-1),
+      integer iwarr(1:mpg%nCv,0:state%ns-1)
+      integer index_arr(1:mpg%nCv,0:state%ns-1),
      1 index_part(npart),killed(npart)
-      integer ix,iy,is,ip,ikilled,ipt,ipto,iptoo,nadd
+      integer iCv,is,ip,ikilled,ipt,ipto,iptoo,nadd
       real (kind=R8) ::
      *   killval,addval,rmin,rmax,zmin,zmax,rre,zre
 #ifndef NAG22
@@ -1035,36 +1050,33 @@ c
      *   g05kaf
 #endif
       logical phase1,inside_rectangle,gefunden
-      if (b2plot_debug.ge.8) 
+      if (b2plot_debug.ge.8)
      . write(*,*) 'Starting allocate_particles: nps, np = ',nps,np
 c initialise integer weight array and cross-index array
       swarr=0.0_R8
-      do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            iwarr(ix,iy,is)=0
-            index_arr(ix,iy,is)=0
-            swarr=swarr+warr(ix,iy,is)
-          enddo
+      do is=0,state%ns-1
+        do iCv=1,mpg%nCv
+          iwarr(iCv,is)=0
+          index_arr(iCv,is)=0
+          swarr=swarr+warr(iCv,is)
         enddo
       enddo
       if(swarr .eq. 0) then
-        if (b2plot_debug.ge.8) 
+        if (b2plot_debug.ge.8)
      .   write(*,*) 'Weighting array == 0, reset to 1'
-        do is=0,ns-1
-          do iy=-1,ny
-            do ix=-1,nx
-              warr(ix,iy,is)=1
-              swarr=swarr+warr(ix,iy,is)
-            enddo
+        do is=0,state%ns-1
+          do iCv=1,mpg%nCv
+            warr(iCv,is)=1
+            swarr=swarr+warr(iCv,is)
           enddo
         enddo
       endif
-      if (b2plot_debug.ge.8) 
+      if (b2plot_debug.ge.8)
      . write(*,*) 'allocate_particles: swarr = ',swarr
 c evaluate integer weight array and cross-index arrays
       ikilled=0
       do ip=1,nps
+#ifdef WG_TODO
         ix=ipx(ip)
         iy=ipy(ip)
         is=ips(ip)
@@ -1086,6 +1098,7 @@ c evaluate integer weight array and cross-index arrays
           endif
           index_part(ip)=0
         endif
+#endif
       enddo
 c find particles that need to be killed
       nadd=0
@@ -1093,37 +1106,35 @@ c find particles that need to be killed
       addval=0.0_R8
       phase1=.true.
  1000 continue
-      if (b2plot_debug.ge.8) 
+      if (b2plot_debug.ge.8)
      . write(*,5000) 1000,killval,addval,phase1,ikilled,nadd
       do ip=nps+1,np
         ikilled=ikilled+1
         killed(ikilled)=ip
       enddo
-      do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            do while
-     .       (warr(ix,iy,is)/swarr*np-iwarr(ix,iy,is) .le. killval)
-              ipt=index_arr(ix,iy,is)
-              if(ipt .eq. 0) then
-                write(*,*) 'ERROR: should not reach here'
-              endif
-              ipto=0
-              do while(ipt .ne. 0)
-                iptoo=ipto
-                ipto=ipt
-                ipt=index_part(ipto)
-              enddo
-              if(iptoo .eq. 0) then
-                index_arr(ix,iy,is)=0
-              else
-                index_part(iptoo)=0
-              endif
-              iwarr(ix,iy,is)=iwarr(ix,iy,is)-1
-              ikilled=ikilled+1
-              killed(ikilled)=ipto
-              if(.not.phase1 .and. ikilled .eq. nadd) goto 2000     ! we have killed enough particles 
+      do is=0,state%ns-1
+        do iCv=1,mpg%nCv
+          do while
+     .     (warr(iCv,is)/swarr*np-iwarr(iCv,is) .le. killval)
+            ipt=index_arr(iCv,is)
+            if(ipt .eq. 0) then
+              write(*,*) 'ERROR: should not reach here'
+            endif
+            ipto=0
+            do while(ipt .ne. 0)
+              iptoo=ipto
+              ipto=ipt
+              ipt=index_part(ipto)
             enddo
+            if(iptoo .eq. 0) then
+              index_arr(iCv,is)=0
+            else
+              index_part(iptoo)=0
+            endif
+            iwarr(iCv,is)=iwarr(iCv,is)-1
+            ikilled=ikilled+1
+            killed(ikilled)=ipto
+            if(.not.phase1 .and. ikilled .eq. nadd) goto 2000     ! we have killed enough particles
           enddo
         enddo
       enddo
@@ -1133,74 +1144,74 @@ c find particles that need to be killed
       endif
 c find where particles need to be added
  2000 continue
-      if (b2plot_debug.ge.8) 
+      if (b2plot_debug.ge.8)
      . write(*,5000) 2000,killval,addval,phase1,ikilled,nadd
       nadd=0
-      do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            nadd=int(warr(ix,iy,is)/swarr*np)
-     .             -iwarr(ix,iy,is)+nint(addval)+nadd
-            if(nadd .gt. 0 .and. ikilled .gt. 0) then
-              ipt=index_arr(ix,iy,is)
-              ipto=0
-              do while(ipt .ne. 0)
-                ipto=ipt
-                ipt=index_part(ipto)
-              enddo
-              do while(nadd .gt. 0 .and. ikilled .gt. 0)
-                if(ipto .eq. 0) then
-                  index_arr(ix,iy,is)=killed(ikilled)
-                else
-                  index_part(ipto)=killed(ikilled)
-                endif
-                index_part(killed(ikilled))=0
+      do is=0,state%ns-1
+        do iCv=1,mpg%nCv
+          nadd=int(warr(iCv,is)/swarr*np)
+     .           -iwarr(iCv,is)+nint(addval)+nadd
+          if(nadd .gt. 0 .and. ikilled .gt. 0) then
+            ipt=index_arr(iCv,is)
+            ipto=0
+            do while(ipt .ne. 0)
+              ipto=ipt
+              ipt=index_part(ipto)
+            enddo
+            do while(nadd .gt. 0 .and. ikilled .gt. 0)
+              if(ipto .eq. 0) then
+                index_arr(iCv,is)=killed(ikilled)
+              else
+                index_part(ipto)=killed(ikilled)
+              endif
+              index_part(killed(ikilled))=0
+#ifdef WG_TODO
 c add particle of species is in cell (ix,iy)
-                ipx(killed(ikilled))=ix
-                ipy(killed(ikilled))=iy
-                ips(killed(ikilled))=is
-                zmin=
+              ipx(killed(ikilled))=ix
+              ipy(killed(ikilled))=iy
+              ips(killed(ikilled))=is
+              zmin=
      1           MIN(cry(ix,iy,1),cry(ix,iy,3),
      2               cry(ix,iy,2),cry(ix,iy,0))
-                rmin=
+              rmin=
      1           MIN(crx(ix,iy,1),crx(ix,iy,3),
      2               crx(ix,iy,2),crx(ix,iy,0))
-                zmax=
+              zmax=
      1           MAX(cry(ix,iy,1),cry(ix,iy,3),
      2               cry(ix,iy,2),cry(ix,iy,0))
-                rmax=
+              rmax=
      1           MAX(crx(ix,iy,1),crx(ix,iy,3),
      2               crx(ix,iy,2),crx(ix,iy,0))
-                gefunden=.false.
-                do while (.not.gefunden)
+              gefunden=.false.
+              do while (.not.gefunden)
 #ifndef NAG22
-                  rre=g05caf(3.1_R8)*(rmax-rmin)+rmin
-                  zre=g05caf(3.1_R8)*(zmax-zmin)+zmin
+                rre=g05caf(3.1_R8)*(rmax-rmin)+rmin
+                zre=g05caf(3.1_R8)*(zmax-zmin)+zmin
 #else
-                  rre=g05kaf(IGEN,ISEED)*(rmax-rmin)+rmin
-                  zre=g05kaf(IGEN,ISEED)*(zmax-zmin)+zmin
+                rre=g05kaf(IGEN,ISEED)*(rmax-rmin)+rmin
+                zre=g05kaf(IGEN,ISEED)*(zmax-zmin)+zmin
 #endif
-                  gefunden=inside_rectangle(rre,zre,
+                gefunden=inside_rectangle(rre,zre,
      1             crx(ix,iy,1),cry(ix,iy,1),
      2             crx(ix,iy,3),cry(ix,iy,3),
      3             crx(ix,iy,2),cry(ix,iy,2),
      4             crx(ix,iy,0),cry(ix,iy,0))
-                enddo
-                p_r(killed(ikilled))=rre
-                p_z(killed(ikilled))=zre
-                ikilled=ikilled-1
-                nadd=nadd-1
-                iwarr(ix,iy,is)=iwarr(ix,iy,is)+1
               enddo
-            endif
-            if(.not.phase1 .and. ikilled .eq. 0) goto 4000
-          enddo
+              p_r(killed(ikilled))=rre
+              p_z(killed(ikilled))=zre
+#endif
+              ikilled=ikilled-1
+              nadd=nadd-1
+              iwarr(iCv,is)=iwarr(iCv,is)+1
+            enddo
+          endif
+          if(.not.phase1 .and. ikilled .eq. 0) goto 4000
         enddo
       enddo
 c at this point we might still need to add either "nadd" or "ikilled" particles
  3000 continue
       phase1=.false.
-      if (b2plot_debug.ge.8) 
+      if (b2plot_debug.ge.8)
      . write(*,5000) 3000,killval,addval,phase1,ikilled,nadd
       if(nadd .gt. 0) then
         killval=killval+0.1_R8
@@ -1211,7 +1222,7 @@ c at this point we might still need to add either "nadd" or "ikilled" particles
         goto 2000
       endif
  4000 continue
-      if (b2plot_debug.ge.8) 
+      if (b2plot_debug.ge.8)
      . write(*,5000) 4000, killval,addval,phase1,ikilled,nadd
       return
  5000 format('allocate_particles (',i4,'): ',
@@ -1281,7 +1292,7 @@ cdpc split logical and data
 *
       IF (FIRST) THEN
          IF (FLAG  .NE.  CHECK) THEN
-            IF (B2PLOT_DEBUG .GE. 8) 
+            IF (B2PLOT_DEBUG .GE. 8)
      .       WRITE(6,*) ' H1RN (RANMAR): INITIALISED WITH DEFAULT SEED'
             ISEED1      = 12345
             ISEED2      = 98765

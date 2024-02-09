@@ -2,7 +2,8 @@
 *.specification
 
       subroutine b2stcx (nCv, nFc, ns, is0, ismain, switch, geo,     !srv 09.01.01
-     &  mpg, na, ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)        !srv 07.07.09
+     &  mpg, na, ua, ti, tn, ni,
+     &  rcx, sna0, smq0, shi0, shn0, rcxna, rcxmo, rcxhi)
       use b2mod_types
       use b2mod_constants
 !      use b2mod_tallies
@@ -11,9 +12,9 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
-!      use b2mod_balance !djm Jan2017
-!     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
-!     &          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
+     &          balance_netcdf
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -34,7 +35,8 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(nCv,0:1,0:ns-1), smq0(nCv,0:3,0:ns-1), shi0(nCv,0:3),
-     *  shn0(nCv,0:3)
+     *  shn0(nCv,0:3),
+     *  rcxna(nCv,0:ns-1), rcxmo(nCv,0:ns-1), rcxhi(nCv,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -70,6 +72,8 @@
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     &  'faulty argument ismain')
 *   ..test is0
       call xertst (0.le.is0.and.is0.lt.ns-1, 'faulty argument is0')
       call xertst (lnext(is0,is0+1),
@@ -126,10 +130,10 @@ ctmp.dpc
      &       t0*na(iCv,is0)
             sna0(iCv,1,is0) = sna0(iCv,1,is0)-
      &       t0*na(iCv,is)
-!WG_TODO            rcxna(iCv,is)=rcxna(iCv,is)+
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
-!WG_TODO            rcxna(iCv,is0)=rcxna(iCv,is0)-
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
+            rcxna(iCv,is)=rcxna(iCv,is)+
+     1       t0*na(iCv,is0)*na(iCv,is)
+            rcxna(iCv,is0)=rcxna(iCv,is0)-
+     1       t0*na(iCv,is0)*na(iCv,is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is0)=
@@ -162,9 +166,9 @@ ctmp.dpc
      &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
                t1 = t0*na(iCv,is0)*na(iCv,is)*(tkin + 1.5_R8*tn(iCv))
              endif
-             shi0(iCv,0) = shi0(iCv,0)+t1 
+             shi0(iCv,0) = shi0(iCv,0)+t1
            else !tn_style=2
-             if (zn(is).eq.1.and.zn(is0).eq.1) then ! CX between hydrogenic species
+             if (nint(zn(is)).eq.1.and.nint(zn(is0)).eq.1) then ! CX between hydrogenic species
                tkin = (mp/2.0_R8)*
      &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*
@@ -173,7 +177,7 @@ ctmp.dpc
      &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
                t1n = t0*na(iCv,is0)*na(iCv,is)*
      &            (1.5_R8*(ti(iCv)-tn(iCv)) + tkin)
-             elseif (zn(is0).eq.1) then  ! only is0/is0+1 hydrogenic
+             elseif (nint(zn(is0)).eq.1) then  ! only is0/is0+1 hydrogenic
                tkin = (mp/2.0_R8)*
      &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
@@ -181,7 +185,7 @@ ctmp.dpc
                tkin = (mp/2.0_R8)*
      &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
                t1n = -t0*na(iCv,is0)*na(iCv,is)*1.5_R8*tn(iCv)
-             elseif (zn(is).eq.1) then  ! only is/is-1 hydrogenic
+             elseif (nint(zn(is)).eq.1) then  ! only is/is-1 hydrogenic
                tkin = (mp/2.0_R8)*
      &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*
@@ -199,7 +203,7 @@ ctmp.dpc
              shi0(iCv,0) = shi0(iCv,0)+t1
              shn0(iCv,0) = shn0(iCv,0)+t1n
            endif
-!WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
+           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
 !WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
           endif
         enddo
@@ -286,8 +290,8 @@ ctmp.dpc
               smq0(iCv,1,is0) = smq0(iCv,1,is0)-
      &         (1.0_R8+rg0)*t2
             endif
-!WG_TODO            rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
-!WG_TODO            rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
+            rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
+            rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is0)=
@@ -301,13 +305,13 @@ ctmp.dpc
       do is = 0, ns-1                     !srv 28.07.11 {
         if(is.eq.ismain) then
           wrk0=sna0(:,0,is)+sna0(:,1,is)*na(:,is)
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
+          call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
         endif
       enddo
-      wrk0=shi0(:,:,0)+
-     &     shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
-     &     shi0(:,:,3)*ni(:,:,0)*ti
-      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)                !srv 11.06.13
+      wrk0=shi0(:,0)+
+     &     shi0(:,1)*ti+shi0(:,2)*ni(:,0)+
+     &     shi0(:,3)*ni(:,0)*ti
+      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, sih)                !srv 11.06.13
 #endif
 
       write (chcx,'(i3.3)') is0
@@ -364,11 +368,11 @@ ctmp.dpc
       endif
 
 cdjm Jan2017 Keep linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2stcx_sna0to1 = sna0
-!WG_TODO        b2stcx_smq0to3 = smq0
-!WG_TODO        b2stcx_shi0to3 = shi0
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2stcx_sna0to1 = sna0
+        b2stcx_smq0to3 = smq0
+        b2stcx_shi0to3 = shi0
+      endif
 
 * ..return
       ncall_b2stcx = ncall_b2stcx+1

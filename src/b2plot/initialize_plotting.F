@@ -50,7 +50,7 @@ c      call plinit()
       call gopks(6,0)
       if(index(devenv,'x11').ne.0.or.
      1   index(devenv,'X11').ne.0) then
-       if(b2plot_debug.ge.12) write(*,*) 'X11'
+        if(b2plot_debug.ge.12) write(*,*) 'X11'
         nwork=nwork+1
 #ifdef WINDOWS
         call gopwk(nwork,0,1)      ! X11          !srv 07.05.01
@@ -131,6 +131,8 @@ c
 c
       extralabel=' '
       globalheader=' '
+      xlabel=' '
+      ylabel=' '
       runtime=real(time,R4)
       glsz=1.0_R4
       lbsz=1.0_R4
@@ -142,6 +144,7 @@ c
       color_map_loaded=.false.
       color_file=' '
       device='psc'
+      bold=.false.
       return
       end subroutine initialise_plotting_flags
 
@@ -316,6 +319,16 @@ c
       gcol=iopt
       return
       end subroutine set_title_color
+
+      subroutine set_frame_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
+      fcol=iopt
+      return
+      end subroutine set_frame_color
 
       subroutine set_barlabel_color(iopt)
       use b2mod_types

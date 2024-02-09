@@ -57,6 +57,7 @@ c======================================================================
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
+      use b2mod_dimensions
       implicit none
 c
 c*** Reads the data from dg output file

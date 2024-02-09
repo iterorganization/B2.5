@@ -10,16 +10,22 @@
       use b2mod_constants
 !WG_RM      use b2mod_external
       use b2mod_b2cmpa
-!WG_TODO      use b2mod_balance                                               !djm Jan2017
-!WG_TODO     & , only : b2sifr_smoch0to3, b2sifr_smotf0to3, balance_netcdf
+      use b2mod_balance                                                 !djm Jan2017
+     &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
+     &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3, 
+     &              balance_netcdf
       use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2sifr
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2sifr, ncall_b2tlnl
+     & , only : ncall_b2tlnl
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -38,7 +44,9 @@
      &   smprb(nCv), smptb(nCv), smfrb(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   vti32(nCv), gti(nCv), gte(nCv)
+     *   vti32(nCv), gti(nCv), gte(nCv),
+     *   smbtf_cthe(nCv),                                               !djm Jul2018
+     *   smbtf_cthi(nCv)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -139,6 +147,8 @@ csw 24sep2013
       smprb = 0.0_R8
       smptb = 0.0_R8
       smfrb = 0.0_R8
+      smbtf_cthe = 0.0_R8
+      smbtf_cthi = 0.0_R8
 *   ..loop over all other species
       do is = 0, ns-1
 *    ..consider distinct cases
@@ -206,6 +216,17 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
      &        +switch%b2sifr_phm3*cthi(iCv,isb)*delti*
      &        (ne(iCv)-st_ext%ne(iCv)))*
      1        geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
+         if (balance_netcdf.ne.0) then
+           smbtf_cthe(iCv) = smbtf_cthe(iCv)-t0*                    !djm Jul2018
+     &                  switch%b2sifr_phm2*cthe(iCv,isb)*delte*ne(iCv)*
+     &                  geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
+     &                  geo%cvHz(iCv)
+           smbtf_cthi(iCv) = smbtf_cthi(iCv)-t0*
+     &                  switch%b2sifr_phm3*cthi(iCv,isb)*delti*
+     &                  (ne(iCv)-st_ext%ne(iCv))*
+     &                  geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
+     &                  geo%cvHz(iCv)
+          endif
        enddo
       endif
       if (iout.ne.0) then                                           !srv 17.06.02 {
@@ -223,10 +244,12 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
       endif                                                         !srv 17.06.02 }
 
 cdjm Jan2017 Store the linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2sifr_smoch0to3(1:Cv,0:3,isb)=smbch
-!WG_TODO        b2sifr_smotf0to3(1:nCv,0:3,isb)=smbtf
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2sifr_smotf_ehxp0to3(1:nCv,0,isb)=smprb !djm Jul2018
+        b2sifr_smotf_cthe0to3(1:nCv,0,isb)=smbtf_cthe
+        b2sifr_smotf_cthi0to3(1:nCv,0,isb)=smbtf_cthi
+        b2sifr_smoch0to3(1:nCv,0:3,isb)=smbch
+      endif
 
 * ..return
       ncall_b2sifr = ncall_b2sifr+1

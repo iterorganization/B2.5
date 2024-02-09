@@ -29,10 +29,8 @@ c***
 c***  plenter.dat
 c----------------------------------------------------------------------
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2plot_ank
       implicit none
@@ -48,18 +46,25 @@ c*** Grid sub-division for calculation of sources
       parameter (nqch=5)
 c
 c*** Local variables
-      integer i,j,k,l,ix,iy,jmp,jtp
-      real (kind=R8) :: x, a, b, cc, d, e, f, a0, a1, a2
+      integer i,j,k,l,iCv,jmp,jtp
+#ifdef WG_TODO
+      real (kind=R8) :: x
+#endif
+      real (kind=R8) :: a, b, cc, d, e, f, a0, a1, a2
       real (kind=R8) :: sga,bgd,sgd,sgb
       real (kind=R8) :: initparm(10), r0rad
       real (kind=R8) :: q_tmp(nnr,nnz)
+#ifdef WG_TODO
       real (kind=R8), allocatable :: qpr_tmp(:), qpz_tmp(:)
+#endif
       real (kind=R8) :: r,z,bq,dr,dz,qmx,qmn,rmp,ztp,ztt,pwr_tot
       logical found
 c----------------------------------------------------------------------
 c*** Calculate the coefficients for radiation profiles
 c
+#ifdef WG_TODO
       allocate(qpr_tmp(0:ny-1),qpz_tmp(0:nx-1))
+#endif
       stack_req=(/0,11,0,0,0,0,0/)
       if (bad_args(stack_req)) return
       r0rad=rpop(rstack,irstack)
@@ -92,6 +97,7 @@ c*** Calculate the radial profile qpr_tmp
 c*** First, find the "outer midplane" ...
       rmp=0.0_R8
       jmp=0
+#ifdef WG_TODO
       j=jsep+1
       do i=leftcut(1),rightcut(1)-1
         if(cr(i,j).gt.rmp) then
@@ -99,6 +105,7 @@ c*** First, find the "outer midplane" ...
           rmp=cr(i,j)
         end if
       end do
+#endif
       if(jmp.eq.0) then
         write(*,*) 'Unexpected error in b2paux: midplane not found'
         return
@@ -108,13 +115,16 @@ c*** and then calculate the profiles taking x=R(midplane)/rmp
 c*** and y=(R(midplane)-rmp)/(Redge-rmp)
 c
       open(lun,file='fpri.dat')
+#ifdef WG_TODO
       do j=0,jsep
         x=(cr(jmp,j)-cr(jmp,0))/(rmp-cr(jmp,0))
         qpr_tmp(j)=rd_in(x)
         write(lun,*) j,x,qpr_tmp(j)
       end do
+#endif
       close(lun)
       open(lun,file='fpro.dat')
+#ifdef WG_TODO
       j=jsep+1
       write(lun,*) j,0.0_R8,a+b
       do j=jsep+2,ny-1
@@ -122,12 +132,14 @@ c
         qpr_tmp(j)=rd_out(x)
         write(lun,*) j,x,qpr_tmp(j)
       end do
+#endif
       close(lun)
 c
 c*** Calculate the poloidal profile qpz_tmp
 c*** First, find the "top" location ...
       ztp=0.0_R8
       jtp=0
+#ifdef WG_TODO
       j=jsep+1
       do i=leftcut(1),rightcut(1)-1
         if(cz(i,j).gt.ztp) then
@@ -135,6 +147,7 @@ c*** First, find the "top" location ...
           ztp=cz(i,j)
         end if
       end do
+#endif
       if(jtp.eq.0) then
         write(*,*) 'Unexpected error in b2paux: top not found'
         return
@@ -143,6 +156,7 @@ c
 c*** ... calculate the poloidal length for normalisation ...
 c
       ztt=0.0_R8
+#ifdef WG_TODO
       j=jsep+1
       do i=leftcut(1),rightcut(1)-1
         ztt=ztt+hx(i,j)
@@ -167,10 +181,13 @@ c
         qpz_tmp(i)=exp(-(ztt*sgb)**2)
         ztt=ztt+x
       end do
+#endif
       open(lun,file='fprp.dat')
+#ifdef WG_TODO
       do i=0,nx-1
         write(lun,*) i,qpz_tmp(i)
       end do
+#endif
       close(lun)
 c
 c*** Now calculate the emissivity. Sample points along the sub-grid
@@ -187,10 +204,12 @@ c
             q_tmp(i,k)=0.0_R8
             do l=1,nqch
               r=r+dr
-              call chord_find(nx,ny,crx,cry,r,0.0_R8,z,found,ix,iy)
+              call chord_find(mpg,geo,r,0.0_R8,z,found,iCv)
+#ifdef WG_TODO
               if(found) then
                 q_tmp(i,k)=q_tmp(i,k)+qpr_tmp(iy)*qpz_tmp(ix)
               end if
+#endif
             end do
           end do
         end do
@@ -228,7 +247,9 @@ c
         write(lun,'(1p,8e15.6)') (q_tmp(i,k),i=1,nnr)
       end do
       close(lun)
+#ifdef WG_TODO
       deallocate(qpr_tmp,qpz_tmp)
+#endif
       return
 
       contains

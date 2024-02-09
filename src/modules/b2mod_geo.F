@@ -37,13 +37,17 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: abs_diff, dist, disx, disy, distc, match
-      public :: cr, cz, hy1, pit, sy
+      public :: cr, cz, hy1, sy
 
       contains
+      
+***********************************************************************
 
       subroutine alloc_b2mod_geo(nxd,nyd)
       implicit none
       integer, intent(in) :: nxd, nyd
+
+      if (b2mod_geo_allocated) return
 
       allocate(bb(-1:nxd,-1:nyd,0:3))
       allocate(crx(-1:nxd,-1:nyd,0:3))
@@ -115,6 +119,8 @@
 
       return
       end subroutine dealloc_b2mod_geo
+
+***********************************************************************
 
       subroutine read_b2mod_geo(nx,ny,nread)
       use b2mod_math
@@ -219,6 +225,8 @@ c conn
 
       return
       end subroutine read_b2mod_geo
+
+***********************************************************************
 
       subroutine write_b2mod_geo(nwrite)
       implicit none
@@ -2186,14 +2194,6 @@ c conn
      & geom_match_dist
       return
       end function matchBottom
-
-      function pit(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      real(kind=R8) :: pit
-      pit = sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
-      return
-      end function pit
 
       function sy(ix,iy)
       use b2mod_indirect

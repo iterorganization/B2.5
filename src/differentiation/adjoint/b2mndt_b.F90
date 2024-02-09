@@ -1725,7 +1725,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
         CALL B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &                     nscxmax, ismain, ismain0, dtim, switch, geo, mpg, &
 &                     st, st_ext, ier0)
-        FLUSH(6) 
+        FLUSH(6)
 !!!      (should develop other error handling)
 !      ..re-compute ne, ne2, ni
         CALL B2XPNE_NODIFF(ncv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%&
@@ -1764,7 +1764,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
             CALL B2MWQT_NODIFF(nout(4), ncv, ns, itim, b2mndt_itcnt, &
 &                        switch%boris, switch, geo, st%pl, st%dv, st%&
 &                        diag)
-            FLUSH(nout(4)) 
+            FLUSH(nout(4))
           ELSE
             CALL PUSHCONTROL1B(0)
           END IF
@@ -2170,7 +2170,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                        wrk0b, st%co%cssb, stb%co%cssb)
               rzb = 0.D0
               CALL POPREAL8ARRAY(wrk0, r8*ncv/8)
-              WHERE (st%dv%pz/rz .EQ. 0.D0) 
+              WHERE (st%dv%pz/rz .EQ. 0.D0)
                 tempb0 = 0.D0
               ELSEWHERE
                 tempb0 = geo%cvbb(:, 0)*wrk0b/(rz*2.0*SQRT(st%dv%pz/rz)*&
@@ -3770,7 +3770,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
         CALL B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &                     nscxmax, ismain, ismain0, dtim, switch, geo, mpg, &
 &                     st, st_ext, ier0)
-        FLUSH(6) 
+        FLUSH(6)
         CALL XERTST(ier0 .EQ. 0, 'error return from b2news')
 !!!      (should develop other error handling)
         ierr = ier0
@@ -3810,7 +3810,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
             CALL B2MWQT_NODIFF(nout(4), ncv, ns, itim, b2mndt_itcnt, &
 &                        switch%boris, switch, geo, st%pl, st%dv, st%&
 &                        diag)
-            FLUSH(nout(4)) 
+            FLUSH(nout(4))
           END IF
         END IF
 !      ..update iteration counter

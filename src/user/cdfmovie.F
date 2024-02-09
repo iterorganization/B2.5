@@ -1,35 +1,35 @@
-      subroutine cdfmovie(ncid,nx,ny,ns,switch)
+      subroutine cdfmovie(ncid,nCv,ns,geo,state,switch)
       use b2mod_types
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_geo
       use b2mod_time
+      use b2us_geo
+      use b2us_plasma
+      use b2mod_dimensions
 #ifndef NO_CDF
       use b2mod_movies
-      use b2mod_dimensions
-#endif
       use b2mod_constants
 #ifdef B25_EIRENE
       use eirmod_parmmod
+     ,   , ncv_eir => ncv
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
 #endif
+#endif
       use b2mod_switches
       use b2mod_subsys
       implicit none
-      integer ncid, nx, ny, ns
-      type (switches), intent (in) :: switch
+      integer ncid, nCv, ns
+      type (geometry), intent(in) :: geo
+      type (B2State), intent(in) :: state
+      type (switches), intent(in) :: switch
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      real (kind=R8) :: time(1), dummy(-1:nx, -1:ny)
-#ifdef WG_TODO
-     & , dummy3(-1:nx, -1:ny, 1:ns)
-#endif
-      integer ix, iy, is
+      real (kind=R8) :: time(1), dummy(1:nCv), dummy3(1:nCv, 1:ns)
+      integer iCv, is
       integer ncall
       integer status, ndims, nvars, natts, unlimid
       character*256 filename
@@ -53,8 +53,7 @@
           else
             write(6,'(a)') trim(filename)//' will be created'
           end if
-          call create_cdf_start(ncid, filename, nx+2, ny+2, ns,
-     &     nnatmi, nnmoli)
+          call create_cdf_start(ncid, filename, nCv, ns, nnatmi, nnmoli)
           call create_cdf_field2(ncid, 'te',
      1     'Electron temperature', 'eV')
           call create_cdf_field2(ncid, 'ti',
@@ -84,51 +83,45 @@
       write(*,*) 'put_cdf_start'
       call put_cdf_start(ncid,filename,time)
       write(*,*) 'put_cdf_field2: te'
-      dummy(:,:) = te(:,:)/qe
-      call put_cdf_field2(ncid,'te',dummy,nx+2,ny+2)
+      dummy(:) = state%pl%te(:)/qe
+      call put_cdf_field2(ncid,'te',dummy,nCv)
       write(*,*) 'put_cdf_field2: ti'
-      dummy(:,:) = ti(:,:)/qe
-      call put_cdf_field2(ncid,'ti',dummy,nx+2,ny+2)
+      dummy(:) = state%pl%ti(:)/qe
+      call put_cdf_field2(ncid,'ti',dummy,nCv)
       write(*,*) 'put_cdf_field2: ne'
-      call put_cdf_field2(ncid,'ne',ne,nx+2,ny+2)
+      call put_cdf_field2(ncid,'ne',state%dv%ne,nCv)
       write(*,*) 'put_cdf_field3: na'
-      call put_cdf_field3(ncid,'na',na,nx+2,ny+2,ns)
-      do iy=-1,ny
-        do ix=-1,nx
-          dummy(ix,iy)=0.0_R8
-          do is=0,ns-1
-            dummy(ix,iy)=dummy(ix,iy)+rqahe(ix,iy,is)
-          enddo
-          dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
+      call put_cdf_field3(ncid,'na',state%pl%na,nCv,ns)
+      do iCv = 1, nCv
+        dummy(iCv) = 0.0_R8
+        do is = 0, ns-1
+          dummy(iCv) = dummy(iCv) + state%srw%rqahe(iCv,is)
         enddo
+        dummy(iCv) = dummy(iCv) / geo%cvVol(iCv)
       enddo
       write(*,*) 'put_cdf_field2: rqahesum'
-      call put_cdf_field2(ncid,'rqahesum',dummy,nx+2,ny+2)
-      do iy=-1,ny
-        do ix=-1,nx
-          dummy(ix,iy)=0.0_R8
-          do is=0,ns-1
-            dummy(ix,iy)=dummy(ix,iy)+rqrad(ix,iy,is)
-          enddo
-          dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
+      call put_cdf_field2(ncid,'rqahesum',dummy,nCv)
+      do iCv = 1, nCv
+        dummy(iCv) = 0.0_R8
+        do is = 0, ns-1
+          dummy(iCv) = dummy(iCv) + state%srw%rqrad(iCv,is)
         enddo
+        dummy(iCv) = dummy(iCv) / geo%cvVol(iCv)
       enddo
       write(*,*) 'put_cdf_field2: rqradsum'
-      call put_cdf_field2(ncid,'rqradsum',dummy,nx+2,ny+2)
-#ifdef WG_TODO
+      call put_cdf_field2(ncid,'rqradsum',dummy,nCv)
       if(nnatmi.gt.0) then
-        dummy3=0.0_R8
-        dummy3(-1:nx,-1:ny,1:nnatmi)=dab2(0:nx+1,0:ny+1,1:nnatmi,1)
+        dummy3 = 0.0_R8
+        dummy3(1:nCv,1:nnatmi) = dab2(1:nCv,1:nnatmi,1)
         write(*,*) 'put_cdf_field3: dab2'
-        call put_cdf_field3(ncid,'dab2',dummy3,nx+2,ny+2,nnatmi)
+        call put_cdf_field3(ncid,'dab2',dummy3,nCv,nnatmi)
       endif
       if(nnmoli.gt.0) then
-        dummy3=0.0_R8
-        dummy3(-1:nx,-1:ny,1:nnmoli)=dmb2(0:nx+1,0:ny+1,1:nnmoli,1)
+        dummy3 = 0.0_R8
+        dummy3(1:nCv,1:nnmoli) = dmb2(1:nCv,1:nnmoli,1)
         write(*,*) 'put_cdf_field3: dmb2'
-        call put_cdf_field3(ncid,'dmb2',dummy3,nx+2,ny+2,nnmoli)
+        call put_cdf_field3(ncid,'dmb2',dummy3,nCv,nnmoli)
       endif
-#endif
       write(*,*) 'put_cdf_end'
       call put_cdf_end(ncid)
 
@@ -139,8 +132,7 @@
 *  ..procedures
       external xertst
 
-      call xertst (0.lt.nx.and.nx.le.DEF_NXD, 'faulty input nx')
-      call xertst (0.lt.ny.and.ny.le.DEF_NYD, 'faulty input ny')
+      call xertst (0.lt.nCv, 'faulty input nCv')
       call xertst (0.lt.ns.and.ns.le.DEF_NSD, 'faulty input ns')
 #endif
       return

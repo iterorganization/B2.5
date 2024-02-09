@@ -25,30 +25,13 @@ endif
 endif
 
 
-ifeq (${FC},mpif90)
-INCMOD  = -I${OBJDIR}
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
-DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
-FCOPTS   =
-ifdef SOLPS_DEBUG
-FCOPTS  += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
-else
-FCOPTS  += -O2
-endif
-ifdef USE_OPENMP
-FCOPTS  += -fopenmp
-LDOPTS  += -fopenmp
-endif
-else
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+COMPILER_MAJOR_VERSION = $(shell ${FC} --version 2>&1 | head -1 | cut -d ' ' -f 3 | cut -d '.' -f 1 )
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
 ifndef SOLPS_DEBUG
-FCOPTS  += -O2
+FCOPTS  += -O2 -xHost
 else
 FCOPTS  += -g -C -traceback -debug all -check all
 endif
@@ -69,30 +52,7 @@ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
 FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
-endif
 
-ifeq (${FC},mpif90)
-  COMPILER_REDEF = yes
-  ifdef IMAS_VERSION
-    UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-    UAL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
-    UAL_MICRO_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-    IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-    IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-    IMAS_MICRO_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f3 )
-    GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
-    GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-    GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-  endif
-  IMAS_PKG_LIST = imas-gfortran
-  ifeq ($(shell test ${IMAS_MINOR_VERSION} -lt 17; echo $$?),0)
-    ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-      ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
-        LD_GGD := -lggd_gfortran
-      endif
-    endif
-  endif
-endif
 
 #!!!Local Variables:
 #!!! mode: Makefile

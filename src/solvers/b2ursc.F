@@ -1,9 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ursc (nCv, nFc, geo, mpg, fun, sfn, ffn, resfn)
+      subroutine b2ursc (nCv, nFc, mpg, fun, sfn, ffn, resfn)
       use b2mod_types
-      use b2us_geo
       use b2us_map
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -13,7 +12,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc
-      type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   fun(nCv), sfn(nCv,0:1), ffn(nFc,0:1)

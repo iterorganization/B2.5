@@ -10,15 +10,19 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2nppo
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2nppo, ncall_b2uppo, ncall_b2uspo,
+     & , only : ncall_b2uppo, ncall_b2uspo,
      &          my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                               !srv 27.06.21
 #endif
      &          ncall_b2ursd
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -94,7 +98,7 @@
 *   ..compute residual
       if((solving.and.any(solvereg(0:nregionv))).or.
      &    switch%get_residuals.eq.1) then                           !srv 22.05.18
-        call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
+        call b2ursd (nCv, nFc, mpg, dv%ne, pl%po, sr%sch, dv%fch,
      &    dv%respo)
       endif                                                         !srv 22.05.18
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
@@ -109,14 +113,14 @@ c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
       if(solving.and.any(solvereg(0:nregionv))) then                !srv 22.05.18
-        call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, switch, 
-     &   geo, mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo,aa, 
+        call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, switch,
+     &   geo, mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo,aa,
      &  'b2nppo')
 *   ..apply correction
         call b2uppo (nCv, rxf, dv%corpo, pl%po)
       endif                                                         !srv 22.05.18
 
-      if(switch%b2nppo_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then                    !srv 11.09.09 {
+      if(switch%b2nppo_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then    !srv 11.09.09 {
 !       call my_out_us(70,nCv,0,pl%te,'b2nppo_te')
 !       call my_out_us(70,nCv,0,dv%ne,'b2nppo_ne')
         call my_out_us(70,nCv,0,pl%po,'b2nppo_po')

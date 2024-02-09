@@ -5,15 +5,16 @@
       use b2mod_types
       use b2mod_version
       use b2mod_time
-!      use b2mod_diag
-!      use b2mod_b2plot
-!      use b2mod_external
-!      use b2mod_elements
+      use b2mod_sputter
+      use b2mod_diag
+      use b2mod_b2plot
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -23,6 +24,7 @@
 #endif
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_trace
       use b2mod_file
       use b2mod_xerset
       use b2mod_ipmain
@@ -32,12 +34,10 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
-#ifdef WG_TODO
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
       use eirmod_comprt
      , , only: iunout
-#endif
       use eirmod_eirbra
      & , smo_eir => smo
 #else
@@ -67,48 +67,37 @@
       type(geometry), save   :: geo
       type(B2State), save    :: state
 !      type(B2StateExt), save :: state_ext
-!      type(switches), save   :: switch
+      type(switches), save   :: switch
 
 *   ..local variables
 #ifndef NO_GETENV
       integer lenval, ierror
 #ifdef WG_TODO
-      logical streql
-      external streql
 #ifndef USE_PXFGETENV
       intrinsic get_environment_variable
 #endif
 #endif
 #endif
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io, is
+      integer iflag
 #if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
 #endif
-#ifdef WG_TODO
-      integer iflag
       integer :: b2time = 1, ntim_batch = 500
-      integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
-      integer :: use_eirene = 0, external_species = 0
-      integer :: boundary_namelist, neutrals_namelist = 0
-      real (kind=R8) :: BoRiS = 0.0_R8
-      real (kind=R8) :: dtim = 1.0_R8
-#endif
+      integer :: ismain = 1, ismain0 = 0, mvnum = 0, tally = 1
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
-#ifdef WG_TODO
       character filename*256
       character b2fstate_only*256
 #ifdef B25_EIRENE
       character extension*4
-#endif
-      logical file_exists, todo
       integer lnblnk
       external lnblnk
 #endif
       character cnamip*80, cvalip*80, line*500
-      logical file_open
+      logical file_open, file_exists, match_found, todo
 *   ..procedures
-      logical is_comment
-      external is_comment
+      logical is_comment, streql
+      external is_comment, streql
       external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
@@ -144,7 +133,6 @@
       call cfopen (nout(0),'b2co.prt','new','formatted')
       call cfopen (nout(1),'b2co.files','new','formatted')
       call cfopen (nout(2),'b2fstate','new','un*formatted')
-c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers                                           !xpb
@@ -220,15 +208,20 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
+*   ..load default values of switches
+      call set_defaults_switches(switch,ns)
+*   ..overwrite with values provided in b2mn.dat
+      call read_switches(switch)
+*   ..check the values of the switches
+      call check_switches(switch,ns)
 *   ..read geometry and mapping
       call read_b2fgmtry (ninp(1), mpg, geo)
-!WG_TODO      call get_nxt(nx, nxtl, nxtr)
+      call init_geometry (mpg, geo, switch)
 *   ..read initial state
       call cfverr (ninp(4), plasmastate_version)                        !xpb
       call read_b2fstate (ninp(4), nCv, nFc, ns, state)
 *   ..obtain external species data if any
-!WG_TODO      call ipgeti ('b2mndr_external_species', external_species)
-!WG_TODO      if (external_species.ne.0) then
+!WG_TODO      if (switch%external_species.ne.0) then
 !WG_TODO        call read_b2mod_external(nx,ny,ns,ismain)
 !WG_TODO      else
 !WG_TODO        call alloc_b2mod_external_dummy(nx,ny)
@@ -246,31 +239,31 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
+*   ..write plasma state
       call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+      write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..close graphics files
 *     (none)
-*   ..write plasma state
-c      call cfverw(nout(7), plasmastate_version)
-c      idum(0) = nCv
-c      idum(1) = nFc
-c      idum(2) = ns
-c      call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
-c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
-      write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..truncate tracing files
-#ifdef WG_TODO
       call ipgeti ('ank_tracing', ank_tracing)
       call ipgeti ('b2mndr_ismain', ismain)
-      call ipgetr ('b2mndr_dtim', dtim)
-      call ipgetr ('b2news_BoRiS', BoRiS)
-      call ipgeti ('b2mndr_eirene', use_eirene)
-      call ipgeti ('b2stbr_sput_dst', sput_dst)
-      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
-      call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
+      match_found = .false.
+      is = ismain
+      do while (is.ge.0 .and. .not.match_found)
+        if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
+     &                     .and. nint(am(is)).eq.nint(am(ismain))) then
+          ismain0 = is
+          match_found = .true.
+        end if
+        is = is - 1
+      end do
+      if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
+      call ipgeti ('b2mwti_ismain0', ismain0)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,file_exists)
-      if (file_exists.and.use_eirene.ne.0) then
+      if (file_exists.and.switch%use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) line
         rewind(45)
@@ -278,22 +271,20 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         close(45)
         CALL EIRENE_SET_PARMMOD(1)
         write(*,*) 'Called FIND_PARAM'
-        write(*,*) '   NDX = ',NDX
-        write(*,*) '   NDY = ',NDY
         write(*,*) ' NSTRA = ',NSTRA
         write(*,*) '   NFL = ',NFL
         write(*,*) '  NATM = ',NATM
         write(*,*) '  NMOL = ',NMOL
         write(*,*) '  NION = ',NION
         write(*,*) 'NLIMPS = ',NLIMPS
+        write(*,*) '  NLIM = ',NLIM
+        write(*,*) '  NSTS = ',NSTS
       endif
       goto 7000
  6999 continue
       file_exists = .false.
  7000 continue
-      if (.not.file_exists.or.use_eirene.eq.0) then
-        ndx=DEF_NXD+DEF_NCUT*5
-        ndy=DEF_NYD
+      if (.not.file_exists.or.switch%use_eirene.eq.0) then
         nfl=DEF_NFL
         natm=DEF_NATM
         nmol=DEF_NMOL
@@ -303,9 +294,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-        N1ST=DEF_NYD+1
-        N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
-     .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
+        nlimps=nlim+nsts
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
@@ -319,34 +308,38 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
-      call alloc_b2mod_braeir(nx,ny,ns,nstra)
-!PB      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
-      call alloc_b2mod_eirbra(nx*ny,ns,natm,npls,nstra)
+      call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
+      call alloc_b2mod_eirbra(nCv,ns,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
-      call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
-     1 natm,nmol,nion,nlimps)
-      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
-      if (boundary_namelist.eq.1)
-     > call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-      call alloc_b2mod_neutrals
-     . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
-      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
-     > call read_neutrals_namelist(nx, ny, ns, .false.)
-!!WG_TODO      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
-      write_nml_user = .false.
-      call alloc_b2mod_wall_init(nx,ny,nncut)
 #ifdef WG_TODO
+      call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
+     1 natm,nmol,nion,nlimps)
+#endif
+      call alloc_b2mod_boundary(1, 1, ns, nbcd, nnisod)
+      if (switch%b2stbc_boundary_namelist.eq.1)
+     > call read_b2mod_boundary_namelist(ns, mpg, .false.)
+      call alloc_b2mod_neutrals
+     . (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+      if (switch%b2stbr_neutrals_namelist.eq.1 .or.
+     &    switch%use_eirene.ne.0)
+     > call read_neutrals_namelist(ns, mpg, switch, .false.)
+      call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstraid,natm,
+     . switch)
+      write_nml_user = .false.
+#ifdef WG_TODO
+      call alloc_b2mod_wall_init(nx,ny,nncut)
       call init_wall(nx,ny)
 #endif
       first_time_step = .true.  ! IYS 21.06.2022
-      if (use_eirene.eq.0) then
+      if (switch%use_eirene.eq.0) then
         nnatmi = 0
         nnmoli = 0
       else
@@ -359,7 +352,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
 #endif
         if (file_exists) then
           open(unit=44,file=filename)
-          call ngread(ismain,iflag)
+          call ngread(mpg,geo,ns,switch,ismain,iflag)
           nnatmi = natmi
           nnmoli = nmoli
         else
@@ -368,10 +361,10 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(switch)
-        call b2trcc(nout(1),nx,nxtl,nxtr)
-        call b2filei(0,ns,nnreg(0))
-        call b2filec(0,ns,nnreg(0))
+        call b2trci(geo,mpg,ns,nlim,nmol,switch)
+        call b2trcc(nout(1))
+        call b2filei(ns,mpg%nnreg(0),switch)
+        call b2filec
       end if
 *   ..rewrite NetCDF files
 #ifdef NO_GETENV
@@ -399,7 +392,8 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, tim)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
+     .                       tim, .false.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -411,20 +405,20 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, tim)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
+     .                       tim, .true.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
      .               'no b2batch.nc file found'
         end if
       end if
-      call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)
-      if (todo.and.b2wall_netcdf.gt.0) then
+      if (todo.and.switch%b2stbr_b2wall_netcdf.gt.0) then
         filename='b2wall.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_wall_cdf(nx, ny, ns, tim)
+          call b2co_wall_cdf(tim)
           write(*,*) 'Returned from b2co_wall_cdf'
         else
           write(*,*) 'Skipped calling b2co_wall_cdf because '//
@@ -437,7 +431,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_tally_cdf(nx, ny, ns, tim)
+          call b2co_tally_cdf(ns, mpg, tim)
           write(*,*) 'Returned from b2co_tally_cdf'
         else
           write(*,*) 'Skipped calling b2co_tally_cdf because '//
@@ -450,14 +444,13 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_movies_cdf(nx, ny, nx, nnatmi, nnmoli, tim)
+          call b2co_movies_cdf(nCv, ns, nnatmi, nnmoli, tim)
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//
      .               'no b2movies.nc file found'
         end if
       end if
-#endif
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

@@ -15,22 +15,14 @@
      *  rcxhireg(:,:),
      *  rcxmoreg(:,:)
       real (kind=R8), allocatable, save ::
-     *  fnaxreg(:,:),
-     *  fnayreg(:,:),
-     *  fhmxreg(:,:),
-     *  fhmyreg(:,:),
-     *  fhpxreg(:,:),
-     *  fhpyreg(:,:),
-     *  fhixreg(:),
-     *  fhiyreg(:),
-     *  fhexreg(:),
-     *  fheyreg(:),
-     *  fchxreg(:),
-     *  fchyreg(:),
-     *  fhtxreg(:),                                               !cjk
-     *  fhtyreg(:),
-     *  fhjxreg(:),
-     *  fhjyreg(:)
+     *  fnareg(:,:),
+     *  fhmreg(:,:),
+     *  fhpreg(:,:),
+     *  fhireg(:),
+     *  fhereg(:),
+     *  fchreg(:),
+     *  fhtreg(:),                                               !cjk
+     *  fhjreg(:)
       real (kind=R8), allocatable, save ::
      *  nareg(:,:),
      *  tereg(:),
@@ -41,10 +33,8 @@
      *  poreg(:),
      *  volreg(:)
       real (kind=R8), allocatable, save ::                        !cjk
-     *  qconvixreg(:,:),
-     *  qconviyreg(:,:),
-     *  qconvexreg(:),
-     *  qconveyreg(:)
+     *  qconvireg(:,:),
+     *  qconvereg(:)
       real (kind=R8), allocatable, save ::
      *  b2stbr_sna_reg(:,:),
      *  b2stbr_smo_reg(:,:),
@@ -128,22 +118,14 @@
       rcxhireg=0.0_R8
       rcxmoreg=0.0_R8
 
-      allocate(fnaxreg(0:nnreg(1),0:nsd-1))
-      allocate(fnayreg(0:nnreg(1),0:nsd-1))
-      allocate(fhmxreg(0:nnreg(1),0:nsd-1))
-      allocate(fhmyreg(0:nnreg(1),0:nsd-1))
-      allocate(fhpxreg(0:nnreg(1),0:nsd-1))
-      allocate(fhpyreg(0:nnreg(1),0:nsd-1))
-      allocate(fhixreg(0:nnreg(1)))
-      allocate(fhiyreg(0:nnreg(1)))
-      allocate(fhexreg(0:nnreg(1)))
-      allocate(fheyreg(0:nnreg(1)))
-      allocate(fchxreg(0:nnreg(1)))
-      allocate(fchyreg(0:nnreg(1)))
-      allocate(fhtxreg(0:nnreg(1)))                                 !cjk
-      allocate(fhtyreg(0:nnreg(1)))
-      allocate(fhjxreg(0:nnreg(1)))
-      allocate(fhjyreg(0:nnreg(1)))
+      allocate(fnareg(0:nnreg(1),0:nsd-1))
+      allocate(fhmreg(0:nnreg(1),0:nsd-1))
+      allocate(fhpreg(0:nnreg(1),0:nsd-1))
+      allocate(fhireg(0:nnreg(1)))
+      allocate(fhereg(0:nnreg(1)))
+      allocate(fchreg(0:nnreg(1)))
+      allocate(fhtreg(0:nnreg(1)))                                 !cjk
+      allocate(fhjreg(0:nnreg(1)))
       allocate(nareg(0:nnreg(0),0:nsd-1))
       allocate(tereg(0:nnreg(0)))
       allocate(nereg(0:nnreg(0)))
@@ -152,10 +134,8 @@
       allocate(nireg(0:nnreg(0)))
       allocate(poreg(0:nnreg(0)))
       allocate(volreg(0:nnreg(0)))
-      allocate(qconvixreg(0:nnreg(1),0:nsd-1))                      !cjk
-      allocate(qconviyreg(0:nnreg(1),0:nsd-1))
-      allocate(qconvexreg(0:nnreg(1)))
-      allocate(qconveyreg(0:nnreg(1)))
+      allocate(qconvireg(0:nnreg(1),0:nsd-1))                      !cjk
+      allocate(qconvereg(0:nnreg(1)))
       allocate(b2stbr_sna_reg(0:nnreg(0),0:nsd-1))
       allocate(b2stbr_smo_reg(0:nnreg(0),0:nsd-1))
       allocate(b2stbr_sne_reg(0:nnreg(0)))
@@ -233,22 +213,14 @@
       deallocate(rcxnareg)
       deallocate(rcxhireg)
       deallocate(rcxmoreg)
-      deallocate(fnaxreg)
-      deallocate(fnayreg)
-      deallocate(fhmxreg)
-      deallocate(fhmyreg)
-      deallocate(fhpxreg)
-      deallocate(fhpyreg)
-      deallocate(fhixreg)
-      deallocate(fhiyreg)
-      deallocate(fhexreg)
-      deallocate(fheyreg)
-      deallocate(fchxreg)
-      deallocate(fchyreg)
-      deallocate(fhtxreg)
-      deallocate(fhtyreg)
-      deallocate(fhjxreg)
-      deallocate(fhjyreg)
+      deallocate(fnareg)
+      deallocate(fhmreg)
+      deallocate(fhpreg)
+      deallocate(fhireg)
+      deallocate(fhereg)
+      deallocate(fchreg)
+      deallocate(fhtreg)
+      deallocate(fhjreg)
       deallocate(nareg)
       deallocate(tereg)
       deallocate(nereg)
@@ -257,10 +229,8 @@
       deallocate(nireg)
       deallocate(poreg)
       deallocate(volreg)
-      deallocate(qconvixreg)
-      deallocate(qconviyreg)
-      deallocate(qconvexreg)
-      deallocate(qconveyreg)
+      deallocate(qconvireg)
+      deallocate(qconvereg)
       deallocate(b2stbr_sna_reg)
       deallocate(b2stbr_smo_reg)
       deallocate(b2stbr_sne_reg)
@@ -431,11 +401,11 @@
       end subroutine create_cdf_var_with_attrs
 
       subroutine define_cdf_b2mod_tallies(filename,ncid,nnreg,nsd)
-      integer ncid, nnreg(0:2), nsd
+      integer ncid, nnreg(0:1), nsd
       character*256 filename
 #include <netcdf.inc>
       integer :: status, 
-     1 vregid, xregid, yregid, nsid, tid, varid, specid
+     1 vregid, fregid, nsid, tid, varid, specid
       integer :: vdims(3)
       external check_cdf_status
 
@@ -444,9 +414,7 @@
 
       status=nf_def_dim(ncid,'vreg',nnreg(0)+1,vregid)
       call check_cdf_status(status)
-      status=nf_def_dim(ncid,'xreg',nnreg(1)+1,xregid)
-      call check_cdf_status(status)
-      status=nf_def_dim(ncid,'yreg',nnreg(1)+1,yregid)
+      status=nf_def_dim(ncid,'freg',nnreg(1)+1,fregid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'ns',nsd,nsid)
       call check_cdf_status(status)
@@ -679,85 +647,42 @@
      *  ncid,'resmo_reg',NF_DOUBLE,
      *  3,vdims,'kg.m.s^-1','resmo_reg')
 
-      vdims(1)=xregid
+      vdims(1)=fregid
       vdims(2)=tid
       call create_cdf_var_with_attrs(
-     *  ncid,'fhixreg',NF_DOUBLE,
-     *  2,vdims,'W','fhixreg')
+     *  ncid,'fhireg',NF_DOUBLE,
+     *  2,vdims,'W','fhireg')
       call create_cdf_var_with_attrs(
-     *  ncid,'fhexreg',NF_DOUBLE,
-     *  2,vdims,'W','fhexreg')
+     *  ncid,'fhereg',NF_DOUBLE,
+     *  2,vdims,'W','fhereg')
       call create_cdf_var_with_attrs(
-     *  ncid,'fchxreg',NF_DOUBLE,
-     *  2,vdims,'A','fchxreg')
+     *  ncid,'fchreg',NF_DOUBLE,
+     *  2,vdims,'A','fchreg')
       call create_cdf_var_with_attrs(                              !cjk
-     *  ncid,'fhtxreg',NF_DOUBLE,
-     *  2,vdims,'W','fhtxreg')
+     *  ncid,'fhtreg',NF_DOUBLE,
+     *  2,vdims,'W','fhtreg')
       call create_cdf_var_with_attrs(
-     *  ncid,'fhjxreg',NF_DOUBLE,
-     *  2,vdims,'W','fhjxreg')
-
-      vdims(1)=xregid                                              !cjk
-      vdims(2)=tid
+     *  ncid,'fhjreg',NF_DOUBLE,
+     *  2,vdims,'W','fhjreg')
       call create_cdf_var_with_attrs(
-     *  ncid,'qconvexreg',NF_DOUBLE,
-     *  2,vdims,'W','qconvexreg')
+     *  ncid,'qconvereg',NF_DOUBLE,
+     *  2,vdims,'W','qconvereg')
 
-      vdims(1)=xregid
+      vdims(1)=fregid
       vdims(2)=nsid
       vdims(3)=tid
       call create_cdf_var_with_attrs(
-     *  ncid,'fnaxreg',NF_DOUBLE,
-     *  3,vdims,'s^-1','fnaxreg')
+     *  ncid,'fnareg',NF_DOUBLE,
+     *  3,vdims,'s^-1','fnareg')
       call create_cdf_var_with_attrs(
-     *  ncid,'fhmxreg',NF_DOUBLE,
-     *  3,vdims,'W','fhmxreg')
+     *  ncid,'fhmreg',NF_DOUBLE,
+     *  3,vdims,'W','fhmreg')
       call create_cdf_var_with_attrs(
-     *  ncid,'fhpxreg',NF_DOUBLE,
-     *  3,vdims,'W','fhpxreg')
+     *  ncid,'fhpreg',NF_DOUBLE,
+     *  3,vdims,'W','fhpreg')
       call create_cdf_var_with_attrs(                              !cjk
-     *  ncid,'qconvixreg',NF_DOUBLE,
-     *  3,vdims,'W','qconvixreg')
-
-      vdims(1)=yregid
-      vdims(2)=tid
-      call create_cdf_var_with_attrs(
-     *  ncid,'fhiyreg',NF_DOUBLE,
-     *  2,vdims,'W','fhiyreg')
-      call create_cdf_var_with_attrs(
-     *  ncid,'fheyreg',NF_DOUBLE,
-     *  2,vdims,'W','fheyreg')
-      call create_cdf_var_with_attrs(
-     *  ncid,'fchyreg',NF_DOUBLE,
-     *  2,vdims,'A','fchyreg')
-      call create_cdf_var_with_attrs(                              !cjk
-     *  ncid,'fhtyreg',NF_DOUBLE,
-     *  2,vdims,'W','fhtyreg')
-      call create_cdf_var_with_attrs(
-     *  ncid,'fhjyreg',NF_DOUBLE,
-     *  2,vdims,'W','fhjyreg')
-
-      vdims(1)=yregid                                              !cjk
-      vdims(2)=tid
-      call create_cdf_var_with_attrs(
-     *  ncid,'qconveyreg',NF_DOUBLE,
-     *  2,vdims,'W','qconveyreg')
-
-      vdims(1)=yregid
-      vdims(2)=nsid
-      vdims(3)=tid
-      call create_cdf_var_with_attrs(
-     *  ncid,'fnayreg',NF_DOUBLE,
-     *  3,vdims,'s^-1','fnayreg')
-      call create_cdf_var_with_attrs(
-     *  ncid,'fhmyreg',NF_DOUBLE,
-     *  3,vdims,'W','fhmyreg')
-      call create_cdf_var_with_attrs(
-     *  ncid,'fhpyreg',NF_DOUBLE,
-     *  3,vdims,'W','fhpyreg')
-      call create_cdf_var_with_attrs(                               !cjk
-     *  ncid,'qconviyreg',NF_DOUBLE,
-     *  3,vdims,'W','qconviyreg')
+     *  ncid,'qconvireg',NF_DOUBLE,
+     *  3,vdims,'W','qconvireg')
 
       status=nf_close(ncid)
       call check_cdf_status(status)

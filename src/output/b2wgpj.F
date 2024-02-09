@@ -186,14 +186,12 @@
        enddo
       endif
 *   ..make log-contour plots of electron pressure
-#ifdef WG_TODO
       if (strmas(idout,'cppe')) then
-       call b2xppe (nx, ny, ne, te, wrk0)
+       call b2xppe (n2, ne, te, wrk0)
        write (header,fmtl) 'ELECTRON PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppe', header
        call b2wgxq (nx, ny, header, xc, xf, yc, yf, wrk0, 0, 1.0_R8)
       endif
-#endif
 *   ..make contour plots of parallel velocity
       if (strmas(idout,'cpua')) then
        do is = 0, ns-1
@@ -206,10 +204,9 @@
        enddo
       endif
 *   ..make contour plots of mach number
-#ifdef WG_TODO
       if (strmas(idout,'cpmc')) then
        do is = 0, ns-1
-        call b2xpmc (nx, ny, ua(-1,-1,is), pz, rz, wrk0)
+        call b2xpmc (n2, ua(-1,-1,is), pz, rz, wrk0)
         t0 = 1
         write (header,fmth2) 'MACH NUMBER.', is, t0/100.
         write (nprt,fmtp) '+cpmc', header
@@ -218,7 +215,6 @@
      &    -t0/20.0_R8, t0/20.0_R8, 10)
        enddo
       endif
-#endif
 *   ..make contour plots of electron heat flux
       if (strmas(idout,'cphe')) then
        t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,0,0),1))

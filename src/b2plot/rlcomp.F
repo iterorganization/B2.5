@@ -73,7 +73,6 @@ c>>>
         xsrc=xysrc(1,i)
         ysrc=xysrc(2,i)
 c<<<
-c        uu_dbg= i .eq. 1
 c        print *
 c        print *,'Source number, ssrc, xsrc, ysrc'
 c        print '(1p,2x,i4,3e10.2)',i, ssrc, xsrc, ysrc

@@ -19,6 +19,9 @@
       use b2mod_ad
      & , only : ncall_b2sifrtf
       use b2mod_subsys
+      use b2mod_balance                                                 !djm Jun2019
+     & , only : b2sifr_smofrea0to3, b2sifr_smofria0to3,
+     &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb, ismain
@@ -70,10 +73,13 @@
       real (kind=R8) ::
      &  KabVp(nCv), Kabtf(nCv), Kbatf(nCv), ka(nCv), kb(nCv), wrk(nCv)  !srv 13.01.17 {
 ! Local arrays smb*al have been introduced specially.
-! The usage of smb*a instaed of smb*al should be checked.
+! The usage of smb*a instead of smb*al should be checked.
       real (kind=R8) ::
      *  smbfrial(nCv,0:3), smbfreal(nCv,0:3),
      *  smbtfial(nCv,0:3), smbtfeal(nCv,0:3)                            !srv 13.01.17 }
+      real (kind=R8) :: rz2_temp(1:ns*nCv), na_temp(1:ns*nCv),
+     &                  am_sqrt(0:ns-1, 0:ns-1)
+      integer :: ctr, i, j
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
@@ -120,6 +126,22 @@
       call sfill (nCv*4, 0.0e0_R8, smbfreal, 1)
       call sfill (nCv*4, 0.0e0_R8, smbtfial, 1)
       call sfill (nCv*4, 0.0e0_R8, smbtfeal, 1)                         !srv 13.01.17 }
+
+*   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
+      ctr = 1
+      do iCv = 1, nCv
+        do is = 0, ns-1
+          rz2_temp(ctr) = rz2(iCv,is)
+          na_temp(ctr) = na(iCv,is)
+          ctr = ctr + 1
+        end do
+      end do
+      do j = 0, ns-1
+        do i = 0, ns-1
+          am_sqrt(i,j) = sqrt(am(j)*am(i)/(am(j)+am(i)))
+        end do
+      end do
+
 * ..compute friction
 *   ..loop over all other species
       do is = 0, ns-1
@@ -179,14 +201,17 @@
        enddo
       endif
 *   ..contribution from ions thermal force
+      do iCv = 1, nCv
+        ka(iCv) = fka(iCv,isb)
+      enddo
       do is = 0, ns-1
        if(isb.ne.is .and.
      &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
         do iCv = 1, mpg%nCi
           Kabtf(iCv) = fkabtf(iCv,isb,is)
           Kbatf(iCv) = fkabtf(iCv,is,isb)
-          ka(iCv)    = fka(iCv,isb)
-          kb(iCv)    = fka(iCv,is)
+c         kb(iCv)    = fka(iCv,is)
+          kb(iCv)    = fka_new(iCv,is,rz2_temp,na_temp,am_sqrt)
           KabVp(iCv) = fkabvp(iCv,isb,is)
 c      .. calculations could be simplified
 c      .. but we did not do it in order to have the same formulae as manual
@@ -220,6 +245,19 @@ c      .. apply flux limit
       smbfrea = smbfreal
       smbtfia = smbtfial
       smbtfea = smbtfeal
+
+      if (balance_netcdf.ne.0) then !djm Jun2019
+        do iCv=1,nCv
+          b2sifr_smofria0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
+     &                                      smbfria(iCv,0:3)
+          b2sifr_smofrea0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
+     &                                      smbfrea(iCv,0:3)
+          b2sifr_smotfia0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
+     &                                      smbtfia(iCv,0:3)
+          b2sifr_smotfea0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
+     &                                      smbtfea(iCv,0:3)
+        enddo
+      endif
 
       if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
        write (chns,'(i3.3)') isb
@@ -341,10 +379,28 @@ c      .. apply flux limit
       return
       end function fka
 
+      function fka_new(iCv, a, rz2_temp, na_temp, am_sqrt)
+      implicit none
+      integer, intent(in) :: iCv, a
+      real(kind=R8) :: fka_new
+      real(kind=R8) :: rz2_temp(1:ns*nCv)
+      real(kind=R8) :: na_temp(1:ns*nCv)
+      real(kind=R8) :: am_sqrt(0:ns-1,0:ns-1)
+      integer r, ind
+      fka_new = 0.0_R8
+      ind = (iCv-1)*ns
+      do r = 0, ns-1
+        fka_new = fka_new + rz2_temp(ind+r+1)*na_temp(ind+r+1)*
+     &   sqrt(mp)*am_sqrt(r,a)
+      end do
+      fka_new = fka_new*rz2_temp(ind+a+1)
+      return
+      end function fka_new
+
       function roxa(iCv, is)
       implicit none
       integer, intent(in) :: iCv, is
-      real (kind=R8) :: roxa
+      real(kind=R8) :: roxa
 
       roxa = am(is)*mp*na(iCv,is)
       return

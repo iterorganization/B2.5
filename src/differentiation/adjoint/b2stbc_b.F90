@@ -636,7 +636,7 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
 !WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain,
-!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
+!WG_RM     &    geo, mpg, pl, dv, main_call)
 !
 ! ..compute conditions on the cuts
 !     (no flow)

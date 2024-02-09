@@ -1,31 +1,33 @@
-      subroutine conv_surface_models (nout, mpg, gm,
-     .           bndmdl, trifc, elem_cv, nelem)
+      subroutine conv_surface_models (mpg,
+     .           bndmdl, trifc, elem_cv, nelem, node_vert, nnode)
 
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_indirect
       use b2us_map
-      use b2us_geo
 
       implicit none
 
-      integer, intent(in) :: nout, nelem
+      integer, intent(in) :: nelem, nnode
       type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: gm
-      integer, intent(in) :: trifc(3,nelem), elem_cv(nelem)
+      integer, intent(in) :: trifc(3,nelem), elem_cv(nelem),
+     .           node_vert(nnode)
       integer, intent(inout) :: bndmdl(3,nelem)
       character(500) :: line
       integer :: ineir, iouteir, nstsi, ists, i, ier, icut, nd, nsf,
      .           isf, j, ifc, ib, ntrg, ihelp(12), isum, nadmod, nasmod,
-     .           itrg, ix, iy, ic, nt, it, is
-      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
+     .           itrg, ix, iy, ic, nt, it, is, idum
+      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:),
+     .                        ilbls(:), ilble(:)
       integer, allocatable :: ipos_b2(:), indelm(:), tris(:)
       integer, allocatable :: idim_eir(:), ipos_eir(:),
      .                        istart_eir(:), iend_eir(:), idtrg(:),
-     .                        istart_dum(:), iend_dum(:)
-      logical :: found,lhelp(60)
+     .                        istart_dum(:), iend_dum(:),
+     .                        ilbls_eir(:), ilble_eir(:)
+      logical :: found, lhelp(60), lwgf
       integer :: artificial_slab=0, spatial_hybrid = 0
+      integer :: find_loc
 #ifndef F2003
       integer newunit
       external newunit
@@ -43,10 +45,14 @@
       allocate (istart(nd))
       allocate (iend(nd))
       allocate (idtrg(nd))
+      allocate (ilbls(nd))
+      allocate (ilble(nd))
       idtrg = 0
+      ilbls = 0
+      ilble = 0
 
       call find_eirene_numbering(mpg, idim, ipos, istart, iend,
-     .                           nd, nsf, ipos_b2)
+     .                           ilbls, ilble, nd, nsf, ipos_b2)
 #ifdef F2003
       open (newunit=ineir,file='input.dat',iostat=ier)
 #else
@@ -98,6 +104,10 @@
       allocate (iend_eir(nstsi))
       allocate (istart_dum(nstsi))
       allocate (iend_dum(nstsi))
+      allocate (ilbls_eir(nstsi))
+      allocate (ilble_eir(nstsi))
+      ilbls_eir = 0
+      ilble_eir = 0
       ists = 0
       do
         do
@@ -108,7 +118,9 @@
         ists = ists + 1
         read (line,'(12i6)') i,idim_eir(ists),ipos_eir(ists),
      .                         istart_eir(ists), iend_eir(ists),
-     .                         istart_dum(ists), iend_dum(ists)
+     .                         istart_dum(ists), iend_dum(ists),
+     .                         idum            , idum,
+     .                         ilbls_eir(ists) , ilble_eir(ists)
         !! Accommodate different input formats
         if (idim_eir(ists).eq.1 .and.
      .      istart_eir(ists).eq.iend_eir(ists) .and.
@@ -125,6 +137,12 @@
         end do
         if (line(1:3) == '***') exit
       end do
+
+      ! if non-zero ilbls/e_eir are present, assume input.dat
+      ! has been created by wg-uinp, and is already in wg format
+      lwgf = .false.
+      if (maxval(abs(ilbls_eir)).gt.0 .and. maxval(abs(ilble_eir)).gt.0)
+     .  lwgf = .true.
 
 !  finshed reading input block 3
 
@@ -143,7 +161,9 @@
           if (idim_eir(ists) == idim(isf)) then
             if ((ipos_eir(ists) == ipos(isf)) .and.
      .          (istart_eir(ists) == istart(isf)) .and.
-     .          (iend_eir(ists) == iend(isf))) then
+     .          (iend_eir(ists) == iend(isf)) .and. 
+     .          (ilbls_eir(ists) == ilbls(isf)) .and. 
+     .          (ilble_eir(ists) == ilble(isf))) then
 !  matching surfaces identified
               if ( isf <= mpg%nRc) then
 !  neutral source
@@ -223,7 +243,8 @@
 !  nfla ntrfrm ...
 !  ntrfrm=1
       read (ineir,'(12i6)') ihelp
-      write (iouteir,'(12i6)') ihelp(1),1,ihelp(5:12)
+      if (.not.lwgf) write (iouteir,'(12i6)') ihelp(1),1,ihelp(5:12)
+      if (lwgf) write (iouteir,'(12i6)') ihelp
 
 !  iflb ...
       do
@@ -241,12 +262,14 @@
       read (ineir,'(12i6)') ihelp(1)
       itrg = 0
       do i = 1, ntrg
-        if (index('EWSN',crcstra(i)) > 0) itrg = itrg + 1
+        if (index('EWSNA',crcstra(i)) > 0) itrg = itrg + 1
       end do
 
       if (spatial_hybrid.eq.0) then !! default, no spatially hybrid
-        if (ihelp(1) /= itrg)
-     .      call xerrab ('number of targets mismatch')
+        if (ihelp(1) /= itrg) then
+            write (*,*) 'ihelp(1), itrg = ', ihelp(1), itrg, ntrg
+            call xerrab ('number of targets mismatch')
+        endif
       else !! spatially hybrid neutrals are used
         !! SH_TODO
       endif
@@ -263,7 +286,10 @@
       do i = 1, isum
         read (ineir,'(12i6)') ihelp
         if (i <= ntrg) then
-          write (iouteir,'(12i6)') ihelp(1), idtrg(i), ihelp(8:12)
+          if (.not.lwgf)
+     .      write (iouteir,'(12i6)') ihelp(1), idtrg(i), ihelp(8:12)
+          if (lwgf)
+     .      write (iouteir,'(12i6)') ihelp
         else
 !  nothing to be done
         end if
@@ -288,15 +314,18 @@
       if (nasmod /= 0) then
         if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
           !! limiter or linear case: only NW and NE corners
+          j = find_loc(node_vert,nnode,mpg%icornVx(2))
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(2)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+          j = find_loc(node_vert,nnode,mpg%icornVx(4))
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(4)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
         elseif (count(mpg%icornVx > 0) == nasmod) then
           !! SN of DN case: 4 or 8 corners
           do i = 1, nasmod
+            j = find_loc(node_vert,nnode,mpg%icornVx(i))
             read (ineir,'(2i6)') ihelp(1), ihelp(2)
-            write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(i)
+            write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
           end do
         else
          call xerrab('conv_surface_models -- nasmod')
@@ -321,41 +350,46 @@
       deallocate (ipos_b2)
       deallocate (istart)
       deallocate (iend)
+      deallocate (ilbls)
+      deallocate (ilble)
       deallocate (idim_eir)
       deallocate (ipos_eir)
       deallocate (istart_eir)
       deallocate (iend_eir)
       deallocate (istart_dum)
       deallocate (iend_dum)
+      deallocate (ilbls_eir)
+      deallocate (ilble_eir)
       deallocate (indelm)
 
       end subroutine conv_surface_models
 
-      subroutine find_nondef_surfaces (nout, mpg, gm,
-     .           elem, bndmdl, elem_cv,nelem, node_vert, nnode)
+      subroutine find_nondef_surfaces (nout, mpg,
+     .           elem, bndmdl, elem_cv,nelem, node_vert, nnode,
+     .           neighbor)
 
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_indirect
       use b2us_map
-      use b2us_geo
 
       implicit none
 
       integer, intent(in) :: nout, nelem, nnode
       type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: gm
       integer, intent(in) :: elem(3,nelem), elem_cv(nelem),
-     .                       node_vert(nnode)
+     .                       node_vert(nnode), neighbor(3,2,nelem)
       integer, intent(inout) :: bndmdl(3,nelem)
       integer, allocatable :: indelm(:), tris(:), jsts(:)
       integer :: istra, imodel, i, j, ifc, ifcmin, ifcmax, ic, nt, it,
      .           jt, is, is1, itmin, itmax, ibold, ib,
      .           ntarg, nblk3, nblk14, nd, nsf, istb
-      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
+      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:),
+     .                        ilbls(:), ilble(:)
       integer, allocatable :: ipos_b2(:)
       integer :: artificial_slab=0
+      logical :: exists
 #ifndef F2003
       integer newunit
       external newunit
@@ -374,6 +408,12 @@
 !  skip neutral sources without associated faces
 !  CRCSTRA = 'V','C','T'
         if (mpg%rcFcP(istra,2) == 0) cycle
+!nh     check if the surface is not already written for a different species
+        exists = .false.
+        do i = 1,istra-1
+          if (rcstart(istra).eq.rcstart(i)) exists = .true.
+        end do
+        if (exists) cycle
         imodel = imodel + 1
         write (nout,'(a15,i6,a,i6)') 'recyc. surface ',istra,
      .   ' is associated with nondefault standard surface ',imodel
@@ -400,6 +440,9 @@
      .                      node_vert(elem(is1,jt)))
                 if ((ifcmin == itmin) .and. (ifcmax == itmax)) then
                   bndmdl(is,jt) = -imodel
+                  ! check for presence of (void) neighbor and set model if needed
+                  if (neighbor(is,1,jt).ne.0) 
+     .             bndmdl(neighbor(is,2,jt),neighbor(is,1,jt)) = -imodel
                   exit itloop
                 end if
               end do
@@ -407,6 +450,7 @@
             deallocate (tris)
           end if
         end do
+        
       end do
 
       ntarg = imodel
@@ -476,9 +520,11 @@
       allocate (ipos_b2(nd))
       allocate (istart(nd))
       allocate (iend(nd))
+      allocate (ilbls(nd))
+      allocate (ilble(nd))
 
       call find_eirene_numbering(mpg, idim, ipos, istart, iend,
-     .                           nd, nsf, ipos_b2)
+     .                           ilbls, ilble, nd, nsf, ipos_b2)
 
 !  ... from neutral sources
       imodel = 0
@@ -487,6 +533,12 @@
 
       do istra = 1, mpg%nRc
         if (idim(istra) < 0) cycle
+!nh     check if the surface is not already written for a different species
+        exists = .false.
+        do i = 1,istra-1
+          if (rcstart(istra).eq.rcstart(i)) exists=.true.
+        end do
+        if (exists) cycle
         imodel = imodel + 1
         jsts(imodel) = -imodel
 
@@ -533,10 +585,26 @@
       open (unit=nblk14,file='eirene_block14.dat')
 #endif
       write (nblk14,'(3i6)') mpg%nCv, mpg%nCi, mpg%nFc
+!nh   determine the number of surface strata
+      ntarg = 0
+      imodel = 0
+      do istra = 1, mpg%nRc
+!  skip neutral sources without associated faces
+!  CRCSTRA = 'V','C','T'
+        if (mpg%rcFcP(istra,2) == 0) cycle
+        ntarg = ntarg+1
+      end do
       write (nblk14,'(i6)') ntarg
       write (nblk14,'(12i6)') (1, i=1,ntarg)
       do i = 1, ntarg
-        write (nblk14,'(12i6)') i, jsts(i), 0, 0, 1, 1
+        imodel = imodel + 1
+        do j = 1, i-1
+          if (rcstart(i).eq.rcstart(j)) then
+            imodel = imodel - 1 ! surface is already defined
+            exit
+          end if
+        end do
+        write (nblk14,'(12i6)') i, -imodel, 0, 0, 1, 1
       end do
       close (nblk14)
 
@@ -550,8 +618,8 @@
       end subroutine find_nondef_surfaces
 
 
-      subroutine find_eirene_numbering (mpg,
-     .           idim, ipos, istart, iend, nd, nsf, ipos_b2)
+      subroutine find_eirene_numbering (mpg, idim, ipos, istart, iend, 
+     .           ilbls, ilble, nd, nsf, ipos_b2)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
@@ -565,12 +633,15 @@
       integer, intent(in) :: nd
       integer, intent(out) :: nsf
       integer, intent(out) :: idim(nd), ipos(nd), istart(nd),
-     .                        iend(nd), ipos_b2(nd)
+     .                        iend(nd), ipos_b2(nd), ilbls(nd),
+     .                        ilble(nd)
       integer :: icut, istra, ib, ix
       integer :: artificial_slab=0
 
       nsf = 0
       idim = -1
+      ilbls = 0
+      ilble = 0
 
 ! find grid lines numbers for neutral source surfaces
       do istra = 1, mpg%nRc
@@ -659,6 +730,8 @@
           ipos_b2(nsf) = 1
           istart(nsf) = 1
           iend(nsf) = 1
+          ilbls(nsf) = rcstart(istra)
+          ilble(nsf) = rcend(istra)
         case ('C','V','T')
         case default
           call xerrab ('Wrong CRCSTRA or not yet available for WG')
@@ -743,6 +816,8 @@
           ipos_b2(nsf) = 1
           istart(nsf) = 1
           iend(nsf) = 1
+          ilbls(nsf) = bcstart(ib)
+          ilble(nsf) = bcend(ib)
         case default
           call xerrab ('Wrong BCCHAR or not yet available for WG')
         end select

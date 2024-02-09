@@ -57,7 +57,7 @@
       integer ncall, style, itmax, iters, itpar, cpu
       parameter (itmax=100)
       real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
+     *   nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
       integer, save :: nz
       integer, allocatable, save :: ind(:), iasave(:), jasave(:)
       real (kind=R8) :: incrbb(nCv)
@@ -69,8 +69,8 @@
       external xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, xerrab
 *   ..initialization
-      save ncall, style, acpar, cpu
-      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
+      save ncall, style, cpu
+      data ncall/0/, style/2/, cpu/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -82,8 +82,6 @@
        call ipgeti ('b2ux9p_style', style)
        call xertst (0.le.style.and.style.lt.3,
      &   'faulty internal parameter style')
-       call ipgetr ('b2ux9p_acpar', acpar)
-       call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux9p_cpu', cpu)
        if(style.eq.2) then
          mult_nonzero=1

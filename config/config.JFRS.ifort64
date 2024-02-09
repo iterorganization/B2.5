@@ -23,7 +23,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
 ifndef SOLPS_DEBUG
-FCOPTS  += -O2
+FCOPTS  += -O2 -xHost
 else
 FCOPTS  += -O0 -g -C -traceback -fpe0 -debug all -check all
 endif

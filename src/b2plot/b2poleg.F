@@ -12,25 +12,24 @@ c***
 c***  oleg.dat with the data for Oleg
 c----------------------------------------------------------------------
       use b2mod_types
-      use b2mod_geo
-      use b2mod_rates
       use b2mod_b2plot
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_external
       use b2mod_constants
+      use b2us_data
+      use b2mod_dimensions
       implicit none
       integer ig
       integer lun
 c
 c*** Local variables
 c
-      integer ix,k
-      real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
+#ifdef WG_TODO
+      integer ix, k
+      real (kind=R8) :: x, y, z, hlp_je, hlp_q, hlp_qp, hlp_si
+#endif
 c----------------------------------------------------------------------
 c*** Check the ig value
 c
-      if(ig.lt.0 .or. ig.gt.ny) then
+      if(ig.lt.0 .or. ig.gt.DEF_NYD) then
         print *,'*** b2poleg: wrong value of ig = ',ig
         return
       end if
@@ -43,6 +42,7 @@ c
   710 format(6x,a1,9x,a4,9x,a2,10x,a2,8x,a6,6x,a6,
      ,       6x,a5,8x,a4,7x,a6/)
 c
+#ifdef WG_TODO
       x=0.0_R8
       z=0.0_R8
       do ix=0,nx-1
@@ -70,14 +70,16 @@ c
   700   format(1p,48e12.4)
       end do
       close (lun)
+#endif
+      return
 c
       contains
 
-      function area(ix,iy)
+      function area(iFc)
       implicit none
-      integer, intent(in) :: ix, iy
+      integer, intent(in) :: iFc
       real(kind=R8) :: area
-      area = gs(ix,iy,0)*qc(ix,iy,0)
+      area = geo%fcS(iFc)*geo%fcQgam(iFc,0)
       return
       end function area
 

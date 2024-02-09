@@ -17,6 +17,9 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+      use b2mod_ad
+     & , only : ncall_b2trcl, b2trcl_cutlo
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_math
@@ -26,9 +29,10 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2trcl, ncall_b2tlnl,
+     &          ncall_b2tlnl,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca,
-     &          b2trcl_cutlo, ncall_b2ttia
+     &          ncall_b2ttia
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -91,7 +95,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *.declarations
 
 *   ..local variables
-      integer i, k, is, is0, iCv, iFc, iFt, mode
+      integer k, is, is0, iCv, iFc, iFt, mode
       character(3) chns, chns0                                        !srv 17.06.08
 #ifdef ASTRA
       integer mintopcut                                               !lk 19.09.07
@@ -298,29 +302,19 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        do iFc = 1, nFc                                                  !lkw 12.10.22 {
         if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .or.
      &      mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
-          ! compute conn on the face
-          connf = 0.0_R8
-          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))) then
-           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-             iFt = mpg%cvFt(mpg%fcCv(iFc,1))
-             connf = connf + geo%ftConn(iFt)
-           endif
-          endif
-          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
-           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-             iFt = mpg%cvFt(mpg%fcCv(iFc,2))
-             connf = connf + geo%ftConn(iFt)
-           endif
-          endif
-          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
-     &        mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
-           connf = 0.5*connf
-          endif
+          if (mpg%fcFs(iFc).gt.0) then
+            connf = geo%fsConn(mpg%fcFs(iFc))
+          else
+            iFt = mpg%cvFt(mpg%fcCv(iFc,1))
+            if (iFt.gt.0.and.iFt.le.mpg%nFt) connf = geo%ftConn(iFt)
+          end if
           ! compute flux limits
-          co%f_luc_ke(iFc) = 1.0_R8/(1.0_R8 +
-     &      7.5e16_R8*(tef(iFc)/ev)**2/(connf*ne2f(iFc)))
-          co%f_luc_ki(iFc) = 1.0_R8/(1.0_R8 +
-     &      7.5e16_R8*(tif(iFc)/ev)**2/(connf*ne2f(iFc)))
+          if (connf.gt.0.0_R8) then
+            co%f_luc_ke(iFc) = 1.0_R8/(1.0_R8 +
+     &       7.5e16_R8*(tef(iFc)/ev)**2/(connf*ne2f(iFc)))
+            co%f_luc_ki(iFc) = 1.0_R8/(1.0_R8 +
+     &       7.5e16_R8*(tif(iFc)/ev)**2/(connf*ne2f(iFc)))
+          end if
           co%f_luc_sg(iFc) = co%f_luc_ke(iFc)
           co%f_luc_al(iFc) = co%f_luc_ke(iFc)
           co%f_luc_et(iFc) = co%f_luc_ki(iFc)
@@ -438,27 +432,31 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .or.
      &      mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
           ! compute conn and eps on the face
-          connf = 0.0_R8
-          epsf  = 0.0_R8
-          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))) then
-           iFt = mpg%cvFt(mpg%fcCv(iFc,1))
-           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-             connf = connf + geo%ftConn(iFt)
-             epsf  = epsf  + geo%ftEps(iFt)
-           endif
-          endif
-          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))  then
-           iFt = mpg%cvFt(mpg%fcCv(iFc,2))
-           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-             connf = connf + geo%ftConn(iFt)
-             epsf  = epsf  + geo%ftEps(iFt)
-           endif
-          endif
-          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
-     &        mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
-            connf = 0.5*connf
-            epsf  = 0.5*epsf
-          endif
+          if (mpg%fcFs(iFc).gt.0) then
+            connf = geo%fsConn(mpg%fcFs(iFc))
+            epsf  = 0.0_R8
+            if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))) then
+              iFt = mpg%cvFt(mpg%fcCv(iFc,1))
+              if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+                epsf  = epsf + geo%ftEps(iFt)
+              end if
+            end if
+            if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+              iFt = mpg%cvFt(mpg%fcCv(iFc,2))
+              if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+                epsf  = epsf + geo%ftEps(iFt)
+              end if
+            end if
+            if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &          mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))
+     >       epsf = 0.5_R8
+          else
+            iFt = mpg%cvFt(mpg%fcCv(iFc,1))
+            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+              connf = geo%ftConn(iFt)
+              epsf  = geo%ftEps(iFt)
+            end if
+          end if
           ! parameters at faces
           nu1f = connf/(tauf(iFc)*
      &     sqrt(tef(iFc)/me)*2.0e0_R8*pi*epsf**1.5e0_R8)
@@ -477,11 +475,15 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           ! compute flux limits
           co%f_luc_ke(iFc) = 1.0_R8/k1f*0.58e0_R8*sqrt(epsf**3)
           co%f_luc_ki(iFc) = 1.0_R8/k2f*1.60e0_R8*sqrt(epsf**3)
-          co%f_luc_et(iFc)=switch%cvsa_mltpl/
-     1      (1.0e0_R8+15.12e16_R8/connf*
-     2      (tif(iFc)/ev)**2/ne2f(iFc))/
-     4      (1.0e0_R8+15.12e16_R8*epsf**1.5e0_R8/
+          if (connf.gt.0.0_R8) then
+            co%f_luc_et(iFc)=switch%cvsa_mltpl/
+     1       (1.0e0_R8+15.12e16_R8/connf*
+     2       (tif(iFc)/ev)**2/ne2f(iFc))/
+     4       (1.0e0_R8+15.12e16_R8*epsf**1.5e0_R8/
      6        connf*(tif(iFc)/ev)**2/ne2f(iFc))
+          else
+            co%f_luc_et(iFc)=switch%cvsa_mltpl
+          end if
           co%f_luc_sg(iFc) = co%f_luc_ke(iFc)
           co%f_luc_al(iFc) = co%f_luc_ke(iFc)
           do is=0,ns-1

@@ -9,36 +9,25 @@ LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 LD_NAG      ?= -L${NAGDIR} -lnag
 
-CPP      = /lib/cpp -C -traditional
+CPP      = /lib/cpp -C -traditional -ffreestanding
 
 ifdef USE_MPI
-FC       = mpif90
+FC       = mpiifort
 else
 ifdef USE_IMPGYRO
-FC       = mpif90
+FC       = mpiifort
 else
 FC       = ifort
 endif
 endif
 
-ifeq (${FC},mpif90)
-OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD   = -B
-GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
-DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
-ifdef USE_OPENMP
-FCOPTS += -fopenmp
-LDOPTS += -fopenmp
-endif
-else
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2
+FCOPTS   = -O2 -xHost
 endif
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
@@ -52,32 +41,6 @@ endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
 FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
-endif
-endif
-
-ifeq (${FC},mpif90)
-  COMPILER_REDEF = yes
-  ifdef IMAS_VERSION
-    ifndef SOLPS_CPP
-      UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-      UAL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
-      UAL_MICRO_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-      IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-      IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-      IMAS_MICRO_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f3 )
-      GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
-      GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-      GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-    endif
-    IMAS_PKG_LIST = imas-gfortran
-    ifeq ($(shell test ${IMAS_MINOR_VERSION} -lt 17; echo $$?),0)
-      ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-        ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
-          LD_GGD := -lggd-gfortran
-        endif
-      endif
-    endif
-  endif
 endif
 
 

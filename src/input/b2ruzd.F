@@ -67,7 +67,8 @@
       logical function lnext(is,js)
       implicit none
       integer, intent(in) :: is, js
-      lnext = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+      lnext = zamax(is).lt.zamin(js).and.
+     & nint(zn(is)).eq.nint(zn(js)).and.
      &  abs(am(is)-am(js)).lt.amtol
       return
       end function lnext

@@ -1,4 +1,4 @@
-      subroutine b2co_wall_cdf(nx,ny,ns,tim)
+      subroutine b2co_wall_cdf(tim)
       use b2mod_types
       use b2mod_wall
       use b2mod_subsys
@@ -6,7 +6,6 @@
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer :: nx, ny, ns
       real (kind=R8) :: tim
 #ifndef NO_CDF
 #ifndef NO_GETENV
