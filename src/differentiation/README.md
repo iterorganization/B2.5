@@ -6,7 +6,7 @@ They are only needed as additional subroutines when a new version of the differe
 The source files in tangent and adjoint folders are instead used to compile the tangent and adjoint AD codes respectively. They have been put in these subdirectories otherwise the Make file would try to use them for compilaton of standalone B2.5 or coupled B2.5-EIRENE executables.
 
 The files with name "files_to_*.txt" are needed when differentiating the code, to tell Tapenade which source files
-to keep/exclude from the differentiation. The splitting between files_to_exclude and files_to_ignore is needed by the automatic postprocessing of the differentiated files.
+to keep/exclude from the differentiation.
 
 solpsGeneralLib: file where some basic functions/subroutine not shown to Tapenade are defined, only used for differentiation
 
