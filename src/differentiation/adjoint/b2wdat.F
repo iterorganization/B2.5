@@ -517,8 +517,8 @@
        call my_out_us(70,nVx,2,geo%vxBzB,'Vx.BzB')
       endif                                                             !srv   end for iout=3   
 
-      if(use_mms.eq.1 .and. iout.eq.10) then                                 !srv 26.02.18 {
-!WG_TODO        call calc_err(nx, ny, ns)
+      if(use_mms.eq.1 .and. iout.eq.10) then                            !srv 26.02.18 {
+        call calc_err_nodiff(nCv, ns, state%pl, state%dv)
       endif                                                             !srv 26.02.18 }
 
       if (mpg%isClassicalGrid.eq.1) then

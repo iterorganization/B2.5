@@ -1,15 +1,19 @@
 C =====================================================================
-      subroutine plotpatch(NX,NY,IS,
-     . CRX,CRY,region,work,ZLOD,ZHID,PHYSICAL,LINLOG,igraphs)
+      subroutine plotpatch(MPG,GEO,IS,
+     . work,ZLOD,ZHID,PHYSICAL,LINLOG,igraphs)
 C =====================================================================
       use b2mod_types
+      use b2us_map
+      use b2us_geo
+      use b2mod_b2plot
+     , , only : cvIx, cvIy
       use b2mod_b2plot_debug
       implicit none
 #include "graphics_vars.h"
-      integer nx,ny,is,linlog,igraphs
-      REAL (KIND=R8) :: CRX(-1:NX,-1:NY,0:3),CRY(-1:NX,-1:NY,0:3),
-     1 work(-1:NX,-1:NY),ZLOD,ZHID
-      integer region(-1:nx,-1:ny,0:2)
+      type(mapping) :: mpg
+      type(geometry) :: geo
+      integer is,linlog,igraphs
+      REAL (KIND=R8) :: work(mpg%nCv),ZLOD,ZHID
       LOGICAL PHYSICAL
 
       INTEGER LFIN(100),choose_color
@@ -22,24 +26,24 @@ C =====================================================================
       integer ind(nnd)
       real (kind=R4) :: dst(nst)
 #endif
-      real (kind=R4) :: xbox(8),ybox(8),
-     1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
-      integer ix,iy,icol,ici,n,i,ic,
+      real (kind=R4), allocatable :: xbox(:), ybox(:)
+      real (kind=R4) :: zlo,zhi,zval,clv,zinc,rlo,rhi,small
+      integer iCv,iFc,iVa,iVb,iVx1,iVx2,icol,ici,n,i,j,ic,
      2 no_available_colors,noz,nozm,nfmtz
+      logical left_match_found,right_match_found
+      logical, allocatable :: done(:)
       real floor,ceil
       external floor,ceil
 
       zlo=real(zlod,R4)
       zhi=real(zhid,R4)
-      RLO=real(work(0,0),R4)
-      RHI=real(work(0,0),R4)
-      do IY=-1,NY
-        do IX=-1,NX
-          if(.not.physical.or.region(ix,iy,0).ne.0)then
-            RLO=MIN(RLO,REAL(work(IX,IY),R4))
-            RHI=MAX(RHI,REAL(work(IX,IY),R4))
-          endif
-        end do
+      RLO=real(work(1),R4)
+      RHI=real(work(1),R4)
+      do iCv=1,mpg%nCv
+        if(.not.physical.or.mpg%cvReg(iCv).ne.0) then
+          RLO=MIN(RLO,REAL(work(iCv),R4))
+          RHI=MAX(RHI,REAL(work(iCv),R4))
+        endif
       end do
       if(ZLO.EQ.ZHI) then
         ZLO=RLO
@@ -63,7 +67,7 @@ C =====================================================================
 
       IF(NOFCLS.EQ.0) THEN                ! standard contouring
         IF(mod(LINLOG,2).EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm
@@ -102,8 +106,8 @@ C =====================================================================
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               clval(i)=zval
             enddo
           else
@@ -178,37 +182,83 @@ C =====================================================================
       endif
 #endif
 
-      do iy=-1,ny
-        do ix=-1,nx
-         if(.not.physical.or.region(ix,iy,0).ne.0) then
+      allocate(xbox(1:max(4,maxval(mpg%cvVxP(:,2)))))
+      allocate(ybox(1:max(4,maxval(mpg%cvVxP(:,2)))))
+      if(physical) allocate(done(1:maxval(mpg%cvFcP(:,2))))
+      do iCv=1,mpg%nCv
+        if(.not.physical.or.mpg%cvReg(iCv).ne.0) then
 cxpb Do not plot dead cells in physical domain
           if(physical) then
-            do ic=0,1
-              xbox(ic+1)=real(crx(ix,iy,ic),R4)
-              ybox(ic+1)=real(cry(ix,iy,ic),R4)
-            enddo
-            do ic=2,3
-              xbox(6-ic)=real(crx(ix,iy,ic),R4)
-              ybox(6-ic)=real(cry(ix,iy,ic),R4)
-            enddo
+            done=.false.
+            iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+            iVa=mpg%fcVx(iFc,1)
+            xbox(1)=real(geo%vxX(iVa),R4)
+            ybox(1)=real(geo%vxY(iVa),R4)
+            iVb=mpg%fcVx(iFc,2)
+            xbox(2)=real(geo%vxX(iVb),R4)
+            ybox(2)=real(geo%vxY(iVb),R4)
+            done(1)=.true.
+            ic=2
+            do while (ic.lt.mpg%cvVxP(iCv,2))
+              do i=2,mpg%cvFcP(iCv,2)
+                if (done(i)) cycle
+                left_match_found=.false.
+                right_match_found=.false.
+                iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+                iVx1=mpg%fcVx(iFc,1)
+                iVx2=mpg%fcVx(iFc,2)
+                if (iVx1.eq.iVa) then
+                  left_match_found=.true.
+                  do j=ic,1,-1
+                    xbox(j+1)=xbox(j)
+                    ybox(j+1)=ybox(j)
+                  end do
+                  xbox(1)=real(geo%vxX(iVx2),R4)
+                  ybox(1)=real(geo%vxY(iVx2),R4)
+                  ic=ic+1
+                else if (iVx1.eq.iVb) then
+                  right_match_found=.true.
+                  xbox(ic+1)=real(geo%vxX(iVx2),R4)
+                  ybox(ic+1)=real(geo%vxY(iVx2),R4)
+                  ic=ic+1
+                end if
+                if (iVx2.eq.iVa) then
+                  left_match_found=.true.
+                  do j=ic,1,-1
+                    xbox(j+1)=xbox(j)
+                    ybox(j+1)=ybox(j)
+                  end do
+                  xbox(1)=real(geo%vxX(iVx1),R4)
+                  ybox(1)=real(geo%vxY(iVx1),R4)
+                  ic=ic+1
+                else if (iVx2.eq.iVb) then
+                  right_match_found=.true.
+                  xbox(ic+1)=real(geo%vxX(iVx1),R4)
+                  ybox(ic+1)=real(geo%vxY(iVx1),R4)
+                  ic=ic+1
+                end if
+                done(i)=left_match_found.or.right_match_found
+              end do
+            end do
+            n=mpg%cvVxP(iCv,2)
           else
-            xbox(1)=ix-0.5_R4
-            xbox(2)=ix+1-0.5_R4
-            xbox(3)=ix+1-0.5_R4
-            xbox(4)=ix-0.5_R4
-            ybox(1)=iy-0.5_R4
-            ybox(2)=iy-0.5_R4
-            ybox(3)=iy+1-0.5_R4
-            ybox(4)=iy+1-0.5_R4
+            xbox(1)=real(cvIx(iCv),R4)-0.5_R4
+            xbox(2)=real(cvIx(iCv),R4)+0.5_R4
+            xbox(3)=real(cvIx(iCv),R4)+0.5_R4
+            xbox(4)=real(cvIx(iCv),R4)-0.5_R4
+            ybox(1)=real(cvIy(iCv),R4)-0.5_R4
+            ybox(2)=real(cvIy(iCv),R4)-0.5_R4
+            ybox(3)=real(cvIy(iCv),R4)+0.5_R4
+            ybox(4)=real(cvIy(iCv),R4)+0.5_R4
+            n=4
           endif
-          n=4
           call clip_box(xbox,ybox,xlo,ylo,xhi,yhi,n)
           if(n.gt.2) then
-            if(work(ix,iy).gt.clval(ncont+1)) then
+            if(work(iCv).gt.clval(ncont+1)) then
               icol=ncont+1
             else
               icol=0
-              do while(work(ix,iy).gt.clval(icol+1))
+              do while(work(iCv).gt.clval(icol+1))
                 icol=icol+1
               enddo
             endif
@@ -220,15 +270,16 @@ cxpb Do not plot dead cells in physical domain
             call sfsgfa(xbox,ybox,n,dst,nst,ind,nnd,ici)
 #endif
           endif
-         endif
-        enddo
+        endif
       enddo
+      deallocate(xbox,ybox)
+      if(physical) deallocate(done)
 #ifdef PLPLOT
       call plcol(1)
 #endif
 C Draw Mesh/Separatrix if wanted
       if(wall) call data_copy(is)
-      call additional_elements(nx,ny,physical)
+      call additional_elements(mpg%nCv,physical)
       return
       end subroutine plotpatch
 c
@@ -304,7 +355,7 @@ c
      1     (log10(zmax)-log10(zmin))
         enddo
       else
-        call nice(zmin,zmax,noz,nozm,fmtz,nfmtz)
+        call nice(zmin,zmax,noz,nozm,fmtz,nfmtz,.true.)
         NCNT=NOZ*NOZM
         write (*,*) 'ncnt =',ncnt,' noz =',noz,' nozm =',nozm
         do while(NCNT.lt.5.AND.NOZM.GT.1)

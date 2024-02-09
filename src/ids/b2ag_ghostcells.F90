@@ -11,17 +11,71 @@ module b2ag_ghostcells
 
   implicit none
 
+  !integer :: nrid, nCi, nCg, nC
+
 contains
 
   ! Given the grid dimensions without ghost cells and the number of cuts,
   ! figures out what the actual grid size nx, ny for the B2 data structures has to be
   ! accounting for ghost cells
-  subroutine computeGridSizeWithGhostCells(nnx, nny, niso, nx, ny)
+  subroutine computeGridSizeWithGhostCells_st(nnx, nny, niso, nx, ny)
     integer, intent(in) :: nnx, nny, niso
     integer, intent(out) :: nx, ny
 
     nx = nnx + 2 * niso
     ny = nny
+  end subroutine computeGridSizeWithGhostCells_st
+
+  subroutine computeGridSizeWithGhostCells(nrid,nCi,nCg,nFc,nCmxVx0,nCmxFc0, &
+              &  nFmxCv0, nVmxCv0, nVmxFc0, nCv, nCmxVx, nCmxFc, &
+              &  nFmxCv, nVmxCv, nVmxFc, nCmxNv ) 
+    integer, intent(in) :: nrid, nCi, nCg, nFc, nCmxVx0, nCmxFc0, nFmxCv0, &
+              &  nVmxCv0, nVmxFc0
+    integer, intent(out) :: nCv, nCmxVx, nCmxFc, nFmxCv, &
+              &   nVmxCv, nVmxFc, nCmxNv
+    
+    
+     
+    !internal
+    integer :: i, cflags(1:nCi), nBc, cvFc(1:nCmxFc0), iFc, nBF
+    character id*32
+
+    !With the assumption that each boundary cell has only one boundary face
+    !read the cflag van cell information, count the number of 3's
+    !read(nrid)
+   
+    call read_cvFc(nrid,nCv,cvFc,nCmxFc0)
+    !count how many faces only appear once in cvFc, these are boundary faces (nBF)
+    nBF = 0
+    do iFc = 1,nFc
+      if (count (cvFc == iFc) .eq. 1) then
+         nBF = nBF + 1
+      endif
+    enddo
+    
+    if(nCg.ne.nBF) then        
+       write(*,'(a,4i4)') 'b2ag_ghostcells: nCg and nBF disagree',nCg,nBF
+       stop
+    endif
+
+    nCv = nCi + nCg
+
+    !.. calculate nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc
+    nCmxVx = nCmxVx0 + 2*nCg  ! every ghost cell has two vertices
+    nCmxFc = nCmxFc0 + nCg    ! every ghost cell has one face
+    nFmxCv = nFmxCv0 + nCg    ! every boundary faces is now also used in a ghost cell
+    nVmxCv = nVmxCv0 + 2*nCg  ! every vertex at the boundary get two more cells
+    nVmxFc = nVmxFc0          ! no new faces created for ghost cells 
+
+    ! Compute nCmxNv
+    nCmxNv = 20 * nCv         ! over-estimate for 9-point stencil, and possible complexity for triangle meshes
+                              ! wdk to be considered: some exact recomputation of this number to write in b2fgmtry
+
+
+    return
+
+96  call xerrab('error here')
+
   end subroutine computeGridSizeWithGhostCells
 
 
@@ -68,7 +122,7 @@ contains
         if (iBlock == niso + 1) then
            ixu = nnx-2
         else
-            ixu = nxiso(iBlock) - 2
+            ixu = nxiso(iBlock) - 3
         end if
         
         !if ( withSourceOffset ) ixu = ixu + 1
@@ -101,7 +155,7 @@ contains
   !>  Corners: any cell with more than one boundary face needs "corner ghost cells" to connect
   !>           the ghost cells (which is required by code). 
 
-  subroutine create_guard_cells(nnx, nny, nx, ny, niso, nxiso, &
+  subroutine create_guard_cells_st(nnx, nny, nx, ny, niso, nxiso, &
        & crx, cry, psi, bp, bt, ffbz, cflags, withSourceOffset)
     use b2mod_cellhelper
 
@@ -121,7 +175,7 @@ contains
     real(R8) :: cflags_tmpreal(-1:nx,-1:ny)   
     logical :: classicalGrid
     
-    call logmsg(LOGDEBUG, "create_guard_cells: entering")
+    call logmsg(LOGDEBUG, "create_guard_cells_st: entering")
 
     ! initialize connectivity
     nbix = NO_CONNECTIVITY
@@ -153,7 +207,7 @@ contains
     ! -> Check whether there are any external cells.
     classicalGrid = isClassicalGrid(cflags)
     if (classicalGrid) &
-        & call logmsg(LOGDEBUG, "create_guard_cells: assuming classical grid")
+        & call logmsg(LOGDEBUG, "create_guard_cells_st: assuming classical grid")
 
     ! find slots for ghost cells
     nGhostCell = 0
@@ -205,9 +259,9 @@ contains
     ! However, we cannot compute the magnetic field for the ghost cells now, 
     ! for this we also require the metric information
 
-    call logmsg(LOGDEBUG, "create_guard_cells: # of ghost cells "//int2str(nGhostCell) )    
-    call logmsg(LOGDEBUG, "create_guard_cells: # of non-canonical ghost cells "//int2str(nNoCanonicalGhostCell) )
-    call logmsg(LOGDEBUG, "create_guard_cells: leaving")
+    call logmsg(LOGDEBUG, "create_guard_cells_st: # of ghost cells "//int2str(nGhostCell) )    
+    call logmsg(LOGDEBUG, "create_guard_cells_st: # of non-canonical ghost cells "//int2str(nNoCanonicalGhostCell) )
+    call logmsg(LOGDEBUG, "create_guard_cells_st: leaving")
 
   contains
 
@@ -536,7 +590,199 @@ contains
 
     end subroutine getNoncanonicalGhostSlot
     
+  end subroutine create_guard_cells_st
+
+  subroutine create_guard_cells(nnCv,nnFc,nnVx,g,m)
+    use b2us_geo
+    use b2us_map
+
+    integer, intent(in) :: nnCv, nnFc, nnVx
+    type(geometry), intent(inout) :: g
+    type(mapping), intent(inout) :: m
+
+    !internal
+
+    integer :: i, iCv, cellnumber, cvFcpos, cvVxpos, nGhostCell
+    !integer :: facenumbers(nGhostCell)
+    integer :: facenumbers(m%nCg)  ! too big
+    real(kind=R8) :: fcX,fcY 
+    intrinsic maxval
+
+
+    call logmsg(LOGDEBUG, "create_guard_cells:entering")
+
+    ! initialize connectivity
+    
+
+    ! rearrange cells to make space for ghost cells according to default B2 system - not necessary
+    ! cvFc and cvFcP changes here, as ghost cells are only one face cells
+    ! cvVx and cvVxP changes here
+    ! in cflags(:,1) guard_cell gets flag == GRID_GUARD
+    nGhostCell = m%nCv - nnCv
+    ! change cvFcP and cvVxP
+    do iCv = nnCv+1, m%nCv
+       m%cvFcP(iCv,2) = 1
+       m%cvFcP(iCv,1) = m%cvFcP(iCv-1,1) + m%cvFcP(iCv-1,2)
+
+       m%cvVxP(iCv,2) = 2
+       m%cvVxP(iCv,1) = m%cvVxP(iCv-1,1) + m%cvVxP(iCv-1,2)
+    enddo
+    
+    ! change cvFc
+    ! create list of boundary faces
+    call get_boundary_faces(facenumbers,g,m,nGhostCell,nnCv)
+
+    do i = 1, nGhostCell
+       cellnumber = nnCv + i 
+       cvFcpos = m%cvFcP(cellnumber,1)
+       m%cvFc(cvFcpos) = facenumbers(i) 
+
+       cvVxpos = m%cvVxP(cellnumber,1)
+       m%cvVx(cvVxpos) = m%fcVx(facenumbers(i),1)
+       m%cvVx(cvVxpos+1) = m%fcVx(facenumbers(i),2)
+    enddo
+
+    ! change cvLbl(:,1), cvX, cvY
+    do iCv = nnCv+1, m%nCv
+       m%cvLbl(iCv) = GRID_GUARD
+       !iface = m%cvFc(m%cvFc(i,1)) ! just one face
+       ! temporary put the cell center of the guard cells of the boundary face
+       ! in b2agmt the proper cell center is computed
+       fcX = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(iCv,1): &
+           &    m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)))
+       g%cvX(iCv) = fcX
+       fcY = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(iCv,1): &
+           &    m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)))
+       g%cvY(iCv) = fcY
+       m%cvFt(iCv) = maxval(m%cvFt)     
+    enddo
+
+    ! add flux tubes of guard cells
+    do iCv = nnCv+1,m%nCv
+       
+    enddo
+    
+
+    ! calculate cvFpsi , cvBt and cvBp in routine b2agbb in b2agfs.f
+
+    call logmsg(LOGDEBUG, "create_guard_cells: # of ghost cells "//int2str(nGhostCell))
+    call logmsg(LOGDEBUG, "create_guard_cells: leaving")
+
+  contains
+    
+    ! Give a list of the boundary faces
+    subroutine get_boundary_faces(facenumbers,g,m,nGhostCell,nnCv)
+      use b2us_geo
+      use b2us_map
+
+      integer, intent(in) :: nGhostCell, nnCv
+      integer, intent(out) :: facenumbers(nGhostCell)
+      type(mapping) :: m 
+      type(geometry) :: g
+
+      !internal
+      integer :: iCv, j, counter, nf
+      integer, allocatable :: faces(:)
+      logical :: Bface
+      intrinsic count
+      
+      counter = 1
+      do iCv = 1, nnCv
+          if (m%cvLbl(iCv).eq.GRID_BOUNDARY) then
+             nf = m%cvFcP(iCv,2)
+             allocate(faces(0:nf-1)) 
+             faces = m%cvFc(m%cvFcP(iCv,1): &
+                 &   m%cvFcP(iCv,1)+nf-1)
+               do j = 0, nf-1
+                  Bface = isBoundaryFace(faces(j))
+                  if (Bface) then
+                     facenumbers(counter) = faces(j)
+                     counter = counter+1
+                  endif
+               enddo
+             deallocate(faces)
+          endif
+      enddo
+
+    end subroutine get_boundary_faces
+
+    logical function isBoundaryFace(iface)
+      integer, intent(in) :: iface
+
+      integer :: counter
+
+      counter = 0
+
+      counter = count (m%cvFc == iface)
+
+
+      ! if the face is present once, it is a boundary face
+      if (counter.eq.1) then
+         isBoundaryFace = 1
+      else
+         isBoundaryFace = 0
+      endif 
+
+    end function isBoundaryFace
+
+
   end subroutine create_guard_cells
+
+
+
+  subroutine read_cvFc(nrid, nCv, cvFc,nCmxFc)
+     
+      use b2mod_types
+      use b2mod_subsys
+      implicit none
+      integer, intent(in) :: nrid, nCv, nCmxFc
+      integer :: cflags1(nCv), &
+       & cv(nCv), cvVxP1(nCv), & 
+       & cvVxP2(nCv), cvreg(nCv), cvFc(nCmxFc)
+      real (kind=R8) :: &
+       & cvX(nCv), cvY(nCv), &
+       & psi(nCv), bp(nCv), bt(nCv)
+      integer, allocatable :: cvVx(:) 
+      
+      integer i, j
+      character idcod*5, id0*32, id1*32
+      logical streql
+      external xertst, streql
+
+      !..subprogram start-up calls
+      call subini('read_cflags')
+
+      j=0
+      idcod = 'start'
+      id1 = idcod
+
+99    if  (j.eq.0) then
+        if ((streql('*cf:',idcod)).and. &
+       &   (streql('cv' ,id1))) then
+           do i = 1, nCv
+             read(nrid,*,err=97) cv(i), cvVxP1(i), cvVxP2(i), cvX(i), &
+       &     cvY(i), psi(i), bp(i), bt(i), cflags1(i), cvreg(i)
+           enddo
+           j=1
+           allocate(cvVx(cvVxP1(nCv)+cvVxP2(nCv)-1))
+           !read cvVx
+           call cfruin(nrid,cvVxP1(nCv)+cvVxP2(nCv)-1,cvVx,'cvVx')
+           !read cvFc
+           call cfruin(nrid,nCmxFc,cvFc,'cvFc')           
+        else
+         read(nrid,*,err=97) idcod, id1
+!         read(nrid,'(2a8,a32)',err=96) idcod, id1 !read the next line
+         goto 99
+        end if
+      end if 
+
+      return
+
+96 call xerrab('read_cflags - error at head')
+97 call xerrab('read_cflags - error reading grid file')           
+
+
+  end subroutine read_cvFc
 
 
 end module b2ag_ghostcells

@@ -88,6 +88,12 @@ c*** Starting points of the segments
       case (5)
        call rearre(ppp1,3*DEF_NLIM,ll)
        lppp=ll/3
+       if(lppp.gt.DEF_NLIM) then !{
+         write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+         write(0,*) 'Current number of requested elements: ',lppp
+         call xerrab
+     .    (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+       end if !}
        do i=1,lppp !{
         pp1(1,i)=0.001_R8*ppp1(1,i)
         pp1(2,i)=0.001_R8*ppp1(2,i)
@@ -97,6 +103,12 @@ c*** Ending points of the segments
       case (6)
        call rearre(ppp2,3*DEF_NLIM,ll)
        lppp=ll/3
+       if(lppp.gt.DEF_NLIM) then !{
+         write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+         write(0,*) 'Current number of requested elements: ',lppp
+         call xerrab
+     .    (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+       end if !}
        do i=1,lppp !{
         pp2(1,i)=0.001_R8*ppp2(1,i)
         pp2(2,i)=0.001_R8*ppp2(2,i)
@@ -210,6 +222,12 @@ c*** List of segments to be skipped
       case (21:22)
        call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
        do j = nskipel+1, nskipel+i
+        if(lskipel(j).gt.DEF_NLIM) then !{
+         write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+         write(0,*) 'Current number of requested elements: ',lskipel(j)
+         call xerrab
+     .    (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+        end if !}
         lskip(lskipel(j)) = .true.
        end do
        nskipel=nskipel+i

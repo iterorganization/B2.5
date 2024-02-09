@@ -1,4 +1,7 @@
-      subroutine conv_triangles (nout, mpg, gm, nx, ny)
+      subroutine conv_triangles (mpg, gm,
+     .    nmxnodes, nmxelem, nnodes, nelem, npnodes, npelem,
+     .    xco, yco, node_vert, elem, elem_cv, trifc, neigh, 
+     .    cntr, tria_mode)
 
       use b2mod_types
       use b2mod_indirect
@@ -11,30 +14,34 @@
 #endif
       implicit none
 
-      integer, intent(in) :: nout, nx, ny
+      integer, intent(in) ::nmxnodes, nmxelem, npnodes, npelem,
+     .  tria_mode
+      integer ::  nnodes, nelem
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
+      integer :: nx, ny
+      integer :: node_vert(nmxnodes), elem(3,nmxelem), elem_cv(nmxelem),
+     .  trifc(3,nmxelem), neigh(3,2,nmxelem), cntr(3,nmxelem)
+      real(R8) :: xco(nmxnodes), yco(nmxnodes)
 
 #ifdef B25_EIRENE
       type(TAVLTree), pointer :: baum
       logical :: inserted
-      integer :: nco_old, ic, nnodes, ico, ivx, nelem, iel, i1, i2, i3,
-     .           idum, i, nel2, is, jdum, is1, ifc, icv, icut, ixt, iyt,
-     .           iad, ix, iy, isig, iused, ineir,
+      integer :: nco_old, nelem_conv, ic, ico, ivx, iel, iel2,
+     .           i1, i2, i3, idum, i, nel2, 
+     .           is, is1, is2, ifc, icv, icut, ixt, iyt,
+     .           ix, iy, isig, iused, ineir,
      .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
-     .           ixl, ixr, iv, icside,
-     .           npnodes
+     .           ixl, ixr, iv, icside
 
       real(R8), allocatable :: xc_old(:), yc_old(:)
-      real(R8), allocatable :: xc_new(:), yc_new(:)
-      integer, allocatable :: im_old_new(:), elem_new(:,:),
-     .                        im_new_old(:), node_vert(:)
-      integer, allocatable :: neigh(:,:,:), elem_cv(:), trifc(:,:),
-     .                        ixtri(:), iytri(:), bndmdl(:,:),
+      integer, allocatable :: im_old_new(:), im_new_old(:)
+      integer, allocatable :: ixtri(:), iytri(:),
      .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
       integer :: artificial_slab=0, overwrite_ntrfrm = 0,
-     .            is_narrow_grid = 0
+     .            is_narrow_grid = 0, use_old_co = 0
       real(R8) :: xc, yc, dist = 1.0_R8
+      real(R8) :: tol_align = 1.0e-4_R8
       logical :: ffound
       character(500) :: line
       type :: tri_elem
@@ -55,6 +62,8 @@
       call ipgeti ('overwrite_ntrfrm', overwrite_ntrfrm)
       call ipgeti ('is_narrow_grid', is_narrow_grid)
       call ipgetr ('conv_triangles_dist',dist)
+      call ipgeti ('conv_triangles_old_co', use_old_co)
+      call ipgetr ('conv_triangles_tol', tol_align)
 
 !  if input.dat exists check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
@@ -82,14 +91,10 @@
 
       allocate (xc_old(nco_old))
       allocate (yc_old(nco_old))
-      allocate (xc_new(nco_old+mpg%nVx))      ! dimension with margin for error detection
-      allocate (yc_new(nco_old+mpg%nVx))
       allocate (im_old_new(nco_old+mpg%nVx))
       allocate (im_new_old(nco_old+mpg%nVx))
-      allocate (node_vert(nco_old+mpg%nVx))
       im_old_new = 0
       im_new_old = 0
-      node_vert = 0
 
       if (overwrite_ntrfrm.eq.1) then
         ntrfrm = 1
@@ -106,45 +111,30 @@
 
 !  now find new coordinate indices
 
-
 !  first introduce coordinates from unstructured mesh into
 !  self-balancing binary search tree
       baum => EIRENE_NewTree()
-      NNODES=0
       call eirene_setcon
-
-      do ivx = 1, mpg%nVx
-        !! Check whether vertex is actually used in the plasma grid
-        !! => remove X-point duplicates
-        iused = count(mpg%cvVx == ivx)
-        if (iused > 0) then
-          IC=NNODES+1
-          inserted=.false.
-          xc = gm%vxX(ivx)*100._R8    ! convert to cm
-          yc = gm%vxY(ivx)*100._R8    ! convert to cm
-          call EIRENE_insert (baum, xc, yc,
-     .                      0._R8, dist, ic, inserted)
-
-          if (.not.inserted) then
+      do i = 1, npnodes
+        IC=i
+        inserted=.false.
+        xc = xco(i)
+        yc = yco(i)
+        call EIRENE_insert (baum, xc, yc,
+     .                    0._R8, dist, ic, inserted)
+        if (.not.inserted) then
             write(*,*) '------------'
-            write(*,*) 'problem with vertex ', ivx
+            write(*,*) 'problem with plasma node ', i
             write(*,*) 'x = ', xc
             write(*,*) 'y = ', yc
             write(*,*) 'not inserted in node list'
             write(*,*) '------------'
-          else
-            NNODES=NNODES+1
-            xc_new(NNODES)=xc
-            yc_new(NNODES)=yc
-            node_vert(NNODES)=ivx ! store plasma vertex number corresponding to the node
-          endif
         endif
       end do
-      !! Store number of nodes corresponding to plasma grid vertices
-      NPNODES = NNODES
-      write (*,*) 'Found ', NPNODES, ' unique plasma vertices/nodes.'
+
 
 !  now check coordinates from old fort.33 file for new index
+      nnodes = npnodes
       do ico = 1, nco_old
         IC=NNODES+1
         inserted=.false.
@@ -161,10 +151,10 @@
             write(*,*) '------------'
           else
             NNODES=NNODES+1
-            if (NNODES .gt. (nco_old+mpg%nVx))
+            if (NNODES .gt. (nmxnodes))
      .        call xerrab ('insufficient array space for new nodes')
-            xc_new(NNODES) = xc_old(ico)
-            yc_new(NNODES) = yc_old(ico)
+            xco(NNODES) = xc_old(ico)
+            yco(NNODES) = yc_old(ico)
             !write (*,*) 'Inserting node ', nnodes, ' for old node ', ico
             im_old_new(ico) = nnodes
             im_new_old(nnodes) = ico
@@ -177,7 +167,11 @@
      .                  'to old node ', im_new_old(ic)
 !            call xerrab ('node already used')
           endif
-          !write (*,*) 'Linking node ', ic, ' to old node ', ico
+          !write (*,*) 'Linking node ', ic, ' to old node ', ico'
+          if (use_old_co.eq.1) then
+            xco(ic) = xc_old(ico)
+            yco(ic) = yc_old(ico)
+          endif
           im_old_new(ico) = ic
           im_new_old(ic) = ico
         END IF
@@ -205,21 +199,22 @@
       !! 2) check whether each new node corresponds to an old node
       do i = 1, nnodes
         iused = count(im_old_new == i)
-        if (iused <= 0) then
+        if (iused <= 0 .and. 
+     .      .not.(i.le.npnodes.and.tria_mode.eq.1)) then ! for tria_mode 1, only chech the nodes that are not plasma vertices
           ico = ico + 1
           write (*,*) 'Node ', i, ' in new fort.33 not present in '//
      .                'original file'
-          write (*,*) 'X, Y = ', xc_new(i), yc_new(i)
+          write (*,*) 'X, Y = ', xco(i), yco(i)
         elseif (iused > 1) then
           ico = ico + 1
           write (*,*) 'Node ', i, ' in new fort.33 linked to ' //
      .                'multiple nodes in original file'
-          write (*,*) 'X, Y = ', xc_new(i), yc_new(i)
+          write (*,*) 'X, Y = ', xco(i), yco(i)
         endif
       enddo
 
       !! 3) check whether plasma vertices are correctly linked to a node
-      if (nnodes /= nco_old) then
+      if (nnodes /= nco_old.and.tria_mode.eq.0) then
         write (*,*) 'Created ', nnodes, ' nodes, ',
      .              'but expected ', nco_old, ' nodes'
         !! check wether each plasma vertex has been identified as a
@@ -241,27 +236,22 @@
 !        call xerrab ('conv_triangles -- problem with node conversion')
       endif
 
-      call write_npco (nnodes, xc_new, yc_new, 1._R8)
-      write (*,*) ' triangle.coordinates written '
-
 !  conversion of coordinates finished
 
 !  now read element information from old fort.34
       open (unit=34,access='SEQUENTIAL',form='FORMATTED')
-      read (34,*) nelem
+      read (34,*) nelem_conv
 
-      allocate (elem_new(3,nelem))
-
-      do iel = 1, nelem
+!  assume npelem elements may already have been present (plasma)
+!  => append the additional nelem_conv ones from fort.34 at the end
+      nelem = npelem + nelem_conv
+      do iel = npelem + 1, nelem
         read (34,*) idum, i1, i2, i3
-        elem_new(1,iel) = im_old_new(i1)
-        elem_new(2,iel) = im_old_new(i2)
-        elem_new(3,iel) = im_old_new(i3)
+        elem(1,iel) = im_old_new(i1)
+        elem(2,iel) = im_old_new(i2)
+        elem(3,iel) = im_old_new(i3)
       end do
       close(34)
-
-      call write_elemente (nelem, elem_new)
-      write (*,*) ' triangle.elements written '
 
 !  conversion of elements finished
 
@@ -269,105 +259,163 @@
       open (unit=35,access='SEQUENTIAL',form='FORMATTED')
       read (35,*) nel2
 
-      if (nel2 /= nelem)
+      if (nel2 /= nelem_conv)
      .  call xerrab ('conv_triangles -- '//
      .               'wrong no. of triangles in fort.35')
 
-      allocate (neigh(3,2,nelem))
-      allocate (ixtri(nelem))
-      allocate (iytri(nelem))
+      if (tria_mode.eq.1) then ! assume new format fort.35; void triangles only, already unstructured format
 
-      do i = 1, nelem
-        read (35,*) idum,(neigh(is,1,i),neigh(is,2,i),jdum ,is = 1,3),
-     .              ixtri(i), iytri(i)
-      end do
-      close(35)
+        do i = npelem + 1, nelem
+          read (35,*) idum,(neigh(is,1,i),neigh(is,2,i),cntr(is,i),
+     .                is = 1,3),
+     .                elem_cv(i), trifc(1,i), trifc(2,i), trifc(3,i)
+        end do
+        close(35)
+
+
+
+        ! consistency check
+        ico = 0
+        do iel = npelem + 1, nelem
+          if (elem_cv(iel).ne.-1 .or. trifc(1,iel).ne.0 .or.
+     .        trifc(2,iel).ne.0  .or. trifc(3,iel).ne.0 ) then
+            ico = ico + 1
+            write (*,*) 'Problem with void triangle ',iel
+            write (*,*) 'iCv, iFc1, iFc2, iFc3 = ', elem_cv(iel),
+     .      trifc(1:3,iel)
+          endif
+        enddo
+        call xertst(ico.eq.0,'Problem with void triangles')
+
+      elseif (tria_mode.eq.0) then ! assume structured format fort.35; conversion of ix,iy indexing needed
+
+        ! set size of structured grid to convert plasma triangles
+        if (mpg%isClassicalGrid == 1) then
+          nx = mpg%nx
+          ny = mpg%ny
+        else
+          call xerrab 
+     .      ('Need structured grid info to convert plasma triangles.')
+        endif
+
+        allocate (ixtri(nelem_conv))
+        allocate (iytri(nelem_conv))
+
+        do i = npelem + 1, nelem
+          read (35,*) idum,(neigh(is,1,i),neigh(is,2,i),cntr(is,i),
+     .                is = 1,3), ixtri(i), iytri(i)
+        end do
+        close(35)
 
 !  setup conversion arrays
 
-      allocate (ix_b2_eir(0:nx+1))
-      allocate (ix_eir_b25(1:nx+3*nncut))
-      ix_eir_b25 = -2
+        allocate (ix_b2_eir(0:nx+1))
+        allocate (ix_eir_b25(1:nx+3*nncut))
+        ix_eir_b25 = -2
 
-      ix_b2_eir = [ (ix, ix = 1, nx) ]
-      do icut = 1, nncut
-        ix_b2_eir(leftcut(icut)+1:nx)=ix_b2_eir(leftcut(icut)+1:nx)+1
-        ix_b2_eir(rightcut(icut)+1:nx)=ix_b2_eir(rightcut(icut)+1:nx)+1
-      end do
-      do icut = 1, mpg%nctcnt
-        ix_b2_eir(mpg%ictcntrl(icut)+1:nx)=
-     .     ix_b2_eir(mpg%ictcntrl(icut)+1:nx)+1
-      end do
+        ix_b2_eir = [ (ix, ix = 1, nx) ]
+        do icut = 1, nncut
+          ix_b2_eir(leftcut(icut)+1:nx)=ix_b2_eir(leftcut(icut)+1:nx)+1
+          ix_b2_eir(rightcut(icut)+1:nx)=
+     .       ix_b2_eir(rightcut(icut)+1:nx)+1
+        end do
+        do icut = 1, mpg%nctcnt
+          ix_b2_eir(mpg%ictcntrl(icut)+1:nx)=
+     .       ix_b2_eir(mpg%ictcntrl(icut)+1:nx)+1
+        end do
 
-      do ix = 1, nx
-        ixt = ix_b2_eir(ix)
-        ix_eir_b25(ixt) = ix - 1
-      end do
+        do ix = 1, nx
+          ixt = ix_b2_eir(ix)
+          ix_eir_b25(ixt) = ix - 1
+        end do
 
-      allocate (iy_eir(ny))
-      iy_eir = 0
-      do iy = 1, ny
-        iy_eir(iy) = iy - 1
-      end do
+        allocate (iy_eir(ny))
+        iy_eir = 0
+        do iy = 1, ny
+          iy_eir(iy) = iy - 1
+        end do
 
 !  convert plasma cell index from (ixtri,iytri) to icv
-      allocate (elem_cv(nelem))
-      if (artificial_slab > 0) then
-        allocate(trias(-1:nx,-1:ny))
-      end if
+        if (artificial_slab > 0) then
+          allocate(trias(-1:nx,-1:ny))
+        end if
 
-      do iel = 1, nelem
-        if (ixtri(iel) < 0) then
-          elem_cv(iel) = -1
-        else
-!  ixtri, iytri are in Eirene cell counting
-!  find cell number in B2.5 counting
-          iad = 0
-          ixt = ix_eir_b25(ixtri(iel))
-          iyt = iy_eir(iytri(iel))
-          if (ixt == -2) then
+        do iel = npelem + 1, nelem
+          if (ixtri(iel) < 0) then
             elem_cv(iel) = -1
           else
-            icv = mpg%imapCv(ixt,iyt)
-            elem_cv(iel) = icv
-          end if
-          if  (artificial_slab .eq. 1) then
-            if ((ixt > -2) .and. (ixt <= nx) .and.
-     .          (iyt > -2) .and. (iyt <= ny)) then
-              allocate (tel)
-              tel%itri = iel
-              tel%next_tri => trias(ixt,iyt)%ptri
-              trias(ixt,iyt)%ptri => tel
+!  ixtri, iytri are in Eirene cell counting
+!  find cell number in B2.5 counting
+            ixt = ix_eir_b25(ixtri(iel))
+            iyt = iy_eir(iytri(iel))
+            if (ixt == -2) then
+              elem_cv(iel) = -1
+            else
+              icv = mpg%imapCv(ixt,iyt)
+              elem_cv(iel) = icv
+            end if
+            if  (artificial_slab .eq. 1) then
+              if ((ixt > -2) .and. (ixt <= nx) .and.
+     .            (iyt > -2) .and. (iyt <= ny)) then
+                allocate (tel)
+                tel%itri = iel
+                tel%next_tri => trias(ixt,iyt)%ptri
+                trias(ixt,iyt)%ptri => tel
+              end if
             end if
           end if
-        end if
-      end do
+        end do
+      endif
+
+      ! shift neighbor info for presence of (plasma) triangles
+      do iel = npelem + 1, nelem
+        do is = 1,3
+          if (neigh(is,1,iel).ne.0) 
+     .      neigh(is,1,iel) = neigh(is,1,iel) + npelem
+        enddo
+      enddo
 
 !  find face numbers for triangle sides
-      allocate (trifc(3,nelem))
-      trifc = 0
-
-      do iel = 1, nelem
+      do iel = npelem + 1, nelem
         if (elem_cv(iel) < 0) then
 !  triangle belongs to void region
 !  check if it is neighbored to a plasma cell
           do is = 1, 3
             if (trifc(is,iel) == 0) then
-              if (neigh(is,1,iel) == 0) cycle
-              icv = elem_cv(neigh(is,1,iel))
-              if (icv > 0) then
-                is1 = is + 1
-                if (is1 > 3) is1 = 1
-                call find_face_number (icv,elem_new(is, iel),
-     .            elem_new(is1,iel), nnodes, npnodes, node_vert,
-     .            xc_new, yc_new, ifc, mpg, gm)
-                isig = 1
-                if (ifc > 0) then
+              is1 = is + 1
+              if (is1 > 3) is1 = 1
+              if (neigh(is,1,iel) == 0) then
+                ! Triangle w/o neighbor => edge of triangle grid.
+                ! For stitching void grid to plasma grid: check if there is a plasma triangle on other side
+                call find_plasma_neighbor (icv, ifc, iel2, is2, 
+     .            elem(is, iel), elem(is1, iel), nnodes, node_vert,
+     .            npelem, nelem, elem, mpg)
+                ! If yes, adapt neighbor information
+                if (icv > 0) then
+                  neigh(is,1,iel) = iel2
+                  neigh(is,2,iel) = is2
+                  neigh(is2,1,iel2) = iel
+                  neigh(is2,2,iel2) = is
+                  isig = 1
                   if (icv == mpg%fcCv(ifc,2)) isig = -1
+                  trifc(is,iel) = -isig * ifc
+                  trifc(is2,iel2) = isig * ifc
+                endif
+              else
+                ! Triangle with neighbor => check cell of neighbor
+                icv = elem_cv(neigh(is,1,iel))
+                if (icv > 0) then
+                  call find_face_number (icv,elem(is, iel),
+     .              elem(is1,iel), nnodes, npnodes, node_vert,
+     .              xco, yco, ifc, mpg, gm, tol_align)
+                  isig = 1
+                  if (ifc > 0) then
+                    if (icv == mpg%fcCv(ifc,2)) isig = -1
+                  end if
+                  trifc(is,iel) = -isig * ifc
+                  trifc(neigh(is,2,iel),neigh(is,1,iel)) = isig * ifc
                 end if
-                trifc(is,iel) = -isig * ifc
-                trifc(neigh(is,2,iel),neigh(is,1,iel)) = isig * ifc
-              end if
+              endif
             end if
           end do
         else
@@ -377,9 +425,9 @@
             if (trifc(is,iel) == 0) then
               is1 = is + 1
               if (is1 > 3) is1 = 1
-              call find_face_number (icv, elem_new(is, iel),
-     .          elem_new(is1,iel), nnodes, npnodes, node_vert,
-     .          xc_new, yc_new, ifc, mpg, gm)
+              call find_face_number (icv, elem(is, iel),
+     .          elem(is1,iel), nnodes, npnodes, node_vert,
+     .          xco, yco, ifc, mpg, gm, tol_align)
               isig = 1
               if (ifc > 0) then
                 if (icv == mpg%fcCv(ifc,2)) isig = -1
@@ -442,10 +490,10 @@
                 is1 = is + 1
                 if (is1 > 3) is1 = 1
                 if (trifc(is,iel) == 0) then
-                  ismin = min(node_vert(elem_new(is,iel)),
-     .                        node_vert(elem_new(is1,iel)))
-                  ismax = max(node_vert(elem_new(is,iel)),
-     .                        node_vert(elem_new(is1,iel)))
+                  ismin = min(node_vert(elem(is,iel)),
+     .                        node_vert(elem(is1,iel)))
+                  ismax = max(node_vert(elem(is,iel)),
+     .                        node_vert(elem(is1,iel)))
                   do iv = 1, 4
                     icmin = min(cfce(iv,1),cfce(iv,2))
                     icmax = max(cfce(iv,1),cfce(iv,2))
@@ -470,44 +518,16 @@
         end do
       end if
 
-
-      allocate (bndmdl(3,nelem))
-      bndmdl = 0
-
-!  set recycling boundary model indicators
-      inquire (file='input.dat',exist=ffound)
-      if (ffound) then
-        call conv_surface_models (nout, mpg, gm,
-     .     bndmdl, trifc, elem_cv, nelem)
-      else
-        call find_nondef_surfaces (nout, mpg, gm,
-     .     elem_new, bndmdl, elem_cv, nelem, node_vert, nnodes)
-      end if
-
-!  no check for closedness of mesh done here as there might be
-!  additional Eirene surfaces in the mesh boundaries
-
-      call write_neighbors (nelem, neigh, bndmdl, elem_cv, trifc)
-      write (*,*) ' triangle.neighbors written '
-
       call EIRENE_DestroyTree(baum)
-      deallocate (xc_old)
-      deallocate (yc_old)
-      deallocate (xc_new)
-      deallocate (yc_new)
-      deallocate (im_old_new)
-      deallocate (im_new_old)
-      deallocate (node_vert)
-      deallocate (elem_new)
-      deallocate (neigh)
-      deallocate (ixtri)
-      deallocate (iytri)
-      deallocate (elem_cv)
-      deallocate (ix_b2_eir)
-      deallocate (ix_eir_b25)
-      deallocate (iy_eir)
-      deallocate (trifc)
-      deallocate (bndmdl)
+      if (allocated(xc_old)) deallocate (xc_old)
+      if (allocated(yc_old)) deallocate (yc_old)
+      if (allocated(im_old_new)) deallocate (im_old_new)
+      if (allocated(im_new_old)) deallocate (im_new_old)
+      if (allocated(ixtri)) deallocate (ixtri)
+      if (allocated(iytri)) deallocate (iytri)
+      if (allocated(ix_b2_eir)) deallocate (ix_b2_eir)
+      if (allocated(ix_eir_b25)) deallocate (ix_eir_b25)
+      if (allocated(iy_eir)) deallocate (iy_eir)
 #endif
 
       return
@@ -515,7 +535,8 @@
 
       subroutine find_face_number (icv, in1, in2,
      .                             nnodes, npnodes, node_vert,
-     .                             xc_new, yc_new, ifc, mpg, gm)
+     .                             xco, yco, ifc, mpg, gm,
+     .                             tol_align)
 
       use b2mod_types
       use b2us_map
@@ -524,7 +545,7 @@
       implicit none
       integer, intent(in) :: icv, in1, in2, nnodes, npnodes,
      .                       node_vert(nnodes)
-      real(R8), intent(in) :: xc_new(nnodes), yc_new(nnodes)
+      real(R8), intent(in) :: xco(nnodes), yco(nnodes)
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
       integer, intent(out) :: ifc
@@ -532,7 +553,8 @@
       integer, allocatable :: jvx(:)
       integer :: nv, nf, j, jfc, jv1, jv2
       real(R8) :: px1, py1, px2, py2, vpx, vpy,
-     .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq
+     .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq, vvp, vvf
+      real(R8) :: tol_align
       logical :: found
 
       nv = mpg%cvVxP(icv,2)
@@ -563,12 +585,15 @@
         endif
       else
 !  at least one vertex was introduced in triangle creation
-        px1 = xc_new(in1)
-        py1 = yc_new(in1)
-        px2 = xc_new(in2)
-        py2 = yc_new(in2)
+        px1 = xco(in1)
+        py1 = yco(in1)
+        px2 = xco(in2)
+        py2 = yco(in2)
         vpx = px2 - px1
         vpy = py2 - py1
+        vvp = sqrt(vpx**2 + vpy**2)
+        vpx = vpx/vvp
+        vpy = vpy/vvp
         do j = 1, nf
           jfc = mpg%cvFc(mpg%cvFcP(icv,1)+j-1)
           jv1 = mpg%fcVx(jfc,1)
@@ -579,17 +604,20 @@
           fy2 = gm%vxY(jv2)*100._R8
           vfx = fx2 - fx1
           vfy = fy2 - fy1
+          vvf = sqrt(vfx**2 + vfy**2)
+          vfx = vfx/vvf
+          vfy = vfy/vvf
 !  check if p and f are parallel
           det = abs(vfx*vpy - vfy*vpx)
-          if (det > 1.D-4) cycle
+          if (det > tol_align) cycle
 !  check that the "new" point lies on interval (x1,y1) -- (x2,y2)
           if ((node_vert(in1) /= jv1) .and. (node_vert(in1) /= jv2))then
-            d = vfy*px1 - vfx*py1 + (fx2*fy1-fx1*fy2)
+            d = vvf*vfy*px1 - vvf*vfx*py1 + (fx2*fy1-fx1*fy2)
           else
-            d = vfy*px2 - vfx*py2 + (fx2*fy1-fx1*fy2)
+            d = vvf*vfy*px2 - vvf*vfx*py2 + (fx2*fy1-fx1*fy2)
           end if
           dq = d*d
-          lq = vfx*vfx + vfy*vfy
+          lq = vvf*vvf
           if (dq < 1.D-6*LQ) then
             ifc = jfc
             return
@@ -602,3 +630,62 @@
       deallocate (jvx)
       return
       end subroutine find_face_number
+
+      subroutine find_plasma_neighbor (icv, ifc, iel2, is2, in1, in2,
+     .  nnodes, node_vert, npelem, nelem, elem, mpg)
+
+      use b2mod_types
+      use b2us_map
+      use b2us_geo
+      implicit none 
+
+      type(mapping), intent(in) :: mpg
+
+      integer :: icv, ifc, icv1, ifc1, iel, iel2, is, is1, is2,
+     .  in1, in2, iv1, iv2, nnodes, npelem, nelem
+      integer :: node_vert(nnodes), elem(3,nelem)
+      logical :: found
+
+      icv = -1 ! default: assume void neighbor
+      ifc = -1
+      iel2 = -1
+      is2  = -1
+
+      ! In the new unstructured code, we assume that plasma boundary faces
+      ! will not have been split for triangulation
+      ! => we simply need to detect whether nodes of the triangle face correspond to
+      !    those of a plasma boundary face
+      do icv1 = mpg%nCi+1,mpg%nCv  ! loop over guard cells
+        ifc1 = mpg%cvFc(mpg%cvFcP(icv1,1)) ! number of the guard cell face
+        iv1 = mpg%fcVx(ifc1,1)
+        iv2 = mpg%fcVx(ifc1,2)
+        if ((min(node_vert(in1),node_vert(in2)) == min(iv1,iv2)) .and.
+     .      (max(node_vert(in1),node_vert(in2)) == max(iv1,iv2))) then
+          ! Cell and face number identified
+          icv = min(mpg%fcCv(ifc1,1),mpg%fcCv(ifc1,2))
+          ifc = ifc1
+          ! Now, find the plasma triangle that has this face in common
+          found = .false.
+          do iel = 1, npelem
+            do is = 1, 3
+              is1 = is + 1
+              if (is1 > 3) is1 = 1
+              iv1 = elem(is,iel)
+              iv2 = elem(is1,iel)
+              if ((min(in1,in2) == min(iv1,iv2)) .and.
+     .            (max(in1,in2) == max(iv1,iv2))) then
+                if (found) call xerrab ('neibhbor already found')
+                found = .true.
+                iel2 = iel
+                is2 = is
+              endif
+            enddo
+          enddo
+          if (.not.found) then
+            write (*,*) 'Did not find triangle for icv, ifc =  ',icv,ifc
+            call xerrab ('Problem stiching plasma & void grids.')
+          endif
+        endif
+      enddo
+
+      end subroutine find_plasma_neighbor

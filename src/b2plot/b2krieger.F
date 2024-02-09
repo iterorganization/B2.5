@@ -14,11 +14,9 @@ c***
 c*** cell count starts from the target PFR corner
 c-----------------------------------------------------------------------
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_b2cmpa
-      use b2mod_plasma
       use b2mod_elements
       use b2mod_constants
       implicit none
@@ -26,7 +24,7 @@ c-----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,is,i,j,k,l
+      integer iCv,is,i,j,k,l
       integer, allocatable :: mz_hlp(:)
       real (kind=R8), allocatable :: n_hlp(:),v_hlp(:)
       character hlp_frmr*600, hlp_frm*200
@@ -34,15 +32,15 @@ c
 c-----------------------------------------------------------------------
 c*** The plasma data at the cell centers
 c
-      allocate(mz_hlp(nspecies+ns),hlp_al(nspecies+ns))
+      allocate(mz_hlp(nspecies+state%ns),hlp_al(nspecies+state%ns))
       allocate(n_hlp(nspecies),v_hlp(nspecies))
-      do is=0,ns-1 !{
+      do is=0,state%ns-1 !{
         mz_hlp(nspecies+1+is)=nint((zamin(is)+zamax(is))/2.0_R8)
         hlp_al(nspecies+1+is)=is_codes(is)
         hlp_al(b2espcr(is))=hlp_al(nspecies+1+is)
         mz_hlp(b2espcr(is))=99
       end do !}
-      do is=1,nspecies+ns !{
+      do is=1,nspecies+state%ns !{
         if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
       end do !}
 
@@ -66,34 +64,32 @@ c
      ,  'total density and average velocity of the ion species'
       write (lun,*)
       write (hlp_frmr,'(a,i3,a)')
-     ,  '(a9,7x,a1,11x,a1,10x,a3,9x,a2,11x,a2,10x,a2,4x,',
-     ,    nspecies+ns,'(4x,a3,i2.2,6x,a4,i2.2,3x)/)'
+     ,  '(a6,9x,a1,11x,a1,10x,a3,9x,a2,11x,a2,10x,a2,4x,',
+     ,    nspecies+state%ns,'(4x,a3,i2.2,6x,a4,i2.2,3x)/)'
       write (lun,hlp_frmr)
-     ,  '#  ix  iy','R','Z','pit','ne','Te','Ti',
+     ,  '#  iCv','R','Z','pit','ne','Te','Ti',
      ,  ('n'//hlp_al(i),mz_hlp(i),
-     ,  'vp'//hlp_al(i),mz_hlp(i),i=1,nspecies+ns)
+     ,  'vp'//hlp_al(i),mz_hlp(i),i=1,nspecies+state%ns)
       write (hlp_frm,'(a,i3,a)')
-     ,  '(1x,1p,2i4,',6+2*(nspecies+ns),'e12.4)'
+     ,  '(1x,1p,i6,',6+2*(nspecies+state%ns),'e12.4)'
 
-      do iy=0,ny-1 !{
-        write (lun,*)
-        do ix=0,nx-1 !{
-          k=0
-          do j=1,nspecies !{
-            n_hlp(j)=0.0_R8
-            v_hlp(j)=0.0_R8
-            do l=1,nfluids(j)+1 !{
-              n_hlp(j)=n_hlp(j)+na(ix,iy,k)
-              v_hlp(j)=v_hlp(j)+na(ix,iy,k)*ua(ix,iy,k)
-              k=k+1
-            end do !}
-            v_hlp(j)=v_hlp(j)/n_hlp(j)
+      do iCv=1,mpg%nCi !{
+        k=0
+        do j=1,nspecies !{
+          n_hlp(j)=0.0_R8
+          v_hlp(j)=0.0_R8
+          do l=1,nfluids(j)+1 !{
+            n_hlp(j)=n_hlp(j)+state%pl%na(iCv,k)
+            v_hlp(j)=v_hlp(j)+state%pl%na(iCv,k)*state%pl%ua(iCv,k)
+            k=k+1
           end do !}
-          write (lun,hlp_frm) ix,iy,cr(ix,iy),cz(ix,iy),pit(ix,iy),
-     ,                        ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,                       (n_hlp(j),v_hlp(j),j=1,nspecies),
-     ,                       (na(ix,iy,k),ua(ix,iy,k),k=0,ns-1)
+          v_hlp(j)=v_hlp(j)/n_hlp(j)
         end do !}
+        write (lun,hlp_frm)
+     ,   iCv,geo%cvX(iCv),geo%cvY(iCv),pitch(geo,iCv),
+     ,   state%dv%ne(iCv),state%pl%te(iCv)/ev,state%pl%ti(iCv)/ev,
+     ,   (n_hlp(j),v_hlp(j),j=1,nspecies),
+     ,   (state%pl%na(iCv,k),state%pl%ua(iCv,k),k=0,state%ns-1)
       end do !}
       close (lun)
       deallocate(mz_hlp,hlp_al)

@@ -20,23 +20,22 @@ c***  gm_core.dat magnetic surfaces in the core part of the grid
 c***
 c*** For CDN, no gm_sep.dat or gm_SOL.dat is created.
 c=======================================================================
-      use b2mod_geo
+      use b2us_data
       use b2mod_diag
       use b2mod_b2plot
-      use b2mod_indirect
       implicit none
       integer lun
 
 c*** Local variables
 
-      integer i,j,k,l,i1,i2
+      integer i,j,l,i1,i2
       character hlp_frmr*100, tab, ofile*12
 c=======================================================================
 
       tab=char(9)
 
-      if(nncut.eq.1) then !{                        === single null ===
-
+      if(mpg%nXpt.eq.1) then !{                      === single null ===
+#ifdef WG_TODO
         k=jsep
 
         ofile='gm_sep.dat'
@@ -103,15 +102,16 @@ c=======================================================================
         write(lun,hlp_frmr,err=998) (crx(i2,j,3),cry(i2,j,3),j=0,k)
 
         close (lun)
-      else if(nncut.eq.2) then !}{ === double null ===
+#endif
+      else if(mpg%nXpt.eq.2) then !}{ === double null ===
 
         write(0,*) 'b2pgeom: double null configuration yet to be ',
      ,                                                    'implemented'
         return
 
       else !}{
-        write(0,*) 'b2pgeom: wrong value of nncut (must be 1 or 2) ',
-     ,             nncut
+        write(0,*) 'b2pgeom: wrong value of nXpt (must be 1 or 2) ',
+     ,             mpg%nXpt
         return
       end if !}
 

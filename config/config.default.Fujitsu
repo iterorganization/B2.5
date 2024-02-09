@@ -15,7 +15,7 @@ endif
 #  $(error LD_SONNET not defined)
 #endif
 
-EQUIVS = -Dsdot=ddot -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
 # DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP

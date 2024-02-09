@@ -69,8 +69,8 @@ c
       integer ix,iy,is,in
 
       real*8
-     *   b2ssum,sdot,b2s2sum
-      external b2ssum,sdot,b2s2sum
+     *   b2ssum,b2s2sum
+      external b2ssum,b2s2sum
 
       real*8
      *   pitmin,pitmax

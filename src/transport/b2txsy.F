@@ -16,7 +16,6 @@
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer iFc
-      external b2xxgs
 *     ------------------------------------------------------------------
       call subini ('b2txsy')
 *   ..compute funsy
@@ -26,8 +25,6 @@
      &    fcVol(iFc,1)*fun(mpg%fcCv(iFc,2)))/
      &   (fcVol(iFc,1) + fcVol(iFc,2))
       enddo
-*   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, funsy, 2)
 *   ..return
       call subend ()
       return

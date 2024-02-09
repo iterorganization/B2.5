@@ -1,4 +1,4 @@
-      subroutine b2xpve (nCv, nFc, ns, switch, geo, mpg, qe, rza, 
+      subroutine b2xpve (nCv, nFc, ns, switch, geo, mpg, qe, rza,
      &                rz2, alfx_c,                                     !srv 17.11.16 {
      &                sigx_c, fch_pi_c, po, ne, te, na, ua, st_ext, ve)
       use b2mod_types
@@ -13,7 +13,7 @@
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
-     &   qe, rza(nCv,0:ns-1), rz2(nCv,0:ns-1), alfx_c(nCv), sigx_c(nCv),  
+     &   qe, rza(nCv,0:ns-1), rz2(nCv,0:ns-1), alfx_c(nCv), sigx_c(nCv),
      &   te(nCv), po(nCv), ne(nCv), na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &   fch_pi_c(nCv,0:1)
       real (kind=R8) ::
@@ -30,7 +30,7 @@
 *     ------------------------------------------------------------------
       if(switch%b2sigp_style.eq.2) then                                 !srv 13.01.17 {
         call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)
-        call b2xpic (nCv, ns, mpg, qe, rza, geo%cvBb, na, ua, zeff, 
+        call b2xpic (nCv, ns, qe, rza, geo%cvBb, na, ua, zeff,
      &    st_ext, fch_pi_c)
       else
         fch_pi_c = 0.0_R8

@@ -306,7 +306,7 @@
       call ipgeti ('b2yrdr_ns', ns1)
       call xertst (0.lt.ns1, 'faulty input ns1')
       call xertst (DEF_NSD.ge.ns1,
-     . 'increase size of DEF_NSD in b2mod_dimensions.F')
+     . 'increase size of DEF_NSD in b2mod_dimensions')
 *   ..read atomic rate data
       write(*,*) 'ns1 =',ns1
       call alloc_b2mod_ppout(nx,ny,ns1)
@@ -363,7 +363,8 @@
 *    ..find range of this nuclear species
        is1 = is+1
    20  if (is1.ne.rtns) then
-         if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
+         if (nint(rtzn(is)).eq.nint(rtzn(is1)).and.
+     &       rtzmax(is).lt.rtzmin(is1)) then
          is1 = is1+1
          goto 20
         endif

@@ -1,14 +1,15 @@
-      subroutine b2co_tally_cdf(nx, ny, ns, tim)
+      subroutine b2co_tally_cdf(ns, mpg, tim)
       use b2mod_types
       use b2mod_geo
       use b2mod_tallies
-      use b2mod_indirect
       use b2mod_subsys
+      use b2us_map
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nx, ny, ns
+      integer ns
+      type (mapping), intent(in) :: mpg
       real (kind=R8) :: tim
 #ifndef NO_CDF
 #ifndef NO_GETENV
@@ -136,7 +137,7 @@ c prepare the b2tallies.nc.xxxx file
 #endif
 #endif
       filename='b2tallies.nc.'//extension
-      call define_cdf_b2mod_tallies(filename,ncid2,nnreg,ns)
+      call define_cdf_b2mod_tallies(filename,ncid2,mpg%nnreg,ns)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 

@@ -20,9 +20,9 @@
 *     B2TLHE computes the electron heat transport flux limit velocity.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iCv, iFc
+      integer iFc
       real (kind=R8) ::
-     *   t0, t1
+     *   t0, t1, cflme_loc(nFc), nef(nFc)
 *   ..procedures
       intrinsic max, sqrt
       external xertst, b2xvsg
@@ -43,13 +43,34 @@
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
 
+      ! Init local flux limit to constant value
+      cflme_loc = cflme
+
+      ! Enhanced flux limit for low-density regions
+      if (switch%b2tlhe_far_sol .eq. 1) then
+        ! Attempt enhanced flux limit for low-density regions
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ne,nef)
+        do iFc = 1, nFc
+          if (nef(iFc) .le. switch%b2tlhe_ne_min) then
+           ! Set at min value
+           cflme_loc(iFc) = switch%b2tlhe_ne_min
+          elseif (nef(iFc) .lt. switch%b2tlhe_ne_max ) then
+           ! Interpolate for smooth transition
+           cflme_loc(iFc) = 
+     .      (cflme*(nef(iFc) - switch%b2tlhe_ne_min) + 
+     .       switch%b2tlhe_cflme_min*(switch%b2tlhe_ne_max - nef(iFc)))/
+     .      (switch%b2tlhe_ne_max - switch%b2tlhe_ne_min)
+          endif
+        enddo
+      endif
+
 *   ..compute flux limit velocity
       if (switch%b2tqce_model.eq.1.or.switch%b2tqce_model.eq.3) then  ! SOLPS5.0 treatments
 cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqce_model,
 c    because now both options are interchangeable
         do iFc = 1, nFc
           t0 = max(te(mpg%fcCv(iFc,1)),te(mpg%fcCv(iFc,2)))
-          chvemx(iFc) = cflme*sqrt(t0/me)*abs(geo%fcPbs(iFc))            !srv 11.01.13
+          chvemx(iFc) = cflme_loc(iFc)*sqrt(t0/me)*abs(geo%fcPbs(iFc))!srv 11.01.13
         enddo
       else if (switch%b2tqce_model.eq.2) then  ! SOLPS4.0 treatment
         do iFc = 1, nFc
@@ -59,7 +80,8 @@ cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same informa
 c           as case b2tqce_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhe), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
-          chvemx(iFc) = cflme * geo%fcS(iFc) * abs(geo%fcQalf(iFc,0)) *
+          chvemx(iFc) = cflme_loc(iFc) *
+     .        geo%fcS(iFc) * abs(geo%fcQalf(iFc,0)) *
      .       (ne(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/me)*t0 +
      .        ne(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/me)*t1)/
      .       ((ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))*max(t0,t1))

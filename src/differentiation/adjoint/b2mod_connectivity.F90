@@ -8,6 +8,7 @@
 module b2mod_connectivity
 
     use b2mod_types
+    use b2mod_dimensions
     use carre_constants
     use b2mod_cellhelper
     use logging

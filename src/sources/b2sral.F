@@ -1,14 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
+      subroutine b2sral (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &  switch, geo, mpg, st, st_ext, wrong_flow, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, wrong_flow, main_call)
       use b2mod_types
       use b2mod_constants
       use b2mod_tallies
-!      use b2mod_sources
-!     &     , only: rcxna, rcxhi, rcxmo
       use b2mod_input_profile
       use b2mod_numerics_namelist
 !      use b2mod_boundary_namelist
@@ -22,6 +20,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : b2sral_elm_count, ncall_b2sral
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
@@ -43,26 +44,28 @@
      & , only : dab2, lkindi, lkindm, lkindp
 #endif
       use b2mod_ad
-     & , only : b2sral_elm_count, my_out_folder, filename_b2w,
+     & , only : my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr,
+     &          ncall_b2stbr_phys, ncall_b2stbr,
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
      &          ncall_b2tfrn, ncall_b2tiner
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nxtl, nxtr,
+      integer nCv, nFc, nVx, ns,
      *  nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
+      type (B2Average), intent (in) :: st_avg
       logical wrong_flow                                                 !xpb
       logical main_call                                                  !dpc
 *   ..common blocks
@@ -244,9 +247,8 @@
          write(*,*) ' style=',switch%b2sral_style,' b2stbc called'
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &    geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext,
-     &    st%srw, st%psnc, st%psnl,
-     &    wrong_flow, main_call)
+     &    geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,
+     &    st%srw, st%psnc, st%psnl, wrong_flow, main_call)
 *   .. store contributions from BCs
        st%sr%sna = st%srw%sna0
        st%sr%smo = st%srw%smo0
@@ -302,9 +304,9 @@
 *   ..initialise smq to 0
       call sfill (nCv*4*ns, 0.0_R8, st%sr%smq, 1)
 *   ..compute special contributions (boundaries and recycling)
-      call b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr,
+      call b2stbr (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, dtim,
-     &  switch, geo, mpg, st, st_ext, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -335,8 +337,7 @@
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext,
-     &  st%sr, st%srw, main_call)
+     &  geo, mpg, st%pl, st%dv, st_ext, st%sr, st%srw, main_call)
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -381,7 +382,7 @@
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
-      call b2stel (nCv, nFc, nVx, ns, ismain,
+      call b2stel (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, st%pl, st%dv, st%rt, st%rtw, st%srw) !srv 11.09.09 {
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
@@ -402,9 +403,9 @@
       rcxnareg=0.0_R8
       rcxhireg=0.0_R8
       rcxmoreg=0.0_R8
-!WG_TODO      rcxna=0.0_R8
-!WG_TODO      rcxhi=0.0_R8
-!WG_TODO      rcxmo=0.0_R8
+      st%srw%rcxna=0.0_R8
+      st%srw%rcxhi=0.0_R8
+      st%srw%rcxmo=0.0_R8
 
       if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
@@ -427,7 +428,8 @@
         call b2stcx (nCv, nFc, ns, iscx(k), ismain, switch,
      &    geo, mpg, st%pl%na, st%pl%ua, st%pl%ti, st%pl%tn, st%dv%ni,
      &    st%rtw%rcx,
-     &    st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%shn0)       !srv 07.07.09
+     &    st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%shn0,
+     &    st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
          call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))

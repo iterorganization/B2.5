@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nCv, nFc, nVx, ns, switch, geo, mpg, pl, 
+      subroutine b2tfcc (nCv, nFc, nVx, ns, switch, geo, mpg, pl,
      &                   dv, co, rt)
       use b2mod_types
       use b2mod_constants
@@ -92,7 +92,7 @@
        con(:,1) =  switch%xfac*2.5_R8*co%cdpa(:,1,is)*nwf*wrkf*tef
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+       call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
        dv%floe        = dv%floe        + flo0
@@ -101,7 +101,7 @@
 *   ..correct floi, coni, flon, conn
 
 *    ..compute poloidal/radial coefficients for pressure diffusion term
-       if (.not.is_neutral(is).or.zn(is).ne.1) then
+       if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
          flo(:,0) = -switch%xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tif
          flo(:,1) = -switch%xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tif
          con(:,0) =  switch%xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tif
@@ -114,7 +114,7 @@
        endif
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+       call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability
@@ -127,7 +127,7 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          endif
        elseif (switch%tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
-         if (.not.is_neutral(is).or.zn(is).ne.1) then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          else
@@ -163,7 +163,7 @@ c the logic statements could be simplified but for now this is not done to impro
       con(:,1) = 0.0_R8
 
 *   ..compute coefficients for stencil
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+      call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *   ..add to previous contributions
       dv%floe        = dv%floe        + flo0
@@ -179,7 +179,7 @@ c the logic statements could be simplified but for now this is not done to impro
 *    ..interpolate nwe to cell faces
        call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
 
-       if (.not.is_neutral(is).or.zn(is).ne.1) then
+       if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
         do iFc = 1, nFc
           con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
@@ -207,7 +207,7 @@ c the logic statements could be simplified but for now this is not done to impro
        con(:,1) = 0.0_R8
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+       call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability
@@ -220,7 +220,7 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          endif
        elseif (switch%tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
-         if (.not.is_neutral(is).or.zn(is).ne.1) then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          else
@@ -230,6 +230,17 @@ c the logic statements could be simplified but for now this is not done to impro
        endif
 
       enddo !! end loop over species
+
+      if (switch%b2npht_iout.ne.0) then
+        call my_out_us(70,nFc,1,dv%floe(1,0),'b2tfcc_floex')
+        call my_out_us(70,nFc,1,dv%floe(1,1),'b2tfcc_floey')
+        call my_out_us(70,nFc,1,dv%cone(1,0,0),'b2tfcc_conex')
+        call my_out_us(70,nFc,1,dv%cone(1,1,0),'b2tfcc_coney')
+        call my_out_us(70,nFc,1,dv%cone(1,0,1),'b2tfcc_conex1')
+        call my_out_us(70,nFc,1,dv%cone(1,1,1),'b2tfcc_coney1')
+        call my_out_us(70,nFc,1,dv%cone(1,0,2),'b2tfcc_conex2')
+        call my_out_us(70,nFc,1,dv%cone(1,1,2),'b2tfcc_coney2')
+      endif
 
 * ..return
       ncall_b2tfcc = ncall_b2tfcc+1

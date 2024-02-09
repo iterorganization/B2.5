@@ -8,6 +8,7 @@
       real (kind=R8) ::
      *   vxvol(mpg%nVmxCv),centre(nCv,0:nz),vertex(nVx,0:nz)
       integer is
+      external intvertex
       do is=0,nz
         call intvertex(nCv,nVx,mpg,vxvol,centre(1,is),vertex(1,is))
       enddo

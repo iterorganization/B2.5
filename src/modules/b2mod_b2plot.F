@@ -7,8 +7,12 @@
       implicit none
 
       real (kind=R8), allocatable, save ::
-     *  work(:,:,:,:),
-     *  wrk(:),
+     *  work(:,:,:),
+     *  wrkc(:),
+     *  wrkcs(:,:),
+     *  wrkf(:),
+     *  wrkfs(:,:),
+     *  wrkv(:),
      *  vxa(:,:),
      *  vya(:,:),
      *  vza(:,:),
@@ -18,18 +22,18 @@
      *  vxi(:,:),
      *  vyi(:,:),
      *  vzi(:,:),
-     *  arrowx(:,:,:),
-     *  arrowy(:,:,:),
+     *  arrowx(:,:),
+     *  arrowy(:,:),
      *  earrowx(:,:),
      *  earrowy(:,:),
      *  p1(:,:),
      *  p2(:,:),
      *  xx(:,:),
      *  yy(:,:),
-     *  nh(:,:),
-     *  zeff(:,:),
-     *  uutraj(:,:,:),
-     *  vvtraj(:,:,:),
+     *  nh(:),
+     *  zeff(:),
+     *  uutraj(:,:),
+     *  vvtraj(:,:),
      *  targetx(:,:),
      *  targety(:,:),
      *  targetr(:,:),
@@ -46,6 +50,13 @@
 
       integer, allocatable, save ::
      *  ind_hlp(:), indt_hlp(:)
+
+      integer, allocatable, save ::
+     *  cvIx(:), cvIy(:), fcxIx(:), fcxIy(:), fcyIx(:), fcyIy(:),
+     *  vxIx(:), vxIy(:)
+
+      real (kind=R8), allocatable, save ::
+     *  dsimp(:), dsomp(:), wdimp(:), wdomp(:)
 
       real (kind=R8), allocatable, save ::
      *  eirene_stack(:,:,:),
@@ -108,20 +119,22 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
       integer, save ::
-     *  ndim(3,wklng),nedim(2,wklng),nwdim(2,wklng),
-     *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
+     *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),ntrfrm,
+     *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average,
+     *  ixref,iyref
 cank 960511
       integer, save ::
      *  nlimi,nstsi,natmi,nmoli,nioni,nlim1
 cank
       integer, save ::
-     *  mcol,scol,vcol,ocol,ecol,acol,zcol,y_transform_l,
+     *  mcol,scol,vcol,ocol,ecol,fcol,acol,zcol,y_transform_l,
      *  dcol,wcol,tcol,hcol,gcol,bcol,xcol,lfsz,expsymbol
 
       logical, save ::
      *  writing_to_file,color_set,use_compile,
+     *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,plot_vs_rmaj,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,plotting_sep,expline
+     *  xparallel,plotting_sep,bold,expline
 
       character*256, save ::
      *  graphlabel(wklng),
@@ -131,50 +144,50 @@ cank
       character*80, save ::
      *  b2version
 
-      integer, save :: nx, ny, ns, nsw, jxa, jxi, jsep, ixref, iyref,
-     *  nxtr, nxtl
+      integer, save :: nsw
 
       integer, save :: neo_ic
 
       contains
 
-      subroutine alloc_b2mod_b2plot(nxd,nyd,nsd,ns_ext,wklngd,
+      subroutine alloc_b2mod_b2plot(nCv,nFc,nVx,nsd,ns_ext,wklngd,
      1 natmd,nmold,niond,nlim)
       implicit none
-      integer nxd,nyd,nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
+      integer nCv,nFc,nVx
+      integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
+#ifdef WG_TODO
       external get_jsep, get_nxt, ipgeti, xertst
+#endif
 
-      nx=nxd
-      ny=nyd
-      ns=nsd
       nsw=max(nsd+3,(nsd+1)*(nsd+1)-1,ns_ext)
 
-      call get_jsep(nx,ny,jxi,jxa,jsep)
-      ixref=jxa
-      iyref=jsep
-      call ipgeti ('set_transport_ixref', ixref)
-      call xertst (-1.le.ixref.and.ixref.le.nxd,
-     1   'faulty argument set_transport_ixref')
-      call ipgeti ('set_transport_iyref', iyref)
-      call xertst (-1.le.iyref.and.iyref.le.nyd,
-     1   'faulty argument set_transport_iyref')
-      call get_nxt(nx,nxtl,nxtr)
-
-      allocate(work(-1:nxd,-1:nyd,0:nsw,1:wklngd))
-      allocate(wrk(-1:nxd+nyd+1))
-      allocate(wrk_hlp(1:nxd*nyd))
-      allocate(ind_hlp(1:nxd*nyd))
-      allocate(arrowx(-1:nxd,-1:nyd,0:nsw))
-      allocate(arrowy(-1:nxd,-1:nyd,0:nsw))
+      allocate(work(1:nCv,0:nsw,1:wklngd))
+      allocate(wrkc(1:nCv))
+      allocate(wrkcs(1:nCv,0:max(nsd,ns_ext)-1))
+      allocate(wrkf(1:nFc))
+      allocate(wrkfs(1:nFc,0:nsd-1))
+      allocate(wrkv(1:nVx))
+      allocate(wrk_hlp(1:nCv))
+      allocate(ind_hlp(1:nCv))
+      allocate(arrowx(1:nCv,0:nsw))
+      allocate(arrowy(1:nCv,0:nsw))
       allocate(p1(2,nlim))
       allocate(p2(2,nlim))
-      allocate(xx(-1:nx,2))
-      allocate(yy(-1:ny,2))     
-      allocate(nh(-1:nxd,-1:nyd))
-      allocate(zeff(-1:nxd,-1:nyd))
-      allocate(uutraj(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(vvtraj(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(xx(1:nCv,2))
+      allocate(yy(1:nCv,2))
+      allocate(nh(1:nCv))
+      allocate(zeff(1:nCv))
+      allocate(uutraj(1:nCv,0:nsd-1))
+      allocate(vvtraj(1:nCv,0:nsd-1))
+      allocate(cvIx(1:nCv))
+      allocate(cvIy(1:nCv))
+      allocate(fcxIx(1:nFc))
+      allocate(fcxIy(1:nFc))
+      allocate(fcyIx(1:nFc))
+      allocate(fcyIy(1:nFc))
+      allocate(vxIx(1:nVx))
+      allocate(vxIy(1:nVx))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
       allocate(textplel(0:nsd))
@@ -260,7 +273,11 @@ cank
 
       if (.not.allocated(work)) return
       deallocate(work)
-      deallocate(wrk)
+      deallocate(wrkc)
+      deallocate(wrkcs)
+      deallocate(wrkf)
+      deallocate(wrkfs)
+      deallocate(wrkv)
       deallocate(wrk_hlp)
       deallocate(ind_hlp)
       deallocate(arrowx)
@@ -273,6 +290,14 @@ cank
       deallocate(zeff)
       deallocate(uutraj)
       deallocate(vvtraj)
+      deallocate(cvIx)
+      deallocate(cvIy)
+      deallocate(fcxIx)
+      deallocate(fcxIy)
+      deallocate(fcyIx)
+      deallocate(fcyIy)
+      deallocate(vxIx)
+      deallocate(vxIy)
 #ifndef PSR
       deallocate(textpl)
       deallocate(textplel)
@@ -297,6 +322,7 @@ cank
       subroutine dealloc_b2mod_b2plot_eirene
       implicit none
 
+      if (.not.allocated(eirene_stack)) return
       deallocate(eirene_stack)
       deallocate(triangle_area)
       deallocate(triangle_vol)
@@ -319,6 +345,7 @@ cank
       subroutine dealloc_b2mod_b2plot_wall
       implicit none
 
+      if (.not.allocated(wwrk_hlp)) return
       deallocate(wwrk_hlp)
       deallocate(twrk_hlp)
       deallocate(indt_hlp)
@@ -357,57 +384,5 @@ cank
 
       return
       end subroutine write_b2mod_b2plot
-
-      function ix_e2b(ixe)
-      use b2mod_indirect
-      implicit none
-      integer ix_e2b
-      integer ixe
-      integer ic, i
-
-      if (ixe.eq.-1 .or. ixe.eq.0) then
-        ix_e2b = -2
-      else
-        i = 1
-        ix_e2b = 0
-        do while (i.lt.ixe)
-          i = i + 1
-          ix_e2b = ix_e2b + 1
-          do ic = 1, nncut
-            if (ix_e2b.eq.leftcut(ic)) i = i + 1
-            if (ix_e2b.eq.rightcut(ic)) i = i + 1
-          end do
-          if (nncut.eq.2 .and. ix_e2b.eq.nxtr) i = i + 1
-        end do
-      end if
-      return
-      end function ix_e2b
-
-      function ix_b2e(ixb)
-      use b2mod_indirect
-      implicit none
-      integer ix_b2e
-      integer ixb
-      integer i
-
-      if (ixb.eq.-2) then
-        ix_b2e = -1
-      else if (ixb.gt.nx) then
-        ix_b2e = -1
-      else if (ixb.eq.-1 .or. ixb.eq.nx) then
-        ix_b2e = -1
-      else if (nncut.eq.2 .and.
-     .        (ixb.ge.nxtl .and. ixb.le.nxtr)) then
-        ix_b2e = -1
-      else
-        ix_b2e = ixb + 1
-        do i = 1, nncut
-          if (ixb.ge.leftcut(i)) ix_b2e = ix_b2e + 1
-          if (ixb.ge.rightcut(i)) ix_b2e = ix_b2e + 1
-        end do
-        if (nncut.eq.2 .and. ixb.gt.nxtr) ix_b2e = ix_b2e + 1
-      end if
-      return
-      end function ix_b2e
 
       end module b2mod_b2plot

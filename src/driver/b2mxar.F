@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar (nCv, ns, nregionv, BoRiS, switch, geo, mpg, 
-     &  pl, dv, diag)
+      subroutine b2mxar (nCv, ns, switch, geo, mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -13,13 +12,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, ns, nregionv
+      integer nCv, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
-      real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
       type (B2Diagnostic), intent (inout) :: diag
 *   ..common blocks
@@ -116,7 +114,7 @@
          prvn = prvi !dummy
         else
          do is = 0, ns-1
-          if (.not.is_neutral(is).or.zn(is).ne.1) then
+          if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
            prvi = prvi+geo%cvVol(iCv)*pl%na(iCv,is)*pl%ti(iCv)
           else
            prvn = prvn+geo%cvVol(iCv)*pl%na(iCv,is)*pl%tn(iCv)
@@ -137,10 +135,10 @@
        t3 = t3+abs(dv%reshn(iCv))
        t4 = t4+abs(dv%reskt(iCv))
       enddo
-      diag%areshe = t0/((1.5_R8+BoRiS)*prvi)
-      diag%areshi = t1/((1.5_R8+BoRiS)*prvi)
+      diag%areshe = t0/((1.5_R8+switch%BoRiS)*prvi)
+      diag%areshi = t1/((1.5_R8+switch%BoRiS)*prvi)
       diag%arespo = t2/(qe*nevi)
-      diag%areshn = t3/((1.5_R8+BoRiS)*prvn)
+      diag%areshn = t3/((1.5_R8+switch%BoRiS)*prvn)
       diag%areskt = t4/(prvi)
 
 * ..compute regional scaled sums
@@ -187,8 +185,8 @@
         diag%reshireg(mpg%cvReg(iCv)) =
      .    diag%reshireg(mpg%cvReg(iCv))+abs(dv%reshi(iCv))
       enddo
-      diag%reshereg = diag%reshereg/((1.5_R8+BoRiS)*prvi)
-      diag%reshireg = diag%reshireg/((1.5_R8+BoRiS)*prvi)
+      diag%reshereg = diag%reshereg/((1.5_R8+switch%BoRiS)*prvi)
+      diag%reshireg = diag%reshireg/((1.5_R8+switch%BoRiS)*prvi)
 
 * ..return
       call subend ()

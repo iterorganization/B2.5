@@ -1,8 +1,8 @@
 module carre_b2ag
 
   use b2mod_types
-  use b2mod_indirect
   use b2mod_interp
+  use b2mod_math
   implicit none
 
 contains

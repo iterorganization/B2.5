@@ -185,7 +185,7 @@ PROGRAM B2MN_DV
 !
 !     B2MN is the main program for the B2 code. The code solves a
 !     system of fluid equations that models a multi-species plasma
-!     in a two-dimensional geometry. This program calls routines 
+!     in a two-dimensional geometry. This program calls routines
 !     within the main program module b2mod_main for the actual
 !     computation.
 !
@@ -309,7 +309,7 @@ PROGRAM B2MN_DV
 !  tdatad(5,2,3,4,1) = 1.0_R8 !Xe_perp
 !  tdatad(6,2,5,4,1) = 1.0_R8 !Xe_perp
 !  switchd%b2tqna_ballooning(7) = 1.0_R8
-!  switchd%b2tqna_ballooning_rescale(8) = 1.0_R8 
+!  switchd%b2tqna_ballooning_rescale(8) = 1.0_R8
 
 !  nbdirs=9 !example with k-model
 !  enkpard(1,1,1) = 1.0_R8
@@ -441,7 +441,7 @@ SUBROUTINE B2MN_NODIFF()
 !
 !     B2MN is the main program for the B2 code. The code solves a
 !     system of fluid equations that models a multi-species plasma
-!     in a two-dimensional geometry. This program calls routines 
+!     in a two-dimensional geometry. This program calls routines
 !     within the main program module b2mod_main for the actual
 !     computation.
 !

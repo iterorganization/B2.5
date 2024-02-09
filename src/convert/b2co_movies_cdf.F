@@ -1,11 +1,11 @@
-      subroutine b2co_movies_cdf(nx, ny, ns, natm, nmol, tim)
+      subroutine b2co_movies_cdf(nCv, ns, natm, nmol, tim)
       use b2mod_types
       use b2mod_geo
       use b2mod_movies
       use b2mod_indirect
       use b2mod_subsys
       implicit none
-      integer nx, ny, ns, natm, nmol
+      integer nCv, ns, natm, nmol
       real (kind=R8) :: tim
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -135,7 +135,7 @@ c prepare the b2movies.nc.xxxx file
       filename='b2movies.nc.'//extension
       idum=timedim
       timedim=itim
-      call create_cdf_start(ncid2, filename, nx+2, ny+2, ns, natm, nmol)
+      call create_cdf_start(ncid2, filename, nCv, ns, natm, nmol)
       call create_cdf_field2(ncid2, 'te', 'Electron temperature', 'eV')
       call create_cdf_field2(ncid2, 'ti', 'Ion temperature', 'eV')
       call create_cdf_field2(ncid2, 'ne', 'Electron density', 'm^-3')

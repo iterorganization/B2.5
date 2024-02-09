@@ -1,15 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 ! $AD NOCHECKPOINT
-      subroutine calccoef(nCv,nFc,nVx,meth,geo,mpg,flo,con,flo0,con0)
+      subroutine calccoef(nCv,nFc,nVx,meth,geo,flo,con,flo0,con0)
       use b2mod_types
       use b2us_geo
-      use b2us_map
       implicit none
 *   ..input arguments
       integer nCv, nFc, nVx, meth
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   flo(nFc,0:1), con(nFc,0:1)
 *   ..output arguments
@@ -118,6 +116,7 @@
         con0(iFc,0) = t0 + 0.5_R8*abs(flo(iFc,0)) + 
      &                t1 + 0.5_R8*abs(flo(iFc,1))
         con0(iFc,1) = t0*t01 + t1*t11
+
        enddo
 
       elseif (meth .eq. 3) then ! SOLPS4 continuity scheme

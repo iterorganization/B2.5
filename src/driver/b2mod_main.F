@@ -9,8 +9,8 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
-!WG_TODO      use b2mod_b2_to_astra
-!WG_TODO      use b2mod_astra_to_b2
+      use b2mod_b2_to_astra
+      use b2mod_astra_to_b2
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -166,13 +166,15 @@
 
       contains
 
-      subroutine b2mn_init (switch, geo, mpg, state, state_ext)
+      subroutine b2mn_init (switch, geo, mpg,
+     .                      state, state_ext, state_avg)
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2Average), intent (inout)  :: state_avg
       integer idum(0:9)
 
 *   ..program start-up calls
@@ -184,7 +186,6 @@ csw 28feb2011 mpi
       if(rank_mpi .ne. 0) then
 #ifdef B25_EIRENE
         my_pe=rank_mpi
-        iunout=7+ifoff
         call eirene_find_param(0)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
@@ -276,55 +277,63 @@ csw
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
      .  mpg%nFt, mpg%nVmxCv)
       call createB2State (mpg%nCv, mpg%nFc, ns, state)
-      call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
+      call createB2StateExt (mpg%nCv, mpg%nFc, ns, state_ext)
 *   ..call principal driver routine
-      call alloc_b2mod_ppout(1,1,ns)
-      call alloc_b2mod_recycle(mpg%nFc,ns)   !nh 30.03.21
-!WG_TODO      call alloc_b2mod_astra_to_b2(nx, ny)
-!WG_TODO      call alloc_b2mod_b2_to_astra(nx, ny, ns)
+      call alloc_b2mod_ppout (DEF_NXD, DEF_NYD, ns)
+      call alloc_b2mod_recycle (mpg%nFc, ns)   !nh 30.03.21
+      call alloc_b2mod_astra_to_b2(mpg, DEF_NXD, DEF_NYD)
+      call alloc_b2mod_b2_to_astra(mpg, DEF_NYD, ns)
 
       call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg, 
-     &               state, state_ext)
+     &               state, state_ext, state_avg)
 
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step(switch, geo, mpg, state, state_ext, J)
+      subroutine b2mn_step(switch, geo, mpg,
+     &                     state, state_ext, state_avg, J)
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+#ifndef NAGFOR
       use b2mod_input_profile
      , , only : tdata
-      use b2mod_ad
-     , , only: nncf
       use b2mod_par_opt
      & , only : par_opt_phys, npar_opt, sigma, nsigma, mean, nmean,
      &          shift, nshift, nshift_opt
+#endif
+      use b2mod_ad
+     , , only: nncf
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2average), intent (inout)  :: state_avg
       real(kind=R8) :: J(nncf)
 
-      call b2mndr_1 (nout, ns, switch, geo, mpg, state, state_ext, J)
+      call b2mndr_1 (nout, ns,
+     .               switch, geo, mpg, state, state_ext, state_avg, J)
 
       return
       end subroutine b2mn_step
 
-      subroutine b2mn_fin (switch, geo, mpg, state, state_ext)
+      subroutine b2mn_fin (switch, geo, mpg,
+     .                     state, state_ext, state_avg)
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      type(B2Average), intent (inout)  :: state_avg
       integer io
 
-      call b2mndr_2 (nout, ns, switch, geo, mpg, state, state_ext)
+      call b2mndr_2 (nout, ns, switch, geo, mpg,
+     .               state, state_ext, state_avg)
 #ifdef JET
 *   ..set and write ppout
       call cfopen (nout(11),'tran','new','unformatted')

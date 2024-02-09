@@ -1,6 +1,6 @@
 c
 C =====================================================================
-      subroutine pltwall(nx,ny,physical,from_target)
+      subroutine pltwall(nCv,physical,from_target)
 C =====================================================================
       use b2mod_types
       use b2mod_indirect
@@ -8,7 +8,7 @@ C =====================================================================
       use b2mod_b2plot_debug
       use b2mod_wall
       implicit none
-      integer nx, ny
+      integer nCv
       logical physical, from_target
 #include "graphics_vars.h"
 
@@ -52,7 +52,7 @@ C =====================================================================
 
       IF(NOFWCLS.EQ.0) THEN                ! standard wall contouring
         IF(wlinlog.EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm
@@ -91,8 +91,8 @@ C =====================================================================
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               wclval(i)=zval
             enddo
           else
@@ -189,6 +189,7 @@ C =====================================================================
         call gsplci(ici)
         if (physical) then
           call lined_d(r1(i),z1(i),r2(i),z2(i))
+#ifdef WG_TODO
         else if (.not.from_target) then
           wallx1 = real(imapx(i),R4)
           wallx2 = real(imapx(i),R4)
@@ -217,6 +218,7 @@ C =====================================================================
             wally2 = wally2 + 0.5_R4
           endif
           call lined_d(wallx1,wally1,wallx2,wally2)
+#endif
         else if (from_target) then
           wallx1 = i - 0.5_R4
           wallx2 = i + 0.5_R4

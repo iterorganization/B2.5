@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
+      subroutine b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
       use b2mod_types
@@ -11,9 +11,9 @@
 !WG_TODO     1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
 !WG_TODO     2          smpr, smpt, smfr, smcf
 !WG_TODO: smof -> part of b2mod_sources
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-!WG_TODO     2          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
+     2          balance_netcdf, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -23,20 +23,24 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+      use b2mod_ad
+     & , only : b2npmo_solvedum, ncall_b2npmo
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : b2npmo_solvedum, ncall_b2npmo, ncall_b2usmo,
+     & , only : ncall_b2usmo,
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
      &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
 #ifdef WG_DEBUG
      &          my_out_sf,                                             !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0, itcnt                !srv 13.01.17
+      integer nCv, nFc, nVx, ns, ismain, itcnt                         !srv 13.01.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -57,7 +61,7 @@
 !            => add again to B2Source?
       real (kind=R8) ::
      *  smcf(nCv,0:ns-1), smpr(nCv,0:ns-1), smpt(nCv,0:ns-1),
-     *  smfr(nCv,0:ns-1)
+     *  smfr(nCv,0:ns-1), ubf(nFc), robf(nFc)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -273,9 +277,9 @@
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nCv, nFc, nVx, is, switch, geo, mpg,  
      &   co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
-!WG_TODO       endif
+       if (balance_netcdf.ne.0) then
+         fmo_b2nxfv(:,:,is)=flubv                                       !djm Jan2017
+       endif
        call b2saxpy (nFc*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nCv, nFc, nVx, is, switch, geo, mpg, rob, 
@@ -309,9 +313,13 @@
 !WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
 
 cdjm Jan2017 update momentum source components for balance
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
-!WG_TODO       endif
+      if (balance_netcdf.ne.0) then
+         tot_smo0to3(:,:,is)=smb !djm Mar2019
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
+        call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
+     &    ubf,robf)
+      endif
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
@@ -319,6 +327,13 @@ cdjm Jan2017 update momentum source components for balance
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
      .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
      .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
+
+cdjm Mar2019 output the total momentum flux and source for balance
+        if (balance_netcdf.ne.0) then
+          fmo_tot(:,:,is)=dv%fmo(:,:,is)
+        endif
+
+
       endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
@@ -398,10 +413,10 @@ c    ..compare matrices
 *    ..compute correction
          pb1 = pb !csc to avoid aliasing in Tapenade
          rob1 = rob !csc to avoid aliasing in Tapenade
-         call b2usmo (nCv, nFc, nVx, is, switch, geo, mpg, mpg%nnreg(0),
+         call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &     b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, rob1, pb,
      &     pb1, pl%ua(:,is), smb,
-     &     flcb, cvcb, dv%resmo(:,is),  ctcfb, dv%corua(:,is),
+     &     flcb, cvcb, dv%resmo(:,is), ctcfb, dv%corua(:,is),
      &     dv%pcca(:,:,is), aa, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:mpg%nnreg(0)) = solvemo(is,0:mpg%nnreg(0))
 csw 21feb2014 added this else branch
@@ -456,7 +471,7 @@ c     ..compare 9-pt stencil matrices
         end do
         if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
-        call b2usmo (nCv, nFc, nVx, ns, switch, geo, mpg, mpg%nnreg(0),
+        call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &    solvemt, itcnt, switch%b2npmo_rxg, ro, rz, pr, pz, wrk0,
      &    smt, flct, cvct,
      &    dv%resmt, ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')
@@ -496,8 +511,7 @@ c     ..compare 9-pt stencil matrices
         do is = 0, ns-1
           do iCv = 1, nCv
             if (.not.is_neutral(is).or.switch%tn_style.le.1.or.
-     .         (switch%tn_style.eq.2.and.
-     .         (nint(zn(is)).ne.1.or.is.ne.ismain0))) then
+     .         (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
               cst=sqrt(pz(iCv)/rz(iCv))                                 !iyv 03.02.14
             else
               cst=sqrt(pl%tn(iCv)/(mp*am(is)))

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &  wrong_flow, main_call, praverage)
       use b2mod_types
       use b2mod_math
@@ -9,12 +9,10 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_constants
-!      use b2mod_geo_corner
       use b2mod_time
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2cmpb
-      use b2mod_external
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
       use b2us_geo
@@ -25,13 +23,17 @@
       use eirmod_braeir
 #endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
+      use b2mod_ad
+     & , only : ncall_b2stbc_phys,
+     &          UBIG, VBIG, PBIG, UP00, EPSLON, NE00, US
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2stbc_phys, senepar, senipar, sconpar, scurpar,
+     & , only : senepar, senipar, sconpar, scurpar,
      &  prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16,
-     &  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS
+     *  NUEOUT, FS, VS, NAS, TES, TIS, NIVS, FFAC, DFS, POS, S2
+#endif
       use b2mod_subsys
       use b2mod_dimensions
       implicit none
@@ -44,7 +46,6 @@
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
       logical main_call                                              !xpb
@@ -1272,8 +1273,11 @@ c   (ionising_core option)
             cs = sqrt(pz(iCv1)/rz(iCv1))
             srw%sna0(iCv1,0,is) = 0.0_R8
             srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
-            if (conpar(is,ib,2).gt.0.0_R8) then
-              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
+            if (switch%bccon14_gradpar_0 .eq.1) then
+              srw%sna0(iCv1,0,is) =  srw%sna0(iCv1,0,is) -  
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*dv%fna(iFc,1,is)
+            elseif (conpar(is,ib,2).gt.0.0_R8) then
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) - 
      .          co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
             endif
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
@@ -2908,7 +2912,8 @@ c   (ionising_core option)
 * -- BCMOM=3 -- SHEATH CONDITIONS, MACH NUMBER AS INPUT
 
         case (3)
-          call xerrab ('b2stbc_phys -- BCMOM = 3 not adapted for WG')
+          call xerrab ('b2stbc_phys -- BCMOM = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCMOM = 13')
 #ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
@@ -3703,7 +3708,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCENE=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCENE = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENE = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENE = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
@@ -4568,7 +4574,8 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=12 -- SHEATH CONDITIONS, EL ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        call xerrab ('b2stbc_phys -- BCENE = 12 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENE = 12 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENE = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
@@ -5621,7 +5628,8 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCENI=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCENI = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENI = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENI = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
@@ -6276,8 +6284,8 @@ cxpb code segment analog to b2tfhi
      &        enipar(ib,1)*sy
           endif
           do is = 0, ns-1
-            if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0 .or.
-     &         (switch%tn_style.eq.2.and.zn(is).ne.1)) then
+            if(.not.is_neutral(is) .or. switch%tn_style.eq.0 .or.
+     &         (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
@@ -6513,7 +6521,8 @@ cxpb          endif
 * -- BCENI=12 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        call xerrab ('b2stbc_phys -- BCENI = 12 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENI = 12 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENI = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
@@ -8087,7 +8096,8 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCPOT=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCPOT = 11')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a,1p,g14.7,a)')
@@ -8455,11 +8465,11 @@ c              fchi=0.0_R8
           srw%sch0(iCv1,1) = srw%sch0(iCv1,1) - t0
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-            if (switch%eirene_sheath_pot.eq.1) then
-              ! B2 indexing for delta_sheathxb
-              delta_sheathb(ifc) =
+          if (switch%eirene_sheath_pot.eq.1) then
+            ! B2 indexing for delta_sheathxb
+            delta_sheathb(iFc) =
      &          qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
-            endif
+          endif
 #endif
 cwdk Todo: seecmodel
           wrong_flow = .false.

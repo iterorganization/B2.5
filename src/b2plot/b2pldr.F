@@ -1,15 +1,7 @@
-      subroutine b2pldr (ninp, nout, nx, ny, ns)
+      subroutine b2pldr (ninp, nout, ns)
       use b2mod_types
       use b2mod_version
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmgs
       use b2mod_b2cmpa
@@ -19,29 +11,27 @@
       use b2mod_b2cmwg
       use b2mod_ppout
       use b2mod_diag
-      use b2mod_work
       use b2mod_math
-      use b2mod_external
       use b2mod_ipmain
       use b2mod_subsys
+      use b2mod_switches
+      use b2us_io
+      use b2us_geo
+      use b2us_map
+      use b2us_data
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:6), nout(0:2), nx, ny, ns
+      integer ninp(0:6), nout(0:2), ns
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
 *   ..local variables
-      integer is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
+      integer is, idum(0:9), k, ismain
       integer external_species
-      integer itim, itcnt, n2
+      integer itim, itcnt
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
-#ifdef WG_TODO
-      real (kind=R8) ::
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
-#endif
 *   ..initialisation
       save ismain, external_species
       data ismain/1/, external_species/0/
@@ -54,8 +44,6 @@
 
 *   ..subprogram start-up calls
       call subini ('b2pldr')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
      &             1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
@@ -63,7 +51,6 @@
      &             1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
@@ -76,9 +63,8 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
-#ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, isymm)
-#endif
+      call read_b2fgmtry (ninp(1), mpg, geo)
+      call init_geometry (mpg, geo, switch)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, ns)
@@ -97,26 +83,19 @@
        end if
        goto 1
     2 continue
+      call read_switch_afn(switch)
+      call set_defaults_switches(switch,ns)
+      call read_switches(switch)
+      call check_switches(switch,ns)
 *   ..read plasma state file
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
       call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,        !xpb
-     &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p,
-     &  kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     &  b2fstate_version)
+      call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
 *   ..test plasma state and fluxes
-#ifdef WG_TODO
-      call b2xvps (nx, ny, ns,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-#endif
+      call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 *   ..read atomic rate data
       call cfverr (ninp(5), b2frates_version)
       call cfruch (ninp(5), 120, lblrc, 'label')
@@ -143,80 +122,69 @@
        itim = idum(0)
        itcnt = idum(1)
 *    ..get residuals and corrections
-       call cfrure (ninp(6), n2*ns, resco, 'resco')
-       call cfrure (ninp(6), n2*ns, corpa, 'corpa')
-       call cfrure (ninp(6), n2*ns, resmo, 'resmo')
-       call cfrure (ninp(6), n2*ns, corua, 'corua')
-       call cfrure (ninp(6), n2, resmt, 'resmt')
-       call cfrure (ninp(6), n2, corut, 'corut')
-       call cfrure (ninp(6), n2, reshe, 'reshe')
-       call cfrure (ninp(6), n2, corte, 'corte')
-       call cfrure (ninp(6), n2, reshi, 'reshi')
-       call cfrure (ninp(6), n2, corti, 'corti')
-       call cfrure (ninp(6), n2, respo, 'respo')
-       call cfrure (ninp(6), n2, corpo, 'corpo')
+       call cfrure (ninp(6), mpg%nCv*ns, state%dv%resco, 'resco')
+       call cfrure (ninp(6), mpg%nCv*ns, state%dv%corpa, 'corpa')
+       call cfrure (ninp(6), mpg%nCv*ns, state%dv%resmo, 'resmo')
+       call cfrure (ninp(6), mpg%nCv*ns, state%dv%corua, 'corua')
+       call cfrure (ninp(6), mpg%nCv, state%dv%resmt, 'resmt')
+       call cfrure (ninp(6), mpg%nCv, state%dv%corut, 'corut')
+       call cfrure (ninp(6), mpg%nCv, state%dv%reshe, 'reshe')
+       call cfrure (ninp(6), mpg%nCv, state%dv%corte, 'corte')
+       call cfrure (ninp(6), mpg%nCv, state%dv%reshi, 'reshi')
+       call cfrure (ninp(6), mpg%nCv, state%dv%corti, 'corti')
+       call cfrure (ninp(6), mpg%nCv, state%dv%respo, 'respo')
+       call cfrure (ninp(6), mpg%nCv, state%dv%corpo, 'corpo')
 *    ..tracing loop
        goto 10
       endif
 *    ..compute log-log electron rate coefficients
-#ifdef WG_TODO
-      call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
-     &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
-#endif
+      call b2spel (mpg%nCv, ns, ev, state%pl%te, state%dv%ne, state%rt)
 *   ..compute electron rate coefficients
       call ipgeti ('b2mndr_ismain', ismain)
       call xertst (0.le.ismain.and.ismain.lt.ns,
      &         'faulty b2mndr_ismain')
       call xertst (.not.is_neutral(ismain),
      &         'ismain cannot refer to a neutral species')
-#ifdef WG_TODO
-      call b2sqel (nx, ny, ns, ismain, ev, te,
-     &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
-#endif
+      call b2sqel (mpg%nCv, ns, ismain, switch, ev, state%pl%te,
+     .      state%rt, state%rtw)
 *   ..find nscx, iscx
 *     (indices for neutral hydrogen species)
-      nscx = 0
+      state%rt%nscx = 0
       do is = 0, ns-1
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-          call xertst (nscx.lt.nscxmax,
-     1     'too many neutral hydrogen species')
-          iscx(nscx) = is
-          nscx = nscx+1
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
+          call xertst (state%rt%nscx.lt.state%rt%nscxmax,
+     1      'too many neutral hydrogenic species')
+          state%rt%iscx(state%rt%nscx) = is
+          state%rt%nscx = state%rt%nscx+1
         endif
       enddo
-      do k = nscx, nscxmax-1
-        iscx(k) = -1
+      do k = state%rt%nscx, state%rt%nscxmax-1
+        state%rt%iscx(k) = -1
       enddo
 *    ..compute log-log charge exchange rate coefficients
-#ifdef WG_TODO
-      do k = 0, nscx-1
-        call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
-     &   rlcx(-1,-1,0,0,k))
+      do k = 0, state%rt%nscx-1
+        call b2spcx (mpg%nCv, ns, ev, am(state%rt%iscx(k)),
+     &   state%pl%ti, state%dv%ne,
+     &   state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,k))
       enddo
 *   ..compute charge exchange rate coefficients
-      rcx = 0.0_R8
-      do k = 0, nscx-1
-        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
-     &   rlcx(-1,-1,0,0,k), rcx)
+      state%rtw%rcx = 0.0_R8
+      do k = 0, state%rt%nscx-1
+        call b2sqcx (mpg%nCv, ns, ev, switch, am(state%rt%iscx(k)),
+     &   state%pl%ti, state%pl%tn,
+     &   state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,k), state%rtw%rcx)
       enddo
-#endif
-*  .. interpolate magnetic field to cell corners                         !xpb
-c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     * leftix,leftiy,rightix,rightiy,
-     * bottomix,bottomiy,topix,topiy,region,bb,wbbc)                     !xpb
-*   ..compute extrapolated wbbc(:,:,3) component
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)
+#ifdef WG_TODO
       if (external_species.ne.0) then
         call read_b2mod_external(nx,ny,ns,ismain)
       else
         call alloc_b2mod_external_dummy(nx,ny)
       endif
+#endif
 *   ..process
-      call b2plot(nx,ny,ns)
+      call b2plot(ns)
 
 * ..return
       call dealloc_b2mod_b2cmrc

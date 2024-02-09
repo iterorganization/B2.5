@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
+      subroutine b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &  nscxmax, ismain, ismain0, dtim, switch, geo, mpg,
-     &  st, st_ext, ierr)
+     &  st, st_ext, st_avg, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_numerics_namelist
@@ -15,12 +15,14 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
+     &          b2divua, b2exbe
       use b2mod_eirdiag
      & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
      &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
@@ -49,19 +51,23 @@
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_balance
+     & , only : fhi_32, fhi_52, fhe_52, fhe_32, fmo_cvsa
+#endif
       use b2mod_ad
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nxtl, nxtr
+      integer nCv, nFc, nVx, ns
       integer nscx, nscxmax, iscx(0: nscxmax-1), ismain, ismain0
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
+      type (B2Average), intent (in) :: st_avg
 *   ..output arguments                                                    !xpb
       integer ierr
       logical wrong_flow
@@ -116,8 +122,6 @@
       intrinsic mod
       real (kind=R8) ::
      *  smin, smax, b2sasum
-      integer len_of_digits
-      external len_of_digits
       external xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn, b2xpfe, b2xpfi,
@@ -314,29 +318,35 @@ csw 01oct2012 initialize potential if necessary
       else
         st%co%cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
-!        do is=0,ns-1                                                    !srv 01.10.99
-        do is = switch%nsmin, switch%nsmax-1
+c The Rhie-Chow term in the particle fluxes uses pccb terms
+c which are calculated in b2npmo.
+c Hence to get a consistent calculation we need to do a dummy call to
+c b2npmo with rxf = 0 and recompute fluxes.
+      call b2npmo (nCv, nFc, nVx, ns, ismain,
+     &    switch, geo, mpg,
+     &    ncall_b2news_, b2news_solving(1), 0.0_R8,
+     &    st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
+      do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
-          call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
-     &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))                      !srv 01.10.99
+        call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
+     &   st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
-     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
-        enddo                                                            !srv 01.10.99
-*      ..compute electron drift velocities
-        call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
+        call b2tfnb (nCv, nFc, nVx, is, ismain,
+     &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
+      enddo
+*    ..compute electron drift velocities
+      call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
      &    st%dv%fac_ExB, st%dv%ne, st%pl%te, st%pl%po, st%dv%vedia,
      &    st%dv%veecrb)
-!      end if                                                            !srv 01.10.99
 
 csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
 c   extra call at this place within internal iteration)
       if(switch%no_b2sral_call .eq. 0) then
         write(*,*) ' re-compute source '
 *     ..re-compute source linearisation                                  !xpb
-        call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
+        call b2sral (nCv, nFc, nVx, ns,
      &    nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &    switch, geo, mpg, st, st_ext, wrong_flow, .false.)
+     &    switch, geo, mpg, st, st_ext, st_avg, wrong_flow, .false.)
 #ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
@@ -384,7 +394,7 @@ c   extra call at this place within internal iteration)
      &    st%dv%ni, st%dv%nn, st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr,
      &    .false.)                                                       !srv 23.07.21
 *     ..stabilise the source coefficients                                !xpb
-        call b2srst (nCv, ns, switch, mpg,
+        call b2srst (nCv, ns, switch,
      &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, !srv 01.07.08
      &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)    !srv 23.07.21
       endif
@@ -399,8 +409,8 @@ c   extra call at this place within internal iteration)
       wrk0 = wrk0/st%dv%ne                                                  !srv 05.03.11
       if(switch%b2news_iout.ne.0) then                                                 !srv 05.07.17
        call b2xzef(nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff, st_ext)
-       call b2xpic (nCv, ns, mpg, qe, st%rt%rza, geo%cvBb,
-     &    st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
+       call b2xpic(nCv, ns, qe, st%rt%rza, geo%cvBb, st%pl%na,
+     &   st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
        call b2xpif (nCv, nFc, switch, geo, mpg, st%dv%fch_pi_c,
      &   st%dv%fch_pi_f)
        call my_out_us(70,nCv,0,st%dv%fch_pi_c,'b2news__fch_pi_c')
@@ -412,25 +422,7 @@ c   extra call at this place within internal iteration)
 !lkw20.03.2023}
 csw 11oct2012 added check on Coriolis force (taken from b2news)
       ier0=0
-c Necessary for smooth restart with Rhie-Chow:
-c The Rhie-Chow term in the particle fluxes uses pccb terms which are calculated in b2npmo.
-c Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to
-c b2npmo with rxf = 0 and recompute fluxes.
-      if (ncall_b2news_.eq.0) then
-        call b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
-     &    switch, geo, mpg,
-     &    ncall_b2news_, b2news_solving(1), 0.0_R8,
-     &    st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
-        do is = switch%nsmin, switch%nsmax-1
-*    ..compute partial pressure
-          call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
-     &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
-*    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
-     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
-        enddo
-      endif
-      call b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
+      call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1,
      &  st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
@@ -466,7 +458,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+        call b2tfnb (nCv, nFc, nVx, is, ismain,
      &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
 *    ..perform iteration
 csw 16oct2012 init ier0
@@ -496,7 +488,7 @@ csw 16oct2012 init ier0
 !    &     st%pl%ti, st%pl%tn, is, pb)                                   !srv 01.10.99
 !        endif                                                           !srv 15.02.10
 *    ..re-compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+        call b2tfnb (nCv, nFc, nVx, is, ismain,
      &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
 *      ..compute electron drift velocities
@@ -574,12 +566,12 @@ csw 16oct2012 init ier0
      &        solvepo(ireg).neqv.last_solve_9(ireg)
             end do
             if (new_matrix.or..true.) call restart_ma28_for_us
-              call b2nppo (nCv, nFc, nVx, mpg%nnreg(0),                  !srv 22.05.18
+            call b2nppo (nCv, nFc, nVx, mpg%nnreg(0),                    !srv 22.05.18
      &        b2news_solving(3), solvepo, ncall_b2news_, rxf2, switch,
      &        geo, mpg, st%pl, st%dv, st%sr, ier0)
             last_solve_9(0:mpg%nnreg(0))=solvepo(0:mpg%nnreg(0))
           else
-             call xerrab ('visper not yet available for WG')
+            call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
             call b2npp7 (nx, ny, mpg%nnreg(0), b2news_solving(3),        !srv 27.01.00 22.05.18
      &       solvepo, ncall_b2news_, rxf2, ne, te, conc, avisper,        !srv 27.01.00
@@ -593,13 +585,13 @@ csw 16oct2012 init ier0
           call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
 *   ..compute new residual following the tradition
-          call b2ursd (nCv, nFc, geo, mpg, st%dv%ne, st%pl%po,
+          call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,
      &     st%sr%sch, st%dv%fch, wrk0)
           t0 = b2sasum(nCv,wrk0,1)
           write(*,*) 'respo after solving',t0
         else
          if(switch%get_residuals.eq.1)
-     &    call b2ursd (nCv, nFc, geo, mpg,
+     &    call b2ursd (nCv, nFc, mpg,
      &                 st%dv%ne, st%pl%po, st%sr%sch, st%dv%fch,
      &                 st%dv%respo)
         endif
@@ -628,7 +620,7 @@ csw 16oct2012 init ier0
 #ifdef DBG
         write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
 #endif
-        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+        call b2tfnb (nCv, nFc, nVx, is, ismain,
      &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
 
@@ -677,7 +669,7 @@ c      with diamagnetic drift part                                       !srv 13
      &  st%pl, st%dv, st%co, st%rt, st_ext, .true.)                      !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,          !srv 13.10.06
-     &  st%pl, st%dv, st%co, st%rt, .true.)                              !djm Jan2017
+     &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
        st%dv%floi_noc = st%dv%floi                                       !srv 24.10.02
        st%dv%floe_noc = st%dv%floe                                       !srv 24.10.02
 
@@ -695,7 +687,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,st%dv%ue)
       do is=0,ns-1
-        st%dv%ue = st%dv%ue + 
+        st%dv%ue = st%dv%ue +
      &           st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
       enddo
       st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
@@ -704,11 +696,11 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  ncall_b2news_, ismain, b2news_solving, solveee, solveei,          !srv 22.05.18
+     &  ncall_b2news_, ismain, b2news_solving, solveee, solveei,         !srv 22.05.18
      &  solveen, solveet, solvepo, solvemo, solvekt, solvezt, rxf3,
-     &  st%pl, st%dv, st%co, st%rt, st%sr, st_ext, ier0)
+     &  st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)
 csw 16aug2011 init potential
-      if(switch%pot_eq.eq.0) st%pl%po=0.0_R8                              !srv 13.07.05
+      if(switch%pot_eq.eq.0) st%pl%po=0.0_R8                             !srv 13.07.05
       if(switch%pot_eq.eq.2) st%pl%po=3.1_R8*st%pl%te/qe
       call xertst (ier0.eq.0, 'error return from b2npht')
 
@@ -724,7 +716,7 @@ c   recompute particle fluxes
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+        call b2tfnb (nCv, nFc, nVx, is, ismain,
      &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
 *    ..perform iteration
         new_matrix = .false.
@@ -760,7 +752,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,     !srv 01.10.99
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+        call b2tfnb (nCv, nFc, nVx, is, ismain,
      &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities

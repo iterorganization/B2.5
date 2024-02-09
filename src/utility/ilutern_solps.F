@@ -140,38 +140,38 @@ c             (maybe necessary in case of multi-fluid?)
       if(b2swtest.eq.1) lfirst_ilu=.true.
 
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
-       write(*,*) 'Opening 76'
-       open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
+         write(*,*) 'Opening 76'
+         open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
      .         form='unformatted')                                   !srv 11.03.13
-       write(76) n
-       do i=1,n
-        write(76) r1(i)
-       enddo
-       close(76)
-       write(*,*) 'Opening 77'
-       open(77,file='b2_5_mtr_binary_'//trim(name)//'.dat',
+         write(76) n
+         do i=1,n
+           write(76) r1(i)
+         enddo
+         close(76)
+         write(*,*) 'Opening 77'
+         open(77,file='b2_5_mtr_binary_'//trim(name)//'.dat',
      .         form='unformatted')                                   !srv 11.03.13
-       write(77) n, nz
-       do i=1,nz
-        write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
-       enddo
-       close(77)
+         write(77) n, nz
+         do i=1,nz
+           write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+         enddo
+         close(77)
       endif
 
       if(kwrite_fmt.eq.ncall) then
-       write(*,*) 'Opening 76'
-       open(76,file='b2_5_rhs_'//trim(name)//'.dat')
-       write(76,*) n
-       do i=1,n
-        write(76,*) r1(i)
-       enddo
-       close(76)
-       open(77,file='b2_5_matrix_'//trim(name)//'.dat')
-       write(77,*) n, nz
-       do i=1,nz
-        write(77,*) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
-       enddo
-       close(77)
+        write(*,*) 'Opening 76'
+        open(76,file='b2_5_rhs_'//trim(name)//'.dat')
+        write(76,*) n
+        do i=1,n
+          write(76,*) r1(i)
+        enddo
+        close(76)
+        open(77,file='b2_5_matrix_'//trim(name)//'.dat')
+        write(77,*) n, nz
+        do i=1,nz
+          write(77,*) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+        enddo
+        close(77)
       endif                                                          !srv 18.03.10 }
 
 cdpc

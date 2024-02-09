@@ -1,10 +1,7 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                           pl, dv, kin_frac_hyb, fnn_inc)
+     &                           pl, dv)
       use b2mod_types
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_switches
-      use b2mod_geo
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
@@ -21,7 +18,7 @@
       use eirmod_braeir
       use eirmod_extrab25
       use b2mod_neutrals_namelist
-     & , only: crcstra, rcfe, rcfi, mol
+     & , only: rcfe, rcfi, mol
 #else
       use parmmod   ! IGNORE
      .   , ncv_eir => ncv
@@ -30,7 +27,7 @@
 #else
       use b2mod_braeir
       use b2mod_neutrals_namelist
-     & , only : crcstra, rcfe, rcfi, mol
+     & , only : rcfe, rcfi, mol
 #endif
       use b2mod_recycle
      & , only : fna_mol
@@ -61,13 +58,11 @@
      &  vadiac(nCv,0:1,0:ns-1)
       real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:ns-1),
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
-      integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2,
-     &           iv1, iv2, icp
+      integer :: ic, iFc, ian, ien, ntrgdat, ifl, i, istra, ic2,
+     &           iv1, iv2, iCp
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww,
      1 pvxs, pvys, puxs, puys
       real (kind=R8) :: wght(nFc,2)
-      real (kind=R8), intent(in) ::
-     &  kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
       real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
 
       call subini ('copy_background')
@@ -215,7 +210,7 @@ c Initialization
      .                        nafsqalf(1:nFc,1,is)
           do ic = mpg%nCi+1, nCv   ! loop over all guard cells
             iFc = mpg%cvFc(mpg%cvFcP(ic,1))
-            icp = mpg%fcCv(ifc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
+            iCp = mpg%fcCv(iFc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
             fna_tmp(iFc,is) = dv%fna(iFc,1,is)/
      .                       (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
      .                        pl%na(ic,is)+1.E-30_R8)
@@ -357,7 +352,7 @@ c     internal cell -> full diamagnetic drift
           do ifc = 1, nFc
             fnib(ifc,nflai) = dv%fna(ifc,0,is) + dv%fna(ifc,1,is)
             if (is_neutral(is)) then
-              fnn_inc_b(ifc,nflai) = fnn_inc(ifc,is)
+              fnn_inc_b(ifc,nflai) = dv%fnn_inc(ifc,is)
               fnn_mol_b(ifc,nflai) = fna_mol(ifc,is)
             endif
           end do
@@ -433,7 +428,7 @@ c we derive the guard cell value from its neighbouring interior cell
         endif
 
 #ifdef B25_EIRENE
-        call eirene_alloc_target_data(istra,ntrgdat,nflai,ifoff)
+        call eirene_alloc_target_data(istra,ntrgdat,nflai)
 #else
         call alloc_target_data(istra,ntrgdat,nflai)
 #endif
@@ -454,14 +449,21 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
-            if (zab(ifl).ne.0) then !! ion species
+            if (zab(ifl).ne.0.and.mol(istra).eq.0) then !! ion species
               trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*
-     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            elseif (mol(istra).eq.0) then !! neutral atom species
+     &                mpg%rcFcOr(ian+i-1)*dv%kin_frac_hyb(iFc)
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.0) then !! neutral atom species
               trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
-     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            else                          !! neutral molecule species
-              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)
+     &                mpg%rcFcOr(ian+i-1)*dv%kin_frac_hyb(iFc)
+              fnib(iFc,ifl) = fnn_inc_b(iFc,ifl)
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.1) then     !! neutral molecule species
+              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)*
+     &                                  dv%fluid_frac_hyb(iFc)
+              fnib(iFc,ifl) = 0.0_R8
+            else
+              if (fnn_mol_b(iFc,ifl).gt.0) then
+                call xerrab ('no molecular contribution expected here')
+              endif
             endif
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !! istra, i, ifl = ',istra,i,ifl
@@ -491,6 +493,7 @@ c we derive the guard cell value from its neighbouring interior cell
             trgt(istra)%vpart(i,ifl) = 0.0_R8
             trgt(istra)%mach(i,ifl) = 1.0_R8
             trgt(istra)%usr(i,ifl) = 0.0_R8
+            trgt(istra)%zit(i,ifl) = zab(ifl)
           end do
         end do
       end do
@@ -501,7 +504,75 @@ c we derive the guard cell value from its neighbouring interior cell
       return
       end subroutine copy_background
 
-      subroutine write_f30
+      subroutine write_f30(geo,mpg)
+      use b2us_map
+      use b2us_geo
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      integer :: i, nB, iLbl, minLbl, maxLbl, nBFaces, nBVerts
+      integer, allocatable :: bVerts(:)
+
+      write(*,*) 'Writing fort.30 file'
+
+      ! open the file
+      open(unit=30,file='fort.30')
+
+      ! identify range of face labels
+      minLbl = minval(mpg%fcLbl)
+      maxLbl = maxval(mpg%fcLbl)
+
+      ! first pass: identify number of boundary segments to be written
+      nB = 0
+      do iLbl = minLbl,maxLbl
+
+        ! only treat faces with non-zero fclbl
+        if (iLbl.eq.0) cycle
+
+        ! determine number of faces with this label
+        nBFaces = count(mpg%fcLbl==iLbl)
+
+        if (nBFaces.gt.0) nB = nB + 1
+
+      enddo
+
+      ! write file
+      write(30,'(i3)') nB
+
+      do iLbl = minLbl,maxLbl
+
+        ! only treat faces with non-zero fclbl
+        if (iLbl.eq.0) cycle
+
+        ! determine number of faces with this label
+        nBFaces = count(mpg%fcLbl==iLbl)
+
+        ! corresponding number of vertices
+        nBVerts = nBFaces + 1
+
+        if (nBFaces.gt.0) then
+
+          allocate (bVerts(nBVerts))
+
+          ! sort vertices of the boundary faces into a polygon
+          call sort_vertices(nBVerts,bVerts,mpg%nFc,mpg%fcLbl,iLbl,mpg)
+
+          ! write into fort.30
+          write(30,'(i3)') iLbl
+          write(30,'(i12)') nBVerts
+          do i = 1,nBVerts
+            write(30,'(2(2X,E21.14))') 
+     .        geo%vxX(bVerts(i)), geo%vxY(bVerts(i))
+          end do
+
+          deallocate (bVerts)
+
+        end if
+      end do
+
+      ! close file
+      close(30)
+
       return
       end subroutine write_f30
 c
@@ -517,6 +588,7 @@ c
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
@@ -610,22 +682,22 @@ c
      .                             ' TARGET DATA #',istra
           write (31,'(a)') '*'
 
-          write (31,'(a1,a6,11a15)') '*','Index','Flux','Ti','ni',
-     .      'Vx','Vy','Vz','fi','fel','vpart','mach','usr'
-          write (31,'(a1,a6,11a15)') '*',' ',' ','(eV)','(1/m^3)',
-     .      'm/s','m/s','m/s',' ',' ',' ',' '
+          write (31,'(a1,a6,12a15)') '*','Index','Flux','Ti','ni',
+     .      'Vx','Vy','Vz','fi','fel','vpart','mach','usr','Zi'
+          write (31,'(a1,a6,12a15)') '*',' ',' ','(eV)','(1/m^3)',
+     .      'm/s','m/s','m/s',' ',' ',' ',' ',' '
 
           write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
           write (31,'(i6)') ntrgdat
 
           do i = 1, ntrgdat
-            write (31,'(i7,11es15.7)')
+            write (31,'(i7,12es15.7)')
      .        i,trgt(istra)%flux(i,ifl),trgt(istra)%tit(i),
      .          trgt(istra)%dnit(i,ifl),trgt(istra)%vxt(i,ifl),
      .          trgt(istra)%vyt(i,ifl),trgt(istra)%vzt(i,ifl),
      .          trgt(istra)%fi(i,ifl),trgt(istra)%fel(i,ifl),
      .          trgt(istra)%vpart(i,ifl),trgt(istra)%mach(i,ifl),
-     .          trgt(istra)%usr(i,ifl)
+     .          trgt(istra)%usr(i,ifl),trgt(istra)%zit(i,ifl)
           end do
         end do ! ifl
       end do   ! istra
@@ -633,3 +705,4 @@ c
 #endif
       return
       end subroutine write_f31
+      

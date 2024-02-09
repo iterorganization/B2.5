@@ -49,7 +49,7 @@
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt)                    !lk 30.06.17
       logical too_low_density(mpg%nFt)                              ! IYS 27.11.2017
 *   ..procedures
-      external xertst, ipgetr, b2xxgs
+      external xertst, ipgetr
 *   ..initialisation
 
 *-----------------------------------------------------------------------

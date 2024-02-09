@@ -20,10 +20,10 @@ module b2mod_ual_io_data
     use carre_constants
     use b2mod_cellhelper
 
-    use b2mod_grid_mapping
+    use b2us_map
 #ifdef IMAS
-#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #else
@@ -45,21 +45,14 @@ module b2mod_ual_io_data
 
     implicit none
 
-    !> Provides service routines to transform data from B2 to IMAS IDS
-    !! (data in form of vertex, face or cell)
-    interface b2_IMAS_Transform_Data_B2_To_IDS
-        module procedure b2_IMAS_Transform_Data_B2_To_IDS_Cell, &
-            &   b2_IMAS_Transform_Data_B2_To_IDS_Face
-    end interface
-
 contains
 
     !! Below here: service routines to transform data from B2 to IMAS IDS
 
     !> Transform data from B2 to IDS cell
-    function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetInd, gmap,  &
+    function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetInd, mpg,  &
             &   b2CellData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -68,21 +61,19 @@ contains
 #endif
         integer, intent(in) :: gridSubsetInd !< Index of the
             !< grid subset the data is to be stored on
-        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
-            !< by b2CreateMap holding an intermediate grid description to be
-            !< transferred into a CPO or IDS
-        real(IDS_real), intent(in) :: b2CellData( 1:gmap%nCv )
+        type(mapping), intent(in) :: mpg !< The grid mapping
+        real(IDS_real), intent(in) :: b2CellData( 1:mpg%nCv )
         real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                 !< handling data field values
 
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid,  &
-            &   gridSubsetInd, gmap, b2CellData = b2CellData )
+            &   gridSubsetInd, mpg, b2CellData = b2CellData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Cell
 
     !> Transform data from B2 to IDS face
-    function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetInd, gmap,  &
+    function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetInd, mpg,  &
             &   b2FaceData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -91,26 +82,20 @@ contains
 #endif
         integer, intent(in) :: gridSubsetInd !< Index of the
             !< grid subset the data is to be stored on
-        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
-            !< by b2CreateMap holding an intermediate grid description to be
-            !< transferred into a CPO or IDS
-        real(IDS_real), intent(in) ::  &
-            &   b2FaceData( 1:gmap%nFcx + gmap%nFcy , 0:1 )   !< Face data
+        type(mapping), intent(in) :: mpg !< The grid mapping
+        real(IDS_real), intent(in) :: b2FaceData( 1:mpg%nFc )   !< Face data
             !< given on the 2-D B2 data structure
         real(IDS_real), dimension(:), pointer :: idsdata !< Array for
             !< handling data field values
 
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid,  &
-            &   gridSubsetInd, gmap, b2FaceData = b2FaceData )
+            &   gridSubsetInd, mpg, b2FaceData = b2FaceData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Face
-
-    !! TODO: find a way to include this subroutine in the
-    !! b2_IMAS_Transform_Data_B2_To_IDS interface
 
     !> Transform data from B2 to IDS vertex
     function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetInd,   &
-            &   gmap, b2VertexData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+            &   mpg, b2VertexData ) result( idsdata )
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -119,25 +104,23 @@ contains
 #endif
         integer, intent(in)         :: gridSubsetInd !< Index of the
             !< grid subset the data is to be stored on
-        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
-            !< b2CreateMap holding an intermediate grid description to be
-            !< transferred into a CPO or IDS
-        real(IDS_real), intent(in)  :: b2VertexData( 1:gmap%nVx )
+        type(mapping), intent(in) :: mpg !< The grid mapping
+        real(IDS_real), intent(in) :: b2VertexData( 1:mpg%nVx )
             !< Array holding vertex coordinates (2-D space)
         real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
             !< handling data field values
 
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetInd,   &
-            &   gmap, b2VertexData = b2VertexData )
+            &   mpg, b2VertexData = b2VertexData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Vertex
 
     !> Transform a quantity stored on faces from a 2-D B2 array into a 1-D IMAS
     !! IDS array for a given grid subset ID. Either b2CellData or b2FaceData
-    !! must be given. Do not use this directly, use the provided general
-    !! interface b2_IMAS_Transform_Data_B2_To_IDS instead.
+    !! must be given. Do not use this directly, use the intermediate
+    !! routines b2_IMAS_Transform_Data_B2_To_IDS_[object type] instead.
     function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetInd,  &
-            &   gmap, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
-#if IMAS_MINOR_VERSION > 14
+            &   mpg, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -145,17 +128,15 @@ contains
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in) :: gridSubsetInd !< Base grid subset index
-        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
-            !< by b2CreateMap holding an intermediate grid description to be
-            !< transferred into a CPO or IDS
+        type(mapping), intent(in) :: mpg !< The grid mapping
         real(IDS_real), intent(in), optional :: &
-            &   b2CellData( 1:gmap%nCv )      !< Cell data given
+            &   b2CellData( 1:mpg%nCv )      !< Cell data given
             !< on the 2-D B2 data structure
         real(IDS_real), intent(in), optional :: &
-            &   b2FaceData( 1:gmap%nFcx + gmap%nFcy, 0:1 ) !< Face data
+            &   b2FaceData( 1:mpg%nFc )      !< Face data
             !< given on the 2-D B2 data structure
         real(IDS_real), intent(in), optional :: &
-            &   b2VertexData( 1:gmap%nVx )    !< Vertex data
+            &   b2VertexData( 1:mpg%nVx )    !< Vertex data
             !< given on the 2-D B2 data structure
         real(IDS_real), dimension(:), pointer :: idsdata      !< Array for
             !< handling data field values
@@ -206,7 +187,7 @@ contains
                 !! plane space
                 iFc = curObj%ind( SPACE_POLOIDALPLANE )
                 !! copy data
-                idsdata( iObj ) = b2FaceData( iFc , gmap%mapFcIFace( iFc ) )
+                idsdata( iObj ) = b2FaceData( iFc )
             else if( present( b2VertexData )) then
                 !! Vertex/Node data case
                 !! check that it is a vertex

@@ -20,7 +20,6 @@
      *   t0, t1
       intrinsic max, sqrt
       external xertst
-      external b2xxgs
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcx')
@@ -78,9 +77,6 @@
      &   (geo%fcVol(iFc,1) + geo%fcVol(iFc,2))
        enddo
       endif
-*   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,0), 1)
-!      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,1), 2)
 *   ..return
       call subend ()
       return

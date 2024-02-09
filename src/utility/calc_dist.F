@@ -1,27 +1,25 @@
-      subroutine calc_dist(mpg,geo,clist,nc,iref,ds)
+      subroutine calc_dist(geo,clist,nc,iref,ds)
       ! Description
       !============
-      ! Subroutine to compute relative distance between a set of cell 
-      ! centers (Euclidean). The distance is computed between each 
+      ! Subroutine to compute relative distance between a set of cell
+      ! centers (Euclidean). The distance is computed between each
       ! set of consecutive cells (i.e. x(iCv+1) - x(iCv) in 1D), but no
-      ! check is made whether the cells are ordened in a 'logical' way. 
+      ! check is made whether the cells are ordered in a 'logical' way.
 
       ! Initialize
-      !===========      
+      !===========
       ! Modules
       use b2mod_types
       use b2us_geo
-      use b2us_map
       use b2mod_subsys
       implicit none
       ! Input variables
-      type(geometry), intent(in) :: geo 
-      type(mapping), intent(in) :: mpg 
+      type(geometry), intent(in) :: geo
       integer, intent(in) :: nc, iref, clist(1:nc)
 
       ! Output variables
       real (kind=R8), intent(out) :: ds(1:nc)
-    
+
       ! Intermediate variables
       real (kind=R8) :: dsref
       integer :: iCv
@@ -37,16 +35,16 @@
       call xertst(iref.ge.0 .and. iref.le.nc,
      & 'calc_dist: iref out of range')
 
-      ! Compute the initial length as the distance of the first cell to 
+      ! Compute the initial length as the distance of the first cell to
       ! the first boundary face
       ds(1) = 0
 
       ! Loop over number of cells
       do iCv = 2,nc
         ! Compute cumulative distance
-        ds(iCv) = ds(iCv-1) 
-     &    + sqrt( (geo%cvX(clist(iCv)) - geo%cvX(clist(iCv-1)) )**2 
-     &    + (geo%cvY(clist(iCv)) - geo%cvY(clist(iCv-1)) )**2  )
+        ds(iCv) = ds(iCv-1)
+     &    + sqrt( (geo%cvX(clist(iCv)) - geo%cvX(clist(iCv-1)) )**2
+     &          + (geo%cvY(clist(iCv)) - geo%cvY(clist(iCv-1)) )**2  )
       enddo
 
       ! If reference cell provided, shift distance computation
@@ -57,7 +55,7 @@
         ! Subtract reference length
         ds = ds - dsref
       endif
-    
+
       ! Call subend and return
       call subend ()
       return

@@ -16,7 +16,7 @@
 *$$$  call subini ('b2xpnn')
       nn = 0.0_R8
       do is = 0, ns-1
-       if(is_neutral(is).and.zn(is).eq.1) nn = nn + na(:,is)
+       if(is_neutral(is).and.nint(zn(is)).eq.1) nn = nn + na(:,is)
       enddo
 *$$$  call subend ()
       return

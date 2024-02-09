@@ -55,7 +55,6 @@
       logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
 
-
 !     ..START OF COMPUTATION
 
 !     Allocate and initialize par_opt variables to be used in B2.5
@@ -112,7 +111,6 @@
      &    write(*,*) 'IPOPT: warning, G_U(',icon,') set to infty'
       end do
 ! FIXME Z_L/Z_U
-
 
 !     First create a handle for the Ipopt problem (and read the options file)
 !     If Hessian is provided or steepest descent is asked the additional argument needed

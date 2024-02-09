@@ -4,16 +4,9 @@
       subroutine b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &  dtim, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  tchem, tchee, tphys, tphye,
-     &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
-     &  neutral_sources_rescale, core_sources_rescale,
-     &  sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
-     &  sput_chem_model, therm_evap, sput_res,
-     &  reflection_on, sputter_energy_on, main_call, output,
-     &  sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
-     1  sput_mixed_alpha, sput_mixed_beta,
-     2  new_sputter_namelist, shi0_ff, f_redep,
-     3  temperature_at_guard_cell, potential_at_guard_cell,
-     4  recycled_neutrals_contr,fluid_frac_hyb, kin_frac_hyb, fnn_inc)
+     &  thevp, thvpe, trese, tresn, trfln, trfle,
+     &  sput_src, sput_chem_model, reflection_on, sputter_energy_on,
+     &  main_call, new_sputter_namelist, shi0_ff, f_redep)
       use b2mod_types
 !WG_TODO      use b2mod_sputter
       use b2mod_tallies
@@ -29,14 +22,18 @@
       use b2us_map
       use b2us_plasma
       use b2mod_recycle
+      use b2mod_ad
+     & , only : ncall_b2stbr_phys
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2stbr_phys, my_out_folder
+     & , only : my_out_folder
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #ifdef WG_DEBUG
      &        , my_out_sf                                               !srv 27.06.21
+#endif
 #endif
       use b2mod_subsys
       implicit none
@@ -51,22 +48,11 @@
       type (B2RatesWork), intent (in) :: rtw
       type (B2StateExt), intent (in) :: st_ext
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
-      integer sput_src, sput_chem_model, boundary_namelist,
-     *     reflection_on, sputter_energy_on, output,
-     *     sput_frac_flag, potential_at_guard_cell,
-     *     temperature_at_guard_cell
+      integer sput_src, sput_chem_model,
+     *     reflection_on, sputter_energy_on
       logical main_call, new_sputter_namelist
       real (kind=R8) :: dtim,
      &  f_redep(nCv,0:ns-1)
-      real (kind=R8) ::
-     *  neutral_sources_rescale, core_sources_rescale,
-     &  sput_chem_alpha, sput_phys_alpha, alpha,
-     &  therm_evap, sput_res,
-     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
-     1  sput_mixed_alpha, sput_mixed_beta,
-     2  recycled_neutrals_contr
-      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc),
-     &            kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
       real (kind=R8) ::
@@ -159,6 +145,11 @@ c     output for analysis/debugging
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+*   ..automatic spatial hybrid not allowed for multispecies
+      if(switch%use_auto_spatial_hyb.ne.0.and.ns.gt.1) then
+        call xerrab('automatic spatial hybrid option not allowed '//
+     &    'for multispecies')
+      endif
 *   ..extensive tests on first few calls
       if(ncall_b2stbr_phys.lt.3) then
 *    ..test sign of vol
@@ -184,6 +175,22 @@ c     output for analysis/debugging
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
+      endif
+*    ..give a warning when mrecyc and/or erecyc are used for AFN neutrals
+      if ((ncall_b2stbr_phys.eq.0).and.(switch%recycle_afn.ne.0)) then
+        do istra = 1, nstrat
+          if (b2species_start(istra).ge.0) then
+            do is = b2species_start(istra), b2species_end(istra)
+              if (nint(zn(is)).eq.1) then
+                if(erecyc(is,istra)>0.0_R8.or.
+     2            mrecyc(is,istra)>0.0_R8)
+     3            write(*,*)'recycle_afn incompatible with '//
+     4             'user-defined momentum and energy recycling '//
+     5             'coefficients > 0 for istra= ', istra
+              endif
+            enddo
+          endif
+        enddo
       endif
 #ifdef WG_TODO
       if(new_sputter_namelist) then
@@ -212,7 +219,8 @@ c     output for analysis/debugging
      1       srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
         enddo
       enddo
-      if((main_call.and.output.ge.1).or.output.gt.1)
+      if((main_call.and.switch%b2stbr_output.ge.1).or.
+     &                  switch%b2stbr_output.gt.1)
      *     write(*,*) 'b2stbr_phys_sna(start): ',b2stbr_phys_sna
 
       if(ncall_b2stbr_phys.eq.0.and.sput_dst.ge.0.and.
@@ -223,7 +231,7 @@ c     output for analysis/debugging
      &     avogr/1.0e6_R8/monolayer_l(itargsp)
           do iwall=1, nbnd
             if(deposition(iwall,itargsp).lt.0.0_R8) then
-              if(output.ge.8) then
+              if(switch%b2stbr_output.ge.8) then
                 write(*,*) 'itrack,iwall,deposition_error',
      1           itargsp,iwall,deposition(iwall,itargsp)
               endif
@@ -265,9 +273,10 @@ c     initialize debugging/analysis arrays
         fna_mol      = 0.0_R8  !nh 30.03.21
 
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
-     &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
+     &   pl, dv, co, rt, dnn)
       endif !! end pre-computations KUL fluid neutrals
 
+      
       do istra = 1, nstrat
 #ifdef WG_TODO
         sput_dst_bulk=targsp(istra,1)
@@ -280,7 +289,8 @@ c     initialize debugging/analysis arrays
      &       zbulk.eq.6
         endif
         if(ncall_b2stbr_phys.eq.0) then
-          if(sput_frac_flag.gt.0 .and. istra.eq.1) write(*,*)
+          if(switch%b2stbr_sput_frac_flag.gt.0 .and. istra.eq.1)
+     >     write(*,*)
      &      'Mixed materials sputtering model is active!'
           if (crcstra(istra).eq.'S' .or. crcstra(istra).eq.'N' .or.
      &        crcstra(istra).eq.'E' .or. crcstra(istra).eq.'W') then
@@ -288,7 +298,7 @@ c     initialize debugging/analysis arrays
               write(*,*)
      &         'No bulk material sputtering specified for stratum ',
      &          istra
-            else if(sput_frac_flag.eq.0) then
+            else if(switch%b2stbr_sput_frac_flag.eq.0) then
               write(*,'(a,a2,a,i2,a,l1)')
      &         'Sputtering ',is_codes(sput_dst_bulk),
      &         ' for stratum ',istra,
@@ -331,7 +341,8 @@ c     initialize debugging/analysis arrays
             enddo
           enddo
         enddo
-        if((main_call.and.output.ge.1).or.output.gt.1)
+        if((main_call.and.switch%b2stbr_output.ge.1).or.
+     &                    switch%b2stbr_output.gt.1)
      *     write(*,*) 'stratum,b2stbr_phys_sna(start): ',
      1   istra, b2stbr_phys_sna
 #endif
@@ -344,7 +355,8 @@ c     initialize debugging/analysis arrays
             iRc2 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,2) ! the domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
 
-            Phi_app = getPhiApplied(boundary_namelist,mpg,iRc1) ! the potential
+            Phi_app =
+     .       getPhiApplied(switch%b2stbc_boundary_namelist,mpg,iRc1) ! the potential
 
             lcore = mpg%cvOnClosedSurface(iRc1) ! xpb: no sputtering in core!
 
@@ -394,7 +406,8 @@ c for KUL recycling/reflection model
             enddo
           enddo
         enddo
-        if((main_call.and.output.ge.1).or.output.gt.1)
+        if((main_call.and.switch%b2stbr_output.ge.1).or.
+     &                    switch%b2stbr_output.gt.1)
      *       write(*,*) 'stratum,b2stbr_phys_sna(end): ',
      1   istra, b2stbr_phys_sna
 #endif
@@ -410,7 +423,8 @@ c for KUL recycling/reflection model
           enddo
         enddo
       enddo
-      if((main_call.and.output.ge.1).or.output.gt.1)
+      if((main_call.and.switch%b2stbr_output.ge.1).or.
+     &                  switch%b2stbr_output.gt.1)
      *     write(*,*) 'b2stbr_phys_sna(end): ',b2stbr_phys_sna
 
       if(main_call.and.sput_dst.ge.0.and.sput_dst.lt.ns) then
@@ -420,7 +434,7 @@ c for KUL recycling/reflection model
      &     avogr/1.0e6_R8/monolayer_l(itargsp)
           do iwall=1, nbnd
             if(deposition(iwall,itargsp).lt.0.0_R8) then
-              if(output.ge.8) then
+              if(switch%b2stbr_output.ge.8) then
                 write(*,*) 'itrack,iwall,deposition_error',
      1           itargsp,iwall,deposition(iwall,itargsp)
               endif
@@ -519,12 +533,15 @@ c for KUL recycling/reflection model
 
 #ifdef WG_TODO
       if(reflection_max.gt.1.0_R8 .or.
-     .  ((main_call.and.output.ge.1).or.output.gt.1))
+     .  ((main_call.and.switch%b2stbr_output.ge.1).or.
+     .                  switch%b2stbr_output.gt.1))
      1 write(*,*) 'Maximum reflection coefficient ', reflection_max
-      if (redep_max.gt.0.0_R8 .and. (main_call.or.output.gt.1))
+      if (redep_max.gt.0.0_R8 .and.
+     &   (main_call.or.switch%b2stbr_output.gt.1))
      . write(*,*) 'Maximum redeposition coefficient ', redep_max
       if(redep_max.gt.0.0_R8 .and. (yself_max.ge.1.0_R8 .or.
-     .  ((main_call.and.output.ge.1).or.output.gt.1)))
+     .  ((main_call.and.switch%b2stbr_output.ge.1).or.
+     .                  switch%b2stbr_output.gt.1)))
      . write(*,*) 'Maximum self-sputtering coefficient ', yself_max
 #endif
 * ..return
@@ -573,7 +590,7 @@ c new variables for advanced fluid neutral reflection/recycling model
 #ifdef WG_TODO
       iwall=xymap(ix,iy)
 cdpc-exp
-      if(sput_frac_flag.eq.0.or.lcore.or.ntargsp.eq.0.or.
+      if(switch%b2stbr_sput_frac_flag.eq.0.or.lcore.or.ntargsp.eq.0.or.
      .   iwall.eq.0) then
 c no mixed materials
         sput_frac=0.0_R8
@@ -587,23 +604,23 @@ c no mixed materials
         sput_frac_chem_sum=sput_frac_chem(0)
       else  ! mixed materials
 c calculate the fraction from each constituent of the mixed material
-        if(output.ge.10)
+        if(switch%b2stbr_output.ge.10)
      &       write(*,*) 'b2stbr_phys.recycle: ix,iy,iwall',ix,iy,iwall
 c the base material ("0") is assumed to have an unnormalised weight
 c sput_mixed_alpha (default 1)
-        sput_frac(0)=sput_mixed_alpha
+        sput_frac(0)=switch%b2stbr_sput_mixed_alpha
 c the remaining constituents each have an unnormalised weight equal
 c to the number of monolayers deposited raised to the power
 c sput_mixed_beta (default 1)
         do itrack=1,ntargsp
           sput_frac(0)=sput_frac(0)+
-     1     monolayer_deposition(iwall,itrack)**sput_mixed_beta
+     1 monolayer_deposition(iwall,itrack)**switch%b2stbr_sput_mixed_beta
         enddo
 c the remaining constituents are then normalised by the sum of weights
         do itrack=1,ntargsp
           sput_frac(itrack)=
-     1      monolayer_deposition(iwall,itrack)**sput_mixed_beta/
-     &      sput_frac(0)
+     1 monolayer_deposition(iwall,itrack)**switch%b2stbr_sput_mixed_beta
+     &     /sput_frac(0)
         enddo
 c the base material weight is calculated to ensure that the sum of
 c normalised weights is 1
@@ -652,13 +669,13 @@ c Be suppression of chemical sputtering
           sput_frac_chem_sum=sput_frac_chem_sum*be_suppression_factor
           sput_frac_chem(1:ntargsp)=sput_frac_chem(1:ntargsp)*
      1     be_suppression_factor
-          if(output.ge.10) then
+          if(switch%b2stbr_output.ge.10) then
             write(*,'(a,1p,2g12.5)')
      1       'b2stbr_phys.recycle: be_frac, be_suppression_factor',
      2       be_frac, be_suppression_factor
           endif
         endif
-        if(output.ge.10) then
+        if(switch%b2stbr_output.ge.10) then
           write(hlp_frm,'(a6,i1,a6)') '(a,1p,',ntargsp+1,'g12.5)'
           write(*,hlp_frm) 'b2stbr_phys.recycle: sput_frac ',
      &          sput_frac(0:ntargsp)
@@ -711,7 +728,7 @@ c and this strata should be ignored here
         return
       endif
 
-      if (temperature_at_guard_cell.eq.1) then
+      if (switch%b2stbr_temperature_at_guard_cell.eq.1) then
         tef = pl%te(iCv)
         tif = pl%ti(iCv)
         tnf = pl%tn(iCv)
@@ -726,7 +743,7 @@ c and this strata should be ignored here
      &         pl%tn(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
      &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
       endif
-      if (potential_at_guard_cell.eq.1) then
+      if (switch%b2stbr_potential_at_guard_cell.eq.1) then
 !        write(6,*) 'Potential taken at guard cell (phys)'
         pof = pl%po(iCv)
       else
@@ -782,7 +799,7 @@ c and this strata should be ignored here
             if (main_call) then
               wrk(1:ndepth_nml) = target_temp(iwall,1:ndepth_nml)
               call heatdiff1D(iwall,ns,qin+qel,
-     .           dtim*plate_time_factor(iwall),wrk,output)
+     .           dtim*plate_time_factor(iwall),wrk,switch%b2stbr_output)
               target_temp(iwall,1:ndepth_nml) = wrk(1:ndepth_nml)
             end if
             surface_temp = target_temp(iwall,1)
@@ -799,12 +816,14 @@ cmb   Loop implicitly expects that the species are arranged per isonuclear seque
       nnsum = 0.0_R8
       nnwwnsum = 0.0_R8
       do is = nsmin, nsmax
-         if (zn(is0).ne.zn(is).or.amtol.lt.abs(am(is0)-am(is))) then
+         if (nint(zn(is0)).ne.nint(zn(is)).or.
+     &       amtol.lt.abs(am(is0)-am(is))) then
             is0 = is
          endif
 cdpc
          if(is_neutral(is)) is1=is
-         if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
+         if(nint(zn(is1)).ne.nint(zn(is)).or.
+     &      amtol.lt.abs(am(is1)-am(is))) then
             write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
          endif
          if(is0.ne.is1) then
@@ -826,16 +845,17 @@ cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*(dv%fna(iFc,0,is) + dv%fna(iFc,1,is))) *
-     1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
+     1        switch%neutral_sources_rescale*strasclfl(istra) ! dpc: Eirene coupling 1999.06.28
          Einc=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/geo%fcS(iFc)  ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
             vbar = sqrt(8.0_R8 * pl%ti(iCv) / (pi * am(is) * mp))
-            Pflx = Pflx + pl%na(iCv,is)*vbar*alpha *
-     1           neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
+            Pflx = Pflx + pl%na(iCv,is)*vbar*switch%b2stbr_alpha *
+     1           switch%neutral_sources_rescale*strasclfl(istra) ! dpc: Eirene coupling 1999.06.28
          endif
-         if (switch%recycle_afn.eq.0.or.zn(is0).ne.1) then !! default neutral recycling/reflection model (always for non-hydrogenic species)
+         if (switch%recycle_afn.eq.0.or.nint(zn(is0)).ne.1) then
+!! default neutral recycling/reflection model (always for non-hydrogenic species)
            srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
      &      b2recyc(is,istra)*t0
 #ifdef WG_TODO
@@ -854,18 +874,20 @@ c     (toroidal piece only, because poloidal piece of parallel velocity flips si
      &      am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/
      &      geo%cvBb(iCv,3)**2*b2recyc(is,istra)*t0*geo%cvHz(iCv)
          if (switch%lin_shi0.eq.1) then
-           srw%shi0(iCv,1) = srw%shi0(iCv,1)+recycled_neutrals_contr*
+           srw%shi0(iCv,1) = srw%shi0(iCv,1)+
+     &        switch%recycled_neutrals_contr*
      &        max(erecyc(is,istra)*(1.5_R8+switch%BoRiS)*Einc*ev,
      &        (1.5_R8+switch%BoRiS)*surface_temp*KBolt)*
      &        b2recyc(is,istra)*t0/pl%ti(iCv)
          else
-           srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*
+           srw%shi0(iCv,0) = srw%shi0(iCv,0)+
+     &        switch%recycled_neutrals_contr*
      &        max(erecyc(is,istra)*(1.5_R8+switch%BoRiS)*Einc*ev,
      &        (1.5_R8+switch%BoRiS)*surface_temp*KBolt)*
      &        b2recyc(is,istra)*t0
          endif
          if (is2.ne.-1) shi0_ff(iCv,is2) = shi0_ff(iCv,is2)+
-     &        recycled_neutrals_contr*max(
+     &        switch%recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+switch%BoRiS)*Einc*ev,
      &        (1.5_R8+switch%BoRiS)*surface_temp*KBolt)*
      &        b2recyc(is,istra)*t0
@@ -886,13 +908,6 @@ c   Nuclear Fusion 57.11 (2017): 116043.
            cosa = geo%fcQalf(iFc,0)
            sina = geo%fcQalf(iFc,1)
 
-
-!! end of preliminary calculations
-           if(erecyc(is,istra)>0.0_R8.or.
-     2      mrecyc(is,istra)>0.0_R8)
-     3     write(*,*)'recycle_afn incompatible with user-defined '//
-     4     'momentum and energy recycling coefficients > 0'
-
            if (is.ne.is0) then !! ion species, recycling
 
 
@@ -903,7 +918,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &              is0,is2,is,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tif,tef,pof,
+     &              dv%fluid_frac_hyb(iFc),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,
      &              cosa, sina, switch%use_uy_uz_0,
      &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec)
@@ -915,9 +930,12 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
                 fenerec = 0.0_R8
              endif
 
-             snan = fnnrec*neutral_sources_rescale
+             snan =
+     &        fnnrec*switch%neutral_sources_rescale*strasclfl(istra)
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
-             smon = fmomrec*geo%cvhz(iCv)*neutral_sources_rescale
+             smon =
+     &        fmomrec*geo%cvhz(iCv)*switch%neutral_sources_rescale*
+     &        strasclfl(istra)
              srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon
 
              nnsum = nnsum + nnrec
@@ -926,12 +944,12 @@ cmb   net neutral energy source from recycling
 
              if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + fenerec*
-     &                              neutral_sources_rescale
+     &          switch%neutral_sources_rescale*strasclfl(istra)
              elseif (switch%tn_style.eq.1) then
                !! neutral energy boundary conditions are not used
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + fenerec*
-     &                              neutral_sources_rescale
+     &          switch%neutral_sources_rescale*strasclfl(istra)
              endif
 
              if (switch%AFN_out.ne.0) then
@@ -957,7 +975,7 @@ c          while B2.5 uses internal energy equations.
      &             (tnf*pl%ua(iCv,is0)*geo%fcpbs(iFc)*
      &             pl%na(iCv,is0) +
      &             (dv%fhm(iFc,0,is0)+dv%fhm(iFc,1,is0)) ))*
-     &             neutral_sources_rescale
+     &             switch%neutral_sources_rescale*strasclfl(istra)
 
              if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
@@ -1000,10 +1018,10 @@ c          while B2.5 uses internal energy equations.
              endif
 
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) -
-     &         fnni*neutral_sources_rescale
+     &         fnni*switch%neutral_sources_rescale*strasclfl(istra)
 
 !! save the incident fluid neutral flux
-             fnn_inc(iFc,is0) = fnni*isign
+             dv%fnn_inc(iFc,is0) = fnni*isign
 
 cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
@@ -1011,7 +1029,7 @@ cmb   net momentum sources from neutral particle reflection
                  call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),
+     &              dv%fluid_frac_hyb(iFc),
      &              pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
@@ -1023,7 +1041,7 @@ cmb   net momentum sources from neutral particle reflection
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,farea,b2recyc(is,istra),
-     &              recycm(is,istra),fluid_frac_hyb(iFc),pl,tnf,
+     &              recycm(is,istra),dv%fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
@@ -1033,7 +1051,7 @@ cmb   net momentum sources from neutral particle reflection
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tif,tnf,
+     &              dv%fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
@@ -1043,7 +1061,7 @@ cmb   net momentum sources from neutral particle reflection
                  call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tif,tnf,
+     &              dv%fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
@@ -1060,7 +1078,7 @@ cmb   net momentum sources from neutral particle reflection
 
 cnh  adding the reflected particle source (with the molecular part subtracted)
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
-     1         fnnrefl*neutral_sources_rescale
+     1         fnnrefl*switch%neutral_sources_rescale*strasclfl(istra)
              snan = fnnrefl
 
 
@@ -1073,7 +1091,7 @@ cnh  adding the reflected particle source (with the molecular part subtracted)
              endif
 
              smon = (fmomni+fmomrefl)*geo%cvhz(iCv)*
-     &              neutral_sources_rescale
+     &              switch%neutral_sources_rescale*strasclfl(istra)
              srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon
 
              nnsum = nnsum + nni + nnrefl
@@ -1081,30 +1099,30 @@ cnh  adding the reflected particle source (with the molecular part subtracted)
 
              if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + (feneni + fenerefl)*
-     &                                          neutral_sources_rescale
+     &          switch%neutral_sources_rescale*strasclfl(istra)
              elseif (switch%tn_style.eq.1) then
                !! neutral energy boundary conditions are not used
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + (feneni + fenerefl)*
-     &                                          neutral_sources_rescale
+     &          switch%neutral_sources_rescale*strasclfl(istra)
              endif
 
 c remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary
 c temporary switch to evaluate the effect.
              if (switch%remove_FC_el.eq.1) then
                srw%she0(iCv,0) = srw%she0(iCv,0) + (fene_el)*
-     &                                          neutral_sources_rescale
+     &          switch%neutral_sources_rescale*strasclfl(istra)
              endif
 
            endif
-           if (zamax(is).eq.zn(is)) then   !! see eq. 62-63 of the main reference.
+           if (nint(zamax(is)).eq.nint(zn(is))) then   !! see eq. 62-63 of the main reference.
                if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
                smon = -isign*
      &            cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/
      &            nnsum*farea*abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))*
      &            geo%cvhz(iCv)
                srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon*
-     &                                    neutral_sources_rescale
+     &            switch%neutral_sources_rescale*strasclfl(istra)
              nnsum = 0.0_R8
              nnwwnsum = 0.0_R8
            endif
@@ -1114,14 +1132,14 @@ c temporary switch to evaluate the effect.
          if(.not.lcore) then    ! xpb: no sputtering in core!
 c chemical sputtering
             if(chem_sput(is,istra).gt.0.0_R8.and.
-     &           nint(zn(is)).eq.sput_src.and.
-     &           (l_chem_sput.or.sput_frac_flag.ne.0)) then
-               if(zbulk.eq.6.or.sput_frac_flag.ne.0) then      ! chemical sputtering only for C
+     &         nint(zn(is)).eq.sput_src.and.
+     &        (l_chem_sput.or.switch%b2stbr_sput_frac_flag.ne.0)) then
+               if(zbulk.eq.6.or.switch%b2stbr_sput_frac_flag.ne.0) then  ! chemical sputtering only for C
                   if(sput_chem_model.eq.1) then
                      if (Einc.gt.0.0_R8) then
                         ytmp = chem_sput(is,istra) *
-     &                       exp(-(sput_chem_cutoff_alpha/Einc)**
-     &                       sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+     &            exp(-(switch%b2stbr_sput_chem_cutoff_alpha/Einc)**
+     &                  switch%b2stbr_sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                         t1=t0 * ytmp
                         chemical_sputtering(iwall,is) = ytmp
                      else
@@ -1132,8 +1150,10 @@ c chemical sputtering
                      call chmsput(iwall,Einc,zaf(is),zn(is),
      &                    zn(sput_dst_bulk),
      &                    am(is),am(sput_dst_bulk),surface_temp,
-     &                    Pflx/neutral_sources_rescale,yldchm)
-                     t1=Pflx*neutral_sources_rescale*
+     &                    Pflx/(switch%neutral_sources_rescale*
+     &                          strasclfl(istra)),yldchm)
+                     t1=Pflx*switch%neutral_sources_rescale*
+     &                          strasclfl(istra)*
      &                    yldchm*chem_sput(is,istra)*area
                      chemical_sputtering(iwall,is) = yldchm
                   else
@@ -1144,12 +1164,14 @@ c chemical sputtering
                   t1=0.0_R8
                   chemical_sputtering(iwall,is) = 0.0_R8
                endif
-               if(sput_frac_flag.ne.0) then
+               if(switch%b2stbr_sput_frac_flag.ne.0) then
                   if (zbulk.ne.6 .and. sput_chem_model.ne.1) then
                      call chmsput(iwall,Einc,zaf(is),zn(is),
      &                    6.0_R8,am(is),12.011_R8,surface_temp,
-     &                    Pflx/neutral_sources_rescale,yldchm)
-                     t1=Pflx*neutral_sources_rescale*
+     &                    Pflx/(switch%neutral_sources_rescale*
+     &                    strasclfl(istra)),yldchm)
+                     t1=Pflx*switch%neutral_sources_rescale*
+     &                    strasclfl(istra)*
      &                    yldchm*chem_sput(is,istra)*area
                      chemical_sputtering(iwall,is) = yldchm
                   endif
@@ -1159,8 +1181,9 @@ c chemical sputtering
                endif
                if(ncall_b2stbr_phys.ne.0 .or.
      &            sputter_namelist_used) then
-                  t1=(sputter_yield(ix,iy,is,1)+sput_chem_alpha*t1)/
-     *                 (1+sput_chem_alpha)
+                  t1=(sputter_yield(ix,iy,is,1)+
+     &                switch%b2stbr_sput_chem_alpha*t1)/
+     *                 (1+switch%b2stbr_sput_chem_alpha)
                endif
                t2=t1*(1.5_R8+switch%BoRiS)*surface_temp*KBolt
                sputter_yield(ix,iy,is,1)=t1
@@ -1171,7 +1194,7 @@ c chemical sputtering
                endif
 cxpb  Erosion from the bulk material if chemically sputtered
 cxpb  without mixed materials model
-               if(sput_frac_flag.eq.0) then
+               if(switch%b2stbr_sput_frac_flag.eq.0) then
                   if (sput_dst_bulk.eq.-1) then
                     itrack=0
                   else
@@ -1210,8 +1233,9 @@ cxpb  with mixed materials model
                if(sputter_energy_on.ne.0) then
                   if(ncall_b2stbr_phys .ne. 0 .or.
      &               sputter_namelist_used) then
-                     t2=(sputter_yield2(ix,iy,is,1)+sput_chem_alpha*t2)/
-     *                    (1+sput_chem_alpha)
+                     t2=(sputter_yield2(ix,iy,is,1)+
+     &                   switch%b2stbr_sput_chem_alpha*t2)/
+     *                    (1+switch%b2stbr_sput_chem_alpha)
                   endif
                   sputter_yield2(ix,iy,is,1)=t2
                   tchee(is)=tchee(is)+t2
@@ -1239,14 +1263,15 @@ cxpb We first treat the bulk material
      2                   phys_sput(sput_dst_bulk+1,istra)
                   if(f_redep(ixn,iyn,sput_dst_bulk).gt.0.0_R8 .and.
      1               yself.gt.0.0_R8 .and.
-     2              (output.gt.2 .or. (main_call.and.output.ge.2) .or.
+     2              (switch%b2stbr_output.gt.2 .or.
+     .              (main_call.and.switch%b2tsbr_output.ge.2) .or.
      3               yself.ge.1.0_R8))
      >             write(*,'(a,1x,a2,2i4,1p,2g12.5)')
      .              'Self-sputtering coefficient ',
      .               is_codes(sput_dst_bulk),
      .               ix, iy, pof-Phi_app, yself
                   yself_max=max(yself_max,yself)
-                  if(sput_frac_flag.eq.0) then
+                  if(switch%b2stbr_sput_frac_flag.eq.0) then
                     ytmp=sputter(is,zaf(is),sput_dst_bulk,Einc*ev) *
      1               phys_sput(is,istra) *
      2               (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))/
@@ -1265,14 +1290,15 @@ cxpb We first treat the bulk material
                   t1=t0 * ytmp
                   if(ncall_b2stbr_phys.ne.0 .or.
      &               sputter_namelist_used) then
-                     t1=(sputter_yield(ix,iy,is,2)+sput_phys_alpha*t1)/
-     *                 (1.0_R8+sput_phys_alpha)
+                     t1=(sputter_yield(ix,iy,is,2)+
+     &                   switch%sput_phys_alpha*t1)/
+     *                 (1.0_R8+switch%sput_phys_alpha)
                   endif
-                  if(sput_frac_flag.ne.0) then
+                  if(switch%b2stbr_sput_frac_flag.ne.0) then
                      ytmp=ytmp*sput_frac(0)
                      t1=t1*sput_frac(0)
                   endif
-                  if(output.ge.11) then
+                  if(switch%b2stbr_output.ge.11) then
                     write(*,'(a,3(1x,i3),1x,1p,3g15.8)')
      &               'b2stbr_phys.recycle: phys_sput,redep,self_sput ',
      &                 0,is,sput_dst_bulk,ytmp,
@@ -1289,7 +1315,7 @@ cxpb  Erosion from the bulk material if physically sputtered
      1              iwall.gt.0.and.main_call) then
 cxpb  We count here as eroded all the sputtered material, including the promptly redeposited fraction
 cxpb  We add this promptly redeposited fraction in the deposited material
-                    if(sput_frac_flag.eq.0) then
+                    if(switch%b2stbr_sput_frac_flag.eq.0) then
                       erosion(iwall,itrack) = erosion(iwall,itrack) +
      1                 dtim*plate_time_factor(iwall)*t1/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))*
@@ -1317,7 +1343,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
                  physical_sputtering(iwall,is) = 0.0_R8
                  sputter_yield(ix,iy,is,2) = 0.0_R8
                endif
-               if(sput_frac_flag.ne.0) then
+               if(switch%b2stbr_sput_frac_flag.ne.0) then
                   do itrack=1,ntargsp
                     redep_max=max(redep_max,
      1               f_redep(ixn,iyn,target_intcode(itrack)))
@@ -1329,7 +1355,8 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      2                   phys_sput(target_intcode(itrack)+1,istra)
                     if(f_redep(ixn,iyn,target_intcode(itrack)).gt.0.0_R8
      1                 .and. yself.gt.0.0_R8 .and.
-     2                (output.gt.2 .or. (main_call.and.output.ge.2) .or.
+     2                (switch%b2stbr_output.gt.2 .or.
+     .                (main_call.and.switch%b2stbr_output.ge.2) .or.
      3                 yself.ge.1.0_R8))
      >               write(*,'(a,1x,i3,2i4,1p,2g12.5)')
      .                'Self-sputtering coefficient ',
@@ -1344,7 +1371,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      4                   (1.0_R8-
      5                    f_redep(ixn,iyn,target_intcode(itrack))*
      6                    yself*sput_frac(itrack))
-                    if(output.ge.11) then
+                    if(switch%b2tsbr_output.ge.11) then
                       write(*,'(a,3(1x,i3),1x,1p,3g15.8)')
      &                'b2stbr_phys.recycle: phys_sput,redep,self_sput ',
      &                       itrack,is,target_intcode(itrack),ytmp,
@@ -1381,7 +1408,7 @@ cxpb  with mixed materials model
                      ztmp=sputter2(is,sput_dst_bulk,Einc*ev) *
      1                 phys_sput(is,istra) *
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))
-                     if(sput_frac_flag.ne.0) then
+                     if(switch%b2stbr_sput_frac_flag.ne.0) then
                        ytmp=ytmp*sput_frac(0)
                        ztmp=ztmp*sput_frac(0)
                        yself=yself*sput_frac(0)
@@ -1402,9 +1429,10 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
                      if(ncall_b2stbr_phys .ne. 0 .or.
      &                  sputter_namelist_used) then
                         t2=(sputter_yield2(ix,iy,is,2)+
-     *                   sput_phys_alpha*t2)/(1.0_R8+sput_phys_alpha)
+     *                      switch%sput_phys_alpha*t2)/
+     /                     (1.0_R8+switch%sput_phys_alpha)
                      endif
-                     if(output.ge.11) then
+                     if(switch%b2stbr_output.ge.11) then
                         write(*,'(a,3(1x,i3),1p,5g15.8)')
      &             'b2stbr_phys.recycle: phys_sput2,redep,e_self_sput ',
      &                       0,is,sput_dst_bulk,ztmp,
@@ -1421,7 +1449,7 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
                      physical_sputtering_energy(iwall,is) = 0.0_R8
                      sputter_yield2(ix,iy,is,2) = 0.0_R8
                   endif
-                  if(sput_frac_flag.ne.0) then
+                  if(switch%b2stbr_sput_frac_flag.ne.0) then
                      do itrack=1,ntargsp
                         eself=sputter2(target_intcode(itrack)+1,
      .                   target_intcode(itrack),
@@ -1458,7 +1486,7 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
      3                    f_redep(ixn,iyn,target_intcode(itrack))*yself)
                         physical_sputtering_energy(iwall,is) =
      &                       physical_sputtering_energy(iwall,is) + ztmp
-                        if(output.ge.11) then
+                        if(switch%b2stbr_output.ge.11) then
                        write(*,'(a,3(1x,i3),1p,3g15.8)')
      &             'b2stbr_phys.recycle: phys_sput2,redep,e_self_sput ',
      &                       itrack,is,target_intcode(itrack),ztmp,
@@ -1486,13 +1514,13 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
             endif
 c thermal evaporation     ! no fix for mixed materials yet
             itrack=track_index(is)
-            if(therm_evap.gt.0.0_R8.and.iwall.gt.0.and.
+            if(switch%b2stbr_therm_evap.gt.0.0_R8.and.iwall.gt.0.and.
      .        (is.eq.sput_dst_bulk .or.
      .        (is_neutral(is).and.(itrack.gt.0.and.itrack.le.ntrack)))
      >        ) then
                call thermev(iwall, is, surface_temp, GammaEvap, t2)
                thermal_evaporation(iwall,is) = GammaEvap
-               t1=GammaEvap*area*therm_evap
+               t1=GammaEvap*area*switch%b2stbr_therm_evap
                t2=t1*(1.5_R8+switch%BoRiS)*surface_temp*KBolt
                sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
 cxpb  Erosion from the bulk material if thermally evaporated
@@ -1509,24 +1537,27 @@ cxpb  Erosion from the bulk material if thermally evaporated
                thermal_evaporation(iwall,is) = 0.0_R8
             endif
 c radiation enhanced sublimation
-            if(sput_res.gt.0.0_R8.and.
-     &        (l_chem_sput.or.sput_frac_flag.ne.0)) then
+            if(switch%b2stbr_sput_res.gt.0.0_R8.and.
+     &        (l_chem_sput.or.switch%b2stbr_sput_frac_flag.ne.0)) then
                if(zbulk.eq.6) then
                   call ressput(Einc,zaf(is),zn(is),zn(sput_dst_bulk),
      &              am(is),am(sput_dst_bulk),surface_temp,
-     &              Pflx/neutral_sources_rescale,sput_dst_bulk,yldres)
+     &              Pflx/
+     &              (switch%neutral_sources_rescale*strasclfl(istra)),
+     &              sput_dst_bulk,yldres)
                   RES_sputtering(iwall,is) = yldres
-                  t1=yldres*neutral_sources_rescale*
-     &              area*sput_res
+                  t1=yldres*switch%neutral_sources_rescale*
+     &              strasclfl(istra)*area*switch%b2stbr_sput_res
                endif
-               if(sput_frac_flag.ne.0) then
+               if(switch%b2stbr_sput_frac_flag.ne.0) then
                   if(zbulk.ne.6) then
                     call ressput(Einc,zaf(is),zn(is),6.0_R8,
      &               am(is),12.011_R8,surface_temp,
-     &               Pflx/neutral_sources_rescale,sput_dst_bulk,yldres)
+     &               Pflx/(switch%neutral_sources_rescale*
+     &               strasclfl(istra)),sput_dst_bulk,yldres)
                     RES_sputtering(iwall,is) = yldres
-                    t1=yldres*neutral_sources_rescale*
-     &               area*sput_res
+                    t1=yldres*switch%neutral_sources_rescale*
+     &               strasclfl(istra)*area*switch%b2stbr_sput_res
                   endif
                   t1=t1*sput_frac_chem_sum
                   RES_sputtering(iwall,is) =
@@ -1536,7 +1567,7 @@ c radiation enhanced sublimation
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
 cxpb  Erosion from the bulk material if RES sputtered
 cxpb  without mixed materials model
-               if(sput_frac_flag.eq.0) then
+               if(switch%b2stbr_sput_frac_flag.eq.0) then
                   if (sput_dst_bulk.eq.-1) then
                     itrack=0
                   else
@@ -1620,10 +1651,11 @@ cxpb  as deposition
 *    ..recycling into next ionized species
          if(is.lt.ns-1) then
            if(lnext(is,is+1)) then
-              srw%sna0(iCv,0,is+1) = srw%sna0(iCv,0,is+1)+
-     2        rcion(is,istra)*t0/neutral_sources_rescale
-              if (is_neutral(is+1)) then           ! IYS 18.09.2018
-              endif
+             srw%sna0(iCv,0,is+1) = srw%sna0(iCv,0,is+1)+
+     2        rcion(is,istra)*t0/(switch%neutral_sources_rescale*
+     3        strasclfl(istra))
+             if (is_neutral(is+1)) then           ! IYS 18.09.2018
+             endif
            endif
          endif
       enddo      ! do is = 0, ns-1
@@ -1633,13 +1665,14 @@ cxpb  as deposition
          is0 = ns-1
          is1 = ns-1
          do is = nsmax, nsmin, -1
-            if (zn(is0).ne.zn(is).or.
+            if (nint(zn(is0)).ne.nint(zn(is)).or.
      &           amtol.lt.abs(am(is0)-am(is))) then
                is0 = is
             endif
 cxpb
-            if(zamax(is).eq.zn(is)) is1=is
-            if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
+            if(nint(zamax(is)).eq.nint(zn(is))) is1=is
+            if(nint(zn(is1)).ne.nint(zn(is)).or.
+     &         amtol.lt.abs(am(is1)-am(is))) then
               write(*,'(a,3i3)')
      .         'b2stbr problem: is, is0, is1 ',is,is0,is1
             endif
@@ -1651,7 +1684,7 @@ cxpb
 cxpb
 *          (species (is) recycles into is0)
             t0 = max(0.0_R8,isign*(dv%fna(iFc,0,is) + dv%fna(iFc,1,is)))
-     .          *core_sources_rescale ! xpb: 2002.02.01
+     .          *switch%b2stbr_core_sources_rescale ! xpb: 2002.02.01
             if (is.ne.is0) then
                srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+
      &          b2recyc(is,istra)*t0
@@ -1663,7 +1696,7 @@ c     (at core, cell faces will be aligned with flux surfaces)
      .           b2recyc(is,istra)*t0*geo%cvHz(iCv)
                srw%shi0(iCv,0) = srw%shi0(iCv,0)+erecyc(is,istra)*
      .          (1.5_R8+switch%BoRiS)*(zaf(is)*tef+tif)*
-     &           b2recyc(is,istra)*t0*recycled_neutrals_contr            !srv
+     &           b2recyc(is,istra)*t0*switch%recycled_neutrals_contr    !srv
             endif
          enddo      ! do is = nsmax, nsmin, -1
       endif

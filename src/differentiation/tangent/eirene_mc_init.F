@@ -9,6 +9,7 @@
       use b2mod_eirdiag
       use b2mod_dimensions
 #endif
+      use b2mod_dimensions
       implicit none
       integer, intent(in) :: nCv, nFc
 #ifndef B25_EIRENE
