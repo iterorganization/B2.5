@@ -43,9 +43,8 @@
       real (kind=R8), allocatable :: ft_ds_imp(:), ft_ds_omp(:)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
-      integer :: lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
-     ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
-     ,  npfr_cvs,pfr_cvs(100),
+      integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o, spfr_cv,epfr_cv,
+     ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp, pfr_cvs(100),npfr_cvs,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
       real (kind=R8) :: Te_det_threshold, q95_albll,
@@ -61,14 +60,14 @@
 
       namelist /user/
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
-     ,  j_h_at,j_he_at,j_ne_at,
+     ,  j_h_at,j_he_at,j_ne_at,spfr_cv,epfr_cv,
      ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
      ,  npfr_cvs,pfr_cvs,
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
-     ,  filedata,user_filename,rzomp,rzimp,
-     ,  Te_det_threshold,q95_albll,R0_albll,B0_albll,trgshp
+     ,  filedata,user_filename,rzomp,rzimp,npfr_cvs,
+     ,  pfr_cvs
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -153,8 +152,9 @@ c***  Standard set-up:
       lpfrb_o=0
       lpfrt_i=0
       lpfrt_o=0
+      spfr_cv=0
+      epfr_cv=0
       npfr_cvs=0
-      pfr_cvs=0
       npfrgrp=0
       ipfrgrp=0
       jpfrgrp=0

@@ -1161,7 +1161,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 #endif
       endif
       wrk0=she0_eir(:,0)+she0_eir(:,1)*st%pl%te+
-     &     she0_eir(:,2)*st%dv%ne+she0_eir(:,3)*st%pl%te*st%dv%ne
+     &       she0_eir(:,2)*st%dv%ne+she0_eir(:,3)*st%pl%te*st%dv%ne
       she_eir_tot = -sum(wrk0)
       if (switch%b2stbr_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                            .or. switch%iout_b2wdat.eq.4 ) then
