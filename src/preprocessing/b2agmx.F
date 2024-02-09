@@ -12,7 +12,7 @@
      & cell_width, cell_height,
      1 leftix1, leftiy1, rightix1, rightiy1,
      2 topix1, topiy1, bottomix1, bottomiy1,
-     3 leftcut1, rightcut1, bottomcut1, topcut1,
+     3 leftcut1, rightcut1, bottomcut1, topcut1, ccut1,
      & cflags1)
       use b2mod_types
       use b2mod_math
@@ -48,7 +48,7 @@
      2  topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
      3  bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
      4  leftcut1(1:nncutmax), rightcut1(1:nncutmax),
-     5  bottomcut1(1:nncutmax), topcut1(1:nncutmax)
+     5  bottomcut1(1:nncutmax), topcut1(1:nncutmax), ccut1
       integer, intent(in) :: cflags1(-1:nx1,-1:ny1, CARREOUT_NCELLFLAGS)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -225,10 +225,26 @@
          rightcut = rightcut1
          bottomcut = bottomcut1
          topcut = topcut1
+         ccut = ccut1
          cflags = cflags1
+*   ..extrapolate magnetic field to edges
+         do iy = -1, ny
+           do ix = -1, nx
+            if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy)))
+     >       wbbl(ix,iy,0:2) =
+     &        bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
+            if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy)))
+     >        wbbr(ix,iy,0:2) =
+     &         bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
+            if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))
+     &          .and.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy)))
+     >         wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
+     &       (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
+          enddo
+         enddo
 
          call init_region(nx,ny,nncut,nncutmax,
-     1     leftcut,rightcut,topcut,bottomcut,
+     1     leftcut,rightcut,topcut,bottomcut,ccut,
      1     leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
      2     region,nnreg,resignore,crx,cry,periodic_bc,cflags)
 
@@ -867,7 +883,7 @@ cxpb  extra test since cases beyond double-null are not yet coded
      1 leftcut(2), rightcut(2), topcut(2), bottomcut(2)
 
       call init_region(nx,ny,nncut,nncutmax,
-     1 leftcut,rightcut,topcut,bottomcut,
+     1 leftcut,rightcut,topcut,bottomcut,ccut,
      1 leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
      2 region,nnreg,resignore,crx,cry,periodic_bc,cflags)
 
@@ -888,7 +904,8 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
             if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy)))
      >        wbbr(ix,iy,0:2) =
      &         bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
-            if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy)))
+            if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))
+     &          .and.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy)))
      >         wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
      &       (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
           enddo

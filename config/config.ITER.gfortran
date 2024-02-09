@@ -39,8 +39,17 @@ FC = gfortran
 endif
 endif
 
+GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
+
+GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
+GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
+
 FCOPTS  = -fPIC
 LDOPTS  = -fPIC
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
+FCOPTS += -march=sandybridge
+endif
+
 ifdef SOLPS_DEBUG
 FCOPTS += -gdwarf-2
 endif

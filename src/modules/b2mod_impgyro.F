@@ -61,9 +61,8 @@
 
       write (*,*) 'b2ig: Entering impgyro_init'
 
-      last = .false.
-
 #ifdef USE_MPI
+      last = .false.
       write (*,*) 'b2ig: Calling MPI COMM FLAG=MPI'
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
@@ -83,6 +82,7 @@
       write (*,*) 'b2ig: ikmn, ikmx obtained from IMPGYRO', ikmn, ikmx
 #else
 #ifdef USE_IMPGYRO
+      last = .false.
       write (*,*) 'b2ig: Calling MPI COMM FLAG=IG'
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)

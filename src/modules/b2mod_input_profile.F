@@ -1,14 +1,7 @@
       module b2mod_input_profile
-c      use b2mod_types
+      use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_time
-!WG_TODO      use b2mod_sources
-!WG_TODO     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
-!WG_TODO     &             balance_netcdf
-!WG_TODO      use b2mod_geo_corner
-!WG_TODO     &     , only: nmdpl
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -84,7 +77,7 @@ c      use b2mod_types
         allocate(addspec(nss,nkind_coeff,0:nss))
       endif
 #else
-!      call xertst (nCv.le.DEF_NXD, 'faulty input nx')
+      call xertst (nCv.gt.0, 'faulty input nCv')
       call xertst (ns.le.DEF_NSD, 'faulty input ns')
 #endif
 
@@ -249,8 +242,7 @@ c      use b2mod_types
             if (new_files) write(93,*) r(i),f(i)
           enddo
 !          write(*,*) 'vor region_profile'
-          call region_profile
-     .     (kind_data,ndat,r,ndim,pr,nx,ny,ifa,nanf)
+          call region_profile(mpg,geo,kind_data,ndat,r,ndim,pr,ifa,nanf)
 !          write (*,*) 'ifa=',ifa
           if (ifa.eq.1) goto 99
 !          allocate (pf(1:ndim))
@@ -278,7 +270,7 @@ c      use b2mod_types
           xf(nx)=0.0_R8
           if (nxdat.gt.0) then
             call xertst(nxdat.le.nxx+2,
-     .       'Increase NXD in b2mod_dimensions to match size of profile')
+     .     'Increase NXD in b2mod_dimensions to match size of profile')
             do i=1,nxdat
               x(i)=xdata(1,i,kind_source,spec)
               fx(i)=xdata(2,i,kind_source,spec)
@@ -636,7 +628,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
 #ifdef WG_TODO
-            call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
+            call region_profile(mpg,geo,1,ndat,r,ndim,pr,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
 !           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
@@ -647,7 +639,7 @@ cdjm Jan2017 Keep linearised sources for balance
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 
-            call calc_dist(mpg,geo,omp,nomp,icsepomp,pr)
+            call calc_dist(geo,omp,nomp,icsepomp,pr)
 
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
@@ -657,6 +649,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             if (elm_data)
      >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+
             if (tr_ip_new_files) then
 
               if (elm_data) then
@@ -753,7 +746,6 @@ cdjm Jan2017 Keep linearised sources for balance
      1                 prof(iy)*mp*am(nsp(is))*pl%na(icv,nsp(is))
 
                     elseif (kind_coeff.eq.8) then
-
                       if (csig_an_style.eq.0) then
                         sig0(icv)=prof(iy)*qe*dv%ne(icv)*
      1                   poloidal_scale_factor
@@ -775,6 +767,7 @@ cdjm Jan2017 Keep linearised sources for balance
                       write(*,*)
      .                 'Option',kind_coeff,'not yet implemented'
                     endif
+
                   endif
                  enddo !ic
                 enddo !ift=1,mpg%nFt
@@ -920,43 +913,37 @@ c*** Clear data to forget previous profiles
 
 *-----------------------------------------------------------------------
 
-      subroutine region_profile(kind_data,ndat,r,ndim,pr,nx,ny,ifa,
+      subroutine region_profile(mpg,geo,kind_data,ndat,r,ndim,pr,ifa,
      & nfitanf)
 
       use b2mod_indirect
-      use b2mod_geo
+      use b2mod_user_namelist
+     & , only : nomp, omp, icsepomp
+      use b2us_geo
+      use b2us_map
       use b2mod_mwti
-     & , only: output_ds
+     & , only: output_ds_cv
       implicit none
-      integer:: i,nx,ny,ifa
+      type (mapping), intent(in) :: mpg
+      type (geometry), intent(in) :: geo
+      integer:: i,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
-      real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
-      integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
-      integer ixref, iyref
+      real(kind=R8) :: r(nrr),pr(nrr),prtmp
+      real(kind=R8), allocatable :: pra(:), prdsa(:)
+      integer ncall, nya
       character*256 filenamer
       logical exist
       external ipgetr
-      external get_jsep
-      save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
+      save ncall
       data ncall/0/
 
       call subini('region_profile')
       if (ncall.eq.0) then
-        call get_jsep(nx,ny,jxi,jxa,jsep)
-        call xertst (-1.le.jsep.and.jsep.le.ny,
-     2   'faulty parameter jsep')
-        call ipgeti ('b2mwti_jxa',jxa)
-        call xertst (-1.le.jxa.and.jxa.le.nx,
-     2   'faulty internal parameter jxa')
-        ixref = jxa
-        iyref = jsep
-        call ipgeti ('set_transport_ixref', ixref)
-        call xertst (-1.le.ixref.and.ixref.le.nx,
-     1   'faulty argument set_transport_ixref')
-        call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
-     1   'faulty argument set_transport_iyref')
-        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
+        if (nomp.gt.0) then
+          allocate(pra(nomp))
+          allocate(prdsa(nomp))
+          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp')
+        end if
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
@@ -976,7 +963,7 @@ c*** Clear data to forget previous profiles
       read (91,*,END=92,ERR=97) prtmp
       prdsa(i) = prtmp
       nya = i
-      if (i.lt.ny+2) goto 91
+      if (i.lt.nomp) goto 91
    92 continue
       nfitanf=1
       IFA=0
@@ -994,7 +981,6 @@ c*** Clear data to forget previous profiles
         if (pra(i).GT.r(ndat)) exit
         nfitend=i
       enddo
-
 
       if (nfitend.LE.nfitanf) goto 97
 

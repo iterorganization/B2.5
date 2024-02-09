@@ -93,7 +93,6 @@ c     calculate the drift contribution
         enddo
       enddo
 
-
 c     set the epar to zero for the time being
       eparn = 0.
 c     loop over the species 
@@ -131,7 +130,6 @@ c       including the eparr
      +            nreg,sigma,nleg,nenergy,ncof,
      +            neogeo,neofrc,ic,eparr,coeff)
 
-
 c     loop over the species 
       do i = 0, nsl-1
         do j = 0, ncl(i)-1
@@ -143,7 +141,6 @@ c       calculate pinch including the ware pinch
 
         enddo
       enddo
-
 
       return 
       end subroutine neodv

@@ -3,6 +3,7 @@
       use b2mod_indirect
      . , only: GRID_N_CELLFLAGS
       use b2mod_cellhelper
+      use b2mod_geometry
       use carre_constants
       use b2mod_grid_mapping
 
@@ -158,7 +159,7 @@
   !!        This means the region range in the x direction is
   !!        (leftcut(i):rightcut(i))
       subroutine init_connectivity( nx, ny, cflag,
-     &     periodic_bc, nncut, inseltop, inselbot, istyle )
+     &     periodic_bc, nncut, ccut, inseltop, inselbot, istyle )
 
       use b2mod_types
       use b2mod_dimensions
@@ -169,13 +170,14 @@
       integer cflag(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
     !!   .. output arguments
       integer, intent(out) ::
-     & nncut, inseltop, inselbot
+     & nncut, ccut, inseltop, inselbot
 
     !! internal
 
       integer :: ic, ix, iy, i, ixNb, iyNb, ixl, ixr
       integer :: xstep, ystep, nNb
       logical :: cutFound, cellFound, fullGrid
+      external xerrab
 
       nncut=0
       bottomcut1(:)=ny+1
@@ -539,7 +541,6 @@
 
       end if
 
-
     !! third step: find cuts
 
       do iy=-1,ny
@@ -611,6 +612,20 @@
         end if
       end do
 
+
+      ! For DN configuration, check if central cut ccut is already set (ccut).
+      ! If yes, keep (came from Carre2)
+      ! If no, assume 'standard' DN grid from Carre and find location based
+      ! on two guard cells next to each other
+      if (nncut.eq.2.and.ccut.eq.0) then
+        iy = max(topcut1(1),topcut1(2))
+        do ix=-1,nx-1
+          if (isGhostCell(cflag(ix  ,iy,CELLFLAG_TYPE)) .and.
+     &        isGhostCell(cflag(ix+1,iy,CELLFLAG_TYPE))) ccut = ix+1
+        enddo
+        if (ccut.eq.0) call xerrab ('Did not find central cut')
+      endif
+
       write(*,*) 'istyle',istyle,'nncut',nncut
       if(nncut.eq.0) write(*,*) 'No cuts found'
       if(nncut.ge.1) write(*,'(1x,a,4i5)')
@@ -619,6 +634,12 @@
       if(nncut.ge.2) write(*,'(1x,a,4i5)')
      & 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ',
      & leftcut1(2), rightcut1(2), topcut1(2), bottomcut1(2)
+      if(nncut.ge.3) write(*,'(1x,a,4i5)')
+     & 'Calculated leftcut3, rightcut3, topcut3, bottomcut3 = ',
+     & leftcut1(3), rightcut1(3), topcut1(3), bottomcut1(3)
+      if(nncut.ge.3) call xerrab ('Unexpected number of cuts')
+      if(nncut.eq.2) write(*,'(1x,a,i5)')
+     & 'Central cut at ccut = ', ccut
 
       return
       end subroutine init_connectivity

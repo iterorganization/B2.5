@@ -6,12 +6,14 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : my_out_folder
 #ifdef WG_DEBUG
      &        , my_out_sf                                               !srv 27.06.21
+#endif
 #endif
       use b2mod_subsys
       implicit none
@@ -75,7 +77,7 @@
          dva = 0.25_R8*dva*vsa0(:,is)
 
 *      ..set dva in guard cells (constant extrapolation from domain cell)
-         call extend(dva,nCv,mpg,1)
+         call extend(dva,mpg,1)
 
 *      ..compute current density in cell centers through divergence theorem
          call intface(nCv,nFc,mpg%fcCv,weight,dva,wrkf) 

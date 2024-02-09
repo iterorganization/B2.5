@@ -16,9 +16,9 @@
       use b2us_map
       use b2us_plasma
       use b2mod_user_namelist
-     & , only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+     & , only : nomp, omp, icsepomp, nimp, imp, icsepimp
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
 #endif
       use b2mod_dimensions
@@ -222,13 +222,11 @@ cxpb size is changed in b2mod_dimensions
       control_read = .false.
       end subroutine write_b2us_feedback_control
 
-      subroutine init_feedback(nCv, nFc, nVx, ns, natmi, switch, geo,
-     & mpg)
+      subroutine init_feedback(nFc, ns, switch, mpg)
       implicit none
       type (switches), intent (in) :: switch
-      type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      integer :: nCv, nFc, nVx, ns, natmi
+      integer :: nFc, ns
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
       logical consistent, done
@@ -361,21 +359,13 @@ cxpb size is changed in b2mod_dimensions
       if(nepedm_sol.gt.0.0_R8) then
         call ipgeti ('b2stbc_iyped', iyped)
         icped = iyped+2
-#ifdef WG_RM
-        call xertst (iyped.gt.-2 .and. iyped.le.mpg%ny 
-     &   .and. iyped.le.nomp, 'faulty input iyped')
-#endif
+        call xertst (icped.ge.1.and.icped.le.nomp, 'faulty input iyped')
         call xertst (mpg%cvOnClosedSurface(omp(icped)),
      .   'location of top of pedestal outside core region!')
       endif
       call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
       call ipgetr ('b2stbc_ndes', ndes)
       call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
-#ifdef WG_RM
-      call ipgetr ('b2stbc_cbsnafac', cbsnafac)
-      call xertst (0.0_R8.lt.cbsnafac,
-     1  'faulty internal parameter cbsnafac')
-#endif
       call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
       call xertst (0.0_R8.le.private_flux_puff,
      1 'faulty internal parameter private_flux_puff')
@@ -917,12 +907,11 @@ cxpb size is changed in b2mod_dimensions
       return
       end subroutine init_feedback
 
-      subroutine compute_feedback(nCv, nFc, nVx, ns, ismain,
-     &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call,
-     &  diagno)
+      subroutine compute_feedback(nCv, nFc, ns, ismain,
+     &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, diagno
+      integer nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -931,10 +920,8 @@ cxpb size is changed in b2mod_dimensions
       type (B2Rates), intent (in) :: rt
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call
-*   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
-      integer :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start,
+      integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
      & is_end, iss
 #ifdef B25_EIRENE
       integer :: i, j, k, l
@@ -996,10 +983,10 @@ cxpb size is changed in b2mod_dimensions
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
                     fb_current(ifb) = fb_current(ifb) +
-     &                 pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+     &                 pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
                     if(is.eq.is_start) then
                       vol_feedback = vol_feedback +
-     &                               geo%cvVol(fbReg(icv))
+     &                               geo%cvVol(fbReg(iCv))
                     endif
                   enddo
                   is_end=is
@@ -1031,9 +1018,9 @@ cxpb size is changed in b2mod_dimensions
               ic2 = ic1 + fbRegP(ifb,2) - 1
               do iCv = ic1, ic2
                 fb_current(ifb) = fb_current(ifb) +
-     &            dv%ne(fbReg(icv)) * geo%cvVol(fbReg(icv))
+     &            dv%ne(fbReg(iCv)) * geo%cvVol(fbReg(iCv))
                 vol_feedback = vol_feedback +
-     &                         geo%cvVol(fbReg(icv))
+     &                         geo%cvVol(fbReg(iCv))
               enddo
               fb_current(ifb) = fb_current(ifb) /
      &                 vol_feedback
@@ -1075,10 +1062,10 @@ cxpb size is changed in b2mod_dimensions
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
-                    if(mpg%cvReg(fbReg(icv)).ne.0 .and.
-     &                 fbReg(icv).le.mpg%nCi) then
+                    if(mpg%cvReg(fbReg(iCv)).ne.0 .and.
+     &                 fbReg(iCv).le.mpg%nCi) then
                       fb_current(ifb) = fb_current(ifb) +
-     &                  pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+     &                  pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
                     endif
                   enddo
                   is_end=is
@@ -1103,10 +1090,10 @@ cxpb size is changed in b2mod_dimensions
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
-                    if(mpg%cvReg(fbReg(icv)).ne.0 .and.
-     &                 fbReg(icv).le.mpg%nCi) then
+                    if(mpg%cvReg(fbReg(iCv)).ne.0 .and.
+     &                 fbReg(iCv).le.mpg%nCi) then
                       fb_current(ifb) = fb_current(ifb) +
-     &                  pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+     &                  pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
                     endif
                   enddo
                   is_end=is
@@ -1154,10 +1141,10 @@ cxpb size is changed in b2mod_dimensions
                 ic1 = fbRegP(ifb,1)
                 ic2 = ic1 + fbRegP(ifb,2) - 1
                 do iCv = ic1, ic2
-                  if (mpg%cvOnClosedSurface(icv)) then
-                    sum_s = sum_s + pl%na(icv,is) * geo%cvVol(icv)
+                  if (mpg%cvOnClosedSurface(iCv)) then
+                    sum_s = sum_s + pl%na(iCv,is) * geo%cvVol(iCv)
                     charge_frac(iss) = charge_frac(iss) +
-     .                pl%na(icv,is) * geo%cvVol(icv)
+     .                pl%na(iCv,is) * geo%cvVol(iCv)
                   end if
                 end do
               end do
@@ -1179,11 +1166,11 @@ cxpb size is changed in b2mod_dimensions
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                  ifc1 = mpg%fsFcP(ifssep,1)
-                  ifc2 = ifc1 + mpg%fsFcP(ifssep,2) - 1
+                  iFc1 = mpg%fsFcP(mpg%iFssep,1)
+                  iFc2 = iFc1 + mpg%fsFcP(mpg%iFssep,2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
-                  do iFc = ifc1, ifc2
+                  do iFc = iFc1, iFc2
                     ic1 = mpg%fcCv(mpg%fsFc(iFc),1)
                     ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
                     if(mpg%cvOnClosedSurface(ic1) .or. 
@@ -1262,11 +1249,11 @@ cxpb size is changed in b2mod_dimensions
      &            b2espcr(fb_species(ifb))
               endif
               fb_current(ifb) = 0.0_R8
-              ifc1 = fbRegP(ifb,1)
-              ifc2 = ifc1 + fbRegP(ifb,2) - 1
-              do iFc = ifc1, ifc2
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
-     &           dv%fna(fbReg(ifc),1,fb_species(ifb))
+     &           dv%fna(fbReg(iFc),1,fb_species(ifb))
               end do
               is_start=-1
               is_end=-1
@@ -1294,25 +1281,25 @@ cxpb size is changed in b2mod_dimensions
               neave2=0.0_R8
 #endif
               fb_current(ifb) = 0.0_R8
-              ifc1 = fbRegP(ifb,1)
-              ifc2 = ifc1 + fbRegP(ifb,2) - 1
-              do iFc = ifc1, ifc2
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
-     &           dv%fhe(fbReg(ifc),1)
+     &           dv%fhe(fbReg(iFc),1)
 #ifdef COMPLICATED
             ic1 = mpg%bcCvP(ib,1)
             ic2 = ic1 + mpg%bcCvP(ib,2) -1
-            do icv = ic1, ic2
-              teave1=teave1+pl%te(mpg%bcCv(icv,1))*
-     .                      dv%ne(mpg%bcCv(icv,1))*
-     .                     geo%cvVol(mpg%bcCv(icv,1))
-              neave1=neave1+dv%ne(mpg%bcCv(icv,1))*
-     .                     geo%cvVol(mpg%bcCv(icv,1))
-              teave2=teave2+pl%te(mpg%bcCv(icv,2))*
-     .                      dv%ne(mpg%bcCv(icv,2))*
-     .                     geo%cvVol(mpg%bcCv(icv,2))
-              neave2=neave2+dv%ne(mpg%bcCv(icv,2))*
-     .                     geo%cvVol(mpg%bcCv(icv,2))
+            do iCv = ic1, ic2
+              teave1=teave1+pl%te(mpg%bcCv(iCv,1))*
+     .                      dv%ne(mpg%bcCv(iCv,1))*
+     .                     geo%cvVol(mpg%bcCv(iCv,1))
+              neave1=neave1+dv%ne(mpg%bcCv(iCv,1))*
+     .                     geo%cvVol(mpg%bcCv(iCv,1))
+              teave2=teave2+pl%te(mpg%bcCv(iCv,2))*
+     .                      dv%ne(mpg%bcCv(iCv,2))*
+     .                     geo%cvVol(mpg%bcCv(iCv,2))
+              neave2=neave2+dv%ne(mpg%bcCv(iCv,2))*
+     .                     geo%cvVol(mpg%bcCv(iCv,2))
             enddo
 #endif
               end do
@@ -1342,25 +1329,25 @@ cxpb size is changed in b2mod_dimensions
               niave2=0.0_R8
 #endif
               fb_current(ifb) = 0.0_R8
-              ifc1 = fbRegP(ifb,1)
-              ifc2 = ifc1 + fbRegP(ifb,2) - 1
-              do iFc = ifc1, ifc2
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
-     &           dv%fhi(fbReg(ifc),1)
+     &           dv%fhi(fbReg(iFc),1)
 #ifdef COMPLICATED
             ic1 = mpg%bcCvP(ib,1)
             ic2 = ic1 + mpg%bcCvP(ib,2) -1
-            do icv = ic1, ic2
-              tiave1=tiave1+pl%ti(mpg%bcCv(icv,1))*
-     .                      dv%ni(mpg%bcCv(icv,1),0)*
-     .                     geo%cvVol(mpg%bcCv(icv,1))
-              niave1=niave1+dv%ni(mpg%bcCv(icv,1),0)*
-     .                     geo%cvVol(mpg%bcCv(icv,1))
-              tiave2=tiave2+pl%ti(mpg%bcCv(icv,2))*
-     .                      dv%ni(mpg%bcCv(icv,2)),0*
-     .                     geo%cvVol(mpg%bcCv(icv,2))
-              niave2=niave2+dv%ni(mpg%bcCv(icv,2),0)*
-     .                     geo%cvVol(mpg%bcCv(icv,2))
+            do iCv = ic1, ic2
+              tiave1=tiave1+pl%ti(mpg%bcCv(iCv,1))*
+     .                      dv%ni(mpg%bcCv(iCv,1),0)*
+     .                     geo%cvVol(mpg%bcCv(iCv,1))
+              niave1=niave1+dv%ni(mpg%bcCv(iCv,1),0)*
+     .                     geo%cvVol(mpg%bcCv(iCv,1))
+              tiave2=tiave2+pl%ti(mpg%bcCv(iCv,2))*
+     .                      dv%ni(mpg%bcCv(iCv,2)),0*
+     .                     geo%cvVol(mpg%bcCv(iCv,2))
+              niave2=niave2+dv%ni(mpg%bcCv(iCv,2),0)*
+     .                     geo%cvVol(mpg%bcCv(iCv,2))
             enddo
 #endif
               enddo
@@ -1381,11 +1368,11 @@ cxpb size is changed in b2mod_dimensions
      &            'current '
               endif
               fb_current(ifb) = 0.0_R8
-              ifc1 = fbRegP(ifb,1)
-              ifc2 = ifc1 + fbRegP(ifb,2) - 1
-              do iFc = ifc1, ifc2
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
-     &           dv%fch(fbReg(ifc),1)
+     &           dv%fch(fbReg(iFc),1)
               enddo
               is_start=-1
               is_end=-1
@@ -1411,9 +1398,9 @@ cxpb size is changed in b2mod_dimensions
               do is=0, ns-1
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
-                  do icv = 1, nCv
+                  do iCv = 1, nCv
                    fb_current(ifb) = fb_current(ifb) +
-     &               pl%na(icv,is)*geo%cvVol(icv)
+     &               pl%na(iCv,is)*geo%cvVol(iCv)
                   enddo
                   is_end=is
                 endif
@@ -1534,11 +1521,11 @@ cxpb size is changed in b2mod_dimensions
                       ic1 = fbRegP(ifb,1)
                       ic2 = ic1 + fbRegP(ifb,2) - 1
                       do iCv = ic1, ic2
-                        if(mpg%cvReg(fbReg(icv)).ne.0 .and.
-     &                     fbReg(icv).le.mpg%nCi) then
+                        if(mpg%cvReg(fbReg(iCv)).ne.0 .and.
+     &                     fbReg(iCv).le.mpg%nCi) then
                           fb_const(ifb) = 
      &                      fb_const(ifb) + 
-     &                      pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+     &                      pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
                         endif
                       enddo
                       is_end=is
@@ -1943,13 +1930,13 @@ cxpb size is changed in b2mod_dimensions
       type (mapping), intent (in) :: mpg
       integer, intent (in) :: ifb, nFc
       integer, intent (inout) :: ifbreg
-      integer ifc
+      integer iFc
 
-      do ifc = 1, nFc
-        if ((mpg%fcReg(ifc).eq.fb_reg_par(ifb,1)) .or.
+      do iFc = 1, nFc
+        if ((mpg%fcReg(iFc).eq.fb_reg_par(ifb,1)) .or.
      &      (fb_reg_par(ifb,2).gt.0.and.
-     &      (mpg%fcReg(ifc).eq.fb_reg_par(ifb,2)))) then
-          fbReg(ifbreg) = ifc
+     &      (mpg%fcReg(iFc).eq.fb_reg_par(ifb,2)))) then
+          fbReg(ifbreg) = iFc
           ifbreg = ifbreg + 1
          endif
       end do
@@ -1962,13 +1949,13 @@ cxpb size is changed in b2mod_dimensions
       type (mapping), intent (in) :: mpg
       integer, intent (in) :: ifb, nCv
       integer, intent (inout) :: ifbreg
-      integer icv
+      integer iCv
 
-      do icv = 1, nCv
-        if ((mpg%cvReg(icv).eq.fb_reg_par(ifb,1)) .or.
+      do iCv = 1, nCv
+        if ((mpg%cvReg(iCv).eq.fb_reg_par(ifb,1)) .or.
      &      (fb_reg_par(ifb,2).gt.0.and.
-     &      (mpg%cvReg(icv).eq.fb_reg_par(ifb,2)))) then
-          fbReg(ifbreg) = icv
+     &      (mpg%cvReg(iCv).eq.fb_reg_par(ifb,2)))) then
+          fbReg(ifbreg) = iCv
           ifbreg = ifbreg + 1
          endif
       end do
@@ -1978,12 +1965,11 @@ cxpb size is changed in b2mod_dimensions
 
 ***********************************************************************
 
-      subroutine conv_fbparms (nx, ny, ns, m)
+      subroutine conv_fbparms (m)
       use b2mod_feedback
       implicit none
-      integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
-      integer :: is, ix, iy, icv, iss, ifbreg
+      integer :: is, ix, iy, iCv, iss, ifbreg
       logical :: done
 
       nFb = nspecies !number of feedback imposed
@@ -2023,9 +2009,9 @@ cxpb size is changed in b2mod_dimensions
             do iy = na_feedback_iy1(is),na_feedback_iy2(is)
               call xertst(ifbreg.le.nMxFbReg,
      &          'b2us_feedback: increase size of nMxFbReg')
-              icv = m%imapCv(ix,iy)
-              if (icv.eq.0) cycle
-              fb_Reg(ifbreg) = icv
+              iCv = m%imapCv(ix,iy)
+              if (iCv.eq.0) cycle
+              fb_Reg(ifbreg) = iCv
               ifbreg = ifbreg + 1
             enddo
           enddo
@@ -2039,10 +2025,9 @@ cxpb size is changed in b2mod_dimensions
 
 ***********************************************************************
 
-      subroutine write_fbparms (ns)
+      subroutine write_fbparms
       use b2mod_version
       implicit none
-      integer, intent(in) :: ns
       integer :: ifb, iout
 #ifndef F2003
       integer newunit

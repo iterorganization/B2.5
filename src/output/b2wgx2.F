@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wgx2 (nx, ny, header, crx, cry, fun, iloc, scal,
+      subroutine b2wgx2 (nx, ny, header, fun, iloc, scal,
      &  fa0, fa1, ncnta, fb0, fb1, ncntb)
       use b2mod_types
       use b2mod_indirect
@@ -12,8 +12,7 @@
       integer nx, ny, iloc, ncnta, ncntb
       character header*(*)
       real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3),
-     &  cry(-1:nx,-1:ny,0:3), fun(-1:nx,-1:ny)
+     *  fun(-1:nx,-1:ny)
       real (kind=R8) ::
      *  scal, fa0, fa1, fb0, fb1
 *   ..output arguments (unspecified on entry)
@@ -40,9 +39,6 @@
 *
 *     header - character*(*), input.
 *     header specifies a label for the plots.
-*
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
-*     See the calling routine for description.
 *
 *     fun - (-1:nx,-1:ny) real*8 array, input.
 *     fun specifies the function of which a contour plot is to be made.

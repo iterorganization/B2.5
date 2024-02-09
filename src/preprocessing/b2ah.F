@@ -3,10 +3,7 @@
 
       program b2ah
       use b2mod_types
-      use b2mod_geo
       use b2mod_version
-      use b2mod_indirect
-      use b2mod_geo_corner
       use b2mod_xerset
       implicit none
 
@@ -35,7 +32,6 @@
 *
 *     The input units are:
 *     ninp(0): formatted; provides physics parameters.
-*     ninp(1): un*formatted; provides the geometry.
 *
 *     The output units are:
 *     nout(0): formatted; provides summary printed output.
@@ -61,14 +57,13 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:1), nout(0:1), idum(0:9), nx, ny, ns, io
-      character*120 lblgm
+      integer ninp(0:0), nout(0:1), idum(0:9),ns, io
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen, cfruin, cfruch
-      external b2ahx0, b2ahdr, b2rugm
+      external b2ahx0, b2ahdr
 *   ..initialise input/output units
-      data ninp/50,51/
+      data ninp/50/
       data nout/60,61/
 
 *-----------------------------------------------------------------------
@@ -79,7 +74,7 @@
 *
 *     Description of some local variables:
 *
-*     ninp - (0:1) integer array.
+*     ninp - (0:0) integer array.
 *     ninp specifies the input unit numbers.
 *
 *     nout - (0:1) integer array.
@@ -97,31 +92,14 @@
       call prgini ('b2ah')
 *   ..open files
       call cfopen (ninp(0),'b2ah.dat','old','formatted')
-      call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
       call cfopen (nout(0),'b2ah.prt','new','formatted')
       call cfopen (nout(1),'b2fpardf','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number                                              !xpb
-      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(1), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
 *   ..obtain ns
-      call b2ahx0 (ninp(0), ns)
-*   ..read geometry and metric
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-#ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, isymm)
-#endif
+      call b2ahx0 (ninp, ns)
 *   ..call principal driver routine
-      call b2ahdr (ninp, nout, nx, ns)
+      call b2ahdr (ninp, nout, ns)
 *   ..close graphics files
 *     (none)
 *   ..close other files
@@ -135,8 +113,6 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_indirect
       call prgend ()
       stop 'b2ah'
 

@@ -162,8 +162,7 @@
       ! csc local variables
       integer :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff,
      &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
-     &           ifc1, ifc2, jj, imean, curr_ind,
-     &           nfaces
+     &           ifc1, ifc2, jj, imean, curr_ind
       integer, allocatable :: cfReg(:), shiftcfdata(:)
       logical :: done, optimize
       character*1 str
@@ -406,16 +405,15 @@
             noss = cfend(icf) - cfstart(icf) + 1
             do iss = 1, noss
               indss = cfstart(icf)+iss-1
-              nfaces = 0
               write (*,*) ' Defining cost function ',icf
               write (*,*) ' surface label ',indss
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, incf, ncffc,
-     >           m%mxncf,m%cfReg, m%cfFcOr, m, idb, nfaces)
-              write(ss,"(I0)") indss
-              call xertst(nfaces.gt.0, 
-     &         'No faces found for cost function face label = '//ss)
+     >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
             end do              ! iss
+            write(ss,"(I0)") icf
+            call xertst(ncffc.gt.0, 
+     &        'No faces found for cost function  = '//ss)
             m%cfRegP(icf,2) = ncffc
 ! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
             if (m%cfOnCv(icf)) then

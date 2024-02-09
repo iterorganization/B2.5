@@ -25,8 +25,7 @@
       else
        ix = ibase(n,incx)
        do i = 0, n-1
-        sx(ix) = sa
-        ix = ix+incx
+        sx(ix + i * incx) = sa
        enddo
       endif
       return

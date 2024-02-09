@@ -790,7 +790,10 @@ c
       use b2mod_tallies
       use b2mod_b2cmpa
       use b2mod_balance                                                  !djm Jan2017
-     & , only : b2sihs_diaa0to3, b2sihs_diae0to3, balance_netcdf
+     & , only : balance_netcdf
+#ifdef WG_TODO
+     &        , b2sihs_diaa0to3, b2sihs_diae0to3
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

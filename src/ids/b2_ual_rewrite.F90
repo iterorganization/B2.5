@@ -61,19 +61,16 @@
 
 program b2_ual_rewrite
 
-    use b2mod_geo
     use b2mod_main
     use b2mod_driver
-    use b2mod_plasma
-    use b2mod_sources
     use b2mod_switches
-    use b2mod_transport
     use b2mod_grid_mapping
     use b2us_geo
     use b2us_map
     use b2us_plasma
     use ids_routines &  ! IGNORE
-     & , only : imas_create_env
+     & , only : imas_create_env, ual_open_pulse, &
+     &          CREATE_PULSE
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
@@ -81,15 +78,15 @@ program b2_ual_rewrite
      & , only : new_ids_edge, delete_ids_edge
     use b2mod_ual_io &
      & , only : b25_process_ids
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_divertors
 #endif
@@ -114,13 +111,15 @@ program b2_ual_rewrite
     type (mapping) :: mpg
     type (B2state) :: state
     type (B2StateExt) :: state_ext
+    type (B2Average) :: state_avg
+
     type (switches) :: switch
     character(len=24) :: shot_string
     character(len=24) :: run_string
     character(len=24) :: new_run_string
     character(len=24) :: argName
     integer narg, cptArg, new_run
-    integer nx, ny
+    integer idum(0:2)
     character*16 usrnam
     logical same_run_number
     data new_run / 0 /
@@ -132,20 +131,21 @@ program b2_ual_rewrite
     treename = 'ids'
     same_run_number = .true.
     write (*,*) 'Starting b2mn init'
-    call b2mn_init (switch, geo, mpg, state, state_ext)
+    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
     ! call b2mn_step(0)
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstrat,npls)
+    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
 #endif
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
     call cfverr(56, b2fplasma_version)
-    call read_b2mod_geo(nx, ny, 56)
-    call read_b2mod_plasma(nx, ny, ns, 56)
-    call read_b2mod_residuals(56)
-    call read_b2mod_sources(56)
-    call read_b2mod_transport(nx, ny, ns, 56)
+    ! obtain parameters from b2fplasma file
+    call cfruin (56,3,idum,'nCv,nFc,ns')
+    call xertst (idum(0).eq.mpg%nCv.and.idum(1).eq.mpg%nFc.and. &
+     &           idum(2).eq.state%pl%ns, &
+     &          'faulty input nCv, nFc, ns from b2fplasma file')
+    call read_b2fplasma(56, mpg%nCv, mpg%nFc, ns, state)
 
     call ipgeti('b2mndr_shot_number', shot )
     if (shot.gt.0) then
@@ -236,11 +236,14 @@ program b2_ual_rewrite
     write (0,*) "Checking if IMAS data-entry already exists : ", trim(database), shot, run
     call imas_open_env(treename, shot, run, idx, &
       &                username, database, version, status)
+!!$    call ual_begin_pulse_action( HDF5_BACKEND, shot, run, username, database, &
+!!$        &  version, idx )
+!!$    call ual_open_pulse( idx, OPEN_PULSE, '', status )
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
-      call ids_get( idx, "equilibrium", equilibrium, status)
+      call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
-      call ids_get( idx, "dataset_description", old_description, status)
+      call ids_get( idx, "dataset_description", old_description, status )
       old_imas_version = 'x.xx.x'
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old dataset_description IDS !'
@@ -265,7 +268,7 @@ program b2_ual_rewrite
         tmp_run = run
         if (new_run.eq.run .and. database.ne.'iter') then
           tmp_run = run + 1000
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
           write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
      &     'idscp --setDatasetVersion'//                   &
      &        ' -si ',shot,' -ri ',run,                    &
@@ -285,7 +288,7 @@ program b2_ual_rewrite
 #endif
           if (database.eq.'iter') database = 'ITER'
         end if
-#if IMAS_MINOR_VERSION > 31
+#if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
         write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
      &   'idscp --setDatasetVersion'//                   &
      &        ' -si ',shot,' -ri ',tmp_run,              &
@@ -306,17 +309,26 @@ program b2_ual_rewrite
         if (database.eq.'iter') database = 'ITER'
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status )
+!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
+!!$            & database, version, idx )
+!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
       else if (.not.same_run_number) then
         call close_ual(idx)
         idx = 0
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
+!!$        call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
+!!$            & database, version, idx )
+!!$        call ual_open_pulse( idx, OPEN_PULSE, '', status )
         if ( status.ne.0 .or. idx.eq.0 .or. database.eq.'iter') then ! New run IDS must be created
           idx = 0
           if (database.eq.'iter') database = 'ITER'
-          call imas_create_env(treename, shot, new_run, 0, 0, idx, &
-            &                  username, database, version, status )
+!!$          call imas_create_env(treename, shot, new_run, 0, 0, idx, &
+!!$            &                  username, database, version, status )
+          call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
+              & database, version, idx )
+          call ual_open_pulse( idx, CREATE_PULSE, '', status )
           call xertst( status.eq.0, 'Error creating new IDS file !')
         end if
       end if
@@ -326,19 +338,22 @@ program b2_ual_rewrite
       if (database.eq.'iter') database = 'ITER'
       call imas_create_env(treename, shot, run, 0, 0, idx, &
         &                  username, database, version, status )
+!!$      call ual_begin_pulse_action( HDF5_BACKEND, shot, new_run, username, &
+!!$          & database, version, idx )
+!!$      call ual_open_pulse( idx, CREATE_PULSE, '', status )
       call xertst( status.eq.0, 'Error creating new IDS !')
     end if
     !! Create/Write the set data to IDSs
-    call B25_process_ids( geo, mpg, state, switch, &
+    call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
       &  edge_profiles, edge_sources, edge_transport, &
       &  radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       &  summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
       &  numerics, run_start_time, run_end_time, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       &  divertors, &
 #endif
       &  tim, dtim, shot, new_run, database, version, new_eq_ggd )
@@ -346,13 +361,13 @@ program b2_ual_rewrite
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, equilibrium, &
-#if IMAS_MINOR_VERSION > 21
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   idx, new_eq_ggd )
@@ -376,18 +391,13 @@ program b2_ual_rewrite
 #endif
     end if
     call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
-#if IMAS_MINOR_VERSION > 30
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
-#if IMAS_MINOR_VERSION > 21
-        &   summary, &
-#endif
-        &   description )
     call close_ual(idx)
     idx = 0
 

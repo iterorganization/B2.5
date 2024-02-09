@@ -85,7 +85,8 @@
       logical function lrtnext(k,k1)
       implicit none
       integer, intent(in) :: k, k1
-      lrtnext = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
+      lrtnext = rtzmax(k).lt.rtzmin(k1)
+     &  .and.nint(rtzn(k)).eq.nint(rtzn(k1))
       return
       end function lrtnext
 

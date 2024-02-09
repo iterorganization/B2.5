@@ -30,13 +30,13 @@
       contains
 
       subroutine b2trace(ns, nxtl, nxtr, ismain, dtim,
-     .                   geo, mpg, st, switch)
+     .                   geo, mpg, st, switch, st_ext)
 #ifdef B25_EIRENE
 #ifdef WG_TODO
       use eirmod_parmmod
      .   , only : nmol
 #endif
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 c
 c  version : 29.08.2000 00:26
@@ -51,6 +51,7 @@ c----------------------------------------------------------------------
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: geo
       type(B2state), intent(in) :: st
+      type(B2StateExt), intent(in) :: st_ext
       type(switches), intent(in) :: switch
       integer ns, nxtl, nxtr, ismain
       real (kind=R8) :: dtim
@@ -145,7 +146,7 @@ c*** Particle balance in old style by Andrei Kukushkin
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,switch%BoRiS)
 c*** Parallel momentum balance
-      if(filedata(ntrc_blm)) call b2blnm(nx,ny,ns)
+      if(filedata(ntrc_blm)) call b2blnm(mpg,ns,st,st_ext)
 c*** Additional integrals
       if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0))
       if(filedata(ntrc_srt)) call b2wrsrt(nx,ny,ns)
@@ -159,12 +160,15 @@ c
       return
       end subroutine b2trace
 c======================================================================
-      subroutine b2trci(switch)
+      subroutine b2trci(geo,mpg,ns,nlim,nmol,switch)
       implicit none
+      type(geometry), intent(in) :: geo
+      type(mapping), intent(inout) :: mpg
       type(switches), intent(in) :: switch
+      integer ns, nlim, nmol
 c*** Initialisation call
       if (tracing_initialised) return
-!WG_TODO     call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
@@ -181,9 +185,9 @@ c*** Initialise tracing routines
       return
       end subroutine b2trci
 c======================================================================
-      subroutine b2trcc(nput,nx,nxtl,nxtr)
+      subroutine b2trcc(nput)
       implicit none
-      integer, intent(in) :: nput, nx, nxtl, nxtr
+      integer, intent(in) :: nput
       integer iline
 c*** Truncate to match savefile
       if(filedata(ntrc_bln)) then
@@ -216,11 +220,13 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_sep)), iline
       end if
+#ifdef WG_TODO
       if(filedata(ntrc_usr)) then
         call b2usrtrcc(nx,nxtl,nxtr,iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
       end if
+#endif
       return
       end subroutine b2trcc
 c======================================================================
