@@ -97,7 +97,7 @@
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain ns
-      call b2ahx0 (ninp, ns)
+      call b2ahx0 (ninp(0), ns)
 *   ..call principal driver routine
       call b2ahdr (ninp, nout, ns)
 *   ..close graphics files

@@ -8,7 +8,7 @@
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:2)
+      integer ninp(0:1)
 *   ..output arguments (unspecified on entry)
       integer nCv, nFc, ns
       type(mapping), intent(inout) :: mpg
@@ -35,7 +35,7 @@
 *
 *  5. parameters (see also routine b2cdcv)
 *
-*     ninp - (0:2) integer array.
+*     ninp - (0:1) integer array.
 *     ninp specifies the input unit numbers.
 *
 *     nCv, nFc - integer.
