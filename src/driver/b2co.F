@@ -209,6 +209,7 @@
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..load default values of switches
+      call read_first_switches(switch)
       call set_defaults_switches(switch,ns)
 *   ..overwrite with values provided in b2mn.dat
       call read_switches(switch)
