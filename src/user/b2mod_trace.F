@@ -168,7 +168,7 @@ c======================================================================
       integer ns, nlim, nmol
 c*** Initialisation call
       if (tracing_initialised) return
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
