@@ -127,10 +127,10 @@
                 enddo 
                 if  (( i1 .eq. 2 .and. i2 .eq. 2 ) .or. 
      &              ( i1 .eq. 1 .and. i2.eq.2 .and. 
-     &              abs(cvFpsi(cells(1)) - cvFpsi(cells(2)) 
+     &              (abs(cvFpsi(cells(1)) - cvFpsi(cells(2)))
      &               .lt.tol )) .or.
      &              ( i1 .eq. 2 .and. i2.eq.1 .and. 
-     &              abs(cvFpsi(cells(1)) - cvFpsi(cells(2))
+     &              (abs(cvFpsi(cells(1)) - cvFpsi(cells(2)))
      &               .lt. tol ))) then
                    isPoloidal = .true. 
                 endif               
