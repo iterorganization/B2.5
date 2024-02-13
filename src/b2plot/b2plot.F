@@ -857,7 +857,7 @@ c
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),nstra,natm,
      >                       switch)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       if (nomp.gt.0) then
         allocate(dsomp(nomp),wdomp(nomp))
         call set_distances(mpg,geo,nomp,omp,icsepomp-1,dsomp,wdomp)
