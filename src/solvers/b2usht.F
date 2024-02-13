@@ -44,6 +44,7 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(mpg%nCmxNv)
+      real (kind=R8) :: dumm(1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -368,7 +369,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nCv,0,ne,'b2usht_ne_te')
        call my_out_us(70,nCv,0,ni,'b2usht_ni_te')
        call my_out_us(70,nCv,0,reshe,'b2usht_reshe_te')
-!nh       call my_out_us(70,1,0,mpg%nCmxNv,'b2usht_nCmxNv')
+       dumm = real(mpg%nCmxNv)
+       call my_out_us(70,1,0,dumm,'b2usht_nCmxNv')
 
        call my_out_us(70,nFc,1,flo0(1,0),'b2usht_floex') 
        call my_out_us(70,nFc,1,flo0(1,1),'b2usht_floey')  
