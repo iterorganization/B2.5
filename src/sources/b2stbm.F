@@ -9,7 +9,9 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+#ifdef USE_IMPGYRO
       use b2mod_impgyro
+#endif
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
 #ifdef WG_RM

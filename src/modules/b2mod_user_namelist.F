@@ -4,6 +4,7 @@
       use b2mod_dimensions
       use b2us_geo
       use b2us_map
+      use b2mod_switches
       use b2mod_dimensions
       implicit none
       integer npfrgrpd, nntrgrpd
@@ -87,11 +88,12 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol)
+      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol,sw)
       implicit none
       integer, intent(in) :: ns, nlim, nmol
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
+      type (switches), intent (in) :: sw
 
       call xertst(1.le.ns, 'faulty argument ns')
       call xertst(0.le.nlim, 'faulty argument nlim')
@@ -132,7 +134,7 @@ c***  Standard set-up:
       rzomp = 0.0_R8
       rzimp = 0.0_R8
       user_filename='b2.user.parameters'
-      call read_b2mod_user_namelist(ns,geo,m)
+      call read_b2mod_user_namelist(ns,geo,m,sw)
       user_initialised = .true.
 
       return
@@ -148,20 +150,20 @@ c***  Standard set-up:
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(ns,geo,m)
+      subroutine read_b2mod_user_namelist(ns,geo,m,sw)
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
       integer, intent(in) :: ns
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
+      type (switches), intent (in) :: sw
       integer ic, iFc
 
       logical :: file_ok
       character*260 filename
       integer i
       logical done, ifail, found
-      integer, save :: use_eirene, neutrals_namelist
       integer j, k, is, im
       logical old_style
       logical, save :: hydrogen, helium, neon
@@ -172,8 +174,6 @@ c***  Standard set-up:
 #endif
 
       call subini ('readuser')
-      call ipgeti ('b2mndr_eirene', use_eirene)
-      call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 
 *  -- USER --
       filename=user_filename
@@ -332,7 +332,7 @@ c*** Set default values according to current species list
           end if
         end do
       end do
-      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
+      if (sw%b2stbr_neutrals_namelist.eq.1 .or. sw%use_eirene.ne.0) then
         do i = 1,3
           if (j_h_at(i).eq.0) cycle
           if (user_namelist_used) then
