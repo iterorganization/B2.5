@@ -12100,7 +12100,7 @@ cxpb as they no longer necessarily point to the same species
 
 *   ..we now do b2ai.dat, using the data computed for b2ah.dat
 *   ..we read to check if the initial densities must be changed
-!nh      call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2), mpg)
+      call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2), mpg)
       call xertst (idum(2).eq.ns,
      .   'incorrect species number in b2ai.dat')
       call b2rflb (ninp(6), lblps(61:120))
