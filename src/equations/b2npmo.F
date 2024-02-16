@@ -214,13 +214,8 @@ c time-dependent treatment                                            !srv 07.07
 *  .. add contribution from time-dependent source
        sr%smo = sr%smo + sr%smodt
        do is = 0, ns-1
-        if(switch%b2mndt2_temp_4.eq.1) then
          sr%smo(:,0,is) = sr%smo(:,0,is)-am(is)*mp*geo%cvVol*geo%cvHz*
      &           (pl%na(:,is)-psnl%na(:,is))*psnl%ua(:,is)/dtim
-        else
-         sr%smo(:,0,is) = sr%smo(:,0,is)-am(is)*mp*geo%cvVol*geo%cvHz*
-     &           (pl%na(:,is)-psnl%na(:,is))*pl%ua(:,is)/dtim
-        endif
        enddo
       endif                                                            !srv 07.07.21 }
 
