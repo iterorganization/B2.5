@@ -12,11 +12,13 @@
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
       use b2mod_sputter
+     & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
       use b2mod_ysmp_sdrv
      & , only : dealloc_b2mod_ysmp_sdrv
       use b2mod_wall
      & , only : dealloc_b2mod_wall
       use b2mod_neoclassical
+     & , only : dealloc_b2mod_neoclassical
       use b2mod_first_flight
       use b2mod_input_profile
       use b2mod_user_namelist
@@ -26,6 +28,7 @@
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
       use b2mod_transport_disruption
+     & , only : dealloc_b2mod_transport_disruption
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
