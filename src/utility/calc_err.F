@@ -148,9 +148,9 @@
          write(71,*)
        enddo
 
-       call calc_err_cc(nCv, 'Te', pl%te, exact_te, qe)                 !srv 29.12.18
+       call calc_err_cc(nCv, 'te', pl%te, exact_te, qe)                 !srv 29.12.18
 
-       call calc_err_cc(nCv, 'Ti', pl%ti, exact_ti, qe) 
+       call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe) 
 
 
        filename='exact_ua_us.dat'
@@ -208,7 +208,7 @@
          write(71,*)
        enddo
 
-       call calc_err_cc(nCv, 'Po', pl%po, exact_po, 1.0_R8)
+       call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8)
 
        close(71)
        return
