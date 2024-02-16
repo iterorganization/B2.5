@@ -1105,6 +1105,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_sputter
+     , , only : sput_dst, sput_dst2, sput_dst3
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_recycle

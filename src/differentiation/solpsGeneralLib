@@ -1077,6 +1077,21 @@ function ieee_is_finite:
  shape:(param 1, result)
   type: (float(), boolean())
 
+function isplusorminus:
+ external:
+ shape:(param 1, result)
+  type: (character(), boolean())
+
+function isadigit:
+ external:
+ shape:(param 1, result)
+  type: (character(), boolean())
+
+function machsfr:
+ external:
+ shape:(result)
+  type: (float())
+
 subroutine b2mwti:
  external:
  shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10, param 11, param 12, param 13, param 14, param 15, param 16, param 17, param 18, param 19, param 20, param 21, param 22, param 23)
@@ -1122,8 +1137,18 @@ subroutine calc_err:
  shape:(param 1, param 2, param 3)
  deps: (id, id, id)
 
+subroutine set_exact_solution:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
 subroutine find_faces:
  external:
  shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8)
  deps: (id, id, id, id, id, id, id, id)
+
+subroutine deallocateB2GridMap:
+ external:
+ shape:(param 1)
+ deps: (id)
 
