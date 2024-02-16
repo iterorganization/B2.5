@@ -4,12 +4,12 @@ c
      . (filename)
 
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use b2mod_subsys
       use eirmod_ctrig
+      use b2us_data
       implicit none
       character*(*) filename
       character*80 dataname
@@ -45,9 +45,9 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalues(inpts)=chord_tria_integral(ntrii,nrknot,
+        yvalues(inpts)=chord_tria_integral(geo,ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,npoints,
+     2   xtrian,ytrian,necke,ixtri,npoints,
      3   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0) 
      >   write(*,*) 'Processed ',inpts,' chords'
@@ -136,11 +136,11 @@ c
      . (filename)
 
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use eirmod_ctrig
+      use b2us_data
       implicit none
 
       character*(*) filename
@@ -168,15 +168,15 @@ c
      *   xmin,xmax,ymin,ymax
 
       if(use_compile) then
-        call compile_tria_chords(maxchords,maxcompile,
+        call compile_tria_chords(geo,maxchords,maxcompile,
      &   ntrii,nrknot,
-     &   xtrian,ytrian,necke,ixtri,iytri,
+     &   xtrian,ytrian,necke,ixtri,
      1   inpts,indchd,indit,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
 
       do is=0,nedim(2,iewrk)-1
-        call calculate_tzvalues(maxchords,maxcompile,
+        call calculate_tzvalues(geo,maxchords,maxcompile,
      1   inpts,indchd,indit,indscl,
      1   eirene_stack(1,is,iewrk),
      1   zvalues,filename,dataname,nxcam,xmin,xmax,nycam,ymin,ymax)
@@ -204,18 +204,20 @@ c
       return
       end subroutine process_eirene_camera
 c
-      subroutine compile_tria_chords(maxchords,maxcompile,
+      subroutine compile_tria_chords(geo,maxchords,maxcompile,
      & ntrii,nrknot,
-     & xtrian,ytrian,necke,ixtri,iytri,
+     & xtrian,ytrian,necke,ixtri,
      1 inpts,indchd,indit,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
       use b2mod_subsys
+      use b2us_geo
       implicit none
+      type(geometry), intent(in) :: geo
 
       integer maxchords,maxcompile,ntrii,nrknot,inpts
-      integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
+      integer necke(3,ntrii),ixtri(ntrii)
       integer indchd(maxchords+1),indit(maxcompile)
       real (kind=R8) ::
      * indscl(maxcompile),
@@ -248,8 +250,8 @@ c
       ind=1
    10 read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
       inpts=inpts+1
-      call chord_tria_compile(npoints,ntrii,nrknot,
-     * xtrian,ytrian,necke,ixtri,iytri,
+      call chord_tria_compile(geo,npoints,ntrii,nrknot,
+     * xtrian,ytrian,necke,ixtri,
      1 x1,y1,z1,x2,y2,z2,vector,
      1 indchd(inpts),indit(ind),indscl(ind))
       indold=ind
@@ -279,17 +281,18 @@ c
       end subroutine compile_tria_chords
 c
 #ifdef B25_EIRENE
-      subroutine calculate_tzvalues(maxchords,maxcompile,
+      subroutine calculate_tzvalues(geo,maxchords,maxcompile,
      1 inpts,indchd,indit,indscl,workarr,
      2 zvalues,filename,dataname,
      3 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
       use b2mod_subsys
       use eirmod_ctrig
+      use b2us_geo
       implicit none
+      type(geometry), intent(in) :: geo
 
       integer maxchords,maxcompile,inpts
       integer indchd(maxchords+1),indit(maxcompile)
@@ -333,8 +336,8 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
         inpts=inpts+1
-        zvalues(inpts)=chord_tria_integral(ntrii,nrknot,workarr,
-     1   xtrian,ytrian,necke,ixtri,iytri,npoints,
+        zvalues(inpts)=chord_tria_integral(geo,ntrii,nrknot,workarr,
+     1   xtrian,ytrian,necke,ixtri,npoints,
      2   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0)
      >   write(*,*) 'Processed ',inpts,' chords'

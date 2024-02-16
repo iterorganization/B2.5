@@ -315,7 +315,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &    switch, geo, mpg,
      &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
-     &    st%pl, st%dv, st%rt, st%co, st%sr,
+     &    st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
      &    st%psnc, st%psnl, st_ext, ier0)
       do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
@@ -417,7 +417,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1, dtim,
-     &  st%pl, st%dv, st%rt, st%co, st%sr,
+     &  st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
      &  st%psnc, st%psnl, st_ext, ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo')
 *   ..set nep

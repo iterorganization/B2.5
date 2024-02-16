@@ -11,9 +11,9 @@
 !WG_TODO      use b2mod_layer
 !WG_TODO      use b2mod_elements
 !WG_TODO      use b2mod_sputter
-!WG_TODO      use b2mod_first_flight
+      use b2mod_first_flight
       use b2mod_constants
-!WG_TODO      use b2mod_neutrals_namelist
+      use b2mod_neutrals_namelist
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
@@ -98,7 +98,7 @@
 *.declarations
 
 *   ..local variables
-      integer is, k
+      integer iCv, iFc, is, k
 #ifdef WG_TODO
       integer ib, ic, ibnd, itrack
       integer, save :: jxi, jxa, jsep
@@ -128,8 +128,8 @@
      &  flxtmp(nCv)
 #endif
       integer sput_src,
-#ifdef WG_TODO
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
+#ifdef WG_TODO
      1  coreregn2,
 #endif
      2  sput_chem_model, reflection_on, sputter_energy_on
@@ -142,11 +142,11 @@
 #endif
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  f_redep(nCv,0:ns-1)
-#ifdef WG_TODO
       real (kind=R4) :: start_time, end_time
+#ifdef WG_TODO
       logical equilibrium(ntrack), over_erosion
 #endif
-      logical new_sputter_namelist
+      logical new_sputter_namelist, catch_up
 #ifndef NO_CDF
 #include <netcdf.inc>
       integer :: status, ncid, ndims, nvars, natts, unlimid
@@ -159,24 +159,22 @@
       external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-#ifdef WG_TODO
       intrinsic mod
-#endif
 #if ( defined(_OPENMP) && defined(CRAY) )
       real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
 #endif
 *   ..initialisation
       save sput_src,
-#ifdef WG_TODO
      *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
+#ifdef WG_TODO
      1     coreregn2,
 #endif
      5     sput_chem_model, reflection_on, sputter_energy_on
       data sput_src/1/,
-#ifdef WG_TODO
      *     in_no_of_angles/9/,
      *     in_size_of_table/200000/,
+#ifdef WG_TODO
      1     coreregn2/4/,
 #endif
      7     sput_chem_model/0/,
@@ -201,47 +199,37 @@
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         if(switch%b2stbr_first_flight.ne.0) then
-        call xerrab ('b2stbr -- first flight options not av. for WG')
-#ifdef WG_TODO
-           call ipgeti ('b2stbr_first_flight_no_of_flights',
-     *          in_no_of_angles)
-           call ipgeti ('b2stbr_first_flight_table_size',
-     *          in_size_of_table)
-           in_no_of_start_points = 2*(nx+2)+2*max(nncut,1)*(ny+2)
-           call ipgeti ('b2stbr_first_flight_no_of_start_points',
-     *       in_no_of_start_points)
-           call xertst (0.lt.in_no_of_start_points,
-     *      'faulty input first_flight_no_of_start_points')
+          call ipgeti ('b2stbr_first_flight_no_of_flights',
+     *      in_no_of_angles)
+          call ipgeti ('b2stbr_first_flight_table_size',
+     *      in_size_of_table)
+          in_no_of_start_points = nCv - mpg%nCi
+          call ipgeti ('b2stbr_first_flight_no_of_start_points',
+     *      in_no_of_start_points)
+          call xertst (0.lt.in_no_of_start_points,
+     *     'faulty input first_flight_no_of_start_points')
 #ifdef _OPENMP
-           start_time = omp_get_wtime()
+          start_time = omp_get_wtime()
 #else
-           call cpu_time(start_time)
+          call cpu_time(start_time)
 #endif
-           call alloc_b2mod_first_flight(
-     *          in_no_of_angles,in_size_of_table,
-     *          in_no_of_start_points,switch%in_dl)
-           do iCv=1,nCv
-             if(leftix(ix,ib).eq.-2 .and. region(ix,ib,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'W',output)
-             if(rightix(ix,ib).eq.nx+1 .and. region(ix,ib,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'E',output)
-           enddo
-           do iCv=1,nCv
-             if(topiy(ib,iy).eq.ny+1 .and. region(ib,iy,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'N',output)
-             if(bottomiy(ib,iy).eq.-2 .and. region(ib,iy,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'S',output)
-           enddo
+          call alloc_b2mod_first_flight(
+     *      in_no_of_angles,in_size_of_table,
+     *      in_no_of_start_points,switch%b2stbr_in_dl)
+          do iCv=mpg%nCi+1,nCv
+            iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+            call setup_b2mod_first_flight(mpg,geo,iCv,iFc,
+     *       switch%b2stbr_output)
+          enddo
 #ifdef _OPENMP
-           end_time = omp_get_wtime()
+          end_time = omp_get_wtime()
 #else
-           call cpu_time(end_time)
+          call cpu_time(end_time)
 #endif
-           write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
-     *          'Used ',ptr_table,' out of ',size_of_table,
-     *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
-     *          end_time-start_time,' cpu-seconds'
-#endif
+          write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
+     *     'Used ',ptr_table,' out of ',size_of_table,
+     *     ' (',real(ptr_table)/real(size_of_table)*100,'%)',
+     *      end_time-start_time,' cpu-seconds'
         endif
         call ipgeti ('b2stbr_sput_src', sput_src)
         call ipgeti ('b2stbr_sput_chem_model', sput_chem_model)
@@ -268,7 +256,6 @@
 #endif
         call ipgeti ('b2stbr_no_b2stbr_phys_call', no_b2stbr_phys_call)
       else
-#ifdef WG_TODO
         if(neutrals_time_mod.gt.0.0_R8) then
           write(*,*) 'NEUTRALS: ',tim,mod(tim,neutrals_time_mod),
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
@@ -288,13 +275,12 @@
         if(catch_up) then
           if(neutrals_time_mod.gt.0.0_R8)
      >     neutrals_count=int(tim/neutrals_time_mod)
-          call read_neutrals_namelist(nx, ny, ns, .true.)
+          call read_neutrals_namelist(ns, mpg, switch, .true.)
           new_sputter_namelist=.true.
           call xertst (nstrat.le.nstraid,
      &     'Increase DEF_NSTRA in b2mod_dimensions')
           call write_b2mod_neutrals_namelist
         endif
-#endif
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
