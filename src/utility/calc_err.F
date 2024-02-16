@@ -175,16 +175,27 @@
              write(71,'(a,a3,a,a3,a,es10.3)')
      &        ' C_eraNa',chns,'/C_Na',chns,'    =',
      &        maxval(abs(era))/maxval(abs(exact_na(:,is)))
-           else
-             write(71,'(a,a3,a,a3,a,a4)')
-     &        ' L2eraNa',chns,'/L2Na',chns,'    =',' Inf'
-             write(71,'(a,a3,a,a3,a,a4)')
-     &        ' C_eraNa',chns,'/C_Na',chns,'    =',' Inf'
-           endif                                                        !srv 09.07.18 }
+         else
+           write(71,'(a,a3,a,a3,a,a4)')
+     &      ' L2eraNa',chns,'/L2Na',chns,'    =',' Inf'
+           write(71,'(a,a3,a,a3,a,a4)')
+     &      ' C_eraNa',chns,'/C_Na',chns,'    =',' Inf'
+         endif                                                          !srv 09.07.18 }
 
-           write(71,*)
-         enddo
-       endif
+         write(71,*)
+       enddo
+
+       call calc_err_cc(nCv, 'te', pl%te, exact_te, qe)                 !srv 29.12.18
+
+       call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe) 
+
+
+       filename='exact_ua_us.dat'
+       call find_file(filename,l_exist)
+       call xertst(l_exist,'No exact_ua_us.dat file')
+       open(70,file=trim(filename))
+       read (70,*) ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
+       close(70)
 
        if (b2news_solving(4)) then
          if (any(solveee(0:mpg%nnreg(0)))) then
@@ -266,11 +277,7 @@
          enddo
        endif
 
-       if (b2news_solving(3).and.
-     &     any(solvepo(0:mpg%nnreg(0)))) then
-         call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8,
-     &                    switch, itim)
-       endif
+       call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8)
 
        close(71)
        return
