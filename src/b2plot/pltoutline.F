@@ -82,16 +82,17 @@ c
       do iCv=1,mpg%nCi
         brx=geo%cvX(iCv)
         bzy=geo%cvY(iCv)
-#ifdef WG_TODO
-            s=cr(rightix(ix,iy),rightiy(ix,iy))-
-     .        cr(leftix(ix,iy),leftiy(ix,iy))
-            t=cz(rightix(ix,iy),rightiy(ix,iy))-
-     .        cz(leftix(ix,iy),leftiy(ix,iy))
-            u=cr(topix(ix,iy),topiy(ix,iy))-
-     .        cr(bottomix(ix,iy),bottomiy(ix,iy))
-            v=cz(topix(ix,iy),topiy(ix,iy))-
-     .        cz(bottomix(ix,iy),bottomiy(ix,iy))
-#endif
+        s=geo%cvEb(iCv,0)
+        t=geo%cvEb(iCv,1)
+        if((geo%cvBb(iCv,0).gt.0.0_R8.and.geo%cvBb(iCv,2).ge.0.0_R8).or.
+     .     (geo%cvBb(iCv,0).lt.0.0_R8.and.geo%cvBb(iCv,2).lt.0.0_R8))
+     .   then
+          u=-geo%cvEb(iCv,1)
+          v= geo%cvEb(iCv,0)
+        else
+          u= geo%cvEb(iCv,1)
+          v=-geo%cvEb(iCv,0)
+        end if
         rmagst=sqrt(s**2+t**2)
         rmaguv=sqrt(u**2+v**2)
 
