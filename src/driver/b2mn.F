@@ -4,6 +4,7 @@
       program b2mn
       use b2mod_types
       use b2mod_main
+     , , only: b2mn_init, b2mn_step, b2mn_fin
       use b2mod_ad
      , , only: nncf
       use b2us_data

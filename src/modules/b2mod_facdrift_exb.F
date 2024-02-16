@@ -34,6 +34,7 @@
       subroutine b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
       use b2mod_indirect
       use b2mod_geo
+     & , only: cr, cz, crx, cry 
       use b2mod_work
       implicit none
       integer nx, ny, ramp_slow
