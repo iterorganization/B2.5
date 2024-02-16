@@ -9,6 +9,7 @@ c
       use b2mod_b2plot_values
       use b2mod_subsys
       use eirmod_ctrig
+      use b2us_data
       implicit none
       character*(*) filename
       character*80 dataname
@@ -41,9 +42,9 @@ c
           read(99,*,err=30,end=40) x1,y1,z1,xvalues(inpts+1)
         endif
         inpts=inpts+1
-        yvalues(inpts)=chord_tria_value(ntrii,nrknot,
+        yvalues(inpts)=chord_tria_value(geo,ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,
+     2   xtrian,ytrian,necke,ixtri,
      2   x1,y1,z1,dx1,dy1,dz1,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab

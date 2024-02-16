@@ -85,14 +85,14 @@ c
       common /t_ratio/ ratio
 
       real (kind=R8) ::
+     1   r_ref, z_ref, s_ref(nomp), profile(nomp),
 #ifdef WG_TODO
-     1   r_ref, z_ref, s_ref(mpg%nFt),
      5   bas_vis_piece(mpg%nCv,0:nsd_local-1),
      6   uedge_c(DEF_NXD,DEF_NYD), uedge_v(DEF_NXD,DEF_NYD,1:4),
-     7   corners(DEF_NXD+1,DEF_NYD+1), profile(mpg%nFt),
+     7   corners(DEF_NXD+1,DEF_NYD+1),
 #endif
      8   safetyfactor(mpg%nFt), shear(mpg%nFt), rave(mpg%nFt)
-      real (kind=R8) ::                                                !cjk
+      real (kind=R8) ::
      *   nuab(mpg%nCv,0:nsd_local,0:nsd_local),
      *   nua(mpg%nCv,0:nsd_local),
      *   nustar(mpg%nCv,0:nsd_local),
@@ -121,13 +121,15 @@ c
      *   pr(:), pz(:), ro(:,:), up(:,:), vv(:,:), ww(:,:),
      *   fnax(:,:), fnay(:,:), fmox(:,:), fmoy(:,:),
      *   fhmx(:,:), fhmy(:,:), fhpx(:,:), fhpy(:,:),
+     *   flux_density(:,:,:), cv_flux(:,:,:),
      *   cvsa_cl_x(:,:), cvsa_cl_y(:,:),
      *   fllim0fna_x(:,:), fllim0fna_y(:,:),
      *   fllim0fhi_x(:,:), fllim0fhi_y(:,:),
      *   energy_balance(:), energy_balance2(:), particle_balance(:,:),
      *   energy_balance_old(:), wall_tmp(:,:), trg_tmp(:,:),
      *   k1(:), nu1(:), tau(:), flf(:,:), flv(:,:), wrkf2(:,:),
-     *   hce(:,:), alf(:,:), sig(:,:)
+     *   hce(:,:), alf(:,:), sig(:,:), gte(:), gti(:),
+     *   ehxp(:), smbch(:,:), smbtf(:,:), smbvh(:,:), smbvv(:,:)
       real (kind=R8), allocatable ::
      *   div_fna(:,:), div_fmo(:,:), div_fhm(:,:), div_fhp(:,:),
      *   div_fhe(:), div_fhi(:), div_fhet(:), div_fhit(:),
@@ -336,6 +338,15 @@ c
       allocate(fhmy(mpg%nCv,0:nsd_local-1))
       allocate(fhpx(mpg%nCv,0:nsd_local-1))
       allocate(fhpy(mpg%nCv,0:nsd_local-1))
+      allocate(flux_density(mpg%nFc,0:1,0:nsd_local-1))
+      allocate(cv_flux(mpg%nCv,0:1,0:nsd_local-1))
+      allocate(ehxp(mpg%nCv))
+      allocate(gte(mpg%nCv))
+      allocate(gti(mpg%nCv))
+      allocate(smbch(mpg%nCv,0:3))
+      allocate(smbtf(mpg%nCv,0:3))
+      allocate(smbvh(mpg%nCv,0:3))
+      allocate(smbvv(mpg%nCv,0:3))
       allocate(div_fna(mpg%nCv,0:nsd_local-1))
       allocate(div_fmo(mpg%nCv,0:nsd_local-1))
       allocate(div_fhm(mpg%nCv,0:nsd_local-1))
@@ -840,6 +851,41 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
      & state%co%alfx_c, state%co%sigx_c,
      & state%rt%rza, state%rt%rz2, state_ext,
      & state%srw%she0, state%srw%shi0, state%srw%shn0, state%srw)
+      if(switch%b2sigp_style.ne.2) then
+       call b2nxfx (mpg%nCv, mpg%nFc, mpg%nVx, switch, geo, mpg, qe,
+     &   state%dv%ne, state%pl%te, state%pl%po,
+     &   ehxp, wrkfs(1,0), wrkfs(1,1))
+       call gradc_p(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+     &   state%pl%ti, wrkv, gti)
+       call gradc_p(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+     &   state%pl%te, wrkv, gte)
+       do is = 0, state%ns-1
+        call b2sifr_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns, is,
+     &   switch, geo, mpg,
+     &   state%pl%na, state%pl%ua, state%pl%te, state%pl%ti,
+     &   state%dv%ni, state%dv%ne, state%dv%ne2, state%rt%rza,
+     &   state%rt%rz2, ehxp, state%dv%lnlam,
+     &   state%co%cthe, state%co%cthi, state_ext,
+     &   smbch, smbtf, state%srw%smpr(:,is), state%srw%smpt(:,is),
+     &   state%srw%smfr(:,is), wrkc, gti, gte)
+        state%srw%b2npmo_smaf(:,:,is)=smbch(:,:)+smbtf(:,:)
+        call b2sigp (mpg%nCv, mpg%nFc, mpg%nVx, is,
+     &   switch, geo, mpg, state%rt%rza(:,is),
+     &   state%pl%na(:,is), state%pl%ti, state%pl%tn,
+     &   state%dv%ne, state%pl%te, state%pl%po,
+     &   state%srw%b2npmo_smag(1,0,is),
+     &   wrkcs(1,0), wrkcs(1,1), wrkcs(1,2))
+        call b2siav (mpg%nCv, mpg%nFc, mpg%nVx, ns, is,
+     &   switch, geo, mpg, am(is)*mp,
+     &   state%pl%ua(:,is), state%pl%te, state%pl%ti,
+     &   state%pl%na(:,is), state%dv%ni(:,1), state%dv%ne2,
+     &   state%rt%rz2, state%dv%lnlam,
+     &   state%co%hcix_c, state%co%cvsahz_cl(:,:,is),
+     &   smbvh, smbvv, state%co%kt_neo,
+     &   wrkcs(1,0), wrkcs(1,1), wrkcs(1,2))
+        state%srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)
+       end do
+      end if
 c
       call alloc_b2mod_boundary(DEF_NXD, DEF_NYD, ns, nbcd, nnisod)
       if (boundary_namelist.eq.1)
@@ -1332,6 +1378,8 @@ c
       xcol=1
       zcol=1
       neo_ic=3    ! banana plateau + Pfirsch-Schlueter
+      ic_active(1:mpg%nCi)=.true.
+      ic_active(mpg%nCi+1:mpg%nCv)=.false.
       call ipgeti ('neoclassical_ic', neo_ic)
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
@@ -1376,20 +1424,31 @@ c
      .    state%co%fllim0fhi(1,1,is),fllim0fhi_y(1,is))
         uutraj(:,is)=state%pl%ua(:,is)
       enddo
-#ifdef WG_TODO
       do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            vv(ix,iy,is)=fna(ix,iy,1,1,is)/na(ix,iy,is)/gs(ix,iy,1)
-            up(ix,iy,is)=
-     .       fna(ix,iy,0,0,is)/na(ix,iy,is)/gs(ix,iy,0)/qz(ix,iy,1)
-            arrowx(ix,iy,is)=up(ix,iy,is)
-            arrowy(ix,iy,is)=vv(ix,iy,is)
-            vvtraj(ix,iy,is)=vv(ix,iy,is)
-          enddo
-        enddo
+        do iFc = 1, mpg%nFc
+          if (geo%fcQalf(iFc,0).ne.0.0_R8) then
+            flux_density(iFc,0,is)=state%dv%fna(iFc,0,is)
+     .       /(geo%fcS(iFc)*geo%fcQalf(iFc,0))
+          else
+            flux_density(iFc,0,is) = 0.0_R8
+          end if
+          if (geo%fcQalf(iFc,1).ne.0.0_R8) then
+            flux_density(iFc,1,is)=state%dv%fna(iFc,1,is)
+     .       /(geo%fcS(iFc)*geo%fcQalf(iFc,1))
+          else
+            flux_density(iFc,1,is) = 0.0_R8
+          end if
+        end do
+        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
+     .     flux_density(1,0,is),cv_flux(1,0,is))
+        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
+     .     flux_density(1,1,is),cv_flux(1,1,is))
+        up(:,is)=cv_flux(:,0,is)/state%pl%na(:,is)
+        vv(:,is)=cv_flux(:,1,is)/state%pl%na(:,is)
+        arrowx(:,is)=up(:,is)
+        arrowy(:,is)=vv(:,is)
+        vvtraj(:,is)=vv(:,is)
       enddo
-#endif
       do iFt=1,mpg%nFt
         rave(iFt)=0.0_R8
         t1=0.0_R8
@@ -1519,6 +1578,8 @@ c
             deallocate(alf,hce,sig)
             deallocate(flf,flv,wrkf2)
             deallocate(fnax,fnay,fmox,fmoy,fhpx,fhpy,fhmx,fhmy)
+            deallocate(flux_density,cv_flux)
+            deallocate(ehxp,gte,gti,smbch,smbtf,smbvh,smbvv)
             deallocate(div_fna,div_fmo,div_fhm,div_fhp)
             deallocate(div_fhe,div_fhi,div_fch,div_fhj)
             deallocate(div_fhn,div_fkt,div_fzt,div_fhet,div_fhit)
@@ -1614,6 +1675,8 @@ c
           deallocate(alf,hce,sig)
           deallocate(flf,flv,wrkf2)
           deallocate(fnax,fnay,fmox,fmoy,fhpx,fhpy,fhmx,fhmy)
+          deallocate(flux_density,cv_flux)
+          deallocate(ehxp,gte,gti,smbch,smbtf,smbvh,smbvv)
           deallocate(div_fna,div_fmo,div_fhm,div_fhp)
           deallocate(div_fhe,div_fhi,div_fch,div_fhj)
           deallocate(div_fhn,div_fkt,div_fzt,div_fhet,div_fhit)
@@ -2878,31 +2941,28 @@ c
           description='zt at previous time step (s^{-2}?)'
           nz=1
           call copy(state%psnl%zt,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case ('smth')
           description='Thermal force (N)'
           nz=ns
-          mach(-1:nx,-1:ny,0:nz-1)=smpr(-1:nx,-1:ny,0:nz-1)+
-     .                             smpt(-1:nx,-1:ny,0:nz-1)
+          mach(:,:)=state%srw%smpr(:,:)+state%srw%smpt(:,:)
           call copy(mach,1.0_R8,nz,textpl)
         case ('smpr')
           description='Thermal force (proportional to exhp) (N)'
           nz=ns
-          call copy(smpr,1.0_R8,nz,textpl)
+          call copy(state%srw%smpr,1.0_R8,nz,textpl)
         case ('smpt')
           description='Thermal force '//
      .     '(proportional to T_{i} and T_{e} gradients) (N)'
           nz=ns
-          call copy(smpt,1.0_R8,nz,textpl)
+          call copy(state%srw%smpt,1.0_R8,nz,textpl)
         case ('smfr')
           description='Friction force (N)'
           nz=ns
-          call copy(smfr,1.0_R8,nz,textpl)
+          call copy(state%srw%smfr,1.0_R8,nz,textpl)
         case ('smcf')
           description='Centrifugal force (N)'
           nz=ns
-          call copy(smcf,1.0_R8,nz,textpl)
-#endif
+          call copy(state%srw%smcf,1.0_R8,nz,textpl)
         case ('pot')
           description='Potential energy (eV) (cum. ionisation energy)'
           nz=ns
@@ -3333,7 +3393,6 @@ c
      .                state%dv%ni(:,1)*state%sr%szt(:,3)*state%pl%zt(:)
           endif
           call copy(mach,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case ('smaf')
           description='smaf (extended friction term) (N)'
           nz=ns
@@ -3356,18 +3415,17 @@ c
               return
             endif
             do is=0,ns-1
-              mach(:,:,is)=b2npmo_smaf(:,:,isel,is)
+              mach(:,is)=state%srw%b2npmo_smaf(:,isel,is)
             enddo
             write(*,*)
      &         '"smaf (extended friction term)" option with ',isel
           else
             description='Total ' // trim(description)  ! IGNORE
             do is=0,ns-1
-              mach(-1:nx,-1:ny,is)=b2npmo_smaf(-1:nx,-1:ny,0,is)+
-     .          ua(-1:nx,-1:ny,is)*b2npmo_smaf(-1:nx,-1:ny,1,is)+
-     .          ro(-1:nx,-1:ny,is)*b2npmo_smaf(-1:nx,-1:ny,2,is)+
-     .          ro(-1:nx,-1:ny,is)*b2npmo_smaf(-1:nx,-1:ny,3,is)*
-     .          ua(-1:nx,-1:ny,is)
+              mach(:,is)=state%srw%b2npmo_smaf(:,0,is)+
+     .          state%pl%ua(:,is)*state%srw%b2npmo_smaf(:,1,is)+
+     .          ro(:,is)*state%srw%b2npmo_smaf(:,2,is)+
+     .          ro(:,is)*state%srw%b2npmo_smaf(:,3,is)*state%pl%ua(:,is)
             end do
           end if
           call copy(mach,1.0_R8,nz,textpl)
@@ -3395,18 +3453,17 @@ c
               return
             endif
             do is=0,ns-1
-              mach(:,:,is)=b2npmo_smag(:,:,isel,is)
+              mach(:,is)=state%srw%b2npmo_smag(:,isel,is)
             enddo
             write(*,*)
      &         '"smag (pressure gradient term)" option with ',isel
           else
             description='Total ' // trim(description)  ! IGNORE
             do is=0,ns-1
-              mach(-1:nx,-1:ny,is)=b2npmo_smag(-1:nx,-1:ny,0,is)+
-     .          ua(-1:nx,-1:ny,is)*b2npmo_smag(-1:nx,-1:ny,1,is)+
-     .          ro(-1:nx,-1:ny,is)*b2npmo_smag(-1:nx,-1:ny,2,is)+
-     .          ro(-1:nx,-1:ny,is)*b2npmo_smag(-1:nx,-1:ny,3,is)*
-     .          ua(-1:nx,-1:ny,is)
+              mach(:,is)=state%srw%b2npmo_smag(:,0,is)+
+     .          state%pl%ua(:,is)*state%srw%b2npmo_smag(:,1,is)+
+     .          ro(:,is)*state%srw%b2npmo_smag(:,2,is)+
+     .          ro(:,is)*state%srw%b2npmo_smag(:,3,is)*state%pl%ua(:,is)
             end do
           end if
           call copy(mach,1.0_R8,nz,textpl)
@@ -3434,22 +3491,20 @@ c
               return
             endif
             do is=0,ns-1
-              mach(:,:,is)=b2npmo_smav(:,:,isel,is)
+              mach(:,is)=state%srw%b2npmo_smav(:,isel,is)
             enddo
             write(*,*)
      &         '"smav (additional viscosity term)" option with ',isel
           else
             description='Total ' // trim(description)  ! IGNORE
             do is=0,ns-1
-              mach(-1:nx,-1:ny,is)=b2npmo_smav(-1:nx,-1:ny,0,is)+
-     .          ua(-1:nx,-1:ny,is)*b2npmo_smav(-1:nx,-1:ny,1,is)+
-     .          ro(-1:nx,-1:ny,is)*b2npmo_smav(-1:nx,-1:ny,2,is)+
-     .          ro(-1:nx,-1:ny,is)*b2npmo_smav(-1:nx,-1:ny,3,is)*
-     .          ua(-1:nx,-1:ny,is)
+              mach(:,is)=state%srw%b2npmo_smav(:,0,is)+
+     .          state%pl%ua(:,is)*state%srw%b2npmo_smav(:,1,is)+
+     .          ro(:,is)*state%srw%b2npmo_smav(:,2,is)+
+     .          ro(:,is)*state%srw%b2npmo_smav(:,3,is)*state%pl%ua(:,is)
             end do
           end if
           call copy(mach,1.0_R8,nz,textpl)
-#endif
         case ('rco')
           description='RESCO'
           nz=ns
@@ -5847,16 +5902,16 @@ c     assumes that bb is OK for 1d cases
             enddo
           enddo
         case('traj')     ! trajectories
-          stack_req=(/5,0,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          if(istack(5).gt.0) then
-            stack_req=(/7+istack(iistack),0,0,0,0,0,0/)
+          if(istack(1).gt.0) then
+            stack_req=(/3+istack(iistack),0,0,0,0,0,0/)
           else
-            stack_req=(/7+istack(iistack),0,0,1,0,0,0/)
+            stack_req=(/3+istack(iistack),0,0,1,0,0,0/)
           endif
           if(bad_args(stack_req)) return
-          call caltraj(istack(iistack-6-istack(iistack)),
-     +     7+istack(iistack))
+          call caltraj(istack(iistack-2-istack(iistack)),
+     +     3+istack(iistack))
           call pop_stack(stack_req)
         case('stoe')     ! matrix --> Eirene array
           stack_req=(/0,0,0,1,0,0,0/)
@@ -6054,6 +6109,13 @@ c     assumes that bb is OK for 1d cases
           if(bad_args(stack_req)) return
           do is=0,ns-1
             vvtraj(:,is)=work(:,min(is,ndim(2,iwrk)-1),iwrk)
+          enddo
+          goto 2059
+        case('icse')     ! set ic_active from matrix stack
+          stack_req=(/0,0,0,1,0,0,0/)
+          if(bad_args(stack_req)) return ! 2900
+          do iCv=1,mpg%nCi
+            ic_active(iCv)=work(iCv,0,iwrk).ne.0.0_R8
           enddo
           goto 2059
         case('arox')     ! set arrow field x-component from matrix
@@ -7077,47 +7139,48 @@ cdpc still in testing phase
             return
           endif
           call strcopy(16,256,textwwk(is1,iwwrk),spop(sstack,isstack))
-#ifdef WG_TODO
         case('tranprof') ! output transport profile
           stack_req=(/0,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           open(99,file='b2.transport.inputfile')
           write(99,*) '&TRANSPORT'
-          r_ref=(crx(jxa,jsep,2)+crx(jxa,jsep,3))/2.0_R8
-          z_ref=(cry(jxa,jsep,2)+cry(jxa,jsep,3))/2.0_R8
-          do iy=-1,jsep
-            s_ref(iy)=-sqrt((cr(jxa,iy)-r_ref)**2+
-     1       (cz(jxa,iy)-z_ref)**2)
+          r_ref=(geo%vxX(mpg%fcVx(ifsepomp,1))+
+     1           geo%vxX(mpg%fcVx(ifsepomp,2)))/2.0_R8
+          z_ref=(geo%vxY(mpg%fcVx(ifsepomp,1))+
+     1           geo%vxY(mpg%fcVx(ifsepomp,2)))/2.0_R8
+          do i=1,icsepomp-1
+            s_ref(i)=-sqrt((geo%cvX(omp(i))-r_ref)**2+
+     1                     (geo%cvY(omp(i))-z_ref)**2)
           enddo
-          do iy=jsep+1,ny
-            s_ref(iy)=sqrt((cr(jxa,iy)-r_ref)**2+
-     1       (cz(jxa,iy)-z_ref)**2)
+          do i=icsepomp,nomp
+            s_ref(i)=sqrt((geo%cvX(omp(i))-r_ref)**2+
+     1                    (geo%cvY(omp(i))-z_ref)**2)
           enddo
-          s_ref(-1)=1.1_R8 * s_ref(-1)
-          s_ref(ny)=1.1_R8 * s_ref(ny)
+          s_ref(1)=1.1_R8*s_ref(1)
+          s_ref(nomp)=1.1_R8*s_ref(nomp)
           do is=0,ns-1
             if(.not.is_neutral(is)) then
-              do iy=-1,ny
-                profile(iy)=dna0(jxa,iy,is)
+              do i=1,nomp
+                profile(i)=state%co%dna0(omp(i),is)
               enddo
-              call write_crazy(99,ny+2,1,is,s_ref,profile)
+              call write_crazy(99,nomp,1,is,s_ref,profile)
             endif
           enddo
           do is=0,ns-1
             if(.not.is_neutral(is)) then
-              do iy=-1,ny
-                profile(iy)=hcib(jxa,iy,is)/na(jxa,iy,is)
+              do i=1,nomp
+                profile(i)=state%co%hcib(omp(i),is)/
+     1                     state%pl%na(omp(i),is)
               enddo
-              call write_crazy(99,ny+2,3,is,s_ref,profile)
+              call write_crazy(99,nomp,3,is,s_ref,profile)
             endif
           enddo
-          do iy=-1,ny
-            profile(iy)=hce0(jxa,iy)/ne(jxa,iy)
+          do iy=1,nomp
+            profile(i)=state%co%hce0(omp(i))/state%dv%ne(omp(i))
           enddo
-          call write_crazy(99,ny+2,4,0,s_ref,profile)
+          call write_crazy(99,nomp,4,0,s_ref,profile)
           write(99,*) '/'
           close(99)
-#endif
         case default SVALUE
           cflag=.false.
       END SELECT SVALUE
@@ -11209,7 +11272,7 @@ c
       end subroutine select_constants
 
       subroutine select_flvalue
-      integer is, iclv
+      integer ix, iy, is, iclv
 
       cflag=.true.
       FLVALUE: select case(cval)
@@ -11647,6 +11710,37 @@ c
           if(bad_args(stack_req)) return
           call t_setnplot(istack(iistack))
           call pop_stack(stack_req)
+        case('t_xy')     ! set xy range for active cell to start trajectories
+          stack_req=(/4,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          if(.not.check_classical_grid(mpg)) return
+          iy2=ipop(istack,iistack)
+          ix2=ipop(istack,iistack)
+          iy1=ipop(istack,iistack)
+          ix1=ipop(istack,iistack)
+          if(-1.gt.ix1.or.ix1.gt.mpg%nx.or.
+     &       -1.gt.ix2.or.ix2.gt.mpg%nx) then
+            write(*,*)
+     &       'Faulty parameter ix1, ix2 = ',ix1,ix2,' for t_xy!'
+            return
+          end if
+          if(-1.gt.iy1.or.iy1.gt.mpg%ny.or.
+     &       -1.gt.iy2.or.iy2.gt.mpg%ny) then
+            write(*,*)
+     &       'Faulty parameter iy1, iy2 = ',iy1,iy2,' for t_xy!'
+            return
+          end if
+          if(ix1.eq.0.and.ix2.eq.0) ix2=mpg%nx
+          if(iy1.eq.0.and.iy2.eq.0) iy2=mpg%ny
+          ic_active=.false.
+          do iy=iy1,iy2
+            do ix=ix1,ix2
+              if (mpg%imapCv(ix,iy).gt.0.and.
+     &            mpg%imapCv(ix,iy).le.mpg%nCi) then
+                ic_active(mpg%imapCv(ix,iy))=.true.
+              end if
+            end do
+          end do
         case('reso')     ! reset output
           call resetoutput
         case('swid')     ! part of tcl/tk interface
@@ -11870,7 +11964,7 @@ c calculate neoclassical diagnostics
       use b2mod_types
       implicit none
       integer lu,ndata,kind,is,i
-      real(kind=R8) s_ref(ndata),q(ndata)
+      real(kind=R8) :: s_ref(ndata),q(ndata)
 
       write(lu,'(1x,a,i2,a,i3,a,i4,a)')
      .    'ndata(1,',kind,',',is,')=',ndata,','

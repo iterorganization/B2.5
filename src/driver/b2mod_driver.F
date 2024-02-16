@@ -810,8 +810,8 @@
 *     vol - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 *     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-*     includes a factor 2*pi*crx, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cry.)
+*     includes a factor 2*pi*R, while in the case of cylindrical
+*     symmetry it includes a factor 2*pi*Z.)
 *     It will hold that 0.lt.vol(,).
 *
 *     hx, hy - (-1:nx,-1:ny) real*8 array.

@@ -3,15 +3,11 @@
 
       subroutine b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
-     &  itcnt, solving, rxf, dtim, pl, dv, rt, co, sr,
+     &  itcnt, solving, rxf, dtim, pl, dv, rt, co, sr, srw,
      &  psnc, psnl, st_ext, ierr)
       use b2mod_types
       use b2mod_math
       use b2mod_constants
-!WG_TODO      use b2mod_sources
-!WG_TODO     1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
-!WG_TODO     2          smpr, smpt, smfr, smcf
-!WG_TODO: smof -> part of b2mod_sources
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
      2          balance_netcdf, tot_smo0to3, fmo_tot
@@ -48,6 +44,7 @@
       type (B2Coeff), intent (in) :: co
       type (B2Rates), intent (in) :: rt
       type (B2Source), intent (inout) :: sr
+      type (B2SourceWork), intent (inout) :: srw
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
@@ -59,11 +56,8 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
 !WG_TODO     &  smof(nCv,0:3,0:ns-1)
-!WG_TODO_TMP these sources used to be in b2mod_sources
-!            => add again to B2Source?
       real (kind=R8) ::
-     *  smcf(nCv,0:ns-1), smpr(nCv,0:ns-1), smpt(nCv,0:ns-1),
-     *  smfr(nCv,0:ns-1), ubf(nFc), robf(nFc)
+     *  ubf(nFc), robf(nFc)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -299,7 +293,7 @@ c time-dependent treatment                                            !srv 07.07
         call b2sifr_ (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &   pl%na, pl%ua, pl%te, pl%ti, dv%ni, dv%ne, dv%ne2, rt%rza,
      &   rt%rz2, ehxp, dv%lnlam, co%cthe, co%cthi, st_ext,
-     &   smbch, smbtf, smpr(:,is), smpt(:,is), smfr(:,is),
+     &   smbch, smbtf, srw%smpr(:,is), srw%smpt(:,is), srw%smfr(:,is),
      &   wrk0, gti, gte)
        endif
 
@@ -328,18 +322,18 @@ c time-dependent treatment                                            !srv 07.07
      &   smbvv, co%kt_neo, wrk0, wrk1, wrk2)
 *    ..compute centrifugal force term                                   !srv 09.07.01
        call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
-     *   pl%na(:,is), pl%ua(:,is), smbcf, smcf(:,is), ctcfb, wrk0)
+     *   pl%na(:,is), pl%ua(:,is), smbcf, srw%smcf(:,is), ctcfb, wrk0)
 *    ..compute correcting source due to artificial anomalous electric conductivity
        call b2sian (nCv, nFc, is, switch, geo, mpg, dv%fchanml, smban)
 *    ..compute total parallel momentum source
        call b2scopy (nCv*4, sr%smo(:,:,is), 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, sr%smq(:,:,is), 1, smb, 1)
-!WG_TODO       b2npmo_smaf(:,:,is)=smbch(:,:)+smbtf(:,:)                !srv 11.09.09 {
+       srw%b2npmo_smaf(:,:,is)=smbch(:,:)+smbtf(:,:)                    !srv 11.09.09 {
        call b2saxpy (nCv*4, 1.0_R8, smbch, 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                   !srv 11.09.09 }
-!WG_TODO       b2npmo_smag(:,:,is)=smbgp(:,:)
+       srw%b2npmo_smag(:,:,is)=smbgp(:,:)
        call b2saxpy (nCv*4, 1.0_R8, smbgp, 1, smb, 1)
-!WG_TODO       b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)                !srv 03.07.08 {
+       srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)                    !srv 03.07.08 {
        call b2saxpy (nCv*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbvv,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
