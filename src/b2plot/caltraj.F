@@ -613,13 +613,17 @@ CXPB     deltar and deltaz are normally zero, except when crossing periodicity
 CXPB     boundaries, then they translate the particle to the spatial
 CXPB     location of the next computational cell.
 
+         if (iCv.gt.mpg%nCi) then
+           rre = rre + vr*timerun
+           zre = zre + vz*timerun
+           goto 1000
+         end if
+
          radvance=vr*MAX(timerun,1.0e-6_R8)*0.01_R8
          zadvance=vz*MAX(timerun,1.0e-6_R8)*0.01_R8
 
          rre = rre + vr*timerun + radvance
          zre = zre + vz*timerun + zadvance
-
-         if (iCv.gt.mpg%nCi) goto 1000
 
          do while(.not.inside_cell(mpg,geo,rre,zre,iCv))
            radvance=radvance*0.5_R8
@@ -826,11 +830,11 @@ C Projection of the vvtraj upon the axis of the cell (side middle points)
 
       if((geo%cvBb(iCv,0).gt.0.0_R8.and.geo%cvBb(iCv,2).ge.0.0_R8).or.
      .   (geo%cvBb(iCv,0).lt.0.0_R8.and.geo%cvBb(iCv,2).lt.0.0_R8)) then
-        rechvv(1)=(1.0_R8/betrag)*(-geo%cvEb(iCv,1))*vvtraj(iCv,l)
-        rechvv(2)=(1.0_R8/betrag)*  geo%cvEb(iCv,0) *vvtraj(iCv,l)
-      else
         rechvv(1)=(1.0_R8/betrag)*  geo%cvEb(iCv,1) *vvtraj(iCv,l)
         rechvv(2)=(1.0_R8/betrag)*(-geo%cvEb(iCv,0))*vvtraj(iCv,l)
+      else
+        rechvv(1)=(1.0_R8/betrag)*(-geo%cvEb(iCv,1))*vvtraj(iCv,l)
+        rechvv(2)=(1.0_R8/betrag)*  geo%cvEb(iCv,0) *vvtraj(iCv,l)
       end if
 
 C Projection of the uutraj upon the axis of the cell (side middle points)

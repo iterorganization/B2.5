@@ -505,6 +505,10 @@ c
 cxpb  We use the subtended angle method to handle arbitrary cell shapes
 cxpb  The cell sides must be travelled in order
 
+      if (iCv.le.0.or.iCv.gt.mpg%nCi) then
+        inside_cell=.false.
+        return
+      end if
       allocate(done(mpg%cvFcP(iCv,2)))
       done=.false.
       iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
