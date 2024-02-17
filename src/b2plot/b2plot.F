@@ -3757,6 +3757,60 @@ c
           end do
           write(*,*) '"iygt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
+        case ('iclt')
+          description='iclt'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(1:istack(iistack)-1,0)=1.0_R8
+          mach(istack(iistack):mpg%nCv,0)=0.0_R8
+          write(*,*) '"iclt" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('icle')
+          description='icle'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(1:istack(iistack),0)=1.0_R8
+          mach(istack(iistack)+1:mpg%nCv,0)=0.0_R8
+          write(*,*) '"icle" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('iceq')
+          description='iceq'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          mach(istack(iistack),0)=1.0_R8
+          write(*,*) '"iceq" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('icne')
+          description='icne'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=1.0_R8
+          mach(istack(iistack),0)=0.0_R8
+          write(*,*) '"icne" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('icge')
+          description='icge'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(1:istack(iistack)-1,0)=0.0_R8
+          mach(istack(iistack):mpg%nCv,0)=1.0_R8
+          write(*,*) '"icge" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('icgt')
+          description='icgt'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(1:istack(iistack),0)=0.0_R8
+          mach(istack(iistack)+1:mpg%nCv,0)=1.0_R8
+          write(*,*) '"icgt" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('islt')
           description='islt'
           nz=ns
@@ -3841,6 +3895,28 @@ c
           end do
           write(*,*) '"isgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,ns,textpl)
+        case ('ifeq')
+          description='ifeq'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
+          mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
+          write(*,*) '"ifeq" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('iveq')
+          description='iveq'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          do i=1,mpg%vxCvP(istack(iistack),2)
+            iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
+            mach(iCv,0)=1.0_R8
+          end do
+          write(*,*) '"iveq" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('lnlam')
           description='ln \GK\R'
           nz=1
@@ -4269,6 +4345,14 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iCv=1,mpg%nCv
             mach(iCv,0)=real(cvIy(iCv),R8)
+          enddo
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('ic')
+          description='ic'
+          stack_req=(/0,0,0,0,0,0,0/)
+          nz=1
+          do iCv=1,mpg%nCv
+            mach(iCv,0)=real(iCv,R8)
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('ift')
@@ -11210,6 +11294,12 @@ c
         case('ns')       ! ns
           stack_name='integer'
           call ipush(istack,iistack,state%ns)
+        case('ncv')      ! nCv
+          stack_name='integer'
+          call ipush(istack,iistack,mpg%nCv)
+        case('nci')      ! nCi
+          stack_name='integer'
+          call ipush(istack,iistack,mpg%nCi)
         case('nspecies') ! nspecies
           stack_name='integer'
           call ipush(istack,iistack,nspecies)
