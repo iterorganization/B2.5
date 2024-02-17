@@ -1894,7 +1894,8 @@ cxpb size is changed in DIMENSIONS.F
                 elseif (switch%use_eirene.eq.1 .and. 
      &            switch%use_pump.ge.1) then
                   call calc_puff_pump(switch, ns, mpg, nCv, dv, 
-     &               fb_species(ifb), sna_pump, sna_puff, sna_core)
+     &               b2espcr(fb_species(ifb)),sna_pump,
+     &                sna_puff, sna_core)
                   saved_fb_actuator(ifb) = sna_pump*fb_rescale(ifb) - 
      &              sna_core
                 else
