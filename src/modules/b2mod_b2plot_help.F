@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=408,nfns=219,nsparameters=34,nelabels=36,
+      parameter(nlabels=412,nfns=219,nsparameters=34,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
@@ -75,7 +75,7 @@
      7  'nflfnay' , 'nflfhix' , 'nflfhiy' , 'flvisc'  , 'sna'     ,
      8  'she'     , 'shi'     , 'sch'     , 'crx'     , 'cry'     ,
      9  'nh'      , 'qz0'     , 'qz1'     , 'sxperp'  , 'ue'      ,
-     *  'fchp'    , 'za2'     , 'xreg'    , 'yreg'    , 'b2espcr' /
+     *  'fchp'    , 'za2'     , 'freg'    , 'flbl'    , 'b2espcr' /
       data labels(251:300) /
      1  'qc'      , 'bc'      , 'ceqp'    , 'sne'     , 'brne'    ,
      2  'bcne'    , 'exne'    , 'dnneo'   , 'chineo'  , 'vnneo'   ,
@@ -109,9 +109,10 @@
      8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
      9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
      *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     , 'iclt'    /
-      data labels(401:408) /
+      data labels(401:410) /
      1  'icle'    , 'iceq'    , 'icne'    , 'icge'    , 'icgt'    ,
-     2  'ifeq'    , 'iveq'    , 'ic'      /
+     2  'ifeq'    , 'iveq'    , 'ic'      , 'iimp'    , 'iomp'    ,
+     3  'clbl'    , 'tlbl'    /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -384,8 +385,8 @@
      5    'Parallel electron velocity (u_{e}) (m.s^{-1})',
      6    'Parallel current (A)',
      7    'Squared ion charge (e^{2})',
-     8    'X-directed flux region',
-     9    'Y-directed flux region',
+     8    'Flux region index',
+     9    'Face label',
      *    'Nuclear sequence index'/
       data descriptions(251:260) /
      1    'qc',
@@ -552,7 +553,7 @@
      8    'Radial fluid neutral energy flux (W)',
      9    'Flux tube number',
      *    'iclt'/
-      data descriptions(401:408) /
+      data descriptions(401:410) /
      1    'icle',
      2    'iceq',
      3    'icne',
@@ -560,7 +561,12 @@
      5    'icgt',
      6    'ifeq',
      7    'iveq',
-     8    'ic'/
+     8    'ic',
+     9    'Inner midplane cells',
+     *    'Outer midplane cells'/
+      data descriptions(411:412) /
+     1    'Cell label',
+     2    'Flux tube label'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -649,9 +655,10 @@
      8    1,      1,      1,      1,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      1/
-      data dimensions(401:408) /
+      data dimensions(401:412) /
      1    1,      1,      1,      1,      1,
-     2    1,      1,      1/
+     2    1,      1,      1,      1,      1,
+     3    1,      1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
