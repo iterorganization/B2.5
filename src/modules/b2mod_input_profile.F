@@ -680,13 +680,13 @@ cdjm Jan2017 Keep linearised sources for balance
                   iir=CVREGMAX
                 endif
                 lbl = mpg%ftLbl(mpg%cvFt(omp(iy)))
-                do ift=1,mpg%nFt
-                 if (mpg%ftLbl(ift).ne.lbl) cycle
-                 do ic = mpg%ftCvP(ift,1), mpg%ftCvP(ift,1) +
-     &                                    mpg%ftCvP(ift,2) - 1
-                  icv = mpg%ftCv(ic)
-                  iir = mpg%cvReg(icv)
-                  lpflux = mpg%ftReg(mpg%cvFt(icv)).eq.3
+                do iFt=1,mpg%nFt
+                 if (mpg%ftLbl(iFt).ne.lbl) cycle
+                 do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
+     &                                     mpg%ftCvP(iFt,2) - 1
+                  iCv = mpg%ftCv(ic)
+                  iir = mpg%cvReg(iCv)
+                  lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
                   ldiv=mod(iir-1,4)+1.ge.3
                   poloidal_scale_factor = 1.0_R8
                   elm_region=.false.
@@ -717,51 +717,47 @@ cdjm Jan2017 Keep linearised sources for balance
                     endif
 
                     if (kind_coeff.eq.1) then
-                      dna0(icv,nsp(is))=
+                      dna0(iCv,nsp(is))=
      1                 prof(iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.2) then
-                      dpa0(icv,nsp(is))=
+                      dpa0(iCv,nsp(is))=
      1                 prof(iy)*poloidal_scale_factor/
-     &                 (rt%rza(icv,nsp(is))*pl%te(icv)+pl%ti(icv))
+     &                 (rt%rza(iCv,nsp(is))*pl%te(iCv)+pl%ti(iCv))
 
                     elseif (kind_coeff.eq.3) then
-                      hcib(icv,nsp(is))=poloidal_scale_factor*
-     &                 prof(iy)*pl%na(icv,nsp(is))
+                      hcib(iCv,nsp(is))=poloidal_scale_factor*
+     &                 prof(iy)*pl%na(iCv,nsp(is))
 
                     elseif (kind_coeff.eq.4) then
-                      hce0(icv)=prof(iy)*dv%ne(icv)*
+                      hce0(iCv)=prof(iy)*dv%ne(iCv)*
      1                 poloidal_scale_factor
 
                     elseif (kind_coeff.eq.5) then
-                      vla0(icv,0,nsp(is))=
+                      vla0(iCv,0,nsp(is))=
      1                 prof(iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.6) then
-                      vla0(icv,1,nsp(is))=
+                      vla0(iCv,1,nsp(is))=
      1                 prof(iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.7) then
-                      vsa0(icv,nsp(is))=poloidal_scale_factor*
-     1                 prof(iy)*mp*am(nsp(is))*pl%na(icv,nsp(is))
+                      vsa0(iCv,nsp(is))=poloidal_scale_factor*
+     1                 prof(iy)*mp*am(nsp(is))*pl%na(iCv,nsp(is))
 
                     elseif (kind_coeff.eq.8) then
                       if (csig_an_style.eq.0) then
-                        sig0(icv)=prof(iy)*qe*dv%ne(icv)*
+                        sig0(iCv)=prof(iy)*qe*dv%ne(iCv)*
      1                   poloidal_scale_factor
-                      elseif(csig_an_style.eq.1) then
-                        call xerrab
-     1                   ('csig_an_style=1 not yet coded for WG')
-#ifdef WG_TODO
-                        sig0(icv)=prof(iy)*qe*dv%ne(nmdpl,-1)*
+                      elseif(csig_an_style.eq.1.and.nomp.gt.0) then
+                        sig0(iCv)=prof(iy)*qe*dv%ne(omp(1))*
      1                   poloidal_scale_factor
-#endif
                       endif
 
                     elseif (kind_coeff.eq.9) then
-                      alf0(icv)=poloidal_scale_factor*
-     1                 prof(iy)*dv%ne(icv)*
-     2                 sqrt(qe/pl%te(icv))
+                      alf0(iCv)=poloidal_scale_factor*
+     1                 prof(iy)*dv%ne(iCv)*
+     2                 sqrt(qe/pl%te(iCv))
 
                     else
                       write(*,*)

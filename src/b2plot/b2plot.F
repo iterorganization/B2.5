@@ -3024,62 +3024,96 @@ c
           end do
           write(*,*) '"region" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
-#ifdef WG_TODO
-        case ('xreg')
-          description='X-directed flux region'
+        case ('freg')
+          description='Flux region index'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(istack(iistack) .eq. 0) then
-                mach(ix,iy,0)=region(ix,iy,1)
-              else if(istack(iistack) .gt. 0) then
-                if(region(ix,iy,1) .eq. istack(iistack)) then
-                  mach(ix,iy,0)=1.0_R8
-                else
-                  mach(ix,iy,0)=0.0_R8
-                end if
-              else
-                if(region(ix,iy,1) .eq. -istack(iistack)) then
-                  mach(ix,iy,0)=0.0_R8
-                else
-                  mach(ix,iy,0)=1.0_R8
-                end if
+          mach(:,0)=0.0_R8
+          do iFc=1,mpg%nFc
+            if(istack(iistack) .eq. 0) then
+              if(mpg%fcReg(iFc).ne.0) then
+                mach(mpg%fcCv(iFc,1),0)=real(mpg%fcReg(iFc),R8)
+                mach(mpg%fcCv(iFc,2),0)=real(mpg%fcReg(iFc),R8)
               end if
-            end do
+            else if(istack(iistack) .gt. 0) then
+              if(mpg%fcReg(iFc).eq.istack(iistack)) then
+                mach(mpg%fcCv(iFc,1),0)=1.0_R8
+                mach(mpg%fcCv(iFc,2),0)=1.0_R8
+              end if
+            end if
           end do
-          write(*,*) 'X-directed flux "region" option with ',
+          write(*,*) 'Flux "region" option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
-        case ('yreg')
-          description='Y-directed flux region'
+        case ('clbl')
+          description='Cell label'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          do iy=-1,ny
-            do ix=-1,nx
-              if(istack(iistack) .eq. 0) then
-                mach(ix,iy,0)=region(ix,iy,2)
-              else if(istack(iistack) .gt. 0) then
-                if(region(ix,iy,2) .eq. istack(iistack)) then
-                  mach(ix,iy,0)=1.0_R8
-                else
-                  mach(ix,iy,0)=0.0_R8
-                end if
-              else
-                if(region(ix,iy,2) .eq. -istack(iistack)) then
-                  mach(ix,iy,0)=0.0_R8
-                else
-                  mach(ix,iy,0)=1.0_R8
-                end if
+          mach(:,0)=0.0_R8
+          do iCv=1,mpg%nCv
+            if(istack(iistack) .eq. 0) then
+              if(mpg%cvLbl(iCv).ne.0) then
+                mach(iCv,0)=real(mpg%cvLbl(iCv),R8)
               end if
-            end do
+            else
+              if(mpg%cvLbl(iCv).eq.istack(iistack)) then
+                mach(iCv,0)=1.0_R8
+              end if
+            end if
           end do
-          write(*,*) 'Y-directed flux "region" option with ',
+          write(*,*) 'Cell label option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
-#endif
+        case ('flbl')
+          description='Flux label'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          do iFc=1,mpg%nFc
+            if(istack(iistack) .eq. 0) then
+              if(mpg%fcLbl(iFc).ne.0) then
+                mach(mpg%fcCv(iFc,1),0)=real(mpg%fcLbl(iFc),R8)
+                mach(mpg%fcCv(iFc,2),0)=real(mpg%fcLbl(iFc),R8)
+              end if
+            else
+              if(mpg%fcLbl(iFc).eq.istack(iistack)) then
+                mach(mpg%fcCv(iFc,1),0)=1.0_R8
+                mach(mpg%fcCv(iFc,2),0)=1.0_R8
+              end if
+            end if
+          end do
+          write(*,*) 'Flux label option with ',
+     .     ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('tlbl')
+          description='Flux tube label'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          do iFt=1,mpg%nFt
+            if(istack(iistack) .eq. 0) then
+              if(mpg%ftLbl(iFt).ne.0) then
+                do i=1,mpg%ftCvP(iFt,2)
+                  iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+                  mach(iCv,0)=real(mpg%cvLbl(iCv),R8)
+                end do
+              end if
+            else
+              if(mpg%ftLbl(iFt).eq.istack(iistack)) then
+                do i=1,mpg%ftCvP(iFt,2)
+                  iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+                  mach(iCv,0)=1.0_R8
+                end do
+              end if
+            end if
+          end do
+          write(*,*) 'Flux tube label option with ',
+     .     ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('sna')
           description='Particle source (#.s^{-1})'
           nz=ns
@@ -4451,6 +4485,18 @@ c     assumes that bb is OK for 1d cases
           nz=1
           mach(1:mpg%nCi,0)=0.0_R8
           mach(mpg%nCi+1:mpg%nCv,0)=1.0_R8
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('iimp')
+          description='Inner midplane cells'
+          nz=1
+          mach(:,0)=0.0_R8
+          if (nimp.gt.0) mach(imp(1:nimp),0)=1.0_R8
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('iomp')
+          description='Outer midplane cells'
+          nz=1
+          mach(:,0)=0.0_R8
+          if (nomp.gt.0) mach(omp(1:nomp),0)=1.0_R8
           call copy(mach,1.0_R8,nz,textbl)
         case ('dib2')
           description='Test ion density (m^{-3})'
@@ -11261,20 +11307,15 @@ c
         case('kbolt')    ! Boltzmann constant
           stack_name='real'
           call rpush(rstack,irstack,kbolt)
-#ifdef WG_TODO
-        case('jxi')      ! jxi
-          if(.not.check_classical_grid(mpg)) return
+        case('nimp')     ! nimp
           stack_name='integer'
-          call ipush(istack,iistack,jxi)
-        case('jxa')      ! jxa
-          if(.not.check_classical_grid(mpg)) return
+          call ipush(istack,iistack,nimp)
+        case('nomp')     ! nomp
           stack_name='integer'
-          call ipush(istack,iistack,jxa)
-        case('jsep')     ! jsep
-          if(.not.check_classical_grid(mpg)) return
+          call ipush(istack,iistack,nomp)
+        case('ifsep')    ! ifsep
           stack_name='integer'
-          call ipush(istack,iistack,jsep)
-#endif
+          call ipush(istack,iistack,mpg%iFssep)
         case('ixref')    ! ixref
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
