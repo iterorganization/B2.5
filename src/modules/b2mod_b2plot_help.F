@@ -109,7 +109,7 @@
      8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
      9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
      *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     , 'iclt'    /
-      data labels(401:410) /
+      data labels(401:412) /
      1  'icle'    , 'iceq'    , 'icne'    , 'icge'    , 'icgt'    ,
      2  'ifeq'    , 'iveq'    , 'ic'      , 'iimp'    , 'iomp'    ,
      3  'clbl'    , 'tlbl'    /
