@@ -501,8 +501,8 @@
       call cfruin (iun, mpg%nFc,     mpg%fcReg, 'fcReg')
       call cfruin (iun, mpg%nCv,     mpg%cvReg, 'cvReg')
       call cfruin (iun, mpg%nFt,     mpg%ftReg, 'ftReg')
-      call cfrure (iun, mpg%nCmxFc,  mpg%intcellP,'intcellP')
-      call cfrure (iun, mpg%nCmxFc,  mpg%intcellR,'intcellR')
+      call cfrure (iun, mpg%nCmxFc,  mpg%intcellP, 'intcellP')
+      call cfrure (iun, mpg%nCmxFc,  mpg%intcellR, 'intcellR')
 
       n2 = 0
       nx = 0
@@ -514,9 +514,9 @@
       call cfruin (iun, n2, mpg%imapVx,  'imapVx')
       call cfruin (iun, nx, mpg%icornVX, 'icornVx')
 
-      call cfruin (iun, mpg%nFc, mpg%fcLbl,'fcLbl')
-      call cfruin (iun, mpg%nCv, mpg%cvLbl,'cvLbl')
-      call cfruin (iun, mpg%nFt, mpg%ftLbl,'ftLbl')
+      call cfruin (iun, mpg%nFc, mpg%fcLbl, 'fcLbl')
+      call cfruin (iun, mpg%nCv, mpg%cvLbl, 'cvLbl')
+      call cfruin (iun, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
 #ifdef WG_DEBUG
       imapCv  = mpg%imapCv
@@ -560,8 +560,8 @@
       call cfwuin (nout, mpg%nFc,     mpg%fcReg, 'fcReg')
       call cfwuin (nout, mpg%nCv,     mpg%cvReg, 'cvReg')
       call cfwuin (nout, mpg%nFt,     mpg%ftReg, 'ftReg')
-      call cfwure (nout, mpg%nCmxFc,  mpg%intcellP,'intcellP')
-      call cfwure (nout, mpg%nCmxFc,  mpg%intcellR,'intcellR')
+      call cfwure (nout, mpg%nCmxFc,  mpg%intcellP, 'intcellP')
+      call cfwure (nout, mpg%nCmxFc,  mpg%intcellR, 'intcellR')
 
       if (mpg%isClassicalGrid.eq.1) then
         n2 = (mpg%nx+2)*(mpg%ny+2)
@@ -569,7 +569,7 @@
         call cfwuin (nout, n2, mpg%imapFcx, 'imapFcx')
         call cfwuin (nout, n2, mpg%imapFcy, 'imapFcy')
         call cfwuin (nout, n2, mpg%imapVx,  'imapVx')
-        call cfwuin (nout, mpg%nx, mpg%icornVx,  'icornVx')
+        call cfwuin (nout, mpg%nx, mpg%icornVx, 'icornVx')
       else
         call cfwuin (nout, 0, idum, 'imapCv')
         call cfwuin (nout, 0, idum, 'imapFcx')
@@ -578,9 +578,9 @@
         call cfwuin (nout, 0, idum, 'icornVx')
       endif
 
-      call cfwuin (nout, mpg%nFc,  mpg%fcLbl,'fcLbl')
-      call cfwuin (nout, mpg%nCv,  mpg%cvLbl,'cvLbl')
-      call cfwuin (nout, mpg%nFt,  mpg%ftLbl,'ftLbl')
+      call cfwuin (nout, mpg%nFc, mpg%fcLbl, 'fcLbl')
+      call cfwuin (nout, mpg%nCv, mpg%cvLbl, 'cvLbl')
+      call cfwuin (nout, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
       return
       end subroutine write_mapping
