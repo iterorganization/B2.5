@@ -124,7 +124,7 @@
      &                 iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
       integer, save :: bcene_16_style = 0, bceni_16_style = 0           !srv 16.02.12
-      integer, save :: bcene_15_style = 0                               !srv 19.04.13
+      integer, save :: bcene_15_style = 1                               !srv 19.04.13
       integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
@@ -163,6 +163,9 @@
      &                        phm2 = 1.0e0_R8,
      &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
+      !iyv optional stabilisation coefficients for sheath BCENI/E = 15
+      real (kind=R8), save :: stab_coeff_sheath_te = 0.0_R8,            !iyv 18.12.23
+     &                        stab_coeff_sheath_ti = 0.0_R8             !iyv 13.02.24
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, fedback_species, ishigh
       logical, save :: BCCON14(NBCD)                                    !srv 20.09.17
@@ -292,6 +295,11 @@
        call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
+       call ipgetr ('b2stbc_stab_coeff_sheath_te', stab_coeff_sheath_te) !iyv 18.12.23
+       call ipgetr ('b2stbc_stab_coeff_sheath_ti', stab_coeff_sheath_ti) !iyv 13.02.24
+       call xertst (0.0_R8.le.stab_coeff_sheath_te.and.
+     &              0.0_R8.le.stab_coeff_sheath_ti,
+     &  'faulty sheath BC stabilization coefficients')
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
@@ -6343,12 +6351,13 @@ cxpb code segment analog to b2tfhe
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &            (1.0e0_R8+GAMMAE)*t0
+     &            ((1.0e0_R8+GAMMAE) + stab_coeff_sheath_te)*t0         !iyv 14.12.23
                  she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &            (1.0e0_R8-GAMMAE)*
+     &            ((1.0e0_R8-GAMMAE)*
      &            qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-     &                          - potpar(IB,2))*t0
+     &             - potpar(IB,2)) - stab_coeff_sheath_te*
+     &                te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*t0
               else                                                      !srv 27.02.13
                 cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -6379,12 +6388,13 @@ cxpb code segment analog to b2tfhe
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               (1.0e0_R8+GAMMAE)*t0
+     &            ((1.0e0_R8+GAMMAE)+stab_coeff_sheath_te)*t0           !iyv 14.12.23
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &           (1.0e0_R8-GAMMAE)*qe*
-     &           (po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-     &                                     - potpar(IB,2))*t0
+     &           ((1.0e0_R8-GAMMAE)*qe*
+     &            (po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &            -potpar(IB,2))-stab_coeff_sheath_te*
+     &             te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*t0            !iyv 14.12.23
               else                                                      !srv 27.02.13
                 cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -8391,9 +8401,15 @@ cxpb          endif
             endif                                                     !srv 20.09.17
             SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) -              !srv 11.03.09 20.09.17
-     &       ENIPAR(IB,1)*t0*cs*
+     &       (ENIPAR(IB,1)+stab_coeff_sheath_ti)*t0*cs*               !iyv 13.02.24
      &       abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))   !srv 26.11.02 28.01.03
+            SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =               !iyv 13.02.24
+     &       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
+     &       stab_coeff_sheath_ti*t0*cs*
+     &       TI(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     &       abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))
             if(mdf_fhi.ne.0) then                                     !srv 13.10.06 {
               shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &         shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
@@ -8425,8 +8441,13 @@ cxpb          endif
             endif                                                     !srv 20.09.17
             SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      .       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) -              !srv 11.03.09 20.09.17
-     &       ENIPAR(IB,1)*t0*cs*
+     &       (ENIPAR(IB,1)+stab_coeff_sheath_ti)*t0*cs*
      &       abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))            !srv 26.11.02 28.01.03
+            SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =               !iyv 13.02.24
+     &       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
+     &       stab_coeff_sheath_ti*t0*cs*
+     &       TI(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     &       abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
             if(mdf_fhi.ne.0) then                                     !srv 13.10.06 {
               shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      .         shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +

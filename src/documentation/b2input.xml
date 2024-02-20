@@ -1714,6 +1714,15 @@
 				</switch>
 			</switchgroup>
 			<switch>
+				<name>b2stbc_bcene_15_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If bcene_15_style.eq.0, the electron sheath boundary condition computes the electron current as the difference between the ion flow and the poloidal current.
+					If bcene_15_style.eq.1 (recommended, default), the electron current at the sheath is computed directly from the sheath potential drop. This method has proven numerically more stable, especially in cases with drifts.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbc_bcene_16_style</name>
 				<default>0</default>
 				<type>integer</type>
@@ -3951,11 +3960,29 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbc_stab_coeff_sheath_te</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Stabilizing term to the source associated with boundary condition BCENE=15, when bcene_15_style.eq.1 (default).
+					To help suppress electron temperature oscillations, this parameter can be set to a positive value. The range 1-100 is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_stab_coeff_sheath_ti</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Stabilizing term to the source associated with boundary condition BCENI=15.
+					To help suppress ion temperature oscillations, this parameter can be set to a positive value. The range 1-100 is recommended.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_na_min</name>
 				<default>1.0e4</default>
 				<type>real</type>
 				<description>
-					Minimal density maintained in all cells for all species.
+					Minimal density maintained in all cells for all species (in m^{-3}).
 					It must be true that na_min is smaller than na_new, as well as any of the initial densities provided in b2ai.dat.
 					This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
 				</description>
@@ -3965,7 +3992,23 @@
 				<default>1.0e14</default>
 				<type>real</type>
 				<description>
-					Initial density put in all cells for all new species if not overwritten by initial state file. This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
+					Initial density (in m^{-3}) put in all cells for all new species if not overwritten by initial state file. This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_te_min</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Sets the minimum electron temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_ti_min</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Sets the minimum ion temperature value (in eV).
 				</description>
 			</switch>
 			<switch>

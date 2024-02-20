@@ -47,6 +47,7 @@
       real (kind=R8) ::
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
+      real (kind=R8), save :: te_min = 0.1_R8, ti_min = 0.1_R8            !iyv 18.12.23
       integer, save :: nrings, jxi, jxa, jsep
       save ncall, stylec, pot_eq
 *   ..procedures
@@ -70,6 +71,12 @@
        call ipgeti ('nrings_for_no_speedup_averaging', nrings)     ! IYS 27.03.2019
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
+       call ipgetr ('b2upht_te_min', te_min)                       !iyv 18.12.23 {
+       call xertst (te_min.gt.0.0_R8,
+     &  'faulty internal parameter te_min')
+       call ipgetr ('b2upht_ti_min', ti_min)
+       call xertst (ti_min.gt.0.0_R8,
+     &  'faulty internal parameter ti_min')                        !iyv 18.12.23 }
       endif
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -146,17 +153,18 @@
         if(on_closed_surface(ix,iy) .and.
      *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           dti1(ix,iy) = tt1(iy)/tt0(iy) +
-     *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
+     *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))           ! IYS 19.12.2017
           dte1(ix,iy) = tt3(iy)/tt2(iy) +
-     *         corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))    ! IYS 19.12.2017
+     *         corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))           ! IYS 19.12.2017
         endif
         dte = dte1(ix,iy)
-        dti = dti1(ix,iy)                                       !srv 25.07.17
+        dti = dti1(ix,iy)                                           !srv 25.07.17
         if (leftix(ix,iy).ne.-2)
      >   wrk0(ix,iy) = ne(ix,iy)*dte+ni(ix,iy,0)*dti-
      &                 ne(leftix(ix,iy),leftiy(ix,iy))*dte-
      &                 ni(leftix(ix,iy),leftiy(ix,iy),0)*dti
-        if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)   !xpb
+        if (solvereg(ireg))
+     >   te(ix,iy) = max(te_min*ev,te(ix,iy)+dte)                   !iyv 18.12.23
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1
@@ -165,7 +173,8 @@
         else if (pot_eq.eq.2) then
           po(ix,iy) = 3.1_R8*te(ix,iy)/qe
         end if
-        if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)   !xpb
+        if (solvireg(ireg))
+     >   ti(ix,iy) = max(ti_min*ev,ti(ix,iy)+dti)                   !iyv 18.12.23
        enddo
       enddo
 *   ..adjust ua
