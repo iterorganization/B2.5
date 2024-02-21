@@ -4809,7 +4809,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &           - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
      &          ((1.0e0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
-     &           - switch%stab_coeff_sheath_te*pl%te(iCv))*t0 -         !lkw 31.03.2023
+     &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
      &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
             else
               cs = sqrt(pz(iCv1)/rz(iCv1))
