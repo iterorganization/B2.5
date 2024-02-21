@@ -1736,7 +1736,7 @@ c
       contains
 
       subroutine select_matrix
-      integer i, j, is, ix, ibc, iCv, iFt
+      integer i, j, is, ix, ibc, iCv, iFc, iFt
 #ifdef WG_TODO
       integer iy, iso
 #endif
