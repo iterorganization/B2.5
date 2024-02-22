@@ -87,7 +87,7 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
 *    ..test edge values of the fluxes
        do is = 0, ns-1
-        call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+        call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
        enddo
        call b2xvff (nx, ny, fhe, 'fhe')
        call b2xvff (nx, ny, fhi, 'fhi')

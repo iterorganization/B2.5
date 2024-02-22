@@ -97,7 +97,7 @@
      &  'Supra-luminal velocities !')
 *    ..test edge values of fna
        do is = 0, ns-1
-        call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+        call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
        enddo
       endif
       
