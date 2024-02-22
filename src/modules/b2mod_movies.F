@@ -277,7 +277,6 @@ c OLD interface
       character*(*) filename, name, long_name, units
       integer nCv
       integer index(1), ntstep
-      integer lnblnk
 * variable shapes
       integer dims(2)
 * dimensions and variables

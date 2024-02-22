@@ -537,8 +537,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-      integer lnblnk
-      external lnblnk
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
@@ -632,9 +630,7 @@ c     the line format common
             write(tmpstring2,'(a)') ' (IMP)'
           endif
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           if(values(11).ne.init_value .and.
      &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
@@ -662,7 +658,7 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nimp
               write(nwtf,*) wrk(i),work(imp(i),is,iwrk)
             enddo
@@ -753,15 +749,13 @@ c     the line format common
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
           write(tmpstring2,'(a)') ' (IMP)'
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nimp
               write(nwtf,*) wrk(i),work(imp(i),is,iwrk)
             enddo
@@ -835,8 +829,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-      integer lnblnk
-      external lnblnk
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
@@ -930,9 +922,7 @@ c     the line format common
             write(tmpstring2,'(a)') ' (OMP)'
           endif
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           if(values(11).ne.init_value .and.
      &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
@@ -960,7 +950,7 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nomp
               write(nwtf,*) wrk(i),work(omp(i),is,iwrk)
             enddo
@@ -1051,15 +1041,13 @@ c     the line format common
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
           write(tmpstring2,'(a)') ' (OMP)'
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nomp
               write(nwtf,*) wrk(i),work(omp(i),is,iwrk)
             enddo
