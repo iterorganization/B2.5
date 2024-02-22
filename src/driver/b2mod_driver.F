@@ -352,7 +352,6 @@
       logical streql
       external rratio, smax, streql
 #ifdef IMAS
-      integer lnblnk
       character*16 usrnam
       external usrnam
 #endif
@@ -1102,7 +1101,7 @@
      > 'from run directory - Catalyst will not start.'
        if (use_catalyst .eqv. .true.) then
           call coprocessorinitializewithpython
-     >     (filename,lnblnk(filename))
+     >     (filename,len_trim(filename))
        endif
 #endif
 

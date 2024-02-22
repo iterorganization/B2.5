@@ -85,14 +85,13 @@
       character*8 species_name
       integer i
       logical skip, openp
-      integer lnblnk
       logical streql, isadigit, isplusorminus
-      external streql, lnblnk, isadigit, isplusorminus, strip_spaces
+      external streql, isadigit, isplusorminus, strip_spaces
 
       get_atomic_number = 0
       species_name = repeat(' ',8)
       openp = .false.
-      do i = 1, lnblnk(name)
+      do i = 1, len_trim(name)
         if (.not.openp) then
           skip = .false.
           skip = skip .or. isadigit(name(i:i))

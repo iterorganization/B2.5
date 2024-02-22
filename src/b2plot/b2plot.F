@@ -212,9 +212,8 @@ c
 #endif
       integer i,j,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
-     2 ikind,lnblnk,nz,isel,
+     2 ikind,nz,isel,
      3 i1,ibnd
-      external lnblnk
       data sput_src/1/, ismain/1/, sput_frc/0.0_R8/,
      5     plate_kb/1.6e-3_R8/, plate_ka/1.3e-5_R8/,
      6     vappr_a/-40181.0_R8/, vappr_b/14.80_R8/, stick_coef/0.4_R8/,
@@ -1547,7 +1546,7 @@ c
           if(streql(sval,' ')) then
             write(*,*) 'Read empty string'
           else
-            write(*,*) 'Read string: ',sval(1:lnblnk(sval))
+            write(*,*) 'Read string: ',trim(sval)
           endif
         endif
         goto 10
@@ -2438,7 +2437,7 @@ c
             call copy(mach,1.0_R8,nz,textbl)
           endif
         case ('neutrad')
-          description='Total power loss due to atom radiation (W)'
+          description='Power loss due to atom radiation (W)'
           if (natmi.gt.0) then
             nz=natmi
             mach(:,0:nz-1)=eneutrad(:,1:nz,0)
@@ -5268,21 +5267,18 @@ c     assumes that bb is OK for 1d cases
           if(bad_args(stack_req)) return
           if(.not.check_classical_grid(mpg)) return
           call sumx()
-          graphlabel(iwrk)=graphlabel(iwrk)
-     1                 (1:lnblnk(graphlabel(iwrk)))//' SUMX '
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//' SUMX '
         case('sumy')     ! sum over y
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(.not.check_classical_grid(mpg)) return
           call sumy()
-          graphlabel(iwrk)=graphlabel(iwrk)
-     1                 (1:lnblnk(graphlabel(iwrk)))//' SUMY '
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//' SUMY '
         case('sumft')    ! sum over flux tube
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call sumft()
-          graphlabel(iwrk)=graphlabel(iwrk)
-     1                 (1:lnblnk(graphlabel(iwrk)))//' SUMFT '
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//' SUMFT '
         case('f.x')      ! line plot versus x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5323,15 +5319,13 @@ c     assumes that bb is OK for 1d cases
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call intx()
-          graphlabel(iwrk)=graphlabel(iwrk)
-     1                 (1:lnblnk(graphlabel(iwrk)))//' INTX '
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//' INTX '
         case('inty')     ! integrate over y
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(.not.check_classical_grid(mpg)) return
           call inty()
-          graphlabel(iwrk)=graphlabel(iwrk)
-     1                 (1:lnblnk(graphlabel(iwrk)))//' INTY '
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//' INTY '
         case('f.lx')     ! line plot versus log x
           stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5398,8 +5392,7 @@ c     assumes that bb is OK for 1d cases
           do is=0,ndim(2,iwrk)-1
             work(:,is,iwrk)=abs(work(:,is,iwrk))
           end do
-          graphlabel(iwrk)=
-     .      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//' (ABS)'
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//' (ABS)'
         case('ddx')      ! d/dx
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5408,8 +5401,7 @@ c     assumes that bb is OK for 1d cases
      .        work(1,is,iwrk),wrkv,mach(1,is))
           end do
           work(:,0:ndim(2,iwrk)-1,iwrk)=mach(:,0:ndim(2,iwrk)-1)
-          graphlabel(iwrk)=
-     .      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m) (d/dx)'
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//'/(m) (d/dx)'
         case('ddy')      ! d/dy
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5418,8 +5410,7 @@ c     assumes that bb is OK for 1d cases
      .        work(1,is,iwrk),wrkv,mach(1,is))
           end do
           work(:,0:ndim(2,iwrk)-1,iwrk)=mach(:,0:ndim(2,iwrk)-1)
-          graphlabel(iwrk)=
-     .      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m) (d/dy)'
+          graphlabel(iwrk)=trim(graphlabel(iwrk))//'/(m) (d/dy)'
         case('sumz')     ! sum over ns
           stack_req=(/2,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5445,14 +5436,11 @@ c     assumes that bb is OK for 1d cases
           ndim(2,iwrk)=1
           if(izstrt .ne. izend) then
             graphlabel(iwrk)=
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //' SUM'//
-     2       textwk(izstrt,iwrk)(1:lnblnk(textwk(izstrt,iwrk)))
-     3       //' to'//
-     4       textwk(izend,iwrk)(1:lnblnk(textwk(izend,iwrk)))
+     1       trim(graphlabel(iwrk)) //' SUM'//
+     2       trim(textwk(izstrt,iwrk))//' to'//trim(textwk(izend,iwrk))
           else
             graphlabel(iwrk)=
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2       textwk(izstrt,iwrk)(1:lnblnk(textwk(izstrt,iwrk)))
+     1       trim(graphlabel(iwrk)) // trim(textwk(izstrt,iwrk))
           end if
           textwk(0,iwrk)=textbl(0)
           call pop_stack(stack_req)
@@ -5995,11 +5983,11 @@ c     assumes that bb is OK for 1d cases
           i=index(graphlabel(iwrk),' (CHS)')
           if (i.eq.0) then
            graphlabel(iwrk)=
-     1      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//' (CHS)'
+     1      trim(graphlabel(iwrk))//' (CHS)'
           else
            write(graphlabel(iwrk),'(a,a)')
      1      graphlabel(iwrk)(1:i-1),
-     2      graphlabel(iwrk)(i+6:lnblnk(graphlabel(iwrk)))
+     2      graphlabel(iwrk)(i+6:len_trim(graphlabel(iwrk)))
           endif
         case('bala')     ! balance ???
           stack_req=(/0,0,0,1,0,0,0/)
@@ -6069,7 +6057,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           values(14)=minval(wall_stack(1:nbnd,0:nwdim(2,iwwrk)-1,iwwrk))
           values(15)=maxval(wall_stack(1:nbnd,0:nwdim(2,iwwrk)-1,iwwrk))
-          wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
+          wall_label(iwwrk)=trim(graphlabel(iwrk))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(2,iwrk),iwrk)
           call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
@@ -6092,7 +6080,7 @@ c     assumes that bb is OK for 1d cases
      .     minval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           values(15)=
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
-          wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
+          wall_label(iwwrk)=trim(graphlabel(iwrk))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(2,iwrk),iwrk)
           call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
@@ -6114,7 +6102,7 @@ c     assumes that bb is OK for 1d cases
      .     minval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           values(15)=
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
-          wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
+          wall_label(iwwrk)=trim(graphlabel(iwrk))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(2,iwrk),iwrk)
           call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
@@ -6156,8 +6144,8 @@ c     assumes that bb is OK for 1d cases
               do iatm=1,natmi
                 if (latmscl(iatm).ne.b2espcr(is)) cycle
                 stmp2=trim(textan(iatm-1))
-                if (isaletter(stmp2(lnblnk(stmp2):lnblnk(stmp2))))
-     >           stmp2=stmp2(1:lnblnk(stmp2))//'0'
+                if (isaletter(stmp2(len_trim(stmp2):len_trim(stmp2))))
+     >           stmp2=trim(stmp2)//'0'
                 write(*,'(5a,i3,a,i3,a)')
      .           'We seem to have found a match between ',
      &            trim(textpl(is)),' and ',trim(stmp2),
@@ -6983,22 +6971,22 @@ cdpc still in testing phase
           endif
           do is=0,ndim(2,iwrk)-1
             if(ndim(2,iwrk) .eq. 1) then
-              write(*,'(a,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1                 textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),
+              write(*,'(a,1x,1p,g15.8)')
+     1                 trim(stmp)//trim(textwk(is,iwrk)),
      1                 work(iCv,is,iwrk)
               if(writing_to_file) then
-                write(nwtf,'(a,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1                    textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),
-     1                    work(iCv,is,iwrk)
+                write(nwtf,'(a,1x,1p,g15.8)')
+     1                 trim(stmp)//trim(textwk(is,iwrk)),
+     1                 work(iCv,is,iwrk)
               endif
             else
-              write(*,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1                 textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is,
+              write(*,'(a,i3,1p,g15.8)')
+     1                 trim(stmp)//trim(textwk(is,iwrk)),is,
      1                 work(iCv,is,iwrk)
               if(writing_to_file) then
-                write(nwtf,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1                    textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is,
-     1                    work(iCv,is,iwrk)
+                write(nwtf,'(a,i3,1p,g15.8)')
+     1                 trim(stmp)//trim(textwk(is,iwrk)),is,
+     1                 work(iCv,is,iwrk)
               endif
             endif
           enddo
@@ -7012,8 +7000,7 @@ cdpc still in testing phase
           open(99,file=stmp)
           do is=0,ndim(2,iwrk)-1
             write(99,'(''#'',1x,a,1x,a)')
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))),
-     2       textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk)))
+     1       trim(graphlabel(iwrk)),trim(textwk(is,iwrk))
             do iCv=1,mpg%nCv
               write(99,*) iCv,is,work(iCv,is,iwrk)
             enddo
@@ -7068,8 +7055,7 @@ cdpc still in testing phase
           open(99,file=stmp)
           write(hlp_frm,'(a,i3,a)') '(a1,1x,a,1x,',nz,'a13)'
           write(99,hlp_frm) '#',
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))),
-     2       (textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is=0,nz-1)
+     1       trim(graphlabel(iwrk)),(trim(textwk(is,iwrk)),is=0,nz-1)
           if (classical_style) then
             write(hlp_frm,'(a,i3,a)') '(2i4,1p,',nz,'(1x,1e12.5))'
             do iy=iy1,iy2
@@ -7696,8 +7682,7 @@ cdpc still in testing phase
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return
           call sumt()
-          eirene_label(iewrk)=eirene_label(iewrk)
-     1                 (1:lnblnk(eirene_label(iewrk)))//' SUM '
+          eirene_label(iewrk)=trim(eirene_label(iewrk))//' SUM '
         case('esurf')    ! plot triangle patch plot
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return
@@ -7735,8 +7720,7 @@ cdpc still in testing phase
           iy=ipop(istack,iistack)
           call eclvp(ix,iy)
           write(stmp,'(a,2x,a1,2i4,a2)')
-     .     eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))),
-     .     '{',ix,iy,' }'
+     .     trim(eirene_label(iewrk)),'{',ix,iy,' }'
           eirene_label(iewrk)=stmp
         case('eabs')     ! abs() on Eirene stack
           stack_req=(/0,0,0,0,1,0,0/)
@@ -7746,8 +7730,7 @@ cdpc still in testing phase
               eirene_stack(i,is,iewrk)=abs(eirene_stack(i,is,iewrk))
             end do
           end do
-          eirene_label(iewrk)=
-     .      eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk)))//' (ABS)'
+          eirene_label(iewrk)=trim(eirene_label(iewrk))//' (ABS)'
         case('esumz')    ! sum over ns for Eirene stack data
           stack_req=(/2,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return
@@ -7780,15 +7763,14 @@ cdpc still in testing phase
           nedim(2,iewrk)=1
           if(izstrt .ne. izend) then
             eirene_label(iewrk)=
-     1       eirene_label(iewrk)(1:lnblnk(eirene_label(iwwrk)))
+     1       trim(eirene_label(iewrk))
      2       //' SUM'//
-     3       textewk(izstrt,iewrk)(1:lnblnk(textewk(izstrt,iewrk)))
+     3       trim(textewk(izstrt,iewrk))
      4       //' to'//
-     5       textewk(izend,iewrk)(1:lnblnk(textewk(izend,iewrk)))
+     5       trim(textewk(izend,iewrk))
           else
             wall_label(iewrk)=
-     1       wall_label(iewrk)(1:lnblnk(wall_label(iewrk))) //
-     2       textewk(izstrt,iewrk)(1:lnblnk(textewk(izstrt,iewrk)))
+     1       trim(wall_label(iewrk)) // trim(textewk(izstrt,iewrk))
           end if
           textewk(0,iewrk)=textbl(0)
           call pop_stack(stack_req)
@@ -8317,8 +8299,7 @@ cdpc still in testing phase
               eirene_stack(i,is,iewrk)=-eirene_stack(i,is,iewrk)
             end do
           end do
-          eirene_label(iewrk)=
-     1      eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk)))//' (CHS)'
+          eirene_label(iewrk)=trim(eirene_label(iewrk))//' (CHS)'
         case('etos')     ! Eirene array -> m
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return
@@ -8475,21 +8456,21 @@ cdpc still in testing phase
           endif
           do is=0,nedim(2,iewrk)-1
             if(nedim(2,iewrk) .eq. 1) then
-              write(*,'(a,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1                 textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))),
+              write(*,'(a,1x,1p,g15.8)')
+     1                 trim(stmp)//trim(textewk(is,iewrk)),
      1                 eirene_stack(it,is,iewrk)
               if(writing_to_file) then
-                write(nwtf,'(a,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1                 textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))),
+                write(nwtf,'(a,1x,1p,g15.8)')
+     1                 trim(stmp)//trim(textewk(is,iewrk)),
      1                 eirene_stack(it,is,iewrk)
               endif
             else
-              write(*,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1               textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))),is,
+              write(*,'(a,i3,1p,g15.8)')
+     1               trim(stmp)//trim(textewk(is,iewrk)),is,
      1               eirene_stack(it,is,iewrk)
               if(writing_to_file) then
-                write(nwtf,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
-     1               textewk(is,iewrk)(1:lnblnk(textwk(is,iewrk))),is,
+                write(nwtf,'(a,i3,1p,g15.8)')
+     1               trim(stmp)//trim(textewk(is,iewrk)),is,
      1               eirene_stack(it,is,iewrk)
               endif
             endif
@@ -8501,8 +8482,7 @@ cdpc still in testing phase
           open(99,file=stmp)
           do is=0,nedim(2,iewrk)-1
             write(99,'(''#'',1x,a,1x,a)')
-     1       eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))),
-     2       textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk)))
+     1       trim(eirene_label(iewrk)),trim(textewk(is,iewrk))
             do it=1,ntrii
               write(99,*) it,is,eirene_stack(it,is,iewrk)
             enddo
@@ -9244,22 +9224,19 @@ c normalised weights is 1
           stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call sumw()
-          graphlabel(iwwrk)=graphlabel(iwwrk)
-     1                 (1:lnblnk(graphlabel(iwwrk)))//' summed '
+          graphlabel(iwwrk)=trim(graphlabel(iwwrk))//' summed '
           call set_wallbarlabel(wall_label(iwwrk))
         case('intw')     ! integrate over walls
           stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call intw()
-          graphlabel(iwwrk)=graphlabel(iwwrk)
-     1                 (1:lnblnk(graphlabel(iwwrk)))//' integrated '
+          graphlabel(iwwrk)=trim(graphlabel(iwwrk))//' integrated '
           call set_wallbarlabel(wall_label(iwwrk))
         case('intw*')    ! integrate over walls (no account of segments)
           stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call intwstar()
-          graphlabel(iwwrk)=graphlabel(iwwrk)
-     1                 (1:lnblnk(graphlabel(iwwrk)))//' integrated '
+          graphlabel(iwwrk)=trim(graphlabel(iwwrk))//' integrated '
           call set_wallbarlabel(wall_label(iwwrk))
         case('pswa')     ! per wall area
           stack_req=(/0,0,0,0,0,1,0/)
@@ -9298,7 +9275,7 @@ c normalised weights is 1
           iy=ipop(istack,iistack)
           call wclvp(ix,iy)
           write(stmp,'(a,2x,a1,2i4,a2)')
-     -     wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk))),'{',ix,iy,' }'
+     -     trim(wall_label(iwwrk)),'{',ix,iy,' }'
           wall_label(iwwrk)=stmp
           call set_wallbarlabel(wall_label(iwwrk))
         case('wwid')     ! wall line width factor
@@ -9315,8 +9292,7 @@ c normalised weights is 1
               wall_stack(i,is,iwwrk)=abs(wall_stack(i,is,iwwrk))
             end do
           end do
-          wall_label(iwwrk)=
-     .      wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//' (ABS)'
+          wall_label(iwwrk)=trim(wall_label(iwwrk))//' (ABS)'
           call set_wallbarlabel(wall_label(iwwrk))
         case('ddw')      ! d/dw derivative along wall length
           stack_req=(/0,0,0,0,0,1,0/)
@@ -9353,8 +9329,7 @@ c normalised weights is 1
           end do
           wall_stack(1:nbnd,0:nwdim(2,iwwrk)-1,iwwrk)=
      .     wall_tmp(1:nbnd,0:nwdim(2,iwwrk)-1)
-          wall_label(iwwrk)=
-     .     wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//'/(m) (d/dw)'
+          wall_label(iwwrk)=trim(wall_label(iwwrk))//'/(m) (d/dw)'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wsumz')    ! sum over ns for wall stack data
           stack_req=(/2,0,0,0,0,1,0/)
@@ -9377,8 +9352,7 @@ c normalised weights is 1
           do is=izstrt+1,izend
             do i=1,nwdim(1,iwwrk)
               wall_stack(i,izstrt,iwwrk)=
-     1          wall_stack(i,izstrt,iwwrk)
-     2         +wall_stack(i,is,iwwrk)
+     1         wall_stack(i,izstrt,iwwrk)+wall_stack(i,is,iwwrk)
             end do
           end do
           do i=1,nwdim(1,iwwrk)
@@ -9388,14 +9362,12 @@ c normalised weights is 1
           nwdim(2,iwwrk)=1
           if(izstrt .ne. izend) then
             wall_label(iwwrk)=
-     1       wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk))) //' SUM'//
-     2       textwwk(izstrt,iwwrk)(1:lnblnk(textwwk(izstrt,iwwrk)))
-     3       //' to'//
-     4       textwwk(izend,iwwrk)(1:lnblnk(textwwk(izend,iwwrk)))
+     1       trim(wall_label(iwwrk))//' SUM'//
+     2       trim(textwwk(izstrt,iwwrk))//' to'//
+     4       trim(textwwk(izend,iwwrk))
           else
             wall_label(iwwrk)=
-     1       wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk))) //
-     2       textwwk(izstrt,iwwrk)(1:lnblnk(textwwk(izstrt,iwwrk)))
+     1       trim(wall_label(iwwrk))//trim(textwwk(izstrt,iwwrk))
           end if
           textwwk(0,iwwrk)=textbl(0)
           call pop_stack(stack_req)
@@ -9952,8 +9924,7 @@ c normalised weights is 1
               wall_stack(i,is,iwwrk)=-wall_stack(i,is,iwwrk)
             end do
           end do
-          wall_label(iwwrk)=
-     1      wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//' (CHS)'
+          wall_label(iwwrk)=trim(wall_label(iwwrk))//' (CHS)'
           call set_wallbarlabel(wall_label(iwwrk))
 #ifdef WG_TODO
         case('wtos')     ! wall array -> m
@@ -10037,18 +10008,14 @@ c normalised weights is 1
           i=ipop(istack,iistack)
           do is=0,nwdim(2,iwwrk)-1
             if(nwdim(2,iwwrk) .eq. 1) then
-              write(*,*) stmp(1:lnblnk(stmp)),
-     1                 wall_stack(i,is,iwwrk)
+              write(*,*) trim(stmp),wall_stack(i,is,iwwrk)
               if(writing_to_file) then
-                write(nwtf,*) stmp(1:lnblnk(stmp)),
-     1                   wall_stack(i,is,iwwrk)
+                write(nwtf,*) trim(stmp),wall_stack(i,is,iwwrk)
               endif
             else
-              write(*,*) stmp(1:lnblnk(stmp)),is,
-     1                wall_stack(i,is,iwwrk)
+              write(*,*) trim(stmp),is,wall_stack(i,is,iwwrk)
               if(writing_to_file) then
-                write(nwtf,*) stmp(1:lnblnk(stmp)),is,
-     1                    wall_stack(i,is,iwwrk)
+                write(nwtf,*) trim(stmp),is,wall_stack(i,is,iwwrk)
               endif
             endif
           enddo
@@ -10059,8 +10026,7 @@ c normalised weights is 1
           open(99,file=stmp)
           do is=0,nwdim(2,iwwrk)-1
             write(99,'(''#'',1x,a,1x,a)')
-     1       wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk))),
-     2       textwwk(is,iwwrk)(1:lnblnk(textwwk(is,iwwrk)))
+     1       trim(wall_label(iwwrk)),trim(textwwk(is,iwwrk))
             do i=1,nbnd
               write(99,*) i,is,wall_stack(i,is,iwwrk)
             enddo
@@ -10088,8 +10054,7 @@ c normalised weights is 1
           write(hlp_frm,'(a,i3,a)') '(a1,1x,a,1x,',nz,'a13)'
           write(*,*) hlp_frm
           write(99,hlp_frm) '#',
-     1       wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk))),
-     2       (textwwk(is,iwwrk)(1:lnblnk(textwwk(is,iwwrk))),is=0,nz-1)
+     1       trim(wall_label(iwwrk)),(trim(textwwk(is,iwwrk)),is=0,nz-1)
           write(hlp_frm,'(a,i3,a)') '(i4,1p,',nz,'(1e12.5,1x))'
           write(*,*) hlp_frm
           do ix=ix1,ix2
@@ -10180,8 +10145,7 @@ c
           iy=ipop(istack,iistack)
           call tclvp(ix,iy)
           write(stmp,'(a,2x,a1,2i4,a2)')
-     -     target_label(itwrk)(1:lnblnk(target_label(itwrk))),
-     +     '{',ix,iy,' }'
+     -     trim(target_label(itwrk)),'{',ix,iy,' }'
           target_label(itwrk)=stmp
           call set_targetbarlabel(target_label(itwrk))
         case('trg.w')    ! line plot versus target wall
@@ -10209,43 +10173,42 @@ c
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call sumtrgw()
-          target_label(itwrk)=target_label(itwrk)
-     1     (1:lnblnk(target_label(itwrk)))//' summed over w'
+          target_label(itwrk)=
+     1     trim(target_label(itwrk))//' summed over w'
           call set_targetbarlabel(target_label(itwrk))
         case('sumtrgz')  ! sum over targets along z
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call sumtrgz()
-          target_label(itwrk)=target_label(itwrk)
-     1     (1:lnblnk(target_label(itwrk)))//' summed over z'
+          target_label(itwrk)=
+     1     trim(target_label(itwrk))//' summed over z'
           call set_targetbarlabel(target_label(itwrk))
         case('inttrgw')  ! integrate over targets along walls
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call inttrgw()
-          target_label(itwrk)=target_label(itwrk)
-     1     (1:lnblnk(target_label(itwrk)))//' integrated along w'
+          target_label(itwrk)=
+     1     trim(target_label(itwrk))//' integrated along w'
           call set_targetbarlabel(target_label(itwrk))
         case('inttrgw*') ! integrate over targets along walls (no account of segments)
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call inttrgwstar()
-          target_label(itwrk)=target_label(itwrk)
-     1     (1:lnblnk(target_label(itwrk)))//' integrated along w'
+          target_label(itwrk)=
+     1     trim(target_label(itwrk))//' integrated along w'
           call set_targetbarlabel(target_label(itwrk))
         case('inttrgz')  ! integrate over targets along z
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call inttrgz()
-          target_label(itwrk)=target_label(itwrk)
-     1     (1:lnblnk(target_label(itwrk)))//' integrated along z'
+          target_label(itwrk)=
+     1     trim(target_label(itwrk))//' integrated along z'
           call set_targetbarlabel(target_label(itwrk))
         case('trgabs')   ! absolute value of target data
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           target_stack(1:nbnd,:,itwrk)=abs(target_stack(1:nbnd,:,itwrk))
-          target_label(itwrk)=target_label(itwrk)
-     1     (1:lnblnk(target_label(itwrk)))//' (ABS) '
+          target_label(itwrk)=trim(target_label(itwrk))//' (ABS) '
           call set_targetbarlabel(target_label(itwrk))
         case('trgddw')   ! target d/dw derivative along wall length
           stack_req=(/0,0,0,0,0,0,1/)
@@ -10281,9 +10244,7 @@ c
             end do
           end do
           target_stack(1:nbnd,:,itwrk)=trg_tmp(1:nbnd,:)
-          target_label(itwrk)=
-     .     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
-     +     '(/m) (d/dw)'
+          target_label(itwrk)=trim(target_label(itwrk))//'(/m) (d/dw)'
           call set_targetbarlabel(target_label(itwrk))
         case('trgddp')   ! target d/dp derivative along perpendicular direction
           stack_req=(/0,0,0,0,0,0,1/)
@@ -10313,9 +10274,7 @@ c
             end do
           end do
           target_stack(1:nbnd,:,itwrk)=trg_tmp(1:nbnd,:)
-          target_label(itwrk)=
-     .     target_label(itwrk)(1:lnblnk(target_label(itwrk))) //
-     +     '(/m) (d/dp)'
+          target_label(itwrk)=trim(target_label(itwrk))//'(/m) (d/dp)'
           call set_targetbarlabel(target_label(itwrk))
         case('trgddz')   ! target d/dz derivative along target depth
           stack_req=(/0,0,0,0,0,0,1/)
@@ -10341,9 +10300,7 @@ c
             end do
           end do
           target_stack(1:nbnd,:,itwrk)=trg_tmp(1:nbnd,:)
-          target_label(itwrk)=
-     .     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
-     +     '(/m) (d/dz)'
+          target_label(itwrk)=trim(target_label(itwrk))//'(/m) (d/dz)'
           call set_targetbarlabel(target_label(itwrk))
         case('rtrgm+')   ! target stack + real
           stack_req=(/0,1,0,0,0,0,1/)
@@ -10637,8 +10594,7 @@ c
               target_stack(ibnd,i,itwrk)=-target_stack(ibnd,i,itwrk)
             end do
           end do
-          target_label(itwrk)=
-     1      target_label(itwrk)(1:lnblnk(target_label(itwrk)))//' (CHS)'
+          target_label(itwrk)=trim(target_label(itwrk))//' (CHS)'
           call set_targetbarlabel(target_label(itwrk))
         case('trgtow')   ! target array --> wall
           stack_req=(/0,0,0,0,0,0,1/)
@@ -10675,18 +10631,16 @@ c
           stmp=spop(sstack,isstack)
           i=ipop(istack,iistack)
           ibnd=ipop(istack,iistack)
-          write(*,*) stmp(1:lnblnk(stmp)),target_stack(ibnd,i,itwrk)
+          write(*,*) trim(stmp),target_stack(ibnd,i,itwrk)
           if(writing_to_file) then
-            write(nwtf,*)
-     .       stmp(1:lnblnk(stmp)),target_stack(ibnd,i,itwrk)
+            write(nwtf,*) trim(stmp),target_stack(ibnd,i,itwrk)
           endif
         case('trgprt')   ! output the target stack to a file
           stack_req=(/0,0,1,0,0,0,1/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           open(99,file=stmp)
-          write(99,'(''#'',1x,a)')
-     .     target_label(itwrk)(1:lnblnk(target_label(itwrk)))
+          write(99,'(''#'',1x,a)') trim(target_label(itwrk))
           do i=1,ndepth_nml
             do ibnd=1,nbnd
               write(99,*) ibnd,i,target_stack(ibnd,i,itwrk)
@@ -10719,8 +10673,7 @@ c
           end if
           stmp=spop(sstack,isstack)
           open(99,file=stmp)
-          write(99,*) '#',
-     1       target_label(itwrk)(1:lnblnk(target_label(itwrk)))
+          write(99,*) '#', trim(target_label(itwrk))
           do iy=iy1,iy2
             do ix=ix1,ix2
               write(99,'(2i4,1pe12.5)') ix,iy,target_stack(ix,iy,itwrk)
@@ -11482,7 +11435,7 @@ c
           iy=ipop(istack,iistack)
           call clvp(ix,iy)
           write(stmp,'(a,2x,a1,2i4,a2)')
-     -     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))),'{',ix,iy,' }'
+     -     trim(graphlabel(iwrk)),'{',ix,iy,' }'
           graphlabel(iwrk)=stmp
         case('debu','debug')  ! set debugging level
           stack_req=(/1,0,0,0,0,0,0/)

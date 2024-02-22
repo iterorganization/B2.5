@@ -118,8 +118,7 @@ c     the traj common
       real (kind=R8) ::
      *   zrold,rrold
 
-      integer icol,oocol,lnblnk
-      external lnblnk
+      integer icol,oocol
       character argstring*256,tmpstring*256,titlestring*256
       real (kind=R8) ::
      *   currtime
@@ -221,8 +220,7 @@ c     initialising the randomiser
 c     open the Plot-Screen
       tmpstring='Trajectories'
       if (iarg(specnum).eq.1)
-     > tmpstring=tmpstring(1:lnblnk(tmpstring))//
-     +           texttraj(1)(1:lnblnk(texttraj(1)))
+     > tmpstring=trim(tmpstring)//trim(texttraj(1))
       call customise_label(tmpstring,titlestring)
       call init_page(titlestring,values(5),values(6),
      +               values(7),values(8),1,.true.,.true.,.true.)
@@ -355,10 +353,10 @@ c                         particles than at beginning, it is destroyed.
           call end_page
           call lastd
           call gsplci(1)
-          write(argstring,'(f10.3,a)') currtime*1.0e6_R8,' us'
-          call init_page('Trajectories ' //
-     2     argstring(1:lnblnk(argstring)),values(5),values(6),
-     +     values(7),values(8),1,.true.,.true.,.true.)
+          write(argstring,'(f10.3,a)') currtime*1.0e6_R8,' \Gm\Rs'
+          call init_page('Trajectories '//trim(argstring),
+     1     values(5),values(6),values(7),values(8),1,
+     2     .true.,.true.,.true.)
           call gflas3(1)
           call cpu_time(cpu_start)
           do ip=1,np

@@ -9,17 +9,14 @@ c
       use eirmod_ctrig
       implicit none
       character*256 tmpstring,titlestring
-      integer is,lnblnk
-      external lnblnk
+      integer is
 
       if(b2plot_debug.ge.10)
      > write(*,*) 'Plotting Eirene array: ntrii, nz = ',
      1 nedim(1,iewrk),nedim(2,iewrk)
 
       do is=0,nedim(2,iewrk)-1
-        tmpstring=
-     .   eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk)))//
-     1   textewk(is,iewrk)
+        tmpstring=trim(eirene_label(iewrk))//textewk(is,iewrk)
         call customise_label(tmpstring,titlestring)
         if(b2plot_debug.ge.7) write(*,*) 'physical domain'
         call init_page(titlestring,
