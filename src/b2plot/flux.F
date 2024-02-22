@@ -15,8 +15,6 @@ c
       parameter(mdim=256,lpfxdim=4,lin=1)
 
       integer m,n,ierr,nshot,nedit,lpfx
-      integer lnblnk
-      external lnblnk
       real (kind=R4) :: tshot
       character*4 expnam
       character*3 dianam
@@ -38,7 +36,7 @@ c
       endif
 
       call init_page(
-     1 'Flux surfaces for '//shotinfo(1:lnblnk(shotinfo))//' (Wb/rad)',
+     1 'Flux surfaces for '//trim(shotinfo)//' (Wb/rad)',
      1 xlod,xhid,ylod,yhid,1,.true.,.false.,.true.)
 
       read(shotinfo,*,err=10,end=10) nshot,tshot,dianam,expnam,nedit

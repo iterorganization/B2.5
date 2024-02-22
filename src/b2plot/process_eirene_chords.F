@@ -24,11 +24,10 @@ c
       real (kind=R8) ::
      *   xvalues(maxchords),yvalues(maxchords),
      1   xmin,xmax,ymin,ymax,x1,x2,y1,y2,z1,z2
-      integer lnblnk
       real (kind=R8) ::
      * chord_tria_integral
       external chord_tria_integral
-      external lnblnk, open_file, xerrab
+      external open_file, xerrab
 
       call subini ('process_eirene_chords')
       do is=0,nedim(2,iewrk)-1
@@ -39,8 +38,7 @@ c
         end if
         read(99,*,err=30,end=30) dataname,npoints
         vector=npoints .lt. 0
-        if(vector) 
-     >   dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+        if(vector) dataname=trim(dataname) // ' (vector)'
         npoints=abs(npoints)
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
@@ -53,7 +51,7 @@ c
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
         call xerrab ('increase array size in process_eirene_chords')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue
@@ -102,16 +100,15 @@ c
           end if
         end if
         tmpstring=
-     1   eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))) // '.m ' //
-     2   textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))) // ' ' //
-     3   dataname(1:lnblnk(dataname))
+     1   trim(eirene_label(iewrk)) // '.m ' //
+     2   trim(textewk(is,iewrk)) // ' ' // trim(dataname)
         call customise_label(tmpstring,titlestring)
         call init_page(titlestring,
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.false.)
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
             write(nwtf,'(''# '',a)') trim(extralabel)
@@ -162,8 +159,7 @@ c
       integer indchd(maxchords+1),indit(maxcompile)
       real(kind=R8) ::
      * indscl(maxcompile)
-      integer inpts,is,i,lnblnk,nxcam,nycam
-      external lnblnk
+      integer inpts,is,i,nxcam,nycam
       real (kind=R8) ::
      *   xmin,xmax,ymin,ymax
 
@@ -181,16 +177,15 @@ c
      1   eirene_stack(1,is,iewrk),
      1   zvalues,filename,dataname,nxcam,xmin,xmax,nycam,ymin,ymax)
         tmpstring=
-     1   eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))) //
-     2   textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))) // ' ' //
-     3   dataname(1:lnblnk(dataname))
+     1   trim(eirene_label(iewrk)) //
+     2   trim(textewk(is,iewrk)) // ' ' // trim(dataname)
         call customise_label(tmpstring,titlestring)
         call init_page(titlestring,
      1   xmin,xmax,ymin,ymax,1,.true.,.true.,.true.)
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           do i=1,inpts
             write(nwtf,*) zvalues(i)
           enddo
@@ -229,8 +224,8 @@ c
      *   xmin,ymin,xmax,ymax
 
       logical open_file,vector
-      integer ind,indold,npoints,lnblnk
-      external lnblnk, xertst
+      integer ind,indold,npoints
+      external xertst
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 
@@ -243,8 +238,7 @@ c
       read(99,*,err=30,end=30) dataname,npoints,
      1 nxcam,xmin,xmax,nycam,ymin,ymax
       vector=npoints .lt. 0
-      if(vector)
-     > dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+      if(vector) dataname=trim(dataname) // ' (vector)'
       npoints=abs(npoints)
       inpts=0
       ind=1
@@ -263,7 +257,7 @@ c
      > write(*,*) 'Processed ',inpts,' chords'
       if(inpts .lt. maxchords) goto 10
       call xerrab ('increase array size in process_eirene_chords')
-   30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30 write(*,*) 'Error in reading ',trim(filename)
       call subend ()
       return
    40 continue
@@ -308,10 +302,10 @@ c
      *   xmin,ymin,xmax,ymax
 
       logical open_file,vector
-      integer npoints,lnblnk,i,j
+      integer npoints,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_tria_integral
-      external lnblnk,chord_tria_integral,xerrab
+      external chord_tria_integral,xerrab
 
       call subini ('calculate_tzvalues')
       if(use_compile) then
@@ -330,8 +324,7 @@ c
         read(99,*,err=30,end=30) dataname,npoints,
      1   nxcam,xmin,xmax,nycam,ymin,ymax
         vector=npoints .lt. 0
-        if(vector)
-     1   dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+        if(vector) dataname=trim(dataname) // ' (vector)'
         npoints=abs(npoints)
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
@@ -343,7 +336,7 @@ c
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
         call xerrab ('increase array size in process_eirene_chords')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue

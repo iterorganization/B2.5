@@ -116,8 +116,8 @@
 *   ..procedures
       intrinsic max, mod
       real (kind=R8) ::
-     *   smin, samax
-      external xerrab, smin, samax, sfill, b2scopy, b2saxpy, sip5g
+     *   smin, damax
+      external xerrab, smin, damax, sfill, b2scopy, b2saxpy, sip5g
       data alp/0.0_R8,0.625_R8,0.250_R8,
      1 0.875_R8,0.500_R8,0.125_R8,0.750_R8,
      1 0.375_R8,1.0_R8/
@@ -137,15 +137,15 @@
        call xerrab ('iluter--faulty argument itpar')
       endif
 *   ..test edge values of side-diagonals
-      if (0.lt.samax(m,aa5(0,0,-2),1).or.
-     &  0.lt.samax(m,aa5(0,n-1,2),1)) then
+      if (0.0_R8.lt.damax(m,aa5(0,0,-2),1).or.
+     &    0.0_R8.lt.damax(m,aa5(0,n-1,2),1)) then
        call xerrab ('iluter--faulty argument aa5(,,-2), aa5(,,2)')
-      else if (0.lt.samax(n,aa5(0,0,-1),m).or.
-     &   0.lt.samax(n,aa5(m-1,0,1),m)) then
+      else if (0.0_R8.lt.damax(n,aa5(0,0,-1),m).or.
+     &         0.0_R8.lt.damax(n,aa5(m-1,0,1),m)) then
        call xerrab ('iluter--faulty argument aa5(,,-1), aa5(,,1)')
       endif
 *   ..test sign of main diagonal
-      if (smin(m*n,aa5(0,0,0),1).lt.0) then
+      if (smin(m*n,aa5(0,0,0),1).lt.0.0_R8) then
        call xerrab ('iluter--faulty argument sign aa5(,,0)')
       endif
 
@@ -193,7 +193,7 @@
        call sip5g (m, n, alf, bb5(0,0,-2), bb5(0,0,-1), bb5(0,0,0),
      &   bb5(0,0,1), bb5(0,0,2), wrk1, wrk2)
 *    ..compute norm
-       nrmc(iter) = samax(m*n,wrk2,1)
+       nrmc(iter) = damax(m*n,wrk2,1)
 *    ..update sol
        if (mod(itpar+iter,2).eq.0) then
         call b2saxpy (m*n, rxf, wrk2, 1, sol, 1)
