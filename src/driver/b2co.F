@@ -90,8 +90,6 @@
       character b2fstate_only*256
 #ifdef B25_EIRENE
       character extension*4
-      integer lnblnk
-      external lnblnk
 #endif
       character cnamip*80, cvalip*80, line*500
       logical file_open, file_exists, todo
@@ -358,7 +356,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         nnmoli = 0
       else
 #ifdef B25_EIRENE
-        extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
+        extension=savefile(len_trim(savefile)-3:len_trim(savefile))
         filename=fort_lc//'44.'//extension
         call find_file(filename,file_exists)
 #else

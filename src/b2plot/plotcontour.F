@@ -35,9 +35,9 @@ cxpb  INTEGER NNCUT_L
      .        ixstrt,ixend,iystrt,iyend
       real rlo, rhi, zlo, zhi, zinc, zval, clv, special
       logical iniso
-      integer lnblnk, no_available_colors
-      real ceil
-      external lnblnk, no_available_colors, ceil, xertst
+      integer no_available_colors
+      real (kind=R4) :: ceil, sfloor
+      external no_available_colors, ceil, sfloor, xertst
       intrinsic mod
 
       EXTERNAL FILL,CPDRPL
@@ -184,9 +184,9 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -195,8 +195,8 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
             do i=1,ncont+1
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               call cpsetr('CLV - CONTOUR LEVEL VALUE',zval)
               CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
               CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
@@ -218,7 +218,7 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           endif
         ELSE ! customised contouring
           write (*,*) 'CUSTOMISED CONTOURING'
-          ZLO=10.0_R4**FLOOR(LOG10(ZLO))
+          ZLO=10.0_R4**SFLOOR(LOG10(ZLO))
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
           NCONT=NOFCLS-1
           FMTZ='(1PG9.3)'
@@ -241,7 +241,7 @@ c     1       CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
       ENDIF ! ==> end of lin/log plot <===============================
 
       CALL CPSETC('ILT - INFORMATION LABEL TEXT STRING',
-     1 STRING(1:LNBLNK(STRING)))
+     1 TRIM(STRING))
       CALL CPSETR('ILX - INFORMATION LABEL X POSITION',0.5)
       CALL CPSETR('ILY - INFORMATION LABEL Y POSITION',0.95)
       CALL CPSETI('ILP - INFORMATION LABEL POSITION',-3)

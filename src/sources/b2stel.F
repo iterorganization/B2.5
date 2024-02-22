@@ -175,10 +175,14 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-*   ..test facdrift, fac_ExB
-      call xertst (0.0_R8.le.minval(facdrift) .and.
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(wadia)),
+     &     maxval(abs(vadia)),maxval(abs(vaecrb))).lt.c,
+     &    'Supra-luminal velocities !')
+*    ..test facdrift, fac_ExB
+       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
-      call xertst (0.0_R8.le.minval(fac_ExB) .and.
+       call xertst (0.0_R8.le.minval(fac_ExB) .and.
      &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
 *    ..test rate coefficients
        do is = 0, ns-2
@@ -189,6 +193,8 @@
      &     'faulty argument rra: nonzero for unrelated species')
         endif
        enddo
+       call xertst (minval(rz2).ge.0.0_R8,
+     &  'faulty argument rz2: contains negative values')
       endif
 
 * ..compute source terms

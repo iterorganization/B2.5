@@ -9,8 +9,7 @@ c
       logical open_file,lcol
       real (kind=R8) ::
      1  rcol,x,y,x1,y1,z1,x2,y2,z2,r,z,ro,zo
-      integer icol,npoints,npointsl,i,lnblnk
-      external lnblnk
+      integer icol,npoints,npointsl,i
 
       real (kind=R8) ::
      *   rshift, zshift, r0, z0, a0, b0, tt0
@@ -22,7 +21,7 @@ c
       lcol=npoints .lt. 0
       npoints=abs(npoints)
 
-      call init_page(dataname(1:lnblnk(dataname)),
+      call init_page(trim(dataname),
      1 values(5),values(6),values(7),values(8),1,.true.,.true.,.true.)
       call additional_elements(nx,ny,.true.)
 
@@ -73,7 +72,7 @@ c
         endif
       endif
       goto 10
-   30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30 write(*,*) 'Error in reading ',trim(filename)
       return
    40 continue
       close(90)

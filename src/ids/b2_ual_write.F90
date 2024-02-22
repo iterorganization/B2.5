@@ -147,7 +147,6 @@ program b2_ual_write
     character*16 usrnam, run_user
     character*256 imasdir, home_dir, path, systemarg
     logical absolute_path, not_default
-    integer lnblnk
     external usrnam
 
     !! Set default value for IMAS major version and IDS treename
@@ -256,7 +255,7 @@ program b2_ual_write
           if (l.eq.0) then
             m=index(path,'/')
           else
-            m=index(path(l+lnblnk(imasdir):256),'/')
+            m=index(path(l+len_trim(imasdir):256),'/')
           end if
           absolute_path = l.eq.1.or.(l.eq.0.and.m.eq.1)
           if (absolute_path) then
@@ -293,7 +292,7 @@ program b2_ual_write
     call xertst( .not.streql(database,' '), 'Database not defined !')
     if (index(imasdir,trim(username)).eq.0) then
       l=index(imasdir,trim(run_user))
-      m=index(imasdir(l+lnblnk(run_user):256),'/')
+      m=index(imasdir(l+len_trim(run_user):256),'/')
       write(imasdir,'(a)') imasdir(1:l)//trim(username)//trim(imasdir(m+l:256))
     end if
     if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
@@ -302,8 +301,8 @@ program b2_ual_write
       write(imasdir,'(a)') imasdir(1:l+6)//trim(database)//trim(imasdir(m+l+6:256))
     end if
     if (.not.streql(version,int2str(IMAS_MAJOR_VERSION))) then
-      l=lnblnk(version)
-      m=lnblnk(imasdir)
+      l=len_trim(version)
+      m=len_trim(imasdir)
 #if AL_MAJOR_VERSION > 4
       if (.not.streql(imasdir(m:m),version)) &
         & write(imasdir,'(a)') imasdir(1:m-1)//trim(version)
@@ -311,7 +310,7 @@ program b2_ual_write
       if (.not.streql(imasdir(m-2:m-2),version)) &
         & write(imasdir,'(a)') imasdir(1:m-3)//trim(version)//'/'//int2str(run/10000)
     else if (run.ge.10000) then
-      m=lnblnk(imasdir)
+      m=len_trim(imasdir)
       write(imasdir,'(a)') imasdir(1:m-1)//int2str(run/10000)
 #endif
     end if

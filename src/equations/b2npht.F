@@ -13,6 +13,7 @@
       use b2mod_indirect
       use b2mod_tallies
       use b2mod_b2cmpa
+      use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
@@ -210,6 +211,10 @@
 *    ..test edge values of the fluxes
        call b2xvff (nx, ny, fhe, 'fhe')
        call b2xvff (nx, ny, fhi, 'fhi')
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(ue)),
+     &   maxval(abs(uadia)),maxval(abs(vadia)),maxval(abs(wadia)),
+     &   maxval(abs(vaecrb))).lt.c, 'Supra-luminal velocities !')
 *    ..test fac_ExB
        call xertst (0.0_R8.le.minval(fac_ExB) .and.
      &       1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')

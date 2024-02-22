@@ -42,7 +42,7 @@ c
      ,  (hlp_spwr,equ_hlp(1,5)),    (hlp_spwt,equ_hlp(1,6)),
      ,  (hlp_rdfr,equ_hlp(1,7)),    (hlp_rad_tot,equ_hlp(1,8)),
      ,  (hlp_area_t,equ_hlp(1,9))
-      logical ex, not_default
+      logical ex,not_default
       character hlp_fn*24,hlp_c(2),hlp_u,hlp_frm*256,hlp_frh*256,
      ,  hlp_hdr(m_hlp)*4,hlp_hda(m_hlpa)*4,hlp_inp*8
       data hlp_fn / 'spec_pwr.dat' /
@@ -50,7 +50,6 @@ c
       data hlp_hdr / 'Pin_','Pdv_','Ptg_','Sdv_','Psw_',
      ,               'Pst_','RdF_','Prd_','Sdt_' /
       data hlp_hda / 'Pin' /
-      integer lnblnk
       logical streql
       character*16 usrnam
       character*24 device_env
@@ -300,22 +299,22 @@ c*** Extract the case number
           if (l.gt.0) then
             path = trim(imasdir)//trim(path(l+8:256))
           end if
-          do while (path(lnblnk(path):lnblnk(path)).eq.'/')
-            path(lnblnk(path):lnblnk(path))=' '
+          do while (path(len_trim(path):len_trim(path)).eq.'/')
+            path(len_trim(path):len_trim(path))=' '
           end do
           l=index(path,trim(imasdir))
 #if AL_MAJOR_VERSION > 4
           if (l.gt.0) then
-            m=index(path(l+lnblnk(imasdir):256),'/')
+            m=index(path(l+len_trim(imasdir):256),'/')
             case_number =
-     .       trim(path(m+l+lnblnk(imasdir):m+l+lnblnk(imasdir)+11))
+     .       trim(path(m+l+len_trim(imasdir):m+l+len_trim(imasdir)+11))
           else
 #endif
             l=index(path,'/')
-            m=index(path(l+1:lnblnk(path)),'/')
+            m=index(path(l+1:len_trim(path)),'/')
             do while (m.ne.0)
               l=l+m
-              m=index(path(l+1:lnblnk(path)),'/')
+              m=index(path(l+1:len_trim(path)),'/')
             end do
             case_number = path(l+1:l+12)
 #if AL_MAJOR_VERSION > 4

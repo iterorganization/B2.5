@@ -226,6 +226,10 @@
 *    ..test edge values of the fluxes
        call b2xvff (nx, ny, fhe, 'fhe')
        call b2xvff (nx, ny, fhi, 'fhi')
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(ue)),
+     &   maxval(abs(uadia)),maxval(abs(vadia)),maxval(abs(wadia)),
+     &   maxval(abs(vaecrb))).lt.c, 'Supra-luminal velocities !')
       endif
 
 * ..main computation

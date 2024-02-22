@@ -568,7 +568,7 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, len_of_digits, trace_convert
+      integer len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally, b2idez, convert_eirene
       logical isaletter, silent_open
@@ -584,7 +584,7 @@ c 2002-09-11: logic revised
       logical open_file, streql, isadigit, is_valid
       logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin, cfwuch, cfwure,
-     &  ipgeti, lnblnk, len_of_digits, only_comments, is_valid,
+     &  ipgeti, len_of_digits, only_comments, is_valid,
      &  open_file, get_jsep, conformal_convert, end_comment, isadigit,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
@@ -2604,8 +2604,7 @@ c 2002-09-11: logic revised
        if (.not.streql(boundary_filename,'b2.boundary.parameters'))
      >  then
          first_pass = .false.
-         new_filename =
-     .     boundary_filename(1:lnblnk(boundary_filename))//'.2'
+         new_filename = trim(boundary_filename)//'.2'
          filename = boundary_filename
          call find_file(filename,todo)
          call find_file(new_filename,found)
@@ -2795,8 +2794,7 @@ c 2002-09-11: logic revised
         if (.not.streql(transport_filename,'b2.transport.parameters'))
      >   then
           first_pass = .false.
-          new_filename =
-     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          new_filename = trim(transport_filename)//'.2'
           filename=transport_filename
           call find_file(filename,todo)
           call find_file(new_filename,found)
@@ -3062,8 +3060,7 @@ cxpb We must ensure we have not already listed this additional species
         if (.not.streql(transport_filename,'b2.transport.inputfile'))
      >   then
           first_pass = .false.
-          new_filename =
-     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          new_filename = trim(transport_filename)//'.2'
           filename=transport_filename
           call find_file(filename,todo)
           call find_file(new_filename,found)
@@ -3696,8 +3693,7 @@ cxpb This will need to be checked !!!
        if (.not.streql(sources_filename,'b2.sources.profile'))
      >  then
          first_pass = .false.
-         new_filename =
-     .    sources_filename(1:lnblnk(sources_filename))//'.2'
+         new_filename = trim(sources_filename)//'.2'
          filename = sources_filename
          call find_file(filename,todo)
          call find_file(new_filename,found)
@@ -4002,8 +3998,7 @@ cxpb This will need to be checked !!!
      >   then
           first_pass = .false.
           filename=numerics_filename
-          new_filename =
-     .     numerics_filename(1:lnblnk(numerics_filename))//'.2'
+          new_filename = trim(numerics_filename)//'.2'
           call find_file(filename,todo)
           call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
@@ -5215,7 +5210,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IANF=VERIFY(REAC2,' ')
             IANF=MAX(1,IANF) !VK
             I=INDEX(REAC2(IANF:),' ')-1
-            IF (I.LT.0) I=lnblnk(REAC2(IANF:))
+            IF (I.LT.0) I=len_trim(REAC2(IANF:))
             REACSTR(2:I+1)=REAC2(IANF:I+IANF-1)
 !  READ CRC
             IANF=IEND+VERIFY(REACZEILE(IEND+1:),' ')
@@ -7337,7 +7332,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IANF=VERIFY(REAC2,' ')
             IANF=MAX(1,IANF) !VK
             K=INDEX(REAC2(IANF:),' ')-1
-            IF (K.LT.0) K=lnblnk(REAC2(IANF:))
+            IF (K.LT.0) K=len_trim(REAC2(IANF:))
             REACSTR(2:K+1)=REAC2(IANF:K+IANF-1)
           END IF
           IF (streql(FILNAM,'CONST')) THEN
@@ -8419,7 +8414,7 @@ cxpb check for "OPTIONAL" input cards
               GOTO 615
             ENDIF
           ELSE
-            READ (ZEILE(7:lnblnk(ZEILE)),'(A74)') PATH
+            READ (ZEILE(7:len_trim(ZEILE)),'(A74)') PATH
             I=INDEX(PATH,ACHAR(13)) !VK
             IF(I.GT.0.AND.I.LE.LEN_TRIM(PATH)) PATH(I:I)=' ' !VK TO REMOVE \r
             PATH=ADJUSTL(PATH)
@@ -9410,7 +9405,7 @@ cxpb Read first, transform and rewrite
             GOTO 1041
           ELSE
             READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
-            L = lnblnk(CHRTAL)
+            L = len_trim(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
               I = INDEX(CHRTAL,'<')
@@ -9535,7 +9530,7 @@ cxpb Read first, transform and rewrite
             GOTO 1061
           ELSE
             READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
-            L = lnblnk(CHRTAL)
+            L = len_trim(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
               I = INDEX(CHRTAL,'<')
@@ -11508,9 +11503,9 @@ cxpb as they no longer necessarily point to the same species
             do k = 1, 8
               if (sps_id(ib)(k:k).eq.char(0)) sps_id(ib)(k:k)=' '
             end do
-            if(lnblnk(sps_id(ib)).lt.8)
-     .       sps_id(ib)=sps_id(ib)(1:lnblnk(sps_id(ib)))//
-     .                  repeat(' ',8-lnblnk(sps_id(ib)))
+            if(len_trim(sps_id(ib)).lt.8)
+     .       sps_id(ib)=trim(sps_id(ib))//
+     .                  repeat(' ',8-len_trim(sps_id(ib)))
             line = line(1:len)//''''//sps_id(ib)//''','
             len=len+1+8+2
           end do
@@ -11604,8 +11599,7 @@ cxpb as they no longer necessarily point to the same species
      >  then
          first_pass = .false.
          filename = neutrals_filename
-         new_filename =
-     .     neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
+         new_filename = trim(neutrals_filename)//'.2'
          call find_file(filename,todo)
          call read_neutrals_namelist(nx, ny, ns, .false.)
          call xertst (nstrai.le.nstraid,
