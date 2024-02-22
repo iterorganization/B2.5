@@ -98,8 +98,8 @@
 *   ..procedures
       logical streql
       real (kind=R8) ::
-     *   samax
-      external xertst, ipgeti, ipgetr, samax, sfill
+     *   damax
+      external xertst, ipgeti, ipgetr, damax, sfill
       external b2xvsg, streql
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
@@ -189,9 +189,9 @@
        call b2xvsg (n2*ns, rz2, 1, 'rz2', '.ge.')
        do is = 0, ns-2
         if (.not.lnext(is,is+1)) then
-         call xertst (samax(n2,rsa(-1,-1,is),1).eq.0.0_R8,
+         call xertst (damax(n2,rsa(-1,-1,is),1).eq.0.0_R8,
      &     'faulty argument rsa: nonzero for unrelated species')
-         call xertst (samax(n2,rra(-1,-1,is+1),1).eq.0.0_R8,
+         call xertst (damax(n2,rra(-1,-1,is+1),1).eq.0.0_R8,
      &     'faulty argument rra: nonzero for unrelated species')
         endif
        enddo

@@ -40,8 +40,8 @@
       integer n2, is
 *   ..procedures
       real (kind=R8) ::
-     *   samax
-      external xertst, samax
+     *   damax
+      external xertst, damax
       external b2xvfx
 *   ..initialisation
 
@@ -61,14 +61,14 @@
 * ..compute norms of the corrections
 *   ..compute acorpa, acorua
       do is = 0, ns-1
-       acorpa(is) = samax(n2,corpa(-1,-1,is),1)
-       acorua(is) = samax(n2,corua(-1,-1,is),1)
+       acorpa(is) = damax(n2,corpa(-1,-1,is),1)
+       acorua(is) = damax(n2,corua(-1,-1,is),1)
       enddo
 *   ..compute acorut, acorte, acorti, acorpo
-      acorut = samax(n2,corut,1)
-      acorte = samax(n2,corte,1)
-      acorti = samax(n2,corti,1)
-      acorpo = samax(n2,corpo,1)
+      acorut = damax(n2,corut,1)
+      acorte = damax(n2,corte,1)
+      acorti = damax(n2,corti,1)
+      acorpo = damax(n2,corpo,1)
 
 * ..return
       call subend ()

@@ -94,9 +94,9 @@
 *   ..procedures
       intrinsic max
       real (kind=R8) ::
-     *   scal10, samax, b2ssum
+     *   scal10, damax, b2ssum
       logical strmas
-      external xertst, scal10, samax, b2ssum,
+      external xertst, scal10, damax, b2ssum,
      &  strmas, pagini, pagend, gsln, gpl_d
       external b2xppe, b2xpmc, b2wgxp, b2wgxq
 
@@ -166,7 +166,7 @@
       endif
 *   ..make contour plots of electric potential
       if (strmas(idout,'cppo')) then
-       t0 = scal10(0.8_R8*samax(n2,po,1))
+       t0 = scal10(0.8_R8*damax(n2,po,1))
        write (header,fmth) 'ELECTRIC POTENTIAL (V).', t0/100.
        write (nprt,fmtp) '+cppo', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf, po, 0, 1.0_R8,
@@ -195,7 +195,7 @@
 *   ..make contour plots of parallel velocity
       if (strmas(idout,'cpua')) then
        do is = 0, ns-1
-        t0 = scal10(0.8_R8*samax(n2,ua(-1,-1,is),1))
+        t0 = scal10(0.8_R8*damax(n2,ua(-1,-1,is),1))
         write (header,fmth2) 'PARALLEL VELOCITY (m/s).', is, t0/100.
         write (nprt,fmtp) '+cpua', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf, ua(-1,-1,is),
@@ -217,14 +217,14 @@
       endif
 *   ..make contour plots of electron heat flux
       if (strmas(idout,'cphe')) then
-       t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,0,0),1))
+       t0 = scal10(0.8_R8*damax(n2,fhe(-1,-1,0,0),1))
        write (header,fmth)
      1  'x-directed electron heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphe', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhe(-1,-1,0,0),
      1   0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
-       t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,1,1),1))
+       t0 = scal10(0.8_R8*damax(n2,fhe(-1,-1,1,1),1))
        write (header,fmth)
      1  'y-directed electron heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphe', header
@@ -234,14 +234,14 @@
       endif
 *   ..make contour plots of all atom heat flux
       if (strmas(idout,'cphi')) then
-       t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,0,0),1))
+       t0 = scal10(0.8_R8*damax(n2,fhi(-1,-1,0,0),1))
        write (header,fmth)
      1  'x-directed all atom heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphi', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhi(-1,-1,0,0),
      1   0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
-       t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,1,1),1))
+       t0 = scal10(0.8_R8*damax(n2,fhi(-1,-1,1,1),1))
        write (header,fmth)
      1  'y-directed all atom heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphi', header
@@ -259,7 +259,7 @@
      .            b2ssum(ny+2,fni(ix,-1,0,1),nx+2)
       enddo
 *   ..compute common scale for particle fluxes
-      t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
+      t0 = max(damax(nx+1,wxf1(0),1),damax(nx+1,wxf2(0),1))
       if (t0.eq.0.0_R8) then
        sc = 1.0_R8
       else
@@ -286,7 +286,7 @@
      .            b2ssum(ny+2,fhi(ix,-1,0,1),nx+2)
       enddo
 *   ..compute common scale for two heat fluxes
-      t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
+      t0 = max(damax(nx+1,wxf1(0),1),damax(nx+1,wxf2(0),1))
       if (t0.eq.0.0_R8) then
        sc = 1.0_R8
       else
@@ -311,7 +311,7 @@
        wxf2(ix) = fhi(ix,0,1,0) + fhi(ix,0,1,1)
       enddo
 *   ..compute common scale for two heat fluxes
-      t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
+      t0 = max(damax(nx+1,wxf1(0),1),damax(nx+1,wxf2(0),1))
       if (t0.eq.0.0_R8) then
        sc = 1.0_R8
       else
@@ -337,10 +337,10 @@
      .            b2ssum(ny+2,fch(ix,-1,0,1),nx+2)
       enddo
 *   ..scale for electric current
-      if (samax(nx+1,wxf1(0),1).eq.0.0_R8) then
+      if (damax(nx+1,wxf1(0),1).eq.0.0_R8) then
        sc = 1.0_R8
       else
-       sc = scal10(samax(nx+1,wxf1(0),1))
+       sc = scal10(damax(nx+1,wxf1(0),1))
       endif
 *   ..make plots of electric current as function of x
       if (strmas(idout,'fchx')) then
@@ -359,10 +359,10 @@
          wxf1(ix) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2) +
      .              b2ssum(ny+2,fna(ix,-1,0,1,is),nx+2)
         enddo
-        if (samax(nx+1,wxf1(0),1).eq.0.0_R8) then
+        if (damax(nx+1,wxf1(0),1).eq.0.0_R8) then
          sc = 1.0_R8
         else
-         sc = scal10(samax(nx+1,wxf1(0),1))
+         sc = scal10(damax(nx+1,wxf1(0),1))
         endif
         write (header,'(a,'' ('',i3,'')'',t44,a)')
      &    'INTEGRATED PARTICLE FLUX', is, 'AS FUNCTION OF X'
@@ -381,7 +381,7 @@
      .            b2ssum(nx+2,fni(-1,iy,1,1),1)
       enddo
 *   ..cmpute commoon scale for particle fluxes
-      t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
+      t0 = max(damax(ny+1,wyf1(0),1),damax(ny+1,wyf2(0),1))
       if (t0.eq.0.0_R8) then
        sc = 1.0_R8
       else
@@ -408,7 +408,7 @@
      .            b2ssum(nx+2,fhi(-1,iy,1,1),1)
       enddo
 *   ..compute common scale for two heat fluxes
-      t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
+      t0 = max(damax(ny+1,wyf1(0),1),damax(ny+1,wyf2(0),1))
       if (t0.eq.0.0_R8) then
        sc = 1.0_R8
       else
@@ -433,10 +433,10 @@
      .            b2ssum(nx+2,fch(-1,iy,1,1),1)
       enddo
 *   ..scale for electric current
-      if (samax(ny+1,wyf1(0),1).eq.0.0_R8) then
+      if (damax(ny+1,wyf1(0),1).eq.0.0_R8) then
        sc = 1.0_R8
       else
-       sc = scal10(samax(ny+1,wyf1(0),1))
+       sc = scal10(damax(ny+1,wyf1(0),1))
       endif
 *   ..make plots of electric current as function of y
       if (strmas(idout,'fchy')) then
@@ -455,10 +455,10 @@
          wyf1(iy) = b2ssum(nx+2,fna(-1,iy,1,0,is),1) +
      .              b2ssum(nx+2,fna(-1,iy,1,1,is),1)
         enddo
-        if (samax(ny+1,wyf1(0),1).eq.0.0_R8) then
+        if (damax(ny+1,wyf1(0),1).eq.0.0_R8) then
          sc = 1.0_R8
         else
-         sc = scal10(samax(ny+1,wyf1(0),1))
+         sc = scal10(damax(ny+1,wyf1(0),1))
         endif
         write (header,'(a,'' ('',i3,'')'',t44,a)')
      &    'INTEGRATED PARTICLE FLUX', is, 'AS FUNCTION OF Y'

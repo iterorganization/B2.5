@@ -1,4 +1,4 @@
-EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
+EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
