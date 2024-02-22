@@ -116,8 +116,8 @@
      &  fne_53(-1:nx,-1:ny,0:1)
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax, b2sasum, samax
-      external xertst, ipgeti, ipgetr, smin, smax, b2sasum, samax
+     *  smin, smax, b2sasum, damax
+      external xertst, ipgeti, ipgetr, smin, smax, b2sasum, damax
       external b2xvsg, b2xvps, b2xpne, b2xpni,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
@@ -312,8 +312,8 @@ ctmp.dpc
          do k = 0, nscx-1
            do is=0, ns-1
              write(*,'(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ',
-     1            k,is,samax(n2,rlcx(-1,-1,0,is,k),1),
-     2                 samax(n2,rlcx(-1,-1,1,is,k),1)
+     1            k,is,damax(n2,rlcx(-1,-1,0,is,k),1),
+     2                 damax(n2,rlcx(-1,-1,1,is,k),1)
            enddo
          enddo
         else

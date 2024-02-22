@@ -12,7 +12,7 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 # DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP
