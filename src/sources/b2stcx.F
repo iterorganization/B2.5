@@ -114,7 +114,7 @@
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
 *    ..test velocities
        call xertst (max(maxval(abs(ua)),maxval(abs(wadia)),
-     &               maxval(abs(vadia)),maxval(abs(vaecrb))).lt.c,
+     &   maxval(abs(vadia)),maxval(abs(vaecrb))).lt.c,
      &  'Supra-luminal velocities !')
 *    ..test rate coefficients
        do is = 1, ns-1

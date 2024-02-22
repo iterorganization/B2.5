@@ -24,8 +24,6 @@ c
      *   rcol,r,ro,
      1   x,x1,x2,xo,y,y1,y2,yo,z,z1,z2,zo
       integer npoints,i,it
-      integer lnblnk
-      external lnblnk
 
       if(.not.open_file(90,filename,
      1 'data.local/chords|data/chords/')) return
@@ -40,7 +38,7 @@ c
       r=sqrt(x**2+y**2)
       wrkarr(1:ntrii)=0.0_R8
       call init_page(
-     1 dataname(1:lnblnk(dataname))//' '//ccol(1:lnblnk(ccol)),
+     1 trim(dataname)//' '//trim(ccol),
      1 values(5),values(6),values(7),values(8),1,.true.,.true.,.true.)
       do i=1,npoints
         xo=x
@@ -69,7 +67,7 @@ c
       call additional_elements(nx,ny,.true.)
       call end_page
       goto 10
-   30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30 write(*,*) 'Error in reading ',trim(filename)
       return
    40 continue
       close(90)

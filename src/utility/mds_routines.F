@@ -47,17 +47,13 @@
       integer, parameter :: strmax = 1024
       character(len=strmax+1), allocatable :: str1(:)
 #endif
-#ifndef GFORTRAN
-      integer lnblnk
-      external lnblnk
-#endif
 
       write(hlp_frm,'(a,i3,a)') '(a,a,a,',ns,'(a,a),a)'
       write(*,hlp_frm) 'mds_put_string to ',trim(node_name),
      1 ' of "',(' ',trim(string(is)),is=1,ns),'"'
       strlen=0
       do is=1,ns
-        strlen = max(strlen,lnblnk(string(is)))
+        strlen = max(strlen,len_trim(string(is)))
       enddo
 #ifdef F2003
       allocate(character(len=strlen+1) :: str1(ns))

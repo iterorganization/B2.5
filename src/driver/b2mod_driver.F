@@ -381,7 +381,6 @@
       real (kind=R8) :: rratio
       external rratio
 #ifdef IMAS
-      integer lnblnk
       character*16 usrnam
       logical streql
       external streql, usrnam
@@ -1145,7 +1144,7 @@
      > 'from run directory - Catalyst will not start.'
        if (use_catalyst .eqv. .true.) then
           call coprocessorinitializewithpython
-     >     (filename,lnblnk(filename))
+     >     (filename,len_trim(filename))
        endif
 #endif
 
@@ -1548,7 +1547,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          end if
 #if AL_MAJOR_VERSION < 5
          if (run.ge.10000) then
-           m=lnblnk(imasdir)
+           m=len_trim(imasdir)
            write(imasdir,'(a)') imasdir(1:m-3)//trim(version)
      &       //'/'//int2str(run/10000)
          end if
@@ -1595,7 +1594,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
            if (l.eq.0) then
              m=index(path,'/')
            else
-             m=index(path(l+lnblnk(imasdir):256),'/')
+             m=index(path(l+len_trim(imasdir):256),'/')
            end if
            absolute_path = l.eq.1.or.(l.eq.0.and.m.eq.1)
            if (absolute_path) then

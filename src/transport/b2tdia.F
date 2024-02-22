@@ -39,7 +39,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy
+      integer n2, ix, iy, is
       integer, save :: ncall = 0
       real (kind=R8) :: facdriftm, dOnedBsq(-1:nx,-1:ny,0:1,0:1)
 !     real (kind=R8) :: wght(-1:nx,-1:ny)
@@ -48,7 +48,6 @@
       integer, save :: no_current = 0
       integer, save :: use_9pt_stencil = 1
 #ifdef CLASSICAL_CURRENT
-      integer is
       real (kind=R8) ::
      *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
      *   gampvdc(-1:nx,-1:ny)
@@ -93,6 +92,13 @@
        call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
      &              smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      .              'faulty argument range qz(,,1)')
+*    ..test velocities
+       call xertst (maxval(abs(uadia)).lt.c,
+     &  'Supra-luminal velocities !')
+*    ..test edge values of fna
+       do is = 0, ns-1
+        call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+       enddo
       endif
       
       fchdia = 0.0e0_R8

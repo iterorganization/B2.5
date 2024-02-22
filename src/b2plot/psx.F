@@ -5,10 +5,9 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer ix,iy,is,lnblnk
+      integer ix,iy,is
       character*256 stmp
       intrinsic min,max
-      external lnblnk
 
       values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)
       values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)
@@ -21,7 +20,7 @@ c
           enddo
         enddo
       enddo
-      stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
+      stmp=trim(graphlabel(iwrk))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
       end subroutine psx
@@ -32,10 +31,9 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer ix,iy,is,lnblnk
+      integer ix,iy,is
       character*256 stmp
       intrinsic min,max
-      external lnblnk
 
       values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
       values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
@@ -49,7 +47,7 @@ c
           enddo
         enddo
       enddo
-      stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
+      stmp=trim(graphlabel(iwrk))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
       end subroutine psxperp

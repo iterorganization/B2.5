@@ -8,8 +8,7 @@ c
       use b2mod_b2plot_values
       implicit none
       character*256 tmpstring,titlestring
-      integer is,lnblnk,igraphs
-      external lnblnk
+      integer is,igraphs
 
       if(b2plot_debug.ge.10) write(*,*) 'Plotting array: nx, ny, nz = ',
      1 ndim(1,iwrk),ndim(2,iwrk),ndim(3,iwrk)
@@ -20,8 +19,7 @@ c
       endif
 
       do is=0,ndim(3,iwrk)-1
-        tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     1   textwk(is,iwrk)
+        tmpstring=trim(graphlabel(iwrk))//textwk(is,iwrk)
         call customise_label(tmpstring,titlestring)
         if(typeofplot .ge. 2) then
           if(b2plot_debug.ge.7) write(*,*) 'computational domain'

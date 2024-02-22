@@ -8,8 +8,7 @@ c
       implicit none
       character*256 tmpstring, titlestring
       real (kind=R8) :: wrkx(-1:nx,-1:ny), wrky(-1:nx,-1:ny)
-      integer ix,iy,is,lnblnk
-      external lnblnk
+      integer ix,iy,is
 
       if(b2plot_debug.ge.10) write(*,*) 'Plotting array: nx, ny, nz = ',
      1 ndim(1,iwrk),ndim(2,iwrk),ndim(3,iwrk)
@@ -27,8 +26,7 @@ c
         end do
       end do
       do is=0,ndim(3,iwrk)-1
-        tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     .   textwk(is,iwrk)
+        tmpstring=trim(graphlabel(iwrk))//textwk(is,iwrk)
         call customise_label(tmpstring,titlestring)
         if(typeofplot .ge. 2) then
           if(b2plot_debug.ge.7) write(*,*) 'computational domain'

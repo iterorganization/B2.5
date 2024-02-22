@@ -11,14 +11,14 @@ c
       character*256 tmpstring, titlestring
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,xmult
-      integer ix,iy,is,lnblnk,ixstart,ixend,len_of_digits
+      integer ix,iy,is,ixstart,ixend,len_of_digits
 
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
 
       intrinsic min,max,mod,sqrt
-      external xertst,lnblnk,len_of_digits
+      external xertst,len_of_digits
 
       ixstart=-1
       do while (region(ixstart,iy,0).eq.0 .and. ixstart.le.nx)
@@ -60,9 +60,7 @@ cxpb : new default behaviour : zero of distance set at ixref
         enddo
         write(tmpstring2,hlp_frm) ' <iy = ',iy,'>'
         tmpstring = 
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1    trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
         call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
           lmin=values(9)
@@ -105,7 +103,7 @@ cxpb : new default behaviour : zero of distance set at ixref
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do ix=ixstart,ixend
               write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)
             enddo
@@ -196,7 +194,7 @@ cxpb : new default behaviour : zero of distance set at ixref
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do ix=ixstart,ixend
               write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)
             enddo

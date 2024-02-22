@@ -155,7 +155,7 @@
       logical iniso, error
       integer pbs_from_basis_mesh
 *   ..procedures
-      intrinsic sqrt
+      intrinsic sqrt, floor
       external xertst, ipgeti
       external b2xvgm1
 *   ..initialisation

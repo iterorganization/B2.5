@@ -145,8 +145,7 @@ cxpb  Allocate dummy arrays needed by b2xpfe
       character*256 filename
       logical toread
       logical open_file
-      integer lnblnk
-      external xertst, xerrab, open_file, find_file, extend, lnblnk
+      external xertst, xerrab, open_file, find_file, extend
 
 *   ..test arguments
       call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
@@ -198,7 +197,7 @@ cxpb    za_ext, pt_ext, am_ext, text_ext
             za_ext(:,:,is) = real(is1)
             am_ext(is) = 3.07832E-25_R8/mp
             text_ext(is) = ' '//elements(nint(zn_ext(is)))
-            len=lnblnk(text_ext(is))
+            len=len_trim(text_ext(is))
             if(is1.eq.0) then
               text_ext(is)(len+1:len+4)='^{0}'
             else if(is1.lt.10) then

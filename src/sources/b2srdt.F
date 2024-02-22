@@ -123,7 +123,7 @@
        call b2xvsg (n2, ne0, 1, 'ne0', '.gt.')
        call b2xvsg (2*n2, ni0, 1, 'ni0', '.gt.')
        call b2xvsg (n2*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
-       call xertst (maxval(abs(ua0)).lt.c, 'Supra-luminal velocities!')
+       call xertst (maxval(abs(ua0)).lt.c, 'Supra-luminal velocity !')
 *    ..test current state
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
@@ -131,7 +131,7 @@
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (2*n2, ni, 1, 'ni', '.gt.')
        call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
-       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities!')
+       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocity !')
       endif
 
 #ifdef WITH_FTIMINGS
