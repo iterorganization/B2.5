@@ -388,7 +388,7 @@ c not sure this is the right place
                 if (crcstra(istrai).eq.'C' .and.
      .            species_start(istrai).le.eb2spcr(is+1) .and.
      .            species_end(istrai).ge.eb2spcr(is+1))
-     &              feedback_strata(is) = istrai
+     >           feedback_strata(is) = istrai
               end do
             end if
           end if

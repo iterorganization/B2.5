@@ -28,7 +28,7 @@
      & na_feedback_ix1(0:DEF_NATM-1), na_feedback_ix2(0:DEF_NATM-1), 
      & na_feedback_iy1(0:DEF_NATM-1), na_feedback_iy2(0:DEF_NATM-1), 
      & na_feedback_ib(0:DEF_NATM-1), na_feedback_it(0:DEF_NATM-1),
-     &  max_na_feedback_current(DEF_NATM)=0.0_R8
+     & max_na_feedback_current(DEF_NATM)
       real (kind=R8), save ::
      * saved_cbshe_core, saved_cbshi_core, saved_cbsna_core,
      * saved_cbsch_core, saved_cbsna_pfr1, saved_cbsna_pfr2,
@@ -87,7 +87,8 @@
      & na_feedback_actuator_min/DEF_NATM*0.0_R8/,
      & na_feedback_actuator_max/DEF_NATM*0.0_R8/,
      & na_feedback_overshoot/DEF_NATM*0.0_R8/,
-     & na_feedback_inverse/DEF_NATM*.false./
+     & na_feedback_inverse/DEF_NATM*.false./,
+     & max_na_feedback_current/DEF_NATM*0.0_R8/
 
       contains
 

@@ -6690,7 +6690,7 @@
 			<switch>
 				<name>NA_FEEDBACK_GAMMA</name>
 				<default>0.01</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Ratio of current to target feedback value at which linear rescaling transitions to tanh slowed rescaling for feedback options 7 and 8.
 				</description>
@@ -6746,7 +6746,7 @@
 			<switch>
 				<name>NA_FEEDBACK_IT</name>
 				<default>0</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (0:NSPECIES-1)</type>
 				<description>
 					Index of divertor target to which feedback is applied.
 				</description>
@@ -6754,7 +6754,7 @@
 			<switch>
 				<name>NA_FEEDBACK_ACTUATOR_MIN</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Minimum value of actuator being applied.
 				</description>
@@ -6762,7 +6762,7 @@
 			<switch>
 				<name>NA_FEEDBACK_ACTUATOR_MAX</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>real array of size (0:NSPECIES-1)</type>
 				<description>
 					Maximum value of actuator being applied.
 				</description>
@@ -6794,7 +6794,7 @@
 			<switch>
 				<name>NA_FEEDBACK_INVERSE</name>
 				<default>.false.</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>logical array of size (0:NSPECIES-1)</type>
 				<description>
 					If .true. both feedback target and feedback current are inverted. If .false. actuator value increases in order to increase current feedback value. If .true. actuator value decreases in order to increase current feedback value.
 				</description>

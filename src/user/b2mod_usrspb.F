@@ -48,7 +48,7 @@ c***
 c----------------------------------------------------------------------
 
       integer, save :: lun, mintopcut
-      real (kind=R8), save :: Q_pneut, Q_Te_min_LCFS, 
+      real (kind=R8), save :: Q_pneut, Q_Te_min_LCFS,
      &    Q_rad_tot, Q_rad_SOL
       real (kind=R8), allocatable, save ::
      &    Q_pneut_trg(:),
@@ -65,7 +65,6 @@ c*** Column headers:
      2    '  j_s_max','  I_s_tot', '    I_tot'/
 
       character, save :: hlp_frm*256
-      
 
       public ::     calc_pneut_init, calc_pneut
 
@@ -245,12 +244,12 @@ c------------------------------
       enddo
 
       Q_Te_min_LCFS = Q_Te_min_LCFS / eV
-      
+
 c------------------------------
 ! Total radiated power and radiated power outside the separatrix
       Q_rad_tot =  0.0_R8
       Q_rad_SOL =  0.0_R8
-       
+
       do ix=0,nx-1
         do iy=0,ny-1
           t0 = 0.0_R8
@@ -258,16 +257,15 @@ c------------------------------
             t0 = t0 + rqbrm(ix,iy,is) + rqrad(ix,iy,is)
           enddo
 #ifdef B25_EIRENE
-          t0 = t0 - sum(eneutrad(ix+1,iy+1,1:nnatmi,0)) - 
-     &        sum(emolrad(ix+1,iy+1,1:nnmoli,0)) -
-     &           sum(eionrad(ix+1,iy+1,1:nnioni,0))              
+          t0 = t0 - sum(eneutrad(ix+1,iy+1,1:nnatmi,0)) -
+     &              sum(emolrad(ix+1,iy+1,1:nnmoli,0)) -
+     &              sum(eionrad(ix+1,iy+1,1:nnioni,0))
 #endif
-          
-          Q_rad_tot = Q_rad_tot + t0  
+
+          Q_rad_tot = Q_rad_tot + t0
           if (.not. ON_CLOSED_SURFACE(ix,iy)) Q_rad_SOL = Q_rad_SOL + t0
         enddo
       enddo
-
 
 c*** Write the data in a separate file for plotting...
 c
@@ -336,7 +334,7 @@ c*** Input the DG data and prepare the geometry (this routine works once)
 ! is moved into calc_pneut_init
 
       call calc_pneut_init(nx,ny,nxtl,nxtr)
-      
+
       mintopcut = ny
       if(nncut > 0) mintopcut = minval(topcut(1:nncut))
 
@@ -346,7 +344,6 @@ c*** Input the DG data and prepare the geometry (this routine works once)
       headers(4) = 'Te_min_LCFS'
       headers(5) = '  Q_rad_tot'
       headers(6) = '  Q_rad_SOL'
-
 
       if (ntrgts .eq. 2) then
         do i=1,N_Q_target
@@ -484,7 +481,6 @@ c======================================================================
 c======================================================================
 c======================================================================
 
-
       subroutine b2usstrcc(iline)
       implicit none
       integer, intent(out) :: iline
@@ -567,7 +563,7 @@ c----------------------------------------------------------------------
         deallocate ( Q_pneut_trg)
         deallocate (ix_pneut_beg, ix_pneut_end)
       endif
-      
+
       return
       end subroutine b2usstrf
 
@@ -576,22 +572,22 @@ c======================================================================
 c======================================================================
 c======================================================================
 
-
       subroutine calc_pneut_init(nx,ny,nxtl,nxtr)
       implicit none
-      
+
       integer nx, ny, nxtl, nxtr
-      
+
 ! Subroutine returns ix_pneut_beg(1:2) and ix_pneut_end(1:2):
 ! poloidal cell number ranges over which neutral pressure will be averaged
 
-! This subroutine is called either from b2usstri or b2stbc_fb_pre, so it is worth checking whether necessary arrays are allocated
+! This subroutine is called either from b2usstri or b2stbc_fb_pre,
+! so it is worth checking whether necessary arrays are allocated
       if (.not. allocated(Q_pneut_trg)) then
 ! More safety here since Q_pneut_trg may be allocated from b2stbc_fb
         allocate(Q_pneut_trg(2), Area_pneut_trg(2))
         allocate(ix_pneut_beg(2), ix_pneut_end(2))
       endif
-  
+
 ! Western divertor
       if(lpfrs_pmp.ne.0) then !  iyv 11.04.22
 c***  lpfrs_pmp - location of the pump: 0 - no pump at all,
@@ -651,7 +647,7 @@ c***              3 - in upper PFR, 4 - on the inner wall
         ix_pneut_beg(2) = 1
         ix_pneut_end(2) = 0
       end if !}
-      
+
       return
       end subroutine calc_pneut_init
 c======================================================================
@@ -663,10 +659,10 @@ c======================================================================
       use eirmod_wneutrals
 #endif
       implicit none
-      
-      integer ix,iy,iyp,it, ns,ny, k, is, use_eirene, ncall
+
+      integer ix, iy, iyp, it, ns,ny, k, is, use_eirene, ncall
       save use_eirene, ncall
-      data use_eirene / 0 /, ncall /0/
+      data use_eirene /0/, ncall /0/
 
 ! neutral pressure in PFR
 ! Q_pneut - mean, Q_pneut_trg(1) - inner PFR, Q_pneut_trg(2) - outer PFR
@@ -691,22 +687,22 @@ c======================================================================
           if(use_eirene.ne.0) then
             do k=1,nnatmi
               Q_pneut_trg(it) = Q_pneut_trg(it) +
-     &         dab2(ix+1,iyp,k,1)*tab2(ix+1,iyp,k,1) * gs(ix,iy,1)
+     &         dab2(ix+1,iyp,k,1)*tab2(ix+1,iyp,k,1)*gs(ix,iy,1)
             enddo
             do k=1,nnmoli
               Q_pneut_trg(it) = Q_pneut_trg(it) +
-     &         dmb2(ix+1,iyp,k,1)*tmb2(ix+1,iyp,k,1) * gs(ix,iy,1)
+     &         dmb2(ix+1,iyp,k,1)*tmb2(ix+1,iyp,k,1)*gs(ix,iy,1)
             enddo
           else
             do is=0,ns-1
               if (is_neutral(is)) Q_pneut_trg(it) = Q_pneut_trg(it) +
-     &          na(ix,iy,is)*ti(ix,iy) * gs(ix,iy,1)
+     &          na(ix,iy,is)*ti(ix,iy)*gs(ix,iy,1)
             enddo
           endif
 #else
           do is=0,ns-1
             if (is_neutral(is)) Q_pneut_trg(it) = Q_pneut_trg(it) +
-     &        na(ix,iy,is)*ti(ix,iy) * gs(ix,iy,1)
+     &        na(ix,iy,is)*ti(ix,iy)*gs(ix,iy,1)
           enddo
 #endif
         enddo
@@ -719,7 +715,7 @@ c======================================================================
      > Q_pneut = ( Q_pneut_trg(1) * Area_pneut_trg(1) +
      &    Q_pneut_trg(2) * Area_pneut_trg(2) ) /
      &   (Area_pneut_trg(1) + Area_pneut_trg(2))
-     
+
       if (ncall .eq. 0) ncall = 1
 
       return
