@@ -2199,7 +2199,7 @@ c innermost loop.
           do 40 jayjay=ipivj,jfin
             jay = icn(jayjay)
 #ifdef DBG
-            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)) .and.
+            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
      &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))

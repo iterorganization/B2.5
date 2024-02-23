@@ -1,10 +1,11 @@
 
       subroutine shrink_label(label)
-      integer lnblnk, lng, i, idot, ie
-      external lnblnk
+      implicit none
+      integer lng, i, idot, ie
       character*(*) label
-      lng=lnblnk(label)
-C     write(*,*) ' In: ',label(1:lnblnk(label))
+
+      lng=len_trim(label)
+C     write(*,*) ' In: ',trim(label)
    10 continue
       do i=1,lng
         if(label(i:i).eq.' ') then
@@ -56,7 +57,7 @@ c xE-0y -> xE-y
         endif
       enddo
    20 continue
-      lng=lnblnk(label)
+      lng=len_trim(label)
       idot=0
       ie=0
       do i=1,lng
@@ -69,8 +70,11 @@ c xE-0y -> xE-y
           lng=lng-1
         enddo
       endif
-      if(label(lng:lng).eq.'.') label(lng:lng)=' '
-      if(label.eq.' ') label(1:1)='0'
-C      write(*,*) 'Out: ',label(1:lnblnk(label))
+      if(label.eq.' '.or.label.eq.'.') then
+        label(1:1)='0'
+      elseif(label(lng:lng).eq.'.') then
+        label(lng:lng)=' '
+      endif
+C     write(*,*) 'Out: ',trim(label)
       return
       end subroutine shrink_label

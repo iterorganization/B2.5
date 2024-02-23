@@ -64,8 +64,8 @@
       save ncall, styl0, rg0
 *   ..procedures
       real (kind=R8) ::
-     *  samax
-      external xertst, ipgeti, ipgetr, samax, sfill
+     *  damax
+      external xertst, ipgeti, ipgetr, damax, sfill
       external b2xvsg
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/
@@ -112,10 +112,14 @@
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(wadia)),
+     &   maxval(abs(vadia)),maxval(abs(vaecrb))).lt.c,
+     &  'Supra-luminal velocities !')
 *    ..test rate coefficients
        do is = 1, ns-1
         if (.not.lnext(is-1,is)) then
-         call xertst (samax(n2,rcx(-1,-1,is),1).eq.0.0_R8,
+         call xertst (damax(n2,rcx(-1,-1,is),1).eq.0.0_R8,
      &     'faulty argument rcx: nonzero for unrelated species')
         endif
        enddo
@@ -124,8 +128,8 @@
 ctmp.dpc
 c       write(*,*) 'DPC: b2stcx: is0 ',is0
 c       do is = 1, ns-1
-c        write(*,*) 'is,lnext,samax(rcx) ',
-c     1   is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
+c        write(*,*) 'is,lnext,damax(rcx) ',
+c     1   is,lnext(is-1,is),damax(n2,rcx(-1,-1,is),1)
 c       enddo
 ctmp.dpc
 

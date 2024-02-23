@@ -274,6 +274,11 @@ csw 26feb2014
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini('eirene_mc')
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..set internal parameters on first call
       if(ncall.eq.0) then !{
 c not sure this is the right place
@@ -532,6 +537,12 @@ c   same Eirene stratum
         end do !}
         call xertst(.not.hlp_bad_isp,
      1     'eirene_mc: error in recyceir specification')
+cxpb Add settings for 'duplicate' atomic species
+        do ls=1,nnatmi !{
+          if (ispc_ref(ls).ne.-1) cycle
+          j=eb2atcr(ls)
+          if (lnext(j,j+1)) ispc_ref(ls)=j+1
+        end do !}
 
 csw 08feb2011 l_ddt definition moved down after Eirene call when it is
 c             defined
@@ -910,30 +921,36 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-      call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+      if (nnatmi.gt.0) then
+        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
+        call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+        call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+      end if
+      if (nnmoli.gt.0) then
+        call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+        call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
+        call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+      end if
+      if (nnioni.gt.0) then
+        call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-      call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
+        call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-      call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
-     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
-     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
-     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
-     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
-     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
-     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+      end if
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
@@ -2111,6 +2128,9 @@ c              it is NOT IYSs style)
           sna_av_paml=0.0_R8
           sna_av_pmml=0.0_R8
           sna_av_piml=0.0_R8
+          sna_av_paio=0.0_R8
+          sna_av_pmio=0.0_R8
+          sna_av_piio=0.0_R8
           sni_av_papl=0.0_R8
           sni_av_pmpl=0.0_R8
           sni_av_pipl=0.0_R8
@@ -2148,6 +2168,9 @@ c              it is NOT IYSs style)
            sna_av_paml=0.0_R8
            sna_av_pmml=0.0_R8
            sna_av_piml=0.0_R8
+           sna_av_paio=0.0_R8
+           sna_av_pmio=0.0_R8
+           sna_av_piio=0.0_R8
            sni_av_papl=0.0_R8
            sni_av_pmpl=0.0_R8
            sni_av_pipl=0.0_R8
@@ -2286,6 +2309,9 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           sna_av_paml = 0.0_R8
           sna_av_pmml = 0.0_R8
           sna_av_piml = 0.0_R8
+          sna_av_paio = 0.0_R8
+          sna_av_pmio = 0.0_R8
+          sna_av_piio = 0.0_R8
           sni_av_papl = 0.0_R8
           sni_av_pmpl = 0.0_R8
           sni_av_pipl = 0.0_R8
@@ -2322,6 +2348,9 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
            sna_av_paml = sna_av_paml + sna_h_paml(:,:,:,:,ih)
            sna_av_pmml = sna_av_pmml + sna_h_pmml(:,:,:,:,ih)
            sna_av_piml = sna_av_piml + sna_h_piml(:,:,:,:,ih)
+           sna_av_paio = sna_av_paio + sna_h_paio(:,:,:,:,ih)
+           sna_av_pmio = sna_av_pmio + sna_h_pmio(:,:,:,:,ih)
+           sna_av_piio = sna_av_piio + sna_h_piio(:,:,:,:,ih)
            sni_av_papl = sni_av_papl + sni_h_papl(:,:,:,:,ih)
            sni_av_pmpl = sni_av_pmpl + sni_h_pmpl(:,:,:,:,ih)
            sni_av_pipl = sni_av_pipl + sni_h_pipl(:,:,:,:,ih)
@@ -2434,6 +2463,9 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
           sna_av_paml = sna_s_paml*dble(ih_end)
           sna_av_pmml = sna_s_pmml*dble(ih_end)
           sna_av_piml = sna_s_piml*dble(ih_end)
+          sna_av_paio = sna_s_paio*dble(ih_end)
+          sna_av_pmio = sna_s_pmio*dble(ih_end)
+          sna_av_piio = sna_s_piio*dble(ih_end)
           sni_av_papl = sni_s_papl*dble(ih_end)
           sni_av_pmpl = sni_s_pmpl*dble(ih_end)
           sni_av_pipl = sni_s_pipl*dble(ih_end)
@@ -3793,14 +3825,14 @@ c$$$                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
           enddo
         enddo
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnatmi,'(1x,e14.7))'
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. ENEUTRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnatmi.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. ENEUTRAD : ',
      .   (SUM(eneutrad(1:nx,1:ny,iatm,0)),iatm=1,nnatmi)
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. EMOLRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnmoli.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. EMOLRAD : ',
      .   (SUM(emolrad(1:nx,1:ny,imol,0)),imol=1,nnmoli)
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. EIONRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnioni.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. EIONRAD : ',
      .   (SUM(eionrad(1:nx,1:ny,iion,0)),iion=1,nnioni)
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
@@ -4535,6 +4567,9 @@ c!###}
         sna_h_paml = 0.0_R8
         sna_h_pmml = 0.0_R8
         sna_h_piml = 0.0_R8
+        sna_h_paio = 0.0_R8
+        sna_h_pmio = 0.0_R8
+        sna_h_piio = 0.0_R8
         sni_h_papl = 0.0_R8
         sni_h_pmpl = 0.0_R8
         sni_h_pipl = 0.0_R8

@@ -152,8 +152,9 @@ c=======================================================================
       use eirmod_wneutrals
 #endif
       implicit none
+      integer, intent(in) :: ig
 c
-      integer ig, ih(3)
+      integer ih(3)
       real (kind=R8), allocatable ::
      . hlp_pi(:), hlp_po(:), hlp_at(:,:), hlp_ml(:,:),
      . hlp_na(:,:), hlp_nm(:,:), mach(:,:,:), pz(:,:)
@@ -387,18 +388,18 @@ c-----------------------------------------------------------------------
         allocate(pz(-1:nx,-1:ny))
         call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
         do iy=-1,ny
-          do ix=-1,nx
-            mass=0.0_R8
-            vel=0.0_R8
-            do is=0,ns-1
-              if (is_neutral(is)) cycle
-              mass=mass+am(is)*mp*na(ix,iy,is)
-              vel=vel+rza(ix,iy,is)*na(ix,iy,is)*ua(ix,iy,is)
-            end do
-            vth=sqrt(pz(ix,iy)/mass)
-            mach(ix,iy,1)=vel/(vth*ne(ix,iy))
-            mach(ix,iy,1)=pz(ix,iy)*(1.0_R8+mach(ix,iy,1)**2)
+         do ix=-1,nx
+          mass=0.0_R8
+          vel=0.0_R8
+          do is=0,ns-1
+            if (is_neutral(is)) cycle
+            mass=mass+am(is)*mp*na(ix,iy,is)
+            vel=vel+rza(ix,iy,is)*na(ix,iy,is)*ua(ix,iy,is)
           end do
+          vth=sqrt(pz(ix,iy)/mass)
+          mach(ix,iy,1)=vel/(vth*ne(ix,iy))
+          mach(ix,iy,1)=pz(ix,iy)*(1.0_R8+mach(ix,iy,1)**2)
+         end do
         end do
         open(lun,file='pr.dat')
         write(lun,'(2a)') '#  Plasma pressure:  ',trim(label)
@@ -627,7 +628,7 @@ c-----------------------------------------------------------------------
         close(lun)
 c-----------------------------------------------------------------------
       else if(ig.ge.1000) then
-        call b2paspwr(ig-1000)
+        call b2paspwr(nx,ny,ns,jsep,ig-1000)
       else if(ig.gt.ny) then
         call b2phel(lun)
       else if(ig.ge.0) then

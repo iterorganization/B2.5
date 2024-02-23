@@ -14,9 +14,8 @@ C ===================================================================
       character*(*) locallabel
       character*256 tmp,customlabel
       integer elength,count,i,j,ijpos,icpos,jcpos,istart,iend
-      integer lnblnk
       logical streql
-      external lnblnk, xertst, xerrab, streql
+      external xertst, xerrab, streql
       character var*256,envvar*256,systemarg*256
       character*1 backslash
 #ifdef NAGFOR
@@ -39,7 +38,7 @@ C ===================================================================
       backslash=char(92)
       icpos=1
       jcpos=1
-      elength=lnblnk(locallabel)
+      elength=len_trim(locallabel)
       if(streql(locallabel,' ')) goto 1000
 #ifndef PLPLOT
       call pcsetc('FC - function code character','@')
@@ -178,7 +177,7 @@ C ===================================================================
       else
         envvar=' '
 #ifdef NO_GETENV
-        write(*,*) 'Environment variable ',var(1:lnblnk(var)),
+        write(*,*) 'Environment variable ',trim(var),
      1       ' cannot be retrieved. Code compiled with NO_GETENV!'
 #else
 #ifdef USE_PXFGETENV
@@ -189,13 +188,15 @@ C ===================================================================
      1   call get_environment_variable(var, value=envvar)
 #endif
         if(streql(envvar,' ')) then
-          write(*,*) 'Environment variable ',var(1:lnblnk(var)),
+          write(*,*) 'Environment variable ',trim(var),
      1       ' does not exist'
         endif
 #endif
       endif
-      tmp(jcpos:jcpos+lnblnk(envvar)-1)=envvar(1:lnblnk(envvar))
-      jcpos=jcpos+lnblnk(envvar)
+      if(.not.streql(envvar,' ')) then
+        tmp(jcpos:jcpos+len_trim(envvar)-1)=trim(envvar)
+        jcpos=jcpos+len_trim(envvar)
+      endif
       icpos=iend+1
       goto 10
   110 continue ! `
@@ -221,8 +222,10 @@ C ===================================================================
 #else
       call system(systemarg)
 #endif
-      tmp(jcpos:jcpos+lnblnk(envvar)-1)=envvar(1:lnblnk(envvar))
-      jcpos=jcpos+lnblnk(envvar)
+      if(.not.streql(envvar,' ')) then
+        tmp(jcpos:jcpos+len_trim(envvar)-1)=trim(envvar)
+        jcpos=jcpos+len_trim(envvar)
+      endif
       icpos=iend+1
       goto 10
  1000 continue
@@ -279,9 +282,7 @@ C ===================================================================
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel
-      integer lnblnk
-      external lnblnk
-      wallbarlabel=locallabel(1:lnblnk(locallabel))
+      wallbarlabel=trim(locallabel)
       return
       end subroutine set_wallbarlabel
 c
@@ -291,8 +292,6 @@ C ===================================================================
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel
-      integer lnblnk
-      external lnblnk
-      targetbarlabel=locallabel(1:lnblnk(locallabel))
+      targetbarlabel=trim(locallabel)
       return
       end subroutine set_targetbarlabel

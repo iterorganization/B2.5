@@ -219,7 +219,6 @@ c     -------------------------------------------------------------------------
 *   ..common blocks
 
       integer ix,iy,is,iss
-
       real (kind=R8) ::
      *   ssum,gsum
       real (kind=R8) ::
@@ -234,7 +233,6 @@ c     -------------------------------------------------------------------------
      &   rclbr(-1:nx,-1:ny,0:1,0:ns-1), rclza(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
-
       external b2spel, b2sqel
 
       call subini('corora')
@@ -243,10 +241,9 @@ c     -------------------------------------------------------------------------
       call b2spel (nx, ny, ns, ev, te, neco, rclsa, rclra,
      &     rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
-      call b2sqel (nx, ny, ns, ismain, ev, te, 
+      call b2sqel (nx, ny, ns, ismain, ev, te,
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi,
      &    rcsa, rcra, rcqa, rcrd, rcbr, rcza, rcz2, rcpt, rcpi)
-
 c     initialise array on stack for coronal radiation
       if(iwrk .ge. wklng) call dropstackbottom()
       iwrk=iwrk+1
@@ -326,7 +323,6 @@ c     -------------------------------------------------------------------------
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
       integer co1,co2
-
       external b2spel, b2sqel
 
       call subini('coroni')

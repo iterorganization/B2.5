@@ -39,7 +39,10 @@ module b2mod_mwti
 contains
 
 #ifndef SOLPS4_3
-  subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
+  subroutine b2mwti (itim, tim, &
+#ifndef NO_CDF
+                     ntim, b2time, ntim_batch, &
+#endif
                      nx, ny, ns, ismain, ismain0, BoRiS, &
                      lwti, lwav, luav)
     use b2mod_geo
@@ -62,15 +65,15 @@ contains
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
-    integer, Intent(In) :: itim, ntim, b2time, ntim_batch, &
-                           nx, ny, ns, ismain, ismain0
-    real (kind=R8), Intent(In) :: tim, BoRiS
-    logical, Intent(In) :: lwti, lwav, luav
+    integer, intent(in) :: itim, nx, ny, ns, ismain, ismain0
+    real (kind=R8), intent(in) :: tim, BoRiS
+    logical, intent(in) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
 #ifndef NO_CDF
-#     include <netcdf.inc>
+    integer, intent(in) :: ntim, b2time, ntim_batch
+#   include <netcdf.inc>
 #endif
     !-----------------------------------------------------------------------
     !.documentation
@@ -125,8 +128,7 @@ contains
     integer iy, ix, ic, ixtl, ixtr, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
-         iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
-         nya, nyi, nybl, nybr, nytl, nytr, nc
+         iyaend, iyiend, iylend, iyrend, iytlend, iytrend, nc
 
     !   ..procedures
     external xertst, ipgeti, batch_average
@@ -135,6 +137,7 @@ contains
     integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
+    integer, save :: nya, nyi, nybl, nybr, nytl, nytr
     integer imap(maxvdims), iret, iatm
     integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
@@ -161,8 +164,7 @@ contains
     !   ..initialisation
     save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
-         iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nc, nya, nyi, nybl, nybr, nytl, nytr
+         iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, nc
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
@@ -171,11 +173,14 @@ contains
     ! ..preliminaries
     !   ..subprogram start-up calls
     call subini ('b2mwti')
-    !     ..test nx, ny
+    !     ..test input
     call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
     call xertst (1.le.ns, 'faulty argument ns')
     call xertst (0.le.ismain.and.ismain.lt.ns, &
          'invalid main plasma species index ismain')
+    call xertst (0.le.ismain0.and.ismain0.lt.ns.and. &
+         (is_neutral(ismain0).or.ismain0.eq.ismain), &
+         'invalid main neutral species index ismain0')
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
       !   ..test state
@@ -200,16 +205,20 @@ contains
         enddo
         call output_ds(ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
         call output_ds(ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
+#ifndef NO_CDF
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
         nytl = 0
         nytr = 0
+#endif
       endif
+#ifndef NO_CDF
       nybl = iylend  - iylstrt  + 1
       nybr = iyrend  - iyrstrt  + 1
       nya  = iyaend  - iyastrt  + 1
       nyi  = iyiend  - iyistrt  + 1
+#endif
       nc = max(nncut,1)
       ! Target areas
       open(99,file='dsL')

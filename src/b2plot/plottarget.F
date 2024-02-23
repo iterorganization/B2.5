@@ -27,8 +27,8 @@ C =====================================================================
      1 zlo,zhi,zval,clv,zinc,rlo,rhi
       integer ibnd,i,icol,ici,n,ic,
      2 no_available_colors,noz,nozm,nfmtz
-      real floor,ceil
-      external floor,ceil
+      real (kind=R4) :: sfloor,ceil
+      external sfloor,ceil
 
       zlo=real(zlod,R4)
       zhi=real(zhid,R4)
@@ -84,9 +84,9 @@ C =====================================================================
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -99,8 +99,8 @@ C =====================================================================
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               tclval(i)=zval
             enddo
           else

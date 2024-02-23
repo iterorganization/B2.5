@@ -1,17 +1,16 @@
 c
-      subroutine process_eirene_chord_slice(filename)
+      subroutine process_eirene_chord_slice
+#ifdef B25_EIRENE
+     . (filename)
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
-#ifdef B25_EIRENE
       use b2mod_subsys
       use eirmod_ctrig
-#endif
       implicit none
       character*(*) filename
-#ifdef B25_EIRENE
       character*80 dataname
       character*256 extralabel,titlestring,tmpstring
       logical open_file,vector
@@ -20,8 +19,8 @@ c
       real (kind=R8) ::
      *   xvalues(lngarr),yvalues(lngarr),chord_tria_value,
      1   xmin,xmax,ymin,ymax,x1,y1,z1,dx1,dy1,dz1
-      integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_tria_value,xerrab
+      integer inpts,i,is,npoints
+      external chord_tria_value,xerrab
 
       call subini ('process_chord_slice')
       do is=0,nedim(2,iewrk)-1
@@ -49,7 +48,7 @@ c
         if(inpts .lt. lngarr) goto 10
         call xerrab
      .   ('increase array size in process_eirene_chord_slice')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue
@@ -73,9 +72,8 @@ c
         enddo
 
         tmpstring=
-     1   eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))) //
-     2   textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))) // ' ' //
-     3   dataname(1:lnblnk(dataname))
+     1   trim(eirene_label(iewrk)) //
+     2   trim(textewk(is,iewrk)) // ' ' // trim(dataname)
         call customise_label(tmpstring,titlestring)
 
         call init_page(titlestring,
@@ -83,7 +81,7 @@ c
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
             write(nwtf,'(''# '',a)') trim(extralabel)

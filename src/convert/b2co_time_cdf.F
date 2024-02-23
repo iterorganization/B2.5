@@ -53,6 +53,7 @@
       call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
       call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
       call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
+      call xertst (0.lt.ns, 'faulty argument ns')
 #ifndef NO_CDF
       if (nnreg(0).ge.7) then
         ixtl = 0

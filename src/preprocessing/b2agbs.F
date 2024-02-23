@@ -26,8 +26,7 @@
 *   ..local variables
       integer i, ix, iy, ixl, ixr, jxi, jxa, jsep
       integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
-     *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
-     *  isnum(nncutmax,-1:ny)
+     *  ixleft(nncutmax,-1:ny), isnum(nncutmax,-1:ny)
       real (kind=R8) :: hz(-1:nx,-1:ny),
      *                  hzl(-1:nx,-1:ny),    ! hz at the left cell face
      *                  pol_flux, width
@@ -70,7 +69,6 @@
       iseg = 0
       isnum = 0
       ixleft = -2
-      ixright = -2
       do iy = -1, ny
         ntubes(iy) = 0
         do ix = -1, nx
@@ -84,7 +82,6 @@
           ixl = ix
           ixleft(iseg(ix,iy),iy) = ix
           ixr = ix
-          ixright(iseg(ix,iy),iy) = ix
    20     continue
           if (leftix(ixl,iy).ne.-2) then
             ixl = leftix(ixl,iy)
@@ -109,7 +106,6 @@
             else
               iseg(ixr,iy) = iseg(ix,iy)
               isnum(iseg(ix,iy),iy) = isnum(iseg(ix,iy),iy) + 1
-              if (rightix(ixr,iy).eq.nx+1) ixright(iseg(ix,iy),iy) = ixr
             end if
             goto 30
           end if

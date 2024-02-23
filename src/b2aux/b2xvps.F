@@ -5,6 +5,7 @@
      &  fna, fhe, fhi, fch)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_constants
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -75,6 +76,9 @@
       call b2xvff (nx, ny, fhe, 'fhe')
       call b2xvff (nx, ny, fhi, 'fhi')
       call b2xvff (nx, ny, fch, 'fch')
+
+*   ..test velocities are sub-luminal
+      call xertst ( maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
 
 * ..return
       call subend ()

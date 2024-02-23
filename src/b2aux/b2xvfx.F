@@ -15,12 +15,12 @@
 *     -----------------------------------------------------------------
       character vrnam0*8
       real (kind=R8) ::
-     *   samax
-      external xertst, samax
+     *   damax
+      external xertst, damax
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvfx')
       vrnam0 = vrname
-      call xertst (samax(ny+2,funx(-1,-1),nx+2).eq.0,
+      call xertst (damax(ny+2,funx(-1,-1),nx+2).eq.0,
      &  'b2xvfx--faulty argument x-edge '//vrnam0)
 *$$$  call subend ()
       return

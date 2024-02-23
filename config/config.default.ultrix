@@ -16,7 +16,7 @@ ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    IMAS_PKG_LIST = fundamental_constants
+    IMAS_PKG_LIST = fundamental-constants
   endif
 endif
 
@@ -38,7 +38,7 @@ endif
   FCOPTS = -i4 -O
  endif
  ifeq ($(realkind),8)
-  EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+  EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
   FCOPTS = -i4 -O
  endif
  FC = f77

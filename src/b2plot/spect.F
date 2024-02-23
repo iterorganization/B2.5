@@ -3094,26 +3094,26 @@ c     calculating the emissivity
       call InitADAS(ic,nc,
      &              extension,filename,mie,mir,mic,err)
       if (err .eq. 0) then
-         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
-         if (err .eq. 1) then
+        call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+        if (err .eq. 1) then
 c  try again in the case where local files were used and
 c  a standard database file may be present
-           call InitADAS(ic,nc,
-     &                   extension,filename,mie,mir,mic,err)
-           call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
-         end if
-         do ix=-1,nx
-            do iy=-1,ny
-               lNe(1)=NE(ix,iy)/1.0e6_R8
-               lNi(1)=NA(ix,iy,is)/1.0e6_R8
-               lNi1(1)=NA(ix,iy,is+1)/1.0e6_R8
-               lNH(1)=NH(ix,iy)/1.0e6_R8
-               lTe(1)=TE(ix,iy)/eV
-               call GetEmissivity(nz,iae,iar,iac,
-     &          lNe(1),lNi(1),lNi1(1),lNH(1),lTe(1),1,e(1),p(1))
-               ea(ix,iy)=e(1)/(4.0_R8*PI)*1.0e6_R8
-            enddo
+          call InitADAS(ic,nc,
+     &                  extension,filename,mie,mir,mic,err)
+          call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+        end if
+        do ix=-1,nx
+         do iy=-1,ny
+          lNe(1)=NE(ix,iy)/1.0e6_R8
+          lNi(1)=NA(ix,iy,is)/1.0e6_R8
+          lNi1(1)=NA(ix,iy,is+1)/1.0e6_R8
+          lNH(1)=NH(ix,iy)/1.0e6_R8
+          lTe(1)=TE(ix,iy)/eV
+          call GetEmissivity(nz,iae,iar,iac,
+     &     lNe(1),lNi(1),lNi1(1),lNH(1),lTe(1),1,e(1),p(1))
+          ea(ix,iy)=e(1)/(4.0_R8*PI)*1.0e6_R8
          enddo
+        enddo
       endif
       call copy(ea,1.0_R8,1,textbl)
       write(hlp_frm,'(a,i2,a,i2,a)')

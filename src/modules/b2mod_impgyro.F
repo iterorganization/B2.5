@@ -14,8 +14,8 @@
 #if ( defined(USE_MPI) || defined(USE_IMPGYRO) )
       integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
-#endif
       logical :: last
+#endif
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
      &                      !    by ionisation/recombination
@@ -61,9 +61,8 @@
 
       write (*,*) 'b2ig: Entering impgyro_init'
 
-      last = .false.
-
 #ifdef USE_MPI
+      last = .false.
       write (*,*) 'b2ig: Calling MPI COMM FLAG=MPI'
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
@@ -461,9 +460,8 @@ cxpb
 
       write (*,*) 'b2ig: Entering impgyro_last'
 
-      last = .true.
-
 #if ( defined(USE_MPI) || defined(USE_IMPGYRO) )
+      last = .true.
       call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #endif

@@ -97,8 +97,8 @@
 *   ..procedures
       logical streql
       real (kind=R8) ::
-     *   samax
-      external xertst, ipgeti, ipgetr, samax, sfill
+     *   damax
+      external xertst, ipgeti, ipgetr, damax, sfill
       external b2xvsg, streql
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
@@ -175,20 +175,26 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-*   ..test facdrift, fac_ExB
-      call xertst (0.0_R8.le.minval(facdrift) .and.
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(wadia)),
+     &     maxval(abs(vadia)),maxval(abs(vaecrb))).lt.c,
+     &    'Supra-luminal velocities !')
+*    ..test facdrift, fac_ExB
+       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
-      call xertst (0.0_R8.le.minval(fac_ExB) .and.
+       call xertst (0.0_R8.le.minval(fac_ExB) .and.
      &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
 *    ..test rate coefficients
        do is = 0, ns-2
         if (.not.lnext(is,is+1)) then
-         call xertst (samax(n2,rsa(-1,-1,is),1).eq.0.0_R8,
+         call xertst (damax(n2,rsa(-1,-1,is),1).eq.0.0_R8,
      &     'faulty argument rsa: nonzero for unrelated species')
-         call xertst (samax(n2,rra(-1,-1,is+1),1).eq.0.0_R8,
+         call xertst (damax(n2,rra(-1,-1,is+1),1).eq.0.0_R8,
      &     'faulty argument rra: nonzero for unrelated species')
         endif
        enddo
+       call xertst (minval(rz2).ge.0.0_R8,
+     &  'faulty argument rz2: contains negative values')
       endif
 
 * ..compute source terms
@@ -271,7 +277,7 @@
 *       ..compute electron energy sink
             t2 = t0*rpi(ix,iy,is)*ev
             she0_ion(ix,iy,0) = she0_ion(ix,iy,0)+(1.0_R8+rf0)*t2
-            she0_ion(ix,iy,3) = shi0_ion(ix,iy,3)-
+            she0_ion(ix,iy,3) = she0_ion(ix,iy,3)-
      &                          rf0*t2/(ne(ix,iy)*te(ix,iy))
 *       ..compute atom heat source
             t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*

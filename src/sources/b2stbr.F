@@ -561,7 +561,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
         call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
      &   hx, gs,
      &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
      &   neutral_sources_rescale, core_sources_rescale,
@@ -840,7 +840,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
             end if
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
- !           t1(k) = t01(k)
+!           t1(k) = t01(k)
             t(k) = 1.0_R8 +
      &              max( min( taumax(k),t1(k) ), -taumax(k) )
             if ( iout .ne. 0 )
@@ -855,7 +855,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
             do ix = -1, nx
              do iy = -1, ny
-              if (do_sna_corr_core(k) .or. 
+              if (do_sna_corr_core(k) .or.
      &                (.not. on_closed_surface(ix,iy))) then
                 sna0_eir(ix,iy,0,is) = sna0_eir(ix,iy,0,is)*t(k)
                 sna0_eir(ix,iy,1,is) = sna0_eir(ix,iy,1,is)*t(k)
@@ -1211,38 +1211,46 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       if (iout.eq.1 .or. iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then   !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        if (use_eirene.ne.0) then
+        if (use_eirene.eq.0) then
+!        do k=0,3
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
+!        enddo
+         call my_out(70,nx,ny,b2stbr_smo(-1,-1,is),'b2stbr_smo'//chns)
+!        call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
+!        call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
+#ifdef B25_EIRENE
+        else
          if(.not.is_neutral(is) .and. iout_b2wdat.eq.4) then
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
 !     *              'b2stbr_smo_eir'//chk//chns)
 !          enddo
-          wrk0=smo0_eir(:,:,0,is)+
-     &         smo0_eir(:,:,1,is)*ua(:,:,is)+
-     &         smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smo0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrk0,'b2stbr_smo_eir'//chns)
-          wrk0=smr0_eir(:,:,0,is)+
-     &         smr0_eir(:,:,1,is)*ua(:,:,is)+
-     &         smr0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smr0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrk0,'b2stbr_smr_eir'//chns)
-          wrk0=smd0_eir(:,:,0,is)+
-     &         smd0_eir(:,:,1,is)*ua(:,:,is)+
-     &         smd0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smd0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrk0,'b2stbr_smd_eir'//chns)
+!          wrk0=smo0_eir(:,:,0,is)+
+!     &         smo0_eir(:,:,1,is)*ua(:,:,is)+
+!     &         smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
+!     &         smo0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+!          call my_out(70,nx,ny,wrk0,'b2stbr_smo_eir'//chns)
+          call my_out(70,nx,ny,smo0_eir_tot(-1,-1,is),
+     &                              'b2stbr_smo_eir'//chns)
+!          wrk0=smr0_eir(:,:,0,is)+
+!     &         smr0_eir(:,:,1,is)*ua(:,:,is)+
+!     &         smr0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
+!     &         smr0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+!          call my_out(70,nx,ny,wrk0,'b2stbr_smr_eir'//chns)
+          call my_out(70,nx,ny,smr0_eir_tot(-1,-1,is),
+     &                              'b2stbr_smr_eir'//chns)
+!          wrk0=smd0_eir(:,:,0,is)+
+!     &         smd0_eir(:,:,1,is)*ua(:,:,is)+
+!     &         smd0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
+!     &         smd0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+!          call my_out(70,nx,ny,wrk0,'b2stbr_smd_eir'//chns)
+          call my_out(70,nx,ny,smd0_eir_tot(-1,-1,is),
+     &                              'b2stbr_smd_eir'//chns)
          endif
-        else
-!        do k=0,3
-!         write (chk,'(i1)') k
-!         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
-!        enddo
-         call my_out(70,nx,ny,b2stbr_smo(-1,-1,is),'b2stbr_smo'//chns)
+#endif
         endif
-!       call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
-!       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
        enddo                                                          !srv 29.04.10 }
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
