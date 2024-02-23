@@ -1,16 +1,16 @@
-      function samax (n, sx, incx)
+      function damax (n, sx, incx)
       use b2mod_types
       use b2mod_math_diff
       implicit none
       real (kind=R8) ::
-     *   samax
+     *   damax
       integer n, incx
       real (kind=R8) ::
      *   sx(0:*)
 *     ------------------------------------------------------------------
-*     SAMAX (BLAS-like routine) computes the maximum absolute value in
+*     DAMAX (BLAS-like routine) computes the maximum absolute value in
 *     a vector.
-*     samax(n,sx,incx) returns the maximum absolute value in the s.p.
+*     damax(n,sx,incx) returns the maximum absolute value in the
 *     real*8 vector described by (n,sx,incx). BLAS storage conventions.
 *     n must be positive.
 *     ------------------------------------------------------------------
@@ -20,13 +20,13 @@
       intrinsic max, abs
 *     ------------------------------------------------------------------
       if (n.lt.1.or.incx.eq.0) then
-       call xerrab ('samax--error, n.lt.1.or.incx.eq.0')
+       call xerrab ('damax--error, n.lt.1.or.incx.eq.0')
       else if (incx.eq.1) then
        t = abs(sx(0))
        do i = 1, n-1
         t = max(t,abs(sx(i)))
        enddo
-       samax = t
+       damax = t
       else
        ix = ibase(n,incx)
        t = abs(sx(ix))
@@ -35,8 +35,8 @@
         t = max(t,abs(sx(ix)))
         ix = ix+incx
        enddo
-       samax = t
+       damax = t
       endif
       return
 *     ------------------------------------------------------------------
-      end function samax
+      end function damax
