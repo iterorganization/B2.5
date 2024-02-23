@@ -43,9 +43,10 @@ CONTAINS
 !                gm.fceb:in-out gm.vxbb:in-out gm.vxx:in-out gm.vxy:in-out
 !                gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
 !                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.cvconn:in-out gm.ftconn:in-out gm.fteps:in-out
+!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
 !                gm.ftbbav2:in-out gm.fspsi:in-out mpg.intcellp:in-out
-!                mpg.intcellr:in-out
+!                mpg.intcellr:in-out mpg.divfcor:in-out
 !
 !
 !**********************************************************************
@@ -153,43 +154,68 @@ CONTAINS
 !                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
 !                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
 !                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
-!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
-!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
-!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
-!                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
-!                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
-!                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:in-out st.dv.fllimi:in-out st.dv.resmo:in-out
-!                st.dv.resco:in-out st.dv.respo:in-out st.dv.reshe:in-out
-!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
-!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
-!                st.dv.corua:in-out st.dv.corpa:in-out st.dv.corut:in-out
-!                st.dv.corpo:in-out st.dv.cortt:in-out st.dv.corte:in-out
-!                st.dv.corti:in-out st.dv.cortn:in-out st.dv.corkt:in-out
-!                st.dv.corzt:in-out st.dv.pcca:in-out st.dv.pccm:in-out
-!                st.dv.ne:in-out st.dv.ni:in-out st.dv.nn:in-out
-!                st.dv.ue:in-out st.dv.ne2:in-out st.dv.pa:in-out
-!                st.dv.pz:in-out st.dv.lnlam:in-out st.dv.uadia:in-out
-!                st.dv.vadia:in-out st.dv.wadia:in-out st.dv.vaecrb:in-out
-!                st.dv.vedia:in-out st.dv.wedia:in-out st.dv.veecrb:in-out
-!                st.dv.facdrift:in-out st.dv.fac_exb:in-out st.dv.fac_vis:in-out
-!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
-!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
-!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
-!                st.sr.sna:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
-!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
-!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
-!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
-!                st.srw.sna0:in-out st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.flob:in-out
+!                st.dv.floe:in-out st.dv.floi:in-out st.dv.floe_noc:in-out
+!                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
+!                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
+!                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
+!                st.dv.coni:in-out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
+!                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
+!                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
+!                st.dv.reszt:in-out st.dv.corua:in-out st.dv.corpa:in-out
+!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
+!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
+!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
+!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
+!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
+!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
+!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
+!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
+!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
+!                st.dv.fac_vis:in-out st.sr.sch:in-out st.sr.she:in-out
+!                st.sr.shi:in-out st.sr.sne:in-out st.sr.shn:in-out
+!                st.sr.skt:in-out st.sr.szt:in-out st.sr.smo:in-out
+!                st.sr.smq:in-out st.sr.sna:in-out st.sr.shedt:in-out
+!                st.sr.sktdt:in-out st.sr.sztdt:in-out st.sr.snedt:in-out
+!                st.sr.shidt:in-out st.sr.shndt:in-out st.sr.schdt:in-out
+!                st.sr.smodt:in-out st.sr.snadt:in-out st.sr.skt_diss:in-out
+!                st.sr.skt_prod:in-out st.srw.sch0:in-out st.srw.she0:in-out
+!                st.srw.shi0:in-out st.srw.sne0:in-out st.srw.shn0:in-out
+!                st.srw.skt0:in-out st.srw.szt0:in-out st.srw.smo0:in-out
+!                st.srw.smq0:in-out st.srw.sna0:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
 !                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
-!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:in-out
-!                st.srw.b2stbm_sna:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
+!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
+!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
+!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
+!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
+!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
+!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
+!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
+!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
+!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
+!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -197,21 +223,21 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
+!                st.psnl.ua:out st.psnl.po:out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
-!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
+!                st.psnl.nn:out st.psnl.fch:out st.psnl.fna:in-out
+!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
+!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
+!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
 !                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
 !                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
-!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
-!                st.psnc.kinrgy:in-out st.update.ua:in-out st.update.na:in-out
-!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
-!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
+!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
+!                st.psnc.fna:in-out st.psnc.fhi:out st.psnc.fhe:out
+!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
+!                st.psnc.kinrgy:in-out st.update.ua:out st.update.na:out
+!                st.update.pa:out st.update.po:out st.update.te:out
+!                st.update.ti:out st.update.kt:out st.update.zt:out
 !
 !**********************************************************************
 !

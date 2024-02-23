@@ -18,8 +18,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE GRAD_N_DV(ncv, nfc, nvx, mode, geo, mpg, mpgd, fun, fund, &
-& funv, funvd, gfunn, gfunnd, nbdirs)
+SUBROUTINE GRAD_N_DV(ncv, nfc, nvx, mode, geo, mpg, fun, fund, funv, &
+& funvd, gfunn, gfunnd, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -34,7 +34,6 @@ SUBROUTINE GRAD_N_DV(ncv, nfc, nvx, mode, geo, mpg, mpgd, fun, fund, &
   INTEGER :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fun(ncv), funv(nvx)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
 !   ..output arguments

@@ -4,8 +4,8 @@
 !  Differentiation of gradc_p in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: gfunp funv
 !   with respect to varying inputs: funv fun
-!   Plus diff mem management of: mpg.intcellp:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: geo.fchc:in geo.fcht:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -19,8 +19,8 @@
 !
 !-----------------------------------------------------------------------
 !.specification
-SUBROUTINE GRADC_P_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
-& fund, funv, funvd, gfunp, gfunpd, nbdirs)
+SUBROUTINE GRADC_P_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, &
+& funv, funvd, gfunp, gfunpd, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -36,7 +36,6 @@ SUBROUTINE GRADC_P_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fun(ncv), funv(nvx)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
 !   ..output arguments
@@ -73,8 +72,8 @@ SUBROUTINE GRADC_P_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
   DO nd=1,nbdirsmax
     gfunpfd(nd, :) = 0.D0
   END DO
-  CALL GRAD_P_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, funv, &
-&          funvd, gfunpf, gfunpfd, nbdirs)
+  CALL GRAD_P_DV(ncv, nfc, nvx, 1, geo, mpg, fun, fund, funv, funvd, &
+&          gfunpf, gfunpfd, nbdirs)
 !
 !   ..interpolate to centers
   CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, gfunpf, gfunpfd, gfunp, &

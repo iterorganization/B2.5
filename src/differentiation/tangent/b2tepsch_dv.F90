@@ -17,7 +17,7 @@
 !
 !
 !
-SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
+SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 & facdrift, cddi, cddid, te, ted, ne, ned, floe, floed, cone, coned, &
 & fhepsch, fhepschd, nbdirs)
   USE B2MOD_TYPES
@@ -37,7 +37,6 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: facdrift(nfc), cddi(nfc, 0:1, 0:ns-1), te(ncv), ne(&
 & ncv)
   REAL(kind=r8) :: cddid(nbdirsmax, nfc, 0:1, 0:ns-1), ted(nbdirsmax, &
@@ -133,8 +132,8 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 &                   netevd, nbdirs)
         CALL INTVERTEX_DV(ncv, nvx, mpg, geo%vxvol, nete2, nete2d, &
 &                   nete2v, nete2vd, nbdirs)
-        CALL DIFF_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, nete2, &
-&              nete2d, nete2v, nete2vd, dnete2, dnete2d, nbdirs)
+        CALL DIFF_DV(ncv, nfc, nvx, 1, geo, geod, mpg, nete2, nete2d, &
+&              nete2v, nete2vd, dnete2, dnete2d, nbdirs)
         DO nd=1,nbdirs
 !
 !   ..compute P.Sch heat flux
@@ -156,9 +155,8 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         DO nd=1,nbdirsmax
           dumm0d(nd, :, :) = 0.D0
         END DO
-        CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, dumm0, dumm0d, &
-&                  cddi_eff, cddi_effd, floe0, floe0d, cone0, cone0d, &
-&                  nbdirs)
+        CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, dumm0, dumm0d, cddi_eff&
+&                  , cddi_effd, floe0, floe0d, cone0, cone0d, nbdirs)
         DO ifc=1,nfc
           temp = nete(mpg%fccv(ifc, 2)) - nete(mpg%fccv(ifc, 1))
           DO nd=1,nbdirs
@@ -316,8 +314,8 @@ SUBROUTINE B2TEPSCH_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, facdrift&
         cddi_eff(:, 0) = 5.0_R8*switch%fhepsch*facdrift*cddi(:, 1, is)
         cddi_eff(:, 1) = -(5.0_R8*switch%fhepsch*facdrift*cddi(:, 0, is)&
 &         )
-        CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, dumm0, cddi_eff&
-&                      , floe0, cone0)
+        CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, dumm0, cddi_eff, &
+&                      floe0, cone0)
         DO ifc=1,nfc
           floe(ifc, 0) = 0.5_R8*floe0(ifc, 0)*(nete(mpg%fccv(ifc, 1))+&
 &           nete(mpg%fccv(ifc, 2))) - cone0(ifc, 0)*(nete(mpg%fccv(ifc, &

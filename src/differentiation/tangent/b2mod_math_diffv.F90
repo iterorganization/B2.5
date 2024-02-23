@@ -473,6 +473,72 @@ CONTAINS
     RETURN
   END FUNCTION TRIM1
 
+!  Differentiation of trimg in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: trimg
+!   with respect to varying inputs: tt
+!
+!     (trimg will be used to trim the logarithmic gradients to avoid
+!     some pathetic behaviour near the underflow limit.)
+  SUBROUTINE TRIMG_DV(t0, t1, tt, ttd, trimg, trimgd, nbdirs)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    REAL(kind=r8) :: trimg, t0, t1, tt
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: trimgd, ttd
+    INTRINSIC MIN
+    INTRINSIC MAX
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
+    INTEGER :: nd
+    INTEGER :: nbdirs
+    REAL(kind=r8) :: y1
+    IF (t1 .GT. tt) THEN
+      DO nd=1,nbdirs
+        y1d(nd) = ttd(nd)
+      END DO
+      y1 = tt
+    ELSE
+      y1 = t1
+      DO nd=1,nbdirsmax
+        y1d(nd) = 0.D0
+      END DO
+    END IF
+    IF (t0 .LT. y1) THEN
+      DO nd=1,nbdirs
+        trimgd(nd) = y1d(nd)
+      END DO
+      trimg = y1
+    ELSE
+      trimg = t0
+      DO nd=1,nbdirsmax
+        trimgd(nd) = 0.D0
+      END DO
+    END IF
+    RETURN
+  END SUBROUTINE TRIMG_DV
+
+!
+!     (trimg will be used to trim the logarithmic gradients to avoid
+!     some pathetic behaviour near the underflow limit.)
+  FUNCTION TRIMG(t0, t1, tt)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: trimg, t0, t1, tt
+    INTRINSIC MIN
+    INTRINSIC MAX
+    REAL(kind=r8) :: y1
+    IF (t1 .GT. tt) THEN
+      y1 = tt
+    ELSE
+      y1 = t1
+    END IF
+    IF (t0 .LT. y1) THEN
+      trimg = y1
+    ELSE
+      trimg = t0
+    END IF
+    RETURN
+  END FUNCTION TRIMG
+
 !
   FUNCTION TRUNC(t0, edg)
   USE B2MOD_DIFFSIZES
@@ -522,7 +588,152 @@ CONTAINS
     RETURN
   END FUNCTION LTST
 
+!> Area of triangle given by vertex coordinates
 !
+  FUNCTION TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: trianglearea
+    REAL(kind=r8) :: x0, y0, x1, y1, x2, y2
+    INTRINSIC ABS
+    REAL(kind=r8) :: abs0
+    IF ((x1-x0)*(y2-y0) - (y1-y0)*(x2-x0) .GE. 0.) THEN
+      abs0 = (x1-x0)*(y2-y0) - (y1-y0)*(x2-x0)
+    ELSE
+      abs0 = -((x1-x0)*(y2-y0)-(y1-y0)*(x2-x0))
+    END IF
+    trianglearea = 0.5_R8*abs0
+    RETURN
+  END FUNCTION TRIANGLEAREA
+
+!> Coordinates of centroid of a triangle given by vertex coordinates
+!
+  FUNCTION TRIANGLECENTROID(x0, y0, x1, y1, x2, y2)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: trianglecentroid(0:1)
+    REAL(kind=r8) :: x0, y0, x1, y1, x2, y2
+    trianglecentroid(0) = (x0+x1+x2)/3.0_R8
+    trianglecentroid(1) = (y0+y1+y2)/3.0_R8
+    RETURN
+  END FUNCTION TRIANGLECENTROID
+
+!> Area of quadrangle given by vertex coordinates
+!> The vertices must be in sequence! (=> structured)
+!
+  FUNCTION QUADAREA(x0, y0, x1, y1, x2, y2, x3, y3)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!
+    REAL(kind=r8) :: quadarea
+    REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3
+    REAL(kind=r8) :: result1
+    REAL(kind=r8) :: result2
+!
+    result1 = TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
+    result2 = TRIANGLEAREA(x2, y2, x3, y3, x0, y0)
+    quadarea = result1 + result2
+  END FUNCTION QUADAREA
+
+!> Coordinates of centroid of a quadrangle given by vertex coordinates
+!> Corners are numbered in the B2 convention 2-3
+!>                                           0-1
+!
+  FUNCTION QUADCENTROID(x0, y0, x1, y1, x2, y2, x3, y3)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: quadcentroid(0:1)
+    REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3
+    REAL(kind=r8), DIMENSION(0:1) :: result1
+    REAL(kind=r8) :: result2
+    REAL(kind=r8), DIMENSION(0:1) :: result3
+    REAL(kind=r8) :: result4
+    REAL(kind=r8) :: result5
+    REAL(kind=r8) :: result6
+!
+    result1 = TRIANGLECENTROID(x0, y0, x1, y1, x3, y3)
+    result2 = TRIANGLEAREA(x0, y0, x1, y1, x3, y3)
+    result3 = TRIANGLECENTROID(x0, y0, x2, y2, x3, y3)
+    result4 = TRIANGLEAREA(x0, y0, x2, y2, x3, y3)
+    result5 = TRIANGLEAREA(x0, y0, x1, y1, x3, y3)
+    result6 = TRIANGLEAREA(x0, y0, x2, y2, x3, y3)
+    quadcentroid = (result1*result2+result3*result4)/(result5+result6)
+    RETURN
+  END FUNCTION QUADCENTROID
+
+!> Area of a convex pentagonal cell
+!> The vertices must be in sequence
+!
+!
+  FUNCTION PENTAREA(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: pentarea
+    REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
+    REAL(kind=r8) :: result1
+    REAL(kind=r8) :: result2
+    REAL(kind=r8) :: result3
+!
+    result1 = TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
+    result2 = TRIANGLEAREA(x2, y2, x3, y3, x4, y4)
+    result3 = TRIANGLEAREA(x2, y2, x0, y0, x4, y4)
+    pentarea = result1 + result2 + result3
+    RETURN
+  END FUNCTION PENTAREA
+
+!> Centroid of convex pentagonal cell
+!> The vertices must be in sequence      
+!
+  FUNCTION PENTCENTROID(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: pentcentroid(0:1)
+    REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
+    REAL(kind=r8), DIMENSION(0:1) :: result1
+    REAL(kind=r8) :: result2
+    REAL(kind=r8), DIMENSION(0:1) :: result3
+    REAL(kind=r8) :: result4
+    REAL(kind=r8), DIMENSION(0:1) :: result5
+    REAL(kind=r8) :: result6
+    REAL(kind=r8) :: result7
+    REAL(kind=r8) :: result8
+    REAL(kind=r8) :: result9
+!
+    result1 = TRIANGLECENTROID(x0, y0, x1, y1, x2, y2)
+    result2 = TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
+    result3 = TRIANGLECENTROID(x2, y2, x3, y3, x4, y4)
+    result4 = TRIANGLEAREA(x2, y2, x3, y3, x4, y4)
+    result5 = TRIANGLECENTROID(x2, y2, x0, y0, x4, y4)
+    result6 = TRIANGLEAREA(x2, y2, x0, y0, x4, y4)
+    result7 = TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
+    result8 = TRIANGLEAREA(x2, y2, x3, y3, x4, y4)
+    result9 = TRIANGLEAREA(x2, y2, x0, y0, x4, y4)
+    pentcentroid = (result1*result2+result3*result4+result5*result6)/(&
+&     result7+result8+result9)
+!
+    RETURN
+  END FUNCTION PENTCENTROID
+
+!> Average of a quantity given on the vertices of
+!> an arbitrary quadrangular cell
+!> Corners are numbered in the B2 convention 2-3
+!>                                           0-1
+!
+  FUNCTION AVERAGEVERTEX(f0, x0, y0, f1, x1, y1, f2, x2, y2, f3, x3, y3)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: averagevertex
+    REAL(kind=r8) :: f0, f1, f2, f3
+    REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3
+    REAL(kind=r8) :: a0, a1, a2, a3
+    a0 = TRIANGLEAREA(x2, y2, x0, y0, x1, y1)
+    a1 = TRIANGLEAREA(x0, y0, x1, y1, x3, y3)
+    a2 = TRIANGLEAREA(x0, y0, x2, y2, x3, y3)
+    a3 = TRIANGLEAREA(x2, y2, x3, y3, x1, y1)
+    averagevertex = (f0*a0+f1*a1+f2*a2+f3*a3)/(a0+a1+a2+a3)
+    RETURN
+  END FUNCTION AVERAGEVERTEX
+
 !
   SUBROUTINE B2MOD_MATH_INIT()
   USE B2MOD_DIFFSIZES

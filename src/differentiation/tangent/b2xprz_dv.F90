@@ -36,6 +36,9 @@ SUBROUTINE B2XPRZ_DV(ncv, ns, mp, am, na, nad, rz, rzd, st_ext, nbdirs)
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xprz')
+  DO nd=1,nbdirs
+    rzd(nd, :) = 0.D0
+  END DO
   rz = 0.0_R8
   DO nd=1,nbdirsmax
     rzd(nd, :) = 0.D0

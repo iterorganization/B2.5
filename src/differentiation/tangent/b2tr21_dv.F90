@@ -20,7 +20,7 @@ SUBROUTINE B2T21T_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, &
 & ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
   USE B2MOD_TYPES
   USE B2MOD_RATES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_EXTERNAL_DIFFV
@@ -69,7 +69,7 @@ SUBROUTINE B2T21T_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, &
   INTEGER :: nz(ns+1)
   INTEGER :: i, ix, iy, ifail, nspec, ncharged
 !
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF, IPGETI
+  EXTERNAL B2XVFF_NODIFF, B2XVSG, IPGETI
 !
   INTEGER, SAVE :: icase=0
   INTEGER :: ncall, n2, failcount, failcount0
@@ -105,16 +105,16 @@ SUBROUTINE B2T21T_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, &
 !  ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, bb
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, bb(-1, -1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, bb(-1, -1, 3), 1, 'bb3', '.gt.')
 !    ..test sign of na, ne, te, ti, ne2
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(n2, ne2, 1, 'ne2', '.gt.')
 !    ..test edge values of fch_p
     CALL B2XVFF_NODIFF(nx, ny, fch_p, 'fch_p')
   END IF
@@ -348,7 +348,7 @@ SUBROUTINE B2T21V_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, te&
 & , ti, ua, cvsa)
   USE B2MOD_TYPES
   USE B2MOD_RATES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SUBSYS
@@ -383,7 +383,7 @@ SUBROUTINE B2T21V_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, te&
   INTEGER :: nz(ns)
   INTEGER :: i, ix, iy, ifail, nspec, ncharged
 !
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
 !
   INTEGER, SAVE :: icase=0
   INTEGER :: ncall, n2, failcount, failcount0
@@ -415,15 +415,15 @@ SUBROUTINE B2T21V_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, te&
 !  ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, bb
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, bb(-1, -1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, bb(-1, -1, 3), 1, 'bb3', '.gt.')
 !    ..test sign of na, ne, te, ti
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
   END IF
 !
 !   ..compute the Coulomb logarithm

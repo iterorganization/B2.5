@@ -33,6 +33,7 @@ SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
 !
   USE B2MOD_TYPES
   USE B2MOD_B2PLOT_DIFFV
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !=======================================================================
@@ -40,7 +41,7 @@ SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
 !  version : 28.12.96 21:39
 !
 !
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
@@ -70,7 +71,8 @@ SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
   PARAMETER (ngtsft=def_ngstal*ngitt)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
 !
-  INTEGER :: kard, ldmf, is, ifl
+  INTEGER, INTENT(IN) :: kard, ldmf
+  INTEGER :: is, ifl
   REAL(kind=r8) :: dummy(nlimps, *)
   LOGICAL :: end_of_file
   SAVE end_of_file
@@ -98,12 +100,13 @@ END SUBROUTINE RDNEUTRS_NODIFF
 SUBROUTINE WRNEUTRS_NODIFF(kard, dummy, ldmf)
   USE B2MOD_TYPES
   USE B2MOD_B2PLOT_DIFFV
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !  version : 28.12.96 21:39
 !
 !
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!

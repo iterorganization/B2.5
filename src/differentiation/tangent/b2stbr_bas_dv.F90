@@ -32,7 +32,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   USE B2MOD_SPUTTER_DIFFV
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_ELEMENTS_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_WALL_DIFFV
@@ -100,7 +100,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !   ..procedures
   INTRINSIC ABS, MAX, EXP
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, smin, smax
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, smin, smax
   REAL(kind=r8) :: smax, smin
 !   ..initialisation
   SAVE ncall
@@ -165,9 +165,9 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, hy
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hy, 1, 'hy', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
 !    ..test range of qz
     result1 = smin(n2, qz(-1, -1, 0), 1)
     result2 = smax(n2, qz(-1, -1, 0), 1)
@@ -181,15 +181,15 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
 !    ..test edge values of pbs
     CALL B2XVFX_NODIFF(nx, ny, pbs(-1, -1, 0), 'pbs')
-    CALL B2XVFY(nx, ny, pbs(-1, -1, 1), 'pbs')
+    CALL B2XVFY_NODIFF(nx, ny, pbs(-1, -1, 1), 'pbs')
 !    ..test sign of na, ni, ne, te, ti
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = n2*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
   END IF
 !   ..test edge values of fluxes
   DO is=0,ns-1
@@ -549,9 +549,9 @@ CONTAINS
     REAL(kind=r8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf
     INTRINSIC MAX
     EXTERNAL XERRAB
+    INTRINSIC NINT
     INTRINSIC ABS
     INTRINSIC SQRT
-    INTRINSIC NINT
     INTRINSIC EXP
     REAL(r8) :: y9
     REAL(r8) :: y10
@@ -659,7 +659,7 @@ CONTAINS
       ELSE
         abs0 = -(am(is0)-am(is))
       END IF
-      IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs0) is0 = is
+      IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs0) is0 = is
 !dpc
       IF (is_neutral(is)) is1 = is
       IF (am(is1) - am(is) .GE. 0.) THEN
@@ -667,9 +667,11 @@ CONTAINS
       ELSE
         abs1 = -(am(is1)-am(is))
       END IF
-      IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs1) WRITE(*, *) &
+      IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs1) WRITE(*&
+&                                                               , *) &
 &                                        'b2stbr problem: is, is0, is1 '&
-&                                                   , is, is0, is1
+&                                                               , is, &
+&                                                               is0, is1
       IF (is0 .NE. is1) THEN
         IF (ncall .EQ. 0) WRITE(*, *) 'b2stbr: setting is0 to is1 ', is0&
 &                         , is1
@@ -988,17 +990,21 @@ CONTAINS
         ELSE
           abs2 = -(am(is0)-am(is))
         END IF
-        IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs2) is0 = is
+        IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs2) is0 = &
+&           is
 !xpb
-        IF (zamax(is) .EQ. zn(is)) is1 = is
+        IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
         IF (am(is1) - am(is) .GE. 0.) THEN
           abs3 = am(is1) - am(is)
         ELSE
           abs3 = -(am(is1)-am(is))
         END IF
-        IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs3) WRITE(*, *) &
+        IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) WRITE(&
+&                                                                 *, *) &
 &                                        'b2stbr problem: is, is0, is1 '&
-&                                                     , is, is0, is1
+&                                                                 , is, &
+&                                                                 is0, &
+&                                                                 is1
         IF (is0 .NE. is1) THEN
           IF (ncall .EQ. 0) WRITE(*, *) 'b2stbr: setting is0 to is1 ', &
 &                           is0, is1

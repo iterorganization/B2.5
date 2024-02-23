@@ -18,7 +18,7 @@ SUBROUTINE INIT_WALL_NODIFF(mpg)
   USE B2MOD_RATES
   USE B2MOD_PLASMA_DIFFV
   USE B2MOD_SPUTTER_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_WALL_DIFFV
   USE B2MOD_LAYER_DIFFV
   USE B2MOD_B2CMPA_DIFFV
@@ -47,7 +47,7 @@ SUBROUTINE GET_WALL_DATA_NODIFF(mpg, nx, ny, ns, boris, &
   USE B2MOD_WALL_DIFFV
   USE B2MOD_PLASMA_DIFFV
   USE B2MOD_SPUTTER_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_EXTERNAL_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_SUBSYS
@@ -141,7 +141,7 @@ SUBROUTINE ADD_LAYER_THICKNESS_NODIFF(ns, ibnd)
   USE B2MOD_LAYER_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SPUTTER_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   INTEGER :: ns, nz, ibnd
@@ -405,14 +405,14 @@ SUBROUTINE ADD_LAYER_THICKNESS_NODIFF(ns, ibnd)
 !xpb  Modify surface layer properties for backscattering
   layer_nconstituents(ibnd) = matsurf_nconstituents(ibnd) + ntargsp
 !xpb  Contributions from the bulk
-  layer_nrelconstituents(ibnd, 1:matsurf_nconstituents(ibnd)) = &
+  layer_relconstituents(ibnd, 1:matsurf_nconstituents(ibnd)) = &
 &   matsurf_relconstituents(ibnd, 1:matsurf_nconstituents(ibnd))*&
 &   sput_frac(0)
 !xpb  Contributions from the deposited species
   DO itrack=1,ntargsp
     layer_nzconstituents(ibnd, matsurf_nconstituents(ibnd)+itrack) = &
 &     NINT(zn(target_intcode(itrack)))
-    layer_nrelconstituents(ibnd, matsurf_nconstituents(ibnd)+itrack) = &
+    layer_relconstituents(ibnd, matsurf_nconstituents(ibnd)+itrack) = &
 &     sput_frac(itrack)
   END DO
   CALL COMPOSE_LAYER_NODIFF(ibnd, sput_frac)
@@ -444,6 +444,7 @@ SUBROUTINE COMPOSE_LAYER_NODIFF(ibnd, sput_frac)
   LOGICAL :: found
   EXTERNAL MASS_DENSITY_NODIFF
   REAL(kind=r8) :: MASS_DENSITY_NODIFF
+  INTRINSIC NINT
   REAL(kind=r8) :: result1
 !
   particle_inventory(ibnd, :) = 0.0_R8
@@ -479,8 +480,8 @@ SUBROUTINE COMPOSE_LAYER_NODIFF(ibnd, sput_frac)
       found = .false.
       j = 1
       DO WHILE (.NOT.found .AND. j .LE. nz)
-        found = zn(target_intcode(itrack)) .EQ. matsurf_nzconstituents(&
-&         ibnd, j)
+        found = NINT(zn(target_intcode(itrack))) .EQ. &
+&         matsurf_nzconstituents(ibnd, j)
         IF (.NOT.found) j = j + 1
       END DO
       IF (found) THEN
@@ -517,8 +518,7 @@ FUNCTION LAYER_KAPPA_NODIFF(ibnd, t) RESULT (layer_kappa)
   tcels = t - 273.15_R8
 !
 !xpb First count the bulk contribution
-  frac = layer_nrelconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1&
-&   )
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
   nz = matsurf_nconstituents(ibnd)
 !xpb The bulk or coating surface parameters
   IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
@@ -558,7 +558,7 @@ FUNCTION LAYER_KAPPA_NODIFF(ibnd, t) RESULT (layer_kappa)
   ELSE
 !xpb Loop over deposited species contributions
     DO itrack=1,ntargsp
-      frac = layer_nrelconstituents(ibnd, nz+itrack)
+      frac = layer_relconstituents(ibnd, nz+itrack)
       a(1) = species_kappa_a1(itrack)
       a(2) = species_kappa_a2(itrack)
       a(3) = species_kappa_a3(itrack)
@@ -597,8 +597,7 @@ FUNCTION DLAYER_KAPPABYDT_NODIFF(ibnd, t) RESULT (dlayer_kappabydt)
   tcels = t - 273.15_R8
 !
 !xpb First count the bulk contribution
-  frac = layer_nrelconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1&
-&   )
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
   nz = matsurf_nconstituents(ibnd)
 !xpb The bulk or coating surface parameters
   IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
@@ -638,7 +637,7 @@ FUNCTION DLAYER_KAPPABYDT_NODIFF(ibnd, t) RESULT (dlayer_kappabydt)
   ELSE
 !xpb Loop over deposited species contributions
     DO itrack=1,ntargsp
-      frac = layer_nrelconstituents(ibnd, nz+itrack)
+      frac = layer_relconstituents(ibnd, nz+itrack)
       a(2) = species_kappa_a2(itrack)
       a(3) = species_kappa_a3(itrack)
       a(4) = species_kappa_a4(itrack)
@@ -679,8 +678,7 @@ FUNCTION LAYER_CP_NODIFF(ibnd, t) RESULT (layer_cp)
   tcels = t - 273.15_R8
 !
 !xpb First count the bulk contribution
-  frac = layer_nrelconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1&
-&   )
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
   nz = matsurf_nconstituents(ibnd)
 !xpb The bulk or coating surface parameters
   IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
@@ -726,7 +724,7 @@ FUNCTION LAYER_CP_NODIFF(ibnd, t) RESULT (layer_cp)
 !xpb Loop over deposited species contributions
   IF (layer_nconstituents(ibnd) .GT. nz) THEN
     DO itrack=1,ntargsp
-      frac = layer_nrelconstituents(ibnd, nz+itrack)
+      frac = layer_relconstituents(ibnd, nz+itrack)
       b(1) = species_cp_b1(itrack)
       b(2) = species_cp_b2(itrack)
       b(3) = species_cp_b3(itrack)
@@ -765,8 +763,7 @@ FUNCTION LAYER_EMISSIVITY_NODIFF(ibnd) RESULT (layer_emissivity)
   REAL(kind=r8) :: layer_value, frac
 !
 !xpb First count the bulk contribution
-  frac = layer_nrelconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1&
-&   )
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
   nz = matsurf_nconstituents(ibnd)
 !xpb The bulk or coating surface parameters
   layer_emissivity = matsurf_blackbody_emiss(ibnd)*frac
@@ -775,7 +772,7 @@ FUNCTION LAYER_EMISSIVITY_NODIFF(ibnd) RESULT (layer_emissivity)
   ELSE
 !xpb Loop over deposited species contributions
     DO itrack=1,ntargsp
-      frac = layer_nrelconstituents(ibnd, nz+itrack)
+      frac = layer_relconstituents(ibnd, nz+itrack)
       layer_value = species_blackbody_emiss(itrack)
       layer_emissivity = layer_emissivity + layer_value*frac
     END DO

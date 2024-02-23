@@ -17,9 +17,9 @@
 !
 !
 !
-SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
-& , nad, ua, uad, te, tn, tnd, rza, cvsa0, cvsa0d, cvsa, cvsad, cvsahz, &
-& cvsahzd, flv, flvd, nbdirs)
+SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , na, nad, ua, uad, te, tn, tnd, rza, cvsa0, cvsa0d, cvsa, cvsad, &
+& cvsahz, cvsahzd, flv, flvd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -37,10 +37,10 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), tn(ncv), &
 & rza(ncv, 0:ns-1), cvsa0(nfc, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
@@ -120,8 +120,8 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
       DO is=0,ns-1
         IF (is_neutral(is)) THEN
 !    ..compute differences of parallel velocity
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ua(1, is)&
-&                , uad(:, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
+          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ua(1, is), uad(&
+&                :, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
           DO ifc=1,nfc
             IF (cvsa(ifc, 0, is)*dubf(ifc, 0) .GE. 0.) THEN
               DO nd=1,nbdirs
@@ -290,8 +290,8 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
       DO is=0,ns-1
         IF (is_neutral(is)) THEN
 !    ..compute differences of parallel velocity
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ua(1, is)&
-&                , uad(:, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
+          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ua(1, is), uad(&
+&                :, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
           DO ifc=1,nfc
             arg10 = dubf(ifc, 0)**2 + dubf(ifc, 1)**2
             temp1 = SQRT(arg10)

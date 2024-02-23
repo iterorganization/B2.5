@@ -5,11 +5,10 @@
 !   variations   of useful results: fchvisq
 !   with respect to varying inputs: ti hcix_c ni lnlam rz2 ne2
 !                te
-!   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
-!                geo.cvbb:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in geo.vxonedbsq:in geo.ftconn:in
-!                geo.fteps:in geo.ftbbav2:in
+!   Plus diff mem management of: geo.cvbb:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in geo.vxonedbsq:in
+!                geo.ftconn:in geo.fteps:in geo.ftbbav2:in
 !
 !
 !
@@ -21,9 +20,9 @@
 !
 !
 !
-SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& fac_vis, ne2, ne2d, rz2, rz2d, lnlam, lnlamd, te, ted, ti, tid, ni, &
-& nid, hcix_c, hcix_cd, fchvisq, fchvisqd, nbdirs)
+SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
+& , ne2, ne2d, rz2, rz2d, lnlam, lnlamd, te, ted, ti, tid, ni, nid, &
+& hcix_c, hcix_cd, fchvisq, fchvisqd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -49,7 +48,6 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fac_vis(nfc), ne2(ncv), lnlam(ncv), te(ncv), ti(ncv)&
 & , ni(ncv), rz2(ncv, 0:ns-1), hcix_c(ncv)
   REAL(kind=r8) :: ne2d(nbdirsmax, ncv), lnlamd(nbdirsmax, ncv), ted(&
@@ -80,7 +78,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & 0:ns-1), gtid(nbdirsmax, ncv, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   INTRINSIC SQRT
@@ -133,8 +131,8 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, wrkv&
-&           , wrkvd, gti, gtid, nbdirs)
+    CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ti, tid, wrkv, wrkvd&
+&           , gti, gtid, nbdirs)
 !
 !     ..compute gradients of OnedBsq on cell faces
     CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvonedbsq, geo%&
@@ -321,8 +319,8 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 &           )/(1.D0+arg1(:)**2))
         END DO
         qipgen = result10*(qip1*temp3)
-        CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, qipgen, qipgend&
-&                , wrkv, wrkvd, gqipgen, gqipgend, nbdirs)
+        CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, qipgen, qipgend, wrkv&
+&                , wrkvd, gqipgen, gqipgend, nbdirs)
 !set gqipgen to zero on faces not in touch with core
 !wdk todo: rationalize this when separatrix-structure is introduced?
 !
@@ -576,7 +574,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 & , 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   INTRINSIC SQRT

@@ -23,15 +23,12 @@ MODULE B2MOD_TALLIES_DIFFV
 & rqahereg(:, :), rqradreg(:, :), rqbrmreg(:, :), rcxnareg(:, :), &
 & rcxhireg(:, :), rcxmoreg(:, :)
 !cjk
-  REAL(kind=r8), ALLOCATABLE, SAVE :: fnaxreg(:, :), fnayreg(:, :), &
-& fhmxreg(:, :), fhmyreg(:, :), fhpxreg(:, :), fhpyreg(:, :), fhixreg(:)&
-& , fhiyreg(:), fhexreg(:), fheyreg(:), fchxreg(:), fchyreg(:), fhtxreg(&
-& :), fhtyreg(:), fhjxreg(:), fhjyreg(:)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: fnareg(:, :), fhmreg(:, :), fhpreg&
+& (:, :), fhireg(:), fhereg(:), fchreg(:), fhtreg(:), fhjreg(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: nareg(:, :), tereg(:), nereg(:), &
 & ne2reg(:), tireg(:), nireg(:), poreg(:), volreg(:)
 !cjk
-  REAL(kind=r8), ALLOCATABLE, SAVE :: qconvixreg(:, :), qconviyreg(:, :)&
-& , qconvexreg(:), qconveyreg(:)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: qconvireg(:, :), qconvereg(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_sna_reg(:, :), &
 & b2stbr_smo_reg(:, :), b2stbr_sne_reg(:), b2stbr_she_reg(:), &
 & b2stbr_shi_reg(:), b2stbr_sch_reg(:), b2stbc_sna_reg(:, :), &
@@ -81,23 +78,15 @@ CONTAINS
     rcxhireg = 0.0_R8
     rcxmoreg = 0.0_R8
 !
-    ALLOCATE(fnaxreg(0:nnreg(1), 0:nsd-1))
-    ALLOCATE(fnayreg(0:nnreg(1), 0:nsd-1))
-    ALLOCATE(fhmxreg(0:nnreg(1), 0:nsd-1))
-    ALLOCATE(fhmyreg(0:nnreg(1), 0:nsd-1))
-    ALLOCATE(fhpxreg(0:nnreg(1), 0:nsd-1))
-    ALLOCATE(fhpyreg(0:nnreg(1), 0:nsd-1))
-    ALLOCATE(fhixreg(0:nnreg(1)))
-    ALLOCATE(fhiyreg(0:nnreg(1)))
-    ALLOCATE(fhexreg(0:nnreg(1)))
-    ALLOCATE(fheyreg(0:nnreg(1)))
-    ALLOCATE(fchxreg(0:nnreg(1)))
-    ALLOCATE(fchyreg(0:nnreg(1)))
-    ALLOCATE(fhtxreg(0:nnreg(1)))
+    ALLOCATE(fnareg(0:nnreg(1), 0:nsd-1))
+    ALLOCATE(fhmreg(0:nnreg(1), 0:nsd-1))
+    ALLOCATE(fhpreg(0:nnreg(1), 0:nsd-1))
+    ALLOCATE(fhireg(0:nnreg(1)))
+    ALLOCATE(fhereg(0:nnreg(1)))
+    ALLOCATE(fchreg(0:nnreg(1)))
+    ALLOCATE(fhtreg(0:nnreg(1)))
 !cjk
-    ALLOCATE(fhtyreg(0:nnreg(1)))
-    ALLOCATE(fhjxreg(0:nnreg(1)))
-    ALLOCATE(fhjyreg(0:nnreg(1)))
+    ALLOCATE(fhjreg(0:nnreg(1)))
     ALLOCATE(nareg(0:nnreg(0), 0:nsd-1))
     ALLOCATE(tereg(0:nnreg(0)))
     ALLOCATE(nereg(0:nnreg(0)))
@@ -106,11 +95,9 @@ CONTAINS
     ALLOCATE(nireg(0:nnreg(0)))
     ALLOCATE(poreg(0:nnreg(0)))
     ALLOCATE(volreg(0:nnreg(0)))
-    ALLOCATE(qconvixreg(0:nnreg(1), 0:nsd-1))
+    ALLOCATE(qconvireg(0:nnreg(1), 0:nsd-1))
 !cjk
-    ALLOCATE(qconviyreg(0:nnreg(1), 0:nsd-1))
-    ALLOCATE(qconvexreg(0:nnreg(1)))
-    ALLOCATE(qconveyreg(0:nnreg(1)))
+    ALLOCATE(qconvereg(0:nnreg(1)))
     ALLOCATE(b2stbr_sna_reg(0:nnreg(0), 0:nsd-1))
     ALLOCATE(b2stbr_smo_reg(0:nnreg(0), 0:nsd-1))
     ALLOCATE(b2stbr_sne_reg(0:nnreg(0)))
@@ -190,22 +177,14 @@ CONTAINS
     DEALLOCATE(rcxnareg)
     DEALLOCATE(rcxhireg)
     DEALLOCATE(rcxmoreg)
-    DEALLOCATE(fnaxreg)
-    DEALLOCATE(fnayreg)
-    DEALLOCATE(fhmxreg)
-    DEALLOCATE(fhmyreg)
-    DEALLOCATE(fhpxreg)
-    DEALLOCATE(fhpyreg)
-    DEALLOCATE(fhixreg)
-    DEALLOCATE(fhiyreg)
-    DEALLOCATE(fhexreg)
-    DEALLOCATE(fheyreg)
-    DEALLOCATE(fchxreg)
-    DEALLOCATE(fchyreg)
-    DEALLOCATE(fhtxreg)
-    DEALLOCATE(fhtyreg)
-    DEALLOCATE(fhjxreg)
-    DEALLOCATE(fhjyreg)
+    DEALLOCATE(fnareg)
+    DEALLOCATE(fhmreg)
+    DEALLOCATE(fhpreg)
+    DEALLOCATE(fhireg)
+    DEALLOCATE(fhereg)
+    DEALLOCATE(fchreg)
+    DEALLOCATE(fhtreg)
+    DEALLOCATE(fhjreg)
     DEALLOCATE(nareg)
     DEALLOCATE(tereg)
     DEALLOCATE(nereg)
@@ -214,10 +193,8 @@ CONTAINS
     DEALLOCATE(nireg)
     DEALLOCATE(poreg)
     DEALLOCATE(volreg)
-    DEALLOCATE(qconvixreg)
-    DEALLOCATE(qconviyreg)
-    DEALLOCATE(qconvexreg)
-    DEALLOCATE(qconveyreg)
+    DEALLOCATE(qconvireg)
+    DEALLOCATE(qconvereg)
     DEALLOCATE(b2stbr_sna_reg)
     DEALLOCATE(b2stbr_smo_reg)
     DEALLOCATE(b2stbr_sne_reg)
@@ -5828,7 +5805,7 @@ CONTAINS
   SUBROUTINE DEFINE_CDF_B2MOD_TALLIES(filename, ncid, nnreg, nsd)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: ncid, nnreg(0:2), nsd
+    INTEGER :: ncid, nnreg(0:1), nsd
     CHARACTER(len=256) :: filename
 !     NetCDF-3.
 !
@@ -7640,7 +7617,7 @@ CONTAINS
 !
 !     This is to turn on netCDF internal logging.
     INTEGER :: NF_SET_LOG_LEVEL
-    INTEGER :: status, vregid, xregid, yregid, nsid, tid, varid, specid
+    INTEGER :: status, vregid, fregid, nsid, tid, varid, specid
     INTEGER :: vdims(3)
     EXTERNAL CHECK_CDF_STATUS
 !
@@ -7649,9 +7626,7 @@ CONTAINS
 !
     status = NF_DEF_DIM(ncid, 'vreg', nnreg(0) + 1, vregid)
     CALL CHECK_CDF_STATUS(status)
-    status = NF_DEF_DIM(ncid, 'xreg', nnreg(1) + 1, xregid)
-    CALL CHECK_CDF_STATUS(status)
-    status = NF_DEF_DIM(ncid, 'yreg', nnreg(1) + 1, yregid)
+    status = NF_DEF_DIM(ncid, 'freg', nnreg(1) + 1, fregid)
     CALL CHECK_CDF_STATUS(status)
     status = NF_DEF_DIM(ncid, 'ns', nsd, nsid)
     CALL CHECK_CDF_STATUS(status)
@@ -7832,71 +7807,34 @@ CONTAINS
     CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'resmo_reg', nf_double, 3, &
 &                            vdims, 'kg.m.s^-1', 'resmo_reg')
 !
-    vdims(1) = xregid
+    vdims(1) = fregid
     vdims(2) = tid
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhixreg', nf_double, 2, vdims&
-&                            , 'W', 'fhixreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhexreg', nf_double, 2, vdims&
-&                            , 'W', 'fhexreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fchxreg', nf_double, 2, vdims&
-&                            , 'A', 'fchxreg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhireg', nf_double, 2, vdims, &
+&                            'W', 'fhireg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhereg', nf_double, 2, vdims, &
+&                            'W', 'fhereg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fchreg', nf_double, 2, vdims, &
+&                            'A', 'fchreg')
 !cjk
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhtxreg', nf_double, 2, vdims&
-&                            , 'W', 'fhtxreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhjxreg', nf_double, 2, vdims&
-&                            , 'W', 'fhjxreg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhtreg', nf_double, 2, vdims, &
+&                            'W', 'fhtreg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhjreg', nf_double, 2, vdims, &
+&                            'W', 'fhjreg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'qconvereg', nf_double, 2, &
+&                            vdims, 'W', 'qconvereg')
 !
-!cjk
-    vdims(1) = xregid
-    vdims(2) = tid
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'qconvexreg', nf_double, 2, &
-&                            vdims, 'W', 'qconvexreg')
-!
-    vdims(1) = xregid
+    vdims(1) = fregid
     vdims(2) = nsid
     vdims(3) = tid
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fnaxreg', nf_double, 3, vdims&
-&                            , 's^-1', 'fnaxreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhmxreg', nf_double, 3, vdims&
-&                            , 'W', 'fhmxreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhpxreg', nf_double, 3, vdims&
-&                            , 'W', 'fhpxreg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fnareg', nf_double, 3, vdims, &
+&                            's^-1', 'fnareg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhmreg', nf_double, 3, vdims, &
+&                            'W', 'fhmreg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhpreg', nf_double, 3, vdims, &
+&                            'W', 'fhpreg')
 !cjk
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'qconvixreg', nf_double, 3, &
-&                            vdims, 'W', 'qconvixreg')
-!
-    vdims(1) = yregid
-    vdims(2) = tid
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhiyreg', nf_double, 2, vdims&
-&                            , 'W', 'fhiyreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fheyreg', nf_double, 2, vdims&
-&                            , 'W', 'fheyreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fchyreg', nf_double, 2, vdims&
-&                            , 'A', 'fchyreg')
-!cjk
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhtyreg', nf_double, 2, vdims&
-&                            , 'W', 'fhtyreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhjyreg', nf_double, 2, vdims&
-&                            , 'W', 'fhjyreg')
-!
-!cjk
-    vdims(1) = yregid
-    vdims(2) = tid
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'qconveyreg', nf_double, 2, &
-&                            vdims, 'W', 'qconveyreg')
-!
-    vdims(1) = yregid
-    vdims(2) = nsid
-    vdims(3) = tid
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fnayreg', nf_double, 3, vdims&
-&                            , 's^-1', 'fnayreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhmyreg', nf_double, 3, vdims&
-&                            , 'W', 'fhmyreg')
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'fhpyreg', nf_double, 3, vdims&
-&                            , 'W', 'fhpyreg')
-!cjk
-    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'qconviyreg', nf_double, 3, &
-&                            vdims, 'W', 'qconviyreg')
+    CALL CREATE_CDF_VAR_WITH_ATTRS(ncid, 'qconvireg', nf_double, 3, &
+&                            vdims, 'W', 'qconvireg')
 !
     status = NF_CLOSE(ncid)
     CALL CHECK_CDF_STATUS(status)

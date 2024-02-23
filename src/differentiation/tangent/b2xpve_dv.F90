@@ -5,10 +5,10 @@
 !   variations   of useful results: ve fch_pi_c
 !   with respect to varying inputs: na ne sigx_c ua rza alfx_c
 !                po rz2 te
-!   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.fchc:in
-!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in st_ext.ne:in st_ext.ue:in st_ext.za:in
-!                st_ext.za2:in st_ext.na:in st_ext.ua:in
+!   Plus diff mem management of: geo.cvbb:in geo.fchc:in geo.fcht:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!                st_ext.ne:in st_ext.ue:in st_ext.za:in st_ext.za2:in
+!                st_ext.na:in st_ext.ua:in
 !
 !
 !
@@ -21,10 +21,10 @@
 !
 !
 !srv 17.11.16 {
-SUBROUTINE B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, rza&
-& , rzad, rz2, rz2d, alfx_c, alfx_cd, sigx_c, sigx_cd, fch_pi_c, &
-& fch_pi_cd, po, pod, ne, ned, te, ted, na, nad, ua, uad, st_ext, &
-& st_extd, ve, ved, nbdirs)
+SUBROUTINE B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, qe, rza, rzad&
+& , rz2, rz2d, alfx_c, alfx_cd, sigx_c, sigx_cd, fch_pi_c, fch_pi_cd, po&
+& , pod, ne, ned, te, ted, na, nad, ua, uad, st_ext, st_extd, ve, ved, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -39,7 +39,6 @@ SUBROUTINE B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, rza&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
   REAL(kind=r8) :: qe, rza(ncv, 0:ns-1), rz2(ncv, 0:ns-1), alfx_c(ncv), &
@@ -75,8 +74,8 @@ SUBROUTINE B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, rza&
 !srv 13.01.17 {
     CALL B2XZEF_DV(ncv, ns, rz2, rz2d, na, nad, ne, ned, zeff, zeffd, &
 &            st_ext, nbdirs)
-    CALL B2XPIC_DV(ncv, ns, mpg, qe, rza, rzad, geo%cvbb, na, nad, ua, &
-&            uad, zeff, zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
+    CALL B2XPIC_DV(ncv, ns, qe, rza, rzad, geo%cvbb, na, nad, ua, uad, &
+&            zeff, zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
   ELSE
     fch_pi_c = 0.0_R8
     DO nd=1,nbdirsmax
@@ -95,18 +94,18 @@ SUBROUTINE B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, rza&
   DO nd=1,nbdirsmax
     dummd(nd, :) = 0.D0
   END DO
-  CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, po, pod, dumm, &
-&          dummd, gpop, gpopd, nbdirs)
+  CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, po, pod, dumm, dummd, &
+&          gpop, gpopd, nbdirs)
   DO nd=1,nbdirsmax
     gpepd(nd, :) = 0.D0
   END DO
-  CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, pe, ped, dumm, &
-&          dummd, gpep, gpepd, nbdirs)
+  CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, pe, ped, dumm, dummd, &
+&          gpep, gpepd, nbdirs)
   DO nd=1,nbdirsmax
     gtepd(nd, :) = 0.D0
   END DO
-  CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, te, ted, dumm, &
-&          dummd, gtep, gtepd, nbdirs)
+  CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, te, ted, dumm, dummd, &
+&          gtep, gtepd, nbdirs)
   DO nd=1,nbdirsmax
     nefd(nd, :) = 0.D0
   END DO
@@ -200,8 +199,8 @@ SUBROUTINE B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, rza, rz2, &
   IF (switch%b2sigp_style .EQ. 2) THEN
 !srv 13.01.17 {
     CALL B2XZEF_NODIFF(ncv, ns, rz2, na, ne, zeff, st_ext)
-    CALL B2XPIC_NODIFF(ncv, ns, mpg, qe, rza, geo%cvbb, na, ua, zeff, &
-&                st_ext, fch_pi_c)
+    CALL B2XPIC_NODIFF(ncv, ns, qe, rza, geo%cvbb, na, ua, zeff, st_ext&
+&                , fch_pi_c)
   ELSE
     fch_pi_c = 0.0_R8
   END IF

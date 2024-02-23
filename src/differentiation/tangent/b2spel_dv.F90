@@ -28,6 +28,7 @@ SUBROUTINE B2SPEL_DV(ncv, ns, ev, te, ted, ne, ned, rt, rtd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMRC_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_MATH_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2spel
@@ -95,10 +96,8 @@ SUBROUTINE B2SPEL_DV(ncv, ns, ev, te, ted, ne, ned, rt, rtd, nbdirs)
 & , t1d, ttd
 !   ..procedures
   INTRINSIC MIN, MAX, LOG
-  EXTERNAL B2XVSG_NODIFF, TRIMG
-  EXTERNAL TRIMG_DV
-  REAL(kind=r8) :: TRIMG
   EXTERNAL XERTST
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: y1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
   REAL(kind=r8) :: y2
@@ -113,8 +112,6 @@ SUBROUTINE B2SPEL_DV(ncv, ns, ev, te, ted, ne, ned, rt, rtd, nbdirs)
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
   INTEGER :: nbdirs
-!     (trimg will be used to trim the logarithmic gradients to avoid
-!     some pathetic behaviour near the underflow limit.)
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -130,8 +127,8 @@ SUBROUTINE B2SPEL_DV(ncv, ns, ev, te, ted, ne, ned, rt, rtd, nbdirs)
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
 !   ..extensive tests on first few calls
   IF (ncall_b2spel .LT. 3) THEN
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
 !
 ! ..compute rate coefficients
@@ -540,6 +537,7 @@ SUBROUTINE B2SPEL_NODIFF(ncv, ns, ev, te, ne, rt)
   USE B2MOD_TYPES
   USE B2MOD_B2CMRC_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_MATH_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2spel
@@ -602,16 +600,13 @@ SUBROUTINE B2SPEL_NODIFF(ncv, ns, ev, te, ne, rt)
   REAL(kind=r8) :: rlte, rlne, fxte, fxne, t0, t1, tt
 !   ..procedures
   INTRINSIC MIN, MAX, LOG
-  EXTERNAL B2XVSG_NODIFF, TRIMG
-  REAL(kind=r8) :: TRIMG
   EXTERNAL XERTST
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: y1
   REAL(kind=r8) :: y2
   REAL(kind=r8) :: y3
   REAL(kind=r8) :: y4
   REAL(kind=r8) :: arg1
-!     (trimg will be used to trim the logarithmic gradients to avoid
-!     some pathetic behaviour near the underflow limit.)
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -627,8 +622,8 @@ SUBROUTINE B2SPEL_NODIFF(ncv, ns, ev, te, ne, rt)
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
 !   ..extensive tests on first few calls
   IF (ncall_b2spel .LT. 3) THEN
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
 !
 ! ..compute rate coefficients

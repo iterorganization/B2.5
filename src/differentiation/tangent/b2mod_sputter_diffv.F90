@@ -1537,6 +1537,7 @@ CONTAINS
     REAL(kind=r8) :: tp, a, b, am2, vappres, alpha
     REAL(kind=r8) :: flxthev, qthev
     LOGICAL :: bulk
+    INTRINSIC NINT
     INTRINSIC SQRT
     REAL(kind=r8) :: pwy1
     REAL(r8) :: arg1
@@ -1564,7 +1565,7 @@ CONTAINS
 !xpb Contribution from bulk if species is part of bulk
     bulk = .false.
     DO i=1,nz
-      IF (zn(is) .EQ. matsurf_nzconstituents(ibnd, i)) THEN
+      IF (NINT(zn(is)) .EQ. matsurf_nzconstituents(ibnd, i)) THEN
         a = matsurf_vapprs_a(ibnd)
         b = matsurf_vapprs_b(ibnd)
         am2 = atomic_mass(matsurf_nzconstituents(ibnd, i))

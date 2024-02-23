@@ -21,7 +21,7 @@
 !.specification
 !
 !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
-SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
+SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, &
 & cvsbhz_cl, cvsbhz_cld, cvsbhz, cvsbhzd, flubv, flubvd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
@@ -42,7 +42,6 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
 !srv 16.10.17
   REAL(kind=r8), INTENT(IN) :: cvsbhz_cl(nfc, 0:1), cvsbhz(nfc, 0:1)
   REAL(kind=r8), INTENT(IN) :: cvsbhz_cld(nbdirsmax, nfc, 0:1), cvsbhzd(&
@@ -67,7 +66,7 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !srv 16.10.17
   REAL(kind=r8) :: ft, dloghz(nfc, 0:1), logcvhz(ncv), logvxhz(nvx)
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG_NODIFF
+  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG
   INTRINSIC NINT
   INTRINSIC LOG
   INTEGER :: nd
@@ -200,7 +199,7 @@ SUBROUTINE B2NXFV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, cvsbhz_cl&
 !srv 16.10.17
   REAL(kind=r8) :: ft, dloghz(nfc, 0:1), logcvhz(ncv), logvxhz(nvx)
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG_NODIFF
+  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG
   INTRINSIC NINT
   INTRINSIC LOG
 !   ..initialization

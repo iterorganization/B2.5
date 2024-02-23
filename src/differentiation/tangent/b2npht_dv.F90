@@ -33,13 +33,15 @@
 !                dv.reskt:in dv.reszt:in dv.cortt:in dv.corte:in
 !                dv.corti:in dv.cortn:in dv.corkt:in dv.corzt:in
 !                dv.pccm:in dv.ne:in dv.ni:in dv.nn:in dv.ue:in
-!                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
-!                geo.vxonedbsq:in geo.cvconn:in st_ext.am:in st_ext.ne2:in
-!                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rz2:in
+!                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in geo.cvbb:in
+!                geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in
+!                st_ext.am:in st_ext.ne2:in st_ext.za2:in st_ext.na:in
+!                st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in srw.b2sihs_divue:in
+!                srw.b2sihs_divua:in srw.b2sihs_exbe:in srw.b2sihs_exba:in
+!                srw.b2sihs_visa:in srw.b2sihs_fraa:in srw.b2sihs_str:in
 !                sr.she:in sr.shi:in sr.shn:in sr.skt:in sr.skt_diss:in
 !                sr.skt_prod:in co.cvsa:in co.cvsahz_eff:in co.ceqp:in
 !                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.alfx_c:in
@@ -63,9 +65,9 @@
 !srv 05.07.17
 !srv 22.05.18
 SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
-& , mpgd, itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg&
-& , solvpreg, solvmreg, solvkreg, solvzreg, rxf, pl, pld, dv, dvd, co, &
-& cod, rt, rtd, sr, srd, st_ext, st_extd, ierr, nbdirs)
+& , itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, &
+& solvpreg, solvmreg, solvkreg, solvzreg, rxf, pl, pld, dv, dvd, co, cod&
+& , rt, rtd, sr, srd, srw, srwd, st_ext, st_extd, ierr, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -73,15 +75,16 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2npht_shei_bal, update_balance_sources_heat,
-!WG_TODO     &          balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2npht_shei_bal, &
+& update_balance_sources_heat, balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npht
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : last_solve_9
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2npht, ncall_b2sikt, &
-& ncall_b2sifrtf, ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht&
-& , ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2sikt, ncall_b2sifrtf&
+& , ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht, ncall_b2ursd&
+& , ncall_b2sihs_, ncall_b2tlnl, cvregmax
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -98,7 +101,6 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: rxf
 !srv 22.05.18
   LOGICAL :: solving(4), solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(&
@@ -114,6 +116,8 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   TYPE(B2COEFF_DIFFV), INTENT(INOUT) :: cod
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
+  TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
+  TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -169,7 +173,7 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   EXTERNAL XERTST, IPGETR, B2SAXPY_NODIFF
   EXTERNAL B2SAXPY_DV
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2URSD_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, B2URSD_NODIFF, &
 &     B2USHT_NODIFF, B2UPHT_NODIFF
   EXTERNAL B2URSD_DV, B2USHT_DV, B2UPHT_DV
   EXTERNAL XERRAB
@@ -219,24 +223,24 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !   ..extensive tests on first few calls
   IF (ncall_b2npht .LT. 3) THEN
 !    ..test sign of transport coefficients
-    CALL B2XVSG_NODIFF(ncv, co%ceqp, 1, 'ceqp', '.ge.')
+    CALL B2XVSG(ncv, co%ceqp, 1, 'ceqp', '.ge.')
 !    ..test sign of she, shi
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 0), 1, 'she0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 1), 1, 'she1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 2), 1, 'she2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 3), 1, 'she3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 0), 1, 'shi0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 1), 1, 'shi1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 2), 1, 'shi2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 3), 1, 'shi3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 0), 1, 'shn0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 1), 1, 'shn1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 2), 1, 'shn2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 3), 1, 'shn3', '.le.')
+    CALL B2XVSG(ncv, sr%she(1, 0), 1, 'she0', '.ge.')
+    CALL B2XVSG(ncv, sr%she(1, 1), 1, 'she1', '.le.')
+    CALL B2XVSG(ncv, sr%she(1, 2), 1, 'she2', '.ge.')
+    CALL B2XVSG(ncv, sr%she(1, 3), 1, 'she3', '.le.')
+    CALL B2XVSG(ncv, sr%shi(1, 0), 1, 'shi0', '.ge.')
+    CALL B2XVSG(ncv, sr%shi(1, 1), 1, 'shi1', '.le.')
+    CALL B2XVSG(ncv, sr%shi(1, 2), 1, 'shi2', '.ge.')
+    CALL B2XVSG(ncv, sr%shi(1, 3), 1, 'shi3', '.le.')
+    CALL B2XVSG(ncv, sr%shn(1, 0), 1, 'shn0', '.ge.')
+    CALL B2XVSG(ncv, sr%shn(1, 1), 1, 'shn1', '.le.')
+    CALL B2XVSG(ncv, sr%shn(1, 2), 1, 'shn2', '.ge.')
+    CALL B2XVSG(ncv, sr%shn(1, 3), 1, 'shn3', '.le.')
 !    ..test sign of te, ti
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
   END IF
 !
 ! ..main computation
@@ -262,7 +266,7 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       she0d(nd, :, :) = 0.D0
     END DO
   ELSE
-    CALL B2SIHS__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
+    CALL B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
 &             ismain, dv%fac_exb, dv%lnlam, dvd%lnlam, pl%na, pld%na, pl&
 &             %ua, pld%ua, dv%ue, dvd%ue, pl%te, pld%te, pl%ti, pld%ti, &
 &             pl%tn, pld%tn, pl%po, pld%po, dv%ne, dvd%ne, dv%ni, dvd%ni&
@@ -270,7 +274,7 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &             cvsa, cod%cvsa, co%cvsahz_eff, cod%cvsahz_eff, co%f_luc_sg&
 &             , cod%f_luc_sg, co%alfx_c, cod%alfx_c, co%sigx_c, cod%&
 &             sigx_c, rt%rza, rt%rz2, rtd%rz2, st_ext, st_extd, she0, &
-&             she0d, shi0, shi0d, shn0, shn0d, nbdirs)
+&             she0d, shi0, shi0d, shn0, shn0d, srw, srwd, nbdirs)
   END IF
   arg1 = ncv*4
   CALL B2SAXPY_DV(arg1, 1.0e0_R8, sr%she, srd%she, 1, she0, she0d, 1, &
@@ -287,9 +291,9 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   sr%skt_diss = 0.0_R8
   IF (switch%solve_keps .GT. 0) THEN
     CALL B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, geod&
-&            , mpg, mpgd, pl, pld, dv, dvd, rt%rza, co, cod, st_ext, &
-&            st_extd, shekt, shektd, shikt, shiktd, skt0, skt0d, &
-&            skt_prod, skt_prodd, skt_diss, skt_dissd, nbdirs)
+&            , mpg, pl, pld, dv, dvd, rt%rza, co, cod, st_ext, st_extd, &
+&            shekt, shektd, shikt, shiktd, skt0, skt0d, skt_prod, &
+&            skt_prodd, skt_diss, skt_dissd, nbdirs)
     arg1 = ncv*4
     CALL B2SAXPY_DV(arg1, 1.0e0_R8, shekt, shektd, 1, she0, she0d, 1, &
 &             nbdirs)
@@ -307,6 +311,11 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     END DO
   END IF
 !
+!djm Jan2017 update particle source components for balance
+  IF (balance_netcdf .NE. 0) CALL UPDATE_BALANCE_SOURCES_HEAT(ncv, dv%ne&
+&                                                       , dv%ni, pl%te, &
+&                                                       pl%ti, ns)
+!
 !   ..compute provisional reshe, reshi
 !     (first ignore equipartition)
 !   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
@@ -319,13 +328,12 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
     IF (switch%mdf_fhe .EQ. 0) THEN
-      CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%ne, dvd%ne, pl%te, pld%te, &
-&              she0, she0d, dv%fhe, dvd%fhe, dv%reshe, dvd%reshe, nbdirs&
-&             )
+      CALL B2URSD_DV(ncv, nfc, mpg, dv%ne, dvd%ne, pl%te, pld%te, she0, &
+&              she0d, dv%fhe, dvd%fhe, dv%reshe, dvd%reshe, nbdirs)
     ELSE
-      CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%ne, dvd%ne, pl%te, pld%te, &
-&              she0, she0d, dv%fhe_mdf, dvd%fhe_mdf, dv%reshe, dvd%reshe&
-&              , nbdirs)
+      CALL B2URSD_DV(ncv, nfc, mpg, dv%ne, dvd%ne, pl%te, pld%te, she0, &
+&              she0d, dv%fhe_mdf, dvd%fhe_mdf, dv%reshe, dvd%reshe, &
+&              nbdirs)
     END IF
   END IF
 !srv 22.05.18
@@ -333,32 +341,31 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
     IF (switch%mdf_fhi .EQ. 0) THEN
-      CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%ni(:, 0), dvd%ni(:, :, 0), &
-&              pl%ti, pld%ti, shi0, shi0d, dv%fhi, dvd%fhi, dv%reshi, &
-&              dvd%reshi, nbdirs)
+      CALL B2URSD_DV(ncv, nfc, mpg, dv%ni(:, 0), dvd%ni(:, :, 0), pl%ti&
+&              , pld%ti, shi0, shi0d, dv%fhi, dvd%fhi, dv%reshi, dvd%&
+&              reshi, nbdirs)
     ELSE
-      CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%ni(:, 0), dvd%ni(:, :, 0), &
-&              pl%ti, pld%ti, shi0, shi0d, dv%fhi_mdf, dvd%fhi_mdf, dv%&
-&              reshi, dvd%reshi, nbdirs)
+      CALL B2URSD_DV(ncv, nfc, mpg, dv%ni(:, 0), dvd%ni(:, :, 0), pl%ti&
+&              , pld%ti, shi0, shi0d, dv%fhi_mdf, dvd%fhi_mdf, dv%reshi&
+&              , dvd%reshi, nbdirs)
     END IF
   END IF
   IF ((switch%solve_keps .GT. 0 .AND. ANY(solvkreg(0:mpg%nnreg(0)))) &
-&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_DV(ncv, nfc, geo, &
-&                                                mpg, dv%ni(:, 1), dvd%&
-&                                                ni(:, :, 1), pl%kt, pld&
-&                                                %kt, skt0, skt0d, dv%&
-&                                                fkt, dvd%fkt, dv%reskt&
-&                                                , dvd%reskt, nbdirs)
+&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_DV(ncv, nfc, mpg, dv&
+&                                                %ni(:, 1), dvd%ni(:, :&
+&                                                , 1), pl%kt, pld%kt, &
+&                                                skt0, skt0d, dv%fkt, &
+&                                                dvd%fkt, dv%reskt, dvd%&
+&                                                reskt, nbdirs)
   IF ((switch%solve_keps .GT. 1 .AND. ANY(solvzreg(0:mpg%nnreg(0)))) &
 &     .OR. switch%get_residuals .EQ. 1) THEN
     DO nd=1,nbdirsmax
       szt0d(nd, :, :) = 0.D0
     END DO
-    CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%ni(:, 1), dvd%ni(:, :, 1), pl%&
-&            zt, pld%zt, szt0, szt0d, dv%fzt, dvd%fzt, dv%reszt, dvd%&
-&            reszt, nbdirs)
+    CALL B2URSD_DV(ncv, nfc, mpg, dv%ni(:, 1), dvd%ni(:, :, 1), pl%zt, &
+&            pld%zt, szt0, szt0d, dv%fzt, dvd%fzt, dv%reszt, dvd%reszt, &
+&            nbdirs)
   END IF
-!
 !
 ! residuals for separate neutral energy equation
   IF (switch%tn_style .EQ. 2) THEN
@@ -366,9 +373,8 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     IF (ANY(solvnreg(0:mpg%nnreg(0))) .OR. switch%get_residuals .EQ. 1) &
 &   THEN
 !! AFN_TODO add neutral energy equation in solving switch?
-      CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%nn, dvd%nn, pl%tn, pld%tn, &
-&              shn0, shn0d, dv%fhn, dvd%fhn, dv%reshn, dvd%reshn, nbdirs&
-&             )
+      CALL B2URSD_DV(ncv, nfc, mpg, dv%nn, dvd%nn, pl%tn, pld%tn, shn0, &
+&              shn0d, dv%fhn, dvd%fhn, dv%reshn, dvd%reshn, nbdirs)
       DO nd=1,nbdirsmax
         sheid(nd, :) = 0.D0
       END DO
@@ -387,7 +393,6 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       sheid(nd, :) = 0.D0
     END DO
   END IF
-!
 !
   DO icv=1,mpg%nci
     arg10 = pl%te(icv)
@@ -419,6 +424,12 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     END DO
     shei(icv) = 0.0_R8
   END DO
+!
+  IF (balance_netcdf .NE. 0) THEN
+!djm Jan2017
+    b2npht_shei_bal = shei
+  END IF
+!
 !   ..compute final resht, reshe, reshi
 !      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
 !        dv%resht = dv%reshe + dv%reshi
@@ -507,11 +518,11 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !   ..compute correction
   IF (solving(4)) THEN
 !srv 11.01.13
-    CALL B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, dv%&
-&            ne, dvd%ne, dv%ni, dvd%ni, dv%nn, dvd%nn, pl%te, pld%te, pl&
-&            %ti, pld%ti, pl%tn, pld%tn, pl%kt, pld%kt, pl%zt, pld%zt, &
-&            dv%floe, dvd%floe, dv%cone, dvd%cone, dv%floi, dvd%floi, dv&
-&            %coni, dvd%coni, dv%flon, dvd%flon, dv%conn, dvd%conn, dv%&
+    CALL B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, dv%ne, &
+&            dvd%ne, dv%ni, dvd%ni, dv%nn, dvd%nn, pl%te, pld%te, pl%ti&
+&            , pld%ti, pl%tn, pld%tn, pl%kt, pld%kt, pl%zt, pld%zt, dv%&
+&            floe, dvd%floe, dv%cone, dvd%cone, dv%floi, dvd%floi, dv%&
+&            coni, dvd%coni, dv%flon, dvd%flon, dv%conn, dvd%conn, dv%&
 &            flokt, dvd%flokt, dv%conkt, dvd%conkt, dv%flozt, dvd%flozt&
 &            , dv%conzt, dvd%conzt, she0, she0d, shi0, shi0d, shn0, &
 &            shn0d, skt0, skt0d, szt0, co%ceqp, cod%ceqp, dv%resht, dvd%&
@@ -522,15 +533,15 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &            corzt, wrkf, wrkfd, wrkc, wrkcd, aa, aad, nbdirs)
 !   ..apply correction
 !srv 22.05.18
-    CALL B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-&            solving(3), solving(1), solvereg, solvireg, solvnreg, &
-&            solvtreg, solvpreg, solvmreg, solvkreg, solvzreg, rxf, dv%&
-&            cortt, dvd%cortt, dv%corte, dvd%corte, dv%corti, dvd%corti&
-&            , dv%cortn, dvd%cortn, dv%corkt, dvd%corkt, dv%corzt, dvd%&
-&            corzt, dv%pccm(1:ncv, 0), dvd%pccm(:, 1:ncv, 0), pl%na, pld&
-&            %na, pl%ua, pld%ua, pl%te, pld%te, pl%ti, pld%ti, pl%tn, &
-&            pld%tn, pl%kt, pld%kt, pl%zt, pld%zt, pl%po, pld%po, dv%ne&
-&            , dvd%ne, dv%ni, dvd%ni, nbdirs)
+    CALL B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, solving(3)&
+&            , solving(1), solvereg, solvireg, solvnreg, solvtreg, &
+&            solvpreg, solvmreg, solvkreg, solvzreg, rxf, dv%cortt, dvd%&
+&            cortt, dv%corte, dvd%corte, dv%corti, dvd%corti, dv%cortn, &
+&            dvd%cortn, dv%corkt, dvd%corkt, dv%corzt, dvd%corzt, dv%&
+&            pccm(1:ncv, 0), dvd%pccm(:, 1:ncv, 0), pl%na, pld%na, pl%ua&
+&            , pld%ua, pl%te, pld%te, pl%ti, pld%ti, pl%tn, pld%tn, pl%&
+&            kt, pld%kt, pl%zt, pld%zt, pl%po, pld%po, dv%ne, dvd%ne, dv&
+&            %ni, dvd%ni, nbdirs)
   END IF
 !   ..set error parameter and return
 !     (at present all errors cause an abort through xerrab)
@@ -591,7 +602,8 @@ END SUBROUTINE B2NPHT_DV
 !srv 22.05.18
 SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 & ismain, solving, solvereg, solvireg, solvnreg, solvtreg, solvpreg, &
-& solvmreg, solvkreg, solvzreg, rxf, pl, dv, co, rt, sr, st_ext, ierr)
+& solvmreg, solvkreg, solvzreg, rxf, pl, dv, co, rt, sr, srw, st_ext, &
+& ierr)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -599,15 +611,16 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2npht_shei_bal, update_balance_sources_heat,
-!WG_TODO     &          balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2npht_shei_bal, &
+& update_balance_sources_heat, balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npht
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : last_solve_9
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2npht, ncall_b2sikt, &
-& ncall_b2sifrtf, ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht&
-& , ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2sikt, ncall_b2sifrtf&
+& , ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht, ncall_b2ursd&
+& , ncall_b2sihs_, ncall_b2tlnl, cvregmax
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -632,6 +645,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
+  TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !   ..output arguments (unspecified on entry)
@@ -678,7 +692,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   INTRINSIC SQRT
   EXTERNAL XERTST, IPGETR, B2SAXPY_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2URSD_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, B2URSD_NODIFF, &
 &     B2USHT_NODIFF, B2UPHT_NODIFF
   EXTERNAL XERRAB
   INTRINSIC ANY
@@ -719,24 +733,24 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 !   ..extensive tests on first few calls
   IF (ncall_b2npht .LT. 3) THEN
 !    ..test sign of transport coefficients
-    CALL B2XVSG_NODIFF(ncv, co%ceqp, 1, 'ceqp', '.ge.')
+    CALL B2XVSG(ncv, co%ceqp, 1, 'ceqp', '.ge.')
 !    ..test sign of she, shi
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 0), 1, 'she0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 1), 1, 'she1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 2), 1, 'she2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%she(1, 3), 1, 'she3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 0), 1, 'shi0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 1), 1, 'shi1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 2), 1, 'shi2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shi(1, 3), 1, 'shi3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 0), 1, 'shn0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 1), 1, 'shn1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 2), 1, 'shn2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%shn(1, 3), 1, 'shn3', '.le.')
+    CALL B2XVSG(ncv, sr%she(1, 0), 1, 'she0', '.ge.')
+    CALL B2XVSG(ncv, sr%she(1, 1), 1, 'she1', '.le.')
+    CALL B2XVSG(ncv, sr%she(1, 2), 1, 'she2', '.ge.')
+    CALL B2XVSG(ncv, sr%she(1, 3), 1, 'she3', '.le.')
+    CALL B2XVSG(ncv, sr%shi(1, 0), 1, 'shi0', '.ge.')
+    CALL B2XVSG(ncv, sr%shi(1, 1), 1, 'shi1', '.le.')
+    CALL B2XVSG(ncv, sr%shi(1, 2), 1, 'shi2', '.ge.')
+    CALL B2XVSG(ncv, sr%shi(1, 3), 1, 'shi3', '.le.')
+    CALL B2XVSG(ncv, sr%shn(1, 0), 1, 'shn0', '.ge.')
+    CALL B2XVSG(ncv, sr%shn(1, 1), 1, 'shn1', '.le.')
+    CALL B2XVSG(ncv, sr%shn(1, 2), 1, 'shn2', '.ge.')
+    CALL B2XVSG(ncv, sr%shn(1, 3), 1, 'shn3', '.le.')
 !    ..test sign of te, ti
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
   END IF
 !
 ! ..main computation
@@ -753,7 +767,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                 pl%tn, pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne&
 &                 , dv%fch, co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%&
 &                 alfx_c, co%sigx_c, rt%rza, rt%rz2, st_ext, she0, shi0&
-&                 , shn0)
+&                 , shn0, srw)
   END IF
   arg1 = ncv*4
   CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, sr%she, 1, she0, 1)
@@ -779,6 +793,11 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     CALL B2SAXPY_NODIFF(ncv, 1.0e0_R8, skt_diss, 1, sr%skt_diss, 1)
   END IF
 !
+!djm Jan2017 update particle source components for balance
+  IF (balance_netcdf .NE. 0) CALL UPDATE_BALANCE_SOURCES_HEAT(ncv, dv%ne&
+&                                                       , dv%ni, pl%te, &
+&                                                       pl%ti, ns)
+!
 !   ..compute provisional reshe, reshi
 !     (first ignore equipartition)
 !   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
@@ -791,11 +810,11 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
     IF (switch%mdf_fhe .EQ. 0) THEN
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, dv%ne, pl%te, she0, dv%fhe&
-&                  , dv%reshe)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, dv%ne, pl%te, she0, dv%fhe, dv%&
+&                  reshe)
     ELSE
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, dv%ne, pl%te, she0, dv%&
-&                  fhe_mdf, dv%reshe)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, dv%ne, pl%te, she0, dv%fhe_mdf, &
+&                  dv%reshe)
     END IF
   END IF
 !srv 22.05.18
@@ -803,24 +822,23 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
     IF (switch%mdf_fhi .EQ. 0) THEN
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, dv%ni(:, 0), pl%ti, shi0, &
-&                  dv%fhi, dv%reshi)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, dv%ni(:, 0), pl%ti, shi0, dv%fhi&
+&                  , dv%reshi)
     ELSE
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, dv%ni(:, 0), pl%ti, shi0, &
-&                  dv%fhi_mdf, dv%reshi)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, dv%ni(:, 0), pl%ti, shi0, dv%&
+&                  fhi_mdf, dv%reshi)
     END IF
   END IF
   IF ((switch%solve_keps .GT. 0 .AND. ANY(solvkreg(0:mpg%nnreg(0)))) &
-&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_NODIFF(ncv, nfc, geo&
-&                                                    , mpg, dv%ni(:, 1)&
-&                                                    , pl%kt, skt0, dv%&
-&                                                    fkt, dv%reskt)
+&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_NODIFF(ncv, nfc, mpg&
+&                                                    , dv%ni(:, 1), pl%&
+&                                                    kt, skt0, dv%fkt, &
+&                                                    dv%reskt)
   IF ((switch%solve_keps .GT. 1 .AND. ANY(solvzreg(0:mpg%nnreg(0)))) &
-&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_NODIFF(ncv, nfc, geo&
-&                                                    , mpg, dv%ni(:, 1)&
-&                                                    , pl%zt, szt0, dv%&
-&                                                    fzt, dv%reszt)
-!
+&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_NODIFF(ncv, nfc, mpg&
+&                                                    , dv%ni(:, 1), pl%&
+&                                                    zt, szt0, dv%fzt, &
+&                                                    dv%reszt)
 !
 ! residuals for separate neutral energy equation
   IF (switch%tn_style .EQ. 2) THEN
@@ -828,14 +846,13 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     IF (ANY(solvnreg(0:mpg%nnreg(0))) .OR. switch%get_residuals .EQ. 1) &
 &   THEN
 !! AFN_TODO add neutral energy equation in solving switch?
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, dv%nn, pl%tn, shn0, dv%fhn&
-&                  , dv%reshn)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, dv%nn, pl%tn, shn0, dv%fhn, dv%&
+&                  reshn)
     END IF
   ELSE
 !! this is needed because reshn is added to the total energy equation
     dv%reshn = 0.0_R8
   END IF
-!
 !
   DO icv=1,mpg%nci
     arg10 = pl%te(icv)
@@ -846,6 +863,12 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   DO icv=mpg%nci+1,ncv
     shei(icv) = 0.0_R8
   END DO
+!
+  IF (balance_netcdf .NE. 0) THEN
+!djm Jan2017
+    b2npht_shei_bal = shei
+  END IF
+!
 !   ..compute final resht, reshe, reshi
 !      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
 !        dv%resht = dv%reshe + dv%reshi

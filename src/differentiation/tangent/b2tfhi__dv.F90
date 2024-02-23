@@ -18,18 +18,20 @@
 !                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)
 !                *(co.cddi) *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
 !                *(pl.kt) *(pl.zt)
-!   Plus diff mem management of: dv.fchvispar:in dv.fchvisper:in
-!                dv.fchvisq:in dv.fchinert:in dv.fchanml:in dv.fchviskt:in
-!                dv.fni_he:in dv.fna:in dv.fna_exb:in dv.fhe_exb:in
-!                dv.fhi:in dv.fhi_mdf:in dv.fhipsch:in dv.fhi_exb:in
-!                dv.fnn:in dv.fhn:in dv.fkt:in dv.fzt:in dv.floi:in
-!                dv.flon:in dv.flokt:in dv.flozt:in dv.conn:in
-!                dv.conkt:in dv.conzt:in dv.coni:in dv.ni:in dv.nn:in
-!                dv.vadia:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in co.chce_exb:in
-!                co.chci:in co.chci_exb:in co.chcn:in co.cdkt:in
-!                co.cdzt:in co.cddi:in pl.na:in pl.te:in pl.ti:in
-!                pl.tn:in pl.kt:in pl.zt:in
+!   Plus diff mem management of: fhi_vispar:in fhi_strange:in fhi_visq:in
+!                fhi_anml:in fhi_visper:in fhi_32:in fhi_inert:in
+!                fhi_cond:in dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
+!                dv.fchinert:in dv.fchanml:in dv.fchviskt:in dv.fni_he:in
+!                dv.fna:in dv.fna_exb:in dv.fhe_exb:in dv.fhi:in
+!                dv.fhi_mdf:in dv.fhipsch:in dv.fhi_exb:in dv.fnn:in
+!                dv.fhn:in dv.fkt:in dv.fzt:in dv.floi:in dv.flon:in
+!                dv.flokt:in dv.flozt:in dv.conn:in dv.conkt:in
+!                dv.conzt:in dv.coni:in dv.ni:in dv.nn:in dv.vadia:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in co.chce_exb:in co.chci:in
+!                co.chci_exb:in co.chcn:in co.cdkt:in co.cdzt:in
+!                co.cddi:in pl.na:in pl.te:in pl.ti:in pl.tn:in
+!                pl.kt:in pl.zt:in
 !
 !
 !
@@ -46,7 +48,7 @@
 !srv 13.10.06
 !djm Jan2017
 SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
-& geod, mpg, mpgd, pl, pld, dv, dvd, co, cod, rt, balance, nbdirs)
+& geod, mpg, pl, pld, dv, dvd, co, cod, balance, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -56,15 +58,19 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
-!WG_TODO     &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
-!WG_TODO     &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : fhi_32, fhi_32d, fhi_52, fhi_cond, &
+& fhi_condd, fhi_dia, fhi_ecrb, fhi_strange, fhi_stranged, fhi_pschused,&
+& fhi_inert, fhi_inertd, fhi_vispar, fhi_vispard, fhi_visper, &
+& fhi_visperd, fhi_visq, fhi_visqd, fhi_anml, fhi_anmld, balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhi
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhi, b2tfhi_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : b2tfhi_cutlo
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array ni
+!  Hint: nFc should be the size of dimension 1 of array fni_he
+!  Hint: 0:1 should be the size of dimension 2 of array fni_he
 !  Hint: nFc should be the size of dimension 1 of array fcqalf
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -87,10 +93,8 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2RATES), INTENT(IN) :: rt
 !djm Jan2017
   LOGICAL :: balance
 !   ..input/output arguments (unspecified on entry)
@@ -120,15 +124,14 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !   ..local variables
   INTEGER :: ifc, is, meth
   REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), floi0_mdf(nfc, 0:1)&
-& , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), fhi0_mdf(nfc, 0:1), &
-& flon0(nfc, 0:1), flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1&
-& ), fhi_32(nfc, 0:1), fhi_52(nfc, 0:1)
+& , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), &
+& dumm3(nfc, 0:1), dumm4(nfc, 0:1), fhi0_mdf(nfc, 0:1), flon0(nfc, 0:1)&
+& , flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1)
   REAL(kind=r8) :: floi0d(nbdirsmax, nfc, 0:1), coni0d(nbdirsmax, nfc, 0&
 & :1), floi0_mdfd(nbdirsmax, nfc, 0:1), dumm0d(nbdirsmax, nfc, 0:1), &
 & dumm1d(nbdirsmax, nfc, 0:1), fhi0_mdfd(nbdirsmax, nfc, 0:1), flon0d(&
 & nbdirsmax, nfc, 0:1), flokt0d(nbdirsmax, nfc, 0:1), flozt0d(nbdirsmax&
-& , nfc, 0:1), flo0_exbd(nbdirsmax, nfc, 0:1), fhi_32d(nbdirsmax, nfc, 0&
-& :1), fhi_52d(nbdirsmax, nfc, 0:1)
+& , nfc, 0:1), flo0_exbd(nbdirsmax, nfc, 0:1)
 !pax      
 !srv 25.01.02
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
@@ -136,10 +139,11 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 & nati2v(nvx), dnati2(nfc, 0:1), cddi(nfc, 0:1), cdkt0(nfc, 0:1), cdzt0(&
 & nfc, 0:1)
   REAL(kind=r8) :: flidiad(nbdirsmax, nfc, 0:1), nifd(nbdirsmax, nfc), &
-& nnfd(nbdirsmax, nfc), tifd(nbdirsmax, nfc), natid(nbdirsmax, ncv), &
-& nati2d(nbdirsmax, ncv), nativd(nbdirsmax, nvx), nati2vd(nbdirsmax, nvx&
-& ), dnati2d(nbdirsmax, nfc, 0:1), cddid(nbdirsmax, nfc, 0:1), cdkt0d(&
-& nbdirsmax, nfc, 0:1), cdzt0d(nbdirsmax, nfc, 0:1)
+& nnfd(nbdirsmax, nfc), tifd(nbdirsmax, nfc), wrkfd(nbdirsmax, nfc, 0:1)&
+& , natid(nbdirsmax, ncv), nati2d(nbdirsmax, ncv), nativd(nbdirsmax, nvx&
+& ), nati2vd(nbdirsmax, nvx), dnati2d(nbdirsmax, nfc, 0:1), cddid(&
+& nbdirsmax, nfc, 0:1), cdkt0d(nbdirsmax, nfc, 0:1), cdzt0d(nbdirsmax, &
+& nfc, 0:1)
 !djm Jan2017
   REAL(kind=r8) :: scur(nfc, 0:1)
   REAL(kind=r8) :: scurd(nbdirsmax, nfc, 0:1)
@@ -152,10 +156,14 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !      integer, save :: lim_flux = 0                                    !srv 04.02.03 
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF
   INTRINSIC MAXVAL
+  INTRINSIC SIGN
   REAL(r8), DIMENSION(nCv) :: arg1
   REAL(r8), DIMENSION(nbdirsmax, nCv) :: arg1d
+  REAL(r8), DIMENSION(nFc, 0:1) :: arg10
+  REAL(r8), DIMENSION(nfc, 0:1) :: arg2
+  REAL(kind=r8), DIMENSION(nfc, 0:1) :: arg11
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(kind=r8), DIMENSION(nFc) :: temp0
@@ -185,21 +193,29 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !   ..extensive tests on first few calls
   IF (ncall_b2tfhi .LT. 3) THEN
 !    ..test sign of ni, ti, chci
-    CALL B2XVSG_NODIFF(ncv, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%kt, 1, 'kt', '.ge.')
+    DO nd=1,nbdirs
+      wrkfd(nd, :, 0) = 0.D0
+      wrkfd(nd, :, 1) = 0.D0
+      wrkfd(nd, :, 0) = 0.D0
+      wrkfd(nd, :, 1) = 0.D0
+      wrkfd(nd, :, 0) = 0.D0
+      wrkfd(nd, :, 1) = 0.D0
+    END DO
     wrkf(:, 0) = co%chci(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'chci0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chci0', '.ge.')
     wrkf(:, 1) = co%chci(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'chci1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'chci1', '.ge.')
     wrkf(:, 0) = co%cdkt(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'cdkt0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'cdkt0', '.ge.')
     wrkf(:, 1) = co%cdkt(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'cdkt1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'cdkt1', '.ge.')
     wrkf(:, 0) = co%cdzt(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'cdzt0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'cdzt0', '.ge.')
     wrkf(:, 1) = co%cdzt(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'cdzt1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'cdzt1', '.ge.')
   END IF
 !
   meth = switch%b2tfhi_discr_meth
@@ -249,8 +265,8 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 &                   nativd, nbdirs)
         CALL INTVERTEX_DV(ncv, nvx, mpg, geo%vxvol, nati2, nati2d, &
 &                   nati2v, nati2vd, nbdirs)
-        CALL DIFF_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, nati2, &
-&              nati2d, nati2v, nati2vd, dnati2, dnati2d, nbdirs)
+        CALL DIFF_DV(ncv, nfc, nvx, 1, geo, geod, mpg, nati2, nati2d, &
+&              nati2v, nati2vd, dnati2, dnati2d, nbdirs)
         DO nd=1,nbdirs
 !
 !      ..compute P.Sch heat flux
@@ -274,8 +290,8 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
         DO nd=1,nbdirsmax
           dumm0d(nd, :, :) = 0.D0
         END DO
-        CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, dumm0, dumm0d, cddi&
-&                  , cddid, floi0, floi0d, coni0, coni0d, nbdirs)
+        CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, dumm0, dumm0d, cddi, &
+&                  cddid, floi0, floi0d, coni0, coni0d, nbdirs)
         DO ifc=1,nfc
           temp = nati(mpg%fccv(ifc, 2)) - nati(mpg%fccv(ifc, 1))
           DO nd=1,nbdirs
@@ -495,14 +511,14 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !
 !   ..apply discretization scheme
   DO nd=1,nbdirsmax
-    fhi_32d(nd, :, :) = 0.D0
+    dumm0d(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
     fhi0_mdfd(nd, :, :) = 0.D0
   END DO
-  CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, pl%ti, pld&
-&            %ti, floi0_mdf, floi0_mdfd, co%chci, cod%chci, fhi0_mdf, &
-&            fhi0_mdfd, fhi_32, fhi_32d, fhi_52, fhi_52d, nbdirs)
+  CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, pl%ti, pld%ti, &
+&            floi0_mdf, floi0_mdfd, co%chci, cod%chci, fhi0_mdf, &
+&            fhi0_mdfd, dumm0, dumm0d, dumm1, dumm1d, nbdirs)
   DO nd=1,nbdirs
 !
 !   ..compute ion fluxes
@@ -520,8 +536,8 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   dv%fhi_mdf(:, 1) = fhi0_mdf(:, 1) - dv%fhipsch(:, 1)
 !
 !   ..compute floi, coni
-  CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, floi0_mdf, floi0_mdfd&
-&            , co%chci, cod%chci, floi0, floi0d, coni0, coni0d, nbdirs)
+  CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, floi0_mdf, floi0_mdfd, co%&
+&            chci, cod%chci, floi0, floi0d, coni0, coni0d, nbdirs)
   DO nd=1,nbdirs
 !wdk now we always add PSch linearization; do we need to condition
 !    this on mdf /= 0?
@@ -543,25 +559,19 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
     dv%fhn = 0.0_R8
     dv%flon = 0.0_R8
     dv%conn = 0.0_R8
-    DO nd=1,nbdirsmax
-      dumm0d(nd, :, :) = 0.D0
-    END DO
   ELSE
 !
 !     ..apply discretization scheme
-    DO nd=1,nbdirsmax
-      dumm0d(nd, :, :) = 0.D0
-    END DO
-    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, pl%tn, &
-&              pld%tn, flon0, flon0d, co%chcn, cod%chcn, dv%fhn, dvd%fhn&
-&              , dumm0, dumm0d, dumm1, dumm1d, nbdirs)
+    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, pl%tn, pld%tn&
+&              , flon0, flon0d, co%chcn, cod%chcn, dv%fhn, dvd%fhn, &
+&              dumm0, dumm0d, dumm1, dumm1d, nbdirs)
 !
 !     ..compute flon, conn
-    CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flon0, flon0d, co%&
-&              chcn, cod%chcn, dv%flon, dvd%flon, dv%conn, dvd%conn, &
-&              nbdirs)
-!
+    CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flon0, flon0d, co%chcn, &
+&              cod%chcn, dv%flon, dvd%flon, dv%conn, dvd%conn, nbdirs)
   END IF
+!
+!
 !
   IF (switch%solve_keps .GT. 0) THEN
 !
@@ -570,13 +580,13 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
       flo0_exbd(nd, :, :) = 1.5_R8*dvd%fna_exb(nd, :, :)
     END DO
     flo0_exb = 1.5_R8*dv%fna_exb
-    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, pl%ti, &
-&              pld%ti, flo0_exb, flo0_exbd, co%chci_exb, cod%chci_exb, &
-&              dv%fhi_exb, dvd%fhi_exb, dumm0, dumm0d, dumm1, dumm1d, &
+    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, pl%ti, pld%ti&
+&              , flo0_exb, flo0_exbd, co%chci_exb, cod%chci_exb, dv%&
+&              fhi_exb, dvd%fhi_exb, dumm0, dumm0d, dumm1, dumm1d, &
 &              nbdirs)
-    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, pl%te, &
-&              pld%te, flo0_exb, flo0_exbd, co%chce_exb, cod%chce_exb, &
-&              dv%fhe_exb, dvd%fhe_exb, dumm0, dumm0d, dumm1, dumm1d, &
+    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, pl%te, pld%te&
+&              , flo0_exb, flo0_exbd, co%chce_exb, cod%chce_exb, dv%&
+&              fhe_exb, dvd%fhe_exb, dumm0, dumm0d, dumm1, dumm1d, &
 &              nbdirs)
 !
 !     ..fluxes for k-equation
@@ -604,9 +614,9 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
     cdkt0(:, 1) = co%cdkt(:, 1)
 !
 !     ..apply discretization scheme
-    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, pl%kt, &
-&              pld%kt, flokt0, flokt0d, cdkt0, cdkt0d, dv%fkt, dvd%fkt, &
-&              dumm0, dumm0d, dumm1, dumm1d, nbdirs)
+    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, pl%kt, pld%kt&
+&              , flokt0, flokt0d, cdkt0, cdkt0d, dv%fkt, dvd%fkt, dumm0&
+&              , dumm0d, dumm1, dumm1d, nbdirs)
 !
 !     ..contribution from ExB heat fluxes
 !wdk    at the moment: experimental; it is expected that this contriution
@@ -621,9 +631,8 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 &     %fhe_exb)
 !
 !     ..compute flokt, conkt
-    CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flokt0, flokt0d, &
-&              cdkt0, cdkt0d, dv%flokt, dvd%flokt, dv%conkt, dvd%conkt, &
-&              nbdirs)
+    CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flokt0, flokt0d, cdkt0, &
+&              cdkt0d, dv%flokt, dvd%flokt, dv%conkt, dvd%conkt, nbdirs)
 !
     IF (switch%solve_keps .GT. 1) THEN
 !
@@ -647,18 +656,81 @@ SUBROUTINE B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
       cdzt0(:, 1) = co%cdzt(:, 1)
 !
 !     ..apply discretization scheme
-      CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, pl%zt&
-&                , pld%zt, flozt0, flozt0d, cdzt0, cdzt0d, dv%fzt, dvd%&
-&                fzt, dumm0, dumm0d, dumm1, dumm1d, nbdirs)
+      CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, pl%zt, pld%&
+&                zt, flozt0, flozt0d, cdzt0, cdzt0d, dv%fzt, dvd%fzt, &
+&                dumm0, dumm0d, dumm1, dumm1d, nbdirs)
 !
 !     ..compute flozt, conzt
-      CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flozt0, flozt0d, &
-&                cdzt0, cdzt0d, dv%flozt, dvd%flozt, dv%conzt, dvd%conzt&
-&                , nbdirs)
+      CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flozt0, flozt0d, cdzt0&
+&                , cdzt0d, dv%flozt, dvd%flozt, dv%conzt, dvd%conzt, &
+&                nbdirs)
 !
     END IF
   END IF
 !
+!
+!   ..fluxes for balance.nc file                  !nh  Jan2024
+  IF (balance .AND. balance_netcdf .NE. 0) THEN
+!djm Jan2017
+    dumm1 = 0.0_R8
+    dumm2 = 0.0_R8
+    dumm3 = 0.0_R8
+    dumm4 = 0.0_R8
+    arg10(:, :) = 1.5_R8*dv%fni_he
+    arg2(:, :) = SIGN(arg10(:, :), floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg2(:, :&
+&                  ), dumm1, dumm2, fhi_32, dumm3)
+    fhi_32 = SIGN(fhi_32, dv%fni_he)
+    fhi_52 = 0.0_R8
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, floi0_mdf&
+&                  , co%chci, dumm1, dumm2, fhi_cond)
+    IF (switch%mdf_fhi .EQ. 0) THEN
+      fhi_dia(:, 0) = flidia(:, 0)*tif
+      fhi_dia(:, 1) = flidia(:, 1)*tif
+      fhi_pschused = 0.0_R8
+    ELSE
+      fhi_dia = 0.0_R8
+      fhi_pschused = -dv%fhipsch
+    END IF
+    fhi_ecrb = 0.0_R8
+    dumm1 = 0.0_R8
+    dumm4(:, 0) = co%chvi(:, 0)*nif
+    dumm4(:, 1) = co%chvi(:, 1)*nif
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_strange, dumm3)
+    fhi_strange = SIGN(fhi_strange, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchinert(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchinert(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_inert, dumm3)
+    fhi_inert = SIGN(fhi_inert, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchvispar(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchvispar(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_vispar, dumm3)
+    fhi_vispar = SIGN(fhi_vispar, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchvisper(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchvisper(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_visper, dumm3)
+    fhi_visper = SIGN(fhi_visper, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchvisq(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchvisq(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_visq, dumm3)
+    fhi_visq = SIGN(fhi_visq, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchanml(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchanml(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_anml, dumm3)
+    fhi_anml = SIGN(fhi_anml, dumm4)
+  END IF
 !srv 18.06.08 }
 !
 !
@@ -766,7 +838,7 @@ END SUBROUTINE B2TFHI__DV
 !srv 13.10.06
 !djm Jan2017
 SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-& pl, dv, co, rt, balance)
+& pl, dv, co, balance)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -776,15 +848,18 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
-!WG_TODO     &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
-!WG_TODO     &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : fhi_32, fhi_52, fhi_cond, fhi_dia, &
+& fhi_ecrb, fhi_strange, fhi_pschused, fhi_inert, fhi_vispar, fhi_visper&
+& , fhi_visq, fhi_anml, balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhi
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhi, b2tfhi_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : b2tfhi_cutlo
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array ni
+!  Hint: nFc should be the size of dimension 1 of array fni_he
+!  Hint: 0:1 should be the size of dimension 2 of array fni_he
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -804,7 +879,6 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2RATES), INTENT(IN) :: rt
 !djm Jan2017
   LOGICAL :: balance
 !   ..input/output arguments (unspecified on entry)
@@ -832,9 +906,9 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !   ..local variables
   INTEGER :: ifc, is, meth
   REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), floi0_mdf(nfc, 0:1)&
-& , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), fhi0_mdf(nfc, 0:1), &
-& flon0(nfc, 0:1), flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1&
-& ), fhi_32(nfc, 0:1), fhi_52(nfc, 0:1)
+& , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), &
+& dumm3(nfc, 0:1), dumm4(nfc, 0:1), fhi0_mdf(nfc, 0:1), flon0(nfc, 0:1)&
+& , flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1)
 !pax      
 !srv 25.01.02
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
@@ -852,9 +926,13 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !      integer, save :: lim_flux = 0                                    !srv 04.02.03 
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF
   INTRINSIC MAXVAL
+  INTRINSIC SIGN
   REAL(r8), DIMENSION(nCv) :: arg1
+  REAL(r8), DIMENSION(nFc, 0:1) :: arg10
+  REAL(r8), DIMENSION(nfc, 0:1) :: arg2
+  REAL(kind=r8), DIMENSION(nfc, 0:1) :: arg11
 !   ..initialization
 !
 !-----------------------------------------------------------------------
@@ -880,21 +958,21 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !   ..extensive tests on first few calls
   IF (ncall_b2tfhi .LT. 3) THEN
 !    ..test sign of ni, ti, chci
-    CALL B2XVSG_NODIFF(ncv, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%kt, 1, 'kt', '.ge.')
     wrkf(:, 0) = co%chci(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'chci0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chci0', '.ge.')
     wrkf(:, 1) = co%chci(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'chci1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'chci1', '.ge.')
     wrkf(:, 0) = co%cdkt(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'cdkt0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'cdkt0', '.ge.')
     wrkf(:, 1) = co%cdkt(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'cdkt1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'cdkt1', '.ge.')
     wrkf(:, 0) = co%cdzt(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'cdzt0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'cdzt0', '.ge.')
     wrkf(:, 1) = co%cdzt(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'cdzt1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'cdzt1', '.ge.')
   END IF
 !
   meth = switch%b2tfhi_discr_meth
@@ -929,8 +1007,8 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
         cddi(:, 0) = -(5.0_R8*switch%fhipsch*dv%facdrift*co%cddi(:, 1, &
 &         is))
         cddi(:, 1) = 5.0_R8*switch%fhipsch*dv%facdrift*co%cddi(:, 0, is)
-        CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, dumm0, cddi, &
-&                      floi0, coni0)
+        CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, dumm0, cddi, floi0, &
+&                      coni0)
         DO ifc=1,nfc
           dv%floi(ifc, 0) = dv%floi(ifc, 0) + 0.5_R8*floi0(ifc, 0)*(nati&
 &           (mpg%fccv(ifc, 1))+nati(mpg%fccv(ifc, 2))) - coni0(ifc, 0)*(&
@@ -1034,7 +1112,7 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, floi0_mdf, &
-&                co%chci, fhi0_mdf, fhi_32, fhi_52)
+&                co%chci, fhi0_mdf, dumm0, dumm1)
 !
 !   ..compute ion fluxes
   dv%fhi(:, 0) = fhi0_mdf(:, 0) + (floi0(:, 0)-floi0_mdf(:, 0))*tif
@@ -1044,8 +1122,8 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   dv%fhi_mdf(:, 1) = fhi0_mdf(:, 1) - dv%fhipsch(:, 1)
 !
 !   ..compute floi, coni
-  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, floi0_mdf, co%chci&
-&                , floi0, coni0)
+  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, floi0_mdf, co%chci, &
+&                floi0, coni0)
 !wdk now we always add PSch linearization; do we need to condition
 !    this on mdf /= 0?
   dv%floi = dv%floi + floi0
@@ -1065,10 +1143,11 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &                  %chcn, dv%fhn, dumm0, dumm1)
 !
 !     ..compute flon, conn
-    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flon0, co%chcn, &
-&                  dv%flon, dv%conn)
-!
+    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flon0, co%chcn, dv%&
+&                  flon, dv%conn)
   END IF
+!
+!
 !
   IF (switch%solve_keps .GT. 0) THEN
 !
@@ -1102,8 +1181,8 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &     %fhe_exb)
 !
 !     ..compute flokt, conkt
-    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flokt0, cdkt0, &
-&                  dv%flokt, dv%conkt)
+    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flokt0, cdkt0, dv%&
+&                  flokt, dv%conkt)
 !
     IF (switch%solve_keps .GT. 1) THEN
 !
@@ -1118,12 +1197,75 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &                    , cdzt0, dv%fzt, dumm0, dumm1)
 !
 !     ..compute flozt, conzt
-      CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flozt0, cdzt0&
-&                    , dv%flozt, dv%conzt)
+      CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flozt0, cdzt0, dv%&
+&                    flozt, dv%conzt)
 !
     END IF
   END IF
 !
+!
+!   ..fluxes for balance.nc file                  !nh  Jan2024
+  IF (balance .AND. balance_netcdf .NE. 0) THEN
+!djm Jan2017
+    dumm1 = 0.0_R8
+    dumm2 = 0.0_R8
+    dumm3 = 0.0_R8
+    dumm4 = 0.0_R8
+    arg10(:, :) = 1.5_R8*dv%fni_he
+    arg2(:, :) = SIGN(arg10(:, :), floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg2(:, :&
+&                  ), dumm1, dumm2, fhi_32, dumm3)
+    fhi_32 = SIGN(fhi_32, dv%fni_he)
+    fhi_52 = 0.0_R8
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, floi0_mdf&
+&                  , co%chci, dumm1, dumm2, fhi_cond)
+    IF (switch%mdf_fhi .EQ. 0) THEN
+      fhi_dia(:, 0) = flidia(:, 0)*tif
+      fhi_dia(:, 1) = flidia(:, 1)*tif
+      fhi_pschused = 0.0_R8
+    ELSE
+      fhi_dia = 0.0_R8
+      fhi_pschused = -dv%fhipsch
+    END IF
+    fhi_ecrb = 0.0_R8
+    dumm1 = 0.0_R8
+    dumm4(:, 0) = co%chvi(:, 0)*nif
+    dumm4(:, 1) = co%chvi(:, 1)*nif
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_strange, dumm3)
+    fhi_strange = SIGN(fhi_strange, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchinert(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchinert(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_inert, dumm3)
+    fhi_inert = SIGN(fhi_inert, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchvispar(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchvispar(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_vispar, dumm3)
+    fhi_vispar = SIGN(fhi_vispar, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchvisper(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchvisper(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_visper, dumm3)
+    fhi_visper = SIGN(fhi_visper, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchvisq(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchvisq(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_visq, dumm3)
+    fhi_visq = SIGN(fhi_visq, dumm4)
+    dumm4(:, 0) = 1.5e0_R8/qe*dv%fchanml(:, 0)*switch%b2tfnb_xcur
+    dumm4(:, 1) = 1.5e0_R8/qe*dv%fchanml(:, 1)*switch%b2tfnb_ycur
+    arg11(:, :) = SIGN(dumm4, floi0_mdf)
+    CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, arg11(:, &
+&                  :), dumm1, dumm2, fhi_anml, dumm3)
+    fhi_anml = SIGN(fhi_anml, dumm4)
+  END IF
 !srv 18.06.08 }
 !
 !

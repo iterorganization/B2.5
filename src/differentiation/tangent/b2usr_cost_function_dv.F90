@@ -7,11 +7,7 @@
 !                mean *(st.pl.na) *(st.pl.te) *(st.pl.ti) *(st.dv.fht)
 !                *(st.dv.ne)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
-!                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
-!                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in st_ext.am:in st_ext.na:in
-!                st_ext.ta:in st.pl.na:in st.pl.te:in st.pl.ti:in
+!                par_opt_phys:in st.pl.na:in st.pl.te:in st.pl.ti:in
 !                st.dv.fht:in st.dv.ne:in
 !
 !
@@ -24,8 +20,8 @@
 !
 !
 !
-SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
-& mpgd, st, std, st_ext, st_extd, boris, j, jd, nbdirs)
+SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
+& st_ext, boris, j, jd, nbdirs)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
@@ -33,7 +29,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   USE B2MOD_PAR_OPT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp
-  USE B2MOD_B2CMPA_DIFFV, ONLY : am
+  USE B2MOD_B2CMPA_DIFFV, ONLY : am, amd
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : vold, voldd, cfnorm, cfnormd, nncf, b2rr, &
@@ -44,13 +40,10 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   IMPLICIT NONE
 !
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(B2STATE), INTENT(IN) :: st
   TYPE(B2STATE_DIFFV), INTENT(IN) :: std
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
   REAL(kind=r8) :: boris, j(nncf)
   REAL(kind=r8) :: jd(nbdirsmax, nncf)
   INTEGER :: ncv, nfc, nvx, ns
@@ -74,6 +67,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(r8) :: temp0
+  TYPE(GEOMETRY_DIFFV) :: geod
   REAL(kind=r8), DIMENSION(ncv) :: temp1
   INTEGER :: nbdirs
 !
@@ -95,8 +89,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         n2 = ncfdata(icf)
 !csc icsep-1 because non-internal cells have been excluded!
         arg1 = icsepomp - 1
-        CALL CALC_DIST_NODIFF(mpg, geo, mpg%cfreg(ic1:ic2), n1, arg1, &
-&                       b2rr(icf, 1:n1))
+        CALL CALC_DIST_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, b2rr(&
+&                       icf, 1:n1))
       END IF
       IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
@@ -108,8 +102,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         CALL XERTST(n1 .EQ. nomp - 2, &
 &             'number of Cv in CF does not equal Cvs in OMP')
         arg1 = icsepomp - 1
-        CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
-&                       icf, 1:n1))
+        CALL CALC_DIST_NODIFF(geo, omp(2:nomp-1), n1, arg1, b2rr(icf, 1:&
+&                       n1))
       END IF
     END DO
     first_call = .false.
@@ -385,9 +379,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
             b2data(1:n1) = st%pl%ti(mpg%cfreg(ic1:ic2))/ev
           CASE (7) 
 !electron density radial gradient
-            CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%&
-&                     dv%ne, std%dv%ne, funv, funvd, gradr, gradrd, &
-&                     nbdirs)
+            CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%dv%ne, &
+&                     std%dv%ne, funv, funvd, gradr, gradrd, nbdirs)
             DO nd=1,nbdirs
               b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/&
 &               1.0e19_R8
@@ -395,18 +388,16 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
             b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
           CASE (8) 
 !electron temperature radial gradient
-            CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%&
-&                     pl%te, std%pl%te, funv, funvd, gradr, gradrd, &
-&                     nbdirs)
+            CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%pl%te, &
+&                     std%pl%te, funv, funvd, gradr, gradrd, nbdirs)
             DO nd=1,nbdirs
               b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
             END DO
             b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
           CASE (9) 
 !ion temperature radial gradient
-            CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%&
-&                     pl%ti, std%pl%ti, funv, funvd, gradr, gradrd, &
-&                     nbdirs)
+            CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%pl%ti, &
+&                     std%pl%ti, funv, funvd, gradr, gradrd, nbdirs)
             DO nd=1,nbdirs
               b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
             END DO
@@ -470,8 +461,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         END IF
       CASE (7) 
 !electron density radial gradient
-        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%dv%ne&
-&                 , std%dv%ne, funv, funvd, gradr, gradrd, nbdirs)
+        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%dv%ne, std%&
+&                 dv%ne, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
           b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/1.0e19_R8
         END DO
@@ -500,8 +491,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         j(icf) = cfweight(icf)*temp
       CASE (8) 
 !electron temperature radial gradient
-        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%pl%te&
-&                 , std%pl%te, funv, funvd, gradr, gradrd, nbdirs)
+        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%pl%te, std%&
+&                 pl%te, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
           b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
         END DO
@@ -530,8 +521,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         j(icf) = cfweight(icf)*temp
       CASE (9) 
 !ion temperature radial gradient
-        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%pl%ti&
-&                 , std%pl%ti, funv, funvd, gradr, gradrd, nbdirs)
+        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%pl%ti, std%&
+&                 pl%ti, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
           b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
         END DO
@@ -717,8 +708,8 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         n2 = ncfdata(icf)
 !csc icsep-1 because non-internal cells have been excluded!
         arg1 = icsepomp - 1
-        CALL CALC_DIST_NODIFF(mpg, geo, mpg%cfreg(ic1:ic2), n1, arg1, &
-&                       b2rr(icf, 1:n1))
+        CALL CALC_DIST_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, b2rr(&
+&                       icf, 1:n1))
       END IF
       IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
@@ -730,8 +721,8 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         CALL XERTST(n1 .EQ. nomp - 2, &
 &             'number of Cv in CF does not equal Cvs in OMP')
         arg1 = icsepomp - 1
-        CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
-&                       icf, 1:n1))
+        CALL CALC_DIST_NODIFF(geo, omp(2:nomp-1), n1, arg1, b2rr(icf, 1:&
+&                       n1))
       END IF
     END DO
     first_call = .false.

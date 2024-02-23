@@ -193,7 +193,7 @@ CONTAINS
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
 &   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean&
-&   , curr_ind, nfaces
+&   , curr_ind
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
     CHARACTER(len=1) :: str
@@ -206,9 +206,11 @@ CONTAINS
     EXTERNAL XERRAB_DV
     INTRINSIC ANY
     EXTERNAL ANY_DV
+    EXTERNAL FIND_FACES
     INTRINSIC MIN
     INTRINSIC MAX
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTRINSIC MAXVAL
     EXTERNAL MAXVAL_DV0
     INTRINSIC ALL
@@ -219,6 +221,7 @@ CONTAINS
     INTEGER :: nd
     INTEGER :: nbdirs
     LOGICAL :: ANY_DV
+    LOGICAL :: ALLOCATED_DV
 !
     filename = 'b2.optimization.parameters'
     WRITE(*, *) 'OPTIM: max number of readable cost functions :', nncf
@@ -460,18 +463,16 @@ CONTAINS
               noss = cfend(icf) - cfstart(icf) + 1
               DO iss=1,noss
                 indss = cfstart(icf) + iss - 1
-                nfaces = 0
                 WRITE(*, *) ' Defining cost function ', icf
                 WRITE(*, *) ' surface label ', indss
 ! find all faces belonging to surface structure INDSS
-                CALL FIND_FACES_NODIFF(indss, incf, ncffc, m%mxncf, m%&
-&                                cfreg, m%cffcor, m, idb, nfaces)
-                WRITE(ss, '(I0)') indss
-                CALL XERTST(nfaces .GT. 0, &
-&                     'No faces found for cost function face label = '//&
-&                     ss)
+                CALL FIND_FACES(indss, incf, ncffc, m%mxncf, m%cfreg, m%&
+&                         cffcor, m, idb)
               END DO
 ! iss
+              WRITE(ss, '(I0)') icf
+              CALL XERTST(ncffc .GT. 0, &
+&                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc
 ! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
               IF (m%cfoncv(icf)) THEN
@@ -1063,7 +1064,7 @@ CONTAINS
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
 &   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean&
-&   , curr_ind, nfaces
+&   , curr_ind
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
     CHARACTER(len=1) :: str
@@ -1074,6 +1075,7 @@ CONTAINS
     INTRINSIC TRIM
     EXTERNAL XERRAB
     INTRINSIC ANY
+    EXTERNAL FIND_FACES
     INTRINSIC MIN
     INTRINSIC MAX
     INTRINSIC ALLOCATED
@@ -1324,18 +1326,16 @@ CONTAINS
               noss = cfend(icf) - cfstart(icf) + 1
               DO iss=1,noss
                 indss = cfstart(icf) + iss - 1
-                nfaces = 0
                 WRITE(*, *) ' Defining cost function ', icf
                 WRITE(*, *) ' surface label ', indss
 ! find all faces belonging to surface structure INDSS
-                CALL FIND_FACES_NODIFF(indss, incf, ncffc, m%mxncf, m%&
-&                                cfreg, m%cffcor, m, idb, nfaces)
-                WRITE(ss, '(I0)') indss
-                CALL XERTST(nfaces .GT. 0, &
-&                     'No faces found for cost function face label = '//&
-&                     ss)
+                CALL FIND_FACES(indss, incf, ncffc, m%mxncf, m%cfreg, m%&
+&                         cffcor, m, idb)
               END DO
 ! iss
+              WRITE(ss, '(I0)') icf
+              CALL XERTST(ncffc .GT. 0, &
+&                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc
 ! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
               IF (m%cfoncv(icf)) THEN
@@ -1909,7 +1909,9 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
     IF (ALLOCATED(b2rr)) THEN
       DEALLOCATE(b2rr)
     END IF

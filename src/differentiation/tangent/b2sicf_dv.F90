@@ -4,9 +4,9 @@
 !  Differentiation of b2sicf in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: wrk0 ctcf smbcf
 !   with respect to varying inputs: nb ub wrk0
-!   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.cvhz:in
-!                geo.cvvol:in geo.fchc:in geo.fcht:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxhz:in geo.vxvol:in
+!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvvol:in
+!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxhz:in geo.vxvol:in
 !
 !
 !
@@ -23,16 +23,16 @@
 !
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
-SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
-& mpgd, nb, nbd, ub, ubd, smbcf, smbcfd, smbcb, ctcf, ctcfd, wrk0, wrk0d&
-& , nbdirs)
+SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, nb&
+& , nbd, ub, ubd, smbcf, smbcfd, smbcb, ctcf, ctcfd, wrk0, wrk0d, nbdirs&
+&)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2sicf_smo0to3, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2sicf_smo0to3, balance_netcdf
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sicf
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -49,7 +49,6 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: mb, nb(ncv), ub(ncv)
   REAL(kind=r8) :: nbd(nbdirsmax, ncv), ubd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
@@ -76,7 +75,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   REAL(kind=r8) :: wrks(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF
+  EXTERNAL B2XVFF_NODIFF, B2XVSG
   EXTERNAL XERRAB
   CHARACTER(len=12) :: arg1
   CHARACTER(len=11) :: arg10
@@ -99,7 +98,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
 !   ..extensive tests on first few calls
   IF (ncall_b2sicf .LT. 3) THEN
 !    ..test sign of nb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
   END IF
 !
 ! ..compute centrifugal force
@@ -158,12 +157,10 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
       smbcfd(nd, :, :) = 0.D0
     END DO
   END IF
-!srv 17.06.02 }
 !
 !djm Store linearised source for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2sicf_smo0to3(-1:nx,-1:ny,0:3,isb)=smbcf
-!WG_TODO      endif
+  IF (balance_netcdf .NE. 0) b2sicf_smo0to3(1:ncv, 0:3, isb) = smbcf
+!srv 17.06.02 }
 !
   IF (switch%b2sicf_iout .NE. 0) THEN
 !srv 17.06.02 {
@@ -210,8 +207,8 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2sicf_smo0to3, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2sicf_smo0to3, balance_netcdf
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sicf
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
@@ -249,7 +246,7 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   REAL(kind=r8) :: wrks(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF
+  EXTERNAL B2XVFF_NODIFF, B2XVSG
   EXTERNAL XERRAB
   CHARACTER(len=12) :: arg1
   CHARACTER(len=11) :: arg10
@@ -268,7 +265,7 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
 !   ..extensive tests on first few calls
   IF (ncall_b2sicf .LT. 3) THEN
 !    ..test sign of nb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
   END IF
 !
 ! ..compute centrifugal force
@@ -295,12 +292,10 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
 !
     CALL XERRAB('b2sicf -- style 1 not for WG')
   END IF
-!srv 17.06.02 }
 !
 !djm Store linearised source for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2sicf_smo0to3(-1:nx,-1:ny,0:3,isb)=smbcf
-!WG_TODO      endif
+  IF (balance_netcdf .NE. 0) b2sicf_smo0to3(1:ncv, 0:3, isb) = smbcf
+!srv 17.06.02 }
 !
   IF (switch%b2sicf_iout .NE. 0) THEN
 !srv 17.06.02 {

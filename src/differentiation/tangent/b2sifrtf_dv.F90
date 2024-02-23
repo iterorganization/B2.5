@@ -31,6 +31,9 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifrtf
   USE B2MOD_SUBSYS
+!djm Jun2019
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2sifr_smofrea0to3, b2sifr_smofria0to3&
+& , b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -87,14 +90,17 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   REAL(kind=r8) :: kabvp(ncv), kabtf(ncv), kbatf(ncv), ka(ncv), kb(ncv)&
 & , wrk(ncv)
 ! Local arrays smb*al have been introduced specially.
-! The usage of smb*a instaed of smb*al should be checked.
+! The usage of smb*a instead of smb*al should be checked.
 !srv 13.01.17 }
   REAL(kind=r8) :: smbfrial(ncv, 0:3), smbfreal(ncv, 0:3), smbtfial(ncv&
 & , 0:3), smbtfeal(ncv, 0:3)
+  REAL(kind=r8) :: rz2_temp(ns*ncv), na_temp(ns*ncv), am_sqrt(0:ns-1, 0:&
+& ns-1)
+  INTEGER :: ctr, i, j
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVSG_NODIFF
+  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVSG
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   INTEGER :: arg1
@@ -130,15 +136,15 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !   ..extensive tests on first few calls
   IF (ncall_b2sifrtf .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
 !    ..test sign of na, ni, ti, ne, ne2
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, ne2, 1, 'ne2', '.gt.')
   END IF
 !
 !   ..initialize to 0
@@ -158,6 +164,23 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfeal, 1)
 !srv 13.01.17 }
+!
+!   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
+  ctr = 1
+  DO icv=1,ncv
+    DO is=0,ns-1
+      rz2_temp(ctr) = rz2(icv, is)
+      na_temp(ctr) = na(icv, is)
+      ctr = ctr + 1
+    END DO
+  END DO
+  DO j=0,ns-1
+    DO i=0,ns-1
+      arg10 = am(j)*am(i)/(am(j)+am(i))
+      am_sqrt(i, j) = SQRT(arg10)
+    END DO
+  END DO
+!
 ! ..compute friction
 !   ..loop over all other species
   DO is=0,ns-1
@@ -219,14 +242,17 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     END DO
   END IF
 !   ..contribution from ions thermal force
+  DO icv=1,ncv
+    ka(icv) = FKA(icv, isb)
+  END DO
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
       DO icv=1,mpg%nci
         kabtf(icv) = FKABTF(icv, isb, is)
         kbatf(icv) = FKABTF(icv, is, isb)
-        ka(icv) = FKA(icv, isb)
-        kb(icv) = FKA(icv, is)
+!         kb(iCv)    = fka(iCv,is)
+        kb(icv) = FKA_NEW(icv, is, rz2_temp, na_temp, am_sqrt)
         kabvp(icv) = FKABVP(icv, isb, is)
 !      .. calculations could be simplified
 !      .. but we did not do it in order to have the same formulae as manual
@@ -268,6 +294,20 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   smbfrea = smbfreal
   smbtfia = smbtfial
   smbtfea = smbtfeal
+!
+  IF (balance_netcdf .NE. 0) THEN
+!djm Jun2019
+    DO icv=1,ncv
+      b2sifr_smofria0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbfria(icv, 0:3)
+      b2sifr_smofrea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbfrea(icv, 0:3)
+      b2sifr_smotfia0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbtfia(icv, 0:3)
+      b2sifr_smotfea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbtfea(icv, 0:3)
+    END DO
+  END IF
 !
   IF (iout .NE. 0) THEN
 !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
@@ -412,6 +452,29 @@ CONTAINS
   END FUNCTION FKA
 
 !
+  FUNCTION FKA_NEW(icv, a, rz2_temp, na_temp, am_sqrt)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka_new
+    REAL(kind=r8) :: rz2_temp(ns*ncv)
+    REAL(kind=r8) :: na_temp(ns*ncv)
+    REAL(kind=r8) :: am_sqrt(0:ns-1, 0:ns-1)
+    INTEGER :: r, ind
+    INTRINSIC SQRT
+    REAL(kind=r8) :: result10
+    fka_new = 0.0_R8
+    ind = (icv-1)*ns
+    DO r=0,ns-1
+      result10 = SQRT(mp)
+      fka_new = fka_new + rz2_temp(ind+r+1)*na_temp(ind+r+1)*result10*&
+&       am_sqrt(r, a)
+    END DO
+    fka_new = fka_new*rz2_temp(ind+a+1)
+    RETURN
+  END FUNCTION FKA_NEW
+
+!
   FUNCTION ROXA(icv, is)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -431,7 +494,7 @@ END SUBROUTINE B2SIFRTF_NODIFF
 !   with respect to varying inputs: ti cimp1 cimp2 na sigx_c ne
 !                ce1 ua zeff ue zetae zetap f_luc_sg alfx_c gte
 !                gti rz2
-!   Plus diff mem management of: mpg.intcellp:in geo.cvvol:in
+!   Plus diff mem management of: geo.cvvol:in
 !
 !
 !
@@ -447,9 +510,9 @@ END SUBROUTINE B2SIFRTF_NODIFF
 !.specification
 !
 SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
-& , mpg, mpgd, na, nad, ua, uad, ue, ued, te, ti, tid, ni, ne, ned, ne2&
-& , rza, rz2, rz2d, po, zetap, zetapd, zetae, zetaed, gti, gtid, gte, &
-& gted, ce1, ce1d, ce2, cimp1, cimp1d, cimp2, cimp2d, zeff, zeffd, &
+& , mpg, na, nad, ua, uad, ue, ued, te, ti, tid, ni, nid, ne, ned, ne2, &
+& ne2d, rza, rz2, rz2d, po, zetap, zetapd, zetae, zetaed, gti, gtid, gte&
+& , gted, ce1, ce1d, ce2, cimp1, cimp1d, cimp2, cimp2d, zeff, zeffd, &
 & f_luc_sg, f_luc_sgd, alfx_c, alfx_cd, sigx_c, sigx_cd, st_ext, smbfrea&
 & , smbfread, smbfria, smbfriad, smbtfea, smbtfead, smbtfia, smbtfiad, &
 & smbch, smbchd, smbtf, smbtfd, nbdirs)
@@ -465,6 +528,9 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifrtf
   USE B2MOD_SUBSYS
+!djm Jun2019
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2sifr_smofrea0to3, b2sifr_smofria0to3&
+& , b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -478,7 +544,6 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !srv 13.01.17
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ue(ncv), te(ncv), &
@@ -487,12 +552,12 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 & , ce2(ncv), cimp1(ncv), cimp2(ncv), zeff(ncv), f_luc_sg(nfc), alfx_c(&
 & ncv), sigx_c(ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ued(nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(nbdirsmax, ncv), &
-& rz2d(nbdirsmax, ncv, 0:ns-1), zetapd(nbdirsmax, ncv), zetaed(nbdirsmax&
-& , ncv), gtid(nbdirsmax, ncv), gted(nbdirsmax, ncv), ce1d(nbdirsmax, &
-& ncv), cimp1d(nbdirsmax, ncv), cimp2d(nbdirsmax, ncv), zeffd(nbdirsmax&
-& , ncv), f_luc_sgd(nbdirsmax, nfc), alfx_cd(nbdirsmax, ncv), sigx_cd(&
-& nbdirsmax, ncv)
+& -1), ued(nbdirsmax, ncv), tid(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1&
+& ), ned(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), rz2d(nbdirsmax, ncv, 0:&
+& ns-1), zetapd(nbdirsmax, ncv), zetaed(nbdirsmax, ncv), gtid(nbdirsmax&
+& , ncv), gted(nbdirsmax, ncv), ce1d(nbdirsmax, ncv), cimp1d(nbdirsmax, &
+& ncv), cimp2d(nbdirsmax, ncv), zeffd(nbdirsmax, ncv), f_luc_sgd(&
+& nbdirsmax, nfc), alfx_cd(nbdirsmax, ncv), sigx_cd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
 !srv 13.01.17 05.07.17
   REAL(kind=r8) :: smbfria(ncv, 0:3), smbfrea(ncv, 0:3), smbtfia(ncv, 0:&
@@ -541,18 +606,23 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 & kbatfd(nbdirsmax, ncv), kad(nbdirsmax, ncv), kbd(nbdirsmax, ncv), wrkd&
 & (nbdirsmax, ncv)
 ! Local arrays smb*al have been introduced specially.
-! The usage of smb*a instaed of smb*al should be checked.
+! The usage of smb*a instead of smb*al should be checked.
 !srv 13.01.17 }
   REAL(kind=r8) :: smbfrial(ncv, 0:3), smbfreal(ncv, 0:3), smbtfial(ncv&
 & , 0:3), smbtfeal(ncv, 0:3)
   REAL(kind=r8) :: smbfriald(nbdirsmax, ncv, 0:3), smbfreald(nbdirsmax, &
 & ncv, 0:3), smbtfiald(nbdirsmax, ncv, 0:3), smbtfeald(nbdirsmax, ncv, 0&
 & :3)
+  REAL(kind=r8) :: rz2_temp(ns*ncv), na_temp(ns*ncv), am_sqrt(0:ns-1, 0:&
+& ns-1)
+  REAL(kind=r8) :: rz2_tempd(nbdirsmax, ns*ncv), na_tempd(nbdirsmax, ns*&
+& ncv)
+  INTEGER :: ctr, i, j
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
   EXTERNAL SFILL_DV
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVSG_NODIFF
+  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVSG
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
@@ -600,15 +670,15 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 !   ..extensive tests on first few calls
   IF (ncall_b2sifrtf .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
 !    ..test sign of na, ni, ti, ne, ne2
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, ne2, 1, 'ne2', '.gt.')
   END IF
 !
 !   ..initialize to 0
@@ -627,13 +697,40 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfial, 1)
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfeal, 1)
+!srv 13.01.17 }
+!
+!   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
+  ctr = 1
+  DO nd=1,nbdirsmax
+    rz2_tempd(nd, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    na_tempd(nd, :) = 0.D0
+  END DO
+  DO icv=1,ncv
+    DO is=0,ns-1
+      DO nd=1,nbdirs
+        rz2_tempd(nd, ctr) = rz2d(nd, icv, is)
+        na_tempd(nd, ctr) = nad(nd, icv, is)
+      END DO
+      rz2_temp(ctr) = rz2(icv, is)
+      na_temp(ctr) = na(icv, is)
+      ctr = ctr + 1
+    END DO
+  END DO
+  DO j=0,ns-1
+    DO i=0,ns-1
+      arg10 = am(j)*am(i)/(am(j)+am(i))
+      am_sqrt(i, j) = SQRT(arg10)
+    END DO
+  END DO
   DO nd=1,nbdirsmax
     kabvpd(nd, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
     smbfriald(nd, :, :) = 0.D0
   END DO
-!srv 13.01.17 }
+!
 ! ..compute friction
 !   ..loop over all other species
   DO is=0,ns-1
@@ -768,47 +865,39 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
     DO nd=1,nbdirsmax
       kad(nd, :) = 0.D0
     END DO
-    DO nd=1,nbdirsmax
-      kbd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      kabtfd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      smbtfiald(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      kbatfd(nd, :) = 0.D0
-    END DO
   ELSE
     DO nd=1,nbdirsmax
       kad(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
-      kbd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
       smbtfeald(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      kabtfd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      smbtfiald(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      kbatfd(nd, :) = 0.D0
     END DO
   END IF
 !   ..contribution from ions thermal force
+  DO icv=1,ncv
+    CALL FKA_DV(icv, isb, ka(icv), kad(:, icv), nbdirs)
+  END DO
+  DO nd=1,nbdirsmax
+    kbd(nd, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    kabtfd(nd, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    smbtfiald(nd, :, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    kbatfd(nd, :) = 0.D0
+  END DO
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
       DO icv=1,mpg%nci
         CALL FKABTF_DV(icv, isb, is, kabtf(icv), kabtfd(:, icv), nbdirs)
         CALL FKABTF_DV(icv, is, isb, kbatf(icv), kbatfd(:, icv), nbdirs)
-        CALL FKA_DV(icv, isb, ka(icv), kad(:, icv), nbdirs)
-        CALL FKA_DV(icv, is, kb(icv), kbd(:, icv), nbdirs)
+!         kb(iCv)    = fka(iCv,is)
+        CALL FKA_NEW_DV(icv, is, rz2_temp, rz2_tempd, na_temp, na_tempd&
+&                 , am_sqrt, kb(icv), kbd(:, icv), nbdirs)
         CALL FKABVP_DV(icv, isb, is, kabvp(icv), kabvpd(:, icv), nbdirs)
 !      .. calculations could be simplified
 !      .. but we did not do it in order to have the same formulae as manual
@@ -914,6 +1003,20 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   smbfrea = smbfreal
   smbtfia = smbtfial
   smbtfea = smbtfeal
+!
+  IF (balance_netcdf .NE. 0) THEN
+!djm Jun2019
+    DO icv=1,ncv
+      b2sifr_smofria0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbfria(icv, 0:3)
+      b2sifr_smofrea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbfrea(icv, 0:3)
+      b2sifr_smotfia0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbtfia(icv, 0:3)
+      b2sifr_smotfea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
+&       smbtfea(icv, 0:3)
+    END DO
+  END IF
 !
   IF (iout .NE. 0) THEN
 !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
@@ -1181,6 +1284,74 @@ CONTAINS
     fka = fka*rz2(icv, a)
     RETURN
   END FUNCTION FKA
+
+!  Differentiation of fka_new in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: fka_new
+!   with respect to varying inputs: rz2_temp na_temp
+!
+  SUBROUTINE FKA_NEW_DV(icv, a, rz2_temp, rz2_tempd, na_temp, na_tempd, &
+&   am_sqrt, fka_new, fka_newd, nbdirs)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka_new
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: fka_newd
+    REAL(kind=r8) :: rz2_temp(ns*ncv)
+    REAL(kind=r8) :: rz2_tempd(nbdirsmax, ns*ncv)
+    REAL(kind=r8) :: na_temp(ns*ncv)
+    REAL(kind=r8) :: na_tempd(nbdirsmax, ns*ncv)
+    REAL(kind=r8) :: am_sqrt(0:ns-1, 0:ns-1)
+    INTEGER :: r, ind
+    INTRINSIC SQRT
+    REAL(kind=r8) :: result10
+    INTEGER :: nd
+    REAL(kind=r8) :: temp
+    INTEGER :: nbdirs
+    fka_new = 0.0_R8
+    ind = (icv-1)*ns
+    DO nd=1,nbdirsmax
+      fka_newd(nd) = 0.D0
+    END DO
+    DO r=0,ns-1
+      result10 = SQRT(mp)
+      temp = result10*am_sqrt(r, a)
+      DO nd=1,nbdirs
+        fka_newd(nd) = fka_newd(nd) + temp*(na_temp(ind+r+1)*rz2_tempd(&
+&         nd, ind+r+1)+rz2_temp(ind+r+1)*na_tempd(nd, ind+r+1))
+      END DO
+      fka_new = fka_new + temp*(rz2_temp(ind+r+1)*na_temp(ind+r+1))
+    END DO
+    DO nd=1,nbdirs
+      fka_newd(nd) = rz2_temp(ind+a+1)*fka_newd(nd) + fka_new*rz2_tempd(&
+&       nd, ind+a+1)
+    END DO
+    fka_new = fka_new*rz2_temp(ind+a+1)
+    RETURN
+  END SUBROUTINE FKA_NEW_DV
+
+!
+  FUNCTION FKA_NEW(icv, a, rz2_temp, na_temp, am_sqrt)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka_new
+    REAL(kind=r8) :: rz2_temp(ns*ncv)
+    REAL(kind=r8) :: na_temp(ns*ncv)
+    REAL(kind=r8) :: am_sqrt(0:ns-1, 0:ns-1)
+    INTEGER :: r, ind
+    INTRINSIC SQRT
+    REAL(kind=r8) :: result10
+    fka_new = 0.0_R8
+    ind = (icv-1)*ns
+    DO r=0,ns-1
+      result10 = SQRT(mp)
+      fka_new = fka_new + rz2_temp(ind+r+1)*na_temp(ind+r+1)*result10*&
+&       am_sqrt(r, a)
+    END DO
+    fka_new = fka_new*rz2_temp(ind+a+1)
+    RETURN
+  END FUNCTION FKA_NEW
 
 !  Differentiation of roxa in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: roxa

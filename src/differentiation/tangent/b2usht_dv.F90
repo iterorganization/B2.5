@@ -23,15 +23,15 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
-& ne, ned, ni, nid, nn, nnd, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd&
-& , floe, floed, cone, coned, floi, floid, coni, conid, flon, flond, &
-& conn, connd, flokt, floktd, conkt, conktd, flozt, floztd, conzt, &
-& conztd, she, shed, shi, shid, shn, shnd, skt, sktd, szt, ceqp, ceqpd, &
-& resht, reshtd, reshe, reshed, reshi, reshid, reshn, reshnd, reskt, &
-& resktd, reszt, resztd, cortt, corttd, corte, corted, corti, cortid, &
-& cortn, cortnd, corkt, corktd, corzt, corztd, flo0, flo0d, con0, con0d&
-& , aa, aad, nbdirs)
+SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
+& , ni, nid, nn, nnd, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, floe&
+& , floed, cone, coned, floi, floid, coni, conid, flon, flond, conn, &
+& connd, flokt, floktd, conkt, conktd, flozt, floztd, conzt, conztd, she&
+& , shed, shi, shid, shn, shnd, skt, sktd, szt, ceqp, ceqpd, resht, &
+& reshtd, reshe, reshed, reshi, reshid, reshn, reshnd, reskt, resktd, &
+& reszt, resztd, cortt, corttd, corte, corted, corti, cortid, cortn, &
+& cortnd, corkt, corktd, corzt, corztd, flo0, flo0d, con0, con0d, aa, &
+& aad, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -55,7 +55,6 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: ne(ncv), ni(ncv, 0:1), nn(ncv), te(ncv), ti(ncv), tn(&
 & ncv), kt(ncv), zt(ncv), floe(nfc, 0:1), floi(nfc, 0:1), flon(nfc, 0:1)&
 & , flokt(nfc, 0:1), flozt(nfc, 0:1), cone(nfc, 0:1, 0:2), coni(nfc, 0:1&
@@ -129,7 +128,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
   INTRINSIC ABS, SQRT, DIM
   EXTERNAL XERTST, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2UXUS
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, B2UXUS
   EXTERNAL B2UXUS_DV
   INTRINSIC ANY
   INTRINSIC MIN
@@ -178,26 +177,26 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
 !   ..extensive tests on first few calls
   IF (ncall_b2usht .LT. 3) THEN
 !    ..test sign of ne, ni, te, ti
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
 !    ..test sign of she, shi, ceqp
-    CALL B2XVSG_NODIFF(ncv, she(1, 0), 1, 'she0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, she(1, 1), 1, 'she1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, she(1, 2), 1, 'she2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, she(1, 3), 1, 'she3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 0), 1, 'shi0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 1), 1, 'shi1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 2), 1, 'shi2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 3), 1, 'shi3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 0), 1, 'shn0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 1), 1, 'shn1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 2), 1, 'shn2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 3), 1, 'shn3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, ceqp, 1, 'ceqp', '.ge.')
+    CALL B2XVSG(ncv, she(1, 0), 1, 'she0', '.ge.')
+    CALL B2XVSG(ncv, she(1, 1), 1, 'she1', '.le.')
+    CALL B2XVSG(ncv, she(1, 2), 1, 'she2', '.ge.')
+    CALL B2XVSG(ncv, she(1, 3), 1, 'she3', '.le.')
+    CALL B2XVSG(ncv, shi(1, 0), 1, 'shi0', '.ge.')
+    CALL B2XVSG(ncv, shi(1, 1), 1, 'shi1', '.le.')
+    CALL B2XVSG(ncv, shi(1, 2), 1, 'shi2', '.ge.')
+    CALL B2XVSG(ncv, shi(1, 3), 1, 'shi3', '.le.')
+    CALL B2XVSG(ncv, shn(1, 0), 1, 'shn0', '.ge.')
+    CALL B2XVSG(ncv, shn(1, 1), 1, 'shn1', '.le.')
+    CALL B2XVSG(ncv, shn(1, 2), 1, 'shn2', '.ge.')
+    CALL B2XVSG(ncv, shn(1, 3), 1, 'shn3', '.le.')
+    CALL B2XVSG(ncv, ceqp, 1, 'ceqp', '.ge.')
   END IF
 !
   IF (switch%tn_style .LE. 1) THEN
@@ -241,6 +240,19 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
 &       connd(nd, :, :)
     END DO
     con0(:, :, 0) = cone(:, :, 0) + coni(:, :, 0) + conn
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 0), 'b2usht_flo0x')
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 1), 'b2usht_flo0y')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 0), &
+&                     'b2usht_con0xtest')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 0), &
+&                     'b2usht_con0ytest')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 1), 'b2usht_con0x10')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 1), 'b2usht_con0y10')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 2), 'b2usht_con0x20')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 2), 'b2usht_con0y20')
+    END IF
+!
 !   ..initialize matrix to zero
     aa = 0.0e0_R8
     DO nd=1,nbdirsmax
@@ -330,6 +342,22 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
         aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + temp
       END IF
     END DO
+!
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, ncv, 0, she(1, 1), 'b2usht_she1')
+      CALL MY_OUT_US(70, ncv, 0, she(1, 3), 'b2usht_she3')
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 1), 'b2usht_shi1')
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 3), 'b2usht_shi3')
+      CALL MY_OUT_US(70, ncv, 0, shn(1, 1), 'b2usht_shn1')
+      CALL MY_OUT_US(70, ncv, 0, shn(1, 3), 'b2usht_shn3')
+      CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne')
+      CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni')
+      CALL MY_OUT_US(70, ncv, 0, te, 'b2usht_te')
+      CALL MY_OUT_US(70, ncv, 0, ti, 'b2usht_ti')
+      CALL MY_OUT_US(70, ncv, 0, resht, 'b2usht_resht')
+!
+      CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_aa_tt_pre')
+    END IF
     DO ifc=1,nfc
 ! cell number of c1
       icv1 = mpg%fccv(ifc, 1)
@@ -488,7 +516,9 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
         resht(icv) = 0.0_R8
       END IF
     END DO
-!
+    IF (switch%b2usht_iout .NE. 0) CALL MY_OUT_US(70, mpg%ncmxnv&
+&                                                  , 0, aa, &
+&                                                  'b2usht_aa_tt')
 !   ..solve the correction equation
     CALL B2UXUS_DV(ncv, mpg, aa, aad, itcnt, resht, reshtd, cortt, &
 &            corttd, 'b2usht_total', nbdirs)
@@ -500,6 +530,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_ht_aa')
     CALL MY_OUT_US(70, ncv, 0, resht, 'b2usht_resht')
     CALL MY_OUT_US(70, ncv, 0, cortt, 'b2usht_cortt')
   END IF
@@ -578,6 +609,23 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
 &         icv, 1) + temp1
       END IF
     END DO
+!
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, ncv, 0, she(1, 1), 'b2usht_she1_te')
+      CALL MY_OUT_US(70, ncv, 0, she(1, 3), 'b2usht_she3_te')
+      CALL MY_OUT_US(70, ncv, 0, te, 'b2usht_te_te')
+      CALL MY_OUT_US(70, ncv, 0, ti, 'b2usht_ti_te')
+      CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne_te')
+      CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni_te')
+      CALL MY_OUT_US(70, ncv, 0, reshe, 'b2usht_reshe_te')
+      CALL MY_OUT_US(70, 1, 0, mpg%ncmxnv, 'b2usht_nCmxNv')
+!
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 0), 'b2usht_floex')
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 1), 'b2usht_floey')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 0), 'b2usht_conex')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 0), 'b2usht_coney')
+      CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_aa_te_pre')
+    END IF
     DO ifc=1,nfc
 ! cell number of c1
       icv1 = mpg%fccv(ifc, 1)
@@ -733,6 +781,9 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
       END IF
     END DO
 !
+    IF (switch%b2usht_iout .NE. 0) CALL MY_OUT_US(70, mpg%ncmxnv&
+&                                                  , 0, aa, &
+&                                                  'b2usht_aa_te')
 !   ..solve the correction equation
     CALL B2UXUS_DV(ncv, mpg, aa, aad, itcnt, reshe, reshed, corte, &
 &            corted, 'b2usht_Te', nbdirs)
@@ -740,6 +791,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_he_aa')
     CALL MY_OUT_US(70, ncv, 0, reshe, 'b2usht_reshe')
     CALL MY_OUT_US(70, ncv, 0, corte, 'b2usht_corte')
   END IF
@@ -804,6 +856,23 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
 &         shi(icv, 1) + temp
       END IF
     END DO
+!
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, nfc, 1, floi(1, 0), 'b2usht_floix')
+      CALL MY_OUT_US(70, nfc, 1, floi(1, 1), 'b2usht_floiy')
+      CALL MY_OUT_US(70, nfc, 1, coni(1, 0, 0), 'b2usht_conix')
+      CALL MY_OUT_US(70, nfc, 1, coni(1, 1, 0), 'b2usht_coniy')
+!
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 1), 'b2usht_shi1_ti')
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 3), 'b2usht_shi3_ti')
+      CALL MY_OUT_US(70, ncv, 0, te, 'b2usht_te_ti')
+      CALL MY_OUT_US(70, ncv, 0, ti, 'b2usht_ti_ti')
+      CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne_ti')
+      CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni_ti')
+      CALL MY_OUT_US(70, ncv, 0, reshi, 'b2usht_reshi_ti')
+!
+      CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_aa_ti_pre')
+    END IF
     DO ifc=1,nfc
 ! cell number of c1
       icv1 = mpg%fccv(ifc, 1)
@@ -958,18 +1027,18 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
         reshi(icv) = 0.0_R8
       END IF
     END DO
+    IF (switch%b2usht_iout .NE. 0) CALL MY_OUT_US(70, mpg%ncmxnv&
+&                                                  , 0, aa, &
+&                                                  'b2usht_aa_ti')
 !
 !   ..solve the correction equation
     CALL B2UXUS_DV(ncv, mpg, aa, aad, itcnt, reshi, reshid, corti, &
 &            cortid, 'b2usht_Ti', nbdirs)
     last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
-    DO icv=1,ncv
-      corti(icv) = corti(icv)
-    END DO
   END IF
 !
-!
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_hi_aa')
     CALL MY_OUT_US(70, ncv, 0, reshi, 'b2usht_reshi')
     CALL MY_OUT_US(70, ncv, 0, corti, 'b2usht_corti')
   END IF
@@ -1182,14 +1251,12 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
       CALL B2UXUS_DV(ncv, mpg, aa, aad, itcnt, reshn, reshnd, cortn, &
 &              cortnd, 'b2usht_Tn', nbdirs)
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
-      DO icv=1,ncv
-        cortn(icv) = cortn(icv)
-      END DO
     END IF
   END IF
 !
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_hn_aa')
     CALL MY_OUT_US(70, ncv, 0, reshi, 'b2usht_reshn')
     CALL MY_OUT_US(70, ncv, 0, corti, 'b2usht_cortn')
   END IF
@@ -1400,9 +1467,6 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
     END DO
     CALL B2UXUS_DV(ncv, mpg, aa, aad, itcnt, reskt, resktd, corkt, &
 &            corktd, 'b2usht_kt', nbdirs)
-    DO icv=1,ncv
-      corkt(icv) = corkt(icv)
-    END DO
   ELSE
     DO nd=1,nbdirsmax
       corktd(nd, :) = 0.D0
@@ -1410,6 +1474,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_kt_aa')
     CALL MY_OUT_US(70, ncv, 0, reskt, 'b2usht_reskt')
     CALL MY_OUT_US(70, ncv, 0, corkt, 'b2usht_corkt')
   END IF
@@ -1616,9 +1681,6 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
     END DO
     CALL B2UXUS_DV(ncv, mpg, aa, aad, itcnt, reszt, resztd, corzt, &
 &            corztd, 'b2usht_zt', nbdirs)
-    DO icv=1,ncv
-      corzt(icv) = corzt(icv)
-    END DO
   ELSE
     DO nd=1,nbdirsmax
       corztd(nd, :) = 0.D0
@@ -1626,6 +1688,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_zt_aa')
     CALL MY_OUT_US(70, ncv, 0, reszt, 'b2usht_reszt')
     CALL MY_OUT_US(70, ncv, 0, corzt, 'b2usht_corzt')
   END IF
@@ -1733,7 +1796,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
   INTRINSIC ABS, SQRT, DIM
   EXTERNAL XERTST, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2UXUS
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, B2UXUS
   INTRINSIC ANY
   INTRINSIC MIN
   REAL(kind=r8) :: abs0
@@ -1765,26 +1828,26 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 !   ..extensive tests on first few calls
   IF (ncall_b2usht .LT. 3) THEN
 !    ..test sign of ne, ni, te, ti
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
 !    ..test sign of she, shi, ceqp
-    CALL B2XVSG_NODIFF(ncv, she(1, 0), 1, 'she0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, she(1, 1), 1, 'she1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, she(1, 2), 1, 'she2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, she(1, 3), 1, 'she3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 0), 1, 'shi0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 1), 1, 'shi1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 2), 1, 'shi2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shi(1, 3), 1, 'shi3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 0), 1, 'shn0', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 1), 1, 'shn1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 2), 1, 'shn2', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, shn(1, 3), 1, 'shn3', '.le.')
-    CALL B2XVSG_NODIFF(ncv, ceqp, 1, 'ceqp', '.ge.')
+    CALL B2XVSG(ncv, she(1, 0), 1, 'she0', '.ge.')
+    CALL B2XVSG(ncv, she(1, 1), 1, 'she1', '.le.')
+    CALL B2XVSG(ncv, she(1, 2), 1, 'she2', '.ge.')
+    CALL B2XVSG(ncv, she(1, 3), 1, 'she3', '.le.')
+    CALL B2XVSG(ncv, shi(1, 0), 1, 'shi0', '.ge.')
+    CALL B2XVSG(ncv, shi(1, 1), 1, 'shi1', '.le.')
+    CALL B2XVSG(ncv, shi(1, 2), 1, 'shi2', '.ge.')
+    CALL B2XVSG(ncv, shi(1, 3), 1, 'shi3', '.le.')
+    CALL B2XVSG(ncv, shn(1, 0), 1, 'shn0', '.ge.')
+    CALL B2XVSG(ncv, shn(1, 1), 1, 'shn1', '.le.')
+    CALL B2XVSG(ncv, shn(1, 2), 1, 'shn2', '.ge.')
+    CALL B2XVSG(ncv, shn(1, 3), 1, 'shn3', '.le.')
+    CALL B2XVSG(ncv, ceqp, 1, 'ceqp', '.ge.')
   END IF
 !
   IF (switch%tn_style .LE. 1) THEN
@@ -1810,6 +1873,19 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 !   ..compute flo0, con0
     flo0 = floe + floi + flon
     con0(:, :, 0) = cone(:, :, 0) + coni(:, :, 0) + conn
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 0), 'b2usht_flo0x')
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 1), 'b2usht_flo0y')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 0), &
+&                     'b2usht_con0xtest')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 0), &
+&                     'b2usht_con0ytest')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 1), 'b2usht_con0x10')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 1), 'b2usht_con0y10')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 2), 'b2usht_con0x20')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 2), 'b2usht_con0y20')
+    END IF
+!
 !   ..initialize matrix to zero
     aa = 0.0e0_R8
 !   ..compute the nine-point matrix
@@ -1854,6 +1930,22 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 &         b2npht_rxg*t0)
       END IF
     END DO
+!
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, ncv, 0, she(1, 1), 'b2usht_she1')
+      CALL MY_OUT_US(70, ncv, 0, she(1, 3), 'b2usht_she3')
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 1), 'b2usht_shi1')
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 3), 'b2usht_shi3')
+      CALL MY_OUT_US(70, ncv, 0, shn(1, 1), 'b2usht_shn1')
+      CALL MY_OUT_US(70, ncv, 0, shn(1, 3), 'b2usht_shn3')
+      CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne')
+      CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni')
+      CALL MY_OUT_US(70, ncv, 0, te, 'b2usht_te')
+      CALL MY_OUT_US(70, ncv, 0, ti, 'b2usht_ti')
+      CALL MY_OUT_US(70, ncv, 0, resht, 'b2usht_resht')
+!
+      CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_aa_tt_pre')
+    END IF
     DO ifc=1,nfc
 ! cell number of c1
       icv1 = mpg%fccv(ifc, 1)
@@ -1950,7 +2042,9 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
         resht(icv) = 0.0_R8
       END IF
     END DO
-!
+    IF (switch%b2usht_iout .NE. 0) CALL MY_OUT_US(70, mpg%ncmxnv&
+&                                                  , 0, aa, &
+&                                                  'b2usht_aa_tt')
 !   ..solve the correction equation
     CALL B2UXUS(ncv, mpg, aa, itcnt, resht, cortt, 'b2usht_total'&
 &               )
@@ -1958,6 +2052,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_ht_aa')
     CALL MY_OUT_US(70, ncv, 0, resht, 'b2usht_resht')
     CALL MY_OUT_US(70, ncv, 0, cortt, 'b2usht_cortt')
   END IF
@@ -1995,6 +2090,23 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 &         (switch%b2npht_rxg*te(icv))
       END IF
     END DO
+!
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, ncv, 0, she(1, 1), 'b2usht_she1_te')
+      CALL MY_OUT_US(70, ncv, 0, she(1, 3), 'b2usht_she3_te')
+      CALL MY_OUT_US(70, ncv, 0, te, 'b2usht_te_te')
+      CALL MY_OUT_US(70, ncv, 0, ti, 'b2usht_ti_te')
+      CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne_te')
+      CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni_te')
+      CALL MY_OUT_US(70, ncv, 0, reshe, 'b2usht_reshe_te')
+      CALL MY_OUT_US(70, 1, 0, mpg%ncmxnv, 'b2usht_nCmxNv')
+!
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 0), 'b2usht_floex')
+      CALL MY_OUT_US(70, nfc, 1, flo0(1, 1), 'b2usht_floey')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 0, 0), 'b2usht_conex')
+      CALL MY_OUT_US(70, nfc, 1, con0(1, 1, 0), 'b2usht_coney')
+      CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_aa_te_pre')
+    END IF
     DO ifc=1,nfc
 ! cell number of c1
       icv1 = mpg%fccv(ifc, 1)
@@ -2088,12 +2200,16 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
       END IF
     END DO
 !
+    IF (switch%b2usht_iout .NE. 0) CALL MY_OUT_US(70, mpg%ncmxnv&
+&                                                  , 0, aa, &
+&                                                  'b2usht_aa_te')
 !   ..solve the correction equation
     CALL B2UXUS(ncv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')
 !srv 18.05.02
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_he_aa')
     CALL MY_OUT_US(70, ncv, 0, reshe, 'b2usht_reshe')
     CALL MY_OUT_US(70, ncv, 0, corte, 'b2usht_corte')
   END IF
@@ -2127,6 +2243,23 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 &         b2npht_rxg*ti(icv))
       END IF
     END DO
+!
+    IF (switch%b2usht_iout .NE. 0) THEN
+      CALL MY_OUT_US(70, nfc, 1, floi(1, 0), 'b2usht_floix')
+      CALL MY_OUT_US(70, nfc, 1, floi(1, 1), 'b2usht_floiy')
+      CALL MY_OUT_US(70, nfc, 1, coni(1, 0, 0), 'b2usht_conix')
+      CALL MY_OUT_US(70, nfc, 1, coni(1, 1, 0), 'b2usht_coniy')
+!
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 1), 'b2usht_shi1_ti')
+      CALL MY_OUT_US(70, ncv, 0, shi(1, 3), 'b2usht_shi3_ti')
+      CALL MY_OUT_US(70, ncv, 0, te, 'b2usht_te_ti')
+      CALL MY_OUT_US(70, ncv, 0, ti, 'b2usht_ti_ti')
+      CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne_ti')
+      CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni_ti')
+      CALL MY_OUT_US(70, ncv, 0, reshi, 'b2usht_reshi_ti')
+!
+      CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_aa_ti_pre')
+    END IF
     DO ifc=1,nfc
 ! cell number of c1
       icv1 = mpg%fccv(ifc, 1)
@@ -2219,17 +2352,17 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
         reshi(icv) = 0.0_R8
       END IF
     END DO
+    IF (switch%b2usht_iout .NE. 0) CALL MY_OUT_US(70, mpg%ncmxnv&
+&                                                  , 0, aa, &
+&                                                  'b2usht_aa_ti')
 !
 !   ..solve the correction equation
     CALL B2UXUS(ncv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
     last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
-    DO icv=1,ncv
-      corti(icv) = corti(icv)
-    END DO
   END IF
 !
-!
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_hi_aa')
     CALL MY_OUT_US(70, ncv, 0, reshi, 'b2usht_reshi')
     CALL MY_OUT_US(70, ncv, 0, corti, 'b2usht_corti')
   END IF
@@ -2359,14 +2492,12 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 !   ..solve the correction equation
       CALL B2UXUS(ncv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
-      DO icv=1,ncv
-        cortn(icv) = cortn(icv)
-      END DO
     END IF
   END IF
 !
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_hn_aa')
     CALL MY_OUT_US(70, ncv, 0, reshi, 'b2usht_reshn')
     CALL MY_OUT_US(70, ncv, 0, corti, 'b2usht_cortn')
   END IF
@@ -2489,12 +2620,10 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 !
 !   ..solve the correction equation
     CALL B2UXUS(ncv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
-    DO icv=1,ncv
-      corkt(icv) = corkt(icv)
-    END DO
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_kt_aa')
     CALL MY_OUT_US(70, ncv, 0, reskt, 'b2usht_reskt')
     CALL MY_OUT_US(70, ncv, 0, corkt, 'b2usht_corkt')
   END IF
@@ -2617,12 +2746,10 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 !
 !   ..solve the correction equation
     CALL B2UXUS(ncv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
-    DO icv=1,ncv
-      corzt(icv) = corzt(icv)
-    END DO
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, mpg%ncmxnv, 0, aa, 'b2usht_zt_aa')
     CALL MY_OUT_US(70, ncv, 0, reszt, 'b2usht_reszt')
     CALL MY_OUT_US(70, ncv, 0, corzt, 'b2usht_corzt')
   END IF

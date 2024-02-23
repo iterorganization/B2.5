@@ -9,9 +9,9 @@
 !                *(dv.pa) *(sr.sna) *(pl.na) *(pl.ua)
 !   Plus diff mem management of: dv.fna:in dv.fna_mdf:in dv.flob:in
 !                dv.conb:in dv.resco:in dv.corpa:in dv.pcca:in
-!                dv.pa:in mpg.intcellp:in geo.cvvol:in geo.fchc:in
-!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in sr.sna:in pl.na:in pl.ua:in
+!                dv.pa:in geo.cvvol:in geo.fchc:in geo.fcht:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!                sr.sna:in pl.na:in pl.ua:in
 !
 !
 !
@@ -29,19 +29,22 @@
 !srv 22.05.18
 SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 & ua_solve, solvmreg, itcnt, isb, rxf, switch, switchd, geo, geod, mpg, &
-& mpgd, pl, pld, dv, dvd, sr, srd, ierr, nbdirs)
+& pl, pld, dv, dvd, sr, srd, ierr, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance
-!WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+!djm Jan2017
+!djm Mar2019
+  USE B2MOD_BALANCE_DIFFV, ONLY : update_balance_sources_particles, &
+& balance_netcdf, tot_sna0to1, fna_tot
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco, ncall_b2upco, ncall_b2usco, &
-& my_out_folder, ncall_b2ursc
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2upco, ncall_b2usco, my_out_folder, &
+& ncall_b2ursc
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -58,7 +61,6 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2SOURCE), INTENT(IN) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(IN) :: srd
   REAL(kind=r8) :: rxf
@@ -105,7 +107,7 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv)
 !   ..procedures
   EXTERNAL XERTST, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2URSC_NODIFF, B2USCO_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSC_NODIFF, B2USCO_NODIFF, &
 &     B2UPCO_NODIFF
   EXTERNAL B2URSC_DV, B2USCO_DV, B2UPCO_DV
   INTRINSIC ANY
@@ -150,15 +152,23 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..extensive tests on first few calls
   IF (ncall_b2npco .LT. 3) THEN
 !    ..test sign of conb
-    CALL B2XVSG_NODIFF(nfc, dv%conb(1, 0, 0), 1, 'conb00', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, dv%conb(1, 0, 1), 1, 'conb01', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, dv%conb(1, 0, 2), 1, 'conb02', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 0), 1, 'conb00', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 1), 1, 'conb01', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 2), 1, 'conb02', '.ge.')
 !    ..test sign of snbc, snbv
-    CALL B2XVSG_NODIFF(ncv, sr%sna(1, 0, isb), 1, 'snbc', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%sna(1, 1, isb), 1, 'snbv', '.le.')
+    CALL B2XVSG(ncv, sr%sna(1, 0, isb), 1, 'snbc', '.ge.')
+    CALL B2XVSG(ncv, sr%sna(1, 1, isb), 1, 'snbv', '.le.')
 !    ..test sign of pb, nb
-    CALL B2XVSG_NODIFF(ncv, dv%pa(1, isb), 1, 'pb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%na(1, isb), 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, dv%pa(1, isb), 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, pl%na(1, isb), 1, 'nb', '.gt.')
+  END IF
+!djm Jan2017 update particle source components for balance
+  IF (balance_netcdf .NE. 0) THEN
+!djm Mar2019
+    tot_sna0to1(:, :, isb) = sr%sna(:, :, isb)
+!djm Mar2019
+    fna_tot(:, :, isb) = dv%fna(:, :, isb)
+    CALL UPDATE_BALANCE_SOURCES_PARTICLES(ncv, isb, pl%na(:, isb))
   END IF
 !srv 22.05.18
 ! ..particle balance
@@ -167,15 +177,15 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
     IF (switch%mdf_fnb .EQ. 0) THEN
-      CALL B2URSC_DV(ncv, nfc, geo, mpg, pl%na(:, isb), pld%na(:, :, isb&
-&              ), sr%sna(:, :, isb), srd%sna(:, :, :, isb), dv%fna(:, :&
-&              , isb), dvd%fna(:, :, :, isb), dv%resco(:, isb), dvd%&
-&              resco(:, :, isb), nbdirs)
+      CALL B2URSC_DV(ncv, nfc, mpg, pl%na(:, isb), pld%na(:, :, isb), sr&
+&              %sna(:, :, isb), srd%sna(:, :, :, isb), dv%fna(:, :, isb)&
+&              , dvd%fna(:, :, :, isb), dv%resco(:, isb), dvd%resco(:, :&
+&              , isb), nbdirs)
     ELSE
-      CALL B2URSC_DV(ncv, nfc, geo, mpg, pl%na(:, isb), pld%na(:, :, isb&
-&              ), sr%sna(:, :, isb), srd%sna(:, :, :, isb), dv%fna_mdf(:&
-&              , :, isb), dvd%fna_mdf(:, :, :, isb), dv%resco(:, isb), &
-&              dvd%resco(:, :, isb), nbdirs)
+      CALL B2URSC_DV(ncv, nfc, mpg, pl%na(:, isb), pld%na(:, :, isb), sr&
+&              %sna(:, :, isb), srd%sna(:, :, :, isb), dv%fna_mdf(:, :, &
+&              isb), dvd%fna_mdf(:, :, :, isb), dv%resco(:, isb), dvd%&
+&              resco(:, :, isb), nbdirs)
     END IF
   END IF
 !   ..compute correction
@@ -185,15 +195,15 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !srv 22.05.18
 !srv 13.10.06 26.09.12
     arg1(:) = 'b2usco_'//chns
-    CALL B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, nregionv&
-&            , solvcreg, itcnt, switch%b2npco_rxg, pl%na(:, isb), pld%na&
-&            (:, :, isb), dv%pa(:, isb), dvd%pa(:, :, isb), sr%sna(:, 1&
-&            , isb), srd%sna(:, :, 1, isb), dv%flob, dvd%flob, dv%conb, &
+    CALL B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv, &
+&            solvcreg, itcnt, switch%b2npco_rxg, pl%na(:, isb), pld%na(:&
+&            , :, isb), dv%pa(:, isb), dvd%pa(:, :, isb), sr%sna(:, 1, &
+&            isb), srd%sna(:, :, 1, isb), dv%flob, dvd%flob, dv%conb, &
 &            dvd%conb, dv%resco(:, isb), dvd%resco(:, :, isb), dv%corpa(&
 &            :, isb), dvd%corpa(:, :, isb), aa, aad, arg1(:), nbdirs)
 !   ..apply correction
-    CALL B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, nregionv&
-&            , ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:, &
+    CALL B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
+&            ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:, &
 &            isb), dvd%corpa(:, :, isb), dv%pcca(:, 0, isb), dvd%pcca(:&
 &            , :, 0, isb), dv%pa(:, isb), dvd%pa(:, :, isb), pl%na(:, &
 &            isb), pld%na(:, :, isb), pl%ua(:, isb), pld%ua(:, :, isb), &
@@ -279,12 +289,15 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance
-!WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+!djm Jan2017
+!djm Mar2019
+  USE B2MOD_BALANCE_DIFFV, ONLY : update_balance_sources_particles, &
+& balance_netcdf, tot_sna0to1, fna_tot
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco, ncall_b2upco, ncall_b2usco, &
-& my_out_folder, ncall_b2ursc
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2upco, ncall_b2usco, my_out_folder, &
+& ncall_b2ursc
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -340,7 +353,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
 !   ..procedures
   EXTERNAL XERTST, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2URSC_NODIFF, B2USCO_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSC_NODIFF, B2USCO_NODIFF, &
 &     B2UPCO_NODIFF
   INTRINSIC ANY
   CHARACTER(len=7) :: arg1
@@ -383,15 +396,23 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..extensive tests on first few calls
   IF (ncall_b2npco .LT. 3) THEN
 !    ..test sign of conb
-    CALL B2XVSG_NODIFF(nfc, dv%conb(1, 0, 0), 1, 'conb00', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, dv%conb(1, 0, 1), 1, 'conb01', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, dv%conb(1, 0, 2), 1, 'conb02', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 0), 1, 'conb00', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 1), 1, 'conb01', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 2), 1, 'conb02', '.ge.')
 !    ..test sign of snbc, snbv
-    CALL B2XVSG_NODIFF(ncv, sr%sna(1, 0, isb), 1, 'snbc', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sr%sna(1, 1, isb), 1, 'snbv', '.le.')
+    CALL B2XVSG(ncv, sr%sna(1, 0, isb), 1, 'snbc', '.ge.')
+    CALL B2XVSG(ncv, sr%sna(1, 1, isb), 1, 'snbv', '.le.')
 !    ..test sign of pb, nb
-    CALL B2XVSG_NODIFF(ncv, dv%pa(1, isb), 1, 'pb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%na(1, isb), 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, dv%pa(1, isb), 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, pl%na(1, isb), 1, 'nb', '.gt.')
+  END IF
+!djm Jan2017 update particle source components for balance
+  IF (balance_netcdf .NE. 0) THEN
+!djm Mar2019
+    tot_sna0to1(:, :, isb) = sr%sna(:, :, isb)
+!djm Mar2019
+    fna_tot(:, :, isb) = dv%fna(:, :, isb)
+    CALL UPDATE_BALANCE_SOURCES_PARTICLES(ncv, isb, pl%na(:, isb))
   END IF
 !srv 22.05.18
 ! ..particle balance
@@ -400,11 +421,11 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
     IF (switch%mdf_fnb .EQ. 0) THEN
-      CALL B2URSC_NODIFF(ncv, nfc, geo, mpg, pl%na(:, isb), sr%sna(:, :&
-&                  , isb), dv%fna(:, :, isb), dv%resco(:, isb))
+      CALL B2URSC_NODIFF(ncv, nfc, mpg, pl%na(:, isb), sr%sna(:, :, isb)&
+&                  , dv%fna(:, :, isb), dv%resco(:, isb))
     ELSE
-      CALL B2URSC_NODIFF(ncv, nfc, geo, mpg, pl%na(:, isb), sr%sna(:, :&
-&                  , isb), dv%fna_mdf(:, :, isb), dv%resco(:, isb))
+      CALL B2URSC_NODIFF(ncv, nfc, mpg, pl%na(:, isb), sr%sna(:, :, isb)&
+&                  , dv%fna_mdf(:, :, isb), dv%resco(:, isb))
     END IF
   END IF
 !   ..compute correction
