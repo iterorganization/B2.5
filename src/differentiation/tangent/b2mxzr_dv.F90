@@ -69,10 +69,9 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
   INTEGER :: is, icv
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVFX_NODIFF, B2XXGS
+  EXTERNAL B2XVFX_NODIFF
   INTEGER :: nd
   INTEGER :: nbdirs
-!   ..initialisation
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -86,7 +85,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
 !
 !   ..zero-out parts of (na) residual
   DO is=0,ns-1
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resco(-1,-1,is), 0)
     DO icv=mpg%nci+1,ncv
       DO nd=1,nbdirs
         rescod(nd, icv, is) = 0.D0
@@ -96,7 +94,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
   END DO
 !   ..zero-out parts of (ua) residual
   DO is=0,ns-1
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resmo(-1,-1,is), 0)
     DO icv=mpg%nci+1,ncv
       DO nd=1,nbdirs
         resmod(nd, icv, is) = 0.D0
@@ -104,7 +101,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
       resmo(icv, is) = 0.0_R8
     END DO
   END DO
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, resmt, 0)
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
       resmtd(nd, icv) = 0.D0
@@ -112,7 +108,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
     resmt(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (te) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshe, 0)
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
       reshed(nd, icv) = 0.D0
@@ -120,7 +115,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
     reshe(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (ti) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshi, 0)
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
       reshid(nd, icv) = 0.D0
@@ -128,7 +122,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
     reshi(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (tn) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshn, 0)
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
       reshnd(nd, icv) = 0.D0
@@ -136,7 +129,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
     reshn(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (po) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, respo, 0)
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
       respod(nd, icv) = 0.D0
@@ -144,7 +136,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
     respo(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (kt) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reskt, 0)
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
       resktd(nd, icv) = 0.D0
@@ -152,7 +143,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
     reskt(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (zt) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reszt, 0)
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
       resztd(nd, icv) = 0.D0
@@ -223,8 +213,7 @@ SUBROUTINE B2MXZR_NODIFF(ncv, ns, mpg, resco, resmo, resmt, reshe, reshi&
   INTEGER :: is, icv
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVFX_NODIFF, B2XXGS
-!   ..initialisation
+  EXTERNAL B2XVFX_NODIFF
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -238,49 +227,40 @@ SUBROUTINE B2MXZR_NODIFF(ncv, ns, mpg, resco, resmo, resmt, reshe, reshi&
 !
 !   ..zero-out parts of (na) residual
   DO is=0,ns-1
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resco(-1,-1,is), 0)
     DO icv=mpg%nci+1,ncv
       resco(icv, is) = 0.0_R8
     END DO
   END DO
 !   ..zero-out parts of (ua) residual
   DO is=0,ns-1
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resmo(-1,-1,is), 0)
     DO icv=mpg%nci+1,ncv
       resmo(icv, is) = 0.0_R8
     END DO
   END DO
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, resmt, 0)
   DO icv=mpg%nci+1,ncv
     resmt(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (te) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshe, 0)
   DO icv=mpg%nci+1,ncv
     reshe(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (ti) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshi, 0)
   DO icv=mpg%nci+1,ncv
     reshi(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (tn) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshn, 0)
   DO icv=mpg%nci+1,ncv
     reshn(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (po) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, respo, 0)
   DO icv=mpg%nci+1,ncv
     respo(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (kt) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reskt, 0)
   DO icv=mpg%nci+1,ncv
     reskt(icv) = 0.0_R8
   END DO
 !   ..zero-out parts of (zt) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reszt, 0)
   DO icv=mpg%nci+1,ncv
     reszt(icv) = 0.0_R8
   END DO

@@ -27,7 +27,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 & , sch0, wrong_flow, switch)
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_ANOMALOUS_TRANSPORT_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
@@ -178,8 +178,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
   EXTERNAL XERTST, SFILL_NODIFF, B2SSUM_NODIFF, B2SAXPY_NODIFF
   REAL(kind=r8) :: B2SSUM_NODIFF
 !sv 18.01.02
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XXGS, &
-&     B2XPPZ_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XXGS, B2XPPZ_NODIFF
   INTRINSIC MAXVAL
   REAL(r8) :: y1
   REAL(r8) :: y2
@@ -321,12 +320,12 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, hy
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hy, 1, 'hy', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
 !    ..test edge values of pbs
     CALL B2XVFX_NODIFF(nx, ny, pbs(-1, -1, 0), 'pbs')
-    CALL B2XVFY(nx, ny, pbs(-1, -1, 1), 'pbs')
+    CALL B2XVFY_NODIFF(nx, ny, pbs(-1, -1, 1), 'pbs')
 !    ..test state
 !    ..test edge values of fne, fni
     CALL B2XVFF_NODIFF(nx, ny, fne, 'fne')

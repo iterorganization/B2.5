@@ -55,13 +55,12 @@
       logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
 
-
 !     ..START OF COMPUTATION
 
 !     Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_dv(switch, geo, geod, mpg, mpgd, state, stated,
-     &  state_ext, state_extd, npar_opt)
+      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, 
+     &  stated, state_ext, state_extd, state_avg, state_avgd, npar_opt)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
@@ -112,7 +111,6 @@
      &    write(*,*) 'IPOPT: warning, G_U(',icon,') set to infty'
       end do
 ! FIXME Z_L/Z_U
-
 
 !     First create a handle for the Ipopt problem (and read the options file)
 !     If Hessian is provided or steepest descent is asked the additional argument needed
@@ -250,7 +248,7 @@
 
 !     Clean up
       call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated,
-     & state_ext, state_extd, npar_opt)
+     & state_ext, state_extd, state_avg, state_avgd, npar_opt)
       call IPFREE(IPROBLEM)
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
@@ -331,7 +329,7 @@
             endif
           end do
         endif
-        call b2mn_step(switch, geo, mpg, state, state_ext, j)
+        call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
       endif
       F = DBLE(j(1))
       IER = 0
@@ -411,8 +409,8 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-        call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,
-     &   stated, state_ext, state_extd, j, jdiff, 
+        call b2mn_step_dv(switch, switchd, geo, geod, mpg, state,
+     &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,
      &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       endif
 #ifdef TGT

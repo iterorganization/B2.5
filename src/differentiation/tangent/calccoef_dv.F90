@@ -17,11 +17,10 @@
 !
 !-----------------------------------------------------------------------
 !.specification
-SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
-& cond, flo0, flo0d, con0, con0d, nbdirs)
+SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo, flod, con, cond, &
+& flo0, flo0d, con0, con0d, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -32,7 +31,6 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
 !   ..input arguments
   INTEGER :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
   REAL(kind=r8) :: flod(nbdirsmax, nfc, 0:1), cond(nbdirsmax, nfc, 0:1)
 !   ..output arguments
@@ -270,6 +268,7 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
     END DO
   ELSE IF (meth .EQ. 3) THEN
 !
+!
 ! SOLPS4 continuity scheme
 !
     CALL XERRAB('calccoef -- meth 3 to be implemented')
@@ -297,11 +296,10 @@ END SUBROUTINE CALCCOEF_DV
 !
 !-----------------------------------------------------------------------
 !.specification
-SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
-& , con0)
+SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
+& con0)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -311,7 +309,6 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
 !   ..input arguments
   INTEGER :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
 !   ..output arguments
   REAL(kind=r8) :: flo0(nfc, 0:1), con0(nfc, 0:1)
@@ -461,6 +458,7 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
       con0(ifc, 1) = t0*t01 + t1*t11
     END DO
   ELSE IF (meth .EQ. 3) THEN
+!
 !
 ! SOLPS4 continuity scheme
 !

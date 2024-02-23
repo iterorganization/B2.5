@@ -21,7 +21,7 @@
 SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 & , avisper, bvisper, cvisper, sch, respo, corpo, aa11)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
 !      use b2mod_plasma
 !     * , only : fac_vis
@@ -73,7 +73,7 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
 !srv 11.01.00
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2UX7P, B2UX9P
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX7P, B2UX9P
   CHARACTER(len=10) :: arg1
 !   ..initialisation
 !srv 27.01.00
@@ -105,12 +105,12 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of ne, te, conc, sch
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, conc(-1, -1, 0, 0), 1, 'conc', '.ge.')
-    CALL B2XVSG_NODIFF(n2, conc(-1, -1, 1, 1), 1, 'conc', '.ge.')
-    CALL B2XVSG_NODIFF(n2, sch(-1, -1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(n2, sch(-1, -1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, conc(-1, -1, 0, 0), 1, 'conc', '.ge.')
+    CALL B2XVSG(n2, conc(-1, -1, 1, 1), 1, 'conc', '.ge.')
+    CALL B2XVSG(n2, sch(-1, -1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(n2, sch(-1, -1, 3), 1, 'sch3', '.le.')
 !    ..test edge values of conc
     CALL B2XVFF_NODIFF(nx, ny, conc, 'conc')
   END IF

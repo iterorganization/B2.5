@@ -3,8 +3,10 @@
 !
 !  Differentiation of b2tqin in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: sigin
-!   with respect to varying inputs: *(pl.na) *(pl.ti)
-!   Plus diff mem management of: geo.cvbb:in pl.na:in pl.ti:in
+!   with respect to varying inputs: *(rt.rlcx) *(pl.na) *(pl.ti)
+!                *(pl.tn)
+!   Plus diff mem management of: geo.cvbb:in rt.rlcx:in pl.na:in
+!                pl.ti:in pl.tn:in
 !
 !
 !
@@ -20,7 +22,7 @@
 !.specification
 !
 SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
-& , sigin, sigind, nbdirs)
+& , rtd, sigin, sigind, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -31,6 +33,8 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqin
+  USE B2MOD_EIRDIAG, ONLY : dab2
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : b2eatcr
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -48,6 +52,7 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
 !   ..output arguments (unspecified on entry)
 !sv 01.07.99 !xpb
   REAL(kind=r8) :: sigin(ncv, 0:1, 0:ns-1, 0:nscx-1)
@@ -72,7 +77,7 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
 !     Here, ehx and ehy are the components of the ... modified electric
 !     field: ehx = -(d/dx)po - (1/(qe*ni))*(d/dx)(ni*ti)+B*hx*Vyn,
 !     ehy = -(d/dy)po - (1/(ni*te))*(d/dy)(ne*te)-B*hy*Vpn.
-!     See ... 
+!     See ...
 !
 !     The equations indicated above do not describe all the relevant
 !     transport properties of a plasma. The most significant omission
@@ -88,17 +93,23 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
 !   ..local variables
   INTEGER :: icv, is, is0, k
   REAL(kind=r8) :: rcx, t0, tav
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: rcxd, t0d, tavd
+!! fluid and kinetic densities of main hydrogen neutral atom
+  REAL(kind=r8) :: na0_kin(ncv), na0_fluid(ncv), na0_tot(ncv)
+  REAL(kind=r8) :: na0_fluidd(nbdirsmax, ncv), na0_totd(nbdirsmax, ncv)
 !   ..procedures
   INTRINSIC SQRT, LOG
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_DV
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC NINT
   INTEGER :: arg1
   REAL(kind=r8) :: arg10
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
   REAL(r8) :: arg11
   REAL(r8), DIMENSION(nbdirsmax) :: arg11d
   REAL(kind=r8) :: result1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
   REAL(r8) :: result10
   REAL(r8), DIMENSION(nbdirsmax) :: result10d
   INTEGER :: nd
@@ -109,7 +120,7 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
-!.documentation-internal 
+!.documentation-internal
 !
 !     Description of some local variables:
 !
@@ -126,12 +137,13 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
 !   ..extensive tests on first few calls
   IF (ncall_b2tqin .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
   END IF
+!
 ! ..compute classical sigin
 !   ..compute sigin.
   arg1 = ncv*2*ns*nscx
@@ -143,41 +155,90 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
 !   ..this is only nonzero for hydrogen neutral on hydrogen ion CX
   DO k=0,nscx-1
     is0 = iscx(k)
+    IF (switch%use_eirene .NE. 0) THEN
+      na0_kin = dab2(:, b2eatcr(is0), 1)
+    ELSE
+      na0_kin = 0.0_R8
+    END IF
+    DO nd=1,nbdirs
+      na0_fluidd(nd, :) = pld%na(nd, :, is0)
+!! sum for hybrid fluid-kinetic simulations
+      na0_totd(nd, :) = na0_fluidd(nd, :)
+    END DO
+    na0_fluid = pl%na(:, is0)
+    na0_tot = na0_kin + na0_fluid
     DO is=0,ns-1
       IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
         DO icv=1,ncv
           tav = (pl%ti(icv)+pl%tn(icv))/2.0_R8
           arg10 = tav/(am(is0)*ev)
           t0 = LOG(arg10)
-          arg11 = rt%rlcx(icv, 0, is, k) + rt%rlcx(icv, 1, is, k)*t0
-          result1 = EXPU(arg11)
-          rcx = switch%b2sqcx_phm0*result1
-          arg11 = pl%ti(icv)/ev/0.026_R8
-          temp = SQRT(arg11)
+          temp = rt%rlcx(icv, 1, is, k)
           DO nd=1,nbdirs
+            tavd(nd) = (pld%ti(nd, icv)+pld%tn(nd, icv))/2.0_R8
+            arg10d(nd) = tavd(nd)/(am(is0)*ev)
+            t0d(nd) = arg10d(nd)/arg10
+            arg11d(nd) = rtd%rlcx(nd, icv, 0, is, k) + t0*rtd%rlcx(nd, &
+&             icv, 1, is, k) + temp*t0d(nd)
+          END DO
+          arg11 = rt%rlcx(icv, 0, is, k) + temp*t0
+          CALL EXPU_DV(arg11, arg11d, result1, result1d, nbdirs)
+          DO nd=1,nbdirs
+            rcxd(nd) = switch%b2sqcx_phm0*result1d(nd)
+          END DO
+          rcx = switch%b2sqcx_phm0*result1
+          IF (switch%b2tqin_csigin_style .EQ. 0) THEN
+! From 5.0/5.1: Using the CX rate
+            IF (switch%transport_afn .EQ. 0) THEN
+!! default
+              temp = 2.0_R8*(geo%cvbb(icv, 3)*geo%cvbb(icv, 3))
+              DO nd=1,nbdirs
+                sigind(nd, icv, 0, is, k) = am(is)*mp*(rcx*na0_tot(icv)*&
+&                 pld%na(nd, icv, is)+pl%na(icv, is)*(na0_tot(icv)*rcxd(&
+&                 nd)+rcx*na0_totd(nd, icv)))/temp
+              END DO
+              sigin(icv, 0, is, k) = am(is)*mp*(pl%na(icv, is)*(rcx*&
+&               na0_tot(icv))/temp)
+            ELSE
+!! in case of advanced fluid neutrals, rcx = Kcxm and in that case the factor 1/2 should not be there
+!! ( see "Van Uytven, Wim, et al. "Effect of drifts and currents on the validity of a fluid model for the atoms in the plasma edg
+!e." Nuclear Materials and Energy 33 (2022): 101255.")
+              temp0 = geo%cvbb(icv, 3)*geo%cvbb(icv, 3)
+              DO nd=1,nbdirs
+                sigind(nd, icv, 0, is, k) = am(is)*mp*(rcx*na0_tot(icv)*&
+&                 pld%na(nd, icv, is)+pl%na(icv, is)*(na0_tot(icv)*rcxd(&
+&                 nd)+rcx*na0_totd(nd, icv)))/temp0
+              END DO
+              sigin(icv, 0, is, k) = am(is)*mp*(pl%na(icv, is)*(rcx*&
+&               na0_tot(icv))/temp0)
+            END IF
+          ELSE
+            arg11 = pl%ti(icv)/ev/0.026_R8
+            temp = SQRT(arg11)
+            DO nd=1,nbdirs
 ! From 5.2: Using the diffusivity of room temperature hydrogen gas
 !srv 01.07.99
-            arg11d(nd) = pld%ti(nd, icv)/(ev*0.026_R8)
-            IF (arg11 .EQ. 0.D0) THEN
-              result10d(nd) = 0.D0
-            ELSE
-              result10d(nd) = arg11d(nd)/(2.0*temp)
-            END IF
-          END DO
-          result10 = temp
-          temp0 = 3.2e-15_R8*am(is)*mp
-          temp = 2.0_R8*(geo%cvbb(icv, 3)*geo%cvbb(icv, 3))
-          temp1 = pl%na(icv, is)*result10
+              arg11d(nd) = pld%ti(nd, icv)/(ev*0.026_R8)
+              IF (arg11 .EQ. 0.D0) THEN
+                result10d(nd) = 0.D0
+              ELSE
+                result10d(nd) = arg11d(nd)/(2.0*temp)
+              END IF
+            END DO
+            result10 = temp
+            temp0 = 3.2e-15_R8*am(is)*mp
+            temp = 2.0_R8*(geo%cvbb(icv, 3)*geo%cvbb(icv, 3))
+            temp1 = pl%na(icv, is)*result10
+            DO nd=1,nbdirs
+              sigind(nd, icv, 0, is, k) = temp0*(pl%na(icv, is0)*(&
+&               result10*pld%na(nd, icv, is)+pl%na(icv, is)*result10d(nd&
+&               ))+temp1*pld%na(nd, icv, is0))/temp
+            END DO
+            sigin(icv, 0, is, k) = temp0*(temp1*pl%na(icv, is0)/temp)
+          END IF
           DO nd=1,nbdirs
-            sigind(nd, icv, 0, is, k) = temp0*(pl%na(icv, is0)*(result10&
-&             *pld%na(nd, icv, is)+pl%na(icv, is)*result10d(nd))+temp1*&
-&             pld%na(nd, icv, is0))/temp
-! From 5.0/5.1: Using the CX rate
-!            sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
-!     &       *rcx*pl%na(iCv,is0)/(2.0_R8*geo%cvBb(iCv,3)**2)        
             sigind(nd, icv, 1, is, k) = sigind(nd, icv, 0, is, k)
           END DO
-          sigin(icv, 0, is, k) = temp0*(temp1*pl%na(icv, is0)/temp)
           sigin(icv, 1, is, k) = sigin(icv, 0, is, k)
         END DO
       END IF
@@ -216,6 +277,8 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqin
+  USE B2MOD_EIRDIAG, ONLY : dab2
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : b2eatcr
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -253,7 +316,7 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
 !     Here, ehx and ehy are the components of the ... modified electric
 !     field: ehx = -(d/dx)po - (1/(qe*ni))*(d/dx)(ni*ti)+B*hx*Vyn,
 !     ehy = -(d/dy)po - (1/(ni*te))*(d/dy)(ne*te)-B*hy*Vpn.
-!     See ... 
+!     See ...
 !
 !     The equations indicated above do not describe all the relevant
 !     transport properties of a plasma. The most significant omission
@@ -269,10 +332,12 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
 !   ..local variables
   INTEGER :: icv, is, is0, k
   REAL(kind=r8) :: rcx, t0, tav
+!! fluid and kinetic densities of main hydrogen neutral atom
+  REAL(kind=r8) :: na0_kin(ncv), na0_fluid(ncv), na0_tot(ncv)
 !   ..procedures
   INTRINSIC SQRT, LOG
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC NINT
   INTEGER :: arg1
   REAL(kind=r8) :: arg10
@@ -282,7 +347,7 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
-!.documentation-internal 
+!.documentation-internal
 !
 !     Description of some local variables:
 !
@@ -299,12 +364,13 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
 !   ..extensive tests on first few calls
   IF (ncall_b2tqin .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
   END IF
+!
 ! ..compute classical sigin
 !   ..compute sigin.
   arg1 = ncv*2*ns*nscx
@@ -313,6 +379,14 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
 !   ..this is only nonzero for hydrogen neutral on hydrogen ion CX
   DO k=0,nscx-1
     is0 = iscx(k)
+    IF (switch%use_eirene .NE. 0) THEN
+      na0_kin = dab2(:, b2eatcr(is0), 1)
+    ELSE
+      na0_kin = 0.0_R8
+    END IF
+    na0_fluid = pl%na(:, is0)
+!! sum for hybrid fluid-kinetic simulations
+    na0_tot = na0_kin + na0_fluid
     DO is=0,ns-1
       IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
         DO icv=1,ncv
@@ -322,15 +396,27 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
           arg11 = rt%rlcx(icv, 0, is, k) + rt%rlcx(icv, 1, is, k)*t0
           result1 = EXPU(arg11)
           rcx = switch%b2sqcx_phm0*result1
+          IF (switch%b2tqin_csigin_style .EQ. 0) THEN
+! From 5.0/5.1: Using the CX rate
+            IF (switch%transport_afn .EQ. 0) THEN
+!! default
+              sigin(icv, 0, is, k) = pl%na(icv, is)*am(is)*mp*rcx*&
+&               na0_tot(icv)/(2.0_R8*geo%cvbb(icv, 3)**2)
+            ELSE
+!! in case of advanced fluid neutrals, rcx = Kcxm and in that case the factor 1/2 should not be there
+!! ( see "Van Uytven, Wim, et al. "Effect of drifts and currents on the validity of a fluid model for the atoms in the plasma edg
+!e." Nuclear Materials and Energy 33 (2022): 101255.")
+              sigin(icv, 0, is, k) = pl%na(icv, is)*am(is)*mp*rcx*&
+&               na0_tot(icv)/geo%cvbb(icv, 3)**2
+            END IF
+          ELSE
 ! From 5.2: Using the diffusivity of room temperature hydrogen gas
 !srv 01.07.99
-          arg11 = pl%ti(icv)/ev/0.026_R8
-          result10 = SQRT(arg11)
-          sigin(icv, 0, is, k) = pl%na(icv, is)*am(is)*mp*(pl%na(icv, &
-&           is0)*3.2e-15_R8)*result10/(2.0_R8*geo%cvbb(icv, 3)**2)
-! From 5.0/5.1: Using the CX rate
-!            sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)
-!     &       *rcx*pl%na(iCv,is0)/(2.0_R8*geo%cvBb(iCv,3)**2)        
+            arg11 = pl%ti(icv)/ev/0.026_R8
+            result10 = SQRT(arg11)
+            sigin(icv, 0, is, k) = pl%na(icv, is)*am(is)*mp*(pl%na(icv, &
+&             is0)*3.2e-15_R8)*result10/(2.0_R8*geo%cvbb(icv, 3)**2)
+          END IF
           sigin(icv, 1, is, k) = sigin(icv, 0, is, k)
         END DO
       END IF

@@ -12,13 +12,9 @@
 !
 !
 !
-SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
-& , kin_frac_hyb, fnn_inc)
+SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv)
   USE B2MOD_TYPES
-  USE B2MOD_PLASMA_DIFFV
-  USE B2MOD_INDIRECT
   USE B2MOD_SWITCHES_DIFFV
-  USE B2MOD_GEO_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA_DIFFV
@@ -28,7 +24,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   USE B2MOD_DIAG_DIFFV, ONLY : fluids_list
   USE B2MOD_SUBSYS
   USE B2MOD_BRAEIR_DIFFV
-  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : crcstra, rcfe, rcfi, mol
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : rcfe, rcfi, mol
   USE B2MOD_RECYCLE_DIFFV, ONLY : fna_mol
 !  Hint: nCv should be the size of dimension 1 of array arg1
   USE B2MOD_DIFFSIZES
@@ -36,7 +32,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 !  version : 28.12.96 21:39
 !
 !
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
@@ -92,8 +88,6 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   REAL(kind=r8) :: evi, ebx, eby, ebn, uu, vv, ww, pvxs, pvys, puxs, &
 & puys
   REAL(kind=r8) :: wght(nfc, 2)
-  REAL(kind=r8), INTENT(IN) :: kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0&
-& :ns-1)
   REAL(kind=r8) :: fnn_inc_b(nfc, ns), fnn_mol_b(nfc, ns)
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -560,7 +554,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
       DO ifc=1,nfc
         fnib(ifc, nflai) = dv%fna(ifc, 0, is) + dv%fna(ifc, 1, is)
         IF (is_neutral(is)) THEN
-          fnn_inc_b(ifc, nflai) = fnn_inc(ifc, is)
+          fnn_inc_b(ifc, nflai) = dv%fnn_inc(ifc, is)
           fnn_mol_b(ifc, nflai) = fna_mol(ifc, is)
         END IF
       END DO
@@ -667,17 +661,22 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
         trgt(istra)%fsh(i) = delta_sheathb(ifc)
         DO ifl=1,nflai
           trgt(istra)%dnit(i, ifl) = dnib(ic, ifl)
-          IF (zab(ifl) .NE. 0) THEN
+          IF (zab(ifl) .NE. 0 .AND. mol(istra) .EQ. 0) THEN
 !! ion species
             trgt(istra)%flux(i, ifl) = fnib(ifc, ifl)*mpg%rcfcor(ian+i-1&
-&             )*kin_frac_hyb(ifc)
-          ELSE IF (mol(istra) .EQ. 0) THEN
+&             )*dv%kin_frac_hyb(ifc)
+          ELSE IF (zab(ifl) .EQ. 0 .AND. mol(istra) .EQ. 0) THEN
 !! neutral atom species
             trgt(istra)%flux(i, ifl) = fnn_inc_b(ifc, ifl)*mpg%rcfcor(&
-&             ian+i-1)*kin_frac_hyb(ifc)
-          ELSE
+&             ian+i-1)*dv%kin_frac_hyb(ifc)
+            fnib(ifc, ifl) = fnn_inc_b(ifc, ifl)
+          ELSE IF (zab(ifl) .EQ. 0 .AND. mol(istra) .EQ. 1) THEN
 !! neutral molecule species
-            trgt(istra)%flux(i, ifl) = 2.0_R8*fnn_mol_b(ifc, ifl)
+            trgt(istra)%flux(i, ifl) = 2.0_R8*fnn_mol_b(ifc, ifl)*dv%&
+&             fluid_frac_hyb(ifc)
+            fnib(ifc, ifl) = 0.0_R8
+          ELSE IF (fnn_mol_b(ifc, ifl) .GT. 0) THEN
+            CALL XERRAB('no molecular contribution expected here')
           END IF
           IF (trgt(istra)%flux(i, ifl) .LT. 0.0_R8) THEN
             WRITE(*, *) 'negative flux !! istra, i, ifl = ', istra, i, &
@@ -709,6 +708,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
           trgt(istra)%vpart(i, ifl) = 0.0_R8
           trgt(istra)%mach(i, ifl) = 1.0_R8
           trgt(istra)%usr(i, ifl) = 0.0_R8
+          trgt(istra)%zit(i, ifl) = zab(ifl)
         END DO
       END DO
     END IF
@@ -718,6 +718,85 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   CALL SUBEND()
   RETURN
 END SUBROUTINE COPY_BACKGROUND_NODIFF
+
+!
+SUBROUTINE WRITE_F30_NODIFF(geo, mpg)
+  USE B2US_MAP_DIFFV
+  USE B2US_GEO_DIFFV
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  INTEGER :: i, nb, ilbl, minlbl, maxlbl, nbfaces, nbverts
+  INTEGER, ALLOCATABLE :: bverts(:)
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
+  INTRINSIC COUNT
+!
+! open the file
+  WRITE(*, *) 'Writing fort.30 file'
+!
+  OPEN(unit=30, file='fort.30') 
+! identify range of face labels
+!
+  minlbl = MINVAL(mpg%fclbl)
+! first pass: identify number of boundary segments to be written
+  maxlbl = MAXVAL(mpg%fclbl)
+!
+  nb = 0
+! only treat faces with non-zero fclbl
+  DO ilbl=minlbl,maxlbl
+!
+! determine number of faces with this label
+    IF (ilbl .NE. 0) THEN
+!
+      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
+!
+      IF (nbfaces .GT. 0) nb = nb + 1
+    END IF
+  END DO
+!
+! write file
+!
+  WRITE(30, '(i3)') nb
+!
+! only treat faces with non-zero fclbl
+  DO ilbl=minlbl,maxlbl
+!
+! determine number of faces with this label
+    IF (ilbl .NE. 0) THEN
+!
+! corresponding number of vertices
+      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
+!
+      nbverts = nbfaces + 1
+!
+      IF (nbfaces .GT. 0) THEN
+!
+        ALLOCATE(bverts(nbverts))
+! sort vertices of the boundary faces into a polygon
+!
+        CALL SORT_VERTICES_NODIFF(nbverts, bverts, mpg%nfc, mpg%fclbl, &
+&                           ilbl, mpg)
+! write into fort.30
+!
+        WRITE(30, '(i3)') ilbl
+        WRITE(30, '(i12)') nbverts
+        DO i=1,nbverts
+          WRITE(30, '(2(2X,E21.14))') geo%vxx(bverts(i)), geo%vxy(bverts&
+&         (i))
+        END DO
+!
+        DEALLOCATE(bverts)
+      END IF
+    END IF
+  END DO
+! close file
+!
+  CLOSE(30) 
+!
+  RETURN
+END SUBROUTINE WRITE_F30_NODIFF
 
 !
 SUBROUTINE WRITE_F31_NODIFF(mpg)
@@ -733,7 +812,7 @@ SUBROUTINE WRITE_F31_NODIFF(mpg)
 !  version : 28.12.96 21:39
 !
 !
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
@@ -841,20 +920,21 @@ SUBROUTINE WRITE_F31_NODIFF(mpg)
 &       istra
         WRITE(31, '(a)') '*'
 !
-        WRITE(31, '(a1,a6,11a15)') '*', 'Index', 'Flux', 'Ti', 'ni', &
-&       'Vx', 'Vy', 'Vz', 'fi', 'fel', 'vpart', 'mach', 'usr'
-        WRITE(31, '(a1,a6,11a15)') '*', ' ', ' ', '(eV)', '(1/m^3)', &
-&       'm/s', 'm/s', 'm/s', ' ', ' ', ' ', ' '
+        WRITE(31, '(a1,a6,12a15)') '*', 'Index', 'Flux', 'Ti', 'ni', &
+&       'Vx', 'Vy', 'Vz', 'fi', 'fel', 'vpart', 'mach', 'usr', 'Zi'
+        WRITE(31, '(a1,a6,12a15)') '*', ' ', ' ', '(eV)', '(1/m^3)', &
+&       'm/s', 'm/s', 'm/s', ' ', ' ', ' ', ' ', ' '
 !
         WRITE(31, '(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
         WRITE(31, '(i6)') ntrgdat
 !
         DO i=1,ntrgdat
-          WRITE(31, '(i7,11es15.7)') i, trgt(istra)%flux(i, ifl), trgt(&
+          WRITE(31, '(i7,12es15.7)') i, trgt(istra)%flux(i, ifl), trgt(&
 &         istra)%tit(i), trgt(istra)%dnit(i, ifl), trgt(istra)%vxt(i, &
 &         ifl), trgt(istra)%vyt(i, ifl), trgt(istra)%vzt(i, ifl), trgt(&
 &         istra)%fi(i, ifl), trgt(istra)%fel(i, ifl), trgt(istra)%vpart(&
-&         i, ifl), trgt(istra)%mach(i, ifl), trgt(istra)%usr(i, ifl)
+&         i, ifl), trgt(istra)%mach(i, ifl), trgt(istra)%usr(i, ifl), &
+&         trgt(istra)%zit(i, ifl)
         END DO
       END DO
     END IF

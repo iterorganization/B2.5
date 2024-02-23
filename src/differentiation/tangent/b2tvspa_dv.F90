@@ -23,8 +23,8 @@
 !
 !srv 20.09.06 { 16.10.17
 !srv 22.06.08
-SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& ua, uad, vsaf_cl, vsaf_cld, fac_vis, fchvispar, fchvispard, nbdirs)
+SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, ua, uad&
+& , vsaf_cl, vsaf_cld, fac_vis, fchvispar, fchvispard, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
@@ -50,7 +50,6 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
 !srv 22.06.08
   REAL(kind=r8) :: ua(ncv, 0:ns-1), vsaf_cl(nfc, 0:1, 0:ns-1), fac_vis(&
 & nfc)
@@ -82,7 +81,7 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nbdirsmax, nfc), wrkvxd(nbdirsmax, nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC NINT
@@ -141,8 +140,8 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
           wrkd(nd, :) = result11*uad(nd, :, is)
         END DO
         wrk = ua(:, is)*result11
-        CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, wrk, wrkd, &
-&                wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
+        CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, wrk, wrkd, wrkvx, &
+&                wrkvxd, wrk1, wrk1d, nbdirs)
         DO nd=1,nbdirs
           dvpard(nd, :) = dvpard(nd, :) + wrk0*(wrk1*vsaf_cld(nd, :, 0, &
 &           is)+vsaf_cl(:, 0, is)*wrk1d(nd, :))
@@ -254,7 +253,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 & ), gonedbsq(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC NINT

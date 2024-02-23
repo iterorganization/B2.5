@@ -13,16 +13,9 @@
 !
 !
 MODULE B2MOD_INPUT_PROFILE_DIFFV
-!      use b2mod_types
+  USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_TIME
-!WG_TODO      use b2mod_sources
-!WG_TODO     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
-!WG_TODO     &             balance_netcdf
-!WG_TODO      use b2mod_geo_corner
-!WG_TODO     &     , only: nmdpl
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
@@ -77,7 +70,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: ncv, ns
 !
-!      call xertst (nCv.le.DEF_NXD, 'faulty input nx')
+    CALL XERTST(ncv .GT. 0, 'faulty input nCv')
     CALL XERTST(ns .LE. def_nsd, 'faulty input ns')
 !
     RETURN
@@ -104,10 +97,10 @@ CONTAINS
 !
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE TRANSPORT_INPUT_DV(ncv, nfc, ns, geo, geod, mpg, mpgd, pl, &
-&   pld, dv, dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, &
-&   vla0d, vsa0, vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, &
-&   ncall, nbdirs)
+  SUBROUTINE TRANSPORT_INPUT_DV(ncv, nfc, ns, geo, geod, mpg, pl, pld, &
+&   dv, dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, vla0d&
+&   , vsa0, vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, ncall, &
+&   nbdirs)
 !
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -127,7 +120,6 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
-    TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(B2DERIVATIVES), INTENT(IN) :: dv
@@ -315,7 +307,7 @@ CONTAINS
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 !
-            CALL CALC_DIST_NODIFF(mpg, geo, omp, nomp, icsepomp, pr)
+            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
 !
             CALL E01BEF_DV(ndat, r, rd, f, fd, d, dd, ifail, nbdirs)
             IF (elm_data) CALL E01BEF_DV(ndat, r, rd, felm, felmd, delm&
@@ -329,6 +321,7 @@ CONTAINS
             IF (elm_data) CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm&
 &                                  , delmd, ndim, pr, pelm, pelmd, ifail&
 &                                  , nbdirs)
+!
             IF (tr_ip_new_files) THEN
 !
               IF (elm_data) THEN
@@ -453,7 +446,6 @@ CONTAINS
 &                           , nsp(is)))
 !
                         ELSE IF (kind_coeff .EQ. 8) THEN
-!
                           IF (csig_an_style .EQ. 0) THEN
                             DO nd=1,nbdirs
                               sig0d(nd, icv) = qe*poloidal_scale_factor*&
@@ -501,6 +493,7 @@ CONTAINS
                 END DO
               END DO
             END DO
+!
 !ic
 !ift=1,mpg%nFt
 !iy=1,ndim
@@ -751,7 +744,7 @@ CONTAINS
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 !
-            CALL CALC_DIST_NODIFF(mpg, geo, omp, nomp, icsepomp, pr)
+            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
 !
             CALL E01BEF(ndat, r, f, d, ifail)
             IF (elm_data) CALL E01BEF(ndat, r, felm, delm, ifail)
@@ -762,6 +755,7 @@ CONTAINS
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             IF (elm_data) CALL E01BFF(ndat, r, felm, delm, ndim, pr, &
 &                               pelm, ifail)
+!
             IF (tr_ip_new_files) THEN
 !
               IF (elm_data) THEN
@@ -842,7 +836,6 @@ CONTAINS
 &                           prof(iy)*mp*am(nsp(is))*pl%na(icv, nsp(is))
 !
                         ELSE IF (kind_coeff .EQ. 8) THEN
-!
                           IF (csig_an_style .EQ. 0) THEN
                             sig0(icv) = prof(iy)*qe*dv%ne(icv)*&
 &                             poloidal_scale_factor
@@ -868,6 +861,7 @@ CONTAINS
                 END DO
               END DO
             END DO
+!
 !ic
 !ift=1,mpg%nFt
 !iy=1,ndim
@@ -1015,44 +1009,39 @@ CONTAINS
 !
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE REGION_PROFILE(kind_data, ndat, r, ndim, pr, nx, ny, ifa, &
-&   nfitanf)
+  SUBROUTINE REGION_PROFILE(mpg, geo, kind_data, ndat, r, ndim, pr, ifa&
+&   , nfitanf)
 !
-    USE B2MOD_INDIRECT
-    USE B2MOD_GEO_DIFFV
-    USE B2MOD_MWTI, ONLY : output_ds
+    USE B2MOD_INDIRECT_DIFFV
+    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp
+    USE B2US_GEO_DIFFV
+    USE B2US_MAP_DIFFV
+    USE B2MOD_MWTI, ONLY : output_ds_cv
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: i, nx, ny, ifa
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(GEOMETRY), INTENT(IN) :: geo
+    INTEGER :: i, ifa
     INTEGER :: nfitanf, nfitend, ndim, ndat, kind_data
-    REAL(kind=r8) :: pra(ny+2), prdsa(ny+2), r(nrr), pr(nrr), prtmp
-    INTEGER :: jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
-    INTEGER :: ixref, iyref
+    REAL(kind=r8) :: r(nrr), pr(nrr), prtmp
+    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:)
+    INTEGER :: ncall, nya
     CHARACTER(len=256) :: filenamer
     LOGICAL :: exist
     EXTERNAL IPGETR
-    EXTERNAL GET_JSEP
-    SAVE jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
+    SAVE ncall
     EXTERNAL FIND_FILE
+    INTEGER :: arg1
     DATA ncall /0/
 !
     CALL SUBINI('region_profile')
     IF (ncall .EQ. 0) THEN
-      CALL GET_JSEP(nx, ny, jxi, jxa, jsep)
-      CALL XERTST(-1 .LE. jsep .AND. jsep .LE. ny, &
-&           'faulty parameter jsep')
-      CALL IPGETI('b2mwti_jxa', jxa)
-      CALL XERTST(-1 .LE. jxa .AND. jxa .LE. nx, &
-&           'faulty internal parameter jxa')
-      ixref = jxa
-      iyref = jsep
-      CALL IPGETI('set_transport_ixref', ixref)
-      CALL XERTST(-1 .LE. ixref .AND. ixref .LE. nx, &
-&           'faulty argument set_transport_ixref')
-      CALL IPGETI('set_transport_iyref', iyref)
-      CALL XERTST(-1 .LE. iyref .AND. iyref .LE. ny, &
-&           'faulty argument set_transport_iyref')
-      CALL OUTPUT_DS(ny, ixref, 0, iyref, iyastrt, iyaend, 'dsp')
+      IF (nomp .GT. 0) THEN
+        ALLOCATE(pra(nomp))
+        ALLOCATE(prdsa(nomp))
+        arg1 = icsepomp - 1
+        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp')
+      END IF
       CALL IPGETI('b2trno_csig_an_style', csig_an_style)
     END IF
 !
@@ -1066,7 +1055,7 @@ CONTAINS
       READ(91, *, end=92, err=97) prtmp
       prdsa(i) = prtmp
       nya = i
-      IF (i .LT. ny + 2) GOTO 91
+      IF (i .LT. nomp) GOTO 91
  92   nfitanf = 1
       ifa = 0
       DO i=1,nya
@@ -1087,7 +1076,6 @@ CONTAINS
           END IF
         END IF
       END DO
-!
 !
  100  IF (nfitend .GT. nfitanf) THEN
 !
@@ -1118,7 +1106,7 @@ CONTAINS
   SUBROUTINE AXIAL_PROFILE(kind_data, ndat, x, ndim, pr, nx, ny, ifa, &
 &   nfitanf, nfitend)
 !
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_GEO_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE

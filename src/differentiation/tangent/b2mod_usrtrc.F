@@ -3,7 +3,7 @@
       use b2mod_diag_diffv
       use b2mod_time
       use b2mod_b2cmpa_diffv
-      use b2mod_indirect
+      use b2mod_indirect_diffv
       use b2mod_user_namelist_diffv
 #ifdef B25_EIRENE
       use eirmod_parmmod

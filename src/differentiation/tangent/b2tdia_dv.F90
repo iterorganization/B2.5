@@ -19,8 +19,8 @@
 !
 !
 !srv 16.19.17 {
-SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pz&
-& , pzd, fna, uadia, facdrift, fchdia, fchdiad, nbdirs)
+SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pz, pzd&
+& , fna, uadia, facdrift, fchdia, fchdiad, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_CONSTANTS
@@ -40,7 +40,6 @@ SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pz&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: pz(ncv), facdrift(nfc), fna(nfc, 0:1, 0:ns-1), uadia(&
 & nfc, 0:1, 0:ns-1)
   REAL(kind=r8) :: pzd(nbdirsmax, ncv)
@@ -66,7 +65,7 @@ SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pz&
   REAL(kind=r8) :: pzfd(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nfc) :: temp
@@ -181,7 +180,7 @@ SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pz, fna, &
   REAL(kind=r8) :: facdriftm, wght(nfc, 2), gonedbsq(nfc, 0:1), pzf(nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
 !-----------------------------------------------------------------------
 !.computation

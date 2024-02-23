@@ -37,7 +37,6 @@ SUBROUTINE B2TXSX_DV(ncv, nfc, geo, mpg, fcvol, fcs, fun, fund, funsx, &
 !     of a non-orthogonal grid.)
 !     ------------------------------------------------------------------
   INTEGER :: ifc
-  EXTERNAL B2XXGS
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
@@ -57,8 +56,6 @@ SUBROUTINE B2TXSX_DV(ncv, nfc, geo, mpg, fcvol, fcs, fun, fund, funsx, &
     funsx(ifc) = temp*((fcvol(ifc, 2)*fun(mpg%fccv(ifc, 1))+fcvol(ifc, 1&
 &     )*fun(mpg%fccv(ifc, 2)))/temp0)
   END DO
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, funsx, 1)
 !   ..return
   CALL SUBEND()
   RETURN
@@ -94,7 +91,6 @@ SUBROUTINE B2TXSX_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsx)
 !     of a non-orthogonal grid.)
 !     ------------------------------------------------------------------
   INTEGER :: ifc
-  EXTERNAL B2XXGS
 !     ------------------------------------------------------------------
   CALL SUBINI('b2txsx')
 !   ..test nCv, nFc
@@ -105,8 +101,6 @@ SUBROUTINE B2TXSX_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsx)
 &     (ifc, 1))+fcvol(ifc, 1)*fun(mpg%fccv(ifc, 2)))/(fcvol(ifc, 1)+&
 &     fcvol(ifc, 2))
   END DO
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, funsx, 1)
 !   ..return
   CALL SUBEND()
   RETURN

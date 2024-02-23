@@ -87,7 +87,7 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
   INTRINSIC ABS
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: result1
   CHARACTER(len=20) :: arg1
@@ -110,10 +110,10 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !   ..extensive tests on first few calls
   IF (ncall_b2usco .LT. 3) THEN
 !    ..test sign of nb, pb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pb, 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, pb, 1, 'pb', '.gt.')
 !    ..test sign of snbv
-    CALL B2XVSG_NODIFF(ncv, snbv, 1, 'snbv', '.le.')
+    CALL B2XVSG(ncv, snbv, 1, 'snbv', '.le.')
   END IF
 !
 !   ..initialize matrix
@@ -316,10 +316,9 @@ END SUBROUTINE B2USCO_NODIFF
 !
 !srv 13.10.06 26.09.12
 !srv 18.05.02
-SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
-& nregionv, solvereg, itcnt, rxg, nb, nbd, pb, pbd, snbv, snbvd, flob, &
-& flobd, conb, conbd, rescb, rescbd, corpb, corpbd, aa, aad, name, &
-& nbdirs)
+SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv, &
+& solvereg, itcnt, rxg, nb, nbd, pb, pbd, snbv, snbvd, flob, flobd, conb&
+& , conbd, rescb, rescbd, corpb, corpbd, aa, aad, name, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -339,7 +338,6 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   LOGICAL :: solvereg(0:nregionv)
   REAL(kind=r8) :: rxg, nb(ncv), pb(ncv), snbv(ncv), flob(nfc, 0:1), &
 & conb(nfc, 0:1, 0:4), rescb(ncv)
@@ -395,7 +393,7 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
   INTRINSIC ABS
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   REAL(kind=r8) :: abs0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
   REAL(kind=r8) :: result1
@@ -424,10 +422,10 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
 !   ..extensive tests on first few calls
   IF (ncall_b2usco .LT. 3) THEN
 !    ..test sign of nb, pb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pb, 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, pb, 1, 'pb', '.gt.')
 !    ..test sign of snbv
-    CALL B2XVSG_NODIFF(ncv, snbv, 1, 'snbv', '.le.')
+    CALL B2XVSG(ncv, snbv, 1, 'snbv', '.le.')
   END IF
 !
 !   ..initialize matrix

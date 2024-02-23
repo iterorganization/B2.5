@@ -101,6 +101,7 @@ MODULE B2MOD_WALL_DIFFV
   CHARACTER(len=2), SAVE :: track_species_save(ntrack)
   LOGICAL, SAVE :: track_chem_sput(ntrack)
 !
+  REAL(kind=r8) :: layer_nrelconstituents(nwall, 6+ntrack)
   REAL(kind=r8), ALLOCATABLE :: r1(:), r2(:), z1(:), z2(:)
 !
   NAMELIST /wall_save/ ndepth_nml, track_species, imapx, imapy, xymap, &
@@ -110,9 +111,9 @@ MODULE B2MOD_WALL_DIFFV
 &     physical_sputtering_energy, res_sputtering, thermal_evaporation, &
 &     backscattering, backscattering_energy, plate_time, plate_area, &
 &     monolayer_deposition, monolayer_erosion, layer_nconstituents, &
-&     layer_nzconstituents, layer_nrelconstituents, &
-&     layer_thermal_contact, coating_thickness, coating_material_name, &
-&     layer_alloys, inertial_cooling
+&     layer_nzconstituents, layer_relconstituents, &
+&     layer_nrelconstituents, layer_thermal_contact, coating_thickness, &
+&     coating_material_name, layer_alloys, inertial_cooling
 !
 !xpb Mapping arrays:
 !xpb A wall element numbered iwall can be found in the B2 grid at the position
@@ -261,6 +262,7 @@ CONTAINS
     target_temp = 0.0_R8
     plate_time = 0.0_R8
     layer_thermal_contact = 1.0_R8
+    layer_nrelconstituents = 0.0_R8
 !
     CALL SUBEND()
     RETURN
@@ -385,6 +387,16 @@ CONTAINS
       OPEN(nread, file=trim(filename)) 
       WRITE(*, *) 'Reading ', TRIM(filename)
       READ(nread, wall_save) 
+!xpb For backward compatibility, NRELCONSTITUENTS --> RELCONSTITUENTS
+      result1 = MAXVAL(layer_nrelconstituents)
+      IF (result1 .GT. 0.0_R8) THEN
+        result1 = MAXVAL(layer_relconstituents)
+        IF (result1 .GT. 0.0_R8) THEN
+          layer_nrelconstituents = 0.0_R8
+        ELSE
+          layer_relconstituents = layer_nrelconstituents
+        END IF
+      END IF
       WRITE(*, *) 'Read ', TRIM(filename)
       CLOSE(nread) 
     ELSE
@@ -688,7 +700,7 @@ CONTAINS
 &           matsurf_nzconstituents(ibnd, j)
           IF (.NOT.found) j = j + 1
         END DO
-        IF (found) todo = todo .OR. layer_nrelconstituents(ibnd, i) .NE.&
+        IF (found) todo = todo .OR. layer_relconstituents(ibnd, i) .NE. &
 &           matsurf_relconstituents(ibnd, j)
       END DO
       IF (todo) THEN
@@ -699,8 +711,8 @@ CONTAINS
 &         'LAYER_NZCONSTITUENTS(', ibnd, ',', i, ')=  ', &
 &         layer_nzconstituents(ibnd, i), ','
           WRITE(nwrite, '(a23,i4,a1,i2,a2,1es15.8,a1)') &
-&         'LAYER_NRELCONSTITUENTS(', ibnd, ',', i, ')=', &
-&         layer_nrelconstituents(ibnd, i), ','
+&         'LAYER_RELCONSTITUENTS(', ibnd, ',', i, ')=', &
+&         layer_relconstituents(ibnd, i), ','
         END DO
       END IF
       DO itrack=1,ntargsp

@@ -20,8 +20,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE GRAD_NT_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
-& fund, funv, funvd, gfun, gfund, nbdirs)
+SUBROUTINE GRAD_NT_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, &
+& funv, funvd, gfun, gfund, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -37,7 +37,6 @@ SUBROUTINE GRAD_NT_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fun(ncv), funv(nvx)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
 !   ..output arguments
@@ -74,10 +73,10 @@ SUBROUTINE GRAD_NT_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
 &                              , funv, funvd, nbdirs)
 !
 !   ..compute normal and tangential gradients
-  CALL GRAD_N_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, funv, &
-&          funvd, gfun(:, 0), gfund(:, :, 0), nbdirs)
-  CALL GRAD_T_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, funv, &
-&          funvd, gfun(:, 1), gfund(:, :, 1), nbdirs)
+  CALL GRAD_N_DV(ncv, nfc, nvx, 1, geo, mpg, fun, fund, funv, funvd, &
+&          gfun(:, 0), gfund(:, :, 0), nbdirs)
+  CALL GRAD_T_DV(ncv, nfc, nvx, 1, geo, mpg, fun, fund, funv, funvd, &
+&          gfun(:, 1), gfund(:, :, 1), nbdirs)
 !
 !   ..return
   RETURN

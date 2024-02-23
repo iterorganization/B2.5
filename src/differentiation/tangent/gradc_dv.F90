@@ -4,9 +4,8 @@
 !  Differentiation of gradc in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: gfun funv
 !   with respect to varying inputs: funv fun
-!   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
-!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: geo.fchc:in geo.fcht:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -21,8 +20,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE GRADC_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, fund&
-& , funv, funvd, gfun, gfund, nbdirs)
+SUBROUTINE GRADC_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, funv&
+& , funvd, gfun, gfund, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -38,7 +37,6 @@ SUBROUTINE GRADC_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, fund&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fun(ncv), funv(nvx)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
 !   ..output arguments
@@ -77,10 +75,10 @@ SUBROUTINE GRADC_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, fund&
 &                              , funv, funvd, nbdirs)
 !
 !   ..compute poloidal and radial gradients
-  CALL GRADC_P_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, fun, fund, &
-&           funv, funvd, gfun(:, 0), gfund(:, :, 0), nbdirs)
-  CALL GRADC_R_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, fun, fund, &
-&           funv, funvd, gfun(:, 1), gfund(:, :, 1), nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 1, geo, geod, mpg, fun, fund, funv, &
+&           funvd, gfun(:, 0), gfund(:, :, 0), nbdirs)
+  CALL GRADC_R_DV(ncv, nfc, nvx, 1, geo, geod, mpg, fun, fund, funv, &
+&           funvd, gfun(:, 1), gfund(:, :, 1), nbdirs)
 !
 !   ..return
   RETURN

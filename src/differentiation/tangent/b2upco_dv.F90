@@ -4,9 +4,8 @@
 !  Differentiation of b2upco in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: nb ub pb
 !   with respect to varying inputs: corpb nb ub pb pccb0
-!   Plus diff mem management of: mpg.intcellp:in geo.cvvol:in geo.fchc:in
-!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in
+!   Plus diff mem management of: geo.cvvol:in geo.fchc:in geo.fcht:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -21,9 +20,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
-& nregionv, ua_solve, solvereg, rxf, pcm0, corpb, corpbd, pccb0, pccb0d&
-& , pb, pbd, nb, nbd, ub, ubd, isb, nbdirs)
+SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
+& ua_solve, solvereg, rxf, pcm0, corpb, corpbd, pccb0, pccb0d, pb, pbd, &
+& nb, nbd, ub, ubd, isb, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2US_GEO_DIFFV
@@ -46,7 +45,6 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(SWITCHES), INTENT(IN) :: switch
   REAL(kind=r8) :: rxf, pcm0, corpb(ncv), pccb0(ncv)
   REAL(kind=r8) :: corpbd(nbdirsmax, ncv), pccb0d(nbdirsmax, ncv)
@@ -81,7 +79,7 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
 ! IYS 27.11.2017
   LOGICAL :: too_low_density(mpg%nft)
 !   ..procedures
-  EXTERNAL XERTST, IPGETR, B2XXGS
+  EXTERNAL XERTST, IPGETR
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(r8) :: temp0
@@ -106,8 +104,8 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, corpb, corpbd&
-&           , wrkv, wrkvd, wrk, wrkd, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, corpb, corpbd, wrkv&
+&           , wrkvd, wrk, wrkd, nbdirs)
   DO nd=1,nbdirsmax
     nb_d(nd, :) = 0.D0
   END DO
@@ -337,7 +335,7 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 ! IYS 27.11.2017
   LOGICAL :: too_low_density(mpg%nft)
 !   ..procedures
-  EXTERNAL XERTST, IPGETR, B2XXGS
+  EXTERNAL XERTST, IPGETR
 !   ..initialisation
 !
 !-----------------------------------------------------------------------

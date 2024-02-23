@@ -19,8 +19,8 @@
 !.specification
 !
 !srv 01.07.09 {
-SUBROUTINE B2TLNL_DV(ncv, switch, icase, te, ted, ti, tid, ne, ned, &
-& lnlam, lnlamd, nbdirs)
+SUBROUTINE B2TLNL_DV(ncv, switch, switchd, icase, te, ted, ti, tid, ne, &
+& ned, lnlam, lnlamd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
@@ -37,6 +37,7 @@ SUBROUTINE B2TLNL_DV(ncv, switch, icase, te, ted, ti, tid, ne, ned, &
 !
 !   ..input arguments (unchanged on exit)
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
 !srv 20.09.11
   INTEGER :: ncv, icase
 !srv 20.09.11
@@ -68,7 +69,7 @@ SUBROUTINE B2TLNL_DV(ncv, switch, icase, te, ted, ti, tid, ne, ned, &
   INTEGER :: icv
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC LOG10
   INTRINSIC MAX
   INTRINSIC LOG
@@ -111,8 +112,8 @@ SUBROUTINE B2TLNL_DV(ncv, switch, icase, te, ted, ti, tid, ne, ned, &
 !   ..extensive tests on first few calls
   IF (ncall_b2tlnl .LT. 3) THEN
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
   lambda = switch%b2trcl_lambda
 ! ..compute lnlam
@@ -321,7 +322,7 @@ SUBROUTINE B2TLNL_NODIFF(ncv, switch, icase, te, ti, ne, lnlam)
   INTEGER :: icv
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC LOG10
   INTRINSIC MAX
   INTRINSIC LOG
@@ -355,8 +356,8 @@ SUBROUTINE B2TLNL_NODIFF(ncv, switch, icase, te, ti, ne, lnlam)
 !   ..extensive tests on first few calls
   IF (ncall_b2tlnl .LT. 3) THEN
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
   lambda = switch%b2trcl_lambda
 ! ..compute lnlam

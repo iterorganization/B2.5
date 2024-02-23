@@ -18,10 +18,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2URSD_DV(ncv, nfc, geo, mpg, den, dend, fun, fund, sdf, sdfd&
-& , fdf, fdfd, resdf, resdfd, nbdirs)
+SUBROUTINE B2URSD_DV(ncv, nfc, mpg, den, dend, fun, fund, sdf, sdfd, fdf&
+& , fdfd, resdf, resdfd, nbdirs)
   USE B2MOD_TYPES
-  USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -36,7 +35,6 @@ SUBROUTINE B2URSD_DV(ncv, nfc, geo, mpg, den, dend, fun, fund, sdf, sdfd&
 !
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc
-  TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: den(ncv), fun(ncv), sdf(ncv, 0:3), fdf(nfc, 0:1)
   REAL(kind=r8) :: dend(nbdirsmax, ncv), fund(nbdirsmax, ncv), sdfd(&
@@ -82,7 +80,7 @@ SUBROUTINE B2URSD_DV(ncv, nfc, geo, mpg, den, dend, fun, fund, sdf, sdfd&
   INTEGER :: ifc
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF
   INTEGER :: nd
   INTEGER :: nbdirs
 !   ..initialisation
@@ -98,9 +96,9 @@ SUBROUTINE B2URSD_DV(ncv, nfc, geo, mpg, den, dend, fun, fund, sdf, sdfd&
 !   ..extensive tests on first few calls
   IF (ncall_b2ursd .LT. 3) THEN
 !    ..test sign of den, sdf
-    CALL B2XVSG_NODIFF(ncv, den, 1, 'den', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sdf(1, 1), 1, 'sdf1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sdf(1, 3), 1, 'sdf3', '.le.')
+    CALL B2XVSG(ncv, den, 1, 'den', '.ge.')
+    CALL B2XVSG(ncv, sdf(1, 1), 1, 'sdf1', '.le.')
+    CALL B2XVSG(ncv, sdf(1, 3), 1, 'sdf3', '.le.')
   END IF
 !
 ! ..compute residual
@@ -146,9 +144,8 @@ END SUBROUTINE B2URSD_DV
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2URSD_NODIFF(ncv, nfc, geo, mpg, den, fun, sdf, fdf, resdf)
+SUBROUTINE B2URSD_NODIFF(ncv, nfc, mpg, den, fun, sdf, fdf, resdf)
   USE B2MOD_TYPES
-  USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -162,7 +159,6 @@ SUBROUTINE B2URSD_NODIFF(ncv, nfc, geo, mpg, den, fun, sdf, fdf, resdf)
 !
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc
-  TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: den(ncv), fun(ncv), sdf(ncv, 0:3), fdf(nfc, 0:1)
 !   ..output arguments (unspecified on entry)
@@ -205,7 +201,7 @@ SUBROUTINE B2URSD_NODIFF(ncv, nfc, geo, mpg, den, fun, sdf, fdf, resdf)
   INTEGER :: ifc
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -219,9 +215,9 @@ SUBROUTINE B2URSD_NODIFF(ncv, nfc, geo, mpg, den, fun, sdf, fdf, resdf)
 !   ..extensive tests on first few calls
   IF (ncall_b2ursd .LT. 3) THEN
 !    ..test sign of den, sdf
-    CALL B2XVSG_NODIFF(ncv, den, 1, 'den', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, sdf(1, 1), 1, 'sdf1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sdf(1, 3), 1, 'sdf3', '.le.')
+    CALL B2XVSG(ncv, den, 1, 'den', '.ge.')
+    CALL B2XVSG(ncv, sdf(1, 1), 1, 'sdf1', '.le.')
+    CALL B2XVSG(ncv, sdf(1, 3), 1, 'sdf3', '.le.')
   END IF
 !
 ! ..compute residual

@@ -129,22 +129,23 @@ cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
-            write(*,*) 'Opening 79'
+            write(*,*) 'Opening 84'
             open(79,file='b2_us_matrix')
           endif
-          write(*,*) 'Writing 79'
-          write(79,*) 'Called from '//trim(name)
-          write(79,*) n,' n'
+          write(*,*) 'Writing 84'
+          write(84,*) 'Called from '//trim(name)
+          write(84,*) n,' n'
           do i=1,n
-            write(79,*) rr1(i)
+            write(84,*) rr1(i)
           enddo
-          write(79,*) nz,' nz'
+          write(84,*) nz,' nz'
           do i=1,nz
-            write(79,*) IRNH(i),ICNH(i),A1H(i)
+            write(84,*) IRNH(i),ICNH(i),A1H(i)
           enddo
-        elseif(nwrite.eq.ncall) then
-           write(*,*) 'Closing 79'
-           close(79)
+          if(ncall+1.eq.nwrite) then
+           write(*,*) 'Closing 84'
+           close(84)
+          endif
         endif
       endif
 cdpc

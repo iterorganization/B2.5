@@ -12,14 +12,14 @@
 !
 !
 !
-SUBROUTINE CV_INTERSECTIONS_NODIFF(ncv, geo, m, segm, list, nncv, nmax, &
-& mode, ifail)
+SUBROUTINE CV_INTERSECTIONS_NODIFF(geo, m, segm, list, nncv, nmax, mode&
+& , ifail)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nmax
+  INTEGER :: nmax
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: m
   REAL(kind=r8) :: segm(2, 2)
@@ -32,7 +32,7 @@ SUBROUTINE CV_INTERSECTIONS_NODIFF(ncv, geo, m, segm, list, nncv, nmax, &
 !**
 !     This routine finds all the cv intersecting with the segment specified in segm
 !     It is assumed that segm(1,:) contains x-coordinate and segm(2,:) the y-coordinates
-!     list will contain all the CVs intersecting (without repetitions) and nncv the number of 
+!     list will contain all the CVs intersecting (without repetitions) and nncv the number of
 !     CVs. The CVs will be sorted according to mode, mode=1 sorted along x-dir, mode=2 sorted along y-dir
 !**
 !
@@ -86,4 +86,5 @@ SUBROUTINE CV_INTERSECTIONS_NODIFF(ncv, geo, m, segm, list, nncv, nmax, &
 !
   RETURN
 END SUBROUTINE CV_INTERSECTIONS_NODIFF
+!
 

@@ -21,8 +21,8 @@
 !.specification
 !
 !srv 20.09.06 {
-SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
-& csig_an, csig_and, po, pod, fchanml, fchanmld, nbdirs)
+SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, csig_an, &
+& csig_and, po, pod, fchanml, fchanmld, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -43,7 +43,6 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: po(ncv), csig_an(nfc, 0:1)
   REAL(kind=r8) :: pod(nbdirsmax, ncv), csig_and(nbdirsmax, nfc, 0:1)
 !   ..output arguments (unspecified on entry)
@@ -70,7 +69,7 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: dpod(nbdirsmax, nfc, 0:1), povd(nbdirsmax, mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
   INTEGER :: nd
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
@@ -100,8 +99,8 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
     DO nd=1,nbdirsmax
       povd(nd, :) = 0.D0
     END DO
-    CALL DIFF_DV(ncv, nfc, mpg%nvx, 0, geo, geod, mpg, mpgd, po, pod, &
-&          pov, povd, dpo, dpod, nbdirs)
+    CALL DIFF_DV(ncv, nfc, mpg%nvx, 0, geo, geod, mpg, po, pod, pov, &
+&          povd, dpo, dpod, nbdirs)
 !
 !   ..compute the current
     DO nd=1,nbdirs
@@ -176,7 +175,7 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an, po, &
   REAL(kind=r8) :: dpo(nfc, 0:1), pov(mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
 !-----------------------------------------------------------------------
 !.computation
 !

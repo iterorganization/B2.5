@@ -46,7 +46,6 @@ CONTAINS
 !
     itp = itim + 1
 !
-!
 !  calculate averaged plasma profiles and sources
     arg1 = ncv*ns
     CALL BATCH_AVERAGE(arg1, na, na_mean, itp, ntim_batch)
@@ -79,7 +78,6 @@ CONTAINS
     CALL BATCH_AVERAGE_SQ(ncv, shi_tot, e_shi, itp, ntim_batch)
     arg1 = ncv*ns
     CALL BATCH_AVERAGE_SQ(arg1, smo_tot, e_smo, itp, ntim_batch)
-!
 !
     naver = naver + 1
 !

@@ -33,6 +33,7 @@ SUBROUTINE MY_OUT_US(nwrite, nel, flag, fun_us, first_name)
   INTEGER, SAVE :: ncall=0
   INTEGER, SAVE :: iappend=0
   INTEGER, SAVE :: ndigits=6
+  EXTERNAL IPGETI, XERTST
   INTRINSIC TRIM
 !
   IF (ncall .EQ. 0) THEN

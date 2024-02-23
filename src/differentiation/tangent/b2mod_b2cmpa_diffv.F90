@@ -28,6 +28,9 @@ MODULE B2MOD_B2CMPA_DIFFV
   REAL(kind=r8), SAVE :: zn(0:nsdecl-1), am(0:nsdecl-1), zamax(0:nsdecl-&
 & 1), zamin(0:nsdecl-1), potmin(0:nsdecl-1), potmax(0:nsdecl-1), potimin&
 & (0:nsdecl-1), potimax(0:nsdecl-1)
+  REAL(kind=r8), SAVE :: znd(nbdirsmax, 0:nsdecl-1), amd(nbdirsmax, 0:&
+& nsdecl-1), zamaxd(nbdirsmax, 0:nsdecl-1), zamind(nbdirsmax, 0:nsdecl-1&
+& )
   LOGICAL :: is_neutral(0:nsdecl-1)
   REAL(kind=r8) :: amtol
   PARAMETER (amtol=1.0e-2_R8)
@@ -159,6 +162,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: is, js
+    INTRINSIC NINT
     INTRINSIC ABS
     REAL(kind=r8) :: abs0
     IF (am(is) - am(js) .GE. 0.) THEN
@@ -166,8 +170,8 @@ CONTAINS
     ELSE
       abs0 = -(am(is)-am(js))
     END IF
-    lnext = zamax(is) .LT. zamin(js) .AND. zn(is) .EQ. zn(js) .AND. abs0&
-&     .LT. amtol .AND. is .NE. js
+    lnext = zamax(is) .LT. zamin(js) .AND. NINT(zn(is)) .EQ. NINT(zn(js)&
+&     ) .AND. abs0 .LT. amtol .AND. is .NE. js
     RETURN
   END FUNCTION LNEXT
 

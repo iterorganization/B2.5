@@ -15,8 +15,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2MWQT_NODIFF(nput, ncv, ns, itim, itcnt, boris, switch, geo&
-& , pl, dv, diag)
+SUBROUTINE B2MWQT_NODIFF(nput, ncv, ns, itim, itcnt, switch, geo, pl, dv&
+& , diag)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -32,7 +32,6 @@ SUBROUTINE B2MWQT_NODIFF(nput, ncv, ns, itim, itcnt, boris, switch, geo&
 !
 !   ..input arguments (unchanged on exit)
   INTEGER :: nput, ncv, ns, itim, itcnt
-  REAL(kind=r8) :: boris
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(B2PLASMA), INTENT(IN) :: pl

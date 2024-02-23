@@ -32,20 +32,19 @@
 !.specification
 !
 SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
-& , mpg, pl, pld, dv, dvd, co, rt, rtw, st_ext, st_extd, sr, srw, srwd, &
-& main_call, nbdirs)
+& , mpg, pl, pld, dv, dvd, st_ext, st_extd, sr, srw, srwd, main_call, &
+& nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPB_DIFFV
   USE B2MOD_EXTERNAL_DIFFV
-  USE B2MOD_IMPGYRO_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stbm_sna0to1, b2stbm_smo0to3, &
-& b2stbm_she0to3, b2stbm_shi0to3, balance_netcdf
+  USE B2MOD_BALANCE_DIFFV, ONLY : balance_netcdf, b2stbm_sna0to1, &
+& b2stbm_smo0to3, b2stbm_she0to3, b2stbm_shi0to3
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -59,8 +58,6 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 !-----------------------------------------------------------------------
 !.end b2stbm
 !
-!
-!djm Jan2017 Keep linearised sources for balance
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain
   LOGICAL :: main_call
@@ -76,9 +73,6 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 !   ..input/output arguments 
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
-  TYPE(B2RATES), INTENT(INOUT) :: rt
-  TYPE(B2RATESWORK), INTENT(INOUT) :: rtw
-  TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
@@ -108,8 +102,8 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
   REAL(kind=r8) :: na0d(nbdirsmax, ncv, 0:ns-1), ua0d(nbdirsmax, ncv, 0:&
 & ns-1)
   INTEGER, SAVE :: ncall=0
-  EXTERNAL XERTST, SFILL_NODIFF, smin, smax, B2XVSG_NODIFF&
-&     , B2XVFF_NODIFF, IPGETI, IPGETR
+  EXTERNAL XERTST, SFILL_NODIFF, smin, smax, B2XVSG, &
+&     B2XVFF_NODIFF, IPGETI, IPGETR
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   INTRINSIC ABS, MOD, SQRT
@@ -163,11 +157,11 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, hy
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvhx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(nfc, geo%fcht, 1, 'hy', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvhx, 1, 'hx', '.gt.')
+    CALL B2XVSG(nfc, geo%fcht, 1, 'hy', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -662,11 +656,15 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
     srw%b2stbm_she(:) = srw%she0(:, 0) + srw%she0(:, 1)*pl%te(:)
     srw%b2stbm_shi(:) = srw%shi0(:, 0) + srw%shi0(:, 1)*pl%ti(:)
     srw%b2stbm_sch(:) = srw%sch0(:, 0) + srw%sch0(:, 1)*pl%po(:)
+!
+!djm Jan2017 Keep linearised sources for balance
+    IF (balance_netcdf .NE. 0) THEN
+      b2stbm_sna0to1 = srw%sna0
+      b2stbm_smo0to3 = srw%smo0
+      b2stbm_she0to3 = srw%she0
+      b2stbm_shi0to3 = srw%shi0
+    END IF
   END IF
-!WG_TODO        b2stbm_sna0to1 = sna0
-!WG_TODO        b2stbm_smo0to3 = smo0
-!WG_TODO        b2stbm_she0to3 = she0
-!WG_TODO        b2stbm_shi0to3 = shi0
 !
 ! ..return
   IF (main_call .OR. ncall .EQ. 0) ncall = ncall + 1
@@ -689,19 +687,18 @@ END SUBROUTINE B2STBM_DV
 !.specification
 !
 SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
-& mpg, pl, dv, co, rt, rtw, st_ext, sr, srw, main_call)
+& mpg, pl, dv, st_ext, sr, srw, main_call)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPB_DIFFV
   USE B2MOD_EXTERNAL_DIFFV
-  USE B2MOD_IMPGYRO_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stbm_sna0to1, b2stbm_smo0to3, &
-& b2stbm_she0to3, b2stbm_shi0to3, balance_netcdf
+  USE B2MOD_BALANCE_DIFFV, ONLY : balance_netcdf, b2stbm_sna0to1, &
+& b2stbm_smo0to3, b2stbm_she0to3, b2stbm_shi0to3
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -714,8 +711,6 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 !-----------------------------------------------------------------------
 !.end b2stbm
 !
-!
-!djm Jan2017 Keep linearised sources for balance
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain
   LOGICAL :: main_call
@@ -727,9 +722,6 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
   TYPE(B2STATEEXT), INTENT(INOUT) :: st_ext
 !   ..input/output arguments 
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
-  TYPE(B2RATES), INTENT(INOUT) :: rt
-  TYPE(B2RATESWORK), INTENT(INOUT) :: rtw
-  TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
 !   ..common blocks
@@ -755,8 +747,8 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 & (nfc, 0:1, 0:ns-1), fhi0(nfc, 0:1), ti0(ncv), fhe0(nfc, 0:1), fch0(nfc&
 & , 0:1)
   INTEGER, SAVE :: ncall=0
-  EXTERNAL XERTST, SFILL_NODIFF, smin, smax, B2XVSG_NODIFF&
-&     , B2XVFF_NODIFF, IPGETI, IPGETR
+  EXTERNAL XERTST, SFILL_NODIFF, smin, smax, B2XVSG, &
+&     B2XVFF_NODIFF, IPGETI, IPGETR
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   INTRINSIC ABS, MOD, SQRT
@@ -800,11 +792,11 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, hy
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvhx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(nfc, geo%fcht, 1, 'hy', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvhx, 1, 'hx', '.gt.')
+    CALL B2XVSG(nfc, geo%fcht, 1, 'hy', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -1144,11 +1136,15 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
     srw%b2stbm_she(:) = srw%she0(:, 0) + srw%she0(:, 1)*pl%te(:)
     srw%b2stbm_shi(:) = srw%shi0(:, 0) + srw%shi0(:, 1)*pl%ti(:)
     srw%b2stbm_sch(:) = srw%sch0(:, 0) + srw%sch0(:, 1)*pl%po(:)
+!
+!djm Jan2017 Keep linearised sources for balance
+    IF (balance_netcdf .NE. 0) THEN
+      b2stbm_sna0to1 = srw%sna0
+      b2stbm_smo0to3 = srw%smo0
+      b2stbm_she0to3 = srw%she0
+      b2stbm_shi0to3 = srw%shi0
+    END IF
   END IF
-!WG_TODO        b2stbm_sna0to1 = sna0
-!WG_TODO        b2stbm_smo0to3 = smo0
-!WG_TODO        b2stbm_she0to3 = she0
-!WG_TODO        b2stbm_shi0to3 = shi0
 !
 ! ..return
   IF (main_call .OR. ncall .EQ. 0) ncall = ncall + 1

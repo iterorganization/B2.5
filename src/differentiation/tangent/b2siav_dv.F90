@@ -5,11 +5,10 @@
 !   variations   of useful results: wrk0 wrk1 smbvh smbvv
 !   with respect to varying inputs: ti hcix_c ni ub wrk0 wrk1 lnlam
 !                rz2 cvsbhz_cl ne2 te
-!   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
-!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.fcbb:in
-!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxbb:in geo.vxhz:in geo.vxvol:in
-!                geo.ftconn:in geo.fteps:in geo.ftbbav2:in
+!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvvol:in
+!                geo.fcbb:in geo.fchc:in geo.fcht:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxbb:in geo.vxhz:in
+!                geo.vxvol:in geo.ftconn:in geo.fteps:in geo.ftbbav2:in
 !
 !
 !
@@ -25,21 +24,23 @@
 !.specification
 !
 !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
-SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
-& mpgd, mb, ub, ubd, te, ted, ti, tid, nb, ni, nid, ne2, ne2d, rz2, rz2d&
-& , lnlam, lnlamd, hcix_c, hcix_cd, cvsbhz_cl, cvsbhz_cld, smbvh, smbvhd&
-& , smbvv, smbvvd, kt_neo, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
+SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
+& , ub, ubd, te, ted, ti, tid, nb, ni, nid, ne2, ne2d, rz2, rz2d, lnlam&
+& , lnlamd, hcix_c, hcix_cd, cvsbhz_cl, cvsbhz_cld, smbvh, smbvhd, smbvv&
+& , smbvvd, kt_neo, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2siav_smovh0to3, b2siav_smovv0to3, &
+& balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav, ncall_b2ttia
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2ttia
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nVx should be the size of dimension 1 of array vxbb
@@ -56,7 +57,6 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(SWITCHES), INTENT(IN) :: switch
 !srv 01.07.09
 !srv 31.07.02
@@ -177,8 +177,8 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
       DO nd=1,nbdirsmax
         wrkvd(nd, :) = 0.D0
       END DO
-      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, &
-&             wrkv, wrkvd, gti, gtid, nbdirs)
+      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ti, tid, wrkv, &
+&             wrkvd, gti, gtid, nbdirs)
 !
 !       ..calculate the parallel heat flux of ions in the center of the cell
       qip0 = 0.0e0_R8
@@ -487,8 +487,8 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
       qipgen = result11*(qip1*temp8)
 !
 !       ..gradient qipgen in cell centers   
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, qipgen, &
-&               qipgend, wrkv, wrkvd, wrk0, wrk0d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, qipgen, qipgend&
+&               , wrkv, wrkvd, wrk0, wrk0d, nbdirs)
       temp9 = geo%cvbb(:, 3)*geo%cvbb(:, 3)*geo%cvbb(:, 3)
       DO nd=1,nbdirs
         wrk0d(nd, :) = geo%cvbb(:, 0)*(alpha1*(tauia1*wrk0d(nd, :)+wrk0*&
@@ -497,8 +497,8 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
       wrk0 = geo%cvbb(:, 0)*(wrk0*tauia1*alpha1/temp9)
 !       ..finally calculate the r.h.s. contribution to the parallel balance
 !         corresponding to parallel viscosity connected with heat flow
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk0, &
-&               wrk0d, wrkv, wrkvd, wrk1, wrk1d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk0, wrk0d, &
+&               wrkv, wrkvd, wrk1, wrk1d, nbdirs)
 !zero out spurious contributions outside of separatrix
 !wdk todo: rationalize this when separatrix-structure is introduced?
 !
@@ -557,8 +557,8 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
       DO nd=1,nbdirsmax
         wrk1d(nd, :) = 0.D0
       END DO
-      CALL DIFF_P_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, wrk1, wrk1d, wrkv&
-&              , wrkvd, wrkf, wrkfd, nbdirs)
+      CALL DIFF_P_DV(ncv, nfc, nvx, 1, geo, mpg, wrk1, wrk1d, wrkv, &
+&              wrkvd, wrkf, wrkfd, nbdirs)
 !
 !       ..compute flow and its divergence
       arg13(:) = geo%fcbb(:, 3)
@@ -640,10 +640,10 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
   END IF
 !
 !djm Jan2017 Store linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2siav_smovh0to3(-1:nx,-1:ny,0:3,isb)=smbvh
-!WG_TODO        b2siav_smovv0to3(-1:nx,-1:ny,0:3,isb)=smbvv
-!WG_TODO      endif
+  IF (balance_netcdf .NE. 0) THEN
+    b2siav_smovh0to3(1:ncv, 0:3, isb) = smbvh
+    b2siav_smovv0to3(1:ncv, 0:3, isb) = smbvv
+  END IF
 !
 ! ..return
   ncall_b2siav = ncall_b2siav + 1
@@ -675,11 +675,13 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2siav_smovh0to3, b2siav_smovv0to3, &
+& balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav, ncall_b2ttia
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2ttia
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nVx should be the size of dimension 1 of array vxbb
@@ -1022,10 +1024,10 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
   END IF
 !
 !djm Jan2017 Store linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2siav_smovh0to3(-1:nx,-1:ny,0:3,isb)=smbvh
-!WG_TODO        b2siav_smovv0to3(-1:nx,-1:ny,0:3,isb)=smbvv
-!WG_TODO      endif
+  IF (balance_netcdf .NE. 0) THEN
+    b2siav_smovh0to3(1:ncv, 0:3, isb) = smbvh
+    b2siav_smovv0to3(1:ncv, 0:3, isb) = smbvv
+  END IF
 !
 ! ..return
   ncall_b2siav = ncall_b2siav + 1

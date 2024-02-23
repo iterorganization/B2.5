@@ -30,12 +30,11 @@ MODULE B2MOD_SWITCHES_DIFFV
 !**********************************************************************
 !
 !
-!
-!
   PRIVATE 
   PUBLIC :: alloc_switches, dealloc_switches, read_switches, &
 & set_defaults_switches, check_switches, check_values_switches, &
-& check_consistency_switches
+& check_consistency_switches, read_switch_afn
+!
 !
 !srv 22.05.18
 !srv 13.10.06
@@ -54,6 +53,9 @@ MODULE B2MOD_SWITCHES_DIFFV
 !xpb 27.09.17
 !srv 07.07.08
 !! in absolute sense: abs(ua) < ua_max
+!
+! switches for far-sol flux limiting options
+!
 !
 ! iout switches
 !      integer :: b2nph9_iout       ! No longer needed for unstructured grids
@@ -161,6 +163,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: csig_an_style
       INTEGER :: user_transport
       INTEGER :: tn_style
+      INTEGER :: afn
       INTEGER :: recycle_afn
       INTEGER :: use_uy_uz_0
       INTEGER :: use_uy_uz_1
@@ -170,6 +173,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: diffusion_bc_safeguard
       INTEGER :: do_volrec
       INTEGER :: transport_afn
+      INTEGER :: afn_bcs_use_coarse
       REAL(kind=r8) :: fhe_vis_per
       REAL(kind=r8) :: fhe_vis_par
       REAL(kind=r8) :: fnb_vis_per
@@ -228,6 +232,18 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: auto_spatial_hyb_kn_2
       REAL(kind=r8) :: l_macro_afn
       REAL(kind=r8) :: neutral_sources_rescale
+      INTEGER :: b2tlhe_far_sol
+      INTEGER :: b2tlhi_far_sol
+      INTEGER :: b2tlmv_far_sol
+      REAL(kind=r8) :: b2tlhe_ne_min
+      REAL(kind=r8) :: b2tlhe_ne_max
+      REAL(kind=r8) :: b2tlhe_cflme_min
+      REAL(kind=r8) :: b2tlhi_ni_min
+      REAL(kind=r8) :: b2tlhi_ni_max
+      REAL(kind=r8) :: b2tlhi_cflmi_min
+      REAL(kind=r8) :: b2tlmv_ni_min
+      REAL(kind=r8) :: b2tlmv_ni_max
+      REAL(kind=r8) :: b2tlmv_cflmv_min
       INTEGER :: iout_b2wdat
       INTEGER :: b2sian_iout
       INTEGER :: b2sicf_iout
@@ -309,6 +325,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: b2npht_style
       INTEGER :: fnb_drift_style
       INTEGER :: b2sifr_styl0
+      INTEGER :: b2tqin_csigin_style
       REAL(kind=r8) :: b2sian_phm0
       REAL(kind=r8) :: b2sicf_phm0
       REAL(kind=r8) :: b2sicf_phm1
@@ -472,6 +489,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: b2stbr_b2wall_netcdf
       INTEGER :: b2stbr_coreregno
       INTEGER :: b2stbr_first_flight
+      INTEGER :: bccon14_gradpar_0
       REAL(kind=r8) :: b2stbr_core_sources_rescale
       REAL(kind=r8) :: b2stbr_sput_frc
       REAL(kind=r8) :: b2stbr_alpha
@@ -541,11 +559,17 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: b2optim_save_states
   END TYPE SWITCHES
   TYPE, PUBLIC :: SWITCHES_DIFFV
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: fhe_vis_per
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fhe_vis_par
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fnb_vis_per
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fnb_vis_q
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: fhe_vis_q
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: psch
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: fhepsch
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: fhipsch
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfnb_xcur
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfnb_ycur
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: fch_ion_neutral
       REAL(kind=r8), DIMENSION(nbdirsmax) :: art_rad
       REAL(kind=r8), DIMENSION(nbdirsmax) :: sna0ep
       REAL(kind=r8), DIMENSION(nbdirsmax) :: she0ep
@@ -554,21 +578,35 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: integral_current
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_fchy_dia
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_na_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_ua_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_na_new
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: cfc0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: prl_cur
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: dia_cur
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fch_pte
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: alfteeh
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: fhe_vdia_par
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: fhi_vdia_par
       REAL(kind=r8), DIMENSION(nbdirsmax) :: xvecrb
       REAL(kind=r8), DIMENSION(nbdirsmax) :: xwdia
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fnb_drift_hyb
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: xfac
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fch_inert
       REAL(kind=r8), DIMENSION(nbdirsmax) :: cthiv
       REAL(kind=r8), DIMENSION(nbdirsmax) :: cthev
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2trcl_lambda
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: poleldr
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: radeldr
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: poldidr
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: raddidr
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlv0_alpha
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlv0_gamma
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlh0_alpha
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlh0_gamma
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlc0_alpha
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlc0_gamma
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfnb_alpha
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfnb_gamma
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fch_stochastic
       REAL(kind=r8), DIMENSION(nbdirsmax) :: qalfmin
       REAL(kind=r8), DIMENSION(nbdirsmax) :: delpo
@@ -579,16 +617,63 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: auto_spatial_hyb_kn_2
       REAL(kind=r8), DIMENSION(nbdirsmax) :: l_macro_afn
       REAL(kind=r8), DIMENSION(nbdirsmax) :: neutral_sources_rescale
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlhe_ne_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlhe_ne_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlhe_cflme_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlhi_ni_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlhi_ni_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlhi_cflmi_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlmv_ni_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlmv_ni_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlmv_cflmv_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sian_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sicf_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sicf_phm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sigp_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm5
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm6
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm7
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs_phm8
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sqcx_phm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sqel_phm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sqel_phm1
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sqel_phm2
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srdt_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srdt_phm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srdt_phm3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srdt_phm4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srdt_phm5
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2nxfv_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2nxfv_phm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sifr_limthee
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sifr_limthii
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sifr_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sifr_phm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sifr_phm2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sifr_phm3
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqca_phm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2treq_phm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_phm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_phm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_phm2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npco_pcm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npco_pcm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npht_pcm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npht_pcm1
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stcx_rg0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npco_rxg
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npht_rxg
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npmo_rxg
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: xfm0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: xfm1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: xfm2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: xfm3
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rxm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rxm1
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rxm2
@@ -596,6 +681,17 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rxm4
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rg0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rg1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ion_vlct_restrict_m
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_te_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_te_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_ti_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_ti_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_na_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_na_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_ne_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_ne_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_ua_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_ua_max
       REAL(kind=r8), DIMENSION(nbdirsmax) :: keps_cd
       REAL(kind=r8), DIMENSION(nbdirsmax) :: keps_heat
       REAL(kind=r8), DIMENSION(nbdirsmax) :: dna_min
@@ -611,6 +707,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: keps_inc
       REAL(kind=r8), DIMENSION(nbdirsmax) :: keps_fac
       REAL(kind=r8), DIMENSION(nbdirsmax) :: keps_shear
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sikt_fac_aniso
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sikt_fac_sheath
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sikt_fac_sheath_core
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sikt_fac_diss
@@ -623,23 +720,73 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfhi_fsigkt
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfhi_fkt_hie
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfhe_vis_kt
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sikt_lpar_ref
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_ballooning
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_bb_ref
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_ballooning_rescale
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_pfr_rescale
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_divsol_rescale
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_min_df0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_max_df0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_cfvma
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fch_anomalous
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbm_linearisation
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_core_sources_rescale
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_sput_frc
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_alpha
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_redep_alpha
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_sput_mixed_beta
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_sput_mixed_alpha
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: &
+&     b2stbr_sput_chem_cutoff_alpha
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: &
+&     b2stbr_sput_chem_cutoff_beta
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_therm_evap
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_sput_res
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_sput_phys
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_sput_chem_alpha
       REAL(kind=r8), DIMENSION(nbdirsmax) :: recycled_neutrals_contr
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: sput_phys_alpha
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_in_dl
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srst_rf0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srst_rf1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srst_rf2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srst_rf3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tfnb_flux_limit_min_ti
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: nstg_aresco
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: nstg_areshe
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: nstg_areshi
       REAL(kind=r8), DIMENSION(nbdirsmax) :: boris
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_rxf
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facvis_start
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facdrift_start
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facexb_start
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_hz
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_stim
       REAL(kind=r8), DIMENSION(nbdirsmax) :: neutral_rescale
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2agmt_width
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: geom_match_dist
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: addvis
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: addvis1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: cqip1
       REAL(kind=r8), DIMENSION(nbdirsmax) :: cvsa_mltpl
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_cbc
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_bc_ref
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_bc_ref_te
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_bc_ref_ti
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_corr_flux
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: bc_type13_norm
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: bc_type13_fac
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: nesepm
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ndes_sol
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: nesepm_overshoot
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_cor9
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2trno_alpha_stoch
   END TYPE SWITCHES_DIFFV
 
 CONTAINS
@@ -666,6 +813,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ns
     TYPE(SWITCHES), INTENT(INOUT) :: s
+!
 !
     s%get_residuals = 0
     s%mdf_fhe = 0
@@ -702,7 +850,13 @@ CONTAINS
 !
 ! Advanced fluid neutral models
     s%tn_style = 0
-    s%recycle_afn = 0
+    IF (s%afn .NE. 0) THEN
+      s%recycle_afn = 1
+      s%transport_afn = 1
+    ELSE
+      s%recycle_afn = 0
+      s%transport_afn = 0
+    END IF
     s%use_uy_uz_0 = 0
     s%use_uy_uz_1 = 0
     s%remove_fc_el = 0
@@ -710,7 +864,7 @@ CONTAINS
     s%use_auto_spatial_hyb = 0
     s%diffusion_bc_safeguard = 1
     s%do_volrec = 1
-    s%transport_afn = 0
+    s%afn_bcs_use_coarse = 1
 !
     s%fhe_vis_per = 0.0e0_R8
     s%fhe_vis_par = 0.0e0_R8
@@ -752,11 +906,17 @@ CONTAINS
     s%radeldr = 1.0_R8
     s%poldidr = 1.0_R8
     s%raddidr = 1.0_R8
-    s%b2tlv0_alpha = 0.0_R8
+    IF (s%afn .NE. 0) THEN
+      s%b2tlv0_alpha = 1.0_R8
+      s%b2tlh0_alpha = 1.0_R8
+      s%b2tlc0_alpha = 1.0_R8
+    ELSE
+      s%b2tlv0_alpha = 0.0_R8
+      s%b2tlh0_alpha = 0.0_R8
+      s%b2tlc0_alpha = 0.0_R8
+    END IF
     s%b2tlv0_gamma = 2.0_R8
-    s%b2tlh0_alpha = 0.0_R8
     s%b2tlh0_gamma = 2.0_R8
-    s%b2tlc0_alpha = 0.0_R8
     s%b2tlc0_gamma = 2.0_R8
     s%b2tfnb_alpha = 0.0_R8
     s%b2tfnb_gamma = 2.0_R8
@@ -854,6 +1014,7 @@ CONTAINS
     s%b2npht_style = 1
     s%fnb_drift_style = 1
     s%b2sifr_styl0 = 0
+    s%b2tqin_csigin_style = 0
 !
     s%b2sian_phm0 = 1.0e0_R8
     s%b2sicf_phm0 = 1.0e0_R8
@@ -937,6 +1098,22 @@ CONTAINS
     s%set_te_numerical = 0
     s%set_ti_numerical = 0
     s%set_po_numerical = 0
+!
+!
+! far-sol flux limiting options
+    s%b2tlhe_far_sol = 0
+    s%b2tlhi_far_sol = 0
+    s%b2tlmv_far_sol = 0
+!
+    s%b2tlhe_ne_min = 1.0e17_R8
+    s%b2tlhe_ne_max = 1.0e18_R8
+    s%b2tlhe_cflme_min = 1.0e-3_R8
+    s%b2tlhi_ni_min = 1.0e17_R8
+    s%b2tlhi_ni_max = 1.0e18_R8
+    s%b2tlhi_cflmi_min = 1.0e-3_R8
+    s%b2tlmv_ni_min = 1.0e17_R8
+    s%b2tlmv_ni_max = 1.0e18_R8
+    s%b2tlmv_cflmv_min = 1.0e-3_R8
 !
 ! geometry
     s%fchz_style = 1
@@ -1045,6 +1222,7 @@ CONTAINS
     s%b2stbr_b2wall_netcdf = 0
     s%b2stbr_coreregno = 1
     s%b2stbr_first_flight = 0
+    s%bccon14_gradpar_0 = 0
     s%b2stbr_core_sources_rescale = 1.0_R8
     s%b2stbr_sput_frc = 0.0_R8
     s%b2stbr_alpha = 0.25_R8
@@ -1174,6 +1352,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: s
+    EXTERNAL IPGETI, IPGETR
 !
     CALL ALLOC_SWITCHES(s)
 !
@@ -1195,31 +1374,22 @@ CONTAINS
     CALL IPGETI('b2upht_stylec', s%stylec)
     CALL IPGETI('b2xzdd_zero_dead_and_core', s%zero_dead_and_core)
     CALL IPGETI('b2tqce_fke_Zhdanov', s%fke_zhdanov)
-!srv 02.12.10
     CALL IPGETI('b2trcl_conductive_limit', s%conductive_limit)
-!srv 16.06.08
     CALL IPGETI('b2trcl_core_cond_limit', s%core_cond_limit)
-!csw 13mar2012
     CALL IPGETI('b2trcl_lluciani', s%lluciani)
     CALL IPGETI('b2trcl_core_cond_limit', s%core_cond_limit)
-!csw 13mar2012
     CALL IPGETI('b2news_no_solve', s%no_solve)
-!srv 02.07.08
     CALL IPGETI('b2news_no_b2sral_call', s%no_b2sral_call)
     CALL IPGETI('b2news_do_2nd_b2npco_call', s%do_2nd_b2npco_call)
     CALL IPGETI('b2news_re_eval_prtls_fluxes', s%re_eval_prtls_fluxes)
-!srv 28.06.13
     CALL IPGETI('b2stbc_istyle_cur_contr_on_S_and_N', s%&
 &         istyle_cur_contr_on_s_and_n)
-!srv 01.02.09
     CALL IPGETI('b2mndr_astra', s%use_astra)
     CALL IPGETI('b2stbr_phys_lin_shi0', s%lin_shi0)
     CALL IPGETI('b2trno_flux_limit_to_dpa', s%flux_limit_to_dpa)
     CALL IPGETI('b2trno_flux_limit_to_vsa', s%flux_limit_to_vsa)
     CALL IPGETI('b2trno_csig_an_style', s%csig_an_style)
-!srv 15.06.08
     CALL IPGETI('b2tqna_user_transport', s%user_transport)
-!mb  11.10.17
 !
 ! Advanced fluid neutral models
     CALL IPGETI('b2mn_tn_style', s%tn_style)
@@ -1232,6 +1402,7 @@ CONTAINS
     CALL IPGETI('b2mn_do_volrec', s%do_volrec)
     CALL IPGETI('b2tqna_transport_afn', s%transport_afn)
     CALL IPGETI('diffusion_bc_safeguard', s%diffusion_bc_safeguard)
+    CALL IPGETI('b2stbr_afn_bcs_use_coarse', s%afn_bcs_use_coarse)
 !
     CALL IPGETR('b2tfhe_vis_per', s%fhe_vis_per)
     CALL IPGETR('b2tfhe_vis_par', s%fhe_vis_par)
@@ -1249,39 +1420,27 @@ CONTAINS
     CALL IPGETR('b2stbc_shi0ep', s%shi0ep)
     CALL IPGETR('b2stbc_she0ep', s%she0ep)
     CALL IPGETR('b2stbc_neoclassical', s%b2stbc_neoclassical)
-!xpb
     CALL IPGETR('b2stbc_integral_current', s%integral_current)
-!dpc
     CALL IPGETR('b2stbc_fchy_dia', s%b2stbc_fchy_dia)
-!xpb
     CALL IPGETR('b2mndr_na_min', s%b2mndr_na_min)
     CALL IPGETR('b2mndr_ua_max', s%b2mndr_ua_max)
     CALL IPGETR('b2mndr_na_new', s%b2mndr_na_new)
     CALL IPGETR('b2usmo_cfc0', s%cfc0)
     CALL IPGETR('b2tfhe_prl_cur', s%prl_cur)
     CALL IPGETR('b2tfhe_dia_cur', s%dia_cur)
-!srv 17.05.99
     CALL IPGETR('b2tfhe_fch_pTe', s%fch_pte)
-!srv 30.12.09
     CALL IPGETR('b2tfhe_alfTeEh', s%alfteeh)
-!srv 28.04.08
     CALL IPGETR('b2tfhe_vdia_par', s%fhe_vdia_par)
-!srv 17.05.99
     CALL IPGETR('b2tfhi_vdia_par', s%fhi_vdia_par)
-!srv 17.05.99
     CALL IPGETR('b2tfrn_xvecrb', s%xvecrb)
-!srv 27.01.12
     CALL IPGETR('b2tfrn_xwdia', s%xwdia)
-!srv 27.01.12
     CALL IPGETR('b2tfnb_drift_hyb', s%fnb_drift_hyb)
     CALL IPGETR('b2tfcc_xfac', s%xfac)
     CALL IPGETR('b2tiner_inert', s%fch_inert)
-!srv 07.07.99
     CALL IPGETR('b2trcl_cthi', s%cthiv)
     CALL IPGETR('b2trcl_cthe', s%cthev)
     CALL IPGETR('b2trcl_lambda', s%b2trcl_lambda)
     CALL IPGETR('b2tfnb_poleldr', s%poleldr)
-!srv 25.04.00 {
     CALL IPGETR('b2tfnb_radeldr', s%radeldr)
     CALL IPGETR('b2tfnb_poldidr', s%poldidr)
     CALL IPGETR('b2tfnb_raddidr', s%raddidr)
@@ -1303,6 +1462,21 @@ CONTAINS
     CALL IPGETR('auto_spatial_hyb_Kn_1', s%auto_spatial_hyb_kn_1)
     CALL IPGETR('auto_spatial_hyb_Kn_2', s%auto_spatial_hyb_kn_2)
     CALL IPGETR('L_macro_AFN', s%l_macro_afn)
+!
+! far sol flux limiting
+    CALL IPGETI('b2tlhe_far_sol', s%b2tlhe_far_sol)
+    CALL IPGETI('b2tlhi_far_sol', s%b2tlhi_far_sol)
+    CALL IPGETI('b2tlmv_far_sol', s%b2tlmv_far_sol)
+!
+    CALL IPGETR('b2tlhe_ne_min', s%b2tlhe_ne_min)
+    CALL IPGETR('b2tlhe_ne_max', s%b2tlhe_ne_max)
+    CALL IPGETR('b2tlhe_cflme_min', s%b2tlhe_cflme_min)
+    CALL IPGETR('b2tlhi_ni_min', s%b2tlhi_ni_min)
+    CALL IPGETR('b2tlhi_ni_max', s%b2tlhi_ni_max)
+    CALL IPGETR('b2tlhi_cflmi_min', s%b2tlhi_cflmi_min)
+    CALL IPGETR('b2tlmv_ni_min', s%b2tlmv_ni_min)
+    CALL IPGETR('b2tlmv_ni_max', s%b2tlmv_ni_max)
+    CALL IPGETR('b2tlmv_cflmv_min', s%b2tlmv_cflmv_min)
 !
 ! iout switches
     CALL IPGETI('b2wdat_iout', s%iout_b2wdat)
@@ -1338,27 +1512,19 @@ CONTAINS
     CALL IPGETI('b2tfch_iout', s%b2tfch_iout)
     CALL IPGETI('b2tlmv_iout', s%b2tlmv_iout)
     CALL IPGETI('b2tqca_iout', s%b2tqca_iout)
-!srv 16.06.08
     CALL IPGETI('b2tqce_iout', s%b2tqce_iout)
-!srv 16.06.08
     CALL IPGETI('b2trcl_iout', s%b2trcl_iout)
-!srv 17.06.08
     CALL IPGETI('b2tfnb_iout', s%b2tfnb_iout)
-!srv 16.09.02
     CALL IPGETI('b2tral_iout', s%b2tral_iout)
     CALL IPGETI('b2tlv0_iout', s%b2tlv0_iout)
     CALL IPGETI('b2tlh0_iout', s%b2tlh0_iout)
     CALL IPGETI('b2tlc0_iout', s%b2tlc0_iout)
     CALL IPGETI('b2tqna_iout', s%b2tqna_iout)
-!srv 10.11.09
     CALL IPGETI('b2tvspr_iout', s%b2tvspr_iout)
     CALL IPGETI('b2tvskt_iout', s%b2tvskt_iout)
     CALL IPGETI('b2stbc_iout', s%b2stbc_iout)
-!srv 11.07.05
     CALL IPGETI('b2trno_iout', s%b2trno_iout)
-!srv 17.06.08
     CALL IPGETI('b2stbr_phys_iout', s%b2stbr_phys_iout)
-!srv 11.07.05
     CALL IPGETI('b2wdat_append', s%b2wdat_append)
     CALL IPGETI('b2stbr_AFN_out', s%afn_out)
     CALL IPGETI('copy_background_iout', s%copy_background_iout)
@@ -1373,7 +1539,6 @@ CONTAINS
 &         b2sigp_pressure_restriction)
     CALL IPGETI('b2sihs_style', s%b2sihs_style)
     CALL IPGETI('b2sral_style', s%b2sral_style)
-!srv 28.07.08
     CALL IPGETI('b2sihs_style_visc', s%style_visc)
     CALL IPGETI('b2tfnb_style_int_vel', s%b2tfnb_style_int_vel)
     CALL IPGETI('b2sihs_style_int_vel', s%b2sihs_style_int_vel)
@@ -1385,15 +1550,11 @@ CONTAINS
     CALL IPGETI('b2nxfx_style', s%b2nxfx_style)
     CALL IPGETI('b2nxfc_style', s%b2nxfc_style)
     CALL IPGETI('b2tfhe_mode_ehy', s%mode_ehy)
-!srv 06.04.15
     CALL IPGETI('b2tfhe_mode_ehx', s%mode_ehx)
-!srv 06.04.15
     CALL IPGETI('b2tlmv_style', s%b2tlmv_style)
-!srv 30.05.08
     CALL IPGETI('b2tqca_model', s%b2tqca_model)
     CALL IPGETI('b2tqce_model', s%b2tqce_model)
     CALL IPGETI('b2tqce_style_guard_cells', s%b2tqce_style_guard_cells)
-!srv 19.04.13
     CALL IPGETI('b2tral_mode', s%b2tral_mode)
     CALL IPGETI('b2tlv0_style', s%b2tlv0_style)
     CALL IPGETI('b2tlh0_style', s%b2tlh0_style)
@@ -1407,6 +1568,8 @@ CONTAINS
     CALL IPGETI('b2tfnb_drift_style', s%fnb_drift_style)
 !srv 21.06.08f
     CALL IPGETI('b2sifr_styl0', s%b2sifr_styl0)
+    CALL IPGETI('b2tqin_csigin_style', s%b2tqin_csigin_style)
+!
 !
 ! phm switches
     CALL IPGETR('b2sian_phm0', s%b2sian_phm0)
@@ -1487,7 +1650,6 @@ CONTAINS
 !
 ! diagnostic switches
     CALL IPGETI('b2stbc_diagno', s%b2stbc_diagno)
-!xpb
     CALL IPGETI('b2npmo_diagno', s%b2npmo_diagno)
     CALL IPGETI('b2npmo_ion_vlct_restrict', s%ion_vlct_restrict)
     CALL IPGETR('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_m)
@@ -1626,6 +1788,7 @@ CONTAINS
 &         b2stbr_temperature_at_guard_cell)
     CALL IPGETI('b2stbc_coreregno', s%b2stbr_coreregno)
     CALL IPGETI('b2stbr_first_flight', s%b2stbr_first_flight)
+    CALL IPGETI('bccon14_gradpar_0', s%bccon14_gradpar_0)
     CALL IPGETI('b2stbr_sput_frac_flag', s%b2stbr_sput_frac_flag)
     CALL IPGETI('b2stbr_b2wall_netcdf', s%b2stbr_b2wall_netcdf)
     CALL IPGETR('b2stbr_core_sources_rescale', s%&
@@ -1756,6 +1919,24 @@ CONTAINS
 !
 !**********************************************************************
 !
+  SUBROUTINE READ_SWITCH_AFN(s)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    TYPE(SWITCHES), INTENT(INOUT) :: s
+    EXTERNAL IPGETI
+!
+!nh   Default value
+    s%afn = 0
+!
+    CALL IPGETI('b2mn_afn', s%afn)
+!nh  24.05.23 main switch for AFN model
+!
+    RETURN
+  END SUBROUTINE READ_SWITCH_AFN
+
+!
+!**********************************************************************
+!
   SUBROUTINE CHECK_SWITCHES(s, ns)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -1778,7 +1959,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ns
     TYPE(SWITCHES), INTENT(INOUT) :: s
-    EXTERNAL XERRAB
+    EXTERNAL XERRAB, XERTST
     INTRINSIC MIN
     REAL(kind=r8) :: min1
     REAL(kind=r8) :: result1
@@ -1790,11 +1971,11 @@ CONTAINS
 ! tn_style = 2: separate neutral energy equation for hydrogenic atoms (H/D/T) solved for tn
 !               all ions and non-hydrogenic atoms combined into ti-equation
     IF (s%tn_style .LT. 0 .OR. s%tn_style .GT. 2) CALL XERRAB(&
-&                                          'tn_tyle should be 0, 1 or 2'&
+&                                         'tn_style should be 0, 1 or 2'&
 &                                                      )
 !
     IF (s%tn_style .NE. 0 .AND. s%boris .NE. 0.0_R8) CALL XERRAB(&
-&                     'tn_tyle.ne.0 not compatible with BoRiS.ne.0.0_R8'&
+&                    'tn_style.ne.0 not compatible with BoRiS.ne.0.0_R8'&
 &                                                         )
 !
 ! get_residuals
@@ -1908,18 +2089,12 @@ CONTAINS
     CALL XERTST(0.0_R8 .LE. s%sna0ep, 'faulty parameter b2stbc: sna0ep')
     CALL XERTST(0.0_R8 .LE. s%she0ep, 'faulty parameter b2stbc: she0ep')
     CALL XERTST(0.0_R8 .LE. s%shi0ep, 'faulty parameter b2stbc: shi0ep')
-!xpb
-!xpb
     CALL XERTST(0.0_R8 .LE. s%b2stbc_neoclassical .AND. s%&
 &         b2stbc_neoclassical .LE. 1.0_R8, &
 &         'faulty iparameter b2stbc_neoclassical')
-!xpb
 !
-!xpb
-!xpb
     CALL XERTST(0.0_R8 .LE. s%b2stbc_fchy_dia .AND. s%b2stbc_fchy_dia &
 &         .LE. 1.0_R8, 'faulty internal parameter b2stbc_fchy_dia')
-!xpb
 !
 ! b2sihs
     CALL XERTST(0 .LE. s%b2sihs_style, 'faulty parameter b2sihs style')
@@ -1928,10 +2103,8 @@ CONTAINS
     CALL XERTST(1 .NE. s%b2sral_style, &
 &         'b2sral_style = 1 not yet developed for WG')
 !
-!srv 03.11.17
     CALL XERTST(0 .LE. s%b2sral_style .AND. s%b2sral_style .LE. 2, &
 &         'b2sral_style should be 0, 1 or 2')
-!
 !
 ! b2npco
     CALL XERTST(0 .LT. s%b2npco_rxg, 'faulty parameter b2npco rxg')
@@ -2195,7 +2368,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: s
-    EXTERNAL XERRAB
+    EXTERNAL XERRAB, XERTST
 !
     IF (s%pot_eq .NE. 1 .AND. s%no_current .NE. 1) CALL XERRAB(&
 &                                                'If b2news_poteq.ne.1,'&
@@ -2209,12 +2382,10 @@ CONTAINS
 &                                          'non-default energy equation'&
 &                                                     )
 !
-!srv 16.04.10
     IF (s%fch_pte .EQ. 1.0_R8) s%alfteeh = 0.0_R8
     CALL XERTST(.NOT.(0.0_R8 .NE. s%alfteeh .AND. 0.0_R8 .NE. s%fch_pte)&
 &         , ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
 !
-!srv 14.10.09
     CALL XERTST(.NOT.(0 .NE. s%b2tfnb_alpha .AND. 0 .NE. s%b2tlc0_alpha)&
 &         , 'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//&
 &         'from zero ')

@@ -20,9 +20,9 @@
 !
 !-----------------------------------------------------------------------
 !.specification
-SUBROUTINE CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, fun, &
-& fund, flo, flod, con, cond, flow, flowd, flowf, flowfd, flowc, flowcd&
-& , nbdirs)
+SUBROUTINE CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, fun, fund, &
+& flo, flod, con, cond, flow, flowd, flowf, flowfd, flowc, flowcd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -38,7 +38,6 @@ SUBROUTINE CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, fun, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fun(ncv), flo(nfc, 0:1), con(nfc, 0:1)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), flod(nbdirsmax, nfc, 0:1), cond&
 & (nbdirsmax, nfc, 0:1)
@@ -105,8 +104,8 @@ SUBROUTINE CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, fun, &
     DO nd=1,nbdirsmax
       funvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, fun, fund, funv&
-&          , funvd, dfun, dfund, nbdirs)
+    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, fun, fund, funv, &
+&          funvd, dfun, dfund, nbdirs)
 !
 !    ..convective piece
     DO ifc=1,nfc
@@ -143,8 +142,8 @@ SUBROUTINE CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, fun, &
     DO nd=1,nbdirsmax
       funvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, fun, fund, funv&
-&          , funvd, dfun, dfund, nbdirs)
+    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, fun, fund, funv, &
+&          funvd, dfun, dfund, nbdirs)
 !
 !    ..convective piece
     DO ifc=1,nfc
@@ -177,8 +176,8 @@ SUBROUTINE CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, fun, &
     DO nd=1,nbdirsmax
       funvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, fun, fund, funv&
-&          , funvd, dfun, dfund, nbdirs)
+    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, fun, fund, funv, &
+&          funvd, dfun, dfund, nbdirs)
 !
     DO ifc=1,nfc
       IF (flo(ifc, 0) .GE. 0.) THEN

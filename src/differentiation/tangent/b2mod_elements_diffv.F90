@@ -78,5 +78,48 @@ CONTAINS
     RETURN
   END SUBROUTINE DEALLOC_B2MOD_ELEMENTS
 
+!
+  INTEGER FUNCTION GET_ATOMIC_NUMBER(name)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    CHARACTER(len=*) :: name
+    CHARACTER(len=8) :: species_name
+    INTEGER :: i
+    LOGICAL :: skip, openp
+    EXTERNAL STREQL, LNBLNK, ISADIGIT, ISPLUSORMINUS, STRIP_SPACES
+    INTEGER :: LNBLNK
+    LOGICAL :: STREQL, ISADIGIT, ISPLUSORMINUS
+    CHARACTER :: REPEAT
+!
+    get_atomic_number = 0
+    species_name = REPEAT(' ', 8)
+    openp = .false.
+    DO i=1,LNBLNK(name)
+      IF (.NOT.openp) THEN
+        skip = .false.
+        skip = skip .OR. ISADIGIT(name(i:i))
+        skip = skip .OR. ISPLUSORMINUS(name(i:i))
+        skip = skip .OR. name(i:i) .EQ. '*'
+        openp = name(i:i) .EQ. '('
+      ELSE
+        openp = name(i:i) .NE. ')'
+        skip = .true.
+      END IF
+      skip = skip .OR. openp
+      IF (.NOT.skip) species_name(i:i) = name(i:i)
+    END DO
+    CALL STRIP_SPACES(species_name)
+    DO i=1,92
+      IF (STREQL(species_name(1:2), elements(i))) THEN
+        get_atomic_number = i
+        RETURN
+      END IF
+    END DO
+    IF (STREQL(species_name, 'D') .OR. STREQL(species_name, 'T')) &
+&     get_atomic_number = 1
+!
+    RETURN
+  END FUNCTION GET_ATOMIC_NUMBER
+
 END MODULE B2MOD_ELEMENTS_DIFFV
 

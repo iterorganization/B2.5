@@ -23,7 +23,7 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
   USE B2MOD_RATES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_GEO_CORNER
   USE B2MOD_TALLIES_DIFFV
@@ -101,7 +101,7 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 !srv 13.01.17
   REAL(kind=r8) :: uasx, uesx, uasy
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF, INTFACEV, INTFACEH
+  EXTERNAL B2XVFF_NODIFF, B2XVSG, INTFACEV, INTFACEH
   INTRINSIC ABS
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -248,17 +248,17 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of hx, hy, vol
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hy, 1, 'hy', '.gt.')
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
 !    ..test sign of na, te, ti, ne, ni
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
     arg1 = n2*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
 !    ..test edge values of fch
     CALL B2XVFF_NODIFF(nx, ny, fch, 'fch')
 !    ..test edge values of cvsa
@@ -963,14 +963,13 @@ SUBROUTINE B2SDIA_NODIFF(nx, ny, ns, na, ne, ti, te, she, shi, facdrift)
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
   USE B2MOD_RATES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_GEO_CORNER
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_B2CMPA_DIFFV
 !djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sihs_diaa0to3, b2sihs_diae0to3, &
-& balance_netcdf
+  USE B2MOD_BALANCE_DIFFV, ONLY : balance_netcdf
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -990,7 +989,7 @@ SUBROUTINE B2SDIA_NODIFF(nx, ny, ns, na, ne, ti, te, she, shi, facdrift)
   REAL(kind=r8) :: t0, facgt
   SAVE ncall, facgt
 !   ..procedures
-  EXTERNAL XERTST, B2XVSG_NODIFF, IPGETR
+  EXTERNAL XERTST, B2XVSG, IPGETR
   INTRINSIC MIN, MAX
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -1027,13 +1026,13 @@ SUBROUTINE B2SDIA_NODIFF(nx, ny, ns, na, ne, ti, te, she, shi, facdrift)
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
 !    ..test sign of na, te, ti, ne
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
   END IF
 !
   result1 = MAXVAL(facdrift)

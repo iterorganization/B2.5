@@ -51,6 +51,7 @@ MODULE B2MOD_RECYCLE_DIFFV
 & , :, :, :), rp11(:, :, :, :, :), rp12(:, :, :, :, :), rp21(:, :, :, :&
 & , :), rp22(:, :, :, :, :), rp31(:, :, :, :, :), rp32(:, :, :, :, :), &
 & m_dummy(:), t_dummy(:), shpottau_dummy(:), fna_mol(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: recycle_zn(:)
 !
   REAL(kind=r8), SAVE :: int0l, int0r, int1l, int1r, int2l, int2r, int3l&
 & , int3r, int4l, int4r, int5l, int5r, int6l, int6r
@@ -74,14 +75,14 @@ CONTAINS
   END SUBROUTINE ALLOC_B2MOD_RECYCLE
 
 !
-  SUBROUTINE READ_RECYCLE_FNN(nsd, nbnd_local)
+  SUBROUTINE READ_RECYCLE_FNN(nsd, nbnd_local, use_coarse)
     USE B2MOD_B2CMPA_DIFFV
     USE B2MOD_ELEMENTS_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: nsd, nbnd_local
+    INTEGER, INTENT(IN) :: nsd, nbnd_local, use_coarse
     CHARACTER(len=256) :: filename
     INTEGER :: istra, isp, is, il, it, itm, ndata
     INTEGER :: idum(0:9)
@@ -98,6 +99,7 @@ CONTAINS
     EXTERNAL CFRURE, CFRUIN
     INTRINSIC LEN_TRIM
     EXTERNAL LOWER_CASE
+    EXTERNAL XERRAB
     INTEGER :: arg1
 !
     IF (recycle_initialised) THEN
@@ -106,6 +108,8 @@ CONTAINS
       CALL SUBINI('read_recycle_fnn')
       ns1 = nsd
       ALLOCATE(recycle_index(0:nsd-1))
+      ALLOCATE(recycle_zn(0:nsd-1))
+!! nuclear charge of recycling species
       ALLOCATE(target_index(0:nbnd_local-1))
 !mb   Check how many different recycled species there are
       recycle_index = -1
@@ -121,6 +125,7 @@ CONTAINS
         isp = isp + 1
         recycle_index(is) = isp
         recycle_code(isp) = is_codes(is)
+        recycle_zn(isp) = zn(is)
  5      WRITE(*, '(1x,i3,1x,i3,1x,a)') is, recycle_index(is), &
 &       recycle_code(recycle_index(is))
       END DO
@@ -151,12 +156,27 @@ CONTAINS
       trimrecyc_present = .false.
       DO is=0,isp
         DO it=0,itm
-          filename = recycle_code(is)(1:LEN_TRIM(recycle_code(is)))//&
-&           target_code(it)(1:LEN_TRIM(target_code(it)))//'.fnn'
+          IF (use_coarse .EQ. 0) THEN
+!c the finer tables were used for the original AFN work, but are too large to add to git for each H, D ,T x wall material combina
+!tion
+            filename = recycle_code(is)(1:LEN_TRIM(recycle_code(is)))//&
+&             target_code(it)(1:LEN_TRIM(target_code(it)))//'.fnn'
+          ELSE
+!c therefore coarser tables were added for every [H D T] x [Be C Fe Mo W] combination. The difference with the finer tables shoul
+!d be only a few percent
+            filename = recycle_code(is)(1:LEN_TRIM(recycle_code(is)))//&
+&             target_code(it)(1:LEN_TRIM(target_code(it)))//&
+&             '.fnn.coarse'
+          END IF
           CALL LOWER_CASE(filename)
+!c first search if a new file has been made and stored locally by the user
+!c in the SOLPSTOP/data.local tree structure, then in refl.data.local (not tracked by git),
+!c then search in regular location (on git)
           IF (OPEN_FILE(96, filename, 'data.local/trim.data/refl.data|'&
-&             //'modules/B2.5/Database/trim.data/refl.data')) THEN
-            trimrecyc_present(is, it) = .true.
+&             //'modules/B2.5/Database/trim.data/refl.data.local|'//&
+&             'modules/B2.5/Database/trim.data/refl.data')) &
+&           trimrecyc_present(is, it) = .true.
+          IF (trimrecyc_present(is, it)) THEN
             CALL CFVERR(96, fnn_version)
             CALL CFRUIN(96, 3, idum, 'nm,nt,nshpottau')
 !           Check whether array has same dimensions as previous, otherwise give error
@@ -247,9 +267,22 @@ CONTAINS
             CALL CFRURE(96, ndata, rp32(:, :, :, is, it), 'rp32')
             CLOSE(96) 
           ELSE
-!         Use standard recycling model for this species/wall combination
-            WRITE(*, *) 'No TRIM recycling data for ', recycle_code(is)&
+!         Give error message or information if files are not found
+            WRITE(*, *) 'No TRIM recycling data  for ', recycle_code(is)&
 &           , ' onto ', target_code(it)
+            IF (recycle_zn(is) .EQ. 0.0_R8) THEN
+!! expected to use AFN BCs, so give error 
+              IF (use_coarse .NE. 1) THEN
+!! first suggest to go look for coarse files
+                WRITE(*, *) 'Consider using b2stbr_afn_bcs_use_coarse'
+              END IF
+              CALL XERRAB('Error using advanced fluid neutral BCs')
+            ELSE
+!! currently, default neutral boundary conditions will automatically be used for non-hydrogenic species, so we should not give an
+! error here
+              WRITE(*, *) 'Default recycling model used for ', &
+&             recycle_code(is), ' onto ', target_code(it)
+            END IF
           END IF
         END DO
       END DO
@@ -1676,7 +1709,6 @@ CONTAINS
       END DO
     END IF
 !
-!
 !     Recycled momentum flux densities
     temp = mn*SIGN(1.0_R8, ux)
     temp0 = pcorf*rmx1i*fdni*fluid_frac_hyb
@@ -1721,7 +1753,6 @@ CONTAINS
     DO nd=1,nbdirs
       pncd(nd) = pncd(nd) + temp1*(fdni*fluid_frac_hyb*ptd(nd)/3.0_R8+pt&
 &       *(fluid_frac_hyb*fdnid(nd)+fdni*fluid_frac_hybd(nd))/3.0_R8)
-!
 !
 !     Calculate recycled poloidal momentum flux of neutrals
       fmomrecpd(nd) = isign*area*cosa*pncd(nd) - isign*area*cosa*fmozd(&
@@ -1970,7 +2001,6 @@ CONTAINS
       fnnrec = 0.0_R8
     END IF
 !
-!
 !     Recycled momentum flux densities
     fmox = pcorf*mn*rmx1i*SIGN(1.0_R8, ux)*cs**2*fdni/(-i1l)*&
 &     fluid_frac_hyb
@@ -1994,7 +2024,6 @@ CONTAINS
 !     recycled total energy flux density of neutrals
     fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)*fluid_frac_hyb
     fenec = fenec + 0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
-!
 !
 !     Calculate recycled poloidal momentum flux of neutrals
     fmomrecp = -(isign*(fmoz*cosa+fmoy*sina)*area) + isign*pnc*area*cosa
@@ -2195,6 +2224,7 @@ CONTAINS
 &                           , i1l, i1ld, i1r, i2l, i2ld, i2r, i3l, i3ld&
 &                           , i3r, i4l, i4ld, i4r, i5l, i5r, i6l, i6r, &
 &                           nbdirs)
+!
 !
 !     Calculate incident particle flux density
     temp = vcx/vtot
@@ -2780,6 +2810,7 @@ CONTAINS
 !     Calculate the moments of a truncated drifting Maxwellian distribution
     CALL CALCMOMENTSMAXWELLIAN(uz, tif, mn, i0l, i0r, i1l, i1r, i2l, i2r&
 &                        , i3l, i3r, i4l, i4r, i5l, i5r, i6l, i6r)
+!
 !
 !     Calculate incident particle flux density
     fnni = vcx/vtot*(-(i1l*nnf)+(dnndz*i2l+dnndy*uy*i1l)/vtot)
@@ -4904,17 +4935,18 @@ CONTAINS
   END SUBROUTINE DEALLOC_RECYCLE_FNN
 
 !  Differentiation of precompute_kul_quant in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: dnn fluid_frac_hyb
-!   with respect to varying inputs: *(dv.ne) *(rt.rlcx) *(rt.rlsa)
-!                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: dv.ne:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                rt.rlcx:in rt.rlsa:in pl.na:in pl.te:in pl.ti:in
-!                pl.tn:in
+!   variations   of useful results: *(dv.kin_frac_hyb) *(dv.fluid_frac_hyb)
+!                dnn
+!   with respect to varying inputs: *(dv.kin_frac_hyb) *(dv.fluid_frac_hyb)
+!                *(dv.ne) *(rt.rlcx) *(rt.rlsa) *(pl.na) *(pl.te)
+!                *(pl.ti) *(pl.tn)
+!   Plus diff mem management of: dv.kin_frac_hyb:in dv.fluid_frac_hyb:in
+!                dv.ne:in geo.fchc:in geo.fcht:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in rt.rlcx:in
+!                rt.rlsa:in pl.na:in pl.te:in pl.ti:in pl.tn:in
 !
   SUBROUTINE PRECOMPUTE_KUL_QUANT_DV(ncv, nfc, nvx, switch, geo, geod, &
-&   mpg, mpgd, pl, pld, dv, dvd, co, rt, rtd, dnn, dnnd, fluid_frac_hyb&
-&   , fluid_frac_hybd, kin_frac_hyb, kin_frac_hybd, nbdirs)
+&   mpg, pl, pld, dv, dvd, co, rt, rtd, dnn, dnnd, nbdirs)
     USE B2MOD_TYPES
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2US_GEO_DIFFV
@@ -4929,20 +4961,15 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
-    TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-    TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-    TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
+    TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+    TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
     TYPE(B2COEFF), INTENT(INOUT) :: co
     TYPE(B2RATES), INTENT(IN) :: rt
     TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
     REAL(kind=r8), INTENT(INOUT) :: dnn(nfc, 0:1)
     REAL(kind=r8), INTENT(INOUT) :: dnnd(nbdirsmax, nfc, 0:1)
-    REAL(kind=r8), INTENT(INOUT) :: fluid_frac_hyb(nfc), kin_frac_hyb(&
-&   nfc)
-    REAL(kind=r8), INTENT(INOUT) :: fluid_frac_hybd(nbdirsmax, nfc), &
-&   kin_frac_hybd(nbdirsmax, nfc)
 !     local variables
     INTEGER :: istra, i, irc1, isn, ifc
     INTEGER, SAVE :: ncall=0
@@ -4967,20 +4994,14 @@ CONTAINS
 &               , :, isn), nnvx, nnvxd, nbdirs)
     CALL INTVERTEX_NODIFF(ncv, nvx, mpg, geo%vxvol, dv%ne, nevx)
     CALL INTVERTEX_NODIFF(ncv, nvx, mpg, geo%vxvol, pl%ti, tivx)
-    CALL GRAD_NT_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, pl%na(:, isn&
-&             ), pld%na(:, :, isn), nnvx, nnvxd, dnn, dnnd, nbdirs)
+    CALL GRAD_NT_DV(ncv, nfc, nvx, 1, geo, geod, mpg, pl%na(:, isn), pld&
+&             %na(:, :, isn), nnvx, nnvxd, dnn, dnnd, nbdirs)
     CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, pl%ti, tivx, dti)
     CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, dv%ne, nevx, dne)
 !
     mfp_out = 0.0_R8
 !     pre-computation of the minimal mean-free path along a boundary stratum
     min_kn(:) = 1.0_R8
-    DO nd=1,nbdirsmax
-      fluid_frac_hybd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      kin_frac_hybd(nd, :) = 0.D0
-    END DO
     DO istra=1,nstrai
 !   ..loop over boundary cells
       DO i=1,mpg%rccvp(istra, 2)
@@ -5021,39 +5042,39 @@ CONTAINS
           IF (kn .LE. switch%auto_spatial_hyb_kn_1) THEN
             DO nd=1,nbdirs
 !! fluid treatment
-              fluid_frac_hybd(nd, ifc) = 0.D0
-              kin_frac_hybd(nd, ifc) = 0.D0
+              dvd%fluid_frac_hyb(nd, ifc) = 0.D0
+              dvd%kin_frac_hyb(nd, ifc) = 0.D0
             END DO
-            fluid_frac_hyb(ifc) = 1.0_R8
-            kin_frac_hyb(ifc) = 0.0_R8
+            dv%fluid_frac_hyb(ifc) = 1.0_R8
+            dv%kin_frac_hyb(ifc) = 0.0_R8
           ELSE IF (kn .GE. switch%auto_spatial_hyb_kn_2) THEN
             DO nd=1,nbdirs
 !! kinetic treatment
-              fluid_frac_hybd(nd, ifc) = 0.D0
-              kin_frac_hybd(nd, ifc) = 0.D0
+              dvd%fluid_frac_hyb(nd, ifc) = 0.D0
+              dvd%kin_frac_hyb(nd, ifc) = 0.D0
             END DO
-            fluid_frac_hyb(ifc) = 0.0_R8
-            kin_frac_hyb(ifc) = 1.0_R8
+            dv%fluid_frac_hyb(ifc) = 0.0_R8
+            dv%kin_frac_hyb(ifc) = 1.0_R8
           ELSE
             DO nd=1,nbdirs
 !! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_Kn_1 and auto_Kn_
 !2
-              kin_frac_hybd(nd, ifc) = knd(nd)/(switch%&
+              dvd%kin_frac_hyb(nd, ifc) = knd(nd)/(switch%&
 &               auto_spatial_hyb_kn_2-switch%auto_spatial_hyb_kn_1)
-              fluid_frac_hybd(nd, ifc) = -kin_frac_hybd(nd, ifc)
+              dvd%fluid_frac_hyb(nd, ifc) = -dvd%kin_frac_hyb(nd, ifc)
             END DO
-            kin_frac_hyb(ifc) = (kn-switch%auto_spatial_hyb_kn_1)/(&
+            dv%kin_frac_hyb(ifc) = (kn-switch%auto_spatial_hyb_kn_1)/(&
 &             switch%auto_spatial_hyb_kn_2-switch%auto_spatial_hyb_kn_1)
-            fluid_frac_hyb(ifc) = 1.0_R8 - kin_frac_hyb(ifc)
+            dv%fluid_frac_hyb(ifc) = 1.0_R8 - dv%kin_frac_hyb(ifc)
           END IF
         ELSE
           DO nd=1,nbdirs
 !! keep scaling factors both equal to 1.
-            fluid_frac_hybd(nd, ifc) = 0.D0
-            kin_frac_hybd(nd, ifc) = 0.D0
+            dvd%fluid_frac_hyb(nd, ifc) = 0.D0
+            dvd%kin_frac_hyb(nd, ifc) = 0.D0
           END DO
-          fluid_frac_hyb(ifc) = 1.0_R8
-          kin_frac_hyb(ifc) = 1.0_R8
+          dv%fluid_frac_hyb(ifc) = 1.0_R8
+          dv%kin_frac_hyb(ifc) = 1.0_R8
         END IF
       END DO
 !
@@ -5081,7 +5102,7 @@ CONTAINS
 
 !
   SUBROUTINE PRECOMPUTE_KUL_QUANT(ncv, nfc, nvx, switch, geo, mpg, pl, &
-&   dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
+&   dv, co, rt, dnn)
     USE B2MOD_TYPES
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2US_GEO_DIFFV
@@ -5095,12 +5116,10 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(B2PLASMA), INTENT(IN) :: pl
-    TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+    TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
     TYPE(B2COEFF), INTENT(INOUT) :: co
     TYPE(B2RATES), INTENT(IN) :: rt
     REAL(kind=r8), INTENT(INOUT) :: dnn(nfc, 0:1)
-    REAL(kind=r8), INTENT(INOUT) :: fluid_frac_hyb(nfc), kin_frac_hyb(&
-&   nfc)
 !     local variables
     INTEGER :: istra, i, irc1, isn, ifc
     INTEGER, SAVE :: ncall=0
@@ -5164,23 +5183,23 @@ CONTAINS
 !! 'A' = automatic
           IF (kn .LE. switch%auto_spatial_hyb_kn_1) THEN
 !! fluid treatment
-            fluid_frac_hyb(ifc) = 1.0_R8
-            kin_frac_hyb(ifc) = 0.0_R8
+            dv%fluid_frac_hyb(ifc) = 1.0_R8
+            dv%kin_frac_hyb(ifc) = 0.0_R8
           ELSE IF (kn .GE. switch%auto_spatial_hyb_kn_2) THEN
 !! kinetic treatment
-            fluid_frac_hyb(ifc) = 0.0_R8
-            kin_frac_hyb(ifc) = 1.0_R8
+            dv%fluid_frac_hyb(ifc) = 0.0_R8
+            dv%kin_frac_hyb(ifc) = 1.0_R8
           ELSE
 !! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_Kn_1 and auto_Kn_
 !2
-            kin_frac_hyb(ifc) = (kn-switch%auto_spatial_hyb_kn_1)/(&
+            dv%kin_frac_hyb(ifc) = (kn-switch%auto_spatial_hyb_kn_1)/(&
 &             switch%auto_spatial_hyb_kn_2-switch%auto_spatial_hyb_kn_1)
-            fluid_frac_hyb(ifc) = 1.0_R8 - kin_frac_hyb(ifc)
+            dv%fluid_frac_hyb(ifc) = 1.0_R8 - dv%kin_frac_hyb(ifc)
           END IF
         ELSE
 !! keep scaling factors both equal to 1.
-          fluid_frac_hyb(ifc) = 1.0_R8
-          kin_frac_hyb(ifc) = 1.0_R8
+          dv%fluid_frac_hyb(ifc) = 1.0_R8
+          dv%kin_frac_hyb(ifc) = 1.0_R8
         END IF
       END DO
 !

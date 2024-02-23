@@ -38,8 +38,8 @@
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_dv(switch, geo, geod, mpg, mpgd, state, stated,&
-&      state_ext, state_extd, npar_opt)
+      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, &
+&      stated, state_ext, state_extd, state_avg, state_avgd, npar_opt)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
@@ -122,8 +122,8 @@
       CHKERRA(ierr)
       call PetscFinalize(ierr)
 
-      call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated,&
-&      state_ext, state_extd, npar_opt)
+      call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated, &
+&      state_ext, state_extd, state_avg, state_avgd, npar_opt)
       deallocate(par_opt_phys)
       deallocate(par_opt_physd)
       stop 'b2optim'
@@ -226,7 +226,8 @@
       use b2mod_par_opt_diffv &
      , only : par_rescale, sigma, mean
       use b2mod_ad_diffv &
-     , only : primal_iterations, gradient_iterations
+     , only : primal_iterations, gradient_iterations, primal_res, &
+              gradient_res
       implicit none
       real(kind=r8) j(nncf), jdiff(nbdirsmax,nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean, ishift, icorr
@@ -299,8 +300,9 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
-     &   stated, state_ext, state_extd, j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(switch, switchd, geo, geod, mpg, state, stated, &
+&        state_ext, state_extd, state_avg, state_avgd, j, jdiff, &
+&        npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
@@ -318,6 +320,8 @@
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
+      write (*,*) 'TAO GRADIENT RESIDUAL:', gradient_res
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
       call VecRestoreArrayF90(grad,g_v,ierr)
@@ -351,7 +355,7 @@
       use b2mod_par_opt_diffv &
       , only : sigma, mean
       use b2mod_ad_diffv &
-     , only : primal_iterations
+     , only : primal_iterations, primal_res
       implicit none
       real(kind=r8) j(nncf)
       integer ipar, isigma, imean, ishift, icorr
@@ -416,9 +420,10 @@
           endif
         end do
       endif
-      call b2mn_step(switch, geo, mpg, state, state_ext, j)
+      call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
       F = j(1)
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
 
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
@@ -434,7 +439,8 @@
       use b2mod_par_opt_diffv &
       , only : sigma, mean
       use b2mod_ad_diffv &
-     , only : primal_iterations, gradient_iterations
+     , only : primal_iterations, gradient_iterations, primal_res, &
+              gradient_res
       implicit none
       real(kind=r8) j(nncf), jdiff(nbdirsmax,nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean, ishift, icorr
@@ -507,8 +513,9 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
-     &   stated, state_ext, state_extd, j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(switch, switchd, geo, geod, mpg, state, stated, &
+&        state_ext, state_extd, state_avg, state_avgd, j, jdiff, &
+&        npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(ipar,1)*par_rescale(ipar) ! rescale par to get order unity
@@ -525,6 +532,8 @@
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
+      write (*,*) 'TAO GRADIENT RESIDUAL:', gradient_res
 ! Experimental: write intermediate state file?
       write_state = .false.
       if (switch%b2optim_save_states.gt.0) then

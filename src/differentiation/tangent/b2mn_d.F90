@@ -3,9 +3,20 @@
 !
 !  Differentiation of b2mn as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: b2voloncf:in-out b2data:in-out
-!                b2dataoncf:in-out par_opt_phys:in-out mpg.bcfcor:in-out
-!                mpg.rcfcor:in-out mpg.cffcor:in-out mpg.intcellp:in-out
-!                mpg.intcellr:in-out geo.cvbb:in-out geo.cvx:in-out
+!                b2dataoncf:in-out par_opt_phys:in-out state_avg.na_mean:in-out
+!                state_avg.ua_mean:in-out state_avg.te_mean:in-out
+!                state_avg.ti_mean:in-out state_avg.po_mean:in-out
+!                state_avg.kt_mean:in-out state_avg.zt_mean:in-out
+!                state_avg.sna_mean:in-out state_avg.smo_mean:in-out
+!                state_avg.she_mean:in-out state_avg.shi_mean:in-out
+!                state_avg.shn_mean:in-out state_avg.e_na:in-out
+!                state_avg.e_ua:in-out state_avg.e_te:in-out state_avg.e_ti:in-out
+!                state_avg.e_po:in-out state_avg.e_kt:in-out state_avg.e_zt:in-out
+!                state_avg.e_sna:in-out state_avg.e_smo:in-out
+!                state_avg.e_she:in-out state_avg.e_shi:in-out
+!                state_avg.e_shn:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
+!                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
+!                mpg.divfcor:in-out geo.cvbb:in-out geo.cvx:in-out
 !                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
 !                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
 !                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
@@ -16,7 +27,8 @@
 !                geo.fceb:in-out geo.vxbb:in-out geo.vxx:in-out
 !                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
 !                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
-!                geo.vxbzb:in-out geo.cvconn:in-out geo.ftconn:in-out
+!                geo.vxbzb:in-out geo.vxeb:in-out geo.cvconn:in-out
+!                geo.vxconn:in-out geo.ftconn:in-out geo.fsconn:in-out
 !                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
 !                state_ext.zn:in-out state_ext.am:in-out state_ext.ne:in-out
 !                state_ext.ne2:in-out state_ext.ue:in-out state_ext.za:in-out
@@ -79,11 +91,12 @@
 !                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
 !                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
 !                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
-!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fhm:in-out
-!                state.dv.fhp:in-out state.dv.fhj:in-out state.dv.fht:in-out
-!                state.dv.fkt:in-out state.dv.fzt:in-out state.dv.kinrgy:in-out
-!                state.dv.conc:in-out state.dv.flob:in-out state.dv.floe:in-out
-!                state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fnn_inc:in-out
+!                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
+!                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
+!                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
+!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
 !                state.dv.floi_noc:in-out state.dv.flon:in-out
 !                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
 !                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
@@ -105,18 +118,44 @@
 !                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
 !                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
 !                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
-!                state.sr.sna:in-out state.sr.skt_diss:in-out state.sr.skt_prod:in-out
-!                state.sr_eir.sch:in-out state.sr_eir.she:in-out
-!                state.sr_eir.shi:in-out state.sr_eir.sne:in-out
-!                state.sr_eir.smo:in-out state.sr_eir.smq:in-out
-!                state.sr_eir.sna:in-out state.srw.sch0:in-out
-!                state.srw.she0:in-out state.srw.shi0:in-out state.srw.sne0:in-out
-!                state.srw.shn0:in-out state.srw.skt0:in-out state.srw.szt0:in-out
-!                state.srw.smo0:in-out state.srw.smq0:in-out state.srw.sna0:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
+!                state.sr_eir.she:in-out state.sr_eir.shi:in-out
+!                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
+!                state.sr_eir.smq:in-out state.sr_eir.sna:in-out
+!                state.srw.sch0:in-out state.srw.she0:in-out state.srw.shi0:in-out
+!                state.srw.sne0:in-out state.srw.shn0:in-out state.srw.skt0:in-out
+!                state.srw.szt0:in-out state.srw.smo0:in-out state.srw.smq0:in-out
+!                state.srw.sna0:in-out state.srw.b2stbc_sch:in-out
+!                state.srw.b2stbc_she:in-out state.srw.b2stbc_shi:in-out
+!                state.srw.b2stbc_sne:in-out state.srw.b2stbc_shn:in-out
+!                state.srw.b2stbc_skt:in-out state.srw.b2stbc_szt:in-out
+!                state.srw.b2stbc_smo:in-out state.srw.b2stbc_sna:in-out
 !                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
 !                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
 !                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
-!                state.srw.b2stbm_sna:in-out state.rt.rlcx:in-out
+!                state.srw.b2stbm_sna:in-out state.srw.b2stbr_sch:in-out
+!                state.srw.b2stbr_she:in-out state.srw.b2stbr_shi:in-out
+!                state.srw.b2stbr_sne:in-out state.srw.b2stbr_shn:in-out
+!                state.srw.b2stbr_skt:in-out state.srw.b2stbr_szt:in-out
+!                state.srw.b2stbr_smo:in-out state.srw.b2stbr_sna:in-out
+!                state.srw.rsana:in-out state.srw.rsahi:in-out
+!                state.srw.rsamo:in-out state.srw.rrana:in-out
+!                state.srw.rrahi:in-out state.srw.rramo:in-out
+!                state.srw.rcxna:in-out state.srw.rcxhi:in-out
+!                state.srw.rcxmo:in-out state.srw.rqahe:in-out
+!                state.srw.rqrad:in-out state.srw.rqbrm:in-out
+!                state.srw.b2sihs_joule:in-out state.srw.b2sihs_divue:in-out
+!                state.srw.b2sihs_divua:in-out state.srw.b2sihs_exbe:in-out
+!                state.srw.b2sihs_exba:in-out state.srw.b2sihs_visa:in-out
+!                state.srw.b2sihs_fraa:in-out state.srw.b2sihs_str:in-out
+!                state.srw.sna0_eir_tot:in-out state.srw.smo0_eir_tot:in-out
+!                state.srw.sne0_eir_tot:in-out state.srw.she0_eir_tot:in-out
+!                state.srw.shi0_eir_tot:in-out state.srw.shn0_eir_tot:in-out
+!                state.srw.sch0_eir_tot:in-out state.rt.rlcx:in-out
 !                state.rt.rlqa:in-out state.rt.rlrd:in-out state.rt.rlbr:in-out
 !                state.rt.rlra:in-out state.rt.rlsa:in-out state.rt.rlza:in-out
 !                state.rt.rlz2:in-out state.rt.rlpt:in-out state.rt.rlpi:in-out
@@ -148,7 +187,12 @@
 !                state.update.pa:in-out state.update.po:in-out
 !                state.update.te:in-out state.update.ti:in-out
 !                state.update.kt:in-out state.update.zt:in-out
-!                (global)na_mean:in-out
+!                fna_pinch:in-out fhe_32:in-out fhi_vispar:in-out
+!                fna_nanom:in-out fna_ch:in-out fhi_strange:in-out
+!                fhi_visq:in-out fhi_anml:in-out fna_pll:in-out
+!                fhi_visper:in-out fhe_thermj:in-out fhi_32:in-out
+!                fna_drift:in-out fhe_strange:in-out fhi_inert:in-out
+!                fhe_cond:in-out fhi_cond:in-out
 !
 !
 !
@@ -281,8 +325,8 @@ PROGRAM B2MN_DV
 !.computation
 !
 !  nbdirs=3
-  CALL B2MN_INIT_DV(switch, geo, geod, mpg, mpgd, state, stated, &
-&             state_ext, state_extd, npar_opt)
+  CALL B2MN_INIT_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
+&             , state_ext, state_extd, state_avg, state_avgd, npar_opt)
   call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
   call xertst(switch%b2optim_namelist.eq.1, 'Sensitivity calculation needs b2optim_namelist=1!')
   call set_tgt_perturbation(switchd)
@@ -399,10 +443,11 @@ PROGRAM B2MN_DV
 !  potpard(17,5,1) = 1.0_R8
 !  potpard(18,6,1) = 1.0_R8
 
-  CALL B2MN_STEP_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
-&             , state_ext, state_extd, j, jd, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+  CALL B2MN_STEP_DV(switch, switchd, geo, geod, mpg, state, stated, &
+&             state_ext, state_extd, state_avg, state_avgd, j, jd, &
+&             npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
   CALL B2MN_FIN_DV(switch, geo, geod, mpg, mpgd, state, stated, &
-&            state_ext, state_extd, npar_opt)
+&            state_ext, state_extd, state_avg, state_avgd, npar_opt)
 !
   STOP
 END PROGRAM B2MN_DV
@@ -536,9 +581,9 @@ SUBROUTINE B2MN_NODIFF()
 !-----------------------------------------------------------------------
 !.computation
 !
-  CALL B2MN_INIT(switch, geo, mpg, state, state_ext)
-  CALL B2MN_STEP(switch, geo, mpg, state, state_ext, j)
-  CALL B2MN_FIN(switch, geo, mpg, state, state_ext)
+  CALL B2MN_INIT(switch, geo, mpg, state, state_ext, state_avg)
+  CALL B2MN_STEP(switch, geo, mpg, state, state_ext, state_avg, j)
+  CALL B2MN_FIN(switch, geo, mpg, state, state_ext, state_avg)
 !
   STOP
 END SUBROUTINE B2MN_NODIFF

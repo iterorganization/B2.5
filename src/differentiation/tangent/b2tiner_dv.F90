@@ -21,8 +21,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& na, nad, ua, uad, facdrift, fchinert, fchinertd, nbdirs)
+SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, na, nad&
+& , ua, uad, facdrift, fchinert, fchinertd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
@@ -48,7 +48,6 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), facdrift(nfc)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1)
@@ -78,7 +77,7 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
   INTEGER :: nd
@@ -222,7 +221,7 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
 & , wrk1(nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
 !   ..initialization

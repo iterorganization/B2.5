@@ -20,7 +20,7 @@ SUBROUTINE B2USR_LOADS_NODIFF(nx, ny, ns, nxtl, nxtr, boris, wtarg_max)
   USE B2MOD_GEO_DIFFV
   USE B2MOD_RATES
   USE B2MOD_PLASMA_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_EXTERNAL_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
@@ -83,7 +83,7 @@ SUBROUTINE B2USR_LOADS_NODIFF(nx, ny, ns, nxtl, nxtr, boris, wtarg_max)
       DO iy=0,ny-1
         strg(iy, j) = gs(k+l, iy, 0)
       END DO
-      CALL B2NEUT_IND(2, k + l, 1, ny, shift(j))
+      CALL B2NEUT_IND(1, j, 1, ny, shift(j))
 !index range in the Eirene arrays
       IF (shift(j) .LT. 0) THEN
         WRITE(*, *) 'Error in b2usr_loads: the EIRENE data on '//&

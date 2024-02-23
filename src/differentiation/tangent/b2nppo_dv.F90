@@ -24,8 +24,8 @@
 !
 !srv 22.05.18
 SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
-& rxf, switch, geo, geod, mpg, mpgd, pl, pld, dv, dvd, sr, srd, ierr, &
-& nbdirs)
+& rxf, switch, switchd, geo, geod, mpg, pl, pld, dv, dvd, sr, srd, ierr&
+& , nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -33,10 +33,11 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo, ncall_b2uppo, ncall_b2uspo, &
-& my_out_folder, ncall_b2ursd
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uppo, ncall_b2uspo, my_out_folder, &
+& ncall_b2ursd
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -48,10 +49,10 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, nregionv, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: rxf
 !srv 22.05.18
   LOGICAL :: solving, solvereg(0:nregionv)
@@ -95,10 +96,12 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
 &     B2UPPO_NODIFF
   EXTERNAL B2URSD_DV, B2USPO_DV, B2UPPO_DV
   INTRINSIC ANY
+  REAL(r8), DIMENSION(nbdirsmax, SIZE(pl%te, 1)) :: dummyzerodiffd
+  INTEGER :: nd
   INTEGER :: nbdirs
 !   ..initialisation
 !
@@ -116,11 +119,11 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !   ..extensive tests on first few calls
   IF (ncall_b2nppo .LT. 3) THEN
 !    ..test sign of ne, te
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
 !    ..test sign of sch
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
   END IF
 !srv 22.05.18
 !
@@ -129,8 +132,8 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   IF ((solving .AND. ANY(solvereg(0:nregionv))) .OR. switch%&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
-    CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%ne, dvd%ne, pl%po, pld%po, sr%&
-&            sch, srd%sch, dv%fch, dvd%fch, dv%respo, dvd%respo, nbdirs)
+    CALL B2URSD_DV(ncv, nfc, mpg, dv%ne, dvd%ne, pl%po, pld%po, sr%sch, &
+&            srd%sch, dv%fch, dvd%fch, dv%respo, dvd%respo, nbdirs)
   END IF
 !srv 22.05.18
 !-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
@@ -146,10 +149,13 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !   ..compute correction
   IF (solving .AND. ANY(solvereg(0:nregionv))) THEN
 !srv 22.05.18
+    DO nd=1,nbdirsmax
+      dummyzerodiffd(nd, :) = 0.D0
+    END DO
     CALL B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, geo&
-&            , mpg, mpgd, dv%ne, dvd%ne, pl%te, dv%conc, dvd%conc, sr%&
-&            sch, srd%sch, dv%respo, dvd%respo, dv%corpo, dvd%corpo, aa&
-&            , aad, 'b2nppo', nbdirs)
+&            , mpg, dv%ne, dvd%ne, pl%te, dummyzerodiffd, dv%conc, dvd%&
+&            conc, sr%sch, srd%sch, dv%respo, dvd%respo, dv%corpo, dvd%&
+&            corpo, aa, aad, 'b2nppo', nbdirs)
 !   ..apply correction
     CALL B2UPPO_DV(ncv, rxf, dv%corpo, dvd%corpo, pl%po, pld%po, nbdirs)
   END IF
@@ -205,10 +211,11 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo, ncall_b2uppo, ncall_b2uspo, &
-& my_out_folder, ncall_b2ursd
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uppo, ncall_b2uspo, my_out_folder, &
+& ncall_b2ursd
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -260,7 +267,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
 &     B2UPPO_NODIFF
   INTRINSIC ANY
 !   ..initialisation
@@ -279,11 +286,11 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !   ..extensive tests on first few calls
   IF (ncall_b2nppo .LT. 3) THEN
 !    ..test sign of ne, te
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
 !    ..test sign of sch
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
   END IF
 !srv 22.05.18
 !
@@ -292,8 +299,8 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   IF ((solving .AND. ANY(solvereg(0:nregionv))) .OR. switch%&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
-    CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch&
-&                , dv%respo)
+    CALL B2URSD_NODIFF(ncv, nfc, mpg, dv%ne, pl%po, sr%sch, dv%fch, dv%&
+&                respo)
   END IF
 !srv 22.05.18
 !-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)

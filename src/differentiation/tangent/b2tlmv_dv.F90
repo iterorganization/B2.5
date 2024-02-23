@@ -4,8 +4,8 @@
 !  Differentiation of b2tlmv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: vsbfx cvsbxhz cvsbx
 !   with respect to varying inputs: vsbfx nb cvsbxhz ub cvsbx tb
-!   Plus diff mem management of: geo.fchc:in geo.fcht:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!   Plus diff mem management of: geo.fchc:in geo.fcht:in geo.fcvol:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
 !
 !
 !
@@ -18,9 +18,9 @@
 !
 !
 !srv 09.01.01
-SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
-& mpgd, nb, nbd, tb, tbd, ub, ubd, vsbfx, vsbfxd, cvsbx, cvsbxd, cvsbxhz&
-& , cvsbxhzd, fl, nbdirs)
+SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
+& geod, mpg, nb, nbd, tb, tbd, ub, ubd, vsbfx, vsbfxd, cvsbx, cvsbxd, &
+& cvsbxhz, cvsbxhzd, fl, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -36,10 +36,10 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
 !     ------------------------------------------------------------------
   INTEGER :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: cflmv, nb(ncv), tb(ncv), ub(ncv), vsbfx(nfc), cvsbx(&
 & nfc), cvsbxhz(nfc), fl(nfc)
   REAL(kind=r8) :: nbd(nbdirsmax, ncv), tbd(nbdirsmax, ncv), ubd(&
@@ -51,12 +51,14 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
   INTEGER :: ifc
 !srv 12.04.04
   CHARACTER :: charns*3
-  REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc)
+  REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc), cflmv_loc(nfc), &
+& nbf(nfc)
   REAL(kind=r8) :: qcld(nbdirsmax), qfld(nbdirsmax), tfld(nbdirsmax), &
-& ubvd(nbdirsmax, nvx), dubd(nbdirsmax, nfc)
+& ubvd(nbdirsmax, nvx), dubd(nbdirsmax, nfc), cflmv_locd(nbdirsmax, nfc)&
+& , nbfd(nbdirsmax, nfc)
   INTRINSIC ABS
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
@@ -66,6 +68,7 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
   CHARACTER(len=7) :: arg1
   INTEGER :: nd
   REAL(kind=r8) :: temp
+  REAL(kind=r8) :: temp0
   INTEGER :: nbdirs
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -74,12 +77,51 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
 !   ..test cflmv
   CALL XERTST(0.0_R8 .LE. cflmv, 'faulty argument cflmv')
+! Init local flux limit to constant value
 !   ..extensive tests on first few calls
   IF (ncall_b2tlmv .LT. 3) THEN
 !    ..test sign of nb, tb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tb, 1, 'tb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, tb, 1, 'tb', '.gt.')
   END IF
+!
+! Enhanced flux limit for low-density regions
+  cflmv_loc = cflmv
+!
+  IF (switch%b2tlmv_far_sol .EQ. 1) THEN
+! Attempt enhanced flux limit for low-density regions
+    DO nd=1,nbdirsmax
+      nbfd(nd, :) = 0.D0
+    END DO
+    CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, nb, nbd, nbf, nbfd, &
+&             nbdirs)
+    DO nd=1,nbdirsmax
+      cflmv_locd(nd, :) = 0.D0
+    END DO
+    DO ifc=1,nfc
+      IF (nbf(ifc) .LE. switch%b2tlmv_ni_min) THEN
+! Set at min value
+        DO nd=1,nbdirs
+          cflmv_locd(nd, ifc) = 0.D0
+        END DO
+        cflmv_loc(ifc) = switch%b2tlmv_ni_min
+      ELSE IF (nbf(ifc) .LT. switch%b2tlmv_ni_max) THEN
+! Interpolate for smooth transition
+        DO nd=1,nbdirs
+          cflmv_locd(nd, ifc) = (cflmv-switch%b2tlmv_cflmv_min)*nbfd(nd&
+&           , ifc)/(switch%b2tlmv_ni_max-switch%b2tlmv_ni_min)
+        END DO
+        cflmv_loc(ifc) = (cflmv*(nbf(ifc)-switch%b2tlmv_ni_min)+switch%&
+&         b2tlmv_cflmv_min*(switch%b2tlmv_ni_max-nbf(ifc)))/(switch%&
+&         b2tlmv_ni_max-switch%b2tlmv_ni_min)
+      END IF
+    END DO
+  ELSE
+    DO nd=1,nbdirsmax
+      cflmv_locd(nd, :) = 0.D0
+    END DO
+  END IF
+!
 !   ..compute differences of ub at faces
   DO nd=1,nbdirsmax
     dubd(nd, :) = 0.D0
@@ -87,8 +129,8 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
   DO nd=1,nbdirsmax
     ubvd(nd, :) = 0.D0
   END DO
-  CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, ub, ubd, ubv, ubvd, &
-&          dub, dubd, nbdirs)
+  CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, ub, ubd, ubv, ubvd, dub, &
+&          dubd, nbdirs)
 !srv 30.05.08
 !
 !   ..main computation
@@ -105,14 +147,16 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
         abs0 = -geo%fcpbs(ifc)
       END IF
 !srv 11.01.13
+      temp = nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1)) + nb(mpg%fccv(ifc&
+&       , 2))*tb(mpg%fccv(ifc, 2))
+      temp0 = cflmv_loc(ifc)/2.0_R8
       DO nd=1,nbdirs
-        qfld(nd) = cflmv*abs0*(tb(mpg%fccv(ifc, 1))*nbd(nd, mpg%fccv(ifc&
-&         , 1))+nb(mpg%fccv(ifc, 1))*tbd(nd, mpg%fccv(ifc, 1))+tb(mpg%&
-&         fccv(ifc, 2))*nbd(nd, mpg%fccv(ifc, 2))+nb(mpg%fccv(ifc, 2))*&
-&         tbd(nd, mpg%fccv(ifc, 2)))/2.0_R8
+        qfld(nd) = abs0*(temp*cflmv_locd(nd, ifc)/2.0_R8+temp0*(tb(mpg%&
+&         fccv(ifc, 1))*nbd(nd, mpg%fccv(ifc, 1))+nb(mpg%fccv(ifc, 1))*&
+&         tbd(nd, mpg%fccv(ifc, 1))+tb(mpg%fccv(ifc, 2))*nbd(nd, mpg%&
+&         fccv(ifc, 2))+nb(mpg%fccv(ifc, 2))*tbd(nd, mpg%fccv(ifc, 2))))
       END DO
-      qfl = cflmv*abs0*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1))+nb(mpg&
-&       %fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
+      qfl = abs0*(temp0*temp)
       IF (qfl .GT. 0.0_R8) THEN
         IF (qcl/qfl .GE. 0.) THEN
           DO nd=1,nbdirs
@@ -135,22 +179,22 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
           tfld(nd) = 0.D0
         END DO
       END IF
-      temp = cvsbx(ifc)/tfl
+      temp0 = cvsbx(ifc)/tfl
       DO nd=1,nbdirs
-        cvsbxd(nd, ifc) = (cvsbxd(nd, ifc)-temp*tfld(nd))/tfl
+        cvsbxd(nd, ifc) = (cvsbxd(nd, ifc)-temp0*tfld(nd))/tfl
       END DO
-      cvsbx(ifc) = temp
+      cvsbx(ifc) = temp0
 !srv 02.07.08
-      temp = cvsbxhz(ifc)/tfl
+      temp0 = cvsbxhz(ifc)/tfl
       DO nd=1,nbdirs
-        cvsbxhzd(nd, ifc) = (cvsbxhzd(nd, ifc)-temp*tfld(nd))/tfl
+        cvsbxhzd(nd, ifc) = (cvsbxhzd(nd, ifc)-temp0*tfld(nd))/tfl
       END DO
-      cvsbxhz(ifc) = temp
-      temp = vsbfx(ifc)/tfl
+      cvsbxhz(ifc) = temp0
+      temp0 = vsbfx(ifc)/tfl
       DO nd=1,nbdirs
-        vsbfxd(nd, ifc) = (vsbfxd(nd, ifc)-temp*tfld(nd))/tfl
+        vsbfxd(nd, ifc) = (vsbfxd(nd, ifc)-temp0*tfld(nd))/tfl
       END DO
-      vsbfx(ifc) = temp
+      vsbfx(ifc) = temp0
       fl(ifc) = tfl
     END DO
   ELSE
@@ -175,14 +219,17 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
           abs2 = -geo%fcpbs(ifc)
         END IF
 !srv 11.01.13
+        temp0 = nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1)) + nb(mpg%fccv(&
+&         ifc, 2))*tb(mpg%fccv(ifc, 2))
+        temp = cflmv_loc(ifc)/2.0_R8
         DO nd=1,nbdirs
-          qfld(nd) = cflmv*abs2*(tb(mpg%fccv(ifc, 1))*nbd(nd, mpg%fccv(&
-&           ifc, 1))+nb(mpg%fccv(ifc, 1))*tbd(nd, mpg%fccv(ifc, 1))+tb(&
-&           mpg%fccv(ifc, 2))*nbd(nd, mpg%fccv(ifc, 2))+nb(mpg%fccv(ifc&
-&           , 2))*tbd(nd, mpg%fccv(ifc, 2)))/2.0_R8
+          qfld(nd) = abs2*(temp0*cflmv_locd(nd, ifc)/2.0_R8+temp*(tb(mpg&
+&           %fccv(ifc, 1))*nbd(nd, mpg%fccv(ifc, 1))+nb(mpg%fccv(ifc, 1)&
+&           )*tbd(nd, mpg%fccv(ifc, 1))+tb(mpg%fccv(ifc, 2))*nbd(nd, mpg&
+&           %fccv(ifc, 2))+nb(mpg%fccv(ifc, 2))*tbd(nd, mpg%fccv(ifc, 2)&
+&           )))
         END DO
-        qfl = cflmv*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1))+nb(&
-&         mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
+        qfl = abs2*(temp*temp0)
         IF (qfl .GT. 0.0_R8) THEN
           IF (qcl/qfl .GE. 0.) THEN
             DO nd=1,nbdirs
@@ -205,21 +252,21 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, geo, geod, mpg, &
             tfld(nd) = 0.D0
           END DO
         END IF
-        temp = cvsbx(ifc)/tfl
+        temp0 = cvsbx(ifc)/tfl
         DO nd=1,nbdirs
-          cvsbxd(nd, ifc) = (cvsbxd(nd, ifc)-temp*tfld(nd))/tfl
+          cvsbxd(nd, ifc) = (cvsbxd(nd, ifc)-temp0*tfld(nd))/tfl
         END DO
-        cvsbx(ifc) = temp
-        temp = cvsbxhz(ifc)/tfl
+        cvsbx(ifc) = temp0
+        temp0 = cvsbxhz(ifc)/tfl
         DO nd=1,nbdirs
-          cvsbxhzd(nd, ifc) = (cvsbxhzd(nd, ifc)-temp*tfld(nd))/tfl
+          cvsbxhzd(nd, ifc) = (cvsbxhzd(nd, ifc)-temp0*tfld(nd))/tfl
         END DO
-        cvsbxhz(ifc) = temp
-        temp = vsbfx(ifc)/tfl
+        cvsbxhz(ifc) = temp0
+        temp0 = vsbfx(ifc)/tfl
         DO nd=1,nbdirs
-          vsbfxd(nd, ifc) = (vsbfxd(nd, ifc)-temp*tfld(nd))/tfl
+          vsbfxd(nd, ifc) = (vsbfxd(nd, ifc)-temp0*tfld(nd))/tfl
         END DO
-        vsbfx(ifc) = temp
+        vsbfx(ifc) = temp0
         fl(ifc) = tfl
       ELSE
         fl(ifc) = 1.0_R8
@@ -278,10 +325,11 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
   INTEGER :: ifc
 !srv 12.04.04
   CHARACTER :: charns*3
-  REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc)
+  REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc), cflmv_loc(nfc), &
+& nbf(nfc)
   INTRINSIC ABS
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8) :: abs2
@@ -294,12 +342,33 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
 !   ..test cflmv
   CALL XERTST(0.0_R8 .LE. cflmv, 'faulty argument cflmv')
+! Init local flux limit to constant value
 !   ..extensive tests on first few calls
   IF (ncall_b2tlmv .LT. 3) THEN
 !    ..test sign of nb, tb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tb, 1, 'tb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, tb, 1, 'tb', '.gt.')
   END IF
+!
+! Enhanced flux limit for low-density regions
+  cflmv_loc = cflmv
+!
+  IF (switch%b2tlmv_far_sol .EQ. 1) THEN
+! Attempt enhanced flux limit for low-density regions
+    CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, nb, nbf)
+    DO ifc=1,nfc
+      IF (nbf(ifc) .LE. switch%b2tlmv_ni_min) THEN
+! Set at min value
+        cflmv_loc(ifc) = switch%b2tlmv_ni_min
+      ELSE IF (nbf(ifc) .LT. switch%b2tlmv_ni_max) THEN
+! Interpolate for smooth transition
+        cflmv_loc(ifc) = (cflmv*(nbf(ifc)-switch%b2tlmv_ni_min)+switch%&
+&         b2tlmv_cflmv_min*(switch%b2tlmv_ni_max-nbf(ifc)))/(switch%&
+&         b2tlmv_ni_max-switch%b2tlmv_ni_min)
+      END IF
+    END DO
+  END IF
+!
 !   ..compute differences of ub at faces
   CALL DIFF_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ub, ubv, dub)
 !srv 30.05.08
@@ -315,8 +384,8 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
         abs0 = -geo%fcpbs(ifc)
       END IF
 !srv 11.01.13
-      qfl = cflmv*abs0*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1))+nb(mpg&
-&       %fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
+      qfl = cflmv_loc(ifc)*abs0*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1&
+&       ))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
       IF (qfl .GT. 0.0_R8) THEN
         IF (qcl/qfl .GE. 0.) THEN
           abs1 = qcl/qfl
@@ -351,8 +420,8 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
           abs2 = -geo%fcpbs(ifc)
         END IF
 !srv 11.01.13
-        qfl = cflmv*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1))+nb(&
-&         mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
+        qfl = cflmv_loc(ifc)*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc&
+&         , 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
         IF (qfl .GT. 0.0_R8) THEN
           IF (qcl/qfl .GE. 0.) THEN
             abs3 = qcl/qfl

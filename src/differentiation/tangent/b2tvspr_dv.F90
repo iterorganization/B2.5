@@ -4,9 +4,9 @@
 !  Differentiation of b2tvspr in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: fchvisper
 !   with respect to varying inputs: ti na fchvisper vsa0 rza po
-!   Plus diff mem management of: mpg.intcellr:in geo.cvvol:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: geo.cvvol:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -18,9 +18,9 @@
 !
 !
 !
-SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& po, pod, ti, tid, na, nad, rza, rzad, vsa0, vsa0d, fac_vis, fchvisper&
-& , fchvisperd, nbdirs)
+SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
+& , ti, tid, na, nad, rza, rzad, vsa0, vsa0d, fac_vis, fchvisper, &
+& fchvisperd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -44,7 +44,6 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fac_vis(nfc), po(ncv), ti(ncv), na(ncv, 0:ns-1), rza(&
 & ncv, 0:ns-1), vsa0(ncv, 0:ns-1)
   REAL(kind=r8) :: pod(nbdirsmax, ncv), tid(nbdirsmax, ncv), nad(&
@@ -69,7 +68,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8), DIMENSION(ncv) :: arg1
@@ -116,14 +115,14 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         weight = 1.0_R8
 !
 !      ..compute V_{perp,a} on cell faces
-        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
-&                wrkvd, gpo, gpod, nbdirs)
+        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd&
+&                , gpo, gpod, nbdirs)
         DO nd=1,nbdirs
           arg1d(nd, :) = ti*nad(nd, :, is) + na(:, is)*tid(nd, :)
         END DO
         arg1(:) = na(:, is)*ti
-        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, arg1(:), arg1d(&
-&                :, :), wrkv, wrkvd, gpa, gpad, nbdirs)
+        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, arg1(:), arg1d(:, :)&
+&                , wrkv, wrkvd, gpa, gpad, nbdirs)
         DO nd=1,nbdirs
           arg1d(nd, :) = rza(:, is)*nad(nd, :, is) + na(:, is)*rzad(nd, &
 &           :, is)
@@ -143,8 +142,8 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 &                 vad, nbdirs)
 !
 !      ..compute radial gradient of V_{perp,a}, in cell centers
-        CALL GRADC_DIV_R_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, va, vad, &
-&                     wrkf, wrkfd, dva, dvad, nbdirs)
+        CALL GRADC_DIV_R_DV(ncv, nfc, nvx, 1, geo, mpg, va, vad, wrkf, &
+&                     wrkfd, dva, dvad, nbdirs)
         DO nd=1,nbdirs
           dvad(nd, :) = 0.25_R8*(vsa0(:, is)*dvad(nd, :)+dva*vsa0d(nd, :&
 &           , is))
@@ -152,7 +151,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         dva = 0.25_R8*dva*vsa0(:, is)
 !
 !      ..set dva in guard cells (constant extrapolation from domain cell)
-        CALL EXTEND_DV(dva, dvad, ncv, mpg, 1, nbdirs)
+        CALL EXTEND_DV(dva, dvad, mpg, 1, nbdirs)
 !
 !      ..compute current density in cell centers through divergence theorem
         CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, dva, dvad, wrkf, &
@@ -256,7 +255,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8), DIMENSION(ncv) :: arg1
@@ -304,7 +303,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
         dva = 0.25_R8*dva*vsa0(:, is)
 !
 !      ..set dva in guard cells (constant extrapolation from domain cell)
-        CALL EXTEND_NODIFF(dva, ncv, mpg, 1)
+        CALL EXTEND_NODIFF(dva, mpg, 1)
 !
 !      ..compute current density in cell centers through divergence theorem
         CALL INTFACE(ncv, nfc, mpg%fccv, weight, dva, wrkf)

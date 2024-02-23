@@ -21,9 +21,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
-& facdrift, fac_exb, ne, ned, te, ted, po, pod, vedia, vediad, veecrb, &
-& veecrbd, nbdirs)
+SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, facdrift, &
+& fac_exb, ne, ned, te, ted, po, pod, vedia, vediad, veecrb, veecrbd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
@@ -46,7 +46,6 @@ SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: facdrift(nfc), fac_exb(nfc), ne(ncv), te(ncv), po(ncv&
 & )
   REAL(kind=r8) :: ned(nbdirsmax, ncv), ted(nbdirsmax, ncv), pod(&
@@ -72,7 +71,7 @@ SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 & (nbdirsmax, nfc), wrkd(nbdirsmax, ncv), wrk0d(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
@@ -92,8 +91,8 @@ SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 !   ..extensive tests on first few calls
   IF (ncall_b2tfed .LT. 3) THEN
 !    ..test sign of te
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !   ..test facdrift
   result1 = MINVAL(facdrift)
@@ -117,8 +116,8 @@ SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
     DO nd=1,nbdirsmax
       povd(nd, :) = 0.D0
     END DO
-    CALL GRAD_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, pov, &
-&          povd, dpo, dpod, nbdirs)
+    CALL GRAD_DV(ncv, nfc, nvx, 0, geo, geod, mpg, po, pod, pov, povd, &
+&          dpo, dpod, nbdirs)
     CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvonedbsq, geo%&
 &              vxonedbsq, donedbsq)
 !     ..computation of ExB drift
@@ -236,7 +235,7 @@ SUBROUTINE B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 & , wrk(ncv), wrk0(nfc), wght(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
@@ -254,8 +253,8 @@ SUBROUTINE B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 !   ..extensive tests on first few calls
   IF (ncall_b2tfed .LT. 3) THEN
 !    ..test sign of te
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !   ..test facdrift
   result1 = MINVAL(facdrift)

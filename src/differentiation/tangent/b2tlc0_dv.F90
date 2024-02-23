@@ -18,8 +18,8 @@
 !
 !
 !
-SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
-& , nad, te, ted, ti, tid, tn, tnd, rza, rzad, cdpa0, cdpa0d, cdpa, &
+SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , na, nad, te, ted, ti, tid, tn, tnd, rza, rzad, cdpa0, cdpa0d, cdpa, &
 & cdpad, cdpahz, cdpahzd, flc, flcd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
@@ -38,10 +38,10 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: na(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), rza(ncv, &
 & 0:ns-1), cdpa0(nfc, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), ted(nbdirsmax, ncv), tid&
@@ -122,8 +122,8 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 &                  (:, 1, is), te, ted, ti, tid, tn, tnd, is, pb, pbd, &
 &                  nbdirs)
 !    ..compute differences of partial pressure
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pb, pbd, &
-&                pbv, pbvd, dpbf, dpbfd, nbdirs)
+          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pb, pbd, pbv, &
+&                pbvd, dpbf, dpbfd, nbdirs)
           DO ifc=1,nfc
             DO nd=1,nbdirs
               t0d(nd) = (tnd(nd, mpg%fccv(ifc, 1))+tnd(nd, mpg%fccv(ifc&
@@ -295,8 +295,8 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 &                  (:, 1, is), te, ted, ti, tid, tn, tnd, is, pb, pbd, &
 &                  nbdirs)
 !    ..compute differences of partial pressure
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pb, pbd, &
-&                pbv, pbvd, dpbf, dpbfd, nbdirs)
+          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pb, pbd, pbv, &
+&                pbvd, dpbf, dpbfd, nbdirs)
           DO ifc=1,nfc
             DO nd=1,nbdirs
               t0d(nd) = (tnd(nd, mpg%fccv(ifc, 1))+tnd(nd, mpg%fccv(ifc&

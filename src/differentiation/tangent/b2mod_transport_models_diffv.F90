@@ -28,15 +28,11 @@ MODULE B2MOD_TRANSPORT_MODELS_DIFFV
 CONTAINS
 !
 !
-  SUBROUTINE ALLOC_B2MOD_TRANSPORT_MODELS(nxd, nyd, nsd)
+  SUBROUTINE ALLOC_B2MOD_TRANSPORT_MODELS(nfs, nsd)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nxd, nyd, nsd
+    INTEGER :: nfs, nsd
     transport_models_allocated = .true.
-    CALL XERTST(nxd .LE. def_nxd, 'Increase DEF_NXD in b2mod_dimensions'&
-&        )
-    CALL XERTST(nyd .LE. def_nyd, 'Increase DEF_NYD in b2mod_dimensions'&
-&        )
     CALL XERTST(nsd .LE. def_nsd, 'Increase DEF_NSD in b2mod_dimensions'&
 &        )
   END SUBROUTINE ALLOC_B2MOD_TRANSPORT_MODELS

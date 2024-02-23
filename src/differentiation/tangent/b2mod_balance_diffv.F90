@@ -27,42 +27,60 @@ MODULE B2MOD_BALANCE_DIFFV
 !     Fluxes
   REAL(kind=r8), ALLOCATABLE, SAVE :: fna_pinch(:, :, :), fna_pll(:, :, &
 & :), fna_drift(:, :, :), fna_ch(:, :, :), fna_nanom(:, :, :), fna_panom&
-& (:, :, :), fna_pschused(:, :, :)
+& (:, :, :), fna_pschused(:, :, :), fna_tot(:, :, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: fna_pinchd(:, :, :, :), fna_plld(:&
+& , :, :, :), fna_driftd(:, :, :, :), fna_chd(:, :, :, :), fna_nanomd(:&
+& , :, :, :)
 !     Sources
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_sna0to1(:, :, :), &
 & b2stbr_phys_sna_bal(:, :), b2stbr_bas_sna0to1(:, :, :), &
 & b2stbr_bas_sna_bal(:, :), b2stbr_first_flight_sna0to1(:, :, :), &
 & b2stbr_first_flight_sna_bal(:, :), b2stbc_sna0to1(:, :, :), &
-& b2stbc_sna_bal(:, :), eirene_mc_papl_sna0to1(:, :, :, :), &
+& b2stbc_sna_bal(:, :), eirene_mc_pael_sne0to1(:, :, :), &
+& eirene_mc_papl_sna0to1(:, :, :, :), eirene_mc_pmel_sne0to1(:, :, :), &
 & eirene_mc_pmpl_sna0to1(:, :, :, :), eirene_mc_pipl_sna0to1(:, :, :, :)&
 & , eirene_mc_pppl_sna0to1(:, :, :, :), eirene_mc_core_sna0to1(:, :, :)&
-& , eirene_mc_papl_sna_bal(:, :, :), eirene_mc_pmpl_sna_bal(:, :, :), &
+& , eirene_mc_pael_sne_bal(:, :), eirene_mc_papl_sna_bal(:, :, :), &
+& eirene_mc_pmel_sne_bal(:, :), eirene_mc_pmpl_sna_bal(:, :, :), &
 & eirene_mc_pipl_sna_bal(:, :, :), eirene_mc_pppl_sna_bal(:, :, :), &
-& eirene_mc_core_sna_bal(:, :), b2stbm_sna0to1(:, :, :), b2stbm_sna_bal(&
-& :, :), ext_sna0to1(:, :, :), ext_sna_bal(:, :), b2stel_sna_ion0to1(:, &
-& :, :), b2stel_sna_ion_bal(:, :), b2stel_sna_rec0to1(:, :, :), &
-& b2stel_sna_rec_bal(:, :), b2stcx_sna0to1(:, :, :), b2stcx_sna_bal(:, :&
-& ), b2srsm_sna0to1(:, :, :), b2srsm_sna_bal(:, :), b2srdt_sna0to1(:, :&
-& , :), b2srdt_sna_bal(:, :), b2srst_sna0to1(:, :, :), b2srst_sna_bal(:&
-& , :)
+& eirene_mc_paat_sna_bal(:, :, :), eirene_mc_pmat_sna_bal(:, :, :), &
+& eirene_mc_piat_sna_bal(:, :, :), eirene_mc_paml_sna_bal(:, :, :), &
+& eirene_mc_pmml_sna_bal(:, :, :), eirene_mc_piml_sna_bal(:, :, :), &
+& eirene_mc_paio_sna_bal(:, :, :), eirene_mc_pmio_sna_bal(:, :, :), &
+& eirene_mc_piio_sna_bal(:, :, :), eirene_mc_core_sna_bal(:, :), &
+& b2stbm_sna0to1(:, :, :), b2stbm_sna_bal(:, :), ext_sna0to1(:, :, :), &
+& ext_sna_bal(:, :), b2stel_sna_ion0to1(:, :, :), b2stel_sna_ion_bal(:, &
+& :), b2stel_sna_rec0to1(:, :, :), b2stel_sna_rec_bal(:, :), &
+& b2stcx_sna0to1(:, :, :), b2stcx_sna_bal(:, :), b2srsm_sna0to1(:, :, :)&
+& , b2srsm_sna_bal(:, :), b2srdt_sna0to1(:, :, :), b2srdt_sna_bal(:, :)&
+& , b2srst_sna0to1(:, :, :), b2srst_sna_bal(:, :), tot_sna0to1(:, :, :)&
+& , tot_sna_bal(:, :)
 !     Time-averaged quantities
   REAL(kind=r8), ALLOCATABLE, SAVE :: fna_pinch_av(:, :, :), fna_pll_av(&
 & :, :, :), fna_drift_av(:, :, :), fna_ch_av(:, :, :), fna_nanom_av(:, :&
-& , :), fna_panom_av(:, :, :), fna_pschused_av(:, :, :), &
-& b2stbr_phys_sna_bal_av(:, :), b2stbr_bas_sna_bal_av(:, :), &
+& , :), fna_panom_av(:, :, :), fna_pschused_av(:, :, :), fna_tot_av(:, :&
+& , :), b2stbr_phys_sna_bal_av(:, :), b2stbr_bas_sna_bal_av(:, :), &
 & b2stbr_first_flight_sna_bal_av(:, :), b2stbc_sna_bal_av(:, :), &
-& eirene_mc_papl_sna_bal_av(:, :, :), eirene_mc_pmpl_sna_bal_av(:, :, :)&
-& , eirene_mc_pipl_sna_bal_av(:, :, :), eirene_mc_pppl_sna_bal_av(:, :, &
-& :), eirene_mc_core_sna_bal_av(:, :), b2stbm_sna_bal_av(:, :), &
+& eirene_mc_pael_sne_bal_av(:, :), eirene_mc_papl_sna_bal_av(:, :, :), &
+& eirene_mc_pmel_sne_bal_av(:, :), eirene_mc_pmpl_sna_bal_av(:, :, :), &
+& eirene_mc_pipl_sna_bal_av(:, :, :), eirene_mc_pppl_sna_bal_av(:, :, :)&
+& , eirene_mc_paat_sna_bal_av(:, :, :), eirene_mc_pmat_sna_bal_av(:, :, &
+& :), eirene_mc_piat_sna_bal_av(:, :, :), eirene_mc_paml_sna_bal_av(:, :&
+& , :), eirene_mc_pmml_sna_bal_av(:, :, :), eirene_mc_piml_sna_bal_av(:&
+& , :, :), eirene_mc_paio_sna_bal_av(:, :, :), eirene_mc_pmio_sna_bal_av&
+& (:, :, :), eirene_mc_piio_sna_bal_av(:, :, :), &
+& eirene_mc_core_sna_bal_av(:, :), b2stbm_sna_bal_av(:, :), &
 & ext_sna_bal_av(:, :), b2stel_sna_ion_bal_av(:, :), &
 & b2stel_sna_rec_bal_av(:, :), b2stcx_sna_bal_av(:, :), &
 & b2srsm_sna_bal_av(:, :), b2srdt_sna_bal_av(:, :), b2srst_sna_bal_av(:&
-& , :), resco_av(:, :)
+& , :), tot_sna_bal_av(:, :), resco_av(:, :)
 !   ..Arrays for momentum balance:
 !     Fluxes
   REAL(kind=r8), ALLOCATABLE, SAVE :: fmo_flua(:, :, :), fmo_cvsa(:, :, &
-& :), fmo_b2nxfv(:, :, :)
+& :), fmo_hybr(:, :, :), fmo_b2nxfv(:, :, :), fmo_tot(:, :, :)
 !     Sources
+!som 13.08.21
+!som 13.08.21
 !srv 25.09.17
 !srv 25.09.17
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_smo0to3(:, :, :), &
@@ -78,33 +96,54 @@ MODULE B2MOD_BALANCE_DIFFV
 & b2stcx_smq0to3(:, :, :), b2stcx_smq_bal(:, :), b2srsm_smo0to3(:, :, :)&
 & , b2srsm_smo_bal(:, :), b2srdt_smo0to3(:, :, :), b2srdt_smo_bal(:, :)&
 & , b2srst_smo0to3(:, :, :), b2srst_smo_bal(:, :), b2sifr_smoch0to3(:, :&
-& , :), b2sifr_smoch_bal(:, :), b2sifr_smotf0to3(:, :, :), &
-& b2sifr_smotf_bal(:, :), b2siav_smovh0to3(:, :, :), b2siav_smovh_bal(:&
-& , :), b2siav_smovv0to3(:, :, :), b2siav_smovv_bal(:, :), &
-& b2sicf_smo0to3(:, :, :), b2sicf_smo_bal(:, :), b2sian_smo0to3(:, :, :)&
-& , b2sian_smo_bal(:, :), b2nxdv_smo0to3(:, :, :), b2nxdv_smo_bal(:, :)&
-& , b2sigp_smogp0to3(:, :, :), b2sigp_smogp_bal(:, :), b2sigp_pstat0to3(&
-& :, :, :), b2sigp_pstat_bal(:, :)
+& , :), b2sifr_smoch_bal(:, :), b2sifr_smotf_ehxp0to3(:, :, :), &
+& b2sifr_smotf_cthe0to3(:, :, :), b2sifr_smotf_cthi0to3(:, :, :), &
+& b2sifr_smotf_ehxp_bal(:, :), b2sifr_smotf_cthe_bal(:, :), &
+& b2sifr_smotf_cthi_bal(:, :), b2sifr_smofrea0to3(:, :, :), &
+& b2sifr_smofrea_bal(:, :), b2sifr_smofria0to3(:, :, :), &
+& b2sifr_smofria_bal(:, :), b2sifr_smotfea0to3(:, :, :), &
+& b2sifr_smotfea_bal(:, :), b2sifr_smotfia0to3(:, :, :), &
+& b2sifr_smotfia_bal(:, :), b2siav_smovh0to3(:, :, :), b2siav_smovh_bal(&
+& :, :), b2siav_smovv0to3(:, :, :), b2siav_smovv_bal(:, :), &
+& b2siav_smovi0to3(:, :, :), b2siav_smovi_bal(:, :), b2sicf_smo0to3(:, :&
+& , :), b2sicf_smo_bal(:, :), b2sian_smo0to3(:, :, :), b2sian_smo_bal(:&
+& , :), b2nxdv_smo0to3(:, :, :), b2nxdv_smo_bal(:, :), b2sigp_smogp0to3(&
+& :, :, :), b2sigp_smogp_bal(:, :), b2sigp_smogpi0to3(:, :, :), &
+& b2sigp_smogpi_bal(:, :), b2sigp_smogpe0to3(:, :, :), b2sigp_smogpe_bal&
+& (:, :), b2sigp_smogpgr0to3(:, :, :), b2sigp_smogpgr_bal(:, :), &
+& b2sigp_pstat0to3(:, :, :), b2sigp_pstat_bal(:, :), b2sigp_pstati0to3(:&
+& , :, :), b2sigp_pstati_bal(:, :), b2sigp_pstate0to3(:, :), &
+& b2sigp_pstate_bal(:), tot_smo0to3(:, :, :), tot_smo_bal(:, :)
 !     Time-averaged quantities
+!som 13.08.21
 !srv 25.07.17
   REAL(kind=r8), ALLOCATABLE, SAVE :: fmo_flua_av(:, :, :), fmo_cvsa_av(&
-& :, :, :), fmo_b2nxfv_av(:, :, :), b2stbr_phys_smo_bal_av(:, :), &
-& b2stbr_bas_smo_bal_av(:, :), b2stbc_smo_bal_av(:, :), &
-& eirene_mc_mapl_smo_bal_av(:, :, :), eirene_mc_mmpl_smo_bal_av(:, :, :)&
-& , eirene_mc_mipl_smo_bal_av(:, :, :), eirene_mc_cppv_smo_bal_av(:, :, &
-& :), b2stbm_smo_bal_av(:, :), ext_smo_bal_av(:, :), &
-& b2stel_smq_ion_bal_av(:, :), b2stel_smq_rec_bal_av(:, :), &
-& b2stcx_smq_bal_av(:, :), b2srsm_smo_bal_av(:, :), b2srdt_smo_bal_av(:&
-& , :), b2srst_smo_bal_av(:, :), b2sifr_smoch_bal_av(:, :), &
-& b2sifr_smotf_bal_av(:, :), b2siav_smovh_bal_av(:, :), &
-& b2siav_smovv_bal_av(:, :), b2sicf_smo_bal_av(:, :), b2sian_smo_bal_av(&
+& :, :, :), fmo_hybr_av(:, :, :), fmo_b2nxfv_av(:, :, :), fmo_tot_av(:, &
+& :, :), b2stbr_phys_smo_bal_av(:, :), b2stbr_bas_smo_bal_av(:, :), &
+& b2stbc_smo_bal_av(:, :), eirene_mc_mapl_smo_bal_av(:, :, :), &
+& eirene_mc_mmpl_smo_bal_av(:, :, :), eirene_mc_mipl_smo_bal_av(:, :, :)&
+& , eirene_mc_cppv_smo_bal_av(:, :, :), b2stbm_smo_bal_av(:, :), &
+& ext_smo_bal_av(:, :), b2stel_smq_ion_bal_av(:, :), &
+& b2stel_smq_rec_bal_av(:, :), b2stcx_smq_bal_av(:, :), &
+& b2srsm_smo_bal_av(:, :), b2srdt_smo_bal_av(:, :), b2srst_smo_bal_av(:&
+& , :), b2sifr_smoch_bal_av(:, :), b2sifr_smotf_ehxp_bal_av(:, :), &
+& b2sifr_smotf_cthe_bal_av(:, :), b2sifr_smotf_cthi_bal_av(:, :), &
+& b2sifr_smofrea_bal_av(:, :), b2sifr_smofria_bal_av(:, :), &
+& b2sifr_smotfea_bal_av(:, :), b2sifr_smotfia_bal_av(:, :), &
+& b2siav_smovh_bal_av(:, :), b2siav_smovv_bal_av(:, :), &
+& b2siav_smovi_bal_av(:, :), b2sicf_smo_bal_av(:, :), b2sian_smo_bal_av(&
 & :, :), b2nxdv_smo_bal_av(:, :), b2sigp_smogp_bal_av(:, :), &
-& b2sigp_pstat_bal_av(:, :), resmo_av(:, :)
+& b2sigp_smogpi_bal_av(:, :), b2sigp_smogpe_bal_av(:, :), &
+& b2sigp_smogpgr_bal_av(:, :), b2sigp_pstat_bal_av(:, :), &
+& b2sigp_pstati_bal_av(:, :), b2sigp_pstate_bal_av(:), tot_smo_bal_av(:&
+& , :), resmo_av(:, :)
 !   ..Arrays for electron heat balance:
 !     Fluxes
   REAL(kind=r8), ALLOCATABLE, SAVE :: fhe_32(:, :), fhe_52(:, :), &
 & fhe_thermj(:, :), fhe_cond(:, :), fhe_dia(:, :), fhe_ecrb(:, :), &
 & fhe_strange(:, :), fhe_pschused(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: fhe_32d(:, :, :), fhe_thermjd(:, :&
+& , :), fhe_condd(:, :, :), fhe_stranged(:, :, :)
 !     Sources
 !djm equipartition is not linearised
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_she0to3(:, :), &
@@ -115,8 +154,8 @@ MODULE B2MOD_BALANCE_DIFFV
 & eirene_mc_epel_she0to3(:, :, :), eirene_mc_eael_she_bal(:, :), &
 & eirene_mc_emel_she_bal(:, :), eirene_mc_eiel_she_bal(:, :), &
 & eirene_mc_epel_she_bal(:, :), b2stbm_she0to3(:, :), b2stbm_she_bal(:)&
-& , ext_she0to3(:, :), ext_she_bal(:), b2stel_she0to3(:, :), &
-& b2stel_she_bal(:), b2srsm_she0to3(:, :), b2srsm_she_bal(:), &
+& , ext_she0to3(:, :), ext_she_bal(:), b2stel_she0to3(:, :, :), &
+& b2stel_she_bal(:, :), b2srsm_she0to3(:, :), b2srsm_she_bal(:), &
 & b2srdt_she0to3(:, :), b2srdt_she_bal(:), b2srst_she0to3(:, :), &
 & b2srst_she_bal(:), b2sihs_diae0to3(:, :), b2sihs_diae_bal(:), &
 & b2sihs_divue0to3(:, :), b2sihs_divue_bal(:), b2sihs_exbe0to3(:, :), &
@@ -130,7 +169,7 @@ MODULE B2MOD_BALANCE_DIFFV
 & b2stbr_first_flight_she_bal_av(:), b2stbc_she_bal_av(:), &
 & eirene_mc_eael_she_bal_av(:, :), eirene_mc_emel_she_bal_av(:, :), &
 & eirene_mc_eiel_she_bal_av(:, :), eirene_mc_epel_she_bal_av(:, :), &
-& b2stbm_she_bal_av(:), ext_she_bal_av(:), b2stel_she_bal_av(:), &
+& b2stbm_she_bal_av(:), ext_she_bal_av(:), b2stel_she_bal_av(:, :), &
 & b2srsm_she_bal_av(:), b2srdt_she_bal_av(:), b2srst_she_bal_av(:), &
 & b2sihs_diae_bal_av(:), b2sihs_divue_bal_av(:), b2sihs_exbe_bal_av(:), &
 & b2sihs_joule_bal_av(:), b2npht_shei_bal_av(:), reshe_av(:)
@@ -140,6 +179,9 @@ MODULE B2MOD_BALANCE_DIFFV
 & fhi_cond(:, :), fhi_dia(:, :), fhi_ecrb(:, :), fhi_strange(:, :), &
 & fhi_pschused(:, :), fhi_inert(:, :), fhi_vispar(:, :), fhi_visper(:, :&
 & ), fhi_visq(:, :), fhi_anml(:, :), fhi_kevis(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: fhi_32d(:, :, :), fhi_condd(:, :, &
+& :), fhi_stranged(:, :, :), fhi_inertd(:, :, :), fhi_vispard(:, :, :), &
+& fhi_visperd(:, :, :), fhi_visqd(:, :, :), fhi_anmld(:, :, :)
 !     Source
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_shi0to3(:, :), &
 & b2stbr_phys_shi_bal(:), b2stbr_bas_shi0to3(:, :), b2stbr_bas_shi_bal(:&
@@ -149,14 +191,16 @@ MODULE B2MOD_BALANCE_DIFFV
 & eirene_mc_eppl_shi0to3(:, :, :), eirene_mc_eapl_shi_bal(:, :), &
 & eirene_mc_empl_shi_bal(:, :), eirene_mc_eipl_shi_bal(:, :), &
 & eirene_mc_eppl_shi_bal(:, :), b2stbm_shi0to3(:, :), b2stbm_shi_bal(:)&
-& , ext_shi0to3(:, :), ext_shi_bal(:), b2stel_shi_ion0to3(:, :), &
-& b2stel_shi_ion_bal(:), b2stel_shi_rec0to3(:, :), b2stel_shi_rec_bal(:)&
-& , b2stcx_shi0to3(:, :), b2stcx_shi_bal(:), b2srsm_shi0to3(:, :), &
-& b2srsm_shi_bal(:), b2srdt_shi0to3(:, :), b2srdt_shi_bal(:), &
-& b2srst_shi0to3(:, :), b2srst_shi_bal(:), b2sihs_diaa0to3(:, :), &
-& b2sihs_diaa_bal(:), b2sihs_divua0to3(:, :), b2sihs_divua_bal(:), &
-& b2sihs_exba0to3(:, :), b2sihs_exba_bal(:), b2sihs_visa0to3(:, :), &
-& b2sihs_visa_bal(:), b2sihs_fraa0to3(:, :), b2sihs_fraa_bal(:)
+& , ext_shi0to3(:, :), ext_shi_bal(:), b2stel_she_ion0to3(:, :), &
+& b2stel_she_ion_bal(:), b2stel_she_rec0to3(:, :), b2stel_she_rec_bal(:)&
+& , b2stel_shi_ion0to3(:, :), b2stel_shi_ion_bal(:), b2stel_shi_rec0to3(&
+& :, :), b2stel_shi_rec_bal(:), b2stcx_shi0to3(:, :), b2stcx_shi_bal(:)&
+& , b2srsm_shi0to3(:, :), b2srsm_shi_bal(:), b2srdt_shi0to3(:, :), &
+& b2srdt_shi_bal(:), b2srst_shi0to3(:, :), b2srst_shi_bal(:), &
+& b2sihs_diaa0to3(:, :), b2sihs_diaa_bal(:), b2sihs_divua0to3(:, :), &
+& b2sihs_divua_bal(:), b2sihs_exba0to3(:, :), b2sihs_exba_bal(:), &
+& b2sihs_visa0to3(:, :), b2sihs_visa_bal(:), b2sihs_fraa0to3(:, :), &
+& b2sihs_fraa_bal(:)
 !     Time-averaged quantities
   REAL(kind=r8), ALLOCATABLE, SAVE :: fhi_32_av(:, :), fhi_52_av(:, :), &
 & fhi_cond_av(:, :), fhi_dia_av(:, :), fhi_ecrb_av(:, :), fhi_strange_av&
@@ -166,7 +210,8 @@ MODULE B2MOD_BALANCE_DIFFV
 & ), b2stbr_first_flight_shi_bal_av(:), b2stbc_shi_bal_av(:), &
 & eirene_mc_eapl_shi_bal_av(:, :), eirene_mc_empl_shi_bal_av(:, :), &
 & eirene_mc_eipl_shi_bal_av(:, :), eirene_mc_eppl_shi_bal_av(:, :), &
-& b2stbm_shi_bal_av(:), ext_shi_bal_av(:), b2stel_shi_ion_bal_av(:), &
+& b2stbm_shi_bal_av(:), ext_shi_bal_av(:), b2stel_she_ion_bal_av(:), &
+& b2stel_she_rec_bal_av(:), b2stel_shi_ion_bal_av(:), &
 & b2stel_shi_rec_bal_av(:), b2stcx_shi_bal_av(:), b2srsm_shi_bal_av(:), &
 & b2srdt_shi_bal_av(:), b2srst_shi_bal_av(:), b2sihs_diaa_bal_av(:), &
 & b2sihs_divua_bal_av(:), b2sihs_exba_bal_av(:), b2sihs_visa_bal_av(:), &
@@ -188,23 +233,53 @@ MODULE B2MOD_BALANCE_DIFFV
   INTEGER, SAVE :: balance_average
 
 CONTAINS
+!  Differentiation of alloc_b2mod_balance as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: fna_pinch:out fhe_32:out fhi_vispar:out
+!                fna_nanom:out fna_ch:out fhi_strange:out fhi_visq:out
+!                fhi_anml:out fna_pll:out fhi_visper:out fhe_thermj:out
+!                fhi_32:out fna_drift:out fhe_strange:out fhi_inert:out
+!                fhe_cond:out fhi_cond:out
 !
 !
-  SUBROUTINE ALLOC_B2MOD_BALANCE(ncv, nfc, nsd)
+  SUBROUTINE ALLOC_B2MOD_BALANCE_DV(ncv, nfc, nsd, nbdirs)
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !   ..Input arguments (unchanged on exit)
     INTEGER :: ncv, nfc, nsd
+    INTEGER :: nd
+    INTEGER :: nbdirs
 !
 !   ..Arrays for particle balance:
 !     Fluxes:
+    ALLOCATE(fna_pinchd(nbdirsmax, nfc, 0:1, 0:nsd-1))
+    DO nd=1,nbdirsmax
+      fna_pinchd(nd, 1:nfc, 0:1, 0:nsd-1) = 0.D0
+    END DO
     ALLOCATE(fna_pinch(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_plld(nbdirsmax, nfc, 0:1, 0:nsd-1))
+    DO nd=1,nbdirsmax
+      fna_plld(nd, 1:nfc, 0:1, 0:nsd-1) = 0.D0
+    END DO
     ALLOCATE(fna_pll(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_driftd(nbdirsmax, nfc, 0:1, 0:nsd-1))
+    DO nd=1,nbdirsmax
+      fna_driftd(nd, 1:nfc, 0:1, 0:nsd-1) = 0.D0
+    END DO
     ALLOCATE(fna_drift(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_chd(nbdirsmax, nfc, 0:1, 0:nsd-1))
+    DO nd=1,nbdirsmax
+      fna_chd(nd, 1:nfc, 0:1, 0:nsd-1) = 0.D0
+    END DO
     ALLOCATE(fna_ch(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_nanomd(nbdirsmax, nfc, 0:1, 0:nsd-1))
+    DO nd=1,nbdirsmax
+      fna_nanomd(nd, 1:nfc, 0:1, 0:nsd-1) = 0.D0
+    END DO
     ALLOCATE(fna_nanom(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fna_panom(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fna_pschused(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_tot(nfc, 0:1, 0:nsd-1))
 !     Sources
     ALLOCATE(b2stbr_phys_sna0to1(ncv, 0:1, 0:nsd-1))
     ALLOCATE(b2stbr_phys_sna_bal(ncv, 0:nsd-1))
@@ -230,6 +305,8 @@ CONTAINS
     ALLOCATE(b2srdt_sna_bal(ncv, 0:nsd-1))
     ALLOCATE(b2srst_sna0to1(ncv, 0:1, 0:nsd-1))
     ALLOCATE(b2srst_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(tot_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(tot_sna_bal(ncv, 0:nsd-1))
     b2stbr_phys_sna0to1 = 0.0_R8
     b2stbr_phys_sna_bal = 0.0_R8
     b2stbr_bas_sna0to1 = 0.0_R8
@@ -254,6 +331,8 @@ CONTAINS
     b2srdt_sna_bal = 0.0_R8
     b2srst_sna0to1 = 0.0_R8
     b2srst_sna_bal = 0.0_R8
+    tot_sna0to1 = 0.0_R8
+    tot_sna_bal = 0.0_R8
 !     Time-averaged quantities
     ALLOCATE(fna_pinch_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fna_pll_av(nfc, 0:1, 0:nsd-1))
@@ -262,6 +341,7 @@ CONTAINS
     ALLOCATE(fna_nanom_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fna_panom_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fna_pschused_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_tot_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(b2stbr_phys_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbr_bas_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbr_first_flight_sna_bal_av(ncv, 0:nsd-1))
@@ -274,12 +354,15 @@ CONTAINS
     ALLOCATE(b2srsm_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2srdt_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2srst_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(tot_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(resco_av(ncv, 0:nsd-1))
 !   ..Arrays for momentum balance:
 !     Fluxes
     ALLOCATE(fmo_flua(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fmo_cvsa(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_hybr(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fmo_b2nxfv(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_tot(nfc, 0:1, 0:nsd-1))
 !     Sources
     ALLOCATE(b2stbr_phys_smo0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2stbr_phys_smo_bal(ncv, 0:nsd-1))
@@ -305,12 +388,28 @@ CONTAINS
     ALLOCATE(b2srst_smo_bal(ncv, 0:nsd-1))
     ALLOCATE(b2sifr_smoch0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2sifr_smoch_bal(ncv, 0:nsd-1))
-    ALLOCATE(b2sifr_smotf0to3(ncv, 0:3, 0:nsd-1))
-    ALLOCATE(b2sifr_smotf_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_ehxp0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_ehxp_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthe0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthe_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthi0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthi_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofrea0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smofrea_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofria0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smofria_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfea0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfea_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfia0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfia_bal(ncv, 0:nsd-1))
     ALLOCATE(b2siav_smovh0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2siav_smovh_bal(ncv, 0:nsd-1))
     ALLOCATE(b2siav_smovv0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2siav_smovv_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovi0to3(ncv, 0:3, 0:nsd-1))
+!som 13.08.21
+    ALLOCATE(b2siav_smovi_bal(ncv, 0:nsd-1))
+!som 13.08.21
     ALLOCATE(b2sicf_smo0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2sicf_smo_bal(ncv, 0:nsd-1))
     ALLOCATE(b2sian_smo0to3(ncv, 0:3, 0:nsd-1))
@@ -321,8 +420,20 @@ CONTAINS
     ALLOCATE(b2nxdv_smo_bal(ncv, 0:nsd-1))
     ALLOCATE(b2sigp_smogp0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2sigp_smogp_bal(ncv, 0:nsd-1))
-    ALLOCATE(b2sigp_pstat0to3(ncv, 0:3, 0:nsd-1))
-    ALLOCATE(b2sigp_pstat_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpi0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpi_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpe0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpe_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpgr0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpgr_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_pstat0to3(nfc, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_pstat_bal(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstati0to3(nfc, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_pstati_bal(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstate0to3(nfc, 0:3))
+    ALLOCATE(b2sigp_pstate_bal(nfc))
+    ALLOCATE(tot_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(tot_smo_bal(ncv, 0:nsd-1))
     b2stbr_phys_smo0to3 = 0.0_R8
     b2stbr_phys_smo_bal = 0.0_R8
     b2stbr_bas_smo0to3 = 0.0_R8
@@ -347,12 +458,28 @@ CONTAINS
     b2srst_smo_bal = 0.0_R8
     b2sifr_smoch0to3 = 0.0_R8
     b2sifr_smoch_bal = 0.0_R8
-    b2sifr_smotf0to3 = 0.0_R8
-    b2sifr_smotf_bal = 0.0_R8
+    b2sifr_smotf_ehxp0to3 = 0.0_R8
+    b2sifr_smotf_ehxp_bal = 0.0_R8
+    b2sifr_smotf_cthe0to3 = 0.0_R8
+    b2sifr_smotf_cthe_bal = 0.0_R8
+    b2sifr_smotf_cthi0to3 = 0.0_R8
+    b2sifr_smotf_cthi_bal = 0.0_R8
+    b2sifr_smofrea0to3 = 0.0_R8
+    b2sifr_smofrea_bal = 0.0_R8
+    b2sifr_smofria0to3 = 0.0_R8
+    b2sifr_smofria_bal = 0.0_R8
+    b2sifr_smotfea0to3 = 0.0_R8
+    b2sifr_smotfea_bal = 0.0_R8
+    b2sifr_smotfia0to3 = 0.0_R8
+    b2sifr_smotfia_bal = 0.0_R8
     b2siav_smovh0to3 = 0.0_R8
     b2siav_smovh_bal = 0.0_R8
     b2siav_smovv0to3 = 0.0_R8
     b2siav_smovv_bal = 0.0_R8
+!som 13.08.21
+    b2siav_smovi0to3 = 0.0_R8
+!som 13.08.21
+    b2siav_smovi_bal = 0.0_R8
     b2sicf_smo0to3 = 0.0_R8
     b2sicf_smo_bal = 0.0_R8
 !srv 25.09.17
@@ -363,12 +490,26 @@ CONTAINS
     b2nxdv_smo_bal = 0.0_R8
     b2sigp_smogp0to3 = 0.0_R8
     b2sigp_smogp_bal = 0.0_R8
+    b2sigp_smogpi0to3 = 0.0_R8
+    b2sigp_smogpi_bal = 0.0_R8
+    b2sigp_smogpe0to3 = 0.0_R8
+    b2sigp_smogpe_bal = 0.0_R8
+    b2sigp_smogpgr0to3 = 0.0_R8
+    b2sigp_smogpgr_bal = 0.0_R8
     b2sigp_pstat0to3 = 0.0_R8
     b2sigp_pstat_bal = 0.0_R8
+    b2sigp_pstati0to3 = 0.0_R8
+    b2sigp_pstati_bal = 0.0_R8
+    b2sigp_pstate0to3 = 0.0_R8
+    b2sigp_pstate_bal = 0.0_R8
+    tot_smo0to3 = 0.0_R8
+    tot_smo_bal = 0.0_R8
 !     Time-averaged quantities
     ALLOCATE(fmo_flua_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fmo_cvsa_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_hybr_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fmo_b2nxfv_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_tot_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(b2stbr_phys_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbr_bas_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbc_smo_bal_av(ncv, 0:nsd-1))
@@ -381,24 +522,54 @@ CONTAINS
     ALLOCATE(b2srdt_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2srst_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2sifr_smoch_bal_av(ncv, 0:nsd-1))
-    ALLOCATE(b2sifr_smotf_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_ehxp_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthe_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthi_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofrea_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofria_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfea_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfia_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2siav_smovh_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2siav_smovv_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovi_bal_av(ncv, 0:nsd-1))
+!som 13.08.21
     ALLOCATE(b2sicf_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2sian_smo_bal_av(ncv, 0:nsd-1))
 !srv 25.09.17
     ALLOCATE(b2nxdv_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2sigp_smogp_bal_av(ncv, 0:nsd-1))
-    ALLOCATE(b2sigp_pstat_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpi_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpe_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpgr_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_pstat_bal_av(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstati_bal_av(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstate_bal_av(nfc))
+    ALLOCATE(tot_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(resmo_av(ncv, 0:nsd-1))
 !   ..Arrays for electron heat balance:
 !     Fluxes
+    ALLOCATE(fhe_32d(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhe_32d(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhe_32(nfc, 0:1))
     ALLOCATE(fhe_52(nfc, 0:1))
+    ALLOCATE(fhe_thermjd(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhe_thermjd(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhe_thermj(nfc, 0:1))
+    ALLOCATE(fhe_condd(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhe_condd(nd, 1:nfc, 0:1) = 0.D0
+    END DO
     ALLOCATE(fhe_cond(nfc, 0:1))
     ALLOCATE(fhe_dia(nfc, 0:1))
     ALLOCATE(fhe_ecrb(nfc, 0:1))
+    ALLOCATE(fhe_stranged(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhe_stranged(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhe_strange(nfc, 0:1))
     ALLOCATE(fhe_pschused(nfc, 0:1))
 !     Sources
@@ -414,8 +585,8 @@ CONTAINS
     ALLOCATE(b2stbm_she_bal(ncv))
     ALLOCATE(ext_she0to3(ncv, 0:3))
     ALLOCATE(ext_she_bal(ncv))
-    ALLOCATE(b2stel_she0to3(ncv, 0:3))
-    ALLOCATE(b2stel_she_bal(ncv))
+    ALLOCATE(b2stel_she0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stel_she_bal(ncv, 0:nsd-1))
     ALLOCATE(b2srsm_she0to3(ncv, 0:3))
     ALLOCATE(b2srsm_she_bal(ncv))
     ALLOCATE(b2srdt_she0to3(ncv, 0:3))
@@ -475,7 +646,7 @@ CONTAINS
     ALLOCATE(b2stbc_she_bal_av(ncv))
     ALLOCATE(b2stbm_she_bal_av(ncv))
     ALLOCATE(ext_she_bal_av(ncv))
-    ALLOCATE(b2stel_she_bal_av(ncv))
+    ALLOCATE(b2stel_she_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2srsm_she_bal_av(ncv))
     ALLOCATE(b2srdt_she_bal_av(ncv))
     ALLOCATE(b2srst_she_bal_av(ncv))
@@ -487,17 +658,49 @@ CONTAINS
     ALLOCATE(reshe_av(ncv))
 !   ..Arrays for ion heat balance:
 !     Fluxes
+    ALLOCATE(fhi_32d(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_32d(nd, 1:nfc, 0:1) = 0.D0
+    END DO
     ALLOCATE(fhi_32(nfc, 0:1))
     ALLOCATE(fhi_52(nfc, 0:1))
+    ALLOCATE(fhi_condd(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_condd(nd, 1:nfc, 0:1) = 0.D0
+    END DO
     ALLOCATE(fhi_cond(nfc, 0:1))
     ALLOCATE(fhi_dia(nfc, 0:1))
     ALLOCATE(fhi_ecrb(nfc, 0:1))
+    ALLOCATE(fhi_stranged(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_stranged(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhi_strange(nfc, 0:1))
     ALLOCATE(fhi_pschused(nfc, 0:1))
+    ALLOCATE(fhi_inertd(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_inertd(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhi_inert(nfc, 0:1))
+    ALLOCATE(fhi_vispard(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_vispard(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhi_vispar(nfc, 0:1))
+    ALLOCATE(fhi_visperd(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_visperd(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhi_visper(nfc, 0:1))
+    ALLOCATE(fhi_visqd(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_visqd(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhi_visq(nfc, 0:1))
+    ALLOCATE(fhi_anmld(nbdirsmax, nfc, 0:1))
+    DO nd=1,nbdirsmax
+      fhi_anmld(nd, :, :) = 0.D0
+    END DO
     ALLOCATE(fhi_anml(nfc, 0:1))
     ALLOCATE(fhi_kevis(nfc, 0:1))
 !     Sources
@@ -513,6 +716,10 @@ CONTAINS
     ALLOCATE(b2stbm_shi_bal(ncv))
     ALLOCATE(ext_shi0to3(ncv, 0:3))
     ALLOCATE(ext_shi_bal(ncv))
+    ALLOCATE(b2stel_she_ion0to3(ncv, 0:3))
+    ALLOCATE(b2stel_she_ion_bal(ncv))
+    ALLOCATE(b2stel_she_rec0to3(ncv, 0:3))
+    ALLOCATE(b2stel_she_rec_bal(ncv))
     ALLOCATE(b2stel_shi_ion0to3(ncv, 0:3))
     ALLOCATE(b2stel_shi_ion_bal(ncv))
     ALLOCATE(b2stel_shi_rec0to3(ncv, 0:3))
@@ -547,6 +754,10 @@ CONTAINS
     b2stbm_shi_bal = 0.0_R8
     ext_shi0to3 = 0.0_R8
     ext_shi_bal = 0.0_R8
+    b2stel_she_ion0to3 = 0.0_R8
+    b2stel_she_ion_bal = 0.0_R8
+    b2stel_she_rec0to3 = 0.0_R8
+    b2stel_she_rec_bal = 0.0_R8
     b2stel_shi_ion0to3 = 0.0_R8
     b2stel_shi_ion_bal = 0.0_R8
     b2stel_shi_rec0to3 = 0.0_R8
@@ -589,6 +800,526 @@ CONTAINS
     ALLOCATE(b2stbc_shi_bal_av(ncv))
     ALLOCATE(b2stbm_shi_bal_av(ncv))
     ALLOCATE(ext_shi_bal_av(ncv))
+    ALLOCATE(b2stel_she_ion_bal_av(ncv))
+    ALLOCATE(b2stel_she_rec_bal_av(ncv))
+    ALLOCATE(b2stel_shi_ion_bal_av(ncv))
+    ALLOCATE(b2stel_shi_rec_bal_av(ncv))
+    ALLOCATE(b2stcx_shi_bal_av(ncv))
+    ALLOCATE(b2srsm_shi_bal_av(ncv))
+    ALLOCATE(b2srdt_shi_bal_av(ncv))
+    ALLOCATE(b2srst_shi_bal_av(ncv))
+    ALLOCATE(b2sihs_diaa_bal_av(ncv))
+    ALLOCATE(b2sihs_divua_bal_av(ncv))
+    ALLOCATE(b2sihs_exba_bal_av(ncv))
+    ALLOCATE(b2sihs_visa_bal_av(ncv))
+    ALLOCATE(b2sihs_fraa_bal_av(ncv))
+    ALLOCATE(reshi_av(ncv))
+!     Additional averaged quantities
+    ALLOCATE(ne_av(ncv))
+    ALLOCATE(na_av(ncv, 0:nsd-1))
+    ALLOCATE(ua_av(ncv, 0:nsd-1))
+    ALLOCATE(po_av(ncv))
+    ALLOCATE(te_av(ncv))
+    ALLOCATE(ti_av(ncv))
+    ALLOCATE(rpt_av(ncv, 0:nsd-1))
+    ALLOCATE(kinrgy_av(ncv, 0:nsd-1))
+    ALLOCATE(fne_av(nfc, 0:1))
+!
+    RETURN
+  END SUBROUTINE ALLOC_B2MOD_BALANCE_DV
+
+!
+!
+  SUBROUTINE ALLOC_B2MOD_BALANCE(ncv, nfc, nsd)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!   ..Input arguments (unchanged on exit)
+    INTEGER :: ncv, nfc, nsd
+!
+!   ..Arrays for particle balance:
+!     Fluxes:
+    ALLOCATE(fna_pinch(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_pll(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_drift(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_ch(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_nanom(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_panom(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_pschused(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_tot(nfc, 0:1, 0:nsd-1))
+!     Sources
+    ALLOCATE(b2stbr_phys_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stbr_phys_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stbr_bas_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stbr_bas_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stbr_first_flight_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stbr_first_flight_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stbc_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stbc_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stbm_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stbm_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(ext_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(ext_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_sna_ion0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stel_sna_ion_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_sna_rec0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stel_sna_rec_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stcx_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2stcx_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2srsm_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2srsm_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2srdt_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2srdt_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2srst_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(b2srst_sna_bal(ncv, 0:nsd-1))
+    ALLOCATE(tot_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(tot_sna_bal(ncv, 0:nsd-1))
+    b2stbr_phys_sna0to1 = 0.0_R8
+    b2stbr_phys_sna_bal = 0.0_R8
+    b2stbr_bas_sna0to1 = 0.0_R8
+    b2stbr_bas_sna_bal = 0.0_R8
+    b2stbr_first_flight_sna0to1 = 0.0_R8
+    b2stbr_first_flight_sna_bal = 0.0_R8
+    b2stbc_sna0to1 = 0.0_R8
+    b2stbc_sna_bal = 0.0_R8
+    b2stbm_sna0to1 = 0.0_R8
+    b2stbm_sna_bal = 0.0_R8
+    ext_sna0to1 = 0.0_R8
+    ext_sna_bal = 0.0_R8
+    b2stel_sna_ion0to1 = 0.0_R8
+    b2stel_sna_ion_bal = 0.0_R8
+    b2stel_sna_rec0to1 = 0.0_R8
+    b2stel_sna_rec_bal = 0.0_R8
+    b2stcx_sna0to1 = 0.0_R8
+    b2stcx_sna_bal = 0.0_R8
+    b2srsm_sna0to1 = 0.0_R8
+    b2srsm_sna_bal = 0.0_R8
+    b2srdt_sna0to1 = 0.0_R8
+    b2srdt_sna_bal = 0.0_R8
+    b2srst_sna0to1 = 0.0_R8
+    b2srst_sna_bal = 0.0_R8
+    tot_sna0to1 = 0.0_R8
+    tot_sna_bal = 0.0_R8
+!     Time-averaged quantities
+    ALLOCATE(fna_pinch_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_pll_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_drift_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_ch_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_nanom_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_panom_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_pschused_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fna_tot_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(b2stbr_phys_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stbr_bas_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stbr_first_flight_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stbc_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stbm_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(ext_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_sna_ion_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_sna_rec_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stcx_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2srsm_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2srdt_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2srst_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(tot_sna_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(resco_av(ncv, 0:nsd-1))
+!   ..Arrays for momentum balance:
+!     Fluxes
+    ALLOCATE(fmo_flua(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_cvsa(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_hybr(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_b2nxfv(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_tot(nfc, 0:1, 0:nsd-1))
+!     Sources
+    ALLOCATE(b2stbr_phys_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stbr_phys_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stbr_bas_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stbr_bas_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stbc_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stbc_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stbm_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stbm_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(ext_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(ext_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_smq_ion0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stel_smq_ion_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_smq_rec0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stel_smq_rec_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2stcx_smq0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stcx_smq_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2srsm_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2srsm_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2srdt_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2srdt_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2srst_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2srst_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smoch0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smoch_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_ehxp0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_ehxp_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthe0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthe_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthi0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthi_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofrea0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smofrea_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofria0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smofria_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfea0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfea_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfia0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfia_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovh0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2siav_smovh_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovv0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2siav_smovv_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovi0to3(ncv, 0:3, 0:nsd-1))
+!som 13.08.21
+    ALLOCATE(b2siav_smovi_bal(ncv, 0:nsd-1))
+!som 13.08.21
+    ALLOCATE(b2sicf_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sicf_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sian_smo0to3(ncv, 0:3, 0:nsd-1))
+!srv 25.09.17
+    ALLOCATE(b2sian_smo_bal(ncv, 0:nsd-1))
+!srv 25.09.17
+    ALLOCATE(b2nxdv_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2nxdv_smo_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogp0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_smogp_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpi0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpi_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpe0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpe_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpgr0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpgr_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_pstat0to3(nfc, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_pstat_bal(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstati0to3(nfc, 0:3, 0:nsd-1))
+    ALLOCATE(b2sigp_pstati_bal(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstate0to3(nfc, 0:3))
+    ALLOCATE(b2sigp_pstate_bal(nfc))
+    ALLOCATE(tot_smo0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(tot_smo_bal(ncv, 0:nsd-1))
+    b2stbr_phys_smo0to3 = 0.0_R8
+    b2stbr_phys_smo_bal = 0.0_R8
+    b2stbr_bas_smo0to3 = 0.0_R8
+    b2stbr_bas_smo_bal = 0.0_R8
+    b2stbc_smo0to3 = 0.0_R8
+    b2stbc_smo_bal = 0.0_R8
+    b2stbm_smo0to3 = 0.0_R8
+    b2stbm_smo_bal = 0.0_R8
+    ext_smo0to3 = 0.0_R8
+    ext_smo_bal = 0.0_R8
+    b2stel_smq_ion0to3 = 0.0_R8
+    b2stel_smq_ion_bal = 0.0_R8
+    b2stel_smq_rec0to3 = 0.0_R8
+    b2stel_smq_rec_bal = 0.0_R8
+    b2stcx_smq0to3 = 0.0_R8
+    b2stcx_smq_bal = 0.0_R8
+    b2srsm_smo0to3 = 0.0_R8
+    b2srsm_smo_bal = 0.0_R8
+    b2srdt_smo0to3 = 0.0_R8
+    b2srdt_smo_bal = 0.0_R8
+    b2srst_smo0to3 = 0.0_R8
+    b2srst_smo_bal = 0.0_R8
+    b2sifr_smoch0to3 = 0.0_R8
+    b2sifr_smoch_bal = 0.0_R8
+    b2sifr_smotf_ehxp0to3 = 0.0_R8
+    b2sifr_smotf_ehxp_bal = 0.0_R8
+    b2sifr_smotf_cthe0to3 = 0.0_R8
+    b2sifr_smotf_cthe_bal = 0.0_R8
+    b2sifr_smotf_cthi0to3 = 0.0_R8
+    b2sifr_smotf_cthi_bal = 0.0_R8
+    b2sifr_smofrea0to3 = 0.0_R8
+    b2sifr_smofrea_bal = 0.0_R8
+    b2sifr_smofria0to3 = 0.0_R8
+    b2sifr_smofria_bal = 0.0_R8
+    b2sifr_smotfea0to3 = 0.0_R8
+    b2sifr_smotfea_bal = 0.0_R8
+    b2sifr_smotfia0to3 = 0.0_R8
+    b2sifr_smotfia_bal = 0.0_R8
+    b2siav_smovh0to3 = 0.0_R8
+    b2siav_smovh_bal = 0.0_R8
+    b2siav_smovv0to3 = 0.0_R8
+    b2siav_smovv_bal = 0.0_R8
+!som 13.08.21
+    b2siav_smovi0to3 = 0.0_R8
+!som 13.08.21
+    b2siav_smovi_bal = 0.0_R8
+    b2sicf_smo0to3 = 0.0_R8
+    b2sicf_smo_bal = 0.0_R8
+!srv 25.09.17
+    b2sian_smo0to3 = 0.0_R8
+!srv 25.09.17
+    b2sian_smo_bal = 0.0_R8
+    b2nxdv_smo0to3 = 0.0_R8
+    b2nxdv_smo_bal = 0.0_R8
+    b2sigp_smogp0to3 = 0.0_R8
+    b2sigp_smogp_bal = 0.0_R8
+    b2sigp_smogpi0to3 = 0.0_R8
+    b2sigp_smogpi_bal = 0.0_R8
+    b2sigp_smogpe0to3 = 0.0_R8
+    b2sigp_smogpe_bal = 0.0_R8
+    b2sigp_smogpgr0to3 = 0.0_R8
+    b2sigp_smogpgr_bal = 0.0_R8
+    b2sigp_pstat0to3 = 0.0_R8
+    b2sigp_pstat_bal = 0.0_R8
+    b2sigp_pstati0to3 = 0.0_R8
+    b2sigp_pstati_bal = 0.0_R8
+    b2sigp_pstate0to3 = 0.0_R8
+    b2sigp_pstate_bal = 0.0_R8
+    tot_smo0to3 = 0.0_R8
+    tot_smo_bal = 0.0_R8
+!     Time-averaged quantities
+    ALLOCATE(fmo_flua_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_cvsa_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_hybr_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_b2nxfv_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(fmo_tot_av(nfc, 0:1, 0:nsd-1))
+    ALLOCATE(b2stbr_phys_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stbr_bas_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stbc_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stbm_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(ext_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_smq_ion_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stel_smq_rec_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2stcx_smq_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2srsm_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2srdt_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2srst_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smoch_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_ehxp_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthe_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotf_cthi_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofrea_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smofria_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfea_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sifr_smotfia_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovh_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovv_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2siav_smovi_bal_av(ncv, 0:nsd-1))
+!som 13.08.21
+    ALLOCATE(b2sicf_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sian_smo_bal_av(ncv, 0:nsd-1))
+!srv 25.09.17
+    ALLOCATE(b2nxdv_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogp_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpi_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpe_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_smogpgr_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2sigp_pstat_bal_av(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstati_bal_av(nfc, 0:nsd-1))
+    ALLOCATE(b2sigp_pstate_bal_av(nfc))
+    ALLOCATE(tot_smo_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(resmo_av(ncv, 0:nsd-1))
+!   ..Arrays for electron heat balance:
+!     Fluxes
+    ALLOCATE(fhe_32(nfc, 0:1))
+    ALLOCATE(fhe_52(nfc, 0:1))
+    ALLOCATE(fhe_thermj(nfc, 0:1))
+    ALLOCATE(fhe_cond(nfc, 0:1))
+    ALLOCATE(fhe_dia(nfc, 0:1))
+    ALLOCATE(fhe_ecrb(nfc, 0:1))
+    ALLOCATE(fhe_strange(nfc, 0:1))
+    ALLOCATE(fhe_pschused(nfc, 0:1))
+!     Sources
+    ALLOCATE(b2stbr_phys_she0to3(ncv, 0:3))
+    ALLOCATE(b2stbr_phys_she_bal(ncv))
+    ALLOCATE(b2stbr_bas_she0to3(ncv, 0:3))
+    ALLOCATE(b2stbr_bas_she_bal(ncv))
+    ALLOCATE(b2stbr_first_flight_she0to3(ncv, 0:3))
+    ALLOCATE(b2stbr_first_flight_she_bal(ncv))
+    ALLOCATE(b2stbc_she0to3(ncv, 0:3))
+    ALLOCATE(b2stbc_she_bal(ncv))
+    ALLOCATE(b2stbm_she0to3(ncv, 0:3))
+    ALLOCATE(b2stbm_she_bal(ncv))
+    ALLOCATE(ext_she0to3(ncv, 0:3))
+    ALLOCATE(ext_she_bal(ncv))
+    ALLOCATE(b2stel_she0to3(ncv, 0:3, 0:nsd-1))
+    ALLOCATE(b2stel_she_bal(ncv, 0:nsd-1))
+    ALLOCATE(b2srsm_she0to3(ncv, 0:3))
+    ALLOCATE(b2srsm_she_bal(ncv))
+    ALLOCATE(b2srdt_she0to3(ncv, 0:3))
+    ALLOCATE(b2srdt_she_bal(ncv))
+    ALLOCATE(b2srst_she0to3(ncv, 0:3))
+    ALLOCATE(b2srst_she_bal(ncv))
+    ALLOCATE(b2sihs_diae0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_diae_bal(ncv))
+    ALLOCATE(b2sihs_divue0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_divue_bal(ncv))
+    ALLOCATE(b2sihs_exbe0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_exbe_bal(ncv))
+    ALLOCATE(b2sihs_joule0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_joule_bal(ncv))
+    ALLOCATE(b2npht_shei_bal(ncv))
+    b2stbr_phys_she0to3 = 0.0_R8
+    b2stbr_phys_she_bal = 0.0_R8
+    b2stbr_bas_she0to3 = 0.0_R8
+    b2stbr_bas_she_bal = 0.0_R8
+    b2stbr_first_flight_she0to3 = 0.0_R8
+    b2stbr_first_flight_she_bal = 0.0_R8
+    b2stbc_she0to3 = 0.0_R8
+    b2stbc_she_bal = 0.0_R8
+    b2stbm_she0to3 = 0.0_R8
+    b2stbm_she_bal = 0.0_R8
+    ext_she0to3 = 0.0_R8
+    ext_she_bal = 0.0_R8
+    b2stel_she0to3 = 0.0_R8
+    b2stel_she_bal = 0.0_R8
+    b2srsm_she0to3 = 0.0_R8
+    b2srsm_she_bal = 0.0_R8
+    b2srdt_she0to3 = 0.0_R8
+    b2srdt_she_bal = 0.0_R8
+    b2srst_she0to3 = 0.0_R8
+    b2srst_she_bal = 0.0_R8
+    b2sihs_diae0to3 = 0.0_R8
+    b2sihs_diae_bal = 0.0_R8
+    b2sihs_divue0to3 = 0.0_R8
+    b2sihs_divue_bal = 0.0_R8
+    b2sihs_exbe0to3 = 0.0_R8
+    b2sihs_exbe_bal = 0.0_R8
+    b2sihs_joule0to3 = 0.0_R8
+    b2sihs_joule_bal = 0.0_R8
+    b2npht_shei_bal = 0.0_R8
+!     Time-averaged quantities
+    ALLOCATE(fhe_32_av(nfc, 0:1))
+    ALLOCATE(fhe_52_av(nfc, 0:1))
+    ALLOCATE(fhe_thermj_av(nfc, 0:1))
+    ALLOCATE(fhe_cond_av(nfc, 0:1))
+    ALLOCATE(fhe_dia_av(nfc, 0:1))
+    ALLOCATE(fhe_ecrb_av(nfc, 0:1))
+    ALLOCATE(fhe_strange_av(nfc, 0:1))
+    ALLOCATE(fhe_pschused_av(nfc, 0:1))
+    ALLOCATE(b2stbr_phys_she_bal_av(ncv))
+    ALLOCATE(b2stbr_bas_she_bal_av(ncv))
+    ALLOCATE(b2stbr_first_flight_she_bal_av(ncv))
+    ALLOCATE(b2stbc_she_bal_av(ncv))
+    ALLOCATE(b2stbm_she_bal_av(ncv))
+    ALLOCATE(ext_she_bal_av(ncv))
+    ALLOCATE(b2stel_she_bal_av(ncv, 0:nsd-1))
+    ALLOCATE(b2srsm_she_bal_av(ncv))
+    ALLOCATE(b2srdt_she_bal_av(ncv))
+    ALLOCATE(b2srst_she_bal_av(ncv))
+    ALLOCATE(b2sihs_diae_bal_av(ncv))
+    ALLOCATE(b2sihs_divue_bal_av(ncv))
+    ALLOCATE(b2sihs_exbe_bal_av(ncv))
+    ALLOCATE(b2sihs_joule_bal_av(ncv))
+    ALLOCATE(b2npht_shei_bal_av(ncv))
+    ALLOCATE(reshe_av(ncv))
+!   ..Arrays for ion heat balance:
+!     Fluxes
+    ALLOCATE(fhi_32(nfc, 0:1))
+    ALLOCATE(fhi_52(nfc, 0:1))
+    ALLOCATE(fhi_cond(nfc, 0:1))
+    ALLOCATE(fhi_dia(nfc, 0:1))
+    ALLOCATE(fhi_ecrb(nfc, 0:1))
+    ALLOCATE(fhi_strange(nfc, 0:1))
+    ALLOCATE(fhi_pschused(nfc, 0:1))
+    ALLOCATE(fhi_inert(nfc, 0:1))
+    ALLOCATE(fhi_vispar(nfc, 0:1))
+    ALLOCATE(fhi_visper(nfc, 0:1))
+    ALLOCATE(fhi_visq(nfc, 0:1))
+    ALLOCATE(fhi_anml(nfc, 0:1))
+    ALLOCATE(fhi_kevis(nfc, 0:1))
+!     Sources
+    ALLOCATE(b2stbr_phys_shi0to3(ncv, 0:3))
+    ALLOCATE(b2stbr_phys_shi_bal(ncv))
+    ALLOCATE(b2stbr_bas_shi0to3(ncv, 0:3))
+    ALLOCATE(b2stbr_bas_shi_bal(ncv))
+    ALLOCATE(b2stbr_first_flight_shi0to3(ncv, 0:3))
+    ALLOCATE(b2stbr_first_flight_shi_bal(ncv))
+    ALLOCATE(b2stbc_shi0to3(ncv, 0:3))
+    ALLOCATE(b2stbc_shi_bal(ncv))
+    ALLOCATE(b2stbm_shi0to3(ncv, 0:3))
+    ALLOCATE(b2stbm_shi_bal(ncv))
+    ALLOCATE(ext_shi0to3(ncv, 0:3))
+    ALLOCATE(ext_shi_bal(ncv))
+    ALLOCATE(b2stel_she_ion0to3(ncv, 0:3))
+    ALLOCATE(b2stel_she_ion_bal(ncv))
+    ALLOCATE(b2stel_she_rec0to3(ncv, 0:3))
+    ALLOCATE(b2stel_she_rec_bal(ncv))
+    ALLOCATE(b2stel_shi_ion0to3(ncv, 0:3))
+    ALLOCATE(b2stel_shi_ion_bal(ncv))
+    ALLOCATE(b2stel_shi_rec0to3(ncv, 0:3))
+    ALLOCATE(b2stel_shi_rec_bal(ncv))
+    ALLOCATE(b2stcx_shi0to3(ncv, 0:3))
+    ALLOCATE(b2stcx_shi_bal(ncv))
+    ALLOCATE(b2srsm_shi0to3(ncv, 0:3))
+    ALLOCATE(b2srsm_shi_bal(ncv))
+    ALLOCATE(b2srdt_shi0to3(ncv, 0:3))
+    ALLOCATE(b2srdt_shi_bal(ncv))
+    ALLOCATE(b2srst_shi0to3(ncv, 0:3))
+    ALLOCATE(b2srst_shi_bal(ncv))
+    ALLOCATE(b2sihs_diaa0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_diaa_bal(ncv))
+    ALLOCATE(b2sihs_divua0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_divua_bal(ncv))
+    ALLOCATE(b2sihs_exba0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_exba_bal(ncv))
+    ALLOCATE(b2sihs_visa0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_visa_bal(ncv))
+    ALLOCATE(b2sihs_fraa0to3(ncv, 0:3))
+    ALLOCATE(b2sihs_fraa_bal(ncv))
+    b2stbr_phys_shi0to3 = 0.0_R8
+    b2stbr_phys_shi_bal = 0.0_R8
+    b2stbr_bas_shi0to3 = 0.0_R8
+    b2stbr_bas_shi_bal = 0.0_R8
+    b2stbr_first_flight_shi0to3 = 0.0_R8
+    b2stbr_first_flight_shi_bal = 0.0_R8
+    b2stbc_shi0to3 = 0.0_R8
+    b2stbc_shi_bal = 0.0_R8
+    b2stbm_shi0to3 = 0.0_R8
+    b2stbm_shi_bal = 0.0_R8
+    ext_shi0to3 = 0.0_R8
+    ext_shi_bal = 0.0_R8
+    b2stel_she_ion0to3 = 0.0_R8
+    b2stel_she_ion_bal = 0.0_R8
+    b2stel_she_rec0to3 = 0.0_R8
+    b2stel_she_rec_bal = 0.0_R8
+    b2stel_shi_ion0to3 = 0.0_R8
+    b2stel_shi_ion_bal = 0.0_R8
+    b2stel_shi_rec0to3 = 0.0_R8
+    b2stel_shi_rec_bal = 0.0_R8
+    b2stcx_shi0to3 = 0.0_R8
+    b2stcx_shi_bal = 0.0_R8
+    b2srsm_shi0to3 = 0.0_R8
+    b2srsm_shi_bal = 0.0_R8
+    b2srdt_shi0to3 = 0.0_R8
+    b2srdt_shi_bal = 0.0_R8
+    b2srst_shi0to3 = 0.0_R8
+    b2srst_shi_bal = 0.0_R8
+    b2sihs_diaa0to3 = 0.0_R8
+    b2sihs_diaa_bal = 0.0_R8
+    b2sihs_divua0to3 = 0.0_R8
+    b2sihs_divua_bal = 0.0_R8
+    b2sihs_exba0to3 = 0.0_R8
+    b2sihs_exba_bal = 0.0_R8
+    b2sihs_visa0to3 = 0.0_R8
+    b2sihs_visa_bal = 0.0_R8
+    b2sihs_fraa0to3 = 0.0_R8
+    b2sihs_fraa_bal = 0.0_R8
+!     Time-averaged quantities
+    ALLOCATE(fhi_32_av(nfc, 0:1))
+    ALLOCATE(fhi_52_av(nfc, 0:1))
+    ALLOCATE(fhi_cond_av(nfc, 0:1))
+    ALLOCATE(fhi_dia_av(nfc, 0:1))
+    ALLOCATE(fhi_ecrb_av(nfc, 0:1))
+    ALLOCATE(fhi_strange_av(nfc, 0:1))
+    ALLOCATE(fhi_pschused_av(nfc, 0:1))
+    ALLOCATE(fhi_inert_av(nfc, 0:1))
+    ALLOCATE(fhi_vispar_av(nfc, 0:1))
+    ALLOCATE(fhi_visper_av(nfc, 0:1))
+    ALLOCATE(fhi_visq_av(nfc, 0:1))
+    ALLOCATE(fhi_anml_av(nfc, 0:1))
+    ALLOCATE(fhi_kevis_av(nfc, 0:1))
+    ALLOCATE(b2stbr_phys_shi_bal_av(ncv))
+    ALLOCATE(b2stbr_bas_shi_bal_av(ncv))
+    ALLOCATE(b2stbr_first_flight_shi_bal_av(ncv))
+    ALLOCATE(b2stbc_shi_bal_av(ncv))
+    ALLOCATE(b2stbm_shi_bal_av(ncv))
+    ALLOCATE(ext_shi_bal_av(ncv))
+    ALLOCATE(b2stel_she_ion_bal_av(ncv))
+    ALLOCATE(b2stel_she_rec_bal_av(ncv))
     ALLOCATE(b2stel_shi_ion_bal_av(ncv))
     ALLOCATE(b2stel_shi_rec_bal_av(ncv))
     ALLOCATE(b2stcx_shi_bal_av(ncv))
@@ -615,11 +1346,21 @@ CONTAINS
     RETURN
   END SUBROUTINE ALLOC_B2MOD_BALANCE
 
+!  Differentiation of dealloc_b2mod_balance as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: fna_pinch:out fhe_32:out fhi_vispar:out
+!                fna_nanom:out fna_ch:out fhi_strange:out fhi_visq:out
+!                fhi_anml:out fna_pll:out fhi_visper:out fhe_thermj:out
+!                fhi_32:out fna_drift:out fhe_strange:out fhi_inert:out
+!                fhe_cond:out fhi_cond:out
 !
-  SUBROUTINE DEALLOC_B2MOD_BALANCE()
+  SUBROUTINE DEALLOC_B2MOD_BALANCE_DV(nbdirs)
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
+    INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(fna_pinch)) THEN
       RETURN
@@ -627,13 +1368,29 @@ CONTAINS
 !djm Jan2017 Flux arrays:
 !   ..Arrays for particle balance:
 !     Fluxes
+      IF (ALLOCATED(fna_pinchd)) THEN
+        DEALLOCATE(fna_pinchd)
+      END IF
       DEALLOCATE(fna_pinch)
+      IF (ALLOCATED(fna_plld)) THEN
+        DEALLOCATE(fna_plld)
+      END IF
       DEALLOCATE(fna_pll)
+      IF (ALLOCATED(fna_driftd)) THEN
+        DEALLOCATE(fna_driftd)
+      END IF
       DEALLOCATE(fna_drift)
+      IF (ALLOCATED(fna_chd)) THEN
+        DEALLOCATE(fna_chd)
+      END IF
       DEALLOCATE(fna_ch)
+      IF (ALLOCATED(fna_nanomd)) THEN
+        DEALLOCATE(fna_nanomd)
+      END IF
       DEALLOCATE(fna_nanom)
       DEALLOCATE(fna_panom)
       DEALLOCATE(fna_pschused)
+      DEALLOCATE(fna_tot)
 !     Sources
       DEALLOCATE(b2stbr_phys_sna0to1)
       DEALLOCATE(b2stbr_phys_sna_bal)
@@ -659,6 +1416,8 @@ CONTAINS
       DEALLOCATE(b2srdt_sna_bal)
       DEALLOCATE(b2srst_sna0to1)
       DEALLOCATE(b2srst_sna_bal)
+      DEALLOCATE(tot_sna0to1)
+      DEALLOCATE(tot_sna_bal)
 !     Time-averaged quantities
       DEALLOCATE(fna_pinch_av)
       DEALLOCATE(fna_pll_av)
@@ -667,6 +1426,7 @@ CONTAINS
       DEALLOCATE(fna_nanom_av)
       DEALLOCATE(fna_panom_av)
       DEALLOCATE(fna_pschused_av)
+      DEALLOCATE(fna_tot_av)
       DEALLOCATE(b2stbr_phys_sna_bal_av)
       DEALLOCATE(b2stbr_bas_sna_bal_av)
       DEALLOCATE(b2stbr_first_flight_sna_bal_av)
@@ -679,12 +1439,15 @@ CONTAINS
       DEALLOCATE(b2srsm_sna_bal_av)
       DEALLOCATE(b2srdt_sna_bal_av)
       DEALLOCATE(b2srst_sna_bal_av)
+      DEALLOCATE(tot_sna_bal_av)
       DEALLOCATE(resco_av)
 !   ..Arrays for momentum balance:
 !     Fluxes
       DEALLOCATE(fmo_flua)
       DEALLOCATE(fmo_cvsa)
+      DEALLOCATE(fmo_hybr)
       DEALLOCATE(fmo_b2nxfv)
+      DEALLOCATE(fmo_tot)
 !     Sources
       DEALLOCATE(b2stbr_phys_smo0to3)
       DEALLOCATE(b2stbr_phys_smo_bal)
@@ -710,12 +1473,28 @@ CONTAINS
       DEALLOCATE(b2srst_smo_bal)
       DEALLOCATE(b2sifr_smoch0to3)
       DEALLOCATE(b2sifr_smoch_bal)
-      DEALLOCATE(b2sifr_smotf0to3)
-      DEALLOCATE(b2sifr_smotf_bal)
+      DEALLOCATE(b2sifr_smotf_ehxp0to3)
+      DEALLOCATE(b2sifr_smotf_ehxp_bal)
+      DEALLOCATE(b2sifr_smotf_cthe0to3)
+      DEALLOCATE(b2sifr_smotf_cthe_bal)
+      DEALLOCATE(b2sifr_smotf_cthi0to3)
+      DEALLOCATE(b2sifr_smotf_cthi_bal)
+      DEALLOCATE(b2sifr_smofrea0to3)
+      DEALLOCATE(b2sifr_smofrea_bal)
+      DEALLOCATE(b2sifr_smofria0to3)
+      DEALLOCATE(b2sifr_smofria_bal)
+      DEALLOCATE(b2sifr_smotfea0to3)
+      DEALLOCATE(b2sifr_smotfea_bal)
+      DEALLOCATE(b2sifr_smotfia0to3)
+      DEALLOCATE(b2sifr_smotfia_bal)
       DEALLOCATE(b2siav_smovh0to3)
       DEALLOCATE(b2siav_smovh_bal)
       DEALLOCATE(b2siav_smovv0to3)
       DEALLOCATE(b2siav_smovv_bal)
+      DEALLOCATE(b2siav_smovi0to3)
+!som 13.08.21
+      DEALLOCATE(b2siav_smovi_bal)
+!som 13.08.21
       DEALLOCATE(b2sicf_smo0to3)
       DEALLOCATE(b2sicf_smo_bal)
       DEALLOCATE(b2sian_smo0to3)
@@ -726,12 +1505,26 @@ CONTAINS
       DEALLOCATE(b2nxdv_smo_bal)
       DEALLOCATE(b2sigp_smogp0to3)
       DEALLOCATE(b2sigp_smogp_bal)
+      DEALLOCATE(b2sigp_smogpi0to3)
+      DEALLOCATE(b2sigp_smogpi_bal)
+      DEALLOCATE(b2sigp_smogpe0to3)
+      DEALLOCATE(b2sigp_smogpe_bal)
+      DEALLOCATE(b2sigp_smogpgr0to3)
+      DEALLOCATE(b2sigp_smogpgr_bal)
       DEALLOCATE(b2sigp_pstat0to3)
       DEALLOCATE(b2sigp_pstat_bal)
+      DEALLOCATE(b2sigp_pstati0to3)
+      DEALLOCATE(b2sigp_pstati_bal)
+      DEALLOCATE(b2sigp_pstate0to3)
+      DEALLOCATE(b2sigp_pstate_bal)
+      DEALLOCATE(tot_smo0to3)
+      DEALLOCATE(tot_smo_bal)
 !     Time-averaged quantities
       DEALLOCATE(fmo_flua_av)
       DEALLOCATE(fmo_cvsa_av)
+      DEALLOCATE(fmo_hybr_av)
       DEALLOCATE(fmo_b2nxfv_av)
+      DEALLOCATE(fmo_tot_av)
       DEALLOCATE(b2stbr_phys_smo_bal_av)
       DEALLOCATE(b2stbr_bas_smo_bal_av)
       DEALLOCATE(b2stbc_smo_bal_av)
@@ -744,15 +1537,420 @@ CONTAINS
       DEALLOCATE(b2srdt_smo_bal_av)
       DEALLOCATE(b2srst_smo_bal_av)
       DEALLOCATE(b2sifr_smoch_bal_av)
-      DEALLOCATE(b2sifr_smotf_bal_av)
+      DEALLOCATE(b2sifr_smotf_ehxp_bal_av)
+      DEALLOCATE(b2sifr_smotf_cthe_bal_av)
+      DEALLOCATE(b2sifr_smotf_cthi_bal_av)
+      DEALLOCATE(b2sifr_smofrea_bal_av)
+      DEALLOCATE(b2sifr_smofria_bal_av)
+      DEALLOCATE(b2sifr_smotfea_bal_av)
+      DEALLOCATE(b2sifr_smotfia_bal_av)
       DEALLOCATE(b2siav_smovh_bal_av)
       DEALLOCATE(b2siav_smovv_bal_av)
+      DEALLOCATE(b2siav_smovi_bal_av)
+!som 13.08.21
       DEALLOCATE(b2sicf_smo_bal_av)
       DEALLOCATE(b2sian_smo_bal_av)
 !srv 25.09.17
       DEALLOCATE(b2nxdv_smo_bal_av)
       DEALLOCATE(b2sigp_smogp_bal_av)
+      DEALLOCATE(b2sigp_smogpi_bal_av)
+      DEALLOCATE(b2sigp_smogpe_bal_av)
+      DEALLOCATE(b2sigp_smogpgr_bal_av)
       DEALLOCATE(b2sigp_pstat_bal_av)
+      DEALLOCATE(b2sigp_pstati_bal_av)
+      DEALLOCATE(b2sigp_pstate_bal_av)
+      DEALLOCATE(tot_smo_bal_av)
+      DEALLOCATE(resmo_av)
+!   ..Arrays for electron heat balance:
+!     Fluxes
+      IF (ALLOCATED(fhe_32d)) THEN
+        DEALLOCATE(fhe_32d)
+      END IF
+      DEALLOCATE(fhe_32)
+      DEALLOCATE(fhe_52)
+      IF (ALLOCATED(fhe_thermjd)) THEN
+        DEALLOCATE(fhe_thermjd)
+      END IF
+      DEALLOCATE(fhe_thermj)
+      IF (ALLOCATED(fhe_condd)) THEN
+        DEALLOCATE(fhe_condd)
+      END IF
+      DEALLOCATE(fhe_cond)
+      DEALLOCATE(fhe_dia)
+      DEALLOCATE(fhe_ecrb)
+      IF (ALLOCATED(fhe_stranged)) THEN
+        DEALLOCATE(fhe_stranged)
+      END IF
+      DEALLOCATE(fhe_strange)
+      DEALLOCATE(fhe_pschused)
+!     Sources
+      DEALLOCATE(b2stbr_phys_she0to3)
+      DEALLOCATE(b2stbr_phys_she_bal)
+      DEALLOCATE(b2stbr_bas_she0to3)
+      DEALLOCATE(b2stbr_bas_she_bal)
+      DEALLOCATE(b2stbr_first_flight_she0to3)
+      DEALLOCATE(b2stbr_first_flight_she_bal)
+      DEALLOCATE(b2stbc_she0to3)
+      DEALLOCATE(b2stbc_she_bal)
+      DEALLOCATE(b2stbm_she0to3)
+      DEALLOCATE(b2stbm_she_bal)
+      DEALLOCATE(ext_she0to3)
+      DEALLOCATE(ext_she_bal)
+      DEALLOCATE(b2stel_she0to3)
+      DEALLOCATE(b2stel_she_bal)
+      DEALLOCATE(b2srsm_she0to3)
+      DEALLOCATE(b2srsm_she_bal)
+      DEALLOCATE(b2srdt_she0to3)
+      DEALLOCATE(b2srdt_she_bal)
+      DEALLOCATE(b2srst_she0to3)
+      DEALLOCATE(b2srst_she_bal)
+      DEALLOCATE(b2sihs_diae0to3)
+      DEALLOCATE(b2sihs_diae_bal)
+      DEALLOCATE(b2sihs_divue0to3)
+      DEALLOCATE(b2sihs_divue_bal)
+      DEALLOCATE(b2sihs_exbe0to3)
+      DEALLOCATE(b2sihs_exbe_bal)
+      DEALLOCATE(b2sihs_joule0to3)
+      DEALLOCATE(b2sihs_joule_bal)
+      DEALLOCATE(b2npht_shei_bal)
+!     Time-averaged quantities
+      DEALLOCATE(fhe_32_av)
+      DEALLOCATE(fhe_52_av)
+      DEALLOCATE(fhe_thermj_av)
+      DEALLOCATE(fhe_cond_av)
+      DEALLOCATE(fhe_dia_av)
+      DEALLOCATE(fhe_ecrb_av)
+      DEALLOCATE(fhe_strange_av)
+      DEALLOCATE(fhe_pschused_av)
+      DEALLOCATE(b2stbr_phys_she_bal_av)
+      DEALLOCATE(b2stbr_bas_she_bal_av)
+      DEALLOCATE(b2stbr_first_flight_she_bal_av)
+      DEALLOCATE(b2stbc_she_bal_av)
+      DEALLOCATE(b2stbm_she_bal_av)
+      DEALLOCATE(ext_she_bal_av)
+      DEALLOCATE(b2stel_she_bal_av)
+      DEALLOCATE(b2srsm_she_bal_av)
+      DEALLOCATE(b2srdt_she_bal_av)
+      DEALLOCATE(b2srst_she_bal_av)
+      DEALLOCATE(b2sihs_diae_bal_av)
+      DEALLOCATE(b2sihs_divue_bal_av)
+      DEALLOCATE(b2sihs_exbe_bal_av)
+      DEALLOCATE(b2sihs_joule_bal_av)
+      DEALLOCATE(b2npht_shei_bal_av)
+      DEALLOCATE(reshe_av)
+!   ..Arrays for ion heat balance:
+!     Fluxes
+      IF (ALLOCATED(fhi_32d)) THEN
+        DEALLOCATE(fhi_32d)
+      END IF
+      DEALLOCATE(fhi_32)
+      DEALLOCATE(fhi_52)
+      IF (ALLOCATED(fhi_condd)) THEN
+        DEALLOCATE(fhi_condd)
+      END IF
+      DEALLOCATE(fhi_cond)
+      DEALLOCATE(fhi_dia)
+      DEALLOCATE(fhi_ecrb)
+      IF (ALLOCATED(fhi_stranged)) THEN
+        DEALLOCATE(fhi_stranged)
+      END IF
+      DEALLOCATE(fhi_strange)
+      DEALLOCATE(fhi_pschused)
+      IF (ALLOCATED(fhi_inertd)) THEN
+        DEALLOCATE(fhi_inertd)
+      END IF
+      DEALLOCATE(fhi_inert)
+      IF (ALLOCATED(fhi_vispard)) THEN
+        DEALLOCATE(fhi_vispard)
+      END IF
+      DEALLOCATE(fhi_vispar)
+      IF (ALLOCATED(fhi_visperd)) THEN
+        DEALLOCATE(fhi_visperd)
+      END IF
+      DEALLOCATE(fhi_visper)
+      IF (ALLOCATED(fhi_visqd)) THEN
+        DEALLOCATE(fhi_visqd)
+      END IF
+      DEALLOCATE(fhi_visq)
+      IF (ALLOCATED(fhi_anmld)) THEN
+        DEALLOCATE(fhi_anmld)
+      END IF
+      DEALLOCATE(fhi_anml)
+      DEALLOCATE(fhi_kevis)
+!     Sources
+      DEALLOCATE(b2stbr_phys_shi0to3)
+      DEALLOCATE(b2stbr_phys_shi_bal)
+      DEALLOCATE(b2stbr_bas_shi0to3)
+      DEALLOCATE(b2stbr_bas_shi_bal)
+      DEALLOCATE(b2stbr_first_flight_shi0to3)
+      DEALLOCATE(b2stbr_first_flight_shi_bal)
+      DEALLOCATE(b2stbc_shi0to3)
+      DEALLOCATE(b2stbc_shi_bal)
+      DEALLOCATE(b2stbm_shi0to3)
+      DEALLOCATE(b2stbm_shi_bal)
+      DEALLOCATE(ext_shi0to3)
+      DEALLOCATE(ext_shi_bal)
+      DEALLOCATE(b2stel_she_ion0to3)
+      DEALLOCATE(b2stel_she_ion_bal)
+      DEALLOCATE(b2stel_she_rec0to3)
+      DEALLOCATE(b2stel_she_rec_bal)
+      DEALLOCATE(b2stel_shi_ion0to3)
+      DEALLOCATE(b2stel_shi_ion_bal)
+      DEALLOCATE(b2stel_shi_rec0to3)
+      DEALLOCATE(b2stel_shi_rec_bal)
+      DEALLOCATE(b2stcx_shi0to3)
+      DEALLOCATE(b2stcx_shi_bal)
+      DEALLOCATE(b2srsm_shi0to3)
+      DEALLOCATE(b2srsm_shi_bal)
+      DEALLOCATE(b2srdt_shi0to3)
+      DEALLOCATE(b2srdt_shi_bal)
+      DEALLOCATE(b2srst_shi0to3)
+      DEALLOCATE(b2srst_shi_bal)
+      DEALLOCATE(b2sihs_diaa0to3)
+      DEALLOCATE(b2sihs_diaa_bal)
+      DEALLOCATE(b2sihs_divua0to3)
+      DEALLOCATE(b2sihs_divua_bal)
+      DEALLOCATE(b2sihs_exba0to3)
+      DEALLOCATE(b2sihs_exba_bal)
+      DEALLOCATE(b2sihs_visa0to3)
+      DEALLOCATE(b2sihs_visa_bal)
+      DEALLOCATE(b2sihs_fraa0to3)
+      DEALLOCATE(b2sihs_fraa_bal)
+!     Time-averaged quantities
+      DEALLOCATE(fhi_32_av)
+      DEALLOCATE(fhi_52_av)
+      DEALLOCATE(fhi_cond_av)
+      DEALLOCATE(fhi_dia_av)
+      DEALLOCATE(fhi_ecrb_av)
+      DEALLOCATE(fhi_strange_av)
+      DEALLOCATE(fhi_pschused_av)
+      DEALLOCATE(fhi_inert_av)
+      DEALLOCATE(fhi_vispar_av)
+      DEALLOCATE(fhi_visper_av)
+      DEALLOCATE(fhi_visq_av)
+      DEALLOCATE(fhi_anml_av)
+      DEALLOCATE(fhi_kevis_av)
+      DEALLOCATE(b2stbr_phys_shi_bal_av)
+      DEALLOCATE(b2stbr_bas_shi_bal_av)
+      DEALLOCATE(b2stbr_first_flight_shi_bal_av)
+      DEALLOCATE(b2stbc_shi_bal_av)
+      DEALLOCATE(b2stbm_shi_bal_av)
+      DEALLOCATE(ext_shi_bal_av)
+      DEALLOCATE(b2stel_she_ion_bal_av)
+      DEALLOCATE(b2stel_she_rec_bal_av)
+      DEALLOCATE(b2stel_shi_ion_bal_av)
+      DEALLOCATE(b2stel_shi_rec_bal_av)
+      DEALLOCATE(b2stcx_shi_bal_av)
+      DEALLOCATE(b2srsm_shi_bal_av)
+      DEALLOCATE(b2srdt_shi_bal_av)
+      DEALLOCATE(b2srst_shi_bal_av)
+      DEALLOCATE(b2sihs_diaa_bal_av)
+      DEALLOCATE(b2sihs_divua_bal_av)
+      DEALLOCATE(b2sihs_exba_bal_av)
+      DEALLOCATE(b2sihs_visa_bal_av)
+      DEALLOCATE(b2sihs_fraa_bal_av)
+      DEALLOCATE(reshi_av)
+!     Additional averaged quantities
+      DEALLOCATE(ne_av)
+      DEALLOCATE(na_av)
+      DEALLOCATE(ua_av)
+      DEALLOCATE(po_av)
+      DEALLOCATE(te_av)
+      DEALLOCATE(ti_av)
+!
+      RETURN
+    END IF
+  END SUBROUTINE DEALLOC_B2MOD_BALANCE_DV
+
+!
+  SUBROUTINE DEALLOC_B2MOD_BALANCE()
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTRINSIC ALLOCATED
+!
+    IF (.NOT.ALLOCATED(fna_pinch)) THEN
+      RETURN
+    ELSE
+!djm Jan2017 Flux arrays:
+!   ..Arrays for particle balance:
+!     Fluxes
+      DEALLOCATE(fna_pinch)
+      DEALLOCATE(fna_pll)
+      DEALLOCATE(fna_drift)
+      DEALLOCATE(fna_ch)
+      DEALLOCATE(fna_nanom)
+      DEALLOCATE(fna_panom)
+      DEALLOCATE(fna_pschused)
+      DEALLOCATE(fna_tot)
+!     Sources
+      DEALLOCATE(b2stbr_phys_sna0to1)
+      DEALLOCATE(b2stbr_phys_sna_bal)
+      DEALLOCATE(b2stbr_bas_sna0to1)
+      DEALLOCATE(b2stbr_bas_sna_bal)
+      DEALLOCATE(b2stbr_first_flight_sna0to1)
+      DEALLOCATE(b2stbr_first_flight_sna_bal)
+      DEALLOCATE(b2stbc_sna0to1)
+      DEALLOCATE(b2stbc_sna_bal)
+      DEALLOCATE(b2stbm_sna0to1)
+      DEALLOCATE(b2stbm_sna_bal)
+      DEALLOCATE(ext_sna0to1)
+      DEALLOCATE(ext_sna_bal)
+      DEALLOCATE(b2stel_sna_ion0to1)
+      DEALLOCATE(b2stel_sna_ion_bal)
+      DEALLOCATE(b2stel_sna_rec0to1)
+      DEALLOCATE(b2stel_sna_rec_bal)
+      DEALLOCATE(b2stcx_sna0to1)
+      DEALLOCATE(b2stcx_sna_bal)
+      DEALLOCATE(b2srsm_sna0to1)
+      DEALLOCATE(b2srsm_sna_bal)
+      DEALLOCATE(b2srdt_sna0to1)
+      DEALLOCATE(b2srdt_sna_bal)
+      DEALLOCATE(b2srst_sna0to1)
+      DEALLOCATE(b2srst_sna_bal)
+      DEALLOCATE(tot_sna0to1)
+      DEALLOCATE(tot_sna_bal)
+!     Time-averaged quantities
+      DEALLOCATE(fna_pinch_av)
+      DEALLOCATE(fna_pll_av)
+      DEALLOCATE(fna_drift_av)
+      DEALLOCATE(fna_ch_av)
+      DEALLOCATE(fna_nanom_av)
+      DEALLOCATE(fna_panom_av)
+      DEALLOCATE(fna_pschused_av)
+      DEALLOCATE(fna_tot_av)
+      DEALLOCATE(b2stbr_phys_sna_bal_av)
+      DEALLOCATE(b2stbr_bas_sna_bal_av)
+      DEALLOCATE(b2stbr_first_flight_sna_bal_av)
+      DEALLOCATE(b2stbc_sna_bal_av)
+      DEALLOCATE(b2stbm_sna_bal_av)
+      DEALLOCATE(ext_sna_bal_av)
+      DEALLOCATE(b2stel_sna_ion_bal_av)
+      DEALLOCATE(b2stel_sna_rec_bal_av)
+      DEALLOCATE(b2stcx_sna_bal_av)
+      DEALLOCATE(b2srsm_sna_bal_av)
+      DEALLOCATE(b2srdt_sna_bal_av)
+      DEALLOCATE(b2srst_sna_bal_av)
+      DEALLOCATE(tot_sna_bal_av)
+      DEALLOCATE(resco_av)
+!   ..Arrays for momentum balance:
+!     Fluxes
+      DEALLOCATE(fmo_flua)
+      DEALLOCATE(fmo_cvsa)
+      DEALLOCATE(fmo_hybr)
+      DEALLOCATE(fmo_b2nxfv)
+      DEALLOCATE(fmo_tot)
+!     Sources
+      DEALLOCATE(b2stbr_phys_smo0to3)
+      DEALLOCATE(b2stbr_phys_smo_bal)
+      DEALLOCATE(b2stbr_bas_smo0to3)
+      DEALLOCATE(b2stbr_bas_smo_bal)
+      DEALLOCATE(b2stbc_smo0to3)
+      DEALLOCATE(b2stbc_smo_bal)
+      DEALLOCATE(b2stbm_smo0to3)
+      DEALLOCATE(b2stbm_smo_bal)
+      DEALLOCATE(ext_smo0to3)
+      DEALLOCATE(ext_smo_bal)
+      DEALLOCATE(b2stel_smq_ion0to3)
+      DEALLOCATE(b2stel_smq_ion_bal)
+      DEALLOCATE(b2stel_smq_rec0to3)
+      DEALLOCATE(b2stel_smq_rec_bal)
+      DEALLOCATE(b2stcx_smq0to3)
+      DEALLOCATE(b2stcx_smq_bal)
+      DEALLOCATE(b2srsm_smo0to3)
+      DEALLOCATE(b2srsm_smo_bal)
+      DEALLOCATE(b2srdt_smo0to3)
+      DEALLOCATE(b2srdt_smo_bal)
+      DEALLOCATE(b2srst_smo0to3)
+      DEALLOCATE(b2srst_smo_bal)
+      DEALLOCATE(b2sifr_smoch0to3)
+      DEALLOCATE(b2sifr_smoch_bal)
+      DEALLOCATE(b2sifr_smotf_ehxp0to3)
+      DEALLOCATE(b2sifr_smotf_ehxp_bal)
+      DEALLOCATE(b2sifr_smotf_cthe0to3)
+      DEALLOCATE(b2sifr_smotf_cthe_bal)
+      DEALLOCATE(b2sifr_smotf_cthi0to3)
+      DEALLOCATE(b2sifr_smotf_cthi_bal)
+      DEALLOCATE(b2sifr_smofrea0to3)
+      DEALLOCATE(b2sifr_smofrea_bal)
+      DEALLOCATE(b2sifr_smofria0to3)
+      DEALLOCATE(b2sifr_smofria_bal)
+      DEALLOCATE(b2sifr_smotfea0to3)
+      DEALLOCATE(b2sifr_smotfea_bal)
+      DEALLOCATE(b2sifr_smotfia0to3)
+      DEALLOCATE(b2sifr_smotfia_bal)
+      DEALLOCATE(b2siav_smovh0to3)
+      DEALLOCATE(b2siav_smovh_bal)
+      DEALLOCATE(b2siav_smovv0to3)
+      DEALLOCATE(b2siav_smovv_bal)
+      DEALLOCATE(b2siav_smovi0to3)
+!som 13.08.21
+      DEALLOCATE(b2siav_smovi_bal)
+!som 13.08.21
+      DEALLOCATE(b2sicf_smo0to3)
+      DEALLOCATE(b2sicf_smo_bal)
+      DEALLOCATE(b2sian_smo0to3)
+!srv 25.09.17
+      DEALLOCATE(b2sian_smo_bal)
+!srv 25.09.17
+      DEALLOCATE(b2nxdv_smo0to3)
+      DEALLOCATE(b2nxdv_smo_bal)
+      DEALLOCATE(b2sigp_smogp0to3)
+      DEALLOCATE(b2sigp_smogp_bal)
+      DEALLOCATE(b2sigp_smogpi0to3)
+      DEALLOCATE(b2sigp_smogpi_bal)
+      DEALLOCATE(b2sigp_smogpe0to3)
+      DEALLOCATE(b2sigp_smogpe_bal)
+      DEALLOCATE(b2sigp_smogpgr0to3)
+      DEALLOCATE(b2sigp_smogpgr_bal)
+      DEALLOCATE(b2sigp_pstat0to3)
+      DEALLOCATE(b2sigp_pstat_bal)
+      DEALLOCATE(b2sigp_pstati0to3)
+      DEALLOCATE(b2sigp_pstati_bal)
+      DEALLOCATE(b2sigp_pstate0to3)
+      DEALLOCATE(b2sigp_pstate_bal)
+      DEALLOCATE(tot_smo0to3)
+      DEALLOCATE(tot_smo_bal)
+!     Time-averaged quantities
+      DEALLOCATE(fmo_flua_av)
+      DEALLOCATE(fmo_cvsa_av)
+      DEALLOCATE(fmo_hybr_av)
+      DEALLOCATE(fmo_b2nxfv_av)
+      DEALLOCATE(fmo_tot_av)
+      DEALLOCATE(b2stbr_phys_smo_bal_av)
+      DEALLOCATE(b2stbr_bas_smo_bal_av)
+      DEALLOCATE(b2stbc_smo_bal_av)
+      DEALLOCATE(b2stbm_smo_bal_av)
+      DEALLOCATE(ext_smo_bal_av)
+      DEALLOCATE(b2stel_smq_ion_bal_av)
+      DEALLOCATE(b2stel_smq_rec_bal_av)
+      DEALLOCATE(b2stcx_smq_bal_av)
+      DEALLOCATE(b2srsm_smo_bal_av)
+      DEALLOCATE(b2srdt_smo_bal_av)
+      DEALLOCATE(b2srst_smo_bal_av)
+      DEALLOCATE(b2sifr_smoch_bal_av)
+      DEALLOCATE(b2sifr_smotf_ehxp_bal_av)
+      DEALLOCATE(b2sifr_smotf_cthe_bal_av)
+      DEALLOCATE(b2sifr_smotf_cthi_bal_av)
+      DEALLOCATE(b2sifr_smofrea_bal_av)
+      DEALLOCATE(b2sifr_smofria_bal_av)
+      DEALLOCATE(b2sifr_smotfea_bal_av)
+      DEALLOCATE(b2sifr_smotfia_bal_av)
+      DEALLOCATE(b2siav_smovh_bal_av)
+      DEALLOCATE(b2siav_smovv_bal_av)
+      DEALLOCATE(b2siav_smovi_bal_av)
+!som 13.08.21
+      DEALLOCATE(b2sicf_smo_bal_av)
+      DEALLOCATE(b2sian_smo_bal_av)
+!srv 25.09.17
+      DEALLOCATE(b2nxdv_smo_bal_av)
+      DEALLOCATE(b2sigp_smogp_bal_av)
+      DEALLOCATE(b2sigp_smogpi_bal_av)
+      DEALLOCATE(b2sigp_smogpe_bal_av)
+      DEALLOCATE(b2sigp_smogpgr_bal_av)
+      DEALLOCATE(b2sigp_pstat_bal_av)
+      DEALLOCATE(b2sigp_pstati_bal_av)
+      DEALLOCATE(b2sigp_pstate_bal_av)
+      DEALLOCATE(tot_smo_bal_av)
       DEALLOCATE(resmo_av)
 !   ..Arrays for electron heat balance:
 !     Fluxes
@@ -847,6 +2045,10 @@ CONTAINS
       DEALLOCATE(b2stbm_shi_bal)
       DEALLOCATE(ext_shi0to3)
       DEALLOCATE(ext_shi_bal)
+      DEALLOCATE(b2stel_she_ion0to3)
+      DEALLOCATE(b2stel_she_ion_bal)
+      DEALLOCATE(b2stel_she_rec0to3)
+      DEALLOCATE(b2stel_she_rec_bal)
       DEALLOCATE(b2stel_shi_ion0to3)
       DEALLOCATE(b2stel_shi_ion_bal)
       DEALLOCATE(b2stel_shi_rec0to3)
@@ -889,6 +2091,8 @@ CONTAINS
       DEALLOCATE(b2stbc_shi_bal_av)
       DEALLOCATE(b2stbm_shi_bal_av)
       DEALLOCATE(ext_shi_bal_av)
+      DEALLOCATE(b2stel_she_ion_bal_av)
+      DEALLOCATE(b2stel_she_rec_bal_av)
       DEALLOCATE(b2stel_shi_ion_bal_av)
       DEALLOCATE(b2stel_shi_rec_bal_av)
       DEALLOCATE(b2stcx_shi_bal_av)
@@ -914,40 +2118,114 @@ CONTAINS
   END SUBROUTINE DEALLOC_B2MOD_BALANCE
 
 !
-  SUBROUTINE ALLOC_B2MOD_EIRENE_SOURCES(ncv, nsd, nstrad)
+  SUBROUTINE ALLOC_B2MOD_EIRENE_SOURCES(ncv, nsd, natmd, nmold, niond, &
+&   nstrad)
     USE B2MOD_EIRDIAG
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: ncv, nsd, nstrad
+    INTEGER :: ncv, nsd, natmd, nmold, niond, nstrad
 !   ..procedures
     INTRINSIC SIZE
 !
 !djm Jan2017 Eirene arrays for particle balance:
+    ALLOCATE(eirene_mc_pael_sne0to1(ncv, 0:1, 1:nstrad))
     ALLOCATE(eirene_mc_papl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_pmel_sne0to1(ncv, 0:1, 1:nstrad))
     ALLOCATE(eirene_mc_pmpl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pipl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pppl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_core_sna0to1(ncv, 0:1, 0:nsd-1))
+    ALLOCATE(eirene_mc_pael_sne_bal(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_papl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_pmel_sne_bal(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_pmpl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pipl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pppl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
+    IF (natmd .GT. 0) THEN
+      ALLOCATE(eirene_mc_paat_sna_bal(ncv, natmd, 1:nstrad))
+      ALLOCATE(eirene_mc_pmat_sna_bal(ncv, natmd, 1:nstrad))
+      ALLOCATE(eirene_mc_piat_sna_bal(ncv, natmd, 1:nstrad))
+    ELSE
+      ALLOCATE(eirene_mc_paat_sna_bal(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_pmat_sna_bal(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_piat_sna_bal(ncv, 1, 1:nstrad))
+    END IF
+    IF (nmold .GT. 0) THEN
+      ALLOCATE(eirene_mc_paml_sna_bal(ncv, nmold, 1:nstrad))
+      ALLOCATE(eirene_mc_pmml_sna_bal(ncv, nmold, 1:nstrad))
+      ALLOCATE(eirene_mc_piml_sna_bal(ncv, nmold, 1:nstrad))
+    ELSE
+      ALLOCATE(eirene_mc_paml_sna_bal(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_pmml_sna_bal(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_piml_sna_bal(ncv, 1, 1:nstrad))
+    END IF
+    IF (niond .GT. 0) THEN
+      ALLOCATE(eirene_mc_paio_sna_bal(ncv, niond, 1:nstrad))
+      ALLOCATE(eirene_mc_pmio_sna_bal(ncv, niond, 1:nstrad))
+      ALLOCATE(eirene_mc_piio_sna_bal(ncv, niond, 1:nstrad))
+    ELSE
+      ALLOCATE(eirene_mc_paio_sna_bal(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_pmio_sna_bal(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_piio_sna_bal(ncv, 1, 1:nstrad))
+    END IF
     ALLOCATE(eirene_mc_core_sna_bal(ncv, 0:nsd-1))
+    eirene_mc_pael_sne0to1 = 0.0_R8
     eirene_mc_papl_sna0to1 = 0.0_R8
+    eirene_mc_pmel_sne0to1 = 0.0_R8
     eirene_mc_pmpl_sna0to1 = 0.0_R8
     eirene_mc_pipl_sna0to1 = 0.0_R8
     eirene_mc_pppl_sna0to1 = 0.0_R8
     eirene_mc_core_sna0to1 = 0.0_R8
+    eirene_mc_pael_sne_bal = 0.0_R8
     eirene_mc_papl_sna_bal = 0.0_R8
+    eirene_mc_pmel_sne_bal = 0.0_R8
     eirene_mc_pmpl_sna_bal = 0.0_R8
     eirene_mc_pipl_sna_bal = 0.0_R8
     eirene_mc_pppl_sna_bal = 0.0_R8
+    eirene_mc_paat_sna_bal = 0.0_R8
+    eirene_mc_pmat_sna_bal = 0.0_R8
+    eirene_mc_piat_sna_bal = 0.0_R8
+    eirene_mc_paml_sna_bal = 0.0_R8
+    eirene_mc_pmml_sna_bal = 0.0_R8
+    eirene_mc_piml_sna_bal = 0.0_R8
+    eirene_mc_paio_sna_bal = 0.0_R8
+    eirene_mc_pmio_sna_bal = 0.0_R8
+    eirene_mc_piio_sna_bal = 0.0_R8
     eirene_mc_core_sna_bal = 0.0_R8
 !djm Jun2017 Time-averaged arrays for particle balance:
+    ALLOCATE(eirene_mc_pael_sne_bal_av(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_papl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_pmel_sne_bal_av(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_pmpl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pipl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pppl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
+    IF (natmd .GT. 0) THEN
+      ALLOCATE(eirene_mc_paat_sna_bal_av(ncv, natmd, 1:nstrad))
+      ALLOCATE(eirene_mc_pmat_sna_bal_av(ncv, natmd, 1:nstrad))
+      ALLOCATE(eirene_mc_piat_sna_bal_av(ncv, natmd, 1:nstrad))
+    ELSE
+      ALLOCATE(eirene_mc_paat_sna_bal_av(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_pmat_sna_bal_av(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_piat_sna_bal_av(ncv, 1, 1:nstrad))
+    END IF
+    IF (nmold .GT. 0) THEN
+      ALLOCATE(eirene_mc_paml_sna_bal_av(ncv, nmold, 1:nstrad))
+      ALLOCATE(eirene_mc_pmml_sna_bal_av(ncv, nmold, 1:nstrad))
+      ALLOCATE(eirene_mc_piml_sna_bal_av(ncv, nmold, 1:nstrad))
+    ELSE
+      ALLOCATE(eirene_mc_paml_sna_bal_av(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_pmml_sna_bal_av(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_piml_sna_bal_av(ncv, 1, 1:nstrad))
+    END IF
+    IF (niond .GT. 0) THEN
+      ALLOCATE(eirene_mc_paio_sna_bal_av(ncv, niond, 1:nstrad))
+      ALLOCATE(eirene_mc_pmio_sna_bal_av(ncv, niond, 1:nstrad))
+      ALLOCATE(eirene_mc_piio_sna_bal_av(ncv, niond, 1:nstrad))
+    ELSE
+      ALLOCATE(eirene_mc_paio_sna_bal_av(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_pmio_sna_bal_av(ncv, 1, 1:nstrad))
+      ALLOCATE(eirene_mc_piio_sna_bal_av(ncv, 1, 1:nstrad))
+    END IF
     ALLOCATE(eirene_mc_core_sna_bal_av(ncv, 0:nsd-1))
 !djm Jan2017 Eirene arrays for momentum balance:
     ALLOCATE(eirene_mc_mapl_smo0to3(ncv, 0:3, 0:nsd-1, 1:nstrad))
@@ -1063,20 +2341,44 @@ CONTAINS
       RETURN
     ELSE
 !djm Jan2017 Eirene arrays for particle balance:
+      DEALLOCATE(eirene_mc_pael_sne0to1)
       DEALLOCATE(eirene_mc_papl_sna0to1)
+      DEALLOCATE(eirene_mc_pmel_sne0to1)
       DEALLOCATE(eirene_mc_pmpl_sna0to1)
       DEALLOCATE(eirene_mc_pipl_sna0to1)
       DEALLOCATE(eirene_mc_pppl_sna0to1)
       DEALLOCATE(eirene_mc_core_sna0to1)
+      DEALLOCATE(eirene_mc_pael_sne_bal)
       DEALLOCATE(eirene_mc_papl_sna_bal)
+      DEALLOCATE(eirene_mc_pmel_sne_bal)
       DEALLOCATE(eirene_mc_pmpl_sna_bal)
       DEALLOCATE(eirene_mc_pipl_sna_bal)
       DEALLOCATE(eirene_mc_pppl_sna_bal)
+      DEALLOCATE(eirene_mc_paat_sna_bal)
+      DEALLOCATE(eirene_mc_pmat_sna_bal)
+      DEALLOCATE(eirene_mc_piat_sna_bal)
+      DEALLOCATE(eirene_mc_paml_sna_bal)
+      DEALLOCATE(eirene_mc_pmml_sna_bal)
+      DEALLOCATE(eirene_mc_piml_sna_bal)
+      DEALLOCATE(eirene_mc_paio_sna_bal)
+      DEALLOCATE(eirene_mc_pmio_sna_bal)
+      DEALLOCATE(eirene_mc_piio_sna_bal)
       DEALLOCATE(eirene_mc_core_sna_bal)
+      DEALLOCATE(eirene_mc_pael_sne_bal_av)
       DEALLOCATE(eirene_mc_papl_sna_bal_av)
+      DEALLOCATE(eirene_mc_pmel_sne_bal_av)
       DEALLOCATE(eirene_mc_pmpl_sna_bal_av)
       DEALLOCATE(eirene_mc_pipl_sna_bal_av)
       DEALLOCATE(eirene_mc_pppl_sna_bal_av)
+      DEALLOCATE(eirene_mc_paat_sna_bal_av)
+      DEALLOCATE(eirene_mc_pmat_sna_bal_av)
+      DEALLOCATE(eirene_mc_piat_sna_bal_av)
+      DEALLOCATE(eirene_mc_paml_sna_bal_av)
+      DEALLOCATE(eirene_mc_pmml_sna_bal_av)
+      DEALLOCATE(eirene_mc_piml_sna_bal_av)
+      DEALLOCATE(eirene_mc_paio_sna_bal_av)
+      DEALLOCATE(eirene_mc_pmio_sna_bal_av)
+      DEALLOCATE(eirene_mc_piio_sna_bal_av)
       DEALLOCATE(eirene_mc_core_sna_bal_av)
 !djm Jan2017 Eirene arrays for momentum balance:
       DEALLOCATE(eirene_mc_mapl_smo0to3)
@@ -1182,20 +2484,23 @@ CONTAINS
 &       b2srdt_sna0to1(icv, 1, isb)*nb(icv)
       b2srst_sna_bal(icv, isb) = b2srst_sna0to1(icv, 0, isb) + &
 &       b2srst_sna0to1(icv, 1, isb)*nb(icv)
+      tot_sna_bal(icv, isb) = tot_sna0to1(icv, 0, isb) + tot_sna0to1(icv&
+&       , 1, isb)*nb(icv)
     END DO
     RETURN
   END SUBROUTINE UPDATE_BALANCE_SOURCES_PARTICLES
 
 !
 !djm Jan2017
-  SUBROUTINE UPDATE_BALANCE_SOURCES_MOMENTUM(ncv, isb, ub, rob)
+  SUBROUTINE UPDATE_BALANCE_SOURCES_MOMENTUM(ncv, nfc, isb, ub, rob, ubf&
+&   , robf)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, isb
-    REAL(kind=r8) :: ub(ncv), rob(ncv)
+    INTEGER :: ncv, nfc, isb
+    REAL(kind=r8) :: ub(ncv), rob(ncv), ubf(nfc), robf(nfc)
 !   ..local variables
-    INTEGER :: icv, istrai, nstrad
+    INTEGER :: icv, ifc, istrai, nstrad
 !   ..procedures
     INTRINSIC SIZE
     INTRINSIC ALLOCATED
@@ -1267,15 +2572,44 @@ CONTAINS
       b2sifr_smoch_bal(icv, isb) = b2sifr_smoch0to3(icv, 0, isb) + &
 &       b2sifr_smoch0to3(icv, 1, isb)*ub(icv) + b2sifr_smoch0to3(icv, 2&
 &       , isb)*rob(icv) + b2sifr_smoch0to3(icv, 3, isb)*rob(icv)*ub(icv)
-      b2sifr_smotf_bal(icv, isb) = b2sifr_smotf0to3(icv, 0, isb) + &
-&       b2sifr_smotf0to3(icv, 1, isb)*ub(icv) + b2sifr_smotf0to3(icv, 2&
-&       , isb)*rob(icv) + b2sifr_smotf0to3(icv, 3, isb)*rob(icv)*ub(icv)
+      b2sifr_smotf_ehxp_bal(icv, isb) = b2sifr_smotf_ehxp0to3(icv, 0, &
+&       isb) + b2sifr_smotf_ehxp0to3(icv, 1, isb)*ub(icv) + &
+&       b2sifr_smotf_ehxp0to3(icv, 2, isb)*rob(icv) + &
+&       b2sifr_smotf_ehxp0to3(icv, 3, isb)*rob(icv)*ub(icv)
+      b2sifr_smotf_cthe_bal(icv, isb) = b2sifr_smotf_cthe0to3(icv, 0, &
+&       isb) + b2sifr_smotf_cthe0to3(icv, 1, isb)*ub(icv) + &
+&       b2sifr_smotf_cthe0to3(icv, 2, isb)*rob(icv) + &
+&       b2sifr_smotf_cthe0to3(icv, 3, isb)*rob(icv)*ub(icv)
+      b2sifr_smotf_cthi_bal(icv, isb) = b2sifr_smotf_cthi0to3(icv, 0, &
+&       isb) + b2sifr_smotf_cthi0to3(icv, 1, isb)*ub(icv) + &
+&       b2sifr_smotf_cthi0to3(icv, 2, isb)*rob(icv) + &
+&       b2sifr_smotf_cthi0to3(icv, 3, isb)*rob(icv)*ub(icv)
+      b2sifr_smofrea_bal(icv, isb) = b2sifr_smofrea0to3(icv, 0, isb) + &
+&       b2sifr_smofrea0to3(icv, 1, isb)*ub(icv) + b2sifr_smofrea0to3(icv&
+&       , 2, isb)*rob(icv) + b2sifr_smofrea0to3(icv, 3, isb)*rob(icv)*ub&
+&       (icv)
+      b2sifr_smofria_bal(icv, isb) = b2sifr_smofria0to3(icv, 0, isb) + &
+&       b2sifr_smofria0to3(icv, 1, isb)*ub(icv) + b2sifr_smofria0to3(icv&
+&       , 2, isb)*rob(icv) + b2sifr_smofria0to3(icv, 3, isb)*rob(icv)*ub&
+&       (icv)
+      b2sifr_smotfea_bal(icv, isb) = b2sifr_smotfea0to3(icv, 0, isb) + &
+&       b2sifr_smotfea0to3(icv, 1, isb)*ub(icv) + b2sifr_smotfea0to3(icv&
+&       , 2, isb)*rob(icv) + b2sifr_smotfea0to3(icv, 3, isb)*rob(icv)*ub&
+&       (icv)
+      b2sifr_smotfia_bal(icv, isb) = b2sifr_smotfia0to3(icv, 0, isb) + &
+&       b2sifr_smotfia0to3(icv, 1, isb)*ub(icv) + b2sifr_smotfia0to3(icv&
+&       , 2, isb)*rob(icv) + b2sifr_smotfia0to3(icv, 3, isb)*rob(icv)*ub&
+&       (icv)
       b2siav_smovh_bal(icv, isb) = b2siav_smovh0to3(icv, 0, isb) + &
 &       b2siav_smovh0to3(icv, 1, isb)*ub(icv) + b2siav_smovh0to3(icv, 2&
 &       , isb)*rob(icv) + b2siav_smovh0to3(icv, 3, isb)*rob(icv)*ub(icv)
       b2siav_smovv_bal(icv, isb) = b2siav_smovv0to3(icv, 0, isb) + &
 &       b2siav_smovv0to3(icv, 1, isb)*ub(icv) + b2siav_smovv0to3(icv, 2&
 &       , isb)*rob(icv) + b2siav_smovv0to3(icv, 3, isb)*rob(icv)*ub(icv)
+!som 13.08.21
+      b2siav_smovi_bal(icv, isb) = b2siav_smovi0to3(icv, 0, isb) + &
+&       b2siav_smovi0to3(icv, 1, isb)*ub(icv) + b2siav_smovi0to3(icv, 2&
+&       , isb)*rob(icv) + b2siav_smovi0to3(icv, 3, isb)*rob(icv)*ub(icv)
       b2sicf_smo_bal(icv, isb) = b2sicf_smo0to3(icv, 0, isb) + &
 &       b2sicf_smo0to3(icv, 1, isb)*ub(icv) + b2sicf_smo0to3(icv, 2, isb&
 &       )*rob(icv) + b2sicf_smo0to3(icv, 3, isb)*rob(icv)*ub(icv)
@@ -1289,22 +2623,47 @@ CONTAINS
       b2sigp_smogp_bal(icv, isb) = b2sigp_smogp0to3(icv, 0, isb) + &
 &       b2sigp_smogp0to3(icv, 1, isb)*ub(icv) + b2sigp_smogp0to3(icv, 2&
 &       , isb)*rob(icv) + b2sigp_smogp0to3(icv, 3, isb)*rob(icv)*ub(icv)
-      b2sigp_pstat_bal(icv, isb) = b2sigp_pstat0to3(icv, 0, isb) + &
-&       b2sigp_pstat0to3(icv, 1, isb)*ub(icv) + b2sigp_pstat0to3(icv, 2&
-&       , isb)*rob(icv) + b2sigp_pstat0to3(icv, 3, isb)*rob(icv)*ub(icv)
+      b2sigp_smogpi_bal(icv, isb) = b2sigp_smogpi0to3(icv, 0, isb) + &
+&       b2sigp_smogpi0to3(icv, 1, isb)*ub(icv) + b2sigp_smogpi0to3(icv, &
+&       2, isb)*rob(icv) + b2sigp_smogpi0to3(icv, 3, isb)*rob(icv)*ub(&
+&       icv)
+      b2sigp_smogpe_bal(icv, isb) = b2sigp_smogpe0to3(icv, 0, isb) + &
+&       b2sigp_smogpe0to3(icv, 1, isb)*ub(icv) + b2sigp_smogpe0to3(icv, &
+&       2, isb)*rob(icv) + b2sigp_smogpe0to3(icv, 3, isb)*rob(icv)*ub(&
+&       icv)
+      b2sigp_smogpgr_bal(icv, isb) = b2sigp_smogpgr0to3(icv, 0, isb) + &
+&       b2sigp_smogpgr0to3(icv, 1, isb)*ub(icv) + b2sigp_smogpgr0to3(icv&
+&       , 2, isb)*rob(icv) + b2sigp_smogpgr0to3(icv, 3, isb)*rob(icv)*ub&
+&       (icv)
+      tot_smo_bal(icv, isb) = tot_smo0to3(icv, 0, isb) + tot_smo0to3(icv&
+&       , 1, isb)*ub(icv) + tot_smo0to3(icv, 2, isb)*rob(icv) + &
+&       tot_smo0to3(icv, 3, isb)*rob(icv)*ub(icv)
+    END DO
+    DO ifc=1,nfc
+      b2sigp_pstat_bal(ifc, isb) = b2sigp_pstat0to3(ifc, 0, isb) + &
+&       b2sigp_pstat0to3(ifc, 1, isb)*ubf(ifc) + b2sigp_pstat0to3(ifc, 2&
+&       , isb)*robf(ifc) + b2sigp_pstat0to3(ifc, 3, isb)*robf(ifc)*ubf(&
+&       ifc)
+      b2sigp_pstati_bal(ifc, isb) = b2sigp_pstati0to3(ifc, 0, isb) + &
+&       b2sigp_pstati0to3(ifc, 1, isb)*ubf(ifc) + b2sigp_pstati0to3(ifc&
+&       , 2, isb)*robf(ifc) + b2sigp_pstati0to3(ifc, 3, isb)*robf(ifc)*&
+&       ubf(ifc)
+      b2sigp_pstate_bal(ifc) = b2sigp_pstate0to3(ifc, 0) + &
+&       b2sigp_pstate0to3(ifc, 1)*ubf(ifc) + b2sigp_pstate0to3(ifc, 2)*&
+&       robf(ifc) + b2sigp_pstate0to3(ifc, 3)*robf(ifc)*ubf(ifc)
     END DO
     RETURN
   END SUBROUTINE UPDATE_BALANCE_SOURCES_MOMENTUM
 
 !
-  SUBROUTINE UPDATE_BALANCE_SOURCES_HEAT(ncv, ne, ni, te, ti)
+  SUBROUTINE UPDATE_BALANCE_SOURCES_HEAT(ncv, ne, ni, te, ti, ns)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv
+    INTEGER :: ncv, ns
     REAL(kind=r8) :: ne(ncv), ni(ncv), te(ncv), ti(ncv)
 !   ..local variables
-    INTEGER :: icv, istrai, nstrad
+    INTEGER :: icv, istrai, nstrad, is
 !   ..procedures
     INTRINSIC SIZE
     INTRINSIC ALLOCATED
@@ -1312,6 +2671,7 @@ CONTAINS
     nstrad = SIZE(eirene_mc_eael_she_bal, 2)
 !
 !djm Update electron heat sources
+!xpb We also treat the electron particle sources
     DO icv=1,ncv
       b2stbr_phys_she_bal(icv) = b2stbr_phys_she0to3(icv, 0) + &
 &       b2stbr_phys_she0to3(icv, 1)*te(icv) + b2stbr_phys_she0to3(icv, 2&
@@ -1328,6 +2688,12 @@ CONTAINS
 &       icv, 3)*ne(icv)*te(icv)
       IF (ALLOCATED(eirene_mc_eael_she_bal)) THEN
         DO istrai=1,nstrad
+          eirene_mc_pael_sne_bal(icv, istrai) = eirene_mc_pael_sne0to1(&
+&           icv, 0, istrai) + eirene_mc_pael_sne0to1(icv, 1, istrai)*ne(&
+&           icv)
+          eirene_mc_pmel_sne_bal(icv, istrai) = eirene_mc_pmel_sne0to1(&
+&           icv, 0, istrai) + eirene_mc_pmel_sne0to1(icv, 1, istrai)*ne(&
+&           icv)
           eirene_mc_eael_she_bal(icv, istrai) = eirene_mc_eael_she0to3(&
 &           icv, 0, istrai) + eirene_mc_eael_she0to3(icv, 1, istrai)*te(&
 &           icv) + eirene_mc_eael_she0to3(icv, 2, istrai)*ne(icv) + &
@@ -1352,9 +2718,11 @@ CONTAINS
       ext_she_bal(icv) = ext_she0to3(icv, 0) + ext_she0to3(icv, 1)*te(&
 &       icv) + ext_she0to3(icv, 2)*ne(icv) + ext_she0to3(icv, 3)*ne(icv)&
 &       *te(icv)
-      b2stel_she_bal(icv) = b2stel_she0to3(icv, 0) + b2stel_she0to3(icv&
-&       , 1)*te(icv) + b2stel_she0to3(icv, 2)*ne(icv) + b2stel_she0to3(&
-&       icv, 3)*ne(icv)*te(icv)
+      DO is=0,ns-1
+        b2stel_she_bal(icv, is) = b2stel_she0to3(icv, 0, is) + &
+&         b2stel_she0to3(icv, 1, is)*te(icv) + b2stel_she0to3(icv, 2, is&
+&         )*ne(icv) + b2stel_she0to3(icv, 3, is)*ne(icv)*te(icv)
+      END DO
       b2srsm_she_bal(icv) = b2srsm_she0to3(icv, 0) + b2srsm_she0to3(icv&
 &       , 1)*te(icv) + b2srsm_she0to3(icv, 2)*ne(icv) + b2srsm_she0to3(&
 &       icv, 3)*ne(icv)*te(icv)
@@ -1418,6 +2786,12 @@ CONTAINS
       ext_shi_bal(icv) = ext_shi0to3(icv, 0) + ext_shi0to3(icv, 1)*ti(&
 &       icv) + ext_shi0to3(icv, 2)*ni(icv) + ext_shi0to3(icv, 3)*ni(icv)&
 &       *ti(icv)
+      b2stel_she_ion_bal(icv) = b2stel_she_ion0to3(icv, 0) + &
+&       b2stel_she_ion0to3(icv, 1)*te(icv) + b2stel_she_ion0to3(icv, 2)*&
+&       ne(icv) + b2stel_she_ion0to3(icv, 3)*ne(icv)*te(icv)
+      b2stel_she_rec_bal(icv) = b2stel_she_rec0to3(icv, 0) + &
+&       b2stel_she_rec0to3(icv, 1)*te(icv) + b2stel_she_rec0to3(icv, 2)*&
+&       ne(icv) + b2stel_she_rec0to3(icv, 3)*ne(icv)*te(icv)
       b2stel_shi_ion_bal(icv) = b2stel_shi_ion0to3(icv, 0) + &
 &       b2stel_shi_ion0to3(icv, 1)*ti(icv) + b2stel_shi_ion0to3(icv, 2)*&
 &       ni(icv) + b2stel_shi_ion0to3(icv, 3)*ni(icv)*ti(icv)
@@ -1481,6 +2855,7 @@ CONTAINS
       fna_nanom_av = 0.0_R8
       fna_panom_av = 0.0_R8
       fna_pschused_av = 0.0_R8
+      fna_tot_av = 0.0_R8
       b2stbr_phys_sna_bal_av = 0.0_R8
       b2stbr_bas_sna_bal_av = 0.0_R8
       b2stbr_first_flight_sna_bal_av = 0.0_R8
@@ -1493,18 +2868,32 @@ CONTAINS
       b2srsm_sna_bal_av = 0.0_R8
       b2srdt_sna_bal_av = 0.0_R8
       b2srst_sna_bal_av = 0.0_R8
+      tot_sna_bal_av = 0.0_R8
       resco_av = 0.0_R8
       IF (ALLOCATED(eirene_mc_papl_sna_bal)) THEN
+        eirene_mc_pael_sne_bal_av = 0.0_R8
         eirene_mc_papl_sna_bal_av = 0.0_R8
+        eirene_mc_pmel_sne_bal_av = 0.0_R8
         eirene_mc_pmpl_sna_bal_av = 0.0_R8
         eirene_mc_pipl_sna_bal_av = 0.0_R8
         eirene_mc_pppl_sna_bal_av = 0.0_R8
+        eirene_mc_paat_sna_bal_av = 0.0_R8
+        eirene_mc_pmat_sna_bal_av = 0.0_R8
+        eirene_mc_piat_sna_bal_av = 0.0_R8
+        eirene_mc_paml_sna_bal_av = 0.0_R8
+        eirene_mc_pmml_sna_bal_av = 0.0_R8
+        eirene_mc_piml_sna_bal_av = 0.0_R8
+        eirene_mc_paio_sna_bal_av = 0.0_R8
+        eirene_mc_pmio_sna_bal_av = 0.0_R8
+        eirene_mc_piio_sna_bal_av = 0.0_R8
         eirene_mc_core_sna_bal_av = 0.0_R8
       END IF
 !     ..Arrays for momentum balance:
       fmo_flua_av = 0.0_R8
       fmo_cvsa_av = 0.0_R8
+      fmo_hybr_av = 0.0_R8
       fmo_b2nxfv_av = 0.0_R8
+      fmo_tot_av = 0.0_R8
       b2stbr_phys_smo_bal_av = 0.0_R8
       b2stbr_bas_smo_bal_av = 0.0_R8
       b2stbc_smo_bal_av = 0.0_R8
@@ -1523,15 +2912,29 @@ CONTAINS
       b2srdt_smo_bal_av = 0.0_R8
       b2srst_smo_bal_av = 0.0_R8
       b2sifr_smoch_bal_av = 0.0_R8
-      b2sifr_smotf_bal_av = 0.0_R8
+      b2sifr_smotf_ehxp_bal_av = 0.0_R8
+      b2sifr_smotf_cthe_bal_av = 0.0_R8
+      b2sifr_smotf_cthi_bal_av = 0.0_R8
+      b2sifr_smofrea_bal_av = 0.0_R8
+      b2sifr_smofria_bal_av = 0.0_R8
+      b2sifr_smotfea_bal_av = 0.0_R8
+      b2sifr_smotfia_bal_av = 0.0_R8
       b2siav_smovh_bal_av = 0.0_R8
       b2siav_smovv_bal_av = 0.0_R8
+!som 13.08.21
+      b2siav_smovi_bal_av = 0.0_R8
       b2sicf_smo_bal_av = 0.0_R8
 !srv 25.09.17
       b2sian_smo_bal_av = 0.0_R8
       b2nxdv_smo_bal_av = 0.0_R8
       b2sigp_smogp_bal_av = 0.0_R8
+      b2sigp_smogpi_bal_av = 0.0_R8
+      b2sigp_smogpe_bal_av = 0.0_R8
+      b2sigp_smogpgr_bal_av = 0.0_R8
+      b2sigp_pstati_bal_av = 0.0_R8
+      b2sigp_pstate_bal_av = 0.0_R8
       b2sigp_pstat_bal_av = 0.0_R8
+      tot_smo_bal_av = 0.0_R8
       resmo_av = 0.0_R8
 !     ..Arrays for electron heat balance:
       fhe_32_av = 0.0_R8
@@ -1590,6 +2993,8 @@ CONTAINS
       END IF
       b2stbm_shi_bal_av = 0.0_R8
       ext_shi_bal_av = 0.0_R8
+      b2stel_she_ion_bal_av = 0.0_R8
+      b2stel_she_rec_bal_av = 0.0_R8
       b2stel_shi_ion_bal_av = 0.0_R8
       b2stel_shi_rec_bal_av = 0.0_R8
       b2stcx_shi_bal_av = 0.0_R8
@@ -1651,6 +3056,7 @@ CONTAINS
     fna_nanom_av = avmlt*fna_nanom_av + curmlt*fna_nanom
     fna_panom_av = avmlt*fna_panom_av + curmlt*fna_panom
     fna_pschused_av = avmlt*fna_pschused_av + curmlt*fna_pschused
+    fna_tot_av = avmlt*fna_tot_av + curmlt*fna_tot
     b2stbr_phys_sna_bal_av = avmlt*b2stbr_phys_sna_bal_av + curmlt*&
 &     b2stbr_phys_sna_bal
     b2stbr_bas_sna_bal_av = avmlt*b2stbr_bas_sna_bal_av + curmlt*&
@@ -1660,8 +3066,12 @@ CONTAINS
 &     b2stbr_first_flight_sna_bal
     b2stbc_sna_bal_av = avmlt*b2stbc_sna_bal_av + curmlt*b2stbc_sna_bal
     IF (ALLOCATED(eirene_mc_papl_sna_bal)) THEN
+      eirene_mc_pael_sne_bal_av = avmlt*eirene_mc_pael_sne_bal_av + &
+&       curmlt*eirene_mc_pael_sne_bal
       eirene_mc_papl_sna_bal_av = avmlt*eirene_mc_papl_sna_bal_av + &
 &       curmlt*eirene_mc_papl_sna_bal
+      eirene_mc_pmel_sne_bal_av = avmlt*eirene_mc_pmel_sne_bal_av + &
+&       curmlt*eirene_mc_pmel_sne_bal
       eirene_mc_pmpl_sna_bal_av = avmlt*eirene_mc_pmpl_sna_bal_av + &
 &       curmlt*eirene_mc_pmpl_sna_bal
       eirene_mc_pipl_sna_bal_av = avmlt*eirene_mc_pipl_sna_bal_av + &
@@ -1670,6 +3080,24 @@ CONTAINS
 &       curmlt*eirene_mc_pppl_sna_bal
       eirene_mc_core_sna_bal_av = avmlt*eirene_mc_core_sna_bal_av + &
 &       curmlt*eirene_mc_core_sna_bal
+      eirene_mc_paat_sna_bal_av = avmlt*eirene_mc_paat_sna_bal_av + &
+&       curmlt*eirene_mc_paat_sna_bal
+      eirene_mc_pmat_sna_bal_av = avmlt*eirene_mc_pmat_sna_bal_av + &
+&       curmlt*eirene_mc_pmat_sna_bal
+      eirene_mc_piat_sna_bal_av = avmlt*eirene_mc_piat_sna_bal_av + &
+&       curmlt*eirene_mc_piat_sna_bal
+      eirene_mc_paml_sna_bal_av = avmlt*eirene_mc_paml_sna_bal_av + &
+&       curmlt*eirene_mc_paml_sna_bal
+      eirene_mc_pmml_sna_bal_av = avmlt*eirene_mc_pmml_sna_bal_av + &
+&       curmlt*eirene_mc_pmml_sna_bal
+      eirene_mc_piml_sna_bal_av = avmlt*eirene_mc_piml_sna_bal_av + &
+&       curmlt*eirene_mc_piml_sna_bal
+      eirene_mc_paio_sna_bal_av = avmlt*eirene_mc_paio_sna_bal_av + &
+&       curmlt*eirene_mc_paio_sna_bal
+      eirene_mc_pmio_sna_bal_av = avmlt*eirene_mc_pmio_sna_bal_av + &
+&       curmlt*eirene_mc_pmio_sna_bal
+      eirene_mc_piio_sna_bal_av = avmlt*eirene_mc_piio_sna_bal_av + &
+&       curmlt*eirene_mc_piio_sna_bal
     END IF
     b2stbm_sna_bal_av = avmlt*b2stbm_sna_bal_av + curmlt*b2stbm_sna_bal
     ext_sna_bal_av = avmlt*ext_sna_bal_av + curmlt*ext_sna_bal
@@ -1681,11 +3109,14 @@ CONTAINS
     b2srsm_sna_bal_av = avmlt*b2srsm_sna_bal_av + curmlt*b2srsm_sna_bal
     b2srdt_sna_bal_av = avmlt*b2srdt_sna_bal_av + curmlt*b2srdt_sna_bal
     b2srst_sna_bal_av = avmlt*b2srst_sna_bal_av + curmlt*b2srst_sna_bal
+    tot_sna_bal_av = avmlt*tot_sna_bal_av + curmlt*tot_sna_bal
     resco_av = avmlt*resco_av + curmlt*state%dv%resco
 !   ..Arrays for momentum balance:
     fmo_flua_av = avmlt*fmo_flua_av + curmlt*fmo_flua
     fmo_cvsa_av = avmlt*fmo_cvsa_av + curmlt*fmo_cvsa
+    fmo_hybr_av = avmlt*fmo_hybr_av + curmlt*fmo_hybr
     fmo_b2nxfv_av = avmlt*fmo_b2nxfv_av + curmlt*fmo_b2nxfv
+    fmo_tot_av = avmlt*fmo_tot_av + curmlt*fmo_tot
     b2stbr_phys_smo_bal_av = avmlt*b2stbr_phys_smo_bal_av + curmlt*&
 &     b2stbr_phys_smo_bal
     b2stbr_bas_smo_bal_av = avmlt*b2stbr_bas_smo_bal_av + curmlt*&
@@ -1713,20 +3144,46 @@ CONTAINS
     b2srst_smo_bal_av = avmlt*b2srst_smo_bal_av + curmlt*b2srst_smo_bal
     b2sifr_smoch_bal_av = avmlt*b2sifr_smoch_bal_av + curmlt*&
 &     b2sifr_smoch_bal
-    b2sifr_smotf_bal_av = avmlt*b2sifr_smotf_bal_av + curmlt*&
-&     b2sifr_smotf_bal
+    b2sifr_smotf_ehxp_bal_av = avmlt*b2sifr_smotf_ehxp_bal_av + curmlt*&
+&     b2sifr_smotf_ehxp_bal
+    b2sifr_smotf_cthe_bal_av = avmlt*b2sifr_smotf_cthe_bal_av + curmlt*&
+&     b2sifr_smotf_cthe_bal
+    b2sifr_smotf_cthi_bal_av = avmlt*b2sifr_smotf_cthi_bal_av + curmlt*&
+&     b2sifr_smotf_cthi_bal
+    b2sifr_smofrea_bal_av = avmlt*b2sifr_smofrea_bal_av + curmlt*&
+&     b2sifr_smofrea_bal
+    b2sifr_smofria_bal_av = avmlt*b2sifr_smofria_bal_av + curmlt*&
+&     b2sifr_smofria_bal
+    b2sifr_smotfea_bal_av = avmlt*b2sifr_smotfea_bal_av + curmlt*&
+&     b2sifr_smotfea_bal
+    b2sifr_smotfia_bal_av = avmlt*b2sifr_smotfia_bal_av + curmlt*&
+&     b2sifr_smotfia_bal
     b2siav_smovh_bal_av = avmlt*b2siav_smovh_bal_av + curmlt*&
 &     b2siav_smovh_bal
     b2siav_smovv_bal_av = avmlt*b2siav_smovv_bal_av + curmlt*&
 &     b2siav_smovv_bal
+!som 13.08.21
+    b2siav_smovi_bal_av = avmlt*b2siav_smovi_bal_av + curmlt*&
+&     b2siav_smovi_bal
     b2sicf_smo_bal_av = avmlt*b2sicf_smo_bal_av + curmlt*b2sicf_smo_bal
 !srv 25.09.17
     b2sian_smo_bal_av = avmlt*b2sian_smo_bal_av + curmlt*b2sian_smo_bal
     b2nxdv_smo_bal_av = avmlt*b2nxdv_smo_bal_av + curmlt*b2nxdv_smo_bal
     b2sigp_smogp_bal_av = avmlt*b2sigp_smogp_bal_av + curmlt*&
 &     b2sigp_smogp_bal
+    b2sigp_smogpi_bal_av = avmlt*b2sigp_smogpi_bal_av + curmlt*&
+&     b2sigp_smogpi_bal
+    b2sigp_smogpe_bal_av = avmlt*b2sigp_smogpe_bal_av + curmlt*&
+&     b2sigp_smogpe_bal
+    b2sigp_smogpgr_bal_av = avmlt*b2sigp_smogpgr_bal_av + curmlt*&
+&     b2sigp_smogpgr_bal
     b2sigp_pstat_bal_av = avmlt*b2sigp_pstat_bal_av + curmlt*&
 &     b2sigp_pstat_bal
+    b2sigp_pstati_bal_av = avmlt*b2sigp_pstati_bal_av + curmlt*&
+&     b2sigp_pstati_bal
+    b2sigp_pstate_bal_av = avmlt*b2sigp_pstate_bal_av + curmlt*&
+&     b2sigp_pstate_bal
+    tot_smo_bal_av = avmlt*tot_smo_bal_av + curmlt*tot_smo_bal
     resmo_av = avmlt*resmo_av + curmlt*state%dv%resmo
 !   ..Arrays for electron heat balance:
     fhe_32_av = avmlt*fhe_32_av + curmlt*fhe_32
@@ -1806,6 +3263,10 @@ CONTAINS
     END IF
     b2stbm_shi_bal_av = avmlt*b2stbm_shi_bal_av + curmlt*b2stbm_shi_bal
     ext_shi_bal_av = avmlt*ext_shi_bal_av + curmlt*ext_shi_bal
+    b2stel_she_ion_bal_av = avmlt*b2stel_she_ion_bal_av + curmlt*&
+&     b2stel_she_ion_bal
+    b2stel_she_rec_bal_av = avmlt*b2stel_she_rec_bal_av + curmlt*&
+&     b2stel_she_rec_bal
     b2stel_shi_ion_bal_av = avmlt*b2stel_shi_ion_bal_av + curmlt*&
 &     b2stel_shi_ion_bal
     b2stel_shi_rec_bal_av = avmlt*b2stel_shi_rec_bal_av + curmlt*&
@@ -1852,6 +3313,4277 @@ CONTAINS
   END SUBROUTINE UPDATE_AVERAGE_BALANCE
 
 !
+  SUBROUTINE WRITE_BALANCE(ncv, nfc, nsd, geo)
+    USE B2US_GEO_DIFFV
+    USE B2MOD_B2CMPA_DIFFV, ONLY : zamin, zamax
+    USE B2MOD_B2CMPA_DIFFV, ONLY : am
+    USE B2MOD_CONSTANTS, ONLY : mp, ev
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!   ..input arguments (unchanged on exit)
+    INTEGER :: ncv, nfc, nsd
+    TYPE(GEOMETRY), INTENT(IN) :: geo
+!     NetCDF-3.
+!
+! netcdf version 3 fortran interface:
+!
+!
+!
+! external netcdf data types:
+!
+    INTEGER :: nf_byte
+    INTEGER :: nf_int1
+    INTEGER :: nf_char
+    INTEGER :: nf_short
+    INTEGER :: nf_int2
+    INTEGER :: nf_int
+    INTEGER :: nf_float
+    INTEGER :: nf_real
+    INTEGER :: nf_double
+    INTEGER :: nf_ubyte
+    INTEGER :: nf_ushort
+    INTEGER :: nf_uint
+    INTEGER :: nf_int64
+    INTEGER :: nf_uint64
+    PARAMETER (nf_byte=1)
+!
+    PARAMETER (nf_int1=nf_byte)
+    PARAMETER (nf_char=2)
+    PARAMETER (nf_short=3)
+    PARAMETER (nf_int2=nf_short)
+    PARAMETER (nf_int=4)
+    PARAMETER (nf_float=5)
+    PARAMETER (nf_real=nf_float)
+    PARAMETER (nf_double=6)
+    PARAMETER (nf_ubyte=7)
+    PARAMETER (nf_ushort=8)
+    PARAMETER (nf_uint=9)
+    PARAMETER (nf_int64=10)
+    PARAMETER (nf_uint64=11)
+!
+!
+! default fill values:
+!
+    INTEGER :: nf_fill_byte
+    INTEGER :: nf_fill_int1
+    INTEGER :: nf_fill_char
+    INTEGER :: nf_fill_short
+    INTEGER :: nf_fill_int2
+    INTEGER :: nf_fill_int
+    REAL(kind=r8) :: nf_fill_float
+    REAL(kind=r8) :: nf_fill_real
+    DOUBLE PRECISION :: nf_fill_double
+    PARAMETER (nf_fill_byte=-127)
+!
+    PARAMETER (nf_fill_int1=nf_fill_byte)
+    PARAMETER (nf_fill_char=0)
+    PARAMETER (nf_fill_short=-32767)
+    PARAMETER (nf_fill_int2=nf_fill_short)
+    PARAMETER (nf_fill_int=-2147483647)
+    PARAMETER (nf_fill_float=9.9692099683868690e+36)
+    PARAMETER (nf_fill_real=nf_fill_float)
+    PARAMETER (nf_fill_double=9.9692099683868690d+36)
+!
+!
+! mode flags for opening and creating a netcdf dataset:
+!
+    INTEGER :: nf_nowrite
+    INTEGER :: nf_write
+    INTEGER :: nf_clobber
+    INTEGER :: nf_noclobber
+    INTEGER :: nf_fill
+    INTEGER :: nf_nofill
+    INTEGER :: nf_lock
+    INTEGER :: nf_share
+    INTEGER :: nf_64bit_offset
+    INTEGER :: nf_64bit_data
+    INTEGER :: nf_cdf5
+    INTEGER :: nf_sizehint_default
+    INTEGER :: nf_align_chunk
+    INTEGER :: nf_format_classic
+    INTEGER :: nf_format_64bit
+    INTEGER :: nf_format_64bit_offset
+    INTEGER :: nf_format_64bit_data
+    INTEGER :: nf_format_cdf5
+    INTEGER :: nf_diskless
+    INTEGER :: nf_mmap
+    PARAMETER (nf_nowrite=0)
+!
+    PARAMETER (nf_write=1)
+    PARAMETER (nf_clobber=0)
+    PARAMETER (nf_noclobber=4)
+    PARAMETER (nf_fill=0)
+    PARAMETER (nf_nofill=256)
+    PARAMETER (nf_lock=1024)
+    PARAMETER (nf_share=2048)
+    PARAMETER (nf_64bit_offset=512)
+    PARAMETER (nf_64bit_data=32)
+    PARAMETER (nf_cdf5=nf_64bit_data)
+    PARAMETER (nf_sizehint_default=0)
+    PARAMETER (nf_align_chunk=-1)
+    PARAMETER (nf_format_classic=1)
+    PARAMETER (nf_format_64bit=2)
+    PARAMETER (nf_format_64bit_offset=nf_format_64bit)
+    PARAMETER (nf_format_64bit_data=5)
+    PARAMETER (nf_format_cdf5=nf_format_64bit_data)
+    PARAMETER (nf_diskless=8)
+    PARAMETER (nf_mmap=16)
+!
+!
+! size argument for defining an unlimited dimension:
+!
+    INTEGER :: nf_unlimited
+    PARAMETER (nf_unlimited=0)
+!
+!
+! global attribute id:
+!
+    INTEGER :: nf_global
+    PARAMETER (nf_global=0)
+!
+!
+! implementation limits:
+!
+    INTEGER :: nf_max_dims
+    INTEGER :: nf_max_attrs
+    INTEGER :: nf_max_vars
+    INTEGER :: nf_max_name
+    INTEGER :: nf_max_var_dims
+    PARAMETER (nf_max_dims=1024)
+!
+    PARAMETER (nf_max_attrs=8192)
+    PARAMETER (nf_max_vars=8192)
+    PARAMETER (nf_max_name=256)
+    PARAMETER (nf_max_var_dims=nf_max_dims)
+!
+!
+! error codes:
+!
+    INTEGER :: nf_noerr
+    INTEGER :: nf_ebadid
+    INTEGER :: nf_eexist
+    INTEGER :: nf_einval
+    INTEGER :: nf_eperm
+    INTEGER :: nf_enotindefine
+    INTEGER :: nf_eindefine
+    INTEGER :: nf_einvalcoords
+    INTEGER :: nf_emaxdims
+    INTEGER :: nf_enameinuse
+    INTEGER :: nf_enotatt
+    INTEGER :: nf_emaxatts
+    INTEGER :: nf_ebadtype
+    INTEGER :: nf_ebaddim
+    INTEGER :: nf_eunlimpos
+    INTEGER :: nf_emaxvars
+    INTEGER :: nf_enotvar
+    INTEGER :: nf_eglobal
+    INTEGER :: nf_enotnc
+    INTEGER :: nf_ests
+    INTEGER :: nf_emaxname
+    INTEGER :: nf_eunlimit
+    INTEGER :: nf_enorecvars
+    INTEGER :: nf_echar
+    INTEGER :: nf_eedge
+    INTEGER :: nf_estride
+    INTEGER :: nf_ebadname
+    INTEGER :: nf_erange
+    INTEGER :: nf_enomem
+    INTEGER :: nf_evarsize
+    INTEGER :: nf_edimsize
+    INTEGER :: nf_etrunc
+    PARAMETER (nf_noerr=0)
+!
+    PARAMETER (nf_ebadid=-33)
+    PARAMETER (nf_eexist=-35)
+    PARAMETER (nf_einval=-36)
+    PARAMETER (nf_eperm=-37)
+    PARAMETER (nf_enotindefine=-38)
+    PARAMETER (nf_eindefine=-39)
+    PARAMETER (nf_einvalcoords=-40)
+    PARAMETER (nf_emaxdims=-41)
+    PARAMETER (nf_enameinuse=-42)
+    PARAMETER (nf_enotatt=-43)
+    PARAMETER (nf_emaxatts=-44)
+    PARAMETER (nf_ebadtype=-45)
+    PARAMETER (nf_ebaddim=-46)
+    PARAMETER (nf_eunlimpos=-47)
+    PARAMETER (nf_emaxvars=-48)
+    PARAMETER (nf_enotvar=-49)
+    PARAMETER (nf_eglobal=-50)
+    PARAMETER (nf_enotnc=-51)
+    PARAMETER (nf_ests=-52)
+    PARAMETER (nf_emaxname=-53)
+    PARAMETER (nf_eunlimit=-54)
+    PARAMETER (nf_enorecvars=-55)
+    PARAMETER (nf_echar=-56)
+    PARAMETER (nf_eedge=-57)
+    PARAMETER (nf_estride=-58)
+    PARAMETER (nf_ebadname=-59)
+    PARAMETER (nf_erange=-60)
+    PARAMETER (nf_enomem=-61)
+    PARAMETER (nf_evarsize=-62)
+    PARAMETER (nf_edimsize=-63)
+    PARAMETER (nf_etrunc=-64)
+!
+! error handling modes:
+!
+    INTEGER :: nf_fatal
+    INTEGER :: nf_verbose
+    PARAMETER (nf_fatal=1)
+!
+    PARAMETER (nf_verbose=2)
+    EXTERNAL NF_INQ_LIBVERS
+!
+!
+! miscellaneous routines:
+!
+    CHARACTER(len=80) :: NF_INQ_LIBVERS
+!                         (integer             ncerr)
+    EXTERNAL NF_STRERROR
+!
+    CHARACTER(len=80) :: NF_STRERROR
+!                         (integer             ncerr)
+    EXTERNAL NF_ISSYSERR
+!
+    LOGICAL :: NF_ISSYSERR
+!                         (integer             ncid,
+!                          integer             pe)
+    EXTERNAL NF_INQ_BASE_PE
+!
+!
+! control routines:
+!
+    INTEGER :: NF_INQ_BASE_PE
+!                         (integer             ncid,
+!                          integer             pe)
+    EXTERNAL NF_SET_BASE_PE
+!
+    INTEGER :: NF_SET_BASE_PE
+!                         (character*(*)       path,
+!                          integer             cmode,
+!                          integer             ncid)
+    EXTERNAL NF_CREATE
+!
+    INTEGER :: NF_CREATE
+!                         (character*(*)       path,
+!                          integer             cmode,
+!                          integer             initialsz,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__CREATE
+!
+    INTEGER :: NF__CREATE
+!                         (character*(*)       path,
+!                          integer             cmode,
+!                          integer             initialsz,
+!                          integer             basepe,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__CREATE_MP
+!
+    INTEGER :: NF__CREATE_MP
+!                         (character*(*)       path,
+!                          integer             mode,
+!                          integer             ncid)
+    EXTERNAL NF_OPEN
+!
+    INTEGER :: NF_OPEN
+!                         (character*(*)       path,
+!                          integer             mode,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__OPEN
+!
+    INTEGER :: NF__OPEN
+!                         (character*(*)       path,
+!                          integer             mode,
+!                          integer             basepe,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__OPEN_MP
+!
+    INTEGER :: NF__OPEN_MP
+!                         (integer             ncid,
+!                          integer             fillmode,
+!                          integer             old_mode)
+    EXTERNAL NF_SET_FILL
+!
+    INTEGER :: NF_SET_FILL
+!                          (integer             format,
+!                          integer             old_format)
+    EXTERNAL NF_SET_DEFAULT_FORMAT
+!
+    INTEGER :: NF_SET_DEFAULT_FORMAT
+!                         (integer             ncid)
+    EXTERNAL NF_REDEF
+!
+    INTEGER :: NF_REDEF
+!                         (integer             ncid)
+    EXTERNAL NF_ENDDEF
+!
+    INTEGER :: NF_ENDDEF
+!                         (integer             ncid,
+!                          integer             h_minfree,
+!                          integer             v_align,
+!                          integer             v_minfree,
+!                          integer             r_align)
+    EXTERNAL NF__ENDDEF
+!
+    INTEGER :: NF__ENDDEF
+!                         (integer             ncid)
+    EXTERNAL NF_SYNC
+!
+    INTEGER :: NF_SYNC
+!                         (integer             ncid)
+    EXTERNAL NF_ABORT
+!
+    INTEGER :: NF_ABORT
+!                         (integer             ncid)
+    EXTERNAL NF_CLOSE
+!
+    INTEGER :: NF_CLOSE
+!                         (character*(*)       ncid)
+    EXTERNAL NF_DELETE
+!
+    INTEGER :: NF_DELETE
+!                         (integer             ncid,
+!                          integer             ndims,
+!                          integer             nvars,
+!                          integer             ngatts,
+!                          integer             unlimdimid)
+    EXTERNAL NF_INQ
+!
+!
+! general inquiry routines:
+!
+!
+    INTEGER :: NF_INQ
+    EXTERNAL NF_INQ_PATH
+!
+! new inquire path
+!
+    INTEGER :: NF_INQ_PATH
+!                         (integer             ncid,
+!                          integer             ndims)
+    EXTERNAL NF_INQ_NDIMS
+!
+    INTEGER :: NF_INQ_NDIMS
+!                         (integer             ncid,
+!                          integer             nvars)
+    EXTERNAL NF_INQ_NVARS
+!
+    INTEGER :: NF_INQ_NVARS
+!                         (integer             ncid,
+!                          integer             ngatts)
+    EXTERNAL NF_INQ_NATTS
+!
+    INTEGER :: NF_INQ_NATTS
+!                         (integer             ncid,
+!                          integer             unlimdimid)
+    EXTERNAL NF_INQ_UNLIMDIM
+!
+    INTEGER :: NF_INQ_UNLIMDIM
+!                         (integer             ncid,
+!                          integer             format)
+    EXTERNAL NF_INQ_FORMAT
+!
+    INTEGER :: NF_INQ_FORMAT
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             len,
+!                          integer             dimid)
+    EXTERNAL NF_DEF_DIM
+!
+!
+! dimension routines:
+!
+!
+    INTEGER :: NF_DEF_DIM
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             dimid)
+    EXTERNAL NF_INQ_DIMID
+!
+    INTEGER :: NF_INQ_DIMID
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          character(*)        name,
+!                          integer             len)
+    EXTERNAL NF_INQ_DIM
+!
+    INTEGER :: NF_INQ_DIM
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          character(*)        name)
+    EXTERNAL NF_INQ_DIMNAME
+!
+    INTEGER :: NF_INQ_DIMNAME
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          integer             len)
+    EXTERNAL NF_INQ_DIMLEN
+!
+    INTEGER :: NF_INQ_DIMLEN
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          character(*)        name)
+    EXTERNAL NF_RENAME_DIM
+!
+    INTEGER :: NF_RENAME_DIM
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len)
+    EXTERNAL NF_INQ_ATT
+!
+!
+! general attribute routines:
+!
+!
+    INTEGER :: NF_INQ_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             attnum)
+    EXTERNAL NF_INQ_ATTID
+!
+    INTEGER :: NF_INQ_ATTID
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype)
+    EXTERNAL NF_INQ_ATTTYPE
+!
+    INTEGER :: NF_INQ_ATTTYPE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             len)
+    EXTERNAL NF_INQ_ATTLEN
+!
+    INTEGER :: NF_INQ_ATTLEN
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             attnum,
+!                          character(*)        name)
+    EXTERNAL NF_INQ_ATTNAME
+!
+    INTEGER :: NF_INQ_ATTNAME
+!                         (integer             ncid_in,
+!                          integer             varid_in,
+!                          character(*)        name,
+!                          integer             ncid_out,
+!                          integer             varid_out)
+    EXTERNAL NF_COPY_ATT
+!
+    INTEGER :: NF_COPY_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        curname,
+!                          character(*)        newname)
+    EXTERNAL NF_RENAME_ATT
+!
+    INTEGER :: NF_RENAME_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name)
+    EXTERNAL NF_DEL_ATT
+!
+    INTEGER :: NF_DEL_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             len,
+!                          character(*)        text)
+    EXTERNAL NF_PUT_ATT_TEXT
+!
+!
+! attribute put/get routines:
+!
+!
+    INTEGER :: NF_PUT_ATT_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          character(*)        text)
+    EXTERNAL NF_GET_ATT_TEXT
+!
+    INTEGER :: NF_GET_ATT_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_ATT_INT1
+!
+    INTEGER :: NF_PUT_ATT_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_ATT_INT1
+!
+    INTEGER :: NF_GET_ATT_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_ATT_INT2
+!
+    INTEGER :: NF_PUT_ATT_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_ATT_INT2
+!
+    INTEGER :: NF_GET_ATT_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_ATT_INT
+!
+    INTEGER :: NF_PUT_ATT_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_ATT_INT
+!
+    INTEGER :: NF_GET_ATT_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_PUT_ATT_INT64
+!
+    INTEGER :: NF_PUT_ATT_INT64
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_GET_ATT_INT64
+!
+    INTEGER :: NF_GET_ATT_INT64
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_ATT_REAL
+!
+    INTEGER :: NF_PUT_ATT_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          real                rvals(1))
+    EXTERNAL NF_GET_ATT_REAL
+!
+    INTEGER :: NF_GET_ATT_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          double              dvals(1))
+    EXTERNAL NF_PUT_ATT_DOUBLE
+!
+    INTEGER :: NF_PUT_ATT_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          double              dvals(1))
+    EXTERNAL NF_GET_ATT_DOUBLE
+!
+    INTEGER :: NF_GET_ATT_DOUBLE
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             datatype,
+!                          integer             ndims,
+!                          integer             dimids(1),
+!                          integer             varid)
+    EXTERNAL NF_DEF_VAR
+!
+!
+! general variable routines:
+!
+!
+    INTEGER :: NF_DEF_VAR
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             datatype,
+!                          integer             ndims,
+!                          integer             dimids(1),
+!                          integer             natts)
+    EXTERNAL NF_INQ_VAR
+!
+    INTEGER :: NF_INQ_VAR
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             varid)
+    EXTERNAL NF_INQ_VARID
+!
+    INTEGER :: NF_INQ_VARID
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name)
+    EXTERNAL NF_INQ_VARNAME
+!
+    INTEGER :: NF_INQ_VARNAME
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             xtype)
+    EXTERNAL NF_INQ_VARTYPE
+!
+    INTEGER :: NF_INQ_VARTYPE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             ndims)
+    EXTERNAL NF_INQ_VARNDIMS
+!
+    INTEGER :: NF_INQ_VARNDIMS
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             dimids(1))
+    EXTERNAL NF_INQ_VARDIMID
+!
+    INTEGER :: NF_INQ_VARDIMID
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             natts)
+    EXTERNAL NF_INQ_VARNATTS
+!
+    INTEGER :: NF_INQ_VARNATTS
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name)
+    EXTERNAL NF_RENAME_VAR
+!
+    INTEGER :: NF_RENAME_VAR
+!                         (integer             ncid_in,
+!                          integer             varid,
+!                          integer             ncid_out)
+    EXTERNAL NF_COPY_VAR
+!
+    INTEGER :: NF_COPY_VAR
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VAR_TEXT
+!
+!
+! entire variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VAR_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        text)
+    EXTERNAL NF_GET_VAR_TEXT
+!
+    INTEGER :: NF_GET_VAR_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VAR_INT1
+!
+    INTEGER :: NF_PUT_VAR_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VAR_INT1
+!
+    INTEGER :: NF_GET_VAR_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VAR_INT2
+!
+    INTEGER :: NF_PUT_VAR_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VAR_INT2
+!
+    INTEGER :: NF_GET_VAR_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VAR_INT
+!
+    INTEGER :: NF_PUT_VAR_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VAR_INT
+!
+    INTEGER :: NF_GET_VAR_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VAR_REAL
+!
+    INTEGER :: NF_PUT_VAR_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VAR_REAL
+!
+    INTEGER :: NF_GET_VAR_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VAR_DOUBLE
+!
+    INTEGER :: NF_PUT_VAR_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VAR_DOUBLE
+!
+    INTEGER :: NF_GET_VAR_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          character*1         text)
+    EXTERNAL NF_PUT_VAR1_TEXT
+!
+!
+! single variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VAR1_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          character*1         text)
+    EXTERNAL NF_GET_VAR1_TEXT
+!
+    INTEGER :: NF_GET_VAR1_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int1_t           i1val)
+    EXTERNAL NF_PUT_VAR1_INT1
+!
+    INTEGER :: NF_PUT_VAR1_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int1_t           i1val)
+    EXTERNAL NF_GET_VAR1_INT1
+!
+    INTEGER :: NF_GET_VAR1_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int2_t           i2val)
+    EXTERNAL NF_PUT_VAR1_INT2
+!
+    INTEGER :: NF_PUT_VAR1_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int2_t           i2val)
+    EXTERNAL NF_GET_VAR1_INT2
+!
+    INTEGER :: NF_GET_VAR1_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          integer             ival)
+    EXTERNAL NF_PUT_VAR1_INT
+!
+    INTEGER :: NF_PUT_VAR1_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          integer             ival)
+    EXTERNAL NF_GET_VAR1_INT
+!
+    INTEGER :: NF_GET_VAR1_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          real                rval)
+    EXTERNAL NF_PUT_VAR1_REAL
+!
+    INTEGER :: NF_PUT_VAR1_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          real                rval)
+    EXTERNAL NF_GET_VAR1_REAL
+!
+    INTEGER :: NF_GET_VAR1_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          doubleprecision     dval)
+    EXTERNAL NF_PUT_VAR1_DOUBLE
+!
+    INTEGER :: NF_PUT_VAR1_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          doubleprecision     dval)
+    EXTERNAL NF_GET_VAR1_DOUBLE
+!
+    INTEGER :: NF_GET_VAR1_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VARA_TEXT
+!
+!
+! variable array put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VARA_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          character(*)        text)
+    EXTERNAL NF_GET_VARA_TEXT
+!
+    INTEGER :: NF_GET_VARA_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VARA_INT1
+!
+    INTEGER :: NF_PUT_VARA_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VARA_INT1
+!
+    INTEGER :: NF_GET_VARA_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VARA_INT2
+!
+    INTEGER :: NF_PUT_VARA_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VARA_INT2
+!
+    INTEGER :: NF_GET_VARA_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VARA_INT
+!
+    INTEGER :: NF_PUT_VARA_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VARA_INT
+!
+    INTEGER :: NF_GET_VARA_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VARA_REAL
+!
+    INTEGER :: NF_PUT_VARA_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VARA_REAL
+!
+    INTEGER :: NF_GET_VARA_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VARA_DOUBLE
+!
+    INTEGER :: NF_PUT_VARA_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VARA_DOUBLE
+!
+    INTEGER :: NF_GET_VARA_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VARS_TEXT
+!
+!
+! strided variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VARS_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          character(*)        text)
+    EXTERNAL NF_GET_VARS_TEXT
+!
+    INTEGER :: NF_GET_VARS_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VARS_INT1
+!
+    INTEGER :: NF_PUT_VARS_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VARS_INT1
+!
+    INTEGER :: NF_GET_VARS_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VARS_INT2
+!
+    INTEGER :: NF_PUT_VARS_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VARS_INT2
+!
+    INTEGER :: NF_GET_VARS_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VARS_INT
+!
+    INTEGER :: NF_PUT_VARS_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VARS_INT
+!
+    INTEGER :: NF_GET_VARS_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VARS_REAL
+!
+    INTEGER :: NF_PUT_VARS_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VARS_REAL
+!
+    INTEGER :: NF_GET_VARS_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VARS_DOUBLE
+!
+    INTEGER :: NF_PUT_VARS_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VARS_DOUBLE
+!
+    INTEGER :: NF_GET_VARS_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VARM_TEXT
+!
+!
+! mapped variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VARM_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          character(*)        text)
+    EXTERNAL NF_GET_VARM_TEXT
+!
+    INTEGER :: NF_GET_VARM_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VARM_INT1
+!
+    INTEGER :: NF_PUT_VARM_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VARM_INT1
+!
+    INTEGER :: NF_GET_VARM_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VARM_INT2
+!
+    INTEGER :: NF_PUT_VARM_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VARM_INT2
+!
+    INTEGER :: NF_GET_VARM_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VARM_INT
+!
+    INTEGER :: NF_PUT_VARM_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VARM_INT
+!
+    INTEGER :: NF_GET_VARM_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VARM_REAL
+!
+    INTEGER :: NF_PUT_VARM_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VARM_REAL
+!
+    INTEGER :: NF_GET_VARM_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VARM_DOUBLE
+!
+    INTEGER :: NF_PUT_VARM_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VARM_DOUBLE
+!
+    INTEGER :: NF_GET_VARM_DOUBLE
+    EXTERNAL NF_PUT_VAR1_INT64
+!
+!     64-bit int functions.
+    INTEGER :: NF_PUT_VAR1_INT64
+    EXTERNAL NF_PUT_VARA_INT64
+    INTEGER :: NF_PUT_VARA_INT64
+    EXTERNAL NF_PUT_VARS_INT64
+    INTEGER :: NF_PUT_VARS_INT64
+    EXTERNAL NF_PUT_VARM_INT64
+    INTEGER :: NF_PUT_VARM_INT64
+    EXTERNAL NF_PUT_VAR_INT64
+    INTEGER :: NF_PUT_VAR_INT64
+    EXTERNAL NF_GET_VAR1_INT64
+    INTEGER :: NF_GET_VAR1_INT64
+    EXTERNAL NF_GET_VARA_INT64
+    INTEGER :: NF_GET_VARA_INT64
+    EXTERNAL NF_GET_VARS_INT64
+    INTEGER :: NF_GET_VARS_INT64
+    EXTERNAL NF_GET_VARM_INT64
+    INTEGER :: NF_GET_VARM_INT64
+    EXTERNAL NF_GET_VAR_INT64
+    INTEGER :: NF_GET_VAR_INT64
+!
+!
+!     NetCDF-4.
+!     This is part of netCDF-4. Copyright 2006, UCAR, See COPYRIGHT
+!     file for distribution information.
+!
+!     Netcdf version 4 fortran interface.
+!
+!     $Id: netcdf4.inc,v 1.28 2010/05/25 13:53:02 ed Exp $
+!
+!     New netCDF-4 types.
+    INTEGER :: nf_string
+    INTEGER :: nf_vlen
+    INTEGER :: nf_opaque
+    INTEGER :: nf_enum
+    INTEGER :: nf_compound
+    PARAMETER (nf_string=12)
+!
+    PARAMETER (nf_vlen=13)
+    PARAMETER (nf_opaque=14)
+    PARAMETER (nf_enum=15)
+    PARAMETER (nf_compound=16)
+!
+!     New netCDF-4 fill values.
+    INTEGER :: nf_fill_ubyte
+    INTEGER :: nf_fill_ushort
+    PARAMETER (nf_fill_ubyte=255)
+!      real              nf_fill_uint
+!      real              nf_fill_int64
+!      real              nf_fill_uint64
+    PARAMETER (nf_fill_ushort=65535)
+!
+!     New constants.
+    INTEGER :: nf_format_netcdf4
+    PARAMETER (nf_format_netcdf4=3)
+!
+    INTEGER :: nf_format_netcdf4_classic
+    PARAMETER (nf_format_netcdf4_classic=4)
+!
+    INTEGER :: nf_netcdf4
+    PARAMETER (nf_netcdf4=4096)
+!
+    INTEGER :: nf_classic_model
+    PARAMETER (nf_classic_model=256)
+!
+    INTEGER :: nf_chunk_seq
+    PARAMETER (nf_chunk_seq=0)
+    INTEGER :: nf_chunk_sub
+    PARAMETER (nf_chunk_sub=1)
+    INTEGER :: nf_chunk_sizes
+    PARAMETER (nf_chunk_sizes=2)
+!
+    INTEGER :: nf_endian_native
+    PARAMETER (nf_endian_native=0)
+    INTEGER :: nf_endian_little
+    PARAMETER (nf_endian_little=1)
+    INTEGER :: nf_endian_big
+    PARAMETER (nf_endian_big=2)
+!
+!     For NF_DEF_VAR_CHUNKING
+    INTEGER :: nf_chunked
+    PARAMETER (nf_chunked=0)
+    INTEGER :: nf_contiguous
+    PARAMETER (nf_contiguous=1)
+    INTEGER :: nf_compact
+    PARAMETER (nf_compact=2)
+!
+!     For NF_DEF_VAR_FLETCHER32
+    INTEGER :: nf_nochecksum
+    PARAMETER (nf_nochecksum=0)
+    INTEGER :: nf_fletcher32
+    PARAMETER (nf_fletcher32=1)
+!
+!     For NF_DEF_VAR_DEFLATE
+    INTEGER :: nf_noshuffle
+    PARAMETER (nf_noshuffle=0)
+    INTEGER :: nf_shuffle
+    PARAMETER (nf_shuffle=1)
+!
+!     For NF_DEF_VAR_SZIP
+    INTEGER :: nf_szip_ec_option_mask
+    PARAMETER (nf_szip_ec_option_mask=4)
+    INTEGER :: nf_szip_nn_option_mask
+    PARAMETER (nf_szip_nn_option_mask=32)
+!
+!     For parallel I/O.
+    INTEGER :: nf_mpiio
+    PARAMETER (nf_mpiio=8192)
+    INTEGER :: nf_mpiposix
+    PARAMETER (nf_mpiposix=16384)
+    INTEGER :: nf_pnetcdf
+    PARAMETER (nf_pnetcdf=32768)
+!
+!     For NF_VAR_PAR_ACCESS.
+    INTEGER :: nf_independent
+    PARAMETER (nf_independent=0)
+    INTEGER :: nf_collective
+    PARAMETER (nf_collective=1)
+!
+!     New error codes.
+! Error at HDF5 layer. 
+    INTEGER :: nf_ehdferr
+    PARAMETER (nf_ehdferr=-101)
+! Can't read. 
+    INTEGER :: nf_ecantread
+    PARAMETER (nf_ecantread=-102)
+! Can't write. 
+    INTEGER :: nf_ecantwrite
+    PARAMETER (nf_ecantwrite=-103)
+! Can't create. 
+    INTEGER :: nf_ecantcreate
+    PARAMETER (nf_ecantcreate=-104)
+! Problem with file metadata. 
+    INTEGER :: nf_efilemeta
+    PARAMETER (nf_efilemeta=-105)
+! Problem with dimension metadata. 
+    INTEGER :: nf_edimmeta
+    PARAMETER (nf_edimmeta=-106)
+! Problem with attribute metadata. 
+    INTEGER :: nf_eattmeta
+    PARAMETER (nf_eattmeta=-107)
+! Problem with variable metadata. 
+    INTEGER :: nf_evarmeta
+    PARAMETER (nf_evarmeta=-108)
+! Not a compound type. 
+    INTEGER :: nf_enocompound
+    PARAMETER (nf_enocompound=-109)
+! Attribute already exists. 
+    INTEGER :: nf_eattexists
+    PARAMETER (nf_eattexists=-110)
+! Attempting netcdf-4 operation on netcdf-3 file.   
+    INTEGER :: nf_enotnc4
+    PARAMETER (nf_enotnc4=-111)
+! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.   
+    INTEGER :: nf_estrictnc3
+    PARAMETER (nf_estrictnc3=-112)
+! Attempting netcdf-3 operation on netcdf-4 file.   
+    INTEGER :: nf_enotnc3
+    PARAMETER (nf_enotnc3=-113)
+! Parallel operation on file opened for non-parallel access.   
+    INTEGER :: nf_enopar
+    PARAMETER (nf_enopar=-114)
+! Error initializing for parallel access.   
+    INTEGER :: nf_eparinit
+    PARAMETER (nf_eparinit=-115)
+! Bad group ID.   
+    INTEGER :: nf_ebadgrpid
+    PARAMETER (nf_ebadgrpid=-116)
+! Bad type ID.   
+    INTEGER :: nf_ebadtypid
+    PARAMETER (nf_ebadtypid=-117)
+! Type has already been defined and may not be edited. 
+    INTEGER :: nf_etypdefined
+    PARAMETER (nf_etypdefined=-118)
+! Bad field ID.   
+    INTEGER :: nf_ebadfield
+    PARAMETER (nf_ebadfield=-119)
+! Bad class.   
+    INTEGER :: nf_ebadclass
+    PARAMETER (nf_ebadclass=-120)
+! Mapped access for atomic types only.   
+    INTEGER :: nf_emaptype
+    PARAMETER (nf_emaptype=-121)
+! Attempt to define fill value when data already exists. 
+    INTEGER :: nf_elatefill
+    PARAMETER (nf_elatefill=-122)
+! Attempt to define var properties, like deflate, after enddef. 
+    INTEGER :: nf_elatedef
+    PARAMETER (nf_elatedef=-123)
+! Probem with HDF5 dimscales. 
+    INTEGER :: nf_edimscale
+    PARAMETER (nf_edimscale=-124)
+! No group found.
+    INTEGER :: nf_enogrp
+    PARAMETER (nf_enogrp=-125)
+    EXTERNAL NF_CREATE_PAR
+!
+!
+!     New functions.
+!
+!     Parallel I/O.
+    INTEGER :: NF_CREATE_PAR
+    EXTERNAL NF_OPEN_PAR
+!
+    INTEGER :: NF_OPEN_PAR
+    EXTERNAL NF_VAR_PAR_ACCESS
+!
+    INTEGER :: NF_VAR_PAR_ACCESS
+    EXTERNAL NF_INQ_NCID
+!
+!     Functions to handle groups.
+    INTEGER :: NF_INQ_NCID
+    EXTERNAL NF_INQ_GRPS
+!
+    INTEGER :: NF_INQ_GRPS
+    EXTERNAL NF_INQ_GRPNAME
+!
+    INTEGER :: NF_INQ_GRPNAME
+    EXTERNAL NF_INQ_GRPNAME_FULL
+!
+    INTEGER :: NF_INQ_GRPNAME_FULL
+    EXTERNAL NF_INQ_GRPNAME_LEN
+!
+    INTEGER :: NF_INQ_GRPNAME_LEN
+    EXTERNAL NF_INQ_GRP_PARENT
+!
+    INTEGER :: NF_INQ_GRP_PARENT
+    EXTERNAL NF_INQ_GRP_NCID
+!
+    INTEGER :: NF_INQ_GRP_NCID
+    EXTERNAL NF_INQ_GRP_FULL_NCID
+!
+    INTEGER :: NF_INQ_GRP_FULL_NCID
+    EXTERNAL NF_INQ_VARIDS
+!
+    INTEGER :: NF_INQ_VARIDS
+    EXTERNAL NF_INQ_DIMIDS
+!
+    INTEGER :: NF_INQ_DIMIDS
+    EXTERNAL NF_DEF_GRP
+!
+    INTEGER :: NF_DEF_GRP
+    EXTERNAL NF_RENAME_GRP
+!
+!     New rename grp function
+!
+    INTEGER :: NF_RENAME_GRP
+    EXTERNAL NF_DEF_VAR_DEFLATE
+!
+!     New options for netCDF variables.
+    INTEGER :: NF_DEF_VAR_DEFLATE
+    EXTERNAL NF_INQ_VAR_DEFLATE
+!
+    INTEGER :: NF_INQ_VAR_DEFLATE
+    EXTERNAL NF_DEF_VAR_SZIP
+!
+    INTEGER :: NF_DEF_VAR_SZIP
+    EXTERNAL NF_INQ_VAR_SZIP
+!
+    INTEGER :: NF_INQ_VAR_SZIP
+    EXTERNAL NF_DEF_VAR_FLETCHER32
+!
+    INTEGER :: NF_DEF_VAR_FLETCHER32
+    EXTERNAL NF_INQ_VAR_FLETCHER32
+!
+    INTEGER :: NF_INQ_VAR_FLETCHER32
+    EXTERNAL NF_DEF_VAR_CHUNKING
+!
+    INTEGER :: NF_DEF_VAR_CHUNKING
+    EXTERNAL NF_INQ_VAR_CHUNKING
+!
+    INTEGER :: NF_INQ_VAR_CHUNKING
+    EXTERNAL NF_DEF_VAR_FILL
+!
+    INTEGER :: NF_DEF_VAR_FILL
+    EXTERNAL NF_INQ_VAR_FILL
+!
+    INTEGER :: NF_INQ_VAR_FILL
+    EXTERNAL NF_DEF_VAR_ENDIAN
+!
+    INTEGER :: NF_DEF_VAR_ENDIAN
+    EXTERNAL NF_INQ_VAR_ENDIAN
+!
+    INTEGER :: NF_INQ_VAR_ENDIAN
+    EXTERNAL NF_DEF_VAR_FILTER
+!
+    INTEGER :: NF_DEF_VAR_FILTER
+    EXTERNAL NF_INQ_VAR_FILTER
+!
+    INTEGER :: NF_INQ_VAR_FILTER
+    EXTERNAL NF_INQ_TYPEIDS
+!
+!     User defined types.
+    INTEGER :: NF_INQ_TYPEIDS
+    EXTERNAL NF_INQ_TYPEID
+!
+    INTEGER :: NF_INQ_TYPEID
+    EXTERNAL NF_INQ_TYPE
+!
+    INTEGER :: NF_INQ_TYPE
+    EXTERNAL NF_INQ_USER_TYPE
+!
+    INTEGER :: NF_INQ_USER_TYPE
+    EXTERNAL NF_DEF_COMPOUND
+!
+!     User defined types - compound types.
+    INTEGER :: NF_DEF_COMPOUND
+    EXTERNAL NF_INSERT_COMPOUND
+!
+    INTEGER :: NF_INSERT_COMPOUND
+    EXTERNAL NF_INSERT_ARRAY_COMPOUND
+!
+    INTEGER :: NF_INSERT_ARRAY_COMPOUND
+    EXTERNAL NF_INQ_COMPOUND
+!
+    INTEGER :: NF_INQ_COMPOUND
+    EXTERNAL NF_INQ_COMPOUND_NAME
+!
+    INTEGER :: NF_INQ_COMPOUND_NAME
+    EXTERNAL NF_INQ_COMPOUND_SIZE
+!
+    INTEGER :: NF_INQ_COMPOUND_SIZE
+    EXTERNAL NF_INQ_COMPOUND_NFIELDS
+!
+    INTEGER :: NF_INQ_COMPOUND_NFIELDS
+    EXTERNAL NF_INQ_COMPOUND_FIELD
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELD
+    EXTERNAL NF_INQ_COMPOUND_FIELDNAME
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDNAME
+    EXTERNAL NF_INQ_COMPOUND_FIELDINDEX
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDINDEX
+    EXTERNAL NF_INQ_COMPOUND_FIELDOFFSET
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDOFFSET
+    EXTERNAL NF_INQ_COMPOUND_FIELDTYPE
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDTYPE
+    EXTERNAL NF_INQ_COMPOUND_FIELDNDIMS
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDNDIMS
+    EXTERNAL NF_INQ_COMPOUND_FIELDDIM_SIZES
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDDIM_SIZES
+    EXTERNAL NF_DEF_VLEN
+!
+!     User defined types - variable length arrays.
+    INTEGER :: NF_DEF_VLEN
+    EXTERNAL NF_INQ_VLEN
+!
+    INTEGER :: NF_INQ_VLEN
+    EXTERNAL NF_FREE_VLEN
+!
+    INTEGER :: NF_FREE_VLEN
+    EXTERNAL NF_DEF_ENUM
+!
+!     User defined types - enums.
+    INTEGER :: NF_DEF_ENUM
+    EXTERNAL NF_INSERT_ENUM
+!
+    INTEGER :: NF_INSERT_ENUM
+    EXTERNAL NF_INQ_ENUM
+!
+    INTEGER :: NF_INQ_ENUM
+    EXTERNAL NF_INQ_ENUM_MEMBER
+!
+    INTEGER :: NF_INQ_ENUM_MEMBER
+    EXTERNAL NF_INQ_ENUM_IDENT
+!
+    INTEGER :: NF_INQ_ENUM_IDENT
+    EXTERNAL NF_DEF_OPAQUE
+!
+!     User defined types - opaque.
+    INTEGER :: NF_DEF_OPAQUE
+    EXTERNAL NF_INQ_OPAQUE
+!
+    INTEGER :: NF_INQ_OPAQUE
+    EXTERNAL NF_PUT_ATT
+!
+!     Write and read attributes of any type, including user defined
+!     types.
+    INTEGER :: NF_PUT_ATT
+    EXTERNAL NF_GET_ATT
+    INTEGER :: NF_GET_ATT
+    EXTERNAL NF_PUT_VAR
+!
+!     Write and read variables of any type, including user defined
+!     types.
+    INTEGER :: NF_PUT_VAR
+    EXTERNAL NF_PUT_VAR1
+    INTEGER :: NF_PUT_VAR1
+    EXTERNAL NF_PUT_VARA
+    INTEGER :: NF_PUT_VARA
+    EXTERNAL NF_PUT_VARS
+    INTEGER :: NF_PUT_VARS
+    EXTERNAL NF_GET_VAR
+    INTEGER :: NF_GET_VAR
+    EXTERNAL NF_GET_VAR1
+    INTEGER :: NF_GET_VAR1
+    EXTERNAL NF_GET_VARA
+    INTEGER :: NF_GET_VARA
+    EXTERNAL NF_GET_VARS
+    INTEGER :: NF_GET_VARS
+    EXTERNAL NF_GET_VLEN_ELEMENT
+!
+!     For helping F77 users with VLENs.
+    INTEGER :: NF_GET_VLEN_ELEMENT
+    EXTERNAL NF_PUT_VLEN_ELEMENT
+    INTEGER :: NF_PUT_VLEN_ELEMENT
+    EXTERNAL NF_SET_CHUNK_CACHE
+!
+!     For dealing with file level chunk cache.
+    INTEGER :: NF_SET_CHUNK_CACHE
+    EXTERNAL NF_GET_CHUNK_CACHE
+    INTEGER :: NF_GET_CHUNK_CACHE
+    EXTERNAL NF_SET_VAR_CHUNK_CACHE
+!
+!     For dealing with per variable chunk cache.
+    INTEGER :: NF_SET_VAR_CHUNK_CACHE
+    EXTERNAL NF_GET_VAR_CHUNK_CACHE
+    INTEGER :: NF_GET_VAR_CHUNK_CACHE
+!
+    EXTERNAL NCCRE
+!
+!     NetCDF-2.
+!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+! begin netcdf 2.4 backward compatibility:
+!
+!
+!      
+! functions in the fortran interface
+!
+    INTEGER :: NCCRE
+    EXTERNAL NCOPN
+    INTEGER :: NCOPN
+    EXTERNAL NCDDEF
+    INTEGER :: NCDDEF
+    EXTERNAL NCDID
+    INTEGER :: NCDID
+    EXTERNAL NCVDEF
+    INTEGER :: NCVDEF
+    EXTERNAL NCVID
+    INTEGER :: NCVID
+    EXTERNAL NCTLEN
+    INTEGER :: NCTLEN
+    EXTERNAL NCSFIL
+    INTEGER :: NCSFIL
+!
+!
+    INTEGER :: ncrdwr
+    INTEGER :: nccreat
+    INTEGER :: ncexcl
+    INTEGER :: ncindef
+    INTEGER :: ncnsync
+    INTEGER :: nchsync
+    INTEGER :: ncndirty
+    INTEGER :: nchdirty
+    INTEGER :: nclink
+    INTEGER :: ncnowrit
+    INTEGER :: ncwrite
+    INTEGER :: ncclob
+    INTEGER :: ncnoclob
+    INTEGER :: ncglobal
+    INTEGER :: ncfill
+    INTEGER :: ncnofill
+    INTEGER :: maxncop
+    INTEGER :: maxncdim
+    INTEGER :: maxncatt
+    INTEGER :: maxncvar
+    INTEGER :: maxncnam
+    INTEGER :: maxvdims
+    INTEGER :: ncnoerr
+    INTEGER :: ncebadid
+    INTEGER :: ncenfile
+    INTEGER :: nceexist
+    INTEGER :: nceinval
+    INTEGER :: nceperm
+    INTEGER :: ncenotin
+    INTEGER :: nceindef
+    INTEGER :: ncecoord
+    INTEGER :: ncemaxds
+    INTEGER :: ncename
+    INTEGER :: ncenoatt
+    INTEGER :: ncemaxat
+    INTEGER :: ncebadty
+    INTEGER :: ncebadd
+    INTEGER :: ncests
+    INTEGER :: nceunlim
+    INTEGER :: ncemaxvs
+    INTEGER :: ncenotvr
+    INTEGER :: nceglob
+    INTEGER :: ncenotnc
+    INTEGER :: ncfoobar
+    INTEGER :: ncsyserr
+    INTEGER :: ncfatal
+    INTEGER :: ncverbos
+    INTEGER :: ncentool
+!
+!
+!
+! netcdf data types:
+!
+    INTEGER :: ncbyte
+    INTEGER :: ncchar
+    INTEGER :: ncshort
+    INTEGER :: nclong
+    INTEGER :: ncfloat
+    INTEGER :: ncdouble
+    PARAMETER (ncbyte=1)
+!
+    PARAMETER (ncchar=2)
+    PARAMETER (ncshort=3)
+    PARAMETER (nclong=4)
+    PARAMETER (ncfloat=5)
+    PARAMETER (ncdouble=6)
+    PARAMETER (ncrdwr=1)
+!
+!     
+!     masks for the struct nc flag field; passed in as 'mode' arg to
+!     nccreate and ncopen.
+!     
+!
+!     read/write, 0 => readonly 
+    PARAMETER (nccreat=2)
+!     in create phase, cleared by ncendef 
+    PARAMETER (ncexcl=4)
+!     on create destroy existing file 
+    PARAMETER (ncindef=8)
+!     in define mode, cleared by ncendef 
+    PARAMETER (ncnsync=16)
+!     synchronise numrecs on change (x'10')
+    PARAMETER (nchsync=32)
+!     synchronise whole header on change (x'20')
+    PARAMETER (ncndirty=64)
+!     numrecs has changed (x'40')
+    PARAMETER (nchdirty=128)
+!     header info has changed (x'80')
+    PARAMETER (ncfill=0)
+!     prefill vars on endef and increase of record, the default behavior
+    PARAMETER (ncnofill=256)
+!     do not fill vars on endef and increase of record (x'100')
+    PARAMETER (nclink=32768)
+!     isa link (x'8000')
+    PARAMETER (ncnowrit=0)
+!
+!     
+!     'mode' arguments for nccreate and ncopen
+!     
+    PARAMETER (ncwrite=ncrdwr)
+    PARAMETER (ncclob=nf_clobber)
+    PARAMETER (ncnoclob=nf_noclobber)
+!
+!     
+!     'size' argument to ncdimdef for an unlimited dimension
+!     
+    INTEGER :: ncunlim
+    PARAMETER (ncunlim=0)
+    PARAMETER (ncglobal=0)
+!
+!     
+!     attribute id to put/get a global attribute
+!     
+    PARAMETER (maxncop=64)
+!
+!     
+!     advisory maximums:
+!     
+    PARAMETER (maxncdim=1024)
+    PARAMETER (maxncatt=8192)
+    PARAMETER (maxncvar=8192)
+    PARAMETER (maxncnam=256)
+!     not enforced 
+    PARAMETER (maxvdims=maxncdim)
+    PARAMETER (ncnoerr=nf_noerr)
+!
+!     
+!     global netcdf error status variable
+!     initialized in error.c
+!     
+!
+!     no error 
+    PARAMETER (ncebadid=nf_ebadid)
+!     not a netcdf id 
+    PARAMETER (ncenfile=-31)
+!     too many netcdfs open 
+    PARAMETER (nceexist=nf_eexist)
+! nc_syserr
+!     netcdf file exists && ncnoclob
+    PARAMETER (nceinval=nf_einval)
+!     invalid argument 
+    PARAMETER (nceperm=nf_eperm)
+!     write to read only 
+    PARAMETER (ncenotin=nf_enotindefine)
+!     operation not allowed in data mode 
+    PARAMETER (nceindef=nf_eindefine)
+!     operation not allowed in define mode 
+    PARAMETER (ncecoord=nf_einvalcoords)
+!     coordinates out of domain 
+    PARAMETER (ncemaxds=nf_emaxdims)
+!     maxncdims exceeded 
+    PARAMETER (ncename=nf_enameinuse)
+!     string match to name in use 
+    PARAMETER (ncenoatt=nf_enotatt)
+!     attribute not found 
+    PARAMETER (ncemaxat=nf_emaxatts)
+!     maxncattrs exceeded 
+    PARAMETER (ncebadty=nf_ebadtype)
+!     not a netcdf data type 
+    PARAMETER (ncebadd=nf_ebaddim)
+!     invalid dimension id 
+    PARAMETER (nceunlim=nf_eunlimpos)
+!     ncunlimited in the wrong index 
+    PARAMETER (ncemaxvs=nf_emaxvars)
+!     maxncvars exceeded 
+    PARAMETER (ncenotvr=nf_enotvar)
+!     variable not found 
+    PARAMETER (nceglob=nf_eglobal)
+!     action prohibited on ncglobal varid 
+    PARAMETER (ncenotnc=nf_enotnc)
+!     not a netcdf file 
+    PARAMETER (ncests=nf_ests)
+    PARAMETER (ncentool=nf_emaxname)
+    PARAMETER (ncfoobar=32)
+    PARAMETER (ncsyserr=-31)
+    PARAMETER (ncfatal=1)
+!
+!     
+!     global options variable. used to determine behavior of error handler.
+!     initialized in lerror.c
+!     
+    PARAMETER (ncverbos=2)
+!
+!
+!     default fill values.  these must be the same as in the c interface.
+!
+    INTEGER :: filbyte
+    INTEGER :: filchar
+    INTEGER :: filshort
+    INTEGER :: fillong
+    REAL(kind=r8) :: filfloat
+    DOUBLE PRECISION :: fildoub
+    PARAMETER (filbyte=-127)
+!
+    PARAMETER (filchar=0)
+    PARAMETER (filshort=-32767)
+    PARAMETER (fillong=-2147483647)
+    PARAMETER (filfloat=9.9692099683868690e+36)
+    PARAMETER (fildoub=9.9692099683868690e+36)
+    EXTERNAL NF_SET_LOG_LEVEL
+!
+!     This is to turn on netCDF internal logging.
+    INTEGER :: NF_SET_LOG_LEVEL
+!   ..local variables
+    INTEGER :: nstrad
+    INTEGER :: status
+    INTEGER :: ncid, ncvpid, nfcid, n1id, n2id, n3id, n4id, nsid, &
+&   nstraid, specid, eirncvid, eirnatmid, eirnmolid, eirnionid
+    INTEGER :: vdims(4), idum(1)
+    INTEGER :: is
+    CHARACTER(len=13), ALLOCATABLE :: species_name(:)
+    INTEGER :: use_eirene
+    INTEGER, ALLOCATABLE :: za(:)
+    REAL(kind=r8), SAVE :: fac_hz=1.0e0_R8
+    REAL(kind=r8) :: rdum(1)
+!   ..procedures
+    INTRINSIC SIZE
+    EXTERNAL IPGETI, GET_JSEP, IPGETR, SPECIES_NODIFF, &
+&       CHECK_CDF_STATUS
+    INTRINSIC ALLOCATED
+    INTRINSIC NINT
+    REAL(kind=r8), DIMENSION(nsd) :: arg1
+!
+    WRITE(*, *) 'Begin writing balance.nc file'
+!
+!   ..create the balance.nc file
+    status = NF_CREATE('balance.nc', nf_clobber, ncid)
+    CALL CHECK_CDF_STATUS(status)
+!
+!   ..define all of the dimensions that will be used
+    status = NF_DEF_DIM(ncid, 'nCv', ncv, ncvpid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nFc', nfc, nfcid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, '1', 1, n1id)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, '2', 2, n2id)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, '3', 3, n3id)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, '4', 4, n4id)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'ns', nsd, nsid)
+    CALL CHECK_CDF_STATUS(status)
+    IF (ALLOCATED(eirene_mc_papl_sna_bal)) THEN
+      nstrad = SIZE(eirene_mc_papl_sna_bal, 3)
+    ELSE
+      nstrad = 1
+    END IF
+    status = NF_DEF_DIM(ncid, 'nstra', nstrad, nstraid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'speclng', 13, specid)
+    CALL CHECK_CDF_STATUS(status)
+    IF (ALLOCATED(dab2_av)) THEN
+      status = NF_DEF_DIM(ncid, 'eirnCv', SIZE(pfluxa_av, 1), eirncvid)
+      CALL CHECK_CDF_STATUS(status)
+      status = NF_DEF_DIM(ncid, 'natm', SIZE(pfluxa_av, 2), eirnatmid)
+      CALL CHECK_CDF_STATUS(status)
+      status = NF_DEF_DIM(ncid, 'nmol', SIZE(pfluxm_av, 2), eirnmolid)
+      CALL CHECK_CDF_STATUS(status)
+      status = NF_DEF_DIM(ncid, 'nion', SIZE(eirene_mc_paio_sna_bal, 2)&
+&       , eirnionid)
+      CALL CHECK_CDF_STATUS(status)
+    END IF
+!
+!   ..take dataset out of define mode
+    status = NF_ENDDEF(ncid)
+    CALL CHECK_CDF_STATUS(status)
+!
+!   ..cvX, cvY:
+    vdims(1) = ncvpid
+    vdims(2) = n4id
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvX', geo%cvx, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvY', geo%cvy, vdims, 1)
+!   ..cvBb,cvHz,cvVol,fcS,am:
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvBb', geo%cvbb, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvHz', geo%cvhz, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvVol', geo%cvvol, vdims, 1)
+    vdims(1) = nfcid
+    CALL WRITE_CDF_DOUBLE(ncid, 'fcS', geo%fcs, vdims, 1)
+    vdims(1) = nsid
+    CALL WRITE_CDF_DOUBLE(ncid, 'am', am, vdims, 1)
+!   ..mp, ev:
+    vdims(1) = n1id
+    rdum(1) = mp
+    CALL WRITE_CDF_DOUBLE_SINGLE(ncid, 'mp', rdum, vdims(1))
+    rdum(1) = ev
+    CALL WRITE_CDF_DOUBLE_SINGLE(ncid, 'ev', rdum, vdims(1))
+!   ..species string:
+    vdims(1) = specid
+    vdims(2) = nsid
+    ALLOCATE(species_name(0:nsd-1))
+    DO is=0,nsd-1
+      CALL SPECIES_NODIFF(is, species_name(is), .false.)
+    END DO
+    CALL WRITE_CDF_TEXT(ncid, 'species', species_name(0:nsd-1), vdims, 2&
+&                )
+!   ..b2mndr_eirene:
+    use_eirene = 0
+    CALL IPGETI('b2mndr_eirene', use_eirene)
+    vdims(1) = n1id
+    idum(1) = use_eirene
+    CALL WRITE_CDF_INT_SINGLE(ncid, 'b2mndr_eirene', idum, vdims(1))
+!   ..fac_hz:
+    CALL IPGETR('b2mndr_hz', fac_hz)
+    vdims(1) = n1id
+    rdum(1) = fac_hz
+    CALL WRITE_CDF_DOUBLE_SINGLE(ncid, 'b2mndr_hz', rdum, vdims(1))
+!   ..za:
+    vdims(1) = nsid
+    ALLOCATE(za(0:nsd-1))
+    arg1(:) = (zamin(0:nsd-1)+zamax(0:nsd-1))/2.0_R8
+    za(0:nsd-1) = NINT(arg1(:))
+    CALL WRITE_CDF_INT(ncid, 'za', za(0:nsd-1), vdims, 1)
+!   ..Arrays for particle balance:
+!     Fluxes
+    vdims(1) = nfcid
+    vdims(2) = n2id
+    vdims(3) = nsid
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_pinch', fna_pinch_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_pll', fna_pll_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_drift', fna_drift_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_ch', fna_ch_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_nanom', fna_nanom_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_panom', fna_panom_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_pschused', fna_pschused_av, vdims, &
+&                   3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fna_tot', fna_tot_av, vdims, 3)
+!     Sources
+    vdims(1) = ncvpid
+    vdims(2) = nsid
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_sna_bal', &
+&                   b2stbr_phys_sna_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_sna_bal', &
+&                   b2stbr_bas_sna_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_first_flight_sna_bal', &
+&                   b2stbr_first_flight_sna_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_sna_bal', b2stbc_sna_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbm_sna_bal', b2stbm_sna_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'ext_sna_bal', ext_sna_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_sna_ion_bal', &
+&                   b2stel_sna_ion_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_sna_rec_bal', &
+&                   b2stel_sna_rec_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stcx_sna_bal', b2stcx_sna_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srsm_sna_bal', b2srsm_sna_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srdt_sna_bal', b2srdt_sna_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srst_sna_bal', b2srst_sna_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'tot_sna_bal', tot_sna_bal_av, vdims, 2)
+!     Residual
+    CALL WRITE_CDF_DOUBLE(ncid, 'resco', resco_av, vdims, 2)
+!   ..Arrays for momentum balance:
+!     Fluxes
+    vdims(1) = nfcid
+    vdims(2) = n2id
+    vdims(3) = nsid
+    CALL WRITE_CDF_DOUBLE(ncid, 'fmo_flua', fmo_flua_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fmo_cvsa', fmo_cvsa_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fmo_hybr', fmo_hybr_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fmo_b2nxfv', fmo_b2nxfv_av, vdims, 3)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fmo_tot', fmo_tot_av, vdims, 3)
+!     Sources
+    vdims(1) = ncvpid
+    vdims(2) = nsid
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_smo_bal', &
+&                   b2stbr_phys_smo_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_smo_bal', &
+&                   b2stbr_bas_smo_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_smo_bal', b2stbc_smo_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbm_smo_bal', b2stbm_smo_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'ext_smo_bal', ext_smo_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_smq_ion_bal', &
+&                   b2stel_smq_ion_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_smq_rec_bal', &
+&                   b2stel_smq_rec_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stcx_smq_bal', b2stcx_smq_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srsm_smo_bal', b2srsm_smo_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srdt_smo_bal', b2srdt_smo_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srst_smo_bal', b2srst_smo_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smoch_bal', b2sifr_smoch_bal_av&
+&                   , vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smotf_ehxp_bal', &
+&                   b2sifr_smotf_ehxp_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smotf_cthe_bal', &
+&                   b2sifr_smotf_cthe_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smotf_cthi_bal', &
+&                   b2sifr_smotf_cthi_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smofrea_bal', &
+&                   b2sifr_smofrea_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smofria_bal', &
+&                   b2sifr_smofria_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smotfea_bal', &
+&                   b2sifr_smotfea_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sifr_smotfia_bal', &
+&                   b2sifr_smotfia_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2siav_smovh_bal', b2siav_smovh_bal_av&
+&                   , vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2siav_smovv_bal', b2siav_smovv_bal_av&
+&                   , vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2siav_smovi_bal', b2siav_smovi_bal_av&
+&                   , vdims, 2)
+!som 13.08.21
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sicf_smo_bal', b2sicf_smo_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sian_smo_bal', b2sian_smo_bal_av, &
+&                   vdims, 2)
+!srv 25.09.17
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2nxdv_smo_bal', b2nxdv_smo_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sigp_smogp_bal', b2sigp_smogp_bal_av&
+&                   , vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sigp_smogpi_bal', &
+&                   b2sigp_smogpi_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sigp_smogpe_bal', &
+&                   b2sigp_smogpe_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sigp_smogpgr_bal', &
+&                   b2sigp_smogpgr_bal_av, vdims, 2)
+    vdims(1) = nfcid
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sigp_pstat_bal', b2sigp_pstat_bal_av&
+&                   , vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sigp_pstati_bal', &
+&                   b2sigp_pstati_bal_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sigp_pstate_bal', &
+&                   b2sigp_pstate_bal_av, vdims, 1)
+    vdims(1) = ncvpid
+    CALL WRITE_CDF_DOUBLE(ncid, 'tot_smo_bal', tot_smo_bal_av, vdims, 2)
+!     Residual
+    CALL WRITE_CDF_DOUBLE(ncid, 'resmo', resmo_av, vdims, 2)
+!   ..Arrays for electron heat balance:
+!     Fluxes
+    vdims(1) = nfcid
+    vdims(2) = n2id
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_32', fhe_32_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_52', fhe_52_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_thermj', fhe_thermj_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_cond', fhe_cond_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_dia', fhe_dia_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_ecrb', fhe_ecrb_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_strange', fhe_strange_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhe_pschused', fhe_pschused_av, vdims, &
+&                   2)
+!     Sources
+    vdims(1) = ncvpid
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_she_bal', &
+&                   b2stbr_phys_she_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_she_bal', &
+&                   b2stbr_bas_she_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_first_flight_she_bal', &
+&                   b2stbr_first_flight_she_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_she_bal', b2stbc_she_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbm_she_bal', b2stbm_she_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'ext_she_bal', ext_she_bal_av, vdims, 1)
+    vdims(2) = nsid
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_she_bal', b2stel_she_bal_av, &
+&                   vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srsm_she_bal', b2srsm_she_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srdt_she_bal', b2srdt_she_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srst_she_bal', b2srst_she_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_diae_bal', b2sihs_diae_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_divue_bal', b2sihs_divue_bal_av&
+&                   , vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_exbe_bal', b2sihs_exbe_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_joule_bal', b2sihs_joule_bal_av&
+&                   , vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2npht_shei_bal', b2npht_shei_bal_av, &
+&                   vdims, 1)
+!     Residual
+    CALL WRITE_CDF_DOUBLE(ncid, 'reshe', reshe_av, vdims, 1)
+!   ..Arrays for ion heat balance:
+!     Fluxes
+    vdims(1) = nfcid
+    vdims(2) = n2id
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_32', fhi_32_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_52', fhi_52_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_cond', fhi_cond_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_dia', fhi_dia_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_ecrb', fhi_ecrb_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_strange', fhi_strange_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_pschused', fhi_pschused_av, vdims, &
+&                   2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_inert', fhi_inert_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_vispar', fhi_vispar_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_visper', fhi_visper_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_visq', fhi_visq_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_anml', fhi_anml_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fhi_kevis', fhi_kevis_av, vdims, 2)
+!     Sources
+    vdims(1) = ncvpid
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_shi_bal', &
+&                   b2stbr_phys_shi_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_shi_bal', &
+&                   b2stbr_bas_shi_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_first_flight_shi_bal', &
+&                   b2stbr_first_flight_shi_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_shi_bal', b2stbc_shi_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbm_shi_bal', b2stbm_shi_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'ext_shi_bal', ext_shi_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_she_ion_bal', &
+&                   b2stel_she_ion_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_she_rec_bal', &
+&                   b2stel_she_rec_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_shi_ion_bal', &
+&                   b2stel_shi_ion_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stel_shi_rec_bal', &
+&                   b2stel_shi_rec_bal_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2stcx_shi_bal', b2stcx_shi_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srsm_shi_bal', b2srsm_shi_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srdt_shi_bal', b2srdt_shi_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2srst_shi_bal', b2srst_shi_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_diaa_bal', b2sihs_diaa_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_divua_bal', b2sihs_divua_bal_av&
+&                   , vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_exba_bal', b2sihs_exba_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_visa_bal', b2sihs_visa_bal_av, &
+&                   vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'b2sihs_fraa_bal', b2sihs_fraa_bal_av, &
+&                   vdims, 1)
+!     Residual
+    CALL WRITE_CDF_DOUBLE(ncid, 'reshi', reshi_av, vdims, 1)
+!   ..Eirene sources
+    IF (ALLOCATED(eirene_mc_papl_sna_bal)) THEN
+      vdims(2) = nsid
+      vdims(3) = nstraid
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_papl_sna_bal', &
+&                     eirene_mc_papl_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pmpl_sna_bal', &
+&                     eirene_mc_pmpl_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pipl_sna_bal', &
+&                     eirene_mc_pipl_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pppl_sna_bal', &
+&                     eirene_mc_pppl_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_core_sna_bal', &
+&                     eirene_mc_core_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_mapl_smo_bal', &
+&                     eirene_mc_mapl_smo_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_mmpl_smo_bal', &
+&                     eirene_mc_mmpl_smo_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_mipl_smo_bal', &
+&                     eirene_mc_mipl_smo_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_cppv_smo_bal', &
+&                     eirene_mc_cppv_smo_bal_av, vdims, 3)
+      vdims(2) = eirnatmid
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_paat_sna_bal', &
+&                     eirene_mc_paat_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pmat_sna_bal', &
+&                     eirene_mc_pmat_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_piat_sna_bal', &
+&                     eirene_mc_piat_sna_bal_av, vdims, 3)
+      vdims(2) = eirnmolid
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_paml_sna_bal', &
+&                     eirene_mc_paml_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pmml_sna_bal', &
+&                     eirene_mc_pmml_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_piml_sna_bal', &
+&                     eirene_mc_piml_sna_bal_av, vdims, 3)
+      vdims(2) = eirnionid
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_paio_sna_bal', &
+&                     eirene_mc_paio_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pmio_sna_bal', &
+&                     eirene_mc_pmio_sna_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_piio_sna_bal', &
+&                     eirene_mc_piio_sna_bal_av, vdims, 3)
+      vdims(2) = nstraid
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pael_sne_bal', &
+&                     eirene_mc_pael_sne_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pmel_sne_bal', &
+&                     eirene_mc_pmel_sne_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_eael_she_bal', &
+&                     eirene_mc_eael_she_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_emel_she_bal', &
+&                     eirene_mc_emel_she_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_eiel_she_bal', &
+&                     eirene_mc_eiel_she_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_epel_she_bal', &
+&                     eirene_mc_epel_she_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_eapl_shi_bal', &
+&                     eirene_mc_eapl_shi_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_empl_shi_bal', &
+&                     eirene_mc_empl_shi_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_eipl_shi_bal', &
+&                     eirene_mc_eipl_shi_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_eppl_shi_bal', &
+&                     eirene_mc_eppl_shi_bal_av, vdims, 2)
+    ELSE
+      WRITE(*, *) 'skipping Eirene sources'
+    END IF
+!   ..Additional averaged quantities
+    vdims(1) = ncvpid
+    vdims(2) = nsid
+    CALL WRITE_CDF_DOUBLE(ncid, 'ne', ne_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'na', na_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'ua', ua_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'po', po_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'te', te_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'ti', ti_av, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'rpt', rpt_av, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'kinrgy', kinrgy_av, vdims, 2)
+    vdims(1) = nfcid
+    vdims(2) = n2id
+    CALL WRITE_CDF_DOUBLE(ncid, 'fne', fne_av, vdims, 2)
+    IF (ALLOCATED(dab2_av)) THEN
+      vdims(1) = eirncvid
+      vdims(2) = eirnatmid
+      CALL WRITE_CDF_DOUBLE(ncid, 'dab2', dab2_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'tab2', tab2_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'rfluxa', rfluxa_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'refluxa', refluxa_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'pfluxa', pfluxa_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'pefluxa', pefluxa_av, vdims, 2)
+      vdims(2) = eirnmolid
+      CALL WRITE_CDF_DOUBLE(ncid, 'dmb2', dmb2_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'tmb2', tmb2_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'rfluxm', rfluxm_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'refluxm', refluxm_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'pfluxm', pfluxm_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'pefluxm', pefluxm_av, vdims, 2)
+    END IF
+!
+    status = NF_CLOSE(ncid)
+    CALL CHECK_CDF_STATUS(status)
+!
+    WRITE(*, *) 'balance.nc written'
+!
+    RETURN
+  END SUBROUTINE WRITE_BALANCE
+
+!
+  SUBROUTINE READ_BALANCE()
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!     NetCDF-3.
+!
+! netcdf version 3 fortran interface:
+!
+!
+!
+! external netcdf data types:
+!
+    INTEGER :: nf_byte
+    INTEGER :: nf_int1
+    INTEGER :: nf_char
+    INTEGER :: nf_short
+    INTEGER :: nf_int2
+    INTEGER :: nf_int
+    INTEGER :: nf_float
+    INTEGER :: nf_real
+    INTEGER :: nf_double
+    INTEGER :: nf_ubyte
+    INTEGER :: nf_ushort
+    INTEGER :: nf_uint
+    INTEGER :: nf_int64
+    INTEGER :: nf_uint64
+    PARAMETER (nf_byte=1)
+!
+    PARAMETER (nf_int1=nf_byte)
+    PARAMETER (nf_char=2)
+    PARAMETER (nf_short=3)
+    PARAMETER (nf_int2=nf_short)
+    PARAMETER (nf_int=4)
+    PARAMETER (nf_float=5)
+    PARAMETER (nf_real=nf_float)
+    PARAMETER (nf_double=6)
+    PARAMETER (nf_ubyte=7)
+    PARAMETER (nf_ushort=8)
+    PARAMETER (nf_uint=9)
+    PARAMETER (nf_int64=10)
+    PARAMETER (nf_uint64=11)
+!
+!
+! default fill values:
+!
+    INTEGER :: nf_fill_byte
+    INTEGER :: nf_fill_int1
+    INTEGER :: nf_fill_char
+    INTEGER :: nf_fill_short
+    INTEGER :: nf_fill_int2
+    INTEGER :: nf_fill_int
+    REAL(kind=r8) :: nf_fill_float
+    REAL(kind=r8) :: nf_fill_real
+    DOUBLE PRECISION :: nf_fill_double
+    PARAMETER (nf_fill_byte=-127)
+!
+    PARAMETER (nf_fill_int1=nf_fill_byte)
+    PARAMETER (nf_fill_char=0)
+    PARAMETER (nf_fill_short=-32767)
+    PARAMETER (nf_fill_int2=nf_fill_short)
+    PARAMETER (nf_fill_int=-2147483647)
+    PARAMETER (nf_fill_float=9.9692099683868690e+36)
+    PARAMETER (nf_fill_real=nf_fill_float)
+    PARAMETER (nf_fill_double=9.9692099683868690d+36)
+!
+!
+! mode flags for opening and creating a netcdf dataset:
+!
+    INTEGER :: nf_nowrite
+    INTEGER :: nf_write
+    INTEGER :: nf_clobber
+    INTEGER :: nf_noclobber
+    INTEGER :: nf_fill
+    INTEGER :: nf_nofill
+    INTEGER :: nf_lock
+    INTEGER :: nf_share
+    INTEGER :: nf_64bit_offset
+    INTEGER :: nf_64bit_data
+    INTEGER :: nf_cdf5
+    INTEGER :: nf_sizehint_default
+    INTEGER :: nf_align_chunk
+    INTEGER :: nf_format_classic
+    INTEGER :: nf_format_64bit
+    INTEGER :: nf_format_64bit_offset
+    INTEGER :: nf_format_64bit_data
+    INTEGER :: nf_format_cdf5
+    INTEGER :: nf_diskless
+    INTEGER :: nf_mmap
+    PARAMETER (nf_nowrite=0)
+!
+    PARAMETER (nf_write=1)
+    PARAMETER (nf_clobber=0)
+    PARAMETER (nf_noclobber=4)
+    PARAMETER (nf_fill=0)
+    PARAMETER (nf_nofill=256)
+    PARAMETER (nf_lock=1024)
+    PARAMETER (nf_share=2048)
+    PARAMETER (nf_64bit_offset=512)
+    PARAMETER (nf_64bit_data=32)
+    PARAMETER (nf_cdf5=nf_64bit_data)
+    PARAMETER (nf_sizehint_default=0)
+    PARAMETER (nf_align_chunk=-1)
+    PARAMETER (nf_format_classic=1)
+    PARAMETER (nf_format_64bit=2)
+    PARAMETER (nf_format_64bit_offset=nf_format_64bit)
+    PARAMETER (nf_format_64bit_data=5)
+    PARAMETER (nf_format_cdf5=nf_format_64bit_data)
+    PARAMETER (nf_diskless=8)
+    PARAMETER (nf_mmap=16)
+!
+!
+! size argument for defining an unlimited dimension:
+!
+    INTEGER :: nf_unlimited
+    PARAMETER (nf_unlimited=0)
+!
+!
+! global attribute id:
+!
+    INTEGER :: nf_global
+    PARAMETER (nf_global=0)
+!
+!
+! implementation limits:
+!
+    INTEGER :: nf_max_dims
+    INTEGER :: nf_max_attrs
+    INTEGER :: nf_max_vars
+    INTEGER :: nf_max_name
+    INTEGER :: nf_max_var_dims
+    PARAMETER (nf_max_dims=1024)
+!
+    PARAMETER (nf_max_attrs=8192)
+    PARAMETER (nf_max_vars=8192)
+    PARAMETER (nf_max_name=256)
+    PARAMETER (nf_max_var_dims=nf_max_dims)
+!
+!
+! error codes:
+!
+    INTEGER :: nf_noerr
+    INTEGER :: nf_ebadid
+    INTEGER :: nf_eexist
+    INTEGER :: nf_einval
+    INTEGER :: nf_eperm
+    INTEGER :: nf_enotindefine
+    INTEGER :: nf_eindefine
+    INTEGER :: nf_einvalcoords
+    INTEGER :: nf_emaxdims
+    INTEGER :: nf_enameinuse
+    INTEGER :: nf_enotatt
+    INTEGER :: nf_emaxatts
+    INTEGER :: nf_ebadtype
+    INTEGER :: nf_ebaddim
+    INTEGER :: nf_eunlimpos
+    INTEGER :: nf_emaxvars
+    INTEGER :: nf_enotvar
+    INTEGER :: nf_eglobal
+    INTEGER :: nf_enotnc
+    INTEGER :: nf_ests
+    INTEGER :: nf_emaxname
+    INTEGER :: nf_eunlimit
+    INTEGER :: nf_enorecvars
+    INTEGER :: nf_echar
+    INTEGER :: nf_eedge
+    INTEGER :: nf_estride
+    INTEGER :: nf_ebadname
+    INTEGER :: nf_erange
+    INTEGER :: nf_enomem
+    INTEGER :: nf_evarsize
+    INTEGER :: nf_edimsize
+    INTEGER :: nf_etrunc
+    PARAMETER (nf_noerr=0)
+!
+    PARAMETER (nf_ebadid=-33)
+    PARAMETER (nf_eexist=-35)
+    PARAMETER (nf_einval=-36)
+    PARAMETER (nf_eperm=-37)
+    PARAMETER (nf_enotindefine=-38)
+    PARAMETER (nf_eindefine=-39)
+    PARAMETER (nf_einvalcoords=-40)
+    PARAMETER (nf_emaxdims=-41)
+    PARAMETER (nf_enameinuse=-42)
+    PARAMETER (nf_enotatt=-43)
+    PARAMETER (nf_emaxatts=-44)
+    PARAMETER (nf_ebadtype=-45)
+    PARAMETER (nf_ebaddim=-46)
+    PARAMETER (nf_eunlimpos=-47)
+    PARAMETER (nf_emaxvars=-48)
+    PARAMETER (nf_enotvar=-49)
+    PARAMETER (nf_eglobal=-50)
+    PARAMETER (nf_enotnc=-51)
+    PARAMETER (nf_ests=-52)
+    PARAMETER (nf_emaxname=-53)
+    PARAMETER (nf_eunlimit=-54)
+    PARAMETER (nf_enorecvars=-55)
+    PARAMETER (nf_echar=-56)
+    PARAMETER (nf_eedge=-57)
+    PARAMETER (nf_estride=-58)
+    PARAMETER (nf_ebadname=-59)
+    PARAMETER (nf_erange=-60)
+    PARAMETER (nf_enomem=-61)
+    PARAMETER (nf_evarsize=-62)
+    PARAMETER (nf_edimsize=-63)
+    PARAMETER (nf_etrunc=-64)
+!
+! error handling modes:
+!
+    INTEGER :: nf_fatal
+    INTEGER :: nf_verbose
+    PARAMETER (nf_fatal=1)
+!
+    PARAMETER (nf_verbose=2)
+    EXTERNAL NF_INQ_LIBVERS
+!
+!
+! miscellaneous routines:
+!
+    CHARACTER(len=80) :: NF_INQ_LIBVERS
+!                         (integer             ncerr)
+    EXTERNAL NF_STRERROR
+!
+    CHARACTER(len=80) :: NF_STRERROR
+!                         (integer             ncerr)
+    EXTERNAL NF_ISSYSERR
+!
+    LOGICAL :: NF_ISSYSERR
+!                         (integer             ncid,
+!                          integer             pe)
+    EXTERNAL NF_INQ_BASE_PE
+!
+!
+! control routines:
+!
+    INTEGER :: NF_INQ_BASE_PE
+!                         (integer             ncid,
+!                          integer             pe)
+    EXTERNAL NF_SET_BASE_PE
+!
+    INTEGER :: NF_SET_BASE_PE
+!                         (character*(*)       path,
+!                          integer             cmode,
+!                          integer             ncid)
+    EXTERNAL NF_CREATE
+!
+    INTEGER :: NF_CREATE
+!                         (character*(*)       path,
+!                          integer             cmode,
+!                          integer             initialsz,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__CREATE
+!
+    INTEGER :: NF__CREATE
+!                         (character*(*)       path,
+!                          integer             cmode,
+!                          integer             initialsz,
+!                          integer             basepe,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__CREATE_MP
+!
+    INTEGER :: NF__CREATE_MP
+!                         (character*(*)       path,
+!                          integer             mode,
+!                          integer             ncid)
+    EXTERNAL NF_OPEN
+!
+    INTEGER :: NF_OPEN
+!                         (character*(*)       path,
+!                          integer             mode,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__OPEN
+!
+    INTEGER :: NF__OPEN
+!                         (character*(*)       path,
+!                          integer             mode,
+!                          integer             basepe,
+!                          integer             chunksizehint,
+!                          integer             ncid)
+    EXTERNAL NF__OPEN_MP
+!
+    INTEGER :: NF__OPEN_MP
+!                         (integer             ncid,
+!                          integer             fillmode,
+!                          integer             old_mode)
+    EXTERNAL NF_SET_FILL
+!
+    INTEGER :: NF_SET_FILL
+!                          (integer             format,
+!                          integer             old_format)
+    EXTERNAL NF_SET_DEFAULT_FORMAT
+!
+    INTEGER :: NF_SET_DEFAULT_FORMAT
+!                         (integer             ncid)
+    EXTERNAL NF_REDEF
+!
+    INTEGER :: NF_REDEF
+!                         (integer             ncid)
+    EXTERNAL NF_ENDDEF
+!
+    INTEGER :: NF_ENDDEF
+!                         (integer             ncid,
+!                          integer             h_minfree,
+!                          integer             v_align,
+!                          integer             v_minfree,
+!                          integer             r_align)
+    EXTERNAL NF__ENDDEF
+!
+    INTEGER :: NF__ENDDEF
+!                         (integer             ncid)
+    EXTERNAL NF_SYNC
+!
+    INTEGER :: NF_SYNC
+!                         (integer             ncid)
+    EXTERNAL NF_ABORT
+!
+    INTEGER :: NF_ABORT
+!                         (integer             ncid)
+    EXTERNAL NF_CLOSE
+!
+    INTEGER :: NF_CLOSE
+!                         (character*(*)       ncid)
+    EXTERNAL NF_DELETE
+!
+    INTEGER :: NF_DELETE
+!                         (integer             ncid,
+!                          integer             ndims,
+!                          integer             nvars,
+!                          integer             ngatts,
+!                          integer             unlimdimid)
+    EXTERNAL NF_INQ
+!
+!
+! general inquiry routines:
+!
+!
+    INTEGER :: NF_INQ
+    EXTERNAL NF_INQ_PATH
+!
+! new inquire path
+!
+    INTEGER :: NF_INQ_PATH
+!                         (integer             ncid,
+!                          integer             ndims)
+    EXTERNAL NF_INQ_NDIMS
+!
+    INTEGER :: NF_INQ_NDIMS
+!                         (integer             ncid,
+!                          integer             nvars)
+    EXTERNAL NF_INQ_NVARS
+!
+    INTEGER :: NF_INQ_NVARS
+!                         (integer             ncid,
+!                          integer             ngatts)
+    EXTERNAL NF_INQ_NATTS
+!
+    INTEGER :: NF_INQ_NATTS
+!                         (integer             ncid,
+!                          integer             unlimdimid)
+    EXTERNAL NF_INQ_UNLIMDIM
+!
+    INTEGER :: NF_INQ_UNLIMDIM
+!                         (integer             ncid,
+!                          integer             format)
+    EXTERNAL NF_INQ_FORMAT
+!
+    INTEGER :: NF_INQ_FORMAT
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             len,
+!                          integer             dimid)
+    EXTERNAL NF_DEF_DIM
+!
+!
+! dimension routines:
+!
+!
+    INTEGER :: NF_DEF_DIM
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             dimid)
+    EXTERNAL NF_INQ_DIMID
+!
+    INTEGER :: NF_INQ_DIMID
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          character(*)        name,
+!                          integer             len)
+    EXTERNAL NF_INQ_DIM
+!
+    INTEGER :: NF_INQ_DIM
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          character(*)        name)
+    EXTERNAL NF_INQ_DIMNAME
+!
+    INTEGER :: NF_INQ_DIMNAME
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          integer             len)
+    EXTERNAL NF_INQ_DIMLEN
+!
+    INTEGER :: NF_INQ_DIMLEN
+!                         (integer             ncid,
+!                          integer             dimid,
+!                          character(*)        name)
+    EXTERNAL NF_RENAME_DIM
+!
+    INTEGER :: NF_RENAME_DIM
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len)
+    EXTERNAL NF_INQ_ATT
+!
+!
+! general attribute routines:
+!
+!
+    INTEGER :: NF_INQ_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             attnum)
+    EXTERNAL NF_INQ_ATTID
+!
+    INTEGER :: NF_INQ_ATTID
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype)
+    EXTERNAL NF_INQ_ATTTYPE
+!
+    INTEGER :: NF_INQ_ATTTYPE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             len)
+    EXTERNAL NF_INQ_ATTLEN
+!
+    INTEGER :: NF_INQ_ATTLEN
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             attnum,
+!                          character(*)        name)
+    EXTERNAL NF_INQ_ATTNAME
+!
+    INTEGER :: NF_INQ_ATTNAME
+!                         (integer             ncid_in,
+!                          integer             varid_in,
+!                          character(*)        name,
+!                          integer             ncid_out,
+!                          integer             varid_out)
+    EXTERNAL NF_COPY_ATT
+!
+    INTEGER :: NF_COPY_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        curname,
+!                          character(*)        newname)
+    EXTERNAL NF_RENAME_ATT
+!
+    INTEGER :: NF_RENAME_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name)
+    EXTERNAL NF_DEL_ATT
+!
+    INTEGER :: NF_DEL_ATT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             len,
+!                          character(*)        text)
+    EXTERNAL NF_PUT_ATT_TEXT
+!
+!
+! attribute put/get routines:
+!
+!
+    INTEGER :: NF_PUT_ATT_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          character(*)        text)
+    EXTERNAL NF_GET_ATT_TEXT
+!
+    INTEGER :: NF_GET_ATT_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_ATT_INT1
+!
+    INTEGER :: NF_PUT_ATT_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_ATT_INT1
+!
+    INTEGER :: NF_GET_ATT_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_ATT_INT2
+!
+    INTEGER :: NF_PUT_ATT_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_ATT_INT2
+!
+    INTEGER :: NF_GET_ATT_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_ATT_INT
+!
+    INTEGER :: NF_PUT_ATT_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_ATT_INT
+!
+    INTEGER :: NF_GET_ATT_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_PUT_ATT_INT64
+!
+    INTEGER :: NF_PUT_ATT_INT64
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_GET_ATT_INT64
+!
+    INTEGER :: NF_GET_ATT_INT64
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_ATT_REAL
+!
+    INTEGER :: NF_PUT_ATT_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          real                rvals(1))
+    EXTERNAL NF_GET_ATT_REAL
+!
+    INTEGER :: NF_GET_ATT_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          double              dvals(1))
+    EXTERNAL NF_PUT_ATT_DOUBLE
+!
+    INTEGER :: NF_PUT_ATT_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          double              dvals(1))
+    EXTERNAL NF_GET_ATT_DOUBLE
+!
+    INTEGER :: NF_GET_ATT_DOUBLE
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             datatype,
+!                          integer             ndims,
+!                          integer             dimids(1),
+!                          integer             varid)
+    EXTERNAL NF_DEF_VAR
+!
+!
+! general variable routines:
+!
+!
+    INTEGER :: NF_DEF_VAR
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             datatype,
+!                          integer             ndims,
+!                          integer             dimids(1),
+!                          integer             natts)
+    EXTERNAL NF_INQ_VAR
+!
+    INTEGER :: NF_INQ_VAR
+!                         (integer             ncid,
+!                          character(*)        name,
+!                          integer             varid)
+    EXTERNAL NF_INQ_VARID
+!
+    INTEGER :: NF_INQ_VARID
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name)
+    EXTERNAL NF_INQ_VARNAME
+!
+    INTEGER :: NF_INQ_VARNAME
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             xtype)
+    EXTERNAL NF_INQ_VARTYPE
+!
+    INTEGER :: NF_INQ_VARTYPE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             ndims)
+    EXTERNAL NF_INQ_VARNDIMS
+!
+    INTEGER :: NF_INQ_VARNDIMS
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             dimids(1))
+    EXTERNAL NF_INQ_VARDIMID
+!
+    INTEGER :: NF_INQ_VARDIMID
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             natts)
+    EXTERNAL NF_INQ_VARNATTS
+!
+    INTEGER :: NF_INQ_VARNATTS
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name)
+    EXTERNAL NF_RENAME_VAR
+!
+    INTEGER :: NF_RENAME_VAR
+!                         (integer             ncid_in,
+!                          integer             varid,
+!                          integer             ncid_out)
+    EXTERNAL NF_COPY_VAR
+!
+    INTEGER :: NF_COPY_VAR
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VAR_TEXT
+!
+!
+! entire variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VAR_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        text)
+    EXTERNAL NF_GET_VAR_TEXT
+!
+    INTEGER :: NF_GET_VAR_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VAR_INT1
+!
+    INTEGER :: NF_PUT_VAR_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VAR_INT1
+!
+    INTEGER :: NF_GET_VAR_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VAR_INT2
+!
+    INTEGER :: NF_PUT_VAR_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VAR_INT2
+!
+    INTEGER :: NF_GET_VAR_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VAR_INT
+!
+    INTEGER :: NF_PUT_VAR_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VAR_INT
+!
+    INTEGER :: NF_GET_VAR_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VAR_REAL
+!
+    INTEGER :: NF_PUT_VAR_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VAR_REAL
+!
+    INTEGER :: NF_GET_VAR_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VAR_DOUBLE
+!
+    INTEGER :: NF_PUT_VAR_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VAR_DOUBLE
+!
+    INTEGER :: NF_GET_VAR_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          character*1         text)
+    EXTERNAL NF_PUT_VAR1_TEXT
+!
+!
+! single variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VAR1_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          character*1         text)
+    EXTERNAL NF_GET_VAR1_TEXT
+!
+    INTEGER :: NF_GET_VAR1_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int1_t           i1val)
+    EXTERNAL NF_PUT_VAR1_INT1
+!
+    INTEGER :: NF_PUT_VAR1_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int1_t           i1val)
+    EXTERNAL NF_GET_VAR1_INT1
+!
+    INTEGER :: NF_GET_VAR1_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int2_t           i2val)
+    EXTERNAL NF_PUT_VAR1_INT2
+!
+    INTEGER :: NF_PUT_VAR1_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          nf_int2_t           i2val)
+    EXTERNAL NF_GET_VAR1_INT2
+!
+    INTEGER :: NF_GET_VAR1_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          integer             ival)
+    EXTERNAL NF_PUT_VAR1_INT
+!
+    INTEGER :: NF_PUT_VAR1_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          integer             ival)
+    EXTERNAL NF_GET_VAR1_INT
+!
+    INTEGER :: NF_GET_VAR1_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          real                rval)
+    EXTERNAL NF_PUT_VAR1_REAL
+!
+    INTEGER :: NF_PUT_VAR1_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          real                rval)
+    EXTERNAL NF_GET_VAR1_REAL
+!
+    INTEGER :: NF_GET_VAR1_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          doubleprecision     dval)
+    EXTERNAL NF_PUT_VAR1_DOUBLE
+!
+    INTEGER :: NF_PUT_VAR1_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             index(1),
+!                          doubleprecision     dval)
+    EXTERNAL NF_GET_VAR1_DOUBLE
+!
+    INTEGER :: NF_GET_VAR1_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VARA_TEXT
+!
+!
+! variable array put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VARA_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          character(*)        text)
+    EXTERNAL NF_GET_VARA_TEXT
+!
+    INTEGER :: NF_GET_VARA_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VARA_INT1
+!
+    INTEGER :: NF_PUT_VARA_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VARA_INT1
+!
+    INTEGER :: NF_GET_VARA_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VARA_INT2
+!
+    INTEGER :: NF_PUT_VARA_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VARA_INT2
+!
+    INTEGER :: NF_GET_VARA_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VARA_INT
+!
+    INTEGER :: NF_PUT_VARA_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VARA_INT
+!
+    INTEGER :: NF_GET_VARA_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VARA_REAL
+!
+    INTEGER :: NF_PUT_VARA_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VARA_REAL
+!
+    INTEGER :: NF_GET_VARA_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VARA_DOUBLE
+!
+    INTEGER :: NF_PUT_VARA_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VARA_DOUBLE
+!
+    INTEGER :: NF_GET_VARA_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VARS_TEXT
+!
+!
+! strided variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VARS_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          character(*)        text)
+    EXTERNAL NF_GET_VARS_TEXT
+!
+    INTEGER :: NF_GET_VARS_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VARS_INT1
+!
+    INTEGER :: NF_PUT_VARS_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VARS_INT1
+!
+    INTEGER :: NF_GET_VARS_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VARS_INT2
+!
+    INTEGER :: NF_PUT_VARS_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VARS_INT2
+!
+    INTEGER :: NF_GET_VARS_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VARS_INT
+!
+    INTEGER :: NF_PUT_VARS_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VARS_INT
+!
+    INTEGER :: NF_GET_VARS_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VARS_REAL
+!
+    INTEGER :: NF_PUT_VARS_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VARS_REAL
+!
+    INTEGER :: NF_GET_VARS_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VARS_DOUBLE
+!
+    INTEGER :: NF_PUT_VARS_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VARS_DOUBLE
+!
+    INTEGER :: NF_GET_VARS_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          character(*)        text)
+    EXTERNAL NF_PUT_VARM_TEXT
+!
+!
+! mapped variable put/get routines:
+!
+!
+    INTEGER :: NF_PUT_VARM_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          character(*)        text)
+    EXTERNAL NF_GET_VARM_TEXT
+!
+    INTEGER :: NF_GET_VARM_TEXT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_PUT_VARM_INT1
+!
+    INTEGER :: NF_PUT_VARM_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int1_t           i1vals(1))
+    EXTERNAL NF_GET_VARM_INT1
+!
+    INTEGER :: NF_GET_VARM_INT1
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_PUT_VARM_INT2
+!
+    INTEGER :: NF_PUT_VARM_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          nf_int2_t           i2vals(1))
+    EXTERNAL NF_GET_VARM_INT2
+!
+    INTEGER :: NF_GET_VARM_INT2
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_PUT_VARM_INT
+!
+    INTEGER :: NF_PUT_VARM_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          integer             ivals(1))
+    EXTERNAL NF_GET_VARM_INT
+!
+    INTEGER :: NF_GET_VARM_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          real                rvals(1))
+    EXTERNAL NF_PUT_VARM_REAL
+!
+    INTEGER :: NF_PUT_VARM_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          real                rvals(1))
+    EXTERNAL NF_GET_VARM_REAL
+!
+    INTEGER :: NF_GET_VARM_REAL
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_PUT_VARM_DOUBLE
+!
+    INTEGER :: NF_PUT_VARM_DOUBLE
+!                         (integer             ncid,
+!                          integer             varid,
+!                          integer             start(1),
+!                          integer             count(1),
+!                          integer             stride(1),
+!                          integer             imap(1),
+!                          doubleprecision     dvals(1))
+    EXTERNAL NF_GET_VARM_DOUBLE
+!
+    INTEGER :: NF_GET_VARM_DOUBLE
+    EXTERNAL NF_PUT_VAR1_INT64
+!
+!     64-bit int functions.
+    INTEGER :: NF_PUT_VAR1_INT64
+    EXTERNAL NF_PUT_VARA_INT64
+    INTEGER :: NF_PUT_VARA_INT64
+    EXTERNAL NF_PUT_VARS_INT64
+    INTEGER :: NF_PUT_VARS_INT64
+    EXTERNAL NF_PUT_VARM_INT64
+    INTEGER :: NF_PUT_VARM_INT64
+    EXTERNAL NF_PUT_VAR_INT64
+    INTEGER :: NF_PUT_VAR_INT64
+    EXTERNAL NF_GET_VAR1_INT64
+    INTEGER :: NF_GET_VAR1_INT64
+    EXTERNAL NF_GET_VARA_INT64
+    INTEGER :: NF_GET_VARA_INT64
+    EXTERNAL NF_GET_VARS_INT64
+    INTEGER :: NF_GET_VARS_INT64
+    EXTERNAL NF_GET_VARM_INT64
+    INTEGER :: NF_GET_VARM_INT64
+    EXTERNAL NF_GET_VAR_INT64
+    INTEGER :: NF_GET_VAR_INT64
+!
+!
+!     NetCDF-4.
+!     This is part of netCDF-4. Copyright 2006, UCAR, See COPYRIGHT
+!     file for distribution information.
+!
+!     Netcdf version 4 fortran interface.
+!
+!     $Id: netcdf4.inc,v 1.28 2010/05/25 13:53:02 ed Exp $
+!
+!     New netCDF-4 types.
+    INTEGER :: nf_string
+    INTEGER :: nf_vlen
+    INTEGER :: nf_opaque
+    INTEGER :: nf_enum
+    INTEGER :: nf_compound
+    PARAMETER (nf_string=12)
+!
+    PARAMETER (nf_vlen=13)
+    PARAMETER (nf_opaque=14)
+    PARAMETER (nf_enum=15)
+    PARAMETER (nf_compound=16)
+!
+!     New netCDF-4 fill values.
+    INTEGER :: nf_fill_ubyte
+    INTEGER :: nf_fill_ushort
+    PARAMETER (nf_fill_ubyte=255)
+!      real              nf_fill_uint
+!      real              nf_fill_int64
+!      real              nf_fill_uint64
+    PARAMETER (nf_fill_ushort=65535)
+!
+!     New constants.
+    INTEGER :: nf_format_netcdf4
+    PARAMETER (nf_format_netcdf4=3)
+!
+    INTEGER :: nf_format_netcdf4_classic
+    PARAMETER (nf_format_netcdf4_classic=4)
+!
+    INTEGER :: nf_netcdf4
+    PARAMETER (nf_netcdf4=4096)
+!
+    INTEGER :: nf_classic_model
+    PARAMETER (nf_classic_model=256)
+!
+    INTEGER :: nf_chunk_seq
+    PARAMETER (nf_chunk_seq=0)
+    INTEGER :: nf_chunk_sub
+    PARAMETER (nf_chunk_sub=1)
+    INTEGER :: nf_chunk_sizes
+    PARAMETER (nf_chunk_sizes=2)
+!
+    INTEGER :: nf_endian_native
+    PARAMETER (nf_endian_native=0)
+    INTEGER :: nf_endian_little
+    PARAMETER (nf_endian_little=1)
+    INTEGER :: nf_endian_big
+    PARAMETER (nf_endian_big=2)
+!
+!     For NF_DEF_VAR_CHUNKING
+    INTEGER :: nf_chunked
+    PARAMETER (nf_chunked=0)
+    INTEGER :: nf_contiguous
+    PARAMETER (nf_contiguous=1)
+    INTEGER :: nf_compact
+    PARAMETER (nf_compact=2)
+!
+!     For NF_DEF_VAR_FLETCHER32
+    INTEGER :: nf_nochecksum
+    PARAMETER (nf_nochecksum=0)
+    INTEGER :: nf_fletcher32
+    PARAMETER (nf_fletcher32=1)
+!
+!     For NF_DEF_VAR_DEFLATE
+    INTEGER :: nf_noshuffle
+    PARAMETER (nf_noshuffle=0)
+    INTEGER :: nf_shuffle
+    PARAMETER (nf_shuffle=1)
+!
+!     For NF_DEF_VAR_SZIP
+    INTEGER :: nf_szip_ec_option_mask
+    PARAMETER (nf_szip_ec_option_mask=4)
+    INTEGER :: nf_szip_nn_option_mask
+    PARAMETER (nf_szip_nn_option_mask=32)
+!
+!     For parallel I/O.
+    INTEGER :: nf_mpiio
+    PARAMETER (nf_mpiio=8192)
+    INTEGER :: nf_mpiposix
+    PARAMETER (nf_mpiposix=16384)
+    INTEGER :: nf_pnetcdf
+    PARAMETER (nf_pnetcdf=32768)
+!
+!     For NF_VAR_PAR_ACCESS.
+    INTEGER :: nf_independent
+    PARAMETER (nf_independent=0)
+    INTEGER :: nf_collective
+    PARAMETER (nf_collective=1)
+!
+!     New error codes.
+! Error at HDF5 layer. 
+    INTEGER :: nf_ehdferr
+    PARAMETER (nf_ehdferr=-101)
+! Can't read. 
+    INTEGER :: nf_ecantread
+    PARAMETER (nf_ecantread=-102)
+! Can't write. 
+    INTEGER :: nf_ecantwrite
+    PARAMETER (nf_ecantwrite=-103)
+! Can't create. 
+    INTEGER :: nf_ecantcreate
+    PARAMETER (nf_ecantcreate=-104)
+! Problem with file metadata. 
+    INTEGER :: nf_efilemeta
+    PARAMETER (nf_efilemeta=-105)
+! Problem with dimension metadata. 
+    INTEGER :: nf_edimmeta
+    PARAMETER (nf_edimmeta=-106)
+! Problem with attribute metadata. 
+    INTEGER :: nf_eattmeta
+    PARAMETER (nf_eattmeta=-107)
+! Problem with variable metadata. 
+    INTEGER :: nf_evarmeta
+    PARAMETER (nf_evarmeta=-108)
+! Not a compound type. 
+    INTEGER :: nf_enocompound
+    PARAMETER (nf_enocompound=-109)
+! Attribute already exists. 
+    INTEGER :: nf_eattexists
+    PARAMETER (nf_eattexists=-110)
+! Attempting netcdf-4 operation on netcdf-3 file.   
+    INTEGER :: nf_enotnc4
+    PARAMETER (nf_enotnc4=-111)
+! Attempting netcdf-4 operation on strict nc3 netcdf-4 file.   
+    INTEGER :: nf_estrictnc3
+    PARAMETER (nf_estrictnc3=-112)
+! Attempting netcdf-3 operation on netcdf-4 file.   
+    INTEGER :: nf_enotnc3
+    PARAMETER (nf_enotnc3=-113)
+! Parallel operation on file opened for non-parallel access.   
+    INTEGER :: nf_enopar
+    PARAMETER (nf_enopar=-114)
+! Error initializing for parallel access.   
+    INTEGER :: nf_eparinit
+    PARAMETER (nf_eparinit=-115)
+! Bad group ID.   
+    INTEGER :: nf_ebadgrpid
+    PARAMETER (nf_ebadgrpid=-116)
+! Bad type ID.   
+    INTEGER :: nf_ebadtypid
+    PARAMETER (nf_ebadtypid=-117)
+! Type has already been defined and may not be edited. 
+    INTEGER :: nf_etypdefined
+    PARAMETER (nf_etypdefined=-118)
+! Bad field ID.   
+    INTEGER :: nf_ebadfield
+    PARAMETER (nf_ebadfield=-119)
+! Bad class.   
+    INTEGER :: nf_ebadclass
+    PARAMETER (nf_ebadclass=-120)
+! Mapped access for atomic types only.   
+    INTEGER :: nf_emaptype
+    PARAMETER (nf_emaptype=-121)
+! Attempt to define fill value when data already exists. 
+    INTEGER :: nf_elatefill
+    PARAMETER (nf_elatefill=-122)
+! Attempt to define var properties, like deflate, after enddef. 
+    INTEGER :: nf_elatedef
+    PARAMETER (nf_elatedef=-123)
+! Probem with HDF5 dimscales. 
+    INTEGER :: nf_edimscale
+    PARAMETER (nf_edimscale=-124)
+! No group found.
+    INTEGER :: nf_enogrp
+    PARAMETER (nf_enogrp=-125)
+    EXTERNAL NF_CREATE_PAR
+!
+!
+!     New functions.
+!
+!     Parallel I/O.
+    INTEGER :: NF_CREATE_PAR
+    EXTERNAL NF_OPEN_PAR
+!
+    INTEGER :: NF_OPEN_PAR
+    EXTERNAL NF_VAR_PAR_ACCESS
+!
+    INTEGER :: NF_VAR_PAR_ACCESS
+    EXTERNAL NF_INQ_NCID
+!
+!     Functions to handle groups.
+    INTEGER :: NF_INQ_NCID
+    EXTERNAL NF_INQ_GRPS
+!
+    INTEGER :: NF_INQ_GRPS
+    EXTERNAL NF_INQ_GRPNAME
+!
+    INTEGER :: NF_INQ_GRPNAME
+    EXTERNAL NF_INQ_GRPNAME_FULL
+!
+    INTEGER :: NF_INQ_GRPNAME_FULL
+    EXTERNAL NF_INQ_GRPNAME_LEN
+!
+    INTEGER :: NF_INQ_GRPNAME_LEN
+    EXTERNAL NF_INQ_GRP_PARENT
+!
+    INTEGER :: NF_INQ_GRP_PARENT
+    EXTERNAL NF_INQ_GRP_NCID
+!
+    INTEGER :: NF_INQ_GRP_NCID
+    EXTERNAL NF_INQ_GRP_FULL_NCID
+!
+    INTEGER :: NF_INQ_GRP_FULL_NCID
+    EXTERNAL NF_INQ_VARIDS
+!
+    INTEGER :: NF_INQ_VARIDS
+    EXTERNAL NF_INQ_DIMIDS
+!
+    INTEGER :: NF_INQ_DIMIDS
+    EXTERNAL NF_DEF_GRP
+!
+    INTEGER :: NF_DEF_GRP
+    EXTERNAL NF_RENAME_GRP
+!
+!     New rename grp function
+!
+    INTEGER :: NF_RENAME_GRP
+    EXTERNAL NF_DEF_VAR_DEFLATE
+!
+!     New options for netCDF variables.
+    INTEGER :: NF_DEF_VAR_DEFLATE
+    EXTERNAL NF_INQ_VAR_DEFLATE
+!
+    INTEGER :: NF_INQ_VAR_DEFLATE
+    EXTERNAL NF_DEF_VAR_SZIP
+!
+    INTEGER :: NF_DEF_VAR_SZIP
+    EXTERNAL NF_INQ_VAR_SZIP
+!
+    INTEGER :: NF_INQ_VAR_SZIP
+    EXTERNAL NF_DEF_VAR_FLETCHER32
+!
+    INTEGER :: NF_DEF_VAR_FLETCHER32
+    EXTERNAL NF_INQ_VAR_FLETCHER32
+!
+    INTEGER :: NF_INQ_VAR_FLETCHER32
+    EXTERNAL NF_DEF_VAR_CHUNKING
+!
+    INTEGER :: NF_DEF_VAR_CHUNKING
+    EXTERNAL NF_INQ_VAR_CHUNKING
+!
+    INTEGER :: NF_INQ_VAR_CHUNKING
+    EXTERNAL NF_DEF_VAR_FILL
+!
+    INTEGER :: NF_DEF_VAR_FILL
+    EXTERNAL NF_INQ_VAR_FILL
+!
+    INTEGER :: NF_INQ_VAR_FILL
+    EXTERNAL NF_DEF_VAR_ENDIAN
+!
+    INTEGER :: NF_DEF_VAR_ENDIAN
+    EXTERNAL NF_INQ_VAR_ENDIAN
+!
+    INTEGER :: NF_INQ_VAR_ENDIAN
+    EXTERNAL NF_DEF_VAR_FILTER
+!
+    INTEGER :: NF_DEF_VAR_FILTER
+    EXTERNAL NF_INQ_VAR_FILTER
+!
+    INTEGER :: NF_INQ_VAR_FILTER
+    EXTERNAL NF_INQ_TYPEIDS
+!
+!     User defined types.
+    INTEGER :: NF_INQ_TYPEIDS
+    EXTERNAL NF_INQ_TYPEID
+!
+    INTEGER :: NF_INQ_TYPEID
+    EXTERNAL NF_INQ_TYPE
+!
+    INTEGER :: NF_INQ_TYPE
+    EXTERNAL NF_INQ_USER_TYPE
+!
+    INTEGER :: NF_INQ_USER_TYPE
+    EXTERNAL NF_DEF_COMPOUND
+!
+!     User defined types - compound types.
+    INTEGER :: NF_DEF_COMPOUND
+    EXTERNAL NF_INSERT_COMPOUND
+!
+    INTEGER :: NF_INSERT_COMPOUND
+    EXTERNAL NF_INSERT_ARRAY_COMPOUND
+!
+    INTEGER :: NF_INSERT_ARRAY_COMPOUND
+    EXTERNAL NF_INQ_COMPOUND
+!
+    INTEGER :: NF_INQ_COMPOUND
+    EXTERNAL NF_INQ_COMPOUND_NAME
+!
+    INTEGER :: NF_INQ_COMPOUND_NAME
+    EXTERNAL NF_INQ_COMPOUND_SIZE
+!
+    INTEGER :: NF_INQ_COMPOUND_SIZE
+    EXTERNAL NF_INQ_COMPOUND_NFIELDS
+!
+    INTEGER :: NF_INQ_COMPOUND_NFIELDS
+    EXTERNAL NF_INQ_COMPOUND_FIELD
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELD
+    EXTERNAL NF_INQ_COMPOUND_FIELDNAME
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDNAME
+    EXTERNAL NF_INQ_COMPOUND_FIELDINDEX
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDINDEX
+    EXTERNAL NF_INQ_COMPOUND_FIELDOFFSET
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDOFFSET
+    EXTERNAL NF_INQ_COMPOUND_FIELDTYPE
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDTYPE
+    EXTERNAL NF_INQ_COMPOUND_FIELDNDIMS
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDNDIMS
+    EXTERNAL NF_INQ_COMPOUND_FIELDDIM_SIZES
+!
+    INTEGER :: NF_INQ_COMPOUND_FIELDDIM_SIZES
+    EXTERNAL NF_DEF_VLEN
+!
+!     User defined types - variable length arrays.
+    INTEGER :: NF_DEF_VLEN
+    EXTERNAL NF_INQ_VLEN
+!
+    INTEGER :: NF_INQ_VLEN
+    EXTERNAL NF_FREE_VLEN
+!
+    INTEGER :: NF_FREE_VLEN
+    EXTERNAL NF_DEF_ENUM
+!
+!     User defined types - enums.
+    INTEGER :: NF_DEF_ENUM
+    EXTERNAL NF_INSERT_ENUM
+!
+    INTEGER :: NF_INSERT_ENUM
+    EXTERNAL NF_INQ_ENUM
+!
+    INTEGER :: NF_INQ_ENUM
+    EXTERNAL NF_INQ_ENUM_MEMBER
+!
+    INTEGER :: NF_INQ_ENUM_MEMBER
+    EXTERNAL NF_INQ_ENUM_IDENT
+!
+    INTEGER :: NF_INQ_ENUM_IDENT
+    EXTERNAL NF_DEF_OPAQUE
+!
+!     User defined types - opaque.
+    INTEGER :: NF_DEF_OPAQUE
+    EXTERNAL NF_INQ_OPAQUE
+!
+    INTEGER :: NF_INQ_OPAQUE
+    EXTERNAL NF_PUT_ATT
+!
+!     Write and read attributes of any type, including user defined
+!     types.
+    INTEGER :: NF_PUT_ATT
+    EXTERNAL NF_GET_ATT
+    INTEGER :: NF_GET_ATT
+    EXTERNAL NF_PUT_VAR
+!
+!     Write and read variables of any type, including user defined
+!     types.
+    INTEGER :: NF_PUT_VAR
+    EXTERNAL NF_PUT_VAR1
+    INTEGER :: NF_PUT_VAR1
+    EXTERNAL NF_PUT_VARA
+    INTEGER :: NF_PUT_VARA
+    EXTERNAL NF_PUT_VARS
+    INTEGER :: NF_PUT_VARS
+    EXTERNAL NF_GET_VAR
+    INTEGER :: NF_GET_VAR
+    EXTERNAL NF_GET_VAR1
+    INTEGER :: NF_GET_VAR1
+    EXTERNAL NF_GET_VARA
+    INTEGER :: NF_GET_VARA
+    EXTERNAL NF_GET_VARS
+    INTEGER :: NF_GET_VARS
+    EXTERNAL NF_GET_VLEN_ELEMENT
+!
+!     For helping F77 users with VLENs.
+    INTEGER :: NF_GET_VLEN_ELEMENT
+    EXTERNAL NF_PUT_VLEN_ELEMENT
+    INTEGER :: NF_PUT_VLEN_ELEMENT
+    EXTERNAL NF_SET_CHUNK_CACHE
+!
+!     For dealing with file level chunk cache.
+    INTEGER :: NF_SET_CHUNK_CACHE
+    EXTERNAL NF_GET_CHUNK_CACHE
+    INTEGER :: NF_GET_CHUNK_CACHE
+    EXTERNAL NF_SET_VAR_CHUNK_CACHE
+!
+!     For dealing with per variable chunk cache.
+    INTEGER :: NF_SET_VAR_CHUNK_CACHE
+    EXTERNAL NF_GET_VAR_CHUNK_CACHE
+    INTEGER :: NF_GET_VAR_CHUNK_CACHE
+!
+    EXTERNAL NCCRE
+!
+!     NetCDF-2.
+!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+! begin netcdf 2.4 backward compatibility:
+!
+!
+!      
+! functions in the fortran interface
+!
+    INTEGER :: NCCRE
+    EXTERNAL NCOPN
+    INTEGER :: NCOPN
+    EXTERNAL NCDDEF
+    INTEGER :: NCDDEF
+    EXTERNAL NCDID
+    INTEGER :: NCDID
+    EXTERNAL NCVDEF
+    INTEGER :: NCVDEF
+    EXTERNAL NCVID
+    INTEGER :: NCVID
+    EXTERNAL NCTLEN
+    INTEGER :: NCTLEN
+    EXTERNAL NCSFIL
+    INTEGER :: NCSFIL
+!
+!
+    INTEGER :: ncrdwr
+    INTEGER :: nccreat
+    INTEGER :: ncexcl
+    INTEGER :: ncindef
+    INTEGER :: ncnsync
+    INTEGER :: nchsync
+    INTEGER :: ncndirty
+    INTEGER :: nchdirty
+    INTEGER :: nclink
+    INTEGER :: ncnowrit
+    INTEGER :: ncwrite
+    INTEGER :: ncclob
+    INTEGER :: ncnoclob
+    INTEGER :: ncglobal
+    INTEGER :: ncfill
+    INTEGER :: ncnofill
+    INTEGER :: maxncop
+    INTEGER :: maxncdim
+    INTEGER :: maxncatt
+    INTEGER :: maxncvar
+    INTEGER :: maxncnam
+    INTEGER :: maxvdims
+    INTEGER :: ncnoerr
+    INTEGER :: ncebadid
+    INTEGER :: ncenfile
+    INTEGER :: nceexist
+    INTEGER :: nceinval
+    INTEGER :: nceperm
+    INTEGER :: ncenotin
+    INTEGER :: nceindef
+    INTEGER :: ncecoord
+    INTEGER :: ncemaxds
+    INTEGER :: ncename
+    INTEGER :: ncenoatt
+    INTEGER :: ncemaxat
+    INTEGER :: ncebadty
+    INTEGER :: ncebadd
+    INTEGER :: ncests
+    INTEGER :: nceunlim
+    INTEGER :: ncemaxvs
+    INTEGER :: ncenotvr
+    INTEGER :: nceglob
+    INTEGER :: ncenotnc
+    INTEGER :: ncfoobar
+    INTEGER :: ncsyserr
+    INTEGER :: ncfatal
+    INTEGER :: ncverbos
+    INTEGER :: ncentool
+!
+!
+!
+! netcdf data types:
+!
+    INTEGER :: ncbyte
+    INTEGER :: ncchar
+    INTEGER :: ncshort
+    INTEGER :: nclong
+    INTEGER :: ncfloat
+    INTEGER :: ncdouble
+    PARAMETER (ncbyte=1)
+!
+    PARAMETER (ncchar=2)
+    PARAMETER (ncshort=3)
+    PARAMETER (nclong=4)
+    PARAMETER (ncfloat=5)
+    PARAMETER (ncdouble=6)
+    PARAMETER (ncrdwr=1)
+!
+!     
+!     masks for the struct nc flag field; passed in as 'mode' arg to
+!     nccreate and ncopen.
+!     
+!
+!     read/write, 0 => readonly 
+    PARAMETER (nccreat=2)
+!     in create phase, cleared by ncendef 
+    PARAMETER (ncexcl=4)
+!     on create destroy existing file 
+    PARAMETER (ncindef=8)
+!     in define mode, cleared by ncendef 
+    PARAMETER (ncnsync=16)
+!     synchronise numrecs on change (x'10')
+    PARAMETER (nchsync=32)
+!     synchronise whole header on change (x'20')
+    PARAMETER (ncndirty=64)
+!     numrecs has changed (x'40')
+    PARAMETER (nchdirty=128)
+!     header info has changed (x'80')
+    PARAMETER (ncfill=0)
+!     prefill vars on endef and increase of record, the default behavior
+    PARAMETER (ncnofill=256)
+!     do not fill vars on endef and increase of record (x'100')
+    PARAMETER (nclink=32768)
+!     isa link (x'8000')
+    PARAMETER (ncnowrit=0)
+!
+!     
+!     'mode' arguments for nccreate and ncopen
+!     
+    PARAMETER (ncwrite=ncrdwr)
+    PARAMETER (ncclob=nf_clobber)
+    PARAMETER (ncnoclob=nf_noclobber)
+!
+!     
+!     'size' argument to ncdimdef for an unlimited dimension
+!     
+    INTEGER :: ncunlim
+    PARAMETER (ncunlim=0)
+    PARAMETER (ncglobal=0)
+!
+!     
+!     attribute id to put/get a global attribute
+!     
+    PARAMETER (maxncop=64)
+!
+!     
+!     advisory maximums:
+!     
+    PARAMETER (maxncdim=1024)
+    PARAMETER (maxncatt=8192)
+    PARAMETER (maxncvar=8192)
+    PARAMETER (maxncnam=256)
+!     not enforced 
+    PARAMETER (maxvdims=maxncdim)
+    PARAMETER (ncnoerr=nf_noerr)
+!
+!     
+!     global netcdf error status variable
+!     initialized in error.c
+!     
+!
+!     no error 
+    PARAMETER (ncebadid=nf_ebadid)
+!     not a netcdf id 
+    PARAMETER (ncenfile=-31)
+!     too many netcdfs open 
+    PARAMETER (nceexist=nf_eexist)
+! nc_syserr
+!     netcdf file exists && ncnoclob
+    PARAMETER (nceinval=nf_einval)
+!     invalid argument 
+    PARAMETER (nceperm=nf_eperm)
+!     write to read only 
+    PARAMETER (ncenotin=nf_enotindefine)
+!     operation not allowed in data mode 
+    PARAMETER (nceindef=nf_eindefine)
+!     operation not allowed in define mode 
+    PARAMETER (ncecoord=nf_einvalcoords)
+!     coordinates out of domain 
+    PARAMETER (ncemaxds=nf_emaxdims)
+!     maxncdims exceeded 
+    PARAMETER (ncename=nf_enameinuse)
+!     string match to name in use 
+    PARAMETER (ncenoatt=nf_enotatt)
+!     attribute not found 
+    PARAMETER (ncemaxat=nf_emaxatts)
+!     maxncattrs exceeded 
+    PARAMETER (ncebadty=nf_ebadtype)
+!     not a netcdf data type 
+    PARAMETER (ncebadd=nf_ebaddim)
+!     invalid dimension id 
+    PARAMETER (nceunlim=nf_eunlimpos)
+!     ncunlimited in the wrong index 
+    PARAMETER (ncemaxvs=nf_emaxvars)
+!     maxncvars exceeded 
+    PARAMETER (ncenotvr=nf_enotvar)
+!     variable not found 
+    PARAMETER (nceglob=nf_eglobal)
+!     action prohibited on ncglobal varid 
+    PARAMETER (ncenotnc=nf_enotnc)
+!     not a netcdf file 
+    PARAMETER (ncests=nf_ests)
+    PARAMETER (ncentool=nf_emaxname)
+    PARAMETER (ncfoobar=32)
+    PARAMETER (ncsyserr=-31)
+    PARAMETER (ncfatal=1)
+!
+!     
+!     global options variable. used to determine behavior of error handler.
+!     initialized in lerror.c
+!     
+    PARAMETER (ncverbos=2)
+!
+!
+!     default fill values.  these must be the same as in the c interface.
+!
+    INTEGER :: filbyte
+    INTEGER :: filchar
+    INTEGER :: filshort
+    INTEGER :: fillong
+    REAL(kind=r8) :: filfloat
+    DOUBLE PRECISION :: fildoub
+    PARAMETER (filbyte=-127)
+!
+    PARAMETER (filchar=0)
+    PARAMETER (filshort=-32767)
+    PARAMETER (fillong=-2147483647)
+    PARAMETER (filfloat=9.9692099683868690e+36)
+    PARAMETER (fildoub=9.9692099683868690e+36)
+    EXTERNAL NF_SET_LOG_LEVEL
+!
+!     This is to turn on netCDF internal logging.
+    INTEGER :: NF_SET_LOG_LEVEL
+    INTEGER :: ncid, ndims, nvars, natts, unlimid, status, xtype
+    INTEGER :: ivar, idim
+    INTEGER :: len, vdims(nf_max_var_dims), start(nf_max_var_dims)
+    REAL(kind=r8), ALLOCATABLE :: data1(:), data2(:, :), data3(:, :, :)&
+&   , data4(:, :, :, :)
+    CHARACTER(len=nf_max_name) :: varname, dimname
+    CHARACTER(len=256) :: filename
+    LOGICAL :: exists
+    EXTERNAL FIND_FILE, CHECK_CDF_STATUS
+!
+    WRITE(*, *) 'Begin reading balance.nc file'
+!
+! access the balance.nc file
+    filename = 'balance.nc'
+    CALL FIND_FILE(filename, exists)
+    status = NF_OPEN(filename, nf_nowrite, ncid)
+    CALL CHECK_CDF_STATUS(status)
+!
+    status = NF_INQ(ncid, ndims, nvars, natts, unlimid)
+    CALL CHECK_CDF_STATUS(status)
+!
+! loop over all variables in the file
+! only read a subset of the data as needed by the calling routine(s)
+    DO ivar=1,nvars
+      status = NF_INQ_VAR(ncid, ivar, varname, xtype, ndims, vdims, &
+&       natts)
+      CALL CHECK_CDF_STATUS(status)
+      DO idim=1,ndims
+        status = NF_INQ_DIM(ncid, vdims(idim), dimname, len)
+        CALL CHECK_CDF_STATUS(status)
+        vdims(idim) = len
+        start(idim) = 1
+      END DO
+      SELECT CASE  (varname) 
+      CASE ('b2stel_she_ion_bal') 
+        ALLOCATE(data1(vdims(1)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data1)
+        CALL CHECK_CDF_STATUS(status)
+        b2stel_she_ion_bal = data1
+        DEALLOCATE(data1)
+      CASE ('b2stel_she_rec_bal') 
+        ALLOCATE(data1(vdims(1)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data1)
+        CALL CHECK_CDF_STATUS(status)
+        b2stel_she_rec_bal = data1
+        DEALLOCATE(data1)
+      CASE ('b2stel_shi_ion_bal') 
+        ALLOCATE(data1(vdims(1)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data1)
+        CALL CHECK_CDF_STATUS(status)
+        b2stel_shi_ion_bal = data1
+        DEALLOCATE(data1)
+      CASE ('b2stel_shi_rec_bal') 
+        ALLOCATE(data1(vdims(1)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data1)
+        CALL CHECK_CDF_STATUS(status)
+        b2stel_shi_rec_bal = data1
+        DEALLOCATE(data1)
+      CASE ('b2npht_shei_bal') 
+        ALLOCATE(data1(vdims(1)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data1)
+        CALL CHECK_CDF_STATUS(status)
+        b2npht_shei_bal = data1
+        DEALLOCATE(data1)
+      CASE ('eirene_mc_pael_sne_bal') 
+        ALLOCATE(data2(vdims(1), vdims(2)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_pael_sne_bal = data2
+        DEALLOCATE(data2)
+      CASE ('eirene_mc_pmel_sne_bal') 
+        ALLOCATE(data2(vdims(1), vdims(2)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_pmel_sne_bal = data2
+        DEALLOCATE(data2)
+      CASE ('eirene_mc_eael_she_bal') 
+        ALLOCATE(data2(vdims(1), vdims(2)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_eael_she_bal = data2
+        DEALLOCATE(data2)
+      CASE ('eirene_mc_emel_she_bal') 
+        ALLOCATE(data2(vdims(1), vdims(2)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_emel_she_bal = data2
+        DEALLOCATE(data2)
+      CASE ('eirene_mc_eapl_shi_bal') 
+        ALLOCATE(data2(vdims(1), vdims(2)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_eapl_shi_bal = data2
+        DEALLOCATE(data2)
+      CASE ('eirene_mc_empl_shi_bal') 
+        ALLOCATE(data2(vdims(1), vdims(2)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_empl_shi_bal = data2
+        DEALLOCATE(data2)
+      CASE ('eirene_mc_papl_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_papl_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_pmpl_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_pmpl_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_paat_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_paat_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_pmat_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_pmat_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_piat_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_piat_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_paml_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_paml_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_pmml_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_pmml_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_piml_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_piml_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_paio_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_paio_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_pmio_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_pmio_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_piio_sna_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_piio_sna_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_mapl_smo_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_mapl_smo_bal = data3
+        DEALLOCATE(data3)
+      CASE ('eirene_mc_mmpl_smo_bal') 
+        ALLOCATE(data3(vdims(1), vdims(2), vdims(3)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data3)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_mmpl_smo_bal = data3
+        DEALLOCATE(data3)
+      END SELECT
+    END DO
+!
+    status = NF_CLOSE(ncid)
+    CALL CHECK_CDF_STATUS(status)
+!
+    RETURN
+  END SUBROUTINE READ_BALANCE
+
 !
   SUBROUTINE WRITE_CDF_DOUBLE(ncid, varname, var, vdims, ndim)
   USE B2MOD_DIFFSIZES

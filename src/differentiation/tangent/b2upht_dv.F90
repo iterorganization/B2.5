@@ -5,9 +5,8 @@
 !   variations   of useful results: ti tn ua kt po te zt
 !   with respect to varying inputs: ti tn ne ni ua pccm0 corte
 !                corzt kt corti cortn cortt corkt po te zt
-!   Plus diff mem management of: mpg.intcellp:in geo.cvvol:in geo.fchc:in
-!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in
+!   Plus diff mem management of: geo.cvvol:in geo.fchc:in geo.fcht:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -23,12 +22,12 @@
 !.specification
 !
 !srv 22.05.18
-SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg, solvpreg, &
-& solvmreg, solvkreg, solvzreg, rxf, cortt, corttd, corte, corted, corti&
-& , cortid, cortn, cortnd, corkt, corktd, corzt, corztd, pccm0, pccm0d, &
-& na, nad, ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, po, pod&
-& , ne, ned, ni, nid, nbdirs)
+SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
+& , ua_solve, solvereg, solvireg, solvnreg, solvtreg, solvpreg, solvmreg&
+& , solvkreg, solvzreg, rxf, cortt, corttd, corte, corted, corti, cortid&
+& , cortn, cortnd, corkt, corktd, corzt, corztd, pccm0, pccm0d, na, nad&
+& , ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, po, pod, ne, &
+& ned, ni, nid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -56,7 +55,6 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: rxf, cortt(ncv), corte(ncv), corti(ncv), cortn(ncv), &
 & corkt(ncv), corzt(ncv), pccm0(ncv)
   REAL(kind=r8) :: corttd(nbdirsmax, ncv), corted(nbdirsmax, ncv), &
@@ -102,7 +100,7 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nbdirsmax, mpg%nft), tt1d(nbdirsmax, mpg%nft), tt2d(nbdirsmax, mpg%nft&
 & ), tt3d(nbdirsmax, mpg%nft)
 !   ..procedures
-  EXTERNAL XERTST, B2XVSG_NODIFF, XERRAB
+  EXTERNAL XERTST, B2XVSG, XERRAB
   INTRINSIC MAX
   REAL(kind=r8) :: max1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
@@ -161,16 +159,16 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..test sign of na, ni, vol, te, ti, ne
   IF (ncall_b2upht .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tn, 1, 'tn', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 ! ..apply the correction
@@ -641,8 +639,8 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk0, wrk0d, &
-&           wrkv, wrkvd, wrk, wrkd, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk0, wrk0d, wrkv, &
+&           wrkvd, wrk, wrkd, nbdirs)
   IF (ua_solve) THEN
     DO icv=1,mpg%nci
       ireg = mpg%cvreg(icv)
@@ -750,7 +748,7 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
   REAL(kind=r8) :: dte1(ncv), dti1(ncv), tt0(mpg%nft), tt1(mpg%nft), tt2&
 & (mpg%nft), tt3(mpg%nft)
 !   ..procedures
-  EXTERNAL XERTST, B2XVSG_NODIFF, XERRAB
+  EXTERNAL XERTST, B2XVSG, XERRAB
   INTRINSIC MAX
   REAL(kind=r8) :: max1
   REAL(kind=r8) :: max2
@@ -788,16 +786,16 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
 !   ..test sign of na, ni, vol, te, ti, ne
   IF (ncall_b2upht .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tn, 1, 'tn', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 ! ..apply the correction

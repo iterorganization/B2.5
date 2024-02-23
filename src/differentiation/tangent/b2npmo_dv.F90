@@ -17,18 +17,18 @@
 !   Plus diff mem management of: dv.fchanml:in dv.fna_fcor:in dv.fmo:in
 !                dv.fhm:in dv.resmo:in dv.resmt:in dv.corua:in
 !                dv.corut:in dv.pcca:in dv.pccm:in dv.ne:in dv.ni:in
-!                dv.nn:in dv.ue:in dv.ne2:in dv.lnlam:in mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvhz:in geo.cvhx:in
-!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbshz:in geo.vxbb:in
-!                geo.vxhz:in geo.vxvol:in geo.ftconn:in geo.fteps:in
-!                geo.ftbbav2:in st_ext.am:in st_ext.ne:in st_ext.ne2:in
-!                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rza:in
-!                rt.rz2:in sr.smo:in sr.smq:in co.cvsa:in co.cvsahz:in
-!                co.cvsahz_cl:in co.cvsahz_eff:in co.kt_neo:in
-!                co.alfx_c:in co.sigx_c:in co.hcix_c:in co.f_luc_sg:in
-!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                dv.nn:in dv.ue:in dv.ne2:in dv.lnlam:in geo.cvbb:in
+!                geo.cvhz:in geo.cvhx:in geo.cvvol:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbshz:in geo.vxbb:in geo.vxhz:in geo.vxvol:in
+!                geo.ftconn:in geo.fteps:in geo.ftbbav2:in st_ext.am:in
+!                st_ext.ne:in st_ext.ne2:in st_ext.za2:in st_ext.na:in
+!                st_ext.ta:in rt.rza:in rt.rz2:in sr.smo:in sr.smq:in
+!                co.cvsa:in co.cvsahz:in co.cvsahz_cl:in co.cvsahz_eff:in
+!                co.kt_neo:in co.alfx_c:in co.sigx_c:in co.hcix_c:in
+!                co.f_luc_sg:in pl.na:in pl.ua:in pl.po:in pl.te:in
+!                pl.ti:in pl.tn:in
 !
 !
 !
@@ -43,9 +43,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
-& geod, mpg, mpgd, itcnt, solving, rxf, pl, pld, dv, dvd, rt, rtd, co, &
-& cod, sr, srd, st_ext, st_extd, ierr, nbdirs)
+SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
+& geod, mpg, itcnt, solving, rxf, pl, pld, dv, dvd, rt, rtd, co, cod, sr&
+& , srd, st_ext, st_extd, ierr, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -53,9 +53,9 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
 !WG_TODO     1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
 !WG_TODO     2          smpr, smpt, smfr, smcf
 !WG_TODO: smof -> part of b2mod_sources
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-!WG_TODO     2          balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : update_balance_sources_momentum, &
+& fmo_b2nxfv, balance_netcdf, tot_smo0to3, fmo_tot
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
@@ -65,12 +65,12 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_MA28_FOR_US, ONLY : restart_ma28_for_us
+  USE B2MOD_AD_DIFFV, ONLY : b2npmo_solvedum, ncall_b2npmo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : b2npmo_solvedum, ncall_b2npmo, ncall_b2usmo&
-& , ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp, ncall_b2nxdu&
-& , ncall_b2ttia, ncall_b2sifr, ncall_b2siav, my_out_folder, &
-& ncall_b2tlnl, ncall_b2sifrtf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2usmo, ncall_b2urmo, ncall_b2sicf, &
+& ncall_b2nxfc, ncall_b2sigp, ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, &
+& ncall_b2siav, my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
@@ -85,12 +85,12 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
 !
 !   ..input arguments (unchanged on exit)
 !srv 13.01.17
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0, itcnt
+  INTEGER :: ncv, nfc, nvx, ns, ismain, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2COEFF), INTENT(IN) :: co
   TYPE(B2COEFF_DIFFV), INTENT(IN) :: cod
   TYPE(B2RATES), INTENT(IN) :: rt
@@ -112,7 +112,7 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
 !WG_TODO_TMP these sources used to be in b2mod_sources
 !            => add again to B2Source?
   REAL(kind=r8) :: smcf(ncv, 0:ns-1), smpr(ncv, 0:ns-1), smpt(ncv, 0:ns-&
-& 1), smfr(ncv, 0:ns-1)
+& 1), smfr(ncv, 0:ns-1), ubf(nfc), robf(nfc)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -175,15 +175,16 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
 & 1), wrkfd(nbdirsmax, nfc, 0:1), wrkffd(nbdirsmax, nfc, 0:1), wrkfffd(&
 & nbdirsmax, nfc, 0:1), wrkvd(nbdirsmax, nvx), aad(nbdirsmax, mpg%ncmxnv&
 & ), smbd(nbdirsmax, ncv, 0:3), flcbd(nbdirsmax, nfc, 0:1), cvcbd(&
-& nbdirsmax, nfc, 0:1), rod(nbdirsmax, ncv), rzd(nbdirsmax, ncv), pzd(&
-& nbdirsmax, ncv), rob1d(nbdirsmax, ncv), pb1d(nbdirsmax, ncv), ehxpd(&
-& nbdirsmax, ncv), smtd(nbdirsmax, ncv, 0:3), cstd(nbdirsmax), flctd(&
-& nbdirsmax, nfc, 0:1), wrk1d(nbdirsmax, ncv), smqdud(nbdirsmax, ncv), &
-& wrk0d(nbdirsmax, ncv), ctcfbd(nbdirsmax, ncv), ctcftd(nbdirsmax, ncv)&
-& , zeffd(nbdirsmax, ncv), zmffd(nbdirsmax, ncv), ce1d(nbdirsmax, ncv), &
-& cimp1d(nbdirsmax, ncv), cimp2d(nbdirsmax, ncv), zetapd(nbdirsmax, ncv)&
-& , zetaed(nbdirsmax, ncv), gtid(nbdirsmax, ncv), gted(nbdirsmax, ncv), &
-& gtnd(nbdirsmax, ncv), wrkf0d(nbdirsmax, nfc)
+& nbdirsmax, nfc, 0:1), rod(nbdirsmax, ncv), rzd(nbdirsmax, ncv), prd(&
+& nbdirsmax, ncv), pzd(nbdirsmax, ncv), rob1d(nbdirsmax, ncv), pb1d(&
+& nbdirsmax, ncv), ehxpd(nbdirsmax, ncv), smtd(nbdirsmax, ncv, 0:3), &
+& cstd(nbdirsmax), flctd(nbdirsmax, nfc, 0:1), wrk1d(nbdirsmax, ncv), &
+& smqdud(nbdirsmax, ncv), wrk0d(nbdirsmax, ncv), ctcfbd(nbdirsmax, ncv)&
+& , ctcftd(nbdirsmax, ncv), zeffd(nbdirsmax, ncv), zmffd(nbdirsmax, ncv)&
+& , ce1d(nbdirsmax, ncv), cimp1d(nbdirsmax, ncv), cimp2d(nbdirsmax, ncv)&
+& , zetapd(nbdirsmax, ncv), zetaed(nbdirsmax, ncv), gtid(nbdirsmax, ncv)&
+& , gted(nbdirsmax, ncv), gtnd(nbdirsmax, ncv), wrkf0d(nbdirsmax, nfc), &
+& wrkf1d(nbdirsmax, nfc)
 !srv 13.01.17 05.07.17
   REAL(kind=r8) :: smbfria(ncv, 0:3), smbfrea(ncv, 0:3), smbtfia(ncv, 0:&
 & 3), smbtfea(ncv, 0:3)
@@ -195,7 +196,7 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF, B2SCOPY_NODIFF, B2SSCAL_NODIFF&
 &     , B2SAXPY_NODIFF
   EXTERNAL SFILL_DV, B2SCOPY_DV, B2SSCAL_DV, B2SAXPY_DV
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XPNE_NODIFF, B2XPRZ_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XPNE_NODIFF, B2XPRZ_NODIFF, &
 &     B2XPRO_NODIFF, B2XPPR_NODIFF, B2XPPZ_NODIFF, B2XPPB_NODIFF, &
 &     B2NXDU_NODIFF, B2NXDV_NODIFF, B2NXFX_NODIFF, B2NXFC_NODIFF, B2NXST&
 &     , B2SIGP_NODIFF, B2SIAV_NODIFF, B2SICF_NODIFF, B2NXCM, &
@@ -277,11 +278,11 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
   IF (ncall_b2npmo .LT. 3) THEN
 !    ..test sign of na, te, ti
     DO is=0,ns-1
-      CALL B2XVSG_NODIFF(ncv, pl%na(:, is), 1, 'na', '.gt.')
+      CALL B2XVSG(ncv, pl%na(:, is), 1, 'na', '.gt.')
     END DO
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
     DO nd=1,nbdirsmax
       wrkf0d(nd, :) = 0.D0
     END DO
@@ -289,18 +290,19 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
     DO is=0,ns-1
       DO nd=1,nbdirs
         wrkf0d(nd, :) = geo%fcqalf(:, 0)*cod%cvsa(nd, :, 0, is)
+        wrkf1d(nd, :) = 0.D0
       END DO
       wrkf0(:) = co%cvsa(:, 0, is)*geo%fcqalf(:, 0)
       wrkf1(:) = co%cvsa(:, 1, is)*geo%fcqalf(:, 1)
-      CALL B2XVSG_NODIFF(nfc, wrkf0, 1, 'cvsa0', '.ge.')
-      CALL B2XVSG_NODIFF(nfc, wrkf1, 1, 'cvsa1', '.ge.')
+      CALL B2XVSG(nfc, wrkf0, 1, 'cvsa0', '.ge.')
+      CALL B2XVSG(nfc, wrkf1, 1, 'cvsa1', '.ge.')
     END DO
 !    ..test sign of smo, smq
     DO is=0,ns-1
-      CALL B2XVSG_NODIFF(ncv, sr%smo(:, 1, is), 1, 'smo 1', '.le.')
-      CALL B2XVSG_NODIFF(ncv, sr%smo(:, 3, is), 1, 'smo 3', '.le.')
-      CALL B2XVSG_NODIFF(ncv, sr%smq(:, 1, is), 1, 'smq 1', '.le.')
-      CALL B2XVSG_NODIFF(ncv, sr%smq(:, 3, is), 1, 'smq 3', '.le.')
+      CALL B2XVSG(ncv, sr%smo(:, 1, is), 1, 'smo 1', '.le.')
+      CALL B2XVSG(ncv, sr%smo(:, 3, is), 1, 'smo 3', '.le.')
+      CALL B2XVSG(ncv, sr%smq(:, 1, is), 1, 'smq 1', '.le.')
+      CALL B2XVSG(ncv, sr%smq(:, 3, is), 1, 'smq 3', '.le.')
     END DO
   ELSE
     DO nd=1,nbdirsmax
@@ -347,8 +349,8 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
   END DO
 !srv 13.01.17 }
 !   ..compute the Coulomb logarithm
-  CALL B2TLNL_DV(ncv, switch, switch%icase_ii, pl%te, pld%te, pl%ti, pld&
-&          %ti, dv%ne, dvd%ne, dv%lnlam, dvd%lnlam, nbdirs)
+  CALL B2TLNL_DV(ncv, switch, switchd, switch%icase_ii, pl%te, pld%te, &
+&          pl%ti, pld%ti, dv%ne, dvd%ne, dv%lnlam, dvd%lnlam, nbdirs)
 !   ..compute zetap and zetae
   t1 = 4.0_R8*pi*eps0/qe/qe
   arg1 = 2.0_R8*pi
@@ -395,18 +397,18 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%ti, pld%ti&
-&           , wrkv, wrkvd, gti, gtid, nbdirs)
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%tn, pld%tn&
-&           , wrkv, wrkvd, gtn, gtnd, nbdirs)
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%te, pld%te&
-&           , wrkv, wrkvd, gte, gted, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%ti, pld%ti, wrkv&
+&           , wrkvd, gti, gtid, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%tn, pld%tn, wrkv&
+&           , wrkvd, gtn, gtnd, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%te, pld%te, wrkv&
+&           , wrkvd, gte, gted, nbdirs)
 !srv 13.01.17 }
 !   ..compute ehxp
   IF (switch%b2sigp_style .NE. 2) THEN
-    CALL B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, qe, dv%&
-&            ne, dvd%ne, pl%te, pld%te, pl%po, pld%po, ehxp, ehxpd, &
-&            wrkf0, wrkf1, nbdirs)
+    CALL B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, qe, dv%ne, dvd&
+&            %ne, pl%te, pld%te, pl%po, pld%po, ehxp, ehxpd, wrkf0, &
+&            wrkf1, nbdirs)
   ELSE
     DO nd=1,nbdirsmax
       ehxpd(nd, :) = 0.D0
@@ -484,15 +486,15 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
     IF (switch%b2sigp_style .EQ. 2) THEN
 !srv 13.01.17
       CALL B2SIFRTF_DV(ncv, nfc, nvx, ns, is, ismain, switch, geo, geod&
-&                , mpg, mpgd, pl%na, pld%na, pl%ua, pld%ua, dv%ue, dvd%&
-&                ue, pl%te, pl%ti, pld%ti, dv%ni, dv%ne, dvd%ne, dv%ne2&
-&                , rt%rza, rt%rz2, rtd%rz2, pl%po, zetap, zetapd, zetae&
-&                , zetaed, gti, gtid, gte, gted, ce1, ce1d, ce2, cimp1, &
-&                cimp1d, cimp2, cimp2d, zeff, zeffd, co%f_luc_sg, cod%&
-&                f_luc_sg, co%alfx_c, cod%alfx_c, co%sigx_c, cod%sigx_c&
-&                , st_ext, smbfrea, smbfread, smbfria, smbfriad, smbtfea&
-&                , smbtfead, smbtfia, smbtfiad, smbch, smbchd, smbtf, &
-&                smbtfd, nbdirs)
+&                , mpg, pl%na, pld%na, pl%ua, pld%ua, dv%ue, dvd%ue, pl%&
+&                te, pl%ti, pld%ti, dv%ni, dvd%ni, dv%ne, dvd%ne, dv%ne2&
+&                , dvd%ne2, rt%rza, rt%rz2, rtd%rz2, pl%po, zetap, &
+&                zetapd, zetae, zetaed, gti, gtid, gte, gted, ce1, ce1d&
+&                , ce2, cimp1, cimp1d, cimp2, cimp2d, zeff, zeffd, co%&
+&                f_luc_sg, cod%f_luc_sg, co%alfx_c, cod%alfx_c, co%&
+&                sigx_c, cod%sigx_c, st_ext, smbfrea, smbfread, smbfria&
+&                , smbfriad, smbtfea, smbtfead, smbtfia, smbtfiad, smbch&
+&                , smbchd, smbtf, smbtfd, nbdirs)
 ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17
       DO k=0,3
         DO nd=1,nbdirs
@@ -507,21 +509,21 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
       smbfrea = 0.0_R8
       smbtfia = 0.0_R8
       smbtfea = 0.0_R8
-      CALL B2SIFR__DV(ncv, nfc, nvx, ns, is, switch, geo, geod, mpg, &
-&               mpgd, pl%na, pld%na, pl%ua, pld%ua, pl%te, pld%te, pl%ti&
-&               , pld%ti, dv%ni, dv%ne, dvd%ne, dv%ne2, dvd%ne2, rt%rza&
-&               , rtd%rza, rt%rz2, rtd%rz2, ehxp, ehxpd, dv%lnlam, dvd%&
-&               lnlam, co%cthe, co%cthi, st_ext, smbch, smbchd, smbtf, &
-&               smbtfd, smpr(:, is), smpt(:, is), smfr(:, is), wrk0, &
-&               wrk0d, gti, gtid, gte, gted, nbdirs)
+      CALL B2SIFR__DV(ncv, nfc, nvx, ns, is, switch, switchd, geo, geod&
+&               , mpg, pl%na, pld%na, pl%ua, pld%ua, pl%te, pld%te, pl%&
+&               ti, pld%ti, dv%ni, dvd%ni, dv%ne, dvd%ne, dv%ne2, dvd%&
+&               ne2, rt%rza, rtd%rza, rt%rz2, rtd%rz2, ehxp, ehxpd, dv%&
+&               lnlam, dvd%lnlam, co%cthe, co%cthi, st_ext, smbch, &
+&               smbchd, smbtf, smbtfd, smpr(:, is), smpt(:, is), smfr(:&
+&               , is), wrk0, wrk0d, gti, gtid, gte, gted, nbdirs)
     END IF
 !
 !    ..compute pressure gradient term
-    CALL B2SIGP_DV(ncv, nfc, nvx, is, switch, geo, geod, mpg, mpgd, rt%&
-&            rza(:, is), rtd%rza(:, :, is), pl%na(:, is), pld%na(:, :, &
-&            is), pl%ti, pld%ti, pl%tn, pld%tn, dv%ne, dvd%ne, pl%te, &
-&            pld%te, pl%po, pld%po, smbgp, smbgpd, wrk0, wrk0d, wrk1, &
-&            wrk1d, wrk2, nbdirs)
+    CALL B2SIGP_DV(ncv, nfc, nvx, is, switch, geo, geod, mpg, rt%rza(:, &
+&            is), rtd%rza(:, :, is), pl%na(:, is), pld%na(:, :, is), pl%&
+&            ti, pld%ti, pl%tn, pld%tn, dv%ne, dvd%ne, pl%te, pld%te, pl&
+&            %po, pld%po, smbgp, smbgpd, wrk0, wrk0d, wrk1, wrk1d, wrk2&
+&            , nbdirs)
 !    ..compute flub
     arg12 = nfc*2
     CALL B2SCOPY_DV(arg12, dv%fna_fcor(:, :, is), dvd%fna_fcor(:, :, :, &
@@ -530,12 +532,13 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
     arg2 = am(is)*mp
     CALL B2SSCAL_DV(arg12, arg2, flub, flubd, 1, nbdirs)
 !    ..add convective term due to new form of ion viscosity term only
-    CALL B2NXFV_DV(ncv, nfc, nvx, is, switch, geo, geod, mpg, mpgd, co%&
+    CALL B2NXFV_DV(ncv, nfc, nvx, is, switch, geo, geod, mpg, co%&
 &            cvsahz_cl(:, :, is), cod%cvsahz_cl(:, :, :, is), co%cvsahz(&
 &            :, :, is), cod%cvsahz(:, :, :, is), flubv, flubvd, nbdirs)
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
-!WG_TODO       endif
+    IF (balance_netcdf .NE. 0) THEN
+!djm Jan2017
+      fmo_b2nxfv(:, :, is) = flubv
+    END IF
     arg12 = nfc*2
     CALL B2SAXPY_DV(arg12, 1.0_R8, flubv, flubvd, 1, flub, flubd, 1, &
 &             nbdirs)
@@ -548,23 +551,23 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
 !
 !    ..compute additional viscosity term
     arg13 = am(is)*mp
-    CALL B2SIAV_DV(ncv, nfc, nvx, ns, is, switch, geo, geod, mpg, mpgd, &
-&            arg13, pl%ua(:, is), pld%ua(:, :, is), pl%te, pld%te, pl%ti&
-&            , pld%ti, pl%na(:, is), dv%ni(:, 1), dvd%ni(:, :, 1), dv%&
-&            ne2, dvd%ne2, rt%rz2, rtd%rz2, dv%lnlam, dvd%lnlam, co%&
-&            hcix_c, cod%hcix_c, co%cvsahz_cl(:, :, is), cod%cvsahz_cl(:&
-&            , :, :, is), smbvh, smbvhd, smbvv, smbvvd, co%kt_neo, wrk0&
-&            , wrk0d, wrk1, wrk1d, wrk2, nbdirs)
+    CALL B2SIAV_DV(ncv, nfc, nvx, ns, is, switch, geo, geod, mpg, arg13&
+&            , pl%ua(:, is), pld%ua(:, :, is), pl%te, pld%te, pl%ti, pld&
+&            %ti, pl%na(:, is), dv%ni(:, 1), dvd%ni(:, :, 1), dv%ne2, &
+&            dvd%ne2, rt%rz2, rtd%rz2, dv%lnlam, dvd%lnlam, co%hcix_c, &
+&            cod%hcix_c, co%cvsahz_cl(:, :, is), cod%cvsahz_cl(:, :, :, &
+&            is), smbvh, smbvhd, smbvv, smbvvd, co%kt_neo, wrk0, wrk0d, &
+&            wrk1, wrk1d, wrk2, nbdirs)
 !    ..compute centrifugal force term                                   !srv 09.07.01
 !srv 09.07.01 28.01.02 22.07.05
     arg13 = am(is)*mp
-    CALL B2SICF_DV(ncv, nfc, nvx, is, arg13, switch, geo, geod, mpg, &
-&            mpgd, pl%na(:, is), pld%na(:, :, is), pl%ua(:, is), pld%ua(&
-&            :, :, is), smbcf, smbcfd, smcf(:, is), ctcfb, ctcfbd, wrk0&
-&            , wrk0d, nbdirs)
+    CALL B2SICF_DV(ncv, nfc, nvx, is, arg13, switch, geo, geod, mpg, pl%&
+&            na(:, is), pld%na(:, :, is), pl%ua(:, is), pld%ua(:, :, is)&
+&            , smbcf, smbcfd, smcf(:, is), ctcfb, ctcfbd, wrk0, wrk0d, &
+&            nbdirs)
 !    ..compute correcting source due to artificial anomalous electric conductivity
-    CALL B2SIAN_DV(ncv, nfc, is, switch, geo, mpg, mpgd, dv%fchanml, dvd&
-&            %fchanml, smban, smband, nbdirs)
+    CALL B2SIAN_DV(ncv, nfc, is, switch, geo, mpg, dv%fchanml, dvd%&
+&            fchanml, smban, smband, nbdirs)
 !    ..compute total parallel momentum source
     arg12 = ncv*4
     CALL B2SCOPY_DV(arg12, sr%smo(:, :, is), srd%smo(:, :, :, is), 1, &
@@ -601,29 +604,39 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
 !srv 25.09.17
     CALL B2NXDV_DV(ncv, is, switch, mpg, rob, robd, sr%smq(:, :, is), &
 &            srd%smq(:, :, :, is), smqdu, smqdud, smb, smbd, nbdirs)
-!srv 22.05.18
 !srv ???
 !    ..save final source for species (is)                               !srv 10.11.02
 !WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
 !
 !djm Jan2017 update momentum source components for balance
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
-!WG_TODO       endif
+    IF (balance_netcdf .NE. 0) THEN
+!djm Mar2019
+      tot_smo0to3(:, :, is) = smb
+      CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, pl%ua(:, is), ubf)
+      CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, rob, robf)
+      CALL UPDATE_BALANCE_SOURCES_MOMENTUM(ncv, nfc, is, pl%ua(:, is), &
+&                                    rob, ubf, robf)
+    END IF
+!srv 22.05.18
 !
 !    ..compute residual
     IF ((solving .AND. ANY(solvemo(is, 0:mpg%nnreg(0)))) .OR. switch%&
 &       get_residuals .EQ. 1) THEN
 !srv 22.05.18
-      CALL B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, is, pl&
-&              %ua(:, is), pld%ua(:, :, is), rob, robd, smb, smbd, flub&
-&              , flubd, flubv, flubvd, co%cvsahz(:, :, is), cod%cvsahz(:&
-&              , :, :, is), dv%resmo(:, is), dvd%resmo(:, :, is), dv%fmo&
-&              (:, :, is), dvd%fmo(:, :, :, is), dv%fhm(:, :, is), dvd%&
-&              fhm(:, :, :, is), co%cvsahz_eff(:, :, is), cod%cvsahz_eff&
-&              (:, :, :, is), nbdirs)
+      CALL B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, is, pl%ua(:&
+&              , is), pld%ua(:, :, is), rob, robd, smb, smbd, flub, &
+&              flubd, flubv, flubvd, co%cvsahz(:, :, is), cod%cvsahz(:, &
+&              :, :, is), dv%resmo(:, is), dvd%resmo(:, :, is), dv%fmo(:&
+&              , :, is), dvd%fmo(:, :, :, is), dv%fhm(:, :, is), dvd%fhm&
+&              (:, :, :, is), co%cvsahz_eff(:, :, is), cod%cvsahz_eff(:&
+&              , :, :, is), nbdirs)
 !srv 04.07.08
+!
+!djm Mar2019 output the total momentum flux and source for balance
+      IF (balance_netcdf .NE. 0) fmo_tot(:, :, is) = dv%fmo(:, :, is)
     END IF
+!
+!
 !
 !srv 18.03.10
     WRITE(chns, '(i3.3)') is
@@ -735,14 +748,13 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
       pb1 = pb
       rob1 = rob
       arg19(:) = 'b2usmo_'//chns
-      CALL B2USMO_DV(ncv, nfc, nvx, is, switch, geo, geod, mpg, mpgd, &
-&              mpg%nnreg(0), b2npmo_solvedum, itcnt, switch%b2npmo_rxg, &
-&              rob, robd, rob1, rob1d, pb, pb1, pb1d, pl%ua(:, is), pld%&
-&              ua(:, :, is), smb, smbd, flcb, flcbd, cvcb, cvcbd, dv%&
-&              resmo(:, is), dvd%resmo(:, :, is), ctcfb, ctcfbd, dv%&
-&              corua(:, is), dvd%corua(:, :, is), dv%pcca(:, :, is), dvd&
-&              %pcca(:, :, :, is), aa, aad, wrk1, wrk1d, arg19(:), &
-&              nbdirs)
+      CALL B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpg%nnreg(0)&
+&              , b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, robd, &
+&              rob1, rob1d, pb, pbd, pb1, pb1d, pl%ua(:, is), pld%ua(:, &
+&              :, is), smb, smbd, flcb, flcbd, cvcb, cvcbd, dv%resmo(:, &
+&              is), dvd%resmo(:, :, is), ctcfb, ctcfbd, dv%corua(:, is)&
+&              , dvd%corua(:, :, is), dv%pcca(:, :, is), dvd%pcca(:, :, &
+&              :, is), aa, aad, wrk1, wrk1d, arg19(:), nbdirs)
       last_solve_9(0:mpg%nnreg(0)) = solvemo(is, 0:mpg%nnreg(0))
 !sw 21feb2014 added this else branch
     ELSE
@@ -799,10 +811,10 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
       DO nd=1,nbdirsmax
         wrkffd(nd, :, :) = 0.D0
       END DO
-      CALL B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, is, pl&
-&              %ua(:, is), pld%ua(:, :, is), rob, robd, smb, smbd, flub&
-&              , flubd, flubv, flubvd, co%cvsahz(:, :, is), cod%cvsahz(:&
-&              , :, :, is), wrk0, wrk0d, wrkf, wrkfd, wrkff, wrkffd, &
+      CALL B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, is, pl%ua(:&
+&              , is), pld%ua(:, :, is), rob, robd, smb, smbd, flub, &
+&              flubd, flubv, flubvd, co%cvsahz(:, :, is), cod%cvsahz(:, &
+&              :, :, is), wrk0, wrk0d, wrkf, wrkfd, wrkff, wrkffd, &
 &              wrkfff, wrkfffd, nbdirs)
 !    ..accumulate residual
       CALL B2SAXPY_DV(ncv, 1.0_R8, wrk0, wrk0d, 1, dv%resmt, dvd%resmt, &
@@ -841,10 +853,10 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
     END DO
     IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
 !     ..compute correction
-    CALL B2USMO_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, mpg%&
-&            nnreg(0), solvemt, itcnt, switch%b2npmo_rxg, ro, rod, rz, &
-&            rzd, pr, pz, pzd, wrk0, wrk0d, smt, smtd, flct, flctd, cvct&
-&            , cvctd, dv%resmt, dvd%resmt, ctcft, ctcftd, dv%corut, dvd%&
+    CALL B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpg%nnreg(0), &
+&            solvemt, itcnt, switch%b2npmo_rxg, ro, rod, rz, rzd, pr, &
+&            prd, pz, pzd, wrk0, wrk0d, smt, smtd, flct, flctd, cvct, &
+&            cvctd, dv%resmt, dvd%resmt, ctcft, ctcftd, dv%corut, dvd%&
 &            corut, dv%pccm, dvd%pccm, aa, aad, wrk1, wrk1d, &
 &            'b2usmo_total', nbdirs)
     last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
@@ -910,8 +922,7 @@ SUBROUTINE B2NPMO_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
     DO is=0,ns-1
       DO icv=1,ncv
         IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .LE. 1) .OR. (&
-&           switch%tn_style .EQ. 2 .AND. (NINT(zn(is)) .NE. 1 .OR. is &
-&           .NE. ismain0))) THEN
+&           switch%tn_style .EQ. 2 .AND. NINT(zn(is)) .NE. 1)) THEN
 !iyv 03.02.14
           temp2 = pz(icv)/rz(icv)
           DO nd=1,nbdirs
@@ -1026,8 +1037,8 @@ END SUBROUTINE B2NPMO_DV
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
-& , mpg, itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
+SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
+& itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -1035,9 +1046,9 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !WG_TODO     1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
 !WG_TODO     2          smpr, smpt, smfr, smcf
 !WG_TODO: smof -> part of b2mod_sources
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-!WG_TODO     2          balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : update_balance_sources_momentum, &
+& fmo_b2nxfv, balance_netcdf, tot_smo0to3, fmo_tot
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
@@ -1047,12 +1058,12 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_MA28_FOR_US, ONLY : restart_ma28_for_us
+  USE B2MOD_AD_DIFFV, ONLY : b2npmo_solvedum, ncall_b2npmo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : b2npmo_solvedum, ncall_b2npmo, ncall_b2usmo&
-& , ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp, ncall_b2nxdu&
-& , ncall_b2ttia, ncall_b2sifr, ncall_b2siav, my_out_folder, &
-& ncall_b2tlnl, ncall_b2sifrtf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2usmo, ncall_b2urmo, ncall_b2sicf, &
+& ncall_b2nxfc, ncall_b2sigp, ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, &
+& ncall_b2siav, my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
@@ -1064,7 +1075,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !
 !   ..input arguments (unchanged on exit)
 !srv 13.01.17
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0, itcnt
+  INTEGER :: ncv, nfc, nvx, ns, ismain, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1083,7 +1094,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !WG_TODO_TMP these sources used to be in b2mod_sources
 !            => add again to B2Source?
   REAL(kind=r8) :: smcf(ncv, 0:ns-1), smpr(ncv, 0:ns-1), smpt(ncv, 0:ns-&
-& 1), smfr(ncv, 0:ns-1)
+& 1), smfr(ncv, 0:ns-1), ubf(nfc), robf(nfc)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -1145,7 +1156,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !   ..procedures
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF, B2SCOPY_NODIFF, B2SSCAL_NODIFF&
 &     , B2SAXPY_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XPNE_NODIFF, B2XPRZ_NODIFF, &
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XPNE_NODIFF, B2XPRZ_NODIFF, &
 &     B2XPRO_NODIFF, B2XPPR_NODIFF, B2XPPZ_NODIFF, B2XPPB_NODIFF, &
 &     B2NXDU_NODIFF, B2NXDV_NODIFF, B2NXFX_NODIFF, B2NXFC_NODIFF, B2NXST&
 &     , B2SIGP_NODIFF, B2SIAV_NODIFF, B2SICF_NODIFF, B2NXCM, &
@@ -1208,24 +1219,24 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   IF (ncall_b2npmo .LT. 3) THEN
 !    ..test sign of na, te, ti
     DO is=0,ns-1
-      CALL B2XVSG_NODIFF(ncv, pl%na(:, is), 1, 'na', '.gt.')
+      CALL B2XVSG(ncv, pl%na(:, is), 1, 'na', '.gt.')
     END DO
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
 !    ..test sign of cvsa
     DO is=0,ns-1
       wrkf0(:) = co%cvsa(:, 0, is)*geo%fcqalf(:, 0)
       wrkf1(:) = co%cvsa(:, 1, is)*geo%fcqalf(:, 1)
-      CALL B2XVSG_NODIFF(nfc, wrkf0, 1, 'cvsa0', '.ge.')
-      CALL B2XVSG_NODIFF(nfc, wrkf1, 1, 'cvsa1', '.ge.')
+      CALL B2XVSG(nfc, wrkf0, 1, 'cvsa0', '.ge.')
+      CALL B2XVSG(nfc, wrkf1, 1, 'cvsa1', '.ge.')
     END DO
 !    ..test sign of smo, smq
     DO is=0,ns-1
-      CALL B2XVSG_NODIFF(ncv, sr%smo(:, 1, is), 1, 'smo 1', '.le.')
-      CALL B2XVSG_NODIFF(ncv, sr%smo(:, 3, is), 1, 'smo 3', '.le.')
-      CALL B2XVSG_NODIFF(ncv, sr%smq(:, 1, is), 1, 'smq 1', '.le.')
-      CALL B2XVSG_NODIFF(ncv, sr%smq(:, 3, is), 1, 'smq 3', '.le.')
+      CALL B2XVSG(ncv, sr%smo(:, 1, is), 1, 'smo 1', '.le.')
+      CALL B2XVSG(ncv, sr%smo(:, 3, is), 1, 'smo 3', '.le.')
+      CALL B2XVSG(ncv, sr%smq(:, 1, is), 1, 'smq 1', '.le.')
+      CALL B2XVSG(ncv, sr%smq(:, 3, is), 1, 'smq 3', '.le.')
     END DO
   END IF
 !   ..compute ne, ne2, ro, rz, pr, pz
@@ -1343,9 +1354,10 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !    ..add convective term due to new form of ion viscosity term only
     CALL B2NXFV_NODIFF(ncv, nfc, nvx, is, switch, geo, mpg, co%cvsahz_cl&
 &                (:, :, is), co%cvsahz(:, :, is), flubv)
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
-!WG_TODO       endif
+    IF (balance_netcdf .NE. 0) THEN
+!djm Jan2017
+      fmo_b2nxfv(:, :, is) = flubv
+    END IF
     arg12 = nfc*2
     CALL B2SAXPY_NODIFF(arg12, 1.0_R8, flubv, 1, flub, 1)
 !srv 11.09.09
@@ -1394,15 +1406,20 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !srv 25.09.17
     CALL B2NXDV_NODIFF(ncv, is, switch, mpg, rob, sr%smq(:, :, is), &
 &                smqdu, smb)
-!srv 22.05.18
 !srv ???
 !    ..save final source for species (is)                               !srv 10.11.02
 !WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
 !
 !djm Jan2017 update momentum source components for balance
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
-!WG_TODO       endif
+    IF (balance_netcdf .NE. 0) THEN
+!djm Mar2019
+      tot_smo0to3(:, :, is) = smb
+      CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, pl%ua(:, is), ubf)
+      CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, rob, robf)
+      CALL UPDATE_BALANCE_SOURCES_MOMENTUM(ncv, nfc, is, pl%ua(:, is), &
+&                                    rob, ubf, robf)
+    END IF
+!srv 22.05.18
 !
 !    ..compute residual
     IF ((solving .AND. ANY(solvemo(is, 0:mpg%nnreg(0)))) .OR. switch%&
@@ -1413,7 +1430,12 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 &                  resmo(:, is), dv%fmo(:, :, is), dv%fhm(:, :, is), co%&
 &                  cvsahz_eff(:, :, is))
 !srv 04.07.08
+!
+!djm Mar2019 output the total momentum flux and source for balance
+      IF (balance_netcdf .NE. 0) fmo_tot(:, :, is) = dv%fmo(:, :, is)
     END IF
+!
+!
 !
 !srv 18.03.10
     WRITE(chns, '(i3.3)') is
@@ -1521,11 +1543,11 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !csc to avoid aliasing in Tapenade
       rob1 = rob
       arg19(:) = 'b2usmo_'//chns
-      CALL B2USMO_NODIFF(ncv, nfc, nvx, is, switch, geo, mpg, mpg%nnreg(&
-&                  0), b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, &
-&                  rob1, pb, pb1, pl%ua(:, is), smb, flcb, cvcb, dv%&
-&                  resmo(:, is), ctcfb, dv%corua(:, is), dv%pcca(:, :, &
-&                  is), aa, wrk1, arg19(:))
+      CALL B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, mpg%nnreg(0), &
+&                  b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, rob1&
+&                  , pb, pb1, pl%ua(:, is), smb, flcb, cvcb, dv%resmo(:&
+&                  , is), ctcfb, dv%corua(:, is), dv%pcca(:, :, is), aa&
+&                  , wrk1, arg19(:))
       last_solve_9(0:mpg%nnreg(0)) = solvemo(is, 0:mpg%nnreg(0))
 !sw 21feb2014 added this else branch
     ELSE
@@ -1599,10 +1621,10 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
     END DO
     IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
 !     ..compute correction
-    CALL B2USMO_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpg%nnreg(0)&
-&                , solvemt, itcnt, switch%b2npmo_rxg, ro, rz, pr, pz, &
-&                wrk0, smt, flct, cvct, dv%resmt, ctcft, dv%corut, dv%&
-&                pccm, aa, wrk1, 'b2usmo_total')
+    CALL B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, mpg%nnreg(0), &
+&                solvemt, itcnt, switch%b2npmo_rxg, ro, rz, pr, pz, wrk0&
+&                , smt, flct, cvct, dv%resmt, ctcft, dv%corut, dv%pccm, &
+&                aa, wrk1, 'b2usmo_total')
     last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
   ELSE
     dv%pccm = 0.0_R8
@@ -1644,8 +1666,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
     DO is=0,ns-1
       DO icv=1,ncv
         IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .LE. 1) .OR. (&
-&           switch%tn_style .EQ. 2 .AND. (NINT(zn(is)) .NE. 1 .OR. is &
-&           .NE. ismain0))) THEN
+&           switch%tn_style .EQ. 2 .AND. NINT(zn(is)) .NE. 1)) THEN
 !iyv 03.02.14
           arg13 = pz(icv)/rz(icv)
           cst = SQRT(arg13)

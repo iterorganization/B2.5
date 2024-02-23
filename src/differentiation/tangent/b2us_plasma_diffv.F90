@@ -23,7 +23,7 @@ MODULE B2US_PLASMA_DIFFV
 !     private
   PUBLIC :: b2state, b2plasma, b2derivatives, b2coeff, b2rates, &
 & b2rateswork, b2source, b2sourcework, b2plasmasnapshot, b2diagnostic, &
-& b2update
+& b2update, b2average
 ! total number of species (1:ns or 0:ns-1)
 ! second index is species
 !
@@ -49,7 +49,6 @@ MODULE B2US_PLASMA_DIFFV
 ! dimensions: fc, direction (, species)
 ! kinetic energy
 ! dimensions: cv, species
-!
 !
 ! numerical coefficients (maybe move to separate object)
 !
@@ -89,9 +88,10 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), ALLOCATABLE :: fhi(:, :), fhi_mdf(:, :), fhit(:, :), &
 &     fhipsch(:, :), fhi_eir(:, :), fhi_exb(:, :)
       REAL(r8), ALLOCATABLE :: fnn(:, :), fnn_32(:, :), fnn_52(:, :), &
-&     fhn(:, :)
+&     fhn(:, :), fnn_inc(:, :)
       REAL(r8), ALLOCATABLE :: fhm(:, :, :), fhp(:, :, :), fhj(:, :), &
 &     fht(:, :), fkt(:, :), fzt(:, :)
+      REAL(r8), ALLOCATABLE :: kin_frac_hyb(:), fluid_frac_hyb(:)
       REAL(r8), ALLOCATABLE :: kinrgy(:, :)
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: conc
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: flob, floe, floi, &
@@ -168,12 +168,15 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fnn_32
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fnn_52
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fhn
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fnn_inc
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: fhm
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: fhp
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fhj
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fht
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fkt
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fzt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: kin_frac_hyb
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: fluid_frac_hyb
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: kinrgy
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conc
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: flob
@@ -361,6 +364,9 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sch, she, shi, sne, shn&
 &     , skt, szt
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo, smq, sna
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shedt, sktdt, sztdt, &
+&     snedt, shidt, shndt, schdt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smodt, snadt
       REAL(r8), DIMENSION(:), ALLOCATABLE :: skt_diss, skt_prod
   END TYPE B2SOURCE
   TYPE B2SOURCE_DIFFV
@@ -374,6 +380,15 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smo
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smq
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: sna
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: shedt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sktdt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sztdt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: snedt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: shidt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: shndt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: schdt
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smodt
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: snadt
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: skt_diss
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: skt_prod
   END TYPE B2SOURCE_DIFFV
@@ -396,10 +411,25 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sch0, she0, shi0, sne0, &
 &     shn0, skt0, szt0
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo0, smq0, sna0
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: b2stbc_sch, b2stbc_she, &
+&     b2stbc_shi, b2stbc_sne, b2stbc_shn, b2stbc_skt, b2stbc_szt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_smo, b2stbc_sna
       REAL(r8), DIMENSION(:), ALLOCATABLE :: b2stbm_sch, b2stbm_she, &
 &     b2stbm_shi, b2stbm_sne
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbm_smo, b2stbm_smq, &
 &     b2stbm_sna
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: b2stbr_sch, b2stbr_she, &
+&     b2stbr_shi, b2stbr_sne, b2stbr_shn, b2stbr_skt, b2stbr_szt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_smo, b2stbr_sna
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: rsana, rsahi, rsamo, &
+&     rrana, rrahi, rramo, rcxna, rcxhi, rcxmo, rqahe, rqrad, rqbrm
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: b2sihs_joule, b2sihs_divue&
+&     , b2sihs_divua, b2sihs_exbe, b2sihs_exba, b2sihs_visa, b2sihs_fraa&
+&     , b2sihs_str
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sna0_eir_tot, &
+&     smo0_eir_tot
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: sne0_eir_tot, she0_eir_tot&
+&     , shi0_eir_tot, shn0_eir_tot, sch0_eir_tot
   END TYPE B2SOURCEWORK
   TYPE B2SOURCEWORK_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sch0
@@ -412,6 +442,15 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smo0
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smq0
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: sna0
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_sch
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_she
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_shi
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_sne
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_shn
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_skt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbc_szt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2stbc_smo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2stbc_sna
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbm_sch
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbm_she
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbm_shi
@@ -419,6 +458,42 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2stbm_smo
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2stbm_smq
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2stbm_sna
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_sch
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_she
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_shi
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_sne
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_shn
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_skt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2stbr_szt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2stbr_smo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2stbr_sna
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rsana
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rsahi
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rsamo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rrana
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rrahi
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rramo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rcxna
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rcxhi
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rcxmo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rqahe
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rqrad
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: rqbrm
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_joule
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_divue
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_divua
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_exbe
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_exba
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_visa
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_fraa
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_str
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna0_eir_tot
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo0_eir_tot
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sne0_eir_tot
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: she0_eir_tot
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shi0_eir_tot
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shn0_eir_tot
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sch0_eir_tot
   END TYPE B2SOURCEWORK_DIFFV
 !
 ! nCv, dir, ns, 0:nscxmax-1
@@ -604,9 +679,8 @@ MODULE B2US_PLASMA_DIFFV
 !
 !
 !
-!
 ! External plasma
-! As simplified type containg all data on possible external species
+! A simplified type containg all data on possible external species
 ! To be considered: move to a separate module b2us_plasma_ext?
   TYPE B2STATEEXT
       CHARACTER(len=13), ALLOCATABLE :: text(:)
@@ -645,6 +719,49 @@ MODULE B2US_PLASMA_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo
   END TYPE B2STATEEXT_DIFFV
+!
+!
+!
+! Averaged plasma state
+  TYPE B2AVERAGE
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: na_mean, ua_mean
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: te_mean, ti_mean, po_mean, &
+&     kt_mean, zt_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sna_mean, smo_mean
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: she_mean, shi_mean, &
+&     shn_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_na, e_ua
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: e_te, e_ti, e_po, e_kt, &
+&     e_zt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_sna, e_smo
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: e_she, e_shi, e_shn
+  END TYPE B2AVERAGE
+  TYPE B2AVERAGE_DIFFV
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: na_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: ua_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: te_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: ti_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: po_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: kt_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: zt_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: she_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shi_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shn_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_na
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_ua
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_te
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_ti
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_po
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_kt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_zt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_sna
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_smo
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_she
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_shi
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_shn
+  END TYPE B2AVERAGE_DIFFV
 
 CONTAINS
 !  Differentiation of createb2state as a context to call tangent code (with options multiDirectional context noISIZE r8):
@@ -693,39 +810,64 @@ CONTAINS
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
 !                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
-!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
-!                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
-!                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
-!                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:in-out st.dv.fllimi:in-out st.dv.resmo:in-out
-!                st.dv.resco:in-out st.dv.respo:in-out st.dv.reshe:in-out
-!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
-!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
-!                st.dv.corua:in-out st.dv.corpa:in-out st.dv.corut:in-out
-!                st.dv.corpo:in-out st.dv.cortt:in-out st.dv.corte:in-out
-!                st.dv.corti:in-out st.dv.cortn:in-out st.dv.corkt:in-out
-!                st.dv.corzt:in-out st.dv.pcca:in-out st.dv.pccm:in-out
-!                st.dv.ne:in-out st.dv.ni:in-out st.dv.nn:in-out
-!                st.dv.ue:in-out st.dv.ne2:in-out st.dv.pa:in-out
-!                st.dv.pz:in-out st.dv.lnlam:in-out st.dv.uadia:in-out
-!                st.dv.vadia:in-out st.dv.wadia:in-out st.dv.vaecrb:in-out
-!                st.dv.vedia:in-out st.dv.wedia:in-out st.dv.veecrb:in-out
-!                st.dv.facdrift:in-out st.dv.fac_exb:in-out st.dv.fac_vis:in-out
-!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
-!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
-!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
-!                st.sr.sna:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
-!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
-!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
-!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
-!                st.srw.sna0:in-out st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.flob:in-out
+!                st.dv.floe:in-out st.dv.floi:in-out st.dv.floe_noc:in-out
+!                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
+!                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
+!                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
+!                st.dv.coni:in-out st.dv.fllime:in-out st.dv.fllimi:in-out
+!                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
+!                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
+!                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
+!                st.dv.reszt:in-out st.dv.corua:in-out st.dv.corpa:in-out
+!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
+!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
+!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
+!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
+!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
+!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
+!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
+!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
+!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
+!                st.dv.fac_vis:in-out st.sr.sch:in-out st.sr.she:in-out
+!                st.sr.shi:in-out st.sr.sne:in-out st.sr.shn:in-out
+!                st.sr.skt:in-out st.sr.szt:in-out st.sr.smo:in-out
+!                st.sr.smq:in-out st.sr.sna:in-out st.sr.shedt:in-out
+!                st.sr.sktdt:in-out st.sr.sztdt:in-out st.sr.snedt:in-out
+!                st.sr.shidt:in-out st.sr.shndt:in-out st.sr.schdt:in-out
+!                st.sr.smodt:in-out st.sr.snadt:in-out st.sr.skt_diss:in-out
+!                st.sr.skt_prod:in-out st.srw.sch0:in-out st.srw.she0:in-out
+!                st.srw.shi0:in-out st.srw.sne0:in-out st.srw.shn0:in-out
+!                st.srw.skt0:in-out st.srw.szt0:in-out st.srw.smo0:in-out
+!                st.srw.smq0:in-out st.srw.sna0:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
 !                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
 !                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:in-out
-!                st.srw.b2stbm_sna:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
+!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
+!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
+!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
+!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
+!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
+!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
+!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
+!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
+!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
+!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -845,49 +987,71 @@ CONTAINS
 !                st.dv.fhi:out st.dv.fhi_mdf:out st.dv.fhit:out
 !                st.dv.fhipsch:out st.dv.fhi_eir:out st.dv.fhi_exb:out
 !                st.dv.fnn:out st.dv.fnn_32:out st.dv.fnn_52:out
-!                st.dv.fhn:out st.dv.fhm:out st.dv.fhp:out st.dv.fhj:out
-!                st.dv.fht:out st.dv.fkt:out st.dv.fzt:out st.dv.kinrgy:out
-!                st.dv.conc:out st.dv.flob:out st.dv.floe:out st.dv.floi:out
-!                st.dv.floe_noc:out st.dv.floi_noc:out st.dv.flon:out
-!                st.dv.flokt:out st.dv.flozt:out st.dv.conn:out
-!                st.dv.conkt:out st.dv.conzt:out st.dv.conb:out
-!                st.dv.cone:out st.dv.coni:out st.dv.fllime:out
-!                st.dv.fllimi:out st.dv.resmo:out st.dv.resco:out
-!                st.dv.respo:out st.dv.reshe:out st.dv.reshi:out
-!                st.dv.resht:out st.dv.resmt:out st.dv.reshn:out
-!                st.dv.reskt:out st.dv.reszt:out st.dv.corua:out
-!                st.dv.corpa:out st.dv.corut:out st.dv.corpo:out
-!                st.dv.cortt:out st.dv.corte:out st.dv.corti:out
-!                st.dv.cortn:out st.dv.corkt:out st.dv.corzt:out
-!                st.dv.pcca:out st.dv.pccm:out st.dv.ne:out st.dv.ni:out
-!                st.dv.nn:out st.dv.ue:out st.dv.ne2:out st.dv.pa:out
-!                st.dv.pz:out st.dv.lnlam:out st.dv.uadia:out st.dv.vadia:out
+!                st.dv.fhn:out st.dv.fnn_inc:out st.dv.fhm:out
+!                st.dv.fhp:out st.dv.fhj:out st.dv.fht:out st.dv.fkt:out
+!                st.dv.fzt:out st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
+!                st.dv.kinrgy:out st.dv.conc:out st.dv.flob:out
+!                st.dv.floe:out st.dv.floi:out st.dv.floe_noc:out
+!                st.dv.floi_noc:out st.dv.flon:out st.dv.flokt:out
+!                st.dv.flozt:out st.dv.conn:out st.dv.conkt:out
+!                st.dv.conzt:out st.dv.conb:out st.dv.cone:out
+!                st.dv.coni:out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.resmo:out st.dv.resco:out st.dv.respo:out
+!                st.dv.reshe:out st.dv.reshi:out st.dv.resht:out
+!                st.dv.resmt:out st.dv.reshn:out st.dv.reskt:out
+!                st.dv.reszt:out st.dv.corua:out st.dv.corpa:out
+!                st.dv.corut:out st.dv.corpo:out st.dv.cortt:out
+!                st.dv.corte:out st.dv.corti:out st.dv.cortn:out
+!                st.dv.corkt:out st.dv.corzt:out st.dv.pcca:out
+!                st.dv.pccm:out st.dv.ne:out st.dv.ni:out st.dv.nn:out
+!                st.dv.ue:out st.dv.ne2:out st.dv.pa:out st.dv.pz:out
+!                st.dv.lnlam:out st.dv.uadia:out st.dv.vadia:out
 !                st.dv.wadia:out st.dv.vaecrb:out st.dv.vedia:out
 !                st.dv.wedia:out st.dv.veecrb:out st.dv.facdrift:out
 !                st.dv.fac_exb:out st.dv.fac_vis:out st.sr.sch:out
 !                st.sr.she:out st.sr.shi:out st.sr.sne:out st.sr.shn:out
 !                st.sr.skt:out st.sr.szt:out st.sr.smo:out st.sr.smq:out
-!                st.sr.sna:out st.sr.skt_diss:out st.sr.skt_prod:out
+!                st.sr.sna:out st.sr.shedt:out st.sr.sktdt:out
+!                st.sr.sztdt:out st.sr.snedt:out st.sr.shidt:out
+!                st.sr.shndt:out st.sr.schdt:out st.sr.smodt:out
+!                st.sr.snadt:out st.sr.skt_diss:out st.sr.skt_prod:out
 !                st.srw.sch0:out st.srw.she0:out st.srw.shi0:out
 !                st.srw.sne0:out st.srw.shn0:out st.srw.skt0:out
 !                st.srw.szt0:out st.srw.smo0:out st.srw.smq0:out
-!                st.srw.sna0:out st.srw.b2stbm_sch:out st.srw.b2stbm_she:out
+!                st.srw.sna0:out st.srw.b2stbc_sch:out st.srw.b2stbc_she:out
+!                st.srw.b2stbc_shi:out st.srw.b2stbc_sne:out st.srw.b2stbc_shn:out
+!                st.srw.b2stbc_skt:out st.srw.b2stbc_szt:out st.srw.b2stbc_smo:out
+!                st.srw.b2stbc_sna:out st.srw.b2stbm_sch:out st.srw.b2stbm_she:out
 !                st.srw.b2stbm_shi:out st.srw.b2stbm_sne:out st.srw.b2stbm_smo:out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:out st.rt.rlcx:out
-!                st.rt.rlqa:out st.rt.rlrd:out st.rt.rlbr:out st.rt.rlra:out
-!                st.rt.rlsa:out st.rt.rlza:out st.rt.rlz2:out st.rt.rlpt:out
-!                st.rt.rlpi:out st.rt.rlqr:out st.rt.rza:out st.rt.rz2:out
-!                st.rt.rpt:out st.rt.rpi:out st.rtw.rsa:out st.rtw.rra:out
-!                st.rtw.rqa:out st.rtw.rrd:out st.rtw.rbr:out st.rtw.rcx:out
-!                st.rtw.rqr:out st.psnl.na:out st.psnl.ua:out st.psnl.po:out
-!                st.psnl.te:out st.psnl.ti:out st.psnl.tn:out st.psnl.kt:out
-!                st.psnl.zt:out st.psnl.ne:out st.psnl.ni:out st.psnl.nn:out
-!                st.psnl.fch:out st.psnl.fna:out st.psnl.fhi:out
-!                st.psnl.fhe:out st.psnl.fhn:out st.psnl.fkt:out
-!                st.psnl.fzt:out st.psnl.kinrgy:out st.psnc.na:out
-!                st.psnc.ua:out st.psnc.po:out st.psnc.te:out st.psnc.ti:out
-!                st.psnc.tn:out st.psnc.kt:out st.psnc.zt:out st.psnc.ne:out
-!                st.psnc.ni:out st.psnc.nn:out st.psnc.fch:out
+!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:out st.srw.b2stbr_sch:out
+!                st.srw.b2stbr_she:out st.srw.b2stbr_shi:out st.srw.b2stbr_sne:out
+!                st.srw.b2stbr_shn:out st.srw.b2stbr_skt:out st.srw.b2stbr_szt:out
+!                st.srw.b2stbr_smo:out st.srw.b2stbr_sna:out st.srw.rsana:out
+!                st.srw.rsahi:out st.srw.rsamo:out st.srw.rrana:out
+!                st.srw.rrahi:out st.srw.rramo:out st.srw.rcxna:out
+!                st.srw.rcxhi:out st.srw.rcxmo:out st.srw.rqahe:out
+!                st.srw.rqrad:out st.srw.rqbrm:out st.srw.b2sihs_joule:out
+!                st.srw.b2sihs_divue:out st.srw.b2sihs_divua:out
+!                st.srw.b2sihs_exbe:out st.srw.b2sihs_exba:out
+!                st.srw.b2sihs_visa:out st.srw.b2sihs_fraa:out
+!                st.srw.b2sihs_str:out st.srw.sna0_eir_tot:out
+!                st.srw.smo0_eir_tot:out st.srw.sne0_eir_tot:out
+!                st.srw.she0_eir_tot:out st.srw.shi0_eir_tot:out
+!                st.srw.shn0_eir_tot:out st.srw.sch0_eir_tot:out
+!                st.rt.rlcx:out st.rt.rlqa:out st.rt.rlrd:out st.rt.rlbr:out
+!                st.rt.rlra:out st.rt.rlsa:out st.rt.rlza:out st.rt.rlz2:out
+!                st.rt.rlpt:out st.rt.rlpi:out st.rt.rlqr:out st.rt.rza:out
+!                st.rt.rz2:out st.rt.rpt:out st.rt.rpi:out st.rtw.rsa:out
+!                st.rtw.rra:out st.rtw.rqa:out st.rtw.rrd:out st.rtw.rbr:out
+!                st.rtw.rcx:out st.rtw.rqr:out st.psnl.na:out st.psnl.ua:out
+!                st.psnl.po:out st.psnl.te:out st.psnl.ti:out st.psnl.tn:out
+!                st.psnl.kt:out st.psnl.zt:out st.psnl.ne:out st.psnl.ni:out
+!                st.psnl.nn:out st.psnl.fch:out st.psnl.fna:out
+!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
+!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:out
+!                st.psnc.na:out st.psnc.ua:out st.psnc.po:out st.psnc.te:out
+!                st.psnc.ti:out st.psnc.tn:out st.psnc.kt:out st.psnc.zt:out
+!                st.psnc.ne:out st.psnc.ni:out st.psnc.nn:out st.psnc.fch:out
 !                st.psnc.fna:out st.psnc.fhi:out st.psnc.fhe:out
 !                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
 !                st.psnc.kinrgy:out st.diag.srcna:out st.diag.srcmo:out
@@ -958,8 +1122,10 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(INOUT) :: plasma
     TYPE(B2PLASMA_DIFFV), INTENT(INOUT) :: plasmad
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(plasma%na)) THEN
       RETURN
@@ -1007,9 +1173,14 @@ CONTAINS
         plasmad%zt(nd, 1:ncv) = 0.D0
       END DO
       ALLOCATE(plasma%zt(ncv))
-!
       DO nd=1,nbdirs
+!
         plasmad%na(nd, :, :) = 0.D0
+        plasmad%te(nd, :) = 0.D0
+        plasmad%ti(nd, :) = 0.D0
+        plasmad%tn(nd, :) = 0.D0
+        plasmad%kt(nd, :) = 0.D0
+        plasmad%zt(nd, :) = 0.D0
       END DO
       plasma%na = 0._R8
       plasma%ua = 0._R8
@@ -1074,7 +1245,9 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(INOUT) :: plasma
     TYPE(B2PLASMA_DIFFV), INTENT(INOUT) :: plasmad
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(plasma%na)) THEN
       RETURN
@@ -1181,8 +1354,10 @@ CONTAINS
     TYPE(B2COEFF), INTENT(INOUT) :: coeff
     TYPE(B2COEFF_DIFFV), INTENT(INOUT) :: coeffd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(coeff%calf)) THEN
       RETURN
@@ -1721,7 +1896,9 @@ CONTAINS
     TYPE(B2COEFF), INTENT(INOUT) :: coeff
     TYPE(B2COEFF_DIFFV), INTENT(INOUT) :: coeffd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(coeff%csig)) THEN
       RETURN
@@ -2156,23 +2333,25 @@ CONTAINS
 !                dv.fhi:in-out dv.fhi_mdf:in-out dv.fhit:in-out
 !                dv.fhipsch:in-out dv.fhi_eir:in-out dv.fhi_exb:in-out
 !                dv.fnn:in-out dv.fnn_32:in-out dv.fnn_52:in-out
-!                dv.fhn:in-out dv.fhm:in-out dv.fhp:in-out dv.fhj:in-out
-!                dv.fht:in-out dv.fkt:in-out dv.fzt:in-out dv.kinrgy:in-out
-!                dv.conc:in-out dv.flob:in-out dv.floe:in-out dv.floi:in-out
-!                dv.floe_noc:in-out dv.floi_noc:in-out dv.flon:in-out
-!                dv.flokt:in-out dv.flozt:in-out dv.conn:in-out
-!                dv.conkt:in-out dv.conzt:in-out dv.conb:in-out
-!                dv.cone:in-out dv.coni:in-out dv.fllime:in-out
-!                dv.fllimi:in-out dv.resmo:in-out dv.resco:in-out
-!                dv.respo:in-out dv.reshe:in-out dv.reshi:in-out
-!                dv.resht:in-out dv.resmt:in-out dv.reshn:in-out
-!                dv.reskt:in-out dv.reszt:in-out dv.corua:in-out
-!                dv.corpa:in-out dv.corut:in-out dv.corpo:in-out
-!                dv.cortt:in-out dv.corte:in-out dv.corti:in-out
-!                dv.cortn:in-out dv.corkt:in-out dv.corzt:in-out
-!                dv.pcca:in-out dv.pccm:in-out dv.ne:in-out dv.ni:in-out
-!                dv.nn:in-out dv.ue:in-out dv.ne2:in-out dv.pa:in-out
-!                dv.pz:in-out dv.lnlam:in-out dv.uadia:in-out dv.vadia:in-out
+!                dv.fhn:in-out dv.fnn_inc:in-out dv.fhm:in-out
+!                dv.fhp:in-out dv.fhj:in-out dv.fht:in-out dv.fkt:in-out
+!                dv.fzt:in-out dv.kin_frac_hyb:in-out dv.fluid_frac_hyb:in-out
+!                dv.kinrgy:in-out dv.conc:in-out dv.flob:in-out
+!                dv.floe:in-out dv.floi:in-out dv.floe_noc:in-out
+!                dv.floi_noc:in-out dv.flon:in-out dv.flokt:in-out
+!                dv.flozt:in-out dv.conn:in-out dv.conkt:in-out
+!                dv.conzt:in-out dv.conb:in-out dv.cone:in-out
+!                dv.coni:in-out dv.fllime:in-out dv.fllimi:in-out
+!                dv.resmo:in-out dv.resco:in-out dv.respo:in-out
+!                dv.reshe:in-out dv.reshi:in-out dv.resht:in-out
+!                dv.resmt:in-out dv.reshn:in-out dv.reskt:in-out
+!                dv.reszt:in-out dv.corua:in-out dv.corpa:in-out
+!                dv.corut:in-out dv.corpo:in-out dv.cortt:in-out
+!                dv.corte:in-out dv.corti:in-out dv.cortn:in-out
+!                dv.corkt:in-out dv.corzt:in-out dv.pcca:in-out
+!                dv.pccm:in-out dv.ne:in-out dv.ni:in-out dv.nn:in-out
+!                dv.ue:in-out dv.ne2:in-out dv.pa:in-out dv.pz:in-out
+!                dv.lnlam:in-out dv.uadia:in-out dv.vadia:in-out
 !                dv.wadia:in-out dv.vaecrb:in-out dv.vedia:in-out
 !                dv.wedia:in-out dv.veecrb:in-out dv.facdrift:in-out
 !                dv.fac_exb:in-out dv.fac_vis:in-out
@@ -2187,8 +2366,10 @@ CONTAINS
     TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
     TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(dv%fch)) THEN
       RETURN
@@ -2271,7 +2452,7 @@ CONTAINS
       ALLOCATE(dv%fne(nfc, 0:1), source=0._R8)
       ALLOCATE(dvd%fne_he(nbdirsmax, nfc, 0:1), source=0._R8)
       DO nd=1,nbdirsmax
-        dvd%fne_he(nd, 1:nfc, 0:1) = 0.D0
+        dvd%fne_he(nd, :, :) = 0.D0
       END DO
       ALLOCATE(dv%fne_he(nfc, 0:1), source=0._R8)
       ALLOCATE(dvd%fne_32(nbdirsmax, nfc, 0:1), source=0._R8)
@@ -2326,6 +2507,11 @@ CONTAINS
         dvd%fnn_52(nd, 1:nfc, 0:1) = 0.D0
       END DO
       ALLOCATE(dv%fnn_52(nfc, 0:1), source=0._R8)
+      ALLOCATE(dvd%fnn_inc(nbdirsmax, nfc, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        dvd%fnn_inc(nd, 1:nfc, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(dv%fnn_inc(nfc, 0:ns-1), source=0._R8)
 !
       ALLOCATE(dvd%fna(nbdirsmax, nfc, 0:1, 0:ns-1), source=0._R8)
       DO nd=1,nbdirsmax
@@ -2501,6 +2687,17 @@ CONTAINS
         dvd%fzt(nd, 1:nfc, 0:1) = 0.D0
       END DO
       ALLOCATE(dv%fzt(nfc, 0:1), source=0._R8)
+!
+      ALLOCATE(dvd%kin_frac_hyb(nbdirsmax, nfc), source=0._R8)
+      DO nd=1,nbdirsmax
+        dvd%kin_frac_hyb(nd, 1:nfc) = 0.D0
+      END DO
+      ALLOCATE(dv%kin_frac_hyb(nfc), source=0._R8)
+      ALLOCATE(dvd%fluid_frac_hyb(nbdirsmax, nfc), source=0._R8)
+      DO nd=1,nbdirsmax
+        dvd%fluid_frac_hyb(nd, 1:nfc) = 0.D0
+      END DO
+      ALLOCATE(dv%fluid_frac_hyb(nfc), source=0._R8)
 !
 ! kinetic energy
       ALLOCATE(dvd%kinrgy(nbdirsmax, ncv, 0:ns-1), source=0._R8)
@@ -2875,6 +3072,7 @@ CONTAINS
       ALLOCATE(dv%fnn(nfc, 0:1), source=0._R8)
       ALLOCATE(dv%fnn_32(nfc, 0:1), source=0._R8)
       ALLOCATE(dv%fnn_52(nfc, 0:1), source=0._R8)
+      ALLOCATE(dv%fnn_inc(nfc, 0:ns-1), source=0._R8)
 !
       ALLOCATE(dv%fna(nfc, 0:1, 0:ns-1), source=0._R8)
       ALLOCATE(dv%fna_mdf(nfc, 0:1, 0:ns-1), source=0._R8)
@@ -2913,6 +3111,9 @@ CONTAINS
       ALLOCATE(dv%fht(nfc, 0:1), source=0._R8)
       ALLOCATE(dv%fkt(nfc, 0:1), source=0._R8)
       ALLOCATE(dv%fzt(nfc, 0:1), source=0._R8)
+!
+      ALLOCATE(dv%kin_frac_hyb(nfc), source=0._R8)
+      ALLOCATE(dv%fluid_frac_hyb(nfc), source=0._R8)
 !
 ! kinetic energy
       ALLOCATE(dv%kinrgy(ncv, 0:ns-1), source=0._R8)
@@ -3028,8 +3229,9 @@ CONTAINS
 !                dv.fhe_mdf:out dv.fhet:out dv.fhepsch:out dv.fhe_eir:out
 !                dv.fhe_exb:out dv.fhi:out dv.fhi_mdf:out dv.fhit:out
 !                dv.fhipsch:out dv.fhi_eir:out dv.fhi_exb:out dv.fnn:out
-!                dv.fnn_32:out dv.fnn_52:out dv.fhn:out dv.fhm:out
-!                dv.fhp:out dv.fhj:out dv.fht:out dv.fkt:out dv.fzt:out
+!                dv.fnn_32:out dv.fnn_52:out dv.fhn:out dv.fnn_inc:out
+!                dv.fhm:out dv.fhp:out dv.fhj:out dv.fht:out dv.fkt:out
+!                dv.fzt:out dv.kin_frac_hyb:out dv.fluid_frac_hyb:out
 !                dv.kinrgy:out dv.conc:out dv.flob:out dv.floe:out
 !                dv.floi:out dv.floe_noc:out dv.floi_noc:out dv.flon:out
 !                dv.flokt:out dv.flozt:out dv.conn:out dv.conkt:out
@@ -3054,7 +3256,9 @@ CONTAINS
     TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
     TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(dv%fne)) THEN
       RETURN
@@ -3108,6 +3312,10 @@ CONTAINS
         DEALLOCATE(dvd%fnn_52)
       END IF
       DEALLOCATE(dv%fnn_52)
+      IF (ALLOCATED(dvd%fnn_inc)) THEN
+        DEALLOCATE(dvd%fnn_inc)
+      END IF
+      DEALLOCATE(dv%fnn_inc)
       IF (ALLOCATED(dvd%fch)) THEN
         DEALLOCATE(dvd%fch)
       END IF
@@ -3309,6 +3517,14 @@ CONTAINS
       END IF
       DEALLOCATE(dv%conb)
 !
+      IF (ALLOCATED(dvd%kin_frac_hyb)) THEN
+        DEALLOCATE(dvd%kin_frac_hyb)
+      END IF
+      DEALLOCATE(dv%kin_frac_hyb)
+      IF (ALLOCATED(dvd%fluid_frac_hyb)) THEN
+        DEALLOCATE(dvd%fluid_frac_hyb)
+      END IF
+      DEALLOCATE(dv%fluid_frac_hyb)
 !
 ! kinetic energy
       IF (ALLOCATED(dvd%kinrgy)) THEN
@@ -3573,6 +3789,7 @@ CONTAINS
       DEALLOCATE(dv%fnn)
       DEALLOCATE(dv%fnn_32)
       DEALLOCATE(dv%fnn_52)
+      DEALLOCATE(dv%fnn_inc)
       DEALLOCATE(dv%fch)
       DEALLOCATE(dv%fch_32)
       DEALLOCATE(dv%fch_52)
@@ -3627,6 +3844,8 @@ CONTAINS
       DEALLOCATE(dv%flob)
       DEALLOCATE(dv%conb)
 !
+      DEALLOCATE(dv%kin_frac_hyb)
+      DEALLOCATE(dv%fluid_frac_hyb)
 !
 ! kinetic energy
       DEALLOCATE(dv%kinrgy)
@@ -3699,7 +3918,10 @@ CONTAINS
 !  Differentiation of createb2source as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: sr.sch:in-out sr.she:in-out sr.shi:in-out
 !                sr.sne:in-out sr.shn:in-out sr.skt:in-out sr.szt:in-out
-!                sr.smo:in-out sr.smq:in-out sr.sna:in-out sr.skt_diss:in-out
+!                sr.smo:in-out sr.smq:in-out sr.sna:in-out sr.shedt:in-out
+!                sr.sktdt:in-out sr.sztdt:in-out sr.snedt:in-out
+!                sr.shidt:in-out sr.shndt:in-out sr.schdt:in-out
+!                sr.smodt:in-out sr.snadt:in-out sr.skt_diss:in-out
 !                sr.skt_prod:in-out
 !
 !
@@ -3711,8 +3933,10 @@ CONTAINS
     TYPE(B2SOURCE), INTENT(INOUT) :: sr
     TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(sr%sch)) THEN
       RETURN
@@ -3777,6 +4001,51 @@ CONTAINS
         srd%szt(nd, 1:ncv, 0:3) = 0.D0
       END DO
       ALLOCATE(sr%szt(ncv, 0:3), source=0._R8)
+      ALLOCATE(srd%schdt(nbdirsmax, ncv, 0:3), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%schdt(nd, 1:ncv, 0:3) = 0.D0
+      END DO
+      ALLOCATE(sr%schdt(ncv, 0:3), source=0._R8)
+      ALLOCATE(srd%shedt(nbdirsmax, ncv, 0:3), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%shedt(nd, 1:ncv, 0:3) = 0.D0
+      END DO
+      ALLOCATE(sr%shedt(ncv, 0:3), source=0._R8)
+      ALLOCATE(srd%shidt(nbdirsmax, ncv, 0:3), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%shidt(nd, 1:ncv, 0:3) = 0.D0
+      END DO
+      ALLOCATE(sr%shidt(ncv, 0:3), source=0._R8)
+      ALLOCATE(srd%shndt(nbdirsmax, ncv, 0:3), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%shndt(nd, 1:ncv, 0:3) = 0.D0
+      END DO
+      ALLOCATE(sr%shndt(ncv, 0:3), source=0._R8)
+      ALLOCATE(srd%smodt(nbdirsmax, ncv, 0:3, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%smodt(nd, 1:ncv, 0:3, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(sr%smodt(ncv, 0:3, 0:ns-1), source=0._R8)
+      ALLOCATE(srd%snadt(nbdirsmax, ncv, 0:1, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%snadt(nd, 1:ncv, 0:1, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(sr%snadt(ncv, 0:1, 0:ns-1), source=0._R8)
+      ALLOCATE(srd%snedt(nbdirsmax, ncv, 0:1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%snedt(nd, 1:ncv, 0:1) = 0.D0
+      END DO
+      ALLOCATE(sr%snedt(ncv, 0:1), source=0._R8)
+      ALLOCATE(srd%sktdt(nbdirsmax, ncv, 0:3), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%sktdt(nd, 1:ncv, 0:3) = 0.D0
+      END DO
+      ALLOCATE(sr%sktdt(ncv, 0:3), source=0._R8)
+      ALLOCATE(srd%sztdt(nbdirsmax, ncv, 0:3), source=0._R8)
+      DO nd=1,nbdirsmax
+        srd%sztdt(nd, 1:ncv, 0:3) = 0.D0
+      END DO
+      ALLOCATE(sr%sztdt(ncv, 0:3), source=0._R8)
 !
       RETURN
     END IF
@@ -3806,6 +4075,15 @@ CONTAINS
       ALLOCATE(sr%skt_prod(ncv), source=0._R8)
       ALLOCATE(sr%skt_diss(ncv), source=0._R8)
       ALLOCATE(sr%szt(ncv, 0:3), source=0._R8)
+      ALLOCATE(sr%schdt(ncv, 0:3), source=0._R8)
+      ALLOCATE(sr%shedt(ncv, 0:3), source=0._R8)
+      ALLOCATE(sr%shidt(ncv, 0:3), source=0._R8)
+      ALLOCATE(sr%shndt(ncv, 0:3), source=0._R8)
+      ALLOCATE(sr%smodt(ncv, 0:3, 0:ns-1), source=0._R8)
+      ALLOCATE(sr%snadt(ncv, 0:1, 0:ns-1), source=0._R8)
+      ALLOCATE(sr%snedt(ncv, 0:1), source=0._R8)
+      ALLOCATE(sr%sktdt(ncv, 0:3), source=0._R8)
+      ALLOCATE(sr%sztdt(ncv, 0:3), source=0._R8)
 !
       RETURN
     END IF
@@ -3814,7 +4092,10 @@ CONTAINS
 !  Differentiation of destroyb2source as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: sr.sch:out sr.she:out sr.shi:out
 !                sr.sne:out sr.shn:out sr.skt:out sr.szt:out sr.smo:out
-!                sr.smq:out sr.sna:out sr.skt_diss:out sr.skt_prod:out
+!                sr.smq:out sr.sna:out sr.shedt:out sr.sktdt:out
+!                sr.sztdt:out sr.snedt:out sr.shidt:out sr.shndt:out
+!                sr.schdt:out sr.smodt:out sr.snadt:out sr.skt_diss:out
+!                sr.skt_prod:out
 !
   SUBROUTINE DESTROYB2SOURCE_DV(sr, srd, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -3823,7 +4104,9 @@ CONTAINS
     TYPE(B2SOURCE), INTENT(INOUT) :: sr
     TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(sr%sch)) THEN
       RETURN
@@ -3877,6 +4160,42 @@ CONTAINS
         DEALLOCATE(srd%szt)
       END IF
       DEALLOCATE(sr%szt)
+      IF (ALLOCATED(srd%schdt)) THEN
+        DEALLOCATE(srd%schdt)
+      END IF
+      DEALLOCATE(sr%schdt)
+      IF (ALLOCATED(srd%shedt)) THEN
+        DEALLOCATE(srd%shedt)
+      END IF
+      DEALLOCATE(sr%shedt)
+      IF (ALLOCATED(srd%shidt)) THEN
+        DEALLOCATE(srd%shidt)
+      END IF
+      DEALLOCATE(sr%shidt)
+      IF (ALLOCATED(srd%shndt)) THEN
+        DEALLOCATE(srd%shndt)
+      END IF
+      DEALLOCATE(sr%shndt)
+      IF (ALLOCATED(srd%smodt)) THEN
+        DEALLOCATE(srd%smodt)
+      END IF
+      DEALLOCATE(sr%smodt)
+      IF (ALLOCATED(srd%snadt)) THEN
+        DEALLOCATE(srd%snadt)
+      END IF
+      DEALLOCATE(sr%snadt)
+      IF (ALLOCATED(srd%snedt)) THEN
+        DEALLOCATE(srd%snedt)
+      END IF
+      DEALLOCATE(sr%snedt)
+      IF (ALLOCATED(srd%sktdt)) THEN
+        DEALLOCATE(srd%sktdt)
+      END IF
+      DEALLOCATE(sr%sktdt)
+      IF (ALLOCATED(srd%sztdt)) THEN
+        DEALLOCATE(srd%sztdt)
+      END IF
+      DEALLOCATE(sr%sztdt)
 !
       RETURN
     END IF
@@ -3905,15 +4224,24 @@ CONTAINS
       DEALLOCATE(sr%skt_diss)
       DEALLOCATE(sr%skt_prod)
       DEALLOCATE(sr%szt)
+      DEALLOCATE(sr%schdt)
+      DEALLOCATE(sr%shedt)
+      DEALLOCATE(sr%shidt)
+      DEALLOCATE(sr%shndt)
+      DEALLOCATE(sr%smodt)
+      DEALLOCATE(sr%snadt)
+      DEALLOCATE(sr%snedt)
+      DEALLOCATE(sr%sktdt)
+      DEALLOCATE(sr%sztdt)
 !
       RETURN
     END IF
   END SUBROUTINE DESTROYB2SOURCE
 
 !  Differentiation of createb2sourceeir as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: sr_eir.sch:in-out sr_eir.she:in-out
-!                sr_eir.shi:in-out sr_eir.sne:in-out sr_eir.smo:in-out
-!                sr_eir.smq:in-out sr_eir.sna:in-out
+!   Plus diff mem management of: sr_eir.sch:out sr_eir.she:out
+!                sr_eir.shi:out sr_eir.sne:out sr_eir.smo:out sr_eir.smq:out
+!                sr_eir.sna:out
 !
   SUBROUTINE CREATEB2SOURCEEIR_DV(ncv, ns, nstra, sr_eir, sr_eird, &
 &   nbdirs)
@@ -3924,8 +4252,10 @@ CONTAINS
     TYPE(B2SOURCEEIR), INTENT(INOUT) :: sr_eir
     TYPE(B2SOURCEEIR_DIFFV), INTENT(INOUT) :: sr_eird
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(sr_eir%sch)) THEN
       RETURN
@@ -4005,7 +4335,9 @@ CONTAINS
     TYPE(B2SOURCEEIR), INTENT(INOUT) :: sr_eir
     TYPE(B2SOURCEEIR_DIFFV), INTENT(INOUT) :: sr_eird
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(sr_eir%sch)) THEN
       RETURN
@@ -4071,9 +4403,26 @@ CONTAINS
 !   Plus diff mem management of: srw.sch0:in-out srw.she0:in-out
 !                srw.shi0:in-out srw.sne0:in-out srw.shn0:in-out
 !                srw.skt0:in-out srw.szt0:in-out srw.smo0:in-out
-!                srw.smq0:in-out srw.sna0:in-out srw.b2stbm_sch:in-out
+!                srw.smq0:in-out srw.sna0:in-out srw.b2stbc_sch:in-out
+!                srw.b2stbc_she:in-out srw.b2stbc_shi:in-out srw.b2stbc_sne:in-out
+!                srw.b2stbc_shn:in-out srw.b2stbc_skt:in-out srw.b2stbc_szt:in-out
+!                srw.b2stbc_smo:in-out srw.b2stbc_sna:in-out srw.b2stbm_sch:in-out
 !                srw.b2stbm_she:in-out srw.b2stbm_shi:in-out srw.b2stbm_sne:in-out
 !                srw.b2stbm_smo:in-out srw.b2stbm_smq:in-out srw.b2stbm_sna:in-out
+!                srw.b2stbr_sch:in-out srw.b2stbr_she:in-out srw.b2stbr_shi:in-out
+!                srw.b2stbr_sne:in-out srw.b2stbr_shn:in-out srw.b2stbr_skt:in-out
+!                srw.b2stbr_szt:in-out srw.b2stbr_smo:in-out srw.b2stbr_sna:in-out
+!                srw.rsana:in-out srw.rsahi:in-out srw.rsamo:in-out
+!                srw.rrana:in-out srw.rrahi:in-out srw.rramo:in-out
+!                srw.rcxna:in-out srw.rcxhi:in-out srw.rcxmo:in-out
+!                srw.rqahe:in-out srw.rqrad:in-out srw.rqbrm:in-out
+!                srw.b2sihs_joule:in-out srw.b2sihs_divue:in-out
+!                srw.b2sihs_divua:in-out srw.b2sihs_exbe:in-out
+!                srw.b2sihs_exba:in-out srw.b2sihs_visa:in-out
+!                srw.b2sihs_fraa:in-out srw.b2sihs_str:in-out srw.sna0_eir_tot:in-out
+!                srw.smo0_eir_tot:in-out srw.sne0_eir_tot:in-out
+!                srw.she0_eir_tot:in-out srw.shi0_eir_tot:in-out
+!                srw.shn0_eir_tot:in-out srw.sch0_eir_tot:in-out
 !
 !
   SUBROUTINE CREATEB2SOURCEWORK_DV(ncv, ns, srw, srwd, nbdirs)
@@ -4084,8 +4433,10 @@ CONTAINS
     TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
     TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(srw%sch0)) THEN
       RETURN
@@ -4141,6 +4492,98 @@ CONTAINS
       END DO
       ALLOCATE(srw%sne0(ncv, 0:1), source=0._R8)
 !
+      ALLOCATE(srwd%b2stbc_sch(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_sch(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_sch(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbc_she(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_she(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_she(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbc_shi(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_shi(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_shi(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbc_smo(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_smo(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_smo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%b2stbc_sna(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_sna(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_sna(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%b2stbc_sne(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_sne(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_sne(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbc_shn(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_shn(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_shn(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbc_skt(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_skt(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_skt(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbc_szt(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbc_szt(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbc_szt(ncv), source=0._R8)
+!
+      ALLOCATE(srwd%b2stbr_sch(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_sch(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_sch(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbr_she(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_she(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_she(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbr_shi(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_shi(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_shi(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbr_smo(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_smo(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_smo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%b2stbr_sna(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_sna(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_sna(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%b2stbr_sne(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_sne(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_sne(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbr_shn(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_shn(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_shn(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbr_skt(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_skt(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_skt(ncv), source=0._R8)
+      ALLOCATE(srwd%b2stbr_szt(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2stbr_szt(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2stbr_szt(ncv), source=0._R8)
+!
       ALLOCATE(srwd%b2stbm_sch(nbdirsmax, ncv), source=0._R8)
       DO nd=1,nbdirsmax
         srwd%b2stbm_sch(nd, 1:ncv) = 0.D0
@@ -4177,6 +4620,144 @@ CONTAINS
       END DO
       ALLOCATE(srw%b2stbm_sne(ncv), source=0._R8)
 !
+      ALLOCATE(srwd%rsana(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rsana(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rsana(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rsamo(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rsamo(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rsamo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rsahi(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rsahi(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rsahi(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rrana(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rrana(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rrana(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rramo(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rramo(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rramo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rrahi(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rrahi(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rrahi(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rcxna(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rcxna(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rcxna(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rcxmo(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rcxmo(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rcxmo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rcxhi(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rcxhi(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rcxhi(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rqahe(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rqahe(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rqahe(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rqrad(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rqrad(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rqrad(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%rqbrm(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%rqbrm(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%rqbrm(ncv, 0:ns-1), source=0._R8)
+!
+      ALLOCATE(srwd%b2sihs_joule(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_joule(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_joule(ncv), source=0._R8)
+      ALLOCATE(srwd%b2sihs_divue(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_divue(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_divue(ncv), source=0._R8)
+      ALLOCATE(srwd%b2sihs_divua(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_divua(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_divua(ncv), source=0._R8)
+      ALLOCATE(srwd%b2sihs_exbe(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_exbe(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_exbe(ncv), source=0._R8)
+      ALLOCATE(srwd%b2sihs_exba(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_exba(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_exba(ncv), source=0._R8)
+      ALLOCATE(srwd%b2sihs_visa(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_visa(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_visa(ncv), source=0._R8)
+      ALLOCATE(srwd%b2sihs_fraa(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_fraa(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_fraa(ncv), source=0._R8)
+      ALLOCATE(srwd%b2sihs_str(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%b2sihs_str(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%b2sihs_str(ncv), source=0._R8)
+!
+      ALLOCATE(srwd%sna0_eir_tot(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%sna0_eir_tot(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%sna0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%smo0_eir_tot(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%smo0_eir_tot(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(srw%smo0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%sne0_eir_tot(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%sne0_eir_tot(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%sne0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srwd%she0_eir_tot(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%she0_eir_tot(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%she0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srwd%shn0_eir_tot(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%shn0_eir_tot(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%shn0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srwd%shi0_eir_tot(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%shi0_eir_tot(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%shi0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srwd%sch0_eir_tot(nbdirsmax, ncv), source=0._R8)
+      DO nd=1,nbdirsmax
+        srwd%sch0_eir_tot(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(srw%sch0_eir_tot(ncv), source=0._R8)
+!
       RETURN
     END IF
   END SUBROUTINE CREATEB2SOURCEWORK_DV
@@ -4204,6 +4785,26 @@ CONTAINS
       ALLOCATE(srw%sna0(ncv, 0:1, 0:ns-1), source=0._R8)
       ALLOCATE(srw%sne0(ncv, 0:1), source=0._R8)
 !
+      ALLOCATE(srw%b2stbc_sch(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbc_she(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbc_shi(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbc_smo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%b2stbc_sna(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%b2stbc_sne(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbc_shn(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbc_skt(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbc_szt(ncv), source=0._R8)
+!
+      ALLOCATE(srw%b2stbr_sch(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbr_she(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbr_shi(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbr_smo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%b2stbr_sna(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%b2stbr_sne(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbr_shn(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbr_skt(ncv), source=0._R8)
+      ALLOCATE(srw%b2stbr_szt(ncv), source=0._R8)
+!
       ALLOCATE(srw%b2stbm_sch(ncv), source=0._R8)
       ALLOCATE(srw%b2stbm_she(ncv), source=0._R8)
       ALLOCATE(srw%b2stbm_shi(ncv), source=0._R8)
@@ -4212,6 +4813,36 @@ CONTAINS
       ALLOCATE(srw%b2stbm_sna(ncv, 0:ns-1), source=0._R8)
       ALLOCATE(srw%b2stbm_sne(ncv), source=0._R8)
 !
+      ALLOCATE(srw%rsana(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rsamo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rsahi(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rrana(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rramo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rrahi(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rcxna(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rcxmo(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rcxhi(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rqahe(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rqrad(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%rqbrm(ncv, 0:ns-1), source=0._R8)
+!
+      ALLOCATE(srw%b2sihs_joule(ncv), source=0._R8)
+      ALLOCATE(srw%b2sihs_divue(ncv), source=0._R8)
+      ALLOCATE(srw%b2sihs_divua(ncv), source=0._R8)
+      ALLOCATE(srw%b2sihs_exbe(ncv), source=0._R8)
+      ALLOCATE(srw%b2sihs_exba(ncv), source=0._R8)
+      ALLOCATE(srw%b2sihs_visa(ncv), source=0._R8)
+      ALLOCATE(srw%b2sihs_fraa(ncv), source=0._R8)
+      ALLOCATE(srw%b2sihs_str(ncv), source=0._R8)
+!
+      ALLOCATE(srw%sna0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%smo0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%sne0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srw%she0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srw%shn0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srw%shi0_eir_tot(ncv), source=0._R8)
+      ALLOCATE(srw%sch0_eir_tot(ncv), source=0._R8)
+!
       RETURN
     END IF
   END SUBROUTINE CREATEB2SOURCEWORK
@@ -4219,9 +4850,23 @@ CONTAINS
 !  Differentiation of destroyb2sourcework as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: srw.sch0:out srw.she0:out srw.shi0:out
 !                srw.sne0:out srw.shn0:out srw.skt0:out srw.szt0:out
-!                srw.smo0:out srw.smq0:out srw.sna0:out srw.b2stbm_sch:out
+!                srw.smo0:out srw.smq0:out srw.sna0:out srw.b2stbc_sch:out
+!                srw.b2stbc_she:out srw.b2stbc_shi:out srw.b2stbc_sne:out
+!                srw.b2stbc_shn:out srw.b2stbc_skt:out srw.b2stbc_szt:out
+!                srw.b2stbc_smo:out srw.b2stbc_sna:out srw.b2stbm_sch:out
 !                srw.b2stbm_she:out srw.b2stbm_shi:out srw.b2stbm_sne:out
 !                srw.b2stbm_smo:out srw.b2stbm_smq:out srw.b2stbm_sna:out
+!                srw.b2stbr_sch:out srw.b2stbr_she:out srw.b2stbr_shi:out
+!                srw.b2stbr_sne:out srw.b2stbr_shn:out srw.b2stbr_skt:out
+!                srw.b2stbr_szt:out srw.b2stbr_smo:out srw.b2stbr_sna:out
+!                srw.rsana:out srw.rsahi:out srw.rsamo:out srw.rrana:out
+!                srw.rrahi:out srw.rramo:out srw.rcxna:out srw.rcxhi:out
+!                srw.rcxmo:out srw.rqahe:out srw.rqrad:out srw.rqbrm:out
+!                srw.b2sihs_joule:out srw.b2sihs_divue:out srw.b2sihs_divua:out
+!                srw.b2sihs_exbe:out srw.b2sihs_exba:out srw.b2sihs_visa:out
+!                srw.b2sihs_fraa:out srw.b2sihs_str:out srw.sna0_eir_tot:out
+!                srw.smo0_eir_tot:out srw.sne0_eir_tot:out srw.she0_eir_tot:out
+!                srw.shi0_eir_tot:out srw.shn0_eir_tot:out srw.sch0_eir_tot:out
 !
   SUBROUTINE DESTROYB2SOURCEWORK_DV(srw, srwd, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -4230,7 +4875,9 @@ CONTAINS
     TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
     TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(srw%sch0)) THEN
       RETURN
@@ -4277,6 +4924,80 @@ CONTAINS
       END IF
       DEALLOCATE(srw%sne0)
 !
+      IF (ALLOCATED(srwd%b2stbc_sch)) THEN
+        DEALLOCATE(srwd%b2stbc_sch)
+      END IF
+      DEALLOCATE(srw%b2stbc_sch)
+      IF (ALLOCATED(srwd%b2stbc_she)) THEN
+        DEALLOCATE(srwd%b2stbc_she)
+      END IF
+      DEALLOCATE(srw%b2stbc_she)
+      IF (ALLOCATED(srwd%b2stbc_shi)) THEN
+        DEALLOCATE(srwd%b2stbc_shi)
+      END IF
+      DEALLOCATE(srw%b2stbc_shi)
+      IF (ALLOCATED(srwd%b2stbc_smo)) THEN
+        DEALLOCATE(srwd%b2stbc_smo)
+      END IF
+      DEALLOCATE(srw%b2stbc_smo)
+      IF (ALLOCATED(srwd%b2stbc_sna)) THEN
+        DEALLOCATE(srwd%b2stbc_sna)
+      END IF
+      DEALLOCATE(srw%b2stbc_sna)
+      IF (ALLOCATED(srwd%b2stbc_sne)) THEN
+        DEALLOCATE(srwd%b2stbc_sne)
+      END IF
+      DEALLOCATE(srw%b2stbc_sne)
+      IF (ALLOCATED(srwd%b2stbc_shn)) THEN
+        DEALLOCATE(srwd%b2stbc_shn)
+      END IF
+      DEALLOCATE(srw%b2stbc_shn)
+      IF (ALLOCATED(srwd%b2stbc_skt)) THEN
+        DEALLOCATE(srwd%b2stbc_skt)
+      END IF
+      DEALLOCATE(srw%b2stbc_skt)
+      IF (ALLOCATED(srwd%b2stbc_szt)) THEN
+        DEALLOCATE(srwd%b2stbc_szt)
+      END IF
+      DEALLOCATE(srw%b2stbc_szt)
+!
+      IF (ALLOCATED(srwd%b2stbr_sch)) THEN
+        DEALLOCATE(srwd%b2stbr_sch)
+      END IF
+      DEALLOCATE(srw%b2stbr_sch)
+      IF (ALLOCATED(srwd%b2stbr_she)) THEN
+        DEALLOCATE(srwd%b2stbr_she)
+      END IF
+      DEALLOCATE(srw%b2stbr_she)
+      IF (ALLOCATED(srwd%b2stbr_shi)) THEN
+        DEALLOCATE(srwd%b2stbr_shi)
+      END IF
+      DEALLOCATE(srw%b2stbr_shi)
+      IF (ALLOCATED(srwd%b2stbr_smo)) THEN
+        DEALLOCATE(srwd%b2stbr_smo)
+      END IF
+      DEALLOCATE(srw%b2stbr_smo)
+      IF (ALLOCATED(srwd%b2stbr_sna)) THEN
+        DEALLOCATE(srwd%b2stbr_sna)
+      END IF
+      DEALLOCATE(srw%b2stbr_sna)
+      IF (ALLOCATED(srwd%b2stbr_sne)) THEN
+        DEALLOCATE(srwd%b2stbr_sne)
+      END IF
+      DEALLOCATE(srw%b2stbr_sne)
+      IF (ALLOCATED(srwd%b2stbr_shn)) THEN
+        DEALLOCATE(srwd%b2stbr_shn)
+      END IF
+      DEALLOCATE(srw%b2stbr_shn)
+      IF (ALLOCATED(srwd%b2stbr_skt)) THEN
+        DEALLOCATE(srwd%b2stbr_skt)
+      END IF
+      DEALLOCATE(srw%b2stbr_skt)
+      IF (ALLOCATED(srwd%b2stbr_szt)) THEN
+        DEALLOCATE(srwd%b2stbr_szt)
+      END IF
+      DEALLOCATE(srw%b2stbr_szt)
+!
       IF (ALLOCATED(srwd%b2stbm_sch)) THEN
         DEALLOCATE(srwd%b2stbm_sch)
       END IF
@@ -4306,6 +5027,117 @@ CONTAINS
       END IF
       DEALLOCATE(srw%b2stbm_sne)
 !
+      IF (ALLOCATED(srwd%rsana)) THEN
+        DEALLOCATE(srwd%rsana)
+      END IF
+      DEALLOCATE(srw%rsana)
+      IF (ALLOCATED(srwd%rsamo)) THEN
+        DEALLOCATE(srwd%rsamo)
+      END IF
+      DEALLOCATE(srw%rsamo)
+      IF (ALLOCATED(srwd%rsahi)) THEN
+        DEALLOCATE(srwd%rsahi)
+      END IF
+      DEALLOCATE(srw%rsahi)
+      IF (ALLOCATED(srwd%rrana)) THEN
+        DEALLOCATE(srwd%rrana)
+      END IF
+      DEALLOCATE(srw%rrana)
+      IF (ALLOCATED(srwd%rramo)) THEN
+        DEALLOCATE(srwd%rramo)
+      END IF
+      DEALLOCATE(srw%rramo)
+      IF (ALLOCATED(srwd%rrahi)) THEN
+        DEALLOCATE(srwd%rrahi)
+      END IF
+      DEALLOCATE(srw%rrahi)
+      IF (ALLOCATED(srwd%rcxna)) THEN
+        DEALLOCATE(srwd%rcxna)
+      END IF
+      DEALLOCATE(srw%rcxna)
+      IF (ALLOCATED(srwd%rcxmo)) THEN
+        DEALLOCATE(srwd%rcxmo)
+      END IF
+      DEALLOCATE(srw%rcxmo)
+      IF (ALLOCATED(srwd%rcxhi)) THEN
+        DEALLOCATE(srwd%rcxhi)
+      END IF
+      DEALLOCATE(srw%rcxhi)
+      IF (ALLOCATED(srwd%rqahe)) THEN
+        DEALLOCATE(srwd%rqahe)
+      END IF
+      DEALLOCATE(srw%rqahe)
+      IF (ALLOCATED(srwd%rqrad)) THEN
+        DEALLOCATE(srwd%rqrad)
+      END IF
+      DEALLOCATE(srw%rqrad)
+      IF (ALLOCATED(srwd%rqbrm)) THEN
+        DEALLOCATE(srwd%rqbrm)
+      END IF
+      DEALLOCATE(srw%rqbrm)
+!
+      IF (ALLOCATED(srwd%b2sihs_joule)) THEN
+        DEALLOCATE(srwd%b2sihs_joule)
+      END IF
+      DEALLOCATE(srw%b2sihs_joule)
+      IF (ALLOCATED(srwd%b2sihs_divue)) THEN
+        DEALLOCATE(srwd%b2sihs_divue)
+      END IF
+      DEALLOCATE(srw%b2sihs_divue)
+      IF (ALLOCATED(srwd%b2sihs_divua)) THEN
+        DEALLOCATE(srwd%b2sihs_divua)
+      END IF
+      DEALLOCATE(srw%b2sihs_divua)
+      IF (ALLOCATED(srwd%b2sihs_exbe)) THEN
+        DEALLOCATE(srwd%b2sihs_exbe)
+      END IF
+      DEALLOCATE(srw%b2sihs_exbe)
+      IF (ALLOCATED(srwd%b2sihs_exba)) THEN
+        DEALLOCATE(srwd%b2sihs_exba)
+      END IF
+      DEALLOCATE(srw%b2sihs_exba)
+      IF (ALLOCATED(srwd%b2sihs_visa)) THEN
+        DEALLOCATE(srwd%b2sihs_visa)
+      END IF
+      DEALLOCATE(srw%b2sihs_visa)
+      IF (ALLOCATED(srwd%b2sihs_fraa)) THEN
+        DEALLOCATE(srwd%b2sihs_fraa)
+      END IF
+      DEALLOCATE(srw%b2sihs_fraa)
+      IF (ALLOCATED(srwd%b2sihs_str)) THEN
+        DEALLOCATE(srwd%b2sihs_str)
+      END IF
+      DEALLOCATE(srw%b2sihs_str)
+!
+      IF (ALLOCATED(srwd%sna0_eir_tot)) THEN
+        DEALLOCATE(srwd%sna0_eir_tot)
+      END IF
+      DEALLOCATE(srw%sna0_eir_tot)
+      IF (ALLOCATED(srwd%smo0_eir_tot)) THEN
+        DEALLOCATE(srwd%smo0_eir_tot)
+      END IF
+      DEALLOCATE(srw%smo0_eir_tot)
+      IF (ALLOCATED(srwd%sne0_eir_tot)) THEN
+        DEALLOCATE(srwd%sne0_eir_tot)
+      END IF
+      DEALLOCATE(srw%sne0_eir_tot)
+      IF (ALLOCATED(srwd%she0_eir_tot)) THEN
+        DEALLOCATE(srwd%she0_eir_tot)
+      END IF
+      DEALLOCATE(srw%she0_eir_tot)
+      IF (ALLOCATED(srwd%shi0_eir_tot)) THEN
+        DEALLOCATE(srwd%shi0_eir_tot)
+      END IF
+      DEALLOCATE(srw%shi0_eir_tot)
+      IF (ALLOCATED(srwd%shn0_eir_tot)) THEN
+        DEALLOCATE(srwd%shn0_eir_tot)
+      END IF
+      DEALLOCATE(srw%shn0_eir_tot)
+      IF (ALLOCATED(srwd%sch0_eir_tot)) THEN
+        DEALLOCATE(srwd%sch0_eir_tot)
+      END IF
+      DEALLOCATE(srw%sch0_eir_tot)
+!
       RETURN
     END IF
   END SUBROUTINE DESTROYB2SOURCEWORK_DV
@@ -4332,6 +5164,26 @@ CONTAINS
       DEALLOCATE(srw%sna0)
       DEALLOCATE(srw%sne0)
 !
+      DEALLOCATE(srw%b2stbc_sch)
+      DEALLOCATE(srw%b2stbc_she)
+      DEALLOCATE(srw%b2stbc_shi)
+      DEALLOCATE(srw%b2stbc_smo)
+      DEALLOCATE(srw%b2stbc_sna)
+      DEALLOCATE(srw%b2stbc_sne)
+      DEALLOCATE(srw%b2stbc_shn)
+      DEALLOCATE(srw%b2stbc_skt)
+      DEALLOCATE(srw%b2stbc_szt)
+!
+      DEALLOCATE(srw%b2stbr_sch)
+      DEALLOCATE(srw%b2stbr_she)
+      DEALLOCATE(srw%b2stbr_shi)
+      DEALLOCATE(srw%b2stbr_smo)
+      DEALLOCATE(srw%b2stbr_sna)
+      DEALLOCATE(srw%b2stbr_sne)
+      DEALLOCATE(srw%b2stbr_shn)
+      DEALLOCATE(srw%b2stbr_skt)
+      DEALLOCATE(srw%b2stbr_szt)
+!
       DEALLOCATE(srw%b2stbm_sch)
       DEALLOCATE(srw%b2stbm_she)
       DEALLOCATE(srw%b2stbm_shi)
@@ -4339,6 +5191,36 @@ CONTAINS
       DEALLOCATE(srw%b2stbm_smq)
       DEALLOCATE(srw%b2stbm_sna)
       DEALLOCATE(srw%b2stbm_sne)
+!
+      DEALLOCATE(srw%rsana)
+      DEALLOCATE(srw%rsamo)
+      DEALLOCATE(srw%rsahi)
+      DEALLOCATE(srw%rrana)
+      DEALLOCATE(srw%rramo)
+      DEALLOCATE(srw%rrahi)
+      DEALLOCATE(srw%rcxna)
+      DEALLOCATE(srw%rcxmo)
+      DEALLOCATE(srw%rcxhi)
+      DEALLOCATE(srw%rqahe)
+      DEALLOCATE(srw%rqrad)
+      DEALLOCATE(srw%rqbrm)
+!
+      DEALLOCATE(srw%b2sihs_joule)
+      DEALLOCATE(srw%b2sihs_divue)
+      DEALLOCATE(srw%b2sihs_divua)
+      DEALLOCATE(srw%b2sihs_exbe)
+      DEALLOCATE(srw%b2sihs_exba)
+      DEALLOCATE(srw%b2sihs_visa)
+      DEALLOCATE(srw%b2sihs_fraa)
+      DEALLOCATE(srw%b2sihs_str)
+!
+      DEALLOCATE(srw%sna0_eir_tot)
+      DEALLOCATE(srw%smo0_eir_tot)
+      DEALLOCATE(srw%sne0_eir_tot)
+      DEALLOCATE(srw%she0_eir_tot)
+      DEALLOCATE(srw%shi0_eir_tot)
+      DEALLOCATE(srw%shn0_eir_tot)
+      DEALLOCATE(srw%sch0_eir_tot)
 !
       RETURN
     END IF
@@ -4362,8 +5244,10 @@ CONTAINS
     TYPE(B2RATES), INTENT(INOUT) :: rt
     TYPE(B2RATES_DIFFV), INTENT(INOUT) :: rtd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(rt%iscx)) THEN
       RETURN
@@ -4507,7 +5391,9 @@ CONTAINS
     TYPE(B2RATES), INTENT(INOUT) :: rt
     TYPE(B2RATES_DIFFV), INTENT(INOUT) :: rtd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(rt%iscx)) THEN
       RETURN
@@ -4629,8 +5515,10 @@ CONTAINS
     TYPE(B2RATESWORK), INTENT(INOUT) :: rtw
     TYPE(B2RATESWORK_DIFFV), INTENT(INOUT) :: rtwd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(rtw%rsa)) THEN
       RETURN
@@ -4711,7 +5599,9 @@ CONTAINS
     TYPE(B2RATESWORK), INTENT(INOUT) :: rtw
     TYPE(B2RATESWORK_DIFFV), INTENT(INOUT) :: rtwd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(rtw%rsa)) THEN
       IF (ALLOCATED(rtwd%rsa)) THEN
@@ -4808,8 +5698,10 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: snap
     TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: snapd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(snap%na)) THEN
       RETURN
@@ -4969,7 +5861,9 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: snap
     TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: snapd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(snap%na)) THEN
       RETURN
@@ -5093,11 +5987,11 @@ CONTAINS
   END SUBROUTINE DESTROYB2PLASMASNAPSHOT
 
 !  Differentiation of createb2diagnostic as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: diag.srcna:in-out diag.srcmo:in-out
-!                diag.srcpo:in-out diag.srche:in-out diag.srchi:in-out
-!                diag.srcmt:in-out diag.aresco:in-out diag.aresmo:in-out
-!                diag.acorpa:in-out diag.acorua:in-out diag.rescoreg:in-out
-!                diag.resmoreg:in-out diag.reshereg:in-out diag.reshireg:in-out
+!   Plus diff mem management of: diag.srcna:out diag.srcmo:out
+!                diag.srcpo:out diag.srche:out diag.srchi:out diag.srcmt:out
+!                diag.aresco:in-out diag.aresmo:in-out diag.acorpa:in-out
+!                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
+!                diag.reshereg:in-out diag.reshireg:in-out
 !
   SUBROUTINE CREATEB2DIAGNOSTIC_DV(ncv, ns, nnreg, diag, diagd, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -5108,8 +6002,10 @@ CONTAINS
     TYPE(B2DIAGNOSTIC), INTENT(INOUT) :: diag
     TYPE(B2DIAGNOSTIC_DIFFV), INTENT(INOUT) :: diagd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(diag%srcna)) THEN
       RETURN
@@ -5243,7 +6139,9 @@ CONTAINS
     TYPE(B2DIAGNOSTIC), INTENT(INOUT) :: diag
     TYPE(B2DIAGNOSTIC_DIFFV), INTENT(INOUT) :: diagd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(diag%srcna)) THEN
       RETURN
@@ -5355,8 +6253,10 @@ CONTAINS
     TYPE(B2UPDATE), INTENT(INOUT) :: update
     TYPE(B2UPDATE_DIFFV), INTENT(INOUT) :: updated
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(update%pa)) THEN
       RETURN
@@ -5448,7 +6348,9 @@ CONTAINS
     TYPE(B2UPDATE), INTENT(INOUT) :: update
     TYPE(B2UPDATE_DIFFV), INTENT(INOUT) :: updated
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(update%pa)) THEN
       RETURN
@@ -5517,7 +6419,7 @@ CONTAINS
   END SUBROUTINE DESTROYB2UPDATE
 
 !  Differentiation of createb2stateext as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: state_ext.zn:in-out state_ext.am:in-out
+!   Plus diff mem management of: state_ext.zn:out state_ext.am:in-out
 !                state_ext.ne:in-out state_ext.ne2:in-out state_ext.ue:in-out
 !                state_ext.za:in-out state_ext.za2:in-out state_ext.pt:in-out
 !                state_ext.na:in-out state_ext.ni:in-out state_ext.ua:in-out
@@ -5537,9 +6439,11 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: ii1
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(state_ext%text)) THEN
       RETURN
@@ -5765,7 +6669,9 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
     INTRINSIC ALLOCATED
+    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
+    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(state_ext%text)) THEN
       RETURN
@@ -6007,43 +6913,68 @@ CONTAINS
 !                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
 !                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
 !                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
-!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
-!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
-!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
-!                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
-!                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
-!                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:in-out st.dv.fllimi:in-out st.dv.resmo:in-out
-!                st.dv.resco:in-out st.dv.respo:in-out st.dv.reshe:in-out
-!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
-!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
-!                st.dv.corua:in-out st.dv.corpa:in-out st.dv.corut:in-out
-!                st.dv.corpo:in-out st.dv.cortt:in-out st.dv.corte:in-out
-!                st.dv.corti:in-out st.dv.cortn:in-out st.dv.corkt:in-out
-!                st.dv.corzt:in-out st.dv.pcca:in-out st.dv.pccm:in-out
-!                st.dv.ne:in-out st.dv.ni:in-out st.dv.nn:in-out
-!                st.dv.ue:in-out st.dv.ne2:in-out st.dv.pa:in-out
-!                st.dv.pz:in-out st.dv.lnlam:in-out st.dv.uadia:in-out
-!                st.dv.vadia:in-out st.dv.wadia:in-out st.dv.vaecrb:in-out
-!                st.dv.vedia:in-out st.dv.wedia:in-out st.dv.veecrb:in-out
-!                st.dv.facdrift:in-out st.dv.fac_exb:in-out st.dv.fac_vis:in-out
-!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
-!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
-!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
-!                st.sr.sna:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
-!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
-!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
-!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
-!                st.srw.sna0:in-out st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.flob:in-out
+!                st.dv.floe:in-out st.dv.floi:in-out st.dv.floe_noc:in-out
+!                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
+!                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
+!                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
+!                st.dv.coni:in-out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
+!                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
+!                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
+!                st.dv.reszt:in-out st.dv.corua:in-out st.dv.corpa:in-out
+!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
+!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
+!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
+!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
+!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
+!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
+!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
+!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
+!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
+!                st.dv.fac_vis:in-out st.sr.sch:in-out st.sr.she:in-out
+!                st.sr.shi:in-out st.sr.sne:in-out st.sr.shn:in-out
+!                st.sr.skt:in-out st.sr.szt:in-out st.sr.smo:in-out
+!                st.sr.smq:in-out st.sr.sna:in-out st.sr.shedt:in-out
+!                st.sr.sktdt:in-out st.sr.sztdt:in-out st.sr.snedt:in-out
+!                st.sr.shidt:in-out st.sr.shndt:in-out st.sr.schdt:in-out
+!                st.sr.smodt:in-out st.sr.snadt:in-out st.sr.skt_diss:in-out
+!                st.sr.skt_prod:in-out st.srw.sch0:in-out st.srw.she0:in-out
+!                st.srw.shi0:in-out st.srw.sne0:in-out st.srw.shn0:in-out
+!                st.srw.skt0:in-out st.srw.szt0:in-out st.srw.smo0:in-out
+!                st.srw.smq0:in-out st.srw.sna0:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
 !                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
-!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:in-out
-!                st.srw.b2stbm_sna:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
+!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
+!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
+!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
+!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
+!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
+!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
+!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
+!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
+!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
+!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -6051,21 +6982,21 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
+!                st.psnl.ua:out st.psnl.po:out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
-!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
+!                st.psnl.nn:out st.psnl.fch:out st.psnl.fna:in-out
+!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
+!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
+!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
 !                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
 !                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
-!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
-!                st.psnc.kinrgy:in-out st.update.ua:in-out st.update.na:in-out
-!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
-!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
+!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
+!                st.psnc.fna:in-out st.psnc.fhi:out st.psnc.fhe:out
+!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
+!                st.psnc.kinrgy:in-out st.update.ua:out st.update.na:out
+!                st.update.pa:out st.update.po:out st.update.te:out
+!                st.update.ti:out st.update.kt:out st.update.zt:out
 !
 !**********************************************************************
 !

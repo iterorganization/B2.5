@@ -14,7 +14,6 @@
 !
 MODULE B2MOD_TRANSPORT_NAMELIST_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
   USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions

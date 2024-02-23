@@ -25,7 +25,7 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
   USE B2MOD_RATES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_ANOMALOUS_TRANSPORT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_GEO_CORNER
@@ -88,7 +88,7 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 !   ..procedures
   INTRINSIC MAX, ABS, SQRT
   EXTERNAL XERTST, ESEEC0_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   REAL(r8) :: y1
@@ -164,9 +164,9 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, hy
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hy, 1, 'hy', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
 !    ..test state
 !    ..test edge values of fne, fni, chce, chve, chci, chvi, calf
     CALL B2XVFF_NODIFF(nx, ny, fne, 'fne')
@@ -177,10 +177,10 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
     CALL B2XVFF_NODIFF(nx, ny, chvi, 'chvi')
     CALL B2XVFF_NODIFF(nx, ny, calf, 'calf')
 !    ..test sign of chce, chci
-    CALL B2XVSG_NODIFF(n2, chce(-1, -1, 0, 0), 1, 'chce00', '.ge.')
-    CALL B2XVSG_NODIFF(n2, chce(-1, -1, 1, 1), 1, 'chce11', '.ge.')
-    CALL B2XVSG_NODIFF(n2, chci(-1, -1, 0, 0), 1, 'chci00', '.ge.')
-    CALL B2XVSG_NODIFF(n2, chci(-1, -1, 1, 1), 1, 'chci11', '.ge.')
+    CALL B2XVSG(n2, chce(-1, -1, 0, 0), 1, 'chce00', '.ge.')
+    CALL B2XVSG(n2, chce(-1, -1, 1, 1), 1, 'chce11', '.ge.')
+    CALL B2XVSG(n2, chci(-1, -1, 0, 0), 1, 'chci00', '.ge.')
+    CALL B2XVSG(n2, chci(-1, -1, 1, 1), 1, 'chci11', '.ge.')
   END IF
 !   ..initialise resignore array
   IF (ncall .EQ. 0) THEN

@@ -27,7 +27,7 @@ MODULE B2MOD_LAYER_DIFFV
 !
   INTEGER :: layer_nconstituents(nwall)
   INTEGER :: layer_nzconstituents(nwall, 6+ntrack)
-  REAL(kind=r8) :: layer_nrelconstituents(nwall, 6+ntrack)
+  REAL(kind=r8) :: layer_relconstituents(nwall, 6+ntrack)
   REAL(kind=r8), ALLOCATABLE :: layer_thickness(:)
   REAL(kind=r8), ALLOCATABLE :: layer_mass_density(:)
   REAL(kind=r8), ALLOCATABLE :: layer_depth(:)
@@ -92,7 +92,7 @@ CONTAINS
     layer_alloys = ' '
     layer_nconstituents = 0
     layer_nzconstituents = 0
-    layer_nrelconstituents = 0.0_R8
+    layer_relconstituents = 0.0_R8
 !
     RETURN
   END SUBROUTINE ALLOC_B2MOD_LAYER

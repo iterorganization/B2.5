@@ -24,7 +24,7 @@ SUBROUTINE B2MWMV_NODIFF(nput, nx, ny, ns, itim, tim, dtim)
   USE B2MOD_SOURCES_DIFFV
   USE B2MOD_TRANSPORT_DIFFV
   USE B2MOD_WORK
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -100,7 +100,7 @@ SUBROUTINE B2MWMV_NODIFF(nput, nx, ny, ns, itim, tim, dtim)
   REAL(kind=r8) :: rdum(0:9)
 !   ..procedures
   EXTERNAL XERTST, B2SCOPY_NODIFF, B2SAXPY_NODIFF, CFWUIN, CFWURE
-  EXTERNAL B2XVSG_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG, B2XVFX_NODIFF
   INTEGER :: arg1
 !   ..initialisation
   DATA ncall /0/
@@ -124,14 +124,14 @@ SUBROUTINE B2MWMV_NODIFF(nput, nx, ny, ns, itim, tim, dtim)
   IF (ncall .LT. 3) THEN
 !    ..test state
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
 !    ..test old state
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na0, 1, 'na0', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te0, 1, 'te0', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti0, 1, 'ti0', '.gt.')
+    CALL B2XVSG(arg1, na0, 1, 'na0', '.gt.')
+    CALL B2XVSG(n2, te0, 1, 'te0', '.gt.')
+    CALL B2XVSG(n2, ti0, 1, 'ti0', '.gt.')
   END IF
 !   ..compute change in plasma state
   arg1 = n2*ns

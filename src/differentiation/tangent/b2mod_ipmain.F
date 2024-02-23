@@ -170,6 +170,13 @@
         case ('b2npmo_modvis')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'
+        case ('eirene_lhalpha')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use "DEFINE_LINES" in block 12 '//
+     &     'of Eirene input file instead'
+        case ('eirene_lvib')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now deprecated'
         case ('b2stel_fix_recomb_energy')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Deprecated, '//
@@ -186,6 +193,9 @@
         case ('b2sifr_styl1')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete.'
+        case ('b2tqin_style')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2tqin_csigin_style instead.'
         case default
           prohib = .false.
         end select

@@ -8,7 +8,6 @@
 module b2mod_connectivity
 
     use b2mod_types
-    use b2mod_dimensions
     use carre_constants
     use b2mod_cellhelper
     use logging
@@ -19,318 +18,8 @@ module b2mod_connectivity
     integer, parameter :: NO_CONNECTIVITY = huge(0) !< Constant to mark in
         !< connectivity arrays that no connectivity available
 
-    !! Geometry/topology IDs (obtain using function geometryId(..:))
-
-    integer, parameter :: GEOMETRY_COUNT = 13
-        !< Number of different geometry/topology situations = max(GEOMETRY_*)
-
-    !! The IDs, matching the IDS definitions of the GGD identifiers
-    integer, parameter :: GEOMETRY_UNSPECIFIED = 0
-    integer, parameter :: GEOMETRY_LINEAR = 1
-    integer, parameter :: GEOMETRY_CYLINDER = 2
-    integer, parameter :: GEOMETRY_LIMITER = 3
-    integer, parameter :: GEOMETRY_SN = 4
-    integer, parameter :: GEOMETRY_CDN = 5
-    integer, parameter :: GEOMETRY_DDN_BOTTOM = 6
-    integer, parameter :: GEOMETRY_DDN_TOP = 7
-    integer, parameter :: GEOMETRY_ANNULUS = 8
-    integer, parameter :: GEOMETRY_STELLARATORISLAND = 9
-    integer, parameter :: GEOMETRY_STRUCTURED_SPACES = 10
-    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_MINUS = 11
-    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_PLUS = 12
-
-    !! Region types
-    !! Region type indices are the ones used in the B2 region array,
-    !! i.e. zero-based.
-    integer, parameter :: REGIONTYPE_COUNT = 3
-        !< Number of different region types
-
-    !! The types (indexing as in B2 region array, i.e. zero-based)
-    integer, parameter :: REGIONTYPE_CELL = 0   !< First region type
-    integer, parameter :: REGIONTYPE_XEDGE = 1  !< Second region type
-    integer, parameter :: REGIONTYPE_YEDGE = 2  !< Third region type
-    integer, parameter :: REGIONTYPE_EDGE = 3   !< Undifferentiated edge type
-
-    !! Region counts and names
-
-    !! Maximum number of regions of each type
-    integer, parameter :: REGION_COUNT_MAX = 14
-
-    !! Region counts
-    !! First dimension: geometry type
-    !! Second dimension: region type
-    integer, dimension(0:REGIONTYPE_COUNT-1, 0:GEOMETRY_COUNT-1), parameter :: &
-        &   regionCounts =  &
-        &   reshape( (/     &
-        &       1,  0,  0,  & !! GEOMETRY_UNSPECIFIED
-        &       1,  2,  2,  & !! GEOMETRY_LINEAR
-        &       1,  1,  2,  & !! GEOMETRY_CYLINDER
-        &       2,  3,  3,  & !! GEOMETRY_LIMITER
-        &       4,  6,  7,  & !! GEOMETRY_SN
-        &       8, 12, 14,  & !! GEOMETRY_CDN
-        &       8, 13, 14,  & !! GEOMETRY_DDN_BOTTOM
-        &       8, 13, 14,  & !! GEOMETRY_DDN_TOP
-        &       1,  2,  2,  & !! GEOMETRY_ANNULUS
-        &       5,  7,  8,  & !! GEOMETRY_STELLARATORISLAND
-        &       1,  0,  0,  & !! GEOMETRY_STRUCTURED_SPACES
-        &       7, 13, 13,  & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &       7, 13, 13   & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
-        &    /),            &
-        &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
-
-    character(11), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryName = &
-        &   (/     &
-        &    'UNSPECIFIED', &
-        &    'LINEAR     ', &
-        &    'CYLINDER   ', &
-        &    'LIMITER    ', &
-        &    'SN         ', &
-        &    'CDN        ', &
-        &    'DDN_BOTTOM ', &
-        &    'DDN_TOP    ', &
-        &    'ANNULUS    ', &
-        &    'ISLAND     ', &
-        &    'STRUCTURED ', &
-        &    'LFS_SF-    ', &
-        &    'LFS_SF+    '  &
-        &   /)
-
-    character(50), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryDescription = &
-        &   (/     &
-        &    'Unspecified geometry                              ', &
-        &    'Linear case                                       ', &
-        &    'Cylinder geometry, straight in the third direction', &
-        &    'Limiter geometry                                  ', &
-        &    'Single null geometry                              ', &
-        &    'Connected double null                             ', &
-        &    'Disconnected double null, bottom X-point is active', &
-        &    'Disconnected double null, top X-point is active   ', &
-        &    'Annular geometry, curved in the third direction   ', &
-        &    'Stellarator island geometry                       ', &
-        &    'Structured grid built with multiple 1-D spaces    ', &
-        &    'Low-field side Snowflake-minus geometry           ', &
-        &    'Low-field side Snowflake-plus geometry            '  &
-        &   /)
-
-    !! Region names
-    !! First dimension: geometry type (given in comments)
-    !! Second dimension: region type
-    !! Third dimension: region index
-
-    character(32), parameter, private :: UU = repeat(' ', 32) !< UnUsed string
-
-    character(32), dimension(REGION_COUNT_MAX, 0:REGIONTYPE_COUNT-1,                &
-        &   0:GEOMETRY_COUNT-1) :: regionNames =                                    &
-        &   reshape( (/                                                             &
-        & & ! GEOMETRY_UNSPECIFIED
-        &   'Plasma'//repeat(' ',26),                                               &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
-        & &
-        &   'Left boundary                   ', 'Right boundary                  ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & &
-        &   'Top boundary                    ', 'Bottom boundary                 ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & & ! GEOMETRY_LINEAR
-        &   'Plasma'//repeat(' ',26),                                               &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
-        & &
-        &   'Anti-clockwise boundary         ', 'Clockwise boundary              ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & &
-        &   'Top boundary                    ', 'Bottom boundary                 ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & & ! GEOMETRY_CYLINDER
-        &   'Plasma'//repeat(' ',26),                                               &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
-        & &
-        &   'Periodicity boundary            ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
-        & &
-        &   'Top boundary                    ', 'Bottom boundary                 ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & & ! GEOMETRY_LIMITER
-        &   'Core                            ', 'SOL                             ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & &
-        &   'Anti-clockwise target           ', 'Clockwise target                ', &
-        &   'Core cut                        ',                                     &
-        & UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                               &
-        & &
-        &   'Core boundary                   ', 'Separatrix                      ', &
-        &   'Main chamber wall               ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                             &
-        & & ! GEOMETRY_SN Single null
-        &   'Core                            ', 'SOL                             ', &
-        &   'Western divertor                ', 'Eastern divertor                ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                                 &
-        & &
-        &   'Western target                  ', 'Western throat                  ', &
-        &   'Eastern throat                  ', 'Eastern target                  ', &
-        &   'Core cut                        ', 'PFR cut                         ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU,                                         &
-        & &
-        &   'Western PFR wall                ', 'Core boundary                   ', &
-        &   'Eastern PFR wall                ', 'Separatrix                      ', &
-        &   'Western baffle                  ', 'Main chamber wall               ', &
-        &   'Eastern baffle                  ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU,                                             &
-        & & ! GEOMETRY_CDN Connected double null
-        &   'Inner core                      ', 'Inner SOL                       ', &
-        &   'Lower inner divertor            ', 'Upper inner divertor            ', &
-        &   'Outer core                      ', 'Outer SOL                       ', &
-        &   'Upper outer divertor            ', 'Lower outer divertor            ', &
-        &   UU, UU, UU, UU, UU, UU,                                                 &
-        & &
-        &   'Lower inner target              ', 'Lower inner throat              ', &
-        &   'Upper inner throat              ', 'Upper inner target              ', &
-        &   'Upper outer target              ', 'Upper outer throat              ', &
-        &   'Lower outer throat              ', 'Lower outer target              ', &
-        &   'Lower core cut                  ', 'Upper PFR cut                   ', &
-        &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   UU, UU,                                                                 &
-        & &
-        &   'Lower inner PFR wall            ', 'Inner core boundary             ', &
-        &   'Upper inner PFR wall            ', 'Inner separatrix                ', &
-        &   'Lower inner baffle              ', 'Inner main chamber wall         ', &
-        &   'Upper inner baffle              ', 'Upper outer PFR wall            ', &
-        &   'Outer core boundary             ', 'Lower outer PFR wall            ', &
-        &   'Outer separatrix                ', 'Upper outer baffle              ', &
-        &   'Outer main chamber wall         ', 'Lower outer baffle              ', &
-        & & ! GEOMETRY_DDN_BOTTOM
-        &   'Inner core                      ', 'Inner SOL                       ', &
-        &   'Lower inner divertor            ', 'Upper inner divertor            ', &
-        &   'Outer core                      ', 'Outer SOL                       ', &
-        &   'Upper outer divertor            ', 'Lower outer divertor            ', &
-        &   UU, UU, UU, UU, UU, UU,                                                 &
-        & &
-        &   'Lower inner target              ', 'Lower inner throat              ', &
-        &   'Upper inner throat              ', 'Upper inner target              ', &
-        &   'Upper outer target              ', 'Upper outer throat              ', &
-        &   'Lower outer throat              ', 'Lower outer target              ', &
-        &   'Lower core cut                  ', 'Upper PFR cut                   ', &
-        &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
-        &   UU,                                                                     &
-        & &
-        &   'Lower inner PFR wall            ', 'Inner core boundary             ', &
-        &   'Upper inner PFR wall            ', 'Inner separatrix                ', &
-        &   'Lower inner baffle              ', 'Inner main chamber wall         ', &
-        &   'Upper inner baffle              ', 'Upper outer PFR wall            ', &
-        &   'Outer core boundary             ', 'Lower outer PFR wall            ', &
-        &   'Outer separatrix                ', 'Upper outer baffle              ', &
-        &   'Outer main chamber wall         ', 'Lower outer baffle              ', &
-        & & ! GEOMETRY_DDN_TOP
-        &   'Inner core                      ', 'Inner SOL                       ', &
-        &   'Lower inner divertor            ', 'Upper inner divertor            ', &
-        &   'Outer core                      ', 'Outer SOL                       ', &
-        &   'Upper outer divertor            ', 'Lower outer divertor            ', &
-        &   UU, UU, UU, UU, UU, UU,                                                 &
-        & &
-        &   'Lower inner target              ', 'Lower inner throat              ', &
-        &   'Upper inner throat              ', 'Upper inner target              ', &
-        &   'Upper outer target              ', 'Upper outer throat              ', &
-        &   'Lower outer throat              ', 'Lower outer target              ', &
-        &   'Lower core cut                  ', 'Upper PFR cut                   ', &
-        &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
-        &   UU,                                                                     &
-        & &
-        &   'Lower inner PFR wall            ', 'Inner core boundary             ', &
-        &   'Upper inner PFR wall            ', 'Inner separatrix                ', &
-        &   'Lower inner baffle              ', 'Inner main chamber wall         ', &
-        &   'Upper inner baffle              ', 'Upper outer PFR wall            ', &
-        &   'Outer core boundary             ', 'Lower outer PFR wall            ', &
-        &   'Outer separatrix                ', 'Upper outer baffle              ', &
-        &   'Outer main chamber wall         ', 'Lower outer baffle              ', &
-        & & ! GEOMETRY_ANNULUS
-        &   'Plasma'//repeat(' ',26),                                               &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
-        & &
-        &   'Periodicity boundary            ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
-        & &
-        &   'Top boundary                    ', 'Bottom boundary                 ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & & ! GEOMETRY_STELLARATORISLAND
-        &   'Core                            ', 'SOL                             ', &
-        &   'Inner divertor                  ', 'Outer divertor                  ', &
-        &   'Island                          ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU,                                     &
-        & &
-        &   'Inner target                    ', 'Inner throat                    ', &
-        &   'Outer throat                    ', 'Outer target                    ', &
-        &   'Core cut                        ', 'PFR cut                         ', &
-        &   'Island cut                      ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU,                                             &
-        & &
-        &   'Inner PFR wall                  ', 'Core boundary                   ', &
-        &   'Outer PFR wall                  ', 'Separatrix                      ', &
-        &   'Entrance to inner PFR           ', 'Island center                   ', &
-        &   'Entrance to outer PFR           ', 'Island boundary                 ', &
-        &   UU, UU, UU, UU, UU, UU,                                                 &
-        & & ! GEOMETRY_STRUCTURED_SPACES
-        &   'Plasma'//repeat(' ',26),                                               &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
-        & &
-        &   'Left boundary                   ', 'Right boundary                  ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & &
-        &   'Top boundary                    ', 'Bottom boundary                 ', &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &   'Core                            ', 'SOL                             ', &
-        &   'Inner divertor                  ', 'Outer divertor entrance         ', &
-        &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
-        &   'Third outboard divertor leg     ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU,                                             &
-        & &
-        &   'Inner target                    ', 'Inner divertor entrance         ', &
-        &   'Outer divertor entrance         ', 'First outer divertor target     ', &
-        &   'Second outer divertor target    ', 'SOL connection to outer leg 1   ', &
-        &   'Connection of outer leg 2 and 3 ', 'Third outer divertor target     ', &
-        &   'Core cut                        ', 'PFR cut                         ', &
-        &   'Connection of outer leg 1 and 2 ', 'PFR connection to outer leg 3   ', &
-        &   'CFR connection to outer leg 3   ',                                     &
-        &   UU,                                                                     &
-        & &
-        &   'Inner PFR wall                  ', 'Core boundary                   ', &
-        &   'Outer entrance PFR wall         ', 'Separatrix                      ', &
-        &   'Inner baffle                    ', 'Main chamber wall               ', &
-        &   'Outer entrance baffle           ', 'First outer leg PFR wall        ', &
-        &   'Second outer leg PFR wall       ', 'Third outer leg PFR wall        ', &
-        &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
-        &   'Third outer leg baffle          ',                                     &
-        &   UU,                                                                     &
-        & & ! GEOMETRY_LFS_SNOWFLAKE_PLUS
-        &   'Core                            ', 'SOL                             ', &
-        &   'Inner divertor                  ', 'Outer divertor entrance         ', &
-        &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
-        &   'Third outboard divertor leg     ',                                     &
-        &   UU, UU, UU, UU, UU, UU, UU,                                             &
-        & &
-        &   'Inner target                    ', 'Inner divertor entrance         ', &
-        &   'Outer divertor entrance         ', 'First outer divertor target     ', &
-        &   'Second outer divertor target    ', 'SOL connection to outer leg 1   ', &
-        &   'Connection of outer leg 2 and 3 ', 'Third outer divertor target     ', &
-        &   'Core cut                        ', 'PFR cut                         ', &
-        &   'Connection of outer leg 1 and 2 ', 'PFR connection to outer leg 3   ', &
-        &   'CFR connection to outer leg 3   ',                                     &
-        &   UU,                                                                     &
-        & &
-        &   'Inner PFR wall                  ', 'Core boundary                   ', &
-        &   'Outer entrance PFR wall         ', 'Separatrix                      ', &
-        &   'Inner baffle                    ', 'Main chamber wall               ', &
-        &   'Outer entrance baffle           ', 'First outer leg PFR wall        ', &
-        &   'Second outer leg PFR wall       ', 'Third outer leg PFR wall        ', &
-        &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
-        &   'Third outer leg baffle          ',                                     &
-        &   UU                                                                      &
-        & &
-        &  /), &
-        & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
-
 contains
+   
 
   !> Check the connectivity for errors.
   subroutine test_connectivity(nx,ny,crx,cry,cflag, &
@@ -453,13 +142,13 @@ contains
 
 
   subroutine init_region(nx,ny,nncut,nncutmax, &
-      & leftcut,rightcut,topcut,bottomcut, &
+      & leftcut,rightcut,topcut,bottomcut,ccut, &
       & leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy, &
       & region,nnreg,resignore, &
       & crx,cry,periodic_bc,cflag)
     use b2mod_types
     implicit none
-    integer, intent(in) :: nx,ny,nncut,nncutmax
+    integer, intent(in) :: nx,ny,nncut,nncutmax,ccut
     integer, intent(in) :: leftcut(nncutmax),rightcut(nncutmax), &
         & topcut(nncutmax),bottomcut(nncutmax), &
         & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny),&
@@ -730,8 +419,8 @@ contains
     !
 
     integer ix,iy,inseliy,inselix1,inselix2,iyt,geoType,iFace,offset
-    integer ix1,ix2
-    integer ixpt,ixbreak
+    integer ix1,ix2,ixn,iyn,iregn
+    integer ixbreak
     integer lefttargetindex(2), righttargetindex(2)
     logical CellToTest
     intrinsic min, max
@@ -825,29 +514,30 @@ contains
     !
     region=0
     ! volume component
+    ! first pass: set region for the real cells (internal + boundary cells)
     if(nx.eq.1) then  ! 1d-radial
         do iy=-1,ny
             do ix=-1,nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
             enddo
         enddo
         nnreg(0)=1
     else if(ny.eq.1) then  ! 1d-parallel
         do iy=-1,ny
             do ix=-1,nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
             enddo
         enddo
         nnreg(0)=1
     else if (nncut.eq.0 .and. periodic_bc.eq.1) then   ! limiter and cylindrical slab cases
         do iy = -1, inseliy
             do ix = inselix1, inselix2
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
             enddo
         enddo
         do iy = inseliy+1, ny
             do ix = -1, nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 2
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 2
             enddo
         enddo
         if (inseliy.eq.ny) then
@@ -858,7 +548,7 @@ contains
     else if (nncut.eq.0 .and. periodic_bc.eq.0) then   ! 2-D slab case
         do iy = -1, ny
             do ix = -1, nx
-              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
+              if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0) = 1
             end do
         end do
         nnreg(0) = 1
@@ -867,7 +557,7 @@ contains
             if(nncut.eq.1) then
                 do ix=-1,leftcut(1)-1
                     do iy=-1,ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (periodic_bc.ne.1.or.iy.lt.topcut(1)) &
                             &           region(ix,iy,0)=3
                         if(periodic_bc.eq.1.and. &
@@ -880,25 +570,25 @@ contains
                 enddo
                 do ix=leftcut(1),rightcut(1)-1
                     do iy=bottomcut(1),topcut(1)-1
-                      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
+                      if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
                     enddo
                     if(periodic_bc.eq.0) then
                         do iy=topcut(1),ny
-                          if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
+                          if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
                         enddo
                     elseif(periodic_bc.eq.1) then
                         do iy=topcut(1),inseliy-1
-                          if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
+                          if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=2
                         enddo
                         do iy=inseliy,ny
-                          if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)) .and. &
+                          if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE)) .and. &
                           &   ix.ge.inselix1.and.ix.le.inselix2) region(ix,iy,0)=5
                         enddo
                     endif
                 enddo
                 do ix=rightcut(1),nx
                     do iy=-1,ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (periodic_bc.eq.0.or.iy.lt.topcut(1)) &
                             &           region(ix,iy,0)=4
                         if(periodic_bc.eq.1.and. &
@@ -915,14 +605,21 @@ contains
                     nnreg(0)=4
                 endif
             elseif(nncut.eq.2) then
+                if (ccut.eq.0) then
+#ifdef BUILDING_CARRE
+                   stop 'Found ccut = 0 : central cut for DN not specified.'
+#else
+                   call xerrab ('Found ccut = 0 : central cut for DN not specified.')
+#endif
+                endif
                 do ix = -1, leftcut(1)-1
                     do iy = -1, ny
-                      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=3
+                      if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=3
                     enddo
                 enddo
                 do ix = leftcut(1), leftcut(2)-1
                     do iy = max(bottomcut(1),bottomcut(2)), ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (iy.lt.min(topcut(1),topcut(2))) then
                             region(ix,iy,0)=1
                         else
@@ -931,22 +628,16 @@ contains
                     enddo
                 enddo
                 do iy = -1, ny
-                    ix = leftcut(2)
-                    do while (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy)) .and. &
-                           &  .not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)))
-                        region(ix,iy,0)=4
-                        ix=ix+1
+                    do ix = leftcut(2), ccut-1
+                        if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=4
                     enddo
-                    ix = rightcut(2)-1
-                    do while (isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy)) .and. &
-                           &  .not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)))
-                        region(ix,iy,0)=7
-                        ix=ix-1
+                    do ix = ccut, rightcut(2)-1
+                        if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=7
                     enddo
                 enddo
                 do ix = rightcut(2), rightcut(1)-1
                     do iy = max(bottomcut(1),bottomcut(2)), ny
-                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+                        if (.not.isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
                         if (iy.lt.min(topcut(1),topcut(2))) then
                             region(ix,iy,0)=5
                         else
@@ -956,7 +647,7 @@ contains
                 enddo
                 do ix = rightcut(1), nx
                     do iy = -1, ny
-                      if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=8
+                      if (isRealCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=8
                     enddo
                 enddo
                 nnreg(0)=8
@@ -967,7 +658,7 @@ contains
     ! Ghost cells inherit region number from internal neighbour cell
     do ix=-1,nx
         do iy=-1,ny
-            if ( cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY ) cycle
+            if (.not.isBoundaryCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
             Xvertices(:) = crx(ix,iy,:)
             Yvertices(:) = cry(ix,iy,:)
             geoType = cellGeoType(Xvertices, Yvertices)
@@ -987,6 +678,69 @@ contains
         end do
     end do
 
+    ! Final pass for corner cells surrounded by ghosts
+    do iy=-1,ny
+        do ix=-1,nx
+            if (.not.isGhostCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+            if (region(ix,iy,0).ne.0) cycle
+            ! check for presence of ghost neighbors
+            iregn=0
+            ixn=leftix(ix,iy)
+            iyn=leftiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            ixn=rightix(ix,iy)
+            iyn=rightiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) then
+#ifdef BUILDING_CARRE
+                      stop 'Problem with region definition'
+#else
+                      call xerrab('Problem with region definition')
+#endif
+                    end if
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            ixn=topix(ix,iy)
+            iyn=topiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) then
+#ifdef BUILDING_CARRE
+                      stop 'Problem with region definition'
+#else
+                      call xerrab('Problem with region definition')
+#endif
+                    end if
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            ixn=bottomix(ix,iy)
+            iyn=bottomiy(ix,iy)
+            if (isInDomain(nx,ny,ixn,iyn)) then
+                if (isGhostcell(cflag(ixn,iyn,CELLFLAG_TYPE)).and.region(ixn,iyn,0).ne.0) then
+                    if (iregn.ne.0.and.iregn.ne.region(ixn,iyn,0)) then
+#ifdef BUILDING_CARRE
+                      stop 'Problem with region definition'
+#else
+                      call xerrab('Problem with region definition')
+#endif
+                    end if
+                    iregn=region(ixn,iyn,0)
+                endif
+            endif
+            if (iregn.ne.0) region(ix,iy,0)=iregn
+            if (iregn.eq.0) then
+               write (*,*) 'Problem identifying region for corner cell ', ix,iy
+            endif
+        end do
+    end do
+
     ! Set unused cells to region 0
     do iy=-1,ny
         do ix=-1,nx
@@ -1003,6 +757,15 @@ contains
         enddo
     enddo
 
+    write(*,*) 'region(:,:,0)'
+    do iy=ny,-1,-1
+        write(*,'(3276(10i1,1x))') (region(ix,iy,0),ix=-1,nx)
+    enddo
+    write(*,*) 'cflag(:,:,0)'
+    do iy=ny,-1,-1
+        write(*,'(3276(10i1,1x))') (cflag(ix,iy,CELLFLAG_TYPE),ix=-1,nx)
+    enddo
+
     ! After we know the volumetric region numbers, we fix the boundary indices for
     ! non-structure boundaries. CARRE2 sets them to -1 for all boundary faces not
     ! on a structure. Here they are set to -REGION.
@@ -1011,17 +774,6 @@ contains
     ! We first identify the inner X-point
     ! For DN cases, only the inner X-point is guaranteed to lie within the
     ! valid domain!
-    if (nncut.eq.1) then
-      ixpt = 1
-    else if (nncut.eq.2) then
-      if (topcut(1).le.topcut(2)) then
-        ixpt = 1
-      else
-        ixpt = 2
-      endif
-    else
-      ixpt = 0
-    endif
     do iy=-1,ny
         do ix=-1,nx
             if (cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY) cycle
@@ -2179,168 +1931,7 @@ contains
 
   end subroutine init_region
 
-
-  !> Identify what geometry/topology is present from cut and periodicity data.
-  !> Returns one of the GEOMETRY_* constants. Stops if unknown geometry.
-  integer function geometryId( nnreg, periodic_bc, topcut )
-    integer, intent(in) :: nnreg(0:2), periodic_bc, topcut(:)
-    logical, save :: first
-    data first/.true./
-
-    if (nnreg(0) == 1 .and. periodic_bc.le.0) then
-        geometryId = GEOMETRY_LINEAR
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LINEAR")
-            first = .false.
-        end if
-        return
-    end if
-
-    if (nnreg(0) == 1 .and. periodic_bc == 1) then
-        geometryId = GEOMETRY_CYLINDER
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CYLINDER")
-            first = .false.
-        end if
-        return
-    end if
-
-    if (nnreg(0) == 2) then
-        geometryId = GEOMETRY_LIMITER
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LIMITER")
-            first = .false.
-        end if
-        return
-    end if
-
-    if (nnreg(0) == 4) then
-        geometryId = GEOMETRY_SN
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
-            first = .false.
-        end if
-        return
-    end if
-
-    if (nnreg(0) == 5) then
-        geometryId = GEOMETRY_STELLARATORISLAND
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_STELLARATORISLAND")
-            first = .false.
-        end if
-        return
-    end if
-
-    if (nnreg(0) == 7) then
-        if (topcut(1) < topcut(2)) then
-            geometryId = GEOMETRY_LFS_SNOWFLAKE_MINUS
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_MINUS")
-                first = .false.
-            end if
-            return
-        end if
-        if (topcut(1) > topcut(2)) then
-            geometryId = GEOMETRY_LFS_SNOWFLAKE_PLUS
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_PLUS")
-                first = .false.
-            end if
-            return
-        end if
-        if (topcut(1) == topcut(2)) then
-            geometryId = GEOMETRY_UNSPECIFIED
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
-                first = .false.
-            end if
-            return
-        end if
-    end if
-
-    if (nnreg(0) == 8) then
-
-        if (topcut(1) == topcut(2)) then
-            geometryId = GEOMETRY_CDN
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CDN")
-                first = .false.
-            end if
-            return
-        end if
-        if (topcut(1) < topcut(2)) then
-            geometryId = GEOMETRY_DDN_BOTTOM
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_BOTTOM")
-                first = .false.
-            end if
-            return
-        end if
-        if (topcut(1) > topcut(2)) then
-            geometryId = GEOMETRY_DDN_TOP
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_TOP")
-                first = .false.
-            end if
-            return
-        end if
-    end if
-
-    geometryId = GEOMETRY_UNSPECIFIED
-    if (first) then
-        call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
-        first = .false.
-    end if
-
-#ifdef BUILDING_CARRE
-    stop 'b2mod_connectivity.geometryId: unknown geometry'
-#else
-    call xerrab ( 'b2mod_connectivity.geometryId: unknown geometry' )
-#endif
-
-  end function geometryId
-
-
-  !> Return number of regions of a given type for a given geometry.
-  !> @param geometryId: see definition of GEOMETRY_* constants.
-  !> @param regionType: see definition of REGIONTYPE_* constants.
-  integer function regionCount( geometryId, regionType )
-    integer, intent(in) :: geometryId, regionType
-
-    !! TODO: maybe do some input parameter checking
-    regionCount = regionCounts(regionType, geometryId)
-  end function regionCount
-
-
-  !> Return total number of regions (both cell and face regions) for
-  !> the given geometry
-  integer function regionCountTotal( geometryId )
-    integer, intent(in) :: geometryId
-
-    !! internal
-    integer :: iType
-
-    regionCountTotal = 0
-    do iType = 0, REGIONTYPE_COUNT - 1
-        regionCountTotal = regionCountTotal + regionCount( geometryId, iType )
-    end do
-  end function regionCountTotal
-
-
-  !> Return name of a specific region.
-  !> @param geometryId: see definition of GEOMETRY_* constants.
-  !> @param regionType: see definition of REGIONTYPE_* constants.
-  !> @param regionId: number of region. Should be between [1, regionCount(geometryId, regionType)].
-  character(32) function regionName( geometryId, regionType, regionId )
-    integer, intent(in) :: geometryId, regionType, regionId
-
-    regionName = regionNames(regionId, regionType, geometryId)
-  end function regionName
-
-
   !> Cell categorizations
-
 
   !> Identify cells not used by the solver
   elemental logical function isUnusedCell(celltype)

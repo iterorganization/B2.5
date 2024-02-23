@@ -27,6 +27,13 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
   LOGICAL :: decorate
   INTRINSIC NINT
   INTRINSIC TRIM
+  INTRINSIC ABS
+  INTEGER :: abs0
+  INTEGER :: abs1
+  INTEGER :: abs2
+  INTEGER :: abs3
+  INTEGER :: abs4
+  INTEGER :: abs5
 !
   CALL SUBINI('species')
   izn = NINT(zn(is))
@@ -43,6 +50,23 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
     IF (imi .EQ. 1) string = ' H'
     IF (imi .EQ. 2) string = ' D'
     IF (imi .EQ. 3) string = ' T'
+  ELSE IF (imi .NE. nuclear_mass(izn)) THEN
+    string = ' '
+    len = 1
+    IF (decorate) string(len+1:len+2) = '^{'
+    len = LNBLNK(string)
+    IF (imi .LT. 10) THEN
+      WRITE(string(len+1:len+1), '(i1)') imi
+    ELSE IF (imi .LT. 100) THEN
+      WRITE(string(len+1:len+2), '(i2)') imi
+    ELSE
+      WRITE(string(len+1:len+3), '(i3)') imi
+    END IF
+    len = LNBLNK(string)
+    IF (decorate) string(len+1:len+1) = '}'
+    len = LNBLNK(string)
+    WRITE(string(len+1:len+lnblnk(elements(izn))), '(a)') TRIM(elements(&
+&   izn))
   ELSE
     string = ' '//TRIM(elements(izn))
   END IF
@@ -50,21 +74,53 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
   IF (decorate) string(len+1:len+2) = '^{'
   len = LNBLNK(string)
   IF (izmin .GT. 0) string(len+1:len+1) = '+'
+  IF (izmin .LT. 0) string(len+1:len+1) = '-'
   len = LNBLNK(string)
-  IF (izmin .LT. 10) THEN
-    WRITE(string(len+1:len+1), '(i1)') izmin
+  IF (izmin .GE. 0.) THEN
+    abs0 = izmin
   ELSE
-    WRITE(string(len+1:len+2), '(i2)') izmin
+    abs0 = -izmin
+  END IF
+  IF (abs0 .LT. 10) THEN
+    IF (izmin .GE. 0.) THEN
+      abs1 = izmin
+    ELSE
+      abs1 = -izmin
+    END IF
+    WRITE(string(len+1:len+1), '(i1)') abs1
+  ELSE
+    IF (izmin .GE. 0.) THEN
+      abs2 = izmin
+    ELSE
+      abs2 = -izmin
+    END IF
+    WRITE(string(len+1:len+2), '(i2)') abs2
   END IF
   len = LNBLNK(string)
-  IF (izmax .GT. izmin) THEN
+  IF (izmax .NE. izmin) THEN
     string(len+1:len+1) = '_'
     IF (izmax .GT. 0) string(len+2:len+2) = '+'
+    IF (izmax .LT. 0) string(len+2:len+2) = '-'
     len = LNBLNK(string)
-    IF (izmax .LT. 10) THEN
-      WRITE(string(len+1:len+1), '(i1)') izmax
+    IF (izmax .GE. 0.) THEN
+      abs3 = izmax
     ELSE
-      WRITE(string(len+1:len+2), '(i2)') izmax
+      abs3 = -izmax
+    END IF
+    IF (abs3 .LT. 10) THEN
+      IF (izmax .GE. 0.) THEN
+        abs4 = izmax
+      ELSE
+        abs4 = -izmax
+      END IF
+      WRITE(string(len+1:len+1), '(i1)') abs4
+    ELSE
+      IF (izmax .GE. 0.) THEN
+        abs5 = izmax
+      ELSE
+        abs5 = -izmax
+      END IF
+      WRITE(string(len+1:len+2), '(i2)') abs5
     END IF
   END IF
   len = LNBLNK(string)

@@ -36,19 +36,21 @@
 !                dv.fhe:in dv.fhepsch:in dv.fhi:in dv.fhipsch:in
 !                dv.fhm:in dv.fkt:in dv.kinrgy:in dv.ne:in dv.ni:in-out
 !                dv.nn:in-out dv.vadia:in dv.vaecrb:in dv.vedia:in
-!                dv.veecrb:in dv.facdrift:in mpg.bcfcor:in psnl.na:in
-!                psnl.ne:in psnl.ni:in psnl.fna:in psnl.kinrgy:in
-!                geo.cvbb:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in
-!                st_ext.am:in st_ext.na:in st_ext.ta:in rt.rza:in
-!                srw.sch0:in srw.she0:in srw.shi0:in srw.sne0:in
-!                srw.shn0:in srw.skt0:in srw.szt0:in srw.smo0:in
-!                srw.sna0:in co.chce:in co.chci:in co.cdna:in co.hce0:in
-!                co.hci0:in co.hcn0:in co.dpa0:in co.dna0:in pl.na:in
-!                pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
-!                pl.zt:in
+!                dv.veecrb:in dv.facdrift:in psnl.na:in psnl.ne:in
+!                psnl.ni:in psnl.fna:in psnl.kinrgy:in geo.cvbb:in
+!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in st_ext.am:in
+!                st_ext.na:in st_ext.ta:in rt.rza:in srw.sch0:in
+!                srw.she0:in srw.shi0:in srw.sne0:in srw.shn0:in
+!                srw.skt0:in srw.szt0:in srw.smo0:in srw.sna0:in
+!                srw.b2stbc_sch:in srw.b2stbc_she:in srw.b2stbc_shi:in
+!                srw.b2stbc_sne:in srw.b2stbc_shn:in srw.b2stbc_skt:in
+!                srw.b2stbc_szt:in srw.b2stbc_smo:in srw.b2stbc_sna:in
+!                co.chce:in co.chci:in co.cdna:in co.hce0:in co.hci0:in
+!                co.hcn0:in co.dpa0:in co.dna0:in pl.na:in pl.ua:in
+!                pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -64,18 +66,14 @@
 !.specification
 !
 SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
-& , geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, cod, rt, rtd, rtw, &
-& st_ext, st_extd, srw, srwd, psnc, psncd, psnl, psnld, wrong_flow, &
-& main_call, nbdirs)
+& , geo, geod, mpg, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd&
+& , srw, srwd, psnc, psncd, psnl, psnld, wrong_flow, main_call, nbdirs)
   USE B2MOD_TYPES
 !      use b2mod_geo_corner
   USE B2MOD_CONSTANTS
-!      use b2mod_sources
-!     1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
-!     2          b2stbc_sne
-!      use b2mod_balance !djm Jan 2017
-!     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
-!     2          b2stbc_shi0to3,balance_netcdf
+!djm Jan 2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2stbc_sna0to1, b2stbc_smo0to3, &
+& b2stbc_she0to3, b2stbc_shi0to3, balance_netcdf
   USE B2US_FEEDBACK_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_TIME
@@ -83,13 +81,13 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbc
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV, ONLY : conpar, conpard, enepar, &
 & enepard, enipar, enipard, nbcd, lfeedback, enkpar, enkpard, potpar, &
 & potpard, mompar, mompard
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbc, &
-& ncall_b2stbc_phys, nsdmax
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbc_phys, nsdmax
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
   USE B2MOD_SUBSYS
@@ -108,14 +106,12 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(INOUT) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-  TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2COEFF_DIFFV), INTENT(INOUT) :: cod
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -144,22 +140,22 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 !
 !   ..local variables
   INTEGER :: is
-  REAL(kind=r8) :: praverage(2), testqe, testqi
+  REAL(kind=r8) :: praverage(2)
   REAL(kind=r8) :: wrk(nfc)
+  REAL(kind=r8) :: wrkd(nbdirsmax, nfc)
 !   ..procedures
   INTRINSIC NINT
   EXTERNAL XERTST, SFILL_NODIFF, B2SAXPY_NODIFF, IPGETR, IPGETI
   EXTERNAL SFILL_DV, B2SAXPY_DV
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XXGS, &
-&     B2STBC_PHYS_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF, B2STBC_PHYS_NODIFF
   EXTERNAL B2STBC_PHYS_DV
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
   REAL(r8) :: result1
   INTEGER :: arg1
   REAL(r8) :: result2
-  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nd
+  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd0
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd1
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd2
@@ -201,20 +197,26 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 !   ..extensive tests on first few calls
   IF (ncall_b2stbc .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
+    DO nd=1,nbdirs
 !    ..test sign of chce, chci
+      wrkd(nd, :) = 0.D0
+      wrkd(nd, :) = 0.D0
+      wrkd(nd, :) = 0.D0
+      wrkd(nd, :) = 0.D0
+    END DO
     wrk(:) = co%chce(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chce0', '.ge.')
     wrk(:) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chce1', '.ge.')
     wrk(:) = co%chci(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chci0', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chci0', '.ge.')
     wrk(:) = co%chci(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chci1', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chci1', '.ge.')
   END IF
 !   ..test facdrift           !xpb
   result1 = MINVAL(dv%facdrift)
@@ -308,44 +310,61 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 !
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN
     IF (lfeedback .OR. switch%b2stbc_feedback .NE. 0) CALL &
-&     COMPUTE_FEEDBACK_DV(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-&                   pl, pld, dv, dvd, rt, rtd, srw, psnc, psncd, psnl, &
-&                   psnld, main_call, switch%b2stbc_diagno, nbdirs)
+&     COMPUTE_FEEDBACK_DV(ncv, nfc, ns, ismain, switch, geo, mpg, pl, &
+&                   pld, dv, dvd, rt, rtd, psnc, psncd, psnl, psnld, &
+&                   main_call, nbdirs)
 !
     IF (ncall_b2stbc .EQ. 0) WRITE(*, *) ' b2stbc_phys called'
     CALL B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
-&                 switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, &
-&                 cod, rt, rtd, rtw, st_ext, st_extd, srw, srwd, &
-&                 wrong_flow, main_call, praverage, nbdirs)
+&                 switchd, geo, geod, mpg, pl, pld, dv, dvd, co, cod, rt&
+&                 , rtd, st_ext, st_extd, srw, srwd, wrong_flow, &
+&                 main_call, praverage, nbdirs)
     IF (wrong_flow) WRITE(*, *) &
 &                   'b2stbc: wrong_flow returned from b2stbc_phys'
   END IF
 !boundary_namelist.ge.1
 !
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain,
-!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
+!WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
+!WG_RM     &    switch, geo, pl, dv, srw, main_call)
 !
-! ..compute conditions on the cuts
-!     (no flow)
-!WG_TODO*   ..compute suitable large coefficient
-!WG_TODO      t0 = 1.0e20_R8*b2ssum(nCv,geo%cvVol,1)
-!WG_TODO*     (the dimension of t0 is m**3/s)
-!WG_TODO*   ..loop over species
-!WG_TODO      do is = 0, ns-1
-!WG_TODO*    ..set parallel momentum source
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
-!WG_TODO      enddo
-!
-! added 2001.11.26 dpc/xpb
-! to fix problems with the core energy boundary condition arising
-! from diamagnetic drifts
-  testqe = 0.0_R8
-  testqi = 0.0_R8
 ! ..return
+!      write(*,*) 'Copying sna0 to b2stbc_sna'
+  srw%b2stbc_sna(:, 0:ns-1) = srw%sna0(:, 0, 0:ns-1) + srw%sna0(:, 1, 0:&
+&   ns-1)*pl%na(:, 0:ns-1)
+!      write(*,*) 'Copying smo0 to b2stbc_smo'
+  DO is=0,ns-1
+    srw%b2stbc_smo(:, is) = srw%smo0(:, 0, is) + srw%smo0(:, 1, is)*pl%&
+&     ua(:, is) + srw%smo0(:, 2, is)*am(is)*mp*pl%na(:, is) + srw%smo0(:&
+&     , 3, is)*am(is)*mp*pl%na(:, is)*pl%ua(:, is)
+  END DO
+!      write(*,*) 'Copying she0 to b2stbc_she'
+  srw%b2stbc_she(:) = srw%she0(:, 0) + srw%she0(:, 1)*pl%te(:) + srw%&
+&   she0(:, 2)*dv%ne(:) + srw%she0(:, 3)*dv%ne(:)*pl%te(:)
+!      write(*,*) 'Copying shi0 to b2stbc_shi'
+  srw%b2stbc_shi(:) = srw%shi0(:, 0) + srw%shi0(:, 1)*pl%ti(:) + srw%&
+&   shi0(:, 2)*dv%ni(:, 0) + srw%shi0(:, 3)*dv%ni(:, 0)*pl%ti(:)
+  srw%b2stbc_shn(:) = srw%shn0(:, 0) + srw%shn0(:, 1)*pl%tn(:) + srw%&
+&   shn0(:, 2)*dv%nn(:) + srw%shn0(:, 3)*dv%nn(:)*pl%tn(:)
+!      write(*,*) 'Copying sch0 to b2stbc_sch'
+  srw%b2stbc_sch(:) = srw%sch0(:, 0) + srw%sch0(:, 1)*pl%po(:) + srw%&
+&   sch0(:, 2)*dv%ne(:) + srw%sch0(:, 3)*dv%ne(:)*pl%po(:)
+  srw%b2stbc_skt(:) = srw%skt0(:, 0) + srw%skt0(:, 1)*pl%kt(:) + srw%&
+&   skt0(:, 2)*dv%ni(:, 1) + srw%skt0(:, 3)*dv%ni(:, 1)*pl%kt(:)
+  srw%b2stbc_szt(:) = srw%szt0(:, 0) + srw%szt0(:, 1)*pl%zt(:) + srw%&
+&   szt0(:, 2)*dv%ni(:, 1) + srw%szt0(:, 3)*dv%ni(:, 1)*pl%zt(:)
+!      write(*,*) 'Copying sne0 to b2stbc_sne'
+  srw%b2stbc_sne(:) = srw%sne0(:, 0) + srw%sne0(:, 1)*dv%ne(:)
+!      write(*,*) 'Copied s..0 to b2stbc_s..'
+!
+!djm Jan2017 Keep linearised sources for balance
+  IF (balance_netcdf .NE. 0) THEN
+    b2stbc_sna0to1 = srw%sna0
+    b2stbc_smo0to3 = srw%smo0
+    b2stbc_she0to3 = srw%she0
+    b2stbc_shi0to3 = srw%shi0
+  END IF
+!
   IF (ncall_b2stbc .EQ. 0 .OR. main_call) ncall_b2stbc = ncall_b2stbc + &
 &     1
   CALL SUBEND()
@@ -367,17 +386,13 @@ END SUBROUTINE B2STBC_DV
 !.specification
 !
 SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
-& , mpg, pl, dv, co, rt, rtw, st_ext, srw, psnc, psnl, wrong_flow, &
-& main_call)
+& , mpg, pl, dv, co, rt, st_ext, srw, psnc, psnl, wrong_flow, main_call)
   USE B2MOD_TYPES
 !      use b2mod_geo_corner
   USE B2MOD_CONSTANTS
-!      use b2mod_sources
-!     1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
-!     2          b2stbc_sne
-!      use b2mod_balance !djm Jan 2017
-!     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
-!     2          b2stbc_shi0to3,balance_netcdf
+!djm Jan 2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2stbc_sna0to1, b2stbc_smo0to3, &
+& b2stbc_she0to3, b2stbc_shi0to3, balance_netcdf
   USE B2US_FEEDBACK_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_TIME
@@ -385,12 +400,12 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbc
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV, ONLY : conpar, enepar, enipar, nbcd&
 & , lfeedback, enkpar, potpar, mompar
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbc, &
-& ncall_b2stbc_phys, nsdmax
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbc_phys, nsdmax
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
   USE B2MOD_SUBSYS
@@ -408,7 +423,6 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
@@ -433,13 +447,12 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !
 !   ..local variables
   INTEGER :: is
-  REAL(kind=r8) :: praverage(2), testqe, testqi
+  REAL(kind=r8) :: praverage(2)
   REAL(kind=r8) :: wrk(nfc)
 !   ..procedures
   INTRINSIC NINT
   EXTERNAL XERTST, SFILL_NODIFF, B2SAXPY_NODIFF, IPGETR, IPGETI
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XXGS, &
-&     B2STBC_PHYS_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF, B2STBC_PHYS_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
   REAL(r8) :: result1
@@ -476,20 +489,20 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !   ..extensive tests on first few calls
   IF (ncall_b2stbc .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
 !    ..test sign of chce, chci
     wrk(:) = co%chce(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chce0', '.ge.')
     wrk(:) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chce1', '.ge.')
     wrk(:) = co%chci(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chci0', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chci0', '.ge.')
     wrk(:) = co%chci(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk, 1, 'chci1', '.ge.')
+    CALL B2XVSG(nfc, wrk, 1, 'chci1', '.ge.')
   END IF
 !   ..test facdrift           !xpb
   result1 = MINVAL(dv%facdrift)
@@ -546,43 +559,59 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN
     IF (lfeedback .OR. switch%b2stbc_feedback .NE. 0) CALL &
-&     COMPUTE_FEEDBACK(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl, &
-&                dv, rt, srw, psnc, psnl, main_call, switch%&
-&                b2stbc_diagno)
+&     COMPUTE_FEEDBACK(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv, &
+&                rt, psnc, psnl, main_call)
 !
     IF (ncall_b2stbc .EQ. 0) WRITE(*, *) ' b2stbc_phys called'
     CALL B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
-&                     geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, &
-&                     wrong_flow, main_call, praverage)
+&                     geo, mpg, pl, dv, co, rt, st_ext, srw, wrong_flow&
+&                     , main_call, praverage)
     IF (wrong_flow) WRITE(*, *) &
 &                   'b2stbc: wrong_flow returned from b2stbc_phys'
   END IF
 !boundary_namelist.ge.1
 !
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain,
-!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
+!WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
+!WG_RM     &    switch, geo, pl, dv, srw, main_call)
 !
-! ..compute conditions on the cuts
-!     (no flow)
-!WG_TODO*   ..compute suitable large coefficient
-!WG_TODO      t0 = 1.0e20_R8*b2ssum(nCv,geo%cvVol,1)
-!WG_TODO*     (the dimension of t0 is m**3/s)
-!WG_TODO*   ..loop over species
-!WG_TODO      do is = 0, ns-1
-!WG_TODO*    ..set parallel momentum source
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
-!WG_TODO      enddo
-!
-! added 2001.11.26 dpc/xpb
-! to fix problems with the core energy boundary condition arising
-! from diamagnetic drifts
-  testqe = 0.0_R8
-  testqi = 0.0_R8
 ! ..return
+!      write(*,*) 'Copying sna0 to b2stbc_sna'
+  srw%b2stbc_sna(:, 0:ns-1) = srw%sna0(:, 0, 0:ns-1) + srw%sna0(:, 1, 0:&
+&   ns-1)*pl%na(:, 0:ns-1)
+!      write(*,*) 'Copying smo0 to b2stbc_smo'
+  DO is=0,ns-1
+    srw%b2stbc_smo(:, is) = srw%smo0(:, 0, is) + srw%smo0(:, 1, is)*pl%&
+&     ua(:, is) + srw%smo0(:, 2, is)*am(is)*mp*pl%na(:, is) + srw%smo0(:&
+&     , 3, is)*am(is)*mp*pl%na(:, is)*pl%ua(:, is)
+  END DO
+!      write(*,*) 'Copying she0 to b2stbc_she'
+  srw%b2stbc_she(:) = srw%she0(:, 0) + srw%she0(:, 1)*pl%te(:) + srw%&
+&   she0(:, 2)*dv%ne(:) + srw%she0(:, 3)*dv%ne(:)*pl%te(:)
+!      write(*,*) 'Copying shi0 to b2stbc_shi'
+  srw%b2stbc_shi(:) = srw%shi0(:, 0) + srw%shi0(:, 1)*pl%ti(:) + srw%&
+&   shi0(:, 2)*dv%ni(:, 0) + srw%shi0(:, 3)*dv%ni(:, 0)*pl%ti(:)
+  srw%b2stbc_shn(:) = srw%shn0(:, 0) + srw%shn0(:, 1)*pl%tn(:) + srw%&
+&   shn0(:, 2)*dv%nn(:) + srw%shn0(:, 3)*dv%nn(:)*pl%tn(:)
+!      write(*,*) 'Copying sch0 to b2stbc_sch'
+  srw%b2stbc_sch(:) = srw%sch0(:, 0) + srw%sch0(:, 1)*pl%po(:) + srw%&
+&   sch0(:, 2)*dv%ne(:) + srw%sch0(:, 3)*dv%ne(:)*pl%po(:)
+  srw%b2stbc_skt(:) = srw%skt0(:, 0) + srw%skt0(:, 1)*pl%kt(:) + srw%&
+&   skt0(:, 2)*dv%ni(:, 1) + srw%skt0(:, 3)*dv%ni(:, 1)*pl%kt(:)
+  srw%b2stbc_szt(:) = srw%szt0(:, 0) + srw%szt0(:, 1)*pl%zt(:) + srw%&
+&   szt0(:, 2)*dv%ni(:, 1) + srw%szt0(:, 3)*dv%ni(:, 1)*pl%zt(:)
+!      write(*,*) 'Copying sne0 to b2stbc_sne'
+  srw%b2stbc_sne(:) = srw%sne0(:, 0) + srw%sne0(:, 1)*dv%ne(:)
+!      write(*,*) 'Copied s..0 to b2stbc_s..'
+!
+!djm Jan2017 Keep linearised sources for balance
+  IF (balance_netcdf .NE. 0) THEN
+    b2stbc_sna0to1 = srw%sna0
+    b2stbc_smo0to3 = srw%smo0
+    b2stbc_she0to3 = srw%she0
+    b2stbc_shi0to3 = srw%shi0
+  END IF
+!
   IF (ncall_b2stbc .EQ. 0 .OR. main_call) ncall_b2stbc = ncall_b2stbc + &
 &     1
   CALL SUBEND()
@@ -595,7 +624,7 @@ END SUBROUTINE B2STBC_NODIFF
 FUNCTION BCINT_NODIFF(fun, nx, ny, il, ib) RESULT (bcint)
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
