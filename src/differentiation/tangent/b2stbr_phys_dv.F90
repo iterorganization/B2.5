@@ -17,14 +17,9 @@
 !
 SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & dtim, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, tchem, tchee&
-& , tphys, tphye, thevp, thvpe, trese, tresn, trfln, trfle, &
-& boundary_namelist, neutral_sources_rescale, core_sources_rescale, &
-& sput_src, sput_chem_alpha, sput_phys_alpha, alpha, sput_chem_model, &
-& therm_evap, sput_res, reflection_on, sputter_energy_on, main_call, &
-& output, sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta&
-& , sput_mixed_alpha, sput_mixed_beta, new_sputter_namelist, shi0_ff, &
-& f_redep, temperature_at_guard_cell, potential_at_guard_cell, &
-& recycled_neutrals_contr, fluid_frac_hyb, kin_frac_hyb, fnn_inc)
+& , tphys, tphye, thevp, thvpe, trese, tresn, trfln, trfle, sput_src, &
+& sput_chem_model, reflection_on, sputter_energy_on, main_call, &
+& new_sputter_namelist, shi0_ff, f_redep)
   USE B2MOD_TYPES
 !WG_TODO      use b2mod_sputter
   USE B2MOD_TALLIES_DIFFV
@@ -40,9 +35,10 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_RECYCLE_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbr_phys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbr_phys, my_out_folder
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
   USE B2MOD_SUBSYS
@@ -63,17 +59,9 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
-  INTEGER :: sput_src, sput_chem_model, boundary_namelist, reflection_on&
-& , sputter_energy_on, output, sput_frac_flag, potential_at_guard_cell, &
-& temperature_at_guard_cell
+  INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   LOGICAL :: main_call, new_sputter_namelist
   REAL(kind=r8) :: dtim, f_redep(ncv, 0:ns-1)
-  REAL(kind=r8) :: neutral_sources_rescale, core_sources_rescale, &
-& sput_chem_alpha, sput_phys_alpha, alpha, therm_evap, sput_res, &
-& sput_chem_cutoff_alpha, sput_chem_cutoff_beta, sput_mixed_alpha, &
-& sput_mixed_beta, recycled_neutrals_contr
-  REAL(kind=r8), INTENT(INOUT) :: fluid_frac_hyb(nfc), kin_frac_hyb(mpg%&
-& nfc), fnn_inc(mpg%nfc, 0:ns-1)
 !   ..output arguments (unspecified on entry)
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), tchem(0:ns-1), tchee(0:ns-1)&
@@ -110,8 +98,10 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !   ..procedures
   INTRINSIC ABS
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, smin, smax
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, smin, smax
   REAL(kind=r8) :: smax, smin
+  EXTERNAL XERRAB
+  INTRINSIC NINT
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -155,12 +145,18 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !   ..test nCv, nFc, ns
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
+!   ..automatic spatial hybrid not allowed for multispecies
+  IF (switch%use_auto_spatial_hyb .NE. 0 .AND. ns .GT. 1) CALL XERRAB(&
+&                         'automatic spatial hybrid option not allowed '&
+&                                                               //&
+&                                                     'for multispecies'&
+&                                                              )
 !   ..extensive tests on first few calls
   IF (ncall_b2stbr_phys .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -180,13 +176,29 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &         'faulty argument range fcQgam(,0)')
 !    ..test sign of na, ni, ne, te, ti
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(arg1, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
+  END IF
+!    ..give a warning when mrecyc and/or erecyc are used for AFN neutrals
+  IF (ncall_b2stbr_phys .EQ. 0 .AND. switch%recycle_afn .NE. 0) THEN
+    DO istra=1,nstrat
+      IF (b2species_start(istra) .GE. 0) THEN
+        DO is=b2species_start(istra),b2species_end(istra)
+          IF (NINT(zn(is)) .EQ. 1) THEN
+            IF (erecyc(is, istra) .GT. 0.0_R8 .OR. mrecyc(is, istra) &
+&               .GT. 0.0_R8) WRITE(*, *) &
+&                            'recycle_afn incompatible with '//&
+&                          'user-defined momentum and energy recycling '&
+&                            //'coefficients > 0 for istra= ', istra
+          END IF
+        END DO
+      END IF
+    END DO
   END IF
 !
 ! pre-computations for KUL fluid neutrals
@@ -206,7 +218,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     fna_mol = 0.0_R8
 !
     CALL PRECOMPUTE_KUL_QUANT(ncv, nfc, nvx, switch, geo, mpg, pl, dv, &
-&                       co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
+&                       co, rt, dnn)
   END IF
 !
   DO istra=1,nstrat
@@ -224,7 +236,8 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
         ifc = mpg%cvfc(mpg%cvfcp(irc1, 1))
 !
 ! the potential
-        phi_app = GETPHIAPPLIED(boundary_namelist, mpg, irc1)
+        phi_app = GETPHIAPPLIED(switch%b2stbc_boundary_namelist, mpg, &
+&         irc1)
 !
 ! xpb: no sputtering in core!
         lcore = mpg%cvonclosedsurface(irc1)
@@ -354,6 +367,7 @@ CONTAINS
 &   nnrec, nnwwnrec, nnsum, nnwwnsum, snan, smon, farea, q_conv, sina, &
 &   cosa
     INTRINSIC MAX
+    INTRINSIC NINT
     INTRINSIC ABS
     INTRINSIC SQRT
     EXTERNAL XERRAB
@@ -385,7 +399,7 @@ CONTAINS
       RETURN
     ELSE
 !
-      IF (temperature_at_guard_cell .EQ. 1) THEN
+      IF (switch%b2stbr_temperature_at_guard_cell .EQ. 1) THEN
         tef = pl%te(icv)
         tif = pl%ti(icv)
         tnf = pl%tn(icv)
@@ -397,7 +411,7 @@ CONTAINS
         tnf = (pl%tn(mpg%fccv(ifc, 1))*geo%fchc(ifc, 2)+pl%tn(mpg%fccv(&
 &         ifc, 2))*geo%fchc(ifc, 1))/(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
       END IF
-      IF (potential_at_guard_cell .EQ. 1) THEN
+      IF (switch%b2stbr_potential_at_guard_cell .EQ. 1) THEN
 !        write(6,*) 'Potential taken at guard cell (phys)'
         pof = pl%po(icv)
       ELSE
@@ -471,7 +485,8 @@ CONTAINS
         ELSE
           abs0 = -(am(is0)-am(is))
         END IF
-        IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs0) is0 = is
+        IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs0) is0 = &
+&           is
 !dpc
         IF (is_neutral(is)) is1 = is
         IF (am(is1) - am(is) .GE. 0.) THEN
@@ -479,9 +494,12 @@ CONTAINS
         ELSE
           abs1 = -(am(is1)-am(is))
         END IF
-        IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs1) WRITE(*, *) &
+        IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs1) WRITE(&
+&                                                                 *, *) &
 &                                        'b2stbr problem: is, is0, is1 '&
-&                                                     , is, is0, is1
+&                                                                 , is, &
+&                                                                 is0, &
+&                                                                 is1
         IF (is0 .NE. is1) THEN
           IF (ncall_b2stbr_phys .EQ. 0) WRITE(*, *) &
 &                                       'b2stbr: setting is0 to is1 ', &
@@ -508,7 +526,7 @@ CONTAINS
 !       (species (is) recycles into is0)
 !       (is0 corresponds to CX species is2)
 ! dpc: Eirene coupling 1999.06.28
-        t0 = max5*neutral_sources_rescale
+        t0 = max5*switch%neutral_sources_rescale*strasclfl(istra)
         IF (0.0_R8 .LT. tif/ev + (pof-phi_app)*zaf(is)) THEN
           einc = tif/ev + (pof-phi_app)*zaf(is)
         ELSE
@@ -520,11 +538,11 @@ CONTAINS
           arg11 = 8.0_R8*pl%ti(icv)/(pi*am(is)*mp)
           vbar = SQRT(arg11)
 ! dpc: Eirene coupling 1999.06.28
-          pflx = pflx + pl%na(icv, is)*vbar*alpha*&
-&           neutral_sources_rescale
+          pflx = pflx + pl%na(icv, is)*vbar*switch%b2stbr_alpha*switch%&
+&           neutral_sources_rescale*strasclfl(istra)
         END IF
 !! end KU Leuven advanced fluid neutral models
-        IF (switch%recycle_afn .EQ. 0 .OR. zn(is0) .NE. 1) THEN
+        IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(is0)) .NE. 1) THEN
 !! default neutral recycling/reflection model (always for non-hydrogenic species)
           srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + b2recyc(is, &
 &           istra)*t0
@@ -540,7 +558,7 @@ CONTAINS
             ELSE
               max6 = x1
             END IF
-            srw%shi0(icv, 1) = srw%shi0(icv, 1) + &
+            srw%shi0(icv, 1) = srw%shi0(icv, 1) + switch%&
 &             recycled_neutrals_contr*max6*b2recyc(is, istra)*t0/pl%ti(&
 &             icv)
           ELSE
@@ -550,7 +568,7 @@ CONTAINS
             ELSE
               max7 = x2
             END IF
-            srw%shi0(icv, 0) = srw%shi0(icv, 0) + &
+            srw%shi0(icv, 0) = srw%shi0(icv, 0) + switch%&
 &             recycled_neutrals_contr*max7*b2recyc(is, istra)*t0
           END IF
 ! xpb: recycled neutrals come back with at least thermal energy
@@ -561,7 +579,7 @@ CONTAINS
             ELSE
               max8 = x3
             END IF
-            shi0_ff(icv, is2) = shi0_ff(icv, is2) + &
+            shi0_ff(icv, is2) = shi0_ff(icv, is2) + switch%&
 &             recycled_neutrals_contr*max8*b2recyc(is, istra)*t0
           END IF
         ELSE
@@ -582,13 +600,6 @@ CONTAINS
           cosa = geo%fcqalf(ifc, 0)
           sina = geo%fcqalf(ifc, 1)
 !
-!
-!! end of preliminary calculations
-          IF (erecyc(is, istra) .GT. 0.0_R8 .OR. mrecyc(is, istra) .GT. &
-&             0.0_R8) WRITE(*, *) &
-&                     'recycle_afn incompatible with user-defined '//&
-&                     'momentum and energy recycling coefficients > 0'
-!
           IF (is .NE. is0) THEN
 !! ion species, recycling
 !
@@ -600,10 +611,11 @@ CONTAINS
               CALL CALCRECYCLEDFLUXES(icv, mpg%nci, ifc, isign, is0, is2&
 &                               , is, istra, iwall, phi_app, farea, &
 &                               b2recyc(is, istra), recycm(is, istra), &
-&                               fluid_frac_hyb(ifc), pl, tif, tef, pof, &
-&                               pl%na(icv, is), dv%ne(icv), geo, mpg, t0&
-&                               , cosa, sina, switch%use_uy_uz_0, fnnrec&
-&                               , fmomrec, nnrec, nnwwnrec, fenerec)
+&                               dv%fluid_frac_hyb(ifc), pl, tif, tef, &
+&                               pof, pl%na(icv, is), dv%ne(icv), geo, &
+&                               mpg, t0, cosa, sina, switch%use_uy_uz_0&
+&                               , fnnrec, fmomrec, nnrec, nnwwnrec, &
+&                               fenerec)
             ELSE
               fnnrec = 0.0_R8
               fmomrec = 0.0_R8
@@ -612,9 +624,11 @@ CONTAINS
               fenerec = 0.0_R8
             END IF
 !
-            snan = fnnrec*neutral_sources_rescale
+            snan = fnnrec*switch%neutral_sources_rescale*strasclfl(istra&
+&             )
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + snan
-            smon = fmomrec*geo%cvhz(icv)*neutral_sources_rescale
+            smon = fmomrec*geo%cvhz(icv)*switch%neutral_sources_rescale*&
+&             strasclfl(istra)
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon
 !
             nnsum = nnsum + nnrec
@@ -622,12 +636,12 @@ CONTAINS
 !mb   net neutral energy source from recycling
 !
             IF (switch%tn_style .EQ. 0) THEN
-              srw%shi0(icv, 0) = srw%shi0(icv, 0) + fenerec*&
-&               neutral_sources_rescale
+              srw%shi0(icv, 0) = srw%shi0(icv, 0) + fenerec*switch%&
+&               neutral_sources_rescale*strasclfl(istra)
             ELSE IF (switch%tn_style .NE. 1) THEN
 !! neutral energy boundary conditions are not used
-              srw%shn0(icv, 0) = srw%shn0(icv, 0) + fenerec*&
-&               neutral_sources_rescale
+              srw%shn0(icv, 0) = srw%shn0(icv, 0) + fenerec*switch%&
+&               neutral_sources_rescale*strasclfl(istra)
             END IF
 !
             IF (switch%afn_out .NE. 0) THEN
@@ -650,8 +664,8 @@ CONTAINS
 !
 !
             q_conv = isign*(tnf*pl%ua(icv, is0)*geo%fcpbs(ifc)*pl%na(icv&
-&             , is0)+(dv%fhm(ifc, 0, is0)+dv%fhm(ifc, 1, is0)))*&
-&             neutral_sources_rescale
+&             , is0)+(dv%fhm(ifc, 0, is0)+dv%fhm(ifc, 1, is0)))*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
 !
             IF (switch%tn_style .EQ. 0) THEN
               srw%shi0(icv, 0) = srw%shi0(icv, 0) + q_conv
@@ -695,11 +709,11 @@ CONTAINS
 !
             END IF
 !
-            srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) - fnni*&
-&             neutral_sources_rescale
+            srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) - fnni*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
 !
 !! save the incident fluid neutral flux
-            fnn_inc(ifc, is0) = fnni*isign
+            dv%fnn_inc(ifc, is0) = fnni*isign
 !
 !mb   net momentum sources from neutral particle reflection
             IF (.NOT.lcore) THEN
@@ -708,11 +722,12 @@ CONTAINS
 &                                           , isign, is0, is2, isi, &
 &                                           istra, iwall, phi_app, farea&
 &                                           , b2recyc(is, istra), recycm&
-&                                           (is, istra), fluid_frac_hyb(&
-&                                           ifc), pl, tif, tnf, tef, pof&
-&                                           , dv%ne(icv), geo, mpg, rt, &
-&                                           dnndy, dnndz, cosa, sina, &
-&                                           switch%use_uy_uz_0, switch%&
+&                                           (is, istra), dv%&
+&                                           fluid_frac_hyb(ifc), pl, tif&
+&                                           , tnf, tef, pof, dv%ne(icv)&
+&                                           , geo, mpg, rt, dnndy, dnndz&
+&                                           , cosa, sina, switch%&
+&                                           use_uy_uz_0, switch%&
 &                                           use_uy_uz_1, switch%&
 &                                           diffusion_bc_safeguard, &
 &                                           fnnrefl, fmomrefl, nnrefl, &
@@ -722,7 +737,7 @@ CONTAINS
                 CALL CALCREFLECTEDFLUXESMAXWELLIAN(icv, mpg%nci, ifc, &
 &                                            isign, is0, istra, iwall, &
 &                                            farea, b2recyc(is, istra), &
-&                                            recycm(is, istra), &
+&                                            recycm(is, istra), dv%&
 &                                            fluid_frac_hyb(ifc), pl, &
 &                                            tnf, geo, mpg, cosa, sina, &
 &                                            fnnrefl, fmomrefl, nnrefl, &
@@ -733,10 +748,10 @@ CONTAINS
 &                                    icv, icn, mpg%nci, ifc, isign, is0&
 &                                    , is2, isi, istra, iwall, phi_app, &
 &                                    farea, b2recyc(is, istra), recycm(&
-&                                    is, istra), fluid_frac_hyb(ifc), pl&
-&                                    , tif, tnf, tef, pof, dv%ne(icv), &
-&                                    geo, mpg, rt, dnndy, dnndz, cosa, &
-&                                    sina, switch%use_uy_uz_0, switch%&
+&                                    is, istra), dv%fluid_frac_hyb(ifc)&
+&                                    , pl, tif, tnf, tef, pof, dv%ne(icv&
+&                                    ), geo, mpg, rt, dnndy, dnndz, cosa&
+&                                    , sina, switch%use_uy_uz_0, switch%&
 &                                    use_uy_uz_1, switch%l_macro_afn, &
 &                                    fnnrefl, fmomrefl, nnrefl, &
 &                                    nnwwnrefl, fenerefl, fene_el)
@@ -745,9 +760,9 @@ CONTAINS
 &                                       isign, is0, is2, isi, istra, &
 &                                       iwall, phi_app, farea, b2recyc(&
 &                                       is, istra), recycm(is, istra), &
-&                                       fluid_frac_hyb(ifc), pl, tif, &
-&                                       tnf, tef, pof, dv%ne(icv), geo, &
-&                                       mpg, rt, dnndy, dnndz, cosa, &
+&                                       dv%fluid_frac_hyb(ifc), pl, tif&
+&                                       , tnf, tef, pof, dv%ne(icv), geo&
+&                                       , mpg, rt, dnndy, dnndz, cosa, &
 &                                       sina, switch%use_uy_uz_0, switch&
 &                                       %use_uy_uz_1, fnnrefl, fmomrefl&
 &                                       , nnrefl, nnwwnrefl, fenerefl, &
@@ -764,7 +779,7 @@ CONTAINS
 !
 !nh  adding the reflected particle source (with the molecular part subtracted)
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + fnnrefl*&
-&             neutral_sources_rescale
+&             switch%neutral_sources_rescale*strasclfl(istra)
             snan = fnnrefl
 !
 !
@@ -776,8 +791,8 @@ CONTAINS
               fnni_out(icv) = fnni
             END IF
 !
-            smon = (fmomni+fmomrefl)*geo%cvhz(icv)*&
-&             neutral_sources_rescale
+            smon = (fmomni+fmomrefl)*geo%cvhz(icv)*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon
 !
             nnsum = nnsum + nni + nnrefl
@@ -785,20 +800,21 @@ CONTAINS
 !
             IF (switch%tn_style .EQ. 0) THEN
               srw%shi0(icv, 0) = srw%shi0(icv, 0) + (feneni+fenerefl)*&
-&               neutral_sources_rescale
+&               switch%neutral_sources_rescale*strasclfl(istra)
             ELSE IF (switch%tn_style .NE. 1) THEN
 !! neutral energy boundary conditions are not used
               srw%shn0(icv, 0) = srw%shn0(icv, 0) + (feneni+fenerefl)*&
-&               neutral_sources_rescale
+&               switch%neutral_sources_rescale*strasclfl(istra)
             END IF
 !
 ! remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary
 ! temporary switch to evaluate the effect.
             IF (switch%remove_fc_el .EQ. 1) srw%she0(icv, 0) = srw%she0(&
-&               icv, 0) + fene_el*neutral_sources_rescale
+&               icv, 0) + fene_el*switch%neutral_sources_rescale*&
+&               strasclfl(istra)
           END IF
 !
-          IF (zamax(is) .EQ. zn(is)) THEN
+          IF (NINT(zamax(is)) .EQ. NINT(zn(is))) THEN
 !! see eq. 62-63 of the main reference.
             IF (nnsum .EQ. 0.0_R8) nnsum = 1.0_R8
             IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
@@ -808,8 +824,8 @@ CONTAINS
             END IF
             smon = -(isign*cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/nnsum*&
 &             farea*abs2*geo%cvhz(icv))
-            srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*&
-&             neutral_sources_rescale
+            srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
             nnsum = 0.0_R8
             nnwwnsum = 0.0_R8
           END IF
@@ -818,7 +834,8 @@ CONTAINS
 !    ..recycling into next ionized species
         IF (is .LT. ns - 1) THEN
           IF (LNEXT(is, is + 1)) srw%sna0(icv, 0, is+1) = srw%sna0(icv, &
-&             0, is+1) + rcion(is, istra)*t0/neutral_sources_rescale
+&             0, is+1) + rcion(is, istra)*t0/(switch%&
+&             neutral_sources_rescale*strasclfl(istra))
         END IF
       END DO
 ! IYS 18.09.2018
@@ -834,18 +851,18 @@ CONTAINS
           ELSE
             abs3 = -(am(is0)-am(is))
           END IF
-          IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs3) is0 = is
+          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) is0&
+&            = is
 !xpb
-          IF (zamax(is) .EQ. zn(is)) is1 = is
+          IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
           IF (am(is1) - am(is) .GE. 0.) THEN
             abs4 = am(is1) - am(is)
           ELSE
             abs4 = -(am(is1)-am(is))
           END IF
-          IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs4) WRITE(*, &
-&                                                       '(a,3i3)') &
-&                                        'b2stbr problem: is, is0, is1 '&
-&                                                       , is, is0, is1
+          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs4) &
+&           WRITE(*, '(a,3i3)') 'b2stbr problem: is, is0, is1 ', is, is0&
+&           , is1
           IF (is0 .NE. is1) THEN
             IF (ncall_b2stbr_phys .EQ. 0) WRITE(*, '(a,2i3)') &
 &                                         'b2stbr: setting is0 to is1 '&
@@ -861,7 +878,7 @@ CONTAINS
 !xpb
 !          (species (is) recycles into is0)
 ! xpb: 2002.02.01
-          t0 = max9*core_sources_rescale
+          t0 = max9*switch%b2stbr_core_sources_rescale
           IF (is .NE. is0) THEN
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + b2recyc(is, &
 &             istra)*t0
@@ -874,7 +891,7 @@ CONTAINS
 !srv
             srw%shi0(icv, 0) = srw%shi0(icv, 0) + erecyc(is, istra)*(&
 &             1.5_R8+switch%boris)*(zaf(is)*tef+tif)*b2recyc(is, istra)*&
-&             t0*recycled_neutrals_contr
+&             t0*switch%recycled_neutrals_contr
           END IF
         END DO
       END IF
@@ -888,22 +905,24 @@ END SUBROUTINE B2STBR_PHYS_NODIFF
 
 !  Differentiation of b2stbr_phys in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: int4l int1l int2l int3l int0l
-!                *(srw.she0) *(srw.shi0) *(srw.shn0) *(srw.smo0)
-!                *(srw.sna0)
+!                *(dv.kin_frac_hyb) *(dv.fluid_frac_hyb) *(srw.she0)
+!                *(srw.shi0) *(srw.shn0) *(srw.smo0) *(srw.sna0)
 !   with respect to varying inputs: potpar b2recyc int4l int1l
-!                int2l int3l int0l *(dv.fna) *(dv.fhm) *(dv.ne)
-!                *(rt.rlcx) *(rt.rlsa) *(rt.rza) *(srw.she0) *(srw.shi0)
-!                *(srw.shn0) *(srw.smo0) *(srw.sna0) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.te) *(pl.ti) *(pl.tn)
+!                int2l int3l int0l *(dv.fna) *(dv.fhm) *(dv.kin_frac_hyb)
+!                *(dv.fluid_frac_hyb) *(dv.ne) *(rt.rlcx) *(rt.rlsa)
+!                *(rt.rza) *(srw.she0) *(srw.shi0) *(srw.shn0)
+!                *(srw.smo0) *(srw.sna0) *(pl.na) *(pl.ua) *(pl.po)
+!                *(pl.te) *(pl.ti) *(pl.tn)
 !   Plus diff mem management of: dv.fna:in dv.fne:in dv.fhe:in
-!                dv.fhi:in dv.fhm:in dv.kinrgy:in dv.ne:in dv.ni:in
-!                mpg.rcfcor:in geo.cvbb:in geo.cvhz:in geo.cvqgam:in
-!                geo.cvvol:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.vxvol:in rt.rlcx:in rt.rlsa:in
-!                rt.rza:in rt.rpt:in srw.she0:in srw.shi0:in srw.shn0:in
-!                srw.smo0:in srw.sna0:in pl.na:in pl.ua:in pl.po:in
-!                pl.te:in pl.ti:in pl.tn:in
+!                dv.fhi:in dv.fnn_inc:in dv.fhm:in dv.kin_frac_hyb:in
+!                dv.fluid_frac_hyb:in dv.kinrgy:in dv.ne:in dv.ni:in
+!                geo.cvbb:in geo.cvhz:in geo.cvqgam:in geo.cvvol:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.vxvol:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rpt:in
+!                srw.she0:in srw.shi0:in srw.shn0:in srw.smo0:in
+!                srw.sna0:in pl.na:in pl.ua:in pl.po:in pl.te:in
+!                pl.ti:in pl.tn:in
 !
 !
 !
@@ -919,17 +938,11 @@ END SUBROUTINE B2STBR_PHYS_NODIFF
 !.specification
 !
 SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
-& switch, geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, rt, rtd, rtw, &
+& switch, switchd, geo, geod, mpg, pl, pld, dv, dvd, co, rt, rtd, rtw, &
 & st_ext, srw, srwd, tchem, tchee, tphys, tphye, thevp, thvpe, trese, &
-& tresn, trfln, trfle, boundary_namelist, neutral_sources_rescale, &
-& core_sources_rescale, sput_src, sput_chem_alpha, sput_phys_alpha, &
-& alpha, sput_chem_model, therm_evap, sput_res, reflection_on, &
-& sputter_energy_on, main_call, output, sput_frac_flag, &
-& sput_chem_cutoff_alpha, sput_chem_cutoff_beta, sput_mixed_alpha, &
-& sput_mixed_beta, new_sputter_namelist, shi0_ff, f_redep, &
-& temperature_at_guard_cell, potential_at_guard_cell, &
-& recycled_neutrals_contr, fluid_frac_hyb, fluid_frac_hybd, kin_frac_hyb&
-& , kin_frac_hybd, fnn_inc, nbdirs)
+& tresn, trfln, trfle, sput_src, sput_chem_model, reflection_on, &
+& sputter_energy_on, main_call, new_sputter_namelist, shi0_ff, f_redep, &
+& nbdirs)
   USE B2MOD_TYPES
 !WG_TODO      use b2mod_sputter
   USE B2MOD_TALLIES_DIFFV
@@ -945,9 +958,10 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_RECYCLE_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbr_phys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbr_phys, my_out_folder
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
   USE B2MOD_SUBSYS
@@ -960,10 +974,10 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 !
 !   ..input arguments (unchanged on exit)
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
@@ -974,19 +988,9 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
   TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
-  INTEGER :: sput_src, sput_chem_model, boundary_namelist, reflection_on&
-& , sputter_energy_on, output, sput_frac_flag, potential_at_guard_cell, &
-& temperature_at_guard_cell
+  INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   LOGICAL :: main_call, new_sputter_namelist
   REAL(kind=r8) :: dtim, f_redep(ncv, 0:ns-1)
-  REAL(kind=r8) :: neutral_sources_rescale, core_sources_rescale, &
-& sput_chem_alpha, sput_phys_alpha, alpha, therm_evap, sput_res, &
-& sput_chem_cutoff_alpha, sput_chem_cutoff_beta, sput_mixed_alpha, &
-& sput_mixed_beta, recycled_neutrals_contr
-  REAL(kind=r8), INTENT(INOUT) :: fluid_frac_hyb(nfc), kin_frac_hyb(mpg%&
-& nfc), fnn_inc(mpg%nfc, 0:ns-1)
-  REAL(kind=r8), INTENT(INOUT) :: fluid_frac_hybd(nbdirsmax, nfc), &
-& kin_frac_hybd(nbdirsmax, mpg%nfc)
 !   ..output arguments (unspecified on entry)
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
@@ -1027,8 +1031,10 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 !   ..procedures
   INTRINSIC ABS
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, smin, smax
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, smin, smax
   REAL(kind=r8) :: smax, smin
+  EXTERNAL XERRAB
+  INTRINSIC NINT
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -1075,12 +1081,18 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 !   ..test nCv, nFc, ns
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
+!   ..automatic spatial hybrid not allowed for multispecies
+  IF (switch%use_auto_spatial_hyb .NE. 0 .AND. ns .GT. 1) CALL XERRAB(&
+&                         'automatic spatial hybrid option not allowed '&
+&                                                               //&
+&                                                     'for multispecies'&
+&                                                              )
 !   ..extensive tests on first few calls
   IF (ncall_b2stbr_phys .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -1100,13 +1112,29 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 &         'faulty argument range fcQgam(,0)')
 !    ..test sign of na, ni, ne, te, ti
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(arg1, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
+  END IF
+!    ..give a warning when mrecyc and/or erecyc are used for AFN neutrals
+  IF (ncall_b2stbr_phys .EQ. 0 .AND. switch%recycle_afn .NE. 0) THEN
+    DO istra=1,nstrat
+      IF (b2species_start(istra) .GE. 0) THEN
+        DO is=b2species_start(istra),b2species_end(istra)
+          IF (NINT(zn(is)) .EQ. 1) THEN
+            IF (erecyc(is, istra) .GT. 0.0_R8 .OR. mrecyc(is, istra) &
+&               .GT. 0.0_R8) WRITE(*, *) &
+&                            'recycle_afn incompatible with '//&
+&                          'user-defined momentum and energy recycling '&
+&                            //'coefficients > 0 for istra= ', istra
+          END IF
+        END DO
+      END IF
+    END DO
   END IF
 !
 ! pre-computations for KUL fluid neutrals
@@ -1126,13 +1154,9 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
     fna_mol = 0.0_R8
 !
     CALL PRECOMPUTE_KUL_QUANT_DV(ncv, nfc, nvx, switch, geo, geod, mpg, &
-&                          mpgd, pl, pld, dv, dvd, co, rt, rtd, dnn, &
-&                          dnnd, fluid_frac_hyb, fluid_frac_hybd, &
-&                          kin_frac_hyb, kin_frac_hybd, nbdirs)
+&                          pl, pld, dv, dvd, co, rt, rtd, dnn, dnnd, &
+&                          nbdirs)
   ELSE
-    DO nd=1,nbdirsmax
-      fluid_frac_hybd(nd, :) = 0.D0
-    END DO
     DO nd=1,nbdirsmax
       dnnd(nd, :, :) = 0.D0
     END DO
@@ -1153,8 +1177,8 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
         ifc = mpg%cvfc(mpg%cvfcp(irc1, 1))
 !
 ! the potential
-        CALL GETPHIAPPLIED_DV(boundary_namelist, mpg, irc1, phi_app, &
-&                       phi_appd, nbdirs)
+        CALL GETPHIAPPLIED_DV(switch%b2stbc_boundary_namelist, mpg, irc1&
+&                       , phi_app, phi_appd, nbdirs)
 !
 ! xpb: no sputtering in core!
         lcore = mpg%cvonclosedsurface(irc1)
@@ -1277,17 +1301,17 @@ CONTAINS
 !                *(srw.she0) *(srw.shi0) *(srw.shn0) *(srw.smo0)
 !                *(srw.sna0)
 !   with respect to varying inputs: b2recyc int4l int1l int2l int3l
-!                int0l *(dv.fna) *(dv.fhm) *(dv.ne) fluid_frac_hyb
-!                *(rt.rlcx) *(rt.rlsa) *(rt.rza) *(srw.she0) *(srw.shi0)
-!                *(srw.shn0) *(srw.smo0) *(srw.sna0) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) phi_app dnndy
-!                dnndz
-!   Plus diff mem management of: dv.fna:in dv.fhm:in dv.ne:in geo.cvbb:in
-!                geo.cvhz:in geo.fcs:in geo.fchc:in geo.fcqalf:in
-!                geo.fcpbs:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rpt:in
-!                srw.she0:in srw.shi0:in srw.shn0:in srw.smo0:in
-!                srw.sna0:in pl.na:in pl.ua:in pl.po:in pl.te:in
-!                pl.ti:in pl.tn:in
+!                int0l *(dv.fna) *(dv.fhm) *(dv.fluid_frac_hyb)
+!                *(dv.ne) *(rt.rlcx) *(rt.rlsa) *(rt.rza) *(srw.she0)
+!                *(srw.shi0) *(srw.shn0) *(srw.smo0) *(srw.sna0)
+!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn)
+!                phi_app dnndy dnndz
+!   Plus diff mem management of: dv.fna:in dv.fnn_inc:in dv.fhm:in
+!                dv.fluid_frac_hyb:in dv.ne:in geo.cvbb:in geo.cvhz:in
+!                geo.fcs:in geo.fchc:in geo.fcqalf:in geo.fcpbs:in
+!                rt.rlcx:in rt.rlsa:in rt.rza:in rt.rpt:in srw.she0:in
+!                srw.shi0:in srw.shn0:in srw.smo0:in srw.sna0:in
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
 !
 !-----------------------------------------------------------------------
 !
@@ -1318,6 +1342,7 @@ CONTAINS
 &   fenerefld, fene_eld, nnrefld, nnwwnrefld, nnrecd, nnwwnrecd, nnsumd&
 &   , nnwwnsumd, snand, smond, q_convd
     INTRINSIC MAX
+    INTRINSIC NINT
     INTRINSIC ABS
     INTRINSIC SQRT
     EXTERNAL XERRAB
@@ -1361,7 +1386,7 @@ CONTAINS
       RETURN
     ELSE
 !
-      IF (temperature_at_guard_cell .EQ. 1) THEN
+      IF (switch%b2stbr_temperature_at_guard_cell .EQ. 1) THEN
         DO nd=1,nbdirs
           tefd(nd) = pld%te(nd, icv)
           tifd(nd) = pld%ti(nd, icv)
@@ -1393,7 +1418,7 @@ CONTAINS
         tnf = (geo%fchc(ifc, 2)*pl%tn(mpg%fccv(ifc, 1))+geo%fchc(ifc, 1)&
 &         *pl%tn(mpg%fccv(ifc, 2)))/temp
       END IF
-      IF (potential_at_guard_cell .EQ. 1) THEN
+      IF (switch%b2stbr_potential_at_guard_cell .EQ. 1) THEN
 !        write(6,*) 'Potential taken at guard cell (phys)'
         DO nd=1,nbdirs
           pofd(nd) = pld%po(nd, icv)
@@ -1484,7 +1509,8 @@ CONTAINS
         ELSE
           abs0 = -(am(is0)-am(is))
         END IF
-        IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs0) is0 = is
+        IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs0) is0 = &
+&           is
 !dpc
         IF (is_neutral(is)) is1 = is
         IF (am(is1) - am(is) .GE. 0.) THEN
@@ -1492,9 +1518,12 @@ CONTAINS
         ELSE
           abs1 = -(am(is1)-am(is))
         END IF
-        IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs1) WRITE(*, *) &
+        IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs1) WRITE(&
+&                                                                 *, *) &
 &                                        'b2stbr problem: is, is0, is1 '&
-&                                                     , is, is0, is1
+&                                                                 , is, &
+&                                                                 is0, &
+&                                                                 is1
         IF (is0 .NE. is1) THEN
           IF (ncall_b2stbr_phys .EQ. 0) WRITE(*, *) &
 &                                       'b2stbr: setting is0 to is1 ', &
@@ -1529,9 +1558,10 @@ CONTAINS
 !       (is0 corresponds to CX species is2)
 ! dpc: Eirene coupling 1999.06.28
         DO nd=1,nbdirs
-          t0d(nd) = neutral_sources_rescale*max5d(nd)
+          t0d(nd) = strasclfl(istra)*switch%neutral_sources_rescale*&
+&           max5d(nd)
         END DO
-        t0 = max5*neutral_sources_rescale
+        t0 = max5*switch%neutral_sources_rescale*strasclfl(istra)
         IF (0.0_R8 .LT. tif/ev + (pof-phi_app)*zaf(is)) THEN
           DO nd=1,nbdirs
             eincd(nd) = tifd(nd)/ev + zaf(is)*(pofd(nd)-phi_appd(nd)) + &
@@ -1550,11 +1580,11 @@ CONTAINS
           arg11 = 8.0_R8*pl%ti(icv)/(pi*am(is)*mp)
           vbar = SQRT(arg11)
 ! dpc: Eirene coupling 1999.06.28
-          pflx = pflx + pl%na(icv, is)*vbar*alpha*&
-&           neutral_sources_rescale
+          pflx = pflx + pl%na(icv, is)*vbar*switch%b2stbr_alpha*switch%&
+&           neutral_sources_rescale*strasclfl(istra)
         END IF
 !! end KU Leuven advanced fluid neutral models
-        IF (switch%recycle_afn .EQ. 0 .OR. zn(is0) .NE. 1) THEN
+        IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(is0)) .NE. 1) THEN
 !wdk  recycle toroidal componenent of parallel momentum, factor mrecyc
 !     (toroidal piece only, because poloidal piece of parallel velocity flips sign after reflection)
           temp = mrecyc(is, istra)*geo%cvhz(icv)*am(is)*mp*(geo%cvbb(icv&
@@ -1593,12 +1623,12 @@ CONTAINS
             END IF
             temp2 = b2recyc(is, istra)/pl%ti(icv)
             DO nd=1,nbdirs
-              srwd%shi0(nd, icv, 1) = srwd%shi0(nd, icv, 1) + &
+              srwd%shi0(nd, icv, 1) = srwd%shi0(nd, icv, 1) + switch%&
 &               recycled_neutrals_contr*(max6*t0*(b2recycd(nd, is, istra&
 &               )-temp2*pld%ti(nd, icv))/pl%ti(icv)+temp2*(t0*max6d(nd)+&
 &               max6*t0d(nd)))
             END DO
-            srw%shi0(icv, 1) = srw%shi0(icv, 1) + &
+            srw%shi0(icv, 1) = srw%shi0(icv, 1) + switch%&
 &             recycled_neutrals_contr*(temp2*(max6*t0))
           ELSE
             temp2 = erecyc(is, istra)*(switch%boris+1.5_R8)
@@ -1618,11 +1648,11 @@ CONTAINS
               max7 = x2
             END IF
             DO nd=1,nbdirs
-              srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) + &
+              srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) + switch%&
 &               recycled_neutrals_contr*(max7*t0*b2recycd(nd, is, istra)&
 &               +b2recyc(is, istra)*(t0*max7d(nd)+max7*t0d(nd)))
             END DO
-            srw%shi0(icv, 0) = srw%shi0(icv, 0) + &
+            srw%shi0(icv, 0) = srw%shi0(icv, 0) + switch%&
 &             recycled_neutrals_contr*max7*b2recyc(is, istra)*t0
           END IF
 ! xpb: recycled neutrals come back with at least thermal energy
@@ -1633,7 +1663,7 @@ CONTAINS
             ELSE
               max8 = x3
             END IF
-            shi0_ff(icv, is2) = shi0_ff(icv, is2) + &
+            shi0_ff(icv, is2) = shi0_ff(icv, is2) + switch%&
 &             recycled_neutrals_contr*max8*b2recyc(is, istra)*t0
           END IF
         ELSE
@@ -1654,13 +1684,6 @@ CONTAINS
           cosa = geo%fcqalf(ifc, 0)
           sina = geo%fcqalf(ifc, 1)
 !
-!
-!! end of preliminary calculations
-          IF (erecyc(is, istra) .GT. 0.0_R8 .OR. mrecyc(is, istra) .GT. &
-&             0.0_R8) WRITE(*, *) &
-&                     'recycle_afn incompatible with user-defined '//&
-&                     'momentum and energy recycling coefficients > 0'
-!
           IF (is .NE. is0) THEN
 !! ion species, recycling
 !
@@ -1673,8 +1696,8 @@ CONTAINS
 &                                  is2, is, istra, iwall, phi_app, &
 &                                  phi_appd, farea, b2recyc(is, istra), &
 &                                  b2recycd(1, is, istra), recycm(is, &
-&                                  istra), fluid_frac_hyb(ifc), &
-&                                  fluid_frac_hybd(1, ifc), pl, pld, tif&
+&                                  istra), dv%fluid_frac_hyb(ifc), dvd%&
+&                                  fluid_frac_hyb(1, ifc), pl, pld, tif&
 &                                  , tifd, tef, pof, pofd, pl%na(icv, is&
 &                                  ), dv%ne(icv), geo, mpg, t0, t0d, &
 &                                  cosa, sina, switch%use_uy_uz_0, &
@@ -1703,22 +1726,25 @@ CONTAINS
                 nnwwnrecd(nd) = 0.D0
               END DO
             END IF
+            temp2 = geo%cvhz(icv)*strasclfl(istra)
             DO nd=1,nbdirs
 !
-              snand(nd) = neutral_sources_rescale*fnnrecd(nd)
+              snand(nd) = strasclfl(istra)*switch%&
+&               neutral_sources_rescale*fnnrecd(nd)
               srwd%sna0(nd, icv, 0, is0) = srwd%sna0(nd, icv, 0, is0) + &
 &               snand(nd)
-              smond(nd) = geo%cvhz(icv)*neutral_sources_rescale*fmomrecd&
-&               (nd)
+              smond(nd) = temp2*switch%neutral_sources_rescale*fmomrecd(&
+&               nd)
               srwd%smo0(nd, icv, 0, is0) = srwd%smo0(nd, icv, 0, is0) + &
 &               smond(nd)
 !
               nnsumd(nd) = nnsumd(nd) + nnrecd(nd)
               nnwwnsumd(nd) = nnwwnsumd(nd) + nnwwnrecd(nd)
             END DO
-            snan = fnnrec*neutral_sources_rescale
+            snan = fnnrec*switch%neutral_sources_rescale*strasclfl(istra&
+&             )
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + snan
-            smon = fmomrec*geo%cvhz(icv)*neutral_sources_rescale
+            smon = temp2*(switch%neutral_sources_rescale*fmomrec)
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon
             nnsum = nnsum + nnrec
             nnwwnsum = nnwwnsum + nnwwnrec
@@ -1727,18 +1753,20 @@ CONTAINS
             IF (switch%tn_style .EQ. 0) THEN
               DO nd=1,nbdirs
                 srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) + &
-&                 neutral_sources_rescale*fenerecd(nd)
+&                 strasclfl(istra)*switch%neutral_sources_rescale*&
+&                 fenerecd(nd)
               END DO
-              srw%shi0(icv, 0) = srw%shi0(icv, 0) + fenerec*&
-&               neutral_sources_rescale
+              srw%shi0(icv, 0) = srw%shi0(icv, 0) + fenerec*switch%&
+&               neutral_sources_rescale*strasclfl(istra)
             ELSE IF (switch%tn_style .NE. 1) THEN
 !! neutral energy boundary conditions are not used
               DO nd=1,nbdirs
                 srwd%shn0(nd, icv, 0) = srwd%shn0(nd, icv, 0) + &
-&                 neutral_sources_rescale*fenerecd(nd)
+&                 strasclfl(istra)*switch%neutral_sources_rescale*&
+&                 fenerecd(nd)
               END DO
-              srw%shn0(icv, 0) = srw%shn0(icv, 0) + fenerec*&
-&               neutral_sources_rescale
+              srw%shn0(icv, 0) = srw%shn0(icv, 0) + fenerec*switch%&
+&               neutral_sources_rescale*strasclfl(istra)
             END IF
 !
             IF (switch%afn_out .NE. 0) THEN
@@ -1760,16 +1788,17 @@ CONTAINS
 !          while B2.5 uses internal energy equations.
 !
 !
-            temp2 = tnf*pl%ua(icv, is0)
+            temp2 = isign*switch%neutral_sources_rescale*strasclfl(istra&
+&             )
+            temp0 = tnf*pl%ua(icv, is0)
             DO nd=1,nbdirs
-              q_convd(nd) = isign*neutral_sources_rescale*(geo%fcpbs(ifc&
-&               )*(pl%na(icv, is0)*(pl%ua(icv, is0)*tnfd(nd)+tnf*pld%ua(&
-&               nd, icv, is0))+temp2*pld%na(nd, icv, is0))+dvd%fhm(nd, &
-&               ifc, 0, is0)+dvd%fhm(nd, ifc, 1, is0))
+              q_convd(nd) = temp2*(geo%fcpbs(ifc)*(pl%na(icv, is0)*(pl%&
+&               ua(icv, is0)*tnfd(nd)+tnf*pld%ua(nd, icv, is0))+temp0*&
+&               pld%na(nd, icv, is0))+dvd%fhm(nd, ifc, 0, is0)+dvd%fhm(&
+&               nd, ifc, 1, is0))
             END DO
-            q_conv = isign*neutral_sources_rescale*(geo%fcpbs(ifc)*(&
-&             temp2*pl%na(icv, is0))+dv%fhm(ifc, 0, is0)+dv%fhm(ifc, 1, &
-&             is0))
+            q_conv = temp2*(geo%fcpbs(ifc)*(temp0*pl%na(icv, is0))+dv%&
+&             fhm(ifc, 0, is0)+dv%fhm(ifc, 1, is0))
 !
             IF (switch%tn_style .EQ. 0) THEN
               DO nd=1,nbdirs
@@ -1838,13 +1867,14 @@ CONTAINS
 !
             DO nd=1,nbdirs
               srwd%sna0(nd, icv, 0, is0) = srwd%sna0(nd, icv, 0, is0) - &
-&               neutral_sources_rescale*fnnid(nd)
+&               strasclfl(istra)*switch%neutral_sources_rescale*fnnid(nd&
+&               )
             END DO
-            srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) - fnni*&
-&             neutral_sources_rescale
+            srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) - fnni*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
 !
 !! save the incident fluid neutral flux
-            fnn_inc(ifc, is0) = fnni*isign
+            dv%fnn_inc(ifc, is0) = fnni*isign
 !
 !mb   net momentum sources from neutral particle reflection
             IF (.NOT.lcore) THEN
@@ -1854,9 +1884,9 @@ CONTAINS
 &                                              , istra, iwall, phi_app, &
 &                                              farea, b2recyc(is, istra)&
 &                                              , b2recycd(1, is, istra)&
-&                                              , recycm(is, istra), &
-&                                              fluid_frac_hyb(ifc), &
-&                                              fluid_frac_hybd(1, ifc), &
+&                                              , recycm(is, istra), dv%&
+&                                              fluid_frac_hyb(ifc), dvd%&
+&                                              fluid_frac_hyb(1, ifc), &
 &                                              pl, pld, tif, tifd, tnf, &
 &                                              tnfd, tef, tefd, pof, dv%&
 &                                              ne(icv), dvd%ne(1, icv), &
@@ -1880,12 +1910,13 @@ CONTAINS
 &                                               iwall, farea, b2recyc(is&
 &                                               , istra), b2recycd(1, is&
 &                                               , istra), recycm(is, &
-&                                               istra), fluid_frac_hyb(&
-&                                               ifc), fluid_frac_hybd(1&
-&                                               , ifc), pl, pld, tnf, &
-&                                               tnfd, geo, mpg, cosa, &
-&                                               sina, fnnrefl, fnnrefld&
-&                                               , fmomrefl, fmomrefld, &
+&                                               istra), dv%&
+&                                               fluid_frac_hyb(ifc), dvd&
+&                                               %fluid_frac_hyb(1, ifc)&
+&                                               , pl, pld, tnf, tnfd, &
+&                                               geo, mpg, cosa, sina, &
+&                                               fnnrefl, fnnrefld, &
+&                                               fmomrefl, fmomrefld, &
 &                                               nnrefl, nnrefld, &
 &                                               nnwwnrefl, nnwwnrefld, &
 &                                               fenerefl, fenerefld, &
@@ -1897,9 +1928,9 @@ CONTAINS
 &                                       , is0, is2, isi, istra, iwall, &
 &                                       phi_app, farea, b2recyc(is, &
 &                                       istra), b2recycd(1, is, istra), &
-&                                       recycm(is, istra), &
-&                                       fluid_frac_hyb(ifc), &
-&                                       fluid_frac_hybd(1, ifc), pl, pld&
+&                                       recycm(is, istra), dv%&
+&                                       fluid_frac_hyb(ifc), dvd%&
+&                                       fluid_frac_hyb(1, ifc), pl, pld&
 &                                       , tif, tifd, tnf, tnfd, tef, &
 &                                       tefd, pof, dv%ne(icv), dvd%ne(1&
 &                                       , icv), geo, geod, mpg, rt, rtd&
@@ -1917,15 +1948,15 @@ CONTAINS
 &                                          , iwall, phi_app, farea, &
 &                                          b2recyc(is, istra), b2recycd(&
 &                                          1, is, istra), recycm(is, &
-&                                          istra), fluid_frac_hyb(ifc), &
-&                                          fluid_frac_hybd(1, ifc), pl, &
-&                                          pld, tif, tifd, tnf, tnfd, &
-&                                          tef, tefd, pof, dv%ne(icv), &
-&                                          dvd%ne(1, icv), geo, geod, &
-&                                          mpg, rt, rtd, dnndy, dnndyd, &
-&                                          dnndz, dnndzd, cosa, sina, &
-&                                          switch%use_uy_uz_0, switch%&
-&                                          use_uy_uz_1, fnnrefl, &
+&                                          istra), dv%fluid_frac_hyb(ifc&
+&                                          ), dvd%fluid_frac_hyb(1, ifc)&
+&                                          , pl, pld, tif, tifd, tnf, &
+&                                          tnfd, tef, tefd, pof, dv%ne(&
+&                                          icv), dvd%ne(1, icv), geo, &
+&                                          geod, mpg, rt, rtd, dnndy, &
+&                                          dnndyd, dnndz, dnndzd, cosa, &
+&                                          sina, switch%use_uy_uz_0, &
+&                                          switch%use_uy_uz_1, fnnrefl, &
 &                                          fnnrefld, fmomrefl, fmomrefld&
 &                                          , nnrefl, nnrefld, nnwwnrefl&
 &                                          , nnwwnrefld, fenerefl, &
@@ -1962,10 +1993,11 @@ CONTAINS
 !nh  adding the reflected particle source (with the molecular part subtracted)
             DO nd=1,nbdirs
               srwd%sna0(nd, icv, 0, is0) = srwd%sna0(nd, icv, 0, is0) + &
-&               neutral_sources_rescale*fnnrefld(nd)
+&               strasclfl(istra)*switch%neutral_sources_rescale*fnnrefld&
+&               (nd)
             END DO
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + fnnrefl*&
-&             neutral_sources_rescale
+&             switch%neutral_sources_rescale*strasclfl(istra)
             snan = fnnrefl
 !
 !
@@ -1978,8 +2010,8 @@ CONTAINS
             END IF
             DO nd=1,nbdirs
 !
-              smond(nd) = geo%cvhz(icv)*neutral_sources_rescale*(fmomnid&
-&               (nd)+fmomrefld(nd))
+              smond(nd) = switch%neutral_sources_rescale*strasclfl(istra&
+&               )*geo%cvhz(icv)*(fmomnid(nd)+fmomrefld(nd))
               srwd%smo0(nd, icv, 0, is0) = srwd%smo0(nd, icv, 0, is0) + &
 &               smond(nd)
 !
@@ -1987,27 +2019,29 @@ CONTAINS
               nnwwnsumd(nd) = nnwwnsumd(nd) + nnwwnid(nd) + nnwwnrefld(&
 &               nd)
             END DO
-            smon = (fmomni+fmomrefl)*geo%cvhz(icv)*&
-&             neutral_sources_rescale
+            smon = (fmomni+fmomrefl)*geo%cvhz(icv)*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon
             nnsum = nnsum + nni + nnrefl
             nnwwnsum = nnwwnsum + nnwwni + nnwwnrefl
 !
             IF (switch%tn_style .EQ. 0) THEN
               DO nd=1,nbdirs
-                srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) + &
-&                 neutral_sources_rescale*(fenenid(nd)+fenerefld(nd))
+                srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) + switch%&
+&                 neutral_sources_rescale*strasclfl(istra)*(fenenid(nd)+&
+&                 fenerefld(nd))
               END DO
               srw%shi0(icv, 0) = srw%shi0(icv, 0) + (feneni+fenerefl)*&
-&               neutral_sources_rescale
+&               switch%neutral_sources_rescale*strasclfl(istra)
             ELSE IF (switch%tn_style .NE. 1) THEN
 !! neutral energy boundary conditions are not used
               DO nd=1,nbdirs
-                srwd%shn0(nd, icv, 0) = srwd%shn0(nd, icv, 0) + &
-&                 neutral_sources_rescale*(fenenid(nd)+fenerefld(nd))
+                srwd%shn0(nd, icv, 0) = srwd%shn0(nd, icv, 0) + switch%&
+&                 neutral_sources_rescale*strasclfl(istra)*(fenenid(nd)+&
+&                 fenerefld(nd))
               END DO
               srw%shn0(icv, 0) = srw%shn0(icv, 0) + (feneni+fenerefl)*&
-&               neutral_sources_rescale
+&               switch%neutral_sources_rescale*strasclfl(istra)
             END IF
 !
 ! remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary
@@ -2015,14 +2049,15 @@ CONTAINS
             IF (switch%remove_fc_el .EQ. 1) THEN
               DO nd=1,nbdirs
                 srwd%she0(nd, icv, 0) = srwd%she0(nd, icv, 0) + &
-&                 neutral_sources_rescale*fene_eld(nd)
+&                 strasclfl(istra)*switch%neutral_sources_rescale*&
+&                 fene_eld(nd)
               END DO
-              srw%she0(icv, 0) = srw%she0(icv, 0) + fene_el*&
-&               neutral_sources_rescale
+              srw%she0(icv, 0) = srw%she0(icv, 0) + fene_el*switch%&
+&               neutral_sources_rescale*strasclfl(istra)
             END IF
           END IF
 !
-          IF (zamax(is) .EQ. zn(is)) THEN
+          IF (NINT(zamax(is)) .EQ. NINT(zn(is))) THEN
 !! see eq. 62-63 of the main reference.
             IF (nnsum .EQ. 0.0_R8) THEN
               nnsum = 1.0_R8
@@ -2042,11 +2077,12 @@ CONTAINS
               smond(nd) = -(temp2*temp0*(2*nnwwnsum*nnwwnsumd(nd)-temp*&
 &               3.0_R8*nnsumd(nd))/(3.0_R8*nnsum))
               srwd%smo0(nd, icv, 0, is0) = srwd%smo0(nd, icv, 0, is0) + &
-&               neutral_sources_rescale*smond(nd)
+&               strasclfl(istra)*switch%neutral_sources_rescale*smond(nd&
+&               )
             END DO
             smon = -(temp2*(temp0*temp))
-            srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*&
-&             neutral_sources_rescale
+            srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
             nnsum = 0.0_R8
             nnwwnsum = 0.0_R8
             DO nd=1,nbdirsmax
@@ -2063,10 +2099,12 @@ CONTAINS
           IF (LNEXT(is, is + 1)) THEN
             DO nd=1,nbdirs
               srwd%sna0(nd, icv, 0, is+1) = srwd%sna0(nd, icv, 0, is+1) &
-&               + rcion(is, istra)*t0d(nd)/neutral_sources_rescale
+&               + rcion(is, istra)*t0d(nd)/(switch%&
+&               neutral_sources_rescale*strasclfl(istra))
             END DO
             srw%sna0(icv, 0, is+1) = srw%sna0(icv, 0, is+1) + rcion(is, &
-&             istra)*t0/neutral_sources_rescale
+&             istra)*t0/(switch%neutral_sources_rescale*strasclfl(istra)&
+&             )
           END IF
         END IF
       END DO
@@ -2083,18 +2121,18 @@ CONTAINS
           ELSE
             abs3 = -(am(is0)-am(is))
           END IF
-          IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs3) is0 = is
+          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) is0&
+&            = is
 !xpb
-          IF (zamax(is) .EQ. zn(is)) is1 = is
+          IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
           IF (am(is1) - am(is) .GE. 0.) THEN
             abs4 = am(is1) - am(is)
           ELSE
             abs4 = -(am(is1)-am(is))
           END IF
-          IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs4) WRITE(*, &
-&                                                       '(a,3i3)') &
-&                                        'b2stbr problem: is, is0, is1 '&
-&                                                       , is, is0, is1
+          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs4) &
+&           WRITE(*, '(a,3i3)') 'b2stbr problem: is, is0, is1 ', is, is0&
+&           , is1
           IF (is0 .NE. is1) THEN
             IF (ncall_b2stbr_phys .EQ. 0) WRITE(*, '(a,2i3)') &
 &                                         'b2stbr: setting is0 to is1 '&
@@ -2118,9 +2156,9 @@ CONTAINS
 !          (species (is) recycles into is0)
 ! xpb: 2002.02.01
           DO nd=1,nbdirs
-            t0d(nd) = core_sources_rescale*max9d(nd)
+            t0d(nd) = switch%b2stbr_core_sources_rescale*max9d(nd)
           END DO
-          t0 = max9*core_sources_rescale
+          t0 = max9*switch%b2stbr_core_sources_rescale
           IF (is .NE. is0) THEN
 !
 !wdk  recycling of true parallel momentum
@@ -2139,7 +2177,7 @@ CONTAINS
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + temp2*(pl%ua&
 &             (icv, is)*temp0)
 !srv
-            temp2 = erecyc(is, istra)*(switch%boris+1.5_R8)*&
+            temp2 = erecyc(is, istra)*(switch%boris+1.5_R8)*switch%&
 &             recycled_neutrals_contr
             temp0 = b2recyc(is, istra)*t0
             temp = zaf(is)*tef + tif
@@ -2179,6 +2217,7 @@ CONTAINS
 &   nnrec, nnwwnrec, nnsum, nnwwnsum, snan, smon, farea, q_conv, sina, &
 &   cosa
     INTRINSIC MAX
+    INTRINSIC NINT
     INTRINSIC ABS
     INTRINSIC SQRT
     EXTERNAL XERRAB
@@ -2210,7 +2249,7 @@ CONTAINS
       RETURN
     ELSE
 !
-      IF (temperature_at_guard_cell .EQ. 1) THEN
+      IF (switch%b2stbr_temperature_at_guard_cell .EQ. 1) THEN
         tef = pl%te(icv)
         tif = pl%ti(icv)
         tnf = pl%tn(icv)
@@ -2222,7 +2261,7 @@ CONTAINS
         tnf = (pl%tn(mpg%fccv(ifc, 1))*geo%fchc(ifc, 2)+pl%tn(mpg%fccv(&
 &         ifc, 2))*geo%fchc(ifc, 1))/(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
       END IF
-      IF (potential_at_guard_cell .EQ. 1) THEN
+      IF (switch%b2stbr_potential_at_guard_cell .EQ. 1) THEN
 !        write(6,*) 'Potential taken at guard cell (phys)'
         pof = pl%po(icv)
       ELSE
@@ -2296,7 +2335,8 @@ CONTAINS
         ELSE
           abs0 = -(am(is0)-am(is))
         END IF
-        IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs0) is0 = is
+        IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs0) is0 = &
+&           is
 !dpc
         IF (is_neutral(is)) is1 = is
         IF (am(is1) - am(is) .GE. 0.) THEN
@@ -2304,9 +2344,12 @@ CONTAINS
         ELSE
           abs1 = -(am(is1)-am(is))
         END IF
-        IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs1) WRITE(*, *) &
+        IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs1) WRITE(&
+&                                                                 *, *) &
 &                                        'b2stbr problem: is, is0, is1 '&
-&                                                     , is, is0, is1
+&                                                                 , is, &
+&                                                                 is0, &
+&                                                                 is1
         IF (is0 .NE. is1) THEN
           IF (ncall_b2stbr_phys .EQ. 0) WRITE(*, *) &
 &                                       'b2stbr: setting is0 to is1 ', &
@@ -2333,7 +2376,7 @@ CONTAINS
 !       (species (is) recycles into is0)
 !       (is0 corresponds to CX species is2)
 ! dpc: Eirene coupling 1999.06.28
-        t0 = max5*neutral_sources_rescale
+        t0 = max5*switch%neutral_sources_rescale*strasclfl(istra)
         IF (0.0_R8 .LT. tif/ev + (pof-phi_app)*zaf(is)) THEN
           einc = tif/ev + (pof-phi_app)*zaf(is)
         ELSE
@@ -2345,11 +2388,11 @@ CONTAINS
           arg11 = 8.0_R8*pl%ti(icv)/(pi*am(is)*mp)
           vbar = SQRT(arg11)
 ! dpc: Eirene coupling 1999.06.28
-          pflx = pflx + pl%na(icv, is)*vbar*alpha*&
-&           neutral_sources_rescale
+          pflx = pflx + pl%na(icv, is)*vbar*switch%b2stbr_alpha*switch%&
+&           neutral_sources_rescale*strasclfl(istra)
         END IF
 !! end KU Leuven advanced fluid neutral models
-        IF (switch%recycle_afn .EQ. 0 .OR. zn(is0) .NE. 1) THEN
+        IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(is0)) .NE. 1) THEN
 !! default neutral recycling/reflection model (always for non-hydrogenic species)
           srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + b2recyc(is, &
 &           istra)*t0
@@ -2365,7 +2408,7 @@ CONTAINS
             ELSE
               max6 = x1
             END IF
-            srw%shi0(icv, 1) = srw%shi0(icv, 1) + &
+            srw%shi0(icv, 1) = srw%shi0(icv, 1) + switch%&
 &             recycled_neutrals_contr*max6*b2recyc(is, istra)*t0/pl%ti(&
 &             icv)
           ELSE
@@ -2375,7 +2418,7 @@ CONTAINS
             ELSE
               max7 = x2
             END IF
-            srw%shi0(icv, 0) = srw%shi0(icv, 0) + &
+            srw%shi0(icv, 0) = srw%shi0(icv, 0) + switch%&
 &             recycled_neutrals_contr*max7*b2recyc(is, istra)*t0
           END IF
 ! xpb: recycled neutrals come back with at least thermal energy
@@ -2386,7 +2429,7 @@ CONTAINS
             ELSE
               max8 = x3
             END IF
-            shi0_ff(icv, is2) = shi0_ff(icv, is2) + &
+            shi0_ff(icv, is2) = shi0_ff(icv, is2) + switch%&
 &             recycled_neutrals_contr*max8*b2recyc(is, istra)*t0
           END IF
         ELSE
@@ -2407,13 +2450,6 @@ CONTAINS
           cosa = geo%fcqalf(ifc, 0)
           sina = geo%fcqalf(ifc, 1)
 !
-!
-!! end of preliminary calculations
-          IF (erecyc(is, istra) .GT. 0.0_R8 .OR. mrecyc(is, istra) .GT. &
-&             0.0_R8) WRITE(*, *) &
-&                     'recycle_afn incompatible with user-defined '//&
-&                     'momentum and energy recycling coefficients > 0'
-!
           IF (is .NE. is0) THEN
 !! ion species, recycling
 !
@@ -2425,10 +2461,11 @@ CONTAINS
               CALL CALCRECYCLEDFLUXES(icv, mpg%nci, ifc, isign, is0, is2&
 &                               , is, istra, iwall, phi_app, farea, &
 &                               b2recyc(is, istra), recycm(is, istra), &
-&                               fluid_frac_hyb(ifc), pl, tif, tef, pof, &
-&                               pl%na(icv, is), dv%ne(icv), geo, mpg, t0&
-&                               , cosa, sina, switch%use_uy_uz_0, fnnrec&
-&                               , fmomrec, nnrec, nnwwnrec, fenerec)
+&                               dv%fluid_frac_hyb(ifc), pl, tif, tef, &
+&                               pof, pl%na(icv, is), dv%ne(icv), geo, &
+&                               mpg, t0, cosa, sina, switch%use_uy_uz_0&
+&                               , fnnrec, fmomrec, nnrec, nnwwnrec, &
+&                               fenerec)
             ELSE
               fnnrec = 0.0_R8
               fmomrec = 0.0_R8
@@ -2437,9 +2474,11 @@ CONTAINS
               fenerec = 0.0_R8
             END IF
 !
-            snan = fnnrec*neutral_sources_rescale
+            snan = fnnrec*switch%neutral_sources_rescale*strasclfl(istra&
+&             )
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + snan
-            smon = fmomrec*geo%cvhz(icv)*neutral_sources_rescale
+            smon = fmomrec*geo%cvhz(icv)*switch%neutral_sources_rescale*&
+&             strasclfl(istra)
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon
 !
             nnsum = nnsum + nnrec
@@ -2447,12 +2486,12 @@ CONTAINS
 !mb   net neutral energy source from recycling
 !
             IF (switch%tn_style .EQ. 0) THEN
-              srw%shi0(icv, 0) = srw%shi0(icv, 0) + fenerec*&
-&               neutral_sources_rescale
+              srw%shi0(icv, 0) = srw%shi0(icv, 0) + fenerec*switch%&
+&               neutral_sources_rescale*strasclfl(istra)
             ELSE IF (switch%tn_style .NE. 1) THEN
 !! neutral energy boundary conditions are not used
-              srw%shn0(icv, 0) = srw%shn0(icv, 0) + fenerec*&
-&               neutral_sources_rescale
+              srw%shn0(icv, 0) = srw%shn0(icv, 0) + fenerec*switch%&
+&               neutral_sources_rescale*strasclfl(istra)
             END IF
 !
             IF (switch%afn_out .NE. 0) THEN
@@ -2475,8 +2514,8 @@ CONTAINS
 !
 !
             q_conv = isign*(tnf*pl%ua(icv, is0)*geo%fcpbs(ifc)*pl%na(icv&
-&             , is0)+(dv%fhm(ifc, 0, is0)+dv%fhm(ifc, 1, is0)))*&
-&             neutral_sources_rescale
+&             , is0)+(dv%fhm(ifc, 0, is0)+dv%fhm(ifc, 1, is0)))*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
 !
             IF (switch%tn_style .EQ. 0) THEN
               srw%shi0(icv, 0) = srw%shi0(icv, 0) + q_conv
@@ -2520,11 +2559,11 @@ CONTAINS
 !
             END IF
 !
-            srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) - fnni*&
-&             neutral_sources_rescale
+            srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) - fnni*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
 !
 !! save the incident fluid neutral flux
-            fnn_inc(ifc, is0) = fnni*isign
+            dv%fnn_inc(ifc, is0) = fnni*isign
 !
 !mb   net momentum sources from neutral particle reflection
             IF (.NOT.lcore) THEN
@@ -2533,11 +2572,12 @@ CONTAINS
 &                                           , isign, is0, is2, isi, &
 &                                           istra, iwall, phi_app, farea&
 &                                           , b2recyc(is, istra), recycm&
-&                                           (is, istra), fluid_frac_hyb(&
-&                                           ifc), pl, tif, tnf, tef, pof&
-&                                           , dv%ne(icv), geo, mpg, rt, &
-&                                           dnndy, dnndz, cosa, sina, &
-&                                           switch%use_uy_uz_0, switch%&
+&                                           (is, istra), dv%&
+&                                           fluid_frac_hyb(ifc), pl, tif&
+&                                           , tnf, tef, pof, dv%ne(icv)&
+&                                           , geo, mpg, rt, dnndy, dnndz&
+&                                           , cosa, sina, switch%&
+&                                           use_uy_uz_0, switch%&
 &                                           use_uy_uz_1, switch%&
 &                                           diffusion_bc_safeguard, &
 &                                           fnnrefl, fmomrefl, nnrefl, &
@@ -2547,7 +2587,7 @@ CONTAINS
                 CALL CALCREFLECTEDFLUXESMAXWELLIAN(icv, mpg%nci, ifc, &
 &                                            isign, is0, istra, iwall, &
 &                                            farea, b2recyc(is, istra), &
-&                                            recycm(is, istra), &
+&                                            recycm(is, istra), dv%&
 &                                            fluid_frac_hyb(ifc), pl, &
 &                                            tnf, geo, mpg, cosa, sina, &
 &                                            fnnrefl, fmomrefl, nnrefl, &
@@ -2558,10 +2598,10 @@ CONTAINS
 &                                    icv, icn, mpg%nci, ifc, isign, is0&
 &                                    , is2, isi, istra, iwall, phi_app, &
 &                                    farea, b2recyc(is, istra), recycm(&
-&                                    is, istra), fluid_frac_hyb(ifc), pl&
-&                                    , tif, tnf, tef, pof, dv%ne(icv), &
-&                                    geo, mpg, rt, dnndy, dnndz, cosa, &
-&                                    sina, switch%use_uy_uz_0, switch%&
+&                                    is, istra), dv%fluid_frac_hyb(ifc)&
+&                                    , pl, tif, tnf, tef, pof, dv%ne(icv&
+&                                    ), geo, mpg, rt, dnndy, dnndz, cosa&
+&                                    , sina, switch%use_uy_uz_0, switch%&
 &                                    use_uy_uz_1, switch%l_macro_afn, &
 &                                    fnnrefl, fmomrefl, nnrefl, &
 &                                    nnwwnrefl, fenerefl, fene_el)
@@ -2570,9 +2610,9 @@ CONTAINS
 &                                       isign, is0, is2, isi, istra, &
 &                                       iwall, phi_app, farea, b2recyc(&
 &                                       is, istra), recycm(is, istra), &
-&                                       fluid_frac_hyb(ifc), pl, tif, &
-&                                       tnf, tef, pof, dv%ne(icv), geo, &
-&                                       mpg, rt, dnndy, dnndz, cosa, &
+&                                       dv%fluid_frac_hyb(ifc), pl, tif&
+&                                       , tnf, tef, pof, dv%ne(icv), geo&
+&                                       , mpg, rt, dnndy, dnndz, cosa, &
 &                                       sina, switch%use_uy_uz_0, switch&
 &                                       %use_uy_uz_1, fnnrefl, fmomrefl&
 &                                       , nnrefl, nnwwnrefl, fenerefl, &
@@ -2589,7 +2629,7 @@ CONTAINS
 !
 !nh  adding the reflected particle source (with the molecular part subtracted)
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + fnnrefl*&
-&             neutral_sources_rescale
+&             switch%neutral_sources_rescale*strasclfl(istra)
             snan = fnnrefl
 !
 !
@@ -2601,8 +2641,8 @@ CONTAINS
               fnni_out(icv) = fnni
             END IF
 !
-            smon = (fmomni+fmomrefl)*geo%cvhz(icv)*&
-&             neutral_sources_rescale
+            smon = (fmomni+fmomrefl)*geo%cvhz(icv)*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon
 !
             nnsum = nnsum + nni + nnrefl
@@ -2610,20 +2650,21 @@ CONTAINS
 !
             IF (switch%tn_style .EQ. 0) THEN
               srw%shi0(icv, 0) = srw%shi0(icv, 0) + (feneni+fenerefl)*&
-&               neutral_sources_rescale
+&               switch%neutral_sources_rescale*strasclfl(istra)
             ELSE IF (switch%tn_style .NE. 1) THEN
 !! neutral energy boundary conditions are not used
               srw%shn0(icv, 0) = srw%shn0(icv, 0) + (feneni+fenerefl)*&
-&               neutral_sources_rescale
+&               switch%neutral_sources_rescale*strasclfl(istra)
             END IF
 !
 ! remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary
 ! temporary switch to evaluate the effect.
             IF (switch%remove_fc_el .EQ. 1) srw%she0(icv, 0) = srw%she0(&
-&               icv, 0) + fene_el*neutral_sources_rescale
+&               icv, 0) + fene_el*switch%neutral_sources_rescale*&
+&               strasclfl(istra)
           END IF
 !
-          IF (zamax(is) .EQ. zn(is)) THEN
+          IF (NINT(zamax(is)) .EQ. NINT(zn(is))) THEN
 !! see eq. 62-63 of the main reference.
             IF (nnsum .EQ. 0.0_R8) nnsum = 1.0_R8
             IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
@@ -2633,8 +2674,8 @@ CONTAINS
             END IF
             smon = -(isign*cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/nnsum*&
 &             farea*abs2*geo%cvhz(icv))
-            srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*&
-&             neutral_sources_rescale
+            srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*switch%&
+&             neutral_sources_rescale*strasclfl(istra)
             nnsum = 0.0_R8
             nnwwnsum = 0.0_R8
           END IF
@@ -2643,7 +2684,8 @@ CONTAINS
 !    ..recycling into next ionized species
         IF (is .LT. ns - 1) THEN
           IF (LNEXT(is, is + 1)) srw%sna0(icv, 0, is+1) = srw%sna0(icv, &
-&             0, is+1) + rcion(is, istra)*t0/neutral_sources_rescale
+&             0, is+1) + rcion(is, istra)*t0/(switch%&
+&             neutral_sources_rescale*strasclfl(istra))
         END IF
       END DO
 ! IYS 18.09.2018
@@ -2659,18 +2701,18 @@ CONTAINS
           ELSE
             abs3 = -(am(is0)-am(is))
           END IF
-          IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs3) is0 = is
+          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) is0&
+&            = is
 !xpb
-          IF (zamax(is) .EQ. zn(is)) is1 = is
+          IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
           IF (am(is1) - am(is) .GE. 0.) THEN
             abs4 = am(is1) - am(is)
           ELSE
             abs4 = -(am(is1)-am(is))
           END IF
-          IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs4) WRITE(*, &
-&                                                       '(a,3i3)') &
-&                                        'b2stbr problem: is, is0, is1 '&
-&                                                       , is, is0, is1
+          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs4) &
+&           WRITE(*, '(a,3i3)') 'b2stbr problem: is, is0, is1 ', is, is0&
+&           , is1
           IF (is0 .NE. is1) THEN
             IF (ncall_b2stbr_phys .EQ. 0) WRITE(*, '(a,2i3)') &
 &                                         'b2stbr: setting is0 to is1 '&
@@ -2686,7 +2728,7 @@ CONTAINS
 !xpb
 !          (species (is) recycles into is0)
 ! xpb: 2002.02.01
-          t0 = max9*core_sources_rescale
+          t0 = max9*switch%b2stbr_core_sources_rescale
           IF (is .NE. is0) THEN
             srw%sna0(icv, 0, is0) = srw%sna0(icv, 0, is0) + b2recyc(is, &
 &             istra)*t0
@@ -2699,7 +2741,7 @@ CONTAINS
 !srv
             srw%shi0(icv, 0) = srw%shi0(icv, 0) + erecyc(is, istra)*(&
 &             1.5_R8+switch%boris)*(zaf(is)*tef+tif)*b2recyc(is, istra)*&
-&             t0*recycled_neutrals_contr
+&             t0*switch%recycled_neutrals_contr
           END IF
         END DO
       END IF

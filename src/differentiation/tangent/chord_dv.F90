@@ -2,41 +2,111 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-FUNCTION CHORD_VALUE_NODIFF(nx, ny, tt, xp, yp, zp, dxp, dyp, dzp, &
-& vector) RESULT (chord_value)
+SUBROUTINE CHORD_COMPILE_NODIFF(npoints, mpg, geo, xp1, yp1, zp1, xp2, &
+& yp2, zp2, vector, indchd, indcv, indscl)
 !
   USE B2MOD_TYPES
-  USE B2MOD_GEO_DIFFV
+  USE B2US_MAP_DIFFV
+  USE B2US_GEO_DIFFV
+  USE B2MOD_SUBSYS
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+!
+  INTEGER :: npoints
+  TYPE(MAPPING) :: mpg
+  TYPE(GEOMETRY) :: geo
+  REAL(kind=r8) :: tt(mpg%ncv), score(mpg%ncv)
+  REAL(kind=r8) :: xp1, yp1, zp1, xp2, yp2, zp2
+  INTEGER :: indchd, indcv(*)
+  REAL(kind=r8) :: indscl(*)
+  LOGICAL :: vector
+!
+  REAL(kind=r8) :: CHORD_VALUE_NODIFF
+  INTEGER :: i, icv
+  REAL(kind=r8) :: f, x, y, z, dl, dxp, dyp, dzp
+  LOGICAL :: found
+  INTRINSIC SQRT
+  INTRINSIC REAL
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8) :: result1
+!
+  CALL SUBINI('chord_compile')
+  tt = 1.0_R8
+  score = 0.0_R8
+!
+  dxp = xp2 - xp1
+  dyp = yp2 - yp1
+  dzp = zp2 - zp1
+  arg1 = dxp**2 + dyp**2 + dzp**2
+  dl = SQRT(arg1)
+  dxp = dxp/dl
+  dyp = dyp/dl
+  dzp = dzp/dl
+  dl = dl/REAL(npoints)
+!
+  DO i=1,npoints
+    f = REAL(i-0.5)/REAL(npoints)
+    x = xp1*(1.0-f) + xp2*f
+    y = yp1*(1.0-f) + yp2*f
+    z = zp1*(1.0-f) + zp2*f
+    CALL CHORD_FIND_NODIFF(mpg, geo, x, y, z, found, icv)
+    IF (found) THEN
+      result1 = CHORD_VALUE_NODIFF(mpg%ncv, tt, x, y, z, dxp, dyp, dzp, &
+&       vector)
+      score(icv) = score(icv) + dl*result1
+    END IF
+  END DO
+!
+  i = 0
+  DO icv=1,mpg%ncv
+    IF (score(icv) .NE. 0.0_R8) THEN
+      i = i + 1
+      indcv(i) = icv
+      indscl(i) = score(icv)
+    END IF
+  END DO
+  indchd = i
+!
+  CALL SUBEND()
+  RETURN
+END SUBROUTINE CHORD_COMPILE_NODIFF
+
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+FUNCTION CHORD_VALUE_NODIFF(ncv, tt, xp, yp, zp, dxp, dyp, dzp, vector) &
+&RESULT (chord_value)
+!
+  USE B2MOD_TYPES
+  USE B2US_DATA_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   REAL(kind=r8) :: chord_value
-  INTEGER :: nx, ny
-  REAL(kind=r8) :: tt(-1:nx, -1:ny)
+  INTEGER :: ncv
+  REAL(kind=r8) :: tt(ncv)
   REAL(kind=r8) :: xp, yp, zp, dxp, dyp, dzp
   LOGICAL :: vector
 !
   REAL(kind=r8) :: x, y, z, dl, dx, dy, dz, dbr, dbz, dbphi, dbx, dby, &
 & dbs, dotprod, phi, rt, zt
-  INTEGER :: ix, iy
+  INTEGER :: icv
   LOGICAL :: found
 !
   REAL(kind=r8) :: rshift, zshift, r0, z0, a0, b0, tt0
   COMMON /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
   INTRINSIC SQRT, SIN, COS, ABS, ATAN2
-  EXTERNAL CHORD_FIND, XERTST
+  EXTERNAL CHORD_FIND_NODIFF, XERTST
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: arg1
   REAL(kind=r8) :: result1
@@ -52,7 +122,7 @@ FUNCTION CHORD_VALUE_NODIFF(nx, ny, tt, xp, yp, zp, dxp, dyp, dzp, &
 !
   chord_value = 0.0_R8
 !
-  CALL CHORD_FIND(nx, ny, crx, cry, x, y, z, found, ix, iy)
+  CALL CHORD_FIND_NODIFF(mpg, geo, x, y, z, found, icv)
 !
   IF (.NOT.found) THEN
     IF (.NOT.vector .AND. a0 .GT. 0.0_R8 .AND. b0 .GT. 0.0_R8) THEN
@@ -68,18 +138,13 @@ FUNCTION CHORD_VALUE_NODIFF(nx, ny, tt, xp, yp, zp, dxp, dyp, dzp, &
   ELSE
 !
     IF (vector) THEN
-! in r,z,phi
-      dbr = (crx(ix, iy, 1)+crx(ix, iy, 3)-(crx(ix, iy, 2)+crx(ix, iy, 0&
-&       )))/2.0_R8
-      dbz = (cry(ix, iy, 1)+cry(ix, iy, 3)-(cry(ix, iy, 2)+cry(ix, iy, 0&
-&       )))/2.0_R8
       arg1 = dbr**2 + dbz**2
       dbs = SQRT(arg1)
-      result1 = PIT(ix, iy)
+      result1 = PITCH(geo, icv)
       dbr = dbr/dbs*result1
-      result1 = PIT(ix, iy)
+      result1 = PITCH(geo, icv)
       dbz = dbz/dbs*result1
-      result1 = PIT(ix, iy)
+      result1 = PITCH(geo, icv)
       arg1 = 1.0 - result1**2
       result2 = SQRT(arg1)
       dbphi = 1.0*result2
@@ -108,18 +173,210 @@ FUNCTION CHORD_VALUE_NODIFF(nx, ny, tt, xp, yp, zp, dxp, dyp, dzp, &
       dy = dy/dl
       dz = dz/dl
       dotprod = dbx*dx + dby*dy + dbz*dz
-!       write(*,*) 'ix,iy = ',ix,iy
+!       write(*,*) 'iCv = ',iCv
 !       write(*,*) 'dl = ',dx,dy,dz
 !       write(*,*) 'bl = ',dbr,dbz,dbphi
 !       write(*,*) 'phi = ',phi
 !       write(*,*) 'bl = ',dbx,dby,dbz
 !       write(*,*) 'dl.bl = ',dotprod
-      chord_value = tt(ix, iy)*dotprod
+      chord_value = tt(icv)*dotprod
     ELSE
-      chord_value = tt(ix, iy)
+      chord_value = tt(icv)
     END IF
     CALL SUBEND()
     RETURN
   END IF
 END FUNCTION CHORD_VALUE_NODIFF
+
+!
+SUBROUTINE CHORD_FIND_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
+!
+  USE B2MOD_TYPES
+  USE B2US_MAP_DIFFV
+  USE B2US_GEO_DIFFV
+  USE B2MOD_SUBSYS
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+!
+!
+!DIAG      integer rectangles, triangles, chain      ! diag
+!DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
+!
+  TYPE(MAPPING) :: mpg
+  TYPE(GEOMETRY) :: geo
+  REAL(kind=r8) :: xp, yp, zp
+  LOGICAL :: found
+  INTEGER :: cvpos
+!
+  INTEGER :: icv, icnt1, icnt2
+  REAL(kind=r8) :: x, y, z, r, rmin, rmax, zmin, zmax
+!
+  LOGICAL :: first
+  INTEGER :: ir, iz
+  INTEGER :: lngcov, lngind
+  PARAMETER (lngcov=200, lngind=500000)
+  INTEGER :: covered(lngcov, lngcov), cvcov(lngind), icov(lngind), ipos&
+& , jpos
+!
+  INTEGER :: ip
+  INTEGER :: xmin(lngcov), xmax(lngcov), ymin, ymax
+!
+  REAL(kind=r8) :: rshift, zshift, r0, z0, a0, b0, tt0
+  COMMON /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
+!
+  EXTERNAL XERRAB
+  SAVE covered, rmin, rmax, zmin, zmax, first, cvcov, icov, icv
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
+  INTRINSIC SQRT
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8) :: result1
+  INTEGER :: result10
+  INTEGER :: result2
+!
+  DATA first /.true./
+!
+  CALL SUBINI('chord_find')
+  IF (first) THEN
+    first = .false.
+    rmin = MINVAL(geo%vxx)
+    rmax = MAXVAL(geo%vxx)
+    zmin = MINVAL(geo%vxy)
+    zmax = MAXVAL(geo%vxy)
+    WRITE(*, *) 'rmin,rmax,zmin,zmax ', rmin, rmax, zmin, zmax
+!
+    DO iz=1,lngcov
+      DO ir=1,lngcov
+        covered(ir, iz) = 0
+      END DO
+    END DO
+    ipos = 0
+    icnt2 = 0
+!
+    DO icv=1,mpg%nci
+      DO ip=1,lngcov
+        xmin(ip) = lngcov + 1
+        xmax(ip) = 0
+      END DO
+      ymin = lngcov + 1
+      ymax = 0
+      DO iz=ymin,ymax
+        DO ir=xmin(iz),xmax(iz)
+          ipos = ipos + 1
+          IF (ipos .GT. lngind) THEN
+            WRITE(*, *) 'iCv ', icv
+            CALL XERRAB('increase lngind')
+          END IF
+          cvcov(ipos) = icv
+          icov(ipos) = 0
+          icnt2 = 1
+          IF (covered(ir, iz) .EQ. 0) THEN
+            covered(ir, iz) = ipos
+          ELSE
+            jpos = covered(ir, iz)
+            icnt2 = icnt2 + 1
+ 20         IF (icov(jpos) .NE. 0) THEN
+              jpos = icov(jpos)
+              icnt2 = icnt2 + 1
+              GOTO 20
+            ELSE
+              icov(jpos) = ipos
+            END IF
+          END IF
+        END DO
+      END DO
+    END DO
+!
+    icnt1 = 0
+    DO iz=1,lngcov
+      DO ir=1,lngcov
+        IF (covered(ir, iz) .NE. 0) icnt1 = icnt1 + 1
+      END DO
+    END DO
+    WRITE(*, *) 100.0*icnt1/(lngcov*lngcov), ' % covered'
+    WRITE(*, *) ipos, ' positions used'
+    WRITE(*, *) icnt2, ' is the maximum chain length'
+    icv = 1
+!DIAG   rectangles=0      ! diag
+!DIAG   triangles=0      ! diag
+!DIAG   chain=0      ! diag
+  END IF
+!
+  found = .false.
+!
+  x = xp
+  y = yp
+  z = zp + zshift
+  arg1 = x**2 + y**2
+  result1 = SQRT(arg1)
+  r = result1 + rshift
+  IF (((r .LT. rmin .OR. r .GT. rmax) .OR. z .LT. zmin) .OR. z .GT. zmax&
+& ) THEN
+    CALL SUBEND()
+    RETURN
+  ELSE
+    result10 = IZPOS(z)
+    result2 = IRPOS(r)
+    jpos = covered(result2, result10)
+! next try the chain
+    DO WHILE (jpos .NE. 0)
+!DIAG   chain=chain+1      ! diag
+      icv = cvcov(jpos)
+      jpos = icov(jpos)
+    END DO
+    CALL SUBEND()
+    RETURN
+  END IF
+
+CONTAINS
+!
+!
+  INTEGER FUNCTION IRPOS(r)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8), INTENT(IN) :: r
+    INTRINSIC INT
+    REAL(kind=r8) :: arg10
+    arg10 = (r-rmin)/(rmax-rmin)*lngcov*0.999999_R8 + 1
+    irpos = INT(arg10)
+    RETURN
+  END FUNCTION IRPOS
+
+!
+  INTEGER FUNCTION IZPOS(z)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8), INTENT(IN) :: z
+    INTRINSIC INT
+    REAL(kind=r8) :: arg10
+    arg10 = (z-zmin)/(zmax-zmin)*lngcov*0.999999_R8 + 1
+    izpos = INT(arg10)
+    RETURN
+  END FUNCTION IZPOS
+
+!
+  FUNCTION RPOS(ir)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: ir
+    REAL(kind=r8) :: rpos
+    INTRINSIC REAL
+    rpos = rmin + REAL(ir-1, r8)*(rmax-rmin)/(REAL(lngcov, r8)*&
+&     0.999999_R8)
+    RETURN
+  END FUNCTION RPOS
+
+!
+  FUNCTION ZPOS(iz)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: iz
+    REAL(kind=r8) :: zpos
+    INTRINSIC REAL
+    zpos = zmin + REAL(iz-1, r8)*(zmax-zmin)/(REAL(lngcov, r8)*&
+&     0.999999_R8)
+    RETURN
+  END FUNCTION ZPOS
+
+END SUBROUTINE CHORD_FIND_NODIFF
 

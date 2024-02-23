@@ -18,10 +18,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2URSC_DV(ncv, nfc, geo, mpg, fun, fund, sfn, sfnd, ffn, ffnd&
-& , resfn, resfnd, nbdirs)
+SUBROUTINE B2URSC_DV(ncv, nfc, mpg, fun, fund, sfn, sfnd, ffn, ffnd, &
+& resfn, resfnd, nbdirs)
   USE B2MOD_TYPES
-  USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -36,7 +35,6 @@ SUBROUTINE B2URSC_DV(ncv, nfc, geo, mpg, fun, fund, sfn, sfnd, ffn, ffnd&
 !
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc
-  TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), sfn(ncv, 0:1), ffn(nfc, 0:1)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), sfnd(nbdirsmax, ncv, 0:1), ffnd&
@@ -79,7 +77,7 @@ SUBROUTINE B2URSC_DV(ncv, nfc, geo, mpg, fun, fund, sfn, sfnd, ffn, ffnd&
   INTEGER :: ifc
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF
   INTEGER :: nd
   INTEGER :: nbdirs
 !   ..initialisation
@@ -95,7 +93,7 @@ SUBROUTINE B2URSC_DV(ncv, nfc, geo, mpg, fun, fund, sfn, sfnd, ffn, ffnd&
 !   ..extensive tests on first few calls
   IF (ncall_b2ursc .LT. 3) THEN
 !    ..test sign of sfn
-    CALL B2XVSG_NODIFF(ncv, sfn(1, 1), 1, 'sfn', '.le.')
+    CALL B2XVSG(ncv, sfn(1, 1), 1, 'sfn', '.le.')
   END IF
 !
 ! ..compute residual
@@ -140,9 +138,8 @@ END SUBROUTINE B2URSC_DV
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2URSC_NODIFF(ncv, nfc, geo, mpg, fun, sfn, ffn, resfn)
+SUBROUTINE B2URSC_NODIFF(ncv, nfc, mpg, fun, sfn, ffn, resfn)
   USE B2MOD_TYPES
-  USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -156,7 +153,6 @@ SUBROUTINE B2URSC_NODIFF(ncv, nfc, geo, mpg, fun, sfn, ffn, resfn)
 !
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc
-  TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), sfn(ncv, 0:1), ffn(nfc, 0:1)
 !   ..output arguments (unspecified on entry)
@@ -196,7 +192,7 @@ SUBROUTINE B2URSC_NODIFF(ncv, nfc, geo, mpg, fun, sfn, ffn, resfn)
   INTEGER :: ifc
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -210,7 +206,7 @@ SUBROUTINE B2URSC_NODIFF(ncv, nfc, geo, mpg, fun, sfn, ffn, resfn)
 !   ..extensive tests on first few calls
   IF (ncall_b2ursc .LT. 3) THEN
 !    ..test sign of sfn
-    CALL B2XVSG_NODIFF(ncv, sfn(1, 1), 1, 'sfn', '.le.')
+    CALL B2XVSG(ncv, sfn(1, 1), 1, 'sfn', '.le.')
   END IF
 !
 ! ..compute residual

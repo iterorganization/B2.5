@@ -72,7 +72,7 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
   CHARACTER :: charns*3
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF, HBOUT, INTFACEH
+  EXTERNAL B2XVFF_NODIFF, B2XVSG, HBOUT, INTFACEH
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg1d
   CHARACTER(len=14) :: arg10
@@ -110,7 +110,7 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
 !WG_TODO     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
     END IF
 !    ..test sign of rob
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
   END IF
 !
 !   ..compute flcbx, cvcbx
@@ -242,7 +242,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
   CHARACTER :: charns*3
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF, HBOUT, INTFACEH
+  EXTERNAL B2XVFF_NODIFF, B2XVSG, HBOUT, INTFACEH
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   CHARACTER(len=14) :: arg10
   CHARACTER(len=13) :: arg11
@@ -276,7 +276,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
 !WG_TODO     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
     END IF
 !    ..test sign of rob
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
   END IF
 !
 !   ..compute flcbx, cvcbx

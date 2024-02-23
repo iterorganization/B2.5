@@ -25,17 +25,18 @@
 !.specification
 !
 !srv 01.07.08
-SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
-& , tid, tn, tnd, po, pod, ne, ni, nn, kt, ktd, zt, sr, srd, nbdirs)
+SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
+& , tn, tnd, po, pod, ne, ned, ni, nid, nn, kt, ktd, zt, ztd, sr, srd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
-!WG_TODO     2          b2srst_shi0to3, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2srst_sna0to1, b2srst_smo0to3, &
+& b2srst_she0to3, b2srst_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
@@ -51,12 +52,12 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
 !srv 01.07.08
   INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), kt(ncv), zt(ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
-& pod(nbdirsmax, ncv), ktd(nbdirsmax, ncv)
+& pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
+& ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
@@ -84,7 +85,7 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
   REAL(kind=r8), DIMENSION(nbdirsmax) :: t0d
 !   ..procedures
   INTRINSIC MIN, MAX
-  EXTERNAL XERTST, IPGETR, B2XVSG_NODIFF
+  EXTERNAL XERTST, IPGETR, B2XVSG
   REAL(r8) :: min1
   REAL(r8), DIMENSION(nbdirsmax) :: min1d
   REAL(r8) :: max1
@@ -133,14 +134,14 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
 !   ..test sign of na, ni, ne, te, ti
   IF (ncall_b2srst .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 !  .. save sources
@@ -891,12 +892,12 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
   sztst = sr%szt - sztst
 !
 !djm Jan2017 Store for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srst_sna0to1 = snast
-!WG_TODO        b2srst_smo0to3 = smost
-!WG_TODO        b2srst_she0to3 = shest
-!WG_TODO        b2srst_shi0to3 = shist
-!WG_TODO      endif
+  IF (balance_netcdf .NE. 0) THEN
+    b2srst_sna0to1 = snast
+    b2srst_smo0to3 = smost
+    b2srst_she0to3 = shest
+    b2srst_shi0to3 = shist
+  END IF
 !
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1
@@ -979,17 +980,17 @@ END SUBROUTINE B2SRST_DV
 !.specification
 !
 !srv 01.07.08
-SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
-& ne, ni, nn, kt, zt, sr)
+SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
+& , nn, kt, zt, sr)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
-!WG_TODO     2          b2srst_shi0to3, balance_netcdf
+!djm Jan2017
+  USE B2MOD_BALANCE_DIFFV, ONLY : b2srst_sna0to1, b2srst_smo0to3, &
+& b2srst_she0to3, b2srst_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
@@ -1004,7 +1005,6 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
 !srv 01.07.08
   INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), kt(ncv), zt(ncv)
 !   ..input/output arguments
@@ -1032,7 +1032,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
   REAL(kind=r8) :: t0
 !   ..procedures
   INTRINSIC MIN, MAX
-  EXTERNAL XERTST, IPGETR, B2XVSG_NODIFF
+  EXTERNAL XERTST, IPGETR, B2XVSG
   REAL(r8) :: min1
   REAL(r8) :: max1
   REAL(r8) :: max2
@@ -1065,14 +1065,14 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
 !   ..test sign of na, ni, ne, te, ti
   IF (ncall_b2srst .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 !  .. save sources
@@ -1512,12 +1512,12 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
   sztst = sr%szt - sztst
 !
 !djm Jan2017 Store for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srst_sna0to1 = snast
-!WG_TODO        b2srst_smo0to3 = smost
-!WG_TODO        b2srst_she0to3 = shest
-!WG_TODO        b2srst_shi0to3 = shist
-!WG_TODO      endif
+  IF (balance_netcdf .NE. 0) THEN
+    b2srst_sna0to1 = snast
+    b2srst_smo0to3 = smost
+    b2srst_she0to3 = shest
+    b2srst_shi0to3 = shist
+  END IF
 !
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1

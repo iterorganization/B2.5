@@ -106,32 +106,35 @@ SUBROUTINE B2WUCP_NODIFF(nput, version, ns)
 !   ..save /b2cmpa/
   CALL B2WUZD_NODIFF(nput, version, ns, zamin, zamax, zn, am)
 !   ..save /b2cmpb/
-  idum(0) = cbirso
-  idum(1) = cbirno
-  idum(2) = cbirwe
-  idum(3) = cbirea
-  idum(4) = cbnrso
-  idum(5) = cbnrno
-  idum(6) = cbnrwe
-  idum(7) = cbnrea
-  CALL CFWUIN(nput, 8, idum, 'cbir,cbnr')
-  arg1 = cbnrso + cbnrno + cbnrwe + cbnrea
-  CALL CFWURE(nput, arg1, cbrbrk, 'cbrbrk')
-  DO ireg=0,cbnrso+cbnrno+cbnrwe+cbnrea-1
-    arg1 = 8*ns
-    CALL CFWURE(nput, arg1, cbsna(0, 0, ireg), 'cbsna')
-    arg1 = 8*ns
-    CALL CFWURE(nput, arg1, cbsmo(0, 0, ireg), 'cbsmo')
-    arg1 = 8*ns
-    CALL CFWURE(nput, arg1, cbshi(0, 0, ireg), 'cbshi')
-    CALL CFWURE(nput, 8, cbshe(0, ireg), 'cbshe')
-    CALL CFWURE(nput, 8, cbsch(0, ireg), 'cbsch')
-    arg1 = 8*ns
-    CALL CFWURE(nput, arg1, cbrec(0, 0, ireg), 'cbrec')
-    CALL CFWURE(nput, 8, cbmsa(0, ireg), 'cbmsa')
-    arg1 = 8*ns
-    CALL CFWURE(nput, arg1, cbmsb(0, 0, ireg), 'cbmsb')
-  END DO
+  IF (cbnrso .GT. 0 .AND. cbnrno .GT. 0 .AND. cbnrwe .GT. 0 .AND. cbnrea&
+&     .GT. 0) THEN
+    idum(0) = cbirso
+    idum(1) = cbirno
+    idum(2) = cbirwe
+    idum(3) = cbirea
+    idum(4) = cbnrso
+    idum(5) = cbnrno
+    idum(6) = cbnrwe
+    idum(7) = cbnrea
+    CALL CFWUIN(nput, 8, idum, 'cbir,cbnr')
+    arg1 = cbnrso + cbnrno + cbnrwe + cbnrea
+    CALL CFWURE(nput, arg1, cbrbrk, 'cbrbrk')
+    DO ireg=0,cbnrso+cbnrno+cbnrwe+cbnrea-1
+      arg1 = 8*ns
+      CALL CFWURE(nput, arg1, cbsna(0, 0, ireg), 'cbsna')
+      arg1 = 8*ns
+      CALL CFWURE(nput, arg1, cbsmo(0, 0, ireg), 'cbsmo')
+      arg1 = 8*ns
+      CALL CFWURE(nput, arg1, cbshi(0, 0, ireg), 'cbshi')
+      CALL CFWURE(nput, 8, cbshe(0, ireg), 'cbshe')
+      CALL CFWURE(nput, 8, cbsch(0, ireg), 'cbsch')
+      arg1 = 8*ns
+      CALL CFWURE(nput, arg1, cbrec(0, 0, ireg), 'cbrec')
+      CALL CFWURE(nput, 8, cbmsa(0, ireg), 'cbmsa')
+      arg1 = 8*ns
+      CALL CFWURE(nput, arg1, cbmsb(0, 0, ireg), 'cbmsb')
+    END DO
+  END IF
 !   ..save /b2cmpt/
   arg1 = 8*ns
   CALL CFWURE(nput, arg1, cfdf0, 'cfdf0')

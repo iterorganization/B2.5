@@ -21,8 +21,8 @@
 !.specification
 !
 !srv 13.01.17
-SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
-& ted, po, pod, ne, ned, ehx, ehxd, nbdirs)
+SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
+& , pod, ne, ned, ehx, ehxd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_GEO_DIFFV
@@ -45,7 +45,6 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: te(ncv), po(ncv), ne(ncv)
   REAL(kind=r8) :: ted(nbdirsmax, ncv), pod(nbdirsmax, ncv), ned(&
 & nbdirsmax, ncv)
@@ -76,7 +75,7 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
 & nbdirsmax, ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC LOG
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg1d
@@ -95,8 +94,8 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
 !   ..extensive tests on first few calls
   IF (ncall_b2xehx .LT. 3) THEN
 !    ..test sign of ne, te, csig
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !srv 29.01.20 }
 !
@@ -120,13 +119,13 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
-&            wrkvd, dpop, dpopd, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
+&            dpop, dpopd, nbdirs)
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, nete, neted, wrkv, &
-&            wrkvd, wrk0, wrk0d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, nete, neted, wrkv, wrkvd&
+&            , wrk0, wrk0d, nbdirs)
 !       ..interpolate ne to faces
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
@@ -152,13 +151,13 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
-&            wrkvd, dpop, dpopd, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
+&            dpop, dpopd, nbdirs)
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, nete, neted, wrkv, &
-&            wrkvd, wrk0, wrk0d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, nete, neted, wrkv, wrkvd&
+&            , wrk0, wrk0d, nbdirs)
 !       ..interpolate ne to faces
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
@@ -181,13 +180,13 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
-&            wrkvd, dpop, dpopd, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
+&            dpop, dpopd, nbdirs)
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, te, ted, wrkv, &
-&            wrkvd, wrk0, wrk0d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, te, ted, wrkv, wrkvd, &
+&            wrk0, wrk0d, nbdirs)
     DO nd=1,nbdirs
       arg1d(nd, :) = ned(nd, :)/ne
     END DO
@@ -195,8 +194,8 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, arg1(:), arg1d(:, :&
-&            ), wrkv, wrkvd, wrk1, wrk1d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, arg1(:), arg1d(:, :), &
+&            wrkv, wrkvd, wrk1, wrk1d, nbdirs)
 !       ..interpolate te to faces
     DO nd=1,nbdirsmax
       wrk2d(nd, :) = 0.D0
@@ -278,7 +277,7 @@ SUBROUTINE B2XEHX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, te, po, ne, &
 & , nete(ncv), ones(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC LOG
   REAL(kind=r8), DIMENSION(ncv) :: arg1
 !   ..initialization
@@ -293,8 +292,8 @@ SUBROUTINE B2XEHX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, te, po, ne, &
 !   ..extensive tests on first few calls
   IF (ncall_b2xehx .LT. 3) THEN
 !    ..test sign of ne, te, csig
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !srv 29.01.20 }
 !

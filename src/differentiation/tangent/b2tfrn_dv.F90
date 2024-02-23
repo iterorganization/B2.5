@@ -12,13 +12,12 @@
 !                dv.fchvisq:in dv.fchinert:in dv.fchanml:in dv.fchviskt:in
 !                dv.fna_eir:in dv.fne_eir:in dv.fhe_eir:in dv.fhi_eir:in
 !                dv.pcca:in dv.ne:in dv.ue:in dv.pa:in dv.wadia:in
-!                dv.vaecrb:in dv.wedia:in mpg.intcellp:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.vxvol:in st_ext.za2:in st_ext.na:in rt.rza:in
-!                rt.rz2:in co.chce:in co.chci:in co.cvla:in co.cdna:in
-!                co.cdpa:in pl.na:in pl.ua:in pl.te:in pl.ti:in
-!                pl.tn:in
+!                dv.vaecrb:in dv.wedia:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                st_ext.za2:in st_ext.na:in rt.rza:in rt.rz2:in
+!                co.chce:in co.chci:in co.cvla:in co.cdna:in co.cdpa:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -33,8 +32,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
-& , pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd, nbdirs)
+SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd, nbdirs)
   USE B2MOD_TYPES
 !      use b2mod_boundary_namelist
   USE B2MOD_CONSTANTS
@@ -61,10 +60,10 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2RATES), INTENT(IN) :: rt
@@ -117,7 +116,7 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, INTFACE
   EXTERNAL INTFACE_DV
   INTRINSIC NINT
   INTRINSIC MAXVAL
@@ -166,7 +165,7 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !   ..extensive tests on first few calls
   IF (ncall_b2tfrn .LT. 3) THEN
 !    ..test sign of ne
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
   END IF
 !
   meth = switch%b2tfnb_discr_meth
@@ -212,10 +211,10 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, dv%pa(:, is), pbf)
 !
 !   ..compute differences of pb
-    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, dv%pa(:, is), &
-&          dvd%pa(:, :, is), wrkvx, wrkvxd, dpb, dpbd, nbdirs)
-    CALL GRADC_P_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, dv%pa(:, is)&
-&             , dvd%pa(:, :, is), wrkvx, wrkvxd, dpbc, dpbcd, nbdirs)
+    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, dv%pa(:, is), dvd%pa(&
+&          :, :, is), wrkvx, wrkvxd, dpb, dpbd, nbdirs)
+    CALL GRADC_P_DV(ncv, nfc, nvx, 1, geo, geod, mpg, dv%pa(:, is), dvd%&
+&             pa(:, :, is), wrkvx, wrkvxd, dpbc, dpbcd, nbdirs)
 !
 !   ..compute wrk0
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, pl%ua(:, is), pld%ua(&
@@ -272,11 +271,10 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     END IF
 !
 !   ..apply discretization scheme for density-part of fna_eir
-    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, pl%na(:&
-&              , is), pld%na(:, :, is), flo_eir, flo_eird, co%cdna(:, :&
-&              , is), cod%cdna(:, :, :, is), dv%fna_eir(:, :, is), dvd%&
-&              fna_eir(:, :, :, is), wrk00, wrk00d, wrk11, wrk11d, &
-&              nbdirs)
+    CALL CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, pl%na(:, is), &
+&              pld%na(:, :, is), flo_eir, flo_eird, co%cdna(:, :, is), &
+&              cod%cdna(:, :, :, is), dv%fna_eir(:, :, is), dvd%fna_eir(&
+&              :, :, :, is), wrk00, wrk00d, wrk11, wrk11d, nbdirs)
 !
 !   ..add non-hybrid drift contribution
     temp2 = geo%fcs*geo%fcqalf(:, 0)*(switch%xvecrb*dv%vaecrb(:, 0, is)+&
@@ -567,7 +565,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, INTFACE
   INTRINSIC NINT
   INTRINSIC MAXVAL
   REAL(r8) :: result1
@@ -603,7 +601,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !   ..extensive tests on first few calls
   IF (ncall_b2tfrn .LT. 3) THEN
 !    ..test sign of ne
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
   END IF
 !
   meth = switch%b2tfnb_discr_meth

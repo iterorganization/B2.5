@@ -17,9 +17,9 @@
 !
 !
 !
-SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
-& , nad, ti, tn, tnd, chcib, chcibd, chcb, chcbd, fllim0fhi, fllim0fhid&
-& , nbdirs)
+SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , na, nad, ti, tn, tnd, chcib, chcibd, chcb, chcbd, fllim0fhi, &
+& fllim0fhid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -37,10 +37,10 @@ SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: na(ncv, 0:ns-1), ti(ncv), tn(ncv), chcib(nfc, 0:ns-1)&
 & , chcb(nfc, 0:1, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), tnd(nbdirsmax, ncv), &
@@ -118,8 +118,8 @@ SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
     DO nd=1,nbdirsmax
       tnvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, tn, tnd, tnv, &
-&          tnvd, dtnf, dtnfd, nbdirs)
+    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, tn, tnd, tnv, tnvd, &
+&          dtnf, dtnfd, nbdirs)
     IF (switch%b2tlh0_style .EQ. 0) THEN
       DO is=0,ns-1
         IF (is_neutral(is)) THEN

@@ -24,11 +24,10 @@
 !
 !srv 09.01.01
 !srv 06.04.07
-SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
-& nregionv, solvereg, itcnt, rxg, rob, robd, rzb, rzbd, pb, pz, pzd, ub&
-& , ubd, smb, smbd, flcb, flcbd, cvsb, cvsbd, resmb, resmbd, ctcfb, &
-& ctcfbd, corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name, nbdirs&
-&)
+SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, nregionv, &
+& solvereg, itcnt, rxg, rob, robd, rzb, rzbd, pb, pbd, pz, pzd, ub, ubd&
+& , smb, smbd, flcb, flcbd, cvsb, cvsbd, resmb, resmbd, ctcfb, ctcfbd, &
+& corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -45,21 +44,20 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !.end b2usmo
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, isb, nregionv, itcnt
+  INTEGER :: ncv, nfc, nvx, nregionv, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
 !srv 18.05.02
   CHARACTER(len=*) :: name
 !srv 06.04.07
   REAL(kind=r8) :: rxg, rob(ncv), rzb(ncv), pb(ncv), pz(ncv), ub(ncv), &
 & smb(ncv, 0:3), flcb(nfc, 0:1), cvsb(nfc, 0:1), resmb(ncv), ctcfb(ncv)
-  REAL(kind=r8) :: robd(nbdirsmax, ncv), rzbd(nbdirsmax, ncv), pzd(&
-& nbdirsmax, ncv), ubd(nbdirsmax, ncv), smbd(nbdirsmax, ncv, 0:3), flcbd&
-& (nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1), resmbd(nbdirsmax, &
-& ncv), ctcfbd(nbdirsmax, ncv)
+  REAL(kind=r8) :: robd(nbdirsmax, ncv), rzbd(nbdirsmax, ncv), pbd(&
+& nbdirsmax, ncv), pzd(nbdirsmax, ncv), ubd(nbdirsmax, ncv), smbd(&
+& nbdirsmax, ncv, 0:3), flcbd(nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc&
+& , 0:1), resmbd(nbdirsmax, ncv), ctcfbd(nbdirsmax, ncv)
   LOGICAL :: solvereg(0:nregionv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: corub(ncv), pccb(ncv, 0:1)
@@ -94,7 +92,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2UX5P, INTFACEH, INTFACEV
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX5P, INTFACEH, INTFACEV
   INTRINSIC SQRT
   INTRINSIC ABS
   INTRINSIC MIN
@@ -124,12 +122,12 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !   ..extensive tests on first few calls
   IF (ncall_b2usmo .LT. 3) THEN
 !    ..test sign of rob, rzb, pb, pz, smb1, smb3, cvsb
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, rzb, 1, 'rzb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pb, 1, 'pb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pz, 1, 'pz', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 1), 1, 'smb1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 3), 1, 'smb3', '.le.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, rzb, 1, 'rzb', '.gt.')
+    CALL B2XVSG(ncv, pb, 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, pz, 1, 'pz', '.gt.')
+    CALL B2XVSG(ncv, smb(1, 1), 1, 'smb1', '.le.')
+    CALL B2XVSG(ncv, smb(1, 3), 1, 'smb3', '.le.')
   END IF
 !
 ! ..apply discretization scheme
@@ -139,9 +137,8 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
   DO nd=1,nbdirsmax
     flcb0d(nd, :, :) = 0.D0
   END DO
-  CALL CALCCOEF_DV(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, mpg, &
-&            flcb, flcbd, cvsb, cvsbd, flcb0, flcb0d, cvsb0, cvsb0d, &
-&            nbdirs)
+  CALL CALCCOEF_DV(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, flcb, &
+&            flcbd, cvsb, cvsbd, flcb0, flcb0d, cvsb0, cvsb0d, nbdirs)
 !
 ! ..compute the correction
   aa = 0.0_R8
@@ -272,11 +269,11 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
     t2 = 0.5_R8*flcb0(ifc, 1) - cvsb0(ifc, 1)
     t11 = 0.0_R8
     DO incv=1,mpg%vxcvp(ivx1, 2)
-      t11 = t11 + 1/geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)
+      t11 = t11 + 1.0_R8/geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)
     END DO
     t22 = 0.0_R8
     DO incv=1,mpg%vxcvp(ivx2, 2)
-      t22 = t22 + 1/geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)
+      t22 = t22 + 1.0_R8/geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)
     END DO
 ! contribution to equation of iCv1
 ! contribution to equation of iCv2
@@ -284,7 +281,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 ! contribution from iVx1
       DO incv=1,mpg%vxcvp(ivx1, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx1, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
         DO nd=1,nbdirs
           WHERE (mpg%cvnv(mpg%cvnvp(icv1, 1):mpg%cvnvp(icv1, 1)+mpg%&
 &             cvnvp(icv1, 2)-1) .EQ. icv) aad(nd, mpg%cvnvp(icv1, 1):mpg&
@@ -300,7 +297,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 ! contribution from iVx2
       DO incv=1,mpg%vxcvp(ivx2, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx2, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
         DO nd=1,nbdirs
           WHERE (mpg%cvnv(mpg%cvnvp(icv1, 1):mpg%cvnvp(icv1, 1)+mpg%&
 &             cvnvp(icv1, 2)-1) .EQ. icv) aad(nd, mpg%cvnvp(icv1, 1):mpg&
@@ -318,7 +315,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 ! contribution from iVx1
       DO incv=1,mpg%vxcvp(ivx1, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx1, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
         DO nd=1,nbdirs
           WHERE (mpg%cvnv(mpg%cvnvp(icv2, 1):mpg%cvnvp(icv2, 1)+mpg%&
 &             cvnvp(icv2, 2)-1) .EQ. icv) aad(nd, mpg%cvnvp(icv2, 1):mpg&
@@ -334,7 +331,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 ! contribution from iVx2
       DO incv=1,mpg%vxcvp(ivx2, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx2, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
         DO nd=1,nbdirs
           WHERE (mpg%cvnv(mpg%cvnvp(icv2, 1):mpg%cvnvp(icv2, 1)+mpg%&
 &             cvnvp(icv2, 2)-1) .EQ. icv) aad(nd, mpg%cvnvp(icv2, 1):mpg&
@@ -474,8 +471,8 @@ END SUBROUTINE B2USMO_DV
 !
 !srv 09.01.01
 !srv 06.04.07
-SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
-& , solvereg, itcnt, rxg, rob, rzb, pb, pz, ub, smb, flcb, cvsb, resmb, &
+SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
+& solvereg, itcnt, rxg, rob, rzb, pb, pz, ub, smb, flcb, cvsb, resmb, &
 & ctcfb, corub, pccb, aa, aad0, name)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
@@ -492,7 +489,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !.end b2usmo
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, isb, nregionv, itcnt
+  INTEGER :: ncv, nfc, nvx, nregionv, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -531,7 +528,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2UX5P, INTFACEH, INTFACEV
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX5P, INTFACEH, INTFACEV
   INTRINSIC SQRT
   INTRINSIC ABS
   INTRINSIC MIN
@@ -554,17 +551,17 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !   ..extensive tests on first few calls
   IF (ncall_b2usmo .LT. 3) THEN
 !    ..test sign of rob, rzb, pb, pz, smb1, smb3, cvsb
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, rzb, 1, 'rzb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pb, 1, 'pb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pz, 1, 'pz', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 1), 1, 'smb1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 3), 1, 'smb3', '.le.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, rzb, 1, 'rzb', '.gt.')
+    CALL B2XVSG(ncv, pb, 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, pz, 1, 'pz', '.gt.')
+    CALL B2XVSG(ncv, smb(1, 1), 1, 'smb1', '.le.')
+    CALL B2XVSG(ncv, smb(1, 3), 1, 'smb3', '.le.')
   END IF
 !
 ! ..apply discretization scheme
-  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, mpg&
-&                , flcb, cvsb, flcb0, cvsb0)
+  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, &
+&                flcb, cvsb, flcb0, cvsb0)
 !
 ! ..compute the correction
   aa = 0.0_R8
@@ -622,11 +619,11 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
     t2 = 0.5_R8*flcb0(ifc, 1) - cvsb0(ifc, 1)
     t11 = 0.0_R8
     DO incv=1,mpg%vxcvp(ivx1, 2)
-      t11 = t11 + 1/geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)
+      t11 = t11 + 1.0_R8/geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)
     END DO
     t22 = 0.0_R8
     DO incv=1,mpg%vxcvp(ivx2, 2)
-      t22 = t22 + 1/geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)
+      t22 = t22 + 1.0_R8/geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)
     END DO
 ! contribution to equation of iCv1
 ! contribution to equation of iCv2
@@ -634,7 +631,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 ! contribution from iVx1
       DO incv=1,mpg%vxcvp(ivx1, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx1, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
         WHERE (mpg%cvnv(mpg%cvnvp(icv1, 1):mpg%cvnvp(icv1, 1)+mpg%cvnvp(&
 &           icv1, 2)-1) .EQ. icv) aa(mpg%cvnvp(icv1, 1):mpg%cvnvp(icv1, &
 &         1)+mpg%cvnvp(icv1, 2)-1) = aa(mpg%cvnvp(icv1, 1):mpg%cvnvp(&
@@ -643,7 +640,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 ! contribution from iVx2
       DO incv=1,mpg%vxcvp(ivx2, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx2, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
         WHERE (mpg%cvnv(mpg%cvnvp(icv1, 1):mpg%cvnvp(icv1, 1)+mpg%cvnvp(&
 &           icv1, 2)-1) .EQ. icv) aa(mpg%cvnvp(icv1, 1):mpg%cvnvp(icv1, &
 &         1)+mpg%cvnvp(icv1, 2)-1) = aa(mpg%cvnvp(icv1, 1):mpg%cvnvp(&
@@ -654,7 +651,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 ! contribution from iVx1
       DO incv=1,mpg%vxcvp(ivx1, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx1, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx1, 1)+incv-1)*t11)
         WHERE (mpg%cvnv(mpg%cvnvp(icv2, 1):mpg%cvnvp(icv2, 1)+mpg%cvnvp(&
 &           icv2, 2)-1) .EQ. icv) aa(mpg%cvnvp(icv2, 1):mpg%cvnvp(icv2, &
 &         1)+mpg%cvnvp(icv2, 2)-1) = aa(mpg%cvnvp(icv2, 1):mpg%cvnvp(&
@@ -663,7 +660,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 ! contribution from iVx2
       DO incv=1,mpg%vxcvp(ivx2, 2)
         icv = mpg%vxcv(mpg%vxcvp(ivx2, 1)+incv-1)
-        t3 = 1/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
+        t3 = 1.0_R8/(geo%vxvol(mpg%vxcvp(ivx2, 1)+incv-1)*t22)
         WHERE (mpg%cvnv(mpg%cvnvp(icv2, 1):mpg%cvnvp(icv2, 1)+mpg%cvnvp(&
 &           icv2, 2)-1) .EQ. icv) aa(mpg%cvnvp(icv2, 1):mpg%cvnvp(icv2, &
 &         1)+mpg%cvnvp(icv2, 2)-1) = aa(mpg%cvnvp(icv2, 1):mpg%cvnvp(&

@@ -59,7 +59,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
 !  version : 28.12.96 21:39
 !
 !
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
@@ -156,6 +156,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
   REAL(kind=r8), SAVE :: gpdata(100, 2, nstraid)
   REAL(kind=r8), SAVE :: time_dep_puff_param(10, nstraid)
   REAL(kind=r8), SAVE :: rc_face_ori(2*(def_nxd+def_nyd), nstraid)
+  REAL(kind=r8), SAVE :: strasclfl(nstraid)
   CHARACTER(len=16), SAVE :: textan(0:def_natm-1), textmn(0:def_nmol-1)&
 & , textin(0:def_nion-1)
   REAL(kind=r8), SAVE :: chemical_sputter_yield(0:def_nlim+def_nsts)
@@ -192,8 +193,9 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
   CHARACTER(len=2), SAVE :: surf_mat(nstraid)
   CHARACTER(len=1), SAVE :: hyb_type(nstraid)
   INTEGER, SAVE :: mlcmp(natmid, nmolid), micmp(natmid, nionid), latmscl&
-& (natmid), lmolscl(nmolid), lionscl(nionid), lcns(nstsid), ltns(nstsid)&
-& , lsns(nstraid*def_nsrfs), ksns(nstraid), msns(2, nstraid)
+& (natmid), lmolscl(nmolid), lionscl(nionid), lcns(nstsid), ktns(nstsid)&
+& , ltns(nstsid), lsns(nstraid*def_nsrfs), ksns(nstraid), msns(2, &
+& nstraid)
   REAL(kind=r8), SAVE :: gpfc(natmid, nstraid)
   REAL(kind=r8), SAVE :: rcfe(nstraid), rcfi(nstraid)
 !
@@ -222,7 +224,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
   NAMELIST /neutrals_save/ saved_volrec
 !
   PRIVATE :: neutrals
-!mb Franck-Condon energy contribution 
+!mb Franck-Condon energy contribution
 !mb flag for ion acceleration through sheath potential
   NAMELIST /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp, &
 &     rcfe, rcfi, rc_list_size, rc_list_x, rc_list_y, rc_list_char, &
@@ -243,7 +245,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
 &     , sps_mtri, sps_tmpr, sps_spph, sps_spch, sps_sgrp, sps_mtrl, msns&
 &     , write_nml_neut, time_dep_puff, ngpdata, gpdata, maxpoin, &
 &     time_dep_puff_param, time_dep_puff_func, time_dep_puff_case, e_fc&
-&     , accel_ion
+&     , accel_ion, strasclfl
   INTERFACE READ_NEUTRALS_NAMELIST
       MODULE PROCEDURE READ_NEUTRALS_NAMELIST_ST
       MODULE PROCEDURE READ_NEUTRALS_NAMELIST_US
@@ -257,14 +259,14 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
 CONTAINS
 !
 !
-  SUBROUTINE ALLOC_B2MOD_NEUTRALS(nxd, nyd, nsd, natm_in, nmol_in, &
-&   nion_in, nstra_in, nsts_in, sput_dst)
+  SUBROUTINE ALLOC_B2MOD_NEUTRALS(nsd, natm_in, nmol_in, nion_in, &
+&   nstra_in, nsts_in, sput_dst)
     USE B2MOD_ELEMENTS_DIFFV, ONLY : is_codes
     USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: nxd, nyd, nsd, natm_in, nmol_in, nion_in, &
-&   nstra_in, nsts_in, sput_dst
+    INTEGER, INTENT(IN) :: nsd, natm_in, nmol_in, nion_in, nstra_in, &
+&   nsts_in, sput_dst
     INTEGER :: is, isstart, isend
     INTEGER :: is0, ispecies
     INTEGER :: use_eirene
@@ -275,6 +277,7 @@ CONTAINS
     REAL(kind=r8) :: abs0
     DATA use_eirene /0/
 !
+    CALL XERTST(nsd .LE. def_nsd, 'faulty parameter nsd')
     WRITE(*, *) ' natm_id,natmid ', natm_in, natmid
     CALL XERTST(natm_in .LE. natmid, 'faulty parameter natm_in')
     CALL XERTST(nmol_in .LE. nmolid, 'faulty parameter nmol_in')
@@ -340,7 +343,7 @@ CONTAINS
     END DO
 !mb  Default Franck-Condon energy is 2eV per atom
     e_fc = 3.0_R8
-!mb  Default is to accelerate ions everywhere with sheath potential (target & wall) 
+!mb  Default is to accelerate ions everywhere with sheath potential (target & wall)
     accel_ion = 1
     rcion = 0.0_R8
     recyceir = 1.0_R8
@@ -383,6 +386,7 @@ CONTAINS
     micmp = 0
     lcns = 0
     ltns = 0
+    ktns = 0
     ncns = 0
     ntns = 0
     ksns = 0
@@ -430,8 +434,8 @@ CONTAINS
         ELSE
           abs0 = -(am(is)-am(is0))
         END IF
-        IF (zn(is) .EQ. zn(is0) .AND. abs0 .LT. 1.0e-3_R8 .AND. is .LT. &
-&           nsd) THEN
+        IF (NINT(zn(is)) .EQ. NINT(zn(is0)) .AND. abs0 .LT. 1.0e-3_R8 &
+&           .AND. is .LT. nsd) THEN
           is = is + 1
           IF (is .EQ. nsd) GOTO 100
         ELSE
@@ -447,6 +451,7 @@ CONTAINS
       latmscl(ispecies) = ispecies
       is0 = is
     END DO
+    strasclfl = 1.0_R8
     WRITE(hlp_frm, '(a6,i3,a3)') '(1x,a,', nsd, 'i4)'
     WRITE(*, hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
     WRITE(*, hlp_frm) 'b2eatcr : ', b2eatcr(0:nsd-1)
@@ -483,7 +488,7 @@ CONTAINS
 !
   SUBROUTINE READ_NEUTRALS_NAMELIST_ST(nx, ny, ns, dotest)
     USE B2MOD_WALL_DIFFV, ONLY : track_index, ntrack, track_species
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_ELEMENTS_DIFFV, ONLY : is_codes
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
     USE B2MOD_B2CMPA_DIFFV
@@ -507,6 +512,7 @@ CONTAINS
     INTRINSIC MINLOC
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
+    LOGICAL :: result10
 !
     filename = neutrals_filename
     neutrals_time_mod = 0.0_R8
@@ -535,6 +541,7 @@ CONTAINS
       ELSE
         nstrat = nstrai
       END IF
+!
       ALLOCATE(old_style(nstrat))
       DO is=1,nstrat
         IF (rc_list_size(is) .EQ. 0) THEN
@@ -594,7 +601,7 @@ CONTAINS
 &       istra, :) = -1
 !mb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
 !   to decouple these variables for the EIRENE side and the fluid neutral side.
-!   If these fields have not been set in the namelist they are made equal to their 
+!   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
       IF (b2species_start(istra) .EQ. -100) b2species_start(istra) = &
 &         species_start(istra)
@@ -763,6 +770,7 @@ CONTAINS
 &                        'time_dep_puff_func set for a non-puff stratum'&
 &                                           )
       END IF
+      CALL XERTST(0.0_R8 .LE. strasclfl(istra), 'faulty input strascl')
     END DO
     DO is=0,ns-1
       CALL XERTST(1 .LE. b2espcr(is) .AND. b2espcr(is) .LE. nspecies, &
@@ -778,7 +786,13 @@ CONTAINS
     DO is=1,nnatmi
       CALL XERTST(0 .LE. eb2atcr(is) .AND. eb2atcr(is) .LT. ns, &
 &           'faulty input eb2atcr')
-      CALL XERTST(0 .LE. latmscl(is), 'faulty input latmscl')
+      IF (eb2atcr(is) .GT. 0) THEN
+        result10 = LNEXT(eb2atcr(is) - 1, eb2atcr(is))
+        CALL XERTST(.NOT.result10, &
+&             'eb2atcr must be the first species in sequence !')
+      END IF
+      CALL XERTST(0 .LE. latmscl(is) .AND. latmscl(is) .LE. nspecies, &
+&           'faulty input latmscl')
     END DO
     DO is=1,nspecies
       CALL XERTST(0 .LE. eb2spcr(is) .AND. eb2spcr(is) .LT. ns, &
@@ -788,10 +802,12 @@ CONTAINS
       DO i=1,nnatmi
         CALL XERTST(0 .LE. mlcmp(i, is), 'faulty input mlcmp')
       END DO
-      CALL XERTST(0 .LE. lmolscl(is), 'faulty input lmolscl')
+      CALL XERTST(0 .LE. lmolscl(is) .AND. lmolscl(is) .LE. nspecies, &
+&           'faulty input lmolscl')
     END DO
     DO is=1,nnioni
-      CALL XERTST(0 .LE. lionscl(is), 'faulty input lionscl')
+      CALL XERTST(0 .LE. lionscl(is) .AND. lionscl(is) .LE. nspecies, &
+&           'faulty input lionscl')
     END DO
     DO is=1,nnstsi
       CALL XERTST(0 .LE. lcns(is) .AND. lcns(is) .LE. nnstsi, &
@@ -1086,7 +1102,7 @@ CONTAINS
   SUBROUTINE READ_NEUTRALS_NAMELIST_US_DV(ns, m, md0, switch, dotest, &
 &   nbdirs)
     USE B2MOD_WALL_DIFFV, ONLY : track_index, ntrack, track_species
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_ELEMENTS_DIFFV, ONLY : is_codes
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
     USE B2MOD_B2CMPA_DIFFV
@@ -1102,7 +1118,7 @@ CONTAINS
     INTEGER :: ns
     LOGICAL :: dotest
     INTEGER :: is, ist, ix, istra, i, j, k, n, ii(1), itrack, noss, &
-&   instra, iss, indss, idb, nrcl, nfaces
+&   instra, iss, indss, idb, nrcl
     REAL(kind=r8) :: hlp
     LOGICAL :: file_ok
     CHARACTER(len=3) :: ss
@@ -1112,6 +1128,7 @@ CONTAINS
     INTRINSIC TRIM
     INTRINSIC COUNT
     EXTERNAL COUNT_DV
+    EXTERNAL FIND_FACES
     EXTERNAL XERRAB
     EXTERNAL XERRAB_DV
     INTRINSIC ANY
@@ -1125,6 +1142,7 @@ CONTAINS
     EXTERNAL MINLOC_DV
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
+    LOGICAL :: result10
     INTEGER :: nbdirs
     REAL(kind=r8) :: MINVAL_DV
     LOGICAL :: ANY_DV
@@ -1165,9 +1183,17 @@ CONTAINS
 !wdk    for multispecies or spatially hybrid cases,
 !wdk    could have multiple recycling strata per boundary;
 !wdk    conservative estimate: assume that there might be one stratum per fluid
-      m%mxnrc = ns*COUNT(m%fclbl.NE.0)
+!wvu    for (advanced) spatially hybrid, might need even more.
+      IF (switch%spatial_hybrid .EQ. 0) THEN
+!! default, no spatial hybrid
+        m%mxnrc = ns*COUNT(m%fclbl.NE.0)
+      ELSE
+!! in case of spatially hybrid neutrals, some neutral strata may be defined twice 
+        m%mxnrc = 3*ns*COUNT(m%fclbl.NE.0)
+      END IF
       CALL ALLOC_MAPPING_RC_DV(m, md0, nbdirs)
       m%rcfcp = 0
+!
       OPEN(newunit=idb, file='debug_neutrals.out') 
       instra = 0
       DO istra=1,nstrai
@@ -1177,16 +1203,15 @@ CONTAINS
           noss = rcend(istra) - rcstart(istra) + 1
           DO iss=1,noss
             indss = rcstart(istra) + iss - 1
-            nfaces = 0
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
-            CALL FIND_FACES_NODIFF(indss, instra, nrcl, m%mxnrc, m%rcfc&
-&                            , m%rcfcor, m, idb, nfaces)
-            WRITE(ss, '(I0)') indss
-            CALL XERTST(nfaces .GT. 0, &
-&                 'No faces found for neutrals face label = '//ss)
+            CALL FIND_FACES(indss, instra, nrcl, m%mxnrc, m%rcfc, m%&
+&                     rcfcor, m, idb)
           END DO
 ! iss
+          WRITE(ss, '(I0)') istra
+          CALL XERTST(nrcl .GT. 0, &
+&               'No faces found for neutrals stratum = '//ss)
           m%rcfcp(istra, 2) = nrcl
         ELSE IF (crcstra(istra) .NE. 'T' .AND. crcstra(istra) .NE. 'V' &
 &           .AND. crcstra(istra) .NE. 'C') THEN
@@ -1236,7 +1261,7 @@ CONTAINS
 &       , :) = -1
 !mb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
 !   to decouple these variables for the EIRENE side and the fluid neutral side.
-!   If these fields have not been set in the namelist they are made equal to their 
+!   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
       IF (b2species_start(ist) .EQ. -100) b2species_start(ist) = &
 &         species_start(ist)
@@ -1273,6 +1298,8 @@ CONTAINS
 &         'faulty input neutrals_time_switch')
 !
     DO istra=1,nstrat
+      CALL XERTST(rcstart(istra) .LE. rcend(istra), &
+&           'faulty inputs rcstart > rcend')
       result1 = MAXVAL(targsp(istra, :))
       CALL XERTST(result1 .LT. ns, 'faulty inputs targsp > ns')
       CALL XERTST(targsp(istra, 1) .GE. -1, 'faulty inputs targsp(,1)')
@@ -1338,7 +1365,13 @@ CONTAINS
     DO is=1,nnatmi
       CALL XERTST(0 .LE. eb2atcr(is) .AND. eb2atcr(is) .LT. ns, &
 &           'faulty input eb2atcr')
-      CALL XERTST(0 .LE. latmscl(is), 'faulty input latmscl')
+      IF (eb2atcr(is) .GT. 0) THEN
+        result10 = LNEXT(eb2atcr(is) - 1, eb2atcr(is))
+        CALL XERTST(.NOT.result10, &
+&             'eb2atcr must be the first species in sequence !')
+      END IF
+      CALL XERTST(0 .LE. latmscl(is) .AND. latmscl(is) .LE. nspecies, &
+&           'faulty input latmscl')
     END DO
     DO is=1,nspecies
       CALL XERTST(0 .LE. eb2spcr(is) .AND. eb2spcr(is) .LT. ns, &
@@ -1348,10 +1381,12 @@ CONTAINS
       DO i=1,nnatmi
         CALL XERTST(0 .LE. mlcmp(i, is), 'faulty input mlcmp')
       END DO
-      CALL XERTST(0 .LE. lmolscl(is), 'faulty input lmolscl')
+      CALL XERTST(0 .LE. lmolscl(is) .AND. lmolscl(is) .LE. nspecies, &
+&           'faulty input lmolscl')
     END DO
     DO is=1,nnioni
-      CALL XERTST(0 .LE. lionscl(is), 'faulty input lionscl')
+      CALL XERTST(0 .LE. lionscl(is) .AND. lionscl(is) .LE. nspecies, &
+&           'faulty input lionscl')
     END DO
     DO is=1,nnstsi
       CALL XERTST(0 .LE. lcns(is) .AND. lcns(is) .LE. nnstsi, &
@@ -1484,7 +1519,7 @@ CONTAINS
 !
   SUBROUTINE READ_NEUTRALS_NAMELIST_US(ns, m, switch, dotest)
     USE B2MOD_WALL_DIFFV, ONLY : track_index, ntrack, track_species
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_ELEMENTS_DIFFV, ONLY : is_codes
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
     USE B2MOD_B2CMPA_DIFFV
@@ -1498,7 +1533,7 @@ CONTAINS
     INTEGER :: ns
     LOGICAL :: dotest
     INTEGER :: is, ist, ix, istra, i, j, k, n, ii(1), itrack, noss, &
-&   instra, iss, indss, idb, nrcl, nfaces
+&   instra, iss, indss, idb, nrcl
     REAL(kind=r8) :: hlp
     LOGICAL :: file_ok
     CHARACTER(len=3) :: ss
@@ -1507,6 +1542,7 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC COUNT
+    EXTERNAL FIND_FACES
     EXTERNAL XERRAB
     INTRINSIC ANY
     INTRINSIC MINVAL
@@ -1515,6 +1551,7 @@ CONTAINS
     INTRINSIC MINLOC
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
+    LOGICAL :: result10
 !
     filename = neutrals_filename
     neutrals_time_mod = 0.0_R8
@@ -1549,9 +1586,17 @@ CONTAINS
 !wdk    for multispecies or spatially hybrid cases,
 !wdk    could have multiple recycling strata per boundary;
 !wdk    conservative estimate: assume that there might be one stratum per fluid
-      m%mxnrc = ns*COUNT(m%fclbl.NE.0)
+!wvu    for (advanced) spatially hybrid, might need even more.
+      IF (switch%spatial_hybrid .EQ. 0) THEN
+!! default, no spatial hybrid
+        m%mxnrc = ns*COUNT(m%fclbl.NE.0)
+      ELSE
+!! in case of spatially hybrid neutrals, some neutral strata may be defined twice 
+        m%mxnrc = 3*ns*COUNT(m%fclbl.NE.0)
+      END IF
       CALL ALLOC_MAPPING_RC(m)
       m%rcfcp = 0
+!
       OPEN(newunit=idb, file='debug_neutrals.out') 
       instra = 0
       DO istra=1,nstrai
@@ -1561,16 +1606,15 @@ CONTAINS
           noss = rcend(istra) - rcstart(istra) + 1
           DO iss=1,noss
             indss = rcstart(istra) + iss - 1
-            nfaces = 0
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
-            CALL FIND_FACES_NODIFF(indss, instra, nrcl, m%mxnrc, m%rcfc&
-&                            , m%rcfcor, m, idb, nfaces)
-            WRITE(ss, '(I0)') indss
-            CALL XERTST(nfaces .GT. 0, &
-&                 'No faces found for neutrals face label = '//ss)
+            CALL FIND_FACES(indss, instra, nrcl, m%mxnrc, m%rcfc, m%&
+&                     rcfcor, m, idb)
           END DO
 ! iss
+          WRITE(ss, '(I0)') istra
+          CALL XERTST(nrcl .GT. 0, &
+&               'No faces found for neutrals stratum = '//ss)
           m%rcfcp(istra, 2) = nrcl
         ELSE IF (crcstra(istra) .NE. 'T' .AND. crcstra(istra) .NE. 'V' &
 &           .AND. crcstra(istra) .NE. 'C') THEN
@@ -1620,7 +1664,7 @@ CONTAINS
 &       , :) = -1
 !mb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
 !   to decouple these variables for the EIRENE side and the fluid neutral side.
-!   If these fields have not been set in the namelist they are made equal to their 
+!   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
       IF (b2species_start(ist) .EQ. -100) b2species_start(ist) = &
 &         species_start(ist)
@@ -1657,6 +1701,8 @@ CONTAINS
 &         'faulty input neutrals_time_switch')
 !
     DO istra=1,nstrat
+      CALL XERTST(rcstart(istra) .LE. rcend(istra), &
+&           'faulty inputs rcstart > rcend')
       result1 = MAXVAL(targsp(istra, :))
       CALL XERTST(result1 .LT. ns, 'faulty inputs targsp > ns')
       CALL XERTST(targsp(istra, 1) .GE. -1, 'faulty inputs targsp(,1)')
@@ -1722,7 +1768,13 @@ CONTAINS
     DO is=1,nnatmi
       CALL XERTST(0 .LE. eb2atcr(is) .AND. eb2atcr(is) .LT. ns, &
 &           'faulty input eb2atcr')
-      CALL XERTST(0 .LE. latmscl(is), 'faulty input latmscl')
+      IF (eb2atcr(is) .GT. 0) THEN
+        result10 = LNEXT(eb2atcr(is) - 1, eb2atcr(is))
+        CALL XERTST(.NOT.result10, &
+&             'eb2atcr must be the first species in sequence !')
+      END IF
+      CALL XERTST(0 .LE. latmscl(is) .AND. latmscl(is) .LE. nspecies, &
+&           'faulty input latmscl')
     END DO
     DO is=1,nspecies
       CALL XERTST(0 .LE. eb2spcr(is) .AND. eb2spcr(is) .LT. ns, &
@@ -1732,10 +1784,12 @@ CONTAINS
       DO i=1,nnatmi
         CALL XERTST(0 .LE. mlcmp(i, is), 'faulty input mlcmp')
       END DO
-      CALL XERTST(0 .LE. lmolscl(is), 'faulty input lmolscl')
+      CALL XERTST(0 .LE. lmolscl(is) .AND. lmolscl(is) .LE. nspecies, &
+&           'faulty input lmolscl')
     END DO
     DO is=1,nnioni
-      CALL XERTST(0 .LE. lionscl(is), 'faulty input lionscl')
+      CALL XERTST(0 .LE. lionscl(is) .AND. lionscl(is) .LE. nspecies, &
+&           'faulty input lionscl')
     END DO
     DO is=1,nnstsi
       CALL XERTST(0 .LE. lcns(is) .AND. lcns(is) .LE. nnstsi, &
@@ -1979,22 +2033,21 @@ CONTAINS
 !
 !**********************************************************************
 !
-  SUBROUTINE CONV_RCPARMS(nx, ny, ns, m, g)
-    USE B2MOD_INDIRECT
+  SUBROUTINE CONV_RCPARMS(m)
+    USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nx, ny, ns, istra, istrac, instra, noss, iss, indss, idb&
-&   , nfaces
+    INTEGER :: istra, istrac, instra, noss, iss, indss, idb
     INTEGER :: rcs(nstrat), rce(nstrat), rcl(nstrat)
     INTEGER :: minlbl(nstrat), maxlbl(nstrat)
     CHARACTER(len=1) :: lchar(nstrat)
     CHARACTER(len=3) :: ss
     TYPE(MAPPING), INTENT(INOUT) :: m
-    TYPE(GEOMETRY), INTENT(INOUT) :: g
     INTRINSIC COUNT
     EXTERNAL XERRAB
     INTRINSIC MIN
     INTRINSIC MAX
+    EXTERNAL FIND_FACES
     REAL(kind=r8) :: result1
 !      intrinsic huge
 !
@@ -2168,16 +2221,15 @@ CONTAINS
         noss = rcend(istra) - rcstart(istra) + 1
         DO iss=1,noss
           indss = rcstart(istra) + iss - 1
-          nfaces = 0
           WRITE(*, *) ' surface index ', indss
 !  find all faces belonging to surface structure INDSS
-          CALL FIND_FACES_NODIFF(indss, instra, rcl(istra), m%mxnrc, m%&
-&                          rcfc, m%rcfcor, m, idb, nfaces)
-          WRITE(ss, '(I0)') indss
-          CALL XERTST(nfaces .GT. 0, &
-&               'No faces found for neutrals face label = '//ss)
+          CALL FIND_FACES(indss, instra, rcl(istra), m%mxnrc, m%rcfc, m%&
+&                   rcfcor, m, idb)
         END DO
 ! iss
+        WRITE(ss, '(I0)') istra
+        CALL XERTST(rcl(istra) .GT. 0, &
+&             'No faces found for neutrals stratum = '//ss)
         m%rcfcp(istra, 2) = rcl(istra)
         rcfe(istra) = 0.5_R8
         rcfi(istra) = 3.0_R8
@@ -2220,7 +2272,6 @@ CONTAINS
     TYPE(MAPPING), INTENT(INOUT) :: m
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: md0
     INTEGER :: istra, instra, istrac, ifc, ic1, ic2
-    INTEGER :: iout, ian, ien, i
     INTRINSIC SUM
     INTRINSIC MIN
     INTRINSIC MAX
@@ -2268,21 +2319,6 @@ CONTAINS
         END IF
       END DO
     END DO
-    OPEN(newunit=iout, file='rc.testout') 
-    WRITE(iout, *) 'nstrat =', m%nrc
-    WRITE(iout, '(a,/(10i6))') 'rcCvP(1) ', (m%rccvp(istra, 1), istra=1,&
-&    m%nrc)
-    WRITE(iout, '(a,/(10i6))') 'rcCvP(2) ', (m%rccvp(istra, 2), istra=1,&
-&    m%nrc)
-    DO istra=1,m%nrc
-      ian = m%rccvp(istra, 1)
-      ien = m%rccvp(istra, 1) + m%rccvp(istra, 2) - 1
-      WRITE(iout, *) 'istra = ', istra
-      WRITE(iout, '(a,/(10i6))') 'rcCv(1) ', (m%rccv(i, 1), i=ian,ien)
-      WRITE(iout, '(a,/(10i6))') 'rcCv(2) ', (m%rccv(i, 2), i=ian,ien)
-      WRITE(iout, '(a,/(10f6.2))') 'rcFcOr  ', (m%rcfcor(i), i=ian,ien)
-    END DO
-    CLOSE(iout) 
   END SUBROUTINE RC_TO_STRUCT_DV
 
 !
@@ -2294,7 +2330,6 @@ CONTAINS
 !
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: istra, instra, istrac, ifc, ic1, ic2
-    INTEGER :: iout, ian, ien, i
     INTRINSIC SUM
     INTRINSIC MIN
     INTRINSIC MAX
@@ -2340,49 +2375,36 @@ CONTAINS
         END IF
       END DO
     END DO
-    OPEN(newunit=iout, file='rc.testout') 
-    WRITE(iout, *) 'nstrat =', m%nrc
-    WRITE(iout, '(a,/(10i6))') 'rcCvP(1) ', (m%rccvp(istra, 1), istra=1,&
-&    m%nrc)
-    WRITE(iout, '(a,/(10i6))') 'rcCvP(2) ', (m%rccvp(istra, 2), istra=1,&
-&    m%nrc)
-    DO istra=1,m%nrc
-      ian = m%rccvp(istra, 1)
-      ien = m%rccvp(istra, 1) + m%rccvp(istra, 2) - 1
-      WRITE(iout, *) 'istra = ', istra
-      WRITE(iout, '(a,/(10i6))') 'rcCv(1) ', (m%rccv(i, 1), i=ian,ien)
-      WRITE(iout, '(a,/(10i6))') 'rcCv(2) ', (m%rccv(i, 2), i=ian,ien)
-      WRITE(iout, '(a,/(10f6.2))') 'rcFcOr  ', (m%rcfcor(i), i=ian,ien)
-    END DO
-    CLOSE(iout) 
   END SUBROUTINE RC_TO_STRUCT
 
-!
-!
 !
 !**********************************************************************
 !
   SUBROUTINE WRITE_RCPARMS(ns, m)
     USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_VERSION_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
     INTEGER, INTENT(IN) :: ns
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: istra, iout, is, i
+    INTEGER :: ii(1)
     CHARACTER(len=1), SAVE :: ap=''''
-    CHARACTER(len=10), SAVE :: new_neutrals_version='03.002.000'
     INTRINSIC ABS
     INTRINSIC SUM
     INTRINSIC MAX
     INTRINSIC TRIM
+    INTRINSIC MINLOC
+    INTRINSIC SIZE
     INTEGER :: y1
     INTEGER :: abs0
+    INTEGER, DIMENSION(nn_spcsrf) :: abs1
     INTEGER :: max1
 !
     OPEN(newunit=iout, file='b2us.neutrals.parameters') 
 !
-    CALL CFVERW(iout, new_neutrals_version)
+    CALL CFVERW(iout, newversion)
 !
     WRITE(iout, '(1x,a)') '&NEUTRALS'
     WRITE(iout, '(1x,a,es9.2)') 'EIRENE_STEP_CPU = ', eirene_step_cpu
@@ -2401,6 +2423,7 @@ CONTAINS
 &   istra), ',', istra=1,m%nrc)
     WRITE(iout, '(1x,a,(1x,T14,10(f6.2,a1,1x)))') 'RCFI  =  ', (rcfi(&
 &   istra), ',', istra=1,m%nrc)
+!
     DO istra=1,m%nrc
       WRITE(iout, '(1x,a,i2,a,(10(f6.2,a1)))') 'recyc(0,', istra, ')= '&
 &     , (recyc(is, istra), ',', is=0,ns-1)
@@ -2410,10 +2433,12 @@ CONTAINS
       WRITE(iout, '(1x,a,i2,a,(10(f6.2,a1)))') 'b2recyc(0,', istra, &
 &     ')= ', (b2recyc(is, istra), ',', is=0,ns-1)
     END DO
+!
     DO istra=1,m%nrc
       WRITE(iout, '(1x,a,i2,a,(10(f6.2,a1)))') 'mrecyc(0,', istra, ')= '&
 &     , (mrecyc(is, istra), ',', is=0,ns-1)
     END DO
+!
     DO istra=1,m%nrc
       WRITE(iout, '(1x,a,i2,a,(10(f6.2,a1)))') 'erecyc(0,', istra, ')= '&
 &     , (erecyc(is, istra), ',', is=0,ns-1)
@@ -2449,8 +2474,12 @@ CONTAINS
 &     ',', is=1,nnstsi)
     END IF
 !
+    WRITE(iout, '(1x,a,(1x,T14,10(2x,a1,a2,a1,a1)))') 'surf_mat = ', (ap&
+&   , surf_mat(is), ap, ',', is=1,nstrai)
+!
     WRITE(iout, '(1x,a,(1x,T7,10(i5,a1,1x)))') 'maxw= ', (maxw(is), ','&
 &   , is=1,nstrai)
+!
     WRITE(iout, '(1x,a,(1x,T7,10(i5,a1,1x)))') 'mol= ', (mol(is), ',', &
 &   is=1,nstrai)
 !
@@ -2458,6 +2487,9 @@ CONTAINS
 &   accel_ion(is), ',', is=1,nstrai)
 !
     WRITE(iout, '(1x,a,f10.7,a1)') 'e_fc=', e_fc, ','
+!
+    WRITE(iout, '(1x,a,(1x,T12,10(f6.2,a1,1x)))') 'strasclfl= ', (&
+&   strasclfl(is), ',', is=1,nstrai)
 !
     WRITE(iout, '(1x,a,(10(i5,a1,1x)))') 'b2espcr= ', (b2espcr(is), ','&
 &   , is=0,ns-1)
@@ -2573,8 +2605,21 @@ CONTAINS
 !
     WRITE(iout, '(1x,a,i5,a1)') 'n_spcsrf= ', n_spcsrf, ','
     IF (n_spcsrf .GT. 0) THEN
-      WRITE(iout, '(1x,a,(10(i5,a1,1x)))') 'l_spcsrf= ', (l_spcsrf(i), &
-&     ',', i=1,n_spcsrf)
+      WHERE (l_spcsrf .GE. 0.0) 
+        abs1 = l_spcsrf
+      ELSEWHERE
+        abs1 = -l_spcsrf
+      END WHERE
+      ii = MINLOC(abs1)
+      IF (ii(1) .EQ. 1) THEN
+        is = 0
+      ELSE IF (l_spcsrf(ii(1)) .EQ. 0) THEN
+        is = ii(1) - 1
+      ELSE
+        is = SIZE(l_spcsrf)
+      END IF
+      IF (is .GT. 0) WRITE(iout, '(1x,a,(10(i5,a1,1x)))') 'l_spcsrf= ', &
+&                    (l_spcsrf(i), ',', i=1,is)
       WRITE(iout, '(1x,a,(10(a1,a,a1,a1,1x)))') 'sps_id= ', (ap, sps_id(&
 &     i), ap, ',', i=1,n_spcsrf)
       WRITE(iout, '(1x,a,(10(i5,a1,1x)))') 'i_spcsrf= ', (i_spcsrf(i), &

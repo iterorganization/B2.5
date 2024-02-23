@@ -6,8 +6,9 @@
 !   with respect to varying inputs: *(dv.ne) *(dv.ni) chvemx chvimx
 !                *(pl.na) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in geo.cvbb:in
-!                geo.cvqgam:in geo.cvvol:in geo.fcs:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcpbs:in pl.na:in pl.te:in pl.ti:in
+!                geo.cvqgam:in geo.cvvol:in geo.fcs:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcpbs:in pl.na:in
+!                pl.te:in pl.ti:in
 !
 !
 !
@@ -22,8 +23,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
-& , pl, pld, dv, dvd, st_ext, chvemx, chvemxd, chvimx, chvimxd, nbdirs)
+SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, pl, &
+& pld, dv, dvd, st_ext, chvemx, chvemxd, chvimx, chvimxd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -32,9 +33,10 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2trql
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2trql, ncall_b2tlhe
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlhe
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -50,7 +52,6 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(IN) :: dv
@@ -85,7 +86,7 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   EXTERNAL B2TLHE_NODIFF, B2TLHI_NODIFF, B2TLMV_NODIFF, B2XPNR_NODIFF, &
-&     B2XVSG_NODIFF
+&     B2XVSG
   EXTERNAL B2TLHE_DV, B2TLHI_DV, B2XPNR_DV
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -121,9 +122,9 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
 !   ..extensive tests on first few calls
   IF (ncall_b2trql .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test sign of cvVol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -143,10 +144,10 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
 &         'faulty argument range fcQgam(,0)')
 !    ..test sign of na, te, ti, ne2
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute nirm (atom density weighted by 1/sqrt(am)
   CALL B2XPNR_DV(ncv, ns, pl%na, pld%na, nirm, nirmd, nbdirs)
@@ -154,13 +155,13 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
 ! ..compute flux limit velocities
 !   ..compute electron heat flux limit velocity
   cflme = cflim(0)
-  CALL B2TLHE_DV(ncv, nfc, me, cflme, switch, geo, mpg, dv%ne, dvd%ne, &
-&          pl%te, pld%te, chvemx, chvemxd, nbdirs)
+  CALL B2TLHE_DV(ncv, nfc, me, cflme, switch, switchd, geo, geod, mpg, &
+&          dv%ne, dvd%ne, pl%te, pld%te, chvemx, chvemxd, nbdirs)
 !   ..compute all atom heat flux limit velocity
   cflmi = cflim(1)
-  CALL B2TLHI_DV(ncv, nfc, mp, cflmi, switch, geo, mpg, dv%ni, dvd%ni, &
-&          nirm, nirmd, st_ext%ni, pl%ti, pld%ti, pl%tn, chvimx, chvimxd&
-&          , nbdirs)
+  CALL B2TLHI_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, geod, mpg, &
+&          dv%ni, dvd%ni, nirm, nirmd, st_ext%ni, pl%ti, pld%ti, chvimx&
+&          , chvimxd, nbdirs)
 !
 ! ..return
   ncall_b2trql = ncall_b2trql + 1
@@ -192,9 +193,10 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2trql
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2trql, ncall_b2tlhe
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlhe
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -237,7 +239,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   EXTERNAL B2TLHE_NODIFF, B2TLHI_NODIFF, B2TLMV_NODIFF, B2XPNR_NODIFF, &
-&     B2XVSG_NODIFF
+&     B2XVSG
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
@@ -271,9 +273,9 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
 !   ..extensive tests on first few calls
   IF (ncall_b2trql .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test sign of cvVol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -293,10 +295,10 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
 &         'faulty argument range fcQgam(,0)')
 !    ..test sign of na, te, ti, ne2
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute nirm (atom density weighted by 1/sqrt(am)
   CALL B2XPNR_NODIFF(ncv, ns, pl%na, nirm)
@@ -309,7 +311,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
 !   ..compute all atom heat flux limit velocity
   cflmi = cflim(1)
   CALL B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, dv%ni, nirm&
-&              , st_ext%ni, pl%ti, pl%tn, chvimx)
+&              , st_ext%ni, pl%ti, chvimx)
 !
 ! ..return
   ncall_b2trql = ncall_b2trql + 1

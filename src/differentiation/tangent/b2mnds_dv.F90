@@ -18,7 +18,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
+SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
+& , nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_VERSION_DIFFV
@@ -46,6 +47,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
   INTEGER :: nsd(nbdirsmax)
   INTEGER :: nout(0:10)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
 !   ..output arguments (unspecified on entry)
 !     (none)
 !   ..common blocks
@@ -128,7 +130,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 !   ..procedures
   LOGICAL :: IS_COMMENT
   EXTERNAL XERTST, XERRAB, CFRUCH, CFRUIN, CFWUCH, CFWUIN
-  EXTERNAL XERTST_DV, XERRAB_DV
+  EXTERNAL XERTST_DV, XERRAB_DV, CFRUIN_DV
   EXTERNAL B2RUCP_NODIFF, B2RURC_NODIFF, B2RUSR, B2RFLB, B2RFCP_NODIFF, &
 &     B2XXID, B2MWQ0_NODIFF, B2WFCP_NODIFF, B2WUCP_NODIFF, B2RUZD_NODIFF&
 &     , B2WUZD_NODIFF, B2XVCP_NODIFF
@@ -315,11 +317,14 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
 ! The switches are now also loaded in a module b2mod_switches.
-! Hence, they can be accessed in the classical way using ipgeti/ipgetr or in a new way using this module.
-! The b2mod_switches is mainly intended for switches that are used in different functions/subroutines to reduce code duplication
+! Hence, they can be accessed in the classical way using ipgeti/ipgetr
+! or in a new way using this module.
+! The b2mod_switches is mainly intended for switches that are used in
+! different functions/subroutines to reduce code duplication
 ! and to centralize consistency checks on the switches.
 !
-!
+! read main switch afn to correctly set the corresponding default switches
+  CALL READ_SWITCH_AFN(switch)
 ! load default values of switches
   CALL SET_DEFAULTS_SWITCHES(switch, ns)
 ! overwrite with values provided in b2mn.dat
@@ -646,11 +651,14 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
 ! The switches are now also loaded in a module b2mod_switches.
-! Hence, they can be accessed in the classical way using ipgeti/ipgetr or in a new way using this module.
-! The b2mod_switches is mainly intended for switches that are used in different functions/subroutines to reduce code duplication
+! Hence, they can be accessed in the classical way using ipgeti/ipgetr
+! or in a new way using this module.
+! The b2mod_switches is mainly intended for switches that are used in
+! different functions/subroutines to reduce code duplication
 ! and to centralize consistency checks on the switches.
 !
-!
+! read main switch afn to correctly set the corresponding default switches
+  CALL READ_SWITCH_AFN(switch)
 ! load default values of switches
   CALL SET_DEFAULTS_SWITCHES(switch, ns)
 ! overwrite with values provided in b2mn.dat

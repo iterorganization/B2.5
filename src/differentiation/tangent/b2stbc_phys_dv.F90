@@ -15,7 +15,7 @@
 !-----------------------------------------------------------------------
 !.specification
 SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
-& , geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, wrong_flow, main_call, &
+& , geo, mpg, pl, dv, co, rt, st_ext, srw, wrong_flow, main_call, &
 & praverage)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
@@ -23,12 +23,10 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
-!      use b2mod_geo_corner
   USE B2MOD_TIME
   USE B2MOD_DIAG_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPB_DIFFV
-  USE B2MOD_EXTERNAL_DIFFV
 !srv 26.02.18
   USE B2MOD_BOUNDARY_SOURCES_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -37,12 +35,13 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   USE B2US_PLASMA_DIFFV
 !srv 28.07.11
   USE B2MOD_ASTRA_TO_B2
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbc_phys, ubig, vbig, pbig, up00, &
+& epslon, ne00, us
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbc_phys, senepar, senipar, &
-& sconpar, scurpar, prev_cur_delta, cur_delta, po_step, po_prev, po_curr&
-& , coeff_16, nueout, ubig, vbig, pbig, up00, epslon, ne00, s2, us, fs, &
-& vs, nas, tes, tis, nivs, ffac, dfs, pos
+  USE B2MOD_AD_DIFFV, ONLY : senepar, senipar, sconpar, scurpar, &
+& prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16, nueout&
+& , fs, vs, nas, tes, tis, nivs, ffac, dfs, pos, s2
   USE B2MOD_SUBSYS
   USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
@@ -57,7 +56,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !xpb
@@ -118,11 +116,12 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !srv 24.08.08
   REAL(kind=r8) :: sy, INTVERTEX_S_NODIFF
   EXTERNAL XERTST, IPGETI, ESEEC0_NODIFF
-  EXTERNAL IPGETR, B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF
+  EXTERNAL IPGETR, B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF
   INTRINSIC MINVAL
   EXTERNAL XERRAB
   INTRINSIC MIN
   INTRINSIC SIGN
+  INTRINSIC NINT
   REAL(r8) :: y1
   REAL(r8) :: y2
   REAL(kind=r8) :: x1
@@ -271,20 +270,20 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !   ..extensive tests on first few calls
   IF (ncall_b2stbc_phys .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
 !    ..test sign of chce, chci
     wrkf(:) = co%chce(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chce0', '.ge.')
     wrkf(:) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chce1', '.ge.')
     wrkf(:) = co%chci(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chci0', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chci0', '.ge.')
     wrkf(:) = co%chci(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chci1', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chci1', '.ge.')
   END IF
 !   ..set cutll, cutlo
   IF (.NOT.b2mod_math_initialised) CALL B2MOD_MATH_INIT()
@@ -914,9 +913,13 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           cs = SQRT(arg10)
           srw%sna0(icv1, 0, is) = 0.0_R8
           srw%sna0(icv1, 1, is) = -(s1*conpar(is, ib, 1)*cs)
-          IF (conpar(is, ib, 2) .GT. 0.0_R8) srw%sna0(icv1, 1, is) = srw&
-&             %sna0(icv1, 1, is) - co%dna0(icv1, is)/conpar(is, ib, 2)*&
-&             geo%fcs(ifc)
+          IF (switch%bccon14_gradpar_0 .EQ. 1) THEN
+            srw%sna0(icv1, 0, is) = srw%sna0(icv1, 0, is) - mpg%bcfcor(&
+&             mpg%bccvp(ib, 1)+ibc-1)*dv%fna(ifc, 1, is)
+          ELSE IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
+            srw%sna0(icv1, 1, is) = srw%sna0(icv1, 1, is) - co%dna0(icv1&
+&             , is)/conpar(is, ib, 2)*geo%fcs(ifc)
+          END IF
           sna0_no_mdf(icv1, :, is) = srw%sna0(icv1, :, is)
           IF (switch%mdf_fnb .NE. 0) THEN
             t0 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*(dv%fnapsch(ifc, 0, &
@@ -1309,7 +1312,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
 ! -- BCMOM=3 -- SHEATH CONDITIONS, MACH NUMBER AS INPUT
 !
-        CALL XERRAB('b2stbc_phys -- BCMOM = 3 not adapted for WG')
+        CALL XERRAB('b2stbc_phys -- BCMOM = 3 not adapted for WG.'//&
+&             ' Replace with drift-compatible BCMOM = 13')
       CASE (4) 
 ! -- BCMOM=4 -- PRESCRIBE THE VALUE OF THE VELOCITY, WEAKLY
 !                 A MIXED BOUNDARY CONDITION
@@ -1675,7 +1679,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
 ! -- BCENE=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 !
-      CALL XERRAB('b2stbc_phys -- BCENE = 3 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENE = 3 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENE = 15')
     CASE (4) 
 ! -- BCENE=4 -- PRESCRIBE THE VALUE OF THE ELECTRON TEMPERATURE,
 !                 WEAKLY A MIXED BOUNDARY CONDITION
@@ -1861,7 +1866,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
     CASE (12) 
 ! -- BCENE=12 -- SHEATH CONDITIONS, EL ENERGY TRANSMISSION COEFFICIENT
 !
-      CALL XERRAB('b2stbc_phys -- BCENE = 12 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENE = 12 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENE = 15')
     CASE (13) 
 ! -- BCENE=13 -- PRESCRIBE THE ELECTRON ENERGY FLUX PER UNIT AREA
 !             -- PROPORTIONAL TO TEMPERATURE
@@ -2415,7 +2421,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
 ! -- BCENI=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 !
-      CALL XERRAB('b2stbc_phys -- BCENI = 3 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENI = 3 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENI = 15')
     CASE (4) 
 ! -- BCENI=4 -- PRESCRIBE THE VALUE OF THE ION TEMPERATURE, WEAKLY
 !                 A MIXED BOUNDARY CONDITION
@@ -2572,7 +2579,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         END IF
         DO is=0,ns-1
           IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .EQ. 0) .OR. (&
-&             switch%tn_style .EQ. 2 .AND. zn(is) .NE. 1)) THEN
+&             switch%tn_style .EQ. 2 .AND. NINT(zn(is)) .NE. 1)) THEN
             srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + 2.5_R8*pl%ti(icv1)*&
 &             srw%sna0(icv1, 0, is)
             srw%shi0(icv1, 1) = srw%shi0(icv1, 1) + 2.5_R8*pl%na(icv1, &
@@ -2616,7 +2623,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
     CASE (12) 
 ! -- BCENI=12 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 !
-      CALL XERRAB('b2stbc_phys -- BCENI = 12 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENI = 12 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENI = 15')
     CASE (13) 
 ! -- BCENI=13 -- PRESCRIBE THE ION ENERGY FLUX PER UNIT AREA
 !             -- PROPORTIONAL TO TEMPERATURE
@@ -3158,7 +3166,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
 ! -- BCPOT=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 !
-      CALL XERRAB('b2stbc_phys -- BCPOT = 3 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCPOT = 3 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCPOT = 11')
     CASE (4) 
 ! -- BCPOT=4 -- PRESCRIBE THE VALUE OF THE POTENTIAL,
 !                 WEAKLY A MIXED BOUNDARY CONDITION
@@ -4614,17 +4623,17 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 !                dv.fna_fcor:in dv.fna_eir:in dv.fhe:in dv.fhepsch:in
 !                dv.fhi:in dv.fhipsch:in dv.fhm:in dv.fkt:in dv.kinrgy:in
 !                dv.ne:in dv.ni:in dv.vadia:in dv.vaecrb:in dv.vedia:in
-!                dv.veecrb:in dv.facdrift:in mpg.bcfcor:in geo.cvbb:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in st_ext.am:in
-!                st_ext.na:in st_ext.ta:in rt.rza:in srw.sch0:in
-!                srw.she0:in srw.shi0:in srw.skt0:in srw.szt0:in
-!                srw.smo0:in srw.sna0:in co.chce:in co.chci:in
-!                co.cdna:in co.hce0:in co.hci0:in co.hcn0:in co.dpa0:in
-!                co.dna0:in pl.na:in pl.ua:in pl.po:in pl.te:in
-!                pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                dv.veecrb:in dv.facdrift:in geo.cvbb:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
+!                geo.vxvol:in geo.vxonedbsq:in st_ext.am:in st_ext.na:in
+!                st_ext.ta:in rt.rza:in srw.sch0:in srw.she0:in
+!                srw.shi0:in srw.skt0:in srw.szt0:in srw.smo0:in
+!                srw.sna0:in co.chce:in co.chci:in co.cdna:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.dpa0:in co.dna0:in pl.na:in
+!                pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
+!                pl.zt:in
 !
 !
 !
@@ -4639,21 +4648,18 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
-& switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, cod, rt, rtd, rtw&
-& , st_ext, st_extd, srw, srwd, wrong_flow, main_call, praverage, nbdirs&
-&)
+& switchd, geo, geod, mpg, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, &
+& st_extd, srw, srwd, wrong_flow, main_call, praverage, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_FEEDBACK_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
-!      use b2mod_geo_corner
   USE B2MOD_TIME
   USE B2MOD_DIAG_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPB_DIFFV
-  USE B2MOD_EXTERNAL_DIFFV
 !srv 26.02.18
   USE B2MOD_BOUNDARY_SOURCES_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -4662,12 +4668,13 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   USE B2US_PLASMA_DIFFV
 !srv 28.07.11
   USE B2MOD_ASTRA_TO_B2
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbc_phys, ubig, vbig, pbig, up00, &
+& epslon, ne00, us
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2stbc_phys, senepar, senipar, &
-& sconpar, scurpar, prev_cur_delta, cur_delta, po_step, po_prev, po_curr&
-& , coeff_16, nueout, ubig, vbig, pbig, up00, epslon, ne00, s2, us, fs, &
-& vs, nas, tes, tis, nivs, ffac, dfs, pos
+  USE B2MOD_AD_DIFFV, ONLY : senepar, senipar, sconpar, scurpar, &
+& prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16, nueout&
+& , fs, vs, nas, tes, tis, nivs, ffac, dfs, pos, s2
   USE B2MOD_SUBSYS
   USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -4682,14 +4689,12 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-  TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2COEFF_DIFFV), INTENT(INOUT) :: cod
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -4745,7 +4750,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
   REAL(kind=r8) :: wdia(ncv), wrk0(ncv), wrkf(nfc), pz(ncv), gonedbsq(&
 & nfc, 0:1), sna0_no_mdf(ncv, 0:1, 0:ns-1)
-  REAL(kind=r8) :: pzd(nbdirsmax, ncv)
+  REAL(kind=r8) :: wrkfd(nbdirsmax, nfc), pzd(nbdirsmax, ncv)
 !srv 23.09.08
   REAL(kind=r8) :: cor9
 !srv 11.07.05
@@ -4762,11 +4767,12 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !srv 24.08.08
   REAL(kind=r8) :: sy, INTVERTEX_S_NODIFF
   EXTERNAL XERTST, IPGETI, ESEEC0_NODIFF
-  EXTERNAL IPGETR, B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF
+  EXTERNAL IPGETR, B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF
   INTRINSIC MINVAL
   EXTERNAL XERRAB
   INTRINSIC MIN
   INTRINSIC SIGN
+  INTRINSIC NINT
   REAL(r8) :: y1
   REAL(r8), DIMENSION(nbdirsmax) :: y1d
   REAL(r8) :: y2
@@ -4997,20 +5003,26 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !   ..extensive tests on first few calls
   IF (ncall_b2stbc_phys .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
+    DO nd=1,nbdirs
 !    ..test sign of chce, chci
+      wrkfd(nd, :) = 0.D0
+      wrkfd(nd, :) = 0.D0
+      wrkfd(nd, :) = 0.D0
+      wrkfd(nd, :) = 0.D0
+    END DO
     wrkf(:) = co%chce(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chce0', '.ge.')
     wrkf(:) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chce1', '.ge.')
     wrkf(:) = co%chci(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chci0', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chci0', '.ge.')
     wrkf(:) = co%chci(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'chci1', '.ge.')
+    CALL B2XVSG(nfc, wrkf, 1, 'chci1', '.ge.')
   END IF
 !   ..set cutll, cutlo
   IF (.NOT.b2mod_math_initialised) CALL B2MOD_MATH_INIT()
@@ -5978,7 +5990,15 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END DO
           srw%sna0(icv1, 0, is) = 0.0_R8
           srw%sna0(icv1, 1, is) = -(s1*conpar(is, ib, 1)*cs)
-          IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
+          IF (switch%bccon14_gradpar_0 .EQ. 1) THEN
+            temp3 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
+            DO nd=1,nbdirs
+              srwd%sna0(nd, icv1, 0, is) = srwd%sna0(nd, icv1, 0, is) - &
+&               temp3*dvd%fna(nd, ifc, 1, is)
+            END DO
+            srw%sna0(icv1, 0, is) = srw%sna0(icv1, 0, is) - temp3*dv%fna&
+&             (ifc, 1, is)
+          ELSE IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
             temp4 = co%dna0(icv1, is)/conpar(is, ib, 2)
             DO nd=1,nbdirs
               srwd%sna0(nd, icv1, 1, is) = srwd%sna0(nd, icv1, 1, is) - &
@@ -6546,7 +6566,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
 ! -- BCMOM=3 -- SHEATH CONDITIONS, MACH NUMBER AS INPUT
 !
-        CALL XERRAB('b2stbc_phys -- BCMOM = 3 not adapted for WG')
+        CALL XERRAB('b2stbc_phys -- BCMOM = 3 not adapted for WG.'//&
+&             ' Replace with drift-compatible BCMOM = 13')
       CASE (4) 
 ! -- BCMOM=4 -- PRESCRIBE THE VALUE OF THE VELOCITY, WEAKLY
 !                 A MIXED BOUNDARY CONDITION
@@ -7047,7 +7068,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
 ! -- BCENE=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 !
-      CALL XERRAB('b2stbc_phys -- BCENE = 3 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENE = 3 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENE = 15')
     CASE (4) 
 ! -- BCENE=4 -- PRESCRIBE THE VALUE OF THE ELECTRON TEMPERATURE,
 !                 WEAKLY A MIXED BOUNDARY CONDITION
@@ -7337,7 +7359,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
     CASE (12) 
 ! -- BCENE=12 -- SHEATH CONDITIONS, EL ENERGY TRANSMISSION COEFFICIENT
 !
-      CALL XERRAB('b2stbc_phys -- BCENE = 12 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENE = 12 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENE = 15')
     CASE (13) 
 ! -- BCENE=13 -- PRESCRIBE THE ELECTRON ENERGY FLUX PER UNIT AREA
 !             -- PROPORTIONAL TO TEMPERATURE
@@ -8324,7 +8347,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
 ! -- BCENI=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 !
-      CALL XERRAB('b2stbc_phys -- BCENI = 3 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENI = 3 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENI = 15')
     CASE (4) 
 ! -- BCENI=4 -- PRESCRIBE THE VALUE OF THE ION TEMPERATURE, WEAKLY
 !                 A MIXED BOUNDARY CONDITION
@@ -8550,7 +8574,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         END IF
         DO is=0,ns-1
           IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .EQ. 0) .OR. (&
-&             switch%tn_style .EQ. 2 .AND. zn(is) .NE. 1)) THEN
+&             switch%tn_style .EQ. 2 .AND. NINT(zn(is)) .NE. 1)) THEN
             DO nd=1,nbdirs
               srwd%shi0(nd, icv1, 0) = srwd%shi0(nd, icv1, 0) + 2.5_R8*(&
 &               srw%sna0(icv1, 0, is)*pld%ti(nd, icv1)+pl%ti(icv1)*srwd%&
@@ -8639,7 +8663,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
     CASE (12) 
 ! -- BCENI=12 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 !
-      CALL XERRAB('b2stbc_phys -- BCENI = 12 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCENI = 12 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCENI = 15')
     CASE (13) 
 ! -- BCENI=13 -- PRESCRIBE THE ION ENERGY FLUX PER UNIT AREA
 !             -- PROPORTIONAL TO TEMPERATURE
@@ -9559,7 +9584,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
 ! -- BCPOT=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 !
-      CALL XERRAB('b2stbc_phys -- BCPOT = 3 not adapted for WG')
+      CALL XERRAB('b2stbc_phys -- BCPOT = 3 not adapted for WG.'//&
+&           ' Replace with drift-compatible BCPOT = 11')
     CASE (4) 
 ! -- BCPOT=4 -- PRESCRIBE THE VALUE OF THE POTENTIAL,
 !                 WEAKLY A MIXED BOUNDARY CONDITION

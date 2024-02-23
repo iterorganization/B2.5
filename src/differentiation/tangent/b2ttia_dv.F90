@@ -73,7 +73,7 @@ SUBROUTINE B2TTIA_DV(ncv, ns, ti, tid, rz2, rz2d, ne2, ne2d, lnlam, &
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result2d
@@ -106,8 +106,8 @@ SUBROUTINE B2TTIA_DV(ncv, ns, ti, tid, rz2, rz2d, ne2, ne2d, lnlam, &
 !   ..extensive tests on first few calls
   IF (ncall_b2ttia .LT. 3) THEN
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute ctaup
 !     Following Braginskii                                           !srv 11.07.99
@@ -231,7 +231,7 @@ SUBROUTINE B2TTIA_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
 !   ..initialization
@@ -258,8 +258,8 @@ SUBROUTINE B2TTIA_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
 !   ..extensive tests on first few calls
   IF (ncall_b2ttia .LT. 3) THEN
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute ctaup
 !     Following Braginskii                                           !srv 11.07.99

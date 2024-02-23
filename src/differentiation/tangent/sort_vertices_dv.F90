@@ -12,25 +12,30 @@
 !
 !
 !
-SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb, &
-& ncoss)
+!! Routine that looks for all faces in fcLbl that have a particular
+!! face label/index iLbl, and returns the corresponding vertices as
+!! a polygon
+!!
+!! Implicit assumption: faces connect into a single line
+!! nVxList         : number of vertices corresponding to faces with label iLbl
+!! vxList(nVxList) : sorted list of vertices (on output)
+!! nFcLbl          : number of faces in fcLbl
+!! fcLbl(nFcLbl)   : face labels assigned to all faces
+!! iLbl            : label to look for within fcLbl
+!! m               : mapping
+SUBROUTINE SORT_VERTICES_NODIFF(nvxlist, vxlist, nfclbl, fclbl, ilbl, m)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
   USE B2US_MAP_DIFFV
-  USE B2US_GEO_DIFFV
-  USE CARRE_CONSTANTS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: indss, ndfc, idb
-  INTEGER, INTENT(INOUT) :: inbc, bcl, ncoss
-  INTEGER, INTENT(INOUT) :: fc(ndfc)
-  REAL(r8), INTENT(INOUT) :: fcor(ndfc)
-  TYPE(MAPPING), INTENT(INOUT) :: m
+  INTEGER, INTENT(IN) :: nvxlist, nfclbl, ilbl
+  INTEGER, INTENT(IN) :: fclbl(nfclbl)
+  INTEGER, INTENT(INOUT) :: vxlist(nvxlist)
+  TYPE(MAPPING), INTENT(IN) :: m
 !
-  INTEGER :: icoss, ifc1, i, imn, imx, ncout, istart
+  INTEGER :: ncoss, icoss, ivx, ivxlist, i, imn, imx, ncout, istart
   INTEGER, ALLOCATABLE :: fcss(:), indfc(:)
   LOGICAL, ALLOCATABLE :: lout(:)
-  LOGICAL, ALLOCATABLE :: lfchit(:)
   TYPE FCPART
       INTEGER :: fcno
       INTEGER :: vx1, vx2
@@ -41,23 +46,24 @@ SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb, &
   TYPE(FCPART), POINTER :: face
   INTRINSIC PACK
   INTRINSIC COUNT
+  EXTERNAL XERRAB
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC ASSOCIATED
-  INTRINSIC ALLOCATED
-!  find all faces belonging to surface structure INDSS
-  ncoss = COUNT(m%fclbl .EQ. indss)
+!     find all faces in fcLbl with label iLbl
+  ncoss = COUNT(fclbl .EQ. ilbl)
+  IF (ncoss .NE. nvxlist - 1) CALL XERRAB('Inconsistent input')
   IF (ncoss .EQ. 0) THEN
     RETURN
   ELSE
-    ALLOCATE(fcss(ncoss))
-    ALLOCATE(indfc(m%nfc))
-    indfc = (/(i, i=1,m%nfc)/)
-    fcss(1:ncoss) = PACK(indfc, m%fclbl .EQ. indss)
-    DEALLOCATE(indfc)
-    bcl = bcl + ncoss
 !
-! sort face for a continuous surface
+    ALLOCATE(fcss(ncoss))
+    ALLOCATE(indfc(nfclbl))
+    indfc = (/(i, i=1,nfclbl)/)
+    fcss(1:ncoss) = PACK(indfc, fclbl .EQ. ilbl)
+    DEALLOCATE(indfc)
+!     sort faces for a continuous surface
+    ivxlist = 0
     istart = 1
     ALLOCATE(lout(ncoss))
     lout = .false.
@@ -68,9 +74,15 @@ SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb, &
       NULLIFY(face%prev)
       NULLIFY(face%next)
       face%fcno = fcss(istart)
+! orientation such that right-hand normal points
+! outwards in case of boundary faces
       lout(istart) = .true.
       face%vx1 = m%fcvx(face%fcno, 1)
       face%vx2 = m%fcvx(face%fcno, 2)
+      IF (m%fccv(face%fcno, 1) .GT. m%nci) THEN
+        face%vx1 = m%fcvx(face%fcno, 2)
+        face%vx2 = m%fcvx(face%fcno, 1)
+      END IF
       head => face
       tail => face
 !
@@ -118,22 +130,18 @@ SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb, &
         END DO
 ! icoss
  100    IF (icoss .GT. ncoss) THEN
-          WRITE(*, *) 'face list, indss = ', indss
-          WRITE(idb, *) 'face list, indss = ', indss
+!            write (*,*) 'face list, iLbl = ',iLbl
           DO WHILE (ASSOCIATED(head))
-            WRITE(*, *) head%fcno, head%vx1, head%vx2
-!              write (idb,'(i6,2es16.7)')
-!     .             head%vx1,g%vxX(head%vx1),g%vxY(head%vx1)
-!              write (idb,'(i6,2es16.7)')
-!     .             head%vx2,g%vxX(head%vx2),g%vxY(head%vx2)
-            inbc = inbc + 1
-            ifc1 = head%fcno
-            fc(inbc) = ifc1
-            IF (m%fccv(ifc1, 1) .LT. m%fccv(ifc1, 2)) fcor(inbc) = &
-&               1.0_R8
-            IF (m%fccv(ifc1, 1) .GT. m%fccv(ifc1, 2)) fcor(inbc) = -&
-&               1.0_R8
+!              write (*,*) head%fcno, head%vx1, head%vx2
+            ivxlist = ivxlist + 1
+            ivx = head%vx1
+            vxlist(ivxlist) = ivx
             tail => head
+            IF (.NOT.ASSOCIATED(head%next)) THEN
+              ivxlist = ivxlist + 1
+              ivx = head%vx2
+              vxlist(ivxlist) = ivx
+            END IF
             head => head%next
             DEALLOCATE(tail)
           END DO
@@ -149,23 +157,22 @@ SUBROUTINE FIND_FACES_NODIFF(indss, inbc, bcl, ndfc, fc, fcor, m, idb, &
       END DO
  110 CONTINUE
     DEALLOCATE(lout)
-!     
-!     store faces in m%bcFc(inbc)...
+!
     DO WHILE (ASSOCIATED(head))
-      inbc = inbc + 1
-      ifc1 = head%fcno
-      fc(inbc) = ifc1
-      IF (m%fccv(ifc1, 1) .LT. m%fccv(ifc1, 2)) fcor(inbc) = 1.0_R8
-      IF (m%fccv(ifc1, 1) .GT. m%fccv(ifc1, 2)) fcor(inbc) = -1.0_R8
+      ivxlist = ivxlist + 1
+      ivx = head%vx1
+      vxlist(ivxlist) = ivx
       tail => head
+      IF (.NOT.ASSOCIATED(head%next)) THEN
+        ivxlist = ivxlist + 1
+        ivx = head%vx2
+        vxlist(ivxlist) = ivx
+      END IF
       head => head%next
       DEALLOCATE(tail)
     END DO
 !
     DEALLOCATE(fcss)
-    IF (ALLOCATED(lfchit)) THEN
-      DEALLOCATE(lfchit)
-    END IF
   END IF
-END SUBROUTINE FIND_FACES_NODIFF
+END SUBROUTINE SORT_VERTICES_NODIFF
 

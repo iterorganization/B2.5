@@ -15,7 +15,7 @@
 MODULE B2US_FEEDBACK_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_RATES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPB_DIFFV
@@ -28,8 +28,8 @@ MODULE B2US_FEEDBACK_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp, ifssep, &
-& nimp, imp, icsepimp
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp, nimp, imp, &
+& icsepimp
   USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -258,13 +258,12 @@ CONTAINS
   END SUBROUTINE WRITE_B2US_FEEDBACK_CONTROL
 
 !
-  SUBROUTINE INIT_FEEDBACK(ncv, nfc, nvx, ns, natmi, switch, geo, mpg)
+  SUBROUTINE INIT_FEEDBACK(nfc, ns, switch, mpg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(IN) :: switch
-    TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
-    INTEGER :: ncv, nfc, nvx, ns, natmi
+    INTEGER :: nfc, ns
     INTEGER :: ifb, ifbb, istrai, icount
     INTEGER :: ifbreg, is, ib, is0, is00, is_start, is_end, iatm
     LOGICAL :: consistent, done
@@ -444,6 +443,8 @@ CONTAINS
     IF (nepedm_sol .GT. 0.0_R8) THEN
       CALL IPGETI('b2stbc_iyped', iyped)
       icped = iyped + 2
+      CALL XERTST(icped .GE. 1 .AND. icped .LE. nomp, &
+&           'faulty input iyped')
       CALL XERTST(mpg%cvonclosedsurface(omp(icped)), &
 &           'location of top of pedestal outside core region!')
     END IF
@@ -1000,16 +1001,16 @@ CONTAINS
 !                dv.nn:in-out psnl.na:in psnl.ne:in psnl.ni:in
 !                psnl.fna:in psnl.kinrgy:in rt.rza:in pl.na:in
 !
-  SUBROUTINE COMPUTE_FEEDBACK_DV(ncv, nfc, nvx, ns, ismain, switch, geo&
-&   , mpg, pl, pld, dv, dvd, rt, rtd, srw, psnc, psncd, psnl, psnld, &
-&   main_call, diagno, nbdirs)
+  SUBROUTINE COMPUTE_FEEDBACK_DV(ncv, nfc, ns, ismain, switch, geo, mpg&
+&   , pl, pld, dv, dvd, rt, rtd, psnc, psncd, psnl, psnld, main_call, &
+&   nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, nvx, ns, ismain, diagno
+    INTEGER :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1022,8 +1023,6 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
     TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psncd, psnld
     LOGICAL :: main_call
-!   ..output arguments (unspecified on entry)
-    TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
 !   ..local variables
     INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
 &   , iss
@@ -1335,8 +1334,8 @@ CONTAINS
                 IF (is_start .EQ. -1) is_start = is
                 IF (.NOT.(is_neutral(is) .AND. switch%use_eirene .NE. 0)&
 &               ) THEN
-                  ifc1 = mpg%fsfcp(ifssep, 1)
-                  ifc2 = ifc1 + mpg%fsfcp(ifssep, 2) - 1
+                  ifc1 = mpg%fsfcp(mpg%ifssep, 1)
+                  ifc2 = ifc1 + mpg%fsfcp(mpg%ifssep, 2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
                   DO ifc=ifc1,ifc2
@@ -1645,7 +1644,463 @@ CONTAINS
 !
           SELECT CASE  (fb_rescale_option(ifb)) 
           CASE (0) 
+!
+ 100        WRITE(*, '(a,1x,1p,i3,6g15.6)') 'feedback_rescale ', b2espcr&
+&           (fb_species(ifb)), fb_current(ifb), fb_target(ifb), &
+&           fb_rescale(ifb), fb_prev(ifb), ddtim, dt_prev
+!
+!
+! phase 3:
+!
+            SELECT CASE  (fb_actuator(ifb)) 
+            CASE (0) 
 
+            CASE (1) 
+!
+! no action
+!
+! neutral particle flux => gas puff
+!
+              IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
+&                               'compute_feedback_actuator: using ', &
+&                               'gas_puff for sequence ', b2espcr(&
+&                               fb_species(ifb))
+!
+              IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8&
+&             ) THEN
+                IF (conpar(is_start, fb_ib(ifb), 1) .GT. 0.0_R8) THEN
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = conpard(nd, is_start, &
+&                     fb_ib(ifb), 1)
+                  END DO
+                  saved_fb_actuator(ifb) = conpar(is_start, fb_ib(ifb), &
+&                   1)
+                  WRITE(message, '(a,i3,a,i2,a)') &
+&                 'Initial gas puff strength set by CONPAR(', is_start, &
+&                 ',', fb_ib(ifb), ',1) !'
+                ELSE IF (userfluxparm(fb_istra(ifb), 1) .GT. 0.0_R8) &
+&               THEN
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = userfluxparmd(nd, &
+&                     fb_istra(ifb), 1)
+                  END DO
+                  saved_fb_actuator(ifb) = userfluxparm(fb_istra(ifb), 1&
+&                   )
+                  WRITE(message, '(a,i3,a,i2,a)') &
+&                 'Initial gas puff strength set by USERFLUXPARM(', &
+&                 fb_istra(ifb), ',1)  !'
+                ELSE
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = 0.D0
+                  END DO
+                  saved_fb_actuator(ifb) = 1.0e18_R8
+                  WRITE(*, *) 'Warning!  ', 'The gas puff was ', &
+&                 'started with an initial rate of 1e18!'
+                END IF
+              END IF
+!
+              IF (fb_rescale_option(ifb) .LT. 4) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
+&                   *fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&                 fb_rescale(ifb)
+              ELSE
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
+              END IF
+              IF (fb_puff_min(ifb) .GE. 0.0_R8) THEN
+                IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
+                  saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+                ELSE
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = 0.D0
+                  END DO
+                  saved_fb_actuator(ifb) = fb_puff_min(ifb)
+                END IF
+              END IF
+              IF (fb_puff_max(ifb) .GT. 0.0_R8) THEN
+                IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
+                  saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+                ELSE
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = 0.D0
+                  END DO
+                  saved_fb_actuator(ifb) = fb_puff_max(ifb)
+                END IF
+              END IF
+!
+              IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) &
+&                 .GT. fb_target(ifb)*fb_overshoot(ifb)) THEN
+! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
+!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
+                IF (switch%use_eirene .EQ. 0) THEN
+                  DO nd=1,nbdirs
+                    conpard(nd, is_start, fb_ib(ifb), 1) = 0.D0
+                  END DO
+                  conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
+                ELSE
+                  DO nd=1,nbdirs
+                    userfluxparmd(nd, fb_istra(ifb), 1) = 0.D0
+                  END DO
+                  userfluxparm(fb_istra(ifb), 1) = 0.0_R8
+                END IF
+              ELSE IF (switch%use_eirene .EQ. 0) THEN
+                DO nd=1,nbdirs
+                  conpard(nd, is_start, fb_ib(ifb), 1) = &
+&                   saved_fb_actuatord(nd, ifb)
+                END DO
+                conpar(is_start, fb_ib(ifb), 1) = saved_fb_actuator(ifb)
+              ELSE
+                DO nd=1,nbdirs
+                  userfluxparmd(nd, fb_istra(ifb), 1) = &
+&                   saved_fb_actuatord(nd, ifb)
+                END DO
+                userfluxparm(fb_istra(ifb), 1) = saved_fb_actuator(ifb)
+              END IF
+            CASE (2) 
+!
+! rescale na
+!
+              IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
+&                               'compute_feedback_actuator: using ', &
+&                               'density rescale for sequence ', b2espcr&
+&                               (fb_species(ifb))
+!
+              DO is=is_start,is_end
+                DO nd=1,nbdirs
+                  pld%na(nd, :, is) = fb_rescale(ifb)*pld%na(nd, :, is) &
+&                   + pl%na(:, is)*fb_rescaled(nd, ifb)
+                  dvd%kinrgy(nd, :, is) = fb_rescale(ifb)*dvd%kinrgy(nd&
+&                   , :, is) + dv%kinrgy(:, is)*fb_rescaled(nd, ifb)
+                  dvd%fna(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%fna(nd, &
+&                   :, 0:1, is) + dv%fna(:, 0:1, is)*fb_rescaled(nd, ifb&
+&                   )
+                  dvd%fna_mdf(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
+&                   fna_mdf(nd, :, 0:1, is) + dv%fna_mdf(:, 0:1, is)*&
+&                   fb_rescaled(nd, ifb)
+                  dvd%fna_fcor(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
+&                   fna_fcor(nd, :, 0:1, is) + dv%fna_fcor(:, 0:1, is)*&
+&                   fb_rescaled(nd, ifb)
+                  dvd%fna_he(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
+&                   fna_he(nd, :, 0:1, is) + dv%fna_he(:, 0:1, is)*&
+&                   fb_rescaled(nd, ifb)
+                  dvd%fnapsch(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
+&                   fnapsch(nd, :, 0:1, is) + dv%fnapsch(:, 0:1, is)*&
+&                   fb_rescaled(nd, ifb)
+                  dvd%fna_eir(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
+&                   fna_eir(nd, :, 0:1, is) + dv%fna_eir(:, 0:1, is)*&
+&                   fb_rescaled(nd, ifb)
+                  dvd%fna_32(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
+&                   fna_32(nd, :, 0:1, is) + dv%fna_32(:, 0:1, is)*&
+&                   fb_rescaled(nd, ifb)
+                END DO
+                pl%na(:, is) = pl%na(:, is)*fb_rescale(ifb)
+                dv%kinrgy(:, is) = dv%kinrgy(:, is)*fb_rescale(ifb)
+                temp1 = (fb_rescale(ifb)-1.0_R8)*pl%na(:, is)
+                DO nd=1,nbdirs
+                  dvd%ne(nd, :) = dvd%ne(nd, :) + rt%rza(:, is)*(pl%na(:&
+&                   , is)*fb_rescaled(nd, ifb)+(fb_rescale(ifb)-1.0_R8)*&
+&                   pld%na(nd, :, is)) + temp1*rtd%rza(nd, :, is)
+                END DO
+                dv%ne = dv%ne + temp1*rt%rza(:, is)
+                dv%fna(:, 0:1, is) = dv%fna(:, 0:1, is)*fb_rescale(ifb)
+                dv%fna_mdf(:, 0:1, is) = dv%fna_mdf(:, 0:1, is)*&
+&                 fb_rescale(ifb)
+                dv%fna_fcor(:, 0:1, is) = dv%fna_fcor(:, 0:1, is)*&
+&                 fb_rescale(ifb)
+                dv%fna_nodrift(:, 0:1, is) = dv%fna_nodrift(:, 0:1, is)*&
+&                 fb_rescale(ifb)
+                dv%fna_he(:, 0:1, is) = dv%fna_he(:, 0:1, is)*fb_rescale&
+&                 (ifb)
+                dv%fnapsch(:, 0:1, is) = dv%fnapsch(:, 0:1, is)*&
+&                 fb_rescale(ifb)
+                dv%fna_eir(:, 0:1, is) = dv%fna_eir(:, 0:1, is)*&
+&                 fb_rescale(ifb)
+                dv%fna_32(:, 0:1, is) = dv%fna_32(:, 0:1, is)*fb_rescale&
+&                 (ifb)
+                dv%fna_52(:, 0:1, is) = dv%fna_52(:, 0:1, is)*fb_rescale&
+&                 (ifb)
+              END DO
+!   ..initialise previous state and fluxes
+              psnl%na = pl%na
+              DO nd=1,nbdirs
+                psncd%na(nd, :, :) = pld%na(nd, :, :)
+                psncd%ne(nd, :) = dvd%ne(nd, :)
+                psncd%kinrgy(nd, :, :) = dvd%kinrgy(nd, :, :)
+              END DO
+              psnc%na = pl%na
+              psnl%ne = dv%ne
+              psnc%ne = dv%ne
+              psnl%fna = dv%fna
+              psnc%fna = dv%fna
+              psnl%kinrgy = dv%kinrgy
+              psnc%kinrgy = dv%kinrgy
+!   ..compute initial ni
+              CALL B2XPNI_NODIFF(ncv, ns, pl%na, dv%ni)
+              CALL B2XPNN_NODIFF(ncv, ns, pl%na, dv%nn)
+!   ..compute ni0
+              psnl%ni = dv%ni
+              DO nd=1,nbdirs
+                psncd%ni(nd, :, :) = dvd%ni(nd, :, :)
+              END DO
+              psnc%ni = dv%ni
+            CASE (3) 
+!
+! charged species particle flux
+!
+              IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
+&                               'compute_feedback_actuator: using ', &
+&                               'boundary flux condition for sequence '&
+&                               , b2espcr(fb_species(ifb))
+!
+              is_start = eb2spcr(b2espcr(fb_species(ifb))) + 1
+              is_end = eb2spcr(b2espcr(fb_species(ifb))) + nfluids(&
+&               b2espcr(fb_species(ifb)))
+!
+              IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
+&                 saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = conpard(nd, is_end, &
+&                   fb_ib(ifb), 1)
+                END DO
+                saved_fb_actuator(ifb) = conpar(is_end, fb_ib(ifb), 1)
+              END IF
+!
+              IF (fb_type(ifb) .EQ. 6) THEN
+!csc, this is for backward compatibility, can probably be removed
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = (1.0_R8-fb_alpha(ifb))*&
+&                   saved_fb_actuatord(nd, ifb) + fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = (1.0_R8-fb_alpha(ifb))*&
+&                 saved_fb_actuator(ifb) + fb_rescale(ifb)
+              ELSE IF (fb_rescale_option(ifb) .LT. 4) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
+&                   *fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&                 fb_rescale(ifb)
+              ELSE
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
+              END IF
+!
+              IF (fb_puff_min(ifb) .GE. 0.0_R8) THEN
+                IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
+                  saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+                ELSE
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = 0.D0
+                  END DO
+                  saved_fb_actuator(ifb) = fb_puff_min(ifb)
+                END IF
+              END IF
+              IF (fb_puff_max(ifb) .GT. 0.0_R8) THEN
+                IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
+                  saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+                ELSE
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = 0.D0
+                  END DO
+                  saved_fb_actuator(ifb) = fb_puff_max(ifb)
+                END IF
+              END IF
+!
+              IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) &
+&                 .GT. fb_target(ifb)*fb_overshoot(ifb)) THEN
+                total_flux = 0.0_R8
+                DO nd=1,nbdirsmax
+                  total_fluxd(nd) = 0.D0
+                END DO
+              ELSE
+                DO nd=1,nbdirs
+                  total_fluxd(nd) = saved_fb_actuatord(nd, ifb)
+                END DO
+                total_flux = saved_fb_actuator(ifb)
+              END IF
+!
+              IF (fb_type(ifb) .EQ. 6) THEN
+                DO is=is_start,is_end
+                  iss = is - is_start + 1
+                  DO nd=1,nbdirs
+                    conpard(nd, is, fb_ib(ifb), 1) = charge_frac(iss)*&
+&                     total_fluxd(nd) + total_flux*charge_fracd(nd, iss)
+                  END DO
+                  conpar(is, fb_ib(ifb), 1) = total_flux*charge_frac(iss&
+&                   )
+                END DO
+              ELSE
+                DO nd=1,nbdirs
+                  conpard(nd, fb_species(ifb), fb_ib(ifb), 1) = &
+&                   total_fluxd(nd)
+                END DO
+                conpar(fb_species(ifb), fb_ib(ifb), 1) = total_flux
+              END IF
+            CASE (4) 
+!
+! electron heat flux
+!
+              IF (ncall .EQ. 0) WRITE(*, '(a,a)') &
+&                               'compute_feedback_actuator: using ', &
+&                               'electron heat flux boundary condition'
+!
+              IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
+&                 saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = enepard(nd, fb_ib(ifb), &
+&                   1)
+                END DO
+                saved_fb_actuator(ifb) = enepar(fb_ib(ifb), 1)
+              END IF
+!
+              IF (fb_rescale_option(ifb) .LT. 4) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
+&                   *fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&                 fb_rescale(ifb)
+              ELSE
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
+              END IF
+!
+              DO nd=1,nbdirs
+                enepard(nd, fb_ib(ifb), 1) = saved_fb_actuatord(nd, ifb)
+              END DO
+              enepar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
+            CASE (5) 
+!
+! ion heat flux
+!
+              IF (ncall .EQ. 0) WRITE(*, '(a,a)') &
+&                               'compute_feedback_actuator: using ', &
+&                               'ion heat flux boundary condition'
+!
+              IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
+&                 saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = enipard(nd, fb_ib(ifb), &
+&                   1)
+                END DO
+                saved_fb_actuator(ifb) = enipar(fb_ib(ifb), 1)
+              END IF
+!
+              IF (fb_rescale_option(ifb) .LT. 4) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
+&                   *fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&                 fb_rescale(ifb)
+              ELSE
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
+              END IF
+!
+              DO nd=1,nbdirs
+                enipard(nd, fb_ib(ifb), 1) = saved_fb_actuatord(nd, ifb)
+              END DO
+              enipar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
+            CASE (6) 
+!
+! current
+!
+              IF (ncall .EQ. 0) WRITE(*, '(a,a)') &
+&                               'compute_feedback_actuator: using ', &
+&                               'electric current boundary condition'
+!
+              IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
+&                 saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = potpard(nd, fb_ib(ifb), &
+&                   1)
+                END DO
+                saved_fb_actuator(ifb) = potpar(fb_ib(ifb), 1)
+              END IF
+!
+              IF (fb_rescale_option(ifb) .LT. 4) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
+&                   *fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&                 fb_rescale(ifb)
+              ELSE
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
+              END IF
+!
+              DO nd=1,nbdirs
+                potpard(nd, fb_ib(ifb), 1) = saved_fb_actuatord(nd, ifb)
+              END DO
+              potpar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
+            CASE (7) 
+!
+! density
+!
+              IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
+&                               'compute_feedback_actuator: using ', &
+&                               'density condition for sequence ', &
+&                               b2espcr(fb_species(ifb))
+!
+              IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
+&                 saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = conpard(nd, fb_species(&
+&                   ifb), fb_ib(ifb), 1)
+                END DO
+                saved_fb_actuator(ifb) = conpar(fb_species(ifb), fb_ib(&
+&                 ifb), 1)
+              END IF
+!
+              IF (fb_rescale_option(ifb) .LT. 4) THEN
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
+&                   *fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&                 fb_rescale(ifb)
+              ELSE
+                DO nd=1,nbdirs
+                  saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
+                END DO
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
+              END IF
+!
+              DO nd=1,nbdirs
+                conpard(nd, fb_species(ifb), fb_ib(ifb), 1) = &
+&                 saved_fb_actuatord(nd, ifb)
+              END DO
+              conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator&
+&               (ifb)
+            CASE DEFAULT
+!
+              WRITE(*, *) 'fb_actuator not coded ', fb_type(ifb)
+            END SELECT
+!
+            IF (fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
+&             WRITE(*, '(a,1p,i3,g15.6)') 'feedback_actuator ', b2espcr(&
+&             fb_species(ifb)), saved_fb_actuator(ifb)
           CASE (1) 
 !
 ! no action
@@ -1665,6 +2120,7 @@ CONTAINS
             END DO
             fb_rescale(ifb) = (fb_alpha(ifb)*temp+1.0_R8)/(fb_alpha(ifb)&
 &             +1.0_R8)
+            GOTO 100
           CASE (2) 
 !
 ! pure rescale
@@ -1680,6 +2136,7 @@ CONTAINS
 &               fb_currentd(nd, ifb))/fb_current(ifb)
             END DO
             fb_rescale(ifb) = temp
+            GOTO 100
           CASE (3) 
 !
 ! rescale slowed by tanh_log
@@ -1709,6 +2166,7 @@ CONTAINS
               fb_rescaled(nd, ifb) = temp0*LOG(2.0_R8)*pwy1d(nd)
             END DO
             fb_rescale(ifb) = temp0
+            GOTO 100
           CASE (4) 
 !
 ! rescale done according to SOLPS4 formula:
@@ -1763,6 +2221,7 @@ CONTAINS
             fb_rescale = fb_alpha(ifb)*((fb_target(ifb)-fb_current(ifb))&
 &             /ddtim+(fb_prev(ifb)-fb_current(ifb))/dt_prev)
             saved_fb_actuator(ifb) = fb_current(ifb)
+            GOTO 100
           CASE (5) 
 !
 ! rescale done according to SOLPS4 formula:
@@ -1815,6 +2274,7 @@ CONTAINS
             fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-fb_current(&
 &             ifb))/ddtim+(fb_prev(ifb)-fb_current(ifb))/dt_prev)
             saved_fb_actuator(ifb) = fb_current(ifb)
+            GOTO 100
           CASE (6) 
 !
 ! rescale slowed by fb_alpha (SOLPS4 style)
@@ -1823,465 +2283,13 @@ CONTAINS
               fb_rescaled(nd, ifb) = fb_alpha(ifb)*fb_currentd(nd, ifb)
             END DO
             fb_rescale(ifb) = fb_alpha(ifb)*fb_current(ifb)
+            GOTO 100
           CASE DEFAULT
 !
             WRITE(*, *) 'fb_rescale_option not coded ', &
 &           fb_rescale_option(ifb)
-
+            GOTO 100
           END SELECT
-!
-          WRITE(*, '(a,1x,1p,i3,6g15.6)') 'feedback_rescale ', b2espcr(&
-&         fb_species(ifb)), fb_current(ifb), fb_target(ifb), fb_rescale(&
-&         ifb), fb_prev(ifb), ddtim, dt_prev
-!
-!
-! phase 3:
-!
-          SELECT CASE  (fb_actuator(ifb)) 
-          CASE (0) 
-
-          CASE (1) 
-!
-! no action
-!
-! neutral particle flux => gas puff
-!
-            IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
-&                             'compute_feedback_actuator: using ', &
-&                             'gas_puff for sequence ', b2espcr(&
-&                             fb_species(ifb))
-!
-            IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
-&           THEN
-              IF (conpar(is_start, fb_ib(ifb), 1) .GT. 0.0_R8) THEN
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = conpard(nd, is_start, &
-&                   fb_ib(ifb), 1)
-                END DO
-                saved_fb_actuator(ifb) = conpar(is_start, fb_ib(ifb), 1)
-                WRITE(message, '(a,i3,a,i2,a)') &
-&               'Initial gas puff strength set by CONPAR(', is_start, &
-&               ',', fb_ib(ifb), ',1) !'
-              ELSE IF (userfluxparm(fb_istra(ifb), 1) .GT. 0.0_R8) THEN
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = userfluxparmd(nd, &
-&                   fb_istra(ifb), 1)
-                END DO
-                saved_fb_actuator(ifb) = userfluxparm(fb_istra(ifb), 1)
-                WRITE(message, '(a,i3,a,i2,a)') &
-&               'Initial gas puff strength set by USERFLUXPARM(', &
-&               fb_istra(ifb), ',1)  !'
-              ELSE
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = 0.D0
-                END DO
-                saved_fb_actuator(ifb) = 1.0e18_R8
-                WRITE(*, *) 'Warning!  ', 'The gas puff was ', &
-&               'started with an initial rate of 1e18!'
-              END IF
-            END IF
-!
-            IF (fb_rescale_option(ifb) .LT. 4) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
-&                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
-&                 *fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
-            ELSE
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = fb_rescale(ifb)
-            END IF
-            IF (fb_puff_min(ifb) .GE. 0.0_R8) THEN
-              IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
-                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
-              ELSE
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = 0.D0
-                END DO
-                saved_fb_actuator(ifb) = fb_puff_min(ifb)
-              END IF
-            END IF
-            IF (fb_puff_max(ifb) .GT. 0.0_R8) THEN
-              IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
-                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
-              ELSE
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = 0.D0
-                END DO
-                saved_fb_actuator(ifb) = fb_puff_max(ifb)
-              END IF
-            END IF
-!
-            IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) .GT.&
-&               fb_target(ifb)*fb_overshoot(ifb)) THEN
-! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
-!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
-              IF (switch%use_eirene .EQ. 0) THEN
-                DO nd=1,nbdirs
-                  conpard(nd, is_start, fb_ib(ifb), 1) = 0.D0
-                END DO
-                conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
-              ELSE
-                DO nd=1,nbdirs
-                  userfluxparmd(nd, fb_istra(ifb), 1) = 0.D0
-                END DO
-                userfluxparm(fb_istra(ifb), 1) = 0.0_R8
-              END IF
-            ELSE IF (switch%use_eirene .EQ. 0) THEN
-              DO nd=1,nbdirs
-                conpard(nd, is_start, fb_ib(ifb), 1) = &
-&                 saved_fb_actuatord(nd, ifb)
-              END DO
-              conpar(is_start, fb_ib(ifb), 1) = saved_fb_actuator(ifb)
-            ELSE
-              DO nd=1,nbdirs
-                userfluxparmd(nd, fb_istra(ifb), 1) = &
-&                 saved_fb_actuatord(nd, ifb)
-              END DO
-              userfluxparm(fb_istra(ifb), 1) = saved_fb_actuator(ifb)
-            END IF
-          CASE (2) 
-!
-! rescale na
-!
-            IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
-&                             'compute_feedback_actuator: using ', &
-&                             'density rescale for sequence ', b2espcr(&
-&                             fb_species(ifb))
-!
-            DO is=is_start,is_end
-              DO nd=1,nbdirs
-                pld%na(nd, :, is) = fb_rescale(ifb)*pld%na(nd, :, is) &
-&                 + pl%na(:, is)*fb_rescaled(nd, ifb)
-                dvd%kinrgy(nd, :, is) = fb_rescale(ifb)*dvd%kinrgy(nd&
-&                 , :, is) + dv%kinrgy(:, is)*fb_rescaled(nd, ifb)
-                dvd%fna(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%fna(nd, &
-&                 :, 0:1, is) + dv%fna(:, 0:1, is)*fb_rescaled(nd, ifb&
-&                 )
-                dvd%fna_mdf(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
-&                 fna_mdf(nd, :, 0:1, is) + dv%fna_mdf(:, 0:1, is)*&
-&                 fb_rescaled(nd, ifb)
-                dvd%fna_fcor(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
-&                 fna_fcor(nd, :, 0:1, is) + dv%fna_fcor(:, 0:1, is)*&
-&                 fb_rescaled(nd, ifb)
-                dvd%fna_he(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
-&                 fna_he(nd, :, 0:1, is) + dv%fna_he(:, 0:1, is)*&
-&                 fb_rescaled(nd, ifb)
-                dvd%fnapsch(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
-&                 fnapsch(nd, :, 0:1, is) + dv%fnapsch(:, 0:1, is)*&
-&                 fb_rescaled(nd, ifb)
-                dvd%fna_eir(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
-&                 fna_eir(nd, :, 0:1, is) + dv%fna_eir(:, 0:1, is)*&
-&                 fb_rescaled(nd, ifb)
-                dvd%fna_32(nd, :, 0:1, is) = fb_rescale(ifb)*dvd%&
-&                 fna_32(nd, :, 0:1, is) + dv%fna_32(:, 0:1, is)*&
-&                 fb_rescaled(nd, ifb)
-              END DO
-              pl%na(:, is) = pl%na(:, is)*fb_rescale(ifb)
-              dv%kinrgy(:, is) = dv%kinrgy(:, is)*fb_rescale(ifb)
-              temp1 = (fb_rescale(ifb)-1.0_R8)*pl%na(:, is)
-              DO nd=1,nbdirs
-                dvd%ne(nd, :) = dvd%ne(nd, :) + rt%rza(:, is)*(pl%na(:&
-&                 , is)*fb_rescaled(nd, ifb)+(fb_rescale(ifb)-1.0_R8)*&
-&                 pld%na(nd, :, is)) + temp1*rtd%rza(nd, :, is)
-              END DO
-              dv%ne = dv%ne + temp1*rt%rza(:, is)
-              dv%fna(:, 0:1, is) = dv%fna(:, 0:1, is)*fb_rescale(ifb)
-              dv%fna_mdf(:, 0:1, is) = dv%fna_mdf(:, 0:1, is)*fb_rescale&
-&               (ifb)
-              dv%fna_fcor(:, 0:1, is) = dv%fna_fcor(:, 0:1, is)*&
-&               fb_rescale(ifb)
-              dv%fna_nodrift(:, 0:1, is) = dv%fna_nodrift(:, 0:1, is)*&
-&               fb_rescale(ifb)
-              dv%fna_he(:, 0:1, is) = dv%fna_he(:, 0:1, is)*fb_rescale(&
-&               ifb)
-              dv%fnapsch(:, 0:1, is) = dv%fnapsch(:, 0:1, is)*fb_rescale&
-&               (ifb)
-              dv%fna_eir(:, 0:1, is) = dv%fna_eir(:, 0:1, is)*fb_rescale&
-&               (ifb)
-              dv%fna_32(:, 0:1, is) = dv%fna_32(:, 0:1, is)*fb_rescale(&
-&               ifb)
-              dv%fna_52(:, 0:1, is) = dv%fna_52(:, 0:1, is)*fb_rescale(&
-&               ifb)
-            END DO
-!   ..initialise previous state and fluxes
-            psnl%na = pl%na
-            DO nd=1,nbdirs
-              psncd%na(nd, :, :) = pld%na(nd, :, :)
-              psncd%ne(nd, :) = dvd%ne(nd, :)
-              psncd%kinrgy(nd, :, :) = dvd%kinrgy(nd, :, :)
-            END DO
-            psnc%na = pl%na
-            psnl%ne = dv%ne
-            psnc%ne = dv%ne
-            psnl%fna = dv%fna
-            psnc%fna = dv%fna
-            psnl%kinrgy = dv%kinrgy
-            psnc%kinrgy = dv%kinrgy
-!   ..compute initial ni
-            CALL B2XPNI_NODIFF(ncv, ns, pl%na, dv%ni)
-            CALL B2XPNN_NODIFF(ncv, ns, pl%na, dv%nn)
-!   ..compute ni0
-            psnl%ni = dv%ni
-            DO nd=1,nbdirs
-              psncd%ni(nd, :, :) = dvd%ni(nd, :, :)
-            END DO
-            psnc%ni = dv%ni
-          CASE (3) 
-!
-! charged species particle flux
-!
-            IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
-&                             'compute_feedback_actuator: using ', &
-&                             'boundary flux condition for sequence ', &
-&                             b2espcr(fb_species(ifb))
-!
-            is_start = eb2spcr(b2espcr(fb_species(ifb))) + 1
-            is_end = eb2spcr(b2espcr(fb_species(ifb))) + nfluids(b2espcr&
-&             (fb_species(ifb)))
-!
-            IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
-&               saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = conpard(nd, is_end, &
-&                 fb_ib(ifb), 1)
-              END DO
-              saved_fb_actuator(ifb) = conpar(is_end, fb_ib(ifb), 1)
-            END IF
-!
-            IF (fb_type(ifb) .EQ. 6) THEN
-!csc, this is for backward compatibility, can probably be removed
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = (1.0_R8-fb_alpha(ifb))*&
-&                 saved_fb_actuatord(nd, ifb) + fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = (1.0_R8-fb_alpha(ifb))*&
-&               saved_fb_actuator(ifb) + fb_rescale(ifb)
-            ELSE IF (fb_rescale_option(ifb) .LT. 4) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
-&                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
-&                 *fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
-&               fb_rescale(ifb)
-            ELSE
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = fb_rescale(ifb)
-            END IF
-!
-            IF (fb_puff_min(ifb) .GE. 0.0_R8) THEN
-              IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
-                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
-              ELSE
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = 0.D0
-                END DO
-                saved_fb_actuator(ifb) = fb_puff_min(ifb)
-              END IF
-            END IF
-            IF (fb_puff_max(ifb) .GT. 0.0_R8) THEN
-              IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
-                saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
-              ELSE
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = 0.D0
-                END DO
-                saved_fb_actuator(ifb) = fb_puff_max(ifb)
-              END IF
-            END IF
-!
-            IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) .GT.&
-&               fb_target(ifb)*fb_overshoot(ifb)) THEN
-              total_flux = 0.0_R8
-              DO nd=1,nbdirsmax
-                total_fluxd(nd) = 0.D0
-              END DO
-            ELSE
-              DO nd=1,nbdirs
-                total_fluxd(nd) = saved_fb_actuatord(nd, ifb)
-              END DO
-              total_flux = saved_fb_actuator(ifb)
-            END IF
-!
-            IF (fb_type(ifb) .EQ. 6) THEN
-              DO is=is_start,is_end
-                iss = is - is_start + 1
-                DO nd=1,nbdirs
-                  conpard(nd, is, fb_ib(ifb), 1) = charge_frac(iss)*&
-&                   total_fluxd(nd) + total_flux*charge_fracd(nd, iss)
-                END DO
-                conpar(is, fb_ib(ifb), 1) = total_flux*charge_frac(iss)
-              END DO
-            ELSE
-              DO nd=1,nbdirs
-                conpard(nd, fb_species(ifb), fb_ib(ifb), 1) = &
-&                 total_fluxd(nd)
-              END DO
-              conpar(fb_species(ifb), fb_ib(ifb), 1) = total_flux
-            END IF
-          CASE (4) 
-!
-! electron heat flux
-!
-            IF (ncall .EQ. 0) WRITE(*, '(a,a)') &
-&                             'compute_feedback_actuator: using ', &
-&                             'electron heat flux boundary condition'
-!
-            IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
-&               saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = enepard(nd, fb_ib(ifb), &
-&                 1)
-              END DO
-              saved_fb_actuator(ifb) = enepar(fb_ib(ifb), 1)
-            END IF
-!
-            IF (fb_rescale_option(ifb) .LT. 4) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
-&                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
-&                 *fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
-            ELSE
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = fb_rescale(ifb)
-            END IF
-!
-            DO nd=1,nbdirs
-              enepard(nd, fb_ib(ifb), 1) = saved_fb_actuatord(nd, ifb)
-            END DO
-            enepar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
-          CASE (5) 
-!
-! ion heat flux
-!
-            IF (ncall .EQ. 0) WRITE(*, '(a,a)') &
-&                             'compute_feedback_actuator: using ', &
-&                             'ion heat flux boundary condition'
-!
-            IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
-&               saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = enipard(nd, fb_ib(ifb), &
-&                 1)
-              END DO
-              saved_fb_actuator(ifb) = enipar(fb_ib(ifb), 1)
-            END IF
-!
-            IF (fb_rescale_option(ifb) .LT. 4) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
-&                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
-&                 *fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
-            ELSE
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = fb_rescale(ifb)
-            END IF
-!
-            DO nd=1,nbdirs
-              enipard(nd, fb_ib(ifb), 1) = saved_fb_actuatord(nd, ifb)
-            END DO
-            enipar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
-          CASE (6) 
-!
-! current
-!
-            IF (ncall .EQ. 0) WRITE(*, '(a,a)') &
-&                             'compute_feedback_actuator: using ', &
-&                             'electric current boundary condition'
-!
-            IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
-&               saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = potpard(nd, fb_ib(ifb), &
-&                 1)
-              END DO
-              saved_fb_actuator(ifb) = potpar(fb_ib(ifb), 1)
-            END IF
-!
-            IF (fb_rescale_option(ifb) .LT. 4) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
-&                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
-&                 *fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
-            ELSE
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = fb_rescale(ifb)
-            END IF
-!
-            DO nd=1,nbdirs
-              potpard(nd, fb_ib(ifb), 1) = saved_fb_actuatord(nd, ifb)
-            END DO
-            potpar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
-          CASE (7) 
-!
-! density
-!
-            IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
-&                             'compute_feedback_actuator: using ', &
-&                             'density condition for sequence ', b2espcr&
-&                             (fb_species(ifb))
-!
-            IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
-&               saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = conpard(nd, fb_species(&
-&                 ifb), fb_ib(ifb), 1)
-              END DO
-              saved_fb_actuator(ifb) = conpar(fb_species(ifb), fb_ib(&
-&               ifb), 1)
-            END IF
-!
-            IF (fb_rescale_option(ifb) .LT. 4) THEN
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescale(ifb)*&
-&                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
-&                 *fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
-            ELSE
-              DO nd=1,nbdirs
-                saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
-              END DO
-              saved_fb_actuator(ifb) = fb_rescale(ifb)
-            END IF
-!
-            DO nd=1,nbdirs
-              conpard(nd, fb_species(ifb), fb_ib(ifb), 1) = &
-&               saved_fb_actuatord(nd, ifb)
-            END DO
-            conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator(&
-&             ifb)
-          CASE DEFAULT
-!
-            WRITE(*, *) 'fb_actuator not coded ', fb_type(ifb)
-          END SELECT
-!
-          IF (fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
-&           WRITE(*, '(a,1p,i3,g15.6)') 'feedback_actuator ', b2espcr(&
-&           fb_species(ifb)), saved_fb_actuator(ifb)
         END IF
 !
 !
@@ -2301,13 +2309,13 @@ CONTAINS
   END SUBROUTINE COMPUTE_FEEDBACK_DV
 
 !
-  SUBROUTINE COMPUTE_FEEDBACK(ncv, nfc, nvx, ns, ismain, switch, geo, &
-&   mpg, pl, dv, rt, srw, psnc, psnl, main_call, diagno)
+  SUBROUTINE COMPUTE_FEEDBACK(ncv, nfc, ns, ismain, switch, geo, mpg, pl&
+&   , dv, rt, psnc, psnl, main_call)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, nvx, ns, ismain, diagno
+    INTEGER :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2316,8 +2324,6 @@ CONTAINS
     TYPE(B2RATES), INTENT(IN) :: rt
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
     LOGICAL :: main_call
-!   ..output arguments (unspecified on entry)
-    TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
 !   ..local variables
     INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
 &   , iss
@@ -2547,8 +2553,8 @@ CONTAINS
                 IF (is_start .EQ. -1) is_start = is
                 IF (.NOT.(is_neutral(is) .AND. switch%use_eirene .NE. 0)&
 &               ) THEN
-                  ifc1 = mpg%fsfcp(ifssep, 1)
-                  ifc2 = ifc1 + mpg%fsfcp(ifssep, 2) - 1
+                  ifc1 = mpg%fsfcp(mpg%ifssep, 1)
+                  ifc2 = ifc1 + mpg%fsfcp(mpg%ifssep, 2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
                   DO ifc=ifc1,ifc2
@@ -3234,11 +3240,10 @@ CONTAINS
 !
 !**********************************************************************
 !
-  SUBROUTINE CONV_FBPARMS(nx, ny, ns, m)
+  SUBROUTINE CONV_FBPARMS(m)
     USE B2MOD_FEEDBACK_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: nx, ny, ns
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: is, ix, iy, icv, iss, ifbreg
     LOGICAL :: done
@@ -3302,11 +3307,10 @@ CONTAINS
 !
 !**********************************************************************
 !
-  SUBROUTINE WRITE_FBPARMS(ns)
+  SUBROUTINE WRITE_FBPARMS()
     USE B2MOD_VERSION_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: ns
     INTEGER :: ifb, iout
 !
     OPEN(newunit=iout, file='b2us.feedback_control.parameters') 
