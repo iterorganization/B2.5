@@ -3791,11 +3791,27 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2upht_te_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum electron temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
 				<name>b2upht_ti_min</name>
 				<default>0.1</default>
 				<type>real</type>
 				<description>
 					Sets the minimum ion temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_ti_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum ion temperature value (in eV).
 				</description>
 			</switch>
 			<switch>
@@ -3807,6 +3823,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2upht_tn_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum fluid neutral temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
 				<name>b2upht_kt_min</name>
 				<default>1.0e-5</default>
 				<type>real</type>
@@ -3815,11 +3839,27 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2upht_kt_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum turbulent ExB kinetic energy value (in eV).
+				</description>
+			</switch>
+			<switch>
 				<name>b2upht_zt_min</name>
 				<default>1.0e-8</default>
 				<type>real</type>
 				<description>
 					Sets the minimum turbulent ExB enstrophy value (in s^{-2}).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_zt_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum turbulent ExB enstrophy value (in s^{-2}).
 				</description>
 			</switch>
 			<switch>
