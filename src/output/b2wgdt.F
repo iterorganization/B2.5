@@ -76,9 +76,9 @@
 *   ..procedures
       intrinsic max
       real (kind=R8) ::
-     *   scal10, samax
+     *   scal10, damax
       logical strmas
-      external xertst, scal10, samax, strmas
+      external xertst, scal10, damax, strmas
       external b2wgxp
 
 *-----------------------------------------------------------------------
@@ -96,7 +96,7 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..compute tthi
       tthi = ev*scal10(0.8_R8*
-     &  max(samax(n2,delte,1)/ev,samax(n2,delti,1)/ev))
+     &  max(damax(n2,delte,1)/ev,damax(n2,delti,1)/ev))
 *   ..set coordinates
       do ix = -1, nx
        xf(ix) = ix
@@ -110,7 +110,7 @@
 * ..make plots
 *   ..make contour plots of (ne) change
       if (strmas(idout,'cpne')) then
-       t0 = scal10(0.8_R8*samax(n2,delne,1))
+       t0 = scal10(0.8_R8*damax(n2,delne,1))
        write (header,fmth) 'ELECTRON DENSITY CHANGE (/m**3).', 
      &  t0/50.0_R8
        write (nprt,fmtp) '+cpne', header
@@ -120,7 +120,7 @@
       endif
 *   ..make contour plots of (ni) change
       if (strmas(idout,'cpni')) then
-        t0 = scal10(0.8_R8*samax(n2,delni(-1,-1,0),1))
+        t0 = scal10(0.8_R8*damax(n2,delni(-1,-1,0),1))
        write (header,fmth) 'ALL ATOM DENSITY CHANGE (/m**3).', 
      &  t0/50.0_R8
        write (nprt,fmtp) '+cpni', header
@@ -148,7 +148,7 @@
       endif
 *   ..make contour plots of (po) change
       if (strmas(idout,'cppo')) then
-       t0 = scal10(0.8_R8*samax(n2,delpo,1))
+       t0 = scal10(0.8_R8*damax(n2,delpo,1))
        write (header,fmth) 'ELECTRIC POTENTIAL CHANGE (V).', t0/50.0_R8
        write (nprt,fmtp) '+cppo', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
@@ -158,7 +158,7 @@
 *   ..make contour plots of (na) change
       if (strmas(idout,'cpna')) then
        do is = 0, ns-1
-        t0 = scal10(0.8_R8*samax(n2,delna(-1,-1,is),1))
+        t0 = scal10(0.8_R8*damax(n2,delna(-1,-1,is),1))
         write (header,fmth2) 'DENSITY CHANGE (/m**3).', is, t0/50.0_R8
         write (nprt,fmtp) '+cpna', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
@@ -169,7 +169,7 @@
 *   ..make contour plots of (ua) change
        if (strmas(idout,'cpua')) then
         do is = 0, ns-1
-         t0 = scal10(0.8_R8*samax(n2,delua(-1,-1,is),1))
+         t0 = scal10(0.8_R8*damax(n2,delua(-1,-1,is),1))
          write (header,fmth2) 'VELOCITY CHANGE (m/s).', is, t0/50.0_R8
          write (nprt,fmtp) '+cpua', header
          call b2wgxp (nx, ny, header, xc, xf, yc, yf,

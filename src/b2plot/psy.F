@@ -9,9 +9,7 @@ c
       integer ix,iy,is
       intrinsic min,max
 #endif
-      integer lnblnk
       character*256 stmp
-      external lnblnk
 
 #ifdef WG_TODO
       values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,1)
@@ -26,7 +24,7 @@ c
         enddo
       enddo
 #endif
-      stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
+      stmp=trim(graphlabel(iwrk))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
       end subroutine psy

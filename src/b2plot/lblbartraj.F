@@ -11,8 +11,8 @@ C =====================================================================
       real zlo, zhi
       REAL ZINC, ZVAL, CLV
       INTEGER I, NOZ, NOZM, NFMTZ
-      REAL CEIL, FLOOR
-      EXTERNAL CEIL, FLOOR
+      REAL (KIND=R4) :: CEIL, SFLOOR
+      EXTERNAL CEIL, SFLOOR
       INTRINSIC LOG10
 
       INTEGER LFIN(100)
@@ -61,9 +61,9 @@ C =====================================================================
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.ncol) then
             ncont=ncont*3
