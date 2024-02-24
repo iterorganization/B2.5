@@ -165,19 +165,22 @@
         endif
         dte(iCv) = dte1(iCv)
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
-        if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv)) !xpb
+        if (solvereg(ireg))
+     >   te(iCv) = max(switch%b2upht_te_min*ev,te(iCv)+dte(iCv))    !xpb
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi.and.add_te_corr_to_po(ireg)) then
           po(iCv) = po(iCv)+dte(iCv)/qe
         else if (switch%pot_eq.eq.2) then
           po(iCv) = 3.1_R8*te(iCv)/qe
         end if
-        if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv)) !xpb
-        if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
+        if (solvireg(ireg))
+     >   ti(iCv) = max(switch%b2upht_ti_min*ev,ti(iCv)+dti(iCv))    !xpb
+        if (solvnreg(ireg))
+     >   tn(iCv) = max(switch%b2upht_tn_min*ev,tn(iCv)+dtn(iCv))
         if (switch%solve_keps.gt.0.and.solvkreg(ireg))
-     &    kt(iCv) = max(1.0e-5_R8*ev,kt(iCv)+dkt(iCv))
+     >   kt(iCv) = max(switch%b2upht_kt_min*ev,kt(iCv)+dkt(iCv))
         if (switch%solve_keps.gt.1.and.solvzreg(ireg))
-     &    zt(iCv) = max(1.0e-8_R8*ev,zt(iCv)+dzt(iCv))
+     >   zt(iCv) = max(switch%b2upht_zt_min*ev,zt(iCv)+dzt(iCv))
       enddo
 *   ..adjust ua
       wrk0 = ne*dte + ni(:,0)*dti

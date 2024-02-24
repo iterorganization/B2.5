@@ -88,6 +88,11 @@ c Advanced fluid neutral models
       real (kind=R8) :: b2mndr_na_min
       real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
+      real (kind=R8) :: b2upht_te_min
+      real (kind=R8) :: b2upht_ti_min
+      real (kind=R8) :: b2upht_tn_min
+      real (kind=R8) :: b2upht_kt_min
+      real (kind=R8) :: b2upht_zt_min
       real (kind=R8) :: cfc0
       real (kind=R8) :: prl_cur
       real (kind=R8) :: dia_cur
@@ -509,6 +514,8 @@ c b2stbc
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
+      real (kind=R8) :: stab_coeff_sheath_te
+      real (kind=R8) :: stab_coeff_sheath_ti
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
@@ -614,6 +621,11 @@ c Advanced fluid neutral models
       s % b2mndr_na_min = 1.0e4_R8
       s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
+      s % b2upht_te_min = 0.1_R8
+      s % b2upht_ti_min = 0.1_R8
+      s % b2upht_tn_min = 0.1_R8
+      s % b2upht_kt_min = 1.0e-5_R8
+      s % b2upht_zt_min = 1.0e-8_R8
       s % cfc0 = 1.0e0_R8
       s % prl_cur = 1.0e0_R8
       s % dia_cur = 1.0e0_R8
@@ -1051,6 +1063,8 @@ c b2stbc_phys
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
+      s % stab_coeff_sheath_te = 0.0_R8
+      s % stab_coeff_sheath_ti = 0.0_R8
 
 c b2trno
       s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
@@ -1155,6 +1169,11 @@ c Advanced fluid neutral models
       call ipgetr ('b2mndr_na_min', s%b2mndr_na_min)
       call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
+      call ipgetr ('b2upht_te_min', s%b2upht_te_min)
+      call ipgetr ('b2upht_ti_min', s%b2upht_ti_min)
+      call ipgetr ('b2upht_tn_min', s%b2upht_tn_min)
+      call ipgetr ('b2upht_kt_min', s%b2upht_kt_min)
+      call ipgetr ('b2upht_zt_min', s%b2upht_zt_min)
       call ipgetr ('b2usmo_cfc0', s % cfc0)
       call ipgetr ('b2tfhe_prl_cur', s % prl_cur)
       call ipgetr ('b2tfhe_dia_cur', s % dia_cur)
@@ -1608,6 +1627,10 @@ c b2stbc
       call ipgetr ('b2stbc_nesepm', s%nesepm)
       call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
       call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+      call ipgetr ('b2stbc_stab_coeff_sheath_te',
+     &                                s%stab_coeff_sheath_te)
+      call ipgetr ('b2stbc_stab_coeff_sheath_ti',
+     &                                s%stab_coeff_sheath_ti)
 
 c b2trno
       call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)  !lk 31.01.08
@@ -1784,11 +1807,15 @@ c b2stbc
      .  'faulty parameter b2stbc: shi0ep')
        call xertst (0.0_R8.le.s%b2stbc_neoclassical .and.
      &              s%b2stbc_neoclassical.le.1.0_R8,
-     1              'faulty iparameter b2stbc_neoclassical')
+     1              'faulty parameter b2stbc_neoclassical')
 
        call xertst (0.0_R8.le.s%b2stbc_fchy_dia .and.
      &              s%b2stbc_fchy_dia.le.1.0_R8,
      1              'faulty internal parameter b2stbc_fchy_dia')
+       call xertst (0.0_R8.le.s%stab_coeff_sheath_te,
+     &              'faulty parameter b2stbc_stab_coeff_sheath_te')
+       call xertst (0.0_R8.le.s%stab_coeff_sheath_ti,
+     &              'faulty parameter b2stbc_stab_coeff_sheath_ti')
 
 c b2sihs
        call xertst (0.le.s%b2sihs_style,
@@ -1843,11 +1870,21 @@ c b2news
      &              'faulty input b2tlnl_ei')
 
        call xertst (s%b2mndr_na_min.gt.0.0_R8,
-     &  'faulty parameter b2mndr na_min')
+     &  'faulty parameter b2mndr_na_min')
        call xertst (s%b2mndr_na_new.gt.0.0_R8,
-     &  'faulty parameter b2mndr na_new')
+     &  'faulty parameter b2mndr_na_new')
        call xertst (s%b2mndr_na_new.gt.s%b2mndr_na_min,
      &  'na_new must be larger than na_min!')
+       call xertst (s%b2upht_te_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_te_min')
+       call xertst (s%b2upht_ti_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_ti_min')
+       call xertst (s%b2upht_tn_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_tn_min')
+       call xertst (s%b2upht_kt_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_kt_min')
+       call xertst (s%b2upht_zt_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_zt_min')
 
        call xertst (0.le.s%stylec, 'faulty parameter stylec')
 

@@ -277,7 +277,6 @@ c OLD interface
       character*(*) filename, name, long_name, units
       integer nCv
       integer index(1), ntstep
-      integer lnblnk
 * variable shapes
       integer dims(2)
 * dimensions and variables
@@ -304,10 +303,10 @@ c OLD interface
       iret = nf_def_var (ncid, name, NF_DOUBLE, 2, dims, z_cvt_id)
       call check_cdf_status(iret)
       iret = nf_put_att_text (ncid, z_cvt_id, 'long_name',
-     1 lnblnk(long_name), long_name)
+     1 len_trim(long_name), long_name)
       call check_cdf_status(iret)
       iret = nf_put_att_text (ncid, z_cvt_id, 'units',
-     1 lnblnk(units), units)
+     1 len_trim(units), units)
       call check_cdf_status(iret)
 
 * leave define mode

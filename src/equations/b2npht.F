@@ -181,6 +181,7 @@
         else
           rxg = 1.0_R8
         endif                                                           !srv 07.07.21 }
+        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then

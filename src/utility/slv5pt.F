@@ -98,8 +98,8 @@
       parameter (rxf=1.0_R8)
 *   ..procedures
       real (kind=R8) ::
-     *   smin, samax
-      external xertst, smin, samax, sfill, sgbtrf, sgbtrs
+     *   smin, damax
+      external xertst, smin, damax, sfill, sgbtrf, sgbtrs
 
 *-----------------------------------------------------------------------
 *.computation
@@ -114,11 +114,11 @@
        call xerrab ('slv5pt--faulty argument iters')
       endif
 *   ..test edge values of side-diagonals
-      if (0.0_R8.lt.samax(m,aa5(0,0,-2),1).or.
-     &    0.0_R8.lt.samax(m,aa5(0,n-1,2),1)) then
+      if (0.0_R8.lt.damax(m,aa5(0,0,-2),1).or.
+     &    0.0_R8.lt.damax(m,aa5(0,n-1,2),1)) then
        call xerrab ('slv5pt--faulty argument aa5(,,-2), aa5(,,2)')
-      else if (0.0_R8.lt.samax(n,aa5(0,0,-1),m).or.
-     &         0.0_R8.lt.samax(n,aa5(m-1,0,1),m)) then
+      else if (0.0_R8.lt.damax(n,aa5(0,0,-1),m).or.
+     &         0.0_R8.lt.damax(n,aa5(m-1,0,1),m)) then
        call xerrab ('slv5pt--faulty argument aa5(,,-1), aa5(,,1)')
       endif
 *   ..test sign of main diagonal
@@ -280,7 +280,7 @@
         call xertst (info.eq.0, 'slv5pt--error return from sgbtrs')
        endif
 *    ..compute norm
-       nrmc(it) = samax(m*n,wrk0,1)
+       nrmc(it) = damax(m*n,wrk0,1)
 *    ..update sol
        if (m.le.n) then
         do j = 0, n-1
