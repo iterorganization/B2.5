@@ -12,14 +12,14 @@ c
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,xmult
       real (kind=R8) :: wrk(-1:mpg%nx)
-      integer ix,is,iCv,iCn,lnblnk,ixstart,ixend,len_of_digits
+      integer ix,is,iCv,iCn,ixstart,ixend,len_of_digits
 
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
 
       intrinsic min,max,mod,sqrt
-      external xertst,lnblnk,len_of_digits
+      external xertst,len_of_digits
 
       if(mpg%isClassicalGrid.eq.0) return
       ixstart=-1
@@ -68,9 +68,7 @@ cxpb : new default behaviour : zero of distance set at ixref
         enddo
         write(tmpstring2,hlp_frm) ' <iy = ',iy,'>'
         tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1    trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
         call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
           lmin=values(9)
@@ -113,7 +111,7 @@ cxpb : new default behaviour : zero of distance set at ixref
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do ix=ixstart,ixend
               iCv=mpg%imapCv(ix,iy)
               write(nwtf,*) wrk(ix),work(iCv,is,iwrk)
@@ -209,7 +207,7 @@ cxpb : new default behaviour : zero of distance set at ixref
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do ix=ixstart,ixend
               iCv=mpg%imapCv(ix,iy)
               write(nwtf,*) wrk(ix),work(iCv,is,iwrk)
@@ -285,8 +283,8 @@ c
       real (kind=R8) :: dsep,lmin,lmax,xmin,xmax,xmult
       real (kind=R8), allocatable :: wrk(:)
       integer i,is,iCv,iCn
-      integer lnblnk,len_of_digits
-      external lnblnk,len_of_digits
+      integer len_of_digits
+      external len_of_digits
 
 c     the line format common
       character*10 linefmt
@@ -323,9 +321,7 @@ c     the line format common
         enddo
         write(tmpstring2,hlp_frm) ' <iFt = ',iFt,'>'
         tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1   trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
         call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
           lmin=values(9)
@@ -368,7 +364,7 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,mpg%ftCvP(iFt,2)
               iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
               write(nwtf,*) wrk(i),work(iCv,is,iwrk)
@@ -446,7 +442,7 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,mpg%ftCvP(iFt,2)
               iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
               write(nwtf,*) wrk(i),work(iCv,is,iwrk)

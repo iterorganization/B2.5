@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=399,nfns=217,nsparameters=34,nelabels=36,
+      parameter(nlabels=412,nfns=219,nsparameters=34,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
@@ -75,7 +75,7 @@
      7  'nflfnay' , 'nflfhix' , 'nflfhiy' , 'flvisc'  , 'sna'     ,
      8  'she'     , 'shi'     , 'sch'     , 'crx'     , 'cry'     ,
      9  'nh'      , 'qz0'     , 'qz1'     , 'sxperp'  , 'ue'      ,
-     *  'fchp'    , 'za2'     , 'xreg'    , 'yreg'    , 'b2espcr' /
+     *  'fchp'    , 'za2'     , 'freg'    , 'flbl'    , 'b2espcr' /
       data labels(251:300) /
      1  'qc'      , 'bc'      , 'ceqp'    , 'sne'     , 'brne'    ,
      2  'bcne'    , 'exne'    , 'dnneo'   , 'chineo'  , 'vnneo'   ,
@@ -98,7 +98,7 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:399) /
+      data labels(351:400) /
      1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      ,
      2  'molrad'  , 'ionrad'  , 'tn'      , 'kt'      , 'zt'      ,
      3  'fcxviskt', 'fcyviskt', 'fnnx32'  , 'fnny32'  , 'fnnx52'  ,
@@ -108,7 +108,11 @@
      7  'dkt'     , 'dzt'     , 'dfhn'    , 'dfkt'    , 'dfzt'    ,
      8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
      9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
-     *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     /
+     *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     , 'iclt'    /
+      data labels(401:412) /
+     1  'icle'    , 'iceq'    , 'icne'    , 'icge'    , 'icgt'    ,
+     2  'ifeq'    , 'iveq'    , 'ic'      , 'iimp'    , 'iomp'    ,
+     3  'clbl'    , 'tlbl'    /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -381,8 +385,8 @@
      5    'Parallel electron velocity (u_{e}) (m.s^{-1})',
      6    'Parallel current (A)',
      7    'Squared ion charge (e^{2})',
-     8    'X-directed flux region',
-     9    'Y-directed flux region',
+     8    'Flux region index',
+     9    'Face label',
      *    'Nuclear sequence index'/
       data descriptions(251:260) /
      1    'qc',
@@ -538,7 +542,7 @@
      8    'Boundary E\mU\dB turbulent enstrophy source (s^{-3}?)',
      9    'Recycling fluid neutral heat source (W)',
      *    'Recycling E\mU\dB turbulent energy source (W)'/
-      data descriptions(391:399) /
+      data descriptions(391:400) /
      1    'Recycling E\mU\dB turbulent enstrophy source (s^{-3}?)',
      2    'tn at previous time step (eV)',
      3    'kt at previous time step (eV)',
@@ -547,7 +551,22 @@
      6    'Radial fluid neutral particle flux (s^{-1})',
      7    'Poloidal fluid neutral energy flux (W)',
      8    'Radial fluid neutral energy flux (W)',
-     9    'Flux tube number'/
+     9    'Flux tube number',
+     *    'iclt'/
+      data descriptions(401:410) /
+     1    'icle',
+     2    'iceq',
+     3    'icne',
+     4    'icge',
+     5    'icgt',
+     6    'ifeq',
+     7    'iveq',
+     8    'ic',
+     9    'Inner midplane cells',
+     *    'Outer midplane cells'/
+      data descriptions(411:412) /
+     1    'Cell label',
+     2    'Flux tube label'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -560,8 +579,8 @@
      9    2,      2,      2,      1,      1,
      *    1,      1,      2,      2,      1/
       data dimensions(51:100) /
-     1    1,      1,      1,      1,      0,
-     2    0,      0,      0,      1,      1,
+     1    1,      1,      1,      1,      1,
+     2    1,      0,      0,      1,      1,
      3    1,      1,      2,      2,      1,
      4    1,      2,      2,      2,      2,
      5    2,      2,      2,      2,      2,
@@ -571,27 +590,27 @@
      9    2,      2,      2,      2,      2,
      *    2,      1,      1,      1,      2/
       data dimensions(101:150) /
-     1    1,      1,      2,      1,      0,
-     2    0,      0,      2,      2,      2,
-     3    0,      1,      2,      2,      0,
-     4    0,      0,      2,      2,      1,
+     1    1,      1,      2,      1,      2,
+     2    2,      2,      2,      2,      2,
+     3    0,      1,      2,      2,      2,
+     4    2,      2,      2,      2,      1,
      5    1,      1,      1,      2,      2,
-     6    1,      1,      1,      1,      0,
-     7    0,      0,      0,      0,      0,
-     8    2,      2,      2,      0,      0,
-     9    0,      2,      2,      1,      1,
+     6    1,      1,      1,      1,      1,
+     7    1,      1,      1,      1,      1,
+     8    2,      2,      2,      1,      1,
+     9    1,      2,      2,      1,      1,
      *    1,      2,      2,      2,      0/
       data dimensions(151:200) /
-     1    0,      1,      1,      1,      2,
+     1    1,      1,      1,      1,      2,
      2    2,      2,      2,      2,      2,
      3    2,      2,      1,      1,      0,
-     4    0,      0,      0,      0,      0,
+     4    1,      1,      1,      1,      0,
      5    0,      0,      0,      0,      0,
      6    0,      0,      1,      1,      2,
      7    2,      2,      2,      1,      1,
      8    1,      2,      2,      1,      1,
-     9    1,      0,      0,      0,      0,
-     *    0,      1,      0,      0,      2/
+     9    1,      1,      1,      1,      1,
+     *    1,      1,      1,      1,      2/
       data dimensions(201:250) /
      1    1,      1,      1,      0,      2,
      2    2,      2,      2,      1,      1,
@@ -604,28 +623,28 @@
      9    1,      1,      1,      0,      1,
      *    1,      2,      0,      0,      2/
       data dimensions(251:300) /
-     1    0,      1,      1,      1,      1,
-     2    1,      1,      0,      0,      0,
-     3    0,      0,      0,      0,      0,
-     4    0,      0,      0,      0,      0,
-     5    0,      0,      0,      0,      0,
-     6    0,      0,      1,      2,      2,
+     1    1,      1,      1,      1,      1,
+     2    1,      1,      2,      2,      2,
+     3    2,      2,      2,      2,      2,
+     4    2,      2,      2,      2,      2,
+     5    2,      2,      2,      2,      2,
+     6    2,      2,      1,      2,      2,
      7    2,      2,      2,      2,      2,
      8    1,      2,      1,      2,      1,
      9    1,      1,      2,      2,      1,
      *    2,      1,      2,      2,      2/
       data dimensions(301:350) /
-     1    2,      2,      1,      0,      0,
-     2    0,      0,      0,      2,      2,
-     3    0,      2,      2,      1,      1,
+     1    2,      2,      1,      2,      1,
+     2    1,      1,      1,      2,      2,
+     3    2,      2,      2,      1,      1,
      4    1,      1,      1,      1,      1,
      5    1,      2,      2,      2,      2,
      6    2,      2,      1,      1,      1,
      7    1,      1,      1,      1,      1,
-     8    0,      0,      2,      2,      1,
+     8    1,      1,      2,      2,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      2/
-      data dimensions(351:399) /
+      data dimensions(351:400) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      1,      1,      1,
      3    1,      1,      1,      1,      1,
@@ -635,7 +654,11 @@
      7    1,      1,      1,      1,      1,
      8    1,      1,      1,      1,      1,
      9    1,      1,      1,      1,      1,
-     *    1,      1,      1,      1/
+     *    1,      1,      1,      1,      1/
+      data dimensions(401:412) /
+     1    1,      1,      1,      1,      1,
+     2    1,      1,      1,      1,      1,
+     3    1,      1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -680,11 +703,11 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:217) /
+      data fns(201:219) /
      1 'trigmesh', 'earox', 'earoy', 'earow', 'nice' ,
      2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   , 'etal'  ,
      3 'fcol' , 'bold' , 'rmaj' , 'f.imp'  , 'f.omp' ,
-     4 'f.t'  , 'sumft'/
+     4 'f.t'  , 'sumft', 't_xy' , 'icse'   /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',

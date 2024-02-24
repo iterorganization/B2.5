@@ -87,7 +87,7 @@
       integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
 #endif
       integer, save :: bccon_flux_fb_style =0
-      integer, save :: bcene_15_style =0                                !srv 19.04.13
+      integer, save :: bcene_15_style =1                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
       integer, save :: bcenk_17_style =0
@@ -4808,9 +4808,11 @@ cwdk    Todo: corrections for BCCON.ne.14
             t1 = t1*geo%fcS(iFc)
             if(switch%pot_eq.eq.1) then
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -
-     &          (1.0e0_R8+GAMMAE)*t0 - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
+     &          ((1.0e0_R8+GAMMAE)+switch%stab_coeff_sheath_te)*t0
+     &           - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
-     &          (1.0e0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))*t0 -    !lkw 31.03.2023
+     &          ((1.0e0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
+     &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
      &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
             else
               cs = sqrt(pz(iCv1)/rz(iCv1))
@@ -6713,8 +6715,11 @@ cxpb          endif
             endif
            enddo
            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                        !srv 11.03.09 {
-     &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -
-     &      enipar(ib,2)*t1*geo%fcS(iFc)                                !srv 19.04.13
+     &      (enipar(ib,1)+switch%stab_coeff_sheath_ti)*t0*cs*
+     &       abs(geo%fcPbs(iFc)) -
+     &       enipar(ib,2)*t1*geo%fcS(iFc)                               !srv 19.04.13
+           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +                        !srv 11.03.09 {
+     &       switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           else
            !wdk sheath transmission factor consistent with truncated
            !    Maxwellian distribution on Eirene side (NEMODS=7)
@@ -6735,8 +6740,11 @@ cxpb          endif
             endif
            enddo
            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
-     &      t0*cs*abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
+     &      (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
+     &      abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
      &      t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &      switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           endif
           if(switch%mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +

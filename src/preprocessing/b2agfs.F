@@ -42,11 +42,11 @@
 *
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
-*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
-*     Other values are not allowed. 
-*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
+*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
+*     symmetry about the R=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the Z=0 axis.
+*     Other values are not allowed.
+*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
 *     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e. 
 *     no toroidal magnetic field component.
@@ -457,7 +457,7 @@ cxpb  if just below the top corner, make the corner cell follow
 !
 *   ..test sign of bb3
 !      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
-!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wbbc)
+!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wc)
        !call b2xvs1(nCv,g%cvBb(:,3), 1, 'cvBb3', '.gt.')
        
 

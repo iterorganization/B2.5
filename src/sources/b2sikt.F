@@ -316,6 +316,4 @@ cwdk     parallel transport due to parallel current fluctuations
 *-----------------------------------------------------------------------
 *.end b2sikt
 
-      end
-
-
+      end subroutine b2sikt

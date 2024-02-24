@@ -4,12 +4,12 @@ c
      . (filename)
 
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use b2mod_subsys
       use eirmod_ctrig
+      use b2us_data
       implicit none
       character*(*) filename
       character*80 dataname
@@ -24,11 +24,10 @@ c
       real (kind=R8) ::
      *   xvalues(maxchords),yvalues(maxchords),
      1   xmin,xmax,ymin,ymax,x1,x2,y1,y2,z1,z2
-      integer lnblnk
       real (kind=R8) ::
      * chord_tria_integral
       external chord_tria_integral
-      external lnblnk, open_file, xerrab
+      external open_file, xerrab
 
       call subini ('process_eirene_chords')
       do is=0,nedim(2,iewrk)-1
@@ -39,21 +38,20 @@ c
         end if
         read(99,*,err=30,end=30) dataname,npoints
         vector=npoints .lt. 0
-        if(vector) 
-     >   dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+        if(vector) dataname=trim(dataname) // ' (vector)'
         npoints=abs(npoints)
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalues(inpts)=chord_tria_integral(ntrii,nrknot,
+        yvalues(inpts)=chord_tria_integral(geo,ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,npoints,
+     2   xtrian,ytrian,necke,ixtri,npoints,
      3   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0) 
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
         call xerrab ('increase array size in process_eirene_chords')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue
@@ -102,16 +100,15 @@ c
           end if
         end if
         tmpstring=
-     1   eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))) // '.m ' //
-     2   textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))) // ' ' //
-     3   dataname(1:lnblnk(dataname))
+     1   trim(eirene_label(iewrk)) // '.m ' //
+     2   trim(textewk(is,iewrk)) // ' ' // trim(dataname)
         call customise_label(tmpstring,titlestring)
         call init_page(titlestring,
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.false.)
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
             write(nwtf,'(''# '',a)') trim(extralabel)
@@ -136,11 +133,11 @@ c
      . (filename)
 
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use eirmod_ctrig
+      use b2us_data
       implicit none
 
       character*(*) filename
@@ -162,35 +159,33 @@ c
       integer indchd(maxchords+1),indit(maxcompile)
       real(kind=R8) ::
      * indscl(maxcompile)
-      integer inpts,is,i,lnblnk,nxcam,nycam
-      external lnblnk
+      integer inpts,is,i,nxcam,nycam
       real (kind=R8) ::
      *   xmin,xmax,ymin,ymax
 
       if(use_compile) then
-        call compile_tria_chords(maxchords,maxcompile,
+        call compile_tria_chords(geo,maxchords,maxcompile,
      &   ntrii,nrknot,
-     &   xtrian,ytrian,necke,ixtri,iytri,
+     &   xtrian,ytrian,necke,ixtri,
      1   inpts,indchd,indit,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
 
       do is=0,nedim(2,iewrk)-1
-        call calculate_tzvalues(maxchords,maxcompile,
+        call calculate_tzvalues(geo,maxchords,maxcompile,
      1   inpts,indchd,indit,indscl,
      1   eirene_stack(1,is,iewrk),
      1   zvalues,filename,dataname,nxcam,xmin,xmax,nycam,ymin,ymax)
         tmpstring=
-     1   eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))) //
-     2   textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))) // ' ' //
-     3   dataname(1:lnblnk(dataname))
+     1   trim(eirene_label(iewrk)) //
+     2   trim(textewk(is,iewrk)) // ' ' // trim(dataname)
         call customise_label(tmpstring,titlestring)
         call init_page(titlestring,
      1   xmin,xmax,ymin,ymax,1,.true.,.true.,.true.)
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           do i=1,inpts
             write(nwtf,*) zvalues(i)
           enddo
@@ -204,18 +199,20 @@ c
       return
       end subroutine process_eirene_camera
 c
-      subroutine compile_tria_chords(maxchords,maxcompile,
+      subroutine compile_tria_chords(geo,maxchords,maxcompile,
      & ntrii,nrknot,
-     & xtrian,ytrian,necke,ixtri,iytri,
+     & xtrian,ytrian,necke,ixtri,
      1 inpts,indchd,indit,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
       use b2mod_subsys
+      use b2us_geo
       implicit none
+      type(geometry), intent(in) :: geo
 
       integer maxchords,maxcompile,ntrii,nrknot,inpts
-      integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
+      integer necke(3,ntrii),ixtri(ntrii)
       integer indchd(maxchords+1),indit(maxcompile)
       real (kind=R8) ::
      * indscl(maxcompile),
@@ -227,8 +224,8 @@ c
      *   xmin,ymin,xmax,ymax
 
       logical open_file,vector
-      integer ind,indold,npoints,lnblnk
-      external lnblnk, xertst
+      integer ind,indold,npoints
+      external xertst
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 
@@ -241,15 +238,14 @@ c
       read(99,*,err=30,end=30) dataname,npoints,
      1 nxcam,xmin,xmax,nycam,ymin,ymax
       vector=npoints .lt. 0
-      if(vector)
-     > dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+      if(vector) dataname=trim(dataname) // ' (vector)'
       npoints=abs(npoints)
       inpts=0
       ind=1
    10 read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
       inpts=inpts+1
-      call chord_tria_compile(npoints,ntrii,nrknot,
-     * xtrian,ytrian,necke,ixtri,iytri,
+      call chord_tria_compile(geo,npoints,ntrii,nrknot,
+     * xtrian,ytrian,necke,ixtri,
      1 x1,y1,z1,x2,y2,z2,vector,
      1 indchd(inpts),indit(ind),indscl(ind))
       indold=ind
@@ -261,7 +257,7 @@ c
      > write(*,*) 'Processed ',inpts,' chords'
       if(inpts .lt. maxchords) goto 10
       call xerrab ('increase array size in process_eirene_chords')
-   30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30 write(*,*) 'Error in reading ',trim(filename)
       call subend ()
       return
    40 continue
@@ -279,17 +275,18 @@ c
       end subroutine compile_tria_chords
 c
 #ifdef B25_EIRENE
-      subroutine calculate_tzvalues(maxchords,maxcompile,
+      subroutine calculate_tzvalues(geo,maxchords,maxcompile,
      1 inpts,indchd,indit,indscl,workarr,
      2 zvalues,filename,dataname,
      3 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
       use b2mod_subsys
       use eirmod_ctrig
+      use b2us_geo
       implicit none
+      type(geometry), intent(in) :: geo
 
       integer maxchords,maxcompile,inpts
       integer indchd(maxchords+1),indit(maxcompile)
@@ -305,10 +302,10 @@ c
      *   xmin,ymin,xmax,ymax
 
       logical open_file,vector
-      integer npoints,lnblnk,i,j
+      integer npoints,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_tria_integral
-      external lnblnk,chord_tria_integral,xerrab
+      external chord_tria_integral,xerrab
 
       call subini ('calculate_tzvalues')
       if(use_compile) then
@@ -327,20 +324,19 @@ c
         read(99,*,err=30,end=30) dataname,npoints,
      1   nxcam,xmin,xmax,nycam,ymin,ymax
         vector=npoints .lt. 0
-        if(vector)
-     1   dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+        if(vector) dataname=trim(dataname) // ' (vector)'
         npoints=abs(npoints)
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
         inpts=inpts+1
-        zvalues(inpts)=chord_tria_integral(ntrii,nrknot,workarr,
-     1   xtrian,ytrian,necke,ixtri,iytri,npoints,
+        zvalues(inpts)=chord_tria_integral(geo,ntrii,nrknot,workarr,
+     1   xtrian,ytrian,necke,ixtri,npoints,
      2   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0)
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
         call xerrab ('increase array size in process_eirene_chords')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue
