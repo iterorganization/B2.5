@@ -310,7 +310,7 @@ c     the line format common
         if(noax.gt.0) then
          CALL PLCHHQ(reserve_left+(1.0-reserve_right-reserve_left)/2.0,
      1        txtwdth*1*n_page,
-     1        XLABEL(1:LNBLNK(YLABEL)),
+     1        XLABEL(1:LNBLNK(XLABEL)),
      1        1.0/100.0/N_PAGE*lbsz,0.0,0.0)
         endif
         call gsplci(1)

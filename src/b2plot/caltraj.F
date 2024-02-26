@@ -381,7 +381,7 @@ c                         particles than at beginning, it is destroyed.
           call end_page
           call lastd
           call gsplci(1)
-          write(argstring,'(f10.3,a)') currtime*1.0e6_R8,' us'
+          write(argstring,'(f10.3,a)') currtime*1.0e6_R8,' \Gm\Rs'
           call init_page('Trajectories ' //
      2     argstring(1:lnblnk(argstring)),values(5),values(6),
      +     values(7),values(8),1,.true.,.true.,.true.)

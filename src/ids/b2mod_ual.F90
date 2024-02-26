@@ -903,7 +903,7 @@ contains
     !! closes the IDS)
     subroutine close_ual(idx)
         integer, intent(inout) :: idx  !< The returned identifier to be used in the
-                                    !< subsequent data access operation
+                                       !< subsequent data access operation
 #ifdef IMAS
         integer :: status
         external xertst

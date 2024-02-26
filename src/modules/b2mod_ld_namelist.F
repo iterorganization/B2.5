@@ -197,14 +197,14 @@
         call xertst (0.0_R8.le.R1(is), 'faulty input R_in')
         call xertst (0.0_R8.le.R2(is), 'faulty input R_out')
         if(R1(is).gt.R2(is)) then
-          tmp=R1(is)
+          tmp = R1(is)
           R1(is) = R2(is)
-          R2(is) = R1(is)
+          R2(is) = tmp
         end if
         if(Z1(is).gt.Z2(is)) then
-          tmp=Z1(is)
+          tmp = Z1(is)
           Z1(is) = Z2(is)
-          Z2(is) = Z1(is)
+          Z2(is) = tmp
         end if
         call xertst ((R2(is)-R1(is)).gt.eps,
      .       'difference R1, R2 too small')

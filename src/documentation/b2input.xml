@@ -609,14 +609,14 @@
 					User : The user who ran the simulation.
 				</description>
 				<switch>
-					<name>b2mndr_run_number</name>
-					<default>0</default>
-					<type>integer</type>
-				</switch>
-				<switch>
 					<name>b2mndr_shot_number</name>
 					<type>integer</type>
 					<default>0</default>
+				</switch>
+				<switch>
+					<name>b2mndr_run_number</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2mndr_database</name>

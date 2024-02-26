@@ -65,8 +65,7 @@ contains
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
-    integer, intent(in) :: itim, &
-                           nx, ny, ns, ismain, ismain0
+    integer, intent(in) :: itim, nx, ny, ns, ismain, ismain0
     real (kind=R8), intent(in) :: tim, BoRiS
     logical, intent(in) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
@@ -74,7 +73,7 @@ contains
     !   ..common blocks
 #ifndef NO_CDF
     integer, intent(in) :: ntim, b2time, ntim_batch
-#     include <netcdf.inc>
+#   include <netcdf.inc>
 #endif
     !-----------------------------------------------------------------------
     !.documentation
