@@ -76,9 +76,9 @@
      &  fmtp='(2x,a6,4x,a)')
 *   ..procedures
       real (kind=R8) ::
-     *   scal10, smin, smax, samax
+     *   scal10, smin, smax, damax
       logical strmas
-      external xertst, scal10, smax, samax, strmas
+      external xertst, scal10, smax, damax, strmas
       external b2wgx0, b2wgx1, b2wgx2, b2wgx3
 
 *-----------------------------------------------------------------------
@@ -137,7 +137,7 @@
      &   t0, t1, 4, t0, t1, 20, wrkx, wrky)
       endif
 *   ..contour plots of bx
-      t0 = scal10(0.8_R8*samax(n2,bb(-1,-1,0),1))
+      t0 = scal10(0.8_R8*damax(n2,bb(-1,-1,0),1))
       write (header,fmth) 'MAGNETIC FIELD BX (T).', t0/100.
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
@@ -152,7 +152,7 @@
      &   wrkx, wrky)
       endif
 *   ..contour plots of by
-      t0 = scal10(0.8_R8*samax(n2,bb(-1,-1,1),1))
+      t0 = scal10(0.8_R8*damax(n2,bb(-1,-1,1),1))
       write (header,fmth) 'MAGNETIC FIELD BY (T).', t0/100.
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
@@ -167,7 +167,7 @@
      &   wrkx, wrky)
       endif
 *   ..contour plots of bz
-      t0 = scal10(0.8_R8*samax(n2,bb(-1,-1,2),1))
+      t0 = scal10(0.8_R8*damax(n2,bb(-1,-1,2),1))
       write (header,fmth) 'MAGNETIC FIELD BZ (T).', t0/100.
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header

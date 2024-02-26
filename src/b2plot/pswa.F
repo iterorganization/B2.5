@@ -5,10 +5,9 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer iw,is,lnblnk
+      integer iw,is
       character*256 stmp
       intrinsic min,max
-      external lnblnk
 
       values(14)=wall_stack(1,0,iwwrk)/wall_area(1)
       values(15)=wall_stack(1,0,iwwrk)/wall_area(1)
@@ -19,7 +18,7 @@ c
           values(15)=max(values(15),wall_stack(iw,is,iwwrk))
         enddo
       enddo
-      stmp=wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//'/(m^{2})'
+      stmp=trim(wall_label(iwwrk))//'/(m^{2})'
       call customise_label(stmp,wall_label(iwwrk))
       return
       end subroutine pswa

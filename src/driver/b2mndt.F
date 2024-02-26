@@ -131,8 +131,8 @@
      &  shesm(nCv,0:3), shism(nCv,0:3)!WG_TODO,                          !xpb
 *   ..procedures
       real (kind=R8) ::
-     *  b2sasum, samax
-      external xertst, ipgeti, ipgetr, b2sasum, samax
+     *  b2sasum, damax
+      external xertst, ipgeti, ipgetr, b2sasum, damax
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
@@ -275,16 +275,16 @@ cwdk    For unstructured solver, start with simple reading of start-values
         enddo
 ctmp.dpc
         if (nscx.ge.1) then
-          write(*,*) 'DPC: b2mndt: rlcx'
-          do k = 0, nscx-1
-            do is=0, ns-1
-              write(*,'(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ',
-     1            k,is,samax(nCv,st%rt%rlcx(1,0,is,k),1),
-     2                 samax(nCv,st%rt%rlcx(1,1,is,k),1)
-            enddo
-          enddo
+         write(*,*) 'DPC: b2mndt: rlcx'
+         do k = 0, nscx-1
+           do is=0, ns-1
+             write(*,'(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ',
+     1            k,is,damax(nCv,st%rt%rlcx(1,0,is,k),1),
+     2                 damax(nCv,st%rt%rlcx(1,1,is,k),1)
+           enddo
+         enddo
         else
-          write(*,*) 'DPC: b2mndt: no CX reactions'
+         write(*,*) 'DPC: b2mndt: no CX reactions'
         endif
 ctmp.dpc
 *    ..intermediate iteration
