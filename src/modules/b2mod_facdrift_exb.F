@@ -1,6 +1,7 @@
       module b2mod_facdrift_ExB
       use b2mod_types
       implicit none
+
       real (kind=R8) ::
      1 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec,
      3 facExB_target, facExB_start, facExB_inc, facExB_dec,
@@ -9,6 +10,7 @@
      & facdrift_tanh_a, facdrift_tanh_b, facExB_tanh_a, facExB_tanh_b,
      1 facvis_tanh_a, facvis_tanh_b
       integer ncall, iy_nocoreExB, fac_ref
+
       save
      1 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec,
      1 facExB_target, facExB_start, facExB_inc, facExB_dec,
@@ -16,6 +18,7 @@
      3 facdrift_scalar, fac_ExB_scalar, ncall, iy_nocoreExB,
      & facdrift_tanh_a, facdrift_tanh_b, facExB_tanh_a, facExB_tanh_b,
      & fac_ref, fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
+
       data
      2 facdrift_target/0.0_R8/, facdrift_start/0.0_R8/,
      3 facdrift_inc/1.0_R8/, facdrift_dec/0.0_R8/,
@@ -29,6 +32,7 @@
      & facdrift_tanh_a/0.0_R8/, facdrift_tanh_b/0.0_R8/,
      & facExB_tanh_a/0.0_R8/, facExB_tanh_b/0.0_R8/,
      & facvis_tanh_a/0.0_R8/, facvis_tanh_b/0.0_R8/
+
       contains
 
       subroutine b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)

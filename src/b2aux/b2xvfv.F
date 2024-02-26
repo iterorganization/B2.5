@@ -8,7 +8,7 @@
 *     -----------------------------------------------------------------
 *     B2XVFV verifies the zero entries in the edge locations of some
 *     quantity that is defined in the manner of a viscosity on the
-*     cells and corners of the b2 mesh.
+*     cells and corners of the B2 mesh.
 *     The entries funv(-1,-1:ny,0), funv(nx,-1:ny,0), funv(-1:nx,-1,1)
 *     and funv(-1,-1:ny,1) must vanish or the code will halt via a
 *     call to xertst/xerrab.
@@ -17,18 +17,18 @@
 *     -----------------------------------------------------------------
       character vrnam0*8
       real (kind=R8) ::
-     *   samax
-      external xertst, samax
+     *   damax
+      external xertst, damax
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvfv')
       vrnam0 = vrname
-      call xertst (samax(ny+2,funv(-1,-1,0),nx+2).eq.0,
+      call xertst (damax(ny+2,funv(-1,-1,0),nx+2).eq.0,
      &  'b2xvfv--faulty argument edge (-1,,0) '//vrnam0)
-      call xertst (samax(ny+2,funv(nx,-1,0),nx+2).eq.0,
+      call xertst (damax(ny+2,funv(nx,-1,0),nx+2).eq.0,
      &  'b2xvfv--faulty argument edge (nx,,0) '//vrnam0)
-      call xertst (samax(ny+2,funv(-1,-1,1),nx+2).eq.0,
+      call xertst (damax(ny+2,funv(-1,-1,1),nx+2).eq.0,
      &  'b2xvfv--faulty argument edge (-1,,1) '//vrnam0)
-      call xertst (samax(nx+2,funv(-1,-1,1),1).eq.0,
+      call xertst (damax(nx+2,funv(-1,-1,1),1).eq.0,
      &  'b2xvfv--faulty argument edge (,-1,1) '//vrnam0)
 *$$$  call subend ()
       return
