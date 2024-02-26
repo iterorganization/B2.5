@@ -64,8 +64,7 @@
      *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1)
       real (kind=R8) ::
-     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                        !srv 21.10.10
-     &   kmpr(nCv), kmprv(nVx),
+     &   kmprti(nCv), kmprtif(nFc), kmpr(nCv), kmprv(nVx),
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
      &   rdiv                                                            !srv 05.03.16
       real (kind=R8) ::
@@ -149,11 +148,9 @@ c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 0
 *   ..compute kmpr*ti on the faces and vertices, and differences
         kmprti = kmpr*pl%ti
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,kmprti,kmprtif)
-        call intvertex(nCv,nVx,mpg,geo%vxVol,kmprti,kmprtiv)
       else
         kmprti  = 0.0_R8
         kmprtif = 0.0_R8
-        kmprtiv = 0.0_R8
       endif                                                              !srv 21.10.10 }
 
 c Drift terms
@@ -249,43 +246,14 @@ cwdk                   (original code: simple averaging)
 *     ..additional drift variables
         dv%uadia(:,:,isb) = dv%vaecrb(:,:,isb) + dv%vadia(:,:,isb)
         ub2dia = dv%vaecrb(:,:,isb) + 2.0_R8*dv%vadia(:,:,isb)
+
 *     ..computation of P.Sch flows
-        wrk  = 1.0_R8/(qe*rt%rza(:,isb))
-        call intface(nCv,nFc,mpg%fcCv,weight,wrk,wrk1)
-        wrk1 = wrk1*geo%fcBzb
-        call intface(nVx,nFc,mpg%fcVx,weight,nbcor,wrk2)
-        dv%fnaPSch(:,0,isb) =  switch%PSch*dv%facdrift*wrk1*dnbti(:,1)*
-     &     geo%fcS*geo%fcQalf(:,0)!*nbf/wrk2
-        dv%fnaPSch(:,1,isb) = -switch%PSch*dv%facdrift*wrk1*dnbti(:,0)*
-     &     geo%fcS*geo%fcQalf(:,1)!*nbf/wrk2
-*     ..linearization coefficients for P.Sch flows
-        cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk2
-        cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk2
-        call calccoef(nCv,nFc,nVx,0,geo,zeros,cddb,flob0,conb0)
-        do iFc = 1, nFc
-          dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
-     &      (kmprti(mpg%fcCv(iFc,1))+kmprti(mpg%fcCv(iFc,2))) -
-     &       conb0(iFc,0)*
-     &      (kmprti(mpg%fcCv(iFc,2))-kmprti(mpg%fcCv(iFc,1)))
-          dv%flob(iFc,1)   = 0.5_R8*flob0(iFc,1)*
-     &      (kmprtiv(mpg%fcVx(iFc,1))+kmprtiv(mpg%fcVx(iFc,2))) -
-     &       conb0(iFc,1)*
-     &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
-!wdk      For now, directly add these contributions into conb(,,0),
-!wdk      so they are directly added into the stencil.
-!wdk      Might need to move back to dv%conb(,,3) and dedicated treatment
-!wdk      in b2ux9p if we decide to move away from inverse volume weighting
-!wdk      to compute vertex values of drifts!
-          dv%conb(iFc,0,0) = 0.5_R8*conb0(iFc,0)*
-     &      (kmprti(mpg%fcCv(iFc,1))+kmprti(mpg%fcCv(iFc,2))) -
-     &       0.25_R8*flob0(iFc,0)*
-     &      (kmprti(mpg%fcCv(iFc,2))-kmprti(mpg%fcCv(iFc,1)))
-          dv%conb(iFc,1,0) = 0.5_R8*conb0(iFc,1)*
-     &      (kmprtiv(mpg%fcVx(iFc,1))+kmprtiv(mpg%fcVx(iFc,2))) -
-     &       0.25_R8*flob0(iFc,1)*
-     &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
-        enddo
+        call b2tnpsch(nCv, nFc, nVx, isb, switch, geo, mpg,
+     &    dv%facdrift, co%cddi(:,:,isb), pl%ti, pl%na(:,isb), kmprti,
+     &    dv%flob, dv%conb, dv%fnaPSch(:,:,isb))
+
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
+
         if (isb.ne.ismain .and. .not.is_neutral(isb)) then               !lk 02.06.11 {
           do iFc = 1, nFc
             !wdk for unstructured grids: apply flux limits
@@ -297,10 +265,11 @@ cwdk                   (original code: simple averaging)
             t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
             vbar = geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
      &        sqrt(8.0_R8*t0/(pi*am(isb)*mp))
-            t2 = 1.0_R8 + sqrt((switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*
+            t2 = 1.0_R8 + 
+     .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
-     .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
-     .        (vbar*t1)
+     .        (switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        dnbti(iFc,0))**2)/(vbar*t1)
             dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
             dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
             t3 = sqrt((dv%vadia(iFc,0,isb)*geo%fcBb(iFc,3)/
@@ -328,10 +297,11 @@ cwdk                   (original code: simple averaging)
             t0 = max(pl%ti(iCv1), pl%ti(iCv2))
             t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
             vbar =   sqrt(8.0_R8*t0/(pi*am(isb)*mp))
-            t2 = 1.0_R8 + sqrt((switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*
+            t2 = 1.0_R8 + 
+     .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
-     .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
-     .        (vbar*t1)
+     .        (switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        dnbti(iFc,0))**2)/(vbar*t1)
             dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
             dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
            enddo
