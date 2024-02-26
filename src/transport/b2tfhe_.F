@@ -163,8 +163,8 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
 #endif
-      call b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
-     &    co%cddi, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)           !srv 16.10.17
+      call b2tepsch(nCv, nFc, nVx, switch, geo, mpg, dv%facdrift,
+     &    co%cdde, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)           !srv 16.10.17
 
 * ..compute parallel current
       call b2xehx (nCv, nFc, nVx, switch, geo, mpg, pl%te,

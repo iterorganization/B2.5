@@ -1,5 +1,5 @@
-      subroutine b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, 
-     &    facdrift, cddi, te, ne, floe, cone, fhePSch)
+      subroutine b2tepsch(nCv, nFc, nVx, switch, geo, mpg,
+     &    facdrift, cdde, te, ne, floe, cone, fhePSch)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
@@ -8,12 +8,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer nCv, nFc, nVx
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     &  facdrift(nFc), cddi(nFc,0:1,0:ns-1), te(nCv), ne(nCv)
+     &  facdrift(nFc), cdde(nFc,0:1), te(nCv), ne(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  floe(nFc,0:1), cone(nFc,0:1,0:2), fhePSch(nFc,0:1)
@@ -22,8 +22,9 @@
 *
 *  1. purpose
 *
-*     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
-*     heat flux.
+*     B2ETPSCH computes the poloidal and radial components of the
+*     Pfirsch-Schlueter electron heat flux, and the coefficients that
+*     specify its linearization.
 *
 *  8. further comments
 *
@@ -31,12 +32,12 @@
 *.declarations
 
 *   ..local variables
-      integer iFc, is
+      integer iFc
       integer, save :: ncall = 0
       real (kind=R8) ::
      &  facdriftm, nete(nCv), nete2(nCv), netev(nVx), nete2v(nVx),
      &  dnete2(nFc,0:1),
-     &  floe0(nFc,0:1), cone0(nFc,0:1), cddi_eff(nFc,0:1),
+     &  floe0(nFc,0:1), cone0(nFc,0:1), cdde_eff(nFc,0:1),
      &  dumm0(nFc,0:1)
 *-----------------------------------------------------------------------
 *.computation
@@ -55,26 +56,24 @@
       floe    = 0.0e0_R8
       facdriftm = maxval(facdrift)
       if(facdriftm.ne.0.0e0_R8) then
-       do is = 0,ns-1                                                    !srv 12.05.11
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
 
 *   ..precompute face and vertex values of nete2
-         nete  = ne*te
-         nete2 = ne*te*te
-         call intvertex(nCv,nVx,mpg,geo%vxVol,nete,netev)
-         call intvertex(nCv,nVx,mpg,geo%vxVol,nete2,nete2v)
-         call diff(nCv, nFc, nVx, 1, geo, mpg, nete2, nete2v, dnete2)
+        nete  = ne*te
+        nete2 = ne*te*te
+        call intvertex(nCv,nVx,mpg,geo%vxVol,nete,netev)
+        call intvertex(nCv,nVx,mpg,geo%vxVol,nete2,nete2v)
+        call diff(nCv, nFc, nVx, 1, geo, mpg, nete2, nete2v, dnete2)
 
 *   ..compute P.Sch heat flux
-         fhePSch(:,0) = -2.5_R8*switch%fhePSch*facdrift*cddi(:,0,is)
-     &                                                  *dnete2(:,1)
-         fhePSch(:,1) =  2.5_R8*switch%fhePSch*facdrift*cddi(:,1,is)
-     &                                                  *dnete2(:,0)
+        fhePSch(:,0) = -2.5_R8*switch%fhePSch*facdrift*cdde(:,0)*
+     &    dnete2(:,1)
+        fhePSch(:,1) =  2.5_R8*switch%fhePSch*facdrift*cdde(:,1)*
+     &    dnete2(:,0)
 *     ..linearization coefficients for P.Sch flows
-         cddi_eff(:,0) =  5.0_R8*switch%fhePSch*facdrift*cddi(:,1,is)
-         cddi_eff(:,1) = -5.0_R8*switch%fhePSch*facdrift*cddi(:,0,is)
-         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi_eff,floe0,cone0)
-         do iFc = 1, nFc
+        cdde_eff(:,0) = -5.0_R8*switch%fhePSch*facdrift*cdde(:,1)
+        cdde_eff(:,1) =  5.0_R8*switch%fhePSch*facdrift*cdde(:,0)
+        call calccoef(nCv,nFc,nVx,0,geo,dumm0,cdde_eff,floe0,cone0)
+        do iFc = 1, nFc
           floe(iFc,0)   = 0.5_R8*floe0(iFc,0)*
      &      (nete(mpg%fcCv(iFc,1))+nete(mpg%fcCv(iFc,2))) -
      &       cone0(iFc,0)*
@@ -96,9 +95,7 @@
      &      (netev(mpg%fcVx(iFc,1))+netev(mpg%fcVx(iFc,2))) -
      &       0.25_R8*floe0(iFc,1)*
      &      (netev(mpg%fcVx(iFc,2))-netev(mpg%fcVx(iFc,1)))
-         enddo
-        endif
-       enddo
+        enddo
       endif
 * ..return
       ncall = ncall+1

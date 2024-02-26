@@ -72,7 +72,7 @@ c Advanced fluid neutral models
       real (kind=R8) :: fnb_vis_per  !srv 02.10.17
       real (kind=R8) :: fnb_vis_q    !srv 02.10.17
       real (kind=R8) :: fhe_vis_q
-      real (kind=R8) :: PSch         !srv 17.01.07
+      real (kind=R8) :: fnbPSch      !srv 17.01.07
       real (kind=R8) :: fhePSch      !srv 17.01.07
       real (kind=R8) :: fhiPSch
       real (kind=R8) :: b2tfnb_xcur         !xpb 27.09.17
@@ -605,7 +605,7 @@ c Advanced fluid neutral models
       s % fnb_vis_per = 0.0e0_R8
       s % fnb_vis_q   = 1.0e0_R8
       s % fhe_vis_q   = 1.0e0_R8
-      s % PSch        = 1.0e0_R8
+      s % fnbPSch        = 1.0e0_R8
       s % fhePSch        = 1.0e0_R8
       s % fhiPSch        = 1.0e0_R8
       s % b2tfnb_xcur        = 0.0e0_R8
@@ -1153,7 +1153,7 @@ c Advanced fluid neutral models
       call ipgetr ('b2tfnb_vis_per', s % fnb_vis_per)
       call ipgetr ('b2tfnb_vis_q', s % fnb_vis_q)
       call ipgetr ('b2tfhe_vis_q', s % fhe_vis_q)
-      call ipgetr ('b2tfnb_PSch', s % PSch)
+      call ipgetr ('b2tfnb_PSch', s % fnbPSch)
       call ipgetr ('b2tfhe_PSch', s % fhePSch)
       call ipgetr ('b2tfhi_PSch', s % fhiPSch)
       call ipgetr ('b2tfnb_xcur', s % b2tfnb_xcur)

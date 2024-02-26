@@ -70,8 +70,7 @@ cpax
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
      *   tif(nFc), tnf(nFc), wrkf(nFc,0:1),
-     *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
-     *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1), cdzt0(nFc,0:1)
+     *   cdkt0(nFc,0:1), cdzt0(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -137,63 +136,13 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..set dummy arrays
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
-      facdriftm = maxval(dv%facdrift)
-      dv%fhiPSch = 0.0e0_R8                                                !srv 13.10.06
-      dv%coni    = 0.0e0_R8                                                !srv 02.01.07
-      dv%floi    = 0.0e0_R8
-      if(facdriftm.ne.0.0e0_R8) then
-       do is = 0, ns-1
-        if(.not.is_neutral(is)) then
 
-*      ..precompute face and vertex values of nati and nati2
-         nati  = pl%na(:,is)*pl%ti
-         nati2 = pl%na(:,is)*pl%ti*pl%ti
-         call intvertex(nCv,nVx,mpg,geo%vxVol,nati,nativ)
-         call intvertex(nCv,nVx,mpg,geo%vxVol,nati2,nati2v)
-         call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
-
-*      ..compute P.Sch heat flux
-         dv%fhiPSch(:,0) =  2.5_R8*switch%fhiPSch*
-     &                       dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
-         dv%fhiPSch(:,1) = -2.5_R8*switch%fhiPSch*
-     &                       dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
-*      ..linearization coefficients for P.Sch flows
-         cddi(:,0) = -5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)
-         cddi(:,1) =  5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)
-         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi,floi0,coni0)
-         do iFc = 1, nFc
-          dv%floi(iFc,0)   = dv%floi(iFc,0) +
-     &       0.5_R8*floi0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,1)) + nati(mpg%fcCv(iFc,2))) -
-     &       coni0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,2)) - nati(mpg%fcCv(iFc,1)))
-          dv%floi(iFc,1)   = dv%floi(iFc,1) +
-     &       0.5_R8*floi0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
-     &       coni0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
-!wdk      For now, directly add these contributions into coni(,,0),
-!wdk      so they are directly added into the stencil.
-!wdk      Might need to move back to dv%coni(,,1) and dedicated treatment
-!wdk      in b2ux9p if we decide to move away from inverse volume weighting
-!wdk      to compute vertex values of drifts!
-          dv%coni(iFc,0,0) = dv%coni(iFc,0,0) +
-     &       0.5_R8*coni0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,1))+nati(mpg%fcCv(iFc,2))) -
-     &       0.25_R8*floi0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,2))-nati(mpg%fcCv(iFc,1)))
-          dv%coni(iFc,1,0) = dv%coni(iFc,1,0) +
-     &       0.5_R8*coni0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
-     &       0.25_R8*floi0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
-         enddo
-        endif
-       enddo
-      endif
+      call b2tipsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
+     &    co%cddi, pl%ti, pl%na, dv%floi, dv%coni, dv%fhiPSch)           !srv 16.10.17
 
       wght   = 1.0_R8
       flidia = 0.0_R8                                                   !srv 25.01.02 {
+      facdriftm = maxval(dv%facdrift)
       if(facdriftm.ne.0.0e0_R8) then                                    !srv 18.01.07
        do is = 0, ns-1
         if ( .not.is_neutral(is) ) then
