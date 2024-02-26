@@ -12,9 +12,12 @@
 
 ! Main plasma state parameters
       type B2Plasma
-        integer :: ns ! total number of species (1:ns or 0:ns-1)
-        real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
-        real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt
+        integer :: ns           ! number of species (0:ns-1)
+        integer :: ismain       ! index of main species
+        integer :: ismain0      ! index of main neutral species
+
+        real(R8), dimension(:,:), allocatable :: na, ua                ! first index: cell volumes; second index: species
+        real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt  ! index: cell volumes
       end type B2Plasma
 
 ! Quantities derived from plasma state
@@ -26,7 +29,8 @@
      .                           fchdia(:,:), fchin(:,:),
      .                           fchvispar(:,:), fchvisper(:,:),
      .                           fchvisq(:,:), fchinert(:,:),
-     .                           fchanml(:,:), fchviskt(:,:),
+     .                           fchanml(:,:), fchanml_a(:,:,:),
+     .                           fchviskt(:,:),
      .                           fch_pi_c(:,:), fch_pi_f(:,:)
         real(R8), allocatable :: fni_32(:,:), fni_52(:,:),
      .                           fni(:,:), fni_he(:,:)
@@ -115,7 +119,8 @@
      .                           cdpa(:,:,:), cvsa(:,:,:),
      .                           cvlahz(:,:,:), cdnahz(:,:,:),
      .                           cdpahz(:,:,:), cvsahz(:,:,:),
-     .                           cddi(:,:,:), cvsahz_cl(:,:,:),
+     .                           cvsahz_cl(:,:,:),
+     .                           cddi(:,:,:), cdde(:,:),
      .                           chcb(:,:,:), cvsa_an(:,:,:),
      .                           cvmahz(:,:,:), cvsahz_eff(:,:,:)
         real(R8), allocatable :: cthe(:,:), cthi(:,:), cvsa_cl(:,:,:)
@@ -469,6 +474,7 @@ cwdk move to dv
       allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cdde( nFc, 0:1 ), SOURCE=0._R8 )
 
       allocate( coeff % cthe( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cthi( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -559,6 +565,7 @@ cwdk move to dv
       allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ) )
 
       allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cdde( nFc, 0:1 ) )
 
       allocate( coeff % cthe( nCv, 0:ns-1 ) )
       allocate( coeff % cthi( nCv, 0:ns-1 ) )
@@ -649,6 +656,7 @@ cwdk move to dv
       coeff % vsaf_cl = 0._R8
 
       coeff % cddi = 0._R8
+      coeff % cdde = 0._R8
 
       coeff % cthe = 0._R8
       coeff % cthi = 0._R8
@@ -746,6 +754,7 @@ cwdk move to dv
       deallocate( coeff % vsaf_cl )
 
       deallocate( coeff % cddi )
+      deallocate( coeff % cdde )
 
       deallocate( coeff % cthe )
       deallocate( coeff % cthi )
@@ -817,6 +826,7 @@ cwdk move to dv
       allocate( dv % fchviskt( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchinert( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchanml( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchanml_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fch_pi_c( nCv, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fch_pi_f( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fne( nFc, 0:1 ), SOURCE=0._R8 )
@@ -933,6 +943,7 @@ cwdk move to dv
       allocate( dv % fchviskt( nFc, 0:1 ) )
       allocate( dv % fchinert( nFc, 0:1 ) )
       allocate( dv % fchanml( nFc, 0:1 ) )
+      allocate( dv % fchanml_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fch_pi_c( nCv, 0:1 ) )
       allocate( dv % fch_pi_f( nFc, 0:1 ) )
       allocate( dv % fne( nFc, 0:1 ) )
@@ -1049,6 +1060,7 @@ cwdk move to dv
       dv % fchviskt = 0._R8
       dv % fchinert = 0._R8
       dv % fchanml = 0._R8
+      dv % fchanml_a = 0._R8
       dv % fch_pi_c = 0._R8
       dv % fch_pi_f = 0._R8
       dv % fne = 0._R8
@@ -1242,6 +1254,7 @@ cwdk move to dv
       deallocate( dv % fchviskt )
       deallocate( dv % fchinert )
       deallocate( dv % fchanml )
+      deallocate( dv % fchanml_a )
       deallocate( dv % fch_pi_c )
       deallocate( dv % fch_pi_f )
       deallocate( dv % fna )

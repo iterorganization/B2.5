@@ -162,24 +162,24 @@
       call b2saxpy (nFc*2, 1.0_R8, calf0, 1, co%calf, 1)
       call b2saxpy (nFc*2, 1.0_R8, cdkt0, 1, co%cdkt, 1)
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
+      !wdk note: treatment made consistent with the computation of
+      !          PSch-flows in b2tfnb and b2tfhe/i
+      co%cdde(:,0) = geo%fcBzb*geo%fcS*geo%fcQalf(:,0)/
+     &  (geo%fcQgam(:,0)*(geo%fcHc(:,1) + geo%fcHc(:,2)))/qe
+      co%cdde(:,1) = geo%fcBzb*geo%fcS*geo%fcQalf(:,1)/
+     &  (geo%fcQgam(:,0)*(geo%fcHc(:,1) + geo%fcHc(:,2)))/qe
+      wght = 1.0_R8
       do is = 0, ns-1
        if(.not.is_neutral(is)) then
-        !wdk note: treatment made consistent with the computation of
-        !          PSch-flows in b2tfnb and b2tfhe/i
-        wght = 1.0_R8
-        wrkc = 1.0_R8/(qe*rt%rza(:,is))
+        wrkc = 1.0_R8/rt%rza(:,is)
         call intface(nCv,nFc,mpg%fcCv,wght,wrkc,wrkf)
-        wrkf = wrkf*geo%fcBzb
-        do iFc = 1, nFc
-         co%cddi(iFc,0,is) = wrkf(iFc)*geo%fcS(iFc)*geo%fcQalf(iFc,0)/
-     &    (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
-         co%cddi(iFc,1,is) = wrkf(iFc)*geo%fcS(iFc)*geo%fcQalf(iFc,1)/
-     &    (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
-        enddo
+        co%cddi(:,0,is) = wrkf*co%cdde(:,0)
+        co%cddi(:,1,is) = wrkf*co%cdde(:,1)
        else
         co%cddi(:,:,is) = 0.0_R8
        endif 
       enddo                                                           !srv 13.10.06 }
+
 *  ..check that we have some particle diffusion
       if (ncall_b2tral.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
@@ -266,6 +266,8 @@ cwdk combined check for poloidal or radial diffusion
        call my_out_us(70,nFc,1,co%chve(1,1),'chve_r')
        call my_out_us(70,nFc,1,co%chvi(1,0),'chvi_th')
        call my_out_us(70,nFc,1,co%chvi(1,1),'chvi_r')
+       call my_out_us(70,nFc,1,co%cdde(1,0),'cdde_th')
+       call my_out_us(70,nFc,1,co%cdde(1,1),'cdde_r')
        call my_out_us(70,nFc,1,co%csig(1,0),'csig_th')
        call my_out_us(70,nFc,1,co%csig(1,1),'csig_r')
        call my_out_us(70,nFc,1,co%calf(1,0),'calf_th')
