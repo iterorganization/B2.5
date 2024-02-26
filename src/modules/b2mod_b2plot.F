@@ -70,6 +70,9 @@
      *  wall_temp(:),
      *  target_stack(:,:,:)
 
+      logical, allocatable, save ::
+     *  ic_active(:)
+
       integer wklng
       parameter (wklng=10)
 
@@ -164,7 +167,7 @@ cank
 
       allocate(work(1:nCv,0:nsw,1:wklngd))
       allocate(wrkc(1:nCv))
-      allocate(wrkcs(1:nCv,0:max(nsd,ns_ext)-1))
+      allocate(wrkcs(1:nCv,0:max(2,max(nsd,ns_ext)-1)))
       allocate(wrkf(1:nFc))
       allocate(wrkfs(1:nFc,0:nsd-1))
       allocate(wrkv(1:nVx))
@@ -188,6 +191,7 @@ cank
       allocate(fcyIy(1:nFc))
       allocate(vxIx(1:nVx))
       allocate(vxIy(1:nVx))
+      allocate(ic_active(1:nCv))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
       allocate(textplel(0:nsd))
@@ -298,6 +302,7 @@ cank
       deallocate(fcyIy)
       deallocate(vxIx)
       deallocate(vxIy)
+      deallocate(ic_active)
 #ifndef PSR
       deallocate(textpl)
       deallocate(textplel)

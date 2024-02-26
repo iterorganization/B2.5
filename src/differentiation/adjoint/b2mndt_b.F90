@@ -387,7 +387,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 !WG_TODO,                          !xpb
   REAL(kind=r8) :: snasm(ncv, 0:1, 0:ns-1), smosm(ncv, 0:3, 0:ns-1), &
 & shesm(ncv, 0:3), shism(ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, samax
+  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
   EXTERNAL B2SASUM_B
 !WG_TODO     &  snadt(-1:nx,-1:ny,0:1,0:ns-1),                           !xpb
 !WG_TODO     &  smodt(-1:nx,-1:ny,0:3,0:ns-1),                           !xpb
@@ -395,7 +395,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 !WG_TODO     &  schdt(-1:nx,-1:ny,0:3),                                  !xpb
 !WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 !   ..procedures
-  REAL(kind=r8) :: B2SASUM_NODIFF, samax
+  REAL(kind=r8) :: B2SASUM_NODIFF, damax
   EXTERNAL B2XVSG_NODIFF, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
 &     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
@@ -563,8 +563,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
       WRITE(*, *) 'DPC: b2mndt: rlcx'
       DO k=0,nscx-1
         DO is=0,ns-1
-          result10 = samax(ncv, st%rt%rlcx(1, 0, is, k), 1)
-          result20 = samax(ncv, st%rt%rlcx(1, 1, is, k), 1)
+          result10 = damax(ncv, st%rt%rlcx(1, 0, is, k), 1)
+          result20 = damax(ncv, st%rt%rlcx(1, 1, is, k), 1)
           WRITE(*, '(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ', k, is, &
 &         result10, result20
         END DO
@@ -3470,14 +3470,14 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
 !WG_TODO,                          !xpb
   REAL(kind=r8) :: snasm(ncv, 0:1, 0:ns-1), smosm(ncv, 0:3, 0:ns-1), &
 & shesm(ncv, 0:3), shism(ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, samax
+  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
 !WG_TODO     &  snadt(-1:nx,-1:ny,0:1,0:ns-1),                           !xpb
 !WG_TODO     &  smodt(-1:nx,-1:ny,0:3,0:ns-1),                           !xpb
 !WG_TODO     &  shedt(-1:nx,-1:ny,0:3), shidt(-1:nx,-1:ny,0:3),          !xpb
 !WG_TODO     &  schdt(-1:nx,-1:ny,0:3),                                  !xpb
 !WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 !   ..procedures
-  REAL(kind=r8) :: B2SASUM_NODIFF, samax
+  REAL(kind=r8) :: B2SASUM_NODIFF, damax
   EXTERNAL B2XVSG_NODIFF, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
 &     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
@@ -3644,8 +3644,8 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
       WRITE(*, *) 'DPC: b2mndt: rlcx'
       DO k=0,nscx-1
         DO is=0,ns-1
-          result10 = samax(ncv, st%rt%rlcx(1, 0, is, k), 1)
-          result20 = samax(ncv, st%rt%rlcx(1, 1, is, k), 1)
+          result10 = damax(ncv, st%rt%rlcx(1, 0, is, k), 1)
+          result20 = damax(ncv, st%rt%rlcx(1, 1, is, k), 1)
           WRITE(*, '(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ', k, is, &
 &         result10, result20
         END DO
