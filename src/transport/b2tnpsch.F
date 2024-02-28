@@ -68,8 +68,8 @@
         fnbPSch(:,1) = -switch%fnbPSch*facdrift*cddb(:,1)*dnbti(:,0)
 
 *     ..linearization coefficients for P.Sch flows
-        cddb_eff(:,0) =  switch%fnbPSch*facdrift*cddb(:,1)
-        cddb_eff(:,1) = -switch%fnbPSch*facdrift*cddb(:,0)
+        cddb_eff(:,0) = -switch%fnbPSch*facdrift*cddb(:,1)
+        cddb_eff(:,1) =  switch%fnbPSch*facdrift*cddb(:,0)
         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddb_eff,flob0,conb0)
         do iFc = 1, nFc
           flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
