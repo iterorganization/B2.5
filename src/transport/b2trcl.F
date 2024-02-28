@@ -687,9 +687,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
         do iCv = 1, nCv
           if(.not.mpg%cvOnClosedSurface(iCv)) then
             jemax = sqrt(pl%te(iCv)/me)*
-     &         qe*dv%ne(iCv)*abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-            t0 = abs(co%alfx_c(iCv))*abs(gtec(iCv))/
-     &         (cflim(3)*jemax + b2trcl_cutlo)
+     &         qe*dv%ne(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
+            t0 = abs(co%alfx_c(iCv)*gtec(iCv)/
+     &         (cflim(3)*jemax + b2trcl_cutlo))
             co%fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
             co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)                 !iyv 19.11.13 !srv 08.10.14
           endif

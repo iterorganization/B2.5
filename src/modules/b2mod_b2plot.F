@@ -117,7 +117,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       parameter(npart=100000)
 
       real (kind=R8), save ::
-     * arrowl,earrowl,arroww,
+     * arrowl,earrowl,arroww,signmf,
      * sepwidth,lwidth,wwidth,owidth,vwidth,ewidth,zwidth
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
