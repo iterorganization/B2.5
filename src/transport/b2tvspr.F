@@ -1,5 +1,5 @@
-      subroutine b2tvspr(nCv, nFc, nVx, ns, switch, geo, mpg,
-     &   po, ti, na, rza, vsa0, fac_vis, fchvisper)
+      subroutine b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &   po, ti, na, rza, vsa0, fac_vis, fchvisper_a, fchvisper)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -18,7 +18,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -27,7 +27,17 @@
      2   na(nCv,0:ns-1), rza(nCv,0:ns-1), vsa0(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     3   fchvisper(nFc,0:1)
+     3   fchvisper_a(nFc,0:1,0:ns-1), fchvisper(nFc,0:1)
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2TVSPR computes the poloidal and radial components of the
+*     perpendicular viscosity current.
+*
+*  8. further comments
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -54,12 +64,15 @@
 !      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
 !     &              avisper, bvisper, cvisper)
 
-*   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
+*   ..calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_per.ne.0.0e0_R8.and.
      &   switch%no_current.eq.0) then
+
+       fchvisper = 0.0_R8
        do is = 0,ns-1                                                   !srv 16.10.17
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+        if((switch%visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &     (switch%visper_all_ions.eq.0 .and. is.eq.ismain)) then       !srv 16.10.17
 
          weight = 1.0_R8
 
@@ -89,14 +102,25 @@
          wrkc(mpg%nCi+1:mpg%nCv) = 0.0_R8
 
 *      ..interpolate to face and multiply by radial area
-         call intface(nCv, nFc, mpg%fcCv, weight, wrkc, fchvisper(:,1))
-         fchvisper(:,1) = -fchvisper(:,1)*
-     &     geo%fcS*geo%fcQalf(:,1)/geo%fcBb(:,3)
+         fchvisper_a(:,0,is) = 0.0_R8
+         call intface(nCv, nFc, mpg%fcCv, weight, wrkc,
+     &     fchvisper_a(:,1,is))
+         fchvisper_a(:,1,is) = 
+     &    -fchvisper_a(:,1,is)*geo%fcS*geo%fcQalf(:,1)/geo%fcBb(:,3)
+
+        else
+
+         fchvisper_a(:,:,is) = 0.0_R8
 
         endif                                                           !srv 16.10.17
+
+*     ..accumulate individual contributions into fchvisper
+        fchvisper = fchvisper + fchvisper_a(:,:,is)
+
        enddo                                                            !srv 16.10.17
       else
         fchvisper = 0.0e0_R8
+        fchvisper_a = 0.0e0_R8
       endif                                                             !srv 22.11.99
 
       if(switch%b2tvspr_iout.eq.1) then

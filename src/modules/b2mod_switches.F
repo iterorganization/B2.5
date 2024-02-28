@@ -67,6 +67,8 @@ c Advanced fluid neutral models
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
 
+      integer :: inert_all_ions
+      integer :: visper_all_ions
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02
       real (kind=R8) :: fnb_vis_per  !srv 02.10.17
@@ -413,6 +415,7 @@ c b2tqna
       integer :: b2tqna_limit_coeff
 
 c b2tanml
+      integer :: anml_all_ions
       real (kind=R8) :: fch_anomalous
 
 c b2stbm
@@ -600,6 +603,8 @@ c Advanced fluid neutral models
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
 
+      s % inert_all_ions = 1
+      s % visper_all_ions = 1
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
       s % fnb_vis_per = 0.0e0_R8
@@ -956,6 +961,7 @@ c b2tqna
       s % b2tqna_limit_coeff = 0
 
 c fch_anomalous
+      s % anml_all_ions = 1
       s % fch_anomalous = 1.0e0_R8
 
 c b2stbm
@@ -1148,6 +1154,8 @@ c Advanced fluid neutral models
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
 
+      call ipgeti ('b2tvspr_visper_all_ions', s % visper_all_ions)
+      call ipgeti ('b2tiner_inert_all_ions', s % inert_all_ions)
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)
       call ipgetr ('b2tfnb_vis_per', s % fnb_vis_per)
@@ -1505,6 +1513,7 @@ c b2tqna
       call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                !srv 15.12.05
 
 c fch anomalous
+      call ipgeti ('b2tanml_anml_all_ions', s%anml_all_ions)
       call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
        if (s%fch_anomalous.eq.1.0_R8)
      &  call ipgetr ('b2tanml_anomalous', s%fch_anomalous) ! for backward compatibility

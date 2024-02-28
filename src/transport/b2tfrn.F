@@ -125,20 +125,25 @@ c      endif
      &   geo%fcS*geo%fcQalf(:,1)
 
 *   ..add contribution from currents
-cwdk   condition made consistent with b2tfnb => check zn(is) instead of rza(ix,iy,is)
 cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
-       if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+       if (.not.is_neutral(is)) then
         scur(:,0) = 
-     &   (dv%fchinert(:,0) + dv%fchvispar(:,0) + 
-     &    switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,0) +
-     &    switch%fnb_vis_q*dv%fchvisq(:,0))*switch%b2tfnb_xcur/
-     &   (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
+     &   (dv%fchinert_a(:,0,is) + dv%fchvispar_a(:,0,is) + 
+     &    switch%fnb_vis_per*dv%fchvisper_a(:,0,is) +
+     &    dv%fchanml_a(:,0,is) +
+     &    switch%fnb_vis_q*dv%fchvisq_a(:,0,is))*switch%b2tfnb_xcur/
+     &   (rt%rza(:,is)*qe*nbf) +
+     &    dv%fchviskt_a(:,0,is)/(rt%rza(:,is)*qe*nbf)
         scur(:,1) = 
-     &   (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
-     &    switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) +
-     &    switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
-     &   (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
+     &   (dv%fchinert_a(:,1,is) + dv%fchvispar_a(:,1,is) + 
+     &    switch%fnb_vis_per*dv%fchvisper_a(:,1,is) +
+     &    dv%fchanml_a(:,1,is) +
+     &    switch%fnb_vis_q*dv%fchvisq_a(:,1,is))*switch%b2tfnb_ycur/
+     &   (rt%rza(:,is)*qe*nbf) +
+     &    dv%fchviskt_a(:,1,is)/(rt%rza(:,is)*qe*nbf)
         flo_eir   = flo_eir + switch%fnb_drift_hyb*scur
+       else
+        scur = 0.0_R8 
        end if
 
 *   ..apply discretization scheme for density-part of fna_eir
@@ -195,7 +200,7 @@ cwdk    to be checked: now we use inverse volume weighting in wkr0
       endif
 
 *   ..compute wrk0
-       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,dv%ue,wrk0)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,dv%ue,wrk0)
 
       if(switch%b2sigp_style.eq.2) then
         call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
@@ -215,7 +220,7 @@ cwdk    should we not compute fne_eir as sum(fna_eir,is) - fch?
 cwdk    (in that case, fch including full diamagnetic current?)
 cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
       do is = 0,ns-1
-       if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+       if(.not.is_neutral(is)) then
 
 *   ..compute convective coefficients (poloidal and radial)
         fle_eir(:,0) = geo%fcPbs*wrk0 + 
@@ -274,6 +279,18 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
         call my_out_us(70,nFc,1,co%cdna(1,1,is),'b2tfrn_cdna_r'//chns)
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2tfrn_ua'//chns)
         call my_out_us(70,nCv,0,pl%na(1,is),'b2tfrn_na'//chns)
+        call my_out_us(70,nFc,1,dv%fchvispar_a(1,0,is),
+     &   'b2tfrn_fchvispar_th'//chns)
+        call my_out_us(70,nFc,1,dv%fchvispar_a(1,1,is),
+     &   'b2tfrn_fchvispar_r'//chns)
+        call my_out_us(70,nFc,1,dv%fchinert_a(1,0,is),
+     &   'b2tfrn_fchinert_th'//chns)
+        call my_out_us(70,nFc,1,dv%fchinert_a(1,1,is),
+     &   'b2tfrn_fchinert_r'//chns)
+        call my_out_us(70,nFc,1,dv%fchanml_a(1,0,is),
+     &   'b2tfrn_fchanml_th'//chns)
+        call my_out_us(70,nFc,1,dv%fchanml_a(1,1,is),
+     &   'b2tfrn_fchanml_r'//chns)
        enddo
        call my_out_us(70,nFc,1,dv%fne_eir(1,0),'b2tfrn_fne_eir_th')
        call my_out_us(70,nFc,1,dv%fne_eir(1,1),'b2tfrn_fne_eir_r')
@@ -283,12 +300,6 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
        call my_out_us(70,nFc,1,dv%fhi_eir(1,1),'b2tfrn_fhi_eir_r')
        call my_out_us(70,nFc,1,dv%fch_p(1,0),'b2tfrn_fch_p_th')
        call my_out_us(70,nFc,1,dv%fch_p(1,1),'b2tfrn_fch_p_r')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfrn_fchvispar_th')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfrn_fchvispar_r')
-       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfrn_fchinert_th')
-       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfrn_fchinert_r')
-       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfrn_fchanml_th')
-       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfrn_fchanml_r')
        call my_out_us(70,nFc,1,dv%wedia(1,0),'b2tfrn_wedia_th')
        call my_out_us(70,nFc,1,dv%wedia(1,1),'b2tfrn_wedia_r')
        call my_out_us(70,nFc,1,dv%ue,'b2tfrn_ve')

@@ -290,14 +290,17 @@ csw 01oct2012 initialize potential if necessary
      &  st%co%chvemx, st%co%chvimx)
 *   ..compute transport coefficients
       call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
-     & switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
+     &  switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
 *   ..compute currents
-      call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
-     &              st%pl%po, st%dv%fchanml)
-      call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
-     &              st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-      call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
-     &              st%pl%ua, st%dv%facdrift, st%dv%fchinert)
+      call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
+     &  st%dv%fchanml_a, st%dv%fchanml)
+      call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%ua, st%co%vsaf_cl, st%dv%fac_vis,
+     &  st%dv%fchvispar_a, st%dv%fchvispar)
+      call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%na, st%pl%ua, st%dv%facdrift,
+     &  st%dv%fchinert_a, st%dv%fchinert)
 *     ..iterate on particle balance
       if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
         call b2xprz (nCv, ns, mp, am, st%pl%na, rz, st_ext)
@@ -381,12 +384,15 @@ csw 16oct2012 init ier0
         call my_out_us(70,nCv,0,st%co%ceqp,'b2news__ceqp')
       endif                                                              !srv 12.07.05 }
 *   ..compute currents
-      call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
-     &              st%pl%po, st%dv%fchanml)
-      call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
-     &              st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-      call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
-     &              st%pl%ua, st%dv%facdrift, st%dv%fchinert)
+      call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
+     &  st%dv%fchanml_a, st%dv%fchanml)
+      call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%ua, st%co%vsaf_cl, st%dv%fac_vis,
+     &  st%dv%fchvispar_a, st%dv%fchvispar)
+      call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%na, st%pl%ua, st%dv%facdrift,
+     &  st%dv%fchinert_a, st%dv%fchinert)
 
 *   ..iterate on momentum balance
       do is = switch%nsmin, switch%nsmax-1

@@ -306,12 +306,15 @@ ctmp.dpc
           call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,   !srv 23.11.10
      1      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
 !WG_TODO         newneo=.true.
-          call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
-     &      st%pl%po, st%dv%fchanml)
-          call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
-     &      st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-          call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
-     &      st%pl%ua, st%dv%facdrift, st%dv%fchinert)
+          call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
+     &      st%dv%fchanml_a, st%dv%fchanml)
+          call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%pl%ua, st%co%vsaf_cl, st%dv%fac_vis,
+     &      st%dv%fchvispar_a, st%dv%fchvispar)
+          call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%pl%na, st%pl%ua, st%dv%facdrift,
+     &      st%dv%fchinert_a, st%dv%fchinert)
 #ifdef WG_TODO
           src_ni=0.0_R8
           src_ne=0.0_R8
