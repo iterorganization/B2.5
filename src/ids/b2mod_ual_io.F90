@@ -620,14 +620,18 @@ contains
             &        state%dv%ne, zeff, state_ext)
         call b2xppz( mpg%nCv, ns, state%dv%ne, state%pl%na,         &
             &        state%pl%te, state%pl%ti, state%dv%pz, state_ext)
-        call b2tanml(mpg%nCv, mpg%nFc, ns, switch, geo, mpg,        &
-            &        state%co%csig_an, state%pl%po, state%dv%fchanml)
-        call b2tvspa(mpg%nCv, mpg%nFc, mpg%nVx, ns,                 &
+        call b2tanml(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain,         &
+            &        switch, geo, mpg, state%co%csig_an,            &
+            &        state%pl%po, state%dv%ne,                      &
+            &        state%pl%na, state%rt%rza,                     &
+            &        state%dv%fchanml_a, state%dv%fchanml)
+        call b2tvspa(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain,         &
             &        switch, geo, mpg, state%pl%ua,                 &
-            &        state%co%vsaf_cl, state%dv%fac_vis, state%dv%fchvispar)
-        call b2tiner(mpg%nCv, mpg%nFc, mpg%nVx, ns,                 &
+            &        state%co%vsaf_cl, state%dv%fac_vis,            &
+            &        state%dv%fchvispar_a, state%dv%fchvispar)
+        call b2tiner(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain          &
             &        switch, geo, mpg, state%pl%na, state%pl%ua,    &
-            &        state%dv%facdrift, state%dv%fchinert)
+            &        state%dv%facdrift, state%dv%fchinert_a, state%dv%fchinert)
 
 !   ..find nscx, iscx
 !     (indices for neutral hydrogen species)

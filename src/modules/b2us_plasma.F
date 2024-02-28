@@ -27,10 +27,12 @@
         real(R8), allocatable :: fch(:,:), fch_32(:,:),
      .                           fch_52(:,:), fch_p(:,:),
      .                           fchdia(:,:), fchin(:,:),
-     .                           fchvispar(:,:), fchvisper(:,:),
-     .                           fchvisq(:,:), fchinert(:,:),
+     .                           fchvispar(:,:), fchvispar_a(:,:,:),
+     .                           fchvisper(:,:), fchvisper_a(:,:,:),
+     .                           fchvisq(:,:), fchvisq_a(:,:,:),
+     .                           fchinert(:,:), fchinert_a(:,:,:),
      .                           fchanml(:,:), fchanml_a(:,:,:),
-     .                           fchviskt(:,:),
+     .                           fchviskt(:,:), fchviskt_a(:,:,:),
      .                           fch_pi_c(:,:), fch_pi_f(:,:)
         real(R8), allocatable :: fni_32(:,:), fni_52(:,:),
      .                           fni(:,:), fni_he(:,:)
@@ -821,10 +823,15 @@ cwdk move to dv
       allocate( dv % fchdia( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchin( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchvispar( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvispar_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchvisper( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvisper_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchvisq( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvisq_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchviskt( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchviskt_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchinert( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchinert_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchanml( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchanml_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fch_pi_c( nCv, 0:1 ), SOURCE=0._R8 )
@@ -938,10 +945,15 @@ cwdk move to dv
       allocate( dv % fchdia( nFc, 0:1 ) )
       allocate( dv % fchin( nFc, 0:1 ) )
       allocate( dv % fchvispar( nFc, 0:1 ) )
+      allocate( dv % fchvispar_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchvisper( nFc, 0:1 ) )
+      allocate( dv % fchvisper_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchvisq( nFc, 0:1 ) )
+      allocate( dv % fchvisq_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchviskt( nFc, 0:1 ) )
+      allocate( dv % fchviskt_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchinert( nFc, 0:1 ) )
+      allocate( dv % fchinert_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchanml( nFc, 0:1 ) )
       allocate( dv % fchanml_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fch_pi_c( nCv, 0:1 ) )
@@ -1055,10 +1067,15 @@ cwdk move to dv
       dv % fchdia = 0._R8
       dv % fchin = 0._R8
       dv % fchvispar = 0._R8
+      dv % fchvispar_a = 0._R8
       dv % fchvisper = 0._R8
+      dv % fchvisper_a = 0._R8
       dv % fchvisq = 0._R8
+      dv % fchvisq_a = 0._R8
       dv % fchviskt = 0._R8
+      dv % fchviskt_a = 0._R8
       dv % fchinert = 0._R8
+      dv % fchinert_a = 0._R8
       dv % fchanml = 0._R8
       dv % fchanml_a = 0._R8
       dv % fch_pi_c = 0._R8
@@ -1249,10 +1266,15 @@ cwdk move to dv
       deallocate( dv % fchdia )
       deallocate( dv % fchin )
       deallocate( dv % fchvispar )
+      deallocate( dv % fchvispar_a )
       deallocate( dv % fchvisper )
+      deallocate( dv % fchvisper_a )
       deallocate( dv % fchvisq )
+      deallocate( dv % fchvisq_a )
       deallocate( dv % fchviskt )
+      deallocate( dv % fchviskt_a )
       deallocate( dv % fchinert )
+      deallocate( dv % fchinert_a )
       deallocate( dv % fchanml )
       deallocate( dv % fchanml_a )
       deallocate( dv % fch_pi_c )

@@ -1,5 +1,6 @@
-      subroutine b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, fac_vis,
-     &       ne2, rz2, lnlam, te, ti, ni, hcix_c, fchvisq)
+      subroutine b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &   fac_vis, ne2, rz2, lnlam, te, ti, ni, hcix_c, fchvisq_a,
+     &   fchvisq)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -15,7 +16,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -24,7 +25,17 @@
      &   rz2(nCv,0:ns-1), hcix_c(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fchvisq(nFc,0:1)                                               !srv 11.07.99
+     &   fchvisq_a(nFc,0:1,0:ns-1), fchvisq(nFc,0:1)                    !srv 11.07.99
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2TVSQ computes the [poloidal and radial components of the heat
+*     viscosity current.
+*
+*  8. further comments
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -50,6 +61,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       
       fchvisq   = 0.0e0_R8                                              !srv 11.07.99
+      fchvisq_a = 0.0e0_R8
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_q.ne.0.0e0_R8.and.     !srv 16.10.17
      &   switch%no_current.eq.0) then
@@ -62,7 +74,7 @@
      &    geo%vxOnedBsq, gOnedBsq)
 
         do is = 0,ns-1                                                  !srv 12.05.11
-         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then            !srv 12.05.11
+         if(is.eq.ismain) then                                          !srv 12.05.11
 
           call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)             !srv 01.07.09
 
@@ -221,12 +233,16 @@
 
 *       ..calculate the x-component of the parallel viscosity current
 *         connected with the heat flux 
-          fchvisq(:,0) = fchvisq(:,0) - 0.24e0_R8*switch%fhe_vis_q*
+          fchvisq_a(:,0,is) = -0.24e0_R8*switch%fhe_vis_q*
      &       fac_vis*wrkf*gOnedBsq(:,1)*gqipgen*geo%fcS*geo%fcQalf(:,0)
-          fchvisq(:,1) = fchvisq(:,1) + 0.24e0_R8*switch%fhe_vis_q*
+          fchvisq_a(:,1,is) =  0.24e0_R8*switch%fhe_vis_q*
      &       fac_vis*wrkf*gOnedBsq(:,0)*gqipgen*geo%fcS*geo%fcQalf(:,1)
 
          endif
+
+*      ..accumulate individual contributions into fchvisq
+         fchvisq = fchvisq + fchvisq_a(:,:,is)
+
         enddo
       endif
 * ..return

@@ -353,16 +353,20 @@ cwdk                   (original code: simple averaging)
       flo_nodrift(:,1) = co%cvla(:,1,isb)
 
 *   ..add contribution from currents
-      if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+      if (.not.is_neutral(isb)) then
         scur(:,0) =
-     &     (dv%fchinert(:,0) + dv%fchvispar(:,0) + dv%fchvisper(:,0) +
-     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%b2tfnb_xcur/
-     &     (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
+     &     (dv%fchinert_a(:,0,isb) + dv%fchvispar_a(:,0,isb) +
+     &      dv%fchvisper_a(:,0,isb) + dv%fchanml_a(:,0,isb)  +
+     &      dv%fchvisq_a(:,0,isb))*switch%b2tfnb_xcur/
+     &     (rt%rza(:,isb)*qe*nbf) + 
+     &      dv%fchviskt_a(:,0,isb)/(rt%rza(:,isb)*qe*nbf)
         scur(:,1) =
-     &     (dv%fchinert(:,1) + dv%fchvispar(:,1) +
-     &      switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) +
-     &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
-     &     (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
+     &     (dv%fchinert_a(:,1,isb) + dv%fchvispar_a(:,1,isb) +
+     &      switch%fnb_vis_per*dv%fchvisper_a(:,1,isb) +
+     &      dv%fchanml_a(:,1,isb) +
+     &      switch%fnb_vis_q*dv%fchvisq_a(:,1,isb))*switch%b2tfnb_ycur/
+     &     (rt%rza(:,isb)*qe*nbf) + 
+     &      dv%fchviskt_a(:,1,isb)/(rt%rza(:,isb)*qe*nbf)
         flo     = flo     + drift_hyb*scur
         flo_mdf = flo_mdf + drift_hyb*scur
         flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*geo%fcHz
@@ -376,26 +380,26 @@ cwdk                   (original code: simple averaging)
      &     flo_mdf, co%cdna(:,:,isb), fna_mdf0(:,:),
      &     dv%fna_32(:,:,isb), dv%fna_52(:,:,isb))
 *   ..limit flow by sound speed                                           ! lkw 26.10.2022{
-       do iFc = 1, nFc
-         if (.not.is_neutral(isb).or.switch%tn_style.eq.0.or.
-     &      (switch%tn_style.eq.2.and.nint(zn(isb)).ne.1)) then
-           t0 = max(pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
-         else if (switch%tn_style.eq.1) then
-           t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
-         else if (switch%tn_style.eq.2.and.nint(zn(isb)).eq.1) then
-           t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
-         end if
-         t3 = fna_mdf0(iFc,0) + fna_mdf0(iFc,1)
-         t1 = pl%na(mpg%fcCv(iFc,1),isb)
-         if (t3.lt.0.0_R8) t1 = pl%na(mpg%fcCv(iFc,2),isb)
-         t3 = abs(t3)
-         vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp)) *
+      do iFc = 1, nFc
+        if (.not.is_neutral(isb).or.switch%tn_style.eq.0.or.
+     &     (switch%tn_style.eq.2.and.nint(zn(isb)).ne.1)) then
+          t0 = max(pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
+        else if (switch%tn_style.eq.1) then
+          t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
+        else if (switch%tn_style.eq.2.and.nint(zn(isb)).eq.1) then
+          t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
+        end if
+        t3 = fna_mdf0(iFc,0) + fna_mdf0(iFc,1)
+        t1 = pl%na(mpg%fcCv(iFc,1),isb)
+        if (t3.lt.0.0_R8) t1 = pl%na(mpg%fcCv(iFc,2),isb)
+        t3 = abs(t3)
+        vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp)) *
      &        geo%fcS(iFc)
-         wrk4(iFc) = 1.0_R8/(1.0_R8 +
+        wrk4(iFc) = 1.0_R8/(1.0_R8 +
      &        (t3/(0.5_R8*vbar*t1))**gamma)**(1.0_R8/gamma)
-         fna_mdf0(iFc,0)   = fna_mdf0(iFc,0)*wrk4(iFc)
-         fna_mdf0(iFc,1)   = fna_mdf0(iFc,1)*wrk4(iFc)
-       enddo                                                             ! lkw 26.10.2022}
+        fna_mdf0(iFc,0)   = fna_mdf0(iFc,0)*wrk4(iFc)
+        fna_mdf0(iFc,1)   = fna_mdf0(iFc,1)*wrk4(iFc)
+      enddo                                                             ! lkw 26.10.2022}
 
 !   ..keep the convective flow "correction" factor for further output
       do iFc = 1, nFc
@@ -949,12 +953,18 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call my_out_us(70,nCv,0,rt%rza(1,isb),'b2tfnb_zb'//chns)
        call my_out_us(70,nFc,1,dv%facdrift,'b2tfnb_facdrift'//chns)
        call my_out_us(70,nFc,1,dv%fac_ExB,'b2tfnb_fac_ExB'//chns)
-       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfnb_fchvispar_th')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfnb_fchvispar_r')
-       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfnb_fchinert_th')
-       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfnb_fchinert_r')
-       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfnb_fchanml_th')
-       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfnb_fchanml_r')
+       call my_out_us(70,nFc,1,dv%fchvispar_a(1,0,isb),
+     &            'b2tfnb_fchvispar_th'//chns)
+       call my_out_us(70,nFc,1,dv%fchvispar_a(1,1,isb),
+     &            'b2tfnb_fchvispar_r'//chns)
+       call my_out_us(70,nFc,1,dv%fchinert_a(1,0,isb),
+     &            'b2tfnb_fchinert_th'//chns)
+       call my_out_us(70,nFc,1,dv%fchinert_a(1,1,isb),
+     &            'b2tfnb_fchinert_r'//chns)
+       call my_out_us(70,nFc,1,dv%fchanml_a(1,0,isb),
+     &            'b2tfnb_fchanml_a_th'//chns)
+       call my_out_us(70,nFc,1,dv%fchanml_a(1,1,isb),
+     &            'b2tfnb_fchanml_a_r'//chns)
       endif                                                             !srv 18.06.08 }
 
 * ..return
