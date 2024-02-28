@@ -6030,21 +6030,21 @@ contains
             call write_sourced_value( summary%local%separatrix%velocity_tor%hydrogen, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%hydrogen, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%hydrogen, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%hydrogen, -v )
 #endif
           case ('D')
             call write_sourced_value( summary%local%separatrix%n_i%deuterium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%deuterium, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%deuterium, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%deuterium, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%deuterium, -v )
 #endif
           case ('T')
             call write_sourced_value( summary%local%separatrix%n_i%tritium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%tritium, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%tritium, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, -v )
 #endif
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
@@ -6052,14 +6052,14 @@ contains
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_3, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
               call write_sourced_value( summary%local%separatrix_average%n_i%helium_3, u )
-              call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_3, v )
+              call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_3, -v )
 #endif
             else if (nint(am(eb2spcr(is))).eq.4) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_4, nisep )
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_4, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%helium_4, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_4, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_4, -v )
 #endif
             end if
           case ('Li')
@@ -6067,49 +6067,49 @@ contains
             call write_sourced_value( summary%local%separatrix%velocity_tor%lithium, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%lithium, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%lithium, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%lithium, -v )
 #endif
           case ('Be')
             call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%beryllium, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, -v )
 #endif
           case ('C')
             call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%carbon, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%carbon, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%carbon, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%carbon, -v )
 #endif
           case ('N')
             call write_sourced_value( summary%local%separatrix%n_i%nitrogen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%nitrogen, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%nitrogen, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%nitrogen, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%nitrogen, -v )
 #endif
           case ('O')
             call write_sourced_value( summary%local%separatrix%n_i%oxygen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%oxygen, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%oxygen, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%oxygen, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%oxygen, -v )
 #endif
           case ('Ne')
             call write_sourced_value( summary%local%separatrix%n_i%neon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%neon, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%neon, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%neon, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%neon, -v )
 #endif
           case ('Ar')
             call write_sourced_value( summary%local%separatrix%n_i%argon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%argon, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%argon, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%argon, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%argon, -v )
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           case ('Fe')
@@ -6117,14 +6117,14 @@ contains
             call write_sourced_value( summary%local%separatrix%velocity_tor%iron, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%iron, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%iron, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%iron, -v )
 #endif
           case ('Kr')
             call write_sourced_value( summary%local%separatrix%n_i%krypton, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%krypton, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%krypton, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%krypton, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%krypton, -v )
 #endif
 #endif
           case ('Xe')
@@ -6132,14 +6132,14 @@ contains
             call write_sourced_value( summary%local%separatrix%velocity_tor%xenon, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%xenon, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%xenon, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%xenon, -v )
 #endif
           case ('W')
             call write_sourced_value( summary%local%separatrix%n_i%tungsten, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%tungsten, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%tungsten, u )
-            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tungsten, v )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tungsten, -v )
 #endif
           end select
         end do
@@ -7990,10 +7990,10 @@ contains
           end if
           if (.not.associated(                                                &
             &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_tor ) ) then
-            tmpVx(-1:nx,-1:ny) = wbbc(-1:nx,-1:ny,2)
-            tmpFace(:,:,0) = wbbl(:,:,2)
-            tmpFace(:,:,1) = wbbv(:,:,2)
-            tmpCv(:,:) = bb(:,:,2)
+            tmpVx(-1:nx,-1:ny) = -wbbc(-1:nx,-1:ny,2)
+            tmpFace(:,:,0) = -wbbl(:,:,2)
+            tmpFace(:,:,1) = -wbbv(:,:,2)
+            tmpCv(:,:) = -bb(:,:,2)
             call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_tor,                                        &
