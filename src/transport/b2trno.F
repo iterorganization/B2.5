@@ -223,13 +223,12 @@
      &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                    !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 
-
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
       if (switch%transport_afn.eq.1) then 
        do is = 0, ns-1
          if (is_neutral(is).and.nint(zn(is)).eq.1) then
-           wrkc =  co%dpa0(:,is)*(geo%cvbb(:,2)/geo%cvbb(:,3))**2
+           wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &                 wrkc, co%cdpa(1:nFc,0,is))   
            call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
@@ -237,7 +236,6 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
          endif
        enddo
       endif
-
 
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
