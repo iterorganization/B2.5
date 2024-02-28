@@ -73,8 +73,8 @@
      &     dnati2(:,0)
 
 *      ..linearization coefficients for P.Sch flows
-         cddi_eff(:,0) =  5.0_R8*switch%fhiPSch*facdrift*cddi(:,1,is)
-         cddi_eff(:,1) = -5.0_R8*switch%fhiPSch*facdrift*cddi(:,0,is)
+         cddi_eff(:,0) = -5.0_R8*switch%fhiPSch*facdrift*cddi(:,1,is)
+         cddi_eff(:,1) =  5.0_R8*switch%fhiPSch*facdrift*cddi(:,0,is)
          call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi_eff,floi0,coni0)
          do iFc = 1, nFc
           floi(iFc,0)   = floi(iFc,0) +
