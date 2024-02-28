@@ -299,8 +299,8 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCn,isi)
       ux = upf*pit2
@@ -578,8 +578,8 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
       unf = pl%ua(iCv,isn)
@@ -680,8 +680,8 @@ c     Internal variables
       call subini ('CalcRecycledFluxes')
 c     Initialize/calculate some variables
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCv,isi)
       ux = upf*pit2
@@ -855,8 +855,8 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCn,isi)!! We use iCn instead of iCv because EIRENE does not see the value in the guard cell and the difference can be large.
       ux = upf*pit2
@@ -1249,8 +1249,8 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
       unf = pl%ua(iCv,isn)
       ux =  unf*pit2

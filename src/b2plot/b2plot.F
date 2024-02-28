@@ -148,7 +148,7 @@ c
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
-     *   mass,vel,vth,press
+     *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   boundary_namelist, neutrals_namelist,
      *   sput_frac_flag, use_eirene
@@ -1213,6 +1213,7 @@ c
       z0=0.0_R8
       t0=0.0_R8
       iFt=0
+      signmf=0.0_R8
       do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
         iFt=iFt+1
         iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
@@ -1230,9 +1231,26 @@ c
       if (t0.gt.0.0_R8) then
         r0=r0/t0
         z0=z0/t0
+        iFt=0
+        do while (signmf.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              signmf=signmf
+     .         -((geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-r0)*
+     .            geo%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),1))
+     .         +((geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-z0)*
+     .            geo%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),0))
+            end do
+          end if
+        end do
+! signmf is positive if the poloidal field travels clockwise around the O-point
+        signmf=sign(1.0_R8,signmf)
       else
         r0=geo%cvX(1)
         z0=geo%cvY(1)
+        signmf=sign(1.0_R8,geo%cvEb(1,0))
       end if
       if (mpg%isClassicalGrid.eq.1) then
         values(1)=minval(xx)                             !xmin
@@ -1457,9 +1475,9 @@ c
         if(mpg%cvOnClosedSurface(iCv)) then
           do i=1,mpg%ftCvP(iFt,2)
             iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
-            q=q+abs(geo%cvBb(iCv,3)/geo%cvBb(iCv,0))/
-     &              geo%cvX(iCv)*geo%cvHx(iCv)
-            t1=t1+geo%cvHx(iCv)*geo%cvBb(iCv,3)/abs(geo%cvBb(iCv,0))
+            q=q+geo%cvBb(iCv,3)/geo%cvBb(iCv,0)/
+     &          geo%cvX(iCv)*geo%cvHx(iCv)
+            t1=t1+geo%cvHx(iCv)*geo%cvBb(iCv,3)/geo%cvBb(iCv,0)
             t2=t2+geo%cvHx(iCv)
             rave(iFt)=rave(iFt)+sqrt((geo%cvX(iCv)-r0)**2+
      &                               (geo%cvY(iCv)-z0)**2)*geo%cvHx(iCv)
@@ -1745,12 +1763,12 @@ c
         case('pit','pitch')
           description='Pitch'
           nz=1
-          mach(:,0)=geo%cvBb(:,0)/geo%cvBb(:,3)
+          mach(:,0)=abs(geo%cvBb(:,0))/geo%cvBb(:,3)
           call copy(mach,1.0_R8,nz,textbl)
         case('bx','bpol')
           description='b_{x} (T) (poloidal)'
           nz=1
-          call copy(geo%cvBb(:,0),1.0_R8,nz,textbl)
+          call copy(geo%cvBb(:,0),signmf,nz,textbl)
         case('by','brad')
           description='b_{y} (T)'
           nz=1
@@ -1758,7 +1776,8 @@ c
         case('bz','btor')
           description='b_{z} (T) (toroidal)'
           nz=1
-          call copy(geo%cvBb(:,2),1.0_R8,nz,textbl)
+          mach(:,0)=sign(geo%cvBb(:,2),geo%cvEb(:,2))
+          call copy(mach,1.0_R8,nz,textbl)
         case('bb')
           description='bb (T)'
           nz=1
@@ -1770,7 +1789,7 @@ c
         case('ffbz')
           description='Toroidal magnetic flux function (Wb/m)'
           nz=1
-          mach(:,0)=geo%cvBb(:,2)*geo%cvX(:)
+          mach(:,0)=sign(geo%cvBb(:,2),geo%cvEb(:,2))*geo%cvX(:)
           call copy(mach,1.0_R8,nz,textbl)
         case('psi')
           description='Poloidal magnetic flux function (Wb)'
@@ -1817,8 +1836,9 @@ c
             wrkfs(:,is)=state%dv%vaecrb(:,0,is)+state%dv%wadia(:,0,is)
             call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
      .        wrkfs(1,is),wrkcs(1,is))
-            ww(:,is)=state%pl%ua(:,is)*geo%cvBb(:,2)/geo%cvBb(:,3)-
-     .                     wrkcs(:,is)*geo%cvBb(:,0)/geo%cvBb(:,2)
+            ww(:,is)=sign(state%pl%ua(:,is)*geo%cvBb(:,2)/geo%cvBb(:,3)-
+     .                          wrkcs(:,is)*geo%cvBb(:,0)/geo%cvBb(:,2),
+     .                    geo%cvEb(:,2))
           end do
           call copy(ww,1.0_R8,nz,textpl)
         case('te')

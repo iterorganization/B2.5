@@ -152,7 +152,7 @@
           qip1 = switch%cqip1*ni*ti*sqrt(te+ti)/sqrt(am(is)*mp)
 
 *       ..compute qipgen and its poloidal gradient on faces
-          qipgen = qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))                                                                  
+          qipgen = qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))
           call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, gqipgen)
 
           !set gqipgen to zero on faces not in touch with core
