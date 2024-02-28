@@ -714,7 +714,7 @@ c*** Puffing/seeding rate and recycling source
 
              do j = 1,nnatmi
                if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
-     &           userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
+     &          userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
              end do
 
             elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2.5 outer boundaries except targets

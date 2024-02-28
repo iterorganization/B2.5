@@ -6651,7 +6651,7 @@
 						   S --&gt; max(0, min(X,S + D)), where D = F*((N - &lt;N&gt;)/dt + (&lt;N&gt;_prev - &lt;N&gt;)/dt_prev)
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
 						6: rescale slowed by na_feedback_alpha (SOLPS4 style)
-						7: combinations of cases 2 and 3: if difference between current and target value is within NA_FEEDBACK_GAMMA, then slowing down by tanh(log) is applied, pure rescaling applied otherwise. 
+						7: combinations of cases 2 and 3: if difference between current and target value is within NA_FEEDBACK_GAMMA, then slowing down by tanh(log) is applied, pure rescaling applied otherwise.
 						8: rescaling calculated similarly to option 7, however it is then multiplied by the current pumping/puffing balance (S_pump - S_core - S_ext). Only applicable to gas puff actuator, making it follow pumping that suppresses the oscillations around the target value typical for gas puff actuator.
 				</description>
 			</switch>

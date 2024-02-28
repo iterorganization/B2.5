@@ -66,7 +66,7 @@ c*** Column headers:
 
       character, save :: hlp_frm*256
 
-      public ::     calc_pneut_init, calc_pneut
+      public :: calc_pneut_init, calc_pneut
 
       contains
 
@@ -247,19 +247,22 @@ c------------------------------
 
 c------------------------------
 ! Total radiated power and radiated power outside the separatrix
-      Q_rad_tot =  0.0_R8
-      Q_rad_SOL =  0.0_R8
+      Q_rad_tot = 0.0_R8
+      Q_rad_SOL = 0.0_R8
 
-      do ix=0,nx-1
-        do iy=0,ny-1
+      do ix = 0, nx-1
+        do iy = 0, ny-1
           t0 = 0.0_R8
-          do is=0,ns-1
+          do is = 0, ns-1
             t0 = t0 + rqbrm(ix,iy,is) + rqrad(ix,iy,is)
           enddo
 #ifdef B25_EIRENE
-          t0 = t0 - sum(eneutrad(ix+1,iy+1,1:nnatmi,0)) -
-     &              sum(emolrad(ix+1,iy+1,1:nnmoli,0)) -
-     &              sum(eionrad(ix+1,iy+1,1:nnioni,0))
+          if (nnatmi.gt.0)
+     >     t0 = t0 - sum(eneutrad(ix+1,iy+1,1:nnatmi,0))
+          if (nnmoli.gt.0)
+     >     t0 = t0 - sum(emolrad(ix+1,iy+1,1:nnmoli,0))
+          if (nnioni.gt.0)
+     >     t0 = t0 - sum(eionrad(ix+1,iy+1,1:nnioni,0))
 #endif
 
           Q_rad_tot = Q_rad_tot + t0
@@ -270,15 +273,15 @@ c------------------------------
 c*** Write the data in a separate file for plotting...
 c
       write(lun,hlp_frm) tim,
-     &     Q_pneut,
-     &    (Q_pneut_trg(it), it=1,2),
-     &     Q_Te_min_LCFS, Q_rad_tot, Q_rad_SOL,
-     &    (Q_Te_max(it), it=1,ntrgts),
-     &    (Q_det_wdth(it), it=1,ntrgts),
-     &    (Q_qmax_trg(it), it=1,ntrgts),         !iyv 11.04.22
-     &    (Q_jsat_max_trg(it), it=1,ntrgts),
-     &    (Q_Isat_trg(it), it=1,ntrgts),
-     &    (Q_I_tot_trg(it), it=1,ntrgts)
+     &  Q_pneut,
+     & (Q_pneut_trg(it), it=1,2),
+     &  Q_Te_min_LCFS, Q_rad_tot, Q_rad_SOL,
+     & (Q_Te_max(it), it=1,ntrgts),
+     & (Q_det_wdth(it), it=1,ntrgts),
+     & (Q_qmax_trg(it), it=1,ntrgts),         !iyv 11.04.22
+     & (Q_jsat_max_trg(it), it=1,ntrgts),
+     & (Q_Isat_trg(it), it=1,ntrgts),
+     & (Q_I_tot_trg(it), it=1,ntrgts)
 
       return
       end subroutine b2usstrc
@@ -557,7 +560,7 @@ c----------------------------------------------------------------------
      &   Q_Te_max, Q_det_wdth, Q_I_tot_trg,
      &   Q_jsat_trg, Q_Isat_trg, Q_qmax_trg)
         deallocate(headers)
-       endif
+      endif
 
       if (allocated(Q_pneut_trg)) then
         deallocate ( Q_pneut_trg)
@@ -683,28 +686,22 @@ c======================================================================
         do ix = ix_pneut_beg(it), ix_pneut_end(it)
           Area_pneut_trg(it) = Area_pneut_trg(it) + gs(ix,iy,1)
 
-#ifdef B25_EIRENE
           if(use_eirene.ne.0) then
-            do k=1,nnatmi
+            do k = 1, nnatmi
               Q_pneut_trg(it) = Q_pneut_trg(it) +
      &         dab2(ix+1,iyp,k,1)*tab2(ix+1,iyp,k,1)*gs(ix,iy,1)
             enddo
-            do k=1,nnmoli
+            do k = 1, nnmoli
               Q_pneut_trg(it) = Q_pneut_trg(it) +
      &         dmb2(ix+1,iyp,k,1)*tmb2(ix+1,iyp,k,1)*gs(ix,iy,1)
             enddo
           else
-            do is=0,ns-1
+            do is = 0, ns-1
               if (is_neutral(is)) Q_pneut_trg(it) = Q_pneut_trg(it) +
      &          na(ix,iy,is)*ti(ix,iy)*gs(ix,iy,1)
             enddo
           endif
-#else
-          do is=0,ns-1
-            if (is_neutral(is)) Q_pneut_trg(it) = Q_pneut_trg(it) +
-     &        na(ix,iy,is)*ti(ix,iy)*gs(ix,iy,1)
-          enddo
-#endif
+
         enddo
 
         if(Area_pneut_trg(it).gt.0.0_R8)
