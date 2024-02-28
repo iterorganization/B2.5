@@ -6071,7 +6071,7 @@ contains
 #endif
           case ('Be')
             call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
-            call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, vtor )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, -vtor )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%beryllium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, -v )
