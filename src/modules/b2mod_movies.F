@@ -64,10 +64,10 @@
       dims(3) = timedim
       iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_xyt_id)
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_xyt_id, 'long_name', 
+      iret = nf_put_att_text (ncid, z_xyt_id, 'long_name',
      1 len_trim(long_name), trim(long_name))
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_xyt_id, 'units', 
+      iret = nf_put_att_text (ncid, z_xyt_id, 'units',
      1 len_trim(units), trim(units))
       call check_cdf_status(iret)
       return
@@ -101,10 +101,10 @@
       dims(4) = timedim
       iret = nf_def_var (ncid, name, NF_DOUBLE, 4, dims, z_xyst_id)
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_xyst_id, 'long_name', 
+      iret = nf_put_att_text (ncid, z_xyst_id, 'long_name',
      1 len_trim(long_name), trim(long_name))
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_xyst_id, 'units', 
+      iret = nf_put_att_text (ncid, z_xyst_id, 'units',
      1 len_trim(units), trim(units))
       call check_cdf_status(iret)
       return
@@ -323,10 +323,10 @@ c      call ncaptc (ncid, z_xyt_id, 'long_name', NCCHAR,
 c     1 len_trim(long_name), long_name, iret)
 c      call ncaptc(ncid, z_xyt_id, 'units', NCCHAR,
 c     1 len_trim(units), units, iret)
-      iret = nf_put_att_text (ncid, z_xyt_id, 'long_name', 
+      iret = nf_put_att_text (ncid, z_xyt_id, 'long_name',
      1 len_trim(long_name), long_name)
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_xyt_id, 'units', 
+      iret = nf_put_att_text (ncid, z_xyt_id, 'units',
      1 len_trim(units), units)
       call check_cdf_status(iret)
 

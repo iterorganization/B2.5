@@ -265,7 +265,9 @@ c 2002-09-11: logic revised
      2 l_conn(:), nbini(:),
      3 saved_na_feedback_actuator1(:), na_feedback_target1(:),
      4 na_feedback_alpha1(:), na_feedback_beta1(:),
+     4 na_feedback_gamma1(:),
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
+     5 na_feedback_actuator_min1(:), na_feedback_actuator_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:),
      8 sna_corr1(:), taumax1(:)
@@ -303,7 +305,7 @@ c 2002-09-11: logic revised
      1  na_feedback_choice1(:), na_feedback_option1(:),
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
-     4  na_feedback_ib1(:)
+     4  na_feedback_ib1(:), na_feedback_it1(:)
       integer, allocatable :: l_h_mol1(:,:)
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
@@ -534,6 +536,7 @@ c 2002-09-11: logic revised
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:), solvtmp(:,:)
       logical, allocatable :: do_sna_corr_core1(:)
+      logical, allocatable :: na_feedback_inverse1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -11859,13 +11862,18 @@ cxpb as they no longer necessarily point to the same species
         allocate(na_feedback_iy11(0:nspecies1-1))
         allocate(na_feedback_iy21(0:nspecies1-1))
         allocate(na_feedback_ib1(0:nspecies1-1))
+        allocate(na_feedback_it1(0:nspecies1-1))
         allocate(na_feedback_alpha1(0:nspecies1-1))
         allocate(na_feedback_beta1(0:nspecies1-1))
+        allocate(na_feedback_gamma1(0:nspecies1-1))
         allocate(na_feedback_const1(0:nspecies1-1))
         allocate(na_feedback_time1(0:nspecies1-1))
         allocate(na_feedback_puff_min1(0:nspecies1-1))
         allocate(na_feedback_puff_max1(0:nspecies1-1))
+        allocate(na_feedback_actuator_min1(0:nspecies1-1))
+        allocate(na_feedback_actuator_max1(0:nspecies1-1))
         allocate(na_feedback_overshoot1(0:nspecies1-1))
+        allocate(na_feedback_inverse1(0:nspecies1-1))
         call read_b2mod_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)
@@ -11969,20 +11977,44 @@ cxpb as they no longer necessarily point to the same species
      .       nx,ny,nx1,ny1,2)
             na_feedback_ib1(ispecies1(is)-1) =
      .       na_feedback_ib(is-1)
+            na_feedback_it1(ispecies1(is)-1) =
+     .       na_feedback_it(is-1)
             na_feedback_alpha1(ispecies1(is)-1) =
      .       na_feedback_alpha(is-1)
             na_feedback_beta1(ispecies1(is)-1) =
      .       na_feedback_beta(is-1)
+            na_feedback_gamma1(ispecies1(is)-1) =
+     .       na_feedback_gamma(is-1)
             na_feedback_const1(ispecies1(is)-1) =
      .       na_feedback_const(is-1)
-            na_feedback_puff_min1(ispecies1(is)-1) =
-     .       na_feedback_puff_min(is-1)
-            na_feedback_puff_max1(ispecies1(is)-1) =
-     .       na_feedback_puff_max(is-1)
+            if (maxval(abs(na_feedback_actuator_max)) .eq. 0.0_R8) then
+              if (maxval(abs(na_feedback_puff_max)) .ne. 0.0_R8)
+     .          na_feedback_actuator_max1(ispecies1(is)-1) =
+     .           na_feedback_puff_max(is-1)
+            else
+              na_feedback_actuator_max1(ispecies1(is)-1) =
+     .         na_feedback_actuator_max(is-1)
+            endif
+            if (maxval(abs(na_feedback_actuator_min)) .eq. 0.0_R8) then
+              if (maxval(abs(na_feedback_puff_min)) .ne. 0.0_R8)
+     .          na_feedback_actuator_min1(ispecies1(is)-1) =
+     .           na_feedback_puff_min(is-1)
+            else
+              na_feedback_actuator_min1(ispecies1(is)-1) =
+     .         na_feedback_actuator_min(is-1)
+            endif
             na_feedback_overshoot1(ispecies1(is)-1) =
      .       na_feedback_overshoot(is-1)
             na_feedback_time1(ispecies1(is)-1) =
      .       na_feedback_time(is-1)
+            na_feedback_inverse1(ispecies1(is)-1) =
+     .       na_feedback_inverse(is-1)
+          end if
+        end do
+        do is = 0, nspecies1 - 1
+          if (na_feedback_ib1(is).lt.0) then
+            ib = abs(na_feedback_ib1(is))
+            na_feedback_ib1(is) = -istra1(ib)
           end if
         end do
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i2,'',''))'
@@ -11996,9 +12028,12 @@ cxpb as they no longer necessarily point to the same species
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_ACTUATOR=',na_feedback_actuator1(0:nspecies1-1)
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
-        if (maxval(na_feedback_ib1(0:nspecies1-1)).gt.0)
+        if (maxval(abs(na_feedback_ib1(0:nspecies1-1))).ne.0)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_IB= ',na_feedback_ib1(0:nspecies1-1)
+        if (maxval(na_feedback_it1(0:nspecies1-1)).ne.0)
+     >   write(99,hlp_frm)
+     .     'NA_FEEDBACK_IT= ',na_feedback_it1(0:nspecies1-1)
         if (maxval(na_feedback_ix11(0:nspecies1-1)).gt.-2)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_IX1=',na_feedback_ix11(0:nspecies1-1)
@@ -12024,40 +12059,54 @@ cxpb as they no longer necessarily point to the same species
      &      minval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_BETA=    ',na_feedback_beta1(0:nspecies1-1)
+        if (maxval(na_feedback_gamma1(0:nspecies1-1)).ne.0.01_R8 .or.
+     &      minval(na_feedback_gamma1(0:nspecies1-1)).ne.0.01_R8)
+     >   write(99,hlp_frm)
+     .     'NA_FEEDBACK_GAMMA=   ',na_feedback_gamma1(0:nspecies1-1)
         if (maxval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8 .or.
      &      minval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_CONST=   ',na_feedback_const1(0:nspecies1-1)
         if (maxval(na_feedback_puff_min1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_PUFF_MIN=',na_feedback_puff_min1(0:nspecies1-1)
+     .     'NA_FEEDBACK_ACTUATOR_MIN=',
+     .      na_feedback_actuator_min1(0:nspecies1-1)
         if (maxval(na_feedback_puff_max1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_PUFF_MAX=',na_feedback_puff_max1(0:nspecies1-1)
+     .     'NA_FEEDBACK_ACTUATOR_MAX=',
+     .      na_feedback_actuator_max1(0:nspecies1-1)
         if (maxval(na_feedback_overshoot1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm) 'NA_FEEDBACK_OVERSHOOT=',
      .     na_feedback_overshoot1(0:nspecies1-1)
         if (maxval(na_feedback_time1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_TIME=',na_feedback_time1(0:nspecies1-1)
+        if (any(na_feedback_inverse1(0:nspecies1-1)))
+     >   write(99,hlp_frm)
+     .     'NA_FEEDBACK_INVERSE=',na_feedback_inverse1(0:nspecies1-1)
         write(99,'(a1)') '/'
         close(99)
         deallocate(na_feedback_target1)
         deallocate(na_feedback_choice1)
         deallocate(na_feedback_option1)
         deallocate(na_feedback_actuator1)
+        deallocate(na_feedback_actuator_min1)
+        deallocate(na_feedback_actuator_max1)
         deallocate(na_feedback_ix11)
         deallocate(na_feedback_ix21)
         deallocate(na_feedback_iy11)
         deallocate(na_feedback_iy21)
         deallocate(na_feedback_ib1)
+        deallocate(na_feedback_it1)
         deallocate(na_feedback_alpha1)
         deallocate(na_feedback_beta1)
+        deallocate(na_feedback_gamma1)
         deallocate(na_feedback_const1)
         deallocate(na_feedback_puff_min1)
         deallocate(na_feedback_puff_max1)
         deallocate(na_feedback_overshoot1)
         deallocate(na_feedback_time1)
+        deallocate(na_feedback_inverse1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in b2.feedback_control.parameters'

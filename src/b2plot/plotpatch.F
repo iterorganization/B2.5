@@ -35,7 +35,7 @@ C =====================================================================
       RHI=real(work(0,0),R4)
       do IY=-1,NY
         do IX=-1,NX
-          if(.not.physical.or.region(ix,iy,0).ne.0)then
+          if(.not.physical.or.region(ix,iy,0).ne.0) then
             RLO=MIN(RLO,REAL(work(IX,IY),R4))
             RHI=MAX(RHI,REAL(work(IX,IY),R4))
           endif

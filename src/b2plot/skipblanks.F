@@ -11,4 +11,4 @@ c
         goto 10
       endif
       return
-      end
+      end subroutine skipblanks

@@ -333,14 +333,14 @@ c      if(nidim .ne. 2) call line(2)
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
           if (dcol.gt.1) then
-             call gsplci(dcol)
+            call gsplci(dcol)
           elseif(dcol.lt.0) then
-             call gsplci(-dcol)
-             dcol=dcol-1
-             if (dcol.lt.-17) then
-               dcol=-mod(abs(dcol),17)
-               if (dcol.eq.0) dcol=-17
-             endif
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
           endif
 #endif
           do iy=iystart,iyend-1
@@ -445,15 +445,15 @@ c      if(nidim .ne. 2) call line(2)
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
           if (dcol.gt.1) then
-             call gsplci(dcol)
+            call gsplci(dcol)
           elseif(dcol.lt.0) then
-             if(typeofplot.eq.3) dcol=dcol+1
-             call gsplci(-dcol)
-             dcol=dcol-1
-             if (dcol.lt.-17) then
-               dcol=-mod(abs(dcol),17)
-               if (dcol.eq.0) dcol=-17
-             endif
+            if(typeofplot.eq.3) dcol=dcol+1
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
           endif
 #endif
           do iy=iystart,iyend-1

@@ -15,8 +15,9 @@
       integer, allocatable, save :: feedback_strata(:)
 
 *   ..namelists
+      logical, save :: na_feedback_inverse(0:DEF_NATM-1)
       integer, save :: vacuum_communication,
-     & vacuum_communication_nreg(nvac), 
+     & vacuum_communication_nreg(nvac),
      & vacuum_communication_method(nvac),
      & vacuum_communication_iy(nvacreg,nvac),
      & vacuum_communication_ix1(nvacreg,nvac),
@@ -24,9 +25,10 @@
      & na_feedback_choice(0:DEF_NATM-1),
      & na_feedback_option(0:DEF_NATM-1),
      & na_feedback_actuator(0:DEF_NATM-1),
-     & na_feedback_ix1(0:DEF_NATM-1), na_feedback_ix2(0:DEF_NATM-1), 
-     & na_feedback_iy1(0:DEF_NATM-1), na_feedback_iy2(0:DEF_NATM-1), 
-     & na_feedback_ib(0:DEF_NATM-1)
+     & na_feedback_ix1(0:DEF_NATM-1), na_feedback_ix2(0:DEF_NATM-1),
+     & na_feedback_iy1(0:DEF_NATM-1), na_feedback_iy2(0:DEF_NATM-1),
+     & na_feedback_ib(0:DEF_NATM-1), na_feedback_it(0:DEF_NATM-1),
+     & max_na_feedback_current(DEF_NATM)
       real (kind=R8), save ::
      * saved_cbshe_core, saved_cbshi_core, saved_cbsna_core,
      * saved_cbsch_core, saved_cbsna_pfr1, saved_cbsna_pfr2,
@@ -36,12 +38,15 @@
      & na_feedback_target(0:DEF_NATM-1), na_feedback_time(0:DEF_NATM-1),
      & saved_na_feedback_actuator(0:DEF_NATM-1),
      & na_feedback_alpha(0:DEF_NATM-1), na_feedback_beta(0:DEF_NATM-1),
+     & na_feedback_gamma(0:DEF_NATM-1),
      & na_feedback_const(0:DEF_NATM-1),
      & na_feedback_puff_min(0:DEF_NATM-1),
      & na_feedback_puff_max(0:DEF_NATM-1),
+     & na_feedback_actuator_min(0:DEF_NATM-1),
+     & na_feedback_actuator_max(0:DEF_NATM-1),
      & na_feedback_overshoot(0:DEF_NATM-1)
       namelist /feedback/ saved_cbshe_core, saved_cbshi_core,
-     1 saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1, 
+     1 saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1,
      2 saved_cbsna_pfr2, saved_cbsna_sol, saved_na_feedback_actuator
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/ vacuum_communication,
@@ -51,13 +56,15 @@
      & vacuum_communication_alpha, vacuum_communication_beta,
      & na_feedback_target, na_feedback_choice, na_feedback_option,
      & na_feedback_actuator, na_feedback_alpha, na_feedback_beta,
+     & na_feedback_gamma,
      & na_feedback_const, na_feedback_time,
      & na_feedback_ix1, na_feedback_ix2,
-     & na_feedback_iy1, na_feedback_iy2, 
-     & na_feedback_ib,
+     & na_feedback_iy1, na_feedback_iy2,
+     & na_feedback_ib, na_feedback_it,
      & na_feedback_puff_min, na_feedback_puff_max,
-     & na_feedback_overshoot
-      data 
+     & na_feedback_actuator_min, na_feedback_actuator_max,
+     & na_feedback_overshoot, na_feedback_inverse
+      data
      & feedback_namelist_used/.false./, feedback_read/.false./,
      & control_read/.false./,
      1 saved_cbshe_core/0.0_R8/, saved_cbshi_core/0.0_R8/,
@@ -69,14 +76,19 @@
      * na_feedback_choice/DEF_NATM*0/,
      6 na_feedback_option/DEF_NATM*0/, na_feedback_actuator/DEF_NATM*0/,
      7 na_feedback_ix1/DEF_NATM*-2/, na_feedback_ix2/DEF_NATM*-2/,
-     & na_feedback_iy1/DEF_NATM*-2/, na_feedback_iy2/DEF_NATM*-2/, 
-     & na_feedback_ib/DEF_NATM*-1/,
-     8 na_feedback_alpha/DEF_NATM*0.001_R8/, 
+     & na_feedback_iy1/DEF_NATM*-2/, na_feedback_iy2/DEF_NATM*-2/,
+     & na_feedback_ib/DEF_NATM*0/, na_feedback_it/DEF_NATM*0/,
+     8 na_feedback_alpha/DEF_NATM*0.001_R8/,
      & na_feedback_beta/DEF_NATM*1.0_R8/,
+     8 na_feedback_gamma/DEF_NATM*0.01_R8/,
      & na_feedback_const/DEF_NATM*0.0_R8/,
      & na_feedback_puff_min/DEF_NATM*0.0_R8/,
      & na_feedback_puff_max/DEF_NATM*0.0_R8/,
-     & na_feedback_overshoot/DEF_NATM*0.0_R8/
+     & na_feedback_actuator_min/DEF_NATM*0.0_R8/,
+     & na_feedback_actuator_max/DEF_NATM*0.0_R8/,
+     & na_feedback_overshoot/DEF_NATM*0.0_R8/,
+     & na_feedback_inverse/DEF_NATM*.false./,
+     & max_na_feedback_current/DEF_NATM*0.0_R8/
 
       contains
 
@@ -109,8 +121,8 @@
       else
         if (.not.file_ok) write(6,*) 'No ',trim(filename)
       endif
-      found = max(saved_cbshe_core, saved_cbshi_core, 
-     .            saved_cbsna_core, saved_cbsch_core, 
+      found = max(saved_cbshe_core, saved_cbshi_core,
+     .            saved_cbsna_core, saved_cbsch_core,
      .            saved_cbsna_pfr1, saved_cbsna_pfr2,
      .            saved_cbsna_sol, maxval(saved_na_feedback_actuator))
      .            .gt. 0.0_R8
@@ -193,6 +205,28 @@ cxpb size is changed in b2mod_dimensions
 #endif
         write(6,*) 'Read ',trim(filename)
         close(nread)
+
+        if (maxval(abs(na_feedback_puff_max)) .ne. 0.0_R8)  then
+          if (maxval(abs(na_feedback_actuator_max)) .ne. 0.0_R8) then
+            call xerrab ('Both NA_FEEDBACK_PUFF_MAX and ' //
+     &                 'NA_FEEDBACK_ACTUATOR_MAX are defined!')
+          else
+            na_feedback_actuator_max = na_feedback_puff_max
+            write(*,*) 'Warning! NA_FEEDBACK_PUFF_MAX is obsolete. ' //
+     &             'Its value is written to NA_FEEDBACK_ACTUATOR_MAX.'
+          endif
+        endif
+        if (maxval(abs(na_feedback_puff_min)) .ne. 0.0_R8) then
+          if (maxval(abs(na_feedback_actuator_min)) .ne. 0.0_R8) then
+            call xerrab ('Both NA_FEEDBACK_PUFF_MIN and ' //
+     &                 'NA_FEEDBACK_ACTUATOR_MIN are defined!')
+          else
+            na_feedback_actuator_min = na_feedback_puff_min
+            write(*,*) 'Warning! NA_FEEDBACK_PUFF_MIN is obsolete. ' //
+     &             'Its value is written to NA_FEEDBACK_ACTUATOR_MIN.'
+          endif
+        endif
+
         control_read = .true.
       else
         write(6,*) 'No ',trim(filename)

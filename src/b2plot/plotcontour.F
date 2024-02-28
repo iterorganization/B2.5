@@ -55,8 +55,8 @@ cxpb  INTEGER NNCUT_L
         call alloc_b2mod_b2plot_xy(LNGDEC)
         first=.false.
       endif
-      rwrk=0   ! bug in NCAR: The variable (RWRK(209)) has an undefined value.
-      z=0
+      rwrk=0.0_R4   ! bug in NCAR: The variable (RWRK(209)) has an undefined value.
+      z=0.0_R4
 
 C ========== GLOBAL OPTIONS ==========================================
 #ifdef DBG
@@ -882,8 +882,8 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         DO IY=iystrt,iyend
           DO IX=ixstrt,ixend
             IC=IC+1
-            X(IC)=ix    ! was real(CR(IX,0),R4)
-            Y(IC)=iy    ! was real(CZ(IY,0),R4)
+            X(IC)=real(ix,R4)    ! was real(CR(IX,0),R4)
+            Y(IC)=real(iy,R4)    ! was real(CZ(IY,0),R4)
             Z(IC)=real(FIELD(IX,IY),R4)
           ENDDO
         ENDDO
@@ -894,10 +894,10 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
 C         CALL CPCNRC(z,NNX,NNX,NNY,ZLO,ZHI,0.0,1,0,0)
         CALL CPSETI('SET - DO-SET-CALL FLAG',0)
         CALL CPSETI('MAP - MAPPING FLAG',1)
-        CALL CPSETR('XC1 - X COORDINATE AT I=1', real(ixstrt))
-        CALL CPSETR('XCM - X COORDINATE AT I=M', real(ixend))
-        CALL CPSETR('YC1 - Y COORDINATE AT J=1', real(iystrt))
-        CALL CPSETR('YCN - Y COORDINATE AT J=N', real(iyend))
+        CALL CPSETR('XC1 - X COORDINATE AT I=1', real(ixstrt,R4))
+        CALL CPSETR('XCM - X COORDINATE AT I=M', real(ixend,R4))
+        CALL CPSETR('YC1 - Y COORDINATE AT J=1', real(iystrt,R4))
+        CALL CPSETR('YCN - Y COORDINATE AT J=N', real(iyend,R4))
         CALL CPRECT(z, nnx, nnx, nny, RWRK, LRWK, IWRK, LIWK)
 C Add contours to area map
         CALL CPCLAM(z, RWRK, IWRK, MAP)

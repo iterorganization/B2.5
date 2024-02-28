@@ -378,13 +378,19 @@ c not sure this is the right place
         endif
         do is = 0, nspecies-1
           if (na_feedback_actuator(is).eq.1) then
-            do istrai = 1, nstrat
-              if (crcstra(istrai).eq.'C' .and.
-     .          species_start(istrai).le.eb2spcr(is+1) .and.
-     .          species_end(istrai).ge.eb2spcr(is+1)) then
-                  feedback_strata(is) = istrai
-              end if
-            end do
+            if (na_feedback_ib(is).lt.0 .and.
+     .        crcstra(-na_feedback_ib(is)).eq.'C' .and.
+     .        species_start(-na_feedback_ib(is)).le.eb2spcr(is+1) .and.
+     .        species_end(-na_feedback_ib(is)).ge.eb2spcr(is+1)) then
+                feedback_strata(is) = -na_feedback_ib(is)
+            else
+              do istrai = 1, nstrat
+                if (crcstra(istrai).eq.'C' .and.
+     .            species_start(istrai).le.eb2spcr(is+1) .and.
+     .            species_end(istrai).ge.eb2spcr(is+1))
+     >           feedback_strata(is) = istrai
+              end do
+            end if
           end if
         end do
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
@@ -804,21 +810,14 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
                 tflux(istrai)=gpdata(ih,2,istrai)
               endif
              endif
-           endif
+            endif
           else if (ncall.ge.ncallfeedback.and.
      &             feedback_stratum.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
-              if (feedback_strata(is).gt.0) then !{
-                if (na_feedback_target(is).gt.0.0_R8.and.
-     &              na_feedback_actuator(is).eq.1.and.
-     &              species_start(feedback_strata(is)).le.
-     &              eb2spcr(is+1)+nfluids(is+1).and.
-     &            species_end(feedback_strata(is)).ge.eb2spcr(is+1))
-     >           then !{
-                  tflux(istrai)=tflux(istrai)+
-     .             conpar(eb2spcr(is+1),na_feedback_ib(is),1)
-                end if !}
-              end if !}
+              if (feedback_strata(is).eq.istrai .and.
+     &            na_feedback_target(is).gt.0.0_R8 .and.
+     &            na_feedback_actuator(is).eq.1)
+     .          tflux(istrai)= tflux(istrai) + userfluxparm(istrai,1)
             end do !}
           else !}{
             tflux(istrai)=userfluxparm(istrai,1)
@@ -934,30 +933,36 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-      call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+      if (nnatmi.gt.0) then
+        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
+        call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+        call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+      end if
+      if (nnmoli.gt.0) then
+        call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+        call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
+        call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+      end if
+      if (nnioni.gt.0) then
+        call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-      call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
+        call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-      call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
-     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
-     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
-     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
-     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-      call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
-     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-      call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
-     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+      end if
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
@@ -3832,14 +3837,14 @@ c$$$                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
           enddo
         enddo
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnatmi,'(1x,e14.7))'
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. ENEUTRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnatmi.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. ENEUTRAD : ',
      .   (SUM(eneutrad(1:nx,1:ny,iatm,0)),iatm=1,nnatmi)
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. EMOLRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnmoli.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. EMOLRAD : ',
      .   (SUM(emolrad(1:nx,1:ny,imol,0)),imol=1,nnmoli)
-        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. EIONRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnioni.gt.0)
+     .   write(*,hlp_frm) 'EIRENE_MC. EIONRAD : ',
      .   (SUM(eionrad(1:nx,1:ny,iion,0)),iion=1,nnioni)
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')

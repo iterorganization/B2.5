@@ -17,6 +17,7 @@
       use b2mod_first_flight
       use b2mod_constants
       use b2mod_indirect
+      use b2mod_feedback
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist

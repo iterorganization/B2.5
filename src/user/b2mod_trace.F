@@ -270,4 +270,5 @@ c*** Finalization call
       return
       end subroutine b2trcf
 c======================================================================
+
       end module b2mod_trace

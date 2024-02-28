@@ -6,12 +6,13 @@ c
       use b2mod_indirect
       use b2mod_b2plot_values
       implicit none
+      integer, intent(in) :: iy
       character*12 hlp_frm
       character*32 tmpstring1,tmpstring2
-      character*256 tmpstring, titlestring
+      character*256 tmpstring,titlestring
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,xmult
-      integer ix,iy,is,ixstart,ixend,len_of_digits
+      integer ix,is,ixstart,ixend,len_of_digits
 
 c     the line format common
       character*10 linefmt
@@ -49,17 +50,17 @@ c     the line format common
         enddo
         if (values(13).ne.init_value) then
           dsep=(1.0_R8-values(13))*wrk(ixstart)+(values(13))*wrk(ixend)
-        else if (ixref.ge.ixstart .and. ixref.le.ixend) then 
+        else if (ixref.ge.ixstart .and. ixref.le.ixend) then
 cxpb : new default behaviour : zero of distance set at ixref
           dsep=wrk(ixref)
         else ! old default behaviour : values(13)=0.5
-          dsep=0.5_R8*(wrk(ixstart)+wrk(ixend)) 
+          dsep=0.5_R8*(wrk(ixstart)+wrk(ixend))
         endif
         do ix=ixstart,ixend
           wrk(ix)=wrk(ix)-dsep
         enddo
         write(tmpstring2,hlp_frm) ' <iy = ',iy,'>'
-        tmpstring = 
+        tmpstring =
      1    trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
         call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
@@ -112,14 +113,14 @@ cxpb : new default behaviour : zero of distance set at ixref
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
           if (dcol.gt.1) then
-             call gsplci(dcol)
+            call gsplci(dcol)
           elseif(dcol.lt.0) then
-             call gsplci(-dcol)
-             dcol=dcol-1
-             if (dcol.lt.-17) then
-               dcol=-mod(abs(dcol),17)
-               if (dcol.eq.0) dcol=-17
-             endif
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
           endif
 #endif
           do ix=ixstart,ixend-1
@@ -203,15 +204,15 @@ cxpb : new default behaviour : zero of distance set at ixref
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
           if (dcol.gt.1) then
-             call gsplci(dcol)
+            call gsplci(dcol)
           elseif(dcol.lt.0) then
-             if(typeofplot.eq.3) dcol=dcol+1
-             call gsplci(-dcol)
-             dcol=dcol-1
-             if (dcol.lt.-17) then
-               dcol=-mod(abs(dcol),17)
-               if (dcol.eq.0) dcol=-17
-             endif
+            if(typeofplot.eq.3) dcol=dcol+1
+            call gsplci(-dcol)
+            dcol=dcol-1
+            if (dcol.lt.-17) then
+              dcol=-mod(abs(dcol),17)
+              if (dcol.eq.0) dcol=-17
+            endif
           endif
 #endif
           do ix=ixstart,ixend-1
@@ -248,5 +249,6 @@ cxpb : new default behaviour : zero of distance set at ixref
           call end_page
         endif
       enddo
+
       return
       end subroutine fx

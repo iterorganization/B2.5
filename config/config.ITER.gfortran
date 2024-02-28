@@ -46,8 +46,8 @@ GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
 ifdef USE_OPENMP
 ifndef USE_EIRENE
-FCOPTS = -fPIC
-LDOPTS = -fPIC
+FCOPTS  = -fPIC
+LDOPTS  = -fPIC
 endif
 endif
 ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
