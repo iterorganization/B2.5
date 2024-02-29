@@ -500,7 +500,11 @@
        call my_out_us(70,nVx,2,geo%vxFfbz,'Vx.FfBz')
        call my_out_us(70,nVx,2,geo%vxOnedBsq,'Vx.OnedBsq')
        call my_out_us(70,nVx,2,geo%vxBzB,'Vx.BzB')
-      endif                                                             !srv   end for iout=3
+      endif                                                             !srv   end for iout=3   
+
+!      if(use_mms.eq.1 .and. iout.eq.10) then                                 !srv 26.02.18 {
+!        call calc_err(nCv, ns, state%pl)
+!      endif                                                             !srv 26.02.18 }
 
 #ifdef WG_DEBUG
       if (mpg%isClassicalGrid.eq.1) then
