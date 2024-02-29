@@ -211,11 +211,9 @@
        call b2agsi (parg, isymm, lblgm(61:120), istyle)
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs(ninp(1),istyle,lblgm,g,m,artificial_slab)
-
 *   ..echo lblgm
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
-
 
 *   ..compute metric coefficients on auxiliary mesh
        call b2agmt (g, m, isymm, artificial_slab)
@@ -225,6 +223,12 @@
         call set_connectivity_artificial_slab(g,m)
        endif
 
+*   ..correct pbsx on the proper mesh
+      if(redef_gmtry.ne.0) then
+         call b2agbs(g,m)
+      endif
+
+*   ..writing some important information 
       write(*,*) 'b2agdr1: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
       write(*,*) 'b2agdr2: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
       write(*,'()')

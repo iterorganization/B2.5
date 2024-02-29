@@ -763,7 +763,21 @@ cxpb  if just below the top corner, make the corner cell follow
           m%nncut = idum(2)
         endif
 
-        !read vertex information
+        ! read Xpoint information
+        call cfruin (nrid, 1, idum,'nX')
+        m%nXp = idum(0)
+
+        ! read length of OMP and IMP arrays
+        call cfruin (nrid, 4, idum, 'ncvOMP,ncvIMP,nfcOMP,nfcIMP')
+        m%ncvOMP = idum(0)
+        m%ncvIMP = idum(1)
+        m%nfcOMP = idum(2)
+        m%nfcIMP = idum(3)
+
+        ! read Xpoint vertex number
+        call cfruin(nrid,m%nXp,m%Xpoint,'Xpoint(s)')
+
+        ! read vertex information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('Vx',id)) then
            do iVx = 1, nnVx
@@ -794,6 +808,11 @@ cxpb  if just below the top corner, make the corner cell follow
        !read cvFc
        call cfruin(nrid,nnCmxFc,m%cvFc,'cvFc')
 
+       ! read cvOMP
+       call cfruin(nrid,m%ncvOMP,m%cvOMP,'cvOMP')
+       ! read cvIMP
+       call cfruin(nrid,m%ncvIMP,m%cvIMP,'cvIMP')
+
        !Read face information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('fc',id)) then
@@ -804,6 +823,11 @@ cxpb  if just below the top corner, make the corner cell follow
      &      m%fcAligned(iFc)
            enddo
         endif
+
+       ! read fcOMP
+       call cfruin(nrid,m%nfcOMP,m%fcOMP,'fcOMP')
+       ! read fcIMP
+       call cfruin(nrid,m%nfcIMP,m%fcIMP,'fcIMP')
 
        !Read flux tube information
         if (nnFt .gt. 0) then

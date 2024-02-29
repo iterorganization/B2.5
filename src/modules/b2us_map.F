@@ -16,7 +16,8 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
-     &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc
+     &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc,
+     &             ncvOMP, ncvIMP, nfcOMP, nfcIMP, nXp
         integer :: nnreg(0:1), periodic_bc, iFssep
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -99,6 +100,15 @@
         integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
+
+        integer, allocatable :: cvOMP(:)               ! grid cells that belong to the outer mid plane (OMP)
+        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
+        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
+        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
+  
+        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
+
+
         end type mapping
 
       contains
@@ -179,6 +189,13 @@
       allocate (m%fcLbl(m%nFc))
       allocate (m%ftLbl(m%nFt))
       allocate (m%cvLbl(m%nCv))
+      
+      allocate (m%cvOMP(m%ncvOMP))
+      allocate (m%cvIMP(m%ncvIMP))
+      allocate (m%fcOMP(m%nfcOMP))
+      allocate (m%fcIMP(m%nfcIMP))
+
+      allocate (m%Xpoint(m%nXp))
 
       call initialize_mapping (m)
 
@@ -257,6 +274,13 @@
       m%cvLbl = 0
 
       m%iFssep = 0
+
+      m%cvOMP = 0
+      m%cvIMP = 0
+      m%fcOMP = 0
+      m%fcIMP = 0
+
+      m%Xpoint = 0 
 
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
@@ -345,6 +369,13 @@
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
 
+      deallocate (m%cvOMP)
+      deallocate (m%cvIMP)
+      deallocate (m%fcOMP)
+      deallocate (m%fcIMP)
+
+      deallocate (m%Xpoint)
+      
       return
       end subroutine dealloc_mapping
 
@@ -622,7 +653,7 @@ cwdk  can be derived directly from data in that file
 *   ..set up connectivity information for the matrix stencil
       allocate (m%cvNvP(m%nCv,2))
       allocate (cvNvLoc(10*m%nCv)) ! initial overestimate of size cvNv array
-      allocate (indCv(100))        ! (over)estimate of max number number of neighbors an individual cell could have
+      allocate (indCv(m%nCv))      ! (over)estimate of max number number of neighbors an individual cell could have
 
       iNv = 1
       do iCv = 1, m%nCv
