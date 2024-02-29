@@ -135,7 +135,9 @@
 *   ..local variables
       integer :: iCv
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
-      integer, save :: flag_startup = 0                                  !fc: local variable used to start-up BDF2 scheme with an IE first time-step
+      integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
+      integer, save :: use_mms = 0
+      save ramp_slow                                                     !xpb
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
       integer istg(0:2), is, k
@@ -171,10 +173,13 @@
      &                         switch)
        endif
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
-       if(switch%equation_sources.ne.0)
-     &  call read_equation_sources(nCv, ns, switch, itim, mpg)
-       if(switch%boundary_sources.ne.0)
-     &  call read_boundary_sources(nCv, ns, switch, itim, mpg)          !srv 26.02.18 }
+       call ipgeti ('b2mndr_equation_sources', equation_sources)        !srv 26.02.18 {
+       if(equation_sources.ne.0)
+     &   call read_equation_sources(nCv, ns, switch)
+       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
+       if(boundary_sources.ne.0)
+     &   call read_boundary_sources(nCv, ns, switch)    !srv 26.02.18 }
+       call ipgeti ('b2mndr_use_mms', use_mms)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (switch%b2mndt_style.eq.2) then
@@ -586,10 +591,8 @@ ctmp.dpc
       endif
 
 *   ..mms time-dependent error analysis
-      if(switch%use_mms.eq.2.and.
-     &  mod(ncall_b2mndt+1,switch%calc_err_step_out).eq.0
-     &  .and.switch%b2mndt_dummy.eq.0) then
-        call calc_err(nCv, ns, st%pl, switch, itim, mpg)
+      if(use_mms.eq.2) then
+        call calc_err(nCv, ns, st%pl)
       endif
 
       if (switch%iav_run > 0)
