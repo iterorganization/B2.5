@@ -3016,8 +3016,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 
-*   ..mms error analysis
-      if(use_mms.ne.0) then                                              !srv 26.02.18 {
+*   ..mms steady-state error analysis
+      if(use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then                               !srv 26.02.18 {
         call calc_err(nCv, ns, state%pl)
       endif                                                              !srv 26.02.18 }
       if(iout.ne.0) then
