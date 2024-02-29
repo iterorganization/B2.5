@@ -1,4 +1,4 @@
-      subroutine b2agbs (nx, ny, nncutmax,
+      subroutine b2agbs_st (nx, ny, nncutmax,
      1 leftix, leftiy, rightix, rightiy, region, crx, cry,
      1 ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
      1 pbs, cell_width, cell_height, cflags)
@@ -44,7 +44,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2agbs')
+      call subini ('b2agbs_st')
       call ipgetr ('b2agmt_1d_width', width)
       
 *   ..preparatory quantities
@@ -193,5 +193,5 @@
 *   ..return
       call subend ()
       return
-      end subroutine b2agbs
+      end subroutine b2agbs_st
 
