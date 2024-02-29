@@ -43,14 +43,25 @@
        return
       end subroutine dealloc_b2mod_equation_sources
 
-      subroutine read_equation_sources(nCv, ns)
+      subroutine read_equation_sources(nCv, ns, switch)
        use b2mod_types
+       use b2mod_switches
        implicit none
+       type (switches), intent (inout) :: switch
        integer nCv, ns
-       integer is, iCv
+       integer is, iCv, i
+       logical b2news_solving(4)
        character*27 filename
        logical art_exists
 
+       b2news_solving(1:4)=switch%no_solve.eq.0
+       do i=1,4
+         b2news_solving(i)=b2news_solving(i).or.
+     &    (switch%no_solve.lt.0.and.
+     &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
+       enddo
+
+       if (b2news_solving(2).eq..true.) then
        filename = 'art_sna_us.dat'
        call find_file(filename,art_exists)
        if(art_exists) then
@@ -61,7 +72,9 @@
        else
          call xerrab ('There is no art_sna_us.dat file')
        endif
+       endif
 
+       if (b2news_solving(1).eq..true.) then
        filename='art_smo_us.dat'
        call find_file(filename,art_exists)
        if(art_exists) then
@@ -72,7 +85,9 @@
        else
          call xerrab('There is no art_smo_us.dat file')
        endif
+       endif
 
+       if (b2news_solving(4).eq..true.) then
        filename='art_she_us.dat'
        call find_file(filename,art_exists)
        if(art_exists) then
@@ -83,7 +98,6 @@
        else
          call xerrab('There is no art_she_us.dat file')
        endif
-
        filename='art_shi_us.dat'
        call find_file(filename,art_exists)
        if(art_exists) then
@@ -94,7 +108,9 @@
        else
          call xerrab('There is no art_shi_us.dat file')
        endif
+       endif
 
+       if (b2news_solving(3).eq..true.) then
        filename='art_sch_us.dat'
        call find_file(filename,art_exists)
        if(art_exists) then
@@ -104,6 +120,7 @@
          close(70)
        else
          call xerrab('There is no art_sch_us.dat file')
+       endif
        endif
 
        return
