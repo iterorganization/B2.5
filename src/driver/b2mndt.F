@@ -112,6 +112,7 @@
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
+      integer, save :: use_mms = 0
       save ramp_slow                                                     !xpb
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
@@ -167,9 +168,12 @@
      &   'faulty internal parameter ntim_step_out')                     !srv 31.01.07 }
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
        call ipgeti ('b2mndr_equation_sources', equation_sources)        !srv 26.02.18 {
-       if(equation_sources.ne.0) call read_equation_sources(nCv, ns)
+       if(equation_sources.ne.0)
+     &   call read_equation_sources(nCv, ns, switch)
        call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0) call read_boundary_sources(nCv, ns)    !srv 26.02.18 }
+       if(boundary_sources.ne.0)
+     &   call read_boundary_sources(nCv, ns, switch)    !srv 26.02.18 }
+       call ipgeti ('b2mndr_use_mms', use_mms)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
 
@@ -551,6 +555,11 @@ ctmp.dpc
 *    ..end outer iteration
         istg(0) = istg(0)+1
         goto 1
+      endif
+
+*   ..mms time-dependent error analysis
+      if(use_mms.eq.2) then
+        call calc_err(nCv, ns, st%pl)
       endif
 
       if (switch%iav_run > 0)
