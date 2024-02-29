@@ -224,8 +224,6 @@
       use b2mod_user_namelist
       use b2mod_usrspb
      ,   , only : Q_pneut, calc_pneut, calc_pneut_init
-      use b2mod_geo
-     ,   , only : hy,hz,hx
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use eirmod_braeir
@@ -234,7 +232,7 @@
       use b2mod_external
       use b2mod_plasma
      , ,only: na0, ne0, fna0, kinrgy0, ni0,
-     ,        nap, nep, fnap, kinrgyp, fht
+     ,        nap, nep, fnap, kinrgyp
       use b2mod_sources
      ,   , only : rqrad, rqbrm
       use b2mod_b2plot_wall_loading
@@ -2934,14 +2932,12 @@ c    Relays on the EIRENE data, cannot be used in standalone B2.5 runs
      , , only : is_neutral
       use b2mod_plasma
      , , only : fna_mdf, fna
-      use b2mod_geo
-     , , only : gs
       use b2mod_sources
      , , only : ext_sna
 
       implicit none
 
-      integer ::  j, k, is, ispecies, ic, idir, ia, im, ip,
+      integer :: j, is, ispecies, ic, idir, ia, im, ip,
      &  ix, ixf, iy, iyf, mdf_fnb, style_b2mndt,
      &  js, nx, ny
       real (kind=R8) :: flxnp, flxic, flxnc, flxex, flxsp,
@@ -3017,9 +3013,9 @@ c  Calculate ion flux through the core
             if (core_boundary(ic)) then ! Check whether this is part of the core boundary
               if (.not.is_neutral(is)) then
                 if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
-                  flxic = flxic + bsign*fna(ixf,iyf,idir,is)
+                  flxic = flxic + bsign*fna(ixf,iyf,idir,idir,is)
                 else
-                  flxic = flxic + bsign*fna_mdf(ixf,iyf,idir,is)
+                  flxic = flxic + bsign*fna_mdf(ixf,iyf,idir,idir,is)
                 end if
               end if
             end if
@@ -3117,7 +3113,7 @@ c  substract neutral flux to the core from pumping
       implicit none
       integer, intent(in) :: ispecies, spcsrf_id
       integer, intent(inout) :: spump_list(DEF_NLIM+DEF_NSTS)
-      integer ja, l, jm, k, i
+      integer ja, l, i
 
       i = 1
       if (spcsrf_id.gt.0) then !take surfaces list form spcsrf group directly

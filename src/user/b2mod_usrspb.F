@@ -97,7 +97,7 @@ c----------------------------------------------------------------------
       integer nx, ny, ns
 
       integer it  ! counter for targets
-      integer ix, iy, is, k, l, j, ixt, ixt_fl, iyp                 !iyv 11.04.22
+      integer ix, iy, is, l, j, ixt, ixt_fl                 !iyv 11.04.22
 
       logical first
 
