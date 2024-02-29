@@ -61,66 +61,66 @@
      &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
        enddo
 
-       if (b2news_solving(2).eq..true.) then
-       filename = 'art_sna_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)")
-     &    ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-         close(70)
-       else
-         call xerrab ('There is no art_sna_us.dat file')
-       endif
-       endif
-
-       if (b2news_solving(1).eq..true.) then
-       filename='art_smo_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)")
-     &    ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-         close(70)
-       else
-         call xerrab('There is no art_smo_us.dat file')
-       endif
+       if (b2news_solving(2)) then
+         filename = 'art_sna_us.dat'
+         call find_file(filename,art_exists)
+         if(art_exists) then
+           open(70,FILE=trim(filename))
+           read (70,"(2x,e23.16)")
+     &      ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+           close(70)
+         else
+           call xerrab ('There is no art_sna_us.dat file')
+         endif
        endif
 
-       if (b2news_solving(4).eq..true.) then
-       filename='art_she_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)") 
-     &    (art_she(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         call xerrab('There is no art_she_us.dat file')
-       endif
-       filename='art_shi_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)") 
-     &    (art_shi(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         call xerrab('There is no art_shi_us.dat file')
-       endif
+       if (b2news_solving(1)) then
+         filename='art_smo_us.dat'
+         call find_file(filename,art_exists)
+         if(art_exists) then
+           open(70,FILE=trim(filename))
+           read (70,"(2x,e23.16)")
+     &      ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+           close(70)
+         else
+           call xerrab('There is no art_smo_us.dat file')
+         endif
        endif
 
-       if (b2news_solving(3).eq..true.) then
-       filename='art_sch_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)") 
-     &    (art_sch(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         call xerrab('There is no art_sch_us.dat file')
+       if (b2news_solving(4)) then
+         filename='art_she_us.dat'
+         call find_file(filename,art_exists)
+         if(art_exists) then
+           open(70,FILE=trim(filename))
+           read (70,"(2x,e23.16)")
+     &      (art_she(iCv,0),iCv=1,nCv)
+           close(70)
+         else
+           call xerrab('There is no art_she_us.dat file')
+         endif
+         filename='art_shi_us.dat'
+         call find_file(filename,art_exists)
+         if(art_exists) then
+           open(70,FILE=trim(filename))
+           read (70,"(2x,e23.16)")
+     &      (art_shi(iCv,0),iCv=1,nCv)
+           close(70)
+         else
+           call xerrab('There is no art_shi_us.dat file')
+         endif
        endif
+
+       if (b2news_solving(3)) then
+         filename='art_sch_us.dat'
+         call find_file(filename,art_exists)
+         if(art_exists) then
+           open(70,FILE=trim(filename))
+           read (70,"(2x,e23.16)")
+     &      (art_sch(iCv,0),iCv=1,nCv)
+           close(70)
+         else
+           call xerrab('There is no art_sch_us.dat file')
+         endif
        endif
 
        return
