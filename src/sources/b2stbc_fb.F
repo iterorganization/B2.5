@@ -223,7 +223,7 @@
       use b2mod_boundary_namelist
       use b2mod_user_namelist
       use b2mod_usrspb
-     ,   , only : Q_pneut, calc_pneut, calc_pneut_init
+     , , only : Q_pneut, calc_pneut, calc_pneut_init
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use eirmod_braeir
@@ -231,10 +231,10 @@
       use b2mod_subsys
       use b2mod_external
       use b2mod_plasma
-     , ,only: na0, ne0, fna0, kinrgy0, ni0,
-     ,        nap, nep, fnap, kinrgyp
+     , , only : na0, ne0, fna0, kinrgy0, ni0,
+     ,          nap, nep, fnap, kinrgyp
       use b2mod_sources
-     ,   , only : rqrad, rqbrm
+     , , only : rqrad, rqbrm
       use b2mod_b2plot_wall_loading
       use b2mod_dimensions
       implicit none
