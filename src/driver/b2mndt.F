@@ -559,7 +559,7 @@ ctmp.dpc
 
 *   ..mms time-dependent error analysis
       if(use_mms.eq.2) then
-        call calc_err(nCv, ns, st%pl)
+        call calc_err(nCv, ns, st%pl, switch)
       endif
 
       if (switch%iav_run > 0)

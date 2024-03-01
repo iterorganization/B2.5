@@ -66,15 +66,16 @@
        return
        end subroutine set_exact_solution
 
-       subroutine calc_err(nCv, ns, pl)
+       subroutine calc_err(nCv, ns, pl, switch)
        use b2mod_types
        use b2mod_constants
+       use b2mod_switches
        use b2us_plasma
        implicit none
-       integer nCv, ns
        type (B2Plasma), intent (in) :: pl
-
-       integer is, iCv, ind                                             !srv 09.07.18
+       type (switches), intent (inout) :: switch
+       integer nCv, ns
+       integer is, iCv, ind, i                                          !srv 09.07.18
        real (kind=R8) ::
      &    exact_na(nCv,0:ns-1), exact_ua(nCv,0:ns-1),
      &    exact_te(nCv), exact_ti(nCv),
@@ -83,6 +84,8 @@
        logical l_exist
        character chns*3, chnCv*6
        character*27 filename
+       logical b2news_solving(4)
+
 #ifdef F2003
        intrinsic norm2
 #else
@@ -90,125 +93,140 @@
        external norm2
 #endif
 
+       b2news_solving(1:4)=switch%no_solve.eq.0
+       do i=1,4
+         b2news_solving(i)=b2news_solving(i).or.
+     &    (switch%no_solve.lt.0.and.
+     &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
+       enddo
+
        write (chnCv,'(i6.6)') nCv
        open(71, file='output/'//'errors_'//chnCv//'_us.dat')
 
-       filename='exact_na_us.dat'
-       call find_file(filename,l_exist)
-       call xertst(l_exist,'No exact_na_us.dat file')
-       open(70,file=trim(filename))
-       read (70,*) ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
-       close(70)
+       if (b2news_solving(2)) then
+         filename='exact_na_us.dat'
+         call find_file(filename,l_exist)
+         call xertst(l_exist,'No exact_na_us.dat file')
+         open(70,file=trim(filename))
+         read (70,*) ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
+         close(70)
 
-       do is = 0, ns-1
-         write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,0,pl%na(1,is),'na'//chns)
-         call my_out_us(70,nCv,0,exact_na(1,is),'na'//chns//'_precise')
-         era = pl%na(:,is)-exact_na(:,is)
-         call my_out_us(70,nCv,0,era,'na'//chns//'_aerr')
-         ind = maxloc(abs(era),1)                                       !srv 09.07.18
-         write(71,'(a,a3,a,8x,a,es10.3,a,i7)')
-     &        ' Max|eraNa',chns,'|','=',abs(era(ind)),
+         do is = 0, ns-1
+           write (chns,'(i3.3)') is
+           call my_out_us(70,nCv,0,pl%na(1,is),'na'//chns)
+           call my_out_us(70,nCv,0,exact_na(1,is),
+     &                    'na'//chns//'_precise')
+           era = pl%na(:,is)-exact_na(:,is)
+           call my_out_us(70,nCv,0,era,'na'//chns//'_aerr')
+           ind = maxloc(abs(era),1)                                       !srv 09.07.18
+           write(71,'(a,a3,a,8x,a,es10.3,a,i7)')
+     &          ' Max|eraNa',chns,'|','=',abs(era(ind)),
+     &          '   is in iCv = ', ind
+           if(all(exact_na(:,is).ne.0.0_R8)) then
+             err = abs(era)/exact_na(:,is)
+             ind = maxloc(err,1)
+             write(71,'(a,a3,a,a3,a,es10.3,a,i7)')
+     &        ' Max|eraNa',chns,'/Na',chns,'|   =',err(ind),              !srv 09.07.18
      &        '   is in iCv = ', ind
-         if(all(exact_na(:,is).ne.0.0_R8)) then
-           err = abs(era)/exact_na(:,is)
-           ind = maxloc(err,1)
-           write(71,'(a,a3,a,a3,a,es10.3,a,i7)')
-     &      ' Max|eraNa',chns,'/Na',chns,'|   =',err(ind),              !srv 09.07.18
+             call my_out_us(70,nCv,0,err,'na'//chns//'_rerr')
+           else
+             write(71,'(a,a3,a,a3,a,a4)')
+     &        ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                 !srv 09.07.18
+           endif
+
+#ifdef F2003
+           L2norm=norm2(exact_na(:,is))                                   !srv 09.07.18 {
+#else
+           L2norm=norm2(nCv,exact_na(:,is))
+#endif
+           if(L2norm.ne.0.0_R8) then
+             write(71,'(a,a3,a,a3,a,es10.3)')
+     &        ' L2eraNa',chns,'/L2Na',chns,'    =',
+#ifdef F2003
+     &          norm2(era)/L2norm
+#else
+     &          norm2(nCv,era)/L2norm
+#endif
+             write(71,'(a,a3,a,a3,a,es10.3)')
+     &        ' C_eraNa',chns,'/C_Na',chns,'    =',
+     &          maxval(abs(era))/maxval(abs(exact_na(:,is)))
+           else
+             write(71,'(a,a3,a,a3,a,a4)')
+     &        ' L2eraNa',chns,'/L2Na',chns,'    =',' Inf'
+             write(71,'(a,a3,a,a3,a,a4)')
+     &        ' C_eraNa',chns,'/C_Na',chns,'    =',' Inf'
+           endif                                                          !srv 09.07.18 }
+
+           write(71,*)
+         enddo
+       endif
+
+       if (b2news_solving(4)) then
+         call calc_err_cc(nCv, 'te', pl%te, exact_te, qe)                 !srv 29.12.18
+         call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe)
+       endif
+
+       if (b2news_solving(1)) then
+         filename='exact_ua_us.dat'
+         call find_file(filename,l_exist)
+         call xertst(l_exist,'No exact_ua_us.dat file')
+         open(70,file=trim(filename))
+         read (70,*) ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
+         close(70)
+
+         do is = 0, ns-1
+           write (chns,'(i3.3)') is
+           call my_out_us(70,nCv,0,pl%ua(1,is),'ua'//chns)
+           call my_out_us(70,nCv,0,exact_ua(1,is),
+     &                    'ua'//chns//'_precise')
+           era = pl%ua(:,is)-exact_ua(:,is)
+           call my_out_us(70,nCv,0,era,'ua'//chns//'_aerr')
+           ind = maxloc(abs(era),1)                                       !srv 09.07.18
+           write(71,'(a,a3,a,8x,a,es10.3,a,i7)')
+     &      ' Max|eraUa',chns,'|','=',abs(era(ind)),
      &      '   is in iCv = ', ind
-           call my_out_us(70,nCv,0,err,'na'//chns//'_rerr')
-         else
-           write(71,'(a,a3,a,a3,a,a4)')
-     &      ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                 !srv 09.07.18
-         endif
+           if(all(exact_ua(:,is).ne.0.0_R8)) then
+             err = abs(era/exact_ua(:,is))
+             ind = maxloc(err,1)
+             write(71,'(a,a3,a,a3,a,es10.3,a,i7)')
+     &        ' Max|eraUa',chns,'/Ua',chns,'|   =',err(ind),              !srv 09.07.18
+     &        '   is in iCv = ', ind
+             call my_out_us(70,nCv,0,err,'ua'//chns//'_rerr')
+           else
+             write(71,'(a,a3,a,a3,a,a4)')
+     &        ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                 !srv 09.07.18
+           endif
 
 #ifdef F2003
-         L2norm=norm2(exact_na(:,is))                                   !srv 09.07.18 {
+           L2norm=norm2(exact_ua(:,is))                                   !srv 09.07.18 {
 #else
-         L2norm=norm2(nCv,exact_na(:,is))
+           L2norm=norm2(nCv,exact_ua(:,is))
 #endif
-         if(L2norm.ne.0.0_R8) then
-           write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' L2eraNa',chns,'/L2Na',chns,'    =',
+           if(L2norm.ne.0.0_R8) then
+             write(71,'(a,a3,a,a3,a,es10.3)')
+     &        ' L2eraUa',chns,'/L2Ua',chns,'    =',
 #ifdef F2003
-     &        norm2(era)/L2norm
+     &          norm2(era)/L2norm
 #else
-     &        norm2(nCv,era)/L2norm
+     &          norm2(nCv,era)/L2norm
 #endif
-           write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' C_eraNa',chns,'/C_Na',chns,'    =',
-     &        maxval(abs(era))/maxval(abs(exact_na(:,is)))
-         else
-           write(71,'(a,a3,a,a3,a,a4)')
-     &      ' L2eraNa',chns,'/L2Na',chns,'    =',' Inf'
-           write(71,'(a,a3,a,a3,a,a4)')
-     &      ' C_eraNa',chns,'/C_Na',chns,'    =',' Inf'
-         endif                                                          !srv 09.07.18 }
+             write(71,'(a,a3,a,a3,a,es10.3)')
+     &        ' C_eraUa',chns,'/C_Ua',chns,'    =',
+     &          maxval(abs(era))/maxval(abs(exact_ua(:,is)))
+           else
+             write(71,'(a,a3,a,a3,a,a4)')
+     &        ' L2eraUa',chns,'/L2Ua',chns,'    =',' Inf'
+             write(71,'(a,a3,a,a3,a,a4)')
+     &        ' C_eraUa',chns,'/C_Ua',chns,'    =',' Inf'
+           endif                                                          !srv 09.07.18 }
 
-         write(71,*)
-       enddo
+           write(71,*)
+         enddo
+       endif
 
-       call calc_err_cc(nCv, 'te', pl%te, exact_te, qe)                 !srv 29.12.18
-
-       call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe) 
-
-
-       filename='exact_ua_us.dat'
-       call find_file(filename,l_exist)
-       call xertst(l_exist,'No exact_ua_us.dat file')
-       open(70,file=trim(filename))
-       read (70,*) ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
-       close(70)
-
-       do is = 0, ns-1
-         write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,0,pl%ua(1,is),'ua'//chns)
-         call my_out_us(70,nCv,0,exact_ua(1,is),'ua'//chns//'_precise')
-         era = pl%ua(:,is)-exact_ua(:,is)
-         call my_out_us(70,nCv,0,era,'ua'//chns//'_aerr')
-         ind = maxloc(abs(era),1)                                       !srv 09.07.18
-         write(71,'(a,a3,a,8x,a,es10.3,a,i7)')
-     &    ' Max|eraUa',chns,'|','=',abs(era(ind)),
-     &    '   is in iCv = ', ind
-         if(all(exact_ua(:,is).ne.0.0_R8)) then
-           err = abs(era/exact_ua(:,is))
-           ind = maxloc(err,1)
-           write(71,'(a,a3,a,a3,a,es10.3,a,i7)')
-     &      ' Max|eraUa',chns,'/Ua',chns,'|   =',err(ind),              !srv 09.07.18
-     &      '   is in iCv = ', ind
-           call my_out_us(70,nCv,0,err,'ua'//chns//'_rerr')
-         else
-           write(71,'(a,a3,a,a3,a,a4)')
-     &      ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                 !srv 09.07.18
-         endif
-
-#ifdef F2003
-         L2norm=norm2(exact_ua(:,is))                                   !srv 09.07.18 {
-#else
-         L2norm=norm2(nCv,exact_ua(:,is))
-#endif
-         if(L2norm.ne.0.0_R8) then
-           write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' L2eraUa',chns,'/L2Ua',chns,'    =',
-#ifdef F2003
-     &        norm2(era)/L2norm
-#else
-     &        norm2(nCv,era)/L2norm
-#endif
-           write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' C_eraUa',chns,'/C_Ua',chns,'    =',
-     &        maxval(abs(era))/maxval(abs(exact_ua(:,is)))
-         else
-           write(71,'(a,a3,a,a3,a,a4)')
-     &      ' L2eraUa',chns,'/L2Ua',chns,'    =',' Inf'
-           write(71,'(a,a3,a,a3,a,a4)')
-     &      ' C_eraUa',chns,'/C_Ua',chns,'    =',' Inf'
-         endif                                                          !srv 09.07.18 }
-
-         write(71,*)
-       enddo
-
-       call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8)
+       if (b2news_solving(3)) then
+         call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8)
+       endif
 
        close(71)
        return

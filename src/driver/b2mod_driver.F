@@ -3018,7 +3018,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
 *   ..mms steady-state error analysis
       if(use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then                 !srv 26.02.18 {
-        call calc_err(nCv, ns, state%pl)
+        call calc_err(nCv, ns, state%pl, switch)
       endif                                                              !srv 26.02.18 }
       if(iout.ne.0) then
         if(use_mms.eq.0) then                                            !srv 29.11.18 {
