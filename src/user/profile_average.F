@@ -351,6 +351,7 @@
         call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
         call cfwure (iun, n2*ns, smr_mean, 'smr_mean')
         call cfwure (iun, n2*ns, smd_mean, 'smd_mean')
+
 !        write (iun,'(6es24.16)')
 !     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 !        write (iun,'(6es24.16)')

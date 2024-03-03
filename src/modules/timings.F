@@ -5,4 +5,4 @@
 #else
       integer :: x__module_timings_dummy_value
 #endif
-      end module
+      end module timings

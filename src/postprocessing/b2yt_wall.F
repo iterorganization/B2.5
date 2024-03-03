@@ -9,6 +9,7 @@
       use b2mod_subsys
       use b2mod_dimensions
       implicit none
+
       integer nncut1, nx1, ny1, nncut, nx, ny, nlim, nsts
       logical flip
       integer ix, iy, ixn, iyn, is, is1, ibnd, ibnd1, idir, ireg,
