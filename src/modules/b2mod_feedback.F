@@ -212,8 +212,9 @@ cxpb size is changed in b2mod_dimensions
      &                 'NA_FEEDBACK_ACTUATOR_MAX are defined!')
           else
             na_feedback_actuator_max = na_feedback_puff_max
-            write(*,*) 'Warning! NA_FEEDBACK_PUFF_MAX is obsolete. ' //
-     &             'Its value is written to NA_FEEDBACK_ACTUATOR_MAX.'
+            write(*,'(2a)')
+     &       'Warning! NA_FEEDBACK_PUFF_MAX is obsolete. ',
+     &       'Its value is written to NA_FEEDBACK_ACTUATOR_MAX.'
           endif
         endif
         if (maxval(abs(na_feedback_puff_min)) .ne. 0.0_R8) then
@@ -222,8 +223,9 @@ cxpb size is changed in b2mod_dimensions
      &                 'NA_FEEDBACK_ACTUATOR_MIN are defined!')
           else
             na_feedback_actuator_min = na_feedback_puff_min
-            write(*,*) 'Warning! NA_FEEDBACK_PUFF_MIN is obsolete. ' //
-     &             'Its value is written to NA_FEEDBACK_ACTUATOR_MIN.'
+            write(*,'(2a)')
+     &      'Warning! NA_FEEDBACK_PUFF_MIN is obsolete. ',
+     &      'Its value is written to NA_FEEDBACK_ACTUATOR_MIN.'
           endif
         endif
 

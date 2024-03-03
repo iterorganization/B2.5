@@ -277,7 +277,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ispecies, is0,
+      integer ncall, n2, ix, iy, is, ispecies,
      &        mdf_fnb, style_b2mndt, lit,
 #ifdef B25_EIRENE
      &        i, j, k, l, npump_list,
@@ -425,7 +425,6 @@
        consistent = .true.
        do ispecies = 0, nspecies-1
          if (na_feedback_ib(ispecies).le.0) cycle
-         is0 = eb2spcr(ispecies+1)
          is_start = eb2spcr(ispecies+1)+1
          is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)
          consistent = consistent .and.
@@ -435,9 +434,9 @@
      &      na_feedback_actuator(ispecies) .eq. 2 .or.
      &      na_feedback_actuator(ispecies) .eq. 4 .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
-     &      bccon(is0,na_feedback_ib(ispecies)) .eq. 11) .or.
+     &      bccon(is_start,na_feedback_ib(ispecies)) .eq. 11) .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
-     &      bccon(is0,na_feedback_ib(ispecies)) .eq. 13) .or.
+     &      bccon(is_start,na_feedback_ib(ispecies)) .eq. 13) .or.
      &     (na_feedback_actuator(ispecies) .eq. 3 .and.
      &      maxval(bccon(is_start:is_end,
      .                   na_feedback_ib(ispecies))).eq.11 .and.
