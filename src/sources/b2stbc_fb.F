@@ -402,6 +402,7 @@
        dt_prev = dteff
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
        call ipgeti ('b2sral_style', b2sral_style)
+       call ipgeti ('b2mndr_eirene', use_eirene)
        call get_boundary_namelist
 *   ..fill gas puff strata data (used for the gas puff actuator only)
        do ispecies = 0, nspecies-1
@@ -425,7 +426,8 @@
        consistent = .true.
        do ispecies = 0, nspecies-1
          if (na_feedback_ib(ispecies).le.0) cycle
-         is_start = eb2spcr(ispecies+1)+1
+         is_start = eb2spcr(ispecies+1)
+         if (use_eirene.ne.0) is_start = is_start+1
          is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)
          consistent = consistent .and.
      &    ((na_feedback_choice(ispecies) .eq. 0 .or.
@@ -434,14 +436,23 @@
      &      na_feedback_actuator(ispecies) .eq. 2 .or.
      &      na_feedback_actuator(ispecies) .eq. 4 .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
+     &      .not.core_boundary(na_feedback_ib(ispecies)) .and.
      &      bccon(is_start,na_feedback_ib(ispecies)) .eq. 11) .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
+     &      .not.core_boundary(na_feedback_ib(ispecies)) .and.
      &      bccon(is_start,na_feedback_ib(ispecies)) .eq. 13) .or.
      &     (na_feedback_actuator(ispecies) .eq. 3 .and.
+     &      core_boundary(na_feedback_ib(ispecies)) .and.
      &      maxval(bccon(is_start:is_end,
      .                   na_feedback_ib(ispecies))).eq.11 .and.
      &      minval(bccon(is_start:is_end,
-     .                   na_feedback_ib(ispecies))).eq.11))
+     .                   na_feedback_ib(ispecies))).eq.11) .or.
+     &     (na_feedback_actuator(ispecies) .eq. 3 .and.
+     &      core_boundary(na_feedback_ib(ispecies)) .and.
+     &      maxval(bccon(is_start:is_end,
+     .                   na_feedback_ib(ispecies))).eq.13 .and.
+     &      minval(bccon(is_start:is_end,
+     .                   na_feedback_ib(ispecies))).eq.13))
        end do
        consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      &  boundary_namelist.lt.1
@@ -511,6 +522,22 @@
        end do
        call xertst (consistent,
      .  'feedback option not consistent with feedback actuator')
+*   ..test if actuator has an associated valid boundary condition
+*   ..or Eirene stratum
+       do ispecies = 0, nspecies-1
+         if (na_feedback_actuator(ispecies).eq.1) then
+           consistent = consistent .and.
+     &      (na_feedback_ib(ispecies).ne.0 .and.
+     &       na_feedback_ib(ispecies).le.nbc .and.
+     &       na_feedback_ib(ispecies).ge.-nstrai)
+         else if (na_feedback_actuator(ispecies).eq.3) then
+           consistent = consistent .and.
+     &      (na_feedback_ib(ispecies).gt.0 .and.
+     &       na_feedback_ib(ispecies).le.nbc)
+         end if
+       end do
+       call xertst (consistent,
+     .  'feedback requires an associated boundary or stratum!')
 *   ..test if feedback maximum is greater than minimum
        do ispecies = 0, nspecies-1
          consistent = consistent .and.
@@ -726,7 +753,6 @@
      *       neutral_sources_rescale)
        call xertst (0.0_R8.le.neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
-       call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_nesepm_istra', nesepm_istra)
        if(nesepm_istra.gt.0) then
          call xertst (nesepm_istra.le.nstrat,
@@ -1855,7 +1881,7 @@ c           Inverse the actuator if necessary
      .              .gt.0.0_R8, trim(message) )
                   saved_na_feedback_actuator(ispecies) =
      .             conpar(is_start, na_feedback_ib(ispecies), 1)
-                else  ! (na_feedback_ib(ispecies).lt.0 at this point)
+                else if(na_feedback_ib(ispecies).lt.0) then
                   write(message,'(2a,i3,a)')
      .             'Initial gas puff strength.le.0, set by ',
      .             'USERFLUXPARM(',-na_feedback_ib(ispecies),',1) !'

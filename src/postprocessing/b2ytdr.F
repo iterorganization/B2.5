@@ -12013,8 +12013,13 @@ cxpb as they no longer necessarily point to the same species
         end do
         do is = 0, nspecies1 - 1
           if (na_feedback_ib1(is).lt.0) then
-            ib = abs(na_feedback_ib1(is))
-            na_feedback_ib1(is) = -istra1(ib)
+            if (na_feedback_ib1(is).eq.-1.and.
+     .          b2fstate_version.le.'03.000.008') then
+              na_feedback_ib1(is) = 0
+            else
+              ib = abs(na_feedback_ib1(is))
+              na_feedback_ib1(is) = -istra1(ib)
+            end if
           end if
         end do
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i2,'',''))'
