@@ -277,7 +277,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ispecies,
+      integer ncall, n2, ix, iy, is, ispecies, is0,
      &        mdf_fnb, style_b2mndt, lit,
 #ifdef B25_EIRENE
      &        i, j, k, l, npump_list,
@@ -424,8 +424,30 @@
          end if
        end do
        consistent = .true.
+*   ..test if actuator has an associated valid boundary condition,
+*   ..Eirene stratum or surface group index
+       do ispecies = 0, nspecies-1
+         if (na_feedback_actuator(ispecies).eq.1) then
+           consistent = consistent .and.
+     &      (na_feedback_ib(ispecies).ne.0 .and.
+     &       na_feedback_ib(ispecies).le.nbc .and.
+     &       na_feedback_ib(ispecies).ge.-nstrai)
+         else if (na_feedback_actuator(ispecies).eq.3) then
+           consistent = consistent .and.
+     &      (na_feedback_ib(ispecies).gt.0 .and.
+     &       na_feedback_ib(ispecies).le.nbc)
+         else if (na_feedback_actuator(ispecies).eq.4) then
+           consistent = consistent .and.
+     &      (na_feedback_ib(ispecies).ge.-nstrai .and.
+     &       na_feedback_ib(ispecies).le.n_spcsrf)
+         end if
+       end do
+       call xertst (consistent, 'feedback requires a valid '//
+     .  'boundary, stratum or surface group index!')
+*    ..test consistency with b2.boundary.parameters data
        do ispecies = 0, nspecies-1
          if (na_feedback_ib(ispecies).le.0) cycle
+         is0 = eb2spcr(ispecies+1)
          is_start = eb2spcr(ispecies+1)
          if (use_eirene.ne.0) is_start = is_start+1
          is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)
@@ -437,10 +459,10 @@
      &      na_feedback_actuator(ispecies) .eq. 4 .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
      &      .not.core_boundary(na_feedback_ib(ispecies)) .and.
-     &      bccon(is_start,na_feedback_ib(ispecies)) .eq. 11) .or.
+     &      bccon(is0,na_feedback_ib(ispecies)) .eq. 11) .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
      &      .not.core_boundary(na_feedback_ib(ispecies)) .and.
-     &      bccon(is_start,na_feedback_ib(ispecies)) .eq. 13) .or.
+     &      bccon(is0,na_feedback_ib(ispecies)) .eq. 13) .or.
      &     (na_feedback_actuator(ispecies) .eq. 3 .and.
      &      core_boundary(na_feedback_ib(ispecies)) .and.
      &      maxval(bccon(is_start:is_end,
@@ -493,6 +515,7 @@
          end do
        end do
        do ispecies = 0, nspecies-1
+         if (na_feedback_ib(ispecies).eq.0) cycle
          consistent = consistent .and.
      &    ((na_feedback_choice(ispecies) .eq. 0 .or.
      &      na_feedback_option(ispecies) .eq. 0 .or.
@@ -522,22 +545,6 @@
        end do
        call xertst (consistent,
      .  'feedback option not consistent with feedback actuator')
-*   ..test if actuator has an associated valid boundary condition
-*   ..or Eirene stratum
-       do ispecies = 0, nspecies-1
-         if (na_feedback_actuator(ispecies).eq.1) then
-           consistent = consistent .and.
-     &      (na_feedback_ib(ispecies).ne.0 .and.
-     &       na_feedback_ib(ispecies).le.nbc .and.
-     &       na_feedback_ib(ispecies).ge.-nstrai)
-         else if (na_feedback_actuator(ispecies).eq.3) then
-           consistent = consistent .and.
-     &      (na_feedback_ib(ispecies).gt.0 .and.
-     &       na_feedback_ib(ispecies).le.nbc)
-         end if
-       end do
-       call xertst (consistent,
-     .  'feedback requires an associated boundary or stratum!')
 *   ..test if feedback maximum is greater than minimum
        do ispecies = 0, nspecies-1
          consistent = consistent .and.
@@ -3158,7 +3165,7 @@ c  substract neutral flux to the core from pumping
      &  write(*,'(2a,i3)') "get_pump_list: Warning! ",
      &   "No pumping surfaces found for sequence: ",ispecies
 
-       return
+      return
 *-----------------------------------------------------------------------
 *.end of eirene pump element list construction routine
 
