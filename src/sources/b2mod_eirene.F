@@ -378,11 +378,11 @@ c not sure this is the right place
         endif
         do is = 0, nspecies-1
           if (na_feedback_actuator(is).eq.1) then
-            if (na_feedback_ib(is).lt.0 .and.
-     .        crcstra(-na_feedback_ib(is)).eq.'C' .and.
-     .        species_start(-na_feedback_ib(is)).le.eb2spcr(is+1) .and.
-     .        species_end(-na_feedback_ib(is)).ge.eb2spcr(is+1)) then
-                feedback_strata(is) = -na_feedback_ib(is)
+            if (na_feedback_ib(is).lt.0) then
+              if (crcstra(-na_feedback_ib(is)).eq.'C' .and.
+     .         species_start(-na_feedback_ib(is)).le.eb2spcr(is+1) .and.
+     .         species_end(-na_feedback_ib(is)).ge.eb2spcr(is+1))
+     >          feedback_strata(is) = -na_feedback_ib(is)
             else
               do istrai = 1, nstrat
                 if (crcstra(istrai).eq.'C' .and.
