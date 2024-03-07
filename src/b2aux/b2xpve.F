@@ -56,9 +56,6 @@
             wrkalf(ix,iy) =
      &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
      &        /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-          else
-            wrksig(ix,iy) = 0.0_R8
-            wrkalf(ix,iy) = 0.0_R8
           endif
         enddo
       enddo
