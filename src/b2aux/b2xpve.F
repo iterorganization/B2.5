@@ -41,7 +41,10 @@
 *   ..compute ve, electron parallel velocity                            !iyv 19.11.13 {
       do iy=-1,ny
         do ix=-1,nx
-          if(leftix(ix,iy).ne.-2 ) then
+          if(region(ix,iy,0).eq.0.or.leftix(ix,iy).eq.-2) then
+            wrksig(ix,iy) = 0.0_R8
+            wrkalf(ix,iy) = 0.0_R8
+          else
             wrksig(ix,iy) =
      &           ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
      &           (ne(ix,iy)*te(ix,iy)
@@ -56,6 +59,15 @@
           endif
         enddo
       enddo
+cxpb Special treatment to remove spurious values in top right corners
+      do iy=-1,ny
+        do ix=-1,nx
+          if(topiy(ix,iy).eq.ny+1.and.rightix(ix,iy).eq.nx+1) then
+            wrksig(ix,iy) = wrksig(leftix(ix,iy),leftiy(ix,iy))
+            wrkalf(ix,iy) = wrkalf(leftix(ix,iy),leftiy(ix,iy))
+          endif
+        enddo
+      enddo
 
       do iy=-1,ny
         do ix=-1,nx
@@ -65,13 +77,13 @@
      &                       phm2*alfx_c(ix,iy)*
      &         (wrkalf(ix,iy)+wrkalf(rightix(ix,iy),rightiy(ix,iy))))
      &          /2.0_R8
-           elseif(leftix(ix,iy).eq.-2) then
-                ve(ix,iy)=-( sigx_c(ix,iy)*
+          else if(leftix(ix,iy).eq.-2) then
+            ve(ix,iy)=-( sigx_c(ix,iy)*
      &         (wrksig(rightix(ix,iy),rightiy(ix,iy)))-
      &                       phm2*alfx_c(ix,iy)*
      &         (wrkalf(rightix(ix,iy),rightiy(ix,iy))))
-           elseif(rightix(ix,iy).eq.nx+1) then
-                ve(ix,iy)=-( sigx_c(ix,iy)*wrksig(ix,iy)
+          else if(rightix(ix,iy).eq.nx+1) then
+            ve(ix,iy)=-( sigx_c(ix,iy)*wrksig(ix,iy)
      &          -phm2*alfx_c(ix,iy)*wrkalf(ix,iy))
           endif
         enddo
