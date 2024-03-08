@@ -1,0 +1,34 @@
+# Test whether necessary variables are set
+NCDIR ?= ${NETCDF_HOME}
+NCFDIR ?= ${NETCDF_FORTRAN_HOME}
+LD_NETCDF  = -L${NCDIR}/lib -lnetcdf -L${NCFDIR}/lib -lnetcdff
+MSCL_ROOT ?= ${MSCL_HOME}
+LD_MSCL    = -L${MSCL_ROOT}/lib -lmscl
+LD_NCARG   = -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpng -lz -lXrender -lbz2 -ldl
+NAGDIR ?= ${LAPACK_DIR}
+LD_NAG     = -L${NAGDIR}/lib -llapack -lblas
+
+CPP = /usr/bin/cpp -traditional
+
+GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
+
+GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
+GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
+
+ifdef USE_MPI
+FC = mpif90
+else
+FC = gfortran
+endif
+
+ifdef USE_OPENMP
+FCOPTS  += -fopenmp
+LDOPTS  += -fopenmp
+endif
+
+DDBLOPTION = -Ad # ???
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

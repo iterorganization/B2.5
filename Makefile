@@ -125,6 +125,9 @@ endif
 # Add external includes first
 ifdef NCDIR
 SOLPSINCLUDE += -I${NCDIR}/include
+ifeq ($(UNAME),Darwin)
+SOLPSINCLUDE += -I${NCFDIR}/include
+endif
 endif
 
 ifdef USE_IMPGYRO
