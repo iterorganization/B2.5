@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
-     &       facdrift, fac_ExB, ismain, ismain0, pl, fna,
+     &       facdrift, fac_ExB, pl, fna,
      &       csigin, fchin)                                              !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_constants
@@ -22,7 +22,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer :: nCv, nFc, nVx, ns, ismain, ismain0
+      integer :: nCv, nFc, nVx, ns
       real (kind=R8) ::
      & facdrift(nFc), fac_ExB(nFc),
      & fna(nFc,0:1,0:ns-1),
@@ -92,11 +92,6 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
 *   ..test input
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-      call xertst (0.le.ismain.and.ismain.lt.ns,
-     & 'faulty argument ismain')
-      call xertst (0.le.ismain0.and.ismain0.lt.ns.and.
-     & (is_neutral(ismain0).or.ismain0.eq.ismain),
-     & 'faulty argument ismain0')
       fchin     = 0.0e0_R8                                               !srv 09.07.99
       facdriftm = maxval(facdrift)                                       !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
