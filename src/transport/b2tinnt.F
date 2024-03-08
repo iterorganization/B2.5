@@ -64,6 +64,7 @@
       integer, save :: csigin_style = 1
       integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: phm0 = 1.0_R8
+      real (kind=R8), save :: na_min
       real (kind=R8), save :: fch_ion_neutral = 0.0_R8
       real (kind=R8) ::
      *   fnac(-1:nx,-1:ny,0:1,0:ns-1), vntrc(-1:nx,-1:ny,0:1),          !srv 08.07.09
@@ -86,7 +87,7 @@
 *   ..procedures
       external ipgeti, xertst
 *   ..initialisation
-      data use_eirene/0/, area_fix/3/
+      data use_eirene/0/, area_fix/3/, na_min/1.0e4_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -106,6 +107,9 @@
         call ipgeti ('b2tfhe_no_current', no_current)
         call ipgeti ('b2tqin_csigin_style', csigin_style)
         call ipgetr ('b2sqcx_phm0', phm0)
+        call ipgetr ('b2mndr_na_min', na_min)
+        call xertst (na_min.gt.0.0_R8,
+     &   'faulty internal parameter na_min')
         call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
         call ipgeti ('b2tinnt_kinetic', use_kinetic)
         if (use_kinetic.eq.1) then
@@ -418,6 +422,8 @@
         endif
 *   ..calculate the contribution of ion-neutral current
 !        fchin = 0.0e0_R8
+        fnan = 0.0_R8
+        fnac = 0.0_R8
         do is0 = 0, ns-1
          if (is_neutral(is0).and.nint(zn(is0)).eq.1) then               !srv 20.10.17
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
@@ -444,8 +450,17 @@
           call mapx(nx,ny,1, fnac(-1,-1,0,is0), work(-1,-1,0,is0))
           call mapy(nx,ny,1, fnac(-1,-1,1,is0), work(-1,-1,1,is0))
 *      ..get velocities in the cell centre
-          vntrc(:,:,0) = fnac(:,:,1,is0)/na(:,:,is0)
-          vntrc(:,:,1) = fnac(:,:,0,is0)/na(:,:,is0)
+          do iy=-1,ny
+           do ix=-1,nx
+            if(na(ix,iy,is0).gt.na_min) then
+             vntrc(ix,iy,0) = fnac(ix,iy,1,is0)/na(ix,iy,is0)
+             vntrc(ix,iy,1) = fnac(ix,iy,0,is0)/na(ix,iy,is0)
+            else
+             vntrc(ix,iy,0) = 0.0_R8
+             vntrc(ix,iy,1) = 0.0_R8
+            endif
+           enddo
+          enddo
 *      ..interpolate velocities in the cell face
           call intfaceh(nx,ny,leftix,leftiy,vol,vntrc(-1,-1,0),vntrl)
           call intfaceh(nx,ny,leftix,leftiy,vol,vntrc(-1,-1,1),vntrb)
