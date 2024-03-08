@@ -254,7 +254,8 @@ cwdk                   (original code: simple averaging)
 
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
 
-        if (isb.ne.ismain .and. .not.is_neutral(isb)) then               !lk 02.06.11 {
+        if ((isb.ne.ismain.and..not.is_neutral(isb)).and.
+     .       switch%dia_lim_all_ions.eq.0) then                          !lk 02.06.11 {
           do iFc = 1, nFc
             !wdk for unstructured grids: apply flux limits
             !    to total drift velocities (instead of individual poloidal and radial
@@ -266,9 +267,9 @@ cwdk                   (original code: simple averaging)
             vbar = geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
      &        sqrt(8.0_R8*t0/(pi*am(isb)*mp))
             t2 = 1.0_R8 + 
-     .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,0,isb)*
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
-     .        (switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        (switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,1,isb)*
      .        dnbti(iFc,0))**2)/(vbar*t1)
             dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
             dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
@@ -290,7 +291,7 @@ cwdk                   (original code: simple averaging)
             ub2dia(iFc,1) = ub2dia(iFc,1)/(1.0_R8 + t3/vbar)
           enddo
         endif                                                            !lk 02.06.11 }
-        if (isb.eq.ismain) then                                          !lkw 25.10.2022 {
+        if (isb.eq.ismain.or.switch%dia_lim_all_ions.eq.1) then          !lkw 25.10.2022 {
           do iFc = 1, nFc
             iCv1 = mpg%fcCv(iFc,1)
             iCv2 = mpg%fcCv(iFc,2)
@@ -298,14 +299,30 @@ cwdk                   (original code: simple averaging)
             t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
             vbar =   sqrt(8.0_R8*t0/(pi*am(isb)*mp))
             t2 = 1.0_R8 + 
-     .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,0,isb)*
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
-     .        (switch%fnbPSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        (switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,1,isb)*
      .        dnbti(iFc,0))**2)/(vbar*t1)
             dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
             dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
-           enddo
-         endif                                                           !lkw 25.10.2022}
+            t3 = sqrt((dv%vadia(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%vadia(iFc,1,isb)**2)
+            dv%vadia(iFc,0,isb) = dv%vadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
+            dv%vadia(iFc,1,isb) = dv%vadia(iFc,1,isb)/(1.0_R8 + t3/vbar)
+            t3 = sqrt((dv%wadia(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%wadia(iFc,1,isb)**2)
+            dv%wadia(iFc,0,isb) = dv%wadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
+            dv%wadia(iFc,1,isb) = dv%wadia(iFc,1,isb)/(1.0_R8 + t3/vbar)
+            t3 = sqrt((dv%uadia(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%uadia(iFc,1,isb)**2)
+            dv%uadia(iFc,0,isb) = dv%uadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
+            dv%uadia(iFc,1,isb) = dv%uadia(iFc,1,isb)/(1.0_R8 + t3/vbar)
+            t3 = sqrt((ub2dia(iFc,0)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + ub2dia(iFc,1)**2)
+            ub2dia(iFc,0) = ub2dia(iFc,0)/(1.0_R8 + t3/vbar)
+            ub2dia(iFc,1) = ub2dia(iFc,1)/(1.0_R8 + t3/vbar)
+          enddo
+        endif                                                            !lkw 25.10.2022}
       endif
 
 *   ..compute differences of pa at cell faces and poloidal gradients

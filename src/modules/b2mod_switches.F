@@ -69,6 +69,7 @@ c Advanced fluid neutral models
 
       integer :: inert_all_ions
       integer :: visper_all_ions
+      integer :: dia_lim_all_ions
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02
       real (kind=R8) :: fnb_vis_per  !srv 02.10.17
@@ -605,6 +606,7 @@ c Advanced fluid neutral models
 
       s % inert_all_ions = 1
       s % visper_all_ions = 1
+      s % dia_lim_all_ions = 1
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
       s % fnb_vis_per = 0.0e0_R8
@@ -1156,6 +1158,7 @@ c Advanced fluid neutral models
 
       call ipgeti ('b2tvspr_visper_all_ions', s % visper_all_ions)
       call ipgeti ('b2tiner_inert_all_ions', s % inert_all_ions)
+      call ipgeti ('b2tfnb_dia_lim_all_ions', s % dia_lim_all_ions)
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)
       call ipgetr ('b2tfnb_vis_per', s % fnb_vis_per)
