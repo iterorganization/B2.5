@@ -89,10 +89,15 @@ c Advanced fluid neutral models
       real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
       real (kind=R8) :: b2upht_te_min
+      real (kind=R8) :: b2upht_te_max
       real (kind=R8) :: b2upht_ti_min
+      real (kind=R8) :: b2upht_ti_max
       real (kind=R8) :: b2upht_tn_min
+      real (kind=R8) :: b2upht_tn_max
       real (kind=R8) :: b2upht_kt_min
+      real (kind=R8) :: b2upht_kt_max
       real (kind=R8) :: b2upht_zt_min
+      real (kind=R8) :: b2upht_zt_max
       real (kind=R8) :: cfc0
       real (kind=R8) :: prl_cur
       real (kind=R8) :: dia_cur
@@ -622,10 +627,15 @@ c Advanced fluid neutral models
       s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
       s % b2upht_te_min = 0.1_R8
+      s % b2upht_te_max = 1.0e30_R8
       s % b2upht_ti_min = 0.1_R8
+      s % b2upht_ti_max = 1.0e30_R8
       s % b2upht_tn_min = 0.1_R8
+      s % b2upht_tn_max = 1.0e30_R8
       s % b2upht_kt_min = 1.0e-5_R8
+      s % b2upht_kt_max = 1.0e30_R8
       s % b2upht_zt_min = 1.0e-8_R8
+      s % b2upht_zt_max = 1.0e30_R8
       s % cfc0 = 1.0e0_R8
       s % prl_cur = 1.0e0_R8
       s % dia_cur = 1.0e0_R8
@@ -1170,10 +1180,15 @@ c Advanced fluid neutral models
       call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
       call ipgetr ('b2upht_te_min', s%b2upht_te_min)
+      call ipgetr ('b2upht_te_max', s%b2upht_te_max)
       call ipgetr ('b2upht_ti_min', s%b2upht_ti_min)
+      call ipgetr ('b2upht_ti_max', s%b2upht_ti_max)
       call ipgetr ('b2upht_tn_min', s%b2upht_tn_min)
+      call ipgetr ('b2upht_tn_max', s%b2upht_tn_max)
       call ipgetr ('b2upht_kt_min', s%b2upht_kt_min)
+      call ipgetr ('b2upht_kt_max', s%b2upht_kt_max)
       call ipgetr ('b2upht_zt_min', s%b2upht_zt_min)
+      call ipgetr ('b2upht_zt_max', s%b2upht_zt_max)
       call ipgetr ('b2usmo_cfc0', s % cfc0)
       call ipgetr ('b2tfhe_prl_cur', s % prl_cur)
       call ipgetr ('b2tfhe_dia_cur', s % dia_cur)
@@ -1877,14 +1892,35 @@ c b2news
      &  'na_new must be larger than na_min!')
        call xertst (s%b2upht_te_min.gt.0.0_R8,
      &  'faulty parameter b2upht_te_min')
+       call xertst (s%b2upht_te_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_te_max')
        call xertst (s%b2upht_ti_min.gt.0.0_R8,
      &  'faulty parameter b2upht_ti_min')
+       call xertst (s%b2upht_ti_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_ti_max')
        call xertst (s%b2upht_tn_min.gt.0.0_R8,
      &  'faulty parameter b2upht_tn_min')
+       call xertst (s%b2upht_tn_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_tn_max')
        call xertst (s%b2upht_kt_min.gt.0.0_R8,
      &  'faulty parameter b2upht_kt_min')
+       call xertst (s%b2upht_kt_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_kt_max')
        call xertst (s%b2upht_zt_min.gt.0.0_R8,
      &  'faulty parameter b2upht_zt_min')
+       call xertst (s%b2upht_zt_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_zt_max')
+
+       call xertst (s%b2upht_te_min.lt.s%b2upht_te_max,
+     &  'b2upht_te_min sould be lower than b2upht_te_max')
+       call xertst (s%b2upht_ti_min.lt.s%b2upht_ti_max,
+     &  'b2upht_ti_min sould be lower than b2upht_ti_max')
+       call xertst (s%b2upht_tn_min.lt.s%b2upht_tn_max,
+     &  'b2upht_tn_min sould be lower than b2upht_tn_max')
+       call xertst (s%b2upht_kt_min.lt.s%b2upht_kt_max,
+     &  'b2upht_kt_min sould be lower than b2upht_kt_max')
+       call xertst (s%b2upht_zt_min.lt.s%b2upht_zt_max,
+     &  'b2upht_zt_min sould be lower than b2upht_zt_max')
 
        call xertst (0.le.s%stylec, 'faulty parameter stylec')
 
