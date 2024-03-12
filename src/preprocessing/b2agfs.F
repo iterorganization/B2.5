@@ -457,7 +457,7 @@ cxpb  if just below the top corner, make the corner cell follow
 !
 *   ..test sign of bb3
 !      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
-!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wbbc)
+!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wc)
        !call b2xvs1(nCv,g%cvBb(:,3), 1, 'cvBb3', '.gt.')
        
 
