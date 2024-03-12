@@ -136,20 +136,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
           ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
-          iFt = mpg%cvFt(iCv)
-          if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
-            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-            iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
-          endif
-          if (iFt.ne.0) then
-            if (dtco_fts(iFt).gt.0.0_R8) then
-              ttim=dtim*dtco_fts(iFt)*time_factor(iCv)
-            endif
-          endif
-          sr%snadt(iCv,0,is) =
-     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
-          sr%snadt(iCv,1,is) = -
-     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
+          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)                    !fc 11.03.24
+          sr%snadt(iCv,0,is) = t0*na0(iCv,is)
+          sr%snadt(iCv,1,is) = -t0
           sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
         enddo
       enddo
