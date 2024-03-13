@@ -42,7 +42,8 @@ c
 *  -- LOCAL SCALARS --
       INTEGER IS, nplsi
 #ifdef B25_EIRENE
-      INTEGER NNX, NNY, IX, IY, jvft44, istra, nstsi_in, nstrai_in
+      INTEGER NNX, NNY, IX, IY, jvft44, istra
+      integer nstsi_in, nstrai_in, nplsi_in
       integer, allocatable :: idum(:)
       integer i, j, k, ncl
       integer geometryType
@@ -99,10 +100,17 @@ C
       rewind (44)
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
-      READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-      write(*,'(3a,t27,5i5)')
-     . ' Dimensions in ',fort_lc,'44 = ',nnx,nny,natmi,nmoli,nioni
+      if (jvft44.ge.20240311) then
+        READ(44,'(I4,2X,I4,2X,I4,2X,I4)',END=99,ERR=99)
+     .   NATMI,NMOLI,NIONI,NPLSI_IN
+      else
+        READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
+        NPLSI_IN = nplsi
+      end if
+      write(*,'(3a,t27,6i5)') ' Dimensions in ',fort_lc,'44 = ',
+     . nnx,nny,natmi,nmoli,nioni,nplsi_in
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
+      call xertst(nplsi_in.le.npls,'NGREAD: NPLSI > NPLS')
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
@@ -298,7 +306,7 @@ cank
 cank-960727
       if(jvft44 .ge. 960623) then
         print *,'natmi,nmoli,nioni,nplsi = ',
-     .           natmi,nmoli,nioni,nplsi
+     .           natmi,nmoli,nioni,nplsi_in
         call rdneutrs(44,wldra,natmi,extra_time)
         call rdneutrs(44,wldrm,nmoli,extra_time)
       end if
@@ -403,7 +411,7 @@ cank-960727
         end if
       end if
       if(jvft44 .ge. 961228) then
-        call rdneutrs(44,wldpp,nplsi,extra_time)
+        call rdneutrs(44,wldpp,nplsi_in,extra_time)
         call rdneutrs(44,wldpa,natmi,extra_time)
         call rdneutrs(44,wldpm,nmoli,extra_time)
         call rdneutrs(44,wldpeb,1,extra_time)
@@ -420,7 +428,7 @@ cank-960727
         end if
         if(nstrai_in .gt. 1) then
           do istra=1,nstrai_in
-            call rdneutrs(44,wldpp(:,:,istra),nplsi,extra_time)
+            call rdneutrs(44,wldpp(:,:,istra),nplsi_in,extra_time)
             call rdneutrs(44,wldpa(:,:,istra),natmi,extra_time)
             call rdneutrs(44,wldpm(:,:,istra),nmoli,extra_time)
             call rdneutrs(44,wldpeb(1,istra),1,extra_time)
@@ -488,14 +496,14 @@ cank
           end if
           k=k+nioni
           call read_title(44)
-          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
-          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi_in),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi_in),
      ,                                                       i=1,nstsi)
-          if (lines_for_format(6,nstsi_in*nplsi).gt.
-     .        lines_for_format(6,nstsi*nplsi)) then
-            do i = lines_for_format(6,nstsi*nplsi)+1,
-     .             lines_for_format(6,nstsi_in*nplsi)
+          if (lines_for_format(6,nstsi_in*nplsi_in).gt.
+     .        lines_for_format(6,nstsi*nplsi_in)) then
+            do i = lines_for_format(6,nstsi*nplsi_in)+1,
+     .             lines_for_format(6,nstsi_in*nplsi_in)
               read(44,1028)
             end do
           end if
@@ -543,19 +551,19 @@ cank
           end if
           k=k+nioni
           call read_title(44)
-          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
-          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi_in),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi_in),
      ,                                                      i=1,nstsi)
-          if (lines_for_format(6,nstsi_in*nplsi).gt.
-     .        lines_for_format(6,nstsi*nplsi)) then
-            do i = lines_for_format(6,nstsi*nplsi)+1,
-     .             lines_for_format(6,nstsi_in*nplsi)
+          if (lines_for_format(6,nstsi_in*nplsi_in).gt.
+     .        lines_for_format(6,nstsi*nplsi_in)) then
+            do i = lines_for_format(6,nstsi*nplsi_in)+1,
+     .             lines_for_format(6,nstsi_in*nplsi_in)
               read(44,1028)
             end do
           end if
 
-          do j=1,k+nplsi
+          do j=1,k+nplsi_in
             eirpump(j) = sum(wlpump(j,:))
           end do
         end if
@@ -699,8 +707,8 @@ cank
      ,                                i=1,NCL)
               k=k+nioni
               call read_title(44)
-              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi_in),
      ,                                i=1,NCL)
             end if
             if (jvft44.ge.20201006) then
@@ -947,7 +955,7 @@ cxpb
           write(message,'(a)')
      .     'Mismatched number of plasma species between '//
      .      fort_lc//'44 and '//fort_lc//'44_aver files !'
-          call xertst(idum(0).eq.nplsi,message)
+          call xertst(idum(0).eq.nplsi_in,message)
           call rdneutrs(48,wldnek_aver,1,extra_time)
           call rdneutrs(48,wldnep_aver,1,extra_time)
           call rdneutrs(48,wldna_aver,natmi,extra_time)
@@ -956,7 +964,7 @@ cxpb
           call rdneutrs(48,ewldm_aver,nmoli,extra_time)
           call rdneutrs(48,wldra_aver,natmi,extra_time)
           call rdneutrs(48,wldrm_aver,nmoli,extra_time)
-          call rdneutrs(48,wldpp_aver,nplsi,extra_time)
+          call rdneutrs(48,wldpp_aver,nplsi_in,extra_time)
           call rdneutrs(48,wldpa_aver,natmi,extra_time)
           call rdneutrs(48,wldpm_aver,nmoli,extra_time)
           call rdneutrs(48,wldpeb_aver,1,extra_time)
@@ -1001,13 +1009,14 @@ cxpb
           end if
           k=k+nioni
           call read_title(48)
-          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nplsi),i=1,nlimi)
-          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nplsi),
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nplsi_in),
+     ,                                                        i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nplsi_in),
      ,                                                        i=1,nstsi)
-          if (lines_for_format(6,nstsi_in*nplsi).gt.
-     .        lines_for_format(6,nstsi*nplsi)) then
-            do i = lines_for_format(6,nstsi*nplsi)+1,
-     .             lines_for_format(6,nstsi_in*nplsi)
+          if (lines_for_format(6,nstsi_in*nplsi_in).gt.
+     .        lines_for_format(6,nstsi*nplsi_in)) then
+            do i = lines_for_format(6,nstsi*nplsi_in)+1,
+     .             lines_for_format(6,nstsi_in*nplsi_in)
               read(48,1028)
             end do
           end if
