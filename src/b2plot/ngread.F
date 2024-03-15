@@ -103,12 +103,16 @@ C
       if (jvft44.ge.20240311) then
         READ(44,'(I4,2X,I4,2X,I4,2X,I4)',END=99,ERR=99)
      .   NATMI,NMOLI,NIONI,NPLSI_IN
+        write(*,'(3a,t27,6i5)') ' Dimensions in ',fort_lc,'44 = ',
+     .   nnx,nny,natmi,nmoli,nioni,nplsi_in
       else
         READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
         NPLSI_IN = nplsi
+        write(*,'(3a,t27,5i5)') ' Dimensions in ',fort_lc,'44 = ',
+     .   nnx,nny,natmi,nmoli,nioni
+        write(*,'(a,i5,a)')
+     .   ' Assuming ',nplsi,' plasma background ion species present'
       end if
-      write(*,'(3a,t27,6i5)') ' Dimensions in ',fort_lc,'44 = ',
-     . nnx,nny,natmi,nmoli,nioni,nplsi_in
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(nplsi_in.le.npls,'NGREAD: NPLSI > NPLS')
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')

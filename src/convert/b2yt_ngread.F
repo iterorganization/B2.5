@@ -168,18 +168,22 @@ C
       if(jvftnew.lt.2040311) then
         READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
         nplsi_in = nplsi
+        write(*,'(3a,5i5)') ' Dimensions in ',fort_lc,'44 =   ',
+     .   nnx,nny,natmi,nmoli,nioni
+        write(*,'(a,i5,a)')
+     .   ' Assuming ',nplsi,' plasma background ion species present'
         WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       else
         READ (44,'(I4,2X,I4,2X,I4,2X,I4)',END=99,ERR=99)
      .   natmi,nmoli,nioni,nplsi_in
         WRITE(45,'(I4,2X,I4,2X,I4,2X,I4)')
      .   natm1,nmol1,nion1,npls1
+        write(*,'(3a,6i5)') ' Dimensions in ',fort_lc,'44 =   ',
+     .   nnx,nny,natmi,nmoli,nioni,nplsi_in
       endif
-      write(*,'(3a,6i4)') ' Dimensions in ',fort_lc,'44 =   ',
-     . nnx,nny,natmi,nmoli,nioni,nplsi_in
-      write(*,'(3a,6i4)') ' Dimensions in ',fort_lc,'44.2 = ',
+      write(*,'(3a,6i5)') ' Dimensions in ',fort_lc,'44.2 = ',
      . nx1,ny1,natm1,nmol1,nion1,npls1
-      write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
+      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(nplsi_in.le.npls,'NGREAD: NPLSI > NPLS')
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
