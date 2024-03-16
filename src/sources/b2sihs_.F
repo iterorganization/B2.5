@@ -14,6 +14,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_boundary_namelist
       use b2us_plasma
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
@@ -46,6 +47,7 @@
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
      &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
      &  nn(nCv)
+      integer ib, iCv1, iCv2, ibc
       real (kind=R8) ::
      *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
@@ -277,6 +279,18 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
+      if (switch%b2sihs_shidu.eq.0) then
+      do ib = 1, nbc
+            do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+                  iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+                  iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+                  shidu(iCv2,:) = 0.0_R8
+            enddo
+      enddo
+      endif
+!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
+!WG_TODO        b2sihs_divua0to3 = shidu
+!WG_TODO      endif
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
       endif
@@ -411,6 +425,16 @@
         enddo
        endif                                                           !srv 29.08.02
       enddo
+
+      do iCv=1, mpg%nCv
+            if (ne(iCv) < switch%b2sihs_ne_min) then
+                  shivc(iCv,:) = 0.0_R8
+                  shiva(iCv,:) = 0.0_R8
+            endif
+      enddo
+!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
+!WG_TODO        b2sihs_visa0to3 = shivc+shiva
+!WG_TODO      endif
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3 = shivc+shiva
       endif
