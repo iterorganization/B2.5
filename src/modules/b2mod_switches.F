@@ -1773,7 +1773,7 @@ c b2siav
       call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)              !srv 28.03.06
 
 c b2trcl
-      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                !iyv 06.12.13
+      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                !iyv 06.12.13            
 
 c b2stbc
       call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)

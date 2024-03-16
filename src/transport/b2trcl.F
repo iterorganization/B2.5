@@ -103,7 +103,8 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx, connf, epsf
       real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
-     &    k2(nCv)
+     &    k2(nCv),collisnum(mpg%nFt),csf(nFc),rz(nCv),pz(nCv)
+      real (kind=R8), save :: min_collisions=0.0_R8
       real (kind=R8) :: inctran
 #ifdef ASTRA
      & , tt0(mpg%nFt), tt1(mpg%nFt)                                   !lk 19.09.07
@@ -134,6 +135,9 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+      if (ncall_b2trcl.eq.0) then
+        call ipgetr ('b2trcl_min_collisions',min_collisions)
+      endif
 *   ..set internal parameters on first call
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tfhe_vis_par',vis_par)
@@ -617,17 +621,39 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
        endif
 *   .. apply the conductive limit of parallel ion heat flux
        if(cflim(1).ne.0.0_R8) then
+        call b2ttia (nCv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
+        call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
+        call b2xppz (nCv, ns,  dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
+        wrk1 = 1.0_R8
+        call intface(nCv,nFc,mpg%fcCv,wrk1,tauia(:,ismain),tauiaf)
+        call intface(nCv,nFc,mpg%fcCv,wrk1,sqrt(pz/rz),csf)
+        collisnum = 0.0_R8
+        do iFt=1,mpg%nFt
+          do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)
+     &      +mpg%ftFcP(iFt,2)-1
+            iFc = mpg%ftFc(k)
+            collisnum(iFt) = collisnum(iFt)+1/(tauiaf(iFc)*csf(iFc))*
+     &      (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))*
+     &      (geo%fcBb(iFc,3)/geo%fcBb(iFc,0))
+          enddo
+        enddo
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
-         if(switch%core_cond_limit.ne.0.or.
+        iFt = mpg%cvFt(mpg%fcCv(iFc,1))
+        if (iFt .eq. 0)  iFt = mpg%cvFt(mpg%fcCv(iFc,2))
+        if((switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
-     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
-          flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
-     &                           +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
-          t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
-     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
-     &      b2trcl_cutlo)
+     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))))) then
+          if (collisnum(iFt) .gt. min_collisions) then
+            flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
+     &                             +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
+            t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
+     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
+     &        b2trcl_cutlo)
+          else 
+            t0 = (cflim(1)*max(collisnum(iFt), 1e-16_R8))**(-1)
+          endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
          endif
