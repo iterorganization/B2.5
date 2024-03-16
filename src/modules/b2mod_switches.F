@@ -283,6 +283,7 @@ c phm switches
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
       real (kind=R8) :: b2stbc_phm2
+      integer :: b2sihs_shidu
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -460,6 +461,7 @@ c b2sihs_
       real (kind=R8) :: b2sihs__rf2
       real (kind=R8) :: b2sihs__rf3
       real (kind=R8) :: b2sihs__rf4
+      real (kind=R8) :: b2sihs_ne_min
 
 c b2news_
       integer :: b2news_ncallout
@@ -831,6 +833,7 @@ c Advanced fluid neutral models
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
       s % b2stbc_phm2 = 1.0_R8
+      s % b2sihs_shidu = 1
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -1031,6 +1034,7 @@ c b2sihs_
       s % b2sihs__rf2 = 1.0_R8
       s % b2sihs__rf3 = 1.0_R8
       s % b2sihs__rf4 = 1.0_R8
+      s % b2sihs_ne_min = 1.0e18_R8
 
 c b2news_
       s % b2news_ncallout = -1
@@ -1421,6 +1425,8 @@ c phm switches
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
       call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
 
+      call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
+
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
       call ipgetr ('b2npco_pcm1', s% b2npco_pcm1)
@@ -1624,6 +1630,7 @@ c b2sihs_
       call ipgetr ('b2sihs_rf2', s%b2sihs__rf2)
       call ipgetr ('b2sihs_rf3', s%b2sihs__rf3)
       call ipgetr ('b2sihs_rf4', s%b2sihs__rf4)
+      call ipgetr ('b2sihs_ne_min', s%b2sihs_ne_min)
 
 c b2news_
       call ipgeti ('b2news_ncallout', s%b2news_ncallout)
