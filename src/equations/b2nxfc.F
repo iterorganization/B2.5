@@ -144,22 +144,22 @@
       call b2scopy (n2, cvsb(-1,-1,1,1), 1, cvcb(-1,-1,1,1), 1)
 
 csw 18feb2014 remove fluxes between guard cells
-        do ix=-1,nx
-         do iy=-1,ny
-           if(iffboundx(ix,iy).ne.0) then
-             flub(ix,iy,0,0:1)=0.0_R8
-             cvsb(ix,iy,0,0:1)=0.0_R8
-             flcb(ix,iy,0,0:1)=0.0_R8
-             cvcb(ix,iy,0,0:1)=0.0_R8
-           endif
-           if(iffboundy(ix,iy).ne.0) then
-             flub(ix,iy,1,0:1)=0.0_R8
-             cvsb(ix,iy,1,0:1)=0.0_R8
-             flcb(ix,iy,1,0:1)=0.0_R8
-             cvcb(ix,iy,1,0:1)=0.0_R8
-           endif
-         enddo
+      do ix=-1,nx
+        do iy=-1,ny
+          if(iffboundx(ix,iy).ne.0) then
+            flub(ix,iy,0,0:1)=0.0_R8
+            cvsb(ix,iy,0,0:1)=0.0_R8
+            flcb(ix,iy,0,0:1)=0.0_R8
+            cvcb(ix,iy,0,0:1)=0.0_R8
+          endif
+          if(iffboundy(ix,iy).ne.0) then
+            flub(ix,iy,1,0:1)=0.0_R8
+            cvsb(ix,iy,1,0:1)=0.0_R8
+            flcb(ix,iy,1,0:1)=0.0_R8
+            cvcb(ix,iy,1,0:1)=0.0_R8
+          endif
         enddo
+      enddo
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
