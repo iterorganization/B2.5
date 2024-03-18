@@ -67,7 +67,7 @@
         call find_file(filename,lexist)
         call xertst(lexist,'File '//trim(filename)//' is not found')
         open(70,file=trim(filename))
-        read (70,*) ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
+        read (70,"(1x,e23.16)") ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
         close(70)
       endif
 
@@ -76,7 +76,7 @@
         call find_file(filename,lexist)
         call xertst(lexist,'File '//trim(filename)//' is not found')
         open(70,file=trim(filename))
-        read (70,*) ((bv_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
+        read (70,"(1x,e23.16)") ((bv_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
         close(70)
       endif
 
@@ -85,13 +85,13 @@
         call find_file(filename,lexist)
         call xertst(lexist,'File '//trim(filename)//' is not found')
         open(70,file=trim(filename))
-        read (70,*) (bv_te(iCv),iCv=1,nCv)
+        read (70,"(1x,e23.16)") (bv_te(iCv),iCv=1,nCv)
         close(70)
         filename='bv_ti_us.dat'
         call find_file(filename,lexist)
         call xertst(lexist,'File '//trim(filename)//' is not found')
         open(70,file=trim(filename))
-        read (70,*) (bv_ti(iCv),iCv=1,nCv)
+        read (70,"(1x,e23.16)") (bv_ti(iCv),iCv=1,nCv)
         close(70)
       endif
 
@@ -100,7 +100,7 @@
         call find_file(filename,lexist)
         call xertst(lexist,'File '//trim(filename)//' is not found')
         open(70,file=trim(filename))
-        read (70,*) (bv_po(iCv),iCv=1,nCv)
+        read (70,"(1x,e23.16)") (bv_po(iCv),iCv=1,nCv)
         close(70)
       endif
 

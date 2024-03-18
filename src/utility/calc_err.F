@@ -17,13 +17,13 @@
         call find_file(filename,l_exist)
         call xertst(l_exist,'No exact_na_us.dat file')
         open(70,file=trim(filename))
-        read (70,*) ((pl%na(iCv,is),iCv=1,nCv),is=0,ns-1)
+        read (70,"(1x,e23.16)") ((pl%na(iCv,is),iCv=1,nCv),is=0,ns-1)
         close(70)
         filename='exact_ne_us.dat'
         call find_file(filename,l_exist)
         call xertst(l_exist,'No exact_ne_us.dat file')
         open(70,file=trim(filename))
-        read (70,*) (dv%ne(iCv),iCv=1,nCv)
+        read (70,"(1x,e23.16)") (dv%ne(iCv),iCv=1,nCv)
         close(70)
        endif
 
@@ -32,7 +32,7 @@
         call find_file(filename,l_exist)
         call xertst(l_exist,'No exact_ua_us.dat file')
         open(70,file=trim(filename))
-        read (70,*) ((pl%ua(iCv,is),iCv=1,nCv),is=0,ns-1)
+        read (70,"(1x,e23.16)") ((pl%ua(iCv,is),iCv=1,nCv),is=0,ns-1)
         close(70)
        endif
 
@@ -41,7 +41,7 @@
         call find_file(filename,l_exist)
         call xertst(l_exist,'No exact_te_us.dat file')
         open(70,file=trim(filename))
-        read (70,*) (pl%te(iCv),iCv=1,nCv)
+        read (70,"(1x,e23.16)") (pl%te(iCv),iCv=1,nCv)
         close(70)
        endif
 
@@ -50,7 +50,7 @@
         call find_file(filename,l_exist)
         call xertst(l_exist,'No exact_ti_us.dat file')
         open(70,file=trim(filename))
-        read (70,*) (pl%ti(iCv),iCv=1,nCv)
+        read (70,"(1x,e23.16)") (pl%ti(iCv),iCv=1,nCv)
         close(70)
        endif
 
@@ -59,7 +59,7 @@
         call find_file(filename,l_exist)
         call xertst(l_exist,'No exact_po_us.dat file')
         open(70,file=trim(filename))
-        read (70,*) (pl%po(iCv),iCv=1,nCv)
+        read (70,"(1x,e23.16)") (pl%po(iCv),iCv=1,nCv)
         close(70)
        endif
 
@@ -108,7 +108,8 @@
          call find_file(filename,l_exist)
          call xertst(l_exist,'No exact_na_us.dat file')
          open(70,file=trim(filename))
-         read (70,*) ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
+         read (70,"(1x,e23.16)")
+     &     ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
          close(70)
 
          do is = 0, ns-1
@@ -171,7 +172,8 @@
          call find_file(filename,l_exist)
          call xertst(l_exist,'No exact_ua_us.dat file')
          open(70,file=trim(filename))
-         read (70,*) ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
+         read (70,"(1x,e23.16)")
+     &     ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
          close(70)
 
          do is = 0, ns-1
@@ -280,7 +282,7 @@
        call xertst(l_exist,'Did not find '//trim(pass)//' file')
 
        open(70,file=pass)
-       read (70,*) (exact_var(iCv),iCv=1,nCv)
+       read (70,"(1x,e23.16)") (exact_var(iCv),iCv=1,nCv)
        close(70)
 
        call my_out_us(70,nCv,0,var/scl,trim(nmvar))
