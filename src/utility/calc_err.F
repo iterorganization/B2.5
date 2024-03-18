@@ -54,15 +54,6 @@
         close(70)
        endif
 
-       if(switch%set_tn_numerical.ne.0) then
-        filename='exact_tn_us.dat'
-        call find_file(filename,l_exist)
-        call xertst(l_exist,'No exact_tn_us.dat file')
-        open(70,file=trim(filename))
-        read (70,"(1x,e23.16)") (pl%tn(iCv),iCv=1,nCv)
-        close(70)
-       endif
-
        if(switch%set_po_numerical.ne.0) then
         filename='exact_po_us.dat'
         call find_file(filename,l_exist)
@@ -119,7 +110,8 @@
          call find_file(filename,l_exist)
          call xertst(l_exist,'No exact_na_us.dat file')
          open(70,file=trim(filename))
-         read (70,*) ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
+         read (70,"(1x,e23.16)")
+     &     ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
          close(70)
 
          do is = 0, ns-1
@@ -182,7 +174,8 @@
          call find_file(filename,l_exist)
          call xertst(l_exist,'No exact_ua_us.dat file')
          open(70,file=trim(filename))
-         read (70,*) ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
+         read (70,"(1x,e23.16)")
+     &     ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
          close(70)
 
          do is = 0, ns-1

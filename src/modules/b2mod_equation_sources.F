@@ -70,7 +70,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(2x,e23.16)")
+           read (70,"(1x,e23.16)")
      &      ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          else
@@ -83,7 +83,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(2x,e23.16)")
+           read (70,"(1x,e23.16)")
      &      ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          else
@@ -96,7 +96,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(2x,e23.16)")
+           read (70,"(1x,e23.16)")
      &      (art_she(iCv,0),iCv=1,nCv)
            close(70)
          else
@@ -106,7 +106,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(2x,e23.16)")
+           read (70,"(1x,e23.16)")
      &      (art_shi(iCv,0),iCv=1,nCv)
            close(70)
          else
@@ -119,7 +119,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(2x,e23.16)")
+           read (70,"(1x,e23.16)")
      &      (art_sch(iCv,0),iCv=1,nCv)
            close(70)
          else
