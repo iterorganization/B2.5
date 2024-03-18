@@ -6160,7 +6160,7 @@
 						 7 : prescribe the given profile of density from the bv_na.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total particle flux with constant flux density, CONPAR(,,1) specifies the particle flux in s<sup>-1</sup>
 						 9 : prescribe the decay length for the density, CONPAR(,,1) specifies the gradient length in metres (should use type 15 instead when drifts are turned on)
-						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>
+						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>. CONPAR(,,2) is an optional stabilization parameter that can be set to a positive value to help with the linearization of the boundary condition.
 						11 : particle flux feedback boundary condition, CONPAR(,,1) not used, derived from CBSNA(0,IS,IREG). For feedback schemes not specified via b2.feedback_control.parameters, the species used must be declared using the 'b2stbc_isfeedback' switch.
 						12 : particle density feedback boundary condition, as above, CONPAR(,,1) not used, derived from CBSNA(0,IS,IREG). The species used must be declared using the 'b2stbc_isfeedback' switch.
 						13 : particle density to achieve specified total flux,

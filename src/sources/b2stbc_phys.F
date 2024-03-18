@@ -1561,6 +1561,8 @@ cwdk  now need to recompute full diamagnetic component for ud
      .       'BCCON = 10 : leakage ',CONPAR(IS,IB,1),' on ',BCCHAR(IB),
      1       boundary_location(ib),
      2       ' for species ',IS
+            call xertst(CONPAR(IS,IB,2).ge.0.0_R8,
+     1       'B2STBC -- BCCON=10, CONPAR(,,2) < 0')
             if (core_boundary(ib).and.ishigh)
      >       call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 10')
@@ -1606,6 +1608,20 @@ cwdk  now need to recompute full diamagnetic component for ud
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)) !srv 02.03.05 }
               endif                                                     !srv 09.11.06 08.09.08 }
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=             !lk 18.03.24{
+     &          SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+
+     &          s0*sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     &                te(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     &                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
+     &         (am(is)*mp))*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
+     &         CONPAR(IS,IB,2)
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     &         SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)-
+     2          s0*sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .                te(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
+     3         (am(is)*mp))*
+     2         CONPAR(IS,IB,2)                                          !lk 18.03.24}
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1642,6 +1658,20 @@ cwdk  now need to recompute full diamagnetic component for ud
      &           max(0.0e0_R8,
      .             s0*vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)) !lk 12.12.07 }
               endif                                                     !srv 09.11.06 08.09.08 }
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=            !lk 18.03.24{
+     &         SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+
+     &         s0*sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     &                te(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     &                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
+     &         (am(is)*mp))*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
+     &         CONPAR(IS,IB,2)
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     &         SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)-
+     2         s0*sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .                te(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
+     3         (am(is)*mp))*
+     2         CONPAR(IS,IB,2)                                          !lk 18.03.24}
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
