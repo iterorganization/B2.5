@@ -99,7 +99,7 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
 * ..include the contributions from dtim
 *   ..modify snadt
       do is = 0, ns-1
-        do iCv = 1, nCv
+        do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO           if(iftimbound(ix,iy) .ne. 0) cycle
 !WG_TODO           if((guard_flows.eq.2 .or.
@@ -116,7 +116,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
 *   ..modify smodt
       do is = 0, ns-1
-        do iCv = 1, nCv
+        do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -134,7 +134,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 #ifndef NO_OPENMP_B2SRDT
 !$OMP DO
 #endif
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -161,7 +161,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
         sr%sztdt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
 
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -208,7 +208,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
         sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
       enddo
 
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -224,7 +224,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
         sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
       enddo
 
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
         t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
      &                                  *time_factor(iCv)               !xpb
