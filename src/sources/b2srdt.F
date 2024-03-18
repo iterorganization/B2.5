@@ -180,7 +180,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
 #endif
 
 *   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
-      do iCv = 1, nCv
+#ifndef NO_OPENMP_B2SRDT
+!$OMP DO
+#endif
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -227,9 +230,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp end do
 
-!$omp do
-#endif
-      do iCv = 1, mpg%nCi !! why is this loop separate from the one above? Perhaps worth the effort of merging them now the addtional var_style options cause additional complexity. 
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -316,9 +317,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp end do
 
-!$omp do
-#endif
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
@@ -335,9 +334,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp end do
 
-!$omp do
-#endif
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
         t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
      &                                  *time_factor(iCv)               !xpb
