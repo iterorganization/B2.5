@@ -54,7 +54,9 @@
      *  cfc0, t0, t1, t2, t3, t4, csb, csb1
       save ncall, cfc0
 *   ..procedures
-      external xertst, ipgetr, sfill
+      real (kind=R8) ::
+     *   smin, smax
+      external xertst, ipgetr, sfill, smin, smax
       external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
 *   ..initialisation
       data ncall/0/, cfc0/1.0_R8/
@@ -81,6 +83,24 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
+*   ..test sign of vol, hx, hy, hz
+       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
+       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
+       call b2xvsg (n2, hz, 1, 'hz', '.gt.')
+*   ..test range of qz, qs
+       call xertst (smin(n2,qz(-1,-1,0),1).gt.-1.0_R8.and.
+     &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
+     &  'faulty argument range qz(,,0)')
+       call xertst (smin(n2,qz(-1,-1,1),1).gt.0.0_R8.and.
+     &  smax(n2,qz(-1,-1,1),1).le.1.0_R8,
+     &  'faulty argument range qz(,,1)')
+       call xertst (smin(n2,qs(-1,-1,0),1).gt.-1.0_R8.and.
+     &  smax(n2,qs(-1,-1,0),1).lt.1.0_R8,
+     &  'faulty argument range qs(,,0)')
+       call xertst (smin(n2,qs(-1,-1,1),1).gt.-1.0_R8.and.
+     &  smax(n2,qs(-1,-1,1),1).lt.1.0_R8,
+     &  'faulty argument range qs(,,1)')
 *    ..test sign of rob, pb, smb1, smb3, cvsb
        call b2xvsg (n2, rob, 1, 'rob', '.gt.')
        call b2xvsg (n2, rzb, 1, 'rzb', '.gt.')
@@ -403,4 +423,4 @@ cxpb
 *-----------------------------------------------------------------------
 *.end b2usm9
 
-      end
+      end subroutine b2usm9

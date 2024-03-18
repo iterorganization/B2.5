@@ -283,7 +283,7 @@
       if (ncall.lt.3) then
 *    ..test sign of bb
        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test vol, hx, hy, qz
+*    ..test vol, hx, hy, qz, qc
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')

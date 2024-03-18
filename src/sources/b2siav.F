@@ -99,7 +99,7 @@
       endif
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
-      smbvh  = 0.0_R8
+      smbvh = 0.0_R8
       smbvv = 0.0_R8
 
 !      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then      !srv 26.10.08

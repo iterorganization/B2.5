@@ -73,7 +73,7 @@
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*   ..test range of qz, qc
+*   ..test range of qz, qc, qs
       call xertst (smin(n2,qz(-1,-1,0),1).gt.-1.0_R8.and.
      &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &  'faulty argument range qz(,,0)')
@@ -204,7 +204,7 @@
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*   ..test range of qz, qc
+*   ..test range of qz, qc, qs
       call xertst (smin(n2,qz(-1,-1,0),1).gt.-1.0_R8.and.
      &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &  'faulty argument range qz(,,0)')
