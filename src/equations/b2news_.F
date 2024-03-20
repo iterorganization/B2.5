@@ -435,7 +435,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
-          st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)    !srv 24.04.09
+          st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                  !srv 24.04.09
         enddo
 !! option to impose a speed limit for fluid neutrals in case of spatially hybrid neutrals
         if (switch%spatial_hybrid.ne.0.and.is_neutral(is)) then
@@ -471,7 +472,8 @@ csw 16oct2012 init ier0
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 !        endif                                                           !srv 13.10.06 } 22.05.18
         do iCv = 1, nCv
-          st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)    !srv 24.04.09
+          st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                  !srv 24.04.09
         enddo
 !        if(re_compute_pb.eq.1) then                                     !srv 15.02.10
 !*    ..re-compute partial pressure                                      !srv 01.10.99
@@ -702,7 +704,8 @@ c   recompute particle fluxes
         do is=0,ns-1                                                     !srv 01.10.99
 *    ..DPC
           do iCv = 1, nCv
-            st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)  !srv 24.04.09
+            st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &        switch%b2mndr_na_min),switch%b2mndr_na_max)                !srv 24.04.09
           enddo
 *    ..compute partial pressure
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -738,7 +741,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &                                      switch%use_eirene.ne.0) then !srv 28.06.13 {
         do is=0,ns-1
           do iCv = 1, nCv
-            st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)  !srv 24.04.09
+            st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &        switch%b2mndr_na_min),switch%b2mndr_na_max)                !srv 24.04.09
           enddo
 *    ..compute partial pressure
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,   !srv 01.10.99

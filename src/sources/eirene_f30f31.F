@@ -1,5 +1,5 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                           pl, dv)
+     &                           pl, dv, st_ext)
       use b2mod_types
       use b2mod_switches
       use b2mod_constants
@@ -41,6 +41,7 @@
       type(geometry), intent(in) :: gm
       type(B2Plasma), intent(in) :: pl
       type(B2Derivatives), intent(in) :: dv
+      type(B2StateExt), intent (in) :: st_ext
 
       character chns*3                                                 !srv 16.09.02
       character(2) :: ccall
@@ -60,10 +61,11 @@
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
       integer :: ic, iFc, ian, ien, ntrgdat, ifl, i, istra, ic2,
      &           iv1, iv2, iCp
-      real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww,
+      real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, vtot, vmax,
      1 pvxs, pvys, puxs, puys
       real (kind=R8) :: wght(nFc,2)
       real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
+      real (kind=R8) :: cs(nCv), rz(nCv), pz(nCv)
 
       call subini ('copy_background')
 
@@ -146,6 +148,11 @@ c Initialization
         call my_out_us(70,nCv,0,gm%cvBb(1,2),'copy_bb_2')
         call my_out_us(70,nCv,0,gm%cvBb(1,3),'copy_bb_3')
       endif
+
+      ! precompute sound speed for velocity limiting
+      call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
+      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
+      cs = sqrt(pz/rz)
 
 #ifndef SOLPS4_3
 * cell centred
@@ -255,14 +262,9 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
           do ic = 1, nCv
             dnib(ic,nflai)=max(min(pl%na(ic,is),switch%eir_na_max),
      1                                           switch%eir_na_min)
-            upb(ic,nflai)=max(min(pl%ua(ic,is),switch%eir_ua_max),
-     1                                           switch%eir_ua_min)
-            uudiab(ic,nflai)=max(min(
-     1         wadiac(ic,0,is)+vaecrbc(ic,0,is),switch%eir_ua_max),
-     2                                            switch%eir_ua_min)
-            vvdiab(ic,nflai)=max(min(
-     1         wadiac(ic,1,is)+vaecrbc(ic,1,is),switch%eir_ua_max),
-     2                                            switch%eir_ua_min)
+            upb(ic,nflai)=pl%ua(ic,is)
+            uudiab(ic,nflai)=wadiac(ic,0,is)+vaecrbc(ic,0,is)
+            vvdiab(ic,nflai)=wadiac(ic,1,is)+vaecrbc(ic,1,is)
             if(.not.is_neutral(is)) then
               prb(ic)=prb(ic)+tib(ic)*dnib(ic,nflai)
             else
@@ -276,18 +278,16 @@ c     * guard cell values used for source sampling in infcop
               if (switch%eirene_background.eq.0.or.ic.gt.mpg%nCi) then
 c     internal cell, old treatment -> grad-B drift only
 c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
-                uub(ic,nflai)=max(min(
+                uub(ic,nflai)=
      &               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
      &               switch%xwdia*vadiac(ic,0,is)+
-     &               switch%xvecrb*vaecrbc(ic,0,is),
-     &               switch%eir_ua_max),switch%eir_ua_min)
+     &               switch%xvecrb*vaecrbc(ic,0,is)
               else
 c     internal cell -> full diamagnetic drift
-                uub(ic,nflai)=max(min(
+                uub(ic,nflai)=
      &               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
      &               switch%xwdia*wadiac(ic,0,is)+
-     &               switch%xvecrb*vaecrbc(ic,0,is),
-     &               switch%eir_ua_max),switch%eir_ua_min)
+     &               switch%xvecrb*vaecrbc(ic,0,is)
                  endif
             elseif(switch%eirene_uub_style.eq.1) then
 cwdk  uub computed from face fluxes, and interpolated to cell centers
@@ -295,8 +295,7 @@ c     Should be fully compatible with anom. transport, including all contributio
 c     Note, computation at N/S boundaries questionable at present, because (certain/all) terms
 c     in fna may have been set to 0. Should consider using the eirene_uub_style.eq.0 treatment
 c     in these cells!
-              uub(ic,nflai)=max(min(uuc(ic,is),switch%eir_ua_max),
-     1                                           switch%eir_ua_min)
+              uub(ic,nflai)=uuc(ic,is)
             end if
 
 cwdk  vvb computed from face fluxes, and interpolated to cell centers
@@ -304,49 +303,61 @@ c     Compatible with SOLPS4.3.
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at E/W boundaries questionable, because (certain/all) terms
 c     in fna may have been set to 0.
-            vvb(ic,nflai)=max(min(vvc(ic,is),switch%eir_ua_max),
-     1                                         switch%eir_ua_min)
+            vvb(ic,nflai)=vvc(ic,is)
 cwdk  wwb directly computed from cell-centered velocities.
 c     Compatible with SOLPS4.3, and consistent with sign convention ua,
 c     but may not be fully consistent with respect to drifts.
 c     In particular: convective anomalous contribution (if present) is missing
 c                    (diffusive anomalous contribution zero due to toroidal symm.)
-              if (switch%eirene_background.eq.0.or.ic.gt.mpg%nCi) then
+            if (switch%eirene_background.eq.0.or.ic.gt.mpg%nCi) then
 c     internal cell, old treatment -> grad-B drift only (fna)
 c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
-                wwb(ic,nflai)=max(min(
+                wwb(ic,nflai)=
      &            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
      &            (switch%xwdia*vadiac(ic,0,is)+
      &             switch%xvecrb*vaecrbc(ic,0,is))*
-     &            gm%cvBb(ic,0)/gm%cvBb(ic,2),
-     &            switch%eir_ua_max),switch%eir_ua_min)
-              else
+     &            gm%cvBb(ic,0)/gm%cvBb(ic,2)
+            else
 c     internal cell -> full diamagnetic drift
-                 wwb(ic,nflai)=max(min(
+                 wwb(ic,nflai)=
      &             upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
      &             (switch%xwdia*wadiac(ic,0,is)+
      &              switch%xvecrb*vaecrbc(ic,0,is))*
-     &             gm%cvBb(ic,0)/gm%cvBb(ic,2),
-     &             switch%eir_ua_max),switch%eir_ua_min)
-              end if
+     &             gm%cvBb(ic,0)/gm%cvBb(ic,2)
+            end if
 
-              ebx = gm%cvEb(ic,0)
-              eby = gm%cvEb(ic,1)
-              ebn = sqrt(ebx*ebx + eby*eby)
-              if (ebn > 0) then
-                ebx = ebx / ebn
-                eby = eby / ebn
-              endif
-              pux(ic) = ebx
-              puy(ic) = eby
-              pvx(ic) = -eby
-              pvy(ic) = ebx
-              vxb(ic,nflai) = uub(ic,nflai)*pux(ic) +
-     1                        vvb(ic,nflai)*pvx(ic)
-              vyb(ic,nflai) = uub(ic,nflai)*puy(ic) +
-     1                        vvb(ic,nflai)*pvy(ic)
-              vzb(ic,nflai) = wwb(ic,nflai)*sign(1.0_R8,gm%cvEb(ic,2))
+            ebx = gm%cvEb(ic,0)
+            eby = gm%cvEb(ic,1)
+            ebn = sqrt(ebx*ebx + eby*eby)
+            if (ebn > 0) then
+              ebx = ebx / ebn
+              eby = eby / ebn
+            endif
+            pux(ic) = ebx
+            puy(ic) = eby
+            pvx(ic) = -eby
+            pvy(ic) = ebx
 
+            ! limit the total velocity, and then scale
+            ! all individual components
+            vtot = sqrt(uub(ic,nflai)**2 + vvb(ic,nflai)**2 +
+     &        wwb(ic,nflai)**2)
+            vmax = min(switch%eir_ua_max,abs(switch%eir_ua_min),
+     &        switch%eir_M_max*cs(ic))
+            if (vtot.gt.vmax) then
+              uub(ic,nflai) = uub(ic,nflai)*vmax/vtot
+              vvb(ic,nflai) = vvb(ic,nflai)*vmax/vtot
+              wwb(ic,nflai) = wwb(ic,nflai)*vmax/vtot
+              upb(ic,nflai) = upb(ic,nflai)*vmax/vtot
+              uudiab(ic,nflai) = uudiab(ic,nflai)*vmax/vtot
+              vvdiab(ic,nflai) = vvdiab(ic,nflai)*vmax/vtot
+            endif
+
+            vxb(ic,nflai) = uub(ic,nflai)*pux(ic) +
+     1                      vvb(ic,nflai)*pvx(ic)
+            vyb(ic,nflai) = uub(ic,nflai)*puy(ic) +
+     1                      vvb(ic,nflai)*pvy(ic)
+            vzb(ic,nflai) = wwb(ic,nflai)*sign(1.0_R8,gm%cvEb(ic,2))
           enddo
 * cell faces
           do ifc = 1, nFc
@@ -488,7 +499,7 @@ c we derive the guard cell value from its neighbouring interior cell
             ww = wwb(ic,ifl)
             trgt(istra)%vxt(i,ifl) = puxs*uu + pvxs*vv
             trgt(istra)%vyt(i,ifl) = puys*uu + pvys*vv
-            trgt(istra)%vzt(i,ifl) = ww
+            trgt(istra)%vzt(i,ifl) = ww*sign(1.0_R8,gm%cvEb(ic,2))
             trgt(istra)%fel(i,ifl) = 0.0_R8
             trgt(istra)%vpart(i,ifl) = 0.0_R8
             trgt(istra)%mach(i,ifl) = 1.0_R8

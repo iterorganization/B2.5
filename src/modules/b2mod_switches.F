@@ -86,6 +86,7 @@ c Advanced fluid neutral models
       real (kind=R8) :: integral_current
       real (kind=R8) :: b2stbc_fchy_dia
       real (kind=R8) :: b2mndr_na_min
+      real (kind=R8) :: b2mndr_na_max
       real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
       real (kind=R8) :: b2upht_te_min
@@ -362,6 +363,7 @@ c Eirene coupling
       real (kind=R8) :: eir_ne_max
       real (kind=R8) :: eir_ua_min
       real (kind=R8) :: eir_ua_max
+      real (kind=R8) :: eir_M_max
 
 c k-enstrophy model
       integer :: transport_keps
@@ -624,6 +626,7 @@ c Advanced fluid neutral models
       s % integral_current = 0.0e0_R8
       s % b2stbc_fchy_dia = 0.0e0_R8
       s % b2mndr_na_min = 1.0e4_R8
+      s % b2mndr_na_max = 1.0e30_R8
       s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
       s % b2upht_te_min = 0.1_R8
@@ -906,6 +909,7 @@ c eirene coupling
       s % eir_ne_max = 1.0e30_R8
       s % eir_ua_min = -c
       s % eir_ua_max = c
+      s % eir_M_max = 1.0e30_R8
       s % neutral_sources_rescale = 1.0_R8
 
 c k-enstrophy model
@@ -1177,6 +1181,7 @@ c Advanced fluid neutral models
       call ipgetr ('b2stbc_integral_current', s % integral_current)
       call ipgetr ('b2stbc_fchy_dia', s % b2stbc_fchy_dia)
       call ipgetr ('b2mndr_na_min', s%b2mndr_na_min)
+      call ipgetr ('b2mndr_na_max', s%b2mndr_na_max)
       call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
       call ipgetr ('b2upht_te_min', s%b2upht_te_min)
@@ -1457,6 +1462,7 @@ c Eirene coupling
       call ipgetr ('eirene_ne_max', s % eir_ne_max)
       call ipgetr ('eirene_ua_min', s % eir_ua_min)
       call ipgetr ('eirene_ua_max', s % eir_ua_max)
+      call ipgetr ('eirene_M_max', s % eir_M_max)
       call ipgetr ('b2mndr_rescale_neutrals_sources',
      &                s % neutral_sources_rescale)
 
@@ -1886,10 +1892,16 @@ c b2news
 
        call xertst (s%b2mndr_na_min.gt.0.0_R8,
      &  'faulty parameter b2mndr_na_min')
+       call xertst (s%b2mndr_na_max.gt.0.0_R8,
+     &  'faulty parameter b2mndr_na_max')
        call xertst (s%b2mndr_na_new.gt.0.0_R8,
      &  'faulty parameter b2mndr_na_new')
+       call xertst (s%b2mndr_na_max.gt.s%b2mndr_na_min,
+     &  'na_max must be larger than na_min!')
        call xertst (s%b2mndr_na_new.gt.s%b2mndr_na_min,
      &  'na_new must be larger than na_min!')
+       call xertst (s%b2mndr_na_new.lt.s%b2mndr_na_max,
+     &  'na_new must be smaller than na_max!')
        call xertst (s%b2upht_te_min.gt.0.0_R8,
      &  'faulty parameter b2upht_te_min')
        call xertst (s%b2upht_te_max.gt.0.0_R8,
