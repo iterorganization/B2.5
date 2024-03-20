@@ -276,7 +276,7 @@ cxpb  quantities before their mapping to cell centers
      1   nfla,NFL
       else
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
       endif
 c
       call initialise_potentials(ns)

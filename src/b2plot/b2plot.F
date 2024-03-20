@@ -921,7 +921,7 @@ c
      1   nflai,NFL
       else
         call copy_background(mpg%nCv, mpg%nFc, ns, switch, mpg, geo,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
       endif
 cxpb  Bring in wall data and compute oft-needed wall quantities
 #ifdef WG_TODO
