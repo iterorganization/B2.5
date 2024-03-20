@@ -561,7 +561,7 @@ c   --> better solution wanted here..
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
-     &                 main_call, switch, geo, mpg, st)
+     &                 main_call, switch, geo, mpg, st, st_ext)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
