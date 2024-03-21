@@ -461,55 +461,55 @@ cwdk add 9-point contributions
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
       if (use_9pt_stencil.ne.0) then
-      do iy=-1,ny
-       do ix=-1,nx
-        if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
-         aa9(ix,iy,:) = 0.0_R8
-         aa9(ix,iy,0) = 1.00_R8
-!        aa9(ix,iy,3) =-1.00_R8
-!        rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,1) =-1.00_R8
-         resht(ix,iy) = 0.5_R8*
-     &    (te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy) +
-     &     ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy))
-        endif
-        if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+2) then
-         aa9(ix,iy,:)  = 0.0_R8
-         aa9(ix,iy,0)  = 1.00_R8
-!        aa9(ix,iy, 1) =-0.50_R8
-!        aa9(ix,iy,-3) =-0.50_R8
-!        rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
-!                                pb(bottomix(ix,iy),bottomiy(ix,iy))) -
-!                        pb(ix,iy)
-!        aa9(ix,iy,-3) =-1.00_R8
-!        rescb(-1,ny)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,1) =-1.00_R8
-         resht(ix,iy) = 0.5_R8*
-     &    (te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy) +
-     &     ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy))
-        endif
-        if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then
-         aa9(ix,iy,:)  = 0.0_R8
-         aa9(ix,iy,0)  = 1.00_R8
-!        aa9(ix,iy,3)  =-1.00_R8
-!        rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,-1) =-1.00_R8
-         resht(ix,iy)  = 0.5_R8*
-     &    (te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy) +
-     &     ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
-        endif
-        if (rightix(ix,iy).eq.nx+1.and.topiy(ix,iy).eq.ny+1) then
-         aa9(ix,iy,:)  = 0.0_R8
-         aa9(ix,iy,0)  = 1.00_R8
-!        aa9(ix,iy,-3) =-1.00_R8
-!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,-1) =-1.00_R8
-         resht(ix,iy)  = 0.5_R8*
-     &    (te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy) +
-     &     ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
-        endif
+       do iy=-1,ny
+        do ix=-1,nx
+         if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
+          aa9(ix,iy,:) = 0.0_R8
+          aa9(ix,iy,0) = 1.00_R8
+!         aa9(ix,iy,3) =-1.00_R8
+!         rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,1) =-1.00_R8
+          resht(ix,iy) = 0.5_R8*
+     &     (te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy) +
+     &      ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy))
+         endif
+         if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+2) then
+          aa9(ix,iy,:)  = 0.0_R8
+          aa9(ix,iy,0)  = 1.00_R8
+!         aa9(ix,iy, 1) =-0.50_R8
+!         aa9(ix,iy,-3) =-0.50_R8
+!         rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
+!                                 pb(bottomix(ix,iy),bottomiy(ix,iy))) -
+!                         pb(ix,iy)
+!         aa9(ix,iy,-3) =-1.00_R8
+!         rescb(-1,ny)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,1) =-1.00_R8
+          resht(ix,iy) = 0.5_R8*
+     &     (te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy) +
+     &      ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy))
+         endif
+         if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then
+          aa9(ix,iy,:)  = 0.0_R8
+          aa9(ix,iy,0)  = 1.00_R8
+!         aa9(ix,iy,3)  =-1.00_R8
+!         rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,-1) =-1.00_R8
+          resht(ix,iy)  = 0.5_R8*
+     &     (te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy) +
+     &      ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
+         endif
+         if (rightix(ix,iy).eq.nx+1.and.topiy(ix,iy).eq.ny+1) then
+          aa9(ix,iy,:)  = 0.0_R8
+          aa9(ix,iy,0)  = 1.00_R8
+!         aa9(ix,iy,-3) =-1.00_R8
+!         rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,-1) =-1.00_R8
+          resht(ix,iy)  = 0.5_R8*
+     &     (te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy) +
+     &      ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
+         endif
+        enddo
        enddo
-      enddo
       endif ! 9-point stencil
 
 *   ..solve the correction equation

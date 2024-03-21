@@ -363,51 +363,53 @@ cwdk todo: add rscal-logic
       enddo
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
-      do iy=-1,ny
-       do ix=-1,nx
-        if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
-         aa9(ix,iy,:) = 0.0_R8
-         aa9(ix,iy,0) = 1.00_R8*nb(ix,iy)/pb(ix,iy)
-!        aa9(ix,iy,3) =-1.00_R8
-!        rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,1) =-1.00_R8*nb(rightix(ix,iy),rightiy(ix,iy))/
-     .                          pb(rightix(ix,iy),rightiy(ix,iy))
-         rescb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy)) - nb(ix,iy)
-        endif
-        if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+1) then
-         aa9(ix,iy,:)  = 0.0_R8
-         aa9(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
-!        aa9(ix,iy, 1) =-0.50_R8
-!        aa9(ix,iy,-3) =-0.50_R8
-!        rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
-!    .                           pb(bottomix(ix,iy),bottomiy(ix,iy))) -
-!    .                   pb(ix,iy)
-!        aa9(ix,iy,-3) =-1.00_R8
-!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,1) =-1.00_R8*nb(rightix(ix,iy),rightiy(ix,iy))/
-     .                          pb(rightix(ix,iy),rightiy(ix,iy))
-         rescb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy)) - nb(ix,iy)
-        endif
-        if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then
-         aa9(ix,iy,:)  = 0.0_R8
-         aa9(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
-!        aa9(ix,iy,3)  =-1.00_R8
-!        rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,-1) =-1.00_R8*nb(leftix(ix,iy),leftiy(ix,iy))/
-     .                           pb(leftix(ix,iy),leftiy(ix,iy))
-         rescb(nx,-1)  = nb(leftix(ix,iy),leftiy(ix,iy)) - nb(ix,iy)
-        endif
-        if (rightix(ix,iy).eq.nx+1.and.topiy(ix,iy).eq.ny+1) then
-         aa9(ix,iy,:)  = 0.0_R8
-         aa9(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
-!        aa9(ix,iy,-3) =-1.00_R8
-!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
-         aa9(ix,iy,-1) =-1.00_R8*nb(leftix(ix,iy),leftiy(ix,iy))/
-     .                           pb(leftix(ix,iy),leftiy(ix,iy))
-         rescb(nx,ny)  = nb(leftix(ix,iy),leftiy(ix,iy)) - nb(ix,iy)
-        endif
+      if (use_9pt_stencil.ne.0) then
+       do iy=-1,ny
+        do ix=-1,nx
+         if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
+          aa9(ix,iy,:) = 0.0_R8
+          aa9(ix,iy,0) = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!         aa9(ix,iy,3) =-1.00_R8
+!         rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,1) =-1.00_R8*nb(rightix(ix,iy),rightiy(ix,iy))/
+     .                           pb(rightix(ix,iy),rightiy(ix,iy))
+          rescb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy)) - nb(ix,iy)
+         endif
+         if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+1) then
+          aa9(ix,iy,:)  = 0.0_R8
+          aa9(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!         aa9(ix,iy, 1) =-0.50_R8
+!         aa9(ix,iy,-3) =-0.50_R8
+!         rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
+!    .                            pb(bottomix(ix,iy),bottomiy(ix,iy))) -
+!    .                    pb(ix,iy)
+!         aa9(ix,iy,-3) =-1.00_R8
+!         rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,1) =-1.00_R8*nb(rightix(ix,iy),rightiy(ix,iy))/
+     .                           pb(rightix(ix,iy),rightiy(ix,iy))
+          rescb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy)) - nb(ix,iy)
+         endif
+         if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then
+          aa9(ix,iy,:)  = 0.0_R8
+          aa9(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!         aa9(ix,iy,3)  =-1.00_R8
+!         rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,-1) =-1.00_R8*nb(leftix(ix,iy),leftiy(ix,iy))/
+     .                            pb(leftix(ix,iy),leftiy(ix,iy))
+          rescb(nx,-1)  = nb(leftix(ix,iy),leftiy(ix,iy)) - nb(ix,iy)
+         endif
+         if (rightix(ix,iy).eq.nx+1.and.topiy(ix,iy).eq.ny+1) then
+          aa9(ix,iy,:)  = 0.0_R8
+          aa9(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!         aa9(ix,iy,-3) =-1.00_R8
+!         rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+          aa9(ix,iy,-1) =-1.00_R8*nb(leftix(ix,iy),leftiy(ix,iy))/
+     .                            pb(leftix(ix,iy),leftiy(ix,iy))
+          rescb(nx,ny)  = nb(leftix(ix,iy),leftiy(ix,iy)) - nb(ix,iy)
+         endif
+        enddo
        enddo
-      enddo
+      endif
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)              !srv 18.05.02

@@ -1454,8 +1454,8 @@ c    is good enough approx. for average between corner values
      &         (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8 -
      &         (con_mdf(ix,iy) + 0.5_R8*abs(flo9_mdf))*
      &         (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))! -
-!     &         con9_mdf*dkmprr(ix,iy,0)! -
-!     &         cddb(ix,iy,1,1)*dkmprti(ix,iy,1)                        !srv 21.10.10
+!     &         con9_mdf*dkmprr(ix,iy,0)
+!     &         -cddb(ix,iy,1,1)*dkmprti(ix,iy,1)                        !srv 21.10.10
              flob(ix,iy,0,1) = 0.0_R8
              conb(ix,iy,0,0,0) =
      &         (con_mdf(ix,iy)+con9_mdf*t0+0.5_R8*abs(flo9_mdf))*       !srv 13.10.06
@@ -1865,8 +1865,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8 -
      &       0.5_R8*abs(flo_mdf)*t0*
      &       (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
-     &       (con_2dia(ix,iy)-0.5_R8*abs(flo_mdf)*t0)*dnbr(ix,iy,1)-
-     &       cdpbhz(ix,iy,1,1)*dpbr(ix,iy,1)+
+     &       (con_2dia(ix,iy)-0.5_R8*abs(flo_mdf)*t0)*dnbr(ix,iy,1)
+     &      -cdpbhz(ix,iy,1,1)*dpbr(ix,iy,1)+
      &      t0*vsprcur                                                  !srv 02.04.18
           fnb_nodrift(ix,iy,1,1) = flo_nodrift*
      1       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
@@ -1980,8 +1980,8 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
           else
            flob(ix,iy,1,1) = flo_mdf*
      &       (kmpr(bottomix(ix,iy),bottomiy(ix,iy))+kmpr(ix,iy))/2.0_R8
-!     &      -con_mdf(ix,iy)*dkmprr(ix,iy,1)
-!     &      +cddb(ix,iy,0,0)*dkmprti(ix,iy,0)                          !srv 21.10.10
+!     &       -con_mdf(ix,iy)*dkmprr(ix,iy,1)
+!     &       +cddb(ix,iy,0,0)*dkmprti(ix,iy,0)                         !srv 21.10.10
            conb(ix,iy,1,1,0) =                                          !srv 13.10.06
      &        con_mdf(ix,iy)*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))
      &        +kmpr(ix,iy))/2.0_R8-
