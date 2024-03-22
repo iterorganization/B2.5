@@ -1483,6 +1483,7 @@ c Zhdanov closure
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
       call ipgetr ('b2npht_stab_shei', s%b2npht_stab_shei)
       call ipgetr ('b2upht_te_min', s%b2upht_te_min)
+      call ipgetr ('b2upht_rte_min', s%b2upht_rte_min)
       call ipgetr ('b2upht_te_max', s%b2upht_te_max)
       call ipgetr ('b2upht_ti_min', s%b2upht_ti_min)
       call ipgetr ('b2upht_ti_max', s%b2upht_ti_max)
