@@ -168,6 +168,7 @@
         if (solvereg(ireg))
      >   te(iCv) = max(switch%b2upht_te_min*ev,
      >     min(switch%b2upht_te_max*ev,te(iCv)+dte(iCv)))           !xpb !nh
+         te(iCv) = max(switch%b2upht_rte_min*ti(iCv),te(iCv))    
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi.and.add_te_corr_to_po(ireg)) then
           po(iCv) = po(iCv)+dte(iCv)/qe
