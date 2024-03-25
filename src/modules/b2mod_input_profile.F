@@ -554,6 +554,8 @@ cdjm Jan2017 Keep linearised sources for balance
      &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
         if (any(poloidal_scaling))
      .    call xerrab('Poloidal scaling not yet coded for WG')
+        call xertst(no_div.and.mpg%isClassicalGrid.eq.0,
+     &    'no_div should be true for non-classical vessel mode grids')
       else
         if(transport_ip_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3(1x,e14.7),2i4)')
