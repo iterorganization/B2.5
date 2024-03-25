@@ -499,7 +499,7 @@ cdjm Jan2017 Keep linearised sources for balance
      &  hci0(nCv), hcib(nCv,0:ns-1)
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv)
-      integer :: iy,i,ifail,spec,nspec,iir,ift,icv,
+      integer :: iy,iy2,i,ifail,spec,nspec,iir,ift,icv,
      &      ndim,is,nsp(1:ns+1),iloop,ncall,ndat,
      &      kind_coeff,kind_data,ic,lbl
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
@@ -674,6 +674,7 @@ cdjm Jan2017 Keep linearised sources for balance
             do is=1,nspec
               do iy=1,ndim
                 iir=mpg%cvReg(omp(iy))
+                iy2=iy
                 if(iir.le.0.or.iir.gt.CVREGMAX) then
                   write(*,*) 'transport_input: out of bounds ',
      1             'iy,region(ix,iy) ',iy,iir
@@ -681,11 +682,27 @@ cdjm Jan2017 Keep linearised sources for balance
                 endif
                 lbl = mpg%ftLbl(mpg%cvFt(omp(iy)))
                 do iFt=1,mpg%nFt
-                 if (mpg%ftLbl(iFt).ne.lbl) cycle
+                 if (mpg%isClassicalGrid) then
+                   if (mpg%ftLbl(iFt).ne.lbl) cycle
+                 else
+                   if (iFt.ne.mpg%cvFt(omp(iy))) then 
+                     if ((iFt.le.mpg%cvFt(omp(ndim-1))).or.
+     &                 (iFt.ge.mpg%cvFt(omp(2)))) then
+                       cycle                
+                     elseif (iFt.ne.mpg%nFt) then
+                       iy2=ndim !nh flux tube outside OMP ==> take last OMP flux tube
+                     endif
+                   endif
+                 endif
+
                  do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
      &                                     mpg%ftCvP(iFt,2) - 1
                   iCv = mpg%ftCv(ic)
                   iir = mpg%cvReg(iCv)
+                  if ((.not.mpg%isClassicalGrid).and.(iir.ne.1)
+     &              .and.(iir.ne.5)) then  !nh cell near vessel wall
+                    iy2 = ndim
+                  endif
                   lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
                   ldiv=mod(iir-1,4)+1.ge.3
                   poloidal_scale_factor = 1.0_R8
@@ -718,45 +735,45 @@ cdjm Jan2017 Keep linearised sources for balance
 
                     if (kind_coeff.eq.1) then
                       dna0(iCv,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+     1                 prof(iy2)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.2) then
                       dpa0(iCv,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor/
+     1                 prof(iy2)*poloidal_scale_factor/
      &                 (rt%rza(iCv,nsp(is))*pl%te(iCv)+pl%ti(iCv))
 
                     elseif (kind_coeff.eq.3) then
                       hcib(iCv,nsp(is))=poloidal_scale_factor*
-     &                 prof(iy)*pl%na(iCv,nsp(is))
+     &                 prof(iy2)*pl%na(iCv,nsp(is))
 
                     elseif (kind_coeff.eq.4) then
-                      hce0(iCv)=prof(iy)*dv%ne(iCv)*
+                      hce0(iCv)=prof(iy2)*dv%ne(iCv)*
      1                 poloidal_scale_factor
 
                     elseif (kind_coeff.eq.5) then
                       vla0(iCv,0,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+     1                 prof(iy2)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.6) then
                       vla0(iCv,1,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+     1                 prof(iy2)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.7) then
                       vsa0(iCv,nsp(is))=poloidal_scale_factor*
-     1                 prof(iy)*mp*am(nsp(is))*pl%na(iCv,nsp(is))
+     1                 prof(iy2)*mp*am(nsp(is))*pl%na(iCv,nsp(is))
 
                     elseif (kind_coeff.eq.8) then
                       if (csig_an_style.eq.0) then
-                        sig0(iCv)=prof(iy)*qe*dv%ne(iCv)*
+                        sig0(iCv)=prof(iy2)*qe*dv%ne(iCv)*
      1                   poloidal_scale_factor
                       elseif(csig_an_style.eq.1.and.nomp.gt.0) then
-                        sig0(iCv)=prof(iy)*qe*dv%ne(omp(1))*
+                        sig0(iCv)=prof(iy2)*qe*dv%ne(omp(1))*
      1                   poloidal_scale_factor
                       endif
 
                     elseif (kind_coeff.eq.9) then
                       alf0(iCv)=poloidal_scale_factor*
-     1                 prof(iy)*dv%ne(iCv)*
+     1                 prof(iy2)*dv%ne(iCv)*
      2                 sqrt(qe/pl%te(iCv))
 
                     else
