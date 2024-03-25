@@ -87,10 +87,17 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
         ic2 = ic1 + mpg%cfregp(icf, 2) - 1
         n1 = mpg%cfregp(icf, 2)
         n2 = ncfdata(icf)
+        IF (mpg%cfoncv(icf)) THEN
 !csc icsep-1 because non-internal cells have been excluded!
-        arg1 = icsepomp - 1
-        CALL CALC_DIST_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, b2rr(&
-&                       icf, 1:n1))
+          arg1 = icsepomp - 1
+          CALL CALC_DIST_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, b2rr(&
+&                         icf, 1:n1))
+        ELSE
+!csc icsep-1 because non-internal cells have been excluded!
+          arg1 = icsepomp - 1
+          CALL CALC_DIST_F_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, &
+&                           b2rr(icf, 1:n1))
+        END IF
       END IF
       IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
@@ -101,6 +108,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
 ! check on, and then use, only internal Cvs in OMP list
         CALL XERTST(n1 .EQ. nomp - 2, &
 &             'number of Cv in CF does not equal Cvs in OMP')
+! FIXME check that omp is actually sorted!
         arg1 = icsepomp - 1
         CALL CALC_DIST_NODIFF(geo, omp(2:nomp-1), n1, arg1, b2rr(icf, 1:&
 &                       n1))
@@ -140,10 +148,22 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
           curr_shiftd(nd) = 0.D0
         END DO
       END IF
-      DO nd=1,nbdirs
-        b2datad(nd, 1:n1) = 0.D0
-      END DO
-      b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      IF (mpg%cfoncv(icf)) THEN
+        DO nd=1,nbdirs
+          b2datad(nd, 1:n1) = 0.D0
+        END DO
+        b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      ELSE IF (parallel_hf) THEN
+        DO nd=1,nbdirs
+          b2datad(nd, 1:n1) = 0.D0
+        END DO
+        b2data(1:n1) = geo%fcpbs(mpg%cfreg(ic1:ic2))
+      ELSE
+        DO nd=1,nbdirs
+          b2datad(nd, 1:n1) = 0.D0
+        END DO
+        b2data(1:n1) = geo%fcs(mpg%cfreg(ic1:ic2))
+      END IF
       IF (ALLOCATED(b2datad)) THEN
         DO nd=1,nbdirsmax
           b2datad(nd, :) = 0.D0
@@ -310,13 +330,16 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
         j(icf) = j(icf)/ev
       CASE (5) 
 !max heat flux density on desired FCs
+! assuming that this heat flux is at a solid boundary, 
+! both poloidal and radial components need to be taken
         DO ifc=ic1,ic2
           DO nd=1,nbdirs
-            qqd(nd) = mpg%cffcor(ifc)*std%dv%fht(nd, mpg%cfreg(ifc), 0)/&
-&             geo%fcs(mpg%cfreg(ifc))
+            qqd(nd) = mpg%cffcor(ifc)*(std%dv%fht(nd, mpg%cfreg(ifc), 0)&
+&             +std%dv%fht(nd, mpg%cfreg(ifc), 1))/geo%fcs(mpg%cfreg(ifc)&
+&             )
           END DO
-          qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
-&           cfreg(ifc))
+          qq = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%cfreg(ifc), 1&
+&           ))*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             DO nd=1,nbdirs
               jd(nd, icf) = qqd(nd)
@@ -428,6 +451,30 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
 &                 icv-1))+temp0*csd(nd, mpg%cfreg(ic1+icv-1))/1.0e3_R8)
               END DO
               b2data(icv) = ev*(temp0*temp)
+            END DO
+          CASE (12) 
+!heat flux density on desired FCs (in MW/m^2)
+            DO ifc=ic1,ic2
+              DO nd=1,nbdirs
+                b2datad(nd, ifc) = mpg%cffcor(ifc)*(std%dv%fht(nd, mpg%&
+&                 cfreg(ifc), 0)+std%dv%fht(nd, mpg%cfreg(ifc), 1))/&
+&                 1.0e6
+              END DO
+              b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
+&               cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+              IF (parallel_hf) THEN
+                DO nd=1,nbdirs
+                  b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcpbs(mpg%&
+&                   cfreg(ifc))
+                END DO
+                b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+              ELSE
+                DO nd=1,nbdirs
+                  b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcs(mpg%cfreg(&
+&                   ifc))
+                END DO
+                b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+              END IF
             END DO
           CASE DEFAULT
             WRITE(*, *) cftype(iicf)
@@ -600,24 +647,72 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
         END DO
         j(icf) = cfweight(icf)*temp
       CASE (11) 
-!heat flux peakedness on desired FCs Sum(q**2*ds
+!heat flux peakedness on desired FCs Sum(q**2*ds)
         DO nd=1,nbdirs
           jd(nd, icf) = 0.D0
         END DO
         j(icf) = 0.0_R8
         DO ifc=ic1,ic2
           DO nd=1,nbdirs
-            jd(nd, icf) = jd(nd, icf) + mpg%cffcor(ifc)**2*2*st%dv%fht(&
-&             mpg%cfreg(ifc), 0)*std%dv%fht(nd, mpg%cfreg(ifc), 0)/geo%&
-&             fcs(mpg%cfreg(ifc))
+            jd(nd, icf) = jd(nd, icf) + mpg%cffcor(ifc)**2*2*(st%dv%fht(&
+&             mpg%cfreg(ifc), 0)+st%dv%fht(mpg%cfreg(ifc), 1))*(std%dv%&
+&             fht(nd, mpg%cfreg(ifc), 0)+std%dv%fht(nd, mpg%cfreg(ifc), &
+&             1))/geo%fcs(mpg%cfreg(ifc))
           END DO
-          j(icf) = j(icf) + (st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc&
-&           ))**2/geo%fcs(mpg%cfreg(ifc))
+          j(icf) = j(icf) + ((st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg&
+&           %cfreg(ifc), 1))*mpg%cffcor(ifc))**2/geo%fcs(mpg%cfreg(ifc))
         END DO
         DO nd=1,nbdirs
           jd(nd, icf) = cfweight(icf)*0.5_R8*jd(nd, icf)
         END DO
         j(icf) = 0.5_R8*j(icf)*cfweight(icf)
+      CASE (12) 
+!heat flux density on desired FCs (in MW/m^2)
+! assuming that this heat flux is at a solid boundary, 
+! both poloidal and radial components need to be taken
+        DO ifc=ic1,ic2
+          DO nd=1,nbdirs
+            b2datad(nd, ifc) = mpg%cffcor(ifc)*(std%dv%fht(nd, mpg%cfreg&
+&             (ifc), 0)+std%dv%fht(nd, mpg%cfreg(ifc), 1))/1.0e6
+          END DO
+          b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
+&           cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+          IF (parallel_hf) THEN
+            DO nd=1,nbdirs
+              b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcpbs(mpg%cfreg(&
+&               ifc))
+            END DO
+            b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+          ELSE
+            DO nd=1,nbdirs
+              b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcs(mpg%cfreg(ifc)&
+&               )
+            END DO
+            b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+          END IF
+        END DO
+        CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
+&                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
+&                  b2dataoncfd(:, 1:n2), curr_shift, curr_shiftd, nbdirs&
+&                 )
+        DO icv=1,n2
+          temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
+&           cfdata(icf, 2, icv))
+          DO nd=1,nbdirs
+            jd(nd, icf) = jd(nd, icf) + temp*b2voloncfd(nd, icf, icv) + &
+&             b2voloncf(icf, icv)*2*(b2dataoncf(icv)-cfdata(icf, 2, icv)&
+&             )*b2dataoncfd(nd, icv)
+          END DO
+          j(icf) = j(icf) + b2voloncf(icf, icv)*temp
+        END DO
+        temp0 = 2.0_R8*(cfnorm(icf)*cfnorm(icf))
+        temp = j(icf)*vold(icf)/temp0
+        DO nd=1,nbdirs
+          jd(nd, icf) = cfweight(icf)*(vold(icf)*jd(nd, icf)+j(icf)*&
+&           voldd(nd, icf)-temp*2.0_R8*2*cfnorm(icf)*cfnormd(nd, icf))/&
+&           temp0
+        END DO
+        j(icf) = cfweight(icf)*temp
       CASE DEFAULT
         WRITE(*, *) cftype(icf)
         CALL XERRAB('cftype out of bounds')
@@ -706,10 +801,17 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         ic2 = ic1 + mpg%cfregp(icf, 2) - 1
         n1 = mpg%cfregp(icf, 2)
         n2 = ncfdata(icf)
+        IF (mpg%cfoncv(icf)) THEN
 !csc icsep-1 because non-internal cells have been excluded!
-        arg1 = icsepomp - 1
-        CALL CALC_DIST_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, b2rr(&
-&                       icf, 1:n1))
+          arg1 = icsepomp - 1
+          CALL CALC_DIST_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, b2rr(&
+&                         icf, 1:n1))
+        ELSE
+!csc icsep-1 because non-internal cells have been excluded!
+          arg1 = icsepomp - 1
+          CALL CALC_DIST_F_NODIFF(geo, mpg%cfreg(ic1:ic2), n1, arg1, &
+&                           b2rr(icf, 1:n1))
+        END IF
       END IF
       IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
@@ -720,6 +822,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 ! check on, and then use, only internal Cvs in OMP list
         CALL XERTST(n1 .EQ. nomp - 2, &
 &             'number of Cv in CF does not equal Cvs in OMP')
+! FIXME check that omp is actually sorted!
         arg1 = icsepomp - 1
         CALL CALC_DIST_NODIFF(geo, omp(2:nomp-1), n1, arg1, b2rr(icf, 1:&
 &                       n1))
@@ -740,7 +843,13 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !shift is in mm!
       IF (cf_to_shift(icf) .GT. 0) curr_shift = shift(cf_to_shift(icf))/&
 &         1.0e3_R8
-      b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      IF (mpg%cfoncv(icf)) THEN
+        b2data(1:n1) = geo%cvvol(mpg%cfreg(ic1:ic2))
+      ELSE IF (parallel_hf) THEN
+        b2data(1:n1) = geo%fcpbs(mpg%cfreg(ic1:ic2))
+      ELSE
+        b2data(1:n1) = geo%fcs(mpg%cfreg(ic1:ic2))
+      END IF
       CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
 &             b2data(1:n1), b2voloncf(icf, 1:n2), curr_shift)
       vold(icf) = SUM(b2voloncf(icf, 1:n2))
@@ -808,9 +917,11 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         j(icf) = j(icf)/ev
       CASE (5) 
 !max heat flux density on desired FCs
+! assuming that this heat flux is at a solid boundary, 
+! both poloidal and radial components need to be taken
         DO ifc=ic1,ic2
-          qq = st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc)/geo%fcs(mpg%&
-&           cfreg(ifc))
+          qq = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%cfreg(ifc), 1&
+&           ))*mpg%cffcor(ifc)/geo%fcs(mpg%cfreg(ifc))
           IF (j(icf) .LT. qq) THEN
             j(icf) = qq
           ELSE
@@ -869,6 +980,17 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
             DO icv=1,n1
               b2data(icv) = st%dv%ne(mpg%cfreg(ic1+icv-1))*cs(mpg%cfreg(&
 &               ic1+icv-1))*ev/1.0e3_R8
+            END DO
+          CASE (12) 
+!heat flux density on desired FCs (in MW/m^2)
+            DO ifc=ic1,ic2
+              b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
+&               cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+              IF (parallel_hf) THEN
+                b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+              ELSE
+                b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+              END IF
             END DO
           CASE DEFAULT
             WRITE(*, *) cftype(iicf)
@@ -945,13 +1067,33 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         END DO
         j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
       CASE (11) 
-!heat flux peakedness on desired FCs Sum(q**2*ds
+!heat flux peakedness on desired FCs Sum(q**2*ds)
         j(icf) = 0.0_R8
         DO ifc=ic1,ic2
-          j(icf) = j(icf) + (st%dv%fht(mpg%cfreg(ifc), 0)*mpg%cffcor(ifc&
-&           ))**2/geo%fcs(mpg%cfreg(ifc))
+          j(icf) = j(icf) + ((st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg&
+&           %cfreg(ifc), 1))*mpg%cffcor(ifc))**2/geo%fcs(mpg%cfreg(ifc))
         END DO
         j(icf) = 0.5_R8*j(icf)*cfweight(icf)
+      CASE (12) 
+!heat flux density on desired FCs (in MW/m^2)
+! assuming that this heat flux is at a solid boundary, 
+! both poloidal and radial components need to be taken
+        DO ifc=ic1,ic2
+          b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
+&           cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+          IF (parallel_hf) THEN
+            b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+          ELSE
+            b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+          END IF
+        END DO
+        CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
+&               b2data(1:n1), b2dataoncf(1:n2), curr_shift)
+        DO icv=1,n2
+          j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
+&           icf, 2, icv))**2
+        END DO
+        j(icf) = j(icf)*cfweight(icf)*vold(icf)/cfnorm(icf)**2/2.0_R8
       CASE DEFAULT
         WRITE(*, *) cftype(icf)
         CALL XERRAB('cftype out of bounds')

@@ -122,7 +122,7 @@
       integer, save :: paris(nvmx),parib(nvmx)
       logical, save :: sigma_opt(nsigmx), mean_opt(nsigmx),
      &                 shift_opt(nsigmx), shiftopt(nsigmx),
-     &                 corr_opt(nncf)
+     &                 corr_opt(nncf), parallel_hf
       logical, save :: spatial_dep(nvmx)
       integer, save :: spatial_points(nvmx) = 0
       real (kind=R8), save :: shift_L(nsigmx) = -1000.0_R8, ![envisaged default max 1m shift]
@@ -147,7 +147,7 @@
      & shift_opt, shift_L, shift_U, shift_prior_type, shift_prior_par,
      & shift_prior_range, corr_model, corr_length, corr_prior_type,
      & corr_prior_range, corr_prior_par, corr_opt, corr_L, corr_U,
-     & corr_cutoff, corr_rescale
+     & corr_cutoff, corr_rescale, parallel_hf
 
       contains
 
@@ -223,6 +223,7 @@
       mean_opt = .false.
       spatial_dep = .false.
       spatial_points = 0
+      parallel_hf = .true.
       hessian_approximation = 'limited-memory'
       limited_memory_update_type = 'b2fgs'
       call find_file(filename,file_ok)
@@ -261,7 +262,7 @@
      &   'b2mod_par_opt: shift_cf_data must be >=0')
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.11) call xerrab ('cftype>11 not coded ')
+          if (cftype(icf).gt.12) call xerrab ('cftype>12 not coded ')
           if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
      &     'cftype(1)=0 but no other cost functions are defined')
           if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
@@ -275,13 +276,14 @@
      &     cfstart(icf).lt.2 .and. cfend(icf).lt.2) call xerrab (
      &     'cost functions type 0/6 requires cfstart/cfend>1')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
-     &        (cftype(icf).ge.7 .and. cftype(icf).le.10))
+     &        (cftype(icf).ge.7 .and. cftype(icf).le.10) .or.
+     &        (cftype(icf).ge.12 .and. cftype(icf).le.12))
      >         cfread(icf) = .true.
-          if (cftype(icf).eq.5 .or. cftype(icf).eq.11) 
-     &     m%cfOnCv(icf) = .false. !heat flux CF needs faces
-          if ((cftype(icf).eq.5 .or. cftype(icf).eq.11) 
-     &         .and. cfdef(icf).eq.3)
-     &      call xerrab('cftype 5 and 11 must be defined using faces!')
+          if (cftype(icf).eq.5 .or. cftype(icf).eq.11 .or. 
+     &        cftype(icf).eq.12) m%cfOnCv(icf) = .false. !heat flux CF needs faces
+          if ((cftype(icf).eq.5 .or. cftype(icf).eq.11 .or. 
+     &         cftype(icf).eq.11) .and. cfdef(icf).eq.3) call xerrab(
+     &       'cftype 5, 11 and 12 must be defined using faces!')
           if (shift_cf_data(icf).gt.0 .and. .not.cfread(icf)) then
             write(*,*) 'icf, shift_cf_data(icf), cfread(icf),'//
      &        ' cftype(icf)'

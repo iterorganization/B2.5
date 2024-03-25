@@ -58,8 +58,13 @@
             ic2 = ic1 + mpg%cfRegP(icf,2) - 1
             n1 = mpg%cfRegP(icf,2)
             n2 = ncfdata(icf)
-            call calc_dist(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
-     &        b2rr(icf,1:n1))
+            if (mpg%cfOnCv(icf)) then
+              call calc_dist(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
+     &          b2rr(icf,1:n1))
+            else
+              call calc_dist_f(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
+     &          b2rr(icf,1:n1))
+            endif
           endif
           if (mapToOMP(icf)) then
           ! FIXME to be considerably improved!
@@ -70,6 +75,7 @@
             ! check on, and then use, only internal Cvs in OMP list
             call xertst(n1.eq.nomp-2,
      &       'number of Cv in CF does not equal Cvs in OMP')
+            ! FIXME check that omp is actually sorted!
             call calc_dist(geo,omp(2:nomp-1),n1,icsepomp-1,
      &        b2rr(icf,1:n1))
           endif
@@ -90,7 +96,15 @@
           curr_shift = 0.0_R8
           if (cf_to_shift(icf).gt.0)
      &         curr_shift = shift(cf_to_shift(icf))/1.0e3_R8 !shift is in mm!
-          b2data(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
+          if (mpg%cfOnCv(icf)) then
+            b2data(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
+          else
+            if (parallel_hf) then
+              b2data(1:n1) = geo%fcPbs(mpg%cfReg(ic1:ic2))
+            else
+              b2data(1:n1) = geo%fcS(mpg%cfReg(ic1:ic2))
+            endif
+          endif
           call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
      &      b2data(1:n1),b2volOnCf(icf,1:n2),curr_shift)
           vold(icf) = sum(b2volOnCf(icf,1:n2))
@@ -179,8 +193,11 @@
             J(icf) = J(icf)/ev
           case (5) !max heat flux density on desired FCs
             do iFc = ic1, ic2
-              qq = st%dv%fht(mpg%cfReg(iFc),0)*mpg%cfFcOr(iFc)/
-     &             geo%fcS(mpg%cfReg(iFc))
+              ! assuming that this heat flux is at a solid boundary, 
+              ! both poloidal and radial components need to be taken
+              qq = (st%dv%fht(mpg%cfReg(iFc),0) + 
+     &              st%dv%fht(mpg%cfReg(iFc),1))*mpg%cfFcOr(iFc)/
+     &              geo%fcS(mpg%cfReg(iFc))
               J(icf) = max(J(icf),qq)
             enddo
             J(icf) = J(icf)*cfweight(icf)
@@ -225,6 +242,16 @@
                 do icv=1, n1
                   b2data(icv) = st%dv%ne(mpg%cfReg(ic1+icv-1))*
      &              cs(mpg%cfReg(ic1+icv-1))*eV/1.0e3_R8
+                enddo
+              case (12) !heat flux density on desired FCs (in MW/m^2)
+                do iFc = ic1, ic2
+                  b2data(iFc) = (st%dv%fht(mpg%cfReg(iFc),0) + 
+     &              st%dv%fht(mpg%cfReg(iFc),1))*mpg%cfFcOr(iFc)/1.0e6
+                  if (parallel_hf) then
+                    b2data(iFc) = b2data(iFc)/geo%fcPbs(mpg%cfReg(iFc))
+                  else
+                    b2data(iFc) = b2data(iFc)/geo%fcS(mpg%cfReg(iFc))
+                  endif
                 enddo
               case default
                write(*,*) cftype(iicf)
@@ -298,13 +325,34 @@
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
-          case (11) !heat flux peakedness on desired FCs Sum(q**2*ds
+          case (11) !heat flux peakedness on desired FCs Sum(q**2*ds)
             J(icf) = 0.0_R8
             do iFc = ic1, ic2
-              J(icf) = J(icf) + (st%dv%fht(mpg%cfReg(iFc),0)*
+              J(icf) = J(icf) + ((st%dv%fht(mpg%cfReg(iFc),0)+
+     &             st%dv%fht(mpg%cfReg(iFc),1))*
      &             mpg%cfFcOr(iFc))**2/geo%fcS(mpg%cfReg(iFc))
             enddo
             J(icf) = 0.5_R8*J(icf)*cfweight(icf)
+          case (12) !heat flux density on desired FCs (in MW/m^2)
+            do iFc = ic1, ic2
+              ! assuming that this heat flux is at a solid boundary, 
+              ! both poloidal and radial components need to be taken
+              b2data(iFc) = (st%dv%fht(mpg%cfReg(iFc),0) + 
+     &              st%dv%fht(mpg%cfReg(iFc),1))*mpg%cfFcOr(iFc)/1.0e6
+              if (parallel_hf) then
+                b2data(iFc) = b2data(iFc)/geo%fcPbs(mpg%cfReg(iFc))
+              else
+                b2data(iFc) = b2data(iFc)/geo%fcS(mpg%cfReg(iFc))
+              endif
+            enddo
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        b2data(1:n1),b2dataOnCf(1:n2),curr_shift)
+            do iCv = 1, n2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
+            end do
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
           case default
             write(*,*) cftype(icf)
             call xerrab ('cftype out of bounds')
