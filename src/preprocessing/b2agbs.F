@@ -17,12 +17,14 @@
      .  faces(0:m%nFc), iFc, i, cv, v1, v2, 
      .  scf, ncf, fcs(0:100), c_al, j, ref_fc(m%nFt), ref_cv(m%nFt),
      .  wrkf(0:m%nFc), counter, pfaces(0:100), ref_face, ind,
-     .  face1, face2, nf2, k, l
+     .  face1, face2, nf2, k, l, ncvOMP, ncvIMP, cvOMP(1:m%nCv),
+     .  cvIMP(1:m%nCv)
       real (kind=R8) :: pol_flux, width, vpsi(0:100), psi_max(0:m%nCv),
      .  psif_max(0:m%nFc), psi_ref, pol_flux_ref, cutoff_width ,
-     .  pol_flux_ref1, pol_flux_ref2, pol_flux1, pol_flux2, psif(m%nFc)
+     .  pol_flux_ref1, pol_flux_ref2, pol_flux1, pol_flux2, psif(m%nFc),
+     .  rzomp(2,2), rzimp(2,2)
       logical :: fc_done(0:m%nFc), cv_done(0:m%nCv), 
-     .  cv_aligned(0:m%nCv)
+     .  cv_aligned(0:m%nCv), ifail
       intrinsic int, pack, maxval, maxloc
       data width /1.0_R8/
       save width
@@ -71,7 +73,22 @@
 *   ..select reference location for each flux tube
 *   ..we use the outer midplane whenever possible, then the inner midplane,
 *   ..otherwise the cell to the right of the left end of the flux tube.
-    
+
+*   ..First determine cells from OMP and IMP
+      rzomp(1,:) = m%OMPr
+      rzomp(2,:) = m%OMPz
+      rzimp(1,:) = m%IMPr
+      rzimp(2,:) = m%IMPz
+      ncvOMP = 0
+      cvOMP = 0
+      call cv_intersections (m%nCv, g, m, rzomp, 
+     &  cvOMP, ncvOMP, m%nCv, 1, ifail)
+      call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
+      ncvIMP = 0
+      cvIMP = 0
+      call cv_intersections (m%nCv, g, m, rzimp, 
+     &  cvIMP, ncvIMP, m%nCv, 1, ifail)
+      call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
       ref_ind_cv = 0
       do iFt = 1,m%nFt
         ! Get cells
@@ -90,7 +107,7 @@
    
         ! If there is a common cell between omp cells and tube cells
         do i = 0,nc-1
-           if (isMember(cells(i),m%cvOMP,m%ncvOMP)) then
+           if (isMember(cells(i),cvOMP(1:ncvOMP),ncvOMP)) then
               ref_ind_cv(iFt) = i
               exit
            endif
@@ -98,7 +115,7 @@
         ! Elseif there is common cell between imp cells and tube cells
         if (ref_ind_cv(iFt).eq.0) then
           do i = 0,nc-1
-           if (isMember(cells(i),m%cvIMP,m%ncvIMP)) then
+           if (isMember(cells(i),cvIMP(1:ncvIMP),ncvIMP)) then
               ref_ind_cv(iFt) = i
               exit
            endif   

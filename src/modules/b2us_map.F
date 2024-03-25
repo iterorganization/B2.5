@@ -107,7 +107,11 @@
         integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
   
         integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
-
+        
+        real (kind=R8) :: OMPr(1:2)
+        real (kind=R8) :: OMPz(1:2)
+	real (kind=R8) :: IMPr(1:2)
+        real (kind=R8) :: IMPz(1:2)
 
         end type mapping
 
@@ -281,6 +285,11 @@
       m%fcIMP = 0
 
       m%Xpoint = 0 
+     
+      m%OMPr = 0
+      m%OMPz = 0
+      m%IMPr = 0
+      m%IMPz = 0
 
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
