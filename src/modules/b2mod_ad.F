@@ -95,6 +95,7 @@
 ! ncall variables from other routines
      & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0
 
-      integer, save :: gradient_iterations = 0, primal_iterations = 0 
+      integer, save :: gradient_iterations = 0, primal_iterations = 0
+      real (kind=R8), save :: primal_res=0.0_R8, gradient_res=0.0_R8
 
       end module b2mod_ad
