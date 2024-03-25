@@ -205,12 +205,6 @@ contains
                 call cfruin (lun, 1, idum,'nX')
                 m%nXp = idum(0)
  
-                ! read length of OMP and IMP arrays
-                call cfruin (lun, 4, idum, 'ncvOMP,ncvIMP,nfcOMP,nfcIMP')
-                m%ncvOMP = idum(0)
-                m%ncvIMP = idum(1)
-                m%nfcOMP = idum(2)
-                m%nfcIMP = idum(3)
             end if
         end if
         
