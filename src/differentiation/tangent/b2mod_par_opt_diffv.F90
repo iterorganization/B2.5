@@ -146,7 +146,7 @@ MODULE B2MOD_PAR_OPT_DIFFV
   INTEGER, SAVE :: ncorr_opt=0
   INTEGER, SAVE :: paris(nvmx), parib(nvmx)
   LOGICAL, SAVE :: sigma_opt(nsigmx), mean_opt(nsigmx), shift_opt(nsigmx&
-& ), shiftopt(nsigmx), corr_opt(nncf)
+& ), shiftopt(nsigmx), corr_opt(nncf), parallel_hf
   LOGICAL, SAVE :: spatial_dep(nvmx)
   INTEGER, SAVE :: spatial_points(nvmx)=0
 ![envisaged default max 1m shift]
@@ -170,7 +170,7 @@ MODULE B2MOD_PAR_OPT_DIFFV
 &     shift_l, shift_u, shift_prior_type, shift_prior_par, &
 &     shift_prior_range, corr_model, corr_length, corr_prior_type, &
 &     corr_prior_range, corr_prior_par, corr_opt, corr_l, corr_u, &
-&     corr_cutoff, corr_rescale
+&     corr_cutoff, corr_rescale, parallel_hf
 
 CONTAINS
 !  Differentiation of read_b2mod_par_opt as a context to call tangent code (with options multiDirectional context noISIZE r8):
@@ -272,6 +272,7 @@ CONTAINS
     mean_opt = .false.
     spatial_dep = .false.
     spatial_points = 0
+    parallel_hf = .true.
     hessian_approximation = 'limited-memory'
     limited_memory_update_type = 'b2fgs'
     CALL FIND_FILE(filename, file_ok)
@@ -302,7 +303,7 @@ CONTAINS
 &           'b2mod_par_opt: shift_cf_data must be >=0')
       incf = 0
       DO 100 icf=1,ncf
-        IF (cftype(icf) .GT. 11) CALL XERRAB('cftype>11 not coded ')
+        IF (cftype(icf) .GT. 12) CALL XERRAB('cftype>12 not coded ')
         IF (cftype(1) .EQ. 0 .AND. ncf .EQ. 1) CALL XERRAB(&
 &                  'cftype(1)=0 but no other cost functions are defined'&
 &                                                   )
@@ -320,15 +321,16 @@ CONTAINS
 &           icf) .LT. 2 .AND. cfend(icf) .LT. 2) CALL XERRAB(&
 &                     'cost functions type 0/6 requires cfstart/cfend>1'&
 &                                                     )
-        IF ((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
-&           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) cfread(icf) = .true.
+        IF (((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
+&           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) .OR. (cftype(icf) &
+&           .GE. 12 .AND. cftype(icf) .LE. 12)) cfread(icf) = .true.
 !heat flux CF needs faces
-        IF (cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) m%cfoncv(icf)&
-&          = .false.
-        IF ((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .AND. cfdef(&
-&           icf) .EQ. 3) CALL XERRAB(&
-&                         'cftype 5 and 11 must be defined using faces!'&
-&                             )
+        IF ((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .OR. cftype(&
+&           icf) .EQ. 12) m%cfoncv(icf) = .false.
+        IF (((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .OR. cftype(&
+&           icf) .EQ. 11) .AND. cfdef(icf) .EQ. 3) CALL XERRAB(&
+&                     'cftype 5, 11 and 12 must be defined using faces!'&
+&                                                       )
         IF (shift_cf_data(icf) .GT. 0 .AND. (.NOT.cfread(icf))) THEN
           WRITE(*, *) 'icf, shift_cf_data(icf), cfread(icf),'//&
 &         ' cftype(icf)'
@@ -1135,6 +1137,7 @@ CONTAINS
     mean_opt = .false.
     spatial_dep = .false.
     spatial_points = 0
+    parallel_hf = .true.
     hessian_approximation = 'limited-memory'
     limited_memory_update_type = 'b2fgs'
     CALL FIND_FILE(filename, file_ok)
@@ -1165,7 +1168,7 @@ CONTAINS
 &           'b2mod_par_opt: shift_cf_data must be >=0')
       incf = 0
       DO 100 icf=1,ncf
-        IF (cftype(icf) .GT. 11) CALL XERRAB('cftype>11 not coded ')
+        IF (cftype(icf) .GT. 12) CALL XERRAB('cftype>12 not coded ')
         IF (cftype(1) .EQ. 0 .AND. ncf .EQ. 1) CALL XERRAB(&
 &                  'cftype(1)=0 but no other cost functions are defined'&
 &                                                   )
@@ -1183,15 +1186,16 @@ CONTAINS
 &           icf) .LT. 2 .AND. cfend(icf) .LT. 2) CALL XERRAB(&
 &                     'cost functions type 0/6 requires cfstart/cfend>1'&
 &                                                     )
-        IF ((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
-&           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) cfread(icf) = .true.
+        IF (((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
+&           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) .OR. (cftype(icf) &
+&           .GE. 12 .AND. cftype(icf) .LE. 12)) cfread(icf) = .true.
 !heat flux CF needs faces
-        IF (cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) m%cfoncv(icf)&
-&          = .false.
-        IF ((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .AND. cfdef(&
-&           icf) .EQ. 3) CALL XERRAB(&
-&                         'cftype 5 and 11 must be defined using faces!'&
-&                             )
+        IF ((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .OR. cftype(&
+&           icf) .EQ. 12) m%cfoncv(icf) = .false.
+        IF (((cftype(icf) .EQ. 5 .OR. cftype(icf) .EQ. 11) .OR. cftype(&
+&           icf) .EQ. 11) .AND. cfdef(icf) .EQ. 3) CALL XERRAB(&
+&                     'cftype 5, 11 and 12 must be defined using faces!'&
+&                                                       )
         IF (shift_cf_data(icf) .GT. 0 .AND. (.NOT.cfread(icf))) THEN
           WRITE(*, *) 'icf, shift_cf_data(icf), cfread(icf),'//&
 &         ' cftype(icf)'
