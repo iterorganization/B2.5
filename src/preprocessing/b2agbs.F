@@ -81,12 +81,12 @@
       rzimp(2,:) = m%IMPz
       ncvOMP = 0
       cvOMP = 0
-      call cv_intersections (m%nCv, g, m, rzomp, 
+      call cv_intersections (g, m, rzomp, 
      &  cvOMP, ncvOMP, m%nCv, 1, ifail)
       call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
       ncvIMP = 0
       cvIMP = 0
-      call cv_intersections (m%nCv, g, m, rzimp, 
+      call cv_intersections (g, m, rzimp, 
      &  cvIMP, ncvIMP, m%nCv, 1, ifail)
       call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
       ref_ind_cv = 0
