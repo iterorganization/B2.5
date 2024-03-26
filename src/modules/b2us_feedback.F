@@ -1631,6 +1631,44 @@ cxpb size is changed in DIMENSIONS.F
               fb_current(ifb) = fb_current(ifb) -
      &          (sum(emolrad)+sum(eneutrad)+sum(eionrad))
 #endif
+              case (22) ! average density of this species at the separatrix
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &            'compute_feedback_type: using ',
+     &            'average separatrix density for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+              fb_current(ifb) = 0.0_R8
+              sum_e = 0.0_R8
+              is_start = -1
+              is_end = -1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
+                  iFc1 = mpg%fsFcP(mpg%iFssep,1)
+                  iFc2 = iFc1 + mpg%fsFcP(mpg%iFssep,2) - 1
+! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
+!     belonging to each face of the flux surface
+                  do iFc = iFc1, iFc2
+                    ic1 = mpg%fcCv(mpg%fsFc(iFc),1)
+                    ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
+                    if(mpg%cvOnClosedSurface(ic1) .or. 
+     &                 mpg%cvOnClosedSurface(ic2)) then
+                      fb_current(ifb) = fb_current(ifb) +
+     &                  (pl%na(ic1,is)*geo%fcHc(iFc,2) + pl%na(ic2,is)
+     &                  *geo%fcHc(iFc,1)) /
+     &                  sum(geo%fcHc(iFc,:))*geo%fcS(mpg%fsFc(iFc))
+                      if (is.eq.is_start+1) then
+                        sum_e = sum_e + geo%fcS(mpg%fsFc(iFc))
+                      end if
+                    end if
+                  enddo
+                  is_end = is
+                endif
+              enddo
+              fb_current(ifb) = fb_current(ifb)/sum_e        
             case default
                write(*,*) 'fb_type not coded ',
      &              fb_type(ifb)
