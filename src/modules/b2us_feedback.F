@@ -952,8 +952,8 @@ cxpb size is changed in DIMENSIONS.F
      & is_end, iss, iCv1, ibc, ib
 #ifdef B25_EIRENE
       integer :: i, j, l
-      real(kind=r8) :: sna_pump, sna_puff, sna_core
 #endif
+      real(kind=r8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, t0, t1, 
      &    t2, k
@@ -1865,32 +1865,13 @@ cxpb size is changed in DIMENSIONS.F
      &            fb_rescale_option(ifb).eq.7) then
                 if (switch%use_eirene.eq.0 .and. 
      &              switch%use_pump.ge.1) then
-                  t0 = 0.0_R8
-                  t2 = 0.0_R8
-                  DO ib = 1, nbc
-                    if (BCCON(is_start,ib).eq.10) then
-                    do ibc = 1, mpg%bcCvP(ib,2)
-                      iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
-                      if (switch%recycle_afn.eq.0.or.
-     &                   fb_species(ifb).gt.1) then
-                          t0 = t0 + state%sr%sna(iCv1,0,is_start)
-     &                    +pl%na(iCv1,is_start)*
-     &                    state%sr%sna(iCv1,1,is_start)
-                       endif
-                     enddo
-                     endif
-                   enddo
-                   t1 = 0.0_R8
-                   do is=is_start,is_end
-                     do ib=1,nbc
-                       if (BCCON(IS,IB).eq.8) then
-                         t1 = t1+CONPAR(is,ib,1)
-                       endif
-                     enddo
-                   enddo
-                   print *,'pump', t0,'puff',t1 
-                   if (t0 <-1e0_R8)
-     &            saved_fb_actuator(ifb) = abs(t0)*fb_rescale(ifb)
+
+                call calc_puff_pump_b25(switch, ns, mpg, nCv, dv, pl,
+     &          is_start,is_end, sna_pump, sna_puff, sna_core)
+                print *,'pump', sna_pump,'puff',sna_puff
+                if (sna_pump <-1e0_R8)
+     &          saved_fb_actuator(ifb) = abs(sna_pump)*fb_rescale(ifb)
+     &            -sna_core
                 elseif (switch%use_eirene.eq.1 .and. 
      &            switch%use_pump.ge.1) then
                   call calc_puff_pump(switch, ns, mpg, nCv, dv, 
@@ -2186,30 +2167,20 @@ cxpb size is changed in DIMENSIONS.F
      &            fb_rescale_option(ifb).eq.7) then
                 if (switch%use_pump.ge.1) then
                   if (switch%use_eirene.eq.0) then
-                    t0 = 0.0_R8
-                    t2 = 0.0_R8
-                    do ibc = 1, mpg%bcCvP(fb_ib(ifb),2)
-                      iCv1 = mpg%bcCv(mpg%bcCvP(fb_ib(ifb),1)+ibc-1,1)
-                      t0 = t0 + state%sr%sna(iCv1,0,is_start)
-     &               +pl%na(iCv1,is_start)*state%sr%sna(iCv1,1,is_start)
-                    enddo
-                    t1 = 0.0_R8
-                    do is=is_start,is_end
-                      do ib=1,nbc
-                        if (BCCON(IS,IB).eq.8) then
-                          t1 = t1+CONPAR(is,ib,1)
-                        endif
-                      enddo
-                    enddo
-                
-                    print *,'pump', t0,'puff',t1
-                    if (t0 < -1e0_R8) then
-                      print *,"sna_tot is", t2
-                      saved_fb_actuator(ifb) = abs(t1/t0)
-     &               * saved_fb_actuator(ifb)/fb_rescale(ifb)
-                    else
-                      print *,"pump bigger then -1!", t0
+                    call calc_puff_pump_b25(switch, ns, mpg, nCv, dv, 
+     &               pl, is_start,is_end, sna_pump, sna_puff, sna_core)
+              
+                  print *,'pump', sna_pump,'puff+core',sna_core+sna_puff
+                  if (sna_pump < -1e0_R8) then
+                    print *,"sna_tot is", sna_core+sna_puff
+                    if (abs(1-fb_rescale(ifb)).ge.1e-6) then
+                      saved_fb_actuator(ifb) = 
+     &                abs((sna_puff+sna_core)/sna_pump)
+     &                * saved_fb_actuator(ifb)/fb_rescale(ifb)
                     endif
+                  else
+                    print *,"pump bigger then -1!", sna_pump
+                  endif
                   else
                     call calc_puff_pump(switch, ns, mpg, nCv, dv, 
      &                  fb_species(ifb), sna_pump, sna_puff, sna_core)
@@ -2515,6 +2486,78 @@ cxpb size is changed in DIMENSIONS.F
 
       return
       end subroutine write_fbparms
+
+        subroutine calc_puff_pump_b25(switch, ns, mpg, nCv, dv, pl,
+     &   is_start,is_end, sna_pump, sna_puff, sna_core)
+
+        use b2mod_boundary_namelist
+        use b2mod_neutrals_namelist
+        use b2us_data, only : state
+        type (B2Plasma), intent (inout) :: pl
+        
+        real (kind=R8) :: sna_pump, sna_puff, sna_core
+        integer :: is_start,is_end, is, ns, iFc, nCv, iCv1, ib, 
+     &  istra
+        type (mapping), intent (in) :: mpg
+        type (B2Derivatives), intent (in) :: dv
+        type (switches), intent (in) :: switch
+        sna_core = 0.0_R8
+        do is=is_start,is_end
+          do iCv1=mpg%nCi+1, nCv
+            if(mpg%cvOnClosedSurface(iCv1)) then
+              iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))  
+              if (switch%mdf_fnb.ne.0) then
+                sna_core = sna_core + dv%fna_mdf(iFc,1,is)
+              else
+                sna_core = sna_core + dv%fna(iFc,1,is)
+              end if
+            endif
+          enddo
+        enddo
+
+        sna_puff = 0.0_R8
+        is=is_start
+        do ib=1,nbc
+          if (BCCON(IS,IB).eq.8) then
+            sna_puff = sna_puff+CONPAR(is,ib,1)
+          endif
+        enddo
+
+        sna_pump = 0.0_R8
+        
+        if (switch%recycle_afn.eq.0.or.
+     &          is_start.gt.1) then
+          do istra = 1, nbc
+            print *,"bc:", istra, bccon(is_start,istra)
+            if (bccon(is_start,istra).eq.10) then
+              do ib = 1, mpg%bcCvP(istra,2)
+                iCv1 = mpg%bcCv(mpg%bcCvP(istra,1)+ib-1,1)
+                sna_pump = sna_pump + state%sr%sna(iCv1,0,is_start)
+     &           +pl%na(iCv1,is_start)*
+     &            state%sr%sna(iCv1,1,is_start)
+              enddo
+            endif
+          enddo
+
+          else
+          do istra = 1, nstrai
+            print *,"istra:", istra, recyc(is_start,istra)
+            if (((1-recyc(is_start,istra)).ge.1e-7_R8) 
+     &        .and. (species_start(istra) .eq. is_start)) then
+              do ib = 1, mpg%bcCvP(rcstart(istra)+2,2)
+                iCv1 = mpg%bcCv(mpg%bcCvP(rcstart(istra)+2,1)
+     &            +ib-1,1)
+                  sna_pump = sna_pump + state%sr%sna(iCv1,0,is_start)
+     &           +pl%na(iCv1,is_start)*state%sr%sna
+     &            (iCv1,1,is_start)
+              enddo
+            endif
+          enddo
+        endif
+
+        print *,"pump,puff,core", sna_pump,sna_puff,sna_core
+          
+        end subroutine calc_puff_pump_b25
 
 #ifdef B25_EIRENE
       subroutine calc_puff_pump(switch, ns, mpg, nCv, dv, 
