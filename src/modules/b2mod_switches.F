@@ -447,6 +447,21 @@ c b2sihs_
 
 c b2news_
       integer :: b2news_ncallout
+      real (kind=R8) :: facvis_start
+      real (kind=R8) :: facvis_inc
+      real (kind=R8) :: facvis_dec
+      real (kind=R8) :: facvis_target
+      real (kind=R8) :: facdrift_start
+      real (kind=R8) :: facdrift_inc
+      real (kind=R8) :: facdrift_dec
+      real (kind=R8) :: facdrift_target
+      real (kind=R8) :: facExB_start
+      real (kind=R8) :: facExB_inc
+      real (kind=R8) :: facExB_dec
+      real (kind=R8) :: facExB_target
+      integer :: ramp_slow
+      real (kind=R8) :: b2news_ExB
+      real (kind=R8) :: b2news_vis
 
 c b2srst
       real (kind=R8) :: b2srst_rf0
@@ -471,9 +486,6 @@ c b2mndt
       real (kind=R8) :: nstg_areshi
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
-      real (kind=R8) :: facvis_start
-      real (kind=R8) :: facdrift_start
-      real (kind=R8) :: facExB_start
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -543,7 +555,6 @@ c Optimization
       implicit none
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
-
 
       s % get_residuals = 0
       s % mdf_fhe = 0
@@ -975,6 +986,21 @@ c b2sihs_
 
 c b2news_
       s % b2news_ncallout = -1
+      s % facvis_start = 0.0_R8
+      s % facvis_inc = 1.0_R8
+      s % facvis_dec = 0.0_R8
+      s % facvis_target = 0.0_R8
+      s % facdrift_start = 0.0_R8
+      s % facdrift_inc = 1.0_R8
+      s % facdrift_dec = 0.0_R8
+      s % facdrift_target = 0.0_R8
+      s % facExB_start = 0.0_R8
+      s % facExB_inc = 1.0_R8
+      s % facExB_dec = 0.0_R8
+      s % facExB_target = 0.0_R8
+      s % ramp_slow = 0
+      s % b2news_ExB = 0.0_R8
+      s % b2news_vis = 0.0_R8
 
 c b2sihs_
       s % b2srst_rf0 = 1.0_R8
@@ -1001,9 +1027,6 @@ c b2mndt
       s % nstg_areshi = 0.0_R8
       s % BoRiS = 0.0_R8
       s % b2mndt_rxf = 0.5_R8
-      s % facvis_start = 0.0_R8
-      s % facdrift_start = 0.0_R8
-      s % facExB_start = 0.0_R8
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1287,7 +1310,6 @@ c style/mode switches
       call ipgeti ('b2sifr_styl0', s % b2sifr_styl0)
       call ipgeti ('b2tqin_csigin_style', s % b2tqin_csigin_style)
 
-
 c phm switches
       call ipgetr ('b2sian_phm0', s % b2sian_phm0)
       call ipgetr ('b2sicf_phm0', s % b2sicf_phm0)
@@ -1325,7 +1347,6 @@ c phm switches
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
       call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
-
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1415,7 +1436,6 @@ c Eirene coupling
       call ipgetr ('eirene_ua_max', s % eir_ua_max)
       call ipgetr ('b2mndr_rescale_neutrals_sources',
      &                s % neutral_sources_rescale)
-
 
 c k-enstrophy model
       call ipgeti ('b2mndr_solve_keps',s % solve_keps)
@@ -1535,6 +1555,21 @@ c b2sihs_
 
 c b2news_
       call ipgeti ('b2news_ncallout', s%b2news_ncallout)
+      call ipgetr ('b2news_facExB_start',   s%facExB_start)
+      call ipgetr ('b2news_facExB_inc',   s%facExB_inc)
+      call ipgetr ('b2news_facExB_dec',   s%facExB_dec)
+      call ipgetr ('b2news_facExB_target',   s%facExB_target)
+      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
+      call ipgetr ('b2news_facdrift_inc',   s%facdrift_inc)
+      call ipgetr ('b2news_facdrift_dec',   s%facdrift_dec)
+      call ipgetr ('b2news_facdrift_target',   s%facdrift_target)
+      call ipgetr ('b2news_facvis_start',   s%facvis_start)
+      call ipgetr ('b2news_facvis_inc',   s%facvis_inc)
+      call ipgetr ('b2news_facvis_dec',   s%facvis_dec)
+      call ipgetr ('b2news_facvis_target',   s%facvis_target)
+      call ipgeti ('b2news_ramp_slow', s%ramp_slow)
+      call ipgetr ('b2news_ExB', s%b2news_ExB)
+      call ipgetr ('b2news_vis', s%b2news_vis)
 
 c b2srst
       call ipgetr ('b2srst_rf0', s%b2srst_rf0)
@@ -1563,15 +1598,11 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
-      call ipgetr ('b2news_facExB_start',   s%facExB_start)
-      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
-      call ipgetr ('b2news_facvis_start',   s%facvis_start)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
       call ipgetr ('b2mndr_stim', s%b2mndr_stim)
       call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
-
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
@@ -1696,7 +1727,7 @@ c mdf_fnb
       endif
 
 c pot_eq
-c pot_eq = 0: don't solve pot. eq.;
+c pot_eq = 0: do not solve pot. eq.;
 c pot_eq = 1: solve (default)
 c pot_eq = 2: pot. = 3.1*Te/qe
       if (s%pot_eq.lt.0.or.s%pot_eq.gt.2) then  !srv 16.07.12 27.02.13
@@ -1857,6 +1888,44 @@ c b2news
 
        call xertst (-15.le.s%no_solve.and.s%no_solve.le.1,
      &   'faulty input no_solve')
+
+       call xertst (0.0_R8.le.s%facdrift_start .and.
+     &              1.0_R8.ge.s%facdrift_start,
+     &   'faulty argument facdrift_start')
+       call xertst (0.0_R8.le.s%facdrift_target .and.
+     &              1.0_R8.ge.s%facdrift_target,
+     &   'faulty argument facdrift_target')
+       call xertst (1.0_R8.le.s%facdrift_inc,
+     &   'faulty argument facdrift_inc')
+       call xertst (0.0_R8.le.s%facdrift_dec .and.
+     &              1.0_R8.ge.s%facdrift_dec,
+     &   'faulty argument facdrift_dec')
+       call xertst (0.0_R8.le.s%facExB_start .and.
+     &              1.0_R8.ge.s%facExB_start,
+     &   'faulty argument facExB_start')
+       call xertst (0.0_R8.le.s%facExB_target .and.
+     &              1.0_R8.ge.s%facExB_target,
+     &   'faulty argument facExB_target')
+       call xertst (1.0_R8.le.s%facExB_inc,
+     &   'faulty argument facExB_inc')
+       call xertst (0.0_R8.le.s%facExB_dec .and. 1.0_R8.ge.s%facExB_dec,
+     &   'faulty argument facExB_dec')
+       call xertst (0.0_R8.le.s%b2news_ExB .and.
+     &              1.0_R8.ge.s%b2news_ExB,
+     &  'faulty parameter b2news_ExB')
+       call xertst (0.0_R8.le.s%facvis_start .and.
+     &              1.0_R8.ge.s%facvis_start,
+     &   'faulty argument facvis_start')
+       call xertst (0.0_R8.le.s%facvis_target .and.
+     &              1.0_R8.ge.s%facvis_target,
+     &   'faulty argument facvis_target')
+       call xertst (1.0_R8.le.s%facvis_inc,
+     &   'faulty argument facvis_inc')
+       call xertst (0.0_R8.le.s%facvis_dec .and. 1.0_R8.ge.s%facvis_dec,
+     &   'faulty argument facvis_dec')
+       call xertst (0.0_R8.le.s%b2news_vis .and.
+     &              1.0_R8.ge.s%b2news_vis,
+     &  'faulty parameter b2news_vis')
 
 c b2usmo
        call xertst (0.0_R8.le.s%cfc0, 'faulty parameter cfc0')
@@ -2132,7 +2201,7 @@ c      endif
       endif
 
       if(s%use_auto_spatial_hyb.ne.0.and.s%recycle_afn.eq.0) then
-        call xerrab('automatic spatial hybrid needs KUL neutral BCs')
+        call xerrab('automatic spatial hybrid needs AFN neutral BCs')
       endif
 
 c k-enstrophy model
