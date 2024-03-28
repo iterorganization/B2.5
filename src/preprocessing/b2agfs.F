@@ -101,7 +101,8 @@
      .  min_pitch, distval,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
-      real (kind=R8) :: cvBt(m%nCv), cvBp(m%nCv)
+      real (kind=R8) :: cvBt(m%nCv), cvBp(m%nCv), fcX(m%nFc), 
+     .  fcY(m%nFc)
       integer ireg,errors
       logical found, concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
@@ -163,38 +164,73 @@
 
 
       ! Set up magnetic field and shift coordinates
+      ! offsets on cell center magnetic field
       do iCv = 1,m%nCv
         if ( m%cvLbl(iCv) .eq. GRID_UNDEFINED .or. 
      &     m%cvLbl(iCv) .eq. GRID_EXTERNAL .or. 
      &     m%cvLbl(iCv) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
-        g%cvBb(iCv,0) = abs(cvBp(iCv))
-        g%cvBb(iCv,1) = 0.0_R8
-        g%cvBb(iCv,2) = cvBt(iCv) !keep the sign of the toroidal field
-        g%cvBb(iCv,3) = sqrt( cvBp(iCv)**2 + cvBt(iCv)**2 )
-! WIP B2AG_US
-        !verts = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
-        !verts = m%cvVx(m%cvVxP(i,1):m%cvVxP(i,1)+m%cvVxP(i,2))
-        ! array with length 2, 3 and 4 need to be made
-        ! to distinguish between ghost, tria en quad
-          !g%vxX(i) = g%vxX(i)*xrescale+xoffset
-          !g%vxY(i) = g%vxY(i)*yrescale+xoffset
 
-        !g%vxFpsi(i) = g%vxFpsi(i)
-        !g%vxFfbz(i) = g%vxFfbz(i)
-        if (Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-          g%cvBb(iCv,2) = cvBt(iCv)*g%cvX(iCv)/(g%cvX(iCv)+xoffset)
-          g%cvBb(iCv,0) = abs(cvBp(iCv))/cvBt(iCv)*g%cvBb(iCv,3)
+        if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+          g%cvBb(iCv,2) = g%cvBb(iCv,2)*g%cvX(iCv)/(g%cvX(iCv)+xoffset)
+            elseif (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+          g%cvBb(iCv,2) = g%cvBb(iCv,2)*g%cvY(iCv)/(g%cvY(iCv)+yoffset)
+            endif
+          g%cvBb(iCv,0) = abs(g%cvBb(iCv,0))
+     &          /g%cvBb(iCv,2)*g%cvBb(iCv,3)
           g%cvBb(iCv,3) = sqrt(g%cvBb(iCv,0)**2 + g%cvBb(iCv,2)**2)
         endif
       enddo
+      ! rescaling of offsetting cell coordinates
+      g%cvX = g%cvX*xrescale + xoffset
+      g%cvY = g%cvY*yrescale + yoffset
+      
+      ! offsets on face and vertex magneticfield
+      if (Bt_adjust.eq.1) then
+        fcX = 0.5_R8*(g%vxX(m%fcVx(:,1))+g%vxX(m%fcVx(:,2)))
+        fcY = 0.5_R8*(g%vxY(m%fcVx(:,1))+g%vxY(m%fcVx(:,2)))
+        if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+          g%fcBb(:,2) = g%fcBb(:,2)*fcX/(fcX + xoffset)
+
+          g%vxFpsi = g%vxFpsi*g%vxX/(g%vxX + xoffset)
+          g%vxBb(:,0) = g%vxBb(:,0)*g%vxX/(g%vxX + xoffset)
+          g%vxBb(:,1) = g%vxBb(:,1)*g%vxX/(g%vxX + xoffset)
+          g%vxFfbz = g%vxFfbz*g%vxX/(g%vxX + xoffset)
+
+        elseif (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+          g%fcBb(:,2) = g%fcBb(:,2)*fcY/(fcY + yoffset)
+
+          g%vxFpsi = g%vxFpsi*g%vxY/(g%vxY + yoffset)
+          g%vxBb(:,0) = g%vxBb(:,0)*g%vxY/(g%vxY + yoffset)
+          g%vxBb(:,1) = g%vxBb(:,1)*g%vxY/(g%vxY + yoffset)
+          g%vxFfbz = g%vxFfbz*g%vxY/(g%vxY + yoffset) 
+        endif  
+          g%fcBb(:,0) = abs(g%fcBb(:,0))
+     &          /g%fcBb(:,2)*g%fcBb(:,3)
+          g%fcBb(:,3) = sqrt(g%fcBb(:,0)**2 + g%fcBb(:,2)**2)             
+      endif
+      g%vxX = g%vxX*xrescale+xoffset
+      g%vxY = g%vxY*yrescale+yoffset
+
+      ! Bt_rescale, pit rescale and Bt_reversal
       g%cvBb(:,0)=g%cvBb(:,0)*Bt_rescale*pit_rescale
       g%cvBb(:,1)=g%cvBb(:,1)*Bt_rescale*pit_rescale
+      g%fcBb(:,0)=g%fcBb(:,0)*Bt_rescale*pit_rescale
+      g%fcBb(:,1)=g%fcBb(:,1)*Bt_rescale*pit_rescale
+      g%vxBb(:,0)=g%vxBb(:,0)*Bt_rescale*pit_rescale
+      g%vxBb(:,1)=g%vxBb(:,1)*Bt_rescale*pit_rescale
+      g%vxFpsi = g%vxFpsi*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
          g%cvBb(:,2) = -g%cvBb(:,2)*Bt_rescale
+         g%fcBb(:,2) = -g%fcBb(:,2)*Bt_rescale
+         g%vxFfbz    = -g%vxFfbz*Bt_rescale
       else
          g%cvBb(:,2) = g%cvBb(:,2)*Bt_rescale
+         g%fcBb(:,2) = g%fcBb(:,2)*Bt_rescale
+         g%vxFfbz    = g%vxFfbz*Bt_rescale
       endif
       g%cvBb(:,3) = sqrt(g%cvBb(:,0)**2+g%cvBb(:,1)**2+g%cvBb(:,2)**2)
+      g%fcBb(:,3) = sqrt(g%fcBb(:,0)**2+g%fcBb(:,1)**2+g%fcBb(:,2)**2)
           
  9999 continue
       ! main connectivity already established in Make_traduit_b2us
@@ -457,7 +493,7 @@ cxpb  if just below the top corner, make the corner cell follow
 !
 *   ..test sign of bb3
 !      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
-!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wc)
+!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wbbc)
        !call b2xvs1(nCv,g%cvBb(:,3), 1, 'cvBb3', '.gt.')
        
 
