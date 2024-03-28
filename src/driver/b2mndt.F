@@ -23,6 +23,7 @@
       use b2mod_batch_average
      & , only : batch_av_all
       use b2mod_switches
+      use b2mod_facdrift_ExB
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -108,11 +109,10 @@
 *.declarations
 
 *   ..local variables
-      integer :: ramp_slow, ier0, iCv
+      integer :: ier0, iCv
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
-      save ramp_slow                                                     !xpb
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
       integer istg(0:2), is, k
@@ -120,9 +120,9 @@
       real (kind=R8) ::
      &  rz(nCv), wrk0(nCv), wrkf(nFc)                                    !iyv 06.02.14
 #ifdef WG_TODO
-      logical domoit, ramp_call
+      logical domoit
 #endif
-      logical solving(4)
+      logical solving(4), ramp_call
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
       real (kind=R8) ::                                                  !xpb
@@ -136,8 +136,6 @@
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
-*   ..initialisation
-      data ramp_slow/0/
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -152,7 +150,6 @@
          switch%nstg(1) = 1
          switch%nstg(2) = 0
        end if
-       call ipgeti ('b2news_ramp_slow', ramp_slow)
        if (switch%no_solve.eq.1) switch%nstg(0:2)=1
        test_residual=switch%nstg_areshe.gt.0.0_R8.or.
      &               switch%nstg_areshi.gt.0.0_R8.or.
@@ -220,14 +217,8 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-cwdk    For unstructured solver, start with simple reading of start-values
-        st%dv%fac_ExB  = switch%facExB_start
-        st%dv%facdrift = switch%facdrift_start
-        st%dv%fac_vis  = switch%facvis_start
-
-#ifdef WG_TODO
-        call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
-#endif
+        call b2news_facdrift_fac_ExB_init(nFc, st%dv%fac_ExB,
+     &    st%dv%facdrift, st%dv%fac_vis, switch)
       endif
 *   ..initialise error parameter
       ierr = 0
@@ -385,17 +376,16 @@ ctmp.dpc
           istg(2) = 0
     3     if (istg(2).lt.switch%nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
-#ifdef WG_TODO
-            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
-#endif
+            ramp_call = switch%ramp_slow.eq.0.or.
+     &                  (istg(0)+istg(1)+istg(2)).eq.0
             if (switch%b2mndt_style.eq.1) then
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
-     &         geo, mpg, st, st_ext, st_avg, ier0)
+     &         geo, mpg, st, st_ext, st_avg, ier0, ramp_call)
             elseif (switch%b2mndt_style.eq.2) then
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
-     &         geo, mpg, st, st_ext, st_avg, ier0)
+     &         geo, mpg, st, st_ext, st_avg, ier0, ramp_call)
             else
               call xerrab('b2mndt_style should be 1 or 2')
             endif
