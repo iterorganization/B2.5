@@ -883,15 +883,13 @@
      &    (-sbf*gm%fcQalf(iFc,1)*dux +     gm%fcQalf(iFc,0)*duy)
         gm%fcEb(iFc,2) = sbf*gm%fcBb(iFc,2)/gm%fcBb(iFc,3)
 
-      end do
+        ! Normalize
+        du = sqrt(gm%fcEb(iFc,0)**2+gm%fcEb(iFc,1)**2+gm%fcEb(iFc,2)**2)
+        gm%fcEb(iFc,0) = gm%fcEb(iFc,0)/du
+        gm%fcEb(iFc,1) = gm%fcEb(iFc,1)/du
+        gm%fcEb(iFc,2) = gm%fcEb(iFc,2)/du
 
-      ! normalize
-      gm%fcEb(:,0) = gm%fcEb(:,0)/
-     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
-      gm%fcEb(:,1) = gm%fcEb(:,1)/
-     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
-      gm%fcEb(:,2) = gm%fcEb(:,2)/
-     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
+      end do
 
 !WG_TODO: Need to provide a calculation for gm%vxEb
 
