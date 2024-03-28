@@ -846,7 +846,7 @@
 			<switchgroup>
 				<name>b2news_facdrift*</name>
 				<description>
-					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
 					The ion-neutral friction current requires either facdrift or fac_ExB to be turned on as well.
 				</description>
 				<switch>
@@ -873,7 +873,7 @@
 			<switchgroup>
 				<name>b2news_facExB_*</name>
 				<description>
-					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift.
+					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Note that facExB_dec and facExB profile have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facExB_dec</name>
@@ -899,7 +899,7 @@
 			<switchgroup>
 				<name>b2news_facvis_*</name>
 				<description>
-					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift.
+					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Note that facvis_dec and facvis profile have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facvis_dec</name>
@@ -3873,7 +3873,7 @@
 			<switchgroup>
 				<name>b2news_fac*</name>
 				<description>
-					Parameters for spatial variation of the diamagnetic, ExB and viscosity drift term multipliers. These are allowed to have tanh profiles centered at tanh_a and of width tanh_b, where both quantities are in metres and measured along the radial coordinate for the cell column ix.eq.fac_ref (default value is jxa, see Geometry section for its computation). The maximum value of facdrift and fac_ExB is controlled by their respective _start and _target switches, see Run section for details.
+					Parameters for spatial variation of the diamagnetic, ExB and viscosity drift term multipliers. These are allowed to have tanh profiles centered at tanh_a and of width tanh_b, where both quantities are in metres and measured along the radial coordinate for the cell column ix.eq.fac_ref (default value is jxa, see Geometry section for its computation). The maximum value of facdrift and fac_ExB is controlled by their respective _start and _target switches, see Run section for details. NOTE: none of them have been converted to WG!
 					For consistency with the naming convention of related variables:
 					b2news_facExB_tanh_a is an alias for b2news_fac_ExB_tanh_a,
 					b2news_facExB_tanh_b is an alias for b2news_fac_ExB_tanh_b,

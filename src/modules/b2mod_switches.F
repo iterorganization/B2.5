@@ -460,6 +460,21 @@ c b2sihs_
 
 c b2news_
       integer :: b2news_ncallout
+      real (kind=R8) :: facvis_start
+      real (kind=R8) :: facvis_inc
+      real (kind=R8) :: facvis_dec
+      real (kind=R8) :: facvis_target
+      real (kind=R8) :: facdrift_start
+      real (kind=R8) :: facdrift_inc
+      real (kind=R8) :: facdrift_dec
+      real (kind=R8) :: facdrift_target
+      real (kind=R8) :: facExB_start
+      real (kind=R8) :: facExB_inc
+      real (kind=R8) :: facExB_dec
+      real (kind=R8) :: facExB_target
+      integer :: ramp_slow
+      real (kind=R8) :: b2news_ExB
+      real (kind=R8) :: b2news_vis
 
 c b2srst
       real (kind=R8) :: b2srst_rf0
@@ -484,9 +499,6 @@ c b2mndt
       real (kind=R8) :: nstg_areshi
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
-      real (kind=R8) :: facvis_start
-      real (kind=R8) :: facdrift_start
-      real (kind=R8) :: facExB_start
       integer :: b2mndt_style
 
 c b2mndr
@@ -1010,6 +1022,21 @@ c b2sihs_
 
 c b2news_
       s % b2news_ncallout = -1
+      s % facvis_start = 0.0_R8
+      s % facvis_inc = 1.0_R8
+      s % facvis_dec = 0.0_R8
+      s % facvis_target = 0.0_R8
+      s % facdrift_start = 0.0_R8
+      s % facdrift_inc = 1.0_R8
+      s % facdrift_dec = 0.0_R8
+      s % facdrift_target = 0.0_R8
+      s % facExB_start = 0.0_R8
+      s % facExB_inc = 1.0_R8
+      s % facExB_dec = 0.0_R8
+      s % facExB_target = 0.0_R8
+      s % ramp_slow = 0
+      s % b2news_ExB = 0.0_R8
+      s % b2news_vis = 0.0_R8
 
 c b2sihs_
       s % b2srst_rf0 = 1.0_R8
@@ -1040,9 +1067,6 @@ c b2mndt
       else
         s % b2mndt_rxf = 0.5_R8
       end if
-      s % facvis_start = 0.0_R8
-      s % facdrift_start = 0.0_R8
-      s % facExB_start = 0.0_R8
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1583,6 +1607,21 @@ c b2sihs_
 
 c b2news_
       call ipgeti ('b2news_ncallout', s%b2news_ncallout)
+      call ipgetr ('b2news_facExB_start',   s%facExB_start)
+      call ipgetr ('b2news_facExB_inc',   s%facExB_inc)
+      call ipgetr ('b2news_facExB_dec',   s%facExB_dec)
+      call ipgetr ('b2news_facExB_target',   s%facExB_target)
+      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
+      call ipgetr ('b2news_facdrift_inc',   s%facdrift_inc)
+      call ipgetr ('b2news_facdrift_dec',   s%facdrift_dec)
+      call ipgetr ('b2news_facdrift_target',   s%facdrift_target)
+      call ipgetr ('b2news_facvis_start',   s%facvis_start)
+      call ipgetr ('b2news_facvis_inc',   s%facvis_inc)
+      call ipgetr ('b2news_facvis_dec',   s%facvis_dec)
+      call ipgetr ('b2news_facvis_target',   s%facvis_target)
+      call ipgeti ('b2news_ramp_slow', s%ramp_slow)
+      call ipgetr ('b2news_ExB', s%b2news_ExB)
+      call ipgetr ('b2news_vis', s%b2news_vis)
 
 c b2srst
       call ipgetr ('b2srst_rf0', s%b2srst_rf0)
@@ -1611,9 +1650,6 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
-      call ipgetr ('b2news_facExB_start',   s%facExB_start)
-      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
-      call ipgetr ('b2news_facvis_start',   s%facvis_start)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -1947,6 +1983,44 @@ c b2news
 
        call xertst (-15.le.s%no_solve.and.s%no_solve.le.1,
      &   'faulty input no_solve')
+
+       call xertst (0.0_R8.le.s%facdrift_start .and.
+     &              1.0_R8.ge.s%facdrift_start,
+     &   'faulty argument facdrift_start')
+       call xertst (0.0_R8.le.s%facdrift_target .and.
+     &              1.0_R8.ge.s%facdrift_target,
+     &   'faulty argument facdrift_target')
+       call xertst (1.0_R8.le.s%facdrift_inc,
+     &   'faulty argument facdrift_inc')
+       call xertst (0.0_R8.le.s%facdrift_dec .and.
+     &              1.0_R8.ge.s%facdrift_dec,
+     &   'faulty argument facdrift_dec')
+       call xertst (0.0_R8.le.s%facExB_start .and.
+     &              1.0_R8.ge.s%facExB_start,
+     &   'faulty argument facExB_start')
+       call xertst (0.0_R8.le.s%facExB_target .and.
+     &              1.0_R8.ge.s%facExB_target,
+     &   'faulty argument facExB_target')
+       call xertst (1.0_R8.le.s%facExB_inc,
+     &   'faulty argument facExB_inc')
+       call xertst (0.0_R8.le.s%facExB_dec .and. 1.0_R8.ge.s%facExB_dec,
+     &   'faulty argument facExB_dec')
+       call xertst (0.0_R8.le.s%b2news_ExB .and.
+     &              1.0_R8.ge.s%b2news_ExB,
+     &  'faulty parameter b2news_ExB')
+       call xertst (0.0_R8.le.s%facvis_start .and.
+     &              1.0_R8.ge.s%facvis_start,
+     &   'faulty argument facvis_start')
+       call xertst (0.0_R8.le.s%facvis_target .and.
+     &              1.0_R8.ge.s%facvis_target,
+     &   'faulty argument facvis_target')
+       call xertst (1.0_R8.le.s%facvis_inc,
+     &   'faulty argument facvis_inc')
+       call xertst (0.0_R8.le.s%facvis_dec .and. 1.0_R8.ge.s%facvis_dec,
+     &   'faulty argument facvis_dec')
+       call xertst (0.0_R8.le.s%b2news_vis .and.
+     &              1.0_R8.ge.s%b2news_vis,
+     &  'faulty parameter b2news_vis')
 
 c b2usmo
        call xertst (0.0_R8.le.s%cfc0, 'faulty parameter cfc0')
