@@ -329,14 +329,19 @@ c     internal cell -> full diamagnetic drift
             ebx = gm%cvEb(ic,0)
             eby = gm%cvEb(ic,1)
             ebn = sqrt(ebx*ebx + eby*eby)
-            if (ebn > 0) then
+            if (ebn > 0.0_R8) then
               ebx = ebx / ebn
               eby = eby / ebn
             endif
             pux(ic) = ebx
             puy(ic) = eby
-            pvx(ic) = -eby
-            pvy(ic) = ebx
+            if (gm%cvEb(ic,2).ge.0.0_R8) then
+              pvx(ic) = -eby
+              pvy(ic) = ebx
+            else
+              pvx(ic) = eby
+              pvy(ic) = -ebx
+            endif
 
             ! limit the total velocity, and then scale
             ! all individual components
@@ -492,14 +497,20 @@ c we derive the guard cell value from its neighbouring interior cell
             endif
             puxs = ebx
             puys = eby
-            pvxs = -eby
-            pvys = ebx
+            if (gm%fcEb(iFc,2).ge.0.0_R8) then
+              pvxs = -eby
+              pvys = ebx
+            else
+              pvxs = eby
+              pvys = -ebx
+            endif
+
             uu = uub(ic,ifl)
             vv = vvb(ic,ifl)
             ww = wwb(ic,ifl)
             trgt(istra)%vxt(i,ifl) = puxs*uu + pvxs*vv
             trgt(istra)%vyt(i,ifl) = puys*uu + pvys*vv
-            trgt(istra)%vzt(i,ifl) = ww*sign(1.0_R8,gm%cvEb(ic,2))
+            trgt(istra)%vzt(i,ifl) = ww*sign(1.0_R8,gm%fcEb(iFc,2))
             trgt(istra)%fel(i,ifl) = 0.0_R8
             trgt(istra)%vpart(i,ifl) = 0.0_R8
             trgt(istra)%mach(i,ifl) = 1.0_R8
