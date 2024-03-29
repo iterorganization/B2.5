@@ -84,7 +84,16 @@
 *    ..replace an entry
        call xertst (ipstat(ip).eq.0,
      &   'ipsetc--error, parameter has already been read: '//cnam0)
-       ipval(ip) = cval
+
+        write (0,*) 'WARNING. Duplicated switch ' // trim(ipnam(ip)) //
+     &              ' found in b2mn.dat!'
+        write (*,*) 'WARNING. Duplicated switch ' // trim(ipnam(ip)) //
+     &              ' found in b2mn.dat!'
+        ipval(ip) = cval
+        write (0,*) 'Last value of the switch is ' // trim(ipval(ip)) //
+     &              ' which will be used.'
+        write (*,*) 'Last value of the switch is ' // trim(ipval(ip)) //
+     &              ' which will be used.'
       else
 *    ..extend the table
        call xertst (ipcnt.lt.xdmx*iptbmx,
