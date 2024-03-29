@@ -142,7 +142,7 @@
      &  nxtl, nxtr
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
+      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16 !fc 29.03.24
       integer, save :: b2mndr_redef_pbs = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
@@ -1012,7 +1012,6 @@
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
-       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
        call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
        call ipgeti ('b2mndr_boundary_sources', boundary_sources)
        if(boundary_sources.ne.0)
@@ -3020,7 +3019,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if(use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then                 !srv 26.02.18 {
         call calc_err(nCv, ns, state%pl, switch)
       endif                                                              !srv 26.02.18 }
-      if(iout.ne.0) then
+      if(switch%b2mndr_iout.ne.0) then
         if(use_mms.eq.0) then                                            !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
