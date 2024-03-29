@@ -5,6 +5,7 @@
      &  nscx, nscxmax, iscx, ismain, dtim,
      &  switch, geo, mpg, st, st_ext, st_avg, main_call)
       use b2mod_types
+      use b2mod_openmp
 !WG_TODO      use b2mod_wall
       use b2mod_diag
       use b2mod_time
@@ -142,7 +143,11 @@
 #endif
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  f_redep(nCv,0:ns-1)
+#ifdef _OPENMP
+      real (kind=R8) :: start_time, end_time
+#else
       real (kind=R4) :: start_time, end_time
+#endif
 #ifdef WG_TODO
       logical equilibrium(ntrack), over_erosion
 #endif
