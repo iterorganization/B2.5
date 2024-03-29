@@ -21,7 +21,7 @@ c*** Local variables
 c
       integer iCv,is
       integer, allocatable :: mz_hlp(:)
-      real (kind=R8) :: vr,vz,vt,u
+      real (kind=R8) :: vr,vz,vt
       character hlp_frmr*600
       character*2, allocatable :: hlp_al(:)
 c----------------------------------------------------------------------
@@ -53,12 +53,9 @@ c
      ,                                               is=0,state%ns-1)
 c
       do iCv=1,mpg%nCi
-#ifdef WG_TODO
-        u=atan2(cz(ix+1,iy)-cz(ix-1,iy),cr(ix+1,iy)-cr(ix-1,iy))
-#endif
-        vr=cos(u)*abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
-        vz=sin(u)*abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
-        vt=sqrt(max(0.0_R8,1.0_R8-(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))**2))
+        vr=geo%cvEb(iCv,0)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
+        vz=geo%cvEb(iCv,1)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
+        vt=geo%cvEb(iCv,2)*geo%cvBb(iCv,2)/geo%cvBb(iCv,3)
         write (lun,700)
      ,    iCv,geo%cvX(iCv),geo%cvY(iCv),state%dv%ne(iCv),
      ,    state%pl%te(iCv)/ev,state%pl%ti(iCv)/ev,vr,vz,vt,
