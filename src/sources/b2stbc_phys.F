@@ -411,11 +411,13 @@ cwdk  now need to recompute full diamagnetic component for ud
         ud(:,:) = 0.0_R8
       else if (switch%sheath_drift_fix.eq.0) then
         do is = 0,ns-1
-         ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
+         ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/
+     .                          sign(geo%fcBb(:,2),geo%fcEb(:,2))
         enddo
       else
         do is=0,ns-1
-         ud(:,is) = dv%vaecrb(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
+         ud(:,is) = dv%vaecrb(:,0,is)*geo%fcBb(:,3)/
+     .                           sign(geo%fcBb(:,2),geo%fcEb(:,2))
         enddo
       endif
       if (main_call .and. switch%b2stbc_diagno.ge.1) then             !xpb
@@ -10109,7 +10111,7 @@ cwdk    Todo: corrections for BCCON.ne.14
       integer, intent(in) :: iCv
       real (kind=R8) :: pit
 
-      pit = abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 
       return
       end function pit

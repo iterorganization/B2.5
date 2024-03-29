@@ -58,9 +58,9 @@
           else
             iCp=mpg%ftCv(mpg%ftCvP(iFt,1))
           end if
-          quantn(iCm)=sqrt(1._R8-nlambda*geo%cvBb(iCm,3)/bmax)
-          quantn(iCv)=sqrt(1._R8-nlambda*geo%cvBb(iCv,3)/bmax)
-          quantn(iCp)=sqrt(1._R8-nlambda*geo%cvBb(iCp,3)/bmax)
+          quantn(iCm)=sqrt(1.0_R8-nlambda*geo%cvBb(iCm,3)/bmax)
+          quantn(iCv)=sqrt(1.0_R8-nlambda*geo%cvBb(iCv,3)/bmax)
+          quantn(iCp)=sqrt(1.0_R8-nlambda*geo%cvBb(iCp,3)/bmax)
           qm=(quantn(iCm)*geo%cvHx(iCv)/geo%cvBb(iCv,0)+
      .        quantn(iCv)*geo%cvHx(iCm)/geo%cvBb(iCm,0))/
      .       (geo%cvHx(iCm)/geo%cvBb(iCm,0)+

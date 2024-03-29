@@ -179,7 +179,7 @@
         endif
         if(switch%b2tqna_ballooning.ne.0.0_R8.and.
      &     switch%b2tqna_bb_ref.eq.0.0_R8) then
-          switch%b2tqna_bb_ref=sum(geo%cvBb(:,3))/(nCv)
+          switch%b2tqna_bb_ref=sum(geo%cvBb(:,3))/real(nCv,R8)
           write(*,*) 'b2tqna: bb_ref set to ',switch%b2tqna_bb_ref
         endif
       else
@@ -357,7 +357,7 @@ cxpb Corrected for dimensionality
             dna0(iCv,is) = cfdna(0,is)+
      &       cfdna(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfdna(2,is)*df0+
-     &       cfdna(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfdna(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfdna(7,is).ne.0.0_R8)
      &       dna0(iCv,is) = dna0(iCv,is)!WG_TODO*
 !WG_TODO     &        cfdna(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
@@ -366,7 +366,7 @@ cxpb Corrected for dimensionality
      &       (cfdpa(0,is)+cfdpa(1,is)/
      &       (max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &        cfdpa(2,is)*df0+
-     &        cfdpa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3)))
+     &        cfdpa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3))
             if(cfdpa(7,is).ne.0.0_R8)
      &       dpa0(iCv,is) = dpa0(iCv,is)!WG_TODO*
 !WG_TODO     &        cfdpa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
@@ -374,7 +374,7 @@ cxpb Corrected for dimensionality
             vla0(iCv,1,is) = cfvla(0,is)+
      &       cfvla(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfvla(2,is)*df0+
-     &       cfvla(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfvla(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfvla(7,is).ne.0.0_R8)
      &       vla0(iCv,1,is) = vla0(iCv,1,is)!WG_TODO*
 !WG_TODO     &        cfvla(7,is)*hy1(iCv)/hy1(switch%b2tqna_ixref,iy)
@@ -393,13 +393,13 @@ cxpb Corrected for dimensionality
             dfvsb = cfvsa(0,is)+
      &       cfvsa(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfvsa(2,is)*df0+
-     &       cfvsa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfvsa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfvsa(7,is).ne.0.0_R8)
      &       dfvsb = dfvsb!WG_TODO*cfvsa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
             dfhcb = cfhci(0,is)+
      &       cfhci(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfhci(2,is)*df0+
-     &       cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfhci(7,is).ne.0.0_R8)
      &       dfhcb = dfhcb!WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
 *      ..compute vsa0, hcib
@@ -438,16 +438,16 @@ cxpb Corrected for dimensionality
 *        dimension m**2/s, for the anomalous transport coefficients
 *        hce0, sig0, and alf0)
          dfhce = cfhce(0)+cfhce(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfhce(3)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     1    cfhce(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
          if(cfhce(7).ne.0.0_R8)
      &    dfhce=dfhce!WG_TODO*cfhce(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
          dfsig = cfsig(0)+cfsig(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfsig(3)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))!WG_TODO+
+     1    cfsig(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3) !WG_TODO+
 !WG_TODO     2    cfsig(4)*exp(-cfsig(5)*(lengthy(iCv)/lengthy(ix,ny))**2) !srv 26.11.04
          if(cfsig(7).ne.0.0_R8)
      &    dfsig=dfsig!WG_TODO*cfsig(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
          dfalf = cfalf(0)+cfalf(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfalf(3)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     1    cfalf(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
          if(cfalf(7).ne.0.0_R8)
      &    dfalf=dfalf!WG_TODO*cfalf(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
 *     ..compute hce0, sig0, alf0
@@ -584,7 +584,7 @@ cdpc
       if(switch%b2tqna_ballooning.ne.0.0_R8) then
         do iCv = 1, nCv
             poloidal_scale_factor=
-     1       abs(switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
+     1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
      1       switch%b2tqna_ballooning*
      1       switch%b2tqna_ballooning_rescale
             do is=0,ns-1
@@ -3857,7 +3857,7 @@ c*******************************************************************************
       do is=0,ns-1
         if(.not.is_neutral(is)) then
           if(switch%keps_local.eq.1) then
-*   ..compute local larmor radius
+*   ..compute local Larmor radius
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
      &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
           else
