@@ -22,9 +22,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-c ECH test
+c ECH
       use b2mod_ech
-c Artificial losses test
+c Artificial losses
       use b2mod_artificialsinks
 
 ! csc The following are not necessary for computation but are needed
@@ -411,19 +411,21 @@ c Artificial losses test
 !WG_TODO      rcxhi=0.0_R8
 !WG_TODO      rcxmo=0.0_R8
 
-c ECH module test
+c ECH power
       if(switch%use_ech.eq.1) then
-        call CalcECH(nCv,geo,mpg,switch,st%srw%she0)
+        call CalcECH(nCv,geo,mpg,st%dv,switch,st%srw%she0)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
       endif
+c end ECH
 
-c Artificial losses module test
+c Artificial losses for 1D simulations
       if(switch%losses_limiters.eq.1) then
         call limiterloss(nCv, ns, is, switch, geo,
-     &       mpg, st%pl, st%dv, st%rt, st%srw%sna0,
-     &       st%srw%shi0, st%srw%she0)
+     &       mpg, st%pl, st%dv, st%rt, st_ext, st%srw%sna0,
+     &       st%srw%shi0, st%srw%shn0, st%srw%she0)
         call b2saxpy (nCv*2*ns, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%shn0, 1, st%sr%shi, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
       endif
 
@@ -438,7 +440,7 @@ c Artificial losses module test
 
       if(switch%losses_poloidal.eq.1) then
         call poloidloss(nCv, ns, is, switch, geo,
-     &       mpg, st%pl, st%dv, st%rt, st%srw%sna0,
+     &       mpg, st, st%pl, st%dv, st%rt, st%srw%sna0,
      &       st%srw%shi0, st%srw%she0)
         call b2saxpy (nCv*2*ns, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)

@@ -131,6 +131,8 @@
      .                                         dna_ExB, hce_ExB, hci_ExB
         real(R8), allocatable, dimension(:,:) :: dpa0, dna0, vsa0,
      .                                           hcib
+        real(R8), allocatable, dimension(:,:,:) :: dna_bohm, vla_bohm,
+     .                                           vsa_bohm
         real(R8), allocatable, dimension(:,:,:) :: vla0, vma0
 
         real(R8), allocatable, dimension(:) ::
@@ -451,6 +453,10 @@ cwdk move to dv
       allocate( coeff%hce_ExB( nCv ), SOURCE=0._R8 )
       allocate( coeff%hci_ExB( nCv ), SOURCE=0._R8 )
 
+      allocate( coeff%dna_bohm( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%vla_bohm( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%vsa_bohm( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+
       allocate( coeff%kt_neo( nCv ), SOURCE=0._R8 )
 
       allocate( coeff%fllim_ki( nFc ), SOURCE=0._R8 )
@@ -631,6 +637,10 @@ cwdk move to dv
       coeff%hce_ExB = 0._R8
       coeff%hci_ExB = 0._R8
 
+      coeff%dna_bohm = 0._R8
+      coeff%vla_bohm = 0._R8
+      coeff%vsa_bohm = 0._R8
+
       coeff%kt_neo = 0._R8
 
       coeff%fllim_ki = 0._R8
@@ -726,6 +736,10 @@ cwdk move to dv
       deallocate( coeff%dna_ExB )
       deallocate( coeff%hce_ExB )
       deallocate( coeff%hci_ExB )
+
+      deallocate( coeff%dna_bohm )
+      deallocate( coeff%vla_bohm )
+      deallocate( coeff%vsa_bohm )
 
       deallocate( coeff%kt_neo )
 

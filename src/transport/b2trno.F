@@ -99,9 +99,8 @@
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
-     4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1),
-     5  dna_bohm(nCv,0:1,0:ns-1), vla_bohm(nCv,0:1,0:ns-1),
-     6  vsa_bohm(nCv,0:1,0:ns-1)
+     4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
+
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -157,7 +156,7 @@
      &  switch, geo, mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0,
      &  co%vma0, co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0,
      &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB,
-     &  co%hci_ExB, dna_bohm, vla_bohm, vsa_bohm)
+     &  co%hci_ExB, co%dna_bohm, co%vla_bohm, co%vsa_bohm)
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -238,20 +237,20 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 *   ..Correction for Bohm-like diffusion model                          !mb 09.10.17
 c   Bohm
       if(switch%transport_bohm.eq.1) then
-       do is = 0, ns-1
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   dna_bohm(1:nCv,0,is), co%cdna(1:nFc,0,is))
-        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   dna_bohm(1:nCv,1,is), co%cdna(1:nFc,1,is))
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa_bohm(1:nCv,0,is), co%cvsa(1:nFc,0,is))
-        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa_bohm(1:nCv,1,is), co%cvsa(1:nFc,1,is))
-        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
-     &   vla_bohm(1:nCv,0,is), co%cvla(1:nFc,0,is))
-        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
-     &   vla_bohm(1:nCv,1,is), co%cvla(1:nFc,1,is))
-       enddo
+        do is = 0, ns-1
+          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dna_bohm(1:nCv,0,is), co%cdna(1:nFc,0,is))
+          call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dna_bohm(1:nCv,1,is), co%cdna(1:nFc,1,is))
+          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vsa_bohm(1:nCv,0,is), co%cvsa(1:nFc,0,is))
+          call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vsa_bohm(1:nCv,1,is), co%cvsa(1:nFc,1,is))
+          call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vla_bohm(1:nCv,0,is), co%cvla(1:nFc,0,is))
+          call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vla_bohm(1:nCv,1,is), co%cvla(1:nFc,1,is))
+        enddo
       endif
 
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
