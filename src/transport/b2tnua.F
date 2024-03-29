@@ -33,15 +33,15 @@ c     conversion of constants to CGS units for the collision frequencies
      &          gauss=1.0E+4_R8, gramm=1.0E+3_R8)
       real (kind=R8) :: eV_cgs, e_cgs, c_cgs
       parameter (eV_cgs=ev*erg, e_cgs=qe*c*10.0_R8, c_cgs=c*cm)
-      real (kind=R8) :: mred
+      real (kind=R8) :: mred, kk
       character :: chns*3
 
 *   ..subprogram start-up calls
       call subini ('b2tnua')
 
 c Initialise
-      call sfill (nCv*ns, 0.0_R8, nua, 1)
-      call sfill (nCv*ns*ns, 0.0_R8, nuab, 1)
+      call sfill (nCv*(ns+1), 0.0_R8, nua, 1)
+      call sfill (nCv*(ns+1)*(ns+1), 0.0_R8, nuab, 1)
       
 *   ..calculate thermal velocities
       call thermal_velocity(nCv, ns, pl, switch, vtha)
@@ -86,7 +86,7 @@ c     &        (vtha(iCv,is)**2+vtha(iCv,ns-1)**2)**1.5_R8 ! ion-electron neo-va
 c                 nuab(iCv,is,is2) = 4.80E-2_R8*rt%rza(iCv,is)**4*
 c     &                             (am(is)*mp/mp)**(-1.0_R8/2.0_R8)*
 c     &                             pl%na(iCv,is)*lnab(iCv)*
-c     &                             pl%ti(iCv)/qe**(-3.0_R8/2.0_R8) ! Tom's code
+c     &                             pl%ti(iCv)/qe**(-3.0_R8/2.0_R8) ! Tom's code (wrong conversion to SI...)
 
                 nuab(iCv,is,is2) = (me/(am(is)*mp))**(1.0_R8/2.0_R8)*
      &                         (1.0_R8/(4.0_R8*pi)*qe**4*pl%na(iCv,is)/
@@ -99,7 +99,7 @@ c     &             rt%rza(iCv,is)*rt%rza(iCv,is2)*qe**4/eps0**2/
 c     &             (3.0_R8*am(is)*mp)*lnab(iCv)*
 c     &             (1.0_R8/(am(is)*mp)+1.0_R8/
 c     &             (am(is2)*mp))/(vtha(iCv,is)**2
-c     &             +vtha(iCv,is2)**2)**1.5_R8 ! neo-validity subroutine
+c     &             +vtha(iCv,is2)**2)**1.5_R8 ! neo-validity subroutine (not working properly...)
               enddo !! end loop over volumes
             endif
           enddo !! end inner loop over species
@@ -111,7 +111,7 @@ c     &             +vtha(iCv,is2)**2)**1.5_R8 ! neo-validity subroutine
       call b2tlnl(nCv, switch, 2, pl%te, pl%ti, dv%ne, lnab)
       do iCv = 1,nCv
 c         nuab(iCv,ns,ns) = 2.91_R8/qe*dv%ne(iCv)*lnab(iCv)
-c     &                    *pl%te(iCv)/qe**(-3.0_R8/2.0_R8) ! Tom's code
+c     &                    *pl%te(iCv)/qe**(-3.0_R8/2.0_R8) ! Tom's code (wrong conversion to SI...)
 
         nuab(iCv,ns,ns) = (1.0_R8/(4.0_R8*pi)*qe**4*pl%na(iCv,is-1)/
      &                    (eps0**2*me*mred)*lnab(iCv))*
@@ -123,6 +123,22 @@ c     &    qe**4/eps0**2/(3.0_R8*me)*lnab(iCv)*(2.0_R8/(me))/
 c     &    (2.0_R8*vtha(iCv,ns)**2)**1.5_R8
       enddo
 
+*   ..neutral collisions ! TODO test
+      do is=0,ns-1
+        if (is_neutral(is)) then
+          do iCv = 1,nCv
+! ALL the kk-s are taken from TOMATOR1D
+c neutral H with electrons (ionization)
+            kk = 2.91E-8_R8*(13.6_R8/pl%te(iCv)**0.39_R8*
+     &           exp(-13.6_R8/pl%te(iCv))/(0.232_R8+13.6_R8/pl%te(iCv)))
+            nuab(iCv,is,ns) = kk*dv%ne(iCv)
+c neutral H (charge exchange)
+            kk = 7.829E-9_R8*(pl%ti(iCv) + pl%tn(iCv)/2.0_R8)**0.41_R8
+            nuab(iCv,is,is+1) = kk*pl%na(iCv,is+1)
+          enddo
+        endif
+      enddo
+
 *   ..calculate total collision frequency nua of species a
       do is=0,ns
         do is2=0,ns
@@ -132,12 +148,11 @@ c     &    (2.0_R8*vtha(iCv,ns)**2)**1.5_R8
         enddo !! end inner loop over species
       enddo !! end outer loop over species
 
-      if (switch%bohm_iout.eq.1) then
+      if (switch%bohm_iout.eq.1.or.switch%iout_b2wdat.eq.4) then
         do is = 0,ns-1
           write (chns,'(i3.3)') is
-          call my_out_us(70,nCv,0,nua(:,is),'b2tqna_bohm_nua'//chns)
+          call my_out_us(70,nCv,0,nua(:,is),'b2tqna_bohm_nua_'//chns)
         enddo
-!        write (chns,'(i3.3)') ns electrons
         call my_out_us(70,nCv,0,nua(:,ns),'b2tqna_bohm_nua_electrons')
       endif
 

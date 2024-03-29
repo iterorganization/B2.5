@@ -584,7 +584,7 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       endif
-c sc  implementation of Bohm-like diffusion coefficient 12.07.2023-?
+c ap  implementation of Bohm-like transport model 12.07.2023-?
       if(switch%transport_bohm.ne.0) then
         call set_transport_bohm(nCv, nFc,
      &   ns, nscx, iscx, ismain, switch, geo, 
@@ -3999,30 +3999,29 @@ c*******************************************************************************
       call subini ('set_transport_bohm')
 
 *   ..initialisation
-      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replace with a switch
+c      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replace with a switch
       call sfill (nCv*ns*2, 0.0_R8, dna_bohm, 1)
       call sfill (nCv*ns*2, 0.0_R8, vla_bohm, 1)
       call sfill (nCv*ns*2, 0.0_R8, vsa_bohm, 1)
       call sfill (nCv, 0.0_R8, hce0, 1)
       call sfill (nCv, 0.0_R8, hci0, 1)
       call sfill (nCv, 0.0_R8, hcn0, 1)
-      call sfill (nCv*ns, 0.0_R8, hcib, 1)
 
 *   ..Check whether dna0, vla0 and vma0 are zero for all the species since they are not used in Bohm transport or print warning
       do is = 0, ns-1
         if (ANY( dna0(:,is)/=0 )) then
           write(*,*) 'Warning: '//
-     .    'dna0 is not zero for neutrals'//
+     .    'dna0 is not zero! '//
      .    'Recommended choice is zero when using Bohm transport model!'
         endif
         if (ANY( vla0(:,:,is)/=0 )) then
           write(*,*) 'Warning: '//
-     .    'vla0 is not zero for neutrals'//
+     .    'vla0 is not zero! '//
      .    'Recommended choice is zero when using Bohm transport model!'
         endif
         if (ANY( vma0(:,:,is)/=0 )) then
           write(*,*) 'Warning: '//
-     .    'vma0 is not zero for neutrals'//
+     .    'vma0 is not zero! '//
      .    'Recommended choice is zero when using Bohm transport model!'
         endif 
       enddo
@@ -4043,33 +4042,35 @@ c*******************************************************************************
 
 *   ..compute dna_bohm (Bohm-like particle diffusion coefficient)
           dna_bohm(:,0,is) = 1.00_R8/3.00_R8*nua(:,is)*mfpi*(rholi +
-     &                       mfpi*geo%cvBb(:,0)/1.5_R8)*0.659_R8
+     &                       mfpi*geo%cvBb(:,0)/geo%cvBb(:,3))*
+     &                       switch%bohm_dnafact
           dna_bohm(:,1,is) = 1.00_R8/3.00_R8*nua(:,is)*mfpi*(rholi +
-     &                       mfpi*geo%cvBb(:,1)/1.5_R8)*0.659_R8
+     &                       mfpi*geo%cvBb(:,1)/1.5_R8)*
+     &                       switch%bohm_dnafact
 
 *   ..compute vsa_bohm (Bohm-like viscosity - extesion of the model, be careful)
-          vsa_bohm(:,1,is) = switch%bohm_gammaD*am(is)*mp* ! move from gammaD to another one (?)
-     &                       pl%na(:,is)*dna_bohm(:,1,is)
-          vsa_bohm(:,0,is) = switch%bohm_gammaD*am(is)*mp*
-     &                       pl%na(:,is)*dna_bohm(:,0,is)
+          if(switch%bohm_viscosity.eq.1) then
+            vsa_bohm(:,0,is) = switch%bohm_gammaD*dna_bohm(:,0,is)* ! move from gammaD to another one (?)
+     &                       pl%na(:,is)*am(is)*mp
+            vsa_bohm(:,1,is) = switch%bohm_gammaD*dna_bohm(:,1,is)* ! move from gammaD to another one (?)
+     &                       pl%na(:,is)*am(is)*mp
+          endif
+
+*   ..compute vla_bohm (Bohm-like convection velocity)
+          if(switch%bohm_pureDiff.eq.0.and.switch%bohm_ExB.eq.1) then
+            vla_bohm(:,0,is) = (switch%bohm_vlafact*(pl%te + pl%ti)/ev)/
+     &                         (geo%cvBb(:,3)) ! vlafact suggested: 5.0
+            vla_bohm(:,1,is) = (switch%bohm_vlafact*(pl%te + pl%ti)/ev)/
+     &                         (geo%cvBb(:,3)) ! vlafact suggested: 5.0
+          else
+            vla_bohm(:,0,is) = 2.0_R8*dna_bohm(:,0,is)/switch%R0* !  R0 major radius from switches
+     &                         switch%bohm_vlafact  ! vlafact suggested: 6.5
+            vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/switch%R0* !  R0 major radius from switches
+     &                         switch%bohm_vlafact  ! vlafact suggested: 6.5
+          endif
 
 *   ..compute hcib (Bohm-like ion heat conductivity - extesion of the model, be careful)
           hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
-
-*   ..compute vla_bohm (Bohm-like convection velocity)
-          if(switch%bohm_pureDiff.eq.1) then
-            call sfill (nCv*2, 0.0_R8, vla_bohm(:,:,is), 1)
-c            vla_bohm(:,:,is) = 0.0_R8
-          elseif (switch%bohm_pureDiff.eq.0.and.
-     &            switch%bohm_ExB.eq.1) then
-            vla_bohm(:,0,is) = (5.0_R8*(pl%te + pl%ti)/ev)/
-     &                         (geo%cvBb(:,3))
-            vla_bohm(:,1,is) = (5.0_R8*(pl%te + pl%ti)/ev)/
-     &                         (geo%cvBb(:,3))
-          else
-            vla_bohm(:,0,is) = 2.0_R8*dna_bohm(:,0,is)/switch%R0*6.5_R8 ! R0 major radius from switches ! 6.5 numerical factor
-            vla_bohm(:,1,is) = 2.0_R8*dna_bohm(:,1,is)/switch%R0*6.5_R8
-          endif
 
         elseif(is_neutral(is).and.switch%use_eirene.eq.0.and.
      &                        switch%transport_afn.eq.0) then
@@ -4077,21 +4078,22 @@ c            vla_bohm(:,:,is) = 0.0_R8
 
 *   ..compute dna_bohm (Bohm-like particle diffusion) for neutrals
           dna_bohm(:,0,is) = 1.00_R8/3.00_R8*vthn*
-     &               1/(2.0_R8/switch%a0 + nua(:,is)/vthn) ! a0 minor radius ! nua to be updated with a suitable collision frequency for neutrals
+     &               1/(2.0_R8/switch%a0 + nua(:,is)/vthn) ! a0 minor radius ! nua to be updated (is zero now)
           dna_bohm(:,1,is) = dna_bohm(:,0,is) ! diffusion is isotropic for neutrals
 
 *   ..compute vsa_bohm (Bohm-like) for neutrals
-          vsa_bohm(:,0,is) = switch%bohm_gammaD*am(is)*mp*pl%na(:,is)*
-     &                       dna_bohm(:,0,is)
-          vsa_bohm(:,1,is) = switch%bohm_gammaD*am(is)*mp*pl%na(:,is)*
-     &                       dna_bohm(:,1,is)
+          if(switch%bohm_viscosity.eq.1) then
+            vsa_bohm(:,0,is) = switch%bohm_gammaD*dna_bohm(:,0,is)*
+     &                         am(is)*mp*pl%na(:,is)
+            vsa_bohm(:,1,is) = switch%bohm_gammaD*dna_bohm(:,1,is)*
+     &                         am(is)*mp*pl%na(:,is)
+          endif
 
 *   ..compute hcib (Bohm-like) for neutrals
           hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
 
 *   ..compute vla_bohm (Bohm-like) for neutrals 
-c          vla_bohm(:,:,is) = 0.0_R8 ! no convection for neutrals
-          call sfill (nCv*2, 0.0_R8, vla_bohm(:,:,is), 1)
+*   ..no convection for neutrals, vla_bohm is zero
         endif
       enddo
 
@@ -4099,8 +4101,8 @@ c          vla_bohm(:,:,is) = 0.0_R8 ! no convection for neutrals
       rhole(:) = me*sqrt(2.0_R8*pl%te/(me))/abs(qe*geo%cvBb(:,3))
       vthe(:)  = sqrt(2.0_R8*pl%te/me)
       hce0(:)  = switch%bohm_gammaD*dv%ne(:)*1.00_R8/3.00_R8*
-     &           1.0_R8/16.0_R8*vthe*(rholi(:) + vthe/nua(:,is)*
-     &           geo%cvBb(:,0)/geo%cvBb(:,2))
+     &           1.0_R8/16.0_R8*vthe*(rhole(:) + vthe/nua(:,is)*
+     &           geo%cvBb(:,0)/geo%cvBb(:,2)) ! to be checked
 
 *   ..recompute hci0, hcn0
       do is = 0, ns-1
