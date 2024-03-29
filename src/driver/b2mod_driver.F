@@ -175,7 +175,8 @@ c Artificial losses module
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16
+      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16 !fc 29.03.24
+      integer, save :: b2mndr_redef_pbs = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
@@ -990,8 +991,9 @@ c Artificial losses module
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
-#endif
-       if(switch%boundary_sources.ne.0)
+       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
+       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
+       if(boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
        if(switch%equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
@@ -3537,7 +3539,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         call calc_err(nCv, ns, state%pl, switch)
       endif                                                              !srv 26.02.18 }
       if(switch%b2mndr_iout.ne.0) then
-        if(switch%use_mms.eq.0) then                                     !srv 29.11.18 {
+        if(use_mms.eq.0) then                                            !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
