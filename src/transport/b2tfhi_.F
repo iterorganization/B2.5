@@ -62,7 +62,7 @@
 *   ..local variables
       integer is, meth
       real (kind=R8) ::
-     *   floi0(nFc,0:1), coni0(nFc,0:1), fhi_32_loc(nFc,0:1),
+     *   floi0(nFc,0:1), coni0(nFc,0:1),fhi_32_loc(nFc,0:1),
      *   fhi_52_loc(nFc,0:1),
 #ifdef WG_TODO
      &   flomx,
@@ -691,10 +691,17 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-       call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
-       call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
-       call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
-       call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
+       if (balance.and.(balance_netcdf.ne.0)) then 
+         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       else
+         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
+       endif
        call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfhi__fchvispar_th')
        call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfhi__fchvispar_r')
        call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfhi__fchvisq_th')
@@ -723,10 +730,17 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-       call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
-       call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
-       call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
-       call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
+       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       else
+         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
+       endif
       endif
 
 * ..return
