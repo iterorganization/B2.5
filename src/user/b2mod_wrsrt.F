@@ -64,7 +64,7 @@ c-----------------------------------------------------------------------
 
       contains
 
-      subroutine b2wrsrt(nx,ny,ns)
+      subroutine b2wrsrt(geo,mpg,st,switch,ns,dtim)
       use b2mod_constants
       use b2mod_geo
       use b2mod_rates
@@ -81,9 +81,18 @@ c-----------------------------------------------------------------------
       use b2mod_eirbra
 #endif
       use b2mod_dimensions
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
+      use b2mod_switches
       implicit none
 c
-      integer nx, ny, ns
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2state), intent(in) :: st
+      type(switches), intent(in) :: switch
+      integer nCv, ns
+      real (kind=R8) :: dtim
 c
 c
 c
@@ -105,7 +114,7 @@ c*** Values by species and regions
       equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum)  ! IYS 29.09.2017
 c-----------------------------------------------------------------------
 c*** Local variables of general use
-      integer i, j, k, ir, is, ix, iy
+      integer i, j, k, ir, is, ix, iy, iCv
       integer iatm ! IYS 29.09.2017
 #ifdef B25_EIRENE
       integer imol
@@ -141,42 +150,39 @@ c
       end do
 
 csw 20sep2013 added
-      do iy=0,ny-1
-        do ix=0,nx-1
-          ir=region(ix,iy,0)
+      do iCv=1,mpg%nCv
+          ir = mpg%cvReg(iCv)
           tesum(ir)  = tesum(ir)
-     &          + 1.5_R8*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
-     &          + 1.5_R8*ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy)
+     &          + 1.5_R8*st%pl%te(iCv)*st%dv%ne(iCv)*geo%cvVol(iCv)
+     &          + 1.5_R8*st%pl%ti(iCv)*st%dv%ni(iCv,0)*geo%cvVol(iCv)
           do is=0,ns-1
             nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
-     .                          na(ix,iy,is)*vol(ix,iy)
-            tesum(ir) = tesum(ir) +
-     &       0.5_R8*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
+     .                        st%pl%na(iCv,is)*geo%cvVol(iCv)
+            tesum(ir) = tesum(ir) + 0.5_R8*mp*am(is)*
+     &       st%pl%na(iCv,is)*(st%pl%ua(iCv,is)**2)*geo%cvVol(iCv)
             if (is_neutral(is)) then
               nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
-     .                                na(ix,iy,is)*vol(ix,iy)
+     .                                st%pl%na(iCv,is)*geo%cvVol(iCv)
 ! For fluid neutrals Natm_tmp is just the number of atoms integrated over
 ! the whole B2.5 domain
               Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
-     .                                na(ix,iy,is)*vol(ix,iy)
+     .                                st%pl%na(iCv,is)*geo%cvVol(iCv)
             endif
           end do
 #ifdef B25_EIRENE
-#ifdef WG_TODO
           do iatm = 1, nnatmi
             is = latmscl(iatm)
             if (is.eq.0) cycle
             nasum(is,ir) = nasum(is,ir) +
-     .                     dab2(ix+1,iy+1,iatm,1)*vol(ix,iy)
+     .                     dab2(iCv,iatm,1)*geo%cvVol(iCv)
             do imol = 1, nnmoli
               if (mlcmp(iatm,imol).gt.0)
      >          nasum(is,ir) = nasum(is,ir) +
-     .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
+     .           mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
             end do
           end do
 #endif
-#endif
-        enddo
+    
       enddo
 
       if(filedata(ltrc)) then
