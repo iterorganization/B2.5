@@ -43,16 +43,17 @@
        return
       end subroutine dealloc_b2mod_equation_sources
 
-      subroutine read_equation_sources(nCv, ns, switch)
+      subroutine read_equation_sources(nCv, ns, switch, itim)
        use b2mod_types
        use b2mod_switches
        implicit none
        type (switches), intent (inout) :: switch
        integer nCv, ns
-       integer is, iCv, i
+       integer is, iCv, i, itim
        logical b2news_solving(4)
        character*27 filename
        logical art_exists
+       character*4 chitim
 
        b2news_solving(1:4)=switch%no_solve.eq.0
        do i=1,4
@@ -62,15 +63,29 @@
        enddo
 
        if (b2news_solving(2)) then
-         filename = 'art_sna_us.dat'
-         call find_file(filename,art_exists)
-         if(art_exists) then
-           open(70,FILE=trim(filename))
-           read (70,"(1x,e23.16)")
-     &      ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-           close(70)
-         else
-           call xerrab ('There is no art_sna_us.dat file')
+         if (switch%use_mms.eq.1) then
+           filename = 'art_sna_us.dat'
+           call find_file(filename,art_exists)
+           if(art_exists) then
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e23.16)")
+     &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+             close(70)
+           else
+             call xerrab ('There is no art_sna_us.dat file')
+           endif
+         elseif (switch%use_mms.eq.2) then
+           write (chitim,'(i4.4)') itim
+           filename = 'art_sna_us'//chitim//'.dat'
+           call find_file(filename,art_exists)
+           if(art_exists) then
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e23.16)")
+     &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+             close(70)
+           else
+             call xerrab ('There is no art_sna_us.dat file')
+           endif
          endif
        endif
 

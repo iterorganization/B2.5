@@ -1505,7 +1505,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. All files must be present.
+					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations (according to the switch b2news_no_solve) must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
 				</description>
 			</switch>
 			<switch>
@@ -1513,14 +1513,14 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If equation_sources.ne.0, allow for the specification of source term values for all equations, per unit volume, provided in the art_sna.dat, art_smo.dat, art_she.dat, art_shi.dat, and art_sch.dat files. All files must be present.
+					If equation_sources.ne.0, allow for the specification of source term values for all equations, per unit volume, provided in the art_sna.dat, art_smo.dat, art_she.dat, art_shi.dat, and art_sch.dat files. Only the files corresponding to the solved equations (according to the switch b2news_no_solve) must be provided. For time-dependent MMS (use_mms.eq.2), artifical sources must be provided for each time-step: art_sXX0001.dat, art_sXX0002.dat, art_sXX0003.dat, and so on.
 				</description>
 			</switch>
 			<switchgroup>
 				<name>b2mndr_mms_...</name>
 				<description>
-					If use_mms.ne.0, specifies a run using the Method of Manufactured Solutions. The exact solutions to match are provided by the b2mndr_set_XX_numerical switches.
-					An exact solution is available for comparison if the corresponding set_XX_numerical switch is nonzero. The exact solutions are provided, respectively, in the exact_na.dat and exact_ne.dat, exact_ua.dat, exact_te.dat, exact_ti.dat, and exact_po.dat files.
+					If use_mms.eq.1, specifies a run using the Method of Manufactured Solutions in steady-state mode (b2mndt_style.eq.1). If use_mms.eq.2, specifies a run using the Method of Manufactured Solutions in time-dependent mode (b2mndt_style.eq.2). The exact solutions to match are provided by the b2mndr_set_XX_numerical switches.
+					An exact solution is available for comparison if the corresponding b2mndr_set_XX_numerical switch is nonzero. The exact solutions for steady-state are provided, respectively, in the exact_na.dat and exact_ne.dat, exact_ua.dat, exact_te.dat, exact_ti.dat, and exact_po.dat files. The exact solutions for time-dependent must be provided for each time-step: exact_XX0001.dat, exact_XX0002.dat, exact_XX0003.dat, and so on.
 					The exact_na.dat and exact_ne.dat files must be provided simultaneously.
 				</description>
 				<switch>
