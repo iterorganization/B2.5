@@ -123,7 +123,7 @@
             write(6,'(a,i3,a)')
      &        'rxf*dtco*time_factor for species ',isb,' should be 1 !'
             write(6,*) 'Time derivative terms may be inacurrate !'
-          end if
+          endif
         else
           rxg = switch%b2npco_rxg
         endif

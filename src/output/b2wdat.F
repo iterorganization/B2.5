@@ -53,7 +53,7 @@
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
-      integer, save :: use_mms = 0                                 !srv 26.02.18
+c      integer, save :: use_mms = 0                                 !srv 26.02.18
 
       integer iRFc, nRFc, icell
 #ifdef WG_DEBUG
@@ -119,7 +119,7 @@
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
-       call ipgeti('b2mndr_use_mms',use_mms)                      !srv 26.02.18
+c       call ipgeti('b2mndr_use_mms',use_mms)                      !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
 *    ..try to create a file in optional output folder

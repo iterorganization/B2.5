@@ -43,17 +43,18 @@
       return
       end subroutine dealloc_b2mod_boundary_sources
 
-      subroutine read_boundary_sources(nCv, ns, switch)
+      subroutine read_boundary_sources(nCv, ns, switch, itim)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_switches
       implicit none
       type (switches), intent (inout) :: switch
       integer nCv, ns
-      integer is, iCv, i
+      integer is, iCv, i, itim
       logical b2news_solving(4)
       character*36 filename
       logical lexist
+      character*4 chitim
 
       b2news_solving(1:4)=switch%no_solve.eq.0
       do i=1,4
@@ -63,12 +64,22 @@
       enddo
 
       if (b2news_solving(2)) then
-        filename='bv_na_us.dat'
-        call find_file(filename,lexist)
-        call xertst(lexist,'File '//trim(filename)//' is not found')
-        open(70,file=trim(filename))
-        read (70,"(1x,e23.16)") ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
-        close(70)
+        if (switch%use_mms.eq.1) then
+          filename='bv_na_us.dat'
+          call find_file(filename,lexist)
+          call xertst(lexist,'File '//trim(filename)//' is not found')
+          open(70,file=trim(filename))
+          read (70,"(1x,e23.16)") ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
+          close(70)
+        elseif (switch%use_mms.eq.2) then
+          write (chitim,'(i4.4)') itim
+          filename='bv_na_us'//chitim//'.dat'
+          call find_file(filename,lexist)
+          call xertst(lexist,'File '//trim(filename)//' is not found')
+          open(70,file=trim(filename))
+          read (70,"(1x,e23.16)") ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
+          close(70)
+        endif
       endif
 
       if (b2news_solving(1)) then

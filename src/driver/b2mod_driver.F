@@ -147,8 +147,8 @@
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: shot = 0, run = 0, ids_save = 0
-      integer, save :: use_mms = 0                                   !srv 26.02.18
-      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
+c      integer, save :: use_mms = 0                                   !srv 26.02.18
+c      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
 #ifdef _OPENMP
       real (kind=R8) :: cpuval, cpustart, cpuinit
 #else
@@ -1012,12 +1012,12 @@
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
-       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
-       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0)
+c       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
+c       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
+       if(switch%boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
-       call ipgeti ('b2mndr_equation_sources', equation_sources)
-       if(equation_sources.ne.0)
+c       call ipgeti ('b2mndr_equation_sources', equation_sources)
+       if(switch%equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -3016,11 +3016,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       close(nout(7))
 
 *   ..mms steady-state error analysis
-      if(use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then                 !srv 26.02.18 {
+      if(switch%use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then                 !srv 26.02.18 {
         call calc_err(nCv, ns, state%pl, switch)
       endif                                                              !srv 26.02.18 }
       if(switch%b2mndr_iout.ne.0) then
-        if(use_mms.eq.0) then                                            !srv 29.11.18 {
+        if(switch%use_mms.eq.0) then                                            !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
@@ -3438,8 +3438,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
-      if(boundary_sources.ne.0) call dealloc_b2mod_boundary_sources     !srv 26.02.18
-      if(equation_sources.ne.0) call dealloc_b2mod_equation_sources     !srv 26.02.18
+      if(switch%boundary_sources.ne.0)
+     &  call dealloc_b2mod_boundary_sources     !srv 26.02.18
+      if(switch%equation_sources.ne.0)
+     &  call dealloc_b2mod_equation_sources     !srv 26.02.18
       call dealloc_b2mod_b2plot
 #ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_BRAEIR

@@ -111,8 +111,8 @@
       integer :: ramp_slow, ier0, iCv
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
-      integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
-      integer, save :: use_mms = 0
+c      integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
+c      integer, save :: use_mms = 0
       save ramp_slow                                                     !xpb
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
@@ -167,13 +167,13 @@
        call xertst (1.le.ntim_step_out,
      &   'faulty internal parameter ntim_step_out')                     !srv 31.01.07 }
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
-       call ipgeti ('b2mndr_equation_sources', equation_sources)        !srv 26.02.18 {
-       if(equation_sources.ne.0)
-     &   call read_equation_sources(nCv, ns, switch)
-       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0)
-     &   call read_boundary_sources(nCv, ns, switch)    !srv 26.02.18 }
-       call ipgeti ('b2mndr_use_mms', use_mms)
+c       call ipgeti ('b2mndr_equation_sources', equation_sources)        !srv 26.02.18 {
+       if(switch%equation_sources.ne.0)
+     &   call read_equation_sources(nCv, ns, switch, itim)
+c       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
+       if(switch%boundary_sources.ne.0)
+     &   call read_boundary_sources(nCv, ns, switch, itim)    !srv 26.02.18 }
+c       call ipgeti ('b2mndr_use_mms', use_mms)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
 
@@ -191,6 +191,13 @@
        if (switch%b2stbc_boundary_namelist.ge.1) then
 !WG_TODO         call catchup_b2mod_boundary(ns,mpg,tim)
        endif
+      endif
+*   ..time-dependent MMS test                                            !fc 21.03.24
+      if (switch%use_mms.eq.2) then
+        if(switch%equation_sources.ne.0)
+     &    call read_equation_sources(nCv, ns, switch, itim)
+        if(switch%boundary_sources.ne.0)
+     &    call read_boundary_sources(nCv, ns, switch, itim)
       endif
 *   ..test nCv, nFc, ns, ismain
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -371,7 +378,7 @@ c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shidt,1, st%sr%shi,1)
 c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
           endif
 
-          if(equation_sources.ne.0) then                                 !srv 26.02.18 {
+          if(switch%equation_sources.ne.0) then                                 !srv 26.02.18 {
             do iCv = 1,nCv
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
      &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1)
@@ -558,7 +565,8 @@ c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
       endif
 
 *   ..mms time-dependent error analysis
-      if(use_mms.eq.2) then
+      if(switch%use_mms.eq.2.and.
+     &  mod(ncall_b2mndt+1,ntim_step_out).eq.0) then
         call calc_err(nCv, ns, st%pl, switch)
       endif
 

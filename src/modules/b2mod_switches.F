@@ -461,11 +461,15 @@ c b2mndt
       real (kind=R8) :: facdrift_start
       real (kind=R8) :: facExB_start
       integer :: b2mndt_style
+      integer :: b2mndt_temp0
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
       real (kind=R8) :: b2mndr_stim
       real (kind=R8) :: neutral_rescale
+      integer :: use_mms
+      integer :: equation_sources
+      integer :: boundary_sources
 
 c b2ag
       real (kind=R8) :: b2agmt_width
@@ -975,6 +979,7 @@ c b2mndt
       s % facdrift_start = 0.0_R8
       s % facExB_start = 0.0_R8
       s % b2mndt_style = 1
+      s % b2mndt_temp0 = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -983,6 +988,9 @@ c b2mndr
       s % b2mndr_hz = 1.0_R8
       s % b2mndr_stim = 0.0_R8
       s % neutral_rescale = 1.0_R8
+      s % use_mms = 0
+      s % equation_sources = 0
+      s % boundary_sources = 0
 
 c b2ag
       s % b2agmt_width = 1.0_R8
@@ -1519,12 +1527,15 @@ c b2mndt
       call ipgetr ('b2news_facdrift_start', s%facdrift_start)
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
+      call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
       call ipgetr ('b2mndr_stim', s%b2mndr_stim)
       call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
-
+      call ipgeti ('b2mndr_use_mms', s%use_mms)
+      call ipgeti ('b2mndr_equation_sources', s%equation_sources)
+      call ipgeti ('b2mndr_boundary_sources', s%boundary_sources)
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
