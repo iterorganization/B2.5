@@ -609,11 +609,7 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
-      integer :: b2mndt2_temp_0
-      integer :: b2mndt2_temp_1
-      integer :: b2mndt2_temp_2
-
-
+      integer :: b2mndt_temp0
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1320,10 +1316,7 @@ c b2mndt
       s % facdrift_start = 0.0_R8
       s % facExB_start = 0.0_R8
       s % b2mndt_style = 1
-      s % b2mndt2_temp_0 = 1
-      s % b2mndt2_temp_1 = 1
-      s % b2mndt2_temp_2 = 1
-
+      s % b2mndt_temp0 = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -2139,17 +2132,15 @@ c b2mndt
       call ipgetr ('b2news_facdrift_start', s%facdrift_start)
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
-      call ipgeti ('b2mndt2_temp_0',s%b2mndt2_temp_0)
-      call ipgeti ('b2mndt2_temp_1',s%b2mndt2_temp_1)
-      call ipgeti ('b2mndt2_temp_2',s%b2mndt2_temp_2)
+      call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
 
 c b2mndr
-      call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
-      call ipgetr ('b2mndr_stim', s % b2mndr_stim)
-      call ipgetr ('b2mndr_rescale_neutrals', s % neutral_rescale)
-      call ipgeti ('b2mndr_use_mms', s % use_mms)
-      call ipgeti ('b2mndr_equation_sources', s % equation_sources)
-      call ipgeti ('b2mndr_boundary_sources', s % boundary_sources)
+      call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
+      call ipgetr ('b2mndr_stim', s%b2mndr_stim)
+      call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
+      call ipgeti ('b2mndr_use_mms', s%use_mms)
+      call ipgeti ('b2mndr_equation_sources', s%equation_sources)
+      call ipgeti ('b2mndr_boundary_sources', s%boundary_sources)
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s % b2agmt_width)
