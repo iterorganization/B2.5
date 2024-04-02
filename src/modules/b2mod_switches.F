@@ -126,10 +126,14 @@ c Advanced fluid neutral models
 c ECH model
       integer :: use_ech
       integer :: ech_out
-      real (kind=R8) :: ech_RFfreq
       integer :: ech_harmonics
+      integer :: ech_coupling
+      integer :: ech_gaussian_symmetry
       real (kind=R8) :: ech_power
+      real (kind=R8) :: ech_absfract
       real (kind=R8) :: ech_Rdep
+      real (kind=R8) :: ech_Zdep
+      real (kind=R8) :: ech_RFfreq
 
 c iout switches
       integer :: iout_b2wdat
@@ -313,9 +317,6 @@ c geometry
       integer :: use_9pt_stencil
       integer :: fcVol_style
       integer :: vxVol_style
-      real (kind=R8) :: R0
-      real (kind=R8) :: a0
-      real (kind=R8) :: b
 
 c Eirene coupling
       integer :: use_eirene
@@ -381,18 +382,25 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
 
-c Bohm-like diffusion model
+c Bohm-like transport model
       integer :: transport_bohm
       integer :: bohm_pureDiff
       integer :: bohm_ExB
+      integer :: bohm_viscosity
       integer :: bohm_iout
       real (kind=R8) :: bohm_gammaD
+      real (kind=R8) :: bohm_dnafact
+      real (kind=R8) :: bohm_vlafact
+      real (kind=R8) :: R0
+      real (kind=R8) :: a0
+      real (kind=R8) :: b
 
 c Artificial losses
       integer :: losses_poloidal
       integer :: losses_limiters
       integer :: losses_drifts
       integer :: nlimiters
+      integer :: artloss_out
       real (kind=R8) :: limiter_width
 
 c b2tqna
@@ -820,9 +828,6 @@ c geometry
       s % use_9pt_stencil = 1
       s % fcVol_style = 0
       s % vxVol_style = 2
-      s % R0 = 0.0_R8
-      s % a0 = 0.0_R8
-      s % b = 0.0_R8
 
 c eirene coupling
       s % use_eirene = 0
@@ -895,23 +900,34 @@ c k-enstrophy model
 c ECH model
       s % use_ech = 0
       s % ech_out = 0
-      s % ech_RFfreq = 0.0_R8
       s % ech_harmonics = 0
+      s % ech_coupling = 0
+      s % ech_gaussian_symmetry = 1
       s % ech_power = 0.0_R8
+      s % ech_absfract = 0.0_R8
       s % ech_Rdep = 0.0_R8
+      s % ech_Zdep = 0.0_R8
+      s % ech_RFfreq = 0.0_R8
 
-c Bohm-like diffusion model
+c Bohm-like transport model
       s % transport_bohm = 0
-      s % bohm_gammaD = 0.0_R8
       s % bohm_pureDiff = 0
       s % bohm_ExB = 1
+      s % bohm_viscosity = 1
       s % bohm_iout = 0
+      s % bohm_gammaD = 0.0_R8
+      s % bohm_dnafact = 0.0_R8
+      s % bohm_vlafact = 0.0_R8
+      s % R0 = 0.0_R8
+      s % a0 = 0.0_R8
+      s % b = 0.0_R8
 
 c Artificial losses
       s % losses_poloidal = 0
       s % losses_limiters = 0
       s % losses_drifts = 0
       s % nlimiters = 0
+      s % artloss_out = 0
       s % limiter_width = 0.0_R8
 
 c b2tqna
@@ -1172,10 +1188,14 @@ c Advanced fluid neutral models
 
 c ECH model
       call ipgeti ('b2sral_use_ECH', s % use_ech)
-      call ipgetr ('b2sral_ECH_RFfrequency', s % ech_RFfreq)
       call ipgeti ('b2sral_ECH_harmonics', s % ech_harmonics)
+      call ipgeti ('b2sral_ECH_coupling', s % ech_coupling)
+      call ipgeti ('b2sral_ECH_gauss_symm', s % ech_gaussian_symmetry)
       call ipgetr ('b2sral_ECH_power', s % ech_power)
       call ipgetr ('b2sral_ECH_Rdep', s % ech_Rdep)
+      call ipgetr ('b2sral_ECH_absorption_frac', s % ech_absfract)
+      call ipgetr ('b2sral_ECH_Zdep', s % ech_Zdep)
+      call ipgetr ('b2sral_ECH_RFfrequency', s % ech_RFfreq)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -1364,9 +1384,6 @@ c geometry
       call ipgeti ('b2mndr_use_9pt_stencil',s % use_9pt_stencil)
       call ipgeti ('b2mndr_fcVol_style',s % fcVol_style)
       call ipgeti ('b2mndr_vxVol_style', s % vxVol_style)
-      call ipgetr ('R0', s % R0)
-      call ipgetr ('a0', s % a0)
-      call ipgetr ('b', s % b)
 
 c Eirene coupling
       call ipgeti ('b2mndr_eirene', s % use_eirene)
@@ -1441,19 +1458,26 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
 
-c Bohm-like diffusion model
-        call ipgeti ('b2tqna_transport_bohm', s%transport_bohm)
-        call ipgetr ('b2tqna_bohm_gammaD', s%bohm_gammaD)
-        call ipgeti ('b2tqna_bohm_diff', s%bohm_pureDiff)
-        call ipgeti ('b2tqna_bohm_ExB', s%bohm_ExB)
-        call ipgeti ('b2tqna_bohm_iout', s%bohm_iout)
+c Bohm-like transport model
+      call ipgeti ('b2tqna_transport_bohm', s%transport_bohm)
+      call ipgeti ('b2tqna_bohm_purediff', s%bohm_pureDiff)
+      call ipgeti ('b2tqna_bohm_ExB', s%bohm_ExB)
+      call ipgeti ('b2tqna_bohm_viscosity', s%bohm_viscosity)
+      call ipgeti ('b2tqna_bohm_iout', s%bohm_iout)
+      call ipgetr ('b2tqna_bohm_gammaD', s%bohm_gammaD)
+      call ipgetr ('b2tqna_bohm_dnafact', s%bohm_dnafact)
+      call ipgetr ('b2tqna_bohm_vlafact', s%bohm_vlafact)
+      call ipgetr ('b2tqna_major_radius', s % R0)
+      call ipgetr ('b2tqna_minor_radius', s % a0)
+      call ipgetr ('b2tqna_vessel_half_height', s % b)
 
 c Artificial losses
-        call ipgeti ('b2sral_losses_poloidal', s%losses_poloidal)
-        call ipgeti ('b2sral_losses_limiters', s%losses_limiters)
-        call ipgeti ('b2sral_losses_drifts', s%losses_drifts)
-        call ipgeti ('b2sral_nlimiters', s%nlimiters)
-        call ipgetr ('b2sral_limiter_width', s % limiter_width)
+      call ipgeti ('b2sral_losses_poloidal', s%losses_poloidal)
+      call ipgeti ('b2sral_losses_limiters', s%losses_limiters)
+      call ipgeti ('b2sral_losses_drifts', s%losses_drifts)
+      call ipgeti ('b2sral_nlimiters', s%nlimiters)
+      call ipgeti ('b2sral_artloss_out', s%artloss_out)
+      call ipgetr ('b2sral_limiter_width', s % limiter_width)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1581,22 +1605,22 @@ c b2trcl
       call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                            !iyv 06.12.13
 
 c b2stbc
-        call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
-        call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
+      call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
+      call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
 
-        call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                              !srv 14.10.99
-        call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)                  !srv 11.04.13
-        call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
-        call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)                  !srv 11.04.13
-        call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)          !srv 25.07.05
-        call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
-        call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
-        call ipgetr ('b2stbc_nesepm', s%nesepm)
-        call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
-        call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+      call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                              !srv 14.10.99
+      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)                  !srv 11.04.13
+      call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
+      call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)                  !srv 11.04.13
+      call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)          !srv 25.07.05
+      call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
+      call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
+      call ipgetr ('b2stbc_nesepm', s%nesepm)
+      call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
+      call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
 
 c b2trno
-        call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)         !lk 31.01.08
+      call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)         !lk 31.01.08
 
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
@@ -1944,20 +1968,36 @@ c k-enstrophy model
 c ECH model
       call xertst (0.le.s%use_ech.le.1,
      &              'b2sral_use_ECH value not coded')
+      call xertst (0.le.s%ech_coupling.le.8,
+     &              'b2sral_ECH_coupling value not coded')
       call xertst (0.0_R8.lt.s%ech_RFfreq.or.s%use_ech.eq.0,
      1              'b2sral_ECH_RFfrequency must be .gt. 0.0')
       call xertst (1.lt.s%ech_harmonics.or.s%use_ech.eq.0,
      1              'b2sral_ECH_harmonics must be .ge. 1')
       call xertst (0.0_R8.lt.s%ech_power.or.s%use_ech.eq.0,
      1              'b2sral_ECH_power must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%ech_absfract.or.s%use_ech.eq.0,
+     1              'b2sral_ECH_absorption_frac must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%ech_Rdep.or.s%use_ech.eq.0,
      1              'b2sral_ECH_Rdep must be .gt. 0.0')
 
 c Bohm transport model
       call xertst (s%transport_bohm.ge.0.and.s%transport_bohm.le.1,
      1                         'b2tqna_transport_bohm value not coded')
+      call xertst (s%bohm_pureDiff.ge.0.and.s%bohm_pureDiff.le.1,
+     1                         'b2tqna_bohm_diff value not coded')
+      call xertst (s%bohm_ExB.ge.0.and.s%bohm_ExB.le.1,
+     1                         'b2tqna_bohm_ExB value not coded')
+      call xertst (s%bohm_viscosity.ge.0.and.s%bohm_viscosity.le.1,
+     1             'b2tqna_bohm_viscosity value not coded')
+      call xertst (s%bohm_iout.ge.0.and.s%bohm_iout.le.1,
+     1                         'b2tqna_bohm_iout value not coded')
       call xertst (0.0_R8.lt.s%bohm_gammaD.or.s%transport_bohm.eq.0,
      1                         'b2tqna_bohm_gammaD must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%bohm_dnafact.or.s%transport_bohm.eq.0,
+     1                         'b2tqna_bohm_dnafact must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%bohm_vlafact.or.s%transport_bohm.eq.0,
+     1                         'b2tqna_bohm_vlafact must be .gt. 0.0')
       call xertst ((0.0_R8.lt.s%R0.or.s%transport_bohm.eq.0).and.
      1     (0.0_R8.lt.s%R0.or.s%losses_limiters.eq.0),
      2     'Major radius must be .gt. 0.0')
@@ -1965,22 +2005,16 @@ c Bohm transport model
      1     (0.0_R8.lt.s%a0.or.s%losses_limiters.eq.0).and.
      2     (0.0_R8.lt.s%a0.or.s%losses_drifts.eq.0),
      3     'Minor radius must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%b.or.s%losses_poloidal.eq.0, 
-     1     'b must be .gt. 0.0')
-      call xertst (s%bohm_pureDiff.ge.0.and.s%bohm_pureDiff.le.1,
-     1                         'b2tqna_bohm_diff value not coded')
-      call xertst (s%bohm_ExB.ge.0.and.s%bohm_ExB.le.1,
-     1                         'b2tqna_bohm_ExB value not coded')
-      call xertst (s%bohm_iout.ge.0.and.s%bohm_iout.le.1,
-     1                         'b2tqna_bohm_iout value not coded')
 
 c Artificial losses
       call xertst (s%losses_poloidal.ge.0.and.s%losses_poloidal.le.1,
      1                        'b2sral_losses_poloidal value not coded')
       call xertst (s%losses_limiters.ge.0.and.s%losses_limiters.le.1,
-     1                        'b2sral_losses_poloidal value not coded')
+     1                        'b2sral_losses_limiters value not coded')
       call xertst (s%losses_drifts.ge.0.and.s%losses_drifts.le.1,
-     1                        'b2sral_losses_poloidal value not coded')
+     1                        'b2sral_losses_drifts value not coded')
+      call xertst (0.0_R8.lt.s%b.or.s%losses_poloidal.eq.0, 
+     1     'b must be .gt. 0.0')
       call xertst (0.lt.s%nlimiters.or.s%losses_limiters.eq.0,
      1              'Number of limiters must be .gt. 0')
       call xertst (0.0_R8.lt.s%limiter_width.or.s%losses_limiters.eq.0,
@@ -2146,6 +2180,18 @@ c ECH model
       if(s%ech_out.ne.0.and.s%ech_out.ne.1) then
         call xerrab ('b2sral_ECH_out should be either 0 (no output) ' //
      &   'or 1 (standard output)')
+      endif
+
+c Artifial losses model
+      if(s%artloss_out.ne.0.and.(s%losses_poloidal.eq.0.and.
+     &   s%losses_limiters.eq.0.and.s%losses_drifts.eq.0)) then
+        call xerrab ('b2sral_losses_poloidal or b2sral_losses_drifts '//
+     &               'or b2sral_losses_limiters should be 1 ' //
+     &               'when writing Artifial Losses output')
+      endif
+      if(s%artloss_out.ne.0.and.s%artloss_out.ne.1) then
+        call xerrab ('b2sral_artloss_out should be either 0 ' //
+     &               '(no output) or 1 (standard output)')
       endif
 
 c spatially hybrid neutrals

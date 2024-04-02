@@ -574,22 +574,6 @@
 					<default>-2</default>
 					<type>integer</type>
 				</switch>
-                                <switch>
-				        <name>R0</name>
-				        <default>1.0</default>
-				        <type>real</type>
-				        <description>
-					       Major radius of the machine.
-				        </description>
-			        </switch>
-                                <switch>
-				        <name>a0</name>
-				        <default>0.5</default>
-				        <type>real</type>
-				        <description>
-					       Minor radius of the machine.
-				        </description>
-			        </switch>
 			</switchgroup>
 		</category>
 		<category name="Run">
@@ -2502,31 +2486,89 @@
 				</description>
 			</switch>
                         <switch>
-				<name>bohm_gammaD</name>
-				<default>3.00</default>
+				<name>b2tqna_bohm_purediff</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 0, SOLPS will use a pure diffusion Bohm-like anomalous transport (ref. T. Wauter et al. 2020, RF plasma simulation), otherwise a convection-diffusion model will be used. For the convection velocity, see switch b2tqna_bohm_ExB.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2tqna_bohm_ExB</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If 0, formula 9 T. Wauter et al. 2020 (RF plasma simulation) in is used to evaluate the convection velocity.
+                                        If 1, formula 8 is instead used to evaluate the electric field and the convection velocity is E/B.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2tqna_bohm_viscosity</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If 0, no viscosity will be computed in a Bohm-like way.
+                                        If 1, viscosity effects will be included.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2tqna_bohm_iout</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Output for the Bohm transport model.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2tqna_bohm_gammaD</name>
+				<default>0.00</default>
 				<type>real</type>
 				<description>
 					Sets the correction for energy transport since the energy confinement is poorer compared to the particle confinement.
 				</description>
 			</switch>
                         <switch>
-				<name>b2stbr_recycle_afn</name>
-				<default>0</default>
-				<type>integer</type>
+				<name>b2tqna_bohm_dnafact</name>
+				<default>0.00</default>
+				<type>real</type>
 				<description>
-					Turns on the AFN recycling model.
+					Sets the correction for the diffusion coefficient.
 				</description>
 			</switch>
                         <switch>
-				<name>b2stbr_AFN_out</name>
-				<default>0</default>
-				<type>integer</type>
+				<name>b2tqna_bohm_vlafact</name>
+				<default>0.00</default>
+				<type>real</type>
 				<description>
-					Output for the AFN model.
+					Sets the correction for the convection velocity.
 				</description>
 			</switch>
                         <switch>
-				<name>b2stbr_ech</name>
+				<name>b2tqna_major_radius</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Major radius of the machine.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2tqna_minor_radius</name>
+				<default>0.5</default>
+				<type>real</type>
+				<description>
+					Minor radius of the machine.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2tqna_vessel_half_height</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Minor radius from center to wall.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_use_ECH</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
@@ -2534,11 +2576,110 @@
 				</description>
 			</switch>
                         <switch>
-				<name>b2stbr_ECH_out</name>
+				<name>b2sral_ECH_out</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
 					Output for the ECH model.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_ECH_harmonics</name>
+				<default>2</default>
+				<type>integer</type>
+				<description>
+					Sets the harmonic at which ECH power is injected.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_ECH_coupling</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Coupling = 0 -- Fixed power distributed as a Dirac's delta in volumes intersected at given radial position.
+                                        Coupling = 1 -- Fixed fraction of launched power is coupled/Gaussian injection.
+                                        Coupling = 2 -- TOMAS - deposition on ECR (Budden analysis). To be coded.
+                                        Coupling = 3 -- Ray-tracing with TORAY. To be coded.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_ECH_power</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the amount of injected ECH power.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_ECH_absorption_frac</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the fraction of ECH power that will be absorbed. 
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_ECH_Rdep</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the position at which ECH power is injected.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_ECH_RFfrequency</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the harmonic frequency for power injection.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_losses_poloidal</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the artificial losses due to motion in the poloidal direction.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_losses_limiters</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the artificial losses due to limiters.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_losses_drifts</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the artificial losses due to drifts.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_nlimiters</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Sets the number of limiters.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_artloss_out</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Output for the Artificial Losses model.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_limiter_width</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the limiter width.
 				</description>
 			</switch>
 			<switch>
