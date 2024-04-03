@@ -314,11 +314,10 @@
 
 ***********************************************************************
 
-      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nFt,
-     .                           nVmxCv, gm)
+      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, gm)
 
       implicit none
-      integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nFt, nVmxCv
+      integer, intent(in) :: nout, nCv, nFc, nVx, nFs
       type (geometry), intent (in) :: gm
       external cfwure
 
@@ -947,13 +946,13 @@
       ! only supported for cases derived from original, structured grid
       if (switch%use_9pt_stencil.eq.0) then
         if (mpg%isClassicalGrid.eq.1) then
-          nfx = maxval(mpg%imapFcx)
+          nFx = maxval(mpg%imapFcx)
           ! 'poloidal' faces
-          gm%fcQgam(1:nfx,1) = 0.0_R8
-          gm%fcQalf(1:nfx,1) = 0.0_R8
+          gm%fcQgam(1:nFx,1) = 0.0_R8
+          gm%fcQalf(1:nFx,1) = 0.0_R8
           ! 'radial' faces
-          gm%fcQgam(nfx+1:mpg%nFc,1) = 0.0_R8
-          gm%fcQbet(nfx+1:mpg%nFc,0) = 0.0_R8
+          gm%fcQgam(nFx+1:mpg%nFc,1) = 0.0_R8
+          gm%fcQbet(nFx+1:mpg%nFc,0) = 0.0_R8
         else
           call xerrab ('5-point stencil option not supported for UG')
         endif
@@ -1173,7 +1172,7 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nfx, iCv, iCv1, iCv2, ic
+      integer :: iCv, iCv1, iCv2, ic
       integer :: iFc, iFs, iFt, iVx, i, j
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), L1, L2, LL,
@@ -1484,7 +1483,7 @@ csc   than previous face, then identify next vertex
       found_next = .true.
       do while (found_next)
          ! we have a new face, loop over all faces connected to the current vertex
-         found_next = 0
+         found_next = .false.
          do j = mpg%vxFcP(vx_current,1), 
      &          mpg%vxFcP(vx_current,1)+mpg%vxFcP(vx_current,2)-1
            fc_next = mpg%vxFc(j)

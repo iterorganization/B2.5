@@ -32,7 +32,7 @@
       type(mapping), save    :: mpg
       type(geometry), save   :: geo
       type(B2State), save    :: state
-      type(switches), save   :: switch
+!     type(switches), save   :: switch
 *   ..procedures
       external xertst, cfopen, cfruin
       external b2rucp

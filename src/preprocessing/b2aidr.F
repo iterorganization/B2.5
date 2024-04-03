@@ -73,7 +73,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer is, i, is0, ns0, idum(0:9), io
+      integer is, i, is0, ns0, idum(0:9)
       integer, save :: read_b2fstate_file = 0                       !srv 22.12.09
       type(B2State) :: st1
       real (kind=R8), allocatable :: zcdum(:,:)

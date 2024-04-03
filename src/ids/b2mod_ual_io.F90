@@ -5644,7 +5644,7 @@ contains
         call find_file(filename,exists)
         if (exists) then
           open(99,file=filename)
-          call b2agx0 (99, idum(0), idum(1), idum(2), idum(3))
+          call b2agx0 (99, idum(0), idum(1), idum(2))
           read (99,'(a8)',err=2) id
           read (99,*,err=2) parg
     1     continue

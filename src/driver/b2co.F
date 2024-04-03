@@ -78,7 +78,7 @@
 #endif
 #endif
 #endif
-      integer ninp(0:5), nout(0:7), nCv, nFc, nVx, ns, ns0, is
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, is
       integer idum(0:9), io
       integer iflag
 #if ( !defined(NAGF95) && !defined(NAGFOR) )

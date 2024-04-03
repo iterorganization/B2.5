@@ -37,13 +37,13 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, vx2(0:1), vx0, iCvBnd, nv
+      integer iCv, iFc, vx2(0:1), nv
       integer, allocatable :: vx(:)
       real (kind=R8) ::
-     *  t0, pi, babs, psdx, psdy, width, hzf, babs_test,
+     *  t0, pi, babs, width, hzf,
      *  centroid(0:1) ! 0 = x-coord, 1 = y-coord
 *   ..procedures
-      intrinsic sqrt, sign, sum
+      intrinsic sqrt, sum
 
       !data width /1.0_R8/
       !save width
