@@ -45,6 +45,7 @@ c***     Ga_sep_    gasp_tmp    inward neutral flux for each species
 c***     Gp_sep_    gpuf_tmp    gas puffing rate for each species
 c***     pr_sep_    prsr_tmp    relative total pressure for each species
 c***     nr_sep_    nrsr_tmp    relative ion density for each species
+c***     nri_sep_   nrsri_tmp   relative ion density for each species
 c***
 c***.............................................................(ions)
 c***     nii_sep_   nisi_tmp    average ni for each ion
@@ -60,11 +61,11 @@ c----------------------------------------------------------------------
       integer nglb_tmp
       parameter (nglb_tmp=9)
       integer nspc_tmp
-      parameter (nspc_tmp=10)
+      parameter (nspc_tmp=11)
       integer nion_tmp
       parameter (nion_tmp=2)
       character, save :: hlp_hg(nglb_tmp)*8
-      character, save :: hlp_hs(nspc_tmp)*7
+      character, save :: hlp_hs(nspc_tmp)*8
       character, save :: hlp_hi(nion_tmp)*8
 c*** Values by species
       real (kind=R8), allocatable ::
@@ -73,7 +74,7 @@ c*** Values by species
      *      nisp_tmp(:), zisp_tmp(:), zesp_tmp(:),
      ,      gisp_tmp(:), nasp_tmp(:), tasp_tmp(:),
      ,      gasp_tmp(:), gpuf_tmp(:),
-     ,      prsr_tmp(:), nrsr_tmp(:)
+     ,      prsr_tmp(:), nrsr_tmp(:), nrsri_tmp(:)
 
 c*** Values by ion charge states
       real (kind=R8), allocatable ::
@@ -87,14 +88,15 @@ c*** Column headers:
      2 '  Qt_sep','  Qe_sep','  Qi_sep','Qrad_SOL',
      3 'Spmp_nom'/
       data hlp_hs /
-     1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
-     2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
+     1  ' ni_sep_',' Zi_sep_',' Ze_sep_',' Gi_sep_',' na_sep_',
+     2  ' Ta_sep_',' Ga_sep_',' Gp_sep_',' pr_sep_',' nr_sep_', 
+     3  'nri_sep_' /
       data hlp_hi / 'nii_sep_','Gii_sep_' /
 c----------------------------------------------------------------------
 
       contains
 
-      subroutine b2wrsep(nx,ny,ns,BoRiS)
+      subroutine b2wrsep(geo,mpg,st,st_ext, ns,switch)
       use b2mod_geo
       use b2mod_rates
       use b2mod_plasma
@@ -112,9 +114,18 @@ c----------------------------------------------------------------------
 #else
       use b2mod_eirbra
 #endif
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
+      use b2mod_switches
       implicit none
 
-      integer nx, ny, ns
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2state), intent(in) :: st
+      type (B2StateExt), intent (in) :: st_ext
+      type(switches), intent(in) :: switch
+
       real (kind=R8) :: BoRiS
 c
 c*** Global values
@@ -132,8 +143,9 @@ c*** Global values
 
 c*** Local variables of general use
       real (kind=R8) ::
-     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
-      integer i,j,k,l,ia,is,ix,iy
+     *     v,hlp_i,hlp_n,hlp_p,hlp_v, t0, wrkf ,zeff(mpg%nCv)
+      integer iFc, iFc1, iFc2, ic1, ic2, iCv
+      integer i,j,k,l,ia,is,ns,is_start,is_end
 
       save
 c======================================================================
@@ -156,6 +168,7 @@ c
         gpuf_tmp(i)=0.0_R8
         prsr_tmp(i)=0.0_R8
         nrsr_tmp(i)=0.0_R8
+        nrsri_tmp(i)=0.0_R8
       end do !}
       do i=1,ns !{
         nisi_tmp(i)=0.0_R8
@@ -164,9 +177,83 @@ c
       hlp_n=0.0_R8
       hlp_p=0.0_R8
       hlp_v=0.0_R8
+      hlp_nesp = 0.0_R8
+      hlp_qesp = 0.0_R8
+      hlp_qisp = 0.0_R8 
+      hlp_qtsp = 0.0_R8 
 c
 c*** Compute the data
 c
+      call b2xzef (mpg%nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne,
+     & zeff, st_ext)    
+      do i = mpg%fsFcP(mpg%iFssep,1), mpg%fsFcP(mpg%iFssep,1)
+     &  +mpg%fsFcP(mpg%iFssep,2)-1
+        iFc = mpg%fsFc(i)
+        ic1 = mpg%fcCv(iFc,1)
+        ic2 = mpg%fcCv(iFc,2)
+        if(mpg%cvOnClosedSurface(ic1) .or. 
+     &    mpg%cvOnClosedSurface(ic2)) then
+          wrkf = (st%dv%ne(ic1)*geo%fcHc(iFc,2) 
+     &      + st%dv%ne(ic2) *geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
+          hlp_nesp = hlp_nesp + wrkf*geo%fcS(iFc)
+          hlp_v = hlp_v + geo%fcS(iFc)
+
+          hlp_qesp = hlp_qesp+st%dv%fhe_mdf(iFc,1)
+          hlp_qisp = hlp_qisp+st%dv%fhi_mdf(iFc,1)
+
+          hlp_tesp = hlp_tesp + (st%pl%te(ic1)*geo%fcHc(iFc,2) 
+     &      + st%pl%te(ic2) *geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
+     &      *wrkf*geo%fcS(iFc) 
+          hlp_tisp = hlp_tisp + (st%pl%ti(ic1)*geo%fcHc(iFc,2) 
+     &      + st%pl%ti(ic2) *geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
+     &      *wrkf*geo%fcS(iFc) 
+
+          hlp_zesp = hlp_zesp + (zeff(ic1)*geo%fcHc(iFc,2) 
+     &      + zeff(ic2)*geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
+     &      *wrkf*geo%fcS(iFc) 
+          is=0
+          do j=1,nspecies !{
+            do k=1,nfluids(j) !{
+              is=is+1
+              t0 = (st%pl%na(ic1,ions_list(is))*geo%fcHc(iFc,2) 
+     &        + st%pl%na(ic2,ions_list(is))*geo%fcHc(iFc,1)) 
+     &        /sum(geo%fcHc(iFc,:)) *geo%fcS(iFc)
+              nisi_tmp(is)=nisi_tmp(is)+t0
+              gisi_tmp(is) = gisi_tmp(is)+
+     &          st%dv%fna_mdf(iFc,1,ions_list(is))
+              nisp_tmp(j)=nisp_tmp(j)+t0
+              gisp_tmp(j) = gisp_tmp(j)+
+     &          st%dv%fna_mdf(iFc,1,ions_list(is))
+            enddo
+          enddo
+        endif
+      enddo
+      do j=1,nspecies
+        do iCv=1,mpg%nCv
+          if (mpg%cvOnClosedSurface(iCv)) then
+            if (switch%use_eirene.eq.0) then
+              gasp_tmp(j) = gasp_tmp(j)-st%sr%sna(iCv,0,eb2spcr(j))-
+     &        st%sr%sna(iCv,1,eb2spcr(j))*st%pl%na(iCv,eb2spcr(j))
+            else
+              gasp_tmp(j) = gasp_tmp(j)+
+     &          st%srw%sna0_eir_tot(iCv,eb2spcr(j)+1)
+            endif
+          endif
+        enddo
+      enddo
+      hlp_tesp = hlp_tesp/hlp_nesp/qe
+      hlp_tisp = hlp_tisp/hlp_nesp/qe
+      hlp_zesp = hlp_zesp/hlp_nesp
+      hlp_nesp = hlp_nesp/hlp_v
+      nisp_tmp = nisp_tmp/hlp_v
+      nisi_tmp = nisi_tmp/hlp_v
+      hlp_qtsp = hlp_qesp+hlp_qisp
+      if(hlp_nesp.gt.0.0_R8) then
+        nrsr_tmp = nisp_tmp/hlp_nesp
+      end if 
+      nrsri_tmp = nisp_tmp/sum(nisp_tmp)
+
+#ifdef WG_TODO
       call b2xzef_st(nx,ny,ns,rz2,na,ne,zeff)
       iy=jsep+1
       do ix=0,nx-1 !{
@@ -230,7 +317,7 @@ c          v=vol(ix,iy)
         if(nnreg(0).eq.8.and.(i.eq.5.or.i.eq.6)) cycle
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
       end do !}
-
+#ifdef WG_TODO
       is=0
       do j=1,nspecies !{
         if(hlp_nesp.gt.0.0_R8) then !{
@@ -272,7 +359,7 @@ c          v=vol(ix,iy)
           end do !}
         end if !}
       end do !}
-
+#endif
       if(hlp_nesp.gt.0.0_R8) then !{
         hlp_tesp=hlp_tesp/hlp_nesp/qe
         hlp_zesp=hlp_zesp/hlp_nesp
@@ -336,7 +423,7 @@ c     ,                                i,wldnm(l,i,0),mlcmp(ia,i) !###
           nrsr_tmp(k)=0.0_R8
         end do !}
       end if !}
-
+#endif
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then !{
 
@@ -352,6 +439,7 @@ c*** Write the data in a separate file for plotting...
           equs_tmp(k,8) = gpuf_tmp(k)
           equs_tmp(k,9) = prsr_tmp(k)
           equs_tmp(k,10)= nrsr_tmp(k)
+          equs_tmp(k,11)= nrsri_tmp(k)
         end do !}
         do k = 1, ns !{
           equi_tmp(k,1) = nisi_tmp(k)
@@ -371,20 +459,19 @@ c
       end subroutine b2wrsep
 c======================================================================
 
-      subroutine b2wrsepi(nx,ny,ns,switch)
+      subroutine b2wrsepi(ns,switch)
       use b2mod_switches
       implicit none
-      integer, intent(in) :: nx, ny, ns
       type (switches), intent (in) :: switch
-      integer i, j, k, nv
+      integer i, j, k, nv, ns
       character hlp_c
       logical ex, warn_tmp
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
-
+#ifdef WG_TODO
       call get_jsep(nx,ny,jxi,jxa,jsep)
-
+#endif
       if(nspecies.le.0) then !{
         write(*,*) '!!! b2wrsep: nspecies.lt.0 - no tracing data'
         filedata(ltrc)=.false.
@@ -398,10 +485,6 @@ c----------------------------------------------------------------------
             filedata(ltrc)=.false.
           end if !}
         end do !}
-      end if !}
-      if(nncut.ne.1 .and. nncut.ne.2) then !{
-        write(*,*) '!!! b2wrsep: nncut = ',nncut,' - no tracing data'
-        filedata(ltrc)=.false.
       end if !}
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -497,7 +580,7 @@ c*** New file
 
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
      ,   '(a1,6x,a4,5x,',ng_tmp,'(5x,a8,1x),',
-     ,                   ns_tmp*nsp_tmp,'(5x,a7,a2),',
+     ,                   ns_tmp*nsp_tmp,'(5x,a8,a2),',
      ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
@@ -534,6 +617,7 @@ c>>>
       allocate(gpuf_tmp(nspecies))
       allocate(prsr_tmp(nspecies))
       allocate(nrsr_tmp(nspecies))
+      allocate(nrsri_tmp(nspecies))
       allocate(equi_tmp(ns,nion_tmp))
       allocate(nisi_tmp(ns))
       allocate(gisi_tmp(ns))
@@ -621,6 +705,7 @@ c     Finalization step
       deallocate(gpuf_tmp)
       deallocate(prsr_tmp)
       deallocate(nrsr_tmp)
+      deallocate(nrsri_tmp)
       deallocate(equi_tmp)
       deallocate(nisi_tmp)
       deallocate(gisi_tmp)
