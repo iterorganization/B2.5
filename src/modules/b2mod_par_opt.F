@@ -107,8 +107,7 @@
       integer, intent (in) :: ns
       ! csc local variables
       integer :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff,
-     &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
-     &           nfaces
+     &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc
       integer, allocatable :: cfReg(:)
       logical done
       character*1 str
