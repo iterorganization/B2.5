@@ -354,8 +354,7 @@ c       ( ix )
 *-----------------------------------------------------------------------
 *.declarations
 
-      real (kind=R8) ::
-     *                  wwpp(ns), n(ns), z(-1:nx,-1:ny,ns), visc(ns),
+      real (kind=R8) :: wwpp(ns), n(ns), z(-1:nx,-1:ny,ns), visc(ns),
      *                  eta(ns), mm(ns), coef, pit, cond,
      *                  z2(-1:nx,-1:ny,ns)
       integer           nz(ns)
