@@ -434,7 +434,6 @@ c b2stbr
       integer :: b2stbr_b2wall_netcdf
       integer :: b2stbr_coreregno
       integer :: b2stbr_first_flight
-      integer :: bccon14_gradpar_0
       real (kind=R8) :: b2stbr_core_sources_rescale
       real (kind=R8) :: b2stbr_sput_frc
       real (kind=R8) :: b2stbr_alpha
@@ -996,7 +995,6 @@ c b2stbr
       s % b2stbr_b2wall_netcdf = 0
       s % b2stbr_coreregno = 1
       s % b2stbr_first_flight = 0
-      s % bccon14_gradpar_0 = 0
       s % b2stbr_core_sources_rescale = 1.0_R8
       s % b2stbr_sput_frc = 0.0_R8
       s % b2stbr_alpha = 0.25_R8
@@ -1569,7 +1567,6 @@ c b2stbr
      &  s % b2stbr_temperature_at_guard_cell)
       call ipgeti ('b2stbc_coreregno', s % b2stbr_coreregno)
       call ipgeti ('b2stbr_first_flight', s % b2stbr_first_flight)
-      call ipgeti ('bccon14_gradpar_0', s % bccon14_gradpar_0)
       call ipgeti ('b2stbr_sput_frac_flag', s % b2stbr_sput_frac_flag)
       call ipgeti ('b2stbr_b2wall_netcdf', s % b2stbr_b2wall_netcdf)
       call ipgetr ('b2stbr_core_sources_rescale',
