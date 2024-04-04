@@ -846,7 +846,7 @@
 			<switchgroup>
 				<name>b2news_facdrift*</name>
 				<description>
-					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile options have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
 					The ion-neutral friction current requires either facdrift or fac_ExB to be turned on as well.
 				</description>
 				<switch>
@@ -873,7 +873,7 @@
 			<switchgroup>
 				<name>b2news_facExB_*</name>
 				<description>
-					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Note that facExB_dec and facExB profile have not been converted to WG!
+					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run. Note that facExB_dec and facExB profile options have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facExB_dec</name>
@@ -899,7 +899,7 @@
 			<switchgroup>
 				<name>b2news_facvis_*</name>
 				<description>
-					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Note that facvis_dec and facvis profile have not been converted to WG!
+					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run. Note that facvis_dec and facvis profile options have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facvis_dec</name>
@@ -1192,7 +1192,16 @@
 				<type>real</type>
 				<description>
 					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run.
-					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
+					See also Run section on switches b2news_facExB_... for more details.
+				</description>
+			</switch>
+			<switch>
+				<name>b2news_vis</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies viscous drift flows. If b2news_vis.eq.0 and b2news_facvis_start.eq.0 then viscous drift flows are switched off. If b2news_vis is nonzero, then viscous drift flows are multiplied by that constant throughout the run.
+					See also Run section on switches b2news_facvis_... for more details.
 				</description>
 			</switch>
 			<switch>
