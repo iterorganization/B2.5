@@ -616,8 +616,8 @@
 				</switch>
 				<switch>
 					<name>b2mndr_shot_number</name>
-					<type>integer</type>
 					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2mndr_run_number</name>
@@ -873,7 +873,7 @@
 			<switchgroup>
 				<name>b2news_facExB_*</name>
 				<description>
-					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift.
+					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run.
 				</description>
 				<switch>
 					<name>b2news_facExB_dec</name>
@@ -899,7 +899,7 @@
 			<switchgroup>
 				<name>b2news_facvis_*</name>
 				<description>
-					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift.
+					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run.
 				</description>
 				<switch>
 					<name>b2news_facvis_dec</name>
@@ -1208,6 +1208,15 @@
 				<description>
 					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run.
 					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
+				</description>
+			</switch>
+			<switch>
+				<name>b2news_vis</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies the viscous drift flows. If b2news_vis.eq.0 and b2news_facvis_start.eq.0 then the viscous drift flows are switched off. If b2news_vis is nonzero, then the viscous drift flows are multiplied by that constant throughout the run.
+					See also Run section on switches b2news_facvis_... for more details. A spatial fac_vis profile is also possible, see Numerics section for details.
 				</description>
 			</switch>
 			<switch>
