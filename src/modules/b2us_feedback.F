@@ -2569,26 +2569,30 @@ cxpb size is changed in DIMENSIONS.F
             print *,"bc:", istra, bccon(is_start,istra)
             if (bccon(is_start,istra).eq.10) then
               do ib = 1, mpg%bcCvP(istra,2)
+                do is=is_start,is_end
                 iCv1 = mpg%bcCv(mpg%bcCvP(istra,1)+ib-1,1)
-                sna_pump = sna_pump + state%sr%sna(iCv1,0,is_start)
-     &           +pl%na(iCv1,is_start)*
-     &            state%sr%sna(iCv1,1,is_start)
+                sna_pump = sna_pump + state%sr%sna(iCv1,0,is)
+     &           +pl%na(iCv1,is)*
+     &            state%sr%sna(iCv1,1,is)
+                enddo
               enddo
             endif
           enddo
 
-          else
+        else
           do istra = 1, nstrai
             print *,"istra:", istra, recyc(is_start,istra)
             if (((1-recyc(is_start,istra)).ge.1e-7_R8) 
      &        .and. (species_start(istra) .eq. is_start)) then
+              do is=is_start,is_end
               do ib = 1, mpg%bcCvP(rcstart(istra)+2,2)
                 iCv1 = mpg%bcCv(mpg%bcCvP(rcstart(istra)+2,1)
      &            +ib-1,1)
-                  sna_pump = sna_pump + state%sr%sna(iCv1,0,is_start)
-     &           +pl%na(iCv1,is_start)*state%sr%sna
-     &            (iCv1,1,is_start)
+                  sna_pump = sna_pump + state%sr%sna(iCv1,0,is)
+     &           +pl%na(iCv1,is)*state%sr%sna
+     &            (iCv1,1,is)
               enddo
+            enddo
             endif
           enddo
         endif
