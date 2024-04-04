@@ -93,8 +93,7 @@
 *   ..local variables
       integer iCv
 !     integer inseltop, inselbot
-      integer Bt_adjust, Bt_reversal, periodic_bc, artificial_slab,
-     .  intcellP_new
+      integer Bt_adjust, Bt_reversal, periodic_bc, artificial_slab
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
       real (kind=R8) ::
@@ -103,8 +102,7 @@
       real (kind=R8) :: cvBt(m%nCv), cvBp(m%nCv)
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/,
-     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/,
-     .  intcellP_new/0/
+     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
@@ -148,14 +146,11 @@
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
-      call ipgeti ('b2agfs_intcellP_new' , intcellP_new)
-      call xertst (intcellP_new.eq.0 .or. intcellP_new.eq.1,
-     &  'faulty argument intcellP_new')
 
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
       call b2gxdr_dummy(local_sonnet,istyle,isymm,g,m,
-     &                  cvBp,cvBt,artificial_slab,intcellP_new)
+     &                  cvBp,cvBt,artificial_slab)
 
       ! Set up magnetic field and shift coordinates
       do iCv = 1,m%nCv
@@ -216,7 +211,7 @@
       end subroutine b2agfs
 
       subroutine b2gxdr_dummy(local_sonnet,istyle,
-     &  isymm,g,m,cvBp,cvBt,artificial_slab,intcellP_new)
+     &  isymm,g,m,cvBp,cvBt,artificial_slab)
       use b2mod_types
       use b2mod_version
       use b2ag_parameters
@@ -239,7 +234,7 @@
       !nCv, nFc, nVx: dimension of the grid as used by B2
       integer nnCv, nnFc, nnVx, nnFs, nnFt,
      1 iCv, lun, idum(0:5),
-     2 artificial_slab, intcellP_new
+     2 artificial_slab
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #else
@@ -257,7 +252,7 @@
       call subini('b2gxdr_dummy')
 *   ..test nCv, nFc, nVx, istyle
       call xertst (0.le.m%nCv.or.0.le.m%nFc.or.0.le.m%nVx,
-     & 'faulty arggument nCv, nFc, nVx')
+     & 'faulty argument nCv, nFc, nVx')
       call xertst (istyle.eq.-1 .or. istyle.eq.-2,
      & 'faulty input parameter istyle')
 
@@ -310,7 +305,7 @@
             call check_convexity(g,m)
 
 !     .. Construct intcellP and intcellR
-            call calc_intcell(g,m,intcellP_new)
+            call calc_intcell(g,m)
 
 !     Compute magnetic field with the same recipe as carre...
             if (artificial_slab.eq.0) then
@@ -782,7 +777,7 @@
 
 *-----------------------------------------------------------------------
 
-      subroutine calc_intcell(g,m,intcellP_new)
+      subroutine calc_intcell(g,m)
 
       use b2mod_types
       use b2us_cellhelper
@@ -796,7 +791,7 @@
       !internal
       integer :: iCv, faces4(0:3), i1, i2, i, f3(0:2),
      &    v3(0:2) , f5(0:4) , v5(0:4), counter, faces3(0:2), v4(0:3),
-     &    v1, v2, intcellP_new
+     &    v1, v2
       real (kind=R8) :: dpsi4(0:3), dpsi_max, dpsi3(0:2), intP,
      &    max_length, fcS5(0:4)
       intrinsic sqrt
@@ -807,92 +802,42 @@
 
           faces4 = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1)+3)
 
-          if (intcellP_new.eq.1) then
-            !NEW METHOD to account for trapezoids
-            v4 = m%cvVx(m%cvVxP(iCv,1): m%cvVxP(iCv,1)+3)
-
-            i1 = minloc(g%vxFpsi(v4),1) -1
-            i2 = maxloc(g%vxFpsi(v4),1) -1
-            dpsi_max = g%vxFpsi(v4(i2)) - g%vxFpsi(v4(i1))
-
-            do i = 0,3
-              intP =
-     &        abs( g%vxFpsi(m%fcVx(faces4(i),1)) -
-     &             g%vxFpsi(m%fcVx(faces4(i),2)) ) /  dpsi_max
-              if (intP .gt. 0.95_R8) then
-                m%intcellP(m%cvFcP(iCv,1) + i) = 1.0_R8
-                m%intcellR(m%cvFcP(iCv,1) + i) = 0.0_R8
-              elseif (intP .lt. 0.05_R8) then
-                m%intcellP(m%cvFcP(iCv,1) + i) = 0.0_R8
-                m%intcellR(m%cvFcP(iCv,1) + i) = 1.0_R8
-              else
-                m%intcellP(m%cvFcP(iCv,1)+i) = intP
-                !not possible to assign intR value based on intP
-              endif
-            enddo
-
-            ! To find correct intR
-            ! find the most aligned face
-            dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) -
-     &                  g%vxFpsi(m%fcVx(faces4,2)))
-            i1 = minloc(dpsi4(0:3),1)-1
-            !find the opposite face index of the most aligned faces
-            !as faces are right turned ordered
-            i2 = i1 + 2
-            if (i2 .gt. 3) then
-              i2 = i2 - 4
+          !OLD-METHOD - not correct for trapezoids
+          !find the most aligned face
+          dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) -
+     &                g%vxFpsi(m%fcVx(faces4,2)))
+          i1 = minloc(dpsi4(0:3),1)-1
+          !find the opposite face index of the most aligned faces
+          ! as faces are right turned ordered
+          ! find the second most aligned face
+          counter = -1
+          do i = 0,3
+            if (i.ne.i1) then
+              faces3(counter + 1) = faces4(i)
+              counter = counter + 1
             endif
+          enddo
 
-            do i = 0,3
-              if ((i .eq. i1) .or. (i .eq. i2)) then
-                ! aligned face or face with span in radial direction
-                m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
-              else
-                ! not aligned faces => poloidal faces
-                m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
-              endif
-            enddo
+          dpsi3 = abs(g%vxFpsi(m%fcVx(faces3,1)) -
+     &                g%vxFpsi(m%fcVx(faces3,2)))
+          i2 = minloc(dpsi3(0:2),1)-1
 
-          elseif (intcellP_new.eq.0) then
-
-            !OLD-METHOD - not correct for trapezoids
-            !find the most aligned face
-            dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) -
-     &                  g%vxFpsi(m%fcVx(faces4,2)))
-            i1 = minloc(dpsi4(0:3),1)-1
-            !find the opposite face index of the most aligned faces
-            ! as faces are right turned ordered
-            ! find the second most aligned face
-            counter = -1
-            do i = 0,3
-              if (i.ne.i1) then
-                faces3(counter + 1) = faces4(i)
-                counter = counter + 1
-              endif
-            enddo
-
-            dpsi3 = abs(g%vxFpsi(m%fcVx(faces3,1)) -
-     &                  g%vxFpsi(m%fcVx(faces3,2)))
-            i2 = minloc(dpsi3(0:2),1)-1
-
-            if (i2 .ge. i1) then ! compensate for removed face out of the array
-              i2 = i2 + 1
-            endif
-
-            do i = 0,3
-              if ((i .eq. i1) .or. (i .eq. i2)) then
-                ! aligned faces
-                !intcellP = 0 and intcellR = 1
-                m%intcellP(m%cvFcP(iCv,1)+i) = 0.0_R8
-                m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
-              else
-                ! not aligned faces => poloidal faces
-                m%intcellP(m%cvFcP(iCv,1)+i) = 1.0_R8
-                m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
-              endif
-            enddo
-
+          if (i2 .ge. i1) then ! compensate for removed face out of the array
+            i2 = i2 + 1
           endif
+
+          do i = 0,3
+            if ((i .eq. i1) .or. (i .eq. i2)) then
+              ! aligned faces
+              !intcellP = 0 and intcellR = 1
+              m%intcellP(m%cvFcP(iCv,1)+i) = 0.0_R8
+              m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
+            else
+              ! not aligned faces => poloidal faces
+              m%intcellP(m%cvFcP(iCv,1)+i) = 1.0_R8
+              m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
+            endif
+          enddo
 
         elseif (m%cvFcP(iCv,2) == 3) then !tria
 

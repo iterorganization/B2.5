@@ -26,12 +26,12 @@
 *  1. purpose
 *
 *     B2AGDR computes and writes to an external file the
-*     specification of a b2 geometry and magnetic field.
+*     specification of a B2 geometry and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This subroutine computes and writes out a specification of a b2
+*     This subroutine computes and writes out a specification of a B2
 *     geometry and magnetic field. Summary information will be written
 *     to unit nout(0), which must be connected to a formatted file.
 *     A complete specification of the geometry and the magnetic field
@@ -65,10 +65,10 @@
 *     field.
 *
 *     g - type, input.
-*     g specifies the geometry type as described module b2us_geo
+*     g specifies the geometry type as described in module b2us_geo
 *
 *     m - type, input.
-*     m specifies the mapping type as described module b2us_map
+*     m specifies the mapping type as described in module b2us_map
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -114,10 +114,24 @@
 *
 *     cvBb - (1:nCv,0:3) real*8 array.
 *     cvBb(iCv,0:3) specifies the magnetic field at the center of
-*     the cell iCv. cvBb(iCv,0:2) are the (x,y,z)-components and
-*     cvBb(iVx,3) is the absolute magnetic field strength.
+*     the cell iCv. cvBb(iCv,0:2) are the magnitudes of the 
+*     (poloidal,radial,toroidal)-components and cvBb(iVx,3) is the 
+*     absolute magnetic field strength.
+*     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,2)**2)
+*     It will hold that 0.lt.cvBb(,0:3), because the direction of the
+*     magnetic field follows from cvEb (see below).
+*
+*     cvEb - (1:nCv,0:2) real*8 array.
+*     cvEb(iCv,0:2) specifies the direction of the magnetic field at 
+*     the center of the cell iCv in the (R,Z,toroidal) axis system.
+*     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
+*
+*     the cell iCv. cvBb(iCv,0:2) are the magnitudes of the 
+*     (poloidal,radial,toroidal)-components and cvBb(iVx,3) is the 
+*     absolute magnetic field strength.
 *     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,2)**2.)
-*     It will hold that 0.lt.cvBb(,3).
+*     It will hold that 0.lt.cvBb(,0:3), because the direction of the
+*     magnetic field follows from cvEb (see below).
 *
 *     cvVol - (1:nCv) real*8 array.
 *     cvVol(iCv) specifies the volume of the cell iCv. (In the
@@ -129,7 +143,7 @@
 *     fcQgam - (1:nFc,0:1) real*8 array, output.
 *     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
 *     fcQgam(iFc,1) specifies sin(t), where t is the included angle
-*     between the the cell-connector vector and the normal vector
+*     between the cell-connector vector and the normal vector
 *     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 *
 *     fcQalf - (1:nFc,0:1) real*8 array.
@@ -325,7 +339,7 @@
       endif
       write(*,'(a)')
      . 'If this is not correct, please set :'
-       write(*,'(a)')
+      write(*,'(a)')
      . '"b2agfs_pit_rescale" to "-1.0" in "b2ag.dat" and rerun.'
       write(*,'(a)')
      . 'If already set to "-1.0", set to "1.0" instead.'
@@ -336,178 +350,68 @@
        g%fcBb = abs(g%fcBb)
        g%vxBb = abs(g%vxBb)
 
-       !Check all field to not contain Nan
+       !Check all field to not contain NaN
        !mapping
-       if (m%nCi .ne. m%nCi) then
-         call xerrab('NaN in nCi')
-       endif
-       if (m%nCg .ne. m%nCg) then
-         call xerrab('NaN in nCg')
-       endif
-       if (m%nCv .ne. m%nCv) then
-         call xerrab('NaN in nCv')
-       endif
-       if (m%nFc .ne. m%nFc) then
-         call xerrab('NaN in nFc')
-       endif
-       if (m%nVx .ne. m%nVx) then
-         call xerrab('NaN in nVx')
-       endif
-       if (m%nFt .ne. m%nFt) then
-         call xerrab('NaN in nFt')
-       endif
-       if (m%nFs .ne. m%nFs) then
-         call xerrab('NaN in nFs')
-       endif
+       call nancheckint(1,m%nCi,'nCi')
+       call nancheckint(1,m%nCg,'nCg')
+       call nancheckint(1,m%nCv,'nCv')
+       call nancheckint(1,m%nFc,'nFc')
+       call nancheckint(1,m%nVx,'nVx')
+       call nancheckint(1,m%nFt,'nFt')
+       call nancheckint(1,m%nFs,'nFs')
+       call nancheckint(1,m%nCmxFc,'nCmxFc')
 
-       if (any(m%cvFcP .ne. m%cvFcP)) then
-         call xerrab('NaN in cvFcP')
-       endif
-       if (any(m%cvFc .ne. m%cvFc)) then
-         call xerrab('NaN in cvFc')
-       endif
-       if (any(m%fcCv .ne. m%fcCv)) then
-         call xerrab('NaN in fcCv')
-       endif
-       if (any(m%fcVx .ne. m%fcVx)) then
-         call xerrab('NaN in fcVx')
-       endif
-       if (any(m%cvVxP .ne. m%cvVxP)) then
-         call xerrab('NaN in cvVxP')
-       endif
-       if (any(m%cvVx .ne. m%cvVx)) then
-         call xerrab('NaN in cvVx')
-       endif
-       if (any(m%vxFcP .ne. m%vxFcP)) then
-         call xerrab('NaN in vxFcP')
-       endif
+       call nancheck2dint(m%nCv,1,2,m%cvFcP,'cvFcP')
+       call nancheckint(m%nCv,m%cvFc,'cvFc')
+       call nancheck2dint(m%nFc,1,2,m%fcCv,'fcCv')
+       call nancheck2dint(m%nFc,1,2,m%fcVx,'fcVx')
+       call nancheck2dint(m%nCv,1,2,m%cvVxP,'cvVxP')
+       call nancheckint(m%nCv,m%cvVx,'cvVx')
+       call nancheck2dint(m%nVx,1,2,m%vxFcP,'vxFcP')
+       call nancheckint(m%nVx,m%vxFc,'vxFc')
+       call nancheck2dint(m%nVx,1,2,m%vxCvP,'vxCvP')
+       call nancheckint(m%nVx,m%vxCv,'vxCv')
+       call nancheck2dint(m%nFt,1,2,m%ftCvP,'ftCvP')
+       call nancheckint(m%nFt,m%ftCv,'ftCv')
+       call nancheck2dint(m%nFt,1,2,m%ftFcP,'ftFcP')
+       call nancheckint(m%nFt,m%ftFc,'ftFc')
+       call nancheckint(m%nCv,m%cvFt,'cvFt')
+       call nancheck2dint(m%nFs,1,2,m%fsFcP,'fsFcP')
+       call nancheckint(m%nFs,m%fsFc,'fsFc')
 
-       if (any(m%vxFc .ne. m%vxFc)) then
-         call xerrab('NaN in vxFc')
-       endif
-       if (any(m%vxCvP .ne. m%vxCvP)) then
-         call xerrab('NaN in vxCvP')
-       endif
-       if (any(m%vxCv .ne. m%vxCv)) then
-         call xerrab('NaN in vxCv')
-       endif
-       if (any(m%ftCvP .ne. m%ftCvP)) then
-         call xerrab('NaN in ftCvP')
-       endif
-       if (any(m%ftCv .ne. m%ftCv)) then
-         call xerrab('NaN in ftCv')
-       endif
-       if (any(m%ftFcP .ne. m%ftFcP)) then
-         call xerrab('NaN in ftFcP')
-       endif
-       if (any(m%ftFc .ne. m%ftFc)) then
-         call xerrab('NaN in ftFc')
-       endif
-       if (any(m%cvFt .ne. m%cvFt)) then
-         call xerrab('NaN in cvFt')
-       endif
-       if (any(m%fsFcP .ne. m%fsFcP)) then
-         call xerrab('NaN in fsFcP')
-       endif
-       if (any(m%fsFc .ne. m%fsFc)) then
-         call xerrab('NaN in fsFc')
-       endif
-
-       if (any(m%fcReg .ne. m%fcReg)) then
-         call xerrab('NaN in fcReg')
-       endif
-       if (any(m%cvReg .ne. m%cvReg)) then
-         call xerrab('NaN in cvReg')
-       endif
-       if (any(m%ftReg .ne. m%ftReg)) then
-         call xerrab('NaN in ftReg')
-       endif
-       if (any(m%intcellP .ne. m%intcellP)) then
-         call xerrab('NaN in intcellP')
-       endif
-       if (any(m%intcellR .ne. m%intcellR)) then
-         call xerrab('NaN in intcellR')
-       endif
-       if (any(m%fcLbl .ne. m%fcLbl)) then
-         call xerrab('NaN in fcLbl')
-       endif
-       if (any(m%cvLbl .ne. m%cvLbl)) then
-         call xerrab('NaN in cvLbl')
-       endif
-       if (any(m%ftLbl .ne. m%ftLbl)) then
-         call xerrab('NaN in ftLbl')
-       endif
+       call nancheckint(m%nFc,m%fcReg,'fcReg')
+       call nancheckint(m%nCv,m%cvReg,'cvReg')
+       call nancheckint(m%nFt,m%ftReg,'ftReg')
+       call nancheckint(m%nCmxFc,m%intcellP,'intcellP')
+       call nancheckint(m%nCmxFc,m%intcellR,'intcellR')
+       call nancheckint(m%nFc,m%fcLbl,'fcLbl')
+       call nancheckint(m%nCv,m%cvLbl,'cvLbl')
+       call nancheckint(m%nFt,m%ftLbl,'ftLbl')
 
        !geometry
-       if (any(g%cvBb .ne. g%cvBb)) then
-         call xerrab('NaN in cvBb')
-       endif
-       if (any(g%cvEb .ne. g%cvEb)) then
-         call xerrab('NaN in cvEb')
-       endif
-       if (any(g%cvX .ne. g%cvX)) then
-         call xerrab('NaN in cvX')
-       endif
-       if (any(g%cvY .ne. g%cvY)) then
-         call xerrab('NaN in cvY')
-       endif
-       if (any(g%cvSz .ne. g%cvSz)) then
-         call xerrab('NaN in cvSz')
-       endif
-       if (any(g%cvHz .ne. g%cvHz)) then
-         call xerrab('NaN in cvHz')
-       endif
-       if (any(g%cvQgam .ne. g%cvQgam)) then
-         call xerrab('NaN in cvQgam')
-       endif
-       if (any(g%cvVol .ne. g%cvVol)) then
-         call xerrab('NaN in cvVol')
-       endif
-       if (any(g%fcBb .ne. g%fcBb)) then
-         call xerrab('NaN in fcBb')
-       endif
-       if (any(g%fcS .ne. g%fcS)) then
-         call xerrab('NaN in fcS')
-       endif
-       if (any(g%fcHc .ne. g%fcHc)) then
-         call xerrab('NaN in fcHc')
-       endif
-       if (any(g%fcHt .ne. g%fcHt)) then
-         call xerrab('NaN in fcHt')
-       endif
-       if (any(g%fcQgam .ne. g%fcQgam)) then
-         call xerrab('NaN in fcQgam')
-       endif
-       if (any(g%fcQalf .ne. g%fcQalf)) then
-         call xerrab('NaN in fcQalf')
-       endif
-       if (any(g%fcQbet .ne. g%fcQbet)) then
-         call xerrab('NaN in fcQbet')
-       endif
-       if (any(g%fcPbs .ne. g%fcPbs)) then
-         call xerrab('NaN in fcPbs')
-       endif
-       if (any(g%vxBb .ne. g%vxBb)) then
-         call xerrab('NaN in vxBb')
-       endif
-       if (any(g%vxX .ne. g%vxX)) then
-         call xerrab('NaN in vxX')
-       endif
-       if (any(g%vxY .ne. g%vxY)) then
-         call xerrab('NaN in vxY')
-       endif
-       if (any(g%vxFfbz .ne. g%vxFfbz)) then
-         call xerrab('NaN in vxFfbz')
-       endif
-       if (any(g%vxFpsi .ne. g%vxFpsi)) then
-         call xerrab('NaN in vxFpsi')
-       endif
-       if (any(g%cvConn .ne. g%cvConn)) then
-         call xerrab('NaN in cvConn')
-       endif
-       if (any(g%fsPsi .ne. g%fsPsi)) then
-         call xerrab('NaN in fsPsi')
-       endif
+       call nancheck2d(m%nCv,0,3,g%cvBb,'cvBb')
+       call nancheck2d(m%nCv,0,2,g%cvEb,'cvEb')
+       call nancheck(m%nCv,g%cvX,'cvX')
+       call nancheck(m%nCv,g%cvY,'cvY')
+       call nancheck(m%nCv,g%cvSz,'cvSz')
+       call nancheck(m%nCv,g%cvHz,'cvHz')
+       call nancheck2d(m%nCv,0,1,g%cvQgam,'cvQgam')
+       call nancheck(m%nCv,g%cvVol,'cvVol')
+       call nancheck2d(m%nFc,0,3,g%fcBb,'cvBb')
+       call nancheck(m%nFc,g%fcS,'fcS')
+       call nancheck2d(m%nFc,1,2,g%fcHc,'fcHc')
+       call nancheck(m%nFc,g%fcHt,'fcHt')
+       call nancheck2d(m%nFc,0,1,g%fcQgam,'fcQgam')
+       call nancheck2d(m%nFc,0,1,g%fcQalf,'fcQalf')
+       call nancheck2d(m%nFc,0,1,g%fcQbet,'fcQbet')
+       call nancheck(m%nFc,g%fcPbs,'fcPbs')
+       call nancheck2d(m%nVx,0,3,g%vxBb,'vxBb')
+       call nancheck(m%nVx,g%vxX,'vxX')
+       call nancheck(m%nVx,g%vxY,'vxY')
+       call nancheck(m%nVx,g%vxFfbz,'vxFfbz')
+       call nancheck(m%nVx,g%vxFpsi,'vxFpsi')
+       call nancheck(m%nCv,g%cvConn,'cvConn')
+       call nancheck(m%nFs,g%fsPsi,'fsPsi')
 
 * ..output - see module b2us_io and b2us.F
 *   ..write headers for output files - code from b2us.F
