@@ -151,7 +151,7 @@
 
       do it = 1, nelem
         do is = 1, 3
-          write (*,*) 'Tria, side, neigh, bndmdl, cntr '
+          write (*,*) 'Tria, side, neigh, bndmdl, cntr'
           write (*,*) it,is,neighbor(is,1,it),bndmdl(is,it),cntr(is,it)
         enddo
       enddo
@@ -163,7 +163,7 @@
           if (neighbor(is,1,it) + abs(bndmdl(is,it))
      .                          + abs(cntr(is,it)) == 0) then
             write (*,*) 'Triangle side is, it ',is,it,' open. '//
-     .                  'Node coordinates: '
+     .                  'Node coordinates:'
             write (*,*) xco(elem(1,it)),xco(elem(2,it)),xco(elem(3,it))
             write (*,*) yco(elem(1,it)),yco(elem(2,it)),yco(elem(3,it))
             write (*,*) 'Neighbor, bndmdl, cntr = ',neighbor(is,1,it),
