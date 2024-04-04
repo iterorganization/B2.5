@@ -3359,6 +3359,14 @@
 					<default>-c</default>
 					<type>real</type>
 				</switch>
+				<switch>
+					<name>eirene_M_max</name>
+					<default>1e30</default>
+					<type>real</type>
+					<description>
+						If the Mach number based on the total fluid velocity of a background species exceeds eirene_M_max, all velocity components passed to Eirene are restricted to make the Mach number equal to eirene_M_max. It is an additional restriction on top of eirene_ua_min and eirene_ua_max.
+					</description>
+				</switch>
 			</switchgroup>
 			<switch>
 				<name>eirene_print_minmax</name>
