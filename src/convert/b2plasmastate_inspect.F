@@ -19,7 +19,7 @@
 *
 *     Run as: b2plasmastate_inspect.exe plasmastate.xxxx
 *-----------------------------------------------------------------------
-      
+
 #if ( defined(USE_PXFGETENV) || defined(NAGFOR) )
       integer lenval, ierror
 #endif
@@ -63,7 +63,7 @@
       call cfopen (ninp(3),'b2fstati','old','un*formatted')
       call cfopen (ninp(4), trim(arg), 'old','unformatted')
 
-! Follow b2co logic      
+! Follow b2co logic
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers                                           !xpb
@@ -72,8 +72,8 @@
       call cfverr (ninp(3), b2fstati_version)                          !xpb
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
+      mpg%nCi = idum(0)
+      mpg%nCg = idum(1)
       mpg%nCv = idum(2)
       mpg%nFc = idum(3)
       mpg%nVx = idum(4)
@@ -108,7 +108,7 @@
      &  'faulty input ns from plasma state file')
 *   ..call principal driver routine
       call alloc_mapping (mpg)
-      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
+      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
      .  mpg%nFt, mpg%nVmxCv)
       call createB2State (nCv, nFc, ns, state)
 !*   ..obtain lblmn
@@ -152,7 +152,7 @@
       call cfverr (ninp(4), plasmastate_version)                        !xpb
       call read_b2fstate (ninp(4), nCv, nFc, ns, state)
 
-! Display tim      
+! Display tim
       write(0,'(3a,1p,1e15.8,a)') 'The plasmastate file ',trim(arg),
      & ' corresponds to plasma time ',tim,' seconds.'
 

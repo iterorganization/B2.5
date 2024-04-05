@@ -4,8 +4,8 @@
       ! Subroutine to check that all boundary faces are assigned to
       ! a boundary condition or recycling strata.
       ! To do so, loop over all guard cells and get the face linked to
-      ! each of them. only one face per guard cell is possible! 
-      ! Then check that such face has a label different than zero and 
+      ! each of them. only one face per guard cell is possible!
+      ! Then check that such face has a label different than zero and
       ! that is included in the lists bstart to bend
       ! Initialize
       !===========
@@ -36,8 +36,8 @@
         ! get the only face linked to the guard cell
         bnd_fc = m%cvFc(m%cvFcP(iCv,1))
         ! if face is towards core, for recycling we don't care about it
-        if (m%cvOnClosedSurface(m%fcCv(bnd_fc,1)) .or. 
-     &      m%cvOnClosedSurface(m%fcCv(bnd_fc,2)) .and. 
+        if (m%cvOnClosedSurface(m%fcCv(bnd_fc,1)) .or.
+     &      m%cvOnClosedSurface(m%fcCv(bnd_fc,2)) .and.
      &      .not. docore) cycle
         if (bnd_fc.eq.0) then
           write(*,*) 'guard cell iCv=',iCv

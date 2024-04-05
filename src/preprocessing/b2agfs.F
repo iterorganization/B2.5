@@ -790,9 +790,9 @@
 
       !internal
       integer :: iCv, faces4(0:3), i1, i2, i, f3(0:2),
-     &    v3(0:2) , f5(0:4) , v5(0:4), counter, faces3(0:2), v4(0:3),
+     &    v3(0:2) , f5(0:4) , v5(0:4), counter, faces3(0:2),
      &    v1, v2
-      real (kind=R8) :: dpsi4(0:3), dpsi_max, dpsi3(0:2), intP,
+      real (kind=R8) :: dpsi4(0:3), dpsi_max, dpsi3(0:2),
      &    max_length, fcS5(0:4)
       intrinsic sqrt
 

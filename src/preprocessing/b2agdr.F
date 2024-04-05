@@ -244,7 +244,7 @@
         write(nout(0),'(2x,a)')
      .   'Bz is out of the page towards you.'
       else if (g%vxFfBz(m%nVx).lt.0.0_R8) then
-         write(*,'(a)')
+        write(*,'(a)')
      .   'This case has NEGATIVE toroidal magnetic field.'
         if (isymm.ne.0) write(*,'(a)')
      .   'This means that the Bx(grad B) direction points UP.'
@@ -345,73 +345,81 @@
      . 'If already set to "-1.0", set to "1.0" instead.'
       write(*,'()')
 
-       !Take absolute values of magnetic field to comply with structured b2ag
-       g%cvBb = abs(g%cvBb)
-       g%fcBb = abs(g%fcBb)
-       g%vxBb = abs(g%vxBb)
+      !Take absolute values of magnetic field to comply with structured b2ag
+      g%cvBb = abs(g%cvBb)
+      g%fcBb = abs(g%fcBb)
+      g%vxBb = abs(g%vxBb)
 
-       !Check all field to not contain NaN
-       !mapping
-       call nancheckint(1,m%nCi,'nCi')
-       call nancheckint(1,m%nCg,'nCg')
-       call nancheckint(1,m%nCv,'nCv')
-       call nancheckint(1,m%nFc,'nFc')
-       call nancheckint(1,m%nVx,'nVx')
-       call nancheckint(1,m%nFt,'nFt')
-       call nancheckint(1,m%nFs,'nFs')
-       call nancheckint(1,m%nCmxFc,'nCmxFc')
+      !Check all fields to not contain NaNs
+      !mapping
+      idum(0)=m%nCi
+      call nancheckint(1,idum,'nCi')
+      idum(0)=m%nCg
+      call nancheckint(1,idum,'nCg')
+      idum(0)=m%nCv
+      call nancheckint(1,idum,'nCv')
+      idum(0)=m%nFc
+      call nancheckint(1,idum,'nFc')
+      idum(0)=m%nVx
+      call nancheckint(1,idum,'nVx')
+      idum(0)=m%nFt
+      call nancheckint(1,idum,'nFt')
+      idum(0)=m%nFs
+      call nancheckint(1,idum,'nFs')
+      idum(0)=m%nCmxFc
+      call nancheckint(1,idum,'nCmxFc')
 
-       call nancheck2dint(m%nCv,1,2,m%cvFcP,'cvFcP')
-       call nancheckint(m%nCv,m%cvFc,'cvFc')
-       call nancheck2dint(m%nFc,1,2,m%fcCv,'fcCv')
-       call nancheck2dint(m%nFc,1,2,m%fcVx,'fcVx')
-       call nancheck2dint(m%nCv,1,2,m%cvVxP,'cvVxP')
-       call nancheckint(m%nCv,m%cvVx,'cvVx')
-       call nancheck2dint(m%nVx,1,2,m%vxFcP,'vxFcP')
-       call nancheckint(m%nVx,m%vxFc,'vxFc')
-       call nancheck2dint(m%nVx,1,2,m%vxCvP,'vxCvP')
-       call nancheckint(m%nVx,m%vxCv,'vxCv')
-       call nancheck2dint(m%nFt,1,2,m%ftCvP,'ftCvP')
-       call nancheckint(m%nFt,m%ftCv,'ftCv')
-       call nancheck2dint(m%nFt,1,2,m%ftFcP,'ftFcP')
-       call nancheckint(m%nFt,m%ftFc,'ftFc')
-       call nancheckint(m%nCv,m%cvFt,'cvFt')
-       call nancheck2dint(m%nFs,1,2,m%fsFcP,'fsFcP')
-       call nancheckint(m%nFs,m%fsFc,'fsFc')
+      call nancheck2dint(m%nCv,1,2,m%cvFcP,'cvFcP')
+      call nancheckint(m%nCv,m%cvFc,'cvFc')
+      call nancheck2dint(m%nFc,1,2,m%fcCv,'fcCv')
+      call nancheck2dint(m%nFc,1,2,m%fcVx,'fcVx')
+      call nancheck2dint(m%nCv,1,2,m%cvVxP,'cvVxP')
+      call nancheckint(m%nCv,m%cvVx,'cvVx')
+      call nancheck2dint(m%nVx,1,2,m%vxFcP,'vxFcP')
+      call nancheckint(m%nVx,m%vxFc,'vxFc')
+      call nancheck2dint(m%nVx,1,2,m%vxCvP,'vxCvP')
+      call nancheckint(m%nVx,m%vxCv,'vxCv')
+      call nancheck2dint(m%nFt,1,2,m%ftCvP,'ftCvP')
+      call nancheckint(m%nFt,m%ftCv,'ftCv')
+      call nancheck2dint(m%nFt,1,2,m%ftFcP,'ftFcP')
+      call nancheckint(m%nFt,m%ftFc,'ftFc')
+      call nancheckint(m%nCv,m%cvFt,'cvFt')
+      call nancheck2dint(m%nFs,1,2,m%fsFcP,'fsFcP')
+      call nancheckint(m%nFs,m%fsFc,'fsFc')
 
-       call nancheckint(m%nFc,m%fcReg,'fcReg')
-       call nancheckint(m%nCv,m%cvReg,'cvReg')
-       call nancheckint(m%nFt,m%ftReg,'ftReg')
-       call nancheckint(m%nCmxFc,m%intcellP,'intcellP')
-       call nancheckint(m%nCmxFc,m%intcellR,'intcellR')
-       call nancheckint(m%nFc,m%fcLbl,'fcLbl')
-       call nancheckint(m%nCv,m%cvLbl,'cvLbl')
-       call nancheckint(m%nFt,m%ftLbl,'ftLbl')
+      call nancheckint(m%nFc,m%fcReg,'fcReg')
+      call nancheckint(m%nCv,m%cvReg,'cvReg')
+      call nancheckint(m%nFt,m%ftReg,'ftReg')
+      call nancheck(m%nCmxFc,m%intcellP,'intcellP')
+      call nancheck(m%nCmxFc,m%intcellR,'intcellR')
+      call nancheckint(m%nFc,m%fcLbl,'fcLbl')
+      call nancheckint(m%nCv,m%cvLbl,'cvLbl')
+      call nancheckint(m%nFt,m%ftLbl,'ftLbl')
 
-       !geometry
-       call nancheck2d(m%nCv,0,3,g%cvBb,'cvBb')
-       call nancheck2d(m%nCv,0,2,g%cvEb,'cvEb')
-       call nancheck(m%nCv,g%cvX,'cvX')
-       call nancheck(m%nCv,g%cvY,'cvY')
-       call nancheck(m%nCv,g%cvSz,'cvSz')
-       call nancheck(m%nCv,g%cvHz,'cvHz')
-       call nancheck2d(m%nCv,0,1,g%cvQgam,'cvQgam')
-       call nancheck(m%nCv,g%cvVol,'cvVol')
-       call nancheck2d(m%nFc,0,3,g%fcBb,'cvBb')
-       call nancheck(m%nFc,g%fcS,'fcS')
-       call nancheck2d(m%nFc,1,2,g%fcHc,'fcHc')
-       call nancheck(m%nFc,g%fcHt,'fcHt')
-       call nancheck2d(m%nFc,0,1,g%fcQgam,'fcQgam')
-       call nancheck2d(m%nFc,0,1,g%fcQalf,'fcQalf')
-       call nancheck2d(m%nFc,0,1,g%fcQbet,'fcQbet')
-       call nancheck(m%nFc,g%fcPbs,'fcPbs')
-       call nancheck2d(m%nVx,0,3,g%vxBb,'vxBb')
-       call nancheck(m%nVx,g%vxX,'vxX')
-       call nancheck(m%nVx,g%vxY,'vxY')
-       call nancheck(m%nVx,g%vxFfbz,'vxFfbz')
-       call nancheck(m%nVx,g%vxFpsi,'vxFpsi')
-       call nancheck(m%nCv,g%cvConn,'cvConn')
-       call nancheck(m%nFs,g%fsPsi,'fsPsi')
+      !geometry
+      call nancheck2d(m%nCv,0,3,g%cvBb,'cvBb')
+      call nancheck2d(m%nCv,0,2,g%cvEb,'cvEb')
+      call nancheck(m%nCv,g%cvX,'cvX')
+      call nancheck(m%nCv,g%cvY,'cvY')
+      call nancheck(m%nCv,g%cvSz,'cvSz')
+      call nancheck(m%nCv,g%cvHz,'cvHz')
+      call nancheck2d(m%nCv,0,1,g%cvQgam,'cvQgam')
+      call nancheck(m%nCv,g%cvVol,'cvVol')
+      call nancheck2d(m%nFc,0,3,g%fcBb,'cvBb')
+      call nancheck(m%nFc,g%fcS,'fcS')
+      call nancheck2d(m%nFc,1,2,g%fcHc,'fcHc')
+      call nancheck(m%nFc,g%fcHt,'fcHt')
+      call nancheck2d(m%nFc,0,1,g%fcQgam,'fcQgam')
+      call nancheck2d(m%nFc,0,1,g%fcQalf,'fcQalf')
+      call nancheck2d(m%nFc,0,1,g%fcQbet,'fcQbet')
+      call nancheck(m%nFc,g%fcPbs,'fcPbs')
+      call nancheck2d(m%nVx,0,3,g%vxBb,'vxBb')
+      call nancheck(m%nVx,g%vxX,'vxX')
+      call nancheck(m%nVx,g%vxY,'vxY')
+      call nancheck(m%nVx,g%vxFfbz,'vxFfbz')
+      call nancheck(m%nVx,g%vxFpsi,'vxFpsi')
+      call nancheck(m%nCv,g%cvConn,'cvConn')
+      call nancheck(m%nFs,g%fsPsi,'fsPsi')
 
 * ..output - see module b2us_io and b2us.F
 *   ..write headers for output files - code from b2us.F
@@ -476,10 +484,9 @@
       use b2us_map
       implicit none
 
-      type(geometry) :: g
-      type(mapping)  :: m
+      type(mapping) :: m
       integer ncvl, ncvr, nfpl, nfpr, nfrl, nfrr, nvl1, nvl2,
-     &  nvr1, nvr2, cvl(m%nCv), cvr(m%nCv),
+     & nvr1, nvr2, cvl(m%nCv), cvr(m%nCv),
      & fpl(m%nFc), fpr(m%nFc), frl(m%nFc), frr(m%nFc),
      & vl1(m%nVx), vl2(m%nVx), vr1(m%nVx), vr2(m%nVx),
      & iFc, cvs(1:2), i, iCgl, iCgr

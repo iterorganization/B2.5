@@ -12,7 +12,7 @@
      .          read_mapping, write_mapping,
      .          init_mapping, get_version,
      .          calc_add_connectivity
-      
+
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
@@ -43,7 +43,6 @@
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
         integer, allocatable :: fcAligned(:)           ! Integer to indicate whether a face is aligned with the magnetic field
         logical, allocatable :: cvOnClosedSurface(:)   ! Logical to indicate whether a cell is on a closed flux surface
-        
 
         integer, allocatable :: bcCvP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcCv list, and its number of guard cells
         integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
@@ -136,7 +135,7 @@
       allocate (m%fcReg(m%nFc))
       allocate (m%cvReg(m%nCv))
       allocate (m%ftReg(m%nFt))
-      allocate (m%fcAligned(m%nFc))      
+      allocate (m%fcAligned(m%nFc))
       allocate (m%cvOnClosedSurface(m%nCv))
 
 !      allocate (m%intfaceV(m%nFc,2))
@@ -224,7 +223,7 @@
       m%fcReg = 0
       m%cvReg = 0
       m%ftReg = 0
-      m%fcAligned = 0      
+      m%fcAligned = 0
       m%cvOnClosedSurface = .false.
 
 !      m%intfaceV = 0._R8
@@ -302,7 +301,7 @@
       deallocate (m%fcReg)
       deallocate (m%cvReg)
       deallocate (m%ftReg)
-      deallocate (m%fcAligned)      
+      deallocate (m%fcAligned)
       deallocate (m%cvOnClosedSurface)
 
 !      deallocate (m%intfaceV)
@@ -472,7 +471,6 @@
       end subroutine dealloc_mapping_cf
 
 **********************************************************************
-
 
       subroutine read_mapping (iun, mpg)
 #ifdef WG_DEBUG
@@ -1014,8 +1012,8 @@ cwdk  can be derived directly from data in that file
       else
         call xerrab ('No '//trim(filename))
       endif
+      return
       end subroutine get_version
-
 
 **********************************************************************
 
@@ -1035,7 +1033,6 @@ cwdk  can be derived directly from data in that file
 
       !!Read out fcVx, cvFc, cvFcP, cvVx and cvVxP
       !!Construct vxCv, vxCvP, vxFcP, fcCv !(because of ghostcell, every face has two cells)
-  
 
       !Construct vxFcP
       allocate (indFc(2*m%nFc))
@@ -1068,7 +1065,7 @@ cwdk  can be derived directly from data in that file
          m%vxCvP(ivx+1,1) = m%vxCvP(ivx,1) + m%vxCvP(ivx,2)
          if (m%vxCvP(ivx,2) > 0 ) then
             m%vxCv(m%vxCvP(ivx,1):m%vxCvP(ivx+1,1)-1) =
-     .         pack( indCv, ch == ivx ) 
+     .         pack( indCv, ch == ivx )
          endif
       enddo
 
@@ -1103,11 +1100,10 @@ cwdk  can be derived directly from data in that file
            if (n .eq. 2) then
              m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
            else
-             call xerrab 
-     .         ('calc_add_connectivity: Wrong # of cell per face')
+             call xerrab
+     .        ('calc_add_connectivity: Wrong # of cell per face')
            endif
       enddo
-
 
       deallocate (indFc)
       deallocate (indCv)
@@ -1116,7 +1112,7 @@ cwdk  can be derived directly from data in that file
       deallocate (ch)
       deallocate (fch)
 
-
+      return
       end subroutine calc_add_connectivity
 
 **********************************************************************

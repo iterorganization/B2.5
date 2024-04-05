@@ -86,7 +86,7 @@
 *.declarations
 
 *   ..local variables
-      integer i, iCv, iFc, face, gc, bc, v1, v2, iVx,
+      integer iCv, iFc, face, gc, bc, v1, v2, iVx,
      * artificial_slab
       integer cells(1:2), fcType(m%nFc), c1, c2, verts2(0:1)
       integer, allocatable :: verts(:)
@@ -660,8 +660,7 @@
 
       type(mapping) :: m
       type(geometry) :: g
-      real(kind=R8) ::  psic, isx(0:1), isy(0:1),
-     * t0
+      real(kind=R8) :: psic, isx(0:1), isy(0:1), t0
       integer iCv, i1, i2, ii, iF,
      *  intersectF(0:1), isymm, nv
       integer, allocatable :: verts(:), faces(:)
@@ -734,7 +733,7 @@ cnv   but now for quads
       type(geometry) :: g
 
       integer verts(1:2), cells (1:2), iFc
-      real(kind=R8) ::  fcX, fcY, vec_verts(0:1), vec_cell(0:1), sin
+      real(kind=R8) :: fcX, fcY, vec_verts(0:1), vec_cell(0:1), sin
 
       do iFc = 1,m%nFc
         verts = m%fcVx(iFc,:)

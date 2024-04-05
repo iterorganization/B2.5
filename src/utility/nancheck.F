@@ -33,20 +33,19 @@
 #endif
 *   ..input arguments (unchanged on exit)
       integer nCv
-      real (kind=R8) ::
-     *   data(nCv)
+      real (kind=R8) :: data(nCv)
       character (len=*) label
 *   ..local variables
       integer iCv
 
       do iCv = 1, nCv
 #ifndef NO_IEEE
-          if(ieee_is_nan(data(iCv))) then
+        if(ieee_is_nan(data(iCv))) then
 #else
-          if(my_isnan(data(iCv))) then
+        if(my_isnan(data(iCv))) then
 #endif
-            write(*,*) label, ' NaN found at ', iCv
-          endif
+          write(*,*) label, ' NaN found at ', iCv
+        endif
       enddo
 
       return
@@ -63,8 +62,7 @@
 #endif
 *   ..input arguments (unchanged on exit)
       integer nCv, istart, iend
-      real (kind=R8) ::
-     *   data(nCv,istart:iend)
+      real (kind=R8) :: data(nCv,istart:iend)
       character (len=*) label
 *   ..local variables
       integer i, iCv
@@ -90,8 +88,7 @@
       logical, external :: my_isnanint
 *   ..input arguments (unchanged on exit)
       integer nCv
-      integer ::
-     *   data(nCv)
+      integer :: data(nCv)
       character (len=*) label
 *   ..local variables
       integer iCv
@@ -111,8 +108,7 @@
       logical, external :: my_isnanint
 *   ..input arguments (unchanged on exit)
       integer nCv, istart, iend
-      integer ::
-     *   data(nCv,istart:iend)
+      integer :: data(nCv,istart:iend)
       character (len=*) label
 *   ..local variables
       integer i, iCv
@@ -127,4 +123,3 @@
 
       return
       end subroutine nancheck2dint
-
