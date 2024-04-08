@@ -411,11 +411,13 @@ cwdk  now need to recompute full diamagnetic component for ud
         ud(:,:) = 0.0_R8
       else if (switch%sheath_drift_fix.eq.0) then
         do is = 0,ns-1
-         ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
+         ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/
+     .                          sign(geo%fcBb(:,2),geo%fcEb(:,2))
         enddo
       else
         do is=0,ns-1
-         ud(:,is) = dv%vaecrb(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
+         ud(:,is) = dv%vaecrb(:,0,is)*geo%fcBb(:,3)/
+     .                           sign(geo%fcBb(:,2),geo%fcEb(:,2))
         enddo
       endif
       if (main_call .and. switch%b2stbc_diagno.ge.1) then             !xpb
@@ -1272,10 +1274,7 @@ c   (ionising_core option)
             cs = sqrt(pz(iCv1)/rz(iCv1))
             srw%sna0(iCv1,0,is) = 0.0_R8
             srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
-            if (switch%bccon14_gradpar_0 .eq.1) then
-              srw%sna0(iCv1,0,is) =  srw%sna0(iCv1,0,is) -  
-     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*dv%fna(iFc,1,is)
-            elseif (conpar(is,ib,2).gt.0.0_R8) then
+            if (conpar(is,ib,2).gt.0.0_R8) then
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) - 
      .          co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
             endif
@@ -10109,7 +10108,7 @@ cwdk    Todo: corrections for BCCON.ne.14
       integer, intent(in) :: iCv
       real (kind=R8) :: pit
 
-      pit = abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 
       return
       end function pit
