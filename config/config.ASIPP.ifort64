@@ -15,7 +15,7 @@ LD_MSCL   ?= -L{MSCL_ROOT} -lmscl
 endif
 LD_NAG    ?= -L${NAGDIR} -lnag
 
-CPP      = /lib/cpp -C -traditional
+CPP      = /lib/cpp -traditional
 
 ifdef USE_MPI
 #FC       = mpiifort
