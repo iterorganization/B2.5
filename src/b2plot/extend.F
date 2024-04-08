@@ -9,11 +9,11 @@
      *   field(mpg%nCv,0:ns-1)
       integer is,iCv,iFc,iCin
 
-      do is=0,ns-1
-        do iCv=mpg%nCi+1,mpg%nCv
+      do is = 0, ns-1
+        do iCv = mpg%nCi+1, mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
           iCin = min(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))
-          field(iCv,is)=field(iCin,is)
+          field(iCv,is) = field(iCin,is)
         enddo
       enddo
 
@@ -31,7 +31,7 @@ cxpb  to all the Eirene triangles
       integer, intent(in) :: ncltal(ntrii)
       real (kind=R8) ::
      *   field(ns,ntrii), field_copy(ns,ntrii)
-      integer i,iCv
+      integer i
 
       field_copy = 0.0_R8
       do i = 1, ntrii

@@ -10,8 +10,8 @@
 *   ..input arguments (unchanged on exit)
       integer nfin, nCv
       real (kind=R8) :: cvBp(nCv), cvBt(nCv), cvFpsi(nCv)
-      type(geometry) :: g 
-      type(mapping)  :: m  
+      type(geometry) :: g
+      type(mapping)  :: m
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -66,7 +66,7 @@
      &  'psi bp bt cflags(:) cvReg cvFt'
       do iCv = 1, m%nCv
         write(nfin,'(2(I11,1X),I4,1X,5(F15.8,1X),2(I4,1X),I11)')
-     &    iCv, m%cvVxP(iCv,1), m%cvVxP(iCv,2), 
+     &    iCv, m%cvVxP(iCv,1), m%cvVxP(iCv,2),
      &    g%cvX(iCv), g%cvY(iCv), cvFpsi(iCv), cvBp(iCv), cvBt(iCv),
      &    m%cvLbl(iCv), m%cvReg(iCv),  m%cvFt(iCv)
       enddo
@@ -90,7 +90,7 @@
           write(nfin,'(5(I11,1X),I11)') iFt, m%ftCvP(iFt,1),
      &      m%ftCvP(iFt,2), m%ftFcP(iFt,1), m%ftFcP(iFt,2),
      &      m%ftReg(iFt)
-        enddo   
+        enddo
         call cfwuin(nfin,m%nCv,m%ftCv,'ftCv')
         call cfwuin(nfin,m%nFc,m%ftFc,'ftFc')
       endif
