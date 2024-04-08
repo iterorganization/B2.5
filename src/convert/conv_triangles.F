@@ -14,12 +14,11 @@
 #endif
       implicit none
 
-      integer, intent(in) ::nmxnodes, nmxelem, npnodes, npelem,
+      integer, intent(in) :: nmxnodes, nmxelem, npnodes, npelem,
      .  tria_mode
       integer ::  nnodes, nelem
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
-      integer :: nx, ny
       integer :: node_vert(nmxnodes), elem(3,nmxelem), elem_cv(nmxelem),
      .  trifc(3,nmxelem), neigh(3,2,nmxelem), cntr(3,nmxelem)
       real(R8) :: xco(nmxnodes), yco(nmxnodes)
@@ -27,6 +26,7 @@
 #ifdef B25_EIRENE
       type(TAVLTree), pointer :: baum
       logical :: inserted
+      integer :: nx, ny
       integer :: nco_old, nelem_conv, ic, ico, ivx, iel, iel2,
      .           i1, i2, i3, idum, i, nel2, 
      .           is, is1, is2, ifc, icv, icut, ixt, iyt,
@@ -38,19 +38,22 @@
       integer, allocatable :: im_old_new(:), im_new_old(:)
       integer, allocatable :: ixtri(:), iytri(:),
      .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
-      integer :: artificial_slab=0, overwrite_ntrfrm = 0,
-     .            is_narrow_grid = 0, use_old_co = 0
+      integer :: artificial_slab = 0, overwrite_ntrfrm = 0,
+     .           is_narrow_grid = 0, use_old_co = 0
       real(R8) :: xc, yc, dist = 1.0_R8
       real(R8) :: tol_align = 1.0e-4_R8
       logical :: ffound
       character(500) :: line
+
       type :: tri_elem
         integer :: itri
         type(tri_elem), pointer :: next_tri => null()
       end type tri_elem
+
       type :: tri_list
         type(tri_elem), pointer :: ptri => null()
       end type tri_list
+
       type(tri_list), allocatable :: trias(:,:)
       type(tri_elem), pointer :: tel
 #ifndef F2003
@@ -121,7 +124,7 @@
         xc = xco(i)
         yc = yco(i)
         call EIRENE_insert (baum, xc, yc,
-     .                    0._R8, dist, ic, inserted)
+     .                      0.0_R8, dist, ic, inserted)
         if (.not.inserted) then
             write(*,*) '------------'
             write(*,*) 'problem with plasma node ', i
@@ -272,8 +275,6 @@
         end do
         close(35)
 
-
-
         ! consistency check
         ico = 0
         do iel = npelem + 1, nelem
@@ -282,10 +283,10 @@
             ico = ico + 1
             write (*,*) 'Problem with void triangle ',iel
             write (*,*) 'iCv, iFc1, iFc2, iFc3 = ', elem_cv(iel),
-     .      trifc(1:3,iel)
+     .       trifc(1:3,iel)
           endif
         enddo
-        call xertst(ico.eq.0,'Problem with void triangles')
+        call xertst(ico.eq.0, 'Problem with void triangles')
 
       elseif (tria_mode.eq.0) then ! assume structured format fort.35; conversion of ix,iy indexing needed
 
@@ -295,7 +296,7 @@
           ny = mpg%ny
         else
           call xerrab 
-     .      ('Need structured grid info to convert plasma triangles.')
+     .     ('Need structured grid info to convert plasma triangles.')
         endif
 
         allocate (ixtri(nelem_conv))

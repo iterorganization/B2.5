@@ -299,7 +299,7 @@ c     conversion of constants to CGS units
 *      measure for the density perturbation in a collision dominated
 *      regime
           if (iFt.gt.0)
-     >     deltapar(iCv,is)=(1.-fc_(iFt))**4*nustar(iCv,is)*
+     >     deltapar(iCv,is)=(1.0_R8-fc_(iFt))**4*nustar(iCv,is)*
      &      wb(iCv,is)*rmaj_(iFt)*nua(iCv,is)/(minlnlt**2*
      &      omega(iCv,is))
          endif
@@ -317,7 +317,7 @@ c     conversion of constants to CGS units
         deltal(iCv,ns)=rhol(iCv,ns)/minlnlt
 *      width of Banana orbit
         if (iFt.gt.0)
-     >   wb(iCv,ns)=me*gramm*c_cgs*(1.-fc_(iFt))*
+     >   wb(iCv,ns)=me*gramm*c_cgs*(1.0_R8-fc_(iFt))*
      &    vtha(iCv,ns)/(e_cgs*geo%cvBb(iCv,0)*gauss*cm)
 *      ratio of Banana orbit to minimum gradient length
         deltaw(iCv,ns)=wb(iCv,ns)/minlnlt

@@ -32,9 +32,10 @@
 * ..read the mapping and geometry
 
       call read_mapping (ninp, mpg)
-      call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
+      call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
      .  mpg%nFt, mpg%nVmxCv, gm)
-      
+
+      return
       end subroutine read_b2fgmtry
 
 ***********************************************************************
@@ -48,9 +49,9 @@
 * ..write the mapping and geometry
 
       call write_mapping (nout, mpg)
-      call write_geometry (nout, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nFt, mpg%nVmxCv, gm)
-      
+      call write_geometry (nout, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, gm)
+
+      return
       end subroutine write_b2fgmtry
 
 ***********************************************************************
@@ -63,7 +64,8 @@
 * ..read the state
 
       call read_state (ninp, nCv, nFc, ns, st)
-      
+
+      return
       end subroutine read_b2fstate
 
 ***********************************************************************
@@ -76,7 +78,8 @@
 * ..write the state
 
       call write_state (nout, nCv, nFc, ns, st)
-      
+
+      return
       end subroutine write_b2fstate
 
 ***********************************************************************
@@ -89,7 +92,8 @@
 * ..read the plasma state
 
       call read_plasma (ninp, nCv, nFc, ns, st)
-      
+
+      return
       end subroutine read_b2fplasma
 
 ***********************************************************************
@@ -102,7 +106,8 @@
 * ..write the plasma state
 
       call write_plasma (nout, nCv, nFc, ns, st)
-      
+
+      return
       end subroutine write_b2fplasma
 
       end module b2us_io
