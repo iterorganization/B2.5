@@ -2632,7 +2632,7 @@
       integer :: ix, iy, ic, iFc!, nfx
 
       call createB2State ( mpg%nCv, mpg%nFc, ns, st)
-      call createB2Diagnostic( mpg%nCv, ns, nnreg, st % diag )
+      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st % diag )
 
 !     nfx = (nx+1)*ny
 
