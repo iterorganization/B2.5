@@ -409,7 +409,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call rc_to_struct(mpg)
       end if
 
-      call prep_triangles(nout(0),mpg, gm, nx, ny, tria_mode)
+      call prep_triangles(nout(0), mpg, gm, nx, ny, tria_mode)
 
 *   ..convert feedback schemes (if present!)
       filename='b2.feedback_control.parameters'
