@@ -511,6 +511,21 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: b2sihs__rf3
       REAL(kind=r8) :: b2sihs__rf4
       INTEGER :: b2news_ncallout
+      REAL(kind=r8) :: facvis_start
+      REAL(kind=r8) :: facvis_inc
+      REAL(kind=r8) :: facvis_dec
+      REAL(kind=r8) :: facvis_target
+      REAL(kind=r8) :: facdrift_start
+      REAL(kind=r8) :: facdrift_inc
+      REAL(kind=r8) :: facdrift_dec
+      REAL(kind=r8) :: facdrift_target
+      REAL(kind=r8) :: facexb_start
+      REAL(kind=r8) :: facexb_inc
+      REAL(kind=r8) :: facexb_dec
+      REAL(kind=r8) :: facexb_target
+      INTEGER :: ramp_slow
+      REAL(kind=r8) :: b2news_exb
+      REAL(kind=r8) :: b2news_vis
       REAL(kind=r8) :: b2srst_rf0
       REAL(kind=r8) :: b2srst_rf1
       REAL(kind=r8) :: b2srst_rf2
@@ -527,9 +542,6 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: nstg_areshi
       REAL(kind=r8) :: boris
       REAL(kind=r8) :: b2mndt_rxf
-      REAL(kind=r8) :: facvis_start
-      REAL(kind=r8) :: facdrift_start
-      REAL(kind=r8) :: facexb_start
       REAL(kind=r8) :: b2mndr_hz
       REAL(kind=r8) :: b2mndr_stim
       REAL(kind=r8) :: neutral_rescale
@@ -557,6 +569,8 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: b2stbc_feedback
       INTEGER :: med_style
       INTEGER :: b2optim_save_states
+      INTEGER :: b2optim_reset_iter
+      REAL(kind=r8) :: b2optim_reset_drift
   END TYPE SWITCHES
   TYPE, PUBLIC :: SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fhe_vis_per
@@ -753,6 +767,20 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf2
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf3
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sihs__rf4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facvis_start
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facvis_inc
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facvis_dec
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facvis_target
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facdrift_start
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facdrift_inc
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facdrift_dec
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facdrift_target
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facexb_start
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facexb_inc
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facexb_dec
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: facexb_target
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2news_exb
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2news_vis
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srst_rf0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srst_rf1
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2srst_rf2
@@ -763,9 +791,6 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: nstg_areshi
       REAL(kind=r8), DIMENSION(nbdirsmax) :: boris
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_rxf
-      REAL(kind=r8), DIMENSION(nbdirsmax) :: facvis_start
-      REAL(kind=r8), DIMENSION(nbdirsmax) :: facdrift_start
-      REAL(kind=r8), DIMENSION(nbdirsmax) :: facexb_start
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_hz
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_stim
       REAL(kind=r8), DIMENSION(nbdirsmax) :: neutral_rescale
@@ -787,6 +812,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: nesepm_overshoot
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_cor9
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2trno_alpha_stoch
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2optim_reset_drift
   END TYPE SWITCHES_DIFFV
 
 CONTAINS
@@ -813,7 +839,6 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ns
     TYPE(SWITCHES), INTENT(INOUT) :: s
-!
 !
     s%get_residuals = 0
     s%mdf_fhe = 0
@@ -1248,6 +1273,21 @@ CONTAINS
 !
 ! b2news_
     s%b2news_ncallout = -1
+    s%facvis_start = 0.0_R8
+    s%facvis_inc = 1.0_R8
+    s%facvis_dec = 0.0_R8
+    s%facvis_target = 0.0_R8
+    s%facdrift_start = 0.0_R8
+    s%facdrift_inc = 1.0_R8
+    s%facdrift_dec = 0.0_R8
+    s%facdrift_target = 0.0_R8
+    s%facexb_start = 0.0_R8
+    s%facexb_inc = 1.0_R8
+    s%facexb_dec = 0.0_R8
+    s%facexb_target = 0.0_R8
+    s%ramp_slow = 0
+    s%b2news_exb = 0.0_R8
+    s%b2news_vis = 0.0_R8
 !
 ! b2sihs_
     s%b2srst_rf0 = 1.0_R8
@@ -1274,9 +1314,6 @@ CONTAINS
     s%nstg_areshi = 0.0_R8
     s%boris = 0.0_R8
     s%b2mndt_rxf = 0.5_R8
-    s%facvis_start = 0.0_R8
-    s%facdrift_start = 0.0_R8
-    s%facexb_start = 0.0_R8
 !
 ! Feedback
     s%b2stbc_feedback = 0
@@ -1327,6 +1364,8 @@ CONTAINS
 !
 ! Optimization
     s%b2optim_save_states = 0
+    s%b2optim_reset_iter = 2
+    s%b2optim_reset_drift = 0.4_R8
 !
     RETURN
   END SUBROUTINE SET_DEFAULTS_SWITCHES
@@ -1570,7 +1609,6 @@ CONTAINS
     CALL IPGETI('b2sifr_styl0', s%b2sifr_styl0)
     CALL IPGETI('b2tqin_csigin_style', s%b2tqin_csigin_style)
 !
-!
 ! phm switches
     CALL IPGETR('b2sian_phm0', s%b2sian_phm0)
     CALL IPGETR('b2sicf_phm0', s%b2sicf_phm0)
@@ -1609,7 +1647,6 @@ CONTAINS
 !srv 17.01.07
     CALL IPGETR('b2stbc_phm1', s%b2stbc_phm1)
     CALL IPGETR('b2stbc_phm2', s%b2stbc_phm2)
-!
 !
 ! pcm switches
     CALL IPGETR('b2npco_pcm0', s%b2npco_pcm0)
@@ -1701,7 +1738,6 @@ CONTAINS
     CALL IPGETR('eirene_ua_max', s%eir_ua_max)
     CALL IPGETR('b2mndr_rescale_neutrals_sources', s%&
 &         neutral_sources_rescale)
-!
 !
 ! k-enstrophy model
     CALL IPGETI('b2mndr_solve_keps', s%solve_keps)
@@ -1824,6 +1860,21 @@ CONTAINS
 !
 ! b2news_
     CALL IPGETI('b2news_ncallout', s%b2news_ncallout)
+    CALL IPGETR('b2news_facExB_start', s%facexb_start)
+    CALL IPGETR('b2news_facExB_inc', s%facexb_inc)
+    CALL IPGETR('b2news_facExB_dec', s%facexb_dec)
+    CALL IPGETR('b2news_facExB_target', s%facexb_target)
+    CALL IPGETR('b2news_facdrift_start', s%facdrift_start)
+    CALL IPGETR('b2news_facdrift_inc', s%facdrift_inc)
+    CALL IPGETR('b2news_facdrift_dec', s%facdrift_dec)
+    CALL IPGETR('b2news_facdrift_target', s%facdrift_target)
+    CALL IPGETR('b2news_facvis_start', s%facvis_start)
+    CALL IPGETR('b2news_facvis_inc', s%facvis_inc)
+    CALL IPGETR('b2news_facvis_dec', s%facvis_dec)
+    CALL IPGETR('b2news_facvis_target', s%facvis_target)
+    CALL IPGETI('b2news_ramp_slow', s%ramp_slow)
+    CALL IPGETR('b2news_ExB', s%b2news_exb)
+    CALL IPGETR('b2news_vis', s%b2news_vis)
 !
 ! b2srst
     CALL IPGETR('b2srst_rf0', s%b2srst_rf0)
@@ -1851,16 +1902,12 @@ CONTAINS
     CALL IPGETR('b2mndt_nstg_aresco', s%nstg_aresco)
     CALL IPGETR('b2news_BoRiS', s%boris)
     CALL IPGETR('b2mndt_rxf', s%b2mndt_rxf)
-    CALL IPGETR('b2news_facExB_start', s%facexb_start)
-    CALL IPGETR('b2news_facdrift_start', s%facdrift_start)
-    CALL IPGETR('b2news_facvis_start', s%facvis_start)
 !
 ! b2mndr
     CALL IPGETR('b2mndr_hz', s%b2mndr_hz)
 !srv 09.01.01 09.06.08
     CALL IPGETR('b2mndr_stim', s%b2mndr_stim)
     CALL IPGETR('b2mndr_rescale_neutrals', s%neutral_rescale)
-!
 !
 ! b2ag
     CALL IPGETR('b2agmt_1d_width', s%b2agmt_width)
@@ -1912,6 +1959,8 @@ CONTAINS
 !
 ! Optimization
     CALL IPGETI('b2optim_save_states', s%b2optim_save_states)
+    CALL IPGETI('b2optim_reset_iter', s%b2optim_reset_iter)
+    CALL IPGETR('b2optim_reset_drift', s%b2optim_reset_drift)
 !
     RETURN
   END SUBROUTINE READ_SWITCHES
@@ -1998,7 +2047,7 @@ CONTAINS
 &                                                           )
 !
 ! pot_eq
-! pot_eq = 0: don't solve pot. eq.;
+! pot_eq = 0: do not solve pot. eq.;
 ! pot_eq = 1: solve (default)
 ! pot_eq = 2: pot. = 3.1*Te/qe
     IF (s%pot_eq .LT. 0 .OR. s%pot_eq .GT. 2) THEN
@@ -2166,6 +2215,33 @@ CONTAINS
 !
     CALL XERTST(-15 .LE. s%no_solve .AND. s%no_solve .LE. 1, &
 &         'faulty input no_solve')
+!
+    CALL XERTST(0.0_R8 .LE. s%facdrift_start .AND. 1.0_R8 .GE. s%&
+&         facdrift_start, 'faulty argument facdrift_start')
+    CALL XERTST(0.0_R8 .LE. s%facdrift_target .AND. 1.0_R8 .GE. s%&
+&         facdrift_target, 'faulty argument facdrift_target')
+    CALL XERTST(1.0_R8 .LE. s%facdrift_inc, &
+&         'faulty argument facdrift_inc')
+    CALL XERTST(0.0_R8 .LE. s%facdrift_dec .AND. 1.0_R8 .GE. s%&
+&         facdrift_dec, 'faulty argument facdrift_dec')
+    CALL XERTST(0.0_R8 .LE. s%facexb_start .AND. 1.0_R8 .GE. s%&
+&         facexb_start, 'faulty argument facExB_start')
+    CALL XERTST(0.0_R8 .LE. s%facexb_target .AND. 1.0_R8 .GE. s%&
+&         facexb_target, 'faulty argument facExB_target')
+    CALL XERTST(1.0_R8 .LE. s%facexb_inc, 'faulty argument facExB_inc')
+    CALL XERTST(0.0_R8 .LE. s%facexb_dec .AND. 1.0_R8 .GE. s%facexb_dec&
+&         , 'faulty argument facExB_dec')
+    CALL XERTST(0.0_R8 .LE. s%b2news_exb .AND. 1.0_R8 .GE. s%b2news_exb&
+&         , 'faulty parameter b2news_ExB')
+    CALL XERTST(0.0_R8 .LE. s%facvis_start .AND. 1.0_R8 .GE. s%&
+&         facvis_start, 'faulty argument facvis_start')
+    CALL XERTST(0.0_R8 .LE. s%facvis_target .AND. 1.0_R8 .GE. s%&
+&         facvis_target, 'faulty argument facvis_target')
+    CALL XERTST(1.0_R8 .LE. s%facvis_inc, 'faulty argument facvis_inc')
+    CALL XERTST(0.0_R8 .LE. s%facvis_dec .AND. 1.0_R8 .GE. s%facvis_dec&
+&         , 'faulty argument facvis_dec')
+    CALL XERTST(0.0_R8 .LE. s%b2news_vis .AND. 1.0_R8 .GE. s%b2news_vis&
+&         , 'faulty parameter b2news_vis')
 !
 ! b2usmo
     CALL XERTST(0.0_R8 .LE. s%cfc0, 'faulty parameter cfc0')
@@ -2357,6 +2433,11 @@ CONTAINS
 ! Optimization
     CALL XERTST(s%b2optim_save_states .GE. 0, &
 &         'faulty parameter b2optim_save_states')
+    CALL XERTST(s%b2optim_reset_iter .GT. 0, &
+&         'faulty parameter b2optim_reset_iter')
+    CALL XERTST(s%b2optim_reset_drift .GT. 0.0 .AND. s%&
+&         b2optim_reset_drift .LE. 1.0_R8, &
+&         'faulty parameter b2optim_reset_drift')
 !
     RETURN
   END SUBROUTINE CHECK_VALUES_SWITCHES
@@ -2424,7 +2505,7 @@ CONTAINS
 &     CALL XERRAB('automatic spatial hybrid needs spatial hybrid')
 !
     IF (s%use_auto_spatial_hyb .NE. 0 .AND. s%recycle_afn .EQ. 0) CALL &
-&     XERRAB('automatic spatial hybrid needs KUL neutral BCs')
+&     XERRAB('automatic spatial hybrid needs AFN neutral BCs')
 !
 ! k-enstrophy model
     IF (s%solve_keps .EQ. 0 .AND. s%transport_keps .GT. 0) WRITE(*, *) &

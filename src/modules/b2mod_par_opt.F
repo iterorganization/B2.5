@@ -106,7 +106,7 @@
 ! - corr_L/U: lower/upper bound of the correlation parameter
       integer, save :: npar_opt = 0
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
-     &       par_opt_phys(:)
+     &       par_opt_phys(:), xsave(:)
       logical, save :: flag_optim = .false., reset_gradient = .false.
       integer nnvar, nncon, nnjac
       real (kind=R8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
@@ -119,7 +119,7 @@
       real (kind=R8), save :: cpu_opt=0.0_R8, tol_opt=1.0e-7_R8
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0,
      &                 nmean_opt = 0, nshift_opt = 0, ncorr_opt = 0
-      integer, save :: paris(nvmx),parib(nvmx)
+      integer, save :: paris(nvmx), parib(nvmx)
       logical, save :: sigma_opt(nsigmx), mean_opt(nsigmx),
      &                 shift_opt(nsigmx), shiftopt(nsigmx),
      &                 corr_opt(nncf), parallel_hf

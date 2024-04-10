@@ -2541,7 +2541,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2sikt_fac_diss_sol</name>
+				<name>b2sikt_fac_diss</name>
 				<default>10.0</default>
 				<type>real</type>
 				<description>
@@ -4683,6 +4683,20 @@
 				<default>0</default>
 				<description>
 					If larger than zero, specifies the number of optimization iterations between writes of the intermediate state file b2fstate_optim.XXXX.
+				</description>
+			</switch>
+			<switch>
+				<name>b2optim_reset_drift</name>
+				<default>0.4</default>
+				<description>
+					Percentage value at which drifts are reset at each function/gradient evaluation to avoid simualtion crash.
+				</description>
+			</switch>
+			<switch>
+				<name>b2optim_reset_iter</name>
+				<default>2</default>
+				<description>
+					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in ntim/b2optim_reset_iter iterations.
 				</description>
 			</switch>
 		</category>

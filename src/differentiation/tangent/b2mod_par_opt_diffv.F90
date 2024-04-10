@@ -126,7 +126,7 @@ MODULE B2MOD_PAR_OPT_DIFFV
 ! - corr_L/U: lower/upper bound of the correlation parameter
   INTEGER, SAVE :: npar_opt=0
   REAL(kind=r8), ALLOCATABLE, SAVE :: par_opt0(:), par_opt(:), &
-& par_opt_phys(:)
+& par_opt_phys(:), xsave(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: par_opt_physd(:, :)
   LOGICAL, SAVE :: flag_optim=.false.
   LOGICAL, SAVE :: reset_gradient=.false.

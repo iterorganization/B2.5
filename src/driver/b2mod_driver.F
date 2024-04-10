@@ -1952,7 +1952,9 @@ c   --> better way doing this is necessary)
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
         call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
+        allocate(xsave(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+        xsave(1:npar_opt) = x0(1:npar_opt)
       endif
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -3414,8 +3416,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
 
 * ..return
       ncall = ncall+1
-      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1))
-     &  deallocate(par_opt_phys)
+      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
+        deallocate(par_opt_phys)
+        deallocate(xsave)
+      endif
       deallocate(old_erosion, old_deposition)
       deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag

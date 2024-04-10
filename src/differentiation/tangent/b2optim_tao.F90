@@ -4,7 +4,7 @@
 
       Vec X,X_L,X_U
       Mat Hess
-      integer, save :: iter = 0, filen = 0
+      integer, save :: iter = 0, filen = 0, ntim = 1
       end module taomodule
 
       program b2optim_tao
@@ -40,6 +40,7 @@
       flag_optim  = .true.
       call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, &
 &      stated, state_ext, state_extd, state_avg, state_avgd, npar_opt)
+      call ipgeti('b2mndr_ntim', ntim)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
@@ -125,6 +126,7 @@
       call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated, &
 &      state_ext, state_extd, state_avg, state_avgd, npar_opt)
       deallocate(par_opt_phys)
+      deallocate(xsave)
       deallocate(par_opt_physd)
       stop 'b2optim'
 
@@ -237,7 +239,7 @@
       logical :: write_state
       PetscErrorCode ierr
       PetscInt dummy
-      Vec XX,grad
+      Vec XX, grad
       Tao tao
       PetscScalar F
       PetscReal, pointer :: x_v(:), g_v(:)
@@ -246,6 +248,8 @@
       CHKERRQ(ierr)
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
+
+      call reset_drifts(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
@@ -370,6 +374,8 @@
       call VecGetArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
 
+      call reset_drifts(XX)
+
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
@@ -459,6 +465,8 @@
       CHKERRQ(ierr)
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
+
+      call reset_drifts(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
@@ -600,5 +608,42 @@
 
       return
       end subroutine FormHessian
+
+      subroutine reset_drifts(XX)
+      use b2mod_facdrift_exb_diffv &
+      , only : facdrift_scalar, fac_exb_scalar
+      implicit none
+      logical :: sameX
+      integer :: ipar
+      real (kind=R8) :: nn
+      Vec XX, grad
+      PetscReal, pointer :: x_v(:)
+
+      call VecGetArrayReadF90(XX,x_v,ierr)
+      CHKERRQ(ierr)
+      ! check if the same value for the current solution has been already used
+      ! in FormFunction or FormGradient, if not, then drifts need to be reset to
+      ! avoid potential crash
+      sameX = .true.
+      do ipar = 1, npar_opt
+        if (abs(xsave(ipar)-x_v(ipar)).gt.1.0E-4_R8) sameX = .false.
+        xsave(ipar) = x_v(ipar)
+      end do
+      if (.not. sameX .and. (switch%facExB_start.gt.0.0_R8 .or. switch%facdrift_start.gt.0.0_R8)) then
+        ! reset drift percentage to b2optim_reset_drift
+        fac_exb_scalar = min(switch%b2optim_reset_drift,switch%facExB_start)
+        facdrift_scalar = min(switch%b2optim_reset_drift,switch%facdrift_start)
+        ! make sure that drifts are increased to 100% in ntim/XX iterations
+        ! where XX is b2optim_reset_iter
+        nn = ntim/switch%b2optim_reset_iter
+        switch%facExB_inc = (1.0_R8/fac_exb_scalar)**(1.0_R8/nn)
+        switch%facdrift_inc = (1.0_R8/facdrift_scalar)**(1.0_R8/nn)
+        write (*,*) ' b2optim_tao: resetting drifts to', switch%b2optim_reset_drift
+        write (*,*) ' b2optim_tao: drift_inc set to', switch%facExB_inc
+        write (*,*) ' b2optim_tao: drifts back at 100% in ',nint(nn),'iterations'
+      endif
+
+      return
+      end subroutine reset_drifts
 
       end program b2optim_tao

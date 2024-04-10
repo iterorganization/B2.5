@@ -288,6 +288,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   USE B2MOD_RUNNING_AVERAGE_DIFFV
   USE B2MOD_BATCH_AVERAGE_DIFFV, ONLY : batch_av_all
   USE B2MOD_SWITCHES_DIFFV
+  USE B2MOD_FACDRIFT_EXB_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : parm_hce, parm_hced, &
@@ -404,7 +405,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   REAL(kind=r8) :: rz(ncv), wrk0(ncv), wrkf(nfc)
   REAL(kind=r8) :: rzd(nbdirsmax, ncv), wrk0d(nbdirsmax, ncv), wrkfd(&
 & nbdirsmax, nfc)
-  LOGICAL :: solving(4)
+  LOGICAL :: solving(4), ramp_call
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
 !xpb
@@ -415,11 +416,6 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 & shesm(ncv, 0:3), shism(ncv, 0:3)
   EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, samax
   EXTERNAL B2SASUM_DV
-!WG_TODO     &  snadt(-1:nx,-1:ny,0:1,0:ns-1),                           !xpb
-!WG_TODO     &  smodt(-1:nx,-1:ny,0:3,0:ns-1),                           !xpb
-!WG_TODO     &  shedt(-1:nx,-1:ny,0:3), shidt(-1:nx,-1:ny,0:3),          !xpb
-!WG_TODO     &  schdt(-1:nx,-1:ny,0:3),                                  !xpb
-!WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 !   ..procedures
   REAL(kind=r8) :: B2SASUM_NODIFF, samax
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
@@ -450,8 +446,6 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   REAL(r8), DIMENSION(nCv) :: temp1
   REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd1
   INTEGER :: nbdirs
-!   ..initialisation
-  DATA ramp_slow /0/
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -466,7 +460,6 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
       switch%nstg(1) = 1
       switch%nstg(2) = 0
     END IF
-    CALL IPGETI('b2news_ramp_slow', ramp_slow)
     IF (switch%no_solve .EQ. 1) switch%nstg(0:2) = 1
     test_residual = (switch%nstg_areshe .GT. 0.0_R8 .OR. switch%&
 &     nstg_areshi .GT. 0.0_R8) .OR. switch%nstg_aresco .GT. 0.0_R8
@@ -536,11 +529,8 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 ! the main initialisation is in b2news --- unfortunately a few routines
 ! that need an initial value get called before the first call to b2news
 ! therefore initialise here
-!wdk    For unstructured solver, start with simple reading of start-values
-    st%dv%fac_exb = switch%facexb_start
-    st%dv%facdrift = switch%facdrift_start
-    st%dv%fac_vis = switch%facvis_start
-!
+    CALL B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, st%dv%fac_exb, st%dv%facdrift&
+&                               , st%dv%fac_vis, switch)
   END IF
 !   ..initialise error parameter
   ierr = 0
@@ -740,9 +730,11 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
       istg(2) = 0
  3    IF (istg(2) .LT. switch%nstg(2) .AND. (.NOT.quit_residual)) THEN
 !      ..basic iterative step
+        ramp_call = switch%ramp_slow .EQ. 0 .OR. istg(0) + istg(1) + &
+&         istg(2) .EQ. 0
         CALL B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &                 ismain0, dtim, switch, switchd, geo, geod, mpg, st, &
-&                 std, st_ext, st_extd, st_avg, ier0, nbdirs)
+&                 std, st_ext, st_extd, st_avg, ier0, ramp_call, nbdirs)
         FLUSH(6) 
         CALL XERTST(ier0 .EQ. 0, 'error return from b2news')
 !!!      (should develop other error handling)
@@ -984,6 +976,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   USE B2MOD_RUNNING_AVERAGE_DIFFV
   USE B2MOD_BATCH_AVERAGE_DIFFV, ONLY : batch_av_all
   USE B2MOD_SWITCHES_DIFFV
+  USE B2MOD_FACDRIFT_EXB_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : parm_hce, parm_hci, &
@@ -1084,7 +1077,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   REAL(kind=r8) :: nasum, na0sum
 !iyv 06.02.14
   REAL(kind=r8) :: rz(ncv), wrk0(ncv), wrkf(nfc)
-  LOGICAL :: solving(4)
+  LOGICAL :: solving(4), ramp_call
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
 !xpb
@@ -1094,11 +1087,6 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   REAL(kind=r8) :: snasm(ncv, 0:1, 0:ns-1), smosm(ncv, 0:3, 0:ns-1), &
 & shesm(ncv, 0:3), shism(ncv, 0:3)
   EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, samax
-!WG_TODO     &  snadt(-1:nx,-1:ny,0:1,0:ns-1),                           !xpb
-!WG_TODO     &  smodt(-1:nx,-1:ny,0:3,0:ns-1),                           !xpb
-!WG_TODO     &  shedt(-1:nx,-1:ny,0:3), shidt(-1:nx,-1:ny,0:3),          !xpb
-!WG_TODO     &  schdt(-1:nx,-1:ny,0:3),                                  !xpb
-!WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 !   ..procedures
   REAL(kind=r8) :: B2SASUM_NODIFF, samax
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
@@ -1117,8 +1105,6 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   REAL(kind=r8) :: result20
   REAL(r8), DIMENSION(ncv) :: arg10
   REAL(r8), DIMENSION(ncv) :: result11
-!   ..initialisation
-  DATA ramp_slow /0/
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -1133,7 +1119,6 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
       switch%nstg(1) = 1
       switch%nstg(2) = 0
     END IF
-    CALL IPGETI('b2news_ramp_slow', ramp_slow)
     IF (switch%no_solve .EQ. 1) switch%nstg(0:2) = 1
     test_residual = (switch%nstg_areshe .GT. 0.0_R8 .OR. switch%&
 &     nstg_areshi .GT. 0.0_R8) .OR. switch%nstg_aresco .GT. 0.0_R8
@@ -1203,11 +1188,8 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 ! the main initialisation is in b2news --- unfortunately a few routines
 ! that need an initial value get called before the first call to b2news
 ! therefore initialise here
-!wdk    For unstructured solver, start with simple reading of start-values
-    st%dv%fac_exb = switch%facexb_start
-    st%dv%facdrift = switch%facdrift_start
-    st%dv%fac_vis = switch%facvis_start
-!
+    CALL B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, st%dv%fac_exb, st%dv%facdrift&
+&                               , st%dv%fac_vis, switch)
   END IF
 !   ..initialise error parameter
   ierr = 0
@@ -1358,9 +1340,11 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
       istg(2) = 0
  3    IF (istg(2) .LT. switch%nstg(2) .AND. (.NOT.quit_residual)) THEN
 !      ..basic iterative step
+        ramp_call = switch%ramp_slow .EQ. 0 .OR. istg(0) + istg(1) + &
+&         istg(2) .EQ. 0
         CALL B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                     ismain, ismain0, dtim, switch, geo, mpg, st, &
-&                     st_ext, st_avg, ier0)
+&                     st_ext, st_avg, ier0, ramp_call)
         FLUSH(6) 
         CALL XERTST(ier0 .EQ. 0, 'error return from b2news')
 !!!      (should develop other error handling)

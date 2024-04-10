@@ -3836,7 +3836,9 @@ CONTAINS
         par_opt_physd(nd, nd) = 1.0_R8
       END DO
       ALLOCATE(par_opt_phys(npar_opt))
+      ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+      xsave(1:npar_opt) = x0(1:npar_opt)
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -5416,7 +5418,9 @@ CONTAINS
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
       CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
+      ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+      xsave(1:npar_opt) = x0(1:npar_opt)
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -7220,6 +7224,7 @@ CONTAINS
         DEALLOCATE(par_opt_physd)
       END IF
       DEALLOCATE(par_opt_phys)
+      DEALLOCATE(xsave)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
@@ -7474,6 +7479,7 @@ CONTAINS
     ncall = ncall + 1
     IF (.NOT.flag_optim .AND. switch%b2optim_namelist .EQ. 1) THEN
       DEALLOCATE(par_opt_phys)
+      DEALLOCATE(xsave)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
