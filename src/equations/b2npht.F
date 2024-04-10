@@ -348,7 +348,22 @@ c residuals for separate neutral energy equation
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
      &     (pl%te(iCv)*sqrt(pl%te(iCv)))*(pl%te(iCv)-pl%ti(iCv))
+        shi0(iCv,0) = shi0(iCv,0) + switch%b2npht_stab_shei*     !lkw 29.03.2024{
+     &     co%ceqp(iCv)*  
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
+     &     pl%ti(iCv)
+        shi0(iCv,1) = shi0(iCv,1) - switch%b2npht_stab_shei*
+     &    co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))
+        she0(iCv,0) = she0(iCv,0) + switch%b2npht_stab_shei
+     &    *co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
+     &     pl%te(iCv)
+        she0(iCv,1) = she0(iCv,1) - switch%b2npht_stab_shei
+     &    *co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))                  !lkw 29.03.2024}
       enddo
+
       do iCv = mpg%nCi+1, nCv
         shei(iCv) = 0.0_R8
       enddo

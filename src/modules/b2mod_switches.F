@@ -91,6 +91,7 @@ c Advanced fluid neutral models
       real (kind=R8) :: b2mndr_na_max
       real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
+      real (kind=R8) :: b2npht_stab_shei
       real (kind=R8) :: b2upht_te_min
       real (kind=R8) :: b2upht_te_max
       real (kind=R8) :: b2upht_ti_min
@@ -644,6 +645,7 @@ c Advanced fluid neutral models
       s % b2mndr_na_max = 1.0e30_R8
       s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
+      s % b2npht_stab_shei = 0.0_R8
       s % b2upht_te_min = 0.1_R8
       s % b2upht_te_max = 1.0e30_R8
       s % b2upht_ti_min = 0.1_R8
@@ -1212,6 +1214,7 @@ c Advanced fluid neutral models
       call ipgetr ('b2mndr_na_max', s%b2mndr_na_max)
       call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
+      call ipgetr ('b2npht_stab_shei', s%b2npht_stab_shei)
       call ipgetr ('b2upht_te_min', s%b2upht_te_min)
       call ipgetr ('b2upht_te_max', s%b2upht_te_max)
       call ipgetr ('b2upht_ti_min', s%b2upht_ti_min)
