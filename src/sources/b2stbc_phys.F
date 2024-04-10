@@ -90,6 +90,11 @@
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
       integer, save :: bcenk_17_style =0
+! New decay length BCs variables
+      integer :: nlimiter
+      real (kind=R8) :: Lpar, Dion, c_sound, vthn, Dneut,
+     1                  lambda, lambda_ene, lambda_eni
+! End new variables
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) ::
      *  vte, s1, s1hz, fche, fchi, t0, t1, t2,                          !srv 15.11.07
@@ -819,17 +824,36 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      >       call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 9')
           endif
-
+c test new decay length
+          nlimiter = switch%nlimiters/0.66_R8
+          Dion = 0.0_R8
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             sy = geo%fcS(iFc)
-
+            if(conpar(is,ib,2).ge.0.0_R8) then
+              lambda = conpar(is,ib,1)
+            else
+              if(nlimiter.eq.0) then
+                nlimiter = 1
+              endif
+              if(.not.is_neutral(is)) then
+                Lpar = geo%cvConn(iCv1)/nlimiter
+                Dion = co%dna_bohm(iCv1,1,is)
+                c_sound = sqrt((pl%te(iCv1)+pl%ti(iCv1))/(am(is)*mp))
+                lambda = sqrt(Dion*Lpar/c_sound)
+              else
+                vthn = sqrt(pl%tn(iCv1)/(am(is)*mp))
+                Dneut = co%dna_bohm(iCv1,1,is)
+                lambda = Dneut/vthn*(1.0_R8 - 0.5_R8) ! 0.5 = RH in TOAMTOR1D (50% of neutral particles are lost) should be generalised if kept
+              endif
+            endif
             srw%sna0(iCv1,0,is) = 0.0_R8
-            srw%sna0(iCv1,1,is) = -(co%dna0(iCv1,is)+co%dpa0(iCv1,is)*
+            srw%sna0(iCv1,1,is) = -(co%dna0(iCv1,is)+
+     &             co%dna_bohm(iCv1,1,is)+co%dpa0(iCv1,is)*
      &             (rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1)))/
-     &             conpar(is,ib,1)*sy
+     &             lambda*sy
             if (switch%mdf_fnb.eq.1) then
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      .          (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))
@@ -4381,14 +4405,34 @@ cxpb code segment analog to b2tfhe
             end if
           enddo
         endif
+c test
+        nlimiter = switch%nlimiters/0.66_R8
+        Dion  = 0.0_R8
+        c_sound = 0.0_R8
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
+          if(enepar(ib,2).ge.0.0_R8) then
+            lambda_ene = enepar(ib,1)
+          else
+            if(nlimiter.eq.0) then
+              nlimiter = 1
+            endif
+            Lpar = geo%cvConn(iCv1)/nlimiter
+            do is = 0, ns-1
+              Dion = Dion + co%dna_bohm(iCv1,1,is)*pl%na(iCv1,is)*
+     &               rt%rza(iCv1,is)/dv%ne(iCv1)
+              c_sound = c_sound + sqrt(1.0_R8*(pl%te(iCv1)+
+     &                  pl%ti(iCv1))/(am(is)*mp))*pl%na(iCv1,is)*
+     &                  rt%rza(iCv1,is)/dv%ne(iCv1)
+            enddo
+            lambda = sqrt(Dion*Lpar/c_sound)
+            lambda_ene = lambda/switch%bohm_gammaD
+          endif
           srw%she0(iCv1,0) = 0.0_R8
-          srw%she0(iCv1,1) = -co%hce0(iCv1)/enepar(ib,1)*
-     &                    sy
+          srw%she0(iCv1,1) = -co%hce0(iCv1)/lambda_ene*sy
           do is = 0, ns-1
             srw%she0(iCv1,0) = srw%she0(iCv1,0) + rt%rza(iCv1,is)*
      &                     2.5_R8*pl%te(iCv1)*srw%sna0(iCv1,0,is)
@@ -6259,20 +6303,43 @@ cxpb code segment analog to b2tfhi
      &                 'the density boundary condition'  !srv 21.09.12
           endif
         endif
+c test
+        nlimiter = switch%nlimiters*0.66_R8
+        Dion = 0.0_R8
+        c_sound = 0.0_R8
         do ibc = 1, mpg%bcCvP(ib,2)
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
+          if(enipar(ib,2).ge.0.0_R8) then
+            lambda_eni = enipar(ib,1)
+          else
+            if(nlimiter.eq.0) then
+              nlimiter = 1
+            endif
+            Lpar = geo%cvConn(iCv1)/nlimiter
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                Dion = Dion + co%dna_bohm(iCv1,1,is)*pl%na(iCv1,is)
+                c_sound = c_sound + sqrt(1.0_R8*(pl%te(iCv1)+
+     &                    pl%ti(iCv1))/(am(is)*mp))*pl%na(iCv1,is)
+              endif
+            enddo
+            Dion = Dion/dv%ni(iCv1,0)
+            c_sound = c_sound/dv%ni(iCv1,0)
+            lambda = sqrt(Dion*Lpar/c_sound)
+            lambda_eni = lambda/switch%bohm_gammaD
+          endif
           srw%shi0(iCv1,0) = 0.0_R8
           if (switch%recycle_afn.eq.0 .or. switch%tn_style.ne.0) then
             !! Note that
             !! if tn_style=0: hci0 includes contributions from all ions and all fluid neutrals
             !! if tn_style=1: hci0 includes contributions from ions only
             !! if tn_style=2: hci0 includes contributions from all ions and non-hydrogenic neutrals
-            srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*sy
+            srw%shi0(iCv1,1) = -co%hci0(iCv1)/lambda_eni*sy
           else                                                       !! tn_style=0.and.recycle_afn=1 => take out hydrogenic atoms
             srw%shi0(iCv1,1) = -(co%hci0(iCv1)-co%hcn0(iCv1))/
-     &        enipar(ib,1)*sy
+     &        lambda_eni*sy
           endif
           do is = 0, ns-1
             if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0 .or.
