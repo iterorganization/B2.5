@@ -259,7 +259,7 @@
 !
 SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 & ismain0, dtim, switch, switchd, geo, geod, mpg, st, std, st_ext, &
-& st_extd, st_avg, ierr, nbdirs)
+& st_extd, st_avg, ierr, ramp_call, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -270,6 +270,7 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_MA28_FOR_US, ONLY : restart_ma28_for_us
+  USE B2MOD_FACDRIFT_EXB_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_TALLIES_DIFFV, ONLY : rrahireg, rranareg, rsahireg, rqradreg&
@@ -332,7 +333,7 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   TYPE(B2AVERAGE), INTENT(IN) :: st_avg
 !   ..output arguments                                                    !xpb
   INTEGER :: ierr
-  LOGICAL :: wrong_flow
+  LOGICAL :: wrong_flow, ramp_call
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -398,6 +399,8 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 !   ..initialization
   INTEGER, SAVE :: no_neutr_scl=0
   INTRINSIC ABS
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC MAX
   INTRINSIC MIN
@@ -415,10 +418,12 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
+  REAL(r8) :: result10
+  REAL(r8) :: result20
   REAL(r8), DIMENSION(ncv) :: arg10
   REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg10d
-  REAL(r8), DIMENSION(ncv) :: result10
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result10d
+  REAL(r8), DIMENSION(ncv) :: result11
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result11d
   CHARACTER(len=10) :: arg11
   CHARACTER(len=13) :: arg12
   INTEGER :: nd
@@ -435,18 +440,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   INTEGER :: nbdirs
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !     ingeger, save :: nstg2 = 0
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
-!     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
 !     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
 !
 !-----------------------------------------------------------------------
@@ -536,11 +537,6 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 !     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 !     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgetr ('b2news_facdrift_target', facdrift_target)          !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_start', facdrift_start)            !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
-!       facdrift=facdrift_start                                          !srv 09.07.99
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
 !   ..test nCv, nFc, ns
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFv')
@@ -606,8 +602,23 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     st%pl%po = 3.1_R8*st%pl%te/qe
   END IF
 !
-!      facdrift=min(facdrift*facdrift_inc,facdrift_target)               !srv 09.07.99
-!      write(*,*) 'facdrift',facdrift                                    !srv 09.07.99
+  IF (ramp_call .OR. ncall_b2news_ .EQ. 0) CALL &
+&   B2NEWS_FACDRIFT_FAC_EXB_INC(nfc, st%dv%fac_exb, st%dv%facdrift, st%&
+&                         dv%fac_vis, switch)
+!   ..test facdrift, fac_ExB, fac_vis
+  result10 = MINVAL(st%dv%facdrift)
+  result20 = MAXVAL(st%dv%facdrift)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument facdrift')
+  result10 = MINVAL(st%dv%fac_exb)
+  result20 = MAXVAL(st%dv%fac_exb)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+  result10 = MINVAL(st%dv%fac_vis)
+  result20 = MAXVAL(st%dv%fac_vis)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+!
 ! ..main computation
 !   ..compute ni, nn, ne, ne2
   CALL B2XPNI_DV(ncv, ns, st%pl%na, std%pl%na, st%dv%ni, std%dv%ni, &
@@ -655,14 +666,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     DO nd=1,nbdirs
       arg10d(nd, :) = (std%dv%pz(nd, :)-st%dv%pz*rzd(nd, :)/rz)/rz
       WHERE (arg10(:) .EQ. 0.D0) 
-        result10d(nd, :) = 0.D0
+        result11d(nd, :) = 0.D0
       ELSEWHERE
-        result10d(nd, :) = arg10d(nd, :)/(2.0*temp)
+        result11d(nd, :) = arg10d(nd, :)/(2.0*temp)
       END WHERE
-      wrk0d(nd, :) = geo%cvbb(:, 0)*result10d(nd, :)/geo%cvbb(:, 3)
+      wrk0d(nd, :) = geo%cvbb(:, 0)*result11d(nd, :)/geo%cvbb(:, 3)
     END DO
-    result10 = temp
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = temp
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, wrk0d, st%co%&
 &             cssb, std%co%cssb, nbdirs)
   ELSE
@@ -1063,14 +1074,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     DO nd=1,nbdirs
       arg10d(nd, :) = (std%dv%pz(nd, :)-st%dv%pz*rzd(nd, :)/rz)/rz
       WHERE (arg10(:) .EQ. 0.D0) 
-        result10d(nd, :) = 0.D0
+        result11d(nd, :) = 0.D0
       ELSEWHERE
-        result10d(nd, :) = arg10d(nd, :)/(2.0*temp)
+        result11d(nd, :) = arg10d(nd, :)/(2.0*temp)
       END WHERE
-      wrk0d(nd, :) = geo%cvbb(:, 0)*result10d(nd, :)/geo%cvbb(:, 3)
+      wrk0d(nd, :) = geo%cvbb(:, 0)*result11d(nd, :)/geo%cvbb(:, 3)
     END DO
-    result10 = temp
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = temp
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, wrk0d, st%co%&
 &             cssb, std%co%cssb, nbdirs)
   ELSE
@@ -1349,7 +1360,8 @@ END SUBROUTINE B2NEWS__DV
 !.specification
 !
 SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
-& , ismain0, dtim, switch, geo, mpg, st, st_ext, st_avg, ierr)
+& , ismain0, dtim, switch, geo, mpg, st, st_ext, st_avg, ierr, ramp_call&
+&)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -1360,6 +1372,7 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_MA28_FOR_US, ONLY : restart_ma28_for_us
+  USE B2MOD_FACDRIFT_EXB_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_TALLIES_DIFFV, ONLY : rrahireg, rranareg, rsahireg, rqradreg&
@@ -1409,7 +1422,7 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   TYPE(B2AVERAGE), INTENT(IN) :: st_avg
 !   ..output arguments                                                    !xpb
   INTEGER :: ierr
-  LOGICAL :: wrong_flow
+  LOGICAL :: wrong_flow, ramp_call
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -1468,6 +1481,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 !   ..initialization
   INTEGER, SAVE :: no_neutr_scl=0
   INTRINSIC ABS
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC MAX
   INTRINSIC MIN
@@ -1483,24 +1498,22 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
+  REAL(r8) :: result10
+  REAL(r8) :: result20
   REAL(r8), DIMENSION(ncv) :: arg10
-  REAL(r8), DIMENSION(ncv) :: result10
+  REAL(r8), DIMENSION(ncv) :: result11
   CHARACTER(len=10) :: arg11
   CHARACTER(len=13) :: arg12
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !     ingeger, save :: nstg2 = 0
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
-!     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
 !     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
 !
 !-----------------------------------------------------------------------
@@ -1590,11 +1603,6 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 !     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 !     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgetr ('b2news_facdrift_target', facdrift_target)          !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_start', facdrift_start)            !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
-!       facdrift=facdrift_start                                          !srv 09.07.99
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
 !   ..test nCv, nFc, ns
   CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFv')
@@ -1654,8 +1662,23 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
     st%pl%po = 3.1_R8*st%pl%te/qe
   END IF
 !
-!      facdrift=min(facdrift*facdrift_inc,facdrift_target)               !srv 09.07.99
-!      write(*,*) 'facdrift',facdrift                                    !srv 09.07.99
+  IF (ramp_call .OR. ncall_b2news_ .EQ. 0) CALL &
+&   B2NEWS_FACDRIFT_FAC_EXB_INC(nfc, st%dv%fac_exb, st%dv%facdrift, st%&
+&                         dv%fac_vis, switch)
+!   ..test facdrift, fac_ExB, fac_vis
+  result10 = MINVAL(st%dv%facdrift)
+  result20 = MAXVAL(st%dv%facdrift)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument facdrift')
+  result10 = MINVAL(st%dv%fac_exb)
+  result20 = MAXVAL(st%dv%fac_exb)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+  result10 = MINVAL(st%dv%fac_vis)
+  result20 = MAXVAL(st%dv%fac_vis)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+!
 ! ..main computation
 !   ..compute ni, nn, ne, ne2
   CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
@@ -1689,8 +1712,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
     CALL B2XPPZ_NODIFF(ncv, ns, st%dv%ne, st%pl%na, st%pl%te, st%pl%ti, &
 &                st%dv%pz, st_ext)
     arg10(:) = st%dv%pz/rz
-    result10 = SQRT(arg10(:))
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = SQRT(arg10(:))
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, st%co%cssb)
   ELSE
     st%co%cssb = 0.0_R8
@@ -1988,8 +2011,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
     CALL B2XPPZ_NODIFF(ncv, ns, st%dv%ne, st%pl%na, st%pl%te, st%pl%ti, &
 &                st%dv%pz, st_ext)
     arg10(:) = st%dv%pz/rz
-    result10 = SQRT(arg10(:))
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = SQRT(arg10(:))
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, st%co%cssb)
   ELSE
     st%co%cssb = 0.0_R8
