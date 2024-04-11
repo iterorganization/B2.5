@@ -9653,6 +9653,10 @@ cxpb Read first, transform and rewrite
               ELSE
                 ILINE = ILINE + 2
               END IF
+              IF (idum(7).EQ.2) THEN
+                READ (IUNIN,'(A80)') ZEILEN(ILINE+1) ! ISPLDEG
+                ILINE = ILINE + 1
+              END IF
             END IF
           END DO
           IREAD = 0
