@@ -4970,8 +4970,6 @@
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
 
-
-
 #ifdef F2003
         open(newunit=iout,file='b2us.midplane.parameters')
 #else

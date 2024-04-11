@@ -23,7 +23,6 @@
      .  trifc(3,nmxelem), neigh(3,2,nmxelem), cntr(3,nmxelem)
       real(R8) :: xco(nmxnodes), yco(nmxnodes)
 
-
 #ifdef B25_EIRENE
       type(TAVLTree), pointer :: baum
       logical :: inserted
