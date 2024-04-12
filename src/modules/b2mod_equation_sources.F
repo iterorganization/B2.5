@@ -72,7 +72,7 @@
            call find_file(filename,art_exists)
            if(art_exists) then
              open(70,FILE=trim(filename))
-             read (70,"(1x,e23.16)")
+             read (70,"(1x,e24.16)")
      &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
              close(70)
            else
@@ -84,7 +84,7 @@
            call find_file(filename,art_exists)
            if(art_exists) then
              open(70,FILE=trim(filename))
-             read (70,"(1x,e23.16)")
+             read (70,"(1x,e24.16)")
      &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
              close(70)
            else
@@ -94,15 +94,29 @@
        endif
 
        if (b2news_solving(1)) then
-         filename='art_smo_us.dat'
-         call find_file(filename,art_exists)
-         if(art_exists) then
-           open(70,FILE=trim(filename))
-           read (70,"(1x,e23.16)")
-     &      ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-           close(70)
-         else
-           call xerrab('There is no art_smo_us.dat file')
+         if (switch%use_mms.eq.1) then
+           filename='art_smo_us.dat'
+           call find_file(filename,art_exists)
+           if(art_exists) then
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+             close(70)
+           else
+             call xerrab('There is no art_smo_us.dat file')
+           endif
+         elseif (switch%use_mms.eq.2) then
+           write (chitim,'(i4.4)') itim
+           filename = 'art_smo_us'//chitim//'.dat'
+           call find_file(filename,art_exists)
+           if(art_exists) then
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+             close(70)
+           else
+             call xerrab ('There is no art_smo_us.dat file')
+           endif
          endif
        endif
 
@@ -111,7 +125,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(1x,e23.16)")
+           read (70,"(1x,e24.16)")
      &      (art_she(iCv,0),iCv=1,nCv)
            close(70)
          else
@@ -121,7 +135,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(1x,e23.16)")
+           read (70,"(1x,e24.16)")
      &      (art_shi(iCv,0),iCv=1,nCv)
            close(70)
          else
@@ -134,7 +148,7 @@
          call find_file(filename,art_exists)
          if(art_exists) then
            open(70,FILE=trim(filename))
-           read (70,"(1x,e23.16)")
+           read (70,"(1x,e24.16)")
      &      (art_sch(iCv,0),iCv=1,nCv)
            close(70)
          else
