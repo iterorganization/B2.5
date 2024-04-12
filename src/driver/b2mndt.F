@@ -193,7 +193,7 @@ c       call ipgeti ('b2mndr_use_mms', use_mms)
        endif
       endif
 *   ..time-dependent MMS test                                            !fc 21.03.24
-      if (switch%use_mms.eq.2) then
+      if (switch%use_mms.eq.2.and.itim.gt.0) then
         if(switch%equation_sources.ne.0)
      &    call read_equation_sources(nCv, ns, switch, itim)
         if(switch%boundary_sources.ne.0)

@@ -3117,7 +3117,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
         case (6)
           CALL XERRAB ('B2STBC -- BCMOM=6, NOT YET AVAILABLE')
 
-* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
+* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOCITY
 
         case (7)
           if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
