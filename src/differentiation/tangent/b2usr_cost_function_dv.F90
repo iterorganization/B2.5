@@ -454,26 +454,27 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
             END DO
           CASE (12) 
 !heat flux density on desired FCs (in MW/m^2)
-            DO ifc=ic1,ic2
+            DO ifc=1,n1
               DO nd=1,nbdirs
-                b2datad(nd, ifc) = mpg%cffcor(ifc)*(std%dv%fht(nd, mpg%&
-&                 cfreg(ifc), 0)+std%dv%fht(nd, mpg%cfreg(ifc), 1))/&
-&                 1.0e6
+                b2datad(nd, ifc) = mpg%cffcor(ifc+ic1-1)*(std%dv%fht(nd&
+&                 , mpg%cfreg(ifc+ic1-1), 0)+std%dv%fht(nd, mpg%cfreg(&
+&                 ifc+ic1-1), 1))/1.0e6
               END DO
-              b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
-&               cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+              b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc+ic1-1), 0)+st%dv%&
+&               fht(mpg%cfreg(ifc+ic1-1), 1))*mpg%cffcor(ifc+ic1-1)/&
+&               1.0e6
               IF (parallel_hf) THEN
+                temp = geo%fcpbs(mpg%cfreg(ifc+ic1-1))
                 DO nd=1,nbdirs
-                  b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcpbs(mpg%&
-&                   cfreg(ifc))
+                  b2datad(nd, ifc) = b2datad(nd, ifc)/temp
                 END DO
-                b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+                b2data(ifc) = b2data(ifc)/temp
               ELSE
+                temp = geo%fcs(mpg%cfreg(ifc+ic1-1))
                 DO nd=1,nbdirs
-                  b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcs(mpg%cfreg(&
-&                   ifc))
+                  b2datad(nd, ifc) = b2datad(nd, ifc)/temp
                 END DO
-                b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+                b2data(ifc) = b2data(ifc)/temp
               END IF
             END DO
           CASE DEFAULT
@@ -670,25 +671,26 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
 !heat flux density on desired FCs (in MW/m^2)
 ! assuming that this heat flux is at a solid boundary, 
 ! both poloidal and radial components need to be taken
-        DO ifc=ic1,ic2
+        DO ifc=1,n1
           DO nd=1,nbdirs
-            b2datad(nd, ifc) = mpg%cffcor(ifc)*(std%dv%fht(nd, mpg%cfreg&
-&             (ifc), 0)+std%dv%fht(nd, mpg%cfreg(ifc), 1))/1.0e6
+            b2datad(nd, ifc) = mpg%cffcor(ifc+ic1-1)*(std%dv%fht(nd, mpg&
+&             %cfreg(ifc+ic1-1), 0)+std%dv%fht(nd, mpg%cfreg(ifc+ic1-1)&
+&             , 1))/1.0e6
           END DO
-          b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
-&           cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+          b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc+ic1-1), 0)+st%dv%fht(&
+&           mpg%cfreg(ifc+ic1-1), 1))*mpg%cffcor(ifc+ic1-1)/1.0e6
           IF (parallel_hf) THEN
+            temp = geo%fcpbs(mpg%cfreg(ifc+ic1-1))
             DO nd=1,nbdirs
-              b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcpbs(mpg%cfreg(&
-&               ifc))
+              b2datad(nd, ifc) = b2datad(nd, ifc)/temp
             END DO
-            b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+            b2data(ifc) = b2data(ifc)/temp
           ELSE
+            temp = geo%fcs(mpg%cfreg(ifc+ic1-1))
             DO nd=1,nbdirs
-              b2datad(nd, ifc) = b2datad(nd, ifc)/geo%fcs(mpg%cfreg(ifc)&
-&               )
+              b2datad(nd, ifc) = b2datad(nd, ifc)/temp
             END DO
-            b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+            b2data(ifc) = b2data(ifc)/temp
           END IF
         END DO
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
@@ -983,13 +985,15 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
             END DO
           CASE (12) 
 !heat flux density on desired FCs (in MW/m^2)
-            DO ifc=ic1,ic2
-              b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
-&               cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+            DO ifc=1,n1
+              b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc+ic1-1), 0)+st%dv%&
+&               fht(mpg%cfreg(ifc+ic1-1), 1))*mpg%cffcor(ifc+ic1-1)/&
+&               1.0e6
               IF (parallel_hf) THEN
-                b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+                b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc+ic1-1)&
+&                 )
               ELSE
-                b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+                b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc+ic1-1))
               END IF
             END DO
           CASE DEFAULT
@@ -1078,13 +1082,13 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !heat flux density on desired FCs (in MW/m^2)
 ! assuming that this heat flux is at a solid boundary, 
 ! both poloidal and radial components need to be taken
-        DO ifc=ic1,ic2
-          b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc), 0)+st%dv%fht(mpg%&
-&           cfreg(ifc), 1))*mpg%cffcor(ifc)/1.0e6
+        DO ifc=1,n1
+          b2data(ifc) = (st%dv%fht(mpg%cfreg(ifc+ic1-1), 0)+st%dv%fht(&
+&           mpg%cfreg(ifc+ic1-1), 1))*mpg%cffcor(ifc+ic1-1)/1.0e6
           IF (parallel_hf) THEN
-            b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc))
+            b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc+ic1-1))
           ELSE
-            b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc))
+            b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc+ic1-1))
           END IF
         END DO
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
