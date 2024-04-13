@@ -244,13 +244,16 @@
      &              cs(mpg%cfReg(ic1+icv-1))*eV/1.0e3_R8
                 enddo
               case (12) !heat flux density on desired FCs (in MW/m^2)
-                do iFc = ic1, ic2
-                  b2data(iFc) = (st%dv%fht(mpg%cfReg(iFc),0) + 
-     &              st%dv%fht(mpg%cfReg(iFc),1))*mpg%cfFcOr(iFc)/1.0e6
+                do iFc = 1, n1
+                  b2data(iFc) = (st%dv%fht(mpg%cfReg(iFc+ic1-1),0) +
+     &              st%dv%fht(mpg%cfReg(iFc+ic1-1),1))*
+     &              mpg%cfFcOr(iFc+ic1-1)/1.0e6
                   if (parallel_hf) then
-                    b2data(iFc) = b2data(iFc)/geo%fcPbs(mpg%cfReg(iFc))
+                    b2data(iFc) = b2data(iFc)/
+     &                            geo%fcPbs(mpg%cfReg(iFc+ic1-1))
                   else
-                    b2data(iFc) = b2data(iFc)/geo%fcS(mpg%cfReg(iFc))
+                    b2data(iFc) = b2data(iFc)/
+     &                            geo%fcS(mpg%cfReg(iFc+ic1-1))
                   endif
                 enddo
               case default
@@ -334,15 +337,16 @@
             enddo
             J(icf) = 0.5_R8*J(icf)*cfweight(icf)
           case (12) !heat flux density on desired FCs (in MW/m^2)
-            do iFc = ic1, ic2
+            do iFc = 1, n1
               ! assuming that this heat flux is at a solid boundary, 
               ! both poloidal and radial components need to be taken
-              b2data(iFc) = (st%dv%fht(mpg%cfReg(iFc),0) + 
-     &              st%dv%fht(mpg%cfReg(iFc),1))*mpg%cfFcOr(iFc)/1.0e6
+              b2data(iFc) = (st%dv%fht(mpg%cfReg(iFc+ic1-1),0) +
+     &              st%dv%fht(mpg%cfReg(iFc+ic1-1),1))*
+     &              mpg%cfFcOr(iFc+ic1-1)/1.0e6
               if (parallel_hf) then
-                b2data(iFc) = b2data(iFc)/geo%fcPbs(mpg%cfReg(iFc))
+               b2data(iFc) = b2data(iFc)/geo%fcPbs(mpg%cfReg(iFc+ic1-1))
               else
-                b2data(iFc) = b2data(iFc)/geo%fcS(mpg%cfReg(iFc))
+               b2data(iFc) = b2data(iFc)/geo%fcS(mpg%cfReg(iFc+ic1-1))
               endif
             enddo
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
