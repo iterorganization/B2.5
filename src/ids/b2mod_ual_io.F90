@@ -1009,6 +1009,15 @@ contains
             if (mpg%cvOnClosedSurface(iCv1).neqv. &
               & mpg%cvOnClosedSurface(iCv2)) u = u + state%dv%fht(mpg%fsFc(i),1)
           end do
+          if (mpg%iFssep2.ne.US_GRID_UNDEFINED) then
+            do i = mpg%fsFcP(mpg%iFssep2,1), &
+                 & mpg%fsFcP(mpg%iFssep2,1) + mpg%fsFcP(mpg%iFssep2,2) - 1
+              iCv1 = mpg%fcCv(mpg%fsFc(i),1)
+              iCv2 = mpg%fcCv(mpg%fsFc(i),2)
+              if (mpg%cvOnClosedSurface(iCv1).neqv. &
+                & mpg%cvOnClosedSurface(iCv2)) u = u + state%dv%fht(mpg%fsFc(i),1)
+            end do
+          end if
           if (u.ne.0.0_IDS_real) then
 #if ( IMAS_MINOR_VERSION > 28 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%global_quantities%power_loss, u )
@@ -5353,6 +5362,21 @@ contains
         area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
       end if
     end do
+    if (mpg%iFssep2.gt.0) then
+      do i = mpg%fsFcP(mpg%iFssep2,1), &
+         &   mpg%fsFcP(mpg%iFssep2,1) + mpg%fsFcP(mpg%iFssep2,2) - 1
+        iFc = mpg%fsFc(i)
+        iCv1 = mpg%fcCv(iFc,1)
+        iCv2 = mpg%fcCv(iFc,2)
+        if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
+          & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
+          & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+          sum = sum + geo%fcS(iFc) * weight(iFc) * &
+              & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
+          area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
+        end if
+      end do
+    end if
     if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
 
     return
@@ -6017,6 +6041,26 @@ contains
           icrmax = iCv
         end if
       end do
+      if (mpg%iFssep2.gt.0) then
+        iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep2,1))
+        do i = mpg%fsFcP(mpg%iFssep2,1), &
+     &         mpg%fsFcP(mpg%iFssep2,1) + mpg%fsFcP(mpg%iFssep2,2) - 1
+          iFc = mpg%fsFc(i)
+          rFc = ( geo%vxX(mpg%fcVx(iFc,1)) + geo%vxX(mpg%fcVx(iFc,2)) ) / 2.0_R8
+          iCv1 = mpg%fcCv(iFc,1)
+          iCv2 = mpg%fcCv(iFc,2)
+          iCv = 0
+          if ( mpg%cvReg(iCv1).eq.1 .or. &
+     &       ( mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv1
+          if ( mpg%cvReg(iCv2).eq.1 .or. &
+     &       ( mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv2
+          if ( iCv.eq.0 ) cycle ! skip the divertor legs
+          if ( rFc .gt. r_max) then
+            r_max = rFc
+            icrmax = iCv
+          end if
+        end do
+      end if
       if ( z_eq.ne.IDS_REAL_INVALID .and. &
          & z_min.le.z_eq .and. z_max.ge.z_eq ) then
         midplane_id = 1

@@ -11289,6 +11289,9 @@ c
         case('ifsep')    ! ifsep
           stack_name='integer'
           call ipush(istack,iistack,mpg%iFssep)
+        case('ifsep2')   ! ifsep2
+          stack_name='integer'
+          call ipush(istack,iistack,mpg%iFssep2)
         case('ixref')    ! ixref
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'

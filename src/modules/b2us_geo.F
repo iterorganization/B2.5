@@ -724,7 +724,9 @@
                     mpg%ivdiv(i) = iVx1
                   else ! Two strike points on the same target
                        ! We label the active one only
-                    if (mpg%vxFs(iVx1).eq.mpg%iFssep) then
+                    if (mpg%vxFs(iVx1).eq.mpg%iFssep.or.
+     &                 (mpg%vxFs(iVx1).eq.mpg%iFssep2.and.
+     &                  mpg%iFssep2.gt.0)) then
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx1
                     end if
@@ -742,7 +744,9 @@
                     mpg%ivdiv(i) = iVx2
                   else ! Two strike points on the same target
                        ! We label the active one only
-                    if (mpg%vxFs(iVx2).eq.mpg%iFssep) then
+                    if (mpg%vxFs(iVx2).eq.mpg%iFssep.or.
+     &                 (mpg%vxFs(iVx2).eq.mpg%iFssep2.and.
+     &                  mpg%iFssep2.gt.0)) then
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx2
                     end if
@@ -960,7 +964,8 @@
         iCv2 = mpg%fcCv(iFc,2)
         if (((mpg%cvOnClosedSurface(iCv1).or.iCv1.gt.mpg%nCi) .and.
      &       (mpg%cvOnClosedSurface(iCv2).or.iCv2.gt.mpg%nCi)) .or.
-     &        iFs.eq.mpg%iFssep ) then
+     &        iFs.eq.mpg%iFssep .or.
+     &       (iFs.eq.mpg%iFssep2.and.mpg%iFssep2.gt.0)) then
           do j = mpg%fsVxP(iFs,1), mpg%fsVxP(iFs,1)+mpg%fsVxP(iFs,2)-1
             iVx = mpg%fsVx(j)
             gm%vxConn(iVx) = gm%fsConn(iFs)

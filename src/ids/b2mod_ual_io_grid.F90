@@ -2107,7 +2107,7 @@ contains
 
                 end if
             end do
-        case ( GEOMETRY_SN, GEOMETRY_CDN, &
+        case ( GEOMETRY_SN, &
              & GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
             iType = REGIONTYPE_YEDGE
             cls = CLASS_POLOIDALRADIAL_EDGE
@@ -2133,6 +2133,57 @@ contains
                 indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
                     &        SPACE_POLOIDALPLANE ) = ind
             end do
+
+            !! Initialize explicit object list for grid subset
+            call createExplicitObjectListSingleSpace( grid_ggd,     &
+                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
+            deallocate(IndexList2d)
+
+        case ( GEOMETRY_CDN )
+            iType = REGIONTYPE_YEDGE
+            cls = CLASS_POLOIDALRADIAL_EDGE
+            iSubset = GRID_SUBSET_SEPARATRIX
+            GSubsetCount = GSubsetCount + 1
+
+            call logmsg( LOGDEBUG,                                      &
+                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+                &   int2str(GSubsetCount)//": "//                       &
+                &   gridSubsetName ( iSubset ) )
+
+            !! Create grid subset with one object list
+            call createEmptyGridSubset(                     &
+                &   grid_ggd%grid_subset( GSubsetCount ),   &
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
+
+            if (mpg%iFssep2.eq.0) then
+              allocate( indexList2d(mpg%fsFcP(mpg%iFssep,2), SPACE_COUNT) )
+              indexList2d(:,SPACE_TOROIDALANGLE) = 1
+              do iInd = mpg%fsFcP(mpg%iFssep,1), &
+                      & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+                  ind = mpg%fsFc(iInd)
+                  indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                      &        SPACE_POLOIDALPLANE ) = ind
+              end do
+            else
+              allocate( indexList2d(mpg%fsFcP(mpg%iFssep,2)+mpg%fsFcP(mpg%iFssep2,2), &
+                      &        SPACE_COUNT) )
+              indexList2d(:,SPACE_TOROIDALANGLE) = 1
+              do iInd = mpg%fsFcP(mpg%iFssep,1), &
+                      & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+                  ind = mpg%fsFc(iInd)
+                  indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                      &        SPACE_POLOIDALPLANE ) = ind
+              end do
+              do iInd = mpg%fsFcP(mpg%iFssep2,1), &
+                      & mpg%fsFcP(mpg%iFssep2,1) + mpg%fsFcP(mpg%iFssep2,2) - 1
+                  ind = mpg%fsFc(iInd)
+                  indexList2d( mpg%fsFcP(mpg%iFssep,2)+iInd-mpg%fsFcP(mpg%iFssep2,1)+1, &
+                      &        SPACE_POLOIDALPLANE ) = ind
+              end do
+            end if
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
