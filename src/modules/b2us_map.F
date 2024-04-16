@@ -16,7 +16,7 @@
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
      &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc
-        integer :: nnreg(0:1), periodic_bc, iFssep
+        integer :: nnreg(0:1), periodic_bc, iFssep, iFssep2
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers
@@ -249,6 +249,7 @@
       m%cvLbl = 0
 
       m%iFssep = 0
+      m%iFssep2 = 0
 
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
@@ -593,7 +594,7 @@
       integer :: i, j, k, l
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
-      integer :: totalcount, Fscount, iactive, icount, fccount
+      integer :: totalcount, fscount, iactive, icount, fccount
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
      *                        old_face_list(:), new_face_list(:)
@@ -662,7 +663,7 @@ cwdk  can be derived directly from data in that file
       indFsVx = 0
       totalcount = 0
       do iFs = 1, m%nFs
-        Fscount = 0
+        fscount = 0
         do i = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
           iFc = m%fsFc(i)
           m%fcFs(iFc) = iFs
@@ -671,21 +672,21 @@ cwdk  can be derived directly from data in that file
           if (m%vxFs(iVx1).eq.0) then
             m%vxFs(iVx1) = iFs
             m%nFsVxmx = m%nFsVxmx + 1
-            Fscount = Fscount + 1
+            fscount = fscount + 1
             totalcount = totalcount + 1
             indFsVx(totalcount) = iVx1
           end if
           if (m%vxFs(iVx2).eq.0) then
             m%vxFs(iVx2) = iFs
             m%nFsVxmx = m%nFsVxmx + 1
-            Fscount = Fscount + 1
+            fscount = fscount + 1
             totalcount = totalcount + 1
             indFsVx(totalcount) = iVx2
           end if
         end do
-        if (Fscount.gt.0) then
-          m%fsVxP(iFs,1) = totalcount - Fscount + 1
-          m%fsVxP(iFs,2) = Fscount
+        if (fscount.gt.0) then
+          m%fsVxP(iFs,1) = totalcount - fscount + 1
+          m%fsVxP(iFs,2) = fscount
         end if
       end do
       m%nFsVxmx = totalcount
@@ -703,20 +704,18 @@ cwdk  can be derived directly from data in that file
           do i = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
             iFc = m%vxFc(i)
             if (m%fcFs(iFc).eq.0) cycle
-            if (fccount.eq.0) then
-              iFs = m%fcFs(iFc)
-              fccount = 1
-            else
-              if (m%fcFs(iFc).eq.iFs) fccount = fccount + 1
-            end if
+            fccount = fccount + 1
           end do
           if (fccount.eq.4) then
             m%nXpt = m%nXpt + 1
             indXpt(m%nXpt) = iVx
-            do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
-              iCv = m%vxCv(i)
-              if (m%cvReg(iCv).eq.1) iactive = m%nXpt
-            end do
+            if (iactive.eq.0) then
+              do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
+                if (iactive.ne.0) cycle
+                iCv = m%vxCv(i)
+                if (m%cvReg(iCv).eq.1) iactive = m%nXpt
+              end do
+            end if
           end if
         end if
       end do
@@ -726,7 +725,14 @@ cwdk  can be derived directly from data in that file
       if (m%nXpt.gt.0) then
         allocate(m%Xpt(m%nXpt))
         m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
-        if (iactive.ne.0) m%iFssep = m%vxFs(m%Xpt(iactive))
+        if (iactive.ne.0) then
+          do i = 1, m%vxFcP(m%Xpt(iactive),2)
+            iFs = m%fcFs(m%vxFc(m%vxFcP(m%Xpt(iactive),1)+i-1))
+            if (iFs.eq.0) cycle
+            if (m%iFssep.eq.0) m%iFssep = iFs
+            if (m%iFssep2.eq.0.and.iFs.ne.m%iFssep) m%iFssep2 = iFs
+          end do
+        end if
         indXpt = 0
         icount = 0
         allocate(m%strVxP(m%nXpt,2))
