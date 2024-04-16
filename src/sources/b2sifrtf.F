@@ -104,7 +104,7 @@
      &                  am_sqrt(0:ns-1, 0:ns-1)
       integer :: ctr, i, j
 #if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
-      logical :: do_parallel
+      logical :: make_parallel
 #endif
 *   ..procedures
       intrinsic sqrt
@@ -161,7 +161,7 @@
      &              'faulty input b2tlnl_ii')
       endif
 #if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
-      do_parallel = .not. in_parallel()
+      make_parallel = .not. in_parallel()
 #endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -210,7 +210,7 @@
 * ..compute friction
 *   ..loop over all other species
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%start("parallel")
+      if (make_parallel) call timer%start("parallel")
 #endif
 *     ..contribution from friction between ions
       if (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
@@ -239,7 +239,7 @@
           enddo
         enddo
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
@@ -282,7 +282,7 @@
       else
 *     ..standard friction force calculation
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
@@ -326,7 +326,7 @@
       endif
       call nancheck(nx, ny, smbfrial(:,:,0), 'smbfrial(,,0)')
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%stop("parallel")
+      if (make_parallel) call timer%stop("parallel")
 #endif
 !*   ..compute ue, electron parallel velocity
 !      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
@@ -366,7 +366,7 @@
       endif
 *   ..contribution from ions thermal force
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%start("parallel")
+      if (make_parallel) call timer%start("parallel")
 #endif
       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
      &   Zhdanov_tf_fr.eq.1) then                                       !som 01.07.2021
@@ -398,7 +398,7 @@
          enddo
         enddo
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
@@ -462,7 +462,7 @@ c   .... apply flux limit
          enddo
         enddo
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
@@ -522,7 +522,7 @@ c   .... apply flux limit
       endif
       call nancheck(nx, ny, smbtfial(:,:,0), 'smbtfial(,,0)')
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%stop("parallel")
+      if (make_parallel) call timer%stop("parallel")
 #endif
       smbtf = smbtfeal + smbtfial
 

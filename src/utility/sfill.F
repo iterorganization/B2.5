@@ -18,22 +18,22 @@
 *     ------------------------------------------------------------------
       integer i, ix
 #if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
-      logical do_parallel
+      logical make_parallel
 #endif
       external xerrab
 *     ------------------------------------------------------------------
 #if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
-      do_parallel = (.not. in_parallel())
+      make_parallel = (.not. in_parallel())
 #endif
 #ifdef WITH_FTIMINGS
       call timer%start("sfill")
-      if (do_parallel) call timer%start("parallel")
+      if (make_parallel) call timer%start("parallel")
 #endif
       if (incx.eq.0) then
        call xerrab ('sfill--error, incx.eq.0')
       else if (incx.eq.1) then
 #ifndef NO_OPENMP_SFILL
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& SCHEDULE(static)
 !$OMP& DEFAULT(none)
 !$OMP& PRIVATE(i)
@@ -45,7 +45,7 @@
       else
        ix = ibase(n,incx)
 #ifndef NO_OPENMP_SFILL
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& SCHEDULE(static)
 !$OMP& DEFAULT(none)
 !$OMP& PRIVATE(i)
@@ -56,7 +56,7 @@
        enddo
       endif
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%stop("parallel")
+      if (make_parallel) call timer%stop("parallel")
       call timer%stop("sfill")
 #endif
       return
