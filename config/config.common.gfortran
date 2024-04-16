@@ -51,7 +51,6 @@ GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
 LDLIBES += ${LD_NAG} ${LD_NETCDF}
 
-
 ifdef LD_CATALYST
 CXXFLAGS = -std=c++11
 endif

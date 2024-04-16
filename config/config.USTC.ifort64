@@ -9,7 +9,7 @@ LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG    ?= -L${NCARG_ROOT} -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_NAG      ?= -L${NAGDIR} -lnag
 ifndef SOLPS_CPP
-DEFINES     += -DNCAR4 -DF2003
+DEFINES     += -DNCAR4
 endif
 
 CPP      = /lib/cpp -traditional -ffreestanding

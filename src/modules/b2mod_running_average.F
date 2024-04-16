@@ -117,7 +117,7 @@ c local variables
       character lbli*120
       external b2ruzd, b2xpne, b2xpni
       external cfruch, cfruin, cfrure
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -193,7 +193,7 @@ c local variables
          naver = 0
          ntotdt = 0
 
-#ifdef F2003
+#ifndef LEGACYCOMP
          open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
 #else
@@ -390,7 +390,7 @@ c local variables
       integer :: n2, idum(0:2), iun
       external cfwuch, cfwuin, cfwure
       external b2xxid, b2wuzd
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -401,7 +401,7 @@ c local variables
 
 *  write 2d averaged plasma profiles
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file=savefile,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
 #else

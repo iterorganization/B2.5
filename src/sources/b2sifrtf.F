@@ -193,7 +193,9 @@
       ctr = 1
       do iy = -1, ny
         do ix = -1, nx
+#ifndef LEGACYCOMP
 !$OMP SIMD
+#endif
           do is = 0, ns-1
             rz2_temp(ctr) = rz2(ix,iy,is)
             na_temp(ctr) = na(ix,iy,is)
@@ -688,7 +690,9 @@ c   .... apply flux limit
       real (kind=R8) :: fka
       integer r
       fka = 0.0_R8
+#ifndef LEGACYCOMP
 !$OMP SIMD REDUCTION(+:fka)
+#endif
       do r = 0, ns-1
         fka = fka + rz2(ix,iy,r)*na(ix,iy,r)*sqrt(mp)*
      &          sqrt(am(a)*am(r)/(am(a)+am(r)))
@@ -706,7 +710,9 @@ c   .... apply flux limit
       integer r, ind
       fka_new = 0.0_R8
       ind = (ix+1)*ns+(iy+1)*ns*(nx+2)
+#ifndef LEGACYCOMP
 !$OMP SIMD REDUCTION(+:fka_new)
+#endif
       do r = 0, ns-1
         fka_new = fka_new + rz2_temp(ind+r+1)*na_temp(ind+r+1)*
      &   sqrt(mp)*sqrt(am(a)*am(r)/(am(a)+am(r)))
@@ -725,7 +731,9 @@ c   .... apply flux limit
       integer r, ind
       fka_new_opt = 0.0_R8
       ind = (ix+1)*ns+(iy+1)*ns*(nx+2)
+#ifndef LEGACYCOMP
 !$OMP SIMD REDUCTION(+:fka_new_opt)
+#endif
       do r = 0, ns-1
         fka_new_opt = fka_new_opt + rz2_temp(ind+r+1)*na_temp(ind+r+1)*
      &   sqrt(mp)*am_sqrt(r,a)
