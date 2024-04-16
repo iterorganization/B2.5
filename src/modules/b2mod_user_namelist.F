@@ -219,7 +219,8 @@ c***  Standard set-up:
         do i = m%cvFcP(omp(ic),1),
      &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
           iFc = m%cvFc(i)
-          if (m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0) then
+          if ((m%fcFs(iFc).eq.m%iFssep .and.m%iFssep .ne.0).or.
+     &        (m%fcFs(iFc).eq.m%iFssep2.and.m%iFssep2.ne.0)) then
             icsepomp = ic + 1
             ifsepomp = iFc
             found = .true.
@@ -374,7 +375,8 @@ c*** Set default values according to current species list
         do i = m%cvFcP(imp(ic),1),
      &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
           iFc = m%cvFc(i)
-          if (m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0) then
+          if ((m%fcFs(iFc).eq.m%iFssep .and.m%iFssep .ne.0).or.
+     &        (m%fcFs(iFc).eq.m%iFssep2.and.m%iFssep2.ne.0)) then
             icsepimp = ic + 1
             ifsepimp = iFc
             found = .true.
@@ -389,6 +391,10 @@ c*** Set default values according to current species list
       if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
+      if (m%iFssep2.gt.0) then
+        write(*,*) 'SECOND HALF OF CDN SEPARATRIX FLUX SURFACE AT iFs=',
+     &   m%iFssep2
+      end if
 
       call subend ()
       return

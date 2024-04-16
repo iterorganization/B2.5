@@ -64,7 +64,6 @@ contains
 2   continue
     write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 
-
     ! open geometry file and get nx, ny,... from there
     nnx = 0
     nny = 0
