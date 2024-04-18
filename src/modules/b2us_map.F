@@ -740,7 +740,7 @@ cwdk  can be derived directly from data in that file
         m%strVxP(1,1) = 1
         do i = 1, m%nXpt
           if (i.gt.1) m%strVxP(i,1) = m%strVxP(i-1,1) + m%strVxP(i-1,2)
-          iFs = m%vxFs(m%Xpt(i))
+          iFs = m%iFssep
           do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
             iFc = m%fsFc(j)
             do k = 1, 2
@@ -756,6 +756,25 @@ cwdk  can be derived directly from data in that file
               end if
             end do
           end do
+          if (m%iFssep2.gt.0) then
+            iFs = m%iFssep2
+            do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
+              iFc = m%fsFc(j)
+              do k = 1, 2
+                iVx = m%fcVx(iFc,k)
+                fccount = 0
+                do l = m%vxFcP(iVx,1),
+     &                 m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                  if (m%fcFs(m%vxFc(l)).eq.iFs) fccount = fccount + 1
+                end do
+                if (fccount.eq.1) then
+                  icount = icount + 1
+                  m%strVxP(i,2) = m%strVxP(i,2) + 1
+                  indXpt(icount) = iVx
+                end if
+              end do
+            end do
+          end if
         end do
         m%nStr = icount
         allocate(m%strVx(m%nStr))
