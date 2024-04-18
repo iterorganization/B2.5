@@ -49,6 +49,20 @@ c=======================================================================
         write(lun,'(1p,e15.7,a,e15.7)',err=998) geo%cvX(iVx),tab,
      ,                                                    geo%cvY(iVx)
         deallocate(fcList)
+        if (mpg%iFssep2.gt.0) then
+          call sort_faces(
+     ,     mpg%fsFcP(mpg%iFssep2,2),fcList,mpg%nFc,mpg%fcFs,
+     ,     mpg%iFssep2,mpg)
+          do i=1,mpg%fsFcP(mpg%iFssep2,2) !{
+            iVx = mpg%fcVx(fcList(i),1)
+            write(lun,'(1p,e15.7,a,e15.7)',err=998) geo%cvX(iVx),tab,
+     ,                                                    geo%cvY(iVx)
+          end do !}
+          iVx = mpg%fcVx(fcList(mpg%fsFcP(mpg%iFssep2,2)),2)
+          write(lun,'(1p,e15.7,a,e15.7)',err=998) geo%cvX(iVx),tab,
+     ,                                                    geo%cvY(iVx)
+          deallocate(fcList)
+        end if
         close(lun)
 
         ofile='gm_SOL.dat'
@@ -59,7 +73,7 @@ c=======================================================================
         k=0
         l=0
         do i=1,mpg%nFs
-          if (i.eq.mpg%iFssep) cycle
+          if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
           if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
      &        geo%psi_increasing) cycle
           if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
@@ -76,7 +90,7 @@ c=======================================================================
           vxList=-999.0_R8
           k=0
           do i=1,mpg%nFs !{
-            if (i.eq.mpg%iFssep) cycle
+            if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
             if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
      &          geo%psi_increasing) cycle
             if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
@@ -107,7 +121,7 @@ c=======================================================================
         k=0
         l=0
         do i=1,mpg%nFs
-          if (i.eq.mpg%iFssep) cycle
+          if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
           if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
      &        geo%psi_increasing) cycle
           if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
@@ -127,7 +141,7 @@ c=======================================================================
           vxList=-999.0_R8
           k=0
           do i=1,mpg%nFs !{
-            if (i.eq.mpg%iFssep) cycle
+            if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
             if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
      &          geo%psi_increasing) cycle
             if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
@@ -161,7 +175,7 @@ c=======================================================================
         k=0
         l=0
         do i=1,mpg%nFs
-          if (i.eq.mpg%iFssep) cycle
+          if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
           if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
      &        geo%psi_increasing) cycle
           if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
@@ -181,7 +195,7 @@ c=======================================================================
           vxList=-999.0_R8
           k=0
           do i=1,mpg%nFs !{
-            if (i.eq.mpg%iFssep) cycle
+            if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
             if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
      &          geo%psi_increasing) cycle
             if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
