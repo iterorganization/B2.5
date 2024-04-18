@@ -113,7 +113,7 @@ c      use b2mod_keps
       call sfill (nCv*2, 0.0e0_R8, dlbc, 1)
       call sfill (nCv*2, 0.0e0_R8, dtec, 1)
       call sfill (nCv*2, 0.0e0_R8, dtic, 1)
-      call sfill (nCv*2, 0.0e0_R8, dktc, 1)
+      call sfill (nCv, 0.0e0_R8, dktc, 1)
       if (switch%b2sikt_model.eq.1) then
 cwdk  KU Leuven k model
 cwdk  source : driven by ExB energy flux
