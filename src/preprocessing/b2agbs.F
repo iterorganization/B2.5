@@ -12,24 +12,13 @@
 *   ..input/output arguments (defined on entry, changed upon exit)
       type(geometry) :: g
 *   ..local variables
-      integer :: iCv, sv, nv, sf, nf, verts(0:100), ref_ind_cv(m%nFt),
-     .  iFt, ref_ind_fc(m%nFt), sc, nc, cells(0:m%nCv), typef,
-     .  faces(0:m%nFc), iFc, i, cv, v1, v2,
-     .  scf, ncf, fcs(0:100), c_al, j, ref_fc(m%nFt), ref_cv(m%nFt),
-     .  counter, pfaces(0:100), ref_face, ind,
-     .  face1, face2, nf2, k, l, ncvOMP, ncvIMP, nciOMP, nciIMP, nfcOMP,
-     .  nfcIMP, cvOMP(1:m%nCv), cvIMP(1:m%nCv), ciOMP(1:m%nCi),
-     .  ciIMP(1:m%nCi), fcOMP(m%nFc), fcIMP(m%nFc)
-      real (kind = R8) :: xiOMP(m%nFc), xiIMP(m%nFc),
-     .                    yiOMP(m%nFc), yiIMP(m%nFc)
-!      real (kind=R8) :: pol_flux
-      real (kind=R8) :: width, vpsi(0:100), psi_max(0:m%nCv),
-     .  psif_max(0:m%nFc), psi_ref, pol_flux_ref, cutoff_width ,
-     .  pol_flux_ref1, pol_flux_ref2, pol_flux1, pol_flux2, psif(m%nFc),
-     .  rzomp(2,2), rzimp(2,2)
-      logical :: fc_done(0:m%nFc), cv_done(0:m%nCv),
-     .  cv_aligned(0:m%nCv), ifail
-      intrinsic int, maxval, maxloc
+      integer i, ix, iy, ixl, ixr, iyl, iyr, jxi, jxa, jsep
+      integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
+     *  ixleft(nncutmax,-1:ny),
+     *  isnum(nncutmax,-1:ny)
+      real (kind=R8) :: hz(-1:nx,-1:ny),
+     *                  hzl(-1:nx,-1:ny),    ! hz at the left cell face
+     *                  pol_flux, width, wrk
       data width /1.0_R8/
       save width
 *     ------------------------------------------------------------------
@@ -319,113 +308,24 @@
           if ( counter .ne. 3 )  then
             call xerrab('b2agbs: not supported')
           else
-            ! Get face with max psi
-            ind = maxloc(psif(pfaces(0:counter-1)),1) - 1
-            ref_face = pfaces(ind)
-
-            pol_flux_ref = abs(g%fcBb(ref_face,0)*g%fcS(ref_face)
-     &       *g%fcQalf(ref_face,0))
-
-            ! Two other faces need to the sum of the reference
-            do i = 0,2
-              if ( pfaces(i) .ne. ref_face ) then
-                face1 = pfaces(i)
-              endif
-            enddo
-
-            do i = 0,2
-              if (( pfaces(i).ne. ref_face)
-     &           .and. (pfaces(i) .ne. face1 )) then
-                face2 = pfaces(i)
-              endif
-            enddo
+            wbbl(ix,iy,0) = pol_flux /
+     &       (gs(rightix(ix,iy),rightiy(ix,iy),0) *
+     &        qc(rightix(ix,iy),rightiy(ix,iy),0))
+            wbbl(ix,iy,3) =
+     &       sqrt(wbbl(ix,iy,0)**2+wbbl(ix,iy,1)**2+wbbl(ix,iy,2)**2)
+          end if
+          wrk = pol_flux /
+     .               (hz(ix,iy)*qz(ix,iy,1)*bb(ix,iy,0))
+          if (wrk .lt. 0.0_R8) then
+            write(*,'(a,i2,a,i2,a)') "For cell (ix,iy) (", ix,",", iy, 
+     &        ") redefined hy < 0!"
+            cycle
           endif
-
-          pol_flux1 = abs(g%fcBb(face1,0)*g%fcS(face1)
-     &       *g%fcQalf(face1,0))
-          pol_flux2 = abs(g%fcBb(face2,0)*g%fcS(face2)
-     &       *g%fcQalf(face2,0))
-
-          pol_flux_ref1 = pol_flux_ref * pol_flux1
-     &      /(pol_flux1 + pol_flux2)
-          pol_flux_ref2 = pol_flux_ref * pol_flux2
-     &      /(pol_flux1 + pol_flux2)
-
-          call AdjustPitch(g,face1,pol_flux_ref1)
-          call AdjustPitch(g,face2,pol_flux_ref2)
-
-          ! Update fc_done and cv_done
-          cv_done(ref_ind_cv(iFt)) = .true.
-          fc_done(ref_ind_cv(iFt)) = .true.
-          fc_done(ref_ind_cv(iFt)+1) = .true.
-
-        endif
-
-        ! Complete cells which are not of full width
-        ! Forward propagation
-        do j = 1,nc-1 ! Starting from second cell
-          if (( .not. cv_done(j) )
-     &     .and. ( cv_done(j-1) )) then
-
-             if ( fc_done(j) ) then
-
-                call propagate(g,m,cells(0:nc-1),j,faces(0:nf-1),
-     &       j+1,cv_done(0:nc-1),fc_done(0:nf-1),psif_max(0:nf-1),
-     &        nc,nf)
-             else
-
-               call xerrab
-     &    ('b2agbs: forward prop: fc_done of cv_done cells not done')
-
-             endif
-
-          endif
-
-        enddo
-
-        ! Backward propagation
-        do  j = 1,nc-1
-           l = nc - 1 - j
-           if  (( .not. cv_done(l) )
-     &        .and. ( cv_done(l+1) ) ) then
-
-             if ( fc_done(l+1) ) then
-
-                call propagate(g,m,cells(0:nc-1),l,faces(0:nf-1),
-     &     l,cv_done(0:nc-1),fc_done(0:nf-1),psif_max(0:nf-1),nc,nf)
-
-             else
-
-               call xerrab
-     &    ('b2agbs: backward prop: fc_done of cv_done cells not done')
-
-             endif
-           endif
-        enddo
-
-!        ! Get reference
-!        pol_flux = g%fcBb(ref_ind_fc(iFt),0)
-!     &           * g%fcS(ref_ind_fc(iFt))
-!     &           * g%fcQalf(ref_ind_fc(iFt),0)
-!
-!        ! Apply on the tube - faces
-!        do i = 0,nf-1
-!           iFc = faces(i)
-!
-!          ! Adjust fcBb(:,0)
-!          g%fcBb(iFc,0) = sign(1.0,g%fcBb(iFc,0))
-!    &        * abs(pol_flux / ( g%fcS(iFc) * g%fcQalf(iFc,0)))
-
-!           ! Recompute fcBb(:,3)
-!           g%fcBb(iFc,3) = sqrt(g%fcBb(iFc,0)**2 + g%fcBb(iFc,1)**2
-!     &                     + g%fcBb(iFc,2)**2)
-!
-            ! Recompute fcPbs(:)
-!           g%fcPbs(iFc) = sign(1.0,g%fcPbs(iFc))
-!     &       * abs(pol_flux / g%fcBb(iFc,3))
-!        enddo
-
-      enddo ! Loop over tubes
+          hy(ix,iy) = wrk
+          hx(ix,iy) = vol(ix,iy)/
+     .               (hz(ix,iy)*hy(ix,iy)*qz(ix,iy,1))
+        end do
+      end do
 
 *   ..copying over modified data
 
