@@ -33,7 +33,7 @@
      *  isnum(nncutmax,-1:ny)
       real (kind=R8) :: hz(-1:nx,-1:ny),
      *                  hzl(-1:nx,-1:ny),    ! hz at the left cell face
-     *                  pol_flux, width
+     *                  pol_flux, width, wrk
       data width /1.0_R8/
       save width
 *     ------------------------------------------------------------------
@@ -177,8 +177,14 @@
             wbbl(ix,iy,3) =
      &       sqrt(wbbl(ix,iy,0)**2+wbbl(ix,iy,1)**2+wbbl(ix,iy,2)**2)
           end if
-          hy(ix,iy) = pol_flux /
+          wrk = pol_flux /
      .               (hz(ix,iy)*qz(ix,iy,1)*bb(ix,iy,0))
+          if (wrk .lt. 0.0_R8) then
+            write(*,'(a,i2,a,i2,a)') "For cell (ix,iy) (", ix,",", iy, 
+     &        ") redefined hy < 0!"
+            cycle
+          endif
+          hy(ix,iy) = wrk
           hx(ix,iy) = vol(ix,iy)/
      .               (hz(ix,iy)*hy(ix,iy)*qz(ix,iy,1))
         end do
