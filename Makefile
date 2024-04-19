@@ -14,7 +14,6 @@ TAGSLIST =
 SOLPSINCLUDE ?=
 
 MAKETAGS ?= ctags -e -f
-BASENAME ?= basename -a
 
 MAKES = ${SRCB2}/Makefile
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
@@ -398,7 +397,7 @@ FFPATH += :${SRCDIR}/catalyst
 endif
 
 IDSMODS = ${PROG_ID:%.exe=${OBJDIR}/%.${MOD}}
-MODULES = ${patsubst %.f90,%.o,${patsubst %.F90,%.o,${patsubst %.f,%.o,${patsubst %.F,%.o,${shell ${BASENAME} ${MODLIST} } } } } }
+MODULES = ${patsubst %.f90,%.o,${patsubst %.F90,%.o,${patsubst %.f,%.o,${patsubst %.F,%.o,$(notdir ${shell echo ${MODLIST} } ) } } } }
 MODOBJS = ${MODULES:%.o=${OBJDIR}/%.o}
 MODMODS = $(filter-out ${IDSMODS},${MODOBJS:%.o=%.${MOD}})
 SOLPS4OBJS = ${patsubst ${SOLPS4}/%.F,${OBJDIR}/%.o,${shell echo ${S4LIST} } }

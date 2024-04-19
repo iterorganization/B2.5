@@ -16,7 +16,6 @@ endif
 LD_NAG    ?= -L${NAGDIR} -lnag
 
 CPP      = /lib/cpp -C -traditional
-BASENAME = basename
 
 ifdef USE_MPI
 #FC       = mpiifort
