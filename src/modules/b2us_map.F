@@ -1055,6 +1055,7 @@ cwdk  can be derived directly from data in that file
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), fch(:),
      .                    indcvfc(:)
       intrinsic pack, count
+      external xerrab
 
       !!Read out fcVx, cvFc, cvFcP, cvVx and cvVxP
       !!Construct vxCv, vxCvP, vxFcP, fcCv !(because of ghostcell, every face has two cells)
@@ -1118,7 +1119,7 @@ cwdk  can be derived directly from data in that file
       allocate (fch(m%nCmxFc))
       fch(1:m%nCmxFc) = m%cvFc(1:m%nCmxFc)
 
-      !hier loop over de faces
+      !here loop over the faces
 
       do ifc = 1,m%nFc
            n = count(fch == ifc)
@@ -1126,7 +1127,7 @@ cwdk  can be derived directly from data in that file
              m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
            else
              call xerrab
-     .        ('calc_add_connectivity: Wrong # of cell per face')
+     .        ('calc_add_connectivity: Wrong # of cells per face')
            endif
       enddo
 
