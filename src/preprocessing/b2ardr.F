@@ -727,6 +727,7 @@ cxpb  We must account for the case when the user does not want all bundles
           endif
           if (rtqa(i,j,k).ne.0.0_R8) then
            rtlqa(i,j,is) = log(rtqa(i,j,k))
+           rtlqa(i,j,is) = trimg(-150.0_R8,-20.0_R8,rtlqa(i,j,is))   ! IYS 16.04.2024
           else
            rtlqa(i,j,is) = lnzero
           endif
