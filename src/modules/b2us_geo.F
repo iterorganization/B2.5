@@ -404,9 +404,10 @@
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
      &           i1, i2, inv_dist(mpg%nVx)
+      integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, dux, duy, du, sbf, Psi1, Psi2,
-     .  cvPsi(mpg%nCv), count_up, count_down, count_eq, dpsi(mpg%nCv),
+     .  cvPsi(mpg%nCv), dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, maxloc, minloc, abs, sqrt
@@ -504,17 +505,17 @@
         ! Exceptional case: equal Psi (pentagon splitting);
         ! will also catch case where Psi = 0 everywhere
         do iVx = 1, nVx
-          count_down    = 0.0_R8
-          count_up      = 0.0_R8
-          count_eq      = 0.0_R8
+          count_down = 0
+          count_up   = 0
+          count_eq   = 0
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              count_up = count_up + 1.0e0_R8
+              count_up = count_up + 1
             elseif (cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              count_down = count_down + 1.0e0_R8
+              count_down = count_down + 1
             else
-              count_eq = count_eq + 1.0e0_R8
+              count_eq = count_eq + 1
             endif
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
@@ -646,14 +647,14 @@
         enddo
         !count cells per vertex with higher and lower Psi
         do iVx = 1, nVx
-          count_down    = 0.0_R8
-          count_up      = 0.0_R8
+          count_down = 0
+          count_up   = 0
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
             if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              count_up = count_up + 1.0e0_R8
+              count_up = count_up + 1
             elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              count_down = count_down + 1.0e0_R8
+              count_down = count_down + 1
             endif
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
@@ -661,10 +662,10 @@
             if (iCv.le.mpg%nCi) then
               if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &               count_up / mpg%vxCvP(iVx,2)
+     &               real(count_up,R8) / mpg%vxCvP(iVx,2)
               elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &               count_down / mpg%vxCvP(iVx,2)
+     &               real(count_down,R8) / mpg%vxCvP(iVx,2)
               endif
             else
               ! Make guards cells dominate and account for
@@ -728,19 +729,19 @@
         enddo
         !count cells per vertex with higher and lower Psi
         do iVx = 1, nVx
-          count_down    = 0.0_R8
-          count_up      = 0.0_R8
+          count_down = 0
+          count_up   = 0
           dpsi_max_down = 0.0_R8
           dpsi_max_up   = 0.0_R8
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
             if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              count_up = count_up + 1.0e0_R8
+              count_up = count_up + 1
               if ( dpsi(iCv) .gt. dpsi_max_up) then
                 dpsi_max_up = dpsi(iCv)
               endif
             elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              count_down = count_down + 1.0e0_R8
+              count_down = count_down + 1
               if ( dpsi(iCv) .gt. dpsi_max_down) then
                 dpsi_max_down = dpsi(iCv)
               endif
@@ -752,28 +753,28 @@
               if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &               count_up / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
+     &               real(count_up,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
      &               sqrt(dpsi_max_up/dpsi(iCv)))
                 else
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &               count_up / mpg%vxCvP(iVx,2)
+     &               real(count_up,R8) / mpg%vxCvP(iVx,2)
                 endif
               elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &                count_down / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
+     &             real(count_down,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
      &                   sqrt(dpsi_max_up/dpsi(iCv)))
                 else
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &                count_down / mpg%vxCvP(iVx,2)
+     &             real(count_down,R8) / mpg%vxCvP(iVx,2)
                 endif
               endif
             else
               ! Make guards cells dominate and account for
               ! length difference via distance to vertex
               gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2 +
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2 )
             endif
           enddo
           !Special case for pentagon splitting
@@ -897,7 +898,7 @@
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8
-      gm%cvHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+switch%b2mndr_hz*
+      gm%cvHz = hzconst*(1.0_R8-switch%b2mndr_hz)+switch%b2mndr_hz*
      & gm%cvVol/gm%cvSz
 
 *   ..compute fcHz and fcPbshz
@@ -905,17 +906,17 @@
         call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcHz)
       else
         if (isymm.eq.0) then
-          gm%fcHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%fcHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*switch%b2agmt_width
         elseif (isymm.eq.1 .or. isymm.eq.2) then
           do iFc = 1, mpg%nFc
-            gm%fcHz(iFc) = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+            gm%fcHz(iFc) = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &        switch%b2mndr_hz*
      &        pi*(gm%vxX(mpg%fcVx(iFc,1))+gm%vxX(mpg%fcVx(iFc,2)))
           enddo
         else if (isymm.eq.3 .or. isymm.eq.4) then
           do iFc = 1, mpg%nFc
-            gm%fcHz(iFc) = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+            gm%fcHz(iFc) = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &        switch%b2mndr_hz*
      &        pi*(gm%vxY(mpg%fcVx(iFc,1))+gm%vxY(mpg%fcVx(iFc,2)))
           enddo
@@ -928,13 +929,13 @@
         call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvHz,gm%vxHz)
       else
         if (isymm.eq.0) then
-          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%vxHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*switch%b2agmt_width
         elseif (isymm.eq.1 .or. isymm.eq.2) then
-          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%vxHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*2.0_R8*pi*gm%vxX
         else if (isymm.eq.3 .or. isymm.eq.4) then
-          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%vxHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*2.0_R8*pi*gm%vxY
         endif
       endif
@@ -1055,7 +1056,7 @@
           if ((mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0).and.
      &        (mpg%vxFs(mpg%fcVx(iFc1,2)).ne.0)) then ! linear interpolation
             Psi1 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))+
-     &                     gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
+     &                       gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
             match_found = .true.
           elseif (mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0) then ! take value from vertex 1
             Psi1 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))

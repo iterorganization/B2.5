@@ -108,9 +108,10 @@
 *   ..subprogram start-up calls
       call subini ('b2npco')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
+     . 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall_b2npco.eq.0) then
         if(switch%b2mndt_style.eq.2) then

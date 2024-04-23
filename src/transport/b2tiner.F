@@ -10,10 +10,6 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-      use b2mod_ad
-     & , only : ncall_b2tiner
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -56,13 +52,10 @@
 *   ..subprogram start-up calls
       call subini ('b2tiner')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..extensive tests on first few calls
-      if (ncall_b2tiner.lt.3) then
-      endif
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 c Drift terms
-      if(switch%fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8
-     .   .and.switch%no_current.eq.0)then                                       !srv 07.07.99
+      if(switch%fch_inert.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8
+     .   .and.switch%no_current.eq.0)then                         !srv 07.07.99
 
 *     ..compute gradients of OnedBsq on cell faces
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
@@ -87,11 +80,10 @@ c Drift terms
      &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
 
       else
-        fchinert = 0.0e0_R8
+        fchinert = 0.0_R8
       endif
 
 * ..return
-      ncall_b2tiner = ncall_b2tiner+1
       call subend ()
       return
 

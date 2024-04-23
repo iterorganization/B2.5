@@ -66,7 +66,7 @@
       call subini ('b2nxfc')
 *   ..set internal parameters on first call
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2nxfc.lt.3) then
        if (ncall_b2nxfc.eq.switch%b2news_ncallout) then
@@ -91,7 +91,7 @@
 *     ..compute flcbx, cvcbx        
         do iFc = 1, nFc
           flcb(iFc,0) = flub(iFc,0) + geo%fcPbshz(iFc)*wrkf(iFc)*
-     &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5e0_R8
+     &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5_R8
         enddo
         cvcb(:,0) = cvsb(:,0)
       endif

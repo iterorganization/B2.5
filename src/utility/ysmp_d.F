@@ -809,7 +809,7 @@ C        REAL  A(1),  B(1),  Z(1),  RSP(1)
 C        DATA  RATIO/1/
         real (kind=R8) :: A(NNZ), B(N), Z(N), RSP(NSP)
         INTEGER IJU, IU, IL, JL, JU, JUMAX                               !srv 11.01.07
-        integer, save :: RATIO = kind(1.0e0_R8)/kind(1)                  !srv 11.01.07
+        integer, save :: RATIO = kind(1.0_R8)/kind(1)                    !srv 11.01.07
 C
 C----VALIDATE PATH SPECIFICATION
         IF (PATH.LT.1 .OR. 6.LT.PATH)  GO TO 111
@@ -915,7 +915,7 @@ C----CHECK FOR SUFFICIENT STORAGE FOR U
 C
 C----INITIALIZATION
         DO 1 K=1,N
-          D(K) = 0.0e0_R8                                                !srv 11.01.07
+          D(K) = 0.0_R8                                                  !srv 11.01.07
           JL(K) = 0
     1   CONTINUE
 C
@@ -984,8 +984,8 @@ C
             GO TO 6
 C
 C------CHECK FOR ZERO PIVOT AND SAVE DIAGONAL ELEMENT
-    9     IF (DK.EQ.0.0e0_R8)  GO TO 108                                 !srv 11.01.07
-          D(K) = 1.0e0_R8 / DK                                           !srv 11.01.07
+    9     IF (DK.EQ.0.0_R8)  GO TO 108                                   !srv 11.01.07
+          D(K) = 1.0_R8 / DK                                             !srv 11.01.07
 C
 C------SAVE NONZERO ENTRIES IN K-TH ROW OF U ...
           JMIN = IU(K)
@@ -995,7 +995,7 @@ C------SAVE NONZERO ENTRIES IN K-TH ROW OF U ...
             DO 10 J=JMIN,JMAX
               JUMUJ = JU(MU+J)
               U(J) = D(JUMUJ)
-              D(JUMUJ) = 0.0e0_R8                                        !srv 11.01.07
+              D(JUMUJ) = 0.0_R8                                          !srv 11.01.07
    10       CONTINUE
 C
 C------... AND ADD K TO ROW LIST FOR FIRST NONZERO ENTRY IN K-TH ROW

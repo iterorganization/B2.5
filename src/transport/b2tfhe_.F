@@ -122,7 +122,7 @@ c       call ipgeti ('b2tfhe_lim_flux', lim_flux)                         !srv 0
 c       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
 c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2tfhe.lt.3) then
 *    ..test sign of ne, te, chce
@@ -141,7 +141,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       fchstoch     = 0.0_R8
       csig_stoch   = 0.0_R8
       fledia       = 0.0_R8
-      if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
+      if(facdriftm.ne.0.0_R8) then                                       !srv 18.01.07
        do is = 0,ns-1                                                    !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
 *      ..compute fledia
@@ -159,8 +159,8 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
      *    w1(-1:nx,-1:ny), w2(-1:nx,-1:ny), w3(-1:nx,-1:ny),
      *    w4(-1:nx,-1:ny), w5(-1:nx,-1:ny), w6(-1:nx,-1:ny)
      *         )
-       w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
-       w6=0.0e0_R8;
+       w1=0.0_R8; w2=0.0_R8; w3=0.0_R8; w4=0.0_R8; w5=0.0_R8;
+       w6=0.0_R8;
       endif                                                              !srv 16.09.02 }
 #endif
       call b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
@@ -178,7 +178,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
         end do
         call intface(nCv,nFc,mpg%fcCv,wght,c071c,c071)
       else
-        c071 = 0.71e0_R8                                                 !srv 13.01.17
+        c071 = 0.71_R8                                                   !srv 13.01.17
       endif
 
 *   ..interpolate ne and te to cell faces
@@ -192,18 +192,18 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       call diff(nCv, nFc, nVx, 0, geo, mpg, pe, wrkv, dpe)
 
 * ..compute fluxes and linearization
-       floe0(:,0) = 1.5e0_R8*dv%fne_he(:,0) +
-     &    (co%chve(:,0) + 2.5e0_R8*fledia(:,0))*nef                      !srv 13.09.02 18.01.07 11.01.13  *signmf
+       floe0(:,0) = 1.5_R8*dv%fne_he(:,0) +
+     &    (co%chve(:,0) + 2.5_R8*fledia(:,0))*nef                        !srv 13.09.02 18.01.07 11.01.13  *signmf
      &    -c071*dv%fch_p(:,0)/qe*switch%fch_pTe                          !srv 30.12.09 13.01.17
-       floe0(:,1) = 1.5e0_R8*dv%fne_he(:,1) +
-     &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef -                    !srv 11.05.99
-     &    5.0e0_R8/3.0e0_R8*fchstoch/qe
+       floe0(:,1) = 1.5_R8*dv%fne_he(:,1) +
+     &    (co%chve(:,1) + 2.5_R8*fledia(:,1))*nef -                      !srv 11.05.99
+     &    5.0_R8/3.0_R8*fchstoch/qe
 
-       floe0_mdf(:,0) = 1.5e0_R8*dv%fne_he(:,0) +                        !srv 13.06.06 {
+       floe0_mdf(:,0) = 1.5_R8*dv%fne_he(:,0) +                          !srv 13.06.06 {
      &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*
      &                                      switch%fch_pTe               !srv 30.12.09 13.01.17
-       floe0_mdf(:,1) = 1.5e0_R8*dv%fne_he(:,1) +
-     &    co%chve(:,1)*nef - 5.0e0_R8/3.0e0_R8*fchstoch/qe               !srv 11.05.99
+       floe0_mdf(:,1) = 1.5_R8*dv%fne_he(:,1) +
+     &    co%chve(:,1)*nef - 5.0_R8/3.0_R8*fchstoch/qe                  !srv 11.05.99
 
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
@@ -239,7 +239,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
         dumm3 = 0.0_R8
         dumm4 = 0.0_R8
         call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
-     &    1.5e0_R8*pl%te,sign(dv%fne_he,floe0_mdf),dumm1,dumm2,fhe_32,
+     &    1.5_R8*pl%te,sign(dv%fne_he,floe0_mdf),dumm1,dumm2,fhe_32,
      &    dumm3)
         fhe_32 = sign(fhe_32,dv%fne_he)
         fhe_52 = 0.0_R8
@@ -254,8 +254,8 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
         call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
      &    pl%te,floe0_mdf,co%chce,dumm1,dumm2,fhe_cond)
         if (switch%mdf_fhe.eq.0) then
-          fhe_dia(:,0) = 2.5e0_R8*fledia(:,0)*nef*tef
-          fhe_dia(:,1) = 2.5e0_R8*fledia(:,1)*nef*tef
+          fhe_dia(:,0) = 2.5_R8*fledia(:,0)*nef*tef
+          fhe_dia(:,1) = 2.5_R8*fledia(:,1)*nef*tef
           fhe_pschused = 0.0_R8
         else
           fhe_dia = 0.0_R8
@@ -395,8 +395,8 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out(70,nx,ny,w5,'b2tfhe__qediax')
        call my_out(70,nx,ny,w6,'b2tfhe__chcex_Pat')
 
-       w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
-       w6=0.0e0_R8;
+       w1=0.0_R8; w2=0.0_R8; w3=0.0_R8; w4=0.0_R8; w5=0.0_R8;
+       w6=0.0_R8;
 
       endif                                                              !srv 16.09.02 }
 #endif
@@ -405,10 +405,10 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                        .or. iout_b2wdat.eq.4) then                !srv 16.09.02 {
          if(mdf_fhe.eq.0) then                                           !srv 13.10.06 {
-          w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,1,1)*
+          w1(ix,iy)=1.5_R8*fne_he(ix,iy,1,1)*
      1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-          w2(ix,iy)=2.5e0_R8*fledia(ix,iy,1,1)*
-     &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+          w2(ix,iy)=2.5_R8*fledia(ix,iy,1,1)*
+     &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5_R8
      1     *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
           w3(ix,iy)=-cone0*
      1      (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -416,17 +416,17 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &       harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
           w6(ix,iy) = cone0
          else
-          w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,1,1)*
+          w1(ix,iy)=1.5_R8*fne_he(ix,iy,1,1)*
      1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-          w2(ix,iy)=0.0e0_R8
+          w2(ix,iy)=0.0_R8
           w3(ix,iy)=-cone0_mdf*
      1      (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
           w4(ix,iy)=calf(ix,iy,1,1)*
      &       harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
           w6(ix,iy) = cone0_mdf
          endif
-         w5(ix,iy)=2.5e0_R8*fledia(ix,iy,1,1)*
-     &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+         w5(ix,iy)=2.5_R8*fledia(ix,iy,1,1)*
+     &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5_R8
      1     *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
         endif                                                            !srv 16.09.02 }
 #endif

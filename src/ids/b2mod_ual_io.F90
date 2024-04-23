@@ -1105,7 +1105,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
         iactive = 0
         do i = 1, mpg%nXpt
-          if (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep) then
+          if (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep .or. &
+           & (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep2.and.mpg%iFssep2.gt.0)) then
             if (iactive.eq.0) then
               iactive = i
             else if (geo%vxY(mpg%Xpt(iactive)).lt.geo%vxY(mpg%Xpt(i))) then

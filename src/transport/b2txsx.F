@@ -19,7 +19,7 @@
 *     ------------------------------------------------------------------
       call subini ('b2txsx')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv,nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv,nFc')
 *   ..compute funsx
       do iFc = 1, nFc
         funsx(iFc) = fcS(iFc)*geo%fcQalf(iFc,0)*

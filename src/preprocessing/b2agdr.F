@@ -96,17 +96,17 @@
 *     vxFpsi - (1:nVx) real*8 array.
 *     vxFpsi(iVx) specifies the potential for the magnetic field
 *     components (bx,by) of the vertex with number iVx.
-*     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
+*     In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *     bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
-*     where R is the distance to the axis of symmetry.)
+*     where R is the distance to the axis of symmetry.
 *
 *     vxFfbz - (1:nVx) real*8 array.
 *     vxFfbz(iVx) specifies the field function for the magnetic
 *     field component bz of the vertex with number iVx.
-*     (In the case of straight symmetry, bz=ffbz. In the case of
+*     In the case of straight symmetry, bz=ffbz. In the case of
 *     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
-*     the distance to the axis of symmetry.)
+*     the distance to the axis of symmetry.
 *
 *     cvX, cvY - (1:nCv) real*8 array.
 *     cvX(iCv) specifies the x-coordinate and cvY(iCv) specifies
@@ -118,7 +118,7 @@
 *     (poloidal,radial,toroidal)-components and cvBb(iVx,3) is the 
 *     absolute magnetic field strength.
 *     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,2)**2)
-*     It will hold that 0.lt.cvBb(,0:3), because the direction of the
+*     It will hold that 0.le.cvBb(,0:3), because the direction of the
 *     magnetic field follows from cvEb (see below).
 *
 *     cvEb - (1:nCv,0:2) real*8 array.
@@ -126,21 +126,14 @@
 *     the center of the cell iCv in the (R,Z,toroidal) axis system.
 *     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
 *
-*     the cell iCv. cvBb(iCv,0:2) are the magnitudes of the 
-*     (poloidal,radial,toroidal)-components and cvBb(iVx,3) is the 
-*     absolute magnetic field strength.
-*     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,2)**2.)
-*     It will hold that 0.lt.cvBb(,0:3), because the direction of the
-*     magnetic field follows from cvEb (see below).
-*
 *     cvVol - (1:nCv) real*8 array.
-*     cvVol(iCv) specifies the volume of the cell iCv. (In the
-*     case of toroidal symmetry this volume
+*     cvVol(iCv) specifies the volume of the cell iCv.
+*     In the case of toroidal symmetry this volume
 *     includes a factor 2*pi*cvX, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cvY.)
+*     symmetry it includes a factor 2*pi*cvY.
 *     It will hold that 0.lt.cvVol(,).
 *
-*     fcQgam - (1:nFc,0:1) real*8 array, output.
+*     fcQgam - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
 *     fcQgam(iFc,1) specifies sin(t), where t is the included angle
 *     between the cell-connector vector and the normal vector
@@ -148,17 +141,17 @@
 *
 *     fcQalf - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
-*     fcQalf(iFc,1) specifies sin(t), where t is the include angle
+*     fcQalf(iFc,1) specifies sin(t), where t is the included angle
 *     between the magnetic field vector and the face normal.
 *
 *     fcQbet - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
-*     fcQbet(iFc,1) specifies sin(t), where t is the include angle
+*     fcQbet(iFc,1) specifies sin(t), where t is the included angle
 *     between the cell-connector and the magnetic field vector.
 *
 *     fcPbs - (1:nFc) real*8 array.
 *     For iFc in (1:nFc), fcPbs(iFc) specifies the product
-*     (fcBx/fcBb)*sx  or (magnetic field pitch)*(surface area),
+*     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
 *     namely the parallel contact area.
 *
 *     lblgm - character*120.
@@ -200,7 +193,7 @@
      &             1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
 *   ..test nCv, nFc, nVx
-      call xertst (1.le.m%nCv.and.1.le.m%nFc.and.1.le.m%nVx,
+      call xertst (1.lt.m%nCv.and.1.lt.m%nFc.and.1.lt.m%nVx,
      & 'faulty argument nCv, nFc, nVx')
 
 * ..initialise the geometry
@@ -345,7 +338,7 @@
      . 'If already set to "-1.0", set to "1.0" instead.'
       write(*,'()')
 
-      !Take absolute values of magnetic field to comply with structured b2ag
+      !Take absolute values of magnetic field to comply with b2ag
       g%cvBb = abs(g%cvBb)
       g%fcBb = abs(g%fcBb)
       g%vxBb = abs(g%vxBb)
