@@ -70,7 +70,7 @@
 *   ..subprogram start-up calls
       call subini ('b2upht')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test rxf, pcm0
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
@@ -91,10 +91,10 @@
 
 * ..apply the correction
 *   ..adjust te, ti, po
-      tt0 = 0.0e0_R8
-      tt1 = 0.0e0_R8
-      tt2 = 0.0e0_R8
-      tt3 = 0.0e0_R8
+      tt0 = 0.0_R8
+      tt1 = 0.0_R8
+      tt2 = 0.0_R8
+      tt3 = 0.0_R8
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
 *!!   (stylec is a numerical switch, needs experiments)

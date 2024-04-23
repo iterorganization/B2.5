@@ -60,7 +60,7 @@
        call read_b2mod_feedback(99,'    ',feedback_namelist_used)
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -693,7 +693,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      .  'feedback scheme not consistent with B.C.''s!')
       endif ! ncall.eq.0
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')

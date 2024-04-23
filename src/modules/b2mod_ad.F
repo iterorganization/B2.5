@@ -68,7 +68,7 @@
       integer, save :: ncall_b2tcpa = 0, ncall_b2tfcc = 0,
      & ncall_b2tfch = 0, ncall_b2tfed = 0, ncall_b2tfhe = 0,
      & ncall_b2tfhi = 0, ncall_b2tfnb = 0, ncall_b2tfrn = 0,
-     & ncall_b2tiner = 0, ncall_b2tlh0 = 0, ncall_b2tlhe = 0,
+     & ncall_b2tlh0 = 0, ncall_b2tlhe = 0,
      & ncall_b2tlmv = 0, ncall_b2tlnl = 0, ncall_b2tqca = 0,
      & ncall_b2tqce = 0, ncall_b2tqin = 0, ncall_b2tqna = 0,
      & ncall_b2tral = 0, ncall_transp_keps = 0, ncall_b2trcl = 0,
@@ -88,7 +88,7 @@
      & ncall_b2npmo = 0, ncall_b2nppo = 0, ncall_b2nxdp = 0,
      & ncall_b2nxdu = 0, ncall_b2nxfc = 0,
 ! ncall variables from solvers routines
-     & ncall_b2upco = 0, ncall_b2upht = 0, ncall_b2uppo = 0, 
+     & ncall_b2upco = 0, ncall_b2upht = 0,
      & ncall_b2urmo = 0,ncall_b2ursc = 0, ncall_b2ursd = 0, 
      & ncall_b2usco = 0, ncall_b2usht = 0, ncall_b2usmo = 0,
      & ncall_b2uspo = 0,

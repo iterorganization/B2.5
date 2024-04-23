@@ -91,7 +91,7 @@
       mpg%nx    = idum(0)
       mpg%ny    = idum(1)
       mpg%nncut = idum(2)
-      call xertst (0.le.mpg%nCv.and.0.le.mpg%nFc,
+      call xertst (0.lt.mpg%nCv.and.0.lt.mpg%nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')

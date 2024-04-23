@@ -38,7 +38,7 @@
 *   ..subprogram start-up calls
       call subini ('b2nxcm')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 
 *   ..update pcca
       do is = 0, ns-1

@@ -4,7 +4,7 @@
       ! Subroutine to check that all boundary faces are assigned to
       ! a boundary condition or recycling strata.
       ! To do so, loop over all guard cells and get the face linked to
-      ! each of them. only one face per guard cell is possible!
+      ! each of them. Only one face per guard cell is possible!
       ! Then check that such face has a label different than zero and
       ! that is included in the lists bstart to bend
       ! Initialize
@@ -52,8 +52,8 @@
         do ib = 1, nb
           do ll = bstart(ib), bend(ib)
             if (m%fcLbl(bnd_fc).eq.ll) then
-                assigned = .true.
-                exit
+              assigned = .true.
+              exit
             endif
           enddo !ll
           if (assigned) exit

@@ -221,7 +221,7 @@ c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFv')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFv')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -258,15 +258,15 @@ c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 *     iteration; hence the different setting of rxf2.
       rxf0 = switch%b2mndt_rxf*switch%xfm0
       rxf1 = switch%b2mndt_rxf*switch%xfm1
-      rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-      if (switch%b2mndt_rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
+      rxf2 = 1.0_R8 ! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+      if (switch%b2mndt_rxf .eq. 0.0_R8) rxf2 = 0.0_R8
       rxf3 = switch%b2mndt_rxf*switch%xfm3
 
       zero  = 0.0_R8
       zerof = 0.0_R8
 csw 01oct2012 initialize potential if necessary
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
-        st%pl%po = 0.0e0_R8
+        st%pl%po = 0.0_R8
       else if (switch%pot_eq.eq.2) then
         st%pl%po = 3.1_R8*st%pl%te/qe
       endif
@@ -531,7 +531,7 @@ csw 16oct2012 init ier0
       endif                                                              !srv 12.07.05 }
 
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
-        st%pl%po        = 0.0e0_R8
+        st%pl%po        = 0.0_R8
         !wdk call b2tfch_ to ensure all currents are properly set to 0
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
@@ -555,7 +555,7 @@ csw 16oct2012 init ier0
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
-          if (switch%fhe_vis_per.eq.0.0e0_R8.or..true.) then             !srv 06.07.00
+          if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, mpg%nnreg(0)
               new_matrix = new_matrix.or.

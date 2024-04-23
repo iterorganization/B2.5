@@ -23,7 +23,7 @@
 *     ------------------------------------------------------------------
       call subini ('b2nxdv')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 
 cdjm Jan2017 Keep source at the start to calculate total change for balance routines
       smbtmp = smb
