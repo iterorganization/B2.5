@@ -38,7 +38,7 @@
      &             1.le.nout(2),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
-      call xertst (0.le.mpg%nCv.and.0.le.mpg%nFc,
+      call xertst (0.lt.mpg%nCv.and.0.lt.mpg%nFc,
      &  'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')

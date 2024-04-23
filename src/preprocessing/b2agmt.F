@@ -27,10 +27,10 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine takes as input the coordinates and potential
-*     of the all vertices in the mesh, the potential field and all
+*     This routine takes as input the coordinates and magnetic field
+*     information at all vertices in the mesh, and all
 *     connectivity data of the mesh. It computes metric coefficients of
-*     the mesh: cvVol, cvSz, cvBb (of guard cell only, for other cell it
+*     the mesh: cvVol, cvSz, cvBb (of guard cells only, for other cells it
 *     was already determined in b2agbb), fcQalf, fcQbet, fcQgam at cell
 *     faces.
 *
@@ -51,11 +51,11 @@
 *     cvX, cvY - (1:nCv) real*8 array, input.
 *     See the calling routine for description.
 *
-*     cvVol - (1:nCv) real*8 array.
-*     cvVol(iCv) specifies the volume of the cell iCv. (In the
-*     case of toroidal symmetry this volume
+*     cvVol - (1:nCv) real*8 array, output.
+*     cvVol(iCv) specifies the volume of the cell iCv.
+*     In the case of toroidal symmetry this volume
 *     includes a factor 2*pi*cvX, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cvY.)
+*     symmetry it includes a factor 2*pi*cvY.
 *     It will hold that 0.lt.cvVol(,).
 *
 *     fcQgam - (1:nFc,0:1) real*8 array, output.
@@ -64,21 +64,21 @@
 *     between the the cell-connector vector and the normal vector
 *     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 *
-*     fcQalf - (1:nFc,0:1) real*8 array.
+*     fcQalf - (1:nFc,0:1) real*8 array, output.
 *     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
-*     fcQalf(iFc,1) specifies sin(t), where t is the include angle
+*     fcQalf(iFc,1) specifies sin(t), where t is the included angle
 *     between the magnetic field vector and the face normal.
 *
-*     fcQbet - (1:nFc,0:1) real*8 array.
+*     fcQbet - (1:nFc,0:1) real*8 array, output.
 *     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
-*     fcQbet(iFc,1) specifies sin(t), where t is the include angle
+*     fcQbet(iFc,1) specifies sin(t), where t is the included angle
 *     between the cell-connector and the magnetic field vector.
 *
-*     fcHc - (1:nFc,1:2) real*8 array.
+*     fcHc - (1:nFc,1:2) real*8 array, output.
 *     For iFc in (1:nFc), fcHc(iFc,:) are the distances from
 *     the cell centers fcCv(iFc,:) to the face center of face iFc.
 *
-*     fcHt - (1:nFc) real*8 array.
+*     fcHt - (1:nFc) real*8 array, output.
 *     For iFc in (1:nFc), fcHt is the face length of face iFc.
 *
 *
@@ -87,7 +87,7 @@
 
 *   ..local variables
       integer iCv, iFc, face, gc, bc, v1, v2, iVx,
-     * artificial_slab
+     *   artificial_slab
       integer cells(1:2), fcType(m%nFc), c1, c2, verts2(0:1)
       integer, allocatable :: verts(:)
       integer nv
@@ -111,7 +111,6 @@
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -127,7 +126,7 @@
       call xertst (0.0_R8.lt.guard_rescale,
      &  'faulty input guard_rescale')
 *   ..test nCv, nFc, nVx, isymm
-      call xertst (0.le.m%nCv.and.0.le.m%nFc.and.0.le.m%nVx,
+      call xertst (0.lt.m%nCv.and.0.lt.m%nFc.and.0.lt.m%nVx,
      &  'faulty argument nCv, nFc, nVx')
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
@@ -144,7 +143,7 @@
 
         select case (m%cvFcP(iCv,2))
 
-        case(3,4,5)  !Triangles, quadrilateral and pentagonal
+        case(3,4,5)  ! Triangles, quadrilaterals and pentagons
 
           nv = m%cvVxP(iCv,2)
           allocate(verts(0:nv-1))
@@ -179,19 +178,22 @@
       ! which assumes the vertices in the correct sequence - right turning
           if (nv.eq.4) then
             g%cvSz(iCv) = quadArea(g%vxX(verts(0)), g%vxY(verts(0)),
-     &       g%vxX(verts(1)), g%vxY(verts(1)), g%vxX(verts(2)),
-     &       g%vxY(verts(2)), g%vxX(verts(3)), g%vxY(verts(3)) )
+     &                             g%vxX(verts(1)), g%vxY(verts(1)),
+     &                             g%vxX(verts(2)), g%vxY(verts(2)),
+     &                             g%vxX(verts(3)), g%vxY(verts(3)) )
 
-            centroid(iCv,:) = quadCentroid(g%vxX(verts(0)),
-     &       g%vxY(verts(0)),g%vxX(verts(1)), g%vxY(verts(1)),
-     &       g%vxX(verts(3)),g%vxY(verts(3)), g%vxX(verts(2)),
-     &       g%vxY(verts(2)))
+            centroid(iCv,:) =
+     &       quadCentroid(g%vxX(verts(0)), g%vxY(verts(0)),
+     &                    g%vxX(verts(1)), g%vxY(verts(1)),
+     &                    g%vxX(verts(2)), g%vxY(verts(2)),
+     &                    g%vxX(verts(3)), g%vxY(verts(3)) )
 
           elseif (nv.eq.5) then
             g%cvSz(iCv) =
      &       pentArea(g%vxX(verts(0)), g%vxY(verts(0)),
-     &                g%vxX(verts(1)), g%vxY(verts(1)), g%vxX(verts(2)),
-     &                g%vxY(verts(2)), g%vxX(verts(3)), g%vxY(verts(3)),
+     &                g%vxX(verts(1)), g%vxY(verts(1)),
+     &                g%vxX(verts(2)), g%vxY(verts(2)),
+     &                g%vxX(verts(3)), g%vxY(verts(3)),
      &                g%vxX(verts(4)), g%vxY(verts(4)) )
 
             centroid(iCv,:) =
@@ -208,7 +210,7 @@
             centroid(iCv,:) =
      &       triangleCentroid(g%vxX(verts(0)), g%vxY(verts(0)),
      &                        g%vxX(verts(1)), g%vxY(verts(1)),
-     &                        g%vxX(verts(2)), g%vxY(verts(2)))
+     &                        g%vxX(verts(2)), g%vxY(verts(2)) )
           else
             call xerrab
      &       ('Area computation not implemented for this type')
@@ -216,20 +218,20 @@
 
           if (isymm.eq.0) then  !slab geometry
             ! volume is area times width
-            g%cvVol(iCv) = g%cvSz(iCv) *width
+            g%cvVol(iCv) = g%cvSz(iCv)*width
             call calc_psi_cellcenter(g,m,iCv,psic,isymm)
             cvFpsi(iCv) = psic
-          elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmertry about x=0 axis
+          elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about x=0 axis
             if (volhmk.eq.0) then
-              g%cvX(iCv) = sum(g%vxX(verts)) / nv
-              g%cvY(iCv) = sum(g%vxY(verts)) / nv
-              cvFpsi(iCv) = sum(g%vxFpsi(verts)) / nv
+              g%cvX(iCv) = sum(g%vxX(verts)) / real(nv,R8)
+              g%cvY(iCv) = sum(g%vxY(verts)) / real(nv,R8)
+              cvFpsi(iCv) = sum(g%vxFpsi(verts)) / real(nv,R8)
             else
-            ! Calculate the cellcenter similar to the method for the triangle cellcenter
+            ! Calculate the cell center similar to the method for the triangle cell center
               call calc_psi_cellcenter(g,m,iCv,psic,isymm)
               cvFpsi(iCv) = psic
             endif
-        ! volume is area time circumference of circle with radius equal to the x-coordinate of centroid
+            ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
             g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
           elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about y=0
             if (volhmk.eq.0) then
@@ -237,7 +239,7 @@
               g%cvY(iCv) = sum(g%vxY(verts)) / nv
               cvFpsi(iCv) = sum(g%vxFpsi(verts)) / nv
             else
-              ! Calculate the cellcenter similar to the method for the triangle cellcenter
+              ! Calculate the cell center similar to the method for the triangle cell center
               call calc_psi_cellcenter(g,m,iCv,psic,isymm)
               cvFpsi(iCv) = psic
             endif
@@ -324,7 +326,7 @@
          ! Cell center of guard is face center or intersection point plus (dx,dy)
          ! Vector from face center is direction of (dx/2, dy/2)
          ! (Because cell center of guard cell should be in the middle of the cell)
-         ! For a guard cell, the cellcenter is put equal to the centroid
+         ! For a guard cell, the cell center is put equal to the centroid
          centroid(gc,0) = isx(1) + 0.5_R8 * dx
          centroid(gc,1) = isy(1) + 0.5_R8 * dy
 
@@ -372,11 +374,11 @@
          if (isymm.eq.0) then  !slab geometry
            ! volume is area times width
            g%cvVol(iCv) = g%cvSz(iCv) *width
-         elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmertry about crx=0 axis
-           ! volume is area time circumference of circle with radius equal to the x-coordinate of centroid
+         elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
+           ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
            g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
          elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0
-          ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid
+          ! volume is area times circumference of circle with radius equal to the y-coordinate of centroid
            g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)
          endif
 
@@ -393,15 +395,16 @@
 *  to a right turning scheme. For cell fcCv(iFc,1), the vertices in fcVx need to
 *  ordered right turning. Only here (in the code) this is possible to perform
 *  as the guard cells, only now have a proper cell center. When the cell center
-*  coincides with the face center (as set as dummy cell-center for the guard cell
+*  coincides with the face center (as set as dummy cell center for the guard cell
 *  determined in b2ag_ghostcells), this would complicate the ordering significantly.
 
       call order_face_inf(g,m)
 
 * ..Also for angle calculation, it is necessary to distinguish between radial, poloidal
-*  and other faces, indicated by the array fcType. fcType.EQ.1 indicates a radial face,
-*  fcType.EQ.2 indicates a poloidal face. A face is a poloidal face when it is not aligned
+*  and other faces, indicated by the array fcType. fcType.eq.1 indicates a radial face,
+*  fcType.eq.2 indicates a poloidal face. A face is a poloidal face when it is not aligned
 *  with the magnetic field and when the cell centers of its cells lay on the same psi.
+*  Other faces have fcType.eq.0.
 
       call build_fcType(g,m,fcType,cvFpsi)
 
@@ -421,13 +424,13 @@
         c1 = m%fcCv(iFc,1)
         c2 = m%fcCv(iFc,2)
 
-        ! fcHc(m%nFc,2) : Lengths between cell face center and neighboring cell centers ("connector" direction)
+        ! fcHc(m%nFc,2) : Distances between cell face center and neighboring cell centers ("connector" direction)
         g%fcHc(iFc,1) = sqrt( ( g%cvX(c1) - fcX(iFc) )**2
      &                      + ( g%cvY(c1) - fcY(iFc) )**2 )
         g%fcHc(iFc,2) = sqrt( ( g%cvX(c2) - fcX(iFc) )**2
      &                      + ( g%cvY(c2) - fcY(iFc) )**2 )
 
-        !fcHt(m%nFc) Lengths along cell face ("tangential" direction)
+        !fcHt(m%nFc) Length along cell face ("tangential" direction)
         g%fcHt(iFc) = sqrt( ( g%vxX(v1) - g%vxX(v2) )**2 +
      &                      ( g%vxY(v1) - g%vxY(v2) )**2  )
 
@@ -435,13 +438,12 @@
        if (isymm.eq.0) then
          g%fcS(iFc) = g%fcHt(iFc) * width
        elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
-         ! face surface =  face length * 2 pi * mean x-coordinate of face center
-         g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxX(v1) + g%vxX(v2) )
+         ! face surface = face length * 2 pi * mean x-coordinate of face center
+         g%fcS(iFc) = pi*g%fcHt(iFc) * ( g%vxX(v1) + g%vxX(v2) )
        elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0 axis
-         ! face surface =  face length * 2 pi * mean y-coordinate of face center
-         g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxY(v1) + g%vxY(v2) )
+         ! face surface = face length * 2 pi * mean y-coordinate of face center
+         g%fcS(iFc) = pi*g%fcHt(iFc) * ( g%vxY(v1) + g%vxY(v2) )
        endif
-
 
        ! Calculate fcEb, unit vector of magnetic field at face center
        ! calculated as the weighted average vector of cvEb of the neighboring cells
@@ -459,7 +461,7 @@
        ! b_y
        t0 = 0.5_R8 * ( g%vxBb(v1,1) + g%vxBb(v2,1) )
        ! b_x
-       t1 = - 0.5_R8 * ( g%vxBb(v1,0) + g%vxBb(v2,0))
+       t1 = - 0.5_R8 * ( g%vxBb(v1,0) + g%vxBb(v2,0) )
 
        g%fcEb(iFc,0) = t0 / norm(t0,t1)
        g%fcEb(iFc,1) = t1 / norm(t0,t1)
@@ -537,7 +539,7 @@
 
        ! Correction to comply with sin**2 + cos**2 = 1
        g%fcQgam(iFc,1) = sign(1.0_R8,g%fcQgam(iFc,1))*
-     &    sqrt(1 - g%fcQgam(iFc,0)**2)
+     &    sqrt(1.0_R8 - g%fcQgam(iFc,0)**2)
 
        !OLD METHOD to compute gamma
        !g%fcQgam(iFc,0) = sinang(econf(0), econf(1),fn(0), fn(1) )
@@ -592,7 +594,7 @@
        g%fcQbet(iFc,0) = g%fcQbet(iFc,0)*sign(1.0_R8,g%fcBb(iFc,2))
 
 *    .. angles checks: cos2 + sin2 = 1
-       tol_angles = 1e-5_R8
+       tol_angles = 1.0e-5_R8
        if (( g%fcQalf(iFc,0)**2 + g%fcQalf(iFc,1)**2 - 1)
      &         .gt. tol_angles) then
          write(*,*) "b2agmt: fcQalf not conform at", iFc
@@ -684,7 +686,7 @@ cnv   but now for quads
       ii = 0
       do iF = 0, nv-1
         if (psic.ge.min(g%vxFpsi(m%fcVx(faces(iF),1)) ,
-     &                 g%vxFpsi(m%fcVx(faces(iF),2))) .and.
+     &                  g%vxFpsi(m%fcVx(faces(iF),2))) .and.
      &     (psic.lt.max(g%vxFpsi(m%fcVx(faces(iF),1)),
      &                  g%vxFpsi(m%fcVx(faces(iF),2)))) ) then !intersected
           t0 = (psic - g%vxFpsi(m%fcVx(faces(iF),1))) /
@@ -704,7 +706,7 @@ cnv   but now for quads
         call xerrab('Intersections in cell not found!')
       endif
 
-      ! Compute cellcenter
+      ! Compute cell center
       g%cvX(iCv) = 0.5_R8*sum(isx)
       g%cvY(iCv) = 0.5_R8*sum(isy)
 
@@ -753,10 +755,10 @@ cnv   but now for quads
         !Calculate sinus of vec_verts and vec_cell
         ! sin = | a x b | / norm(a) * norm(b)
         ! with | a x b | = ax*by - bx*ay
-        !only the sign of sin matters to no norms are used in the denominator
+        !only the sign of sin matters so no norms are used in the denominator
         sin = vec_verts(0) * vec_cell(1) - vec_cell(0) * vec_verts(1)
 
-        if (sin.lt.0) then  !reordering needed: change V1 and V2
+        if (sin.lt.0.0_R8) then  !reordering needed: change V1 and V2
            m%fcVx(iFc,1) = verts(2)
            m%fcVx(iFc,2) = verts(1)
         endif
@@ -835,7 +837,7 @@ cnv   but now for quads
       !determine 3d-plane with cell center point
       d = p(0)*g%cvX(bc) + p(1)*g%cvY(bc) + p(2)*bcBb(0)
 
-      ! fill guard cell center coordinate in into the plane
+      ! fill guard cell center coordinate into the plane
       gcBb(0) = (d - p(0)*g%cvX(iCv) - p(1)*g%cvY(iCv)) / p(2)
 
       !same for vxBb(:,1)
@@ -861,14 +863,12 @@ cnv   but now for quads
       gcBb(2) = (d - p(0)*g%cvX(iCv) - p(1)*g%cvY(iCv)) / p(2)
 
       !3. compute magnetic field in guard cell center - same method as in b2agbb but now with only one point
-      if (isymm.ne.0) then
-        if (isymm.eq.1 .or. isymm.eq.2) then
-           t0 = 2.0*pi*g%cvX(bc)
-        elseif (isymm.eq.3 .or. isymm.eq.4) then
-           t0 = 2.0*pi*g%cvY(bc)
-        endif
-      else
-        t0 = 1.0
+      if (isymm.eq.0) then
+        t0 = 1.0_R8
+      else if (isymm.eq.1 .or. isymm.eq.2) then
+        t0 = 2.0_R8*pi*g%cvX(bc)
+      else if (isymm.eq.3 .or. isymm.eq.4) then
+        t0 = 2.0_R8*pi*g%cvY(bc)
       endif
 
       g%cvBb(iCv,0) = sqrt(gcBb(0)**2 + gcBb(1)**2)/t0
@@ -949,9 +949,9 @@ cnv   but now for quads
 
       g%cvBb(iCv,0) = 0.5_R8 *
      &   ( sqrt( isbb(0,0)**2 + isbb(0,1)**2 ) +
-     &     sqrt( isbb(1,0)**2 + isbb(1,1)**2) ) / t0
+     &     sqrt( isbb(1,0)**2 + isbb(1,1)**2 ) ) / t0
       g%cvBb(iCv,1) = 0.0_R8
-      g%cvBb(iCv,2) = 0.5_R8 * ( isbb(0,2)+isbb(1,2)) /t0
+      g%cvBb(iCv,2) = 0.5_R8 * ( isbb(0,2)+isbb(1,2) ) /t0
       g%cvBb(iCv,3) = sqrt(g%cvBb(iCv,0)**2 + g%cvBb(iCv,1)**2 +
      &                     g%cvBb(iCv,2)**2)
 

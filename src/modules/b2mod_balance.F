@@ -2727,7 +2727,7 @@ cdjm Update ion heat sources
       character*13, allocatable :: species_name(:)
       integer use_eirene
       integer, allocatable :: za(:)
-      real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8), save :: fac_hz = 1.0_R8
       real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size

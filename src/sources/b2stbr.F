@@ -288,7 +288,7 @@
         endif
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
@@ -1072,8 +1072,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 
       call subini ('b2stbr_neutr_scl')
       if (ncall_b2stbr_neutr_scl.eq.0) then
-        call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-        call xertst(1.le.ns, 'faulty argument ns')
+        call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+        call xertst (1.le.ns, 'faulty argument ns')
       endif
       if(use_eirene.ne.0.and.ank_mods.ne.0) then
 #ifdef B25_EIRENE

@@ -124,7 +124,7 @@
         call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
       else
         !wdk try to be more precise in case we know full fpsi/ffbz:
-        !wdk direct computation by averaging from vertext values
+        !wdk direct computation by averaging from vertex values
 *     ..preparatory quantities
         hzl = INVALID_DOUBLE
         hzr = INVALID_DOUBLE

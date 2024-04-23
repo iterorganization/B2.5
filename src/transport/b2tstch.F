@@ -36,7 +36,7 @@
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 }
+      real (kind=R8), save :: fch_stochastic = 0.0_R8                   !lk 31.01.08 }
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
@@ -44,7 +44,7 @@
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
 *   ..initialization
-      data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
+      data ncall/0/, delta_stoch/0.0_R8/, sig_stoch/1.0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -67,7 +67,7 @@
      1   'faulty argument b2tqna_ixref')
 
         bottomdelta1 = jsep+1
-        width = 0.0e0_R8
+        width = 0.0_R8
         do iy = jsep,0,-1
           width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
@@ -80,22 +80,22 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      csig_stoch = 0.0e0_R8
-      fchstoch   = 0.0e0_R8
-      if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
+      csig_stoch = 0.0_R8
+      fchstoch   = 0.0_R8
+      if (fch_stochastic .ne. 0.0_R8 ) then                              !lk 31.01.08 {
 
         do iy = bottomdelta1, jsep+1
           do ix = -1, nx
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
             csig_stoch(ix,iy) = sig_stoch*
-     &      qe*(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8*  !lk 24.03.08 17.12.13
-     &       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
-     &      /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2         !srv 07.07.14
+     &      qe*(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8*   !lk 24.03.08 17.12.13
+     &       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
+     &      /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2        !srv 07.07.14
             fchstoch(ix,iy) = -csig_stoch(ix,iy)*
      &       ((po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))-
-     &       0.5e0_R8/qe*
+     &       0.5_R8/qe*
      &       (te(ix,iy) - te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &      -(te(ix,iy) + te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8/
+     &      -(te(ix,iy) + te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8/
      &        qe
      &      *(log(ne(ix,iy))-
      &        log(ne(bottomix(ix,iy),bottomiy(ix,iy)))))

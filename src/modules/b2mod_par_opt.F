@@ -300,7 +300,7 @@
               call find_faces (indss, incf, ncffc,
      >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
             end do              ! iss
-            write(ss,"(I0)") icf
+            write(ss,'(i3)') icf
             call xertst(ncffc.gt.0, 
      &        'No faces found for cost function  = '//ss)
             m%cfRegP(icf,2) = ncffc

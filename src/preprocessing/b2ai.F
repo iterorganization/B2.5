@@ -102,7 +102,7 @@
 *     nCv, nFc - integer.
 *     nCv and nFc specify the number of control volumes and cell faces
 *     in the unstructured mesh.
-*     It will hold that 0.le.nCv and 0.le.nFc.
+*     It will hold that 0.lt.nCv and 0.lt.nFc.
 *
 *     ns - integer.
 *     ns specifies the number of atomic species in the calculation.

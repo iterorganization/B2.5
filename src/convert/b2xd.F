@@ -123,7 +123,7 @@ c      call cfopen (ninp(0),'b2yp.dat','old','formatted')
       nCv = idum(0)
       nFc = idum(1)
       ns  = idum(2)
-      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.1.le.ns,
      &  'faulty input nx, ny, ns from plasma state file')
 *   ..obtain mapping/geometry dimensions from geometry file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
