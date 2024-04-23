@@ -44,7 +44,8 @@ c
 
 #ifdef B25_EIRENE
 *  -- INPUT ARGUMENTS --
-      integer nx1,ny1,natm1,nmol1,nion1,npls1,nfla,non_commensurate
+      integer nx1,ny1
+      integer natm1,nmol1,nion1,npls1,nfla,non_commensurate
       integer iatm1(natm), imol1(nmol), iion1(nion), ipls1(npls)
       integer jsep1, nwrite
       integer region1(-1:nx1,-1:ny1,0:2)
@@ -151,7 +152,7 @@ C
       open(unit=45,file=filename,status='unknown')
       write(*,*) 'Writing '//trim(filename)
 C
-      READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
+      READ (44,'(I4,2X,I4,2X,I8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
      &   .and.
      &   (streql(eirene_format,'old').or.streql(eirene_format,'new')))
@@ -164,7 +165,7 @@ C
       else
         jvftnew = max(jvft44,20160829)
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_Eir_hash()
+      WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       if(jvftnew.lt.2040311) then
         READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
         nplsi_in = nplsi
@@ -1292,7 +1293,7 @@ cank
               eirdiag_nds_end1(i) = 0
             end if
           end do
-          call write_title(45,'eirdiag', 5*nstsi+1)
+          call write_title(45,'eirdiag',5*nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_ind1(i),i=1,nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
           WRITE(45,'(12i6)') (eirdiag_nds_srf1(i),i=1,nstsi)
