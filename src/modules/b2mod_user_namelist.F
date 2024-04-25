@@ -31,7 +31,7 @@
       integer, parameter :: nromp=DEF_NYD*4
       integer, save :: omp(nromp), icsepomp, ifsepomp, nomp,
      ,                 imp(nromp), icsepimp, ifsepimp, nimp
-      real (kind=R8) :: rzomp(2,2), rzimp(2,2)
+      real (kind=R8) :: rzomp(2,2), rzimp(2,2), psi_omp(nromp)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -225,6 +225,11 @@ c***  Standard set-up:
           end if
         end do
         ic = ic + 1
+      end do
+! csc get psi for each OMP cell
+      psi_omp = 0.0_R8
+      do ic = 1, nomp
+        psi_omp(ic) = geo%cvFpsi(omp(ic))
       end do
 
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
