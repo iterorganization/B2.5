@@ -580,6 +580,36 @@
      &           t0
                 endif
                enddo
+
+               t0=0.0e0_R8
+               do iz= 1, znnucl_int(s2nucl(isb)-1)
+                if(iz.ne.nint(zb)) then
+                 t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(isb)-1,iz))*
+     &           ti(ix,iy)+
+     &           na(leftix(ix,iy),leftiy(ix,iy),
+     &           nucl2s(s2nucl(isb)-1,iz))*
+     &           ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &           (ua(ix,iy,nucl2s(s2nucl(isb)-1,iz))*wrk2(ix,iy) -
+     &           ua(leftix(ix,iy),leftiy(ix,iy),
+     &           nucl2s(s2nucl(isb)-1,iz))*
+     &           wrk2(leftix(ix,iy),leftiy(ix,iy)))
+                endif
+               enddo
+
+               wrk0(ix,iy) = wrk0(ix,iy) +
+     &         (nb(ix,iy)/nal(ix,iy,s2nucl(isb)-1)+
+     &         nb(leftix(ix,iy),leftiy(ix,iy))/
+     &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))*
+     &         ft*(cvsahz_uAdp_albe(ix,iy,0,s2nucl(isb)-1,s2nucl(isb)-1)
+     &         -cvsahz_uBdp_al(ix,iy,0,s2nucl(isb)-1))/
+     &         (bb(ix,iy,0)*bb(ix,iy,3)*
+     &         vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),0)*
+     &         bb(leftix(ix,iy),leftiy(ix,iy),3)*
+     &         vol(leftix(ix,iy),leftiy(ix,iy))/
+     &         hx(leftix(ix,iy),leftiy(ix,iy))*
+     &         hz(leftix(ix,iy),leftiy(ix,iy)))*
+     &         t0
               endif
             enddo
            enddo
