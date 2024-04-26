@@ -23,6 +23,9 @@
         real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
         real (kind=R8), allocatable  :: cvBzb(:)       ! Factor for P-S/mdf flows
         real (kind=R8), allocatable  :: cvEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
+        real (kind=R8) :: signmf  ! Direction of poloidal field
+                                  ! +1: Going clockwise around plasma
+                                  ! -1: Going counterclockwise around plasma
 
 !  face based quantities
         real (kind=R8), allocatable  :: fcBb(:,:)      ! Magnetic field: (nFc,0:3) to be recomputed at cell faces (Bx,By,Bz,|B|)
@@ -402,12 +405,12 @@
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
-     &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
+     &           iCv, iFc, iFt, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
      &           i1, i2, inv_dist(mpg%nVx)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
-      real (kind=R8) :: hzconst, dux, duy, du, sbf, Psi1, Psi2,
-     .  cvPsi(mpg%nCv), dpsi(mpg%nCv),
+      real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
+     .  Psi1, Psi2, cvPsi(mpg%nCv), dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, maxloc, minloc, abs, sqrt
@@ -586,7 +589,6 @@
         ! 1/8 for pent at common vertex
         ! 1/2 for pent at flux surface verts
         do iVx = 1, nVx
-
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (iCv.le.mpg%nCi) then
@@ -597,7 +599,6 @@
               gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
             endif
           enddo
-
           if (mpg%vxCvP(iVx,2).eq.3) then
             do inCv = 1, mpg%vxCvP(iVx,2)
               iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
@@ -613,7 +614,6 @@
                 gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
               endif
             enddo
-
           elseif (mpg%vxCvP(iVx,2).eq.4) then
             do inCv = 1, mpg%vxCvP(iVx,2)
               iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
@@ -627,11 +627,8 @@
      &           gm%cvVol(iCv) / 1.0e2_R8
               endif
             enddo
-
           endif
-
         enddo
-
       elseif (switch%vxVol_style .eq. 7) then
         !calculate cvPsi
         do iCv = 1, nCv
@@ -690,11 +687,8 @@
      &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
      &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
               endif
-
             enddo
-
           endif
-
         enddo
       elseif (switch%vxVol_style .eq. 8) then
         ! Same as style 2 but with weighting for boundary vertices
@@ -713,7 +707,6 @@
             endif
           enddo
         enddo
-
       elseif (switch%vxVol_style .eq. 9) then
         !calculate cvPsi
         do iCv = 1, nCv
@@ -792,13 +785,9 @@
      &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
      &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
               endif
-
             enddo
-
           endif
-
         enddo
-
       elseif (switch%vxVol_style .eq. 10) then
         do iVx = 1, nVx
           do inCv = 1, mpg%vxCvP(iVx,2)
@@ -828,7 +817,6 @@
             endif
           enddo
         enddo
-
         ! Compute the interpolation weights
         do iVx = 1,nVx
           if (inv_dist(iVx).eq.1) then
@@ -837,7 +825,6 @@
               gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
      &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
      &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
-
             enddo
           else
             do inCv = 1, mpg%vxCvP(iVx,2)
@@ -852,7 +839,6 @@
             enddo
           endif
         enddo
-
       else
         call xerrab ('wrong value of b2mndr_vxVol_style')
       endif
@@ -1043,6 +1029,49 @@
           end do
         end if
        end do
+      end if
+
+      ! Compute signmf
+      r0=0.0_R8
+      z0=0.0_R8
+      t0=0.0_R8
+      iFt=0
+      gm%signmf=0.0_R8
+      do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+        iFt=iFt+1
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (mpg%cvOnClosedSurface(iCv)) then
+          do i=1,mpg%ftCvP(iFt,2)
+            r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            t0=t0+
+     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+          end do
+        end if
+      end do
+      if (t0.gt.0.0_R8) then
+        r0=r0/t0
+        z0=z0/t0
+        iFt=0
+        do while (gm%signmf.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              gm%signmf=gm%signmf
+     .         -((gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-r0)*
+     .            gm%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),1))
+     .         +((gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-z0)*
+     .            gm%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),0))
+            end do
+          end if
+        end do
+! signmf is positive if the poloidal field travels clockwise around the O-point
+        gm%signmf=sign(1.0_R8,gm%signmf)
+      else
+        gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
       end if
 
 !! Invert the divertor face list if not in correct psi order

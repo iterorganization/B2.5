@@ -1213,7 +1213,6 @@ c
       z0=0.0_R8
       t0=0.0_R8
       iFt=0
-      signmf=0.0_R8
       do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
         iFt=iFt+1
         iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
@@ -1231,26 +1230,9 @@ c
       if (t0.gt.0.0_R8) then
         r0=r0/t0
         z0=z0/t0
-        iFt=0
-        do while (signmf.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-          iFt=iFt+1
-          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-          if (mpg%cvOnClosedSurface(iCv)) then
-            do i=1,mpg%ftCvP(iFt,2)
-              signmf=signmf
-     .         -((geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-r0)*
-     .            geo%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),1))
-     .         +((geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-z0)*
-     .            geo%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),0))
-            end do
-          end if
-        end do
-! signmf is positive if the poloidal field travels clockwise around the O-point
-        signmf=sign(1.0_R8,signmf)
       else
         r0=geo%cvX(1)
         z0=geo%cvY(1)
-        signmf=sign(1.0_R8,geo%cvEb(1,0))
       end if
       if (mpg%isClassicalGrid.eq.1) then
         values(1)=minval(xx)                             !xmin
@@ -1768,7 +1750,7 @@ c
         case('bx','bpol')
           description='b_{x} (T) (poloidal)'
           nz=1
-          call copy(geo%cvBb(:,0),signmf,nz,textbl)
+          call copy(geo%cvBb(:,0),geo%signmf,nz,textbl)
         case('by','brad')
           description='b_{y} (T)'
           nz=1

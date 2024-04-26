@@ -59,7 +59,7 @@
           if (assigned) exit
         enddo ! ib
         if (.not. assigned) then
-          write(*,*) 'ifc, label', bnd_fc, m%fcLbl(bnd_fc)
+          write(*,*) 'iFc, label', bnd_fc, m%fcLbl(bnd_fc)
           call xerrab('boundary face label not assigned to any BC/RC!')
         endif
       enddo !ic
