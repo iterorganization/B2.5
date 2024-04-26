@@ -197,7 +197,7 @@ c Initialization
       if (switch%eirene_uub_style.eq.1) then
         do is = 0,ns-1
           nafsqalf(1:nFc,0,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,0)*
-     .                           naf(1:nFc,is)+1.E-30_R8
+     .                           naf(1:nFc,is)+1.e-30_R8
         end do
         if (switch%eirene_background.eq.0) then
           fna_tmp(1:nFc,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
@@ -211,7 +211,7 @@ c Initialization
 
       do is = 0,ns-1
         nafsqalf(1:nFc,1,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*
-     .                         naf(1:nFc,is)+1.E-30_R8
+     .                         naf(1:nFc,is)+1.e-30_R8
         if (switch%eirene_background.eq.0) then
           fna_tmp(1:nFc,is) = dv%fna(1:nFc,1,is)/
      .                        nafsqalf(1:nFc,1,is)
@@ -220,7 +220,7 @@ c Initialization
             iCp = mpg%fcCv(iFc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
             fna_tmp(iFc,is) = dv%fna(iFc,1,is)/
      .                       (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
-     .                        pl%na(ic,is)+1.E-30_R8)
+     .                        pl%na(ic,is)+1.e-30_R8)
           end do
         else
           fna_tmp(1:nFc,is) = dv%fna_eir(1:nFc,1,is)/
@@ -365,11 +365,11 @@ c     internal cell -> full diamagnetic drift
             vzb(ic,nflai) = wwb(ic,nflai)*sign(1.0_R8,gm%cvEb(ic,2))
           enddo
 * cell faces
-          do ifc = 1, nFc
-            fnib(ifc,nflai) = dv%fna(ifc,0,is) + dv%fna(ifc,1,is)
+          do iFc = 1, nFc
+            fnib(iFc,nflai) = dv%fna(iFc,0,is) + dv%fna(iFc,1,is)
             if (is_neutral(is)) then
-              fnn_inc_b(ifc,nflai) = dv%fnn_inc(ifc,is)
-              fnn_mol_b(ifc,nflai) = fna_mol(ifc,is)
+              fnn_inc_b(iFc,nflai) = dv%fnn_inc(iFc,is)
+              fnn_mol_b(iFc,nflai) = fna_mol(iFc,is)
             endif
           end do
 
