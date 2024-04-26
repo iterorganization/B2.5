@@ -1,10 +1,10 @@
-      subroutine cv_intersections (nCv, geo, m, segm, list, list_ci,
+      subroutine cv_intersections (geo, m, segm, list, list_ci,
      &   nncv, nnci, nmax, mode, ifail)
       use b2mod_types
       use b2us_geo
       use b2us_map
       implicit none
-      integer nCv, nmax
+      integer nmax
       type (geometry), intent (in) :: geo
       type(mapping), intent(in) :: m
       real(kind=r8) :: segm(2,2)
@@ -61,9 +61,9 @@
         ic = list(ii)
         do kk=ii-1,1,-1
           if (mode.eq.1) then
-            if (geo%cVx(list(kk)).le.geo%cVx(ic)) exit
+            if (geo%cvX(list(kk)).le.geo%cvX(ic)) exit
           else
-            if (geo%cVy(list(kk)).le.geo%cVy(ic)) exit
+            if (geo%cvY(list(kk)).le.geo%cvY(ic)) exit
           endif
             list(kk+1)=list(kk)
         enddo

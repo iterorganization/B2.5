@@ -13,17 +13,14 @@
       use b2us_io
       use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2UF reads in an unformatted b2fplasma file, and writes out a
-*     a formatted b2fplasma (b2fplasmf) ile.
+*     B2UF reads in an unformatted b2fplasmf file, and writes out a
+*     a formatted plasma state (b2fplasmf) file.
 *
 *
 *-----------------------------------------------------------------------
@@ -72,7 +69,7 @@
       nCv = idum(0)
       nFc = idum(1)
       ns  = idum(2)
-      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from b2fstate file')
 *   ..obtain ns from parameters file
 !      call cfruin (ninp(2), 1, idum(0), 'ns')
@@ -102,7 +99,7 @@
       call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain parameters from b2fplasma file
-      call cfruin (ninp(4), 3, idum, 'nCv,nFc,ns')
+      call cfruin (ninp(4),3,idum,'nCv,nFc,ns')
       call xertst (idum(0).eq.nCv.and.idum(1).eq.nFc.and.idum(2).eq.ns,
      &  'faulty input nCv, nFc, ns from b2fplasma file')
 *   ..call principal driver routine

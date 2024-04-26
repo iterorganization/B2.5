@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trql (nCv, nFc, ns, switch, geo, mpg, pl, dv, st_ext, 
+      subroutine b2trql (nCv, nFc, ns, switch, geo, mpg, pl, dv, st_ext,
      .  chvemx, chvimx)
       use b2mod_types
       use b2mod_constants
@@ -11,10 +11,14 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2trql
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2trql, ncall_b2tlhe
+     & , only : ncall_b2tlhe
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -81,7 +85,7 @@
 *   ..subprogram start-up calls
       call subini ('b2trql')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2trql.lt.3) then
@@ -91,16 +95,16 @@
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
 *    ..test range of cvQgam, fcQgam
        call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
-     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range cvQgam(,1)')
        call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
-     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range cvQgam(,0)')
        call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
-     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range fcQgam(,1)')
        call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
-     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, te, ti, ne2
        call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
@@ -114,12 +118,12 @@
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
       cflme = cflim(0)
-      call b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, dv%ne, 
+      call b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, dv%ne,
      &  pl%te, chvemx)
 *   ..compute all atom heat flux limit velocity
       cflmi = cflim(1)
       call b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg, dv%ni,
-     &  nirm, st_ext%ni, pl%ti, pl%tn, chvimx)
+     &  nirm, st_ext%ni, pl%ti, chvimx)
 
 * ..return
       ncall_b2trql = ncall_b2trql+1

@@ -13,6 +13,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2trno
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_transport_namelist
@@ -28,10 +31,11 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2trno, ncall_b2tqna,
+     &          ncall_b2tqna,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -100,7 +104,6 @@
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
      4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
-
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -116,7 +119,7 @@
 *   ..subprogram start-up calls
       call subini ('b2trno')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2trno.eq.0) then
@@ -220,13 +223,12 @@
      &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                    !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 
-
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
-      if(switch%transport_afn.eq.1) then 
+      if (switch%transport_afn.eq.1) then 
        do is = 0, ns-1
-         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-           wrkc =  co%dpa0(:,is)*(geo%cvbb(:,2)/geo%cvbb(:,3))**2
+         if (is_neutral(is).and.nint(zn(is)).eq.1) then
+           wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &                 wrkc, co%cdpa(1:nFc,0,is))   
            call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
@@ -297,22 +299,22 @@ c   Bohm
 
 *   ..set csigx = 0 and calfx = 0
       if (switch%csig_an_style.eq.1) then
-        call sfill (nFc, 0.0e0_R8, co%csig(1,0), 1)
-        call sfill (nFc, 0.0e0_R8, co%calf(1,0), 1)
+        call sfill (nFc, 0.0_R8, co%csig(1,0), 1)
+        call sfill (nFc, 0.0_R8, co%calf(1,0), 1)
       end if
 *   ..set strange velocities chve, chvi
 c      call sfill (nFc*2, 0.0_R8, co%chve, 1)
 c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
       chce_stoch = 0.0_R8                                                 !srv 20.09.17
-      if(switch%fch_stochastic.ne.0.0e0_R8)then                            !lk 31.01.08 { !srv 17.12.13
+      if(switch%fch_stochastic.ne.0.0_R8) then                            !lk 31.01.08 { !srv 17.12.13
       call xerrab('b2trno -- option to be adapted for WG')
 #ifdef WG_TODO
         call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)
         do iy = -1, ny                                                    !srv 20.09.17
           do ix = -1, nx
            if(bottomiy(ix,iy).ne.-2) then
-            chce_stoch(ix,iy)=switch%b2trno_alpha_stoch*1.6e0_R8*
+            chce_stoch(ix,iy)=switch%b2trno_alpha_stoch*1.6_R8*
      &      csig_stoch(ix,iy)/
      &      qe/qe*(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
            endif                                                          !srv 20.09.17
@@ -370,11 +372,11 @@ c the logic statements below could be simplfied but for now we go for readabilit
           co%chci = co%chci + co%chcb(:,:,is)
          endif
         else                                                       !! separate ion-neutral energy equation
-          if (.not.is_neutral(is).or.zn(is).ne.1) then
+          if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
             co%chci = co%chci + co%chcb(:,:,is)
           endif
         endif
-        if (is_neutral(is).and.zn(is).eq.1) then                   !! hcn for hydrogenic atoms
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then             !! hcn for hydrogenic atoms
          co%chcn = co%chcn + co%chcb(:,:,is)
         endif
       enddo 
@@ -452,21 +454,21 @@ c the logic statements below could be simplfied but for now we go for readabilit
      &                           'b2trno_dnahz_th'//chns)
         call my_out_us(70,nFc,1,co%cdnahz(1,1,is),
      &                           'b2trno_dnahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cdpahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cdpahz(1,0,is),
      &                           'b2trno_cdpahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cdpahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cdpahz(1,1,is),
      &                           'b2trno_cdpahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvlahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvlahz(1,0,is),
      &                           'b2trno_cvlahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvlahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvlahz(1,1,is),
      &                           'b2trno_cvlahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvsahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),
      &                           'b2trno_cvsahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvsahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),
      &                           'b2trno_cvsahz_r'//chns)
-       call my_out_us(70,nFc,1,co%cvmahz(1,0,is),
+        call my_out_us(70,nFc,1,co%cvmahz(1,0,is),
      &                           'b2trno_cvmahz_th'//chns)
-       call my_out_us(70,nFc,1,co%cvmahz(1,1,is),
+        call my_out_us(70,nFc,1,co%cvmahz(1,1,is),
      &                           'b2trno_cvmahz_r'//chns)
         if (flux_limit_style.eq.2) then                                 !srv 07.12.15 {
          call my_out_us(70,nFc,1,co%chcb(1,0,is),

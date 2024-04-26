@@ -30,11 +30,7 @@ c     -------------------------------------------------------------------------
 
       integer is,ite,ine
       logical ltst0
-      real (kind=R8) :: trimg
-      external trimg
       intrinsic log
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
 
       call subini('getsa')
 
@@ -159,14 +155,14 @@ c     -------------------------------------------------------------------------
       call getsa(ns,rcsa,rcra,T)
       isstart=-1
       do is = 0, ns-1
-        if (isstart.eq.-1.and.zn(is).eq.zn(i).and.
+        if (isstart.eq.-1.and.nint(zn(is)).eq.nint(zn(i)).and.
      &      abs(am(is)-am(i)).lt.1.0e-3_R8) then
           isstart=is
         endif
       enddo
       isend=-1
       do is = ns-1, isstart, -1
-        if (isend.eq.-1.and.zn(is).eq.zn(i).and.
+        if (isend.eq.-1.and.nint(zn(is)).eq.nint(zn(i)).and.
      &      abs(am(is)-am(i)).lt.1.0e-3_R8) then
           isend=is
         endif
@@ -210,87 +206,66 @@ c     -------------------------------------------------------------------------
 
       subroutine setcorora(ismain)
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
+      use b2us_plasma
       use b2mod_diag
-      use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_b2plot
       use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
 
-      integer ix,iy,iss
-
+      integer iCv, iss
       real (kind=R8) ::
      *   ssum,gsum
       real (kind=R8) ::
-     *   neco(-1:nx,-1:ny)
-#ifdef WG_TODO
-     * , rcra(-1:nx,-1:ny,0:ns-1),
-     *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
-     *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
-     *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
-     *   rcpt(-1:nx,-1:ny,0:ns-1), rcpi(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   rclsa(-1:nx,-1:ny,0:1,0:ns-1), rclra(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclqa(-1:nx,-1:ny,0:1,0:ns-1), rclrd(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclbr(-1:nx,-1:ny,0:1,0:ns-1), rclza(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
+     *   neco(mpg%nCv)
+      type(B2Rates) :: rtco
+      type(B2RatesWork) :: rtwco
       integer is
-#endif
-
       external b2spel, b2sqel
 
       call subini('corora')
-      neco(-1:nx,-1:ny) = 1.0e16_R8
+      neco = 1.0e16_R8
+      call createB2Rates (mpg%nCv, state%ns, rtco)
+      call createB2RatesWork (mpg%nCv, state%ns, rtwco)
 *    ..compute log-log electron rate coefficients
-#ifdef WG_TODO
-      call b2spel (nx, ny, ns, ev, te, neco, rclsa, rclra,
-     &     rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
+      call b2spel (mpg%nCv, state%ns, ev, state%pl%te, neco, rtco)
 *   ..compute electron rate coefficients
-      call b2sqel (nx, ny, ns, ismain, ev, te, 
-     &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi,
-     &    rcsa, rcra, rcqa, rcrd, rcbr, rcza, rcz2, rcpt, rcpi)
-#endif
+      call b2sqel (mpg%nCv, state%ns, ismain, switch, ev, state%pl%te,
+     .  rtco, rtwco)
 c     initialise array on stack for coronal radiation
       if(iwrk .ge. wklng) call dropstackbottom()
       iwrk=iwrk+1
-      ndim(1,iwrk)=nx
-      ndim(2,iwrk)=ny
-      ndim(3,iwrk)=nspecies
+      ndim(1,iwrk)=mpg%nCv
+      ndim(2,iwrk)=nspecies
       graphlabel(iwrk)='Coronal radiation (W)'
       do iss=0,nspecies-1
         textwk(iss,iwrk)=textsp(iss)
       enddo
-      work(:,:,:,iwrk)=0.0_R8
-#ifdef WG_TODO
-      do is=0,ns-1
+      work(:,:,iwrk)=0.0_R8
+      do is=0,state%ns-1
         iss = b2espcr(is)-1
-        do ix=-1,nx
-          do iy=-1,ny
-            work(ix,iy,iss,iwrk)=work(ix,iy,iss,iwrk)+
-     .       (rcrd(ix,iy,is)+rcbr(ix,iy,is))
-     .       *vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
-          enddo
-        enddo
+        work(:,iss,iwrk)=work(:,iss,iwrk)+
+     .   (rtwco%rrd(:,is)+rtwco%rbr(:,is))
+     .   *geo%cvVol(:)*state%dv%ne(:)*state%pl%na(:,is)
       enddo
-#endif
+
       gsum=0.0_R8
       do iss=0,nspecies-1
         ssum=0.0_R8
-        do iy=-1,ny
-          do ix=-1,nx
-            ssum=ssum+work(ix,iy,iss,iwrk)
-          enddo
+        do iCv=1,mpg%nCv
+          ssum=ssum+work(iCv,iss,iwrk)
         enddo
         write(*,*) 'Coronal radiation rate for iss = ',iss,' = ',ssum
         gsum=gsum+ssum
       enddo
       write(*,*) 'Coronal radiation rate for all species = ',gsum
+      call destroyB2RatesWork( rtwco )
+      call destroyB2Rates( rtco )
       call subend()
       return
       end subroutine setcorora
@@ -304,111 +279,89 @@ c     -------------------------------------------------------------------------
 
       subroutine setcoroni(ismain)
       use b2mod_types
-      use b2mod_b2plot
-      use b2mod_plasma
+      use b2us_data
+      use b2us_plasma
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_b2plot
       use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
 
-      integer ix,iy,is
+      integer is
+      type(B2Rates) :: rtco
+      type(B2RatesWork) :: rtwco
       real (kind=R8) ::
-     *   neco(-1:nx,-1:ny)
-#ifdef WG_TODO
-     * , rcra(-1:nx,-1:ny,0:ns-1),
-     *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
-     *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
-     *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
-     *   rcpt(-1:nx,-1:ny,0:ns-1), rcpi(-1:nx,-1:ny,0:ns-1)
+     *   neco(mpg%nCv)
       real (kind=R8) ::
-     *   rclsa(-1:nx,-1:ny,0:1,0:ns-1), rclra(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclqa(-1:nx,-1:ny,0:1,0:ns-1), rclrd(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclbr(-1:nx,-1:ny,0:1,0:ns-1), rclza(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
-     &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
+     *   prod(mpg%nCv),divid(mpg%nCv)
       real (kind=R8) ::
-     *   prod(-1:nx,-1:ny),divid(-1:nx,-1:ny)
+     *   ntot(mpg%nCv,0:state%ns-1)
       real (kind=R8) ::
-     *   ntot(-1:nx,-1:ny,0:ns-1)
+     *   n(mpg%nCv,0:state%ns-1)
       real (kind=R8) ::
-     *   n(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   sum(-1:nx,-1:ny,0:ns-1)
+     *   sum(mpg%nCv,0:state%ns-1)
       integer is0,isstart,isend,co1,co2
-#endif
-
       external b2spel, b2sqel
 
       call subini('coroni')
-      neco(-1:nx,-1:ny) = 1.0e16_R8
+      neco = 1.0e16_R8
+      call createB2Rates (mpg%nCv, state%ns, rtco)
+      call createB2RatesWork (mpg%nCv, state%ns, rtwco)
 *    ..compute log-log electron rate coefficients
-#ifdef WG_TODO
-      call b2spel (nx, ny, ns, ev, te, neco, 
-     &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
+      call b2spel (mpg%nCv, state%ns, ev, state%pl%te, neco, rtco)
 *   ..compute electron rate coefficients
-      call b2sqel (nx, ny, ns, ismain, ev, te, 
-     &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi,
-     &    rcsa, rcra, rcqa, rcrd, rcbr, rcza, rcz2, rcpt, rcpi)
-#endif
+      call b2sqel (mpg%nCv, state%ns, ismain, switch, ev, state%pl%te,
+     .  rtco, rtwco)
 c     initialise array on stack for coronal radiation
       if(iwrk .ge. wklng) call dropstackbottom()
       iwrk=iwrk+1
-      ndim(1,iwrk)=nx
-      ndim(2,iwrk)=ny
-      ndim(3,iwrk)=ns
+      ndim(1,iwrk)=mpg%nCv
+      ndim(2,iwrk)=state%ns
       call customise_label('Coronal equilibrium ion density (m^{-3})',
      . graphlabel(iwrk))
-      do is=0,ns-1
+      do is=0,state%ns-1
          textwk(is,iwrk)=textpl(is)
       enddo
-      do is=0,ns-1
-         do ix=-1,nx
-            do iy=-1,ny
-               work(ix,iy,is,iwrk)=0.0_R8
-            enddo
-         enddo
-      enddo
-#ifdef WG_TODO
+      work(:,is,iwrk)=0.0_R8
       is0 = 0
-      do while (is0.lt.ns)
+      do while (is0.lt.state%ns)
         is = is0
-        ntot(-1:nx,-1:ny,is0) = 0.0_R8
-        do while (zn(is).eq.zn(is0).and.
-     &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.ns)
-          ntot(-1:nx,-1:ny,is0) = 
-     .     ntot(-1:nx,-1:ny,is0) + na(-1:nx,-1:ny,is)
+        ntot(:,is0) = 0.0_R8
+        do while (nint(zn(is)).eq.nint(zn(is0)).and.
+     &     abs(am(is)-am(is0)).lt.1.0e-3_R8.and.is.lt.state%ns)
+          ntot(:,is0) = ntot(:,is0) + state%pl%na(:,is)
           is = is + 1
         enddo
         isstart = is0
         isend = is - 1
 c     coronal equilibrium
         do co1=isstart,isend
-          prod(-1:nx,-1:ny)=1.0_R8
+          prod=1.0_R8
           do co2=isstart,co1-1
-            prod(-1:nx,-1:ny)=prod(-1:nx,-1:ny)*
-     .       rcsa(-1:nx,-1:ny,co2)/rcra(-1:nx,-1:ny,co2+1)
+            prod(:)=prod(:)*rtwco%rsa(:,co2)/rtwco%rra(:,co2+1)
           enddo
-          sum(-1:nx,-1:ny,co1)=prod(-1:nx,-1:ny)
+          sum(:,co1)=prod(:)
         enddo
-        divid(-1:nx,-1:ny)=0.0_R8
+        divid=0.0_R8
         do co1=isstart,isend
-          divid(-1:nx,-1:ny)=divid(-1:nx,-1:ny)+sum(-1:nx,-1:ny,co1)
+          divid(:)=divid(:)+sum(:,co1)
         enddo
-        n(-1:nx,-1:ny,isstart)=1.0_R8/divid(-1:nx,-1:ny)
+        n(:,isstart)=1.0_R8/divid(:)
         do co1=isstart+1,isend
-          n(-1:nx,-1:ny,co1)=sum(-1:nx,-1:ny,co1)*n(-1:nx,-1:ny,isstart)
+          n(:,co1)=sum(:,co1)*n(:,isstart)
         enddo
         do co1=isstart,isend
-          work(-1:nx,-1:ny,co1,iwrk)=
-     .     n(-1:nx,-1:ny,co1)*ntot(-1:nx,-1:ny,isstart)
+          work(:,co1,iwrk)=n(:,co1)*ntot(:,isstart)
         enddo
 c Move on to next isonuclear sequence
         is0 = is 
       enddo
-#endif
+
+      call destroyB2RatesWork( rtwco )
+      call destroyB2Rates( rtco )
       call subend()
       return
       end subroutine setcoroni

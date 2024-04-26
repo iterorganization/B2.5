@@ -76,9 +76,9 @@
      &  fmtp='(2x,a6,4x,a)')
 *   ..procedures
       real (kind=R8) ::
-     *   scal10, smin, smax, samax
+     *   scal10, smin, smax, damax
       logical strmas
-      external xertst, scal10, smax, samax, strmas
+      external xertst, scal10, smax, damax, strmas
       external b2wgx0, b2wgx1, b2wgx2, b2wgx3
 
 *-----------------------------------------------------------------------
@@ -112,7 +112,7 @@
       if (strmas(idout,'mpff')) then
        write (nprt,fmtp) '+mpff', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, fpsi(-1,-1,0),
+       call b2wgx2 (nx, ny, header, fpsi(-1,-1,0),
      1   3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20)
 *      (physical representation)
@@ -128,7 +128,7 @@
       if (strmas(idout,'mpff')) then
        write (nprt,fmtp) '+mpff', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, ffbz(-1,-1,0),
+       call b2wgx2 (nx, ny, header, ffbz(-1,-1,0),
      1   3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20)
 *      (physical representation)
@@ -137,12 +137,12 @@
      &   t0, t1, 4, t0, t1, 20, wrkx, wrky)
       endif
 *   ..contour plots of bx
-      t0 = scal10(0.8_R8*samax(n2,bb(-1,-1,0),1))
+      t0 = scal10(0.8_R8*damax(n2,bb(-1,-1,0),1))
       write (header,fmth) 'MAGNETIC FIELD BX (T).', t0/100.
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,0),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,0),
      1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
@@ -152,12 +152,12 @@
      &   wrkx, wrky)
       endif
 *   ..contour plots of by
-      t0 = scal10(0.8_R8*samax(n2,bb(-1,-1,1),1))
+      t0 = scal10(0.8_R8*damax(n2,bb(-1,-1,1),1))
       write (header,fmth) 'MAGNETIC FIELD BY (T).', t0/100.
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,1),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,1),
      1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
@@ -167,12 +167,12 @@
      &   wrkx, wrky)
       endif
 *   ..contour plots of bz
-      t0 = scal10(0.8_R8*samax(n2,bb(-1,-1,2),1))
+      t0 = scal10(0.8_R8*damax(n2,bb(-1,-1,2),1))
       write (header,fmth) 'MAGNETIC FIELD BZ (T).', t0/100.
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,2),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,2),
      1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
@@ -187,7 +187,7 @@
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,3),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,3),
      1   0, 1.0_R8,
      &   0.0_R8, 1.2_R8*t0, 24, 0.0_R8, t0/20.0_R8, 5)
 *      (physical representation)

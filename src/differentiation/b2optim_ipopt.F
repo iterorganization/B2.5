@@ -55,7 +55,6 @@
       logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
 
-
 !     ..START OF COMPUTATION
 
 !     Allocate and initialize par_opt variables to be used in B2.5
@@ -112,7 +111,6 @@
      &    write(*,*) 'IPOPT: warning, G_U(',icon,') set to infty'
       end do
 ! FIXME Z_L/Z_U
-
 
 !     First create a handle for the Ipopt problem (and read the options file)
 !     If Hessian is provided or steepest descent is asked the additional argument needed
@@ -273,7 +271,7 @@
       integer IER, ipar, isigma
       character*3 str
       save j
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
@@ -310,7 +308,7 @@
       integer IER, ipar, isigma
       character*3 str
       save jdiff
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt

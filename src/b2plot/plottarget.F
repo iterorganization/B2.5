@@ -1,5 +1,5 @@
 C =====================================================================
-      subroutine plottarget(nx,ny,nbnd,ndepth,
+      subroutine plottarget(nCv,nbnd,ndepth,
      . targetcr,targetcz,target_stack,
      . ZLOD,ZHID,PHYSICAL,linlog,igraphs)
 C =====================================================================
@@ -7,7 +7,7 @@ C =====================================================================
       use b2mod_b2plot_debug
       implicit none
 #include "graphics_vars.h"
-      integer nx,ny,nbnd,ndepth,igraphs,linlog
+      integer nCv,nbnd,ndepth,igraphs,linlog
       REAL (KIND=R8) :: 
      * targetcr(1:nbnd,1:ndepth,1:2),targetcz(1:nbnd,1:ndepth,1:2),
      1 target_stack(1:nbnd,1:ndepth),ZLOD,ZHID
@@ -27,8 +27,8 @@ C =====================================================================
      1 zlo,zhi,zval,clv,zinc,rlo,rhi
       integer ibnd,i,icol,ici,n,ic,
      2 no_available_colors,noz,nozm,nfmtz
-      real floor,ceil
-      external floor,ceil
+      real (kind=R4) :: sfloor,ceil
+      external sfloor,ceil
 
       zlo=real(zlod,R4)
       zhi=real(zhid,R4)
@@ -60,7 +60,7 @@ C =====================================================================
 
       IF(NOFTCLS.EQ.0) THEN                ! standard contouring
         IF(mod(LINLOG,2).EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm
@@ -84,9 +84,9 @@ C =====================================================================
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -99,8 +99,8 @@ C =====================================================================
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               tclval(i)=zval
             enddo
           else
@@ -240,7 +240,7 @@ C Draw Mesh/Vessel if wanted
 C Draw Wall elements if wanted
       if(wall) then
         call data_copy(0)
-        call pltwall(nx,ny,physical,.true.)
+        call pltwall(nCv,physical,.true.)
       endif
       return
       end subroutine plottarget

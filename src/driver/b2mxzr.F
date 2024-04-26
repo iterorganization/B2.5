@@ -41,8 +41,7 @@
       integer is, iCv
 *   ..procedures
       external xertst, sfill
-      external b2xvfx, b2xxgs
-*   ..initialisation
+      external b2xvfx
 
 *-----------------------------------------------------------------------
 *.computation
@@ -51,54 +50,45 @@
 *   ..subprogram start-up calls
       call subini ('b2mxzr')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 
 *   ..zero-out parts of (na) residual
       do is = 0, ns-1
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resco(-1,-1,is), 0)
        do iCv = mpg%nCi+1, nCv
         resco(iCv,is) = 0.0_R8
        enddo
       enddo
 *   ..zero-out parts of (ua) residual
       do is = 0, ns-1
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resmo(-1,-1,is), 0)
        do iCv = mpg%nCi+1, nCv
         resmo(iCv,is) = 0.0_R8
        enddo
       enddo
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, resmt, 0)
        do iCv = mpg%nCi+1, nCv
         resmt(iCv) = 0.0_R8
        enddo
 *   ..zero-out parts of (te) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshe, 0)
        do iCv = mpg%nCi+1, nCv
         reshe(iCv) = 0.0_R8
        enddo
 *   ..zero-out parts of (ti) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshi, 0)
        do iCv = mpg%nCi+1, nCv
         reshi(iCv) = 0.0_R8
        enddo
 *   ..zero-out parts of (tn) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshn, 0)
        do iCv = mpg%nCi+1, nCv
         reshn(iCv) = 0.0_R8
        enddo
 *   ..zero-out parts of (po) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, respo, 0)
        do iCv = mpg%nCi+1, nCv
         respo(iCv) = 0.0_R8
        enddo
 *   ..zero-out parts of (kt) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reskt, 0)
        do iCv = mpg%nCi+1, nCv
         reskt(iCv) = 0.0_R8
        enddo
 *   ..zero-out parts of (zt) residual
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reszt, 0)
        do iCv = mpg%nCi+1, nCv
         reszt(iCv) = 0.0_R8
        enddo

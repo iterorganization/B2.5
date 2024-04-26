@@ -29,7 +29,7 @@
 *   ..local variables
       integer i, ix, iy, ixl, ixr, iyl, iyr, jxi, jxa, jsep
       integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
-     *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
+     *  ixleft(nncutmax,-1:ny),
      *  isnum(nncutmax,-1:ny)
       real (kind=R8) :: hz(-1:nx,-1:ny),
      *                  hzl(-1:nx,-1:ny),    ! hz at the left cell face
@@ -63,8 +63,11 @@
           bb(:,:,2) =
      .     (ffbz(:,:,0) + ffbz(:,:,1) + ffbz(:,:,2) + ffbz(:,:,3)) /
      .     (4.0_R8 * hz(:,:))
-          wbbl(:,:,2) = (ffbz(:,:,0) + ffbz(:,:,2)) /
-     .     (2.0_R8 * hzl(:,:))
+          wbbl(:,:,2) = bb(:,:,2)
+          where (hzl(:,:).ne.0.0_R8)
+            wbbl(:,:,2) = (ffbz(:,:,0) + ffbz(:,:,2)) /
+     .       (2.0_R8 * hzl(:,:))
+          end where
         end if
       end if
       wbbl(:,:,1) = 0.0_R8
@@ -74,7 +77,6 @@
       isnum = 0
       ntubes = 0
       ixleft = -2
-      ixright = -2
       do iy = -1, ny
         do ix = -1, nx
           if (region(ix,iy,0).eq.0) cycle
@@ -90,7 +92,6 @@
           ixl = ix
           ixleft(iseg(ix,iy),iy) = ix
           ixr = ix
-          ixright(iseg(ix,iy),iy) = ix
    20     continue
           if (leftix(ixl,iy).ne.-2.and.leftiy(ixl,iy).eq.iy) then
             ixl = leftix(ixl,iy)
@@ -119,7 +120,6 @@
             else if (iyr.eq.iy) then
               iseg(ixr,iyr) = iseg(ix,iy)
               isnum(iseg(ix,iy),iy) = isnum(iseg(ix,iy),iy) + 1
-              if (rightix(ixr,iy).eq.nx+1) ixright(iseg(ix,iy),iy) = ixr
             else
               goto 40
             end if
@@ -155,9 +155,14 @@
           if (iseg(ix,iy).eq.0) cycle
           if (ixref(iseg(ix,iy),iy).eq.-2) cycle
 
-          pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
-     &                 gs(ixref(iseg(ix,iy),iy),iy,0) *
-     &                 qc(ixref(iseg(ix,iy),iy),iy,0)
+          if (leftix(ixref(iseg(ix,iy),iy),iy).ne.-2) then
+            pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
+     &                   gs(ixref(iseg(ix,iy),iy),iy,0) *
+     &                   qc(ixref(iseg(ix,iy),iy),iy,0)
+          else
+            pol_flux = bb(ixref(iseg(ix,iy),iy),iy,0) *
+     &                 hy(ixref(iseg(ix,iy),iy),iy)
+          end if
 
           if (leftix(ix,iy).ne.-2) then ! do not adjust pbs if leftix=-2
                                         ! since there is no western face

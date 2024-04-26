@@ -1,7 +1,7 @@
 c
       subroutine process_chord_slice(filename)
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
@@ -16,11 +16,11 @@ c
       real (kind=R8) ::
      *   xvalues(lngarr),yvalues(lngarr),chord_value,
      1   xmin,xmax,ymin,ymax,x1,y1,z1,dx1,dy1,dz1
-      integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_value,xerrab
+      integer inpts,i,is,npoints
+      external chord_value,xerrab
 
       call subini ('process_chord_slice')
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         if(.not.open_file(99,filename,
      1   'data.local/chords|data/chords')) then
           call subend ()
@@ -38,11 +38,11 @@ c
           read(99,*,err=30,end=40) x1,y1,z1,xvalues(inpts+1)
         endif
         inpts=inpts+1
-        yvalues(inpts)=chord_value(nx,ny,
-     1   work(-1,-1,is,iwrk),x1,y1,z1,dx1,dy1,dz1,vector)
+        yvalues(inpts)=chord_value(mpg%nCv,
+     1   work(1,is,iwrk),x1,y1,z1,dx1,dy1,dz1,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab ('increase array size in process_chord_slice')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue
@@ -65,9 +65,8 @@ c
           ymax=max(ymax,yvalues(i))
         enddo
 
-        tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2   textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))) // ' ' //
-     3   dataname(1:lnblnk(dataname))
+        tmpstring=trim(graphlabel(iwrk)) //
+     2   trim(textwk(is,iwrk)) // ' ' // trim(dataname)
         call customise_label(tmpstring,titlestring)
 
         call init_page(titlestring,
@@ -75,7 +74,7 @@ c
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
             write(nwtf,'(''# '',a)') trim(extralabel)

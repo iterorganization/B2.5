@@ -2,7 +2,7 @@ c
       subroutine process_chords(filename)
 
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
@@ -21,13 +21,12 @@ c
       real (kind=R8) ::
      *   xvalues(maxchords),yvalues(maxchords),
      1   xmin,xmax,ymin,ymax,x1,x2,y1,y2,z1,z2
-      integer lnblnk
       real (kind=R8) ::
      * chord_integral
-      external lnblnk,chord_integral,open_file,xerrab
+      external chord_integral,open_file,xerrab
 
       call subini ('process_chords')
-      do is=0,ndim(3,iwrk)-1
+      do is=0,ndim(2,iwrk)-1
         if(.not.open_file(99,filename,
      1   'data.local/chords|data/chords')) then
           call subend ()
@@ -35,19 +34,18 @@ c
         end if
         read(99,*,err=30,end=30) dataname,npoints
         vector=npoints .lt. 0
-        if(vector) 
-     >   dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+        if(vector) dataname=trim(dataname) // ' (vector)'
         npoints=abs(npoints)
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalues(inpts)=chord_integral(nx,ny,work(-1,-1,is,iwrk),
+        yvalues(inpts)=chord_integral(mpg%nCv,work(1,is,iwrk),
      1   npoints,x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0) 
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
         call xerrab ('increase array size in process_chords')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue
@@ -96,16 +94,15 @@ c
           end if
         end if
         tmpstring=
-     1   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) // '.m ' //
-     2   textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))) // ' ' //
-     3   dataname(1:lnblnk(dataname))
+     1   trim(graphlabel(iwrk)) // '.m ' //
+     2   trim(textwk(is,iwrk)) // ' ' // trim(dataname)
         call customise_label(tmpstring,titlestring)
         call init_page(titlestring,
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.false.)
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
             write(nwtf,'(''# '',a)') trim(extralabel)
@@ -127,7 +124,7 @@ c
       subroutine process_camera(filename)
 
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
@@ -155,7 +152,7 @@ c
 #define HITS_PER_CHORD 50
 #endif
       parameter (maxcompile=maxchords*HITS_PER_CHORD)
-      integer indchd(maxchords+1),indix(maxcompile),indiy(maxcompile)
+      integer indchd(maxchords+1),indCv(maxcompile)
       real(kind=R8) ::
      * indscl(maxcompile)
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
@@ -165,36 +162,34 @@ c
      *   htime,dumarr(1),tstepn(1)
       integer itstep,ntstep
 #endif
-      integer inpts,is,i,lnblnk,nxcam,nycam
-      external lnblnk
+      integer inpts,is,i,nxcam,nycam
       real (kind=R8) ::
      *   xmin,xmax,ymin,ymax
 
       if(use_compile) then
         call compile_chords(maxchords,maxcompile,
-     &   nx,ny,crx,cry,
-     1   inpts,indchd,indix,indiy,indscl,filename,dataname,
+     &   mpg,geo,
+     1   inpts,indchd,indCv,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
 
 #if ( !defined(NO_CDF) && defined(CDF_MOVIE) )
       if(moviename .eq. ' ') then
 #endif
-        do is=0,ndim(3,iwrk)-1
+        do is=0,ndim(2,iwrk)-1
           call calculate_zvalues(maxchords,maxcompile,
-     1     inpts,indchd,indix,indiy,indscl,
-     1     work(-1,-1,is,iwrk),
+     1     inpts,indchd,indCv,indscl,
+     1     work(1,is,iwrk),
      1     zvalues,filename,dataname,nxcam,xmin,xmax,nycam,ymin,ymax)
-          tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2     textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))) // ' ' //
-     3     dataname(1:lnblnk(dataname))
+          tmpstring=trim(graphlabel(iwrk)) //
+     2     trim(textwk(is,iwrk)) // ' ' // trim(dataname)
           call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,ymin,ymax,1,.true.,.true.,.true.)
           if(b2plot_debug.ge.4)
      >     write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,inpts
               write(nwtf,*) zvalues(i)
             enddo
@@ -216,11 +211,11 @@ c
           call rwcdf(rw,ncid,'time',imap,dumarr,iret)
           htime=dumarr(1)
           imap(1)=1
-          imap(2)=nx+2
-          call rwcdf(rw,ncid,'ahal',imap,work(-1,-1,0,iwrk),iret)
+          imap(2)=1
+          call rwcdf(rw,ncid,'ahal',imap,work(1,0,iwrk),iret)
           call calculate_zvalues(maxchords,maxcompile,
-     1     inpts,indchd,indix,indiy,indscl,
-     1     work(-1,-1,0,iwrk),
+     1     inpts,indchd,indCv,indscl,
+     1     work(1,0,iwrk),
      1     zvalues,filename,dataname,nxcam,xmin,xmax,nycam,ymin,ymax)
           write(tmpstring,'(f10.3,a)')
      1     htime*1.0e6_R8,
@@ -230,7 +225,7 @@ c
           if(b2plot_debug.ge.4)
      >     write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,inpts
               write(nwtf,*) zvalues(i)
             enddo
@@ -247,28 +242,30 @@ c
       end subroutine process_camera
 c
       subroutine compile_chords(maxchords,maxcompile,
-     & nx,ny,crx,cry,
-     1 inpts,indchd,indix,indiy,indscl,filename,dataname,
+     & mpg,geo,
+     1 inpts,indchd,indCv,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
       use b2mod_subsys
+      use b2us_map
+      use b2us_geo
       implicit none
 
-      integer maxchords,maxcompile,nx,ny,inpts
-      integer indchd(maxchords+1),indix(maxcompile),indiy(maxcompile)
+      type(mapping) :: mpg
+      type(geometry) :: geo
+      integer maxchords,maxcompile,inpts
+      integer indchd(maxchords+1),indCv(maxcompile)
       real (kind=R8) ::
-     * indscl(maxcompile),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3)
+     * indscl(maxcompile)
       character*(*) filename,dataname
       integer nxcam,nycam
       real (kind=R8) ::
      *   xmin,ymin,xmax,ymax
 
       logical open_file,vector
-      integer ind,indold,npoints,lnblnk
-      external lnblnk, xertst
+      integer ind,indold,npoints
+      external xertst
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 
@@ -281,16 +278,15 @@ c
       read(99,*,err=30,end=30) dataname,npoints,
      1 nxcam,xmin,xmax,nycam,ymin,ymax
       vector=npoints .lt. 0
-      if(vector)
-     > dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+      if(vector) dataname=trim(dataname) // ' (vector)'
       npoints=abs(npoints)
       inpts=0
       ind=1
    10 read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
       inpts=inpts+1
-      call chord_compile(npoints,nx,ny,crx,cry,
+      call chord_compile(npoints,mpg,geo,
      1 x1,y1,z1,x2,y2,z2,vector,
-     1 indchd(inpts),indix(ind),indiy(ind),indscl(ind))
+     1 indchd(inpts),indCv(ind),indscl(ind))
       indold=ind
       ind=ind+indchd(inpts)
       call xertst(ind .le. maxcompile,
@@ -300,7 +296,7 @@ c
      > write(*,*) 'Processed ',inpts,' chords'
       if(inpts .lt. maxchords) goto 10
       call xerrab ('increase array size in process_chords')
-   30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30 write(*,*) 'Error in reading ',trim(filename)
       call subend ()
       return
    40 continue
@@ -318,42 +314,41 @@ c
       end subroutine compile_chords
 c
       subroutine calculate_zvalues(maxchords,maxcompile,
-     1 inpts,indchd,indix,indiy,indscl,workarr,
+     1 inpts,indchd,indCv,indscl,workarr,
      2 zvalues,filename,dataname,
      3 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_subsys
       implicit none
 
       integer maxchords,maxcompile,inpts
-      integer indchd(maxchords+1),indix(maxcompile),indiy(maxcompile)
+      integer indchd(maxchords+1),indCv(maxcompile)
       real (kind=R8) ::
      * indscl(maxcompile)
       real (kind=R8) ::
      *   zvalues(maxchords)
       real (kind=R8) ::
-     *   workarr(-1:nx,-1:ny)
+     *   workarr(mpg%nCv)
       character*(*) filename,dataname
       integer nxcam,nycam
       real (kind=R8) ::
      *   xmin,ymin,xmax,ymax
 
       logical open_file,vector
-      integer npoints,lnblnk,i,j
+      integer npoints,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_integral
-      external lnblnk, chord_integral, xerrab
+      external chord_integral, xerrab
 
       call subini ('calculate_zvalues')
       if(use_compile) then
         do i=1,inpts
           zvalues(i)=0.0_R8
           do j=indchd(i),indchd(i+1)-1
-            zvalues(i)=zvalues(i)+
-     1       workarr(indix(j),indiy(j))*indscl(j)
+            zvalues(i)=zvalues(i)+workarr(indCv(j))*indscl(j)
           enddo
         enddo
       else
@@ -365,19 +360,18 @@ c
         read(99,*,err=30,end=30) dataname,npoints,
      1   nxcam,xmin,xmax,nycam,ymin,ymax
         vector=npoints .lt. 0
-        if(vector)
-     1   dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
+        if(vector) dataname=trim(dataname) // ' (vector)'
         npoints=abs(npoints)
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
         inpts=inpts+1
-        zvalues(inpts)=chord_integral(nx,ny,workarr(-1,-1),
+        zvalues(inpts)=chord_integral(mpg%nCv,workarr,
      1   npoints,x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0)
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
         call xerrab ('increase array size in process_chords')
-   30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30   write(*,*) 'Error in reading ',trim(filename)
         call subend ()
         return
    40   continue

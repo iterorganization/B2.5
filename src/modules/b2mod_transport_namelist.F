@@ -1,8 +1,10 @@
       module b2mod_transport_namelist
       use b2mod_types
-      use b2mod_indirect
       use b2mod_ad
      & , only : nsdmax
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
       integer, save ::
@@ -26,7 +28,6 @@
      *   parm_vsa(:), 
      *   parm_hci(:)
 #else
-#     include "DIMENSIONS.F"
       real (kind=R8), save :: parm_dna(0:NSDMAX-1)
       real (kind=R8), save :: parm_dpa(0:NSDMAX-1)
       real (kind=R8), save :: parm_vla(0:NSDMAX-1)

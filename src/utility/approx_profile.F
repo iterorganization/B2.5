@@ -1,4 +1,4 @@
-      subroutine get_dim(fnm, ndat)                  !srv 24.04.09 {
+      subroutine get_dim(fnm, ndat)                        !srv 24.04.09 {
       use b2mod_types
       implicit none
       integer :: ndat
@@ -12,10 +12,10 @@
         ndat = ndat + 1
       enddo
    10 close(70)
-
+      return
       end subroutine get_dim                               !srv 29.04.09 }
 
-      subroutine read_data(fnm, ndat, cy, fy)        !srv 19.07.10 {
+      subroutine read_data(fnm, ndat, cy, fy)              !srv 19.07.10 {
       use b2mod_types
       implicit none
       integer ndat
@@ -27,9 +27,10 @@
         read(70,*) cy(iy), fy(iy)
       enddo
       close(70)
-      end subroutine read_data                       !srv 19.07.10 }
+      return
+      end subroutine read_data                             !srv 19.07.10 }
 
-      subroutine write_data(fnm, ndat, cy, fy)       !srv 19.07.10 {
+      subroutine write_data(fnm, ndat, cy, fy)             !srv 19.07.10 {
       use b2mod_types
       implicit none
       integer ndat
@@ -41,7 +42,8 @@
         write(70,"(1x,2(es14.6))") cy(iy), fy(iy)
       enddo
       close(70)
-      end subroutine write_data                        !srv 19.07.10 }
+      return
+      end subroutine write_data                            !srv 19.07.10 }
 
       subroutine approx_profile(fnm, ndat, r, f, b, c, d)  !srv 01.03.07 {
       use b2mod_types
@@ -80,16 +82,17 @@
         b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
       enddo
       b(ndat) = b(ndat-1)
-      c = 0.0e0_R8
-      d = 0.0e0_R8
+      c = 0.0_R8
+      d = 0.0_R8
 
-      end subroutine approx_profile                                     !srv 01.03.07 }
+      return
+      end subroutine approx_profile                        !srv 01.03.07 }
 
-      subroutine approx_profile_mod(ndat, r, f, b, c, d)                !srv 19.07.10 {
+      subroutine approx_profile_mod(ndat, r, f, b, c, d)   !srv 19.07.10 {
       use b2mod_types
       implicit none
       integer :: ndat
-!       real (kind=R8) :: coord(-1:n), fun(-1:n)
+!      real (kind=R8) :: coord(-1:n), fun(-1:n)
 
       real (kind=R8) :: r(1:ndat), f(1:ndat), b(1:ndat), c(1:ndat),
      &                  d(1:ndat)
@@ -110,11 +113,11 @@
 !      CALL DSPLINE(NDAT, R, F, B, C, D)
 *   ..the simplest linear interpolation
       do i = 1, ndat-1
-         b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
+        b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
       enddo
       b(ndat) = b(ndat-1)
-      c = 0.0e0_R8
-      d = 0.0e0_R8
+      c = 0.0_R8
+      d = 0.0_R8
 
-      end subroutine approx_profile_mod                                 !srv 19.07.10 }
-
+      return
+      end subroutine approx_profile_mod                    !srv 19.07.10 }

@@ -11,10 +11,14 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2tcpa
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tcpa, ncall_b2xehx
+     & , only : ncall_b2xehx
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -59,7 +63,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tcpa')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2tcpa.lt.3) then
 *    ..test sign of ne, te, csig, calf
@@ -79,16 +83,16 @@
      &                               calf(:,0)*dtep)*switch%prl_cur
         if(switch%b2sigp_style.eq.2) then
           call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)
-          call b2xpic (nCv, ns, mpg, qe, rza, geo%cvBb, na, ua, zeff, 
+          call b2xpic (nCv, ns, qe, rza, geo%cvBb, na, ua, zeff,
      &      st_ext, fch_pi_c)
           call b2xpif (nCv, nFc, switch, geo, mpg, fch_pi_c, fch_pi_f)
         else
           fch_pi_f = 0.0_R8                                            !srv 04.04.17
         endif
         fch_p = fch_p - fch_pi_f                                       !srv 13.01.17 }
-        fch_p(:,1) = 0.0e0_R8
+        fch_p(:,1) = 0.0_R8
       else                                                             !srv 26.07.06 {
-        fch_p = 0.0e0_R8
+        fch_p = 0.0_R8
         ehx   = 0.0_R8
       endif                                                            !srv 26.07.06 }
 

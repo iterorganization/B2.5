@@ -8,10 +8,14 @@
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_switches
+      use b2mod_ad
+     & , only : ncall_b2treq
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2treq, ncall_b2tlnl
+     & , only : ncall_b2tlnl
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -65,7 +69,7 @@
 *   ..subprogram start-up calls
       call subini ('b2treq')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
       if (ncall_b2treq.lt.3) then
 *    ..test vol, state
@@ -76,11 +80,11 @@
        call b2xvsg (nCv, ne2m, 1, 'ne2m', '.gt.')
       endif
 
-      call b2tlnl (nCv, switch, switch%icase_ei, te, ti, ne, lnlam)                     !srv 20.09.11
+      call b2tlnl (nCv, switch, switch%icase_ei, te, ti, ne, lnlam)     !srv 20.09.11
 *   ..compute ceqp
       do iCv = 1, nCv
         ceqp(iCv) = switch%b2treq_phm0*
-     &    (cfeqp*lnlam(iCv)*ev*sqrt(ev))*vol(iCv)*                               !srv 01.07.09
+     &    (cfeqp*lnlam(iCv)*ev*sqrt(ev))*vol(iCv)*                      !srv 01.07.09
      &    (ne2m(iCv)/(ni(iCv,0)+st_ext%ni(iCv,0)))
       enddo
 

@@ -25,6 +25,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2tqna
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -32,7 +35,8 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2tqna, ncall_transp_keps
+     &          ncall_transp_keps
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -179,7 +183,7 @@
         endif
         if(switch%b2tqna_ballooning.ne.0.0_R8.and.
      &     switch%b2tqna_bb_ref.eq.0.0_R8) then
-          switch%b2tqna_bb_ref=sum(geo%cvBb(:,3))/(nCv)
+          switch%b2tqna_bb_ref=sum(geo%cvBb(:,3))/real(nCv,R8)
           write(*,*) 'b2tqna: bb_ref set to ',switch%b2tqna_bb_ref
         endif
       else
@@ -208,7 +212,7 @@
         endif
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2tqna.lt.3) then
@@ -283,7 +287,7 @@ c Initialise Bohm
         k=-1
         max_df0_tmp=0.0_R8
         min_df0_tmp=1.0e30_R8
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
           k=0
           do while (iscx(k).ne.is .and. k.lt.nscx)
             k = k+1
@@ -340,7 +344,7 @@ c               endif
 c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(iCv,is)/2.0e-19_R8
 c$$$                dnn=(wrk0(iCv)/sqrt(am(is)))/
 c$$$     1           (na(iCv,is)/switch%neutral_sources_rescale)/2.0e-19_R8
-cxpb Corrected for dimensionality 
+cxpb Corrected for dimensionality
                 dnn=1.0_R8/(pl%na(iCv,is)/
      &            switch%neutral_sources_rescale)/2.0e-19_R8
                 if (switch%b2tqna_diagno.gt.1) then
@@ -362,7 +366,7 @@ cxpb Corrected for dimensionality
             dna0(iCv,is) = cfdna(0,is)+
      &       cfdna(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfdna(2,is)*df0+
-     &       cfdna(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfdna(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfdna(7,is).ne.0.0_R8)
      &       dna0(iCv,is) = dna0(iCv,is)!WG_TODO*
 !WG_TODO     &        cfdna(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
@@ -371,7 +375,7 @@ cxpb Corrected for dimensionality
      &       (cfdpa(0,is)+cfdpa(1,is)/
      &       (max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &        cfdpa(2,is)*df0+
-     &        cfdpa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3)))
+     &        cfdpa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3))
             if(cfdpa(7,is).ne.0.0_R8)
      &       dpa0(iCv,is) = dpa0(iCv,is)!WG_TODO*
 !WG_TODO     &        cfdpa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
@@ -379,7 +383,7 @@ cxpb Corrected for dimensionality
             vla0(iCv,1,is) = cfvla(0,is)+
      &       cfvla(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfvla(2,is)*df0+
-     &       cfvla(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfvla(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfvla(7,is).ne.0.0_R8)
      &       vla0(iCv,1,is) = vla0(iCv,1,is)!WG_TODO*
 !WG_TODO     &        cfvla(7,is)*hy1(iCv)/hy1(switch%b2tqna_ixref,iy)
@@ -398,13 +402,13 @@ cxpb Corrected for dimensionality
             dfvsb = cfvsa(0,is)+
      &       cfvsa(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfvsa(2,is)*df0+
-     &       cfvsa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfvsa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfvsa(7,is).ne.0.0_R8)
      &       dfvsb = dfvsb!WG_TODO*cfvsa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
             dfhcb = cfhci(0,is)+
      &       cfhci(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
      &       cfhci(2,is)*df0+
-     &       cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     &       cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
             if(cfhci(7,is).ne.0.0_R8)
      &       dfhcb = dfhcb!WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
 *      ..compute vsa0, hcib
@@ -423,16 +427,16 @@ cxpb Corrected for dimensionality
         if (switch%tn_style.eq.0) then              !! default combined ion-neutral, add neutral contribution to "total" hci0
           hci0 = hci0 + hcib(:,is)
         elseif (switch%tn_style.eq.1) then
-         if (.not.is_neutral(is))then
+         if (.not.is_neutral(is)) then
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1) then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
 *     ..compute hcn0
-        if (is_neutral(is).and.zn(is).eq.1) then
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
@@ -443,16 +447,16 @@ cxpb Corrected for dimensionality
 *        dimension m**2/s, for the anomalous transport coefficients
 *        hce0, sig0, and alf0)
          dfhce = cfhce(0)+cfhce(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfhce(3)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     1    cfhce(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
          if(cfhce(7).ne.0.0_R8)
      &    dfhce=dfhce!WG_TODO*cfhce(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
          dfsig = cfsig(0)+cfsig(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfsig(3)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))!WG_TODO+
+     1    cfsig(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3) !WG_TODO+
 !WG_TODO     2    cfsig(4)*exp(-cfsig(5)*(lengthy(iCv)/lengthy(ix,ny))**2) !srv 26.11.04
          if(cfsig(7).ne.0.0_R8)
      &    dfsig=dfsig!WG_TODO*cfsig(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
          dfalf = cfalf(0)+cfalf(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfalf(3)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
+     1    cfalf(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
          if(cfalf(7).ne.0.0_R8)
      &    dfalf=dfalf!WG_TODO*cfalf(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
 *     ..compute hce0, sig0, alf0
@@ -481,12 +485,12 @@ cxpb Corrected for dimensionality
               hci0 = hci0 + hcib(:,is)
             endif
           else
-            if (.not.is_neutral(is).or.zn(is).ne.1) then
+            if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
               hci0 = hci0 + hcib(:,is)
             endif
           endif
 *       ..re-compute hcn0
-          if (is_neutral(is).and.zn(is).eq.1) then
+          if (is_neutral(is).and.nint(zn(is)).eq.1) then
             hcn0 = hcn0 + hcib(:,is)
           endif
         enddo
@@ -554,7 +558,7 @@ c mw end
      2   na, ne, te, ti, crx, hy1)
       elseif(user_transport.eq.8) then
         if(ncall_b2tqna.eq.0) then
-          call alloc_b2mod_neoclassical(nx,ny,nsdecl,mmx)
+          call alloc_b2mod_neoclassical(mpg,nsdecl,mmx)
         endif
         call set_transport_neo(nx, ny, ns, hx, hy, vol, crx, cry,
      &   conn, qz, bb, na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
@@ -571,7 +575,7 @@ c ank added blobby transport
 #endif
 c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       if(switch%transport_keps.ne.0) then
-        call set_transport_keps( 
+        call set_transport_keps(
      &    nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, sig0, alf0,
      &    dkt0, dzt0, dna_ExB,
@@ -579,10 +583,10 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       endif
 
       if(switch%transport_afn.ne.0) then
-        call set_transport_afn(nCv, nFc,
-     &   nVx, ns, nscx, iscx, switch, geo, 
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0,hcib)
+        call set_transport_afn(nCv,
+     &   ns, nscx, iscx, switch,
+     &   pl, dv, rt,
+     &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
       endif
 c ap  implementation of Bohm-like transport model 12.07.2023-?
       if(switch%transport_bohm.ne.0) then
@@ -595,7 +599,7 @@ cdpc
       if(switch%b2tqna_ballooning.ne.0.0_R8) then
         do iCv = 1, nCv
             poloidal_scale_factor=
-     1       abs(switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
+     1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
      1       switch%b2tqna_ballooning*
      1       switch%b2tqna_ballooning_rescale
             do is=0,ns-1
@@ -890,28 +894,28 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       real (kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1),
      &                  ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1),  !srv 17.04.06 01.03.07
      &                  fvlc(-1:nx,-1:ny,0:1,0:ns-1)                  !srv 19.04.10
-      real (kind=R8), save :: cdf = 0.0e0_R8, alf = 0.0e0_R8,         !srv 24.04.02 05.11.03
-     &      alfa1 = 0.0e0_R8, alfa2 = 0.0e0_R8,
-     &      delta1 = 0.0e0_R8, delta2 = 0.0e0_R8                      !srv 13.11.02 24.06.03
-      real (kind=R8), save :: vs_alfa1 = 1.0e0_R8, vs_alfa2 = 1.0e0_R8,
-     &                       vs_delta1 = 1.0e0_R8, vs_delta2= 1.0e0_R8 !srv 17.04.06 {
-      real (kind=R8), save :: te_alfa1 = 1.0e0_R8, te_alfa2 = 1.0e0_R8,
-     &                       te_delta1 = 1.0e0_R8, te_delta2= 1.0e0_R8
-      real (kind=R8), save :: ti_alfa1 = 1.0e0_R8, ti_alfa2 = 1.0e0_R8,
-     &                       ti_delta1 = 1.0e0_R8, ti_delta2= 1.0e0_R8 !srv 17.04.06 }
-      real (kind=R8), save :: vl_alfa1 = 1.0e0_R8, vl_alfa2 = 1.0e0_R8,
-     &                       vl_delta1 = 1.0e0_R8, vl_delta2= 1.0e0_R8 !srv 19.04.10
-      real (kind=R8), save ::    alfa3 = 1.0e0_R8                      !srv 13.03.07 {
-      real (kind=R8), save :: vs_alfa3 = 1.0e0_R8
-      real (kind=R8), save :: te_alfa3 = 1.0e0_R8
-      real (kind=R8), save :: ti_alfa3 = 1.0e0_R8                      !srv 13.03.07 }
-      real (kind=R8), save :: vl_alfa3 = 1.0e0_R8                      !srv 19.04.10
+      real (kind=R8), save :: cdf = 0.0_R8, alf = 0.0_R8,             !srv 24.04.02 05.11.03
+     &      alfa1 = 0.0_R8, alfa2 = 0.0_R8,
+     &      delta1 = 0.0_R8, delta2 = 0.0_R8                          !srv 13.11.02 24.06.03
+      real (kind=R8), save :: vs_alfa1 = 1.0_R8, vs_alfa2 = 1.0_R8,
+     &                       vs_delta1 = 1.0_R8, vs_delta2= 1.0_R8    !srv 17.04.06 {
+      real (kind=R8), save :: te_alfa1 = 1.0_R8, te_alfa2 = 1.0_R8,
+     &                       te_delta1 = 1.0_R8, te_delta2= 1.0_R8
+      real (kind=R8), save :: ti_alfa1 = 1.0_R8, ti_alfa2 = 1.0_R8,
+     &                       ti_delta1 = 1.0_R8, ti_delta2= 1.0_R8    !srv 17.04.06 }
+      real (kind=R8), save :: vl_alfa1 = 1.0_R8, vl_alfa2 = 1.0_R8,
+     &                       vl_delta1 = 1.0_R8, vl_delta2= 1.0_R8    !srv 19.04.10
+      real (kind=R8), save ::    alfa3 = 1.0_R8                       !srv 13.03.07 {
+      real (kind=R8), save :: vs_alfa3 = 1.0_R8
+      real (kind=R8), save :: te_alfa3 = 1.0_R8
+      real (kind=R8), save :: ti_alfa3 = 1.0_R8                       !srv 13.03.07 }
+      real (kind=R8), save :: vl_alfa3 = 1.0_R8                       !srv 19.04.10
 ! { IYS 29.11.2012
-      real (kind=R8), save ::    alfa4 = 1.0e0_R8                      !srv 19.04.13
-      real (kind=R8), save :: vs_alfa4 = 1.0e0_R8
-      real (kind=R8), save :: te_alfa4 = 1.0e0_R8
-      real (kind=R8), save :: ti_alfa4 = 1.0e0_R8
-      real (kind=R8), save :: vl_alfa4 = 1.0e0_R8
+      real (kind=R8), save ::    alfa4 = 1.0_R8                       !srv 19.04.13
+      real (kind=R8), save :: vs_alfa4 = 1.0_R8
+      real (kind=R8), save :: te_alfa4 = 1.0_R8
+      real (kind=R8), save :: ti_alfa4 = 1.0_R8
+      real (kind=R8), save :: vl_alfa4 = 1.0_R8
 ! IYS 29.12.2012}
       character chns*3                                                !srv 05.11.03
       save ncall
@@ -1106,7 +1110,11 @@ c
             dna0(ix,iy,is) = dna0(ix,iy,is)*fdnc(ix,iy,is)
             vla0(ix,iy,:,is) = vla0(ix,iy,:,is)*fvlc(ix,iy,:,is)      !srv 19.04.10
             vsa0(ix,iy,is) = vsa0(ix,iy,is)*fvsc(ix,iy,is)
-            hcib(ix,iy,is) = hcib(ix,iy,is)*ftic(ix,iy,is)            !srv 19.05.03
+            if (switch%tn_style.eq.0.or.
+     &         (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
+     &         (switch%tn_style.eq.2.and.
+     &         (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
+     >       hcib(ix,iy,is) = hcib(ix,iy,is)*ftic(ix,iy,is)           !srv 19.05.03
             hci0(ix,iy)    = hci0(ix,iy) + hcib(ix,iy,is)
           enddo
         enddo
@@ -1184,15 +1192,15 @@ c
         real (kind=R8) :: width, bbaverage, t0, t1, step
         real (kind=R8), allocatable, save :: coord(:), fun(:,:)
 
-        fdnc = 1.0e0_R8
-        fvsc = 1.0e0_R8                                           !srv 17.04.06 {
-        ftec = 1.0e0_R8
-        ftic = 1.0e0_R8                                           !srv 17.04.06 }
-        fvlc = 1.0e0_R8                                           !srv 19.04.10 }
+        fdnc = 1.0_R8
+        fvsc = 1.0_R8                                             !srv 17.04.06 {
+        ftec = 1.0_R8
+        ftic = 1.0_R8                                             !srv 17.04.06 }
+        fvlc = 1.0_R8                                             !srv 19.04.10 }
 
        if(nncut > 0) then                                         !srv 25.02.16
         select case (itype)
-         case(9)                                                !srv 22.05.09 {
+         case(9)                                                  !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
 *   ..modification of case (5). It is used barrier function
           do iy = -1, ny                  ! for SOL and PR region
@@ -1284,9 +1292,9 @@ c
            endif
            write(*,"(/' Parameters of H-regime')")
            write(*,"(' Number of midplane cell =',i4)") nmdpl
-           call xertst(0.0e0_R8.le.delta1,
+           call xertst(0.0_R8.le.delta1,
      &                 'faulty argument b2tqna_delta1') !srv 15.05.09
-           call xertst(0.0e0_R8.le.delta2,
+           call xertst(0.0_R8.le.delta2,
      &                 'faulty argument b2tqna_delta2') !srv 15.05.09
 
            allocate(coord(-1:ny), fun(-1:ny,0:2))
@@ -1305,21 +1313,21 @@ c
 
            call set_profile(filename(0), ny, coord, fun(-1,0))
            do iy = -1, ny
-             call xertst (fun(iy,0).gt. 0.0e0_R8,
+             call xertst (fun(iy,0).gt. 0.0_R8,
      1        'Approximation of data from file '//trim(filename(0))//
      2        ' has given '//'negative coefficient')
            enddo
 
            call set_profile(filename(1), ny, coord, fun(-1,1))
            do iy = -1, ny
-             call xertst (fun(iy,1).gt. 0.0e0_R8,
+             call xertst (fun(iy,1).gt. 0.0_R8,
      1        'Approximation of data from file '//trim(filename(1))//
      2        ' has given '//'negative coefficient')
            enddo
 
            call set_profile(filename(2), ny, coord, fun(-1,2))
            do iy = -1, ny-1
-             call xertst (fun(iy,2).gt. 0.0e0_R8,
+             call xertst (fun(iy,2).gt. 0.0_R8,
      1        'Approximation of data from file '//trim(filename(2))//
      2        ' has given '//'negative coefficient')
            enddo
@@ -1328,8 +1336,8 @@ c
      &      ' Exchanges of transport coefficients have been done'
            do is = 0, ns-1
              if(.not.is_neutral(is)) then
-               cfdna(2,is)   = 1.0e0_R8
-               cfhci(2,is)   = 1.0e0_R8
+               cfdna(2,is)   = 1.0_R8
+               cfhci(2,is)   = 1.0_R8
                write(*,"(' Now cfdna(2,',i3,') =',es10.2)")
      &          is, cfdna(2,is)
                write(*,"(' Now cfhci(2,',i3,') =',es10.2)")
@@ -1337,7 +1345,7 @@ c
              endif
            enddo
 
-           cfhce(0) = 1.0e0_R8
+           cfhce(0) = 1.0_R8
            write(*,"( ' Now cfhce(0)    =',es10.2/)") cfhce(0)
 
           endif
@@ -1375,8 +1383,8 @@ c
 *   ..calculate
           do is = 0, ns-1
            if(.not.is_neutral(is)) then
-            t0 = 0.0e0_R8
-            t1 = 0.0e0_R8
+            t0 = 0.0_R8
+            t1 = 0.0_R8
             mintopcut=min(topcut(1)-1,topcut(2)-1)
             do iy = 0, mintopcut    ! for inner surfaces
              do ix = 0, nx
@@ -1390,9 +1398,9 @@ c
             do iy = -1, ny                   ! for all surfaces
              do ix = -1, nx
               if(on_closed_surface(ix,iy) .and. iy.le.mintopcut) then
-               fdnc(ix,iy,is)=1.0e0_R8
+               fdnc(ix,iy,is)=1.0_R8
               else
-               fdnc(ix,iy,is)=1.0e0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
+               fdnc(ix,iy,is)=1.0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
               endif
              enddo
             enddo
@@ -1403,9 +1411,9 @@ c
 *   ..calculate poloidal variation of transport coefficients
           do is = 0, ns-1
            if(.not.is_neutral(is)) then
-            if(alf .ne. 0.0e0_R8) then
-             t0 = 0.0e0_R8
-             t1 = 0.0e0_R8
+            if(alf .ne. 0.0_R8) then
+             t0 = 0.0_R8
+             t1 = 0.0_R8
              do iy = 0, topcut(1)-1   ! for inner surfaces
 !           do ix = leftcut(1), rightcut(1)-1
               do ix = 0, nx
@@ -1415,30 +1423,30 @@ c
                endif
               enddo
              enddo
-             bbaverage = (t0/t1)**(-1.0e0_R8/alf)
+             bbaverage = (t0/t1)**(-1.0_R8/alf)
              do iy = -1, ny                   ! for all surfaces
               do ix = -1, nx
                fdnc(ix,iy,is) = (bbaverage/bb(ix,iy,3))**alf
               enddo
              enddo
             else
-             fdnc(:,:,is) = 1.0e0_R8
+             fdnc(:,:,is) = 1.0_R8
             endif
-           endif                                     !srv 05.11.03 }
+           endif                                                !srv 05.11.03 }
           enddo
          case (5)                                               !srv 13.11.02 12.07.10 {
 
           if(ncall.eq.0) then
            mintopcut=minval(topcut(1:nncut))
-           call xertst(0.0e0_R8.le.delta1,
+           call xertst(0.0_R8.le.delta1,
      *         'faulty argument b2tqna_delta1') !srv 15.05.09
-           call xertst(0.0e0_R8.le.delta2,
+           call xertst(0.0_R8.le.delta2,
      *         'faulty argument b2tqna_delta2') !srv 15.05.09
            if(delta1.eq.0) then
             bottomdelta1 = mintopcut
            elseif(delta1.lt.lengthy(nmdpl,mintopcut)) then              !srv 15.05.09 {
             bottomdelta1 = mintopcut
-            width = 0.0e0_R8
+            width = 0.0_R8
             do iy =mintopcut-1,-1,-1               ! srv 15.05.09 was topcut(1)-1,0,-1
              width = width + hy(nmdpl,iy)
              if(width.ge.delta1) then
@@ -1455,8 +1463,8 @@ c
            elseif(delta2.lt.
      &           lengthy(nmdpl,ny)-lengthy(nmdpl,mintopcut)) then
             topdelta2 = mintopcut                 !srv 24.06.03 {
-            width = 0.0e0_R8
-            do iy = mintopcut,ny                                       !srv 23.01.18
+            width = 0.0_R8
+            do iy = mintopcut,ny                  !srv 23.01.18
              width = width + hy(nmdpl,iy)
              if(width.ge.delta2) then
               topdelta2 = iy
@@ -1465,7 +1473,7 @@ c
             enddo                                !srv 24.06.03 {
            else
             topdelta2 = ny
-           endif                                                       !srv 15.05.09 }
+           endif                                 !srv 15.05.09 }
            if(iout.ne.0) then
             open(70,file= 'output/Parameters_of_H-regime.dat')         !srv 23.01.18
             write(70,"(/' Parameters of H-regime')")
@@ -1546,10 +1554,10 @@ c
           enddo
 
 *   ..take into account poloidal variation of transport coefficients
-          if(alf .ne. 0.0e0_R8) then                                     !srv 04.07.06 {
-           t0 = 0.0e0_R8
-           t1 = 0.0e0_R8
-           do iy = 0, mintopcut-1   ! for inner surfaces
+          if(alf .ne. 0.0_R8) then                    !srv 04.07.06 {
+           t0 = 0.0_R8
+           t1 = 0.0_R8
+           do iy = 0, mintopcut-1                     ! for inner surfaces
             do ix = 0, nx
              if(on_closed_surface(ix,iy)) then
               t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
@@ -1557,7 +1565,7 @@ c
              endif
             enddo
            enddo
-           bbaverage = (t0/t1)**(-1.0e0_R8/alf)
+           bbaverage = (t0/t1)**(-1.0_R8/alf)
 
            do iy = topdelta2+1, ny                    ! for SOL region
             do ix = -1, nx
@@ -1631,7 +1639,7 @@ c
 
          case (1)
 
-          do iy = topcut(1),ny              ! for SOL region
+          do iy = topcut(1),ny                            ! for SOL region
            do ix = -1,nx
             fdnc(ix,iy,:) = fdnc(ix,iy,:) +               !srv 01.03.07 ???
      *                  cdf*((lengthy(nx/2,iy)-lengthy(nx/2,topcut(1)))
@@ -1640,15 +1648,14 @@ c
           enddo
          case default
 
-          fdnc = 1.0e0_R8
+          fdnc = 1.0_R8
         end select
        endif                                                !srv 25.02.16
 
         ncall = ncall + 1
 
-      end subroutine defdc                  !srv 24.02.04 13.11.02}
-
-      end subroutine set_transport_srv                            !srv 12.06.08 }
+      end subroutine defdc                                  !srv 24.02.04 13.11.02}
+      end subroutine set_transport_srv                      !srv 12.06.08 }
 
       subroutine set_transport_swy(nx, ny, ns,
      & dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
@@ -1751,7 +1758,11 @@ c
         do iy=-1,ny
           hci0(ix,iy)=0.0_R8
           do is=0,ns-1
-            hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
+            if (switch%tn_style.eq.0.or.
+     &         (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
+     &         (switch%tn_style.eq.2.and.
+     &         (.not.is_neutrals(is).or.nint(zn(is)).ne.1)))
+     >       hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
           enddo
         enddo
       enddo
@@ -1787,7 +1798,11 @@ c
             do iy=-1,ny
               hci0(ix,iy)=0.0_R8
               do is=0,ns-1
-                hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
+                if (switch%tn_style.eq.0.or.
+     &             (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
+     &             (switch%tn_style.eq.2.and.
+     &             (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
+     >           hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
               enddo
             enddo
           enddo
@@ -1841,7 +1856,7 @@ c
 *   ..subprogram start-up calls
       call subini ('set_transport_eta')
       if (ncall.eq.0) then
-        call alloc_b2mod_transport_models(nx, ny, ns)
+        call alloc_b2mod_transport_models(mpg%nFs,ns)
         call read_b2mod_transport_models(99,'    ',models_found)
         if(nnreg(0).eq.4) then
           if(LSN) then
@@ -2439,7 +2454,11 @@ c MW working end 3
         do iy=-1,ny
           hci0(ix,iy)=0.0_R8
           do is=0,ns-1
-            hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
+            if (switch%tn_style.eq.0.or.
+     &         (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
+     &         (switch%tn_style.eq.2.and.
+     &         (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
+     >       hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
           enddo
         enddo
       enddo
@@ -2598,7 +2617,7 @@ c*** We only apply this in the outer SOL region
       call subini ('set_transport_disruption')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        call alloc_b2mod_transport_disruption(nx,ny)
+        call alloc_b2mod_transport_disruption(mpg)
         if(nnreg(0).eq.4) then
           if (LSN) then
             ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
@@ -3563,7 +3582,11 @@ c      close(14)
      &        vvn(ispecies,istate,iy)*(hy1(ix,iy)/hy1(ixref,iy))
            dfhcb=chi(ispecies,istate,iy)*
      &           (hy1(ix,iy)/hy1(ixref,iy))**2
-           hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
+           if (switch%tn_style.eq.0.or.
+     &        (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
+     &        (switch%tn_style.eq.2.and.
+     &        (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
+     >      hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
            hcib(ix,iy,is)=hcib(ix,iy,is)+dfhcb*na(ix,iy,is)
            hvi0(ix,iy,1)=hvi0(ix,iy,1)+vwt(ispecies,istate,iy)*
      &           (hy1(ix,iy)/hy1(ixref,iy))*na(ix,iy,is)/
@@ -3585,7 +3608,11 @@ c      close(14)
            is=isort(ispecies,istate)
            dna0(ix,iy,is)=dna0(ix,iy,is)+fix_dna
            dfhcb=fix_hci
-           hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
+           if (switch%tn_style.eq.0.or.
+     &        (switch%tn_style.eq.1.and..not.is_neutral(is)).or.
+     &        (switch%tn_style.eq.2.and.
+     &        (.not.is_neutral(is).or.nint(zn(is)).ne.1)))
+     >      hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
            hcib(ix,iy,is)=hcib(ix,iy,is)+dfhcb*na(ix,iy,is)
           enddo
          enddo
@@ -3653,8 +3680,8 @@ c      close(14)
         b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
       enddo
       b(ndat) = b(ndat-1)
-      c = 0.0e0_R8
-      d = 0.0e0_R8
+      c = 0.0_R8
+      d = 0.0_R8
       do i = -1, n
         fun(i) = dseval(ndat, coord(i), r, f, b, c, d)
         write(*,*) coord(i), fun(i)
@@ -3668,10 +3695,10 @@ c      close(14)
 c**************************************************************************************
 c*****************     New KU Leuven transport model for neutrals *********************
 c**************************************************************************************
-      subroutine set_transport_afn(nCv, nFc,
-     &            nVx, ns, nscx, iscx, switch, geo, 
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0,hcib)
+      subroutine set_transport_afn(nCv,
+     &   ns, nscx, iscx, switch,
+     &   pl, dv, rt,
+     &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
@@ -3681,21 +3708,16 @@ c*******************************************************************************
       use b2mod_rates
       use b2mod_transport_namelist
       use b2mod_switches
-      use b2us_geo
-      use b2us_map
       use b2us_plasma
       use b2mod_subsys
       implicit none
 
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, iscx(0:nscxmax-1)
+      integer nCv, ns, nscx, iscx(0:nscxmax-1)
       type (switches), intent (in) :: switch
-      type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) :: t_av, df0
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
@@ -3707,13 +3729,13 @@ c*******************************************************************************
      &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  wrk0(nCv), vcx, dion
+     *  wrk0(nCv), vcx, dion, vnn
       integer is, k, ic, iCv
 
 *   ..subprogram start-up calls
       call subini ('set_transport_afn')
       do is = 0, ns-1
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then ! only for hydrogenic species
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then ! only for hydrogenic species
 
           k=0
           do while (iscx(k).ne.is .and. k.lt.nscx)
@@ -3726,16 +3748,19 @@ c*******************************************************************************
             vcx=0.0_R8
             do ic = 0, ns-1
               t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
-              vcx = vcx + pl%na(iCv,ic) * 
+              vcx = vcx + pl%na(iCv,ic) *
      &          expu(rt%rlcx(iCv,0,ic,k) +
      &          rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
             enddo
             dion=expu(
      2        rt%rlsa(iCv,0,is)+
      3        rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
-*         ..For now, no neutral-neutral collisions inlcuded
+*         ..Collision time for n-n collisions (D-D), based on Kotov 2007
+            vnn = 5.2958e-11_R8*(KBolt*pl%tn(iCv))**0.25_R8*
+     &           pl%na(iCv,is)
+*         ..Total coefficients
             df0=(wrk0(iCv)/sqrt(am(is)))**2/
-     1           (vcx+dion*dv%ne(iCv))
+     1           (vcx+dion*dv%ne(iCv)+vnn)
             ! limit df0
             df0=max(switch%b2tqna_min_df0,
      &          min(switch%b2tqna_max_df0,df0))
@@ -3762,7 +3787,7 @@ c*******************************************************************************
      .       'vma0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
           endif
-        endif 
+        endif
       enddo !! end loop over species
 
 *   ..recompute hci0, hcn0
@@ -3777,12 +3802,12 @@ c*******************************************************************************
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1)then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1)then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
 *     ..compute hcn0
-        if (is_neutral(is).and.zn(is).eq.1) then
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
@@ -3850,7 +3875,7 @@ c*******************************************************************************
       do is=0,ns-1
         if(.not.is_neutral(is)) then
           if(switch%keps_local.eq.1) then
-*   ..compute local larmor radius
+*   ..compute local Larmor radius
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
      &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
           else
@@ -3884,7 +3909,7 @@ cwdk same dna_ExB for all ion species
           endif
           if (switch%keps_visc.gt.0.0_R8) then
             vsa0(:,is) = switch%keps_fac*am(is)*mp*pl%na(:,is)*
-     &        (switch%keps_visc*dna_ExB + switch%vsa_min) + 
+     &        (switch%keps_visc*dna_ExB + switch%vsa_min) +
      &        (1.0_R8-switch%keps_fac)*vsa0(:,is)
           endif
           if (switch%keps_heat.gt.0.0_R8) then
@@ -3906,7 +3931,7 @@ cwdk same dna_ExB for all ion species
           if (switch%keps_alf.gt.0.0_R8) then
             alf0 = switch%keps_alf*(dna_ExB + switch%dna_min)*
      &         dv%ne(omp(icsepomp))*sqrt(qe/pl%te)*
-     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
+     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*alf0
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
           dzt0 = switch%keps_dzt*dna0(:,ismain)*pl%na(:,ismain)
@@ -3918,19 +3943,19 @@ cwdk same dna_ExB for all ion species
         if (switch%tn_style.eq.0) then
           hci0 = hci0 + hcib(:,is)
         elseif (switch%tn_style.eq.1) then
-         if (.not.is_neutral(is))then
+         if (.not.is_neutral(is)) then
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1)then
+         if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
       enddo
- 
+
 *   ..increase percentage of coefficients from k-eps
       switch%keps_fac = min(switch%keps_fac*switch%keps_inc,1.0_R8)
-      if (switch%keps_inc.gt.1.0_R8) 
+      if (switch%keps_inc.gt.1.0_R8)
      > write(*,*) 'b2tqna_keps_fac = ',switch%keps_fac
 
       if (switch%keps_iout.eq.1) then

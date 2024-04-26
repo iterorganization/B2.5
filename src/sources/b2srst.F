@@ -1,17 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2srst (nCv, ns, switch, mpg, na, ua, te, ti, tn, po,   !srv 01.07.08
+      subroutine b2srst (nCv, ns, switch, na, ua, te, ti, tn, po,       !srv 01.07.08
      &  ne, ni, nn, kt, zt, sr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_switches
-      use b2us_map
       use b2us_plasma
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
-!WG_TODO     2          b2srst_shi0to3, balance_netcdf
+      use b2mod_balance !djm Jan2017
+     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
+     2          b2srst_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -21,7 +20,6 @@
 *   ..input arguments (unchanged on exit)
       integer nCv, ns                                  !srv 01.07.08
       type (switches), intent (in) :: switch
-      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &  te(nCv), ti(nCv), tn(nCv), po(nCv),
@@ -62,12 +60,13 @@
       call subini ('b2srst')
 *   ..set internal parameters on first call
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test sign of na, ni, ne, te, ti
       if(ncall_b2srst.lt.3) then
         call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
         call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
+        call b2xvsg (nCv, nn, 1, 'nn', '.gt.')
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
         call b2xvsg (nCv, te, 1, 'te', '.gt.')
         call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
@@ -226,12 +225,12 @@
       sztst = sr%szt - sztst
 
 cdjm Jan2017 Store for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srst_sna0to1 = snast
-!WG_TODO        b2srst_smo0to3 = smost
-!WG_TODO        b2srst_she0to3 = shest
-!WG_TODO        b2srst_shi0to3 = shist
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2srst_sna0to1 = snast
+        b2srst_smo0to3 = smost
+        b2srst_she0to3 = shest
+        b2srst_shi0to3 = shist
+      endif
 
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1

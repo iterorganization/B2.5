@@ -10,12 +10,16 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+      use b2mod_balance                                                 !djm Jan2017
+     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+      use b2mod_ad
+     & , only : ncall_b2siav
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2siav, ncall_b2ttia
+     & , only : ncall_b2ttia
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -69,7 +73,7 @@
 *   ..subprogram start-up calls
       call subini ('b2siav')
 
-      ft = 4.0e0_R8/3.0e0_R8                                            !srv 16.10.17
+      ft = 4.0_R8/3.0_R8                                                !srv 16.10.17
       s2 = sqrt(2.0_R8)                                                 !iyv 02.12.13
       smbvh = 0.0_R8
       smbvv = 0.0_R8
@@ -84,7 +88,7 @@
           call gradc(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
 
 *       ..calculate the parallel heat flux of ions in the center of the cell
-          qip0 = 0.0e0_R8
+          qip0 = 0.0_R8
 
           if (switch%b2siav_qstyle .eq. 0) then
 
@@ -92,7 +96,7 @@
              if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
-               qip0(iCv) = -2.5e0_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
+               qip0(iCv) = -2.5_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
      &           (geo%cvBb(iCv,0)*geo%ftBbav2(iFt))*
      &           (ni(iCv)*ti(iCv)/qe)*gti(iCv,1)
               enddo
@@ -141,7 +145,7 @@
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
                qip0(iCv) = -hcix_c(iCv)*gti(iCv,0)*geo%cvBb(iCv,3)/
-     &           geo%cvBb(iCv,0) - 2.5e0_R8*geo%cvBb(iCv,2)/
+     &           geo%cvBb(iCv,0) - 2.5_R8*geo%cvBb(iCv,2)/
      &           (geo%cvBb(iCv,0)*geo%cvBb(iCv,3))*(ni(iCv)*ti(iCv)/qe)*
      &           gti(iCv,1)
               enddo
@@ -164,19 +168,19 @@
 
           endif
 
-          tauia1 = 0.0e0_R8
-          nu1    = 0.0e0_R8
-          alpha1 = 0.0e0_R8
-          kt_neo = 0.0e0_R8                                             !iyv 02.12.13
+          tauia1 = 0.0_R8
+          nu1    = 0.0_R8
+          alpha1 = 0.0_R8
+          kt_neo = 0.0_R8                                               !iyv 02.12.13
           do iFt = 1, mpg%nFt 
             if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                 iCv = mpg%ftCv(ic)
                 if (switch%lluciani.eq.3) then
                   tauia1(iCv) = switch%cvsa_mltpl*tauia(iCv,isb)/       !lk 20.11.07 { iyv 06.12.13
-     &             (1.0e0_R8+15.12e16_R8/geo%ftConn(iFt)*
+     &             (1.0_R8+15.12e16_R8/geo%ftConn(iFt)*
      &             (ti(iCv)/ev)**2/ne2(iCv))
-     &             /(1.0e0_R8+15.12e16_R8*geo%ftEps(iFt)**1.5e0_R8
+     &             /(1.0_R8+15.12e16_R8*geo%ftEps(iFt)**1.5_R8
      &             /geo%ftConn(iFt)*(ti(iCv)/ev)**2/ne2(iCv))
                 elseif (switch%lluciani.eq.1) then
                   tauia1(iCv) = tauia(iCv,isb)/
@@ -187,15 +191,15 @@
                 endif
                 nu1(iCv) = geo%ftConn(iFt)/(tauia(iCv,isb)
      &           *sqrt(ti(iCv)/(mp*am(isb)))
-     &           *2.0e0_R8*pi*sqrt(geo%ftEps(iFt)**3))
-                alpha1(iCv) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(iCv))+
-     &           2.7e0_R8*nu1(iCv)**2*geo%ftEps(iFt)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(iCv))+
-     &           nu1(iCv)**2*geo%ftEps(iFt)**3)-1.0e0_R8)*0.533e0_R8   !lk 20.11.07 }
+     &           *2.0_R8*pi*sqrt(geo%ftEps(iFt)**3))
+                alpha1(iCv) = ((-0.17_R8+1.05_R8*sqrt(nu1(iCv))+
+     &           2.7_R8*nu1(iCv)**2*geo%ftEps(iFt)**3)/(1.0_R8+
+     &           0.7_R8*sqrt(nu1(iCv))+
+     &           nu1(iCv)**2*geo%ftEps(iFt)**3)-1.0_R8)*0.533_R8        !lk 20.11.07 }
                 kt_neo(iCv) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(iCv)*s2)               !iyv 02.12.13
-     &           +2.7e0_R8*(nu1(iCv)*s2)**2*geo%ftEps(iFt)**3)/
-     &           (1.0e0_R8+0.7e0_R8*sqrt(nu1(iCv)*s2)+
+     &           ((-0.17_R8+1.05_R8*sqrt(nu1(iCv)*s2)                   !iyv 02.12.13
+     &           +2.7_R8*(nu1(iCv)*s2)**2*geo%ftEps(iFt)**3)/
+     &           (1.0_R8+0.7_R8*sqrt(nu1(iCv)*s2)+
      &           (nu1(iCv)*s2)**2*geo%ftEps(iFt)**3))
               enddo
             endif
@@ -267,7 +271,7 @@
 *       ..add to r.h.s. source
           do iCv = 1, mpg%nCi
             t0 = wrk0(iCv)*wrk2(iCv)                                    !srv 01.07.05 }
-            if (t0.gt.0.0e0_R8) then
+            if (t0.gt.0.0_R8) then
               smbvv(iCv,0) = t0*ub(iCv)
             else
               smbvv(iCv,1) = t0
@@ -298,10 +302,10 @@
       endif                                                             !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2siav_smovh0to3(-1:nx,-1:ny,0:3,isb)=smbvh
-!WG_TODO        b2siav_smovv0to3(-1:nx,-1:ny,0:3,isb)=smbvv
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2siav_smovh0to3(1:nCv,0:3,isb)=smbvh
+        b2siav_smovv0to3(1:nCv,0:3,isb)=smbvv
+      endif
 
 * ..return
       ncall_b2siav = ncall_b2siav+1

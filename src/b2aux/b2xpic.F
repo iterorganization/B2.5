@@ -1,11 +1,9 @@
-      subroutine b2xpic (nCv, ns, mpg, qe, rza, bb, na, ua, zeff,       !srv 13.01.17
+      subroutine b2xpic (nCv, ns, qe, rza, bb, na, ua, zeff,       !srv 13.01.17
      &                   st_ext, fch_pi_c)
       use b2mod_types
       use b2us_plasma
-      use b2us_map
       implicit none
       integer nCv, ns
-      type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
      *  qe, rza(nCv,0:ns-1), na(nCv,0:ns-1), ua(nCv,0:ns-1),

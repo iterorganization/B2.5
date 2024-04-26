@@ -4,7 +4,7 @@
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
      &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
-     &  rza, rz2, st_ext, she0, shi0, shn0)
+     &  rza, rz2, st_ext, she0, shi0, shn0, srw)
       use b2mod_types
       use b2mod_tallies
 !      use b2mod_anomalous_transport
@@ -14,21 +14,24 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
-      use B2us_plasma
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
-!WG_TODO     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
-!WG_TODO     &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
-!WG_TODO     &          balance_netcdf
+      use b2us_plasma
+      use b2mod_balance !djm Jan2017
+     & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
+     &          b2sihs_joule0to3, b2sihs_divua0to3,
+     &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
+     &          balance_netcdf
       use b2mod_transport_fun                                         !srv 05.07.17
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2sihs_, ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl,
+     & , only : ncall_b2sihs_
+#ifndef NAGFOR
+     &        , ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2sifrtf
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -37,6 +40,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
+      type (B2SourceWork), intent (inout) :: srw
       real (kind=R8) ::
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
@@ -76,7 +80,7 @@
 #ifdef WG_TODO
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)      !lk 31.01.08 }
 #endif
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  shidu(nCv,0:3), shidd(nCv,0:3),                     !srv 11.09.09 {
      *  shiva(nCv,0:3), shivc(nCv,0:3),
      *  shivan(nCv,0:3), shivcn(nCv,0:3),
@@ -119,7 +123,7 @@
 *   ..subprogram start-up calls
       call subini ('b2sihs_')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2sihs_.lt.3) then
@@ -151,25 +155,25 @@
 
 * ..compute heat source terms
 *   ..initialize sources to zero
-      call sfill (nCv*4, 0.0e0_R8, she0, 1)
-      call sfill (nCv*4, 0.0e0_R8, shi0, 1)
-      call sfill (nCv*4, 0.0e0_R8, shn0, 1)
-      call sfill (nCv*4, 0.0e0_R8, shedu, 1)                         !srv 11.09.09 {
-      call sfill (nCv*4, 0.0e0_R8, shedd, 1)
-      call sfill (nCv*4, 0.0e0_R8, shefr, 1)
-      call sfill (nCv*4, 0.0e0_R8, shidu, 1)
-      call sfill (nCv*4, 0.0e0_R8, shidun, 1)
-      call sfill (nCv*4, 0.0e0_R8, shidd, 1)
-      call sfill (nCv*4, 0.0e0_R8, shifr, 1)
-      call sfill (nCv*4, 0.0e0_R8, shiva, 1)
-      call sfill (nCv*4, 0.0e0_R8, shivc, 1)                         !srv 11.09.09 }
-      call sfill (nCv*4, 0.0e0_R8, shivan, 1)
-      call sfill (nCv*4, 0.0e0_R8, shivcn, 1)                        !srv 11.09.09 }
-      call sfill (nCv*4, 0.0e0_R8, shest, 1)                         !srv 17.12.13
+      call sfill (nCv*4, 0.0_R8, she0, 1)
+      call sfill (nCv*4, 0.0_R8, shi0, 1)
+      call sfill (nCv*4, 0.0_R8, shn0, 1)
+      call sfill (nCv*4, 0.0_R8, shedu, 1)                            !srv 11.09.09 {
+      call sfill (nCv*4, 0.0_R8, shedd, 1)
+      call sfill (nCv*4, 0.0_R8, shefr, 1)
+      call sfill (nCv*4, 0.0_R8, shidu, 1)
+      call sfill (nCv*4, 0.0_R8, shidun, 1)
+      call sfill (nCv*4, 0.0_R8, shidd, 1)
+      call sfill (nCv*4, 0.0_R8, shifr, 1)
+      call sfill (nCv*4, 0.0_R8, shiva, 1)
+      call sfill (nCv*4, 0.0_R8, shivc, 1)                            !srv 11.09.09 }
+      call sfill (nCv*4, 0.0_R8, shivan, 1)
+      call sfill (nCv*4, 0.0_R8, shivcn, 1)                           !srv 11.09.09 }
+      call sfill (nCv*4, 0.0_R8, shest, 1)                            !srv 17.12.13
 *   ..compute the Coulomb logarithm
       call b2tlnl (nCv, switch, switch%icase_ii, te, ti, ne, lnlam)   !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
-      if(switch%fch_stochastic.ne.0.0e0_R8) then                      !lk 31.01.08 { !srv 17.12.13
+      if(switch%fch_stochastic.ne.0.0_R8) then                        !lk 31.01.08 { !srv 17.12.13
        call xerrab ('b2sihs_: fch_stochastic not yet available for WG')
 #ifdef WG_TODO
        call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)
@@ -186,13 +190,13 @@
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
      &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
      &    +hy(topix(ix,iy),topiy(ix,iy)))
-     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
+     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0_R8
          endif
         enddo
        enddo
 #endif
-      endif                                                         !lk 31.01.08 }
-      call b2saxpy (nCv*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
+      endif                                                           !lk 31.01.08 }
+      call b2saxpy (nCv*4, 1.0_R8, shest, 1, she0, 1)                 !srv 17.12.13
 *   ..contribution from divergence ue
       if(switch%b2sihs_style_int_vel.eq.0) then
         call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ue,wrkf(:,0))
@@ -201,25 +205,25 @@
       endif
       wrkf(:,0) = wrkf(:,0)*geo%fcPbs
       call div0(nCv, nFc, mpg, wrkf(:,0), wrkc)
-!WG_TODO      b2divue=0.0_R8
-!WG_TODO      b2sihs_divue=0.0_R8
+      b2divue=0.0_R8
+      srw%b2sihs_divue=0.0_R8
       do iCv = 1, mpg%nCi
          t0 = -switch%b2sihs_phm0*(1.0_R8-switch%BoRiS)*wrkc(iCv)
          shedu(iCv,0) = shedu(iCv,0)+
-     &    (max(0.0e0_R8,t0)+switch%b2sihs__rf0*abs(t0))*ne(iCv)*te(iCv)
-         shedu(iCv,3) = shedu(iCv,3)+min(0.0e0_R8,t0)-
+     &    (max(0.0_R8,t0)+switch%b2sihs__rf0*abs(t0))*ne(iCv)*te(iCv)
+         shedu(iCv,3) = shedu(iCv,3)+min(0.0_R8,t0)-
      &                  switch%b2sihs__rf0*abs(t0)
-!WG_TODO         b2divue(mpg%cvReg(iCv))=b2divue(mpg%cvReg(iCv))+
-!WG_TODO     1     t0*ne(iCv)*te(iCv)
-!WG_TODO         b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
+         b2divue(mpg%cvReg(iCv))=b2divue(mpg%cvReg(iCv))+
+     1     t0*ne(iCv)*te(iCv)
+         srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_divue0to3 = shedu
-!WG_TODO      endif
-      call b2saxpy (nCv*4, 1.0e0_R8, shedu, 1, she0, 1)                !srv 11.09.09
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divue0to3 = shedu
+      endif
+      call b2saxpy (nCv*4, 1.0_R8, shedu, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from divergence ua
-!WG_TODO      b2divua=0.0_R8
-!WG_TODO      b2sihs_divua=0.0_R8
+      b2divua=0.0_R8
+      srw%b2sihs_divua=0.0_R8
       do is = 0, ns-1
         if(switch%b2sihs_style_int_vel.eq.0) then
           call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ua(:,is),wrkf(:,0))
@@ -233,77 +237,83 @@
      &                            *(1.0_R8-switch%BoRiS)*wrkc(iCv)     !srv 21.07.05 {
           if (switch%tn_style.eq.0) then
             shidu(iCv,0) = shidu(iCv,0)+
-     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &        (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &         ti(iCv)
-            shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)
+            shidu(iCv,3) = shidu(iCv,3)+min(0.0_R8,t0)
      &                     -switch%b2sihs__rf1*abs(t0)
+            b2divua(mpg%cvReg(iCv))=b2divua(mpg%cvReg(iCv))
+     1         +t0*ni(iCv,0)*ti(iCv)
           elseif (switch%tn_style.eq.1) then
            if (.not.is_neutral(is)) then
             shidu(iCv,0) = shidu(iCv,0)+
-     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &        (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &         ti(iCv)
-            shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)
+            shidu(iCv,3) = shidu(iCv,3)+min(0.0_R8,t0)
      &                     -switch%b2sihs__rf1*abs(t0)
+            b2divua(mpg%cvReg(iCv))=b2divua(mpg%cvReg(iCv))
+     1         +t0*ni(iCv,0)*ti(iCv)
            endif
           else
-           if (.not.is_neutral(is).or.zn(is).ne.1) then
+           if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
             shidu(iCv,0) = shidu(iCv,0)+
-     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &        (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &         ti(iCv)
-            shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)
+            shidu(iCv,3) = shidu(iCv,3)+min(0.0_R8,t0)
      &                     -switch%b2sihs__rf1*abs(t0)
+            b2divua(mpg%cvReg(iCv))=b2divua(mpg%cvReg(iCv))
+     1         +t0*ni(iCv,0)*ti(iCv)
            else
             t0 = t0*ni(iCv,0)/nn(iCv)
             shidun(iCv,0) = shidun(iCv,0)+
-     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*nn(iCv)*
+     &        (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*nn(iCv)*
      &         tn(iCv)
-            shidun(iCv,3) = shidun(iCv,3)+min(0.0e0_R8,t0)-
+            shidun(iCv,3) = shidun(iCv,3)+min(0.0_R8,t0)-
      &         switch%b2sihs__rf1*abs(t0)
+            b2divua(mpg%cvReg(iCv))=b2divua(mpg%cvReg(iCv))
+     1         +t0*nn(iCv)*tn(iCv)
            endif
           endif
-!WG_TODO          b2divua(mpg%cvReg(iCv))=b2divua(mpg%cvReg(iCv))
-!WG_TODO     1         +t0*ni(iCv,0)*ti(iCv)
-!WG_TODO          b2sihs_divua(iCv)=b2sihs_divua(iCv)+
-!WG_TODO     1         t0*ni(iCv,0)*ti(iCv)
+          srw%b2sihs_divua(iCv)=srw%b2sihs_divua(iCv)+
+     1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_divua0to3 = shidu
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divua0to3 = shidu
+      endif
       if (switch%tn_style.lt.2) then
-        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
+        call b2saxpy (nCv*4, 1.0_R8, shidu, 1, shi0, 1)
       else
-        call b2saxpy (nCv*4, 1.0e0_R8, shidu , 1, shi0, 1)  
-        call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
+        call b2saxpy (nCv*4, 1.0_R8, shidu , 1, shi0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, shidun, 1, shn0, 1)
       endif
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
       call gradc(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &  geo%vxOnedBsq, dOnedBsqc)
-      wrkc = geo%cvBb(:,2)*geo%cvVol*                                  !srv 11.01.13
+      wrkc = geo%cvBb(:,2)*geo%cvVol*                                 !srv 11.01.13
      &    (dpoc(:,1)*dOnedBsqc(:,0) - dpoc(:,0)*dOnedBsqc(:,1))
-!WG_TODO      b2exbe=0.0_R8
-!WG_TODO      b2sihs_exbe=0.0_R8
+      b2exbe=0.0_R8
+      srw%b2sihs_exbe=0.0_R8
       do iCv = 1, mpg%nCi
 !WG_TODO need better solution here...
         fac_ExB_c = fac_ExB(mpg%cvFc(mpg%cvFcP(iCv,1)))
-        t0 = switch%b2sihs_phm5*fac_ExB_c*wrkc(iCv)                    !srv 07.06.00 02.06.99
+        t0 = switch%b2sihs_phm5*fac_ExB_c*wrkc(iCv)                   !srv 07.06.00 02.06.99
         shedd(iCv,0) = shedd(iCv,0)+
-     &    (max(0.0e0_R8,t0)+switch%b2sihs__rf0*abs(t0))*ne(iCv)*te(iCv)
-        shedd(iCv,3) = shedd(iCv,3)+min(0.0e0_R8,t0)-
+     &    (max(0.0_R8,t0)+switch%b2sihs__rf0*abs(t0))*ne(iCv)*te(iCv)
+        shedd(iCv,3) = shedd(iCv,3)+min(0.0_R8,t0)-
      &                 switch%b2sihs__rf0*abs(t0)
-!WG_TODO        b2exbe(mpg%cvReg(iCv))=b2exbe(mpg%cvReg(iCv))+
-!WG_TODO     1      t0*ne(iCv)*te(iCv)
-!WG_TODO        b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
+        b2exbe(mpg%cvReg(iCv))=b2exbe(mpg%cvReg(iCv))+
+     1      t0*ne(iCv)*te(iCv)
+        srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_exbe0to3 = shedd
-!WG_TODO      endif
-      call b2saxpy (nCv*4, 1.0e0_R8, shedd, 1, she0, 1)                !srv 11.09.09
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exbe0to3 = shedd
+      endif
+      call b2saxpy (nCv*4, 1.0_R8, shedd, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
-!WG_TODO      b2exba=0.0_R8
-!WG_TODO      b2sihs_exba=0.0_R8
+      b2exba=0.0_R8
+      srw%b2sihs_exba=0.0_R8
       do is = 0, ns-1
        if(.not.is_neutral(is)) then
         do iCv = 1, mpg%nCi
@@ -312,30 +322,30 @@
            t0=switch%b2sihs_phm6*fac_ExB_c*
      &      (na(iCv,is)/ni(iCv,0))*wrkc(iCv)                    !srv 07.06.00 02.06.99
            shidd(iCv,0) = shidd(iCv,0)+
-     &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &      (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &       ti(iCv)
 !          shi0(iCv,0) = shi0(iCv,0)+
-!     &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
-           shidd(iCv,3) = shidd(iCv,3)+min(0.0e0_R8,t0)-
+!     &      (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
+           shidd(iCv,3) = shidd(iCv,3)+min(0.0_R8,t0)-
      &                    switch%b2sihs__rf1*abs(t0)
-!          shi0(iCv,3) = shi0(iCv,3)+min(0.0e0_R8,t0)-switch%b2sihs__rf1*abs(t0)
-!WG_TODO           b2exba(mpg%cvReg(iCv))=b2exba(mpg%cvReg(iCv))+
-!WG_TODO     1          t0*ni(iCv,0)*ti(iCv)
-!WG_TODO           b2sihs_exba(iCv)=b2sihs_exba(iCv)+
-!WG_TODO     1          t0*ni(iCv,0)*ti(iCv)
+!          shi0(iCv,3) = shi0(iCv,3)+min(0.0_R8,t0)-switch%b2sihs__rf1*abs(t0)
+           b2exba(mpg%cvReg(iCv))=b2exba(mpg%cvReg(iCv))+
+     1          t0*ni(iCv,0)*ti(iCv)
+           srw%b2sihs_exba(iCv)=srw%b2sihs_exba(iCv)+
+     1          t0*ni(iCv,0)*ti(iCv)
         enddo
        endif
       enddo
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_exba0to3 = shidd
-!WG_TODO      endif
-      call b2saxpy (nCv*4, 1.0e0_R8, shidd, 1, shi0, 1)                !srv 11.09.09
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exba0to3 = shidd
+      endif
+      call b2saxpy (nCv*4, 1.0_R8, shidd, 1, shi0, 1)                 !srv 11.09.09
 *   ..contribution from viscous heating
-!WG_TODO      b2visa=0.0_R8
-!WG_TODO      b2sihs_visa=0.0_R8
+      b2visa=0.0_R8
+      srw%b2sihs_visa=0.0_R8
       do is = 0, ns-1
-       if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.            !srv 29.08.02
-     &                           switch%spatial_hybrid.eq.1) then               
+       if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.           !srv 29.08.02
+     &                           switch%spatial_hybrid.eq.1) then
         if (switch%style_visc.eq.0) then
          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
          wrkf = cvsa(:,:,is)/(geo%fcQalf+eps)*wrkf**2
@@ -357,61 +367,61 @@
           t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then
             shivc(iCv,0) = shivc(iCv,0)+
-     &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
+     &                     (1.0_R8+switch%b2sihs__rf2)*t0
             shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
      &                     (ni(iCv,0)*ti(iCv))
             shiva(iCv,0) = shiva(iCv,0)+
-     &                     (1.0e0_R8+switch%b2sihs__rf2)*t1
+     &                     (1.0_R8+switch%b2sihs__rf2)*t1
             shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
      &                     (ni(iCv,0)*ti(iCv))
           elseif (switch%tn_style.eq.1) then
            if (.not.is_neutral(is)) then
             shivc(iCv,0) = shivc(iCv,0)+
-     &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
+     &                     (1.0_R8+switch%b2sihs__rf2)*t0
             shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
      &                     (ni(iCv,0)*ti(iCv))
             shiva(iCv,0) = shiva(iCv,0)+
-     &                     (1.0e0_R8+switch%b2sihs__rf2)*t1
+     &                     (1.0_R8+switch%b2sihs__rf2)*t1
             shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
      &                     (ni(iCv,0)*ti(iCv))
            endif
           else
-           if (.not.is_neutral(is).or.zn(is).ne.1) then
+           if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
             shivc(iCv,0) = shivc(iCv,0)+
-     &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
+     &                     (1.0_R8+switch%b2sihs__rf2)*t0
             shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
      &                     (ni(iCv,0)*ti(iCv))
             shiva(iCv,0) = shiva(iCv,0)+
-     &                     (1.0e0_R8+switch%b2sihs__rf2)*t1
+     &                     (1.0_R8+switch%b2sihs__rf2)*t1
             shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
      &                     (ni(iCv,0)*ti(iCv))
            else
-            shivcn(iCv,0) = shivcn(iCv,0) + 
-     &                      (1.0e0_R8+switch%b2sihs__rf2)*t0
+            shivcn(iCv,0) = shivcn(iCv,0) +
+     &                      (1.0_R8+switch%b2sihs__rf2)*t0
             shivcn(iCv,3) = shivcn(iCv,3) - switch%b2sihs__rf2*t0/
      &                      (nn(iCv)*tn(iCv))
-            shivan(iCv,0) = shivan(iCv,0) + 
-     &                      (1.0e0_R8+switch%b2sihs__rf2)*t1
+            shivan(iCv,0) = shivan(iCv,0) +
+     &                      (1.0_R8+switch%b2sihs__rf2)*t1
             shivan(iCv,3) = shivan(iCv,3) - switch%b2sihs__rf2*t1/
      &                      (nn(iCv)*tn(iCv))
            endif
           endif
-!WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
-!WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
+          b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
+          srw%b2sihs_visa(iCv)=srw%b2sihs_visa(iCv)+t0+t1
         enddo
        endif                                                           !srv 29.08.02
       enddo
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_visa0to3 = shivc+shiva
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_visa0to3 = shivc+shiva
+      endif
       if (switch%tn_style.lt.2) then
-       call b2saxpy (nCv*4, 1.0e0_R8, shivc , 1, shi0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shiva , 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0_R8, shivc , 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0_R8, shiva , 1, shi0, 1)
       elseif (switch%tn_style.eq.2) then
-       call b2saxpy (nCv*4, 1.0e0_R8, shivc , 1, shi0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shiva , 1, shi0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shn0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shn0, 1)
+       call b2saxpy (nCv*4, 1.0_R8, shivc , 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0_R8, shiva , 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0_R8, shivcn, 1, shn0, 1)
+       call b2saxpy (nCv*4, 1.0_R8, shivan, 1, shn0, 1)
       endif
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
@@ -444,7 +454,7 @@
          if(.not. is_neutral(is)) then
            call b2sifrtf (nCv, nFc, nVx, ns, is, ismain, switch, geo,
      &      mpg, na, ua, ue, te, ti, ni, ne, ne2, rza, rz2, po,
-     &      zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff, 
+     &      zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff,
      &      f_luc_sg, alfx_c, sigx_c, st_ext,
      &      smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
            wrks =
@@ -471,31 +481,31 @@
        enddo
        shefr(:,0) =  ue*shefr(:,0)
 
-!WG_TODO       b2joule=0.0_R8
-!WG_TODO       b2sihs_joule=0.0_R8
-!WG_TODO       b2fraa=0.0_R8
-!WG_TODO       b2sihs_fraa=0.0_R8
+       b2joule=0.0_R8
+       srw%b2sihs_joule=0.0_R8
+       b2fraa=0.0_R8
+       srw%b2sihs_fraa=0.0_R8
        do iCv = 1, mpg%nCi
          if(mpg%cvReg(iCv).ne.0) then
            t0 = switch%b2sihs_phm3*geo%cvVol(iCv)*shefr(iCv,0)
 !          shefr(iCv,0) = t0
-           shefr(iCv,0) = max(0.0e0_R8,t0)+switch%b2sihs__rf3*abs(t0)
+           shefr(iCv,0) = max(0.0_R8,t0)+switch%b2sihs__rf3*abs(t0)
            shefr(iCv,3) =
-     &      (min(0.0e0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
+     &      (min(0.0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
      &      (ne(iCv)*te(iCv))
-!WG_TODO           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
-!WG_TODO           b2sihs_joule(iCv)=t0
+           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
+           srw%b2sihs_joule(iCv)=t0
            t0 = -switch%b2sihs_phm4*(1.0_R8-switch%BoRiS)*geo%cvVol(iCv)
      &          *shifr(iCv,0)
 !          shifr(iCv,0) = t0
-!           shifr(iCv,0) = (2.5e0_R8+switch%b2sihs__rf4)*t0
-!           shifr(iCv,3) = -(1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
-           shifr(iCv,0) = max(0.0e0_R8,t0)+switch%b2sihs__rf4*abs(t0)
+!           shifr(iCv,0) = (2.5_R8+switch%b2sihs__rf4)*t0
+!           shifr(iCv,3) = -(1.5_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
+           shifr(iCv,0) = max(0.0_R8,t0)+switch%b2sihs__rf4*abs(t0)
            shifr(iCv,3) =
-     &      (min(0.0e0_R8,t0)-switch%b2sihs__rf4*abs(t0))/
+     &      (min(0.0_R8,t0)-switch%b2sihs__rf4*abs(t0))/
      &      (ni(iCv,0)*ti(iCv))
-!WG_TODO           b2fraa(mpg%cvReg(iCv))=b2fraa(mpg%cvReg(iCv))+t0
-!WG_TODO           b2sihs_fraa(iCv)=t0
+           b2fraa(mpg%cvReg(iCv))=b2fraa(mpg%cvReg(iCv))+t0
+           srw%b2sihs_fraa(iCv)=t0
          endif
        enddo
       endif                                                           !srv 05.07.17
@@ -507,8 +517,8 @@
        call b2xehx (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehx)         !srv 13.01.17
        if (switch%istyle_Joule_heating.eq.0)
      &   call b2xehy (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehy)       !srv 13.01.17
-!WG_TODO       b2joule=0.0_R8
-!WG_TODO       b2sihs_joule=0.0_R8
+       b2joule=0.0_R8
+       srw%b2sihs_joule=0.0_R8
        do iFc = 1, nFc
          wrkf(iFc,0) = fch(iFc,0)*ehx(iFc)/
      &    ((geo%fcS(iFc)*geo%fcQalf(iFc,0) + eps)*
@@ -527,24 +537,24 @@
        do iCv = 1, mpg%nCi
          if(mpg%cvReg(iCv).ne.0) then
           t0 = switch%b2sihs_phm3*geo%cvVol(iCv)*wrkc(iCv)
-          shefr(iCv,0) = shefr(iCv,0)+max(0.0e0_R8,t0)+
+          shefr(iCv,0) = shefr(iCv,0)+max(0.0_R8,t0)+
      &                   switch%b2sihs__rf3*abs(t0)
           shefr(iCv,3) = shefr(iCv,3)+
-     &    (min(0.0e0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
+     &    (min(0.0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
      &    (ne(iCv)*te(iCv))
-!WG_TODO          b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
-!WG_TODO          b2sihs_joule(iCv)=t0
+          b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
+          srw%b2sihs_joule(iCv)=t0
         endif                                                        !srv 26.11.02
        enddo
       endif                                                           !srv 05.07.17
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_joule0to3 = shefr
-!WG_TODO      endif
-      call b2saxpy (nCv*4, 1.0e0_R8, shefr, 1, she0, 1)                !srv 11.09.09
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_joule0to3 = shefr
+      endif
+      call b2saxpy (nCv*4, 1.0_R8, shefr, 1, she0, 1)                !srv 11.09.09
 *   ..contribution from atom-atom friction
       if(switch%b2sigp_style.ne.2) then                           !srv 05.07.17
-!WG_TODO       b2fraa=0.0_R8
-!WG_TODO       b2sihs_fraa=0.0_R8
+       b2fraa=0.0_R8
+       srw%b2sihs_fraa=0.0_R8
        do isb = 0, ns-1
         do is = isb+1, ns-1
 *     ..consider distinct cases
@@ -559,11 +569,11 @@
      &           na(iCv,is)*na(iCv,isb)*vti32(iCv)*
      &           ((ua(iCv,is)-ua(iCv,isb))**2)                    !srv 22.07.05
             shifr(iCv,0) = shifr(iCv,0)+
-     &                        (2.5e0_R8+switch%b2sihs__rf4)*t0
+     &                        (2.5_R8+switch%b2sihs__rf4)*t0
             shifr(iCv,3) = shifr(iCv,3)-
-     &        (1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
-!WG_TODO            b2fraa(region(iCv,0))=b2fraa(region(iCv,0))+t0
-!WG_TODO            b2sihs_fraa(iCv)=b2sihs_fraa(iCv)+t0
+     &        (1.5_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
+            b2fraa(mpg%cvReg(iCv))=b2fraa(mpg%cvReg(iCv))+t0
+            srw%b2sihs_fraa(iCv)=srw%b2sihs_fraa(iCv)+t0
           enddo
          else
 *      ..contribution from friction involving neutral species
@@ -574,12 +584,12 @@
         enddo
        enddo
       endif                                                           !srv 05.07.17
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_fraa0to3 = shifr
-!WG_TODO      endif
-      call b2saxpy (nCv*4, 1.0e0_R8, shifr, 1, shi0, 1)                !srv 11.09.09
-!WG_TODO      b2str=0.0_R8
-!WG_TODO      b2sihs_str=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_fraa0to3 = shifr
+      endif
+      call b2saxpy (nCv*4, 1.0_R8, shifr, 1, shi0, 1)                 !srv 11.09.09
+      b2str=0.0_R8
+      srw%b2sihs_str=0.0_R8
       b2wrong1=0.0_R8
 * ..return
       if(switch%b2sihs_iout.eq.1) then

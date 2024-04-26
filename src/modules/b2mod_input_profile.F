@@ -1,18 +1,14 @@
       module b2mod_input_profile
-c      use b2mod_types
+      use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_time
-!WG_TODO      use b2mod_sources
-!WG_TODO     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
-!WG_TODO     &             balance_netcdf
-!WG_TODO      use b2mod_geo_corner
-!WG_TODO     &     , only: nmdpl
       use b2us_geo
       use b2us_map
       use b2us_plasma
       use b2mod_subsys
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -27,7 +23,6 @@ c      use b2mod_types
       real(kind=R8), allocatable, save :: tdata(:,:,:,:)
       integer, allocatable, save :: addspec(:,:,:)
 #else
-#     include "DIMENSIONS.F"
       parameter(nrr = DEF_NYD+2, nxx = DEF_NXD+2, nss = DEF_NSD)
       integer, save :: nsdata(nkind_data,nkind_source,0:nss)
       integer, save :: nxdata(nkind_data,nkind_source,0:nss)
@@ -82,7 +77,7 @@ c      use b2mod_types
         allocate(addspec(nss,nkind_coeff,0:nss))
       endif
 #else
-!      call xertst (nCv.le.DEF_NXD, 'faulty input nx')
+      call xertst (nCv.gt.0, 'faulty input nCv')
       call xertst (ns.le.DEF_NSD, 'faulty input ns')
 #endif
 
@@ -238,7 +233,7 @@ c      use b2mod_types
           enddo
           if (ndat.eq.0) goto 1
           call xertst(ndat.le.nrr,
-     .     'Increase NYD in DIMENSIONS.F to match size of profile')
+     .     'Increase NYD in b2mod_dimensions to match size of profile')
 !       allocate (f(1:ndat))
 !       allocate (r(1:ndat))
           do i=1,ndat
@@ -247,8 +242,7 @@ c      use b2mod_types
             if (new_files) write(93,*) r(i),f(i)
           enddo
 !          write(*,*) 'vor region_profile'
-          call region_profile
-     .     (kind_data,ndat,r,ndim,pr,nx,ny,ifa,nanf)
+          call region_profile(mpg,geo,kind_data,ndat,r,ndim,pr,ifa,nanf)
 !          write (*,*) 'ifa=',ifa
           if (ifa.eq.1) goto 99
 !          allocate (pf(1:ndim))
@@ -276,7 +270,7 @@ c      use b2mod_types
           xf(nx)=0.0_R8
           if (nxdat.gt.0) then
             call xertst(nxdat.le.nxx+2,
-     .       'Increase NXD in DIMENSIONS.F to match size of profile')
+     .     'Increase NXD in b2mod_dimensions to match size of profile')
             do i=1,nxdat
               x(i)=xdata(1,i,kind_source,spec)
               fx(i)=xdata(2,i,kind_source,spec)
@@ -429,7 +423,7 @@ cdjm Jan2017 Keep linearised sources for balance
         if (maxval(nsdata).gt.0) close(93)
         if (maxval(nsdata).gt.0) close(94)
         if (maxval(nxdata).gt.0) close(95)
-        if (maxval(nsdata).gt.0) close(96)
+        if (maxval(nxdata).gt.0) close(96)
         new_files = .false.
       end if
 
@@ -505,7 +499,7 @@ cdjm Jan2017 Keep linearised sources for balance
      &  hci0(nCv), hcib(nCv,0:ns-1)
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv)
-      integer :: iy,i,ifail,spec,nspec,iir,ift,icv,
+      integer :: iy,iy2,i,ifail,spec,nspec,iir,ift,icv,
      &      ndim,is,nsp(1:ns+1),iloop,ncall,ndat,
      &      kind_coeff,kind_data,ic,lbl
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
@@ -560,6 +554,8 @@ cdjm Jan2017 Keep linearised sources for balance
      &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
         if (any(poloidal_scaling))
      .    call xerrab('Poloidal scaling not yet coded for WG')
+        call xertst(no_div.or.mpg%isClassicalGrid.eq.1,
+     &    'no_div should be true for non-classical vessel mode grids')
       else
         if(transport_ip_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3(1x,e14.7),2i4)')
@@ -618,7 +614,7 @@ cdjm Jan2017 Keep linearised sources for balance
             ndat=ndata(kind_data,kind_coeff,spec)
             if (ndat.eq.0) goto 1
             call xertst(ndat.le.nrr,
-     .       'Increase NYD in DIMENSIONS.F to match size of profile')
+     .      'Increase NYD in b2mod_dimensions to match size of profile')
             nspec=1
             nsp(1)=spec
             do is=1,ns
@@ -634,7 +630,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
 #ifdef WG_TODO
-            call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
+            call region_profile(mpg,geo,1,ndat,r,ndim,pr,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
 !           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
@@ -645,7 +641,7 @@ cdjm Jan2017 Keep linearised sources for balance
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 
-            call calc_dist(mpg,geo,omp,nomp,icsepomp,pr)
+            call calc_dist(geo,omp,nomp,icsepomp,pr)
 
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
@@ -655,6 +651,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             if (elm_data)
      >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+
             if (tr_ip_new_files) then
 
               if (elm_data) then
@@ -678,6 +675,10 @@ cdjm Jan2017 Keep linearised sources for balance
 
             do is=1,nspec
               do iy=1,ndim
+                if (mpg%isClassicalGrid.eq.0) then ! skip guard cells
+                  if ((iy.eq.1).or.(iy.eq.ndim)) cycle
+                endif
+                iy2=iy
                 iir=mpg%cvReg(omp(iy))
                 if(iir.le.0.or.iir.gt.CVREGMAX) then
                   write(*,*) 'transport_input: out of bounds ',
@@ -685,13 +686,28 @@ cdjm Jan2017 Keep linearised sources for balance
                   iir=CVREGMAX
                 endif
                 lbl = mpg%ftLbl(mpg%cvFt(omp(iy)))
-                do ift=1,mpg%nFt
-                 if (mpg%ftLbl(ift).ne.lbl) cycle
-                 do ic = mpg%ftCvP(ift,1), mpg%ftCvP(ift,1) +
-     &                                    mpg%ftCvP(ift,2) - 1
-                  icv = mpg%ftCv(ic)
-                  iir = mpg%cvReg(icv)
-                  lpflux = mpg%ftReg(mpg%cvFt(icv)).eq.3
+                do iFt=1,mpg%nFt
+                 if (mpg%isClassicalGrid.eq.1) then
+                   if (mpg%ftLbl(iFt).ne.lbl) cycle
+                   iy2=iy
+                 else
+                   if (iFt.ne.mpg%cvFt(omp(iy))) then 
+                     if ((iFt.le.mpg%cvFt(omp(ndim-1))).or.
+     &                 (iFt.ge.mpg%cvFt(omp(2)))) then
+                       cycle                
+                     else
+                       iy2=ndim !nh flux tube outside OMP ==> take last OMP flux tube
+                     endif
+                   else
+                     iy2=iy
+                   endif
+                 endif
+
+                 do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
+     &                                     mpg%ftCvP(iFt,2) - 1
+                  iCv = mpg%ftCv(ic)
+                  iir = mpg%cvReg(iCv)
+                  lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
                   ldiv=mod(iir-1,4)+1.ge.3
                   poloidal_scale_factor = 1.0_R8
                   elm_region=.false.
@@ -722,61 +738,152 @@ cdjm Jan2017 Keep linearised sources for balance
                     endif
 
                     if (kind_coeff.eq.1) then
-                      dna0(icv,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+                      dna0(iCv,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.2) then
-                      dpa0(icv,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor/
-     &                 (rt%rza(icv,nsp(is))*pl%te(icv)+pl%ti(icv))
+                      dpa0(iCv,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor/
+     &                 (rt%rza(iCv,nsp(is))*pl%te(iCv)+pl%ti(iCv))
 
                     elseif (kind_coeff.eq.3) then
-                      hcib(icv,nsp(is))=poloidal_scale_factor*
-     &                 prof(iy)*pl%na(icv,nsp(is))
+                      hcib(iCv,nsp(is))=poloidal_scale_factor*
+     &                 prof(iy2)*pl%na(iCv,nsp(is))
 
                     elseif (kind_coeff.eq.4) then
-                      hce0(icv)=prof(iy)*dv%ne(icv)*
+                      hce0(iCv)=prof(iy2)*dv%ne(iCv)*
      1                 poloidal_scale_factor
 
                     elseif (kind_coeff.eq.5) then
-                      vla0(icv,0,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+                      vla0(iCv,0,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.6) then
-                      vla0(icv,1,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+                      vla0(iCv,1,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.7) then
-                      vsa0(icv,nsp(is))=poloidal_scale_factor*
-     1                 prof(iy)*mp*am(nsp(is))*pl%na(icv,nsp(is))
+                      vsa0(iCv,nsp(is))=poloidal_scale_factor*
+     1                 prof(iy2)*mp*am(nsp(is))*pl%na(iCv,nsp(is))
 
                     elseif (kind_coeff.eq.8) then
-
                       if (csig_an_style.eq.0) then
-                        sig0(icv)=prof(iy)*qe*dv%ne(icv)*
+                        sig0(iCv)=prof(iy2)*qe*dv%ne(iCv)*
      1                   poloidal_scale_factor
-                      elseif(csig_an_style.eq.1) then
-                        call xerrab
-     1                   ('csig_an_style=1 not yet coded for WG')
-#ifdef WG_TODO
-                        sig0(icv)=prof(iy)*qe*dv%ne(nmdpl,-1)*
+                      elseif(csig_an_style.eq.1.and.nomp.gt.0) then
+                        sig0(iCv)=prof(iy2)*qe*dv%ne(omp(1))*
      1                   poloidal_scale_factor
-#endif
                       endif
 
                     elseif (kind_coeff.eq.9) then
-                      alf0(icv)=poloidal_scale_factor*
-     1                 prof(iy)*dv%ne(icv)*
-     2                 sqrt(qe/pl%te(icv))
+                      alf0(iCv)=poloidal_scale_factor*
+     1                 prof(iy2)*dv%ne(iCv)*
+     2                 sqrt(qe/pl%te(iCv))
 
                     else
                       write(*,*)
      .                 'Option',kind_coeff,'not yet implemented'
                     endif
+
                   endif
                  enddo !ic
                 enddo !ift=1,mpg%nFt
               enddo !iy=1,ndim
+              if (mpg%isClassicalGrid.eq.0) then ! treatment of guard cells
+                do iCv = 1, nCv
+                  if (mpg%cvFcP(iCv,2).eq.1) then
+                    iir = mpg%cvReg(iCv)
+                    if ((iir.eq.1).or.(iir.eq.5)) then ! core boundary
+                      iy2 = 1 
+                    elseif ((iir.eq.2).or.(iir.eq.6)) then ! SOL boundary
+                      iy2 = ndim
+                    else
+                      cycle
+                    endif
+                  else
+                    cycle
+                  endif
+                  lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
+                  ldiv=mod(iir-1,4)+1.ge.3
+                  poloidal_scale_factor = 1.0_R8
+                  elm_region=.false.
+#ifdef WG_TODO
+                  do isc=1,nscale
+                    if (poloidal_scaling(isc) .and.
+     $                ix.ge.scaling_ix_begin(isc) .and.
+     $                    ix.le.scaling_ix_end(isc)) then
+                      poloidal_scale_factor = poloidal_scale_factor*
+     $                    (1.0_R8 + scaling_strength(isc)/
+     $                    (sqrt(2.0_R8*pi)*scaling_width(isc))*
+     $                    exp(-(ix-ixmean(isc))*(ix-ixmean(isc))/
+     $                         (2.0_R8*scaling_width(isc)**2)))
+                    endif
+                  enddo
+                  elm_region=elm_time.and.elm_data.and.
+     &                     ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+#endif
+                  if(.not.
+     1             (.not.region_flags(iir,kind_coeff).or.
+     1             (lpflux.and.no_pflux).or.
+     1             (ldiv.and.no_div))) then
+
+                    if (elm_region) then
+                      prof(1:ndim)=pelm(1:ndim)
+                    else
+                      prof(1:ndim)=pf(1:ndim)
+                    endif
+
+                    if (kind_coeff.eq.1) then
+                      dna0(iCv,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor
+
+                    elseif (kind_coeff.eq.2) then
+                      dpa0(iCv,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor/
+     &                 (rt%rza(iCv,nsp(is))*pl%te(iCv)+pl%ti(iCv))
+
+                    elseif (kind_coeff.eq.3) then
+                      hcib(iCv,nsp(is))=poloidal_scale_factor*
+     &                 prof(iy2)*pl%na(iCv,nsp(is))
+
+                    elseif (kind_coeff.eq.4) then
+                      hce0(iCv)=prof(iy2)*dv%ne(iCv)*
+     1                 poloidal_scale_factor
+
+                    elseif (kind_coeff.eq.5) then
+                      vla0(iCv,0,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor
+
+                    elseif (kind_coeff.eq.6) then
+                      vla0(iCv,1,nsp(is))=
+     1                 prof(iy2)*poloidal_scale_factor
+
+                    elseif (kind_coeff.eq.7) then
+                      vsa0(iCv,nsp(is))=poloidal_scale_factor*
+     1                 prof(iy2)*mp*am(nsp(is))*pl%na(iCv,nsp(is))
+
+                    elseif (kind_coeff.eq.8) then
+                      if (csig_an_style.eq.0) then
+                        sig0(iCv)=prof(iy2)*qe*dv%ne(iCv)*
+     1                   poloidal_scale_factor
+                      elseif(csig_an_style.eq.1.and.nomp.gt.0) then
+                        sig0(iCv)=prof(iy2)*qe*dv%ne(omp(1))*
+     1                   poloidal_scale_factor
+                      endif
+
+                    elseif (kind_coeff.eq.9) then
+                      alf0(iCv)=poloidal_scale_factor*
+     1                 prof(iy2)*dv%ne(iCv)*
+     2                 sqrt(qe/pl%te(iCv))
+
+                    else
+                      write(*,*)
+     .                 'Option',kind_coeff,'not yet implemented'
+                    endif
+
+                  endif
+                enddo
+              endif     
             enddo !is=1,nspec
             if (ncall.eq.0) then
               if (elm_data) then
@@ -918,43 +1025,37 @@ c*** Clear data to forget previous profiles
 
 *-----------------------------------------------------------------------
 
-      subroutine region_profile(kind_data,ndat,r,ndim,pr,nx,ny,ifa,
+      subroutine region_profile(mpg,geo,kind_data,ndat,r,ndim,pr,ifa,
      & nfitanf)
 
       use b2mod_indirect
-      use b2mod_geo
+      use b2mod_user_namelist
+     & , only : nomp, omp, icsepomp
+      use b2us_geo
+      use b2us_map
       use b2mod_mwti
-     & , only: output_ds
+     & , only: output_ds_cv
       implicit none
-      integer:: i,nx,ny,ifa
+      type (mapping), intent(in) :: mpg
+      type (geometry), intent(in) :: geo
+      integer:: i,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
-      real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
-      integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
-      integer ixref, iyref
+      real(kind=R8) :: r(nrr),pr(nrr),prtmp
+      real(kind=R8), allocatable :: pra(:), prdsa(:)
+      integer ncall, nya
       character*256 filenamer
       logical exist
       external ipgetr
-      external get_jsep
-      save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
+      save ncall
       data ncall/0/
 
       call subini('region_profile')
       if (ncall.eq.0) then
-        call get_jsep(nx,ny,jxi,jxa,jsep)
-        call xertst (-1.le.jsep.and.jsep.le.ny,
-     2   'faulty parameter jsep')
-        call ipgeti ('b2mwti_jxa',jxa)
-        call xertst (-1.le.jxa.and.jxa.le.nx,
-     2   'faulty internal parameter jxa')
-        ixref = jxa
-        iyref = jsep
-        call ipgeti ('set_transport_ixref', ixref)
-        call xertst (-1.le.ixref.and.ixref.le.nx,
-     1   'faulty argument set_transport_ixref')
-        call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
-     1   'faulty argument set_transport_iyref')
-        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
+        if (nomp.gt.0) then
+          allocate(pra(nomp))
+          allocate(prdsa(nomp))
+          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp')
+        end if
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
@@ -974,7 +1075,7 @@ c*** Clear data to forget previous profiles
       read (91,*,END=92,ERR=97) prtmp
       prdsa(i) = prtmp
       nya = i
-      if (i.lt.ny+2) goto 91
+      if (i.lt.nomp) goto 91
    92 continue
       nfitanf=1
       IFA=0
@@ -992,7 +1093,6 @@ c*** Clear data to forget previous profiles
         if (pra(i).GT.r(ndat)) exit
         nfitend=i
       enddo
-
 
       if (nfitend.LE.nfitanf) goto 97
 

@@ -1,27 +1,19 @@
 c
       subroutine pne()
       use b2mod_types
-      use b2mod_plasma
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer ix,iy,is,lnblnk
+      integer is
       character*256 stmp
-      external lnblnk
 
-      values(9)=work(-1,-1,0,iwrk)/ne(-1,-1)
-      values(10)=work(-1,-1,0,iwrk)/ne(-1,-1)
-      do is=0,ndim(3,iwrk)-1
-        do iy=-1,ny
-          do ix=-1,nx
-            work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/ne(ix,iy)
-            values(9)=min(values(9),work(ix,iy,is,iwrk))
-            values(10)=max(values(10),work(ix,iy,is,iwrk))
-          enddo
-        enddo
+      do is=0,ndim(2,iwrk)-1
+        work(:,is,iwrk)=work(:,is,iwrk)/state%dv%ne(:)
       enddo
-      stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     1 '/(m^{-3}) (FRACTIONAL)'
+      values(9)=minval(work(:,0:ndim(2,iwrk)-1,iwrk))
+      values(10)=maxval(work(:,0:ndim(2,iwrk)-1,iwrk))
+      stmp=trim(graphlabel(iwrk))//'/(m^{-3}) (FRACTIONAL)'
       call customise_label(stmp,graphlabel(iwrk))
       return
       end subroutine pne
@@ -33,9 +25,8 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
-      integer i,is,lnblnk
+      integer i,is
       character*256 stmp
-      external lnblnk
 
       values(9)=wall_stack(1,0,iwwrk)/ne(imapx(1),imapy(1))
       values(10)=wall_stack(1,0,iwwrk)/ne(imapx(1),imapy(1))
@@ -47,7 +38,7 @@ c
           values(10)=max(values(10),wall_stack(i,is,iwwrk))
         enddo
       enddo
-      stmp=wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//'/(m^{-3})'
+      stmp=trim(wall_label(iwwrk))//'/(m^{-3})'
       call customise_label(stmp,wall_label(iwwrk))
       return
       end subroutine pwne

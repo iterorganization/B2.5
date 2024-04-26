@@ -11,9 +11,8 @@ C
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-
+      use b2mod_dimensions
       IMPLICIT NONE
-#     include <DIMENSIONS.F>
 
       integer nx, ny, ns, nxtl, nxtr
       real (kind=R8) :: BoRiS
@@ -59,7 +58,7 @@ C AREAS OF THE SURFACE ELEMENTS
           do iy=0,ny-1
             strg(iy,j)=gs(k+l,iy,0)
           end do
-          call b2neut_ind(2,k+l,1,ny,shift(j)) !index range in the Eirene arrays
+          call b2neut_ind(1,j,1,ny,shift(j)) !index range in the Eirene arrays
           if(shift(j).lt.0) then
             write(*,*) "Error in b2usr_loads: the EIRENE data on "//
      w                 "neutral fluxes is incorrect. ",

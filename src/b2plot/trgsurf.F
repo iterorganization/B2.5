@@ -1,13 +1,12 @@
 c
-      subroutine trgsurf(igraphs)
+      subroutine trgsurf(nCv,igraphs)
       use b2mod_types
       use b2mod_wall
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
-      integer lnblnk,igraphs
-      external lnblnk
+      integer nCv,igraphs
 
       if(b2plot_debug.ge.10) 
      > write(*,*) 'Plotting target array: nbnd, ndepth_nml = ',
@@ -21,10 +20,10 @@ c
       if(typeofplot .ge. 2) then
         if(b2plot_debug.ge.7) write(*,*) 'computational domain'
         call init_page(
-     1     target_label(itwrk)(1:lnblnk(target_label(itwrk))),
+     1     trim(target_label(itwrk)),
      1     values(24),values(25),values(26),values(27),1,.false.,.true.,
      2     .false.)
-        call plottarget(nx,ny,nbnd,ndepth_nml,
+        call plottarget(nCv,nbnd,ndepth_nml,
      .     targetcr(1:nbnd,1:ndepth_nml,1:2),
      .     targetcz(1:nbnd,1:ndepth_nml,1:2),
      .     target_stack(1:nbnd,1:ndepth_nml,itwrk),
@@ -34,10 +33,10 @@ c
       if(mod(typeofplot,2) .eq. 1) then
         if(b2plot_debug.ge.7) write(*,*) 'physical domain'
         call init_page(
-     1     target_label(itwrk)(1:lnblnk(target_label(itwrk))),
+     1     trim(target_label(itwrk)),
      1     values(28),values(29),values(30),values(31),1,.true.,.true.,
      2     .true.)
-        call plottarget(nx,ny,nbnd,ndepth_nml,
+        call plottarget(nCv,nbnd,ndepth_nml,
      2     targetcr(1:nbnd,1:ndepth_nml,1:2),
      .     targetcz(1:nbnd,1:ndepth_nml,1:2),
      3     target_stack(1:nbnd,1:ndepth_nml,itwrk),

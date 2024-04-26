@@ -50,7 +50,7 @@ c      call plinit()
       call gopks(6,0)
       if(index(devenv,'x11').ne.0.or.
      1   index(devenv,'X11').ne.0) then
-       if(b2plot_debug.ge.12) write(*,*) 'X11'
+        if(b2plot_debug.ge.12) write(*,*) 'X11'
         nwork=nwork+1
 #ifdef WINDOWS
         call gopwk(nwork,0,1)      ! X11          !srv 07.05.01
@@ -131,6 +131,8 @@ c
 c
       extralabel=' '
       globalheader=' '
+      xlabel=' '
+      ylabel=' '
       runtime=real(time,R4)
       glsz=1.0_R4
       lbsz=1.0_R4
@@ -142,6 +144,7 @@ c
       color_map_loaded=.false.
       color_file=' '
       device='psc'
+      bold=.false.
       return
       end subroutine initialise_plotting_flags
 
@@ -150,16 +153,14 @@ c
       implicit none
       character*(*), intent(in) :: sval
 #include <graphics_vars.h>
-      integer lnblnk
       logical streql
-      external streql, lnblnk
+      external streql
 c
       color_file=sval
       if (streql(color_file,' ')) then
         write(*,*) 'Setting default color table'
       else
-        write(*,*) 'Setting color table ',
-     .                      color_file(1:lnblnk(color_file))
+        write(*,*) 'Setting color table ', trim(color_file)
       endif
       color_map_loaded=.false.
       if (nwork.gt.0) call new_color_map
@@ -317,6 +318,16 @@ c
       return
       end subroutine set_title_color
 
+      subroutine set_frame_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
+      fcol=iopt
+      return
+      end subroutine set_frame_color
+
       subroutine set_barlabel_color(iopt)
       use b2mod_types
       implicit none
@@ -345,12 +356,11 @@ c
       real red, green, blue
       integer iw
       logical open_file, streql
-      integer lnblnk
-      external lnblnk, open_file, streql
+      external open_file, streql
 
       if(color_map_loaded) return
       if(.not.streql(color_file,' ')) then
-        write(*,*) 'Using ',color_file(1:lnblnk(color_file))
+        write(*,*) 'Using ',trim(color_file)
         if(.not.open_file(99,color_file,
      1   'data.local/palettes|scripts.local/palettes|scripts/palettes'))
      >   then
@@ -367,16 +377,14 @@ c
         enddo
         ncol=ncol+1
         goto 10
-   30   write(*,*) 'Error in reading ',
-     1   color_file(1:lnblnk(color_file)),
-     2   ' on line ',ncol+1
+   30   write(*,*) 'Error in reading ',trim(color_file),
+     1   ' on line ',ncol+1
         call color
         goto 50
    40   close(99)
         ncol=ncol-2
         if(ncol.le.0) then
-          write(*,*) 'Too few colors in ',
-     1     color_file(1:lnblnk(color_file))
+          write(*,*) 'Too few colors in ',trim(color_file)
           call color
           goto 50
         endif

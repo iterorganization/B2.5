@@ -7,19 +7,13 @@
       use carre_constants
       use b2mod_ad
      & , only : nsdmax
+      use b2mod_dimensions
       implicit none
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2
 c*  ncbs          : number of these boundary segments
 cank }
-#     include "DIMENSIONS.F"
-#ifndef DEF_NBC
-#define DEF_NBC 20
-#endif
-#ifndef DEF_NISO
-#define DEF_NISO 10
-#endif
       integer NBCD, NNISOD
       parameter (NBCD=DEF_NBC,NNISOD=DEF_NISO)
 #ifdef ALLOCATE_AND_NAMELIST
@@ -145,13 +139,11 @@ csw 18feb2014 added for correct implementation of boundary conditions
       logical catch_up
       external xertst
 
-!WG_TODO need to clean up here;
-!WG_TODO for now: call alloc_b2mod_boundary with dummy nx=1,ny=1;
-      call alloc_b2mod_boundary(1,1,ns,nbcd,nnisod)
+      call alloc_b2mod_boundary(DEF_NXD,DEF_NYD,ns,nbcd,nnisod)
       call read_b2mod_boundary_namelist(ns, mpg, .true.)
-      call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+      call xertst (nbc.le.nbcd, 'increase DEF_NBC in b2mod_dimensions')
       call xertst (nniso.le.nnisod,
-     1     'increase DEF_NISO in DIMENSIONS.F')
+     1     'increase DEF_NISO in b2mod_dimensions')
       call write_b2mod_boundary_namelist
       if(boundary_time_mod.gt.0.0_R8) then
          bc_elm_count=int(tim/boundary_time_mod)
@@ -170,9 +162,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
         write(*,*) 'b2stbc: catching up ...'
         call read_b2mod_boundary_namelist(ns, mpg, .true.)
         call xertst (nbc.le.nbcd,
-     1           'increase DEF_NBC in DIMENSIONS.F')
+     1           'increase DEF_NBC in b2mod_dimensions')
         call xertst (nniso.le.nnisod,
-     1           'increase DEF_NISO in DIMENSIONS.F')
+     1           'increase DEF_NISO in b2mod_dimensions')
         call write_b2mod_boundary_namelist
         if(boundary_time_mod.gt.0.0_R8) then
           catch_up=boundary_time_switch.gt.0.0_R8.and.
@@ -268,9 +260,10 @@ csw 18feb2014 added for correct implementation of boundary conditions
         if(boundary_time_mod.gt.0.0_R8)
      >   bc_elm_count=int(tim/boundary_time_mod)
         call read_b2mod_boundary_namelist(ns, mpg, .true.)
-        call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+        call xertst (nbc.le.nbcd,
+     .                         'increase DEF_NBC in b2mod_dimensions')
         call xertst (nniso.le.nnisod,
-     .                           'increase DEF_NISO in DIMENSIONS.F')
+     .                         'increase DEF_NISO in b2mod_dimensions')
         call write_b2mod_boundary_namelist
       endif
       return
@@ -979,7 +972,7 @@ c.. Test consistency with region boundaries
       type(mapping), intent(inout) :: m
       logical, intent(in) :: dotest
       integer is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
-      integer :: ian, ien, nfaces
+      integer :: ian, ien
       character*3 ss
 #ifdef WG_OUT
       logical covered, corner, guard_cell, found
@@ -1046,16 +1039,15 @@ c.. Test consistency with region boundaries
               indss = bcstart(ib)+iss-1
               write (*,*) ' surface index ',indss
 ! find all faces belonging to surface structure INDSS
-              nfaces = 0
               call find_faces (indss, inbc, nbcfc,
-     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb, nfaces)
-              write(ss,"(I0)") indss
-              call xertst(nfaces.gt.0, 
-     &         'No faces found for boundary face label = '//ss)
+     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
             end do              ! iss
+            write(ss,'(i3)') ib
+            call xertst(nbcfc.gt.0, 
+     &        'No faces found for boundary condition = '//ss)
             m%bcFcP(ib,2) = nbcfc
           else
-            call xerrab ('BCCHAR /= A ')
+            call xerrab ('BCCHAR /= A')
           endif
         end do
         close(idb)
@@ -1178,13 +1170,11 @@ c.. Make a list of core boundaries
 #endif
           endif
         enddo
-#ifdef WG_TODO
-        if (ny.gt.1) then
-          if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
+        if (maxval(m%fsVxP(:,2)).gt.2) then
+          if (m%nnreg(0).gt.1 .or. m%periodic_bc.eq.1) then
             call xertst(1.le.ncbs, 'faulty parameters ncbs')
           end if
         end if
-#endif
         do ib = 1, ncbs
           call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
      .     'faulty parameter lcbs')
@@ -1213,8 +1203,8 @@ c.. Make a list of core boundaries
       do is = 0, ns-1
         call xertst (0.0_R8.lt.niiso(is), 'faulty input niiso')
       enddo
-#ifdef WG_TODO
       do ib = 1, nbc
+#ifdef WG_TODO
         if (bcchar(ib).eq.'N') then
           if(old_style(ib)) then
             call xertst (1.le.bcpos(ib).and.bcpos(ib).le.ny+1,
@@ -1324,7 +1314,8 @@ c.. Make a list of core boundaries
             end do
           endif
         endif
-        if (old_style(ib)) call xertst (bcstart(ib).le.bcend(ib),
+#endif
+        call xertst (bcstart(ib).le.bcend(ib),
      .   'faulty inputs bcstart > bcend')
         do is = 0, ns-1
           call xertst (0.le.bccon(is,ib), 'faulty input bccon')
@@ -1336,7 +1327,6 @@ c.. Make a list of core boundaries
         call xertst (0.le.bcenk(ib), 'faulty input bcenk')
         call xertst (0.le.bcenz(ib), 'faulty input bcenz')
       enddo
-#endif
 #ifdef WG_OUT
       do ib = 1, nniso
         call xertst (-1.le.nxiso1(ib).and.nxiso1(ib).le.nx,
@@ -1649,17 +1639,17 @@ c.. Test consistency with region boundaries
 
 ***********************************************************************
 
-      subroutine conv_bcparms (nx, ny, ns, m, g)
+      subroutine conv_bcparms (ns, m)
       implicit none
-      integer, intent(in) :: nx, ny, ns
+      integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
-      type (geometry), intent (inout) :: g
       integer :: ib, ibc, is, inbc, noss, iss, indss,
-     .           i, iFc, iCv, idb, nfaces
+     .           i, iFc, iCv, idb
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
       integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
       character(1) :: lchar(nbc)
+      character*3 ss
 #ifndef F2003
       integer newunit
       external newunit
@@ -1786,8 +1776,11 @@ cwdk also need to correct for degenerate faces?
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             call find_faces (indss, inbc, bcl(ib),
-     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb, nfaces)
+     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
           end do  ! iss
+          write(ss,'(i3)') ib
+          call xertst(bcl(ib).gt.0, 
+     &      'No faces found for boundary condition = '//ss)
           m%bcFcP(ib,2) = bcl(ib)
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')
@@ -1810,8 +1803,8 @@ cwdk also need to correct for degenerate faces?
         ifchit = 0
 ! for all guard cells mark face to plasma cell
         do i = 1, m%nCg
-          icv = m%nCi + i
-          iFc = m%cvFc(m%cvFcP(icv,1))
+          iCv = m%nCi + i
+          iFc = m%cvFc(m%cvFcP(iCv,1))
           ifchit(iFc) = ifchit(iFc) + 1
         end do
 ! remove mark from boundary faces
@@ -1825,7 +1818,7 @@ cwdk also need to correct for degenerate faces?
           write (*,*) 'suspicious faces '
           do i = 1, m%nFc
             if (ifchit(i) /= 0) then
-              write (*,*) 'ifc ',i,ifchit(i)
+              write (*,*) 'iFc ',i,ifchit(i)
               write (*,*) 'fcCv ',m%fcCv(i,1),m%fcCv(i,2)
             end if
           end do
@@ -1851,12 +1844,12 @@ cwdk also need to correct for degenerate faces?
 ***********************************************************************
 
       subroutine write_bcparms (ns, m)
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: ib, iout, is
       character(1) :: ap =''''
-      character(10) :: new_boundary_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -1868,10 +1861,10 @@ cwdk also need to correct for degenerate faces?
       iout = newunit()
       open(unit=iout,file='b2us.boundary.parameters')
 #endif
-      call cfverw(iout,new_boundary_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&boundary'
-      write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
+      write (iout,'(1x,a,i3,a)') 'NBC     = ',m%nBc,','
       write (iout,'(1x,a,(1x,T14,10(2x,4a1)))')
      .       'BCCHAR  =  ',(ap,acchar(ib),ap,',',ib=1,m%nBc)
 
@@ -1938,7 +1931,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,l1,a1)') 'LBNDUSR=',lbndusr,','
       write (iout,'(1x,a,l1,a1)') 'LFEEDBACK=',lfeedback,','
 
-      write (iout,'(1x,a,i0,a1)') 'NNISO = ',nniso,','
+      write (iout,'(1x,a,i2,a1)') 'NNISO = ',nniso,','
 
       if (nniso > 0)
      .   call xerrab ('write_bcparms -- nniso > 0')
@@ -1966,12 +1959,79 @@ cwdk also need to correct for degenerate faces?
 
       end subroutine write_bcparms
 
+
+      subroutine replace_outdated_bcparms (ns, m)
+      implicit none
+      integer, intent(in) :: ns
+      type (mapping), intent (inout) :: m
+      integer :: ib, is
+      logical changed
+
+cc Here outdated BCs that will not be revived in the WG code can be automatically replaced by new versions.
+cc This should only be done if the change is backward compatible! For example, the non-drift sheath BC BCMOM = 3 can be automaticaly replaced by
+cc BCMOM = 13, because it is drift-compatible but gives the same result as the old BCMOM = 3 for cases without drifts.
+
+      changed = .false.
+      do ib=1,m%nBc
+        do is=0,ns-1
+cc BCMOM
+          if (bcmom(is,ib).eq.3) then
+            bcmom(is,ib) = 13
+            write(*,*) 'Automatically changing BCMOM from 3 to 13'
+            changed = .true.
+          endif 
+
+        enddo
+cc BCENE
+        if (bcene(ib).eq.3) then 
+          bcene(ib) = 15
+          write(*,*) 'Automatically changing BCENE from 3 to 15'
+          changed = .true.
+        endif 
+        if (bcene(ib).eq.12) then 
+          bcene(ib) = 15
+          write(*,*) 'Automatically changing BCENE from 12 to 15'
+          changed = .true.
+        endif 
+cc BCENI
+        if (bceni(ib).eq.3) then 
+          bceni(ib) = 15
+          write(*,*) 'Automatically changing BCENI from 3 to 15'
+          changed = .true.
+        endif 
+        if (bceni(ib).eq.12) then 
+          bceni(ib) = 15
+          write(*,*) 'Automatically changing BCENI from 12 to 15'
+          changed = .true.
+        endif 
+
+cc BCPOT
+
+        if (bcpot(ib).eq.3) then 
+          bcpot(ib) = 11
+          write(*,*) 'Automatically changing BCPOT from 3 to 11'
+          changed = .true.
+        endif 
+
+      enddo
+
+      if (changed) then
+          write(*,*) 'Some outdated BCs' //
+     .    ' in WG have been replaced automatically.'
+          write(*,*) 'See lines above.'
+      endif
+
+      end subroutine replace_outdated_bcparms
+
 ***********************************************************************
 
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
-      integer :: ib, inbc, ibc, ifc, ic1, ic2
-      integer :: iout, ian, ien, i
+      integer :: ib, inbc, ibc, iFc, ic1, ic2
+      integer :: i, j, k
+#ifdef WG_DEBUG
+      integer :: iout, ian, ien
+#endif
 #ifndef F2003
       integer newunit
       external newunit
@@ -1985,17 +2045,17 @@ cwdk also need to correct for degenerate faces?
       call alloc_mapping_bc(m)
 
       inbc = 0 ! index in bcCv
-      do ib = 1,m%nBc
+      do ib = 1, m%nBc
         m%bcCvP(ib,1) = inbc + 1
 !pb     m%bcCvP(ib,2) = nbcfaces(ib)
         m%bcCvP(ib,2) = m%bcFcP(ib,2)
 !pb     do ibc = 1, nbcfaces(ib)
         do ibc = 1, m%bcFcP(ib,2)
           inbc = inbc + 1
-!pb       ifc = bc_faces(ibc,ib)
-          ifc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
-          ic1 = min(m%fcCv(ifc,1), m%fcCv(ifc,2))
-          ic2 = max(m%fcCv(ifc,1), m%fcCv(ifc,2))
+!pb       iFc = bc_faces(ibc,ib)
+          iFc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
+          ic1 = min(m%fcCv(iFc,1), m%fcCv(iFc,2))
+          ic2 = max(m%fcCv(iFc,1), m%fcCv(iFc,2))
           if ((ic1 <= m%nCi) .and. (ic2 >m%nCi)) then
             m%bcCv(inbc,1) = ic2
             m%bcCv(inbc,2) = ic1
@@ -2006,6 +2066,17 @@ cwdk also need to correct for degenerate faces?
         end do
       end do
 
+      if (allocated(m%strDiv)) then
+        do i = 1, maxval(m%strDiv)
+          do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
+            iFc = m%divFc(j)
+            do k = 1, size(m%bcFc)
+              if (m%bcFc(k).eq.iFc) m%divFcOr(j) = m%bcFcOr(k)
+            end do
+          end do
+        end do
+      end if
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='bc.testout')
 #else
@@ -2024,7 +2095,7 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(a,/(10f6.2))') 'bcCv(2) ',(m%bcFcOr(i),i=ian,ien)
       end do
       close (iout)
-
+#endif
       end subroutine bc_to_struct
 
       end module b2mod_boundary_namelist

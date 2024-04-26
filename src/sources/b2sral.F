@@ -1,14 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
+      subroutine b2sral (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
-     &  switch, geo, mpg, st, st_ext, wrong_flow, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, wrong_flow, main_call)
       use b2mod_types
       use b2mod_constants
       use b2mod_tallies
-!      use b2mod_sources
-!     &     , only: rcxna, rcxhi, rcxmo
       use b2mod_input_profile
       use b2mod_numerics_namelist
 !      use b2mod_boundary_namelist
@@ -22,11 +20,13 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : b2sral_elm_count, ncall_b2sral
 c ECH
       use b2mod_ech
 c Artificial losses
       use b2mod_artificialsinks
-
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
@@ -48,26 +48,28 @@ c Artificial losses
      & , only : dab2, lkindi, lkindm, lkindp
 #endif
       use b2mod_ad
-     & , only : b2sral_elm_count, my_out_folder,
+     & , only : my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr,
+     &          ncall_b2stbr_phys, ncall_b2stbr,
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
-     &          ncall_b2tfrn, ncall_b2tiner
+     &          ncall_b2tfrn
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nxtl, nxtr,
+      integer nCv, nFc, nVx, ns,
      *  nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
+      type (B2Average), intent (in) :: st_avg
       logical wrong_flow                                                 !xpb
       logical main_call                                                  !dpc
 *   ..common blocks
@@ -115,7 +117,7 @@ c Artificial losses
 *   ..subprogram start-up calls
       call subini ('b2sral')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -163,7 +165,8 @@ c Artificial losses
       if (ncall_b2sral.eq.0) then                                              !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,ns,
-     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .      switch%b2mndt_style)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -182,7 +185,8 @@ c Artificial losses
         do while(catch_up)
           write(*,*) 'b2sral: catching up ...'
           call read_b2mod_numerics_namelist(nCv,ns,
-     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .      switch%b2mndt_style)
           call write_b2mod_numerics_namelist
           if(numerics_time_mod.gt.0.0_R8) then
             catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
@@ -215,7 +219,8 @@ c Artificial losses
           if(numerics_time_mod.gt.0.0_R8)
      >     b2sral_elm_count=int(tim/numerics_time_mod)
           call read_b2mod_numerics_namelist(nCv,ns,
-     .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .     switch%b2mndt_style)
           call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb
@@ -249,9 +254,8 @@ c Artificial losses
          write(*,*) ' style=',switch%b2sral_style,' b2stbc called'
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &    geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext,
-     &    st%srw, st%psnc, st%psnl,
-     &    wrong_flow, main_call)
+     &    geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,
+     &    st%srw, st%psnc, st%psnl, wrong_flow, main_call)
 *   .. store contributions from BCs
        st%sr%sna = st%srw%sna0
        st%sr%smo = st%srw%smo0
@@ -307,9 +311,9 @@ c Artificial losses
 *   ..initialise smq to 0
       call sfill (nCv*4*ns, 0.0_R8, st%sr%smq, 1)
 *   ..compute special contributions (boundaries and recycling)
-      call b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr,
+      call b2stbr (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, dtim,
-     &  switch, geo, mpg, st, st_ext, main_call)
+     &  switch, geo, mpg, st, st_ext, st_avg, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -340,8 +344,7 @@ c Artificial losses
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext,
-     &  st%sr, st%srw, main_call)
+     &  geo, mpg, st%pl, st%dv, st_ext, st%sr, st%srw, main_call)
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -386,7 +389,7 @@ c Artificial losses
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
-      call b2stel (nCv, nFc, nVx, ns, ismain,
+      call b2stel (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, st%pl, st%dv, st%rt, st%rtw, st%srw) !srv 11.09.09 {
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
@@ -407,9 +410,9 @@ c Artificial losses
       rcxnareg=0.0_R8
       rcxhireg=0.0_R8
       rcxmoreg=0.0_R8
-!WG_TODO      rcxna=0.0_R8
-!WG_TODO      rcxhi=0.0_R8
-!WG_TODO      rcxmo=0.0_R8
+      st%srw%rcxna=0.0_R8
+      st%srw%rcxhi=0.0_R8
+      st%srw%rcxmo=0.0_R8
 
 c ECH power
       if(switch%use_ech.eq.1) then
@@ -469,7 +472,8 @@ c end artificial losses
         call b2stcx (nCv, nFc, ns, iscx(k), ismain, switch,
      &    geo, mpg, st%pl%na, st%pl%ua, st%pl%ti, st%pl%tn, st%dv%ni,
      &    st%rtw%rcx,
-     &    st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%shn0)       !srv 07.07.09
+     &    st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%shn0,
+     &    st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
          call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))

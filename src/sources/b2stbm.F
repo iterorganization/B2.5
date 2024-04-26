@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
-     &  main_call)
+     &  geo, mpg, pl, dv, st_ext, sr, srw, main_call)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -19,10 +18,11 @@
      2          b2stbm_sne
 #endif
       use b2mod_balance !djm Jan2017
-     1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
-     2          b2stbm_shi0to3, balance_netcdf
+     1 , only : balance_netcdf
+     2        , b2stbm_sna0to1, b2stbm_smo0to3, b2stbm_she0to3,
+     3          b2stbm_shi0to3
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_switches
       use b2us_geo
@@ -41,9 +41,6 @@
       type (B2StateExt), intent (inout) :: st_ext
 *   ..input/output arguments 
       type (B2Derivatives), intent (inout) :: dv
-      type (B2Rates), intent (inout) :: rt
-      type (B2RatesWork), intent (inout) :: rtw
-      type (B2Coeff), intent (inout) :: co
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
 *   ..common blocks
@@ -91,7 +88,7 @@
 *   ..subprogram start-up calls
       call subini ('b2stbm')
 *   ..test nCv, nFc, ns, ismain
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
@@ -195,8 +192,8 @@ cxpb Must convert fluxes to flux densities
             na_tot(iCv) = na_tot(iCv) + n0_tmp
             na0(iCv,is) = pl%na(iCv,is) + n0_tmp
             ti0(iCv) = ti0(iCv) + nt_tmp
-            ua0(iCv,is) = (pl%ua(iCv,is)*pl%na(icV,is)*
-     .         sign(1.0_R8,geo%cvBb(iCv,0)) + ua_tmp*n0_tmp)/na0(iCv,is)
+            ua0(iCv,is) = (pl%ua(iCv,is)*pl%na(icV,is)+ua_tmp*n0_tmp)
+     /                    /na0(iCv,is)
           end do
           do iFc = 1, nFc
             fna0(iFc,0,is) = 
@@ -207,7 +204,7 @@ cxpb Must convert fluxes to flux densities
           end do
         else
           na0(:,is) = pl%na(:,is)
-          ua0(:,is) = pl%ua(:,is)*sign(1.0_R8,geo%cvBb(:,0))
+          ua0(:,is) = pl%ua(:,is)
           fna0(:,0,is) = dv%fna(:,0,is)/geo%fcS(:)/geo%fcQgam(iFc,0)
           fna0(:,1,is) = dv%fna(:,1,is)/geo%fcS(:)
         end if
@@ -378,8 +375,7 @@ cxpb
 *  ...parallel momentum sources
             vthe=sqrt(pl%te(iCv)/me)
             vthe=vthe/sqrt(am(is)*mp/me)
-            t0 = st_ext%smo(iCv,is)*
-     .         sign(1.0_R8,geo%cvBb(iCv,0))
+            t0 = st_ext%smo(iCv,is)
             srw%smo0(iCv,0,is) = srw%smo0(iCv,0,is)+
      .         t0+switch%b2stbm_linearisation*abs(t0)*pl%ua(iCv,is)/vthe
             srw%smo0(iCv,1,is) = srw%smo0(iCv,1,is)-
@@ -437,8 +433,7 @@ cxpb
 *  ...raw sources: no linearisation
           srw%sne0(iCv,0) = st_ext%sne(iCv)
           srw%sna0(iCv,0,0:ns-1) = st_ext%sna(iCv,0:ns-1)
-          srw%smo0(iCv,0,0:ns-1) = st_ext%smo(iCv,0:ns-1)*
-     .         sign(1.0_R8,geo%cvBb(iCv,0))
+          srw%smo0(iCv,0,0:ns-1) = st_ext%smo(iCv,0:ns-1)
           srw%she0(iCv,0) = st_ext%she(iCv)
           srw%sch0(iCv,0) = st_ext%sch(iCv)
           srw%shi0(iCv,0) = st_ext%shi(iCv)
@@ -470,10 +465,10 @@ cxpb
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
-!WG_TODO        b2stbm_sna0to1 = sna0
-!WG_TODO        b2stbm_smo0to3 = smo0
-!WG_TODO        b2stbm_she0to3 = she0
-!WG_TODO        b2stbm_shi0to3 = shi0
+        b2stbm_sna0to1 = srw%sna0
+        b2stbm_smo0to3 = srw%smo0
+        b2stbm_she0to3 = srw%she0
+        b2stbm_shi0to3 = srw%shi0
       endif
 
 * ..return

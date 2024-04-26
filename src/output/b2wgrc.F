@@ -156,9 +156,10 @@
 
 *   ..local variables
       integer i, j, k, ind, izn0, kmin, kmax
-      character header*60, chk*3, chdc*(*), fmtp*(*)
-      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
-     &  fmtp='(2x,a6,4x,a)')
+      character header*60, chk*3, fmtp*(*)
+      parameter (fmtp='(2x,a6,4x,a)')
+c$$$      character chdc*(*)
+c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
       real (kind=R8) ::
      *  Rydberg, Ef, Eg, zmin, zmax
       real (kind=R8), allocatable :: wt(:), wn(:)

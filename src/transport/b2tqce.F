@@ -10,10 +10,14 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2tqce
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tqce, ncall_b2tlnl
+     & , only : ncall_b2tlnl
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -75,7 +79,7 @@
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(nCv), tnp                             !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
-      parameter (ce = 3.16e0_R8)
+      parameter (ce = 3.16_R8)
 *   ..procedures
       intrinsic sqrt
       external xertst, sfill
@@ -114,7 +118,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tqce')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
       if (ncall_b2tqce.lt.3) then
 *    ..test bb

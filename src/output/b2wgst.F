@@ -126,9 +126,9 @@
 *   ..procedures
       intrinsic nint, max
       real (kind=R8) ::
-     *   scal10, samax, b2ssum
+     *   scal10, damax, b2ssum
       logical strmas
-      external xertst, scal10, samax, b2ssum,
+      external xertst, scal10, damax, b2ssum,
      &  strmas, pagini, pagend, gsln, gpl_d
       external b2xppe, b2xpmc, b2xgxy, b2wgx2, b2wgx3, b2wgx4,
      &  b2wgx5
@@ -156,7 +156,7 @@
       if (strmas(idout,'cpne')) then
        write (header,fmtl) 'ELECTRON DENSITY (/m**3).'
        write (nprt,fmtp) '+cpne', header
-       call b2wgx4 (nx, ny, header, crx, cry, ne, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, ne, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, ne, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -164,7 +164,7 @@
       if (strmas(idout,'cpni')) then
        write (header,fmtl) 'TOTAL ATOM DENSITY (/m**3).'
        write (nprt,fmtp) '+cpni', header
-       call b2wgx4 (nx, ny, header, crx, cry, ni, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, ni, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, ni, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -172,7 +172,7 @@
       if (strmas(idout,'cpte')) then
        write (header,fmtl) 'ELECTRON TEMPERATURE (eV).'
        write (nprt,fmtp) '+cpte', header
-       call b2wgx4 (nx, ny, header, crx, cry, te, 0, ev)
+       call b2wgx4 (nx, ny, header, te, 0, ev)
        call b2wgx5 (nx, ny, header, crx, cry, te, 0, ev,
      &   wrkx, wrky)
       endif
@@ -180,7 +180,7 @@
       if (strmas(idout,'cpti')) then
        write (header,fmtl) 'ALL ATOM TEMPERATURE (eV).'
        write (nprt,fmtp) '+cpti', header
-       call b2wgx4 (nx, ny, header, crx, cry, ti, 0, ev)
+       call b2wgx4 (nx, ny, header, ti, 0, ev)
        call b2wgx5 (nx, ny, header, crx, cry, ti, 0, ev,
      &   wrkx, wrky)
       endif
@@ -188,7 +188,7 @@
       if (strmas(idout,'cppr')) then
        write (header,fmtl) 'TOTAL PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppr', header
-       call b2wgx4 (nx, ny, header, crx, cry, pr, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, pr, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, pr, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -196,16 +196,16 @@
       if (strmas(idout,'cppz')) then
        write (header,fmtl) 'PLASMA PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppz', header
-       call b2wgx4 (nx, ny, header, crx, cry, pz, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, pz, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, pz, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
 *   ..make contour plots of electric potential
       if (strmas(idout,'cppo')) then
-       t0 = scal10(0.8_R8*samax(n2,po,1))
+       t0 = scal10(0.8_R8*damax(n2,po,1))
        write (header,fmth) 'ELECTRIC POTENTIAL (V).', t0/100
        write (nprt,fmtp) '+cppo', header
-       call b2wgx2 (nx, ny, header, crx, cry, po, 0, 1.0_R8,
+       call b2wgx2 (nx, ny, header, po, 0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
        call b2wgx3 (nx, ny, header, crx, cry, po, 0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10,
@@ -221,7 +221,7 @@
         enddo
         write (header,fmtl2) 'FRACTIONAL ATOM DENSITY (unit).', is
         write (nprt,fmtp) '+cpfn', header
-        call b2wgx4 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8)
+        call b2wgx4 (nx, ny, header, wrk0, 0, 1.0_R8)
         call b2wgx5 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
      &    wrkx, wrky)
        enddo
@@ -232,7 +232,7 @@
        call b2xppe (nx, ny, ne, te, wrk0)
        write (header,fmtl) 'ELECTRON PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppe', header
-       call b2wgx4 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, wrk0, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -240,10 +240,10 @@
 *   ..make contour plots of parallel velocity
       if (strmas(idout,'cpua')) then
        do is = 0, ns-1
-        t0 = scal10(0.8_R8*samax(n2,ua(-1,-1,is),1))
+        t0 = scal10(0.8_R8*damax(n2,ua(-1,-1,is),1))
         write (header,fmth2) 'PARALLEL VELOCITY (m/s).', is, t0/100
         write (nprt,fmtp) '+cpua', header
-        call b2wgx2 (nx, ny, header, crx, cry, ua(-1,-1,is), 0,
+        call b2wgx2 (nx, ny, header, ua(-1,-1,is), 0,
      1   1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
         call b2wgx3 (nx, ny, header, crx, cry, ua(-1,-1,is), 0,
@@ -260,7 +260,7 @@
         t0 = 1
         write (header,fmth2) 'MACH NUMBER.', is, t0/100
         write (nprt,fmtp) '+cpmc', header
-        call b2wgx2 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
+        call b2wgx2 (nx, ny, header, wrk0, 0, 1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
         call b2wgx3 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10,
@@ -275,7 +275,7 @@
        wxf2(ix) = b2ssum(ny+2,fni(ix,-1,0,0),nx+2)
       enddo
 *   ..compute common scale for particle fluxes
-      t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
+      t0 = max(damax(nx+1,wxf1(0),1),damax(nx+1,wxf2(0),1))
       if (t0.eq.0) then
        sc = 1
       else
@@ -309,7 +309,7 @@
        wxf2(ix) = b2ssum(ny+2,fhi(ix,-1,0,0),nx+2)
       enddo
 *   ..compute common scale for two heat fluxes
-      t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
+      t0 = max(damax(nx+1,wxf1(0),1),damax(nx+1,wxf2(0),1))
       if (t0.eq.0) then
        sc = 1
       else
@@ -341,10 +341,10 @@
        wxf1(ix) = b2ssum(ny+2,fch(ix,-1,0,0),nx+2)
       enddo
 *   ..compute scale for electric current
-      if (samax(nx+1,wxf1(0),1).eq.0) then
+      if (damax(nx+1,wxf1(0),1).eq.0) then
        sc = 1
       else
-       sc = scal10(samax(nx+1,wxf1(0),1))
+       sc = scal10(damax(nx+1,wxf1(0),1))
       endif
 *   ..make plots of electric current as function of x
       if (strmas(idout,'fchx')) then
@@ -371,10 +371,10 @@
         do ix = 0, nx
          wxf1(ix) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
         enddo
-        if (samax(nx+1,wxf1(0),1).eq.0) then
+        if (damax(nx+1,wxf1(0),1).eq.0) then
          sc = 1
         else
-         sc = scal10(samax(nx+1,wxf1(0),1))
+         sc = scal10(damax(nx+1,wxf1(0),1))
         endif
         write (header,'(a,'' ('',i3,'')'',t44,a)')
      &    'INTEGRATED PARTICLE FLUX', is, 'AS FUNCTION OF X'
@@ -399,7 +399,7 @@
        wyf2(iy) = b2ssum(nx+2,fni(-1,iy,1,1),1)
       enddo
 *   ..compute common scale for particle fluxes
-      t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
+      t0 = max(damax(ny+1,wyf1(0),1),damax(ny+1,wyf2(0),1))
       if (t0.eq.0) then
        sc = 1
       else
@@ -433,7 +433,7 @@
        wyf2(iy) = b2ssum(nx+2,fhi(-1,iy,1,1),1)
       enddo
 *   ..compute common scale for two heat fluxes
-      t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
+      t0 = max(damax(ny+1,wyf1(0),1),damax(ny+1,wyf2(0),1))
       if (t0.eq.0) then
        sc = 1
       else
@@ -465,10 +465,10 @@
        wyf1(iy) = b2ssum(nx+2,fch(-1,iy,1,1),1)
       enddo
 *   ..compute scale for electric current
-      if (samax(ny+1,wyf1(0),1).eq.0) then
+      if (damax(ny+1,wyf1(0),1).eq.0) then
        sc = 1
       else
-       sc = scal10(samax(ny+1,wyf1(0),1))
+       sc = scal10(damax(ny+1,wyf1(0),1))
       endif
 *   ..make plots of electric current as function of y
       if (strmas(idout,'fchy')) then
@@ -495,10 +495,10 @@
         do iy = 0, ny
          wyf1(iy) = b2ssum(nx+2,fna(-1,iy,1,1,is),1)
         enddo
-        if (samax(ny+1,wyf1(0),1).eq.0) then
+        if (damax(ny+1,wyf1(0),1).eq.0) then
          sc = 1
         else
-         sc = scal10(samax(ny+1,wyf1(0),1))
+         sc = scal10(damax(ny+1,wyf1(0),1))
         endif
         write (header,'(a,'' ('',i3,'')'',t44,a)')
      &    'INTEGRATED PARTICLE FLUX', is, 'AS FUNCTION OF Y'

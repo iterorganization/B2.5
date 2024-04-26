@@ -1,19 +1,20 @@
 c
-      function chord_tria_value(ntrii,nrknot,tt,
-     1 xtrian,ytrian,necke,ixtri,iytri,
+      function chord_tria_value(geo,ntrii,nrknot,tt,
+     1 xtrian,ytrian,necke,ixtri,
      2 xp,yp,zp,dxp,dyp,dzp,vector)
 
       use b2mod_types
-      use b2mod_geo
+      use b2us_geo
       use b2mod_constants
       use b2mod_subsys
       use b2mod_b2plot
       implicit none
+      type(geometry), intent(in) :: geo
       
       real (kind=R8) ::
      * chord_tria_value
       integer ntrii,nrknot
-      integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
+      integer necke(3,ntrii),ixtri(ntrii)
       real (kind=R8) ::
      * tt(1:ntrii),
      1 xtrian(nrknot),
@@ -23,8 +24,9 @@ c
       logical vector
 
       real (kind=R8) ::
-     * x,y,z,dl,dx,dy,dz,dbr,dbz,dbphi,dbx,dby,dbs,dotprod,
-     2 phi,rt,zt
+     * x,y,z,dx,dy,dz,rt,zt
+      real (kind=R8) ::
+     * dl,dbr,dbz,dbs,dbphi,dotprod,dbx,dby,phi
       integer it
       logical found
 
@@ -32,7 +34,8 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      intrinsic sqrt,sin,cos,abs,atan2
+      intrinsic sqrt
+      intrinsic abs,atan2,cos,sin
       external chord_find, xertst
 
       call subini ('chord_tria_value')
@@ -61,20 +64,14 @@ c
       endif
 
       if(vector) then
-        if (ixtri(it).ne.-1 .and. iytri(it).ne.-1) then
+        if (ixtri(it).gt.0) then
 c in r,z,phi
-          dbr=((crx(ix_e2b(ixtri(it)),iytri(it)-1,1)+
-     .          crx(ix_e2b(ixtri(it)),iytri(it)-1,3))-
-     .         (crx(ix_e2b(ixtri(it)),iytri(it)-1,2)+
-     .          crx(ix_e2b(ixtri(it)),iytri(it)-1,0)))/2.0_R8
-          dbz=((cry(ix_e2b(ixtri(it)),iytri(it)-1,1)+
-     .          cry(ix_e2b(ixtri(it)),iytri(it)-1,3))-
-     .         (cry(ix_e2b(ixtri(it)),iytri(it)-1,2)+
-     .          cry(ix_e2b(ixtri(it)),iytri(it)-1,0)))/2.0_R8
+          dbr=geo%cvEb(ixtri(it),0)
+          dbz=geo%cvEb(ixtri(it),1)
           dbs=sqrt(dbr**2+dbz**2)
-          dbr=dbr/dbs*pit(ix_e2b(ixtri(it)),iytri(it)-1)
-          dbz=dbz/dbs*pit(ix_e2b(ixtri(it)),iytri(it)-1)
-          dbphi=1.0*sqrt(1.0-pit(ix_e2b(ixtri(it)),iytri(it)-1)**2)
+          dbr=dbr/dbs*pitch(geo,ixtri(it))
+          dbz=dbz/dbs*pitch(geo,ixtri(it))
+          dbphi=1.0*sqrt(1.0-pitch(geo,ixtri(it))**2)
 c in x,y,z
           phi=atan2(y,x)
           dbz=dbz
@@ -93,7 +90,7 @@ c end-assertion
           dy=dy/dl
           dz=dz/dl
           dotprod=dbx*dx+dby*dy+dbz*dz
-c         write(*,*) 'it,ix,iy = ',it,ix_e2b(ixtri(it)),iytri(it)-1
+c         write(*,*) 'it,iCv = ',it,ixtri(it)
 c         write(*,*) 'dl = ',dx,dy,dz
 c         write(*,*) 'bl = ',dbr,dbz,dbphi
 c         write(*,*) 'phi = ',phi
@@ -108,18 +105,20 @@ c         write(*,*) 'dl.bl = ',dotprod
       return
       end function chord_tria_value
 c
-      function chord_tria_integral(ntrii,nrknot,tt,
-     2 xtrian,ytrian,necke,ixtri,iytri,npoints,
+      function chord_tria_integral(geo,ntrii,nrknot,tt,
+     2 xtrian,ytrian,necke,ixtri,npoints,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector)
       
       use b2mod_types
       use b2mod_subsys
+      use b2us_geo
       implicit none
+      type(geometry), intent(in) :: geo
       
       real (kind=R8) ::
      * chord_tria_integral 
       integer ntrii,nrknot,npoints
-      integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
+      integer necke(3,ntrii),ixtri(ntrii)
       real (kind=R8) ::
      * tt(1:ntrii),
      1 xtrian(nrknot),
@@ -156,8 +155,8 @@ c
         y=yp1*(1.0-f)+yp2*f
         z=zp1*(1.0-f)+zp2*f
         chord_tria_integral=chord_tria_integral+dl*
-     1   chord_tria_value(ntrii,nrknot,tt,
-     2                    xtrian,ytrian,necke,ixtri,iytri,
+     1   chord_tria_value(geo,ntrii,nrknot,tt,
+     2                    xtrian,ytrian,necke,ixtri,
      2                    x,y,z,dx,dy,dz,vector)
       enddo
 
@@ -167,17 +166,19 @@ c
       return
       end function chord_tria_integral
 c
-      subroutine chord_tria_compile(npoints,ntrii,nrknot,
-     * xtrian,ytrian,necke,ixtri,iytri,
+      subroutine chord_tria_compile(geo,npoints,ntrii,nrknot,
+     * xtrian,ytrian,necke,ixtri,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector,
      2 indchd,indit,indscl)
 
       use b2mod_types
       use b2mod_subsys
+      use b2us_geo
       implicit none
+      type(geometry), intent(in) :: geo
 
       integer npoints,ntrii,nrknot
-      integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
+      integer necke(3,ntrii),ixtri(ntrii)
       real (kind=R8) ::
      * tt(ntrii),score(ntrii),
      * xtrian(nrknot),
@@ -220,8 +221,8 @@ c
      &   x,y,z,found,it)
         if(found) then
           score(it)=score(it)+dl*
-     1     chord_tria_value(ntrii,nrknot,tt,
-     2      xtrian,ytrian,necke,ixtri,iytri,
+     1     chord_tria_value(geo,ntrii,nrknot,tt,
+     2      xtrian,ytrian,necke,ixtri,
      2      x,y,z,dxp,dyp,dzp,vector)
         endif
       enddo

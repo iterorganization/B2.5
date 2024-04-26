@@ -23,9 +23,9 @@ C =====================================================================
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
       CHARACTER*20 FMTZ
-      real (kind=R4) :: ceil
+      real (kind=R4) :: ceil, sfloor
       integer  no_available_colors
-      external no_available_colors, ceil
+      external no_available_colors, ceil, sfloor
 
       if(b2plot_debug.ge.10) 
      > write(*,*) 'plttarget: nbnd, ndepth_nml = ',nbnd, ndepth_nml
@@ -60,7 +60,7 @@ C =====================================================================
 
       IF(NOFTCLS.EQ.0) THEN                ! standard target contouring
         IF(trglinlog.EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm
@@ -84,9 +84,9 @@ C =====================================================================
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(1)) then
             ncont=ncont*3

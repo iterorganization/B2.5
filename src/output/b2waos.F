@@ -282,7 +282,7 @@
      .      '(//1x,A,I12,4(/1x,A,ES12.2),5(/1x,a,es12.2,a,i6))')
      .      ' SPECIES   ', is,
      .      ' MASS MU   ', am(is),
-     .      ' CHARGE ZI ', (zamin(is)+zamax(is)),
+     .      ' CHARGE ZI ',(zamin(is)+zamax(is)),
      .      ' EL.TH.DIF ', PARM_HCE,
      .      ' IO.TH.DIF ', PARM_HCI(is),
      .      ' PAR.VIS   ', b2tqca_phm0, '  model flag ', model,

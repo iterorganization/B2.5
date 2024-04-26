@@ -1,6 +1,7 @@
 c
       subroutine plot_chords(filename)
       use b2mod_types
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_values
       implicit none
@@ -9,8 +10,7 @@ c
       logical open_file,lcol
       real (kind=R8) ::
      1  rcol,x,y,x1,y1,z1,x2,y2,z2,r,z,ro,zo
-      integer icol,npoints,npointsl,i,lnblnk
-      external lnblnk
+      integer icol,npoints,npointsl,i
 
       real (kind=R8) ::
      *   rshift, zshift, r0, z0, a0, b0, tt0
@@ -22,9 +22,9 @@ c
       lcol=npoints .lt. 0
       npoints=abs(npoints)
 
-      call init_page(dataname(1:lnblnk(dataname)),
+      call init_page(trim(dataname),
      1 values(5),values(6),values(7),values(8),1,.true.,.true.,.true.)
-      call additional_elements(nx,ny,.true.)
+      call additional_elements(mpg%nCv,.true.)
 
       if(lwidth .ne. 1.0_R8) call gslwsc_d(lwidth)
 
@@ -53,9 +53,12 @@ c
       do i=1,npointsl
         ro=r
         zo=z
-        x=x1*real(npointsl-i)/real(npointsl)+x2*real(i)/real(npointsl)
-        y=y1*real(npointsl-i)/real(npointsl)+y2*real(i)/real(npointsl)
-        z=z1*real(npointsl-i)/real(npointsl)+z2*real(i)/real(npointsl)
+        x=x1*real(npointsl-i,R8)/real(npointsl,R8)+
+     .    x2*real(i,R8)/real(npointsl,R8)
+        y=y1*real(npointsl-i,R8)/real(npointsl,R8)+
+     .    y2*real(i,R8)/real(npointsl,R8)
+        z=z1*real(npointsl-i,R8)/real(npointsl,R8)+
+     .    z2*real(i,R8)/real(npointsl,R8)
         r=sqrt(x**2+y**2)
         r=r+rshift
         z=z+zshift
@@ -70,7 +73,7 @@ c
         endif
       endif
       goto 10
-   30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30 write(*,*) 'Error in reading ',trim(filename)
       return
    40 continue
       close(90)

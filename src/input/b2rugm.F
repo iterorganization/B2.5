@@ -87,8 +87,8 @@
 *     vol - (-1:nx,-1:ny) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 *     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-*     includes a factor 2*pi*crx, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cry.)
+*     includes a factor 2*pi*R, while in the case of cylindrical
+*     symmetry it includes a factor 2*pi*Z.)
 *     It will hold that 0.lt.vol(,).
 *
 *     hx, hy - (-1:nx,-1:ny) real*8 array, output.
@@ -316,7 +316,8 @@ cxpb-end
         do ix = -1, nx
           if (nnreg(0).eq.1) then
             on_closed_surface(ix,iy) = periodic_bc.eq.1
-          else if (nnreg(0).eq.2 .or. nnreg(0).eq.4) then
+          else if (nnreg(0).eq.2 .or. nnreg(0).eq.4 .or.
+     &             nnreg(0).eq.7) then
             on_closed_surface(ix,iy) = region(ix,iy,0).eq.1
           else if (nnreg(0).eq.5 .or. nnreg(0).eq.8) then
             on_closed_surface(ix,iy) = mod(region(ix,iy,0),4).eq.1
@@ -425,10 +426,10 @@ cxpb-end
         call cfrure_opt (nget, n2, cell_height, 'cell_height')
       endif
 *  ..interpolate magnetic field to cell faces
-      call b2agbf (nx, ny, isymm, periodic_bc, nncut,
-     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, bb, wbbl, wbbr, wbbv,
-     & region, leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
-     & topix, topiy, cflags)
+      call b2agbf (nx, ny, isymm,
+     & crx, cry, fpsi, ffbz, vol, bb, wbbl, wbbr, wbbv,
+     & leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
+     & cflags)
 *  ..init some arrays for classical grids
 *   ..read  additional geometric parameters for extended grids
       if(b2fgmtry_version.ge.'03.002.000') then

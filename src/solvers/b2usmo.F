@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usmo (nCv, nFc, nVx, isb, switch, geo, mpg, 
+      subroutine b2usmo (nCv, nFc, nVx, switch, geo, mpg,
      &  nregionv, solvereg, itcnt, rxg, rob, rzb, pb, pz, ub,        !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name)  !srv 06.04.07
       use b2mod_types
@@ -15,7 +15,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb, nregionv, itcnt
+      integer nCv, nFc, nVx, nregionv, itcnt
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -67,7 +67,7 @@
 *   ..subprogram start-up calls
       call subini ('b2usmo')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls
@@ -83,7 +83,7 @@
 
 * ..apply discretization scheme
       call calccoef(nCv,nFc,nVx,switch%b2npmo_discr_meth,
-     &                                geo,mpg,flcb,cvsb,flcb0,cvsb0)
+     &                                geo,flcb,cvsb,flcb0,cvsb0)
 
 * ..compute the correction
       aa = 0.0_R8
@@ -98,7 +98,12 @@
      &    smb(iCv,3)*rob(iCv)+
      &    switch%cfc0*geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb*rob(iCv)
-         aa(mpg%cvNvP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
+         aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
+         if (switch%b2mndt_style.lt.2) then
+           aa(mpg%cvNvP(iCv,1)) = aad0(iCv) +abs(resmb(iCv))/(rxg*csb1)
+         else
+           aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
+         endif
         else
          aa(mpg%cvNvP(iCv,1)) = 1.0_R8
          aad0(iCv) = 0.0_R8
@@ -110,12 +115,12 @@
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flcb0(:,0), cvsb0(:,0) ('5-point' contributions)
         t1 = - 0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0)
-        t2 =   0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0) 
+        t2 =   0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0)
         if (solvereg(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
      &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2
          end where
@@ -124,9 +129,9 @@
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
      &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1 
+     &     t1
          end where
         endif
 *     ..contributions from flcb0(:,1), cvsb0(:,1) ('9-point' contributions)
@@ -136,33 +141,33 @@
         t2 =   0.5_R8*flcb0(iFc,1) - cvsb0(iFc,1)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solvereg(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1
           end where
          enddo
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2
           end where
          enddo
@@ -172,22 +177,22 @@
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
      &      t3*t1
           end where
          enddo
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
      &      t3*t2
           end where
          enddo
@@ -210,8 +215,8 @@
 *   ..contribution from linearization of centrifugal force
 ! $AD II-LOOP
       do iCv = 1, nCv
-        aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) - 
-     &    min(0.0e0_R8,ctcfb(iCv))
+        aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) -
+     &    min(0.0_R8,ctcfb(iCv))
       enddo
 ! $AD II-LOOP
       do iCv = 1, nCv

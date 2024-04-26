@@ -74,8 +74,8 @@
 *     vol - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 *     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-*     includes a factor 2*pi*crx, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cry.)
+*     includes a factor 2*pi*R, while in the case of cylindrical
+*     symmetry it includes a factor 2*pi*Z.)
 *     It will hold that 0.lt.vol(,).
 *
 *     hx, hy, hz - (-1:nx,-1:ny) real*8 array.                          !srv 09.06.08
@@ -115,8 +115,8 @@
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
 *     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
-*     indicate rotational symmetry about the cry=0 axis.
+*     symmetry about the r=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the z=0 axis.
 *     Other values are not allowed.
 *     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.

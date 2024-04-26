@@ -70,7 +70,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       DO I=1,N1
        DO J=1,N2
         RR1(I+(J-1)*N1)=RHS(I,J)
-        S1(I+(J-1)*N1)=0.0e0_R8
+        S1(I+(J-1)*N1)=0.0_R8
        enddo
       enddo
 cdpc

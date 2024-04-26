@@ -387,7 +387,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 !WG_TODO,                          !xpb
   REAL(kind=r8) :: snasm(ncv, 0:1, 0:ns-1), smosm(ncv, 0:3, 0:ns-1), &
 & shesm(ncv, 0:3), shism(ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, samax
+  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
   EXTERNAL B2SASUM_B
 !WG_TODO     &  snadt(-1:nx,-1:ny,0:1,0:ns-1),                           !xpb
 !WG_TODO     &  smodt(-1:nx,-1:ny,0:3,0:ns-1),                           !xpb
@@ -395,7 +395,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 !WG_TODO     &  schdt(-1:nx,-1:ny,0:3),                                  !xpb
 !WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 !   ..procedures
-  REAL(kind=r8) :: B2SASUM_NODIFF, samax
+  REAL(kind=r8) :: B2SASUM_NODIFF, damax
   EXTERNAL B2XVSG_NODIFF, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
 &     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
@@ -563,8 +563,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
       WRITE(*, *) 'DPC: b2mndt: rlcx'
       DO k=0,nscx-1
         DO is=0,ns-1
-          result10 = samax(ncv, st%rt%rlcx(1, 0, is, k), 1)
-          result20 = samax(ncv, st%rt%rlcx(1, 1, is, k), 1)
+          result10 = damax(ncv, st%rt%rlcx(1, 0, is, k), 1)
+          result20 = damax(ncv, st%rt%rlcx(1, 1, is, k), 1)
           WRITE(*, '(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ', k, is, &
 &         result10, result20
         END DO
@@ -1716,7 +1716,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
         CALL B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &                     nscxmax, ismain, ismain0, dtim, switch, geo, mpg, &
 &                     st, st_ext, ier0)
-        FLUSH(6) 
+        FLUSH(6)
 !!!      (should develop other error handling)
 !      ..re-compute ne, ne2, ni
         CALL B2XPNE_NODIFF(ncv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%&
@@ -1755,7 +1755,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
             CALL B2MWQT_NODIFF(nout(4), ncv, ns, itim, b2mndt_itcnt, &
 &                        switch%boris, switch, geo, st%pl, st%dv, st%&
 &                        diag)
-            FLUSH(nout(4)) 
+            FLUSH(nout(4))
           ELSE
             CALL PUSHCONTROL1B(0)
           END IF
@@ -2146,7 +2146,7 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0&
 &                        wrk0b, st%co%cssb, stb%co%cssb)
               rzb = 0.D0
               CALL POPREAL8ARRAY(wrk0, r8*ncv/8)
-              WHERE (st%dv%pz/rz .EQ. 0.D0) 
+              WHERE (st%dv%pz/rz .EQ. 0.D0)
                 tempb0 = 0.D0
               ELSEWHERE
                 tempb0 = geo%cvbb(:, 0)*wrk0b/(rz*2.0*SQRT(st%dv%pz/rz)*&
@@ -3470,14 +3470,14 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
 !WG_TODO,                          !xpb
   REAL(kind=r8) :: snasm(ncv, 0:1, 0:ns-1), smosm(ncv, 0:3, 0:ns-1), &
 & shesm(ncv, 0:3), shism(ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, samax
+  EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
 !WG_TODO     &  snadt(-1:nx,-1:ny,0:1,0:ns-1),                           !xpb
 !WG_TODO     &  smodt(-1:nx,-1:ny,0:3,0:ns-1),                           !xpb
 !WG_TODO     &  shedt(-1:nx,-1:ny,0:3), shidt(-1:nx,-1:ny,0:3),          !xpb
 !WG_TODO     &  schdt(-1:nx,-1:ny,0:3),                                  !xpb
 !WG_TODO     &  snedt(-1:nx,-1:ny,0:1)
 !   ..procedures
-  REAL(kind=r8) :: B2SASUM_NODIFF, samax
+  REAL(kind=r8) :: B2SASUM_NODIFF, damax
   EXTERNAL B2XVSG_NODIFF, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
 &     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
@@ -3644,8 +3644,8 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
       WRITE(*, *) 'DPC: b2mndt: rlcx'
       DO k=0,nscx-1
         DO is=0,ns-1
-          result10 = samax(ncv, st%rt%rlcx(1, 0, is, k), 1)
-          result20 = samax(ncv, st%rt%rlcx(1, 1, is, k), 1)
+          result10 = damax(ncv, st%rt%rlcx(1, 0, is, k), 1)
+          result20 = damax(ncv, st%rt%rlcx(1, 1, is, k), 1)
           WRITE(*, '(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ', k, is, &
 &         result10, result20
         END DO
@@ -3740,7 +3740,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
         CALL B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &                     nscxmax, ismain, ismain0, dtim, switch, geo, mpg, &
 &                     st, st_ext, ier0)
-        FLUSH(6) 
+        FLUSH(6)
         CALL XERTST(ier0 .EQ. 0, 'error return from b2news')
 !!!      (should develop other error handling)
         ierr = ier0
@@ -3780,7 +3780,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
             CALL B2MWQT_NODIFF(nout(4), ncv, ns, itim, b2mndt_itcnt, &
 &                        switch%boris, switch, geo, st%pl, st%dv, st%&
 &                        diag)
-            FLUSH(nout(4)) 
+            FLUSH(nout(4))
           END IF
         END IF
 !      ..update iteration counter

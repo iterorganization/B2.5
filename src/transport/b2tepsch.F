@@ -1,4 +1,4 @@
-      subroutine b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, 
+      subroutine b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg,
      &    facdrift, cddi, te, ne, floe, cone, fhePSch)
       use b2mod_types
       use b2mod_b2cmpa
@@ -45,16 +45,16 @@
 *   ..subprogram start-up calls
       call subini ('b2tepsch')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')   
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 
 *   ..set dummy arrays
       dumm0 = 0.0_R8
 
-      fhePSch = 0.0e0_R8                                                 !srv 13.10.06
-      cone    = 0.0e0_R8                                                 !srv 02.01.07
-      floe    = 0.0e0_R8
+      fhePSch = 0.0_R8                                                   !srv 13.10.06
+      cone    = 0.0_R8                                                   !srv 02.01.07
+      floe    = 0.0_R8
       facdriftm = maxval(facdrift)
-      if(facdriftm.ne.0.0e0_R8) then
+      if(facdriftm.ne.0.0_R8) then
        do is = 0,ns-1                                                    !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
 
@@ -73,7 +73,7 @@
 *     ..linearization coefficients for P.Sch flows
          cddi_eff(:,0) =  5.0_R8*switch%fhePSch*facdrift*cddi(:,1,is)
          cddi_eff(:,1) = -5.0_R8*switch%fhePSch*facdrift*cddi(:,0,is)
-         call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi_eff,floe0,cone0)
+         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi_eff,floe0,cone0)
          do iFc = 1, nFc
           floe(iFc,0)   = 0.5_R8*floe0(iFc,0)*
      &      (nete(mpg%fcCv(iFc,1))+nete(mpg%fcCv(iFc,2))) -

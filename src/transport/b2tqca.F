@@ -9,10 +9,14 @@
       use b2mod_switches
       use b2us_geo
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2tqca
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tqca, ncall_b2tlnl
+     & , only : ncall_b2tlnl
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -70,11 +74,11 @@
 
 *   ..local variables
       integer iCv, is, js
-      character chns*3                                                  !srv 16.06.08
+      character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
-     *  t, t0, t1, tau(nCv), tnp, w                                     !srv 11.09.09
-      parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
+     *  t, t0, t1, tau(nCv), tnp, w                                   !srv 11.09.09
+      parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9_R8)
 *   ..procedures
       intrinsic abs, sqrt
       external xertst, sfill
@@ -102,7 +106,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tqca')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2tqca.lt.3) then
@@ -191,7 +195,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
        endif
       enddo
 *   ..compute vsay, hciy
-*!!   (classical perpendicular momentum transport is set to 0)
+*!!   (classical perpendicular transport is set to 0)
       do is = 0, ns-1
        call sfill (nCv, 0.0_R8, vsa(1,1,is), 1)
       enddo

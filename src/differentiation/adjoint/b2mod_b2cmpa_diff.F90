@@ -75,7 +75,7 @@ CONTAINS
 !     potimax : Ionisation cost to reach zamax(is) from zamin(is-1) (in eV)
 !     is_neutral(is) is true if a stage is a neutral species
 !     partition_number indicates the stage number within its isonuclear sequence
-!     
+!
 !     It is not allowed to bundle neutral and charged states together.
 !
 !
@@ -97,10 +97,10 @@ CONTAINS
         is = 0
         DO WHILE (is .LT. ns)
           IF (.NOT.is_neutral(is)) THEN
-            REWIND(99) 
+            REWIND(99)
             ALLOCATE(pdum(1:NINT(zn(is))))
             DO iss=1,NINT(zn(is))-1
-              READ(99, *) 
+              READ(99, *)
             END DO
             READ(99, *) (pdum(iss), iss=1,NINT(zn(is)))
             IF (NINT(zn(is)) .EQ. 1 .AND. (.NOT.is_neutral(is))) pdum(1)&
@@ -157,7 +157,7 @@ CONTAINS
             is = is + 1
           END IF
         END DO
-        CLOSE(99) 
+        CLOSE(99)
       ELSE
         DO is=0,ns-1
           potimin(is) = 0.0_R8

@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_ipmain
       use b2mod_subsys
+      use b2mod_math
 #if ( defined(IMAS) && defined(AMNS) )
       use amns_types       ! IGNORE
       use amns_module      ! IGNORE
@@ -687,48 +688,51 @@ c****************************************************************************
            enddo
          enddo
        endif
+*    ..smoothing
+       if (amjhydhel.eq.0.or.nz(inuc).ne.1) then !nh only using it when AMJUEL/HYDHEL is not used
+         if(no_smoothing.eq.0) then              !srv 02.07.12 {
 *    ..tail smoothing for rtsa
-       if(no_smoothing.eq.0) then            !srv 02.07.12 {
-         call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtsa,
-     &    wrk)
-         do k = kstart, kend
-          do j = 0, rtnn
-           do i = 0, rtnt
-            rtsa(i,j,k) = wrk(i,j,k)
+           call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtsa,
+     &      wrk)
+           do k = kstart, kend
+            do j = 0, rtnn
+             do i = 0, rtnt
+              rtsa(i,j,k) = wrk(i,j,k)
+             enddo
+            enddo
            enddo
-          enddo
-         enddo
 *    ..tail smoothing for rtqa
-         call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtqa,
-     &    wrk)
-         do k = kstart, kend
-          do j = 0, rtnn
-           do i = 0, rtnt
-            rtqa(i,j,k) = wrk(i,j,k)
+           call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtqa,
+     &      wrk)
+           do k = kstart, kend
+            do j = 0, rtnn
+             do i = 0, rtnt
+              rtqa(i,j,k) = wrk(i,j,k)
+             enddo
+            enddo
            enddo
-          enddo
-         enddo
 *    ..tail smoothing for rtrd
-         call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtrd,
-     &    wrk)
-         do k = kstart, kend
-          do j = 0, rtnn
-           do i = 0, rtnt
-            rtrd(i,j,k) = wrk(i,j,k)
+           call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtrd,
+     &      wrk)
+           do k = kstart, kend
+            do j = 0, rtnn
+             do i = 0, rtnt
+              rtrd(i,j,k) = wrk(i,j,k)
+             enddo
+            enddo
            enddo
-          enddo
-         enddo
 *    ..tail smoothing for rtbr
-         call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtbr,
-     &    wrk)
-         do k = kstart, kend
-          do j = 0, rtnn
-           do i = 0, rtnt
-            rtbr(i,j,k) = wrk(i,j,k)
+           call rattai (rtnt, (rtnn+1)*npart(inuc), tailep, rtt, rtbr,
+     &      wrk)
+           do k = kstart, kend
+            do j = 0, rtnn
+             do i = 0, rtnt
+              rtbr(i,j,k) = wrk(i,j,k)
+             enddo
+            enddo
            enddo
-          enddo
-         enddo
-       endif                                !srv 02.07.12 }
+         endif                                !srv 02.07.12 }
+       endif
 *      (tail is insignificant for rtra and rtcx)
 *    ..display table
        call ratprt (nout(0), nz(inuc), npart(inuc), 
@@ -753,16 +757,23 @@ c****************************************************************************
           endif
           if (rtqa(i,j,k).ne.0.0_R8) then
            rtlqa(i,j,is) = log(rtqa(i,j,k))
+           rtlqa(i,j,is) = trimg(-150.0_R8,-20.0_R8,rtlqa(i,j,is))   ! IYS 16.04.2024
           else
            rtlqa(i,j,is) = lnzero
           endif
           if (rtqr(i,j,k).ne.0.0_R8) then
            rtlqr(i,j,is) = log(rtqr(i,j,k))
+           rtlqr(i,j,is) = trimg(-150.0_R8,-20.0_R8,rtlqr(i,j,is))   ! IYS 16.04.2024
           else
            rtlqr(i,j,is) = lnzero
           endif
           if (rtrd(i,j,k).ne.0.0_R8) then
            rtlrd(i,j,is) = log(rtrd(i,j,k))
+           rtlrd(i,j,is) = trimg(-150.0_R8,-20.0_R8,rtlrd(i,j,is))   ! IYS 16.04.2024
+! ADAS data seems to be limited by 1.0e-74, which should be understood as line radiation power coefficients in W*cm^3
+! Converting to eV*m^3/s and computing NATURAL logarithm, one gets approx -141.0
+! Assuming that line radiation power coefficients usually do not exceed 1.0e-30 W*m^3, one gets
+! -25.8 as maximal NATURAL logarithm of these coefficients measured in eV*m^3/s    IYS 16.04.2024
           else
            rtlrd(i,j,is) = lnzero
           endif

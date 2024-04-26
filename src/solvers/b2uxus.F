@@ -64,7 +64,7 @@
 *   ..local variables
       integer ncall, style, cpu
       real (kind=R8) ::
-     *   acpar, cpu_start, cpu_end, c_end, c_start
+     *   cpu_start, cpu_end, c_end, c_start
 !      real (kind=R8), allocatable :: a(:)
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
@@ -75,8 +75,8 @@
       external xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, xerrab
 *   ..initialization
-      save ncall, style, acpar, cpu
-      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
+      save ncall, style, cpu
+      data ncall/0/, style/2/, cpu/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -89,8 +89,6 @@
        call ipgeti ('b2ux9p_style', style)
        call xertst (0.le.style.and.style.lt.3,
      &   'faulty internal parameter style')
-       call ipgetr ('b2ux9p_acpar', acpar)
-       call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux9p_cpu', cpu)
        if(style.eq.2) then
          mult_nonzero=1
@@ -111,7 +109,7 @@
        endif
       endif
 *   ..test nCv, itcnt
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
@@ -212,7 +210,7 @@
         do iCv = 1,nCv
           ner=0
           do iNv = 1,mpg%cvNvP(iCv,2)
-            if (aa(mpg%cvNvP(iCv,1)+iNv-1) .ne. 0.0e0_R8 ) then
+            if (aa(mpg%cvNvP(iCv,1)+iNv-1) .ne. 0.0_R8 ) then
               k      = k+1
               ner    = ner+1
               a(k)   = aa(mpg%cvNvP(iCv,1)+iNv-1)

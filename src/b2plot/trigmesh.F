@@ -1,7 +1,7 @@
 c
       subroutine trigmesh
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
@@ -9,13 +9,12 @@ c
 #ifdef B25_EIRENE
       use eirmod_ctrig
       implicit none
-      integer lnblnk,it
+      integer it
       character*500 plotlabel
-      external lnblnk
 
       if(b2plot_debug.ge.7) write(*,*) 'physical domain'
       plotlabel='Triangular mesh'
-      call init_page(plotlabel(1:lnblnk(plotlabel)),
+      call init_page(trim(plotlabel),
      1   values(5),values(6),values(7),values(8),1,.true.,.false.,
      2   .true.)
       if(mcol .gt. 1) then
@@ -40,7 +39,7 @@ c
       endif
       call data_copy(0)
       call pltvessel
-      call additional_elements(nx,ny,.true.)
+      call additional_elements(mpg%nCv,.true.)
       call end_page
 #endif
       return

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &  wrong_flow, main_call, praverage)
       use b2mod_types
       use b2mod_math
@@ -9,12 +9,10 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_constants
-!      use b2mod_geo_corner
       use b2mod_time
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2cmpb
-      use b2mod_external
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
       use b2us_geo
@@ -25,16 +23,20 @@
       use eirmod_braeir
 #endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
+      use b2mod_ad
+     & , only : ncall_b2stbc_phys,
+     &          UBIG, VBIG, PBIG, UP00, EPSLON, NE00, US
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2stbc_phys, senepar, senipar, sconpar, scurpar,
+     & , only : senepar, senipar, sconpar, scurpar,
      &  prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16,
-     &  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS
+     *  NUEOUT, FS, VS, NAS, TES, TIS, NIVS, FFAC, DFS, POS, S2
+#endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) :: praverage(2)
@@ -44,7 +46,6 @@
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
       logical main_call                                              !xpb
@@ -86,7 +87,7 @@
       integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
 #endif
       integer, save :: bccon_flux_fb_style =0
-      integer, save :: bcene_15_style =0                                !srv 19.04.13
+      integer, save :: bcene_15_style =1                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
       integer, save :: bcenk_17_style =0
@@ -213,7 +214,7 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
         call ipgetr ('b2stbc_BC2_cor9', cor9)
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -264,7 +265,7 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
       call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &  geo%vxOnedBsq, gOnedBsq)
       pzsum     = 0.0_R8
-      naua2sum  = 0.0e0_R8
+      naua2sum  = 0.0_R8
       volsum    = 0.0_R8
       bzsum     = 0.0_R8
       do ib = 1, nbc
@@ -299,8 +300,8 @@ cwdk code to be removed after full adaption to unstructured solver...
 
       if (istyle_average_pr .eq.0) then                           !srv 08.08.02
        iy = -1                                                    !srv 24.03.99
-       pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
-       volsum=0.0e0_R8                                            !srv 24.03.99
+       pzsum =0.0_R8                                              !srv 24.03.99 18.01.02
+       volsum=0.0_R8                                              !srv 24.03.99
        do ix = -1, nx                                             !srv 26.11.02
         if (on_closed_surface(ix,iy)) then                        !srv 26.11.02
          pzsum=pzsum + pz(ix,iy)*vol(ix,iy)                       !srv 24.03.99 18.01.02
@@ -310,9 +311,9 @@ cwdk code to be removed after full adaption to unstructured solver...
        if (volsum.gt.0.0_R8) pzaverage=pzsum/volsum               !srv 24.03.99 18.01.02
       else                                                        !srv 08.08.02
        iy = 0                                                     !srv 24.03.99  07.06.02 {
-       pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
-       volsum=0.0e0_R8                                            !srv 24.03.99
-       num_inner=0                                                !srv 26.11.02
+       pzsum = 0.0_R8                                             !srv 24.03.99 18.01.02
+       volsum = 0.0_R8                                            !srv 24.03.99
+       num_inner = 0                                              !srv 26.11.02
        do ix = -1, nx                                             !srv 26.11.02
         if (on_closed_surface(ix,iy)) then                        !srv 26.11.02
          pzsum=pzsum
@@ -321,15 +322,16 @@ cwdk code to be removed after full adaption to unstructured solver...
          num_inner=num_inner+1                                    !srv 26.11.02
         endif                                                     !srv 26.11.02
        enddo                                                      !srv 24.03.99
-       if (num_inner.gt.0) pzaverage=pzsum*0.5e0_R8/num_inner     !srv 24.03.99 18.01.02 07.06.02 } 26.11.02
+       if (num_inner.gt.0)
+     >  pzaverage=pzsum*0.5_R8/real(num_inner,R8)                 !srv 24.03.99 18.01.02 07.06.02 } 26.11.02
       endif                                                       !srv 08.08.02
 *   ..find the average ne, te, ti, bb for inner flux surface      !srv 15.12.00 18.10.04
-      bbsum = 0.0e0_R8                                            !srv 18.10.04
-      nesum = 0.0e0_R8                                            !srv 15.12.00 25.01.02
-      tesum = 0.0e0_R8                                            !srv 15.12.00
-      tisum = 0.0e0_R8                                            !srv 15.12.00
-      bzhzsum  = 0.0e0_R8                                         !lk 20.11.07
-      bbaverage  = 0.0e0_R8                                       !lk 20.11.07
+      bbsum = 0.0_R8                                              !srv 18.10.04
+      nesum = 0.0_R8                                              !srv 15.12.00 25.01.02
+      tesum = 0.0_R8                                              !srv 15.12.00
+      tisum = 0.0_R8                                              !srv 15.12.00
+      bzhzsum = 0.0_R8                                            !lk 20.11.07
+      bbaverage = 0.0_R8                                          !lk 20.11.07
       do ix = -1, nx                                              !srv 26.11.02
        if (on_closed_surface(ix,iy)) then                         !srv 26.11.02
         bbsum=bbsum + bb(ix,iy,3)*vol(ix,iy)                      !srv 18.10.04
@@ -346,18 +348,18 @@ cwdk code to be removed after full adaption to unstructured solver...
       end if
 *   ..find the average ua**2, na for inner flux surface           !srv 22.01.02 {
       do is = 0, ns-1
-       uasum  = 0.0e0_R8                                           !srv 15.02.02
-       ua2sum = 0.0e0_R8                                           !srv 07.04.00 15.02.02
-       nasum  = 0.0e0_R8
-       do ix = -1,nx                                               !srv 26.11.02
-        if (on_closed_surface(ix,iy)) then                         !srv 26.11.02
-         ua2sum = ua2sum + ua(ix,iy,is)**2*vol(ix,iy)              !srv 07.04.00 15.02.02
-         uasum  = uasum  + ua(ix,iy,is)*vol(ix,iy)                 !srv 15.02.02
+       uasum  = 0.0_R8                                            !srv 15.02.02
+       ua2sum = 0.0_R8                                            !srv 07.04.00 15.02.02
+       nasum  = 0.0_R8
+       do ix = -1,nx                                              !srv 26.11.02
+        if (on_closed_surface(ix,iy)) then                        !srv 26.11.02
+         ua2sum = ua2sum + ua(ix,iy,is)**2*vol(ix,iy)             !srv 07.04.00 15.02.02
+         uasum  = uasum  + ua(ix,iy,is)*vol(ix,iy)                !srv 15.02.02
          nasum  = nasum  + na(ix,iy,is)*vol(ix,iy)
-        endif                                                      !srv 26.11.02
+        endif                                                     !srv 26.11.02
        enddo
-       ua2average(is) = ua2sum/volsum                              !srv 07.04.00 15.02.02
-       uaaverage(is) = uasum/volsum                                !srv 07.04.00 15.02.02 16.04.02
+       ua2average(is) = ua2sum/volsum                             !srv 07.04.00 15.02.02
+       uaaverage(is) = uasum/volsum                               !srv 07.04.00 15.02.02 16.04.02
        naaverage(is) = nasum/volsum
       enddo                                                        !srv 22.01.02 }
 #endif
@@ -415,11 +417,13 @@ cwdk  now need to recompute full diamagnetic component for ud
         ud(:,:) = 0.0_R8
       else if (switch%sheath_drift_fix.eq.0) then
         do is = 0,ns-1
-         ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
+         ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/
+     .                          sign(geo%fcBb(:,2),geo%fcEb(:,2))
         enddo
       else
         do is=0,ns-1
-         ud(:,is) = dv%vaecrb(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
+         ud(:,is) = dv%vaecrb(:,0,is)*geo%fcBb(:,3)/
+     .                           sign(geo%fcBb(:,2),geo%fcEb(:,2))
         enddo
       endif
       if (main_call .and. switch%b2stbc_diagno.ge.1) then             !xpb
@@ -995,7 +999,7 @@ cwdk      compatibility for E/W boundaries
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
             if (switch%mdf_fnb.eq.0) then
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
-     &          max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          max(0.0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*
      &          (dv%vadia(iFc,0,is) + dv%vaecrb(iFc,0,is)) +
      &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*
@@ -1003,7 +1007,7 @@ cwdk      compatibility for E/W boundaries
      &          0.5_R8*(pl%na(iCv1,is) + pl%na(iCv2,is))/pl%na(iCv1,is))
             else
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
-     &          max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          max(0.0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vaecrb(iFc,0,is) +
      &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vaecrb(iFc,1,is))*
      &          0.5_R8*(pl%na(iCv1,is) + pl%na(iCv2,is))/pl%na(iCv1,is))
@@ -1234,9 +1238,9 @@ cwdk      compatibility for E/W boundaries
      .       'imposed flux adapted due to ionising_core switch usage'
           endif
 *       ..compute average density on boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
-          totflux = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          totflux = 0.0_R8
           !wdk Note on backwards compatibility: feedback now always on
           !wdk flux through the boundary itself (no offset)
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -1854,8 +1858,8 @@ cxpb Careful here because of BC number clash
      .           ('Compile with -DASTRA option to couple to ASTRA!')
 #endif
               endif
-              t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
-              t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
+              t0=0.0_R8   ! Volume between two surfaces               !lk 12.12.12 {
+              t1=0.0_R8   ! Sum of volume-averaged electron and ion temperatures
               DO IBW=IB,NBC
                 IF (BCCHAR(IBW).EQ.'S' .and.
      &              BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
@@ -1974,9 +1978,9 @@ cxpb Careful here because of BC number clash
               endif
               write(*,*) 'BCCON=22: Summed value is ', SCONPAR(IS)
               totflux = 0.0_R8
-              t0=0.0e0_R8   ! Volume between two surfaces             !lk 12.12.12 {
-              t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
-              NAS=0.0e0_R8
+              t0=0.0_R8   ! Volume between two surfaces             !lk 12.12.12 {
+              t1=0.0_R8   ! Sum of volume-averaged electron and ion temperatures
+              NAS=0.0_R8
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2124,9 +2128,9 @@ cxpb Careful here because of BC number clash
               write(*,*) 'BCCON=23: Summed value is ', SCONPAR(IS)
               totfluxn = 0.0_R8
               totfluxi = 0.0_R8
-              t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
-              t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
-              NAS=0.0e0_R8
+              t0=0.0_R8   ! Volume between two surfaces               !lk 12.12.12 {
+              t1=0.0_R8   ! Sum of volume-averaged electron and ion temperatures
+              NAS=0.0_R8
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
               do isa = 1, nnatmi
@@ -2394,8 +2398,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .           ('Compile with -DASTRA option to couple to ASTRA!')
 #endif
               endif
-              t0=0.0e0_R8   ! Volume between two surfaces              !lk 12.12.12 {
-              t1=0.0e0_R8   ! Sum of volume-averaged density
+              t0=0.0_R8   ! Volume between two surfaces              !lk 12.12.12 {
+              t1=0.0_R8   ! Sum of volume-averaged density
               DO IBW=IB,NBC
                 if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2506,9 +2510,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
               endif
               write(*,*) 'BCCON=26: Summed value is ', SCONPAR(IS)
               totflux = 0.0_R8
-              t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
-              t1=0.0e0_R8   ! Volume-averaged density on previous surface
-              NAS=0.0e0_R8
+              t0=0.0_R8   ! Volume between two surfaces               !lk 12.12.12 {
+              t1=0.0_R8   ! Volume-averaged density on previous surface
+              NAS=0.0_R8
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2639,9 +2643,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
               write(*,*) 'BCCON=27: Summed value is ', SCONPAR(IS)
               totfluxn = 0.0_R8
               totfluxi = 0.0_R8
-              t0=0.0e0_R8   ! Volume between two surfaces              !lk 12.12.12 {
-              t1=0.0e0_R8   ! Volume-averaged on neighbouring surface
-              NAS=0.0e0_R8
+              t0=0.0_R8   ! Volume between two surfaces              !lk 12.12.12 {
+              t1=0.0_R8   ! Volume-averaged on neighbouring surface
+              NAS=0.0_R8
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
               do isa = 1, nnatmi
@@ -2774,8 +2778,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       'BCCON = 28, conpar(,,1) !> 0')
           endif
 *       ..compute average density on core boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
           do ib0 = 1, nbc
            ! identify core boundaries; assume all core boundaries
            ! form single flux surface
@@ -2819,11 +2823,11 @@ cxpb  Add contribution from Eirene core boundary fluxes
             enddo
           endif
 *       ..compute average density on core boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
-          t2 = 0.0e0_R8
-          totflux = 0.0e0_R8
-          totpar  = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          t2 = 0.0_R8
+          totflux = 0.0_R8
+          totpar  = 0.0_R8
           do ib0 = 1, nbc
            ! identify core boundaries; assume all core boundaries
            ! form single flux surface
@@ -2931,7 +2935,8 @@ c   (ionising_core option)
 * -- BCMOM=3 -- SHEATH CONDITIONS, MACH NUMBER AS INPUT
 
         case (3)
-          call xerrab ('b2stbc_phys -- BCMOM = 3 not adapted for WG')
+          call xerrab ('b2stbc_phys -- BCMOM = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCMOM = 13')
 #ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
@@ -3404,7 +3409,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      &             MOMPAR(IS,IB,2)*s0hz +
 !     &         MOMPAR(IS,IB,2)*SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &         MOMPAR(IS,IB,1)*
-     &         max(0.0e0_R8,-fna_fcor(
+     &         max(0.0_R8,-fna_fcor(
      &          TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &          TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is))/
      &          na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
@@ -3424,7 +3429,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 !     &           SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
 !     &                BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))+
      &         MOMPAR(IS,IB,1)*
-     &         max(0.0e0_R8,
+     &         max(0.0_R8,
      &          fna_fcor(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is))/
      &                na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
             end do
@@ -3493,7 +3498,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             srw%smo0(iCv1,3,IS) = srw%smo0(iCv1,3,IS) +
      &         MOMPAR(IS,IB,2)*geo%fcS(iFc)*geo%fcHz(iFc) +
      &         MOMPAR(IS,IB,1)*
-     &         max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &         max(0.0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &         dv%fna_fcor(iFc,1,is))/pl%na(iCv1,is)
           enddo
 
@@ -3509,7 +3514,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
                   smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &             smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+        !srv 09.01.01 01.07.05
      &             s0hz*(am(is)*mp)*naaverage(is)*                      !srv 15.02.02
-     &            (-2.0e0_R8*
+     &            (-2.0_R8*
      &             facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm2*    !srv 07.06.00 17.05.99 25.04.00 15.02.02
      &             tiaverage*bb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2)/
      &             (qe*rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
@@ -3522,7 +3527,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
                   smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &             smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+        !srv 09.01.01 01.07.05
      &             s0hz*(am(is)*mp)*naaverage(is)*                      !srv 15.02.02
-     &           (-2.0e0_R8*facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     &           (-2.0_R8*facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &             phm2*                                                !srv 07.06.00 17.05.99 25.04.00 15.02.02
      &             tiaverage*bb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2)/
      &            (qe*rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
@@ -3541,7 +3546,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      &         MOMPAR(IS,IB,2)*s0hz +
 !     &         MOMPAR(IS,IB,2)*SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &         MOMPAR(IS,IB,1)*
-     &         max(0.0e0_R8,
+     &         max(0.0_R8,
      &      -fna_fcor(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is))/
      &                   na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
@@ -3593,8 +3598,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
            enddo
           endif
 *       ..compute average parallel velocity on core boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
           do ib0 = 1, nbc
            ! identify core boundaries; assume all core boundaries
            ! form single flux surface
@@ -3726,7 +3731,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCENE=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCENE = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENE = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENE = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
@@ -4575,7 +4581,7 @@ c test
             endif                                                    !srv 21.03.09 }
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+ENEPAR(IB,1)*
-     &       max(0.0e0_R8,-floe_noc(
+     &       max(0.0_R8,-floe_noc(
      &         topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &         topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1))       !srv 28.10.02
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
@@ -4596,7 +4602,7 @@ c test
           endif                                                      !srv 21.03.09 }
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+ENEPAR(IB,1)*
-     &       max(0.0e0_R8,
+     &       max(0.0_R8,
      &        floe_noc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))       !srv 28.10.02
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)+ENEPAR(IB,2)*
@@ -4611,7 +4617,8 @@ c test
 * -- BCENE=12 -- SHEATH CONDITIONS, EL ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        call xerrab ('b2stbc_phys -- BCENE = 12 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENE = 12 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENE = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
@@ -4791,18 +4798,18 @@ c test
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            rt%rza(iCv1,is)*pl%na(iCv1,is)
             enddo
-            t0 = max(0.0e0_R8, (abs(geo%fcPbs(iFc))*t0*cs -             !srv 05.05.09
+            t0 = max(0.0_R8, (abs(geo%fcPbs(iFc))*t0*cs -               !srv 05.05.09
      &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))    !srv 25.12.06 11.01.13 20.09.17
             t1 = t1*geo%fcS(iFc)
             if(switch%pot_eq.eq.1) then                                 !srv 27.02.13 {
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
-     &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -                !srv 19.04.13
+     &          (1.0_R8+GAMMAE)/(1.0_R8-GAMMAE)*t0 -                    !srv 19.04.13
      &           enepar(ib,2)*t1                                        !wdk to check: correct for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
      &           qe*(pl%po(iCv1)-potpar(ib,2))*(t0 + t1)                !srv 07.11.12
             else                                                        !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
-     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+switch%delpo)*t0 - !srv 19.04.13
+     &          ((1.0_R8+GAMMAE)/(1.0_R8-GAMMAE)+switch%delpo)*t0 -     !srv 19.04.13
      &          (enepar(ib,2) + switch%delpo)*t1                        !wdk to check: correct for gammae?
             endif                                                       !srv 27.02.13 }
             if(switch%mdf_fhe.ne.0) then
@@ -4845,14 +4852,16 @@ cwdk    Todo: corrections for BCCON.ne.14
             t1 = t1*geo%fcS(iFc)
             if(switch%pot_eq.eq.1) then
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -
-     &          (1.0e0_R8+GAMMAE)*t0 - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
+     &          ((1.0_R8+GAMMAE)+switch%stab_coeff_sheath_te)*t0
+     &           - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
-     &          (1.0e0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))*t0 -    !lkw 31.03.2023
+     &          ((1.0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
+     &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
      &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
             else
               cs = sqrt(pz(iCv1)/rz(iCv1))
               srw%she0(iCv1,1) = srw%she0(iCv1,1) - s1*dv%ne(iCv1)*cs*  !srv 11.03.09 {
-     &          ((1.0e0_R8+GAMMAE) + (1.0e0_R8-GAMMAE)*switch%delpo) -
+     &          ((1.0_R8+GAMMAE) + (1.0_R8-GAMMAE)*switch%delpo) -
      &          (enepar(ib,2) + switch%delpo)*t1                        !wdk to check: correct for gammae?
             endif
             if(switch%mdf_fhe.ne.0) then
@@ -4891,9 +4900,9 @@ cwdk    Todo: corrections for BCCON.ne.14
             call xertst(enepar(ib,2).ge.0, 'faulty parameter enepar2')
           endif
 *       ..compute average temperature on boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
-          totflux = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          totflux = 0.0_R8
           !wdk Note on backwards compatibility: feedback now always on
           !wdk flux through the boundary itself (no offset)
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -5513,8 +5522,8 @@ cwdk     * need to correct this BC for hybrid scheme
      1     'BCENE = 23, ENEPAR(,1) !> 0')
         endif
 *     ..compute average temperature on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -5561,11 +5570,11 @@ cwdk     * need to correct this BC for hybrid scheme
      1     'BCENE = 24, ENEPAR(,1) !> 0')
         endif
 *     ..compute average temperature on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        t2 = 0.0e0_R8
-        totflux = 0.0e0_R8
-        totpar  = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        t2 = 0.0_R8
+        totflux = 0.0_R8
+        totpar  = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -5664,7 +5673,8 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCENI=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCENI = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENI = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENI = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
@@ -6342,8 +6352,8 @@ c test
      &        lambda_eni*sy
           endif
           do is = 0, ns-1
-            if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0 .or.
-     &         (switch%tn_style.eq.2.and.zn(is).ne.1)) then
+            if(.not.is_neutral(is) .or. switch%tn_style.eq.0 .or.
+     &         (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
@@ -6579,7 +6589,8 @@ cxpb          endif
 * -- BCENI=12 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        call xerrab ('b2stbc_phys -- BCENI = 12 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCENI = 12 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCENI = 15')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
@@ -6771,8 +6782,11 @@ cxpb          endif
             endif
            enddo
            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                        !srv 11.03.09 {
-     &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -
-     &      enipar(ib,2)*t1*geo%fcS(iFc)                                !srv 19.04.13
+     &      (enipar(ib,1)+switch%stab_coeff_sheath_ti)*t0*cs*
+     &       abs(geo%fcPbs(iFc)) -
+     &       enipar(ib,2)*t1*geo%fcS(iFc)                               !srv 19.04.13
+           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +                        !srv 11.03.09 {
+     &       switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           else
            !wdk sheath transmission factor consistent with truncated
            !    Maxwellian distribution on Eirene side (NEMODS=7)
@@ -6793,8 +6807,11 @@ cxpb          endif
             endif
            enddo
            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
-     &      t0*cs*abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
+     &      (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
+     &      abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
      &      t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &      switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           endif
           if(switch%mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
@@ -6831,9 +6848,9 @@ cwdk    Todo: corrections for BCCON.ne.14
             call xertst(enipar(ib,2).ge.0, 'faulty parameter enipar2')
           endif
 *       ..compute average temperature on boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
-          totflux = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          totflux = 0.0_R8
           !wdk Note on backwards compatibility: feedback now always on
           !wdk flux through the boundary itself (no offset)
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -7273,7 +7290,7 @@ cxpb Careful here because of BC number clash
             enddo
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &       SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
-     &       max(0.0e0_R8,-floi_noc(
+     &       max(0.0_R8,-floi_noc(
      &        topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &        topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1))         !srv 28.10.02
           ENDDO
@@ -7302,7 +7319,7 @@ cxpb Careful here because of BC number clash
             enddo
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &       SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-
-     &       max(0.0e0_R8,
+     &       max(0.0_R8,
      &        floi_noc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))       !srv 28.10.02
           ENDDO
         ELSE
@@ -7423,10 +7440,10 @@ cwdk     * need to correct this BC for hybrid scheme
 !            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*
 !     .       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
 !          end do
-            t0=0.0e0_R8   ! Volume                                     !lk 12.12.12 {
-            t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
-            t2=0.0e0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
-            t3=0.0e0_R8   ! Poloidally volume-averaged electron density in the boundary cell
+            t0=0.0_R8   ! Volume                                     !lk 12.12.12 {
+            t1=0.0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
+            t2=0.0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
+            t3=0.0_R8   ! Poloidally volume-averaged electron density in the boundary cell
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
@@ -7552,10 +7569,10 @@ cwdk     * need to correct this BC for hybrid scheme
             TIS = 0.0_R8  ! Poloidally density-averaged ion temperature in the boundary cell     !IYS 21.01.2016
             NIVS = 0.0_R8
             totflux = 0.0_R8
-            t0=0.0e0_R8   ! Volume                                     !lk 12.12.12 {
-            t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
-            t2=0.0e0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
-            t3=0.0e0_R8   ! Poloidally volume-averaged electron density in the boundary cell
+            t0=0.0_R8   ! Volume                                     !lk 12.12.12 {
+            t1=0.0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
+            t2=0.0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
+            t3=0.0_R8   ! Poloidally volume-averaged electron density in the boundary cell
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
@@ -7803,8 +7820,8 @@ cwdk     * need to correct this BC for hybrid scheme
           ENDIF
           IF(BCCHAR(IB).EQ.'S' .and.
      &     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
-            t0=0.0e0_R8   ! Volume                                     !lk 12.12.12 {
-            t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
+            t0=0.0_R8   ! Volume                                     !lk 12.12.12 {
+            t1=0.0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
                 DO IX= 1, BC_LIST_SIZE(IBW)
@@ -7898,8 +7915,8 @@ cwdk     * need to correct this BC for hybrid scheme
             write(*,*) 'BCENI=27: Summed value is ', SENIPAR
             TIS = 0.0_R8 ! Poloidally density-averaged ion temperature in the boundary cell
             NIVS = 0.0_R8
-            t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
-            t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
+            t0=0.0_R8   ! Volume                                      !lk 12.12.12 {
+            t1=0.0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             totflux = 0.0_R8   ! IYS 22.03.2017
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
@@ -8001,8 +8018,8 @@ cwdk     * need to correct this BC for hybrid scheme
      1     'BCENI = 28, ENIPAR(,1) !> 0')
         endif
 *     ..compute average temperature on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -8048,11 +8065,11 @@ cwdk     * need to correct this BC for hybrid scheme
      1     'BCENI = 29, ENIPAR(,1) !> 0')
         endif
 *     ..compute average temperature on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        t2 = 0.0e0_R8
-        totflux = 0.0e0_R8
-        totpar  = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        t2 = 0.0_R8
+        totflux = 0.0_R8
+        totpar  = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -8153,7 +8170,8 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCPOT=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG')
+        call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG.'//
+     .                 ' Replace with drift-compatible BCPOT = 11')
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a,1p,g14.7,a)')
@@ -8521,11 +8539,11 @@ c              fchi=0.0_R8
           srw%sch0(iCv1,1) = srw%sch0(iCv1,1) - t0
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-            if (switch%eirene_sheath_pot.eq.1) then
-              ! B2 indexing for delta_sheathxb
-              delta_sheathb(ifc) =
+          if (switch%eirene_sheath_pot.eq.1) then
+            ! B2 indexing for delta_sheathxb
+            delta_sheathb(iFc) =
      &          qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
-            endif
+          endif
 #endif
 cwdk Todo: seecmodel
           wrong_flow = .false.
@@ -8571,7 +8589,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
               fchy_inertia = fchy_inertia -
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          switch%b2stbc_phm1*
-     &          0.5e0_R8*am(is)*mp*naua2average(is)*
+     &          0.5_R8*am(is)*mp*naua2average(is)*
      &          dv%facdrift(iFc)*bzaverage*gOnedBsq(iFc,0)*
      &          geo%fcS(iFc)*geo%fcQalf(iFc,1)
              endif
@@ -8594,7 +8612,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
               fchy_inertia = fchy_inertia -
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          switch%b2stbc_phm1*
-     &          0.5e0_R8*am(is)*mp*naua2average(is)*
+     &          0.5_R8*am(is)*mp*naua2average(is)*
      &          dv%facdrift(iFc)*geo%fcBb(iFc,2)*gOnedBsq(iFc,0)*
      &          geo%fcS(iFc)*geo%fcQalf(iFc,1)
              endif
@@ -8620,11 +8638,11 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           !    domain) such that total current through core
           !    is sum of dia + inert currents
 *     ..compute average potential on core boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
-          t2 = 0.0e0_R8
-          totflux = 0.0e0_R8
-          totpar  = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          t2 = 0.0_R8
+          totflux = 0.0_R8
+          totpar  = 0.0_R8
           do ib0 = 1, nbc
            ! identify core boundaries; assume all core boundaries
            ! form single flux surface
@@ -8743,9 +8761,9 @@ cwdk    For testing purposes, use with care!
      1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute average potential on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        totflux = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        totflux = 0.0_R8
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
@@ -8885,10 +8903,10 @@ c end of implementation
      1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute average potential on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        t2 = 0.0e0_R8
-        totflux = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        t2 = 0.0_R8
+        totflux = 0.0_R8
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the plasma cell
@@ -9053,8 +9071,8 @@ c end of implementation
           enddo
         endif
 *     ..compute average potential on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -9100,12 +9118,12 @@ c end of implementation
           enddo
         endif
 *     ..compute average potential on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        t2 = 0.0e0_R8
-        t4 = 0.0e0_R8 !lkw
-        totflux = 0.0e0_R8
-        totpar  = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        t2 = 0.0_R8
+        t4 = 0.0_R8 !lkw
+        totflux = 0.0_R8
+        totpar  = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -9351,7 +9369,7 @@ c end of implementation
                 do is = 0, ns-1                                         !srv 25.06.03
                   if(.not.is_neutral(is))then                           !srv 25.06.03
                     fchy_inertia = fchy_inertia                         !srv 07.04.00 25.06.03
-     &               -0.5e0_R8*am(is)*mp*
+     &               -0.5_R8*am(is)*mp*
      &                facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm1  ! *signmf     !srv 07.04.00 21.04.00 21.10.02
      &               *naaverage(is)                                     !lk 20.11.07  !srv 07.04.00
      &               *ua2average(is)                                    !srv 07.04.00 15.02.02
@@ -9498,8 +9516,8 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
      1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute total ion+electron heat flux, and total kt flux
-        totflux = 0.0e0_R8
-        totpar  = 0.0e0_R8
+        totflux = 0.0_R8
+        totpar  = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -9549,8 +9567,8 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
      1     BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute total particle flux, and total kt flux
-        totflux = 0.0e0_R8
-        totpar  = 0.0e0_R8
+        totflux = 0.0_R8
+        totpar  = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -9719,8 +9737,8 @@ cwdk    Todo: corrections for BCCON.ne.14
      1     'BCENK = 16, ENKPAR(,1) !> 0')
         endif
 *     ..compute average kt on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -9767,11 +9785,11 @@ cwdk    Todo: corrections for BCCON.ne.14
      1     'BCENK = 17, ENKPAR(,1) !> 0')
         endif
 *     ..compute average kt on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        t2 = 0.0e0_R8
-        totflux = 0.0e0_R8
-        totpar  = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        t2 = 0.0_R8
+        totflux = 0.0_R8
+        totpar  = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -10013,8 +10031,8 @@ cwdk    Todo: corrections for BCCON.ne.14
      1     'BCENZ = 16, ENZPAR(,1) !> 0')
         endif
 *     ..compute average zt on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
@@ -10158,7 +10176,7 @@ cwdk    Todo: corrections for BCCON.ne.14
       integer, intent(in) :: iCv
       real (kind=R8) :: pit
 
-      pit = abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 
       return
       end function pit

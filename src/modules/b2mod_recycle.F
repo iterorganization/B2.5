@@ -34,6 +34,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
      &  M_dummy(:), T_dummy(:), shpottau_dummy(:),        !nh 21.02.2020
      &  fna_mol(:,:)                                    !nh 30.03.2021
+      real (kind=R8), allocatable, save :: recycle_zn(:)
 
       real (kind=R8),save::int0l,int0r,
      &    int1l,int1r,int2l,int2r,
@@ -53,13 +54,13 @@ c     Boolean to indicate whether trim data is present for species/material comb
       return
       end subroutine alloc_b2mod_recycle
 
-      subroutine read_recycle_fnn(nsd,nbnd_local)
+      subroutine read_recycle_fnn(nsd,nbnd_local,use_coarse)
       use b2mod_b2cmpa
       use b2mod_elements
       use b2mod_neutrals_namelist
       use b2mod_subsys
       implicit none
-      integer,intent(in):: nsd, nbnd_local
+      integer,intent(in):: nsd, nbnd_local, use_coarse
       character*256 filename
       integer istra, isp, is, il,it,itm,ndata
       integer idum(0:9)
@@ -78,6 +79,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       call subini ('read_recycle_fnn')
       ns1 = nsd
       allocate(recycle_index(0:nsd-1))
+      allocate(recycle_zn(0:nsd-1)) !! nuclear charge of recycling species
       allocate(target_index(0:nbnd_local-1))
 cmb   Check how many different recycled species there are
       recycle_index=-1
@@ -93,6 +95,7 @@ cmb   Check how many different recycled species there are
         isp=isp+1
         recycle_index(is)=isp
         recycle_code(isp)=is_codes(is)
+        recycle_zn(isp) = zn(is) 
     5   continue
         write(*,'(1x,i3,1x,i3,1x,a)') is,recycle_index(is),
      1   recycle_code(recycle_index(is))
@@ -125,15 +128,30 @@ cmb   Mixed materials not taken into account.
       trimrecyc_present = .false.
       do is=0,isp
         do it=0,itm
-          filename =
-     1     recycle_code(is)(1:len_trim(recycle_code(is)))//
-     2     target_code(it)(1:len_trim(target_code(it)))//
-     3     '.fnn'
+          if (use_coarse.eq.0) then
+cc the finer tables were used for the original AFN work, but are too large to add to git for each H, D ,T x wall material combination
+            filename =
+     1       recycle_code(is)(1:len_trim(recycle_code(is)))//
+     2       target_code(it)(1:len_trim(target_code(it)))//
+     3       '.fnn'
+          else
+cc therefore coarser tables were added for every [H D T] x [Be C Fe Mo W] combination. The difference with the finer tables should be only a few percent
+            filename =
+     1       recycle_code(is)(1:len_trim(recycle_code(is)))//
+     2       target_code(it)(1:len_trim(target_code(it)))//
+     3       '.fnn.coarse'
+          endif
           call lower_case(filename)
+cc first search if a new file has been made and stored locally by the user
+cc in the SOLPSTOP/data.local tree structure, then in refl.data.local (not tracked by git),
+cc then search in regular location (on git)
           if(open_file(96,filename,
      1      'data.local/trim.data/refl.data|' //
-     2      'modules/B2.5/Database/trim.data/refl.data')) then
+     2      'modules/B2.5/Database/trim.data/refl.data.local|' //
+     3      'modules/B2.5/Database/trim.data/refl.data')) then
             trimrecyc_present(is,it) = .true.
+          endif
+          if (trimrecyc_present(is,it)) then
             call cfverr (96,fnn_version)
             call cfruin (96, 3, idum, 'nm,nt,nshpottau')
 c           Check whether array has same dimensions as previous, otherwise give error
@@ -216,9 +234,18 @@ c         Read preintegrated recycling coefficient contributions
           call cfrure (96,ndata,rp32(:,:,:,is,it),'rp32')
           close(96)
           else
-c         Use standard recycling model for this species/wall combination
-            write(*,*) 'No TRIM recycling data for ',
+c         Give error message or information if files are not found
+            write(*,*) 'No TRIM recycling data  for ',
      1       recycle_code(is),' onto ',target_code(it)
+            if (recycle_zn(is).eq.0.0_R8) then !! expected to use AFN BCs, so give error 
+              if (use_coarse.ne.1) then !! first suggest to go look for coarse files
+                write(*,*) 'Consider using b2stbr_afn_bcs_use_coarse'
+              endif
+              call xerrab ('Error using advanced fluid neutral BCs')
+            else !! currently, default neutral boundary conditions will automatically be used for non-hydrogenic species, so we should not give an error here
+              write(*,*) 'Default recycling model used for ',
+     1       recycle_code(is),' onto ',target_code(it) 
+            endif
           endif
         enddo
       enddo
@@ -272,8 +299,8 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCn,isi)
       ux = upf*pit2
@@ -551,8 +578,8 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
       unf = pl%ua(iCv,isn)
@@ -602,7 +629,7 @@ c     Convert energy flux densities in net energy flux contributions
       end subroutine CalcIncidentFluxesMaxwellian
 
       subroutine CalcRecycledFluxes(iCv,nCi,iFc,
-     &             isign,
+     &            isign,
      &            isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tef,pof,nif,nef,
@@ -653,8 +680,8 @@ c     Internal variables
       call subini ('CalcRecycledFluxes')
 c     Initialize/calculate some variables
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCv,isi)
       ux = upf*pit2
@@ -673,7 +700,6 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
-
 c     Interpolate tables to find recycling values
 c       Isothermal speed of sound and Mach number
       cs = sqrt(2.0_R8*tif/mn)
@@ -686,7 +712,7 @@ c       Shpottau value: sheath_potential devided by tau (Ti/Te)
       tab = rc1(:,:,:,is,it)
       rc1i = intp_3dtable(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh,ip1,ip2,ip3)
-      rc1i = max(rc1i,0.0_R8)! Make sure thy don't become negative when extrapolating
+      rc1i = max(rc1i,0.0_R8)! Make sure they do not become negative when extrapolating
 
       ff = rmx1(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
       rmx1i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
@@ -737,7 +763,6 @@ c     treated kinetically.
       fnnrec = max(0.0_R8,(recyc0*t0 - 2.0_R8*fna_mol_rec)*
      1  fluid_frac_hyb)
 
-
 c     Recycled momentum flux densities
       fmox = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)*
      1  fluid_frac_hyb
@@ -762,7 +787,6 @@ c       product of density and toroidal velocity
 c     recycled total energy flux density of neutrals
       fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)*fluid_frac_hyb
       fenec = fenec + 0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
-
 
 c     Calculate recycled poloidal momentum flux of neutrals
       fmomrecp = -isign*(fmoz*cosa + fmoy*sina)*
@@ -831,10 +855,10 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-      upf = pl%ua(iCn,isi)!! We use iCn instead of iCv because EIRENE doesn't see the value in the guard cell and the difference can be large.
+      upf = pl%ua(iCn,isi)!! We use iCn instead of iCv because EIRENE does not see the value in the guard cell and the difference can be large.
       ux = upf*pit2
       uy = -sina*isign*upf*pit
       uz = -cosa*isign*upf*pit
@@ -860,6 +884,7 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
+
 c     Calculate incident particle flux density
       fnni = vcx/vtot*(-i1l*nnf+(dnndz*i2l+dnndy*uy*i1l)/vtot)
 
@@ -875,7 +900,6 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
-
 c     Interpolate tables to find recycling values
 c       Isothermal speed of sound and Mach number
       cs = sqrt(2.0_R8*tif/mn)
@@ -888,7 +912,7 @@ c       Interpolate
       tab = rc1(:,:,ispt,is,it)
       rc1i = intp_2dtable(tab,M,T,dM,dT,nM,nT,
      & Mj,tifev,ilM,ilT,ip1,ip2)
-      rc1i = max(rc1i,0.0_R8) ! Make sure thy don't become negative when extrapolating
+      rc1i = max(rc1i,0.0_R8) ! Make sure they do not become negative when extrapolating
       tab = rc2(:,:,ispt,is,it)
       rc2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
      & Mj,tifev,ilM,ilT)
@@ -1014,7 +1038,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
       if (fnni.lt.0.0_R8 .and. safeguard.eq.1) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
-     &            pl,tnf, geo, mpg,cosa, sina,
+     &            pl,tnf,geo,mpg,cosa,sina,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       endif
 
@@ -1023,7 +1047,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
       end subroutine CalcReflectedFluxesDiffusion
 
       subroutine CalcReflectedFluxesKn(Kn_b1,Kn_b2,
-     &             iCv,iCn,nCi,iFc,
+     &            iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,
@@ -1225,8 +1249,8 @@ c     Internal variables
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
-      pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
-      pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
       unf = pl%ua(iCv,isn)
       ux =  unf*pit2
@@ -1573,9 +1597,10 @@ c     Calculate rate coefficients at boundary
       recycle_initialised=.false.
       return
       end subroutine dealloc_recycle_fnn
+      
 
       subroutine precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
-     &  pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
+     &  pl, dv, co, rt, dnn)
       use b2mod_types
       use b2mod_neutrals_namelist
       use b2us_geo
@@ -1588,12 +1613,10 @@ c     Calculate rate coefficients at boundary
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (in) :: dv
+      type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co
       type (B2Rates), intent (in) :: rt
       real (kind=R8), intent(inout) :: dnn(nFc,0:1)
-      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc),
-     &                                  kin_frac_hyb(nFc)
 c     local variables
       integer :: istra, i, iRc1, isn, iFc
       integer, save :: ncall = 0, style_visc = 0
@@ -1646,20 +1669,20 @@ cc compute fluid/kinetic fraction
           if (switch%use_auto_spatial_hyb.eq.1.and.
      &                                HYB_TYPE(istra).eq.'A') then !! 'A' = automatic
             if (Kn.le.switch%auto_spatial_hyb_Kn_1) then !! fluid treatment
-              fluid_frac_hyb(iFc) = 1.0_R8
-              kin_frac_hyb(iFc) = 0.0_R8
+              dv%fluid_frac_hyb(iFc) = 1.0_R8
+              dv%kin_frac_hyb(iFc) = 0.0_R8
             elseif (Kn.ge.switch%auto_spatial_hyb_Kn_2) then  !! kinetic treatment
-              fluid_frac_hyb(iFc) = 0.0_R8
-              kin_frac_hyb(iFc) = 1.0_R8
+              dv%fluid_frac_hyb(iFc) = 0.0_R8
+              dv%kin_frac_hyb(iFc) = 1.0_R8
             else
 !! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_Kn_1 and auto_Kn_2
-              kin_frac_hyb(iFc) = (Kn-switch%auto_spatial_hyb_Kn_1)/
+              dv%kin_frac_hyb(iFc) = (Kn-switch%auto_spatial_hyb_Kn_1)/
      &     (switch%auto_spatial_hyb_Kn_2-switch%auto_spatial_hyb_Kn_1)
-              fluid_frac_hyb(iFc) = 1.0_R8 - kin_frac_hyb(iFc)
+              dv%fluid_frac_hyb(iFc) = 1.0_R8 - dv%kin_frac_hyb(iFc)
             endif
           else !! keep scaling factors both equal to 1.
-            fluid_frac_hyb(iFc) = 1.0_R8
-            kin_frac_hyb(iFc) = 1.0_R8
+            dv%fluid_frac_hyb(iFc) = 1.0_R8
+            dv%kin_frac_hyb(iFc) = 1.0_R8
           endif
         enddo
 
