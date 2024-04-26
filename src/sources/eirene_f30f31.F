@@ -335,13 +335,8 @@ c     internal cell -> full diamagnetic drift
             endif
             pux(ic) = ebx
             puy(ic) = eby
-            if (gm%cvEb(ic,2).ge.0.0_R8) then
-              pvx(ic) = -eby
-              pvy(ic) = ebx
-            else
-              pvx(ic) = eby
-              pvy(ic) = -ebx
-            endif
+            pvx(ic) =-eby*gm%signmf
+            pvy(ic) = ebx*gm%signmf
 
             ! limit the total velocity, and then scale
             ! all individual components
@@ -497,13 +492,8 @@ c we derive the guard cell value from its neighbouring interior cell
             endif
             puxs = ebx
             puys = eby
-            if (gm%fcEb(iFc,2).ge.0.0_R8) then
-              pvxs = -eby
-              pvys = ebx
-            else
-              pvxs = eby
-              pvys = -ebx
-            endif
+            pvxs =-eby*gm%signmf
+            pvys = ebx*gm%signmf
 
             uu = uub(ic,ifl)
             vv = vvb(ic,ifl)
