@@ -15,6 +15,7 @@
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  cdna, cdpa, cvsa_cl, cvsa_drho,                                  !som 18.08.21
      &  chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                   !som 20.10.21
+     &  cvsa_uAdp_albe, cvsa_uBdp_al,                                    !som 26.04.24
      &  cvla, chce, chve, chci, chvi, calf,                              !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
@@ -99,6 +100,8 @@
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 20.10.21
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
+     &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 26.04.24
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 26.04.24 
      6  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
@@ -316,6 +319,7 @@
      &               csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
        call b2tvspa (nx, ny, ns, ismain, bb,                            !srv 19.02.21
      &               na, ua, cvsa_cl, cvsa_drho, fac_vis,               !som 18.08.21
+     &               cvsa_uAdp_albe, cvsa_uBdp_al,                      !som 26.04.24
      &               fchvispar_a, fchvispar)
        call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
      &               na, ua, facdrift, fchinert_a, fchinert)

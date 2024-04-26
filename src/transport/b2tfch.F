@@ -8,6 +8,7 @@
      2  ua, fne_32, fne_52, csig, csigin, csig_stoch,                    !xpb !srv 24.08.21
      &  chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,
      &  chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                   !som 20.10.21
+     &  cvsa_uAdp_albe, cvsa_uBdp_al,                                    !som 26.04.24
      &  fch, conc, fchstoch, fchdia,                                     !srv 17.12.13 16.10.17 som 18.08.21
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
      1  avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl,
@@ -46,6 +47,8 @@
      & chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                   !som 20.10.21
      & cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 20.10.21
      & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
+     & cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 26.04.24
+     & cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 26.04.24     
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny), BoRiS,
@@ -215,6 +218,7 @@ c Drift terms
 *   .. calculate x,y-components of viscosity parallel current
       call b2tvspa(nx, ny, ns, ismain, bb,                               !srv 19.02.21
      &             na, ua, cvsa_cl, cvsa_drho, fac_vis,                  !srv 20.09.06 16.10.17 !som 18.08.21
+     &             cvsa_uAdp_albe, cvsa_uBdp_al,                         !som 26.04.24
      &             fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21

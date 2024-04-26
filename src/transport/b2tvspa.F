@@ -2,7 +2,9 @@
 *.specification
 
       subroutine b2tvspa (nx, ny, ns, ismain, bb,                       !srv 20.09.06 { 16.10.17 19.02.21
-     &  na, ua, cvsa_cl, cvsa_drho, fac_vis, fchvispar_a, fchvispar)    !srv 22.06.08 som 18.08.21
+     &  na, ua, cvsa_cl, cvsa_drho, fac_vis, 
+     &  cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 26.04.24
+     &  fchvispar_a, fchvispar)                                         !srv 22.06.08 som 18.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -26,7 +28,9 @@
      &  ua(-1:nx,-1:ny,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 16.10.17
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 18.08.21
-     1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                       !srv 22.06.08
+     1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny),                       !srv 22.06.08
+     &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 26.04.24
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1)                      !som 26.04.24
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),

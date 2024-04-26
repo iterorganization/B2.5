@@ -370,11 +370,13 @@ csw 01oct2012 initialize potential if necessary
      * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,                !som 08.10.21
      * cvsa_hAdp_albe, cvsa_hBdp_al,                                     !som 20.10.21
      * cvsahz_uAdp_albe, cvsahz_uBdp_al,                                 !som 22.12.23
+     * cvsa_uAdp_albe, cvsa_uBdp_al,                                     !som 26.04.24
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
       call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
       call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21
      &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              cvsa_uAdp_albe, cvsa_uBdp_al,                        !som 26.04.24
      &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21
      &              na, ua, facdrift, fchinert_a, fchinert)
@@ -472,6 +474,7 @@ c   extra call at this place within internal iteration)
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
      &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
+     &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
      &    cvla, chce, chve, chci, chvi, calf,                            !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
@@ -587,6 +590,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
       call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21
      &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              cvsa_uAdp_albe, cvsa_uBdp_al,                        !som 26.04.24
      &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21
      &              na, ua, facdrift, fchinert_a, fchinert)
@@ -862,6 +866,7 @@ csw 16oct2012 init ier0
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
      &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
+     &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
      &    conc, avisper_a, bvisper_a, cvisper_a,
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
      &    fch, fch_p, fchdia, fchin,
@@ -898,6 +903,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,    !som 18.08.21 !srv 24.08.21
      &      chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               !som 20.10.21
+     &      cvsa_uAdp_albe, cvsa_uBdp_al,                                !som 26.04.24
      &      conc, avisper_a, bvisper_a, cvisper_a,
      &      fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,  !srv 08.09.21
      &      fch, fch_p, fchdia, fchin,

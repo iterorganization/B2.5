@@ -10,7 +10,8 @@
      * cvsahz_drho, cvsa_drho,                                          !som 18.08.21
      * chci_al_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,       !som 08.10.21
      * cvsa_hAdp_luc, cvsa_hBdp_luc,                                    !som 20.10.21
-     * cvsahz_uAdp_luc, cvsahz_uBdp_luc,                                !som 22.12.23                                    
+     * cvsahz_uAdp_luc, cvsahz_uBdp_luc,                                !som 22.12.23
+     * cvsa_uAdp_luc, cvsa_uBdp_luc,                                    !som 26.04.24                                      
      4 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)  !srv 24.08.21
       use b2mod_types
       use b2mod_indirect

@@ -875,6 +875,7 @@ contains
             &        chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,           & !som 08.10.21
             &        cvsa_hAdp_albe, cvsa_hBdp_al,                                & !som 20.10.21
             &        cvsahz_uAdp_albe, cvsahz_uBdp_al,                            & !som 22.12.23
+            &        cvsa_uAdp_albe, cvsa_uBdp_al,                                & !som 26.04.24
             &        fllim0fhi, fllimvisc, csig_cl, calf_cl,                      &
             &        csig_stoch, chce_stoch)
 !  ..compute log-log charge exchange rate coefficients
@@ -897,6 +898,7 @@ contains
             &        fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,      &
             &        cdna, cdpa, cvsa_cl, cvsa_drho,                             & !som 18.08.21
             &        chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,              & !som 20.10.21
+            &        cvsa_uAdp_albe, cvsa_uBdp_al,                               & !som 26.04.24
             &        cvla, chce, chve, chci, chvi, calf,                         &
             &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr,                         &
             &        rlza, rlz2, rlpt, rlpi,                                     &
