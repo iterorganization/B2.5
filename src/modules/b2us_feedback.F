@@ -32,7 +32,6 @@
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated=.false.
-      logical, save :: calc_cum=.false.
       real (kind=R8) :: charge_frac(DEF_NSD)
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
@@ -49,7 +48,7 @@
      & fb_const(DEF_NATM) = 0.0_R8, fb_puff_min(DEF_NATM) = 0.0_R8,
      & fb_puff_max(DEF_NATM) = 0.0_R8, fb_overshoot(DEF_NATM) = 0.0_R8,
      & fb_current(DEF_NATM) = 0.0_R8, fb_prev(DEF_NATM) = 0.0_R8,
-     & fb_rescale(DEF_NATM) = 1.0_R8, fb_cum_actuator(DEF_NATM) = 0.0_R8,
+     & fb_rescale(DEF_NATM) = 1.0_R8,
      & fb_current_prev(DEF_NATM) = 0.0_R8,
      & fb_target_actuator(DEF_NATM) = 0.0_R8
 
@@ -57,9 +56,7 @@
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
      & fb_type(DEF_NATM) = 0, fb_rescale_option(DEF_NATM) = 0,
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
-     & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0, !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
-    !  & fb_cum_tim(DEF_NATM) = 0,
-     & set_act_tar(DEF_NATM) = 0
+     & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
       integer, parameter :: NACT_LEN = 10
       real (kind=R8) :: actuator_conv(DEF_NATM,NACT_LEN), actuator_conv_end(DEF_NATM)
 
@@ -101,8 +98,6 @@
      9  save_pfr2_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
      i  coreregno/1/, coreregn2/0/, solregno/6/,
      i  pfrregno1/4/, pfrregno2/5/, isfeedback/0/, nesepm_istra/-1/
-        real (kind=R8), save ::  fb_accuracy = 0.0_R8
-        integer, save :: fb_update_range = 0
       namelist /feedback/ saved_fb_actuator
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/
@@ -330,8 +325,6 @@ cxpb size is changed in DIMENSIONS.F
       call ipgetr ('b2stbc_ndes_sol', ndes_sol)
       call xertst (0.0_R8.le.ndes_sol,
      . 'faulty internal parameter ndes_sol')
-      call ipgetr('b2stbc_fb_accuracy', fb_accuracy)
-      call ipgeti('b2stbc_fb_update_range', fb_update_range)
 #ifdef WG_RM
       if(fnaycore.ne.-1.0e30_R8.or.fheycore.gt.0.0_R8.or.
      &   fhiycore.gt.0.0_R8.or.fchycore.ne.-1.0e30_R8.or.
@@ -1538,6 +1531,8 @@ cxpb size is changed in DIMENSIONS.F
                 endif
               enddo
               fb_current(ifb) = she_rad_tot + she_eir_tot
+              if (fb_current(ifb).eq.0.0_R8)
+     &          fb_current(ifb) = fb_target(ifb)
             
             case (19) !  density of ions at outer midplane
 
@@ -1647,21 +1642,21 @@ cxpb size is changed in DIMENSIONS.F
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                  iFc1 = mpg%fsFcP(mpg%iFssep,1)
-                  iFc2 = iFc1 + mpg%fsFcP(mpg%iFssep,2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
-                  do iFc = iFc1, iFc2
-                    ic1 = mpg%fcCv(mpg%fsFc(iFc),1)
-                    ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
+                  do k = mpg%fsFcP(mpg%iFssep,1),
+     &            mpg%fsFcP(mpg%iFssep,1)+mpg%fsFcP(mpg%iFssep,2)-1
+                    iFc = mpg%fsFc(k)
+                    ic1 = mpg%fcCv(iFc,1)
+                    ic2 = mpg%fcCv(iFc,2)
                     if(mpg%cvOnClosedSurface(ic1) .or. 
      &                 mpg%cvOnClosedSurface(ic2)) then
                       fb_current(ifb) = fb_current(ifb) +
      &                  (pl%na(ic1,is)*geo%fcHc(iFc,2) + pl%na(ic2,is)
      &                  *geo%fcHc(iFc,1)) /
-     &                  sum(geo%fcHc(iFc,:))*geo%fcS(mpg%fsFc(iFc))
+     &                  sum(geo%fcHc(iFc,:))*geo%fcS(iFc)
                       if (is.eq.is_start+1) then
-                        sum_e = sum_e + geo%fcS(mpg%fsFc(iFc))
+                        sum_e = sum_e + geo%fcS(iFc)
                       end if
                     end if
                   enddo
@@ -2237,24 +2232,6 @@ cxpb size is changed in DIMENSIONS.F
                 saved_fb_actuator(ifb) =
      &            fb_rescale(ifb)
               end if
-
-                if((fb_current_prev(ifb)-fb_target(ifb))*
-     &          (fb_current(ifb)-fb_target(ifb)) < 0 
-     &          .and. (ncall > 10) .and. (fb_accuracy.gt.1e-6_R8)) then
-                  print *, "save target actuator";
-                  set_act_tar(ifb) = 1
-                  fb_target_actuator(ifb) = saved_fb_actuator(ifb);
-                endif
-
-                if (set_act_tar(ifb).eq.1) then
-                  if (abs(1-fb_current(ifb)/fb_target(ifb))
-     &                .lt.fb_accuracy) then
-                    saved_fb_actuator(ifb) = fb_target_actuator(ifb)
-                    print *,"set target actuator",saved_fb_actuator(ifb)
-                  else
-                    set_act_tar(ifb) = 0
-                  endif
-                endif
 
     !           if(fb_puff_min(ifb) .le. 0.0_R8)
     !  &          
