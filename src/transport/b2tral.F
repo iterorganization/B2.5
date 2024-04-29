@@ -423,6 +423,10 @@
      &         'b2trzh_cvsahz_hAdpx'//chns//'_'//chns0)
               call my_out(70,nx,ny,cvsahz_hAdp_luc(-1,-1,0,is,is0),
      &         'b2trzh_luciani_cvsahz_hAdpx'//chns//'_'//chns0)
+              call my_out(70,nx,ny,cvsahz_uAdp_fl(-1,-1,0,is,is0),
+     &         'b2trzh_cvsahz_uAdpx'//chns//'_'//chns0)
+              call my_out(70,nx,ny,cvsahz_uAdp_luc(-1,-1,0,is,is0),
+     &         'b2trzh_luciani_cvsahz_uAdpx'//chns//'_'//chns0)
             enddo
             call my_out(70,nx,ny,cvsa0_hBdp(-1,-1,0,is),
      &       'b2trzh_cvsa_hBdpx'//chns)
@@ -432,6 +436,10 @@
      &       'b2trzh_cvsahz_hBdpx'//chns)
             call my_out(70,nx,ny,cvsahz_hBdp_luc(-1,-1,0,is),
      &       'b2trzh_luciani_cvsahz_hBdpx'//chns)
+            call my_out(70,nx,ny,cvsahz_uBdp_fl(-1,-1,0,is),
+     &       'b2trzh_cvsahz_uBdpx'//chns)
+            call my_out(70,nx,ny,cvsahz_uBdp_luc(-1,-1,0,is),
+     &       'b2trzh_luciani_cvsahz_uBdpx'//chns)
           enddo
         endif
 
