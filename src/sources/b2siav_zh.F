@@ -139,7 +139,7 @@
 
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 *   ..compute radial gradients of ti
-          call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
+          call gradc_r(nx, ny, hx, qz, ti, dtir)
 
 * ..calculate the parallel heat flux of ions in the center of the cell
 

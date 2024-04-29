@@ -1,16 +1,18 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine grad_r(nx, ny, mode, hx, hy, vol, qz, qs, fun, func, 
+      subroutine grad_r(nx, ny, mode, hx, hy, vol, qs, fun, func,
      *   gfunr)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_geo
+     , , only : hy1
       implicit none
 *   ..input arguments
       integer nx,ny,mode
       real (kind=R8) ::
      *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), 
+     *   qs(-1:nx,-1:ny,0:1),
      *   fun(-1:nx,-1:ny), func(-1:nx,-1:ny)
 *   ..output arguments
       real (kind=R8) ::
@@ -18,19 +20,19 @@
 *-----------------------------------------------------------------------
 *.documentation
 *
-*     GRAD_R computes gradients of a cell centered quantity fun in the 
-*     radial direction, on x and y-faces of a cell. It takes into 
-*     account the corrections for x-faces not perpendicular to the 
+*     GRAD_R computes gradients of a cell centered quantity fun in the
+*     radial direction, on x and y-faces of a cell. It takes into
+*     account the corrections for x-faces not perpendicular to the
 *     poloidal field (9-point stencil).
 *     gfunr(:,:,0) will hold the radial gradients at x-faces
 *     gfunr(:,:,1) will hold the radial gradients at y-faces
 *
-*     To compute values of the field in cell corners, the routine relies 
+*     To compute values of the field in cell corners, the routine relies
 *     calls to intcor, using the input array 'vol' as weights. Different
-*     interpolation schemes can be mimicked by using a different array 
+*     interpolation schemes can be mimicked by using a different array
 *     with weights in the calling routine.
 *
-*     Note: gfunr will not be computed between guard cells, because 
+*     Note: gfunr will not be computed between guard cells, because
 *           corner values in guard cells may not be (well) defined
 *
 *     If mode.eq.0, the routine will interpolate fun to corners in func
@@ -44,11 +46,9 @@
 
 *   ..procedures
       external intcor, intfaceh, intfacev
-      real (kind=R8) :: hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 
 *-----------------------------------------------------------------------
-*.computation      
+*.computation
 
 *   ..test mode
       call xertst (0.le.mode.and.mode.le.1,

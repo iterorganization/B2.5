@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     *  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,       !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  hx, hy, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,           !srv 07.06.00 02.06.99 07.05.08 05.07.17
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
      *  cvsa_drho, she0, shi0)                                         !som 16.08.21 !srv 28.06.03 07.07.09
       use b2mod_types
@@ -40,7 +40,7 @@
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  lnlam(-1:nx,-1:ny)                                            !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1,0:1),      !srv 24.08.21
@@ -389,11 +389,11 @@
       call b2saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       wght = 1.0_R8
-      call grad(nx, ny, hx, hy, wght, qz, qs, po, dpo)
-      call grad(nx, ny, hx, hy, wght, qz, qs, OnedBsq, dOnedBsq)
-!      call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
+      call grad(nx, ny, hx, hy, wght, qs, po, dpo)
+      call grad(nx, ny, hx, hy, wght, qs, OnedBsq, dOnedBsq)
+!      call grad_p(nx, ny, 1, hx, wght, OnedBsq, OnedBsqc,
 !     .  dOnedBsq(-1,-1,0,0))
-!      call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc,
+!      call grad_r(nx, ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
 !     .  dOnedBsq(-1,-1,0,1))
 
       b2exbe=0.0_R8

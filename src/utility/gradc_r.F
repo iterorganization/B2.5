@@ -1,15 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine gradc_r(nx, ny, hx, hy, vol, qz, fun, dfunr)
+      subroutine gradc_r(nx, ny, hx, qz, fun, dfunr)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_geo
+     , , only : hy1
       implicit none
 *   ..input arguments
-      integer nx,ny,mode
+      integer nx,ny
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
 *   ..output arguments
       real (kind=R8) ::
      *   dfunr(-1:nx,-1:ny)
@@ -27,10 +28,6 @@
 *   ..local variables
       integer ix,iy
 
-*   ..procedures
-      real (kind=R8) :: hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-
 *-----------------------------------------------------------------------
 *.computation      
 
@@ -38,10 +35,10 @@
       do iy = -1,ny
         do ix = -1,nx
           if (bottomiy(ix,iy).eq.-2) then
-cwdk for now:  zero here; consider 1-sided differences if needed?
+cwdk for now: zero here; consider 1-sided differences if needed?
             dfunr(ix,iy) = 0.0_R8
           elseif (topiy(ix,iy).eq.ny+1) then
-cwdk for now:  zero here; consider 1-sided differences if needed?
+cwdk for now: zero here; consider 1-sided differences if needed?
             dfunr(ix,iy) = 0.0_R8
           else
             if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then

@@ -316,7 +316,7 @@
 *   ..recompute currents
        call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,               !srv 20.09.06 }!som 02.11.21
      &               csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
-       call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,       !srv 19.02.21
+       call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qs, bb,           !srv 19.02.21
      &               na, ua, cvsa_cl, cvsa_drho, fac_vis,               !som 18.08.21
      &               fchvispar_a, fchvispar)
        call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb,
@@ -336,7 +336,7 @@
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,                            !srv 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
-     &  vol, hx, hy, qz, gs, qc, qs, bb, pbs,
+     &  vol, hx, hy, gs, qc, qs, bb, pbs,
      &  ua, na, ne, te, ti, po, fch_p,
      &  fchvispar_a, fchvisper_a, fchinert_a, fchanml_a, fchvisq_a,     !srv 08.09.21
      &  fchin_a, fne, cvla, cdna, cdpa, chce, chci,

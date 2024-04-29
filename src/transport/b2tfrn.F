@@ -3,7 +3,7 @@
 
       subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 { 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
-     &  vol, hx, hy, qz, gs, qc, qs, bb, pbs,
+     &  vol, hx, hy, gs, qc, qs, bb, pbs,
      &  ua, na, ne, te, ti, po, fch_p,
      &  fchvispar_a, fchvisper_a, fchinert_a, fchanml_a, fchvisq_a,      !srv 20.09.06 08.09.21
      &  fchin_a, fne, cvla, cdna, cdpa, chce, chci,                      !IYS 17.10.2023
@@ -44,7 +44,7 @@
      &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1,0:1),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     2  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     2  hy(-1:nx,-1:ny),
      2  gs(-1:nx,-1:ny,0:2),
      &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), ve(-1:nx,-1:ny),
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
@@ -513,7 +513,7 @@ c Drift terms
 
           wrk0=1.0_R8  ! compute ... on the cell faces
           nete = ne*te                                                   !lk
-          call grad(nx, ny, hx, hy, wrk0, qz, qs, nete, dnete)
+          call grad(nx, ny, hx, hy, wrk0, qs, nete, dnete)
           do iy=-1,ny  ! compute ... on the cell centers
            do ix=-1,nx
              if(bottomiy(ix,iy).eq.-2) then

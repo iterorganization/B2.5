@@ -1,14 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine grad(nx, ny, hx, hy, vol, qz, qs, fun, gfun)
+      subroutine grad(nx, ny, hx, hy, vol, qs, fun, gfun)
       use b2mod_types
       implicit none
 *   ..input arguments
       integer nx,ny
       real (kind=R8) ::
      *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   qs(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
 *   ..output arguments
       real (kind=R8) ::
      *   gfun(-1:nx,-1:ny,0:1,0:1)
@@ -36,14 +36,14 @@
       external grad_p, grad_r
 
 *-----------------------------------------------------------------------
-*.computation      
+*.computation
 
 *   ..interpolate fun to cell corners
       call intcor(nx,ny,vol,fun,func)
 
 *   ..compute poloidal and radial gradients
-      call grad_p(nx,ny, 1, hx, hy, vol, qs, fun, func, gfun(-1,-1,0,0))
-      call grad_r(nx,ny, 1, hx, hy, vol, qz, qs, fun, func, 
+      call grad_p(nx, ny, 1, hx, vol, fun, func, gfun(-1,-1,0,0))
+      call grad_r(nx, ny, 1, hx, hy, vol, qs, fun, func,
      &  gfun(-1,-1,0,1))
 
 *   ..return

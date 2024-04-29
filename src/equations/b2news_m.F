@@ -378,7 +378,7 @@ csw 01oct2012 initialize potential if necessary
 *   ..recompute currents
       call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,                 !srv 20.09.06 }
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 !som 02.11.21
-      call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,         !srv 02.11.21
+      call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qs, bb,             !srv 02.11.21
      &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
      &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb, na, ua, !srv 08.09.21
@@ -632,7 +632,7 @@ csw 16oct2012 init ier0
 
       call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,                 !srv 20.09.06 }!som 02.11.21
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
-      call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,         !srv 19.02.21 !srv 02.11.21
+      call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qs, bb,             !srv 19.02.21 !srv 02.11.21
      &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
      &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb,         !srv 08.09.21
@@ -1063,7 +1063,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
      &  solveee, solveei, solveet, solvepo, solvemo,                     !srv 22.05.18
-     &  rxf3, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,     !srv 07.06.00 02.06.99
+     &  rxf3, dtim, BoRiS, fac_ExB, hx, hy, qc, qs, vol, gs, bb,         !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                    !som 16.08.21 !srv 24.08.21
      &  fchdia, uadia, wadia, vadia, vaecrb,                             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
@@ -1073,7 +1073,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.ne.0 .and. mdf_fhi.ne.0) then                           !srv 13.10.06
         call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,       !srv 05.07.17 22.05.18
      &   solveee, solveei, solveet, solvepo, solvemo,                    !srv 22.05.18
-     &   rxf3, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,    !srv 07.06.00 02.06.99
+     &   rxf3, dtim, BoRiS, fac_ExB, hx, hy, qc, qs, vol, gs, bb,        !srv 07.06.00 02.06.99
      &   pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &   fne, fch, fchstoch, cvsa,                                       !srv 24.08.21
      &   cvsa_cl, cvsa_drho,                                             !som 16.08.21
@@ -1084,7 +1084,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.eq.0 .and. mdf_fhi.ne.0) then                           !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
      &  solveee, solveei, solveet, solvepo, solvemo,                     !srv 22.05.18
-     &  rxf3, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,     !srv 07.06.00 02.06.99
+     &  rxf3, dtim, BoRiS, fac_ExB, hx, hy, qc, qs, vol, gs, bb,         !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                    !som 16.08.21 !srv 24.08.21
      &  fchdia, uadia, wadia, vadia, vaecrb,                             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
@@ -1094,7 +1094,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.ne.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
      &  solveee, solveei, solveet, solvepo, solvemo,                     !srv 22.05.18
-     &  rxf3, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,     !srv 07.06.00 02.06.99
+     &  rxf3, dtim, BoRiS, fac_ExB, hx, hy, qc, qs, vol, gs, bb,         !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                    !som 16.08.21 !srv 24.08.21
      &  fchdia, uadia, wadia, vadia, vaecrb,                             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17

@@ -1,15 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine grad_p(nx, ny, mode, hx, hy, vol, qs, fun, func, gfunp)
+      subroutine grad_p(nx, ny, mode, hx, vol, fun, func, gfunp)
       use b2mod_types
       use b2mod_indirect
       implicit none
 *   ..input arguments
       integer nx,ny,mode
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qs(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny), func(-1:nx,-1:ny)
+     *   hx(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     *   fun(-1:nx,-1:ny), func(-1:nx,-1:ny)
 *   ..output arguments
       real (kind=R8) ::
      *   gfunp(-1:nx,-1:ny,0:1)

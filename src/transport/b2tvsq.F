@@ -112,7 +112,7 @@
      &   no_current.eq.0) then
 
 *     ..compute radial gradients of ti
-         call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
+         call gradc_r(nx, ny, hx, qz, ti, dtir)
 
 *       compute differences of OnedBsq on cell faces
         call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)

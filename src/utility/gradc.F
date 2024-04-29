@@ -1,14 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine gradc(nx, ny, hx, hy, vol, qz, fun, dfun)
+      subroutine gradc(nx, ny, hx, qz, fun, dfun)
       use b2mod_types
       implicit none
 *   ..input arguments
       integer nx,ny
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
 *   ..output arguments
       real (kind=R8) ::
      *   dfun(-1:nx,-1:ny,0:1)
@@ -35,8 +34,8 @@
 *.computation      
 
 *   ..compute poloidal and radial gradients
-      call gradc_p(nx,ny, hx, hy, vol, qz, fun, dfun(-1,-1,0))
-      call gradc_r(nx,ny, hx, hy, vol, qz, fun, dfun(-1,-1,1))
+      call gradc_p(nx, ny, hx, fun, dfun(-1,-1,0))
+      call gradc_r(nx, ny, hx, qz, fun, dfun(-1,-1,1))
 
 *   ..return
       return

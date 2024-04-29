@@ -359,7 +359,7 @@ ctmp.dpc
 !          if(style.gt.0) then                                           !srv 18.06.08 {
           call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,             !srv 20.09.06 }!som 02.11.21
      &        csig_an, po, ne, na, fchanml_a, fchanml)                   !srv 08.09.21
-          call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,     !srv 20.09.06 { 19.02.21
+          call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qs, bb,         !srv 20.09.06 { 19.02.21
      &        na, ua, cvsa_cl, cvsa_drho, fac_vis,
      &        fchvispar_a, fchvispar)                                    !som 18.08.21
           call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb,
@@ -657,7 +657,7 @@ ctmp.dpc
            solving = .false.
            call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
      &      solveee, solveei, solveet, solvepo, solvemo,               !srv 22.05.18
-     &      rxf, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,!srv 07.07.21
+     &      rxf, dtim, BoRiS, fac_ExB, hx, hy, qc, qs, vol, gs, bb,    !srv 07.07.21
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,
      &      fchdia, uadia, wadia, vadia, vaecrb,                       !srv 09.07.08 07.07.09 24.08.21

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,  !srv 20.09.06 { 16.10.17 19.02.21
+      subroutine b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qs, bb,      !srv 20.09.06 { 16.10.17 19.02.21
      &  na, ua, cvsa_cl, cvsa_drho, fac_vis, fchvispar_a, fchvispar)    !srv 22.06.08 som 18.08.21
       use b2mod_types
       use b2mod_boundary_namelist
@@ -25,7 +25,7 @@
      &  ua(-1:nx,-1:ny,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 16.10.17
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !som 18.08.21
-     1  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1  qs(-1:nx,-1:ny,0:1),
      1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                       !srv 22.06.08
 *   ..output arguments (unspecified on entry)
@@ -105,11 +105,11 @@ c Drift terms
       if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
      &   no_current.eq.0) then
 *      compute gradients of OnedBsq on cell faces
-       call grad(nx, ny, hx, hy, vol, qz, qs, OnedBsq, gOnedBsq)
+       call grad(nx, ny, hx, hy, vol, qs, OnedBsq, gOnedBsq)
 !       wght = 1.0_R8
-!       call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
+!       call grad_p(nx, ny, 1, hx, wght, OnedBsq, OnedBsqc,
 !     .    gOnedBsq(-1,-1,0,0))
-!       call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc,
+!       call grad_r(nx, ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
 !     .    gOnedBsq(-1,-1,0,1))
        do is = 0, ns-1                                                  !srv 24.06.99
         if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
