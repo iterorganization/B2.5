@@ -241,6 +241,13 @@
        call ipgeti ('b2tfhi_no_hybr', no_hybr_i)
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('b2mndr_astra', use_astra)
+#ifndef ASTRA
+       call xertst (use_astra.eq.0,
+     .  'Compile with -DASTRA option to couple to ASTRA!')
+#else
+       call xertst (ny_astra.gt.0,
+     .  'Did not read any ASTRA data! Cannot couple.')
+#endif
        if (redef_gmtry.eq.0) then
          drift_style = 1
        else
@@ -731,7 +738,12 @@ cwdk  now need to recompute full diamagnetic component for ud
             endif
             IF(core_boundary(ib)) THEN
              if(is.eq.ismain.and.use_astra.ne.0) then
+#ifdef ASTRA
               CONPAR(IS,IB,1) = neb_astra                               !srv 28.07.11
+#else
+              call xerrab
+     .         ('Compile with -DASTRA option to couple to ASTRA!')
+#endif
              endif
              if (ishigh) call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 1')
@@ -1111,7 +1123,14 @@ cwdk  now need to recompute full diamagnetic component for ud
         case (8)
           if(new_boundary_files) then
             if(is.eq.ismain.and.BCCHAR(IB).eq.'S'.and.use_astra.ne.0)
-     >       CONPAR(IS,IB,1) = fneb_astra                               !srv 04.10.11
+     >       then
+#ifdef ASTRA
+              CONPAR(IS,IB,1) = fneb_astra                               !srv 04.10.11
+#else
+              call xerrab
+     .         ('Compile with -DASTRA option to couple to ASTRA!')
+#endif
+            end if
             write(*,'(a,1p,g14.7,a4,a1,a,a13,i3)')
      .       'BCCON =  8 : total particle flux ', CONPAR(IS,IB,1),
      1       ' on ', BCCHAR(IB), boundary_location(ib),
