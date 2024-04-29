@@ -370,7 +370,7 @@ csw 01oct2012 initialize potential if necessary
      * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,                !som 08.10.21
      * cvsa_hAdp_albe, cvsa_hBdp_al,                                     !som 20.10.21
      * cvsahz_uAdp_albe, cvsahz_uBdp_al,                                 !som 22.12.23
-     * cvsa_uAdp_luc, cvsa_uBdp_luc,                                     !som 26.04.24
+     * cvsa_uAdp_albe, cvsa_uBdp_al,                                     !som 26.04.24
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
 *                                                                        !srv 09.03.21 {
 *   ..set nep

@@ -583,7 +583,7 @@
 
                t0=0.0e0_R8
                do iz= 1, znnucl_int(s2nucl(isb)-1)
-                if(iz.ne.nint(zb)) then
+                if(iz.ne.nint(zb(ix,iy))) then
                  t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(isb)-1,iz))*
      &           ti(ix,iy)+
      &           na(leftix(ix,iy),leftiy(ix,iy),
