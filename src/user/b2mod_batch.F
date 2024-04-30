@@ -202,13 +202,13 @@
       character(*), intent(in) :: batch_name
       integer iun, n2, idum(0:2)
       character lble*120
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
       n2 = (nx+2)*(ny+2)
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file=batch_name,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
 #else

@@ -76,7 +76,7 @@
 *     ------------------------------------------------------------------
       end subroutine cfopen
 
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer function newunit ()
       implicit none
       logical used

@@ -1285,7 +1285,7 @@ csw dec2013 allow for negative values; this is tweak to scale a specific species
        call xertst (0.0_R8.lt.plate_temp, 'faulty b2stbr_plate_temp')
        call ipgetr ('b2stbr_plate_thick', plate_thick)
        call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
-       call ipgeti ('b2mndr_astra',use_astra)
+       call ipgeti ('b2mndr_astra', use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
        call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
        call ipgeti ('b2mndr_eirene', use_eirene)

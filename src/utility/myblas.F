@@ -200,7 +200,7 @@
       real (kind=R8) ::
      *   sa, sx(0:*), sy(0:*)
 #if ( !defined(NO_OPENMP_MYBLAS) || defined(WITH_FTIMINGS) )
-      logical do_parallel
+      logical make_parallel
 #endif
 *     ------------------------------------------------------------------
 *     B2SAXPY (BLAS routine) performs the vector operation y:=y+sa*x.
@@ -213,18 +213,18 @@
       external xerrab
 *     ------------------------------------------------------------------
 #if ( !defined(NO_OPENMP_MYBLAS) || defined(WITH_FTIMINGS) )
-      do_parallel =  (.not. in_parallel())
+      make_parallel =  (.not. in_parallel())
 #endif
 #ifdef WITH_FTIMINGS
       call timer%start("b2saxpy")
-      if (do_parallel) call timer%start("parallel")
+      if (make_parallel) call timer%start("parallel")
 #endif
       if (incy.eq.0) then
        call xerrab ('b2saxpy--error, incy.eq.0')
       else if (sa.eq.0.0_R8) then
       else if (incx.eq.1.and.incy.eq.1) then
 #ifndef NO_OPENMP_MYBLAS
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& SCHEDULE(static)
 !$OMP& DEFAULT(none)
 !$OMP& PRIVATE(i)
@@ -243,7 +243,7 @@
        enddo
       endif
 #ifdef WITH_FTIMINGS
-      if(do_parallel) call timer%stop("parallel")
+      if(make_parallel) call timer%stop("parallel")
       call timer%stop("b2saxpy")
 #endif
       return
