@@ -382,7 +382,7 @@ csw 01oct2012 initialize potential if necessary
       call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 !som 02.11.21
       call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 02.11.21
-     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,
      &              cvsa_uAdp_albe, cvsa_uBdp_al,                        !som 26.04.24
      &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
@@ -641,7 +641,7 @@ csw 16oct2012 init ier0
       call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
       call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21 !srv 02.11.21
-     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,
      &              cvsa_uAdp_albe, cvsa_uBdp_al,                        !som 26.04.24
      &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21

@@ -170,7 +170,7 @@
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
       call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21
-     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,                 !som 18.08.21
+     &              na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,             !som 18.08.21
      &              cvsa_uAdp_albe, cvsa_uBdp_al,                        !som 26.04.24
      &              fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
