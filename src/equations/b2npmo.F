@@ -641,7 +641,8 @@
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &      te, ti, na(-1,-1,is), ne2, lnlam,
-     &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
+     &      cvsahz(-1,-1,0,is), cvsahz_cl(-1,-1,0,is), 
+     &      cvsahz_drho(-1,-1,0,is),
      &      smbvh, smbvv, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
      *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
@@ -663,7 +664,8 @@
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &      te, ti, na(-1,-1,is), ne2, lnlam,
-     &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
+     &      cvsahz(-1,-1,0,is), cvsahz_cl(-1,-1,0,is), 
+     &      cvsahz_drho(-1,-1,0,is),
      &      smbvtemp, smbvv, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
      *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23
@@ -685,7 +687,8 @@
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &      te, ti, na(-1,-1,is), ne2, lnlam,
-     &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
+     &      cvsahz(-1,-1,0,is), cvsahz_cl(-1,-1,0,is), 
+     &      cvsahz_drho(-1,-1,0,is),
      &      smbvh, smbvtemp, smbvi, kt_neo,
      &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
      *      cvsahz_uAdp_albe, cvsahz_uBdp_al,                          !som 22.12.23

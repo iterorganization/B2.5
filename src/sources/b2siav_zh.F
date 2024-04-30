@@ -3,7 +3,7 @@
 
       subroutine b2siav_zh (nx, ny, ns, isb, ismain, mb, zb,          !srv 19.02.21
      & ub, wbdia, vbecrb, te, ti, nb, ne2, lnlam,                     !srv 01.07.09
-     & cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
+     & cvsbhz, cvsbhz_cl, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
      & alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
      * cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
      & wrk0, wrk1, wrk2, rho_rel, avm_u,
@@ -36,6 +36,7 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      &  ne2(-1:nx,-1:ny),
      &  cvsbhz(-1:nx,-1:ny,0:1),                                      !srv 04.10.99 09.01.01
+     &  cvsbhz_cl(-1:nx,-1:ny,0:1),                                   !som 30.04.24
      &  cvsbhz_drho(-1:nx,-1:ny,0:1),                                 !som 18.08.21
      &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                        !som 08.10.21
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                               !som 08.10.21
@@ -471,7 +472,7 @@
                 wrk0(ix,iy)=0.0e0_R8
               else
                 if(zh_vis_type.eq.2) then
-                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz(ix,iy,0)/          !som 21.12.23
+                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_cl(ix,iy,0)/          !som 30.04.24
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
                 else
