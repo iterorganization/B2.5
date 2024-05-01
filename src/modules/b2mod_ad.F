@@ -47,6 +47,8 @@
       real (kind=R8), save :: cfnorm(nncf), vold(nncf)
       real (kind=R8), allocatable, save :: b2data(:), b2dataOnCf(:)
       real (kind=R8), allocatable, save :: b2rr(:,:), b2volOnCf(:,:)
+      real (kind=R8), allocatable, save :: b2psi(:,:)
+      integer, save :: ompind(nncf,2) = 0
 
       logical, save :: test_residual = .false. 
       integer, save :: b2mndt_itcnt = 0
