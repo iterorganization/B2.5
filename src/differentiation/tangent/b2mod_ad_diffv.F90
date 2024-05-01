@@ -66,6 +66,8 @@ MODULE B2MOD_AD_DIFFV
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2datad(:, :), b2dataoncfd(:, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2rr(:, :), b2voloncf(:, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2voloncfd(:, :, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: b2psi(:, :)
+  INTEGER, SAVE :: ompind(nncf, 2)=0
 !
   LOGICAL, SAVE :: test_residual=.false.
   INTEGER, SAVE :: b2mndt_itcnt=0
