@@ -40,6 +40,7 @@ MODULE B2US_GEO_DIFFV
 ! 1/B**2 in cell centers
 ! Factor for P-S/mdf flows
 ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
+! Psi in each cell
 !
 !  face based quantities
 ! Magnetic field: (nFc,0:3) to be recomputed at cell faces (Bx,By,Bz,|B|)
@@ -55,6 +56,7 @@ MODULE B2US_GEO_DIFFV
 ! Magnetic contact area * hz (at faces)
 ! Factor for P-S/mdf flows
 ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
+! Psi in each face center
 !
 !  vertex quantities
 ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
@@ -94,6 +96,7 @@ MODULE B2US_GEO_DIFFV
       REAL(kind=r8), ALLOCATABLE :: cvonedbsq(:)
       REAL(kind=r8), ALLOCATABLE :: cvbzb(:)
       REAL(kind=r8), ALLOCATABLE :: cveb(:, :)
+      REAL(kind=r8), ALLOCATABLE :: cvfpsi(:)
       REAL(kind=r8), ALLOCATABLE :: fcbb(:, :)
       REAL(kind=r8), ALLOCATABLE :: fcs(:)
       REAL(kind=r8), ALLOCATABLE :: fchc(:, :)
@@ -107,6 +110,7 @@ MODULE B2US_GEO_DIFFV
       REAL(kind=r8), ALLOCATABLE :: fcpbshz(:)
       REAL(kind=r8), ALLOCATABLE :: fcbzb(:)
       REAL(kind=r8), ALLOCATABLE :: fceb(:, :)
+      REAL(kind=r8), ALLOCATABLE :: fcfpsi(:)
       REAL(kind=r8), ALLOCATABLE :: vxbb(:, :)
       REAL(kind=r8), ALLOCATABLE :: vxx(:)
       REAL(kind=r8), ALLOCATABLE :: vxy(:)
@@ -139,6 +143,7 @@ MODULE B2US_GEO_DIFFV
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: cvonedbsq
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: cvbzb
       REAL(kind=r8), DIMENSION(:, :, :), ALLOCATABLE :: cveb
+      REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: cvfpsi
       REAL(kind=r8), DIMENSION(:, :, :), ALLOCATABLE :: fcbb
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: fcs
       REAL(kind=r8), DIMENSION(:, :, :), ALLOCATABLE :: fchc
@@ -152,6 +157,7 @@ MODULE B2US_GEO_DIFFV
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: fcpbshz
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: fcbzb
       REAL(kind=r8), DIMENSION(:, :, :), ALLOCATABLE :: fceb
+      REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: fcfpsi
       REAL(kind=r8), DIMENSION(:, :, :), ALLOCATABLE :: vxbb
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: vxx
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: vxy
@@ -176,16 +182,16 @@ CONTAINS
 !   Plus diff mem management of: g.cvbb:in-out g.cvx:in-out g.cvy:in-out
 !                g.cvsz:in-out g.cvhz:in-out g.cvhx:in-out g.cvqgam:in-out
 !                g.cvvol:in-out g.cvonedbsq:in-out g.cvbzb:in-out
-!                g.cveb:in-out g.fcbb:in-out g.fcs:in-out g.fchc:in-out
-!                g.fcht:in-out g.fchz:in-out g.fcvol:in-out g.fcqgam:in-out
-!                g.fcqalf:in-out g.fcqbet:in-out g.fcpbs:in-out
-!                g.fcpbshz:in-out g.fcbzb:in-out g.fceb:in-out
-!                g.vxbb:in-out g.vxx:in-out g.vxy:in-out g.vxhz:in-out
-!                g.vxvol:in-out g.vxffbz:in-out g.vxfpsi:in-out
-!                g.vxonedbsq:in-out g.vxbzb:in-out g.vxeb:in-out
-!                g.cvconn:in-out g.vxconn:in-out g.ftconn:in-out
-!                g.fsconn:in-out g.fteps:in-out g.ftbbav2:in-out
-!                g.fspsi:in-out
+!                g.cveb:in-out g.cvfpsi:in-out g.fcbb:in-out g.fcs:in-out
+!                g.fchc:in-out g.fcht:in-out g.fchz:in-out g.fcvol:in-out
+!                g.fcqgam:in-out g.fcqalf:in-out g.fcqbet:in-out
+!                g.fcpbs:in-out g.fcpbshz:in-out g.fcbzb:in-out
+!                g.fceb:in-out g.fcfpsi:in-out g.vxbb:in-out g.vxx:in-out
+!                g.vxy:in-out g.vxhz:in-out g.vxvol:in-out g.vxffbz:in-out
+!                g.vxfpsi:in-out g.vxonedbsq:in-out g.vxbzb:in-out
+!                g.vxeb:in-out g.cvconn:in-out g.vxconn:in-out
+!                g.ftconn:in-out g.fsconn:in-out g.fteps:in-out
+!                g.ftbbav2:in-out g.fspsi:in-out
 !
 !
 !**********************************************************************
@@ -199,10 +205,8 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(INOUT) :: g
     TYPE(GEOMETRY_DIFFV), INTENT(INOUT) :: gd
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: nd
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
 !
     IF (ALLOCATED(g%cvbb)) THEN
       RETURN
@@ -264,6 +268,11 @@ CONTAINS
         gd%cveb(nd, 1:ncv, 0:2) = 0.D0
       END DO
       ALLOCATE(g%cveb(ncv, 0:2))
+      ALLOCATE(gd%cvfpsi(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        gd%cvfpsi(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(g%cvfpsi(ncv))
 !
 !  face quantites
       ALLOCATE(gd%fcbb(nbdirsmax, nfc, 0:3))
@@ -331,6 +340,11 @@ CONTAINS
         gd%fceb(nd, 1:nfc, 0:2) = 0.D0
       END DO
       ALLOCATE(g%fceb(nfc, 0:2))
+      ALLOCATE(gd%fcfpsi(nbdirsmax, nfc))
+      DO nd=1,nbdirsmax
+        gd%fcfpsi(nd, 1:nfc) = 0.D0
+      END DO
+      ALLOCATE(g%fcfpsi(nfc))
 !
 !  vertex quantites
       ALLOCATE(gd%vxbb(nbdirsmax, nvx, 0:3))
@@ -456,6 +470,7 @@ CONTAINS
       ALLOCATE(g%cvonedbsq(ncv))
       ALLOCATE(g%cvbzb(ncv))
       ALLOCATE(g%cveb(ncv, 0:2))
+      ALLOCATE(g%cvfpsi(ncv))
 !
 !  face quantites
       ALLOCATE(g%fcbb(nfc, 0:3))
@@ -471,6 +486,7 @@ CONTAINS
       ALLOCATE(g%fcpbshz(nfc))
       ALLOCATE(g%fcbzb(nfc))
       ALLOCATE(g%fceb(nfc, 0:2))
+      ALLOCATE(g%fcfpsi(nfc))
 !
 !  vertex quantites
       ALLOCATE(g%vxbb(nvx, 0:3))
@@ -521,6 +537,7 @@ CONTAINS
     g%cvonedbsq = 0._R8
     g%cvbzb = 0._R8
     g%cveb = 0._R8
+    g%cvfpsi = 0._R8
 !
 !  face quantites
     g%fcbb = 0._R8
@@ -536,6 +553,7 @@ CONTAINS
     g%fcpbshz = 0._R8
     g%fcbzb = 0._R8
     g%fceb = 0._R8
+    g%fcfpsi = 0._R8
 !
 !  vertex quantites
     g%vxbb = 0._R8
@@ -570,13 +588,14 @@ CONTAINS
 !   Plus diff mem management of: g.cvbb:out g.cvx:out g.cvy:out
 !                g.cvsz:out g.cvhz:out g.cvhx:out g.cvqgam:out
 !                g.cvvol:out g.cvonedbsq:out g.cvbzb:out g.cveb:out
-!                g.fcbb:out g.fcs:out g.fchc:out g.fcht:out g.fchz:out
-!                g.fcvol:out g.fcqgam:out g.fcqalf:out g.fcqbet:out
-!                g.fcpbs:out g.fcpbshz:out g.fcbzb:out g.fceb:out
-!                g.vxbb:out g.vxx:out g.vxy:out g.vxhz:out g.vxvol:out
-!                g.vxffbz:out g.vxfpsi:out g.vxonedbsq:out g.vxbzb:out
-!                g.vxeb:out g.cvconn:out g.vxconn:out g.ftconn:out
-!                g.fsconn:out g.fteps:out g.ftbbav2:out g.fspsi:out
+!                g.cvfpsi:out g.fcbb:out g.fcs:out g.fchc:out g.fcht:out
+!                g.fchz:out g.fcvol:out g.fcqgam:out g.fcqalf:out
+!                g.fcqbet:out g.fcpbs:out g.fcpbshz:out g.fcbzb:out
+!                g.fceb:out g.fcfpsi:out g.vxbb:out g.vxx:out g.vxy:out
+!                g.vxhz:out g.vxvol:out g.vxffbz:out g.vxfpsi:out
+!                g.vxonedbsq:out g.vxbzb:out g.vxeb:out g.cvconn:out
+!                g.vxconn:out g.ftconn:out g.fsconn:out g.fteps:out
+!                g.ftbbav2:out g.fspsi:out
 !
 !**********************************************************************
 !
@@ -587,9 +606,7 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(INOUT) :: g
     TYPE(GEOMETRY_DIFFV), INTENT(INOUT) :: gd
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(g%cvbb)) THEN
       RETURN
@@ -640,6 +657,10 @@ CONTAINS
         DEALLOCATE(gd%cveb)
       END IF
       DEALLOCATE(g%cveb)
+      IF (ALLOCATED(gd%cvfpsi)) THEN
+        DEALLOCATE(gd%cvfpsi)
+      END IF
+      DEALLOCATE(g%cvfpsi)
 !
 !  face quantites
       IF (ALLOCATED(gd%fcbb)) THEN
@@ -694,6 +715,10 @@ CONTAINS
         DEALLOCATE(gd%fceb)
       END IF
       DEALLOCATE(g%fceb)
+      IF (ALLOCATED(gd%fcfpsi)) THEN
+        DEALLOCATE(gd%fcfpsi)
+      END IF
+      DEALLOCATE(g%fcfpsi)
 !
 !  vertex quantites
       IF (ALLOCATED(gd%vxbb)) THEN
@@ -798,6 +823,7 @@ CONTAINS
       DEALLOCATE(g%cvonedbsq)
       DEALLOCATE(g%cvbzb)
       DEALLOCATE(g%cveb)
+      DEALLOCATE(g%cvfpsi)
 !
 !  face quantites
       DEALLOCATE(g%fcbb)
@@ -813,6 +839,7 @@ CONTAINS
       DEALLOCATE(g%fcpbshz)
       DEALLOCATE(g%fcbzb)
       DEALLOCATE(g%fceb)
+      DEALLOCATE(g%fcfpsi)
 !
 !  vertex quantites
       DEALLOCATE(g%vxbb)
@@ -845,16 +872,17 @@ CONTAINS
 !   Plus diff mem management of: gm.cvbb:in-out gm.cvx:in-out gm.cvy:in-out
 !                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvqgam:in-out
 !                gm.cvvol:in-out gm.cvonedbsq:in-out gm.cvbzb:in-out
-!                gm.cveb:in-out gm.fcbb:in-out gm.fcs:in-out gm.fchc:in-out
-!                gm.fcht:in-out gm.fchz:in-out gm.fcvol:in-out
-!                gm.fcqgam:in-out gm.fcqalf:in-out gm.fcqbet:in-out
-!                gm.fcpbs:in-out gm.fcpbshz:in-out gm.fcbzb:in-out
-!                gm.fceb:in-out gm.vxbb:in-out gm.vxx:in-out gm.vxy:in-out
-!                gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
-!                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
-!                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
-!                gm.ftbbav2:in-out gm.fspsi:in-out
+!                gm.cveb:in-out gm.cvfpsi:in-out gm.fcbb:in-out
+!                gm.fcs:in-out gm.fchc:in-out gm.fcht:in-out gm.fchz:in-out
+!                gm.fcvol:in-out gm.fcqgam:in-out gm.fcqalf:in-out
+!                gm.fcqbet:in-out gm.fcpbs:in-out gm.fcpbshz:in-out
+!                gm.fcbzb:in-out gm.fceb:in-out gm.fcfpsi:in-out
+!                gm.vxbb:in-out gm.vxx:in-out gm.vxy:in-out gm.vxhz:in-out
+!                gm.vxvol:in-out gm.vxffbz:in-out gm.vxfpsi:in-out
+!                gm.vxonedbsq:in-out gm.vxbzb:in-out gm.vxeb:in-out
+!                gm.cvconn:in-out gm.vxconn:in-out gm.ftconn:in-out
+!                gm.fsconn:in-out gm.fteps:in-out gm.ftbbav2:in-out
+!                gm.fspsi:in-out
 !
 !**********************************************************************
 !
@@ -1084,7 +1112,6 @@ CONTAINS
     USE B2MOD_B2CMFS, ONLY : isymm
     USE B2MOD_SWITCHES_DIFFV
     USE B2US_MAP_DIFFV
-!  Hint: mpg%nFs should be the size of dimension 1 of array fspsi
 !  Hint: ISIZE1OFresult1 should be the size of dimension 1 of array result1
 !  Hint: mpg%nFc should be the size of dimension 1 of array fceb
   USE B2MOD_DIFFSIZES
@@ -1093,11 +1120,10 @@ CONTAINS
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: gm
     INTEGER :: i, j, k, l, ncv, nfc, nvx, nfx, icv, ifc, ivx, incv, ixpt&
-&   , ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx)
+&   , ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx), vv(2)
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
-    REAL(kind=r8) :: hzconst, dux, duy, du, sbf, psi1, psi2, cvpsi(mpg%&
-&   ncv), count_up, count_down, count_eq, dpsi(mpg%ncv), dpsi_max_down, &
-&   dpsi_max_up
+    REAL(kind=r8) :: hzconst, dux, duy, du, sbf, psi1, psi2, count_up, &
+&   count_down, count_eq, dpsi(mpg%ncv), dpsi_max_down, dpsi_max_up
     LOGICAL :: active, match_found
     INTRINSIC MAXVAL, MAXLOC, MINLOC, ABS, SQRT
     EXTERNAL B2XBZB_NODIFF, INTFACE, INTVERTEX_NODIFF, XERRAB, XERTST
@@ -1159,6 +1185,31 @@ CONTAINS
       CALL XERRAB('wrong value of b2mndr_fcVol_style')
     END IF
 !
+!   ..precompute psi in each cell according to vxVol_style=2
+    DO icv=1,ncv
+      ALLOCATE(verts(1:mpg%cvvxp(icv, 2)))
+      verts = mpg%cvvx(mpg%cvvxp(icv, 1):mpg%cvvxp(icv, 1)+mpg%cvvxp(icv&
+&       , 2)-1)
+      result1 = MAXVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
+      result2 = MINVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
+      gm%cvfpsi(icv) = 0.5_R8*(result1+result2)
+      result1 = MAXVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
+      result2 = MINVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
+      x1 = result1 - result2
+      IF (x1 .GE. 0.) THEN
+        dpsi(icv) = x1
+      ELSE
+        dpsi(icv) = -x1
+      END IF
+      DEALLOCATE(verts)
+    END DO
+!
+!   ..precompute psi in each face center
+    DO ifc=1,nfc
+      gm%fcfpsi(ifc) = 0.5_R8*(gm%vxfpsi(mpg%fcvx(ifc, 1))+gm%vxfpsi(mpg&
+&       %fcvx(ifc, 2)))
+    END DO
+!
 !   ..set weights for interpolation to vertices
     IF (switch%vxvol_style .EQ. 0) THEN
 ! weights for inverse volume interpolation
@@ -1193,25 +1244,6 @@ CONTAINS
 ! Idea: assign equal total weight to all cells on either side of the flux surface (inverse volume weighting!)
 !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
 !                  average between flux tube values)
-! calculate cvPsi
-! eventually: consider including cvFpsi as variable into the geo-structure 
-      DO icv=1,ncv
-        ALLOCATE(verts(1:mpg%cvvxp(icv, 2)))
-        verts = mpg%cvvx(mpg%cvvxp(icv, 1):mpg%cvvxp(icv, 1)+mpg%cvvxp(&
-&         icv, 2)-1)
-        result1 = MAXVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
-        result2 = MINVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
-        cvpsi(icv) = 0.5_R8*(result1+result2)
-        result1 = MAXVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
-        result2 = MINVAL(gm%vxfpsi(verts(1:mpg%cvvxp(icv, 2))))
-        x1 = result1 - result2
-        IF (x1 .GE. 0.) THEN
-          dpsi(icv) = x1
-        ELSE
-          dpsi(icv) = -x1
-        END IF
-        DEALLOCATE(verts)
-      END DO
 ! Count cells per vertex with higher, lower Psi
 ! Exceptional case: equal Psi (pentagon splitting);
 ! will also catch case where Psi = 0 everywhere
@@ -1221,9 +1253,9 @@ CONTAINS
         count_eq = 0.0_R8
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
-          IF (cvpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
+          IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
             count_up = count_up + 1.0e0_R8
-          ELSE IF (cvpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
+          ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
             count_down = count_down + 1.0e0_R8
           ELSE
             count_eq = count_eq + 1.0e0_R8
@@ -1232,9 +1264,9 @@ CONTAINS
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (icv .LE. mpg%nci) THEN
-            IF (cvpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
+            IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
               gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = 2.0_R8*count_up
-            ELSE IF (cvpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
+            ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
               gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = 2.0_R8*count_down
             ELSE
               gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_eq
@@ -1337,12 +1369,12 @@ CONTAINS
     ELSE IF (switch%vxvol_style .EQ. 7) THEN
 !
 !
-!calculate cvPsi
+!recalculate cvFpsi
       DO icv=1,ncv
         ALLOCATE(verts(1:mpg%cvvxp(icv, 2)))
         verts = mpg%cvvx(mpg%cvvxp(icv, 1):mpg%cvvxp(icv, 1)+mpg%cvvxp(&
 &         icv, 2))
-        cvpsi(icv) = SUM(gm%vxfpsi(verts))/mpg%cvvxp(icv, 2)
+        gm%cvfpsi(icv) = SUM(gm%vxfpsi(verts))/mpg%cvvxp(icv, 2)
         result10 = MINLOC(gm%vxfpsi(verts), 1)
         i1 = result10 - 1
         result11 = MAXLOC(gm%vxfpsi(verts), 1)
@@ -1360,19 +1392,19 @@ CONTAINS
         count_up = 0.0_R8
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
-          IF (cvpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
+          IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
             count_up = count_up + 1.0e0_R8
-          ELSE IF (cvpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
+          ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
             count_down = count_down + 1.0e0_R8
           END IF
         END DO
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (icv .LE. mpg%nci) THEN
-            IF (cvpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
+            IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
               gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_up/mpg%vxcvp(&
 &               ivx, 2)
-            ELSE IF (cvpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
+            ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
               gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_down/mpg%vxcvp(&
 &               ivx, 2)
             END IF
@@ -1427,12 +1459,12 @@ CONTAINS
       END DO
     ELSE IF (switch%vxvol_style .EQ. 9) THEN
 !
-!calculate cvPsi
+!recalculate cvFpsi
       DO icv=1,ncv
         ALLOCATE(verts(1:mpg%cvvxp(icv, 2)))
         verts = mpg%cvvx(mpg%cvvxp(icv, 1):mpg%cvvxp(icv, 1)+mpg%cvvxp(&
 &         icv, 2))
-        cvpsi(icv) = SUM(gm%vxfpsi(verts))/mpg%cvvxp(icv, 2)
+        gm%cvfpsi(icv) = SUM(gm%vxfpsi(verts))/mpg%cvvxp(icv, 2)
         result12 = MINLOC(gm%vxfpsi(verts), 1)
         i1 = result12 - 1
         result13 = MAXLOC(gm%vxfpsi(verts), 1)
@@ -1452,10 +1484,10 @@ CONTAINS
         dpsi_max_up = 0.0_R8
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
-          IF (cvpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
+          IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
             count_up = count_up + 1.0e0_R8
             IF (dpsi(icv) .GT. dpsi_max_up) dpsi_max_up = dpsi(icv)
-          ELSE IF (cvpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
+          ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
             count_down = count_down + 1.0e0_R8
             IF (dpsi(icv) .GT. dpsi_max_down) dpsi_max_down = dpsi(icv)
           END IF
@@ -1463,7 +1495,7 @@ CONTAINS
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (icv .LE. mpg%nci) THEN
-            IF (cvpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
+            IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
               IF (mpg%cvvxp(icv, 2) .EQ. 3) THEN
                 result14 = SQRT(2.0_R8)
                 arg10 = dpsi_max_up/dpsi(icv)
@@ -1474,7 +1506,7 @@ CONTAINS
                 gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_up/mpg%vxcvp(&
 &                 ivx, 2)
               END IF
-            ELSE IF (cvpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
+            ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
               IF (mpg%cvvxp(icv, 2) .EQ. 3) THEN
                 result14 = SQRT(2.0_R8)
                 arg10 = dpsi_max_up/dpsi(icv)

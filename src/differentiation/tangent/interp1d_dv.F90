@@ -2,7 +2,7 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of interp1d in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: fb
+!   variations   of useful results: fa fb
 !   with respect to varying inputs: fa fb shift
 !
 !
@@ -34,8 +34,8 @@ SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, shift, shiftd&
   REAL(kind=r8) :: fb(nn1)
   REAL(kind=r8) :: fbd(nbdirsmax, nn1)
 !..   local variables
-  INTEGER :: i
-  INTEGER :: ib, ih, it
+  INTEGER :: i, ib, ih, it
+  LOGICAL :: flip1, flip2
 !..   procedures
   EXTERNAL XERTST
   INTEGER :: nd
@@ -50,6 +50,21 @@ SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, shift, shiftd&
   CALL SUBINI('interp1d')
   CALL XERTST(1 .LE. nn, 'faulty input nn')
   CALL XERTST(1 .LE. nn1, 'faulty input nn1')
+! csc case in which xx arrays are monotonic but decreasing
+  flip1 = .false.
+  IF (xx(1) .GT. xx(nn)) THEN
+    flip1 = .true.
+    xx(1:nn) = xx(nn:1:-1)
+    DO nd=1,nbdirs
+      fad(nd, 1:nn) = fad(nd, nn:1:-1)
+    END DO
+    fa(1:nn) = fa(nn:1:-1)
+  END IF
+  flip2 = .false.
+  IF (xx1(1) .GT. xx1(nn1)) THEN
+    flip2 = .true.
+    xx1(1:nn1) = xx1(nn1:1:-1)
+  END IF
   DO i=1,nn1
     CALL XERTST(xx1(i) - shift .GE. xx(1) .AND. xx1(i) - shift .LE. xx(&
 &         nn), 'interp1d not meant for X extrapolation!')
@@ -77,6 +92,22 @@ SUBROUTINE INTERP1D_DV(nn, nn1, xx, xx1, fa, fad, fb, fbd, shift, shiftd&
     END DO
     fb(i) = temp0*temp + fa(ib)
   END DO
+! re-flip arrays
+!
+  IF (flip1) THEN
+    xx(1:nn) = xx(nn:1:-1)
+    DO nd=1,nbdirs
+      fad(nd, 1:nn) = fad(nd, nn:1:-1)
+    END DO
+    fa(1:nn) = fa(nn:1:-1)
+  END IF
+  IF (flip2) THEN
+    xx1(1:nn1) = xx1(nn1:1:-1)
+    DO nd=1,nbdirs
+      fbd(nd, 1:nn1) = fbd(nd, nn1:1:-1)
+    END DO
+    fb(1:nn1) = fb(nn1:1:-1)
+  END IF
 !
   CALL SUBEND()
   RETURN
