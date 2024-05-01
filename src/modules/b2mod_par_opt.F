@@ -3,7 +3,7 @@
       use b2mod_user_namelist
      & , only : omp, nomp
       use b2mod_ad
-     & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
+     & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf, b2psi
       use b2us_map
       use b2mod_dimensions
       use b2mod_transport_namelist
@@ -540,9 +540,12 @@
         allocate(b2volOnCf(ncf,numdata)) !stores interpolated B2.5 volumes onto CF radial points
         allocate(b2dataOnCf(numdata)) !variable to store SOLPS data interpolated onto CF radial points
         numdata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
+        numdata = max(numdata,nomp) ! make sure this is the case when mapping to omp
         allocate(b2rr(ncf,numdata)) !store here radial distance coordinate of SOLPS data
         allocate(b2data(numdata)) !temporary variable to store SOLPS data for interpolation
+        allocate(b2psi(ncf,numdata)) !store here psi of SOLPS data for interpolation
         b2rr = 0.0_R8
+        b2psi = 0.0_R8
         b2volOnCf = 0.0_R8
         b2data = 0.0
         b2dataOnCf = 0.0
@@ -893,6 +896,7 @@
       if (allocated(b2volOnCf)) deallocate(b2volOnCf)
       if (allocated(b2data)) deallocate(b2data)
       if (allocated(b2dataOnCf)) deallocate(b2dataOnCf)
+      if (allocated(b2psi)) deallocate(b2psi)
       end subroutine dealloc_b2mod_par_opt
 
       subroutine test_priors(nn, pr_type, pr_par, pr_range, lowerB)
