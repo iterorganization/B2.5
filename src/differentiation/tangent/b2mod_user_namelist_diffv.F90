@@ -43,7 +43,7 @@ MODULE B2MOD_USER_NAMELIST_DIFFV
   INTEGER, PARAMETER :: nromp=def_nyd*4
   INTEGER, SAVE :: omp(nromp), icsepomp, ifsepomp, nomp, imp(nromp), &
 & icsepimp, ifsepimp, nimp
-  REAL(kind=r8) :: rzomp(2, 2), rzimp(2, 2)
+  REAL(kind=r8) :: rzomp(2, 2), rzimp(2, 2), psi_omp(nromp)
   REAL(kind=r8) :: fusion_power, spmp_he_to_d, spmp_nom
   INTEGER :: lpfrb_i, lpfrb_o, lpfrt_i, lpfrt_o, j_he_at, j_h_at(3), &
 & j_ne_at, lpfrs_pmp, npfrgrp, ipfrgrp(npfrgrpd), jpfrgrp(npfrgrpd), &
@@ -233,6 +233,11 @@ CONTAINS
         END IF
       END DO
       ic = ic + 1
+    END DO
+! csc get psi for each OMP cell
+    psi_omp = 0.0_R8
+    DO ic=1,nomp
+      psi_omp(ic) = geo%cvfpsi(omp(ic))
     END DO
 !
 !xpb convert old-style j_h_at and l_h_mol to deal with isotope mixes

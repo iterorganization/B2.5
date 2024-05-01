@@ -16,7 +16,7 @@ MODULE B2MOD_PAR_OPT_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp
   USE B2MOD_AD_DIFFV, ONLY : nncf, b2rr, b2voloncf, b2voloncfd, b2data, &
-& b2datad, b2dataoncf, b2dataoncfd
+& b2datad, b2dataoncf, b2dataoncfd, b2psi
   USE B2US_MAP_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : flag_dna, flag_dpa, &
@@ -637,6 +637,11 @@ CONTAINS
 !variable to store SOLPS data interpolated onto CF radial points
 !max number of CVs in a cost function
       numdata = MAXVAL(m%cfregp(1:ncf, 2))
+      IF (numdata .LT. nomp) THEN
+        numdata = nomp
+      ELSE
+        numdata = numdata
+      END IF
       ALLOCATE(b2rr(ncf, numdata))
 !store here radial distance coordinate of SOLPS data
       ALLOCATE(b2datad(nbdirsmax, numdata))
@@ -645,7 +650,10 @@ CONTAINS
       END DO
       ALLOCATE(b2data(numdata))
 !temporary variable to store SOLPS data for interpolation
+      ALLOCATE(b2psi(ncf, numdata))
+!store here psi of SOLPS data for interpolation
       b2rr = 0.0_R8
+      b2psi = 0.0_R8
       b2voloncf = 0.0_R8
       b2data = 0.0
       b2dataoncf = 0.0
@@ -1494,11 +1502,19 @@ CONTAINS
 !variable to store SOLPS data interpolated onto CF radial points
 !max number of CVs in a cost function
       numdata = MAXVAL(m%cfregp(1:ncf, 2))
+      IF (numdata .LT. nomp) THEN
+        numdata = nomp
+      ELSE
+        numdata = numdata
+      END IF
       ALLOCATE(b2rr(ncf, numdata))
 !store here radial distance coordinate of SOLPS data
       ALLOCATE(b2data(numdata))
 !temporary variable to store SOLPS data for interpolation
+      ALLOCATE(b2psi(ncf, numdata))
+!store here psi of SOLPS data for interpolation
       b2rr = 0.0_R8
+      b2psi = 0.0_R8
       b2voloncf = 0.0_R8
       b2data = 0.0
       b2dataoncf = 0.0
@@ -1937,6 +1953,9 @@ CONTAINS
       END IF
       DEALLOCATE(b2dataoncf)
     END IF
+    IF (ALLOCATED(b2psi)) THEN
+      DEALLOCATE(b2psi)
+    END IF
   END SUBROUTINE DEALLOC_B2MOD_PAR_OPT_DV
 
 !
@@ -1955,6 +1974,9 @@ CONTAINS
     END IF
     IF (ALLOCATED(b2dataoncf)) THEN
       DEALLOCATE(b2dataoncf)
+    END IF
+    IF (ALLOCATED(b2psi)) THEN
+      DEALLOCATE(b2psi)
     END IF
   END SUBROUTINE DEALLOC_B2MOD_PAR_OPT
 
