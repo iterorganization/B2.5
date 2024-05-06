@@ -68,7 +68,7 @@
 *   ..subprogram start-up calls
       call subini ('b2srdt')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
@@ -80,10 +80,24 @@
        call b2xvsg (nCv, ti0, 1, 'ti0', '.gt.')
        call b2xvsg (nCv, tn0, 1, 'tn0', '.gt.')
        call b2xvsg (nCv, ne0, 1, 'ne0', '.gt.')
+       call b2xvsg (nCv, nn0, 1, 'nn0', '.gt.')
        call b2xvsg (2*nCv, ni0, 1, 'ni0', '.gt.')
        call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
        call b2xvsg (nCv, kt0, 1, 'kt0', '.ge.')
        call b2xvsg (nCv, zt0, 1, 'zt0', '.ge.')
+       call xertst (maxval(abs(ua0)).lt.c, 'Supra-luminal velocity !')
+*    ..test current state
+       call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
+       call b2xvsg (nCv, te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, nn, 1, 'nn', '.gt.')
+       call b2xvsg (2*nCv, ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv*ns, kinrgy, 1, 'kinrgy', '.ge.')
+       call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
+       call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
+       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocity !')
       endif
 
 * ..include the contributions from dtim

@@ -34,10 +34,10 @@
 *   ..subprogram start-up calls
       call subini ('b2tbfl')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       div = 0.0_R8
       do ib = 1, nbc
-        tbfl(ib) = 0.0e0_R8
+        tbfl(ib) = 0.0_R8
         ! compute flux through boundary; positive if out of the domain
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                       ! number of the guard cell

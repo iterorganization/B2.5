@@ -431,7 +431,7 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       issput_chemical=0
 #endif
       eirene_step_cpu=0.0_R8
-      eirene_step_dt=1.0e-3_R8
+      eirene_step_dt=0.0_R8
       eirene_mod=1
       volrecstart(:)=1.0e21_R8
       volrecinc=0.0_R8
@@ -776,7 +776,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt,
+      call xertst (0.0_R8.le.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')
@@ -1379,7 +1379,7 @@ cwvu    for (advanced) spatially hybrid, might need even more.
               call find_faces (indss, instra, nrcl,
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
             end do              ! iss
-            write(ss,"(I0)") istra
+            write(ss,'(i3)') istra
             call xertst(nrcl.gt.0, 
      &       'No faces found for neutrals stratum = '//ss)
             m%rcFcP(istra,2) = nrcl
@@ -1488,7 +1488,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt,
+      call xertst (0.0_R8.le.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')
@@ -2322,7 +2322,7 @@ cwdk also need to correct for degenerate faces?
             call find_faces (indss, instra, rcl(istra),
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
           end do  ! iss
-          write(ss,"(I0)") istra
+          write(ss,'(i3)') istra
           call xertst(rcl(istra).gt.0, 
      &      'No faces found for neutrals stratum = '//ss)
           m%rcFcP(istra,2) = rcl(istra)
@@ -2450,11 +2450,14 @@ cwdk also need to correct for degenerate faces?
       call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&NEUTRALS'
-      write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_CPU = ',eirene_step_cpu
-      write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_DT  = ',eirene_step_dt
-      write (iout,'(1x,a,i0)') 'EIRENE_MOD = ',eirene_mod
+      write (iout,'(1x,a,es9.2,a1)')
+     .       'EIRENE_STEP_CPU = ',eirene_step_cpu,','
+      write (iout,'(1x,a,es9.2,a1)')
+     .       'EIRENE_STEP_DT  = ',eirene_step_dt,','
+      write (iout,'(1x,a,i3,a1)')
+     .       'EIRENE_MOD = ',eirene_mod,','
 
-      write (iout,'(1x,a,i0)') 'NSTRAI     = ',m%nRc
+      write (iout,'(1x,a,i3,a1)') 'NSTRAI     = ',m%nRc,','
       write (iout,'(1x,a,(1x,T14,10(2x,4a1)))')
      .       'CRCSTRA = ',(ap,arcstra(istra),ap,',',istra=1,m%nRc)
 
@@ -2496,14 +2499,14 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,es10.2,a1)') 'volrecwt= ',volrecwt,','
 
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'lsns= ',(abs(lsns(is)),',',is =1,max(1,sum(ksns(1:nstrai))))
+     .   'lsns= ',(abs(lsns(is)),',',is=1,max(1,sum(ksns(1:nstrai))))
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'ksns= ',(ksns(is),',',is =1,nstrai)
+     .   'ksns= ',(ksns(is),',',is=1,nstrai)
       if (nnstsi > 0) then
         write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'lcns= ',(lcns(is),',',is =1,nnstsi)
+     .   'lcns= ',(lcns(is),',',is=1,nnstsi)
         write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'ltns= ',(ltns(is),',',is =1,nnstsi)
+     .   'ltns= ',(ltns(is),',',is=1,nnstsi)
       end if
 
       write (iout,'(1x,a,(1x,T14,10(2x,a1,a2,a1,a1)))')

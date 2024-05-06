@@ -18,14 +18,11 @@ c     the line format common
       real (kind=R8) ::
      2   xvalues(nwall),
      1   xmin,xmax,ymin,ymax,lmin,lmax
-      integer lnblnk
-      external lnblnk
 
       call xertst(nwall.ge.ndata, 'increase nwall')
 
       do is = 0, nwdim(2,iwwrk)-1
-        tmpstring=wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//
-     1   textwwk(is,iwwrk)
+        tmpstring=trim(wall_label(iwwrk))//textwwk(is,iwwrk)
         call customise_label(tmpstring,titlestring)
         if (typeofplot .ge. 2) then
           if(b2plot_debug.ge.7) write(*,*) 'plot along wall index'

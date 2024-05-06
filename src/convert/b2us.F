@@ -80,7 +80,7 @@
       integer :: boundary_namelist=0, neutrals_namelist = 0
       integer :: write_b2fgmtry_us=1, write_b2fstati_us=1
       integer :: tria_mode=0
-      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
+      real (kind=R8), save :: fac_hz = 1.0_R8                        !srv 09.01.01 09.06.08
       real (kind=R8) :: hzconst                                      !srv 30.01.10
       real (kind=R8) :: zpdum(0:nsdecl-1,4)
       character lblgm*120, lblmn*120, lblcp*120, lblps*120
@@ -159,12 +159,12 @@
 *     ..compute hz                                                         !srv 09.01.01  09.06.08 {
 !WG_TODO probably should always write correct hz here,
 !WG_TODO and overwrite with value 1.0 in b2mn if b2mndr_hz = 0.0
-c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
-!      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
+c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
+!      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
         hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
         hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
         hzconst = 1.0_R8                                                   !srv 30.01.10
-        hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
+        hz = hzconst*(1.0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
 
 *     ..conversion to new, unstructured data-types
         call calc_mapping (nx, ny, mpg)

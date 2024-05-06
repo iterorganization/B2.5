@@ -271,7 +271,7 @@
       integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save j
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
@@ -346,7 +346,7 @@
       integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save jdiff
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt

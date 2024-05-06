@@ -51,7 +51,7 @@
      &          ncall_b2stbr_phys, ncall_b2stbr,
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
-     &          ncall_b2tfrn, ncall_b2tiner
+     &          ncall_b2tfrn
 #endif
       use b2mod_subsys
       implicit none
@@ -113,7 +113,7 @@
 *   ..subprogram start-up calls
       call subini ('b2sral')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -161,7 +161,8 @@
       if (ncall_b2sral.eq.0) then                                              !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,ns,
-     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .      switch%b2mndt_style)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -180,7 +181,8 @@
         do while(catch_up)
           write(*,*) 'b2sral: catching up ...'
           call read_b2mod_numerics_namelist(nCv,ns,
-     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .      switch%b2mndt_style)
           call write_b2mod_numerics_namelist
           if(numerics_time_mod.gt.0.0_R8) then
             catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
@@ -213,7 +215,8 @@
           if(numerics_time_mod.gt.0.0_R8)
      >     b2sral_elm_count=int(tim/numerics_time_mod)
           call read_b2mod_numerics_namelist(nCv,ns,
-     .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface)
+     .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     .     switch%b2mndt_style)
           call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb

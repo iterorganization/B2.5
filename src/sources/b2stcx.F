@@ -59,8 +59,8 @@
       real (kind=R8) :: wrk0(nCv)
 #endif
 *   ..procedures
-      real (kind=R8) :: samax
-      external xertst, samax, sfill
+      real (kind=R8) :: damax
+      external xertst, damax, sfill
       external b2xvsg
 *   ..initialisation
 *-----------------------------------------------------------------------
@@ -70,7 +70,7 @@
 *   ..subprogram start-up calls
       call subini ('b2stcx')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      &  'faulty argument ismain')
@@ -86,10 +86,12 @@
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
        call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
+*    ..test velocities
+       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
 *    ..test rate coefficients
        do is = 1, ns-1
         if (.not.lnext(is-1,is)) then
-         call xertst (samax(nCv,rcx(1,is),1).eq.0.0_R8,
+         call xertst (damax(nCv,rcx(1,is),1).eq.0.0_R8,
      &     'faulty argument rcx: nonzero for unrelated species')
         endif
        enddo
@@ -98,8 +100,8 @@
 ctmp.dpc
 c       write(*,*) 'DPC: b2stcx: is0 ',is0
 c       do is = 1, ns-1
-c        write(*,*) 'is,lnext,samax(rcx) ',
-c     1   is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
+c        write(*,*) 'is,lnext,damax(rcx) ',
+c     1   is,lnext(is-1,is),damax(n2,rcx(-1,-1,is),1)
 c       enddo
 ctmp.dpc
 

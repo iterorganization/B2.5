@@ -143,7 +143,7 @@ c     output for analysis/debugging
        write(*,*) 'First call of b2stbr_phys'
       endif                                                         !srv 22.08.08 }
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..automatic spatial hybrid not allowed for multispecies
       if(switch%use_auto_spatial_hyb.ne.0.and.ns.gt.1) then
@@ -904,7 +904,7 @@ c   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 c  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 c   Nuclear Fusion 57.11 (2017): 116043.
 
-           farea = geo%fcs(iFc) !! area of the face
+           farea = geo%fcS(iFc) !! area of the face
            cosa = geo%fcQalf(iFc,0)
            sina = geo%fcQalf(iFc,1)
 
@@ -1081,7 +1081,6 @@ cnh  adding the reflected particle source (with the molecular part subtracted)
      1         fnnrefl*switch%neutral_sources_rescale*strasclfl(istra)
              snan = fnnrefl
 
-
              if (switch%AFN_out.ne.0) then
                fmomni_out(iCv)   = fmomni
                fmomrefl_out(iCv) = fmomrefl
@@ -1116,12 +1115,12 @@ c temporary switch to evaluate the effect.
 
            endif
            if (nint(zamax(is)).eq.nint(zn(is))) then   !! see eq. 62-63 of the main reference.
-               if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
-               smon = -isign*
+             if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
+             smon = -isign*
      &            cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/
-     &            nnsum*farea*abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))*
-     &            geo%cvhz(iCv)
-               srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon*
+     &            nnsum*farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
+     &            geo%cvHz(iCv)
+             srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon*
      &            switch%neutral_sources_rescale*strasclfl(istra)
              nnsum = 0.0_R8
              nnwwnsum = 0.0_R8

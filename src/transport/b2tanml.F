@@ -48,12 +48,13 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tanml')
-*   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, ns
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+      call xertst (1.le.ns, 'faulty argument ns')
 
       if(switch%no_current.ne.0.or.
-     &   switch%fch_anomalous.eq.0.0e0_R8) then                         !srv 27.02.13
-        fchanml = 0.0e0_R8
+     &   switch%fch_anomalous.eq.0.0_R8) then                           !srv 27.02.13
+        fchanml = 0.0_R8
       else                                                              !srv 27.02.13
 
 *   ..compute differences of po
