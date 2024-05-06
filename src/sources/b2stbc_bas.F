@@ -3,7 +3,7 @@
       subroutine b2stbc_bas (nx, ny, ns, ismain,                        !xpb
      1  facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, sne0,
+     &  sna0, smo0, she0, shi0, sch0,
      &  wrong_flow, main_call, diagno,                                  !xpb
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &  b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
@@ -47,7 +47,7 @@
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
+     &  sch0(-1:nx,-1:ny,0:3)
       logical wrong_flow                                                 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------

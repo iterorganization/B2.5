@@ -278,7 +278,7 @@ c 2002-09-11: logic revised
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
-      integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
+      integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
@@ -355,7 +355,7 @@ c 2002-09-11: logic revised
       integer NPRCSF, IPRCSF
       integer NTARG1, ISTEP
       integer MAXPOL, MAXTOR, MAXADD
-      integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
+      integer NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
@@ -564,7 +564,7 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, len_of_digits, trace_convert
+      integer len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally, b2idez, convert_eirene
       logical isaletter, silent_open
@@ -580,7 +580,7 @@ c 2002-09-11: logic revised
       logical open_file, streql, isadigit, is_valid
       logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin, cfwuch, cfwure,
-     &  ipgeti, lnblnk, len_of_digits, only_comments, is_valid,
+     &  ipgeti, len_of_digits, only_comments, is_valid,
      &  open_file, get_jsep, conformal_convert, end_comment, isadigit,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
@@ -1038,7 +1038,6 @@ c 2002-09-11: logic revised
       call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
-      nxm=max(nx,nx1)
       nym=max(ny,ny1)
       call alloc_input_profile(nCv,nsm)
       allocate(am1(0:ns1-1))
@@ -2451,8 +2450,7 @@ c 2002-09-11: logic revised
        if (.not.streql(boundary_filename,'b2.boundary.parameters'))
      >  then
          first_pass = .false.
-         new_filename =
-     .     boundary_filename(1:lnblnk(boundary_filename))//'.2'
+         new_filename = trim(boundary_filename)//'.2'
          filename = boundary_filename
          call find_file(filename,todo)
          call find_file(new_filename,found)
@@ -2617,8 +2615,7 @@ c 2002-09-11: logic revised
         if (.not.streql(transport_filename,'b2.transport.parameters'))
      >   then
           first_pass = .false.
-          new_filename =
-     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          new_filename = trim(transport_filename)//'.2'
           filename=transport_filename
           call find_file(filename,todo)
           call find_file(new_filename,found)
@@ -2879,8 +2876,7 @@ cxpb We must ensure we have not already listed this additional species
         if (.not.streql(transport_filename,'b2.transport.inputfile'))
      >   then
           first_pass = .false.
-          new_filename =
-     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          new_filename = trim(transport_filename)//'.2'
           filename=transport_filename
           call find_file(filename,todo)
           call find_file(new_filename,found)
@@ -3489,8 +3485,7 @@ cxpb This will need to be checked !!!
        if (.not.streql(sources_filename,'b2.sources.profile'))
      >  then
          first_pass = .false.
-         new_filename =
-     .    sources_filename(1:lnblnk(sources_filename))//'.2'
+         new_filename = trim(sources_filename)//'.2'
          filename = sources_filename
          call find_file(filename,todo)
          call find_file(new_filename,found)
@@ -3516,7 +3511,7 @@ cxpb This will need to be checked !!!
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
-     >    nnreg,mpg%cvOnClosedSurface)
+     >    nnreg,mpg%cvOnClosedSurface,style_b2mndt)
         if (same_bundling) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
@@ -3657,8 +3652,7 @@ cxpb This will need to be checked !!!
      >   then
           first_pass = .false.
           filename=numerics_filename
-          new_filename =
-     .     numerics_filename(1:lnblnk(numerics_filename))//'.2'
+          new_filename = trim(numerics_filename)//'.2'
           call find_file(filename,todo)
           call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
@@ -4825,7 +4819,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IANF=VERIFY(REAC2,' ')
             IANF=MAX(1,IANF) !VK
             I=INDEX(REAC2(IANF:),' ')-1
-            IF (I.LT.0) I=lnblnk(REAC2(IANF:))
+            IF (I.LT.0) I=len_trim(REAC2(IANF:))
             REACSTR(2:I+1)=REAC2(IANF:I+IANF-1)
 !  READ CRC
             IANF=IEND+VERIFY(REACZEILE(IEND+1:),' ')
@@ -6939,7 +6933,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IANF=VERIFY(REAC2,' ')
             IANF=MAX(1,IANF) !VK
             K=INDEX(REAC2(IANF:),' ')-1
-            IF (K.LT.0) K=lnblnk(REAC2(IANF:))
+            IF (K.LT.0) K=len_trim(REAC2(IANF:))
             REACSTR(2:K+1)=REAC2(IANF:K+IANF-1)
           END IF
           IF (streql(FILNAM,'CONST')) THEN
@@ -8016,7 +8010,7 @@ cxpb check for "OPTIONAL" input cards
               GOTO 615
             ENDIF
           ELSE
-            READ (ZEILE(7:lnblnk(ZEILE)),'(A74)') PATH
+            READ (ZEILE(7:len_trim(ZEILE)),'(A74)') PATH
             I=INDEX(PATH,ACHAR(13)) !VK
             IF(I.GT.0.AND.I.LE.LEN_TRIM(PATH)) PATH(I:I)=' ' !VK TO REMOVE \r
             PATH=ADJUSTL(PATH)
@@ -8774,7 +8768,7 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,NSIGI_SPC
         else
           READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,
-     .                      NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+     .                      idum(0),idum(1),NSIGI_SPC
         endif
         allocate (IGH(NSIGVI), IIH(NSIGVI))
         allocate (IGHW(NSIGSI), IIHW(NSIGSI))
@@ -9008,7 +9002,7 @@ cxpb Read first, transform and rewrite
             GOTO 1041
           ELSE
             READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
-            L = lnblnk(CHRTAL)
+            L = len_trim(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
               I = INDEX(CHRTAL,'<')
@@ -9133,7 +9127,7 @@ cxpb Read first, transform and rewrite
             GOTO 1061
           ELSE
             READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
-            L = lnblnk(CHRTAL)
+            L = len_trim(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
               I = INDEX(CHRTAL,'<')
@@ -10755,7 +10749,7 @@ cxpb as they no longer necessarily point to the same species
         write(99,'(1x,a,i2,a)') 'NSTRAI=', nstrai1,','
         if (eirene_step_cpu.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_CPU=',eirene_step_cpu,','
-        write(99,'(1x,a,1pg10.3,a)')
+        if (eirene_step_dt.gt.0.0_R8) write(99,'(1x,a,1pg10.3,a)')
      >   'EIRENE_STEP_DT= ',eirene_step_dt,','
         if (eirene_mod.gt.1)
      >   write(99,'(1x,a,i2,a)') 'EIRENE_MOD=', eirene_mod,','
@@ -11119,9 +11113,9 @@ cxpb as they no longer necessarily point to the same species
             do k = 1, 8
               if (sps_id(ib)(k:k).eq.char(0)) sps_id(ib)(k:k)=' '
             end do
-            if(lnblnk(sps_id(ib)).lt.8)
-     .       sps_id(ib)=sps_id(ib)(1:lnblnk(sps_id(ib)))//
-     .                  repeat(' ',8-lnblnk(sps_id(ib)))
+            if(len_trim(sps_id(ib)).lt.8)
+     .       sps_id(ib)=trim(sps_id(ib))//
+     .                  repeat(' ',8-len_trim(sps_id(ib)))
             line = line(1:len)//''''//sps_id(ib)//''','
             len=len+1+8+2
           end do
@@ -11215,8 +11209,7 @@ cxpb as they no longer necessarily point to the same species
      >  then
          first_pass = .false.
          filename = neutrals_filename
-         new_filename =
-     .     neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
+         new_filename = trim(neutrals_filename)//'.2'
          call find_file(filename,todo)
          call read_neutrals_namelist(nx, ny, ns, .false.)
          call xertst (nstrai.le.nstraid,
@@ -12101,7 +12094,7 @@ cxpb as they no longer necessarily point to the same species
 
 *   ..we now do b2ai.dat, using the data computed for b2ah.dat
 *   ..we read to check if the initial densities must be changed
-      call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2))
+      call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2), mpg)
       call xertst (idum(2).eq.ns,
      .   'incorrect species number in b2ai.dat')
       call b2rflb (ninp(6), lblps(61:120))

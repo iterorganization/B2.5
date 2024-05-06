@@ -72,7 +72,7 @@
 *     nCv, nFc - integer, input.
 *     nCv and nFc specify the number of cells and faces in the
 *     unstructured data format.
-*     It will hold that 0.le.nCv and 0.le.nFc.
+*     It will hold that 0.lt.nCv and 0.lt.nFc.
 *
 *     ns - integer, input.
 *     ns specifies the number of atomic species in the calculation.
@@ -156,7 +156,7 @@
      &             1.le.nout(9).and.1.le.nout(10),
      &    'faulty argument ninp, nout')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
@@ -291,8 +291,8 @@ c The b2mod_switches is mainly intended for switches that are used in
 c different functions/subroutines to reduce code duplication
 c and to centralize consistency checks on the switches.
 
-c read main switch afn to correctly set the corresponding default switches
-      call read_switch_afn(switch)
+c read main model switches to correctly set the corresponding defaults
+      call read_first_switches(switch)
 c load default values of switches
       call set_defaults_switches(switch,ns)
 c overwrite with values provided in b2mn.dat

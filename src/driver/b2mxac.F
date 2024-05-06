@@ -35,8 +35,8 @@
       integer is
 *   ..procedures
       real (kind=R8) ::
-     *   samax
-      external xertst, samax
+     *   damax
+      external xertst, damax
       external b2xvfx
 *   ..initialisation
 
@@ -47,23 +47,22 @@
 *   ..subprogram start-up calls
       call subini ('b2mxac')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
-
 
 * ..compute norms of the corrections
 *   ..compute acorpa, acorua
       do is = 0, ns-1
-       diag%acorpa(is) = samax(nCv,dv%corpa(1,is),1)
-       diag%acorua(is) = samax(nCv,dv%corua(1,is),1)
+       diag%acorpa(is) = damax(nCv,dv%corpa(1,is),1)
+       diag%acorua(is) = damax(nCv,dv%corua(1,is),1)
       enddo
 *   ..compute acorut, acorte, acorti, acorpo
-      diag%acorut = samax(nCv,dv%corut,1)
-      diag%acorte = samax(nCv,dv%corte,1)
-      diag%acorti = samax(nCv,dv%corti,1)
-      diag%acortn = samax(nCv,dv%cortn,1)
-      diag%acorpo = samax(nCv,dv%corpo,1)
-      diag%acorkt = samax(nCv,dv%corkt,1)
+      diag%acorut = damax(nCv,dv%corut,1)
+      diag%acorte = damax(nCv,dv%corte,1)
+      diag%acorti = damax(nCv,dv%corti,1)
+      diag%acortn = damax(nCv,dv%cortn,1)
+      diag%acorpo = damax(nCv,dv%corpo,1)
+      diag%acorkt = damax(nCv,dv%corkt,1)
 
 * ..return
       call subend ()

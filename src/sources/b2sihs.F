@@ -64,7 +64,7 @@
       integer, save :: istyle_Joule_heating = 1                         !srv 17.01.14
       integer, save :: b2sigp_style = 2                                 !srv 05.07.17
       integer, save :: use_eirene = 0
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
+      real (kind=R8), save :: fch_stochastic = 0.0_R8                   !lk 31.01.08 {
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)  !lk 31.01.08 }
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
@@ -132,6 +132,13 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sihs')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny, ns
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'faulty argument ismain')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        nsmin=0
@@ -177,11 +184,6 @@
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of hx, hy, vol
@@ -228,13 +230,13 @@
 *   ..initialise sources to zero
       call sfill (n2*4, 0.0_R8, she0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
-      call sfill (n2*4, 0.0e0_R8, shest, 1)                        !srv 17.12.13
+      call sfill (n2*4, 0.0_R8, shest, 1)                          !srv 17.12.13
 *   ..compute the Coulomb logarithm
 #ifdef WG_TODO
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
 #endif
 *   ..contribution from stochastic electron flow
-      if(fch_stochastic.ne.0.0e0_R8) then                          !lk 31.01.08 { !srv 17.12.13
+      if(fch_stochastic.ne.0.0_R8) then                            !lk 31.01.08 { !srv 17.12.13
        call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)
        do iy = 0, ny-1
         do ix = 0, nx-1
@@ -249,11 +251,11 @@
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
      &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy1(ix,iy)
      &    +hy1(topix(ix,iy),topiy(ix,iy)))
-     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
+     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0_R8
           endif
         enddo
        enddo
-       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                  !srv 17.12.13
+       call b2saxpy (n2*4, 1.0_R8, shest, 1, she0, 1)                    !srv 17.12.13
       endif                                                              !lk 31.01.08 }
 *   ..contribution from divergence(ue,ve)
 !xpb !!! The radial derivative terms uesy are non-conservative !!!
@@ -396,7 +398,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &       region(ix,iy,0).ne.0) then
-           t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*     ! 4.0e0_R8/3.0e0_R8* cvsa already has 4/3 !srv 16.10.17
+           t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*     ! 4.0_R8/3.0_R8* cvsa already has 4/3 !srv 16.10.17
      &      (cvsa(ix,iy,0,0,is)*(ua(ix,iy,is)-
      &          ua(leftix(ix,iy),leftiy(ix,iy),is))**2/
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
@@ -451,9 +453,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
              gte(ix,iy) = 0.0_R8
            else
              gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
              gte(ix,iy) = (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
            endif
          enddo
        enddo
@@ -503,25 +505,25 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &     region(ix,iy,0).ne.0) then
              t0 = phm3*vol(ix,iy)*shefr(ix,iy,0)
 !            shefr(ix,iy,0) = t0
-             shefr(ix,iy,0) = max(0.0e0_R8,t0)+rf3*abs(t0)
+             shefr(ix,iy,0) = max(0.0_R8,t0)+rf3*abs(t0)
              shefr(ix,iy,3) =
-     &        (min(0.0e0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
+     &        (min(0.0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
              b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
              b2sihs_joule(ix,iy)=t0
              t0 = - phm4*vol(ix,iy)*shifr(ix,iy,0)
 !            shifr(ix,iy,0) = t0
-!             shifr(ix,iy,0) = (2.5e0_R8+rf4)*t0
-!             shifr(ix,iy,3) = -(1.5e0_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
-             shifr(ix,iy,0) = max(0.0e0_R8,t0)+rf4*abs(t0)
+!             shifr(ix,iy,0) = (2.5_R8+rf4)*t0
+!             shifr(ix,iy,3) = -(1.5_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
+             shifr(ix,iy,0) = max(0.0_R8,t0)+rf4*abs(t0)
              shifr(ix,iy,3) =
-     &        (min(0.0e0_R8,t0)-rf4*abs(t0))/(ni(ix,iy,0)*ti(ix,iy))
+     &        (min(0.0_R8,t0)-rf4*abs(t0))/(ni(ix,iy,0)*ti(ix,iy))
              b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
              b2sihs_fraa(ix,iy)=t0
            endif
          enddo
        enddo
-       call b2saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)
-       call b2saxpy (n2*4, 1.0e0_R8, shifr, 1, shi0, 1)
+       call b2saxpy (n2*4, 1.0_R8, shefr, 1, she0, 1)
+       call b2saxpy (n2*4, 1.0_R8, shifr, 1, shi0, 1)
       else                                                               !srv 05.07.17
 
 *    ..contribution from electron-atom friction

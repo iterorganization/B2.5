@@ -12,12 +12,12 @@
      .          read_mapping, write_mapping,
      .          init_mapping, get_version,
      .          calc_add_connectivity
-      
+
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
      &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc
-        integer :: nnreg(0:1), periodic_bc, iFssep
+        integer :: nnreg(0:1), periodic_bc, iFssep, iFssep2
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers
@@ -43,7 +43,6 @@
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
         integer, allocatable :: fcAligned(:)           ! Integer to indicate whether a face is aligned with the magnetic field
         logical, allocatable :: cvOnClosedSurface(:)   ! Logical to indicate whether a cell is on a closed flux surface
-        
 
         integer, allocatable :: bcCvP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcCv list, and its number of guard cells
         integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
@@ -136,7 +135,7 @@
       allocate (m%fcReg(m%nFc))
       allocate (m%cvReg(m%nCv))
       allocate (m%ftReg(m%nFt))
-      allocate (m%fcAligned(m%nFc))      
+      allocate (m%fcAligned(m%nFc))
       allocate (m%cvOnClosedSurface(m%nCv))
 
 !      allocate (m%intfaceV(m%nFc,2))
@@ -224,7 +223,7 @@
       m%fcReg = 0
       m%cvReg = 0
       m%ftReg = 0
-      m%fcAligned = 0      
+      m%fcAligned = 0
       m%cvOnClosedSurface = .false.
 
 !      m%intfaceV = 0._R8
@@ -257,6 +256,7 @@
       m%cvLbl = 0
 
       m%iFssep = 0
+      m%iFssep2 = 0
 
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
@@ -302,7 +302,7 @@
       deallocate (m%fcReg)
       deallocate (m%cvReg)
       deallocate (m%ftReg)
-      deallocate (m%fcAligned)      
+      deallocate (m%fcAligned)
       deallocate (m%cvOnClosedSurface)
 
 !      deallocate (m%intfaceV)
@@ -473,7 +473,6 @@
 
 **********************************************************************
 
-
       subroutine read_mapping (iun, mpg)
 #ifdef WG_DEBUG
       use b2us_debug
@@ -513,8 +512,8 @@
       call cfruin (iun, mpg%nFc,     mpg%fcReg, 'fcReg')
       call cfruin (iun, mpg%nCv,     mpg%cvReg, 'cvReg')
       call cfruin (iun, mpg%nFt,     mpg%ftReg, 'ftReg')
-      call cfrure (iun, mpg%nCmxFc,  mpg%intcellP,'intcellP')
-      call cfrure (iun, mpg%nCmxFc,  mpg%intcellR,'intcellR')
+      call cfrure (iun, mpg%nCmxFc,  mpg%intcellP, 'intcellP')
+      call cfrure (iun, mpg%nCmxFc,  mpg%intcellR, 'intcellR')
 
       n2 = 0
       nx = 0
@@ -526,9 +525,9 @@
       call cfruin (iun, n2, mpg%imapVx,  'imapVx')
       call cfruin (iun, nx, mpg%icornVX, 'icornVx')
 
-      call cfruin (iun, mpg%nFc, mpg%fcLbl,'fcLbl')
-      call cfruin (iun, mpg%nCv, mpg%cvLbl,'cvLbl')
-      call cfruin (iun, mpg%nFt, mpg%ftLbl,'ftLbl')
+      call cfruin (iun, mpg%nFc, mpg%fcLbl, 'fcLbl')
+      call cfruin (iun, mpg%nCv, mpg%cvLbl, 'cvLbl')
+      call cfruin (iun, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
 #ifdef WG_DEBUG
       imapCv  = mpg%imapCv
@@ -572,8 +571,8 @@
       call cfwuin (nout, mpg%nFc,     mpg%fcReg, 'fcReg')
       call cfwuin (nout, mpg%nCv,     mpg%cvReg, 'cvReg')
       call cfwuin (nout, mpg%nFt,     mpg%ftReg, 'ftReg')
-      call cfwure (nout, mpg%nCmxFc,  mpg%intcellP,'intcellP')
-      call cfwure (nout, mpg%nCmxFc,  mpg%intcellR,'intcellR')
+      call cfwure (nout, mpg%nCmxFc,  mpg%intcellP, 'intcellP')
+      call cfwure (nout, mpg%nCmxFc,  mpg%intcellR, 'intcellR')
 
       if (mpg%isClassicalGrid.eq.1) then
         n2 = (mpg%nx+2)*(mpg%ny+2)
@@ -581,7 +580,7 @@
         call cfwuin (nout, n2, mpg%imapFcx, 'imapFcx')
         call cfwuin (nout, n2, mpg%imapFcy, 'imapFcy')
         call cfwuin (nout, n2, mpg%imapVx,  'imapVx')
-        call cfwuin (nout, mpg%nx, mpg%icornVx,  'icornVx')
+        call cfwuin (nout, mpg%nx, mpg%icornVx, 'icornVx')
       else
         call cfwuin (nout, 0, idum, 'imapCv')
         call cfwuin (nout, 0, idum, 'imapFcx')
@@ -590,9 +589,9 @@
         call cfwuin (nout, 0, idum, 'icornVx')
       endif
 
-      call cfwuin (nout, mpg%nFc,  mpg%fcLbl,'fcLbl')
-      call cfwuin (nout, mpg%nCv,  mpg%cvLbl,'cvLbl')
-      call cfwuin (nout, mpg%nFt,  mpg%ftLbl,'ftLbl')
+      call cfwuin (nout, mpg%nFc, mpg%fcLbl, 'fcLbl')
+      call cfwuin (nout, mpg%nCv, mpg%cvLbl, 'cvLbl')
+      call cfwuin (nout, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
       return
       end subroutine write_mapping
@@ -605,12 +604,12 @@
       integer :: i, j, k, l, indd
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
-      integer :: totalcount, Fscount, iactive, icount, fccount
+      integer :: totalcount, fscount, iactive, icount, fccount
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
      *                        old_face_list(:), new_face_list(:)
       logical :: duplicate, left_match_found, right_match_found
-      external ipgeti
+      external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
 cwdk  can be derived directly from data in that file
@@ -674,7 +673,7 @@ cwdk  can be derived directly from data in that file
       indFsVx = 0
       totalcount = 0
       do iFs = 1, m%nFs
-        Fscount = 0
+        fscount = 0
         do i = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
           iFc = m%fsFc(i)
           m%fcFs(iFc) = iFs
@@ -683,21 +682,21 @@ cwdk  can be derived directly from data in that file
           if (m%vxFs(iVx1).eq.0) then
             m%vxFs(iVx1) = iFs
             m%nFsVxmx = m%nFsVxmx + 1
-            Fscount = Fscount + 1
+            fscount = fscount + 1
             totalcount = totalcount + 1
             indFsVx(totalcount) = iVx1
           end if
           if (m%vxFs(iVx2).eq.0) then
             m%vxFs(iVx2) = iFs
             m%nFsVxmx = m%nFsVxmx + 1
-            Fscount = Fscount + 1
+            fscount = fscount + 1
             totalcount = totalcount + 1
             indFsVx(totalcount) = iVx2
           end if
         end do
-        if (Fscount.gt.0) then
-          m%fsVxP(iFs,1) = totalcount - Fscount + 1
-          m%fsVxP(iFs,2) = Fscount
+        if (fscount.gt.0) then
+          m%fsVxP(iFs,1) = totalcount - fscount + 1
+          m%fsVxP(iFs,2) = fscount
         end if
       end do
       m%nFsVxmx = totalcount
@@ -715,20 +714,18 @@ cwdk  can be derived directly from data in that file
           do i = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
             iFc = m%vxFc(i)
             if (m%fcFs(iFc).eq.0) cycle
-            if (fccount.eq.0) then
-              iFs = m%fcFs(iFc)
-              fccount = 1
-            else
-              if (m%fcFs(iFc).eq.iFs) fccount = fccount + 1
-            end if
+            fccount = fccount + 1
           end do
           if (fccount.eq.4) then
             m%nXpt = m%nXpt + 1
             indXpt(m%nXpt) = iVx
-            do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
-              iCv = m%vxCv(i)
-              if (m%cvReg(iCv).eq.1) iactive = m%nXpt
-            end do
+            if (iactive.eq.0) then
+              do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
+                if (iactive.ne.0) cycle
+                iCv = m%vxCv(i)
+                if (m%cvReg(iCv).eq.1) iactive = m%nXpt
+              end do
+            end if
           end if
         end if
       end do
@@ -738,7 +735,14 @@ cwdk  can be derived directly from data in that file
       if (m%nXpt.gt.0) then
         allocate(m%Xpt(m%nXpt))
         m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
-        if (iactive.ne.0) m%iFssep = m%vxFs(m%Xpt(iactive))
+        if (iactive.ne.0) then
+          do i = 1, m%vxFcP(m%Xpt(iactive),2)
+            iFs = m%fcFs(m%vxFc(m%vxFcP(m%Xpt(iactive),1)+i-1))
+            if (iFs.eq.0) cycle
+            if (m%iFssep.eq.0) m%iFssep = iFs
+            if (m%iFssep2.eq.0.and.iFs.ne.m%iFssep) m%iFssep2 = iFs
+          end do
+        end if
         indXpt = 0
         icount = 0
         allocate(m%strVxP(m%nXpt,2))
@@ -746,7 +750,7 @@ cwdk  can be derived directly from data in that file
         m%strVxP(1,1) = 1
         do i = 1, m%nXpt
           if (i.gt.1) m%strVxP(i,1) = m%strVxP(i-1,1) + m%strVxP(i-1,2)
-          iFs = m%vxFs(m%Xpt(i))
+          iFs = m%iFssep
           do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
             iFc = m%fsFc(j)
             do k = 1, 2
@@ -762,6 +766,25 @@ cwdk  can be derived directly from data in that file
               end if
             end do
           end do
+          if (m%iFssep2.gt.0) then
+            iFs = m%iFssep2
+            do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
+              iFc = m%fsFc(j)
+              do k = 1, 2
+                iVx = m%fcVx(iFc,k)
+                fccount = 0
+                do l = m%vxFcP(iVx,1),
+     &                 m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                  if (m%fcFs(m%vxFc(l)).eq.iFs) fccount = fccount + 1
+                end do
+                if (fccount.eq.1) then
+                  icount = icount + 1
+                  m%strVxP(i,2) = m%strVxP(i,2) + 1
+                  indXpt(icount) = iVx
+                end if
+              end do
+            end do
+          end if
         end do
         m%nStr = icount
         allocate(m%strVx(m%nStr))
@@ -1015,8 +1038,8 @@ cwdk  can be derived directly from data in that file
       else
         call xerrab ('No '//trim(filename))
       endif
+      return
       end subroutine get_version
-
 
 **********************************************************************
 
@@ -1033,10 +1056,10 @@ cwdk  can be derived directly from data in that file
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), fch(:),
      .                    indcvfc(:)
       intrinsic pack, count
+      external xerrab
 
       !!Read out fcVx, cvFc, cvFcP, cvVx and cvVxP
       !!Construct vxCv, vxCvP, vxFcP, fcCv !(because of ghostcell, every face has two cells)
-  
 
       !Construct vxFcP
       allocate (indFc(2*m%nFc))
@@ -1069,7 +1092,7 @@ cwdk  can be derived directly from data in that file
          m%vxCvP(ivx+1,1) = m%vxCvP(ivx,1) + m%vxCvP(ivx,2)
          if (m%vxCvP(ivx,2) > 0 ) then
             m%vxCv(m%vxCvP(ivx,1):m%vxCvP(ivx+1,1)-1) =
-     .         pack( indCv, ch == ivx ) 
+     .         pack( indCv, ch == ivx )
          endif
       enddo
 
@@ -1097,18 +1120,17 @@ cwdk  can be derived directly from data in that file
       allocate (fch(m%nCmxFc))
       fch(1:m%nCmxFc) = m%cvFc(1:m%nCmxFc)
 
-      !hier loop over de faces
+      !here loop over the faces
 
       do ifc = 1,m%nFc
            n = count(fch == ifc)
            if (n .eq. 2) then
              m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
            else
-             call xerrab 
-     .         ('calc_add_connectivity: Wrong # of cell per face')
+             call xerrab
+     .        ('calc_add_connectivity: Wrong # of cells per face')
            endif
       enddo
-
 
       deallocate (indFc)
       deallocate (indCv)
@@ -1117,7 +1139,7 @@ cwdk  can be derived directly from data in that file
       deallocate (ch)
       deallocate (fch)
 
-
+      return
       end subroutine calc_add_connectivity
 
 **********************************************************************

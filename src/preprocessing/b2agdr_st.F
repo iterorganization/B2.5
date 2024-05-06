@@ -343,11 +343,11 @@
      & cell_width1, cell_height1,
      & leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
 
-      call b2agbf (nx1, ny1, isymm, periodic_bc, nncut,
-     & crx1, cry1, fpsi1, ffbz1,
-     & vol1, bb1, wbbl1, wbbr1, wbbv1, region1,
+      call b2agbf (nx1, ny1, isymm,
+     & crx1, cry1, fpsi1, ffbz1, vol1,
+     & bb1, wbbl1, wbbr1, wbbv1,
      & leftix1, leftiy1, bottomix1, bottomiy1, rightix1, rightiy1,
-     & topix1, topiy1, cflags1)
+     & cflags1)
 
 !    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
       call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,

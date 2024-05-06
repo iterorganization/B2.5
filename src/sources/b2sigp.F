@@ -55,7 +55,7 @@
       integer iCv, iFc!, k
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
-     *   t0, wrkf(nFc), wrkv(nVx), nbf(nFc), tbf(nFc), rzbf(nFc), 
+     *   t0, wrkf(nFc), wrkv(nVx), nbf(nFc), tbf(nFc), rzbf(nFc),
      *   tef(nFc)
 *   ..procedures
       external xertst
@@ -70,7 +70,7 @@
 *   ..subprogram start-up calls
       call subini ('b2sigp')
 *   ..test nCv, nFv
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2sigp.lt.3) then
 *    ..test sign of nb, ti, tn, ne, te, rzb
@@ -236,9 +236,9 @@
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk3, wrkv, wrk0)
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nete, wrkv, wrk1)
 * ..compute pressure gradient term
-        smbgp = 0.0e0_R8
-        wrk5  = 0.0e0_R8
-        wrk6  = 0.0e0_R8
+        smbgp = 0.0_R8
+        wrk5  = 0.0_R8
+        wrk6  = 0.0_R8
 *   ..  compute smbgp
         do iCv = 1, mpg%nCi
          t0=geo%cvHz(iCv)*geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)!srv 18.10.02 10.06.05
@@ -264,10 +264,10 @@ cdjm compute b2sigp_pstat0to3 on cell face
         call xertst(switch%pot_eq.eq.1,
      &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 * ..compute pressure gradient term
-        smbgp = 0.0e0_R8
+        smbgp = 0.0_R8
         wrk3  = nb*tb
-        wrk5  = 0.0e0_R8
-        wrk6  = 0.0e0_R8
+        wrk5  = 0.0_R8
+        wrk6  = 0.0_R8
 *   ..  compute gradients in cell centers
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk3, wrkv, wrk0)
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrk1)
@@ -305,9 +305,9 @@ cxpb apply restriction to pressure gradient for minority ions
        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,wrk0,wrkf)
        call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk1)
        do iCv = 1, mpg%nCi
-        if (nb(iCv)/ne(iCv) .lt. 0.1e0_R8) then
+        if (nb(iCv)/ne(iCv) .lt. 0.1_R8) then
          smbgp(iCv,0) = smbgp(iCv,0)*
-     &    min(1.0e0_R8,wrk0(iCv)/wrk1(iCv))
+     &    min(1.0_R8,wrk0(iCv)/wrk1(iCv))
         endif
        enddo                                                          !lk 23.06.17}
       endif

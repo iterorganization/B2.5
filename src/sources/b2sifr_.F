@@ -12,7 +12,7 @@
       use b2mod_b2cmpa
       use b2mod_balance                                                 !djm Jan2017
      &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
-     &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3, 
+     &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
      &              balance_netcdf
       use b2mod_switches
       use b2us_geo
@@ -110,7 +110,7 @@ csw 24sep2013
      &               'faulty input b2tlnl_ii')
       endif
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2sifr.lt.3) then
 *    ..test sign of vol
@@ -201,7 +201,7 @@ csw 24sep2013
      &      geo%cvBb(iCv,3) !srv 12.04.10 11.01.13
            delti=sign(min(abs(delti),dtiapr),delti)
          endif
-c        if(cthi(iCv,isb).ne.2.65e0_R8)
+c        if(cthi(iCv,isb).ne.2.65_R8)
 c     1    write(*,*) iCv,isb,cthi(iCv,isb)
          smbtf(iCv,0) = smbtf(iCv,0)+t0*
      &    (switch%b2sifr_phm1*ehxp(iCv)-
@@ -209,8 +209,8 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
      &    +switch%b2sifr_phm3*cthi(iCv,isb)*delti*
      &    (ne(iCv)-st_ext%ne(iCv)))*
      &    geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*geo%cvHz(iCv)  !srv 01.07.05
-         smprb(iCv) = smprb(iCv) + 
-     &        t0*switch%b2sifr_phm1*ehxp(iCv)*geo%cvHz(iCv) 
+         smprb(iCv) = smprb(iCv) +
+     &        t0*switch%b2sifr_phm1*ehxp(iCv)*geo%cvHz(iCv)
          smptb(iCv) = smptb(iCv) - t0*geo%cvHz(iCv)*
      &        (switch%b2sifr_phm2*cthe(iCv,isb)*delte*ne(iCv)
      &        +switch%b2sifr_phm3*cthi(iCv,isb)*delti*

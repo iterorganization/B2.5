@@ -89,15 +89,21 @@ c        call ipgeti ('b2tinnt_iout', iout)
 c        call ipgeti ('b2tral_mode', mode)
 c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
       endif
-*   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-      fchin     = 0.0e0_R8                                               !srv 09.07.99
+*   ..test input
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
+      call xertst (0.le.ismain0.and.ismain0.lt.ns.and.
+     & (is_neutral(ismain0).or.ismain0.eq.ismain),
+     & 'faulty argument ismain0')
+      fchin     = 0.0_R8                                                 !srv 09.07.99
       facdriftm = maxval(facdrift)                                       !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
 
       if(switch%pot_eq.eq.1 .and.(facdriftm.gt.0.0_R8 .or.
      . fac_ExBm.gt.0.0_R8).and.switch%no_current.eq.0
-     .            .and. switch%fch_ion_neutral .ne. 0.0e0_R8) then       !srv 26.07.06 01.07.99
+     .            .and. switch%fch_ion_neutral .ne. 0.0_R8) then         !srv 26.07.06 01.07.99
 
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then
@@ -169,7 +175,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
               vntrc_fluid(:,0) = fnac(:,0,is0)/na_fluid(:,is0)  !! poloidal
               vntrc_fluid(:,1) = fnac(:,1,is0)/na_fluid(:,is0)  !! radial
               !! correct from poloidal to diamagnetic
-              pit = abs(geo%cvBb(:,0))/geo%cvBb(:,3) !! pitch, b_theta / B
+              pit = abs(geo%cvBb(:,0))/geo%cvBb(:,3)  !! pitch, b_theta / B
               pit2 = abs(geo%cvBb(:,2))/geo%cvBb(:,3) !! b_phi / B
               vntrc_fluid(:,0) =(vntrc_fluid(:,0)-pl%ua(:,is0)*pit)/pit2
 *        .. kinetic velocities
@@ -177,7 +183,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
                 vntrc_kin(:,0) = pfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! poloidal
                 vntrc_kin(:,1) = rfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! radial
               !! correct from poloidal to diamagnetic
-                pit = abs(geo%cvBb(:,0))/geo%cvBb(:,3) !! pitch, b_theta / B
+                pit = abs(geo%cvBb(:,0))/geo%cvBb(:,3)  !! pitch, b_theta / B
                 pit2 = abs(geo%cvBb(:,2))/geo%cvBb(:,3) !! b_phi / B
                 vntrc_par = tfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! approximate parallel velocity as toroidal velocity/b_phi
      &                       /pit2

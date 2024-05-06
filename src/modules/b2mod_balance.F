@@ -1306,7 +1306,7 @@ cdjm Jan2017 Flux arrays:
      &          (nCv,nsd,natmd,nmold,niond,nstrad)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_wneutrals ! IGNORE
+      use eirmod_wneutrals
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #else
@@ -2147,11 +2147,7 @@ cdjm Update ion heat sources
       use b2us_plasma
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_wneutrals ! IGNORE
-     & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
-     &          pfluxa,pfluxm,pefluxa,pefluxm
-#else
-      use eirdiag          ! IGNORE
+      use eirmod_wneutrals 
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #endif
@@ -2358,7 +2354,7 @@ cdjm Update ion heat sources
       if (balance_average.ne.0) then
         if (ntim < 0) then
            avmlt = rratio(1,itim)
-           curmlt = 0._R8
+           curmlt = 0.0_R8
         else
            avmlt = 1.0_R8
            curmlt = 1.0_R8
@@ -2685,6 +2681,7 @@ cdjm Update ion heat sources
       rpt_av=avmlt*rpt_av+curmlt*state%rt%rpt
       kinrgy_av=avmlt*kinrgy_av+curmlt*state%dv%kinrgy
       fne_av=avmlt*fne_av+curmlt*state%dv%fne
+#ifndef SOLPS4_3
       if (allocated(dab2_av)) then
         dab2_av=avmlt*dab2_av+curmlt*dab2
         dmb2_av=avmlt*dmb2_av+curmlt*dmb2
@@ -2699,25 +2696,25 @@ cdjm Update ion heat sources
         pefluxa_av=avmlt*pefluxa_av+curmlt*pefluxa
         pefluxm_av=avmlt*pefluxm_av+curmlt*pefluxm
       endif
+#endif
 
       end subroutine update_average_balance
 
       subroutine write_balance(nCv,nFc,nsd,geo)
-#ifndef NO_CDF
       use b2us_geo
+#ifndef NO_CDF
       use b2mod_b2cmpa
      & , only : zamin,zamax
       use b2mod_b2cmpa
      & , only : am
       use b2mod_constants
      & , only : mp,ev
-#else
-      use b2mod_dimensions
 #endif
+      use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv,nFc,nsd
-      type(geometry), intent (in)   :: geo
+      type(geometry), intent (in) :: geo
 #ifndef NO_CDF
 #include <netcdf.inc>
 *   ..local variables
@@ -2730,7 +2727,7 @@ cdjm Update ion heat sources
       character*13, allocatable :: species_name(:)
       integer use_eirene
       integer, allocatable :: za(:)
-      real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8), save :: fac_hz = 1.0_R8
       real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size
@@ -2787,7 +2784,7 @@ cdjm Update ion heat sources
       vdims(2)=n4id
       call write_cdf_double(ncid,'cvX',geo%cvX,vdims,1)
       call write_cdf_double(ncid,'cvY',geo%cvY,vdims,1)
-*   ..cvBb,cvHz,cvVol,fcS,am:
+*   ..cvBb, cvHz, cvVol, fcS, am:
       call write_cdf_double(ncid,'cvBb',geo%cvBb,vdims,2)
       call write_cdf_double(ncid,'cvHz',geo%cvHz,vdims,1)
       call write_cdf_double(ncid,'cvVol',geo%cvVol,vdims,1)
@@ -3192,10 +3189,10 @@ cdjm Update ion heat sources
       write(*,*) 'balance.nc written'
 #else
 *   ..procedures
-      external ipgeti, xertst
+      external xertst
 
-      call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
-      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
+      call xertst (1.le.nCv, 'faulty parameter nCv')
+      call xertst (1.le.nFc, 'faulty parameter nFc')
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write(*,*) 'Compilation with NO_CDF: balance.nc file not written'
 #endif

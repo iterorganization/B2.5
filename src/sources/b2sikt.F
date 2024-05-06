@@ -85,7 +85,7 @@ c      use b2mod_keps
        endif
       endif
 *   ..test nCv, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2sikt.lt.3) then
@@ -102,16 +102,16 @@ c      use b2mod_keps
 
 * ..compute heat source terms
 *   ..initialize sources to zero
-      call sfill (nCv*4, 0.0e0_R8, she0, 1)
-      call sfill (nCv*4, 0.0e0_R8, shi0, 1)
-      call sfill (nCv*4, 0.0e0_R8, skt0, 1)
-      call sfill (nCv, 0.0e0_R8, skt_prod, 1)
-      call sfill (nCv, 0.0e0_R8, skt_diss, 1)
-      call sfill (nCv*2, 0.0e0_R8, dnac, 1)
-      call sfill (nCv*2, 0.0e0_R8, dlbc, 1)
-      call sfill (nCv*2, 0.0e0_R8, dtec, 1)
-      call sfill (nCv*2, 0.0e0_R8, dtic, 1)
-      call sfill (nCv*2, 0.0e0_R8, dktc, 1)
+      call sfill (nCv*4, 0.0_R8, she0, 1)
+      call sfill (nCv*4, 0.0_R8, shi0, 1)
+      call sfill (nCv*4, 0.0_R8, skt0, 1)
+      call sfill (nCv, 0.0_R8, skt_prod, 1)
+      call sfill (nCv, 0.0_R8, skt_diss, 1)
+      call sfill (nCv*2, 0.0_R8, dnac, 1)
+      call sfill (nCv*2, 0.0_R8, dlbc, 1)
+      call sfill (nCv*2, 0.0_R8, dtec, 1)
+      call sfill (nCv*2, 0.0_R8, dtic, 1)
+      call sfill (nCv, 0.0_R8, dktc, 1)
       if (switch%b2sikt_model.eq.1) then
 cwdk  KU Leuven k model
 cwdk  source : driven by ExB energy flux
@@ -314,6 +314,4 @@ cwdk     parallel transport due to parallel current fluctuations
 *-----------------------------------------------------------------------
 *.end b2sikt
 
-      end
-
-
+      end subroutine b2sikt

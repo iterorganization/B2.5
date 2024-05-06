@@ -615,14 +615,14 @@
 					User : The user who ran the simulation.
 				</description>
 				<switch>
-					<name>b2mndr_run_number</name>
-					<default>0</default>
-					<type>integer</type>
-				</switch>
-				<switch>
 					<name>b2mndr_shot_number</name>
 					<type>integer</type>
 					<default>0</default>
+				</switch>
+				<switch>
+					<name>b2mndr_run_number</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2mndr_database</name>
@@ -846,7 +846,7 @@
 			<switchgroup>
 				<name>b2news_facdrift*</name>
 				<description>
-					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile options have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
 					The ion-neutral friction current requires either facdrift or fac_ExB to be turned on as well.
 				</description>
 				<switch>
@@ -873,7 +873,7 @@
 			<switchgroup>
 				<name>b2news_facExB_*</name>
 				<description>
-					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Note that facExB_dec and facExB profile have not been converted to WG!
+					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run. Note that facExB_dec and facExB profile options have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facExB_dec</name>
@@ -899,7 +899,7 @@
 			<switchgroup>
 				<name>b2news_facvis_*</name>
 				<description>
-					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Note that facvis_dec and facvis profile have not been converted to WG!
+					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run. Note that facvis_dec and facvis profile options have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facvis_dec</name>
@@ -1192,7 +1192,16 @@
 				<type>real</type>
 				<description>
 					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run.
-					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
+					See also Run section on switches b2news_facExB_... for more details.
+				</description>
+			</switch>
+			<switch>
+				<name>b2news_vis</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies viscous drift flows. If b2news_vis.eq.0 and b2news_facvis_start.eq.0 then viscous drift flows are switched off. If b2news_vis is nonzero, then viscous drift flows are multiplied by that constant throughout the run.
+					See also Run section on switches b2news_facvis_... for more details.
 				</description>
 			</switch>
 			<switch>
@@ -1492,6 +1501,40 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2stbc_bcene_15_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If bcene_15_style.eq.0, the electron sheath boundary condition computes the electron current as the difference between the ion flow and the poloidal current.
+					If bcene_15_style.eq.1 (recommended, default), the electron current at the sheath is computed directly from the sheath potential drop. This method has proven numerically more stable, especially in cases with drifts.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_bceni_15_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If bceni_15_style.eq.0 (default), use the ion sheath transmission factor specified by ENIPAR(IB,1).
+					If bceni_15_style.eq.1, use the self-consistent ion sheath transmission factor implied by the truncated drifting Maxwellian ion distribution determined by the Eirene sheath model (ENIPAR(IB,1) is not used). See Eirene manual Section 1.5.1 for the detailed expression.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_bcene_16_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If bcene_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhe_mdf. Recommended when running cases with drifts.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_bceni_16_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If bceni_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhi_mdf. Recommended when running cases with drifts.
+				</description>
+			</switch>
 			<switch>
 				<name>b2stbc_secmodel</name>
 				<default>0</default>
@@ -3325,6 +3368,14 @@
 					<default>-c</default>
 					<type>real</type>
 				</switch>
+				<switch>
+					<name>eirene_M_max</name>
+					<default>1e30</default>
+					<type>real</type>
+					<description>
+						If the Mach number based on the total fluid velocity of a background species exceeds eirene_M_max, all velocity components passed to Eirene are restricted to make the Mach number equal to eirene_M_max. It is an additional restriction on top of eirene_ua_min and eirene_ua_max.
+					</description>
+				</switch>
 			</switchgroup>
 			<switch>
 				<name>eirene_print_minmax</name>
@@ -3712,11 +3763,29 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbc_stab_coeff_sheath_te</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Stabilizing term to the source associated with boundary condition BCENE=15, when bcene_15_style.eq.1 (default).
+					To help suppress electron temperature oscillations, this parameter can be set to a positive value. The range 1-100 is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_stab_coeff_sheath_ti</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Stabilizing term to the source associated with boundary condition BCENI=15.
+					To help suppress ion temperature oscillations, this parameter can be set to a positive value. The range 1-100 is recommended.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_na_min</name>
 				<default>1.0e4</default>
 				<type>real</type>
 				<description>
-					Minimal density maintained in all cells for all species.
+					Minimal density maintained in all cells for all species (in m^{-3}).
 					It must be true that na_min is smaller than na_new, as well as any of the initial densities provided in b2ai.dat.
 					This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
 					It is also used to avoid division by 0 when calculating kinetic neutral velocities from the kinetic flux densities in b2tinnt.F.
@@ -3727,7 +3796,87 @@
 				<default>1.0e14</default>
 				<type>real</type>
 				<description>
-					Initial density put in all cells for all new species if not overwritten by initial state file. This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
+					Initial density (in m^{-3}) put in all cells for all new species if not overwritten by initial state file. This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_te_min</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Sets the minimum electron temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_te_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum electron temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_ti_min</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Sets the minimum ion temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_ti_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum ion temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_tn_min</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Sets the minimum fluid neutral temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_tn_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum fluid neutral temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_kt_min</name>
+				<default>1.0e-5</default>
+				<type>real</type>
+				<description>
+					Sets the minimum turbulent ExB kinetic energy value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_kt_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum turbulent ExB kinetic energy value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_zt_min</name>
+				<default>1.0e-8</default>
+				<type>real</type>
+				<description>
+					Sets the minimum turbulent ExB enstrophy value (in s^{-2}).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_zt_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum turbulent ExB enstrophy value (in s^{-2}).
 				</description>
 			</switch>
 			<switch>
@@ -3843,8 +3992,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If  1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
-					If  2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations.
+					If 0, refers to the obsolete SOLPS5.0 physics model, no longer supported.
+					If 1, the SOLPS5.2 physics model is used, and b2news_ is called to compute the new plasma state. (default)
+					If 2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses a different order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also the Tn and k-epsilon equations, if requested).
 				</description>
 			</switch>
 			<switch>
@@ -4030,7 +4180,7 @@
 			</switch>
 			<switch>
 				<name>b2mndt_rxf</name>
-				<default>0.5</default>
+				<default>See description</default>
 				<type>real</type>
 				<description>
 					Main under-relaxation parameter.
@@ -4726,7 +4876,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $SOLPSTOP/modules(.local)/b2mod_dimensions.F file.
+					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $SOLPSTOP/include(.local)/DIMENSIONS.F file.
 					Need not include the time-dependent stratum. If a time-dependent stratum is used, is incremented internally as needed. The incremented value is referred to as NSTRAT below.
 				</description>
 			</switch>
@@ -4800,7 +4950,7 @@
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their isonuclear sequence.
 					Applies to B2.5 neutral fluid species.
-					If B2RECYC is not explicitly specified, the values from RECYC will be taken. 
+					If B2RECYC is not explicitly specified, the values from RECYC will be taken.
 				</description>
 			</switch>
 			<switch>
@@ -4867,8 +5017,8 @@
 				<name>STRASCLFL</name>
 				<default>1.0</default>
 				<type>real array of length (NSTRAT)</type>
-				<description> 
-					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.     
+				<description>
+					Scaling factor for the fluid neutral B2.5 sources stemming from the stratum. This scaling is required for the spatially hybrid approach, where the hybrid model for hydrogenic strata is typically combined with a fully kinetic model for other species. In that case, STRASCLFL has to made 1.0 for hydrogenic strata and STRASCLFL has to become small for the other strata. STRASCLFL is a stratum-dependent multiplier in addition to b2mndr_rescale_neutrals_sources. b2mndr_rescale_neutrals_sources is used for all strata and has to be made 1.0 for the hybrid model.
 				</description>
 			</switch>
 			<switch>
@@ -4900,15 +5050,15 @@
 				<name>MOL</name>
 				<default>0</default>
 				<type>integer array of length (NSTRAT)</type>
-				<description> 
-					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.    
+				<description>
+					Option to define a purely molecular stratum. Useful if you want to treat only molecules kinetically, whereas the recycled atoms are treated on the B2.5 fluid side.
 				</description>
 			</switch>
 			<switch>
 				<name>HYB_TYPE</name>
 				<default>'M'</default>
 				<type>character*1 array of length (NSTRAT)</type>
-				<description> 
+				<description>
 					When HYB_TYPE='A', possibility to have automatic switching between fluid and kinetic recycling for the stratum for the advanced hybrid model. See description of use_auto_spatial_hyb. HYB_TYPE should be 'M' for all strata for multispecies simulations (ns &gt; 1).
 				</description>
 			</switch>
@@ -4946,17 +5096,18 @@
 			</switch>
 			<switch>
 				<name>EIRENE_STEP_CPU</name>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Length of CPU time devoted to Eirene calls after the first one (in s). Defaults to the value given in input.dat.
+					Length of CPU time devoted to Eirene calls after the first one (in s). If zero, the value given in the Eirene input file will be used.
 				</description>
 			</switch>
 			<switch>
 				<name>EIRENE_STEP_DT</name>
-				<default>1.0e-3</default>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Physical time (in s) the Eirene particles are to be followed before being passed to the time-dependent stratum.
+					Physical time (in s) the Eirene particles are to be followed before being passed to the time-dependent stratum. If zero, the value given by DTIMV in block 13 of the Eirene input file will be used.
 				</description>
 			</switch>
 			<switch>
@@ -4997,7 +5148,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model. 
+					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
 					If not specified, B2SPECIES_START = SPECIES_START.
 				</description>
 			</switch>

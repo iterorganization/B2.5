@@ -46,6 +46,9 @@
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
       use b2mod_balance !djm Jan2017
+     & , only : balance_netcdf, alloc_b2mod_balance, write_balance,
+     &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
+     &          balance_average, update_average_balance
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
@@ -65,16 +68,24 @@
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
+     , , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl
       use eirmod_clogau
+     , , only : eirene_alloc_clogau
       use eirmod_ctrcei
+     , , only : eirene_alloc_ctrcei, eirene_dealloc_ctrcei
       use eirmod_comprt
      , , only : iunout
       use eirmod_braeir
+     , , only : eirene_alloc_braeir, eirene_dealloc_braeir
       use eirmod_eirbra
+     , , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
       use eirmod_infcop
+     , , only : eirene_dealloc_infcop
       use eirmod_extrab25
       use eirmod_wneutrals
+     , , only : eirene_wneutrals_init
       use b2mod_eirene
+     , , only : eirene_mc_final
 #ifdef NAGFOR
       use f90_unix_proc ! IGNORE
 #endif
@@ -92,9 +103,7 @@
 #endif
 #ifdef IMAS
       use ids_routines  ! IGNORE
-     , , only : imas_open_env, ids_deallocate, ids_get,
-     ,         ual_begin_pulse_action, ual_open_pulse,
-     ,         HDF5_BACKEND, OPEN_PULSE, FORCE_OPEN_PULSE
+     , , only : imas_open_env, ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
      , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
      ,          ids_radiation, ids_dataset_description, ids_equilibrium
@@ -143,7 +152,7 @@
       real (kind=R4) :: cpuval, cpustart, cpuinit
 #endif
       real (kind=R8) ::
-     *  na_min, na_new, dtim, etim,
+     *  dtim, etim,
      &  b2mndr_cpu,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, ne_wanted,
@@ -158,7 +167,7 @@
       character chns*3                                               !srv 25.01.16
       integer itim, ierr, edition, b2time, coronal,
      *  tally, ismain, ismain0, natmi, no_solve,
-     *  external_species, idx, status
+     *  external_species, idx
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
@@ -178,8 +187,6 @@
 #endif
 #ifdef CATALYST
       logical use_catalyst
-      integer lnblnk
-      external lnblnk
 #endif
 #ifdef JET
       real (kind=R8) ::
@@ -208,11 +215,10 @@
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       type(ids_divertors) :: divertors
 #endif
-      integer :: time_slice_index, batch_index, tmp_run
+      integer :: batch_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
       character username*24, database*24, treename*24, version*24
       character old_imas_version*132, imas_version*132
-      character systemarg*512
       logical new_eq_ggd
 #endif
       real (kind=R8) ::
@@ -237,7 +243,7 @@
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, etim, idout0, idout1,
-     1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
+     1  b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal,
      3  natmi, tally,
      4  density_rescale,
@@ -257,7 +263,7 @@
      1     etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
-      data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
+      data b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
       data savefile/'plasmastate.xxxx'/,
      1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
@@ -806,8 +812,8 @@
 *     vol - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 *     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-*     includes a factor 2*pi*crx, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cry.)
+*     includes a factor 2*pi*R, while in the case of cylindrical
+*     symmetry it includes a factor 2*pi*Z.)
 *     It will hold that 0.lt.vol(,).
 *
 *     hx, hy - (-1:nx,-1:ny) real*8 array.
@@ -1070,14 +1076,6 @@
      &   'faulty internal parameter plasinc,plasnum')
        call ipgetc ('b2mndr_idout0', idout0)
        call ipgetc ('b2mndr_idout1', idout1)
-       call ipgetr ('b2mndr_na_min', na_min)
-       call ipgetr ('b2mndr_na_new', na_new)
-       call xertst (na_min.gt.0.0_R8,
-     &  'faulty internal parameter na_min')
-       call xertst (na_new.gt.0.0_R8,
-     &  'faulty internal parameter na_new')
-       call xertst (na_new.gt.na_min,
-     &  'na_new must be larger than na_min!')
        call ipgetr ('b2mndr_cpu', b2mndr_cpu)
        call xertst (b2mndr_cpu.ge.0.0_R8,
      1  'faulty internal parameter cpu')
@@ -1098,7 +1096,7 @@
      > 'from run directory - Catalyst will not start.'
        if (use_catalyst .eqv. .true.) then
           call coprocessorinitializewithpython
-     >     (filename,lnblnk(filename))
+     >     (filename,len_trim(filename))
        endif
 #endif
 
@@ -1290,7 +1288,7 @@ c and hence the reaction rates have to be rescaled here.
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
-                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18     
+                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18
                 write(*,'(i3,1p,2e16.8)')
      *             is,zamax(is),rtlqr(0,0,is+1)
              endif
@@ -1551,21 +1549,21 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       endif
       write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
 *   ..compute length along x-direction                               !srv 13.02.17 {
-      lengthx(:,:) = 0.0e0_R8
-      lengthx(-1,:) = hx(-1,:)*0.5e0_R8
+      lengthx(:,:) = 0.0_R8
+      lengthx(-1,:) = hx(-1,:)*0.5_R8
       do iy = -1, ny
        do ix = 0, nx
         if(on_closed_surface(ix,iy)) then
          if(rightix(ix,iy).ne.nx+1) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
         else
          if(leftix(ix,iy).ne.-2) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
@@ -1573,11 +1571,11 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        enddo
       enddo                                                          !srv 13.02.17 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
-      lengthy(:,-1) = hy(:,-1)*0.5e0_R8
+      lengthy(:,-1) = hy(:,-1)*0.5_R8
       do iy = 0, ny
        do ix = -1, nx
         lengthy(ix,iy) = lengthy(ix,iy-1) +
-     *      (hy(ix,iy)+hy(ix,iy-1))*0.5e0_R8
+     *      (hy(ix,iy)+hy(ix,iy-1))*0.5_R8
        enddo
       enddo                                                          !srv 24.04.02 }
 *
@@ -1690,7 +1688,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1                                                 !srv 25.01.16 {
         do iCv=1,nCv
-          state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
+          state % pl % na(iCv,is) = min(max(state % pl % na(iCv,is),
+     &      switch % b2mndr_na_min),switch % b2mndr_na_max)
         enddo
       enddo                                                          !srv 25.01.16 }
 !      if(use_mms.ne.0) then                                         !srv 26.02.18 {
@@ -1708,7 +1707,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
-       call sfill (nCv*(ns-ns0), na_new, state % pl % na(1,ns0), 1)
+       call sfill (nCv*(ns-ns0), switch % b2mndr_na_new, 
+     .   state % pl % na(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % pl % ua(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)  !xpb
        call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%uadia(1,0,ns0), 1)   !xpb
@@ -2048,11 +2048,19 @@ c new CDF movie option (1st frame at t=0)
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
       integer i, is, icf
+#ifdef IMAS
+      integer tmp_run, time_slice_index
+#ifndef NAGFOR
+      integer status
+#endif
+#endif
       character*256 filename, fort31name
+#if ( defined(B25_EIRENE) || defined(IMAS) )
+      character*512 systemarg
+#endif
 #ifdef B25_EIRENE
-      character*256 systemarg
 #ifdef NAGFOR
-      integer ierror
+      integer ierror, status
 #endif
 #endif
       character*1 ss
@@ -2154,45 +2162,48 @@ cwdk  set some integers
 !!!
 #endif
 
-*    ..guess the next state
-        state%psnl%na = state%psnc%na
+*    ..set snapshot values. The behaviour is made to be backward compatible with ua0, uap etc in 3.0.9
+c      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
+c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
+c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
+        state%psnl%na = state%pl%na
         state%psnc%na = state%pl%na
-        state%psnl%ua = state%psnc%ua
+        state%psnl%ua = state%pl%ua
         state%psnc%ua = state%pl%ua
-        state%psnl%ne = state%psnc%ne
+        state%psnl%ne = state%dv%ne
         state%psnc%ne = state%dv%ne
-        state%psnl%ni = state%psnc%ni
+        state%psnl%ni = state%dv%ni
         state%psnc%ni = state%dv%ni
-        state%psnl%te = state%psnc%te
+        state%psnl%te = state%pl%te
         state%psnc%te = state%pl%te
-        state%psnl%ti = state%psnc%ti
+        state%psnl%ti = state%pl%ti
         state%psnc%ti = state%pl%ti
-        state%psnl%tn = state%psnc%tn
+        state%psnl%tn = state%pl%tn
         state%psnc%tn = state%pl%tn
-        state%psnl%kinrgy = state%psnc%kinrgy
+        state%psnl%kinrgy = state%dv%kinrgy
         state%psnc%kinrgy = state%dv%kinrgy
-        state%psnl%po = state%psnc%po
+        state%psnl%po = state%pl%po
         state%psnc%po = state%pl%po
-        state%psnl%kt = state%psnc%kt
+        state%psnl%kt = state%pl%kt
         state%psnc%kt = state%pl%kt
-        state%psnl%zt = state%psnc%zt
+        state%psnl%zt = state%pl%zt
         state%psnc%zt = state%pl%zt
-        state%psnl%fna = state%psnc%fna
+        state%psnl%fna = state%dv%fna
         state%psnc%fna = state%dv%fna
-        state%psnl%fhe = state%psnc%fhe
+        state%psnl%fhe = state%dv%fhe
         state%psnc%fhe = state%dv%fhe
-        state%psnl%fhi = state%psnc%fhi
+        state%psnl%fhi = state%dv%fhi
         state%psnc%fhi = state%dv%fhi
-        state%psnl%fch = state%psnc%fch
+        state%psnl%fch = state%dv%fch
         state%psnc%fch = state%dv%fch
-        state%psnl%fkt = state%psnc%fkt
+        state%psnl%fkt = state%dv%fkt
         state%psnc%fkt = state%dv%fkt
-        state%psnl%fzt = state%psnc%fzt
+        state%psnl%fzt = state%dv%fzt
         state%psnc%fzt = state%dv%fzt
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
-          state%pl%po   =0.0e0_R8
+          state%pl%po=0.0_R8
         else if (switch%pot_eq.eq.2) then
           state%pl%po=3.1_R8*state%pl%te/qe
         endif
@@ -2338,7 +2349,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     .                         state%pl, state%dv)
+     .                         state%pl, state%dv, state_ext)
           call write_f31(mpg)
           close(31)
         end if
@@ -2380,7 +2391,10 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+        call b2mwti(itim,tim,
+#ifndef NO_CDF
+     .         ntim,b2time,ntim_batch,
+#endif
      .         nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      .         state%pl,state%dv,state%co,state%rt,state%srw,
      .         state_ext,ismain,ismain0,lwti,lwav,.true.)
@@ -2625,25 +2639,20 @@ c new CDF movie option
      .    delta_ids_time.gt.0.0_R8)
         process_ids = write_ids
         if (write_ids) then
-          status = 0
 #ifdef IMAS
+          status = 0
           if (idx.eq.0.and.continued) then
-            write(*,*) "Checking if IMAS data-entry already exists : ",
-     .       trim(database), shot, run
+            write(*,'(2a,2i8)')
+     .       "Checking if IMAS data entry already exists : ",
+     .        trim(database), shot, run
             call imas_open_env(treename, shot, run, idx,
      .       username, database, version, status)
-c$$$            call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-c$$$     .           username, database, version, idx )
-c$$$            call ual_open_pulse( idx, OPEN_PULSE, '', status )
             if (status.ne.0) then
               if (database.eq.'ITER') then
                 write(*,*) "Did not find ITER database IDS file."
                 write(*,*) "Checking if old ''iter'' case exists."
                 call imas_open_env(treename, shot, run, idx,
      .           username, 'iter', version, status)
-c$$$                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-c$$$     .               username, 'iter', version, idx )
-c$$$                call ual_open_pulse( idx, OPEN_PULSE, '', status )
                 if (status.eq.0) then
                   database = 'iter'
                   write(*,*) "Old database case found."
@@ -2652,15 +2661,12 @@ c$$$                call ual_open_pulse( idx, OPEN_PULSE, '', status )
               else if (database.eq.'iter') then
                 call imas_open_env(treename, shot, run, idx,
      .           username, 'ITER', version, status)
-c$$$                call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-c$$$     .               username, 'ITER', version, idx )
-c$$$                call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
                 database = 'ITER'
               end if
             end if
             !! If this is a time continuation run, append the new data to the IDS
             if (status.eq.0 .and. idx.ne.0) then
-              write(*,*) "Reading old IMAS data-entry: ",
+              write(*,*) "Reading old IMAS data entry: ",
      .         trim(database), shot, run
               call ids_get( idx, "equilibrium", equilibrium, status)
               call ids_get( idx, "edge_profiles", old_edge_profiles,
@@ -2691,12 +2697,14 @@ c$$$                call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
                 if ( status.ne.0 ) then
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
-                else if (associated(old_description%dd_version)) then
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+                else if (associated(old_description%ids_properties%
+     &                              version_put%data_dictionary)) then
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
                   old_start_time = description%simulation%time_begin
                   old_end_time = description%simulation%time_end
 #endif
-                  old_imas_version = old_description%dd_version(1)
+                  old_imas_version = old_description%ids_properties%
+     &                               version_put%data_dictionary(1)
                   call ids_deallocate( old_description )
                 end if
                 continued = continued .and.
@@ -2709,7 +2717,7 @@ c$$$                call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
      &                database.eq.'iter') then
                     if (.not.streql(old_imas_version,imas_version)) then
                       write(*,*)
-     &                 'Old IMAS data-entry was written '//
+     &                 'Old IMAS data entry was written '//
      &                 'using Data Dictionary version '//
      &                  trim(old_imas_version)//'.'
                       write(*,*)
@@ -2719,7 +2727,6 @@ c$$$                call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
                     if (database.eq.'iter') write(*,*)
      &               'IDS file will be moved to ITER database.'
                     call close_ual(idx)
-                    idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     tmp_run = run
                     if (database.ne.'iter') tmp_run = run + 1000
@@ -2763,10 +2770,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     end if
                     if (database.eq.'iter') database = 'ITER'
                     call imas_open_env(treename, shot, run, idx,
-     .                username, database, version, status)
-c$$$                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
-c$$$     .                run, username, database, version, idx )
-c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
+     .               username, database, version, status)
                   end if
                   if (continued) then
                     if (process_ids) then
@@ -2785,7 +2789,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
      &               summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &               numerics, old_start_time, run_end_time,
+     &               numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &               old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &               divertors,
@@ -2799,7 +2806,7 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
               end if
             else
               write(*,*)
-     .         "No previous IMAS data-entry found, "//
+     .         "No previous IMAS data entry found, "//
      .         "a new one will be created"
               idx = 0
               if (database.eq.'iter') database = 'ITER'
@@ -2817,7 +2824,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
      &          summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &          numerics, run_start_time, run_end_time,
+     &          numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &          run_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
@@ -2839,7 +2849,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
      &          summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &          numerics, old_start_time, run_end_time,
+     &          numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &          old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
@@ -2944,6 +2957,8 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
 #endif
       logical ids_done
 #ifdef IMAS
+      integer tmp_run, time_slice_index, status
+      character*512 systemarg
       logical streql
       external streql
 #endif
@@ -2994,6 +3009,7 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
       filename='b2.wall_save.parameters'
       call find_file(filename,found)
       call wall_final(nx,ny,ns,found)
+
 * ..display and save the result of the calculation
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
@@ -3052,7 +3068,7 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
         write(*,*) 'Saving '//trim(fort_lc)//'31 at end of run'
         open(31,file=trim(fort_lc)//'31')
         call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
         call write_f31(mpg)
         close(31)
        end if
@@ -3093,7 +3109,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+          call b2mwti(itim,tim,
+#ifndef NO_CDF
+     *           ntim,b2time,ntim_batch,
+#endif
      *           nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      *           state%pl,state%dv,state%co,state%rt,state%srw,
      *           state_ext,ismain,ismain0,.true.,.false.,.false.)
@@ -3135,8 +3154,8 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
       write_ids = write_ids .or. ids_save.lt.0
       write_ids = write_ids .and. ntim.gt.0 .and. .not.ids_done
       if (write_ids) then
-        status = 0
 #ifdef IMAS
+        status = 0
         if (idx.ne.0) then
           write(*,*) "Appending a new time slice at t = ", tim, " s."
           num_time_slices = num_time_slices + 1
@@ -3149,7 +3168,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
      &      summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &      numerics, old_start_time, run_end_time,
+     &      numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &      old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
@@ -3157,22 +3179,17 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
      &      tim, dtim, shot, run, database, version, new_eq_ggd,
      &      time_slice_index, num_time_slices )
         else if (continued) then
-          write(*,*) "Checking if IMAS data-entry already exists : ",
+          write(*,'(2a,2i8)')
+     .     "Checking if IMAS data entry already exists : ",
      .      trim(database), shot, run
           call imas_open_env(treename, shot, run, idx,
      .      username, database, version, status)
-c$$$          call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-c$$$     .         username, database, version, idx )
-c$$$          call ual_open_pulse( idx, OPEN_PULSE, '', status )
           if (status.ne.0) then
             if (database.eq.'ITER') then
               write(*,*) "Did not find ITER database IDS file."
               write(*,*) "Checking if old ''iter'' case exists."
               call imas_open_env(treename, shot, run, idx,
      .         username, 'iter', version, status)
-c$$$              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-c$$$     .             username, 'iter', version, idx )
-c$$$              call ual_open_pulse( idx, OPEN_PULSE, '', status )
               if (status.eq.0) then
                 database = 'iter'
                 write(*,*) "Old database case found."
@@ -3181,15 +3198,12 @@ c$$$              call ual_open_pulse( idx, OPEN_PULSE, '', status )
             else if (database.eq.'iter') then
               call imas_open_env(treename, shot, run, idx,
      .         username, 'ITER', version, status)
-c$$$              call ual_begin_pulse_action( HDF5_BACKEND, shot, run,
-c$$$     .             username, 'ITER', version, idx )
-c$$$              call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
               database = 'ITER'
             end if
           end if
           !! If this is a time continuation run, append the new data to the IDS
           if (status.eq.0 .and. idx.ne.0) then
-            write(*,*) "Reading old IMAS data-entry: ",
+            write(*,*) "Reading old IMAS data entry: ",
      .       trim(database), shot, run
             call ids_get( idx, "equilibrium", equilibrium, status)
             call ids_get( idx, "edge_profiles", old_edge_profiles,
@@ -3214,12 +3228,14 @@ c$$$              call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
      .                                old_description, status)
               if ( status.ne.0 ) then
                 write(*,*) 'Error opening old dataset_description IDS !'
-              else if (associated(old_description%dd_version)) then
+              else if (associated(old_description%ids_properties%
+     &                            version_put%data_dictionary)) then
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
                 old_start_time = description%simulation%time_begin
                 old_end_time = description%simulation%time_end
 #endif
-                old_imas_version = old_description%dd_version(1)
+                old_imas_version = old_description%ids_properties%
+     &                             version_put%data_dictionary(1)
                 call ids_deallocate( old_description )
               end if
               continued = continued .and.
@@ -3233,7 +3249,7 @@ c$$$              call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
      &              database.eq.'iter') then
                   if (.not.streql(old_imas_version,imas_version)) then
                     write(*,*)
-     &               'Old IMAS data-entry was written '//
+     &               'Old IMAS data entry was written '//
      &               'using Data Dictionary version '//
      &                trim(old_imas_version)//'.'
                     write(*,*)
@@ -3243,7 +3259,6 @@ c$$$              call ual_open_pulse( idx, FORCE_OPEN_PULSE, '', status )
                   if (database.eq.'iter') write(*,*)
      &             'IDS file will be moved to ITER database.'
                   call close_ual(idx)
-                  idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   tmp_run = run
                   if (database.ne.'iter') tmp_run = run + 1000
@@ -3287,10 +3302,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   end if
                   if (database.eq.'iter') database = 'ITER'
                   call imas_open_env(treename, shot, run, idx,
-     .              username, database, version, status)
-c$$$                    call ual_begin_pulse_action( HDF5_BACKEND, shot,
-c$$$     .                run, username, database, version, idx )
-c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
+     .             username, database, version, status)
                 end if
                 if (continued) then
                   write(*,*)
@@ -3306,7 +3318,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
      &            summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &            numerics, old_start_time, run_end_time,
+     &            numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &            old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &            divertors,
@@ -3322,13 +3337,13 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
             end if
           else
             write(*,*)
-     .       "No previous IMAS data-entry found, "//
+     .       "No previous IMAS data entry found, "//
      .       "a new one will be created"
             idx = 0
             if (database.eq.'iter') database = 'ITER'
           end if
         else
-          write(*,*) "Creating a new IMAS data-entry"
+          write(*,*) "Creating a new IMAS data entry"
           idx = 0
           if (database.eq.'iter') database = 'ITER'
         end if
@@ -3342,7 +3357,10 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
      &      summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &      numerics, run_start_time, run_end_time,
+     &      numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &      run_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
@@ -3387,7 +3405,6 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
 #endif
      &      radiation )
         call close_ual(idx)
-        idx = 0
 #endif
       end if
 
@@ -3398,7 +3415,7 @@ c$$$                    call ual_open_pulse( idx, OPEN_PULSE, '', status )
 * finalise eirene_mc
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
-         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state)
+         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state,state_ext)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif

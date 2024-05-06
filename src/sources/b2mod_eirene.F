@@ -136,7 +136,7 @@
 
       subroutine eirene_mc(nCv, nFc, ns, dtim,
      1 sna0, smo0, she0, shi0, shn0,
-     & main_call, switch, geo, mpg, st)
+     & main_call, switch, geo, mpg, st, st_ext)
       use b2mod_subsys
       implicit none
       integer nCv, nFc, ns
@@ -149,6 +149,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (inout) :: mpg
       type (B2State), intent (inout) :: st
+      type(B2StateExt), intent (in) :: st_ext
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
@@ -469,7 +470,8 @@ csw 26feb2013
         st%dv%fluid_frac_hyb = 1.0_R8
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv)
+        call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv,
+     &    st_ext)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -905,7 +907,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
            call copy_background(nCv, nFc, ns, switch, mpg,
-     &                          geo, st%pl, st%dv)
+     &                          geo, st%pl, st%dv, st_ext)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -2645,7 +2647,7 @@ c   and apply linearisation
       enddo !}
       if (balance_netcdf.ne.0) then
         eirene_mc_pael_sne0to1 = 0.0_R8 !djm Jan2017
-        eirene_mc_papl_sna0to1 = 0.0_R8 
+        eirene_mc_papl_sna0to1 = 0.0_R8
         eirene_mc_pmel_sne0to1 = 0.0_R8
         eirene_mc_pmpl_sna0to1 = 0.0_R8
         eirene_mc_pipl_sna0to1 = 0.0_R8
@@ -3311,7 +3313,7 @@ csw 26feb2014 averaging
 c              t0=sei(ic,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0 = 0.0_R8       !! will go to shi0
-              t0n = 0.0_R8      !! will go to shn0 
+              t0n = 0.0_R8      !! will go to shn0
               do is=0,ns-1
                 if (is_neutral(is).and.lneustra) then
                   t0n = t0n + sei_av(ic,fluids_list(is),istrai)*
@@ -3918,19 +3920,20 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       end subroutine eirene_mc
 
 * ..finalise save
-      subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st)
+      subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st,st_ext)
       implicit none
       integer, intent(in) :: nCv, nFc, ns
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
+      type(B2StateExt), intent (in) :: st_ext
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
       end if
       call copy_background(nCv, nFc, ns, switch,
-     &                     mpg, geo, st%pl, st%dv)
+     &                     mpg, geo, st%pl, st%dv, st_ext)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011
@@ -4250,7 +4253,7 @@ c!###}
       allocate(smo_h(size(smo,1),
      .               size(smo,2), size(smo,3), nhistd))
       allocate(see_h(size(see,1), size(see,2), nhistd))
-      allocate(sei_h(size(sei,1), 
+      allocate(sei_h(size(sei,1),
      .               size(sei,2), size(sei,3), nhistd))
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sna_h_paat(size(sni,1),
@@ -4287,7 +4290,7 @@ c!###}
      .                    size(smo,2), size(smo,3), nhistd))
         allocate(smo_h_cppv(size(smo,1),
      .                    size(smo,2), size(smo,3), nhistd))
-        allocate(sne_h_pael(size(see,1), 
+        allocate(sne_h_pael(size(see,1),
      .                    size(see,2), nhistd))
         allocate(sne_h_pmel(size(see,1),
      .                    size(see,2), nhistd))
@@ -4295,13 +4298,13 @@ c!###}
         allocate(see_h_emel(size(see,1), size(see,2), nhistd))
         allocate(see_h_eiel(size(see,1), size(see,2), nhistd))
         allocate(see_h_epel(size(see,1), size(see,2), nhistd))
-        allocate(sei_h_eapl(size(sei,1), 
+        allocate(sei_h_eapl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
-        allocate(sei_h_empl(size(sei,1), 
+        allocate(sei_h_empl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
-        allocate(sei_h_eipl(size(sei,1), 
+        allocate(sei_h_eipl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
-        allocate(sei_h_eppl(size(sei,1), 
+        allocate(sei_h_eppl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
       endif
       allocate(pfluxa_h(size(pfluxa,1),size(pfluxa,2),1,nhistd))
@@ -4414,7 +4417,7 @@ c!###}
       allocate(smo_s(size(smo,1),
      .               size(smo,2), size(smo,3)))
       allocate(see_s(size(see,1), size(see,2)))
-      allocate(sei_s(size(sei,1), 
+      allocate(sei_s(size(sei,1),
      .               size(sei,2), size(sei,3)))
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sna_s_paat(size(sni,1),
@@ -4459,13 +4462,13 @@ c!###}
         allocate(see_s_emel(size(see,1), size(see,2)))
         allocate(see_s_eiel(size(see,1), size(see,2)))
         allocate(see_s_epel(size(see,1), size(see,2)))
-        allocate(sei_s_eapl(size(sei,1), 
+        allocate(sei_s_eapl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
-        allocate(sei_s_empl(size(sei,1), 
+        allocate(sei_s_empl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
-        allocate(sei_s_eipl(size(sei,1), 
+        allocate(sei_s_eipl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
-        allocate(sei_s_eppl(size(sei,1), 
+        allocate(sei_s_eppl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
       endif
       allocate(pfluxa_s(size(pfluxa,1),size(pfluxa,2),1))

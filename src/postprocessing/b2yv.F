@@ -93,7 +93,7 @@
       nCv = idum(0)
       nFc = idum(1)
       ns  = idum(2)
-      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from plasma state file')
 *   ..obtain ns from b2fparam file
       call cfruin (ninp(2), 1, idum, 'ns')
@@ -150,7 +150,7 @@
        end if
        goto 1
     2 continue
-      call read_switch_afn(switch)
+      call read_first_switches(switch)
       call set_defaults_switches(switch,ns)
       call read_switches(switch)
       call check_switches(switch,ns)

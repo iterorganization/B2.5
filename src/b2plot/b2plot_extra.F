@@ -1185,10 +1185,11 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       END FUNCTION SLREAC_EXTRAP
 
       subroutine old_chang_hinton(mpg,geo,switch,ns,ismain,
-     1 safetyfactor,ne,te,ti,na,transport)
+     1 safetyfactor,ne,te,ti,na,rt,transport)
       use b2mod_types
       use b2us_map
       use b2us_geo
+      use b2us_plasma
       use b2mod_switches
       use b2mod_constants
       use b2mod_b2cmpa
@@ -1197,13 +1198,14 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: geo
       type(switches), intent(in) :: switch
+      type(B2Rates), intent(in) :: rt
       integer ns,ismain
       real (kind=R8) :: lnlam(mpg%nCv),
      2 ne(mpg%nCv), te(mpg%nCv), ti(mpg%nCv),
      3 na(mpg%nCv,0:ns-1), safetyfactor(mpg%nFt),
      2 transport(mpg%nCv,0:ns-1)
 
-      integer iCv,is,irmin,irmax
+      integer iCv,iFc,iFt,i,is,icmin,icmax
       real (kind=R8) :: crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
      2 bave,epsilon,vthi,omegaci,
@@ -1212,54 +1214,61 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
 
       call subini('old_chang_hinton')
       call b2tlnl(mpg%nCv,switch,1,te,ti,ne,lnlam)
-      transport=0
-#ifdef WG_TODO
-      do iy=-1,jsep
-        write(*,*) 'iy: ',iy
-        ix=jxa
-        if(.not.on_closed_surface(ix,iy)) then
-          write(*,*) 'We have a problem: not in core!'
-          call xerrab ('Chang-Hinton: Not in core!')
-        endif
-        irmin=jxa
-        irmax=jxa
-        crmin=cr(ix,iy)
+      transport=0.0_R8
+      do iFt=1,mpg%nFt
+        write(*,*) 'iFt: ',iFt
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        if(.not.mpg%cvOnClosedSurface(iCv)) cycle
+        icmin=iCv
+        icmax=iCv
+        crmin=geo%cvX(iCv)
         crmax=crmin
-        czmin=cz(ix,iy)
+        czmin=geo%cvY(iCv)
         czmax=czmin
-        ix=rightix(ix,iy)
-        do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
-          if(cr(ix,iy).lt.crmin) irmin=ix
-          if(cr(ix,iy).gt.crmax) irmax=ix
-          crmin=min(crmin,cr(ix,iy))
-          crmax=max(crmax,cr(ix,iy))
-          czmin=min(czmin,cz(ix,iy))
-          czmax=max(czmax,cz(ix,iy))
-          ix=rightix(ix,iy)
+        do i=2,mpg%ftCvP(iFt,2)
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+          if(geo%cvX(iCv).lt.crmin) icmin=iCv
+          if(geo%cvY(iCv).gt.crmax) icmax=iCv
+          crmin=min(crmin,geo%cvX(iCv))
+          crmax=max(crmax,geo%cvX(iCv))
+          czmin=min(czmin,geo%cvY(iCv))
+          czmax=max(czmax,geo%cvY(iCv))
         enddo
-        if(ix.ne.jxa) then
-          if(nnreg(0).ge.2) then
-            write(*,*) 'We have a problem: core not continuous!'
-            call xerrab ('Chang-Hinton: core not continuous!')
-          else
-            write(*,*)
-     . 'Chang-Hinton calculation only available for closed field lines!'
-            call subend ()
-            return
-          endif
-        endif
         write(*,*) 'crmin,crmax,czmin,czmax',
      1   crmin,crmax,czmin,czmax
-        bave=cr(ix,iy)*2.0_R8/(crmax+crmin)*bb(ix,iy,3)
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+        bave=geo%cvX(iCv)*2.0_R8/(crmax+crmin)*geo%cvBb(iCv,3)
         write(*,*) 'ne,te,ti,b,q: ',
-     1   ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
+     1   ne(iCv),te(iCv)/qe,ti(iCv)/qe,bave,safetyfactor(iFt)
         epsilon=(crmax-crmin)/(crmax+crmin)
         write(*,*) 'epsilon: ',epsilon
-        write(*,*) 'lnlam: ',lnlam(ix,iy)
-        cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
-        cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
-        cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
-        cr1min=0.5_R8*(crx(irmin,iy,0)+crx(irmin,iy,2))
+        write(*,*) 'lnlam: ',lnlam(iCv)
+        cr1max = 0.0_R8
+        cr2max = 0.0_R8
+        do i=1,mpg%cvFcP(icmax,2)
+          iFc = mpg%cvFc(mpg%cvFcP(icmax,1)+i-1)
+          if (mpg%fcFs(iFc).ne.0) cycle
+          if (cr1max.eq.0.0_R8) then
+            cr1max = 0.5_R8*
+     .       (geo%cvX(mpg%fcVx(iFc,1))+geo%cvX(mpg%fcVx(iFc,2)))
+          else if (cr2max.eq.0.0_R8) then
+            cr2max = 0.5_R8*
+     .       (geo%cvX(mpg%fcVx(iFc,1))+geo%cvX(mpg%fcVx(iFc,2)))
+          end if
+        end do
+        cr1min = 0.0_R8
+        cr2min = 0.0_R8
+        do i=1,mpg%cvFcP(icmin,2)
+          iFc = mpg%cvFc(mpg%cvFcP(icmin,1)+i-1)
+          if (mpg%fcFs(iFc).ne.0) cycle
+          if (cr1min.eq.0.0_R8) then
+            cr1min = 0.5_R8*
+     .       (geo%cvX(mpg%fcVx(iFc,1))+geo%cvX(mpg%fcVx(iFc,2)))
+          else if (cr2min.eq.0.0_R8) then
+            cr2min = 0.5_R8*
+     .       (geo%cvX(mpg%fcVx(iFc,1))+geo%cvX(mpg%fcVx(iFc,2)))
+          end if
+        end do
         write(*,*) 'cr2max,cr2min,cr1max,cr1min: ',
      1   cr2max,cr2min,cr1max,cr1min
         deltap=((cr2max+cr2min)-(cr1max+cr1min))/
@@ -1273,28 +1282,28 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
         write(*,*) 'f2: ',f2
         do is=0,ns-1
           if(.not.is_neutral(is)) then
-            write(*,*) 'za,am,na: ',rza(ix,iy,is),am(is),na(ix,iy,is)
-            vthi=sqrt(ti(ix,iy)/mp/am(is))
+            write(*,*) 'za,am,na: ', rt%rza(iCv,is),am(is),na(iCv,is)
+            vthi=sqrt(ti(iCv)/mp/am(is))
             write(*,*) 'vthi: ',vthi
-            omegaci=rza(ix,iy,is)*qe*bave/mp/am(is)
+            omegaci=rt%rza(iCv,is)*qe*bave/mp/am(is)
             write(*,*) 'omegaci: ',omegaci
             rhoi=sqrt(2.0_R8)*vthi/omegaci
             write(*,*) 'rhoi: ',rhoi
-            alpha=na(ix,iy,is)*rz2(ix,iy,is)/
-     1            na(ix,iy,ismain)/rz2(ix,iy,ismain)  !!! think about this !!!
+            alpha=na(iCv,is)*rt%rz2(iCv,is)/
+     1            na(iCv,ismain)/rt%rz2(iCv,ismain)  !!! think about this !!!
             write(*,*) 'alpha: ',alpha
             taui=12.0_R8*pi**1.5_R8*eps0**2*
-     1             (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2             (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam(ix,iy))
+     1             (am(is)*mp)**0.5_R8*ti(iCv)**1.5_R8/
+     2             (na(iCv,is)*rt%rz2(iCv,is)**2*qe**4*lnlam(iCv))
             write(*,*) 'taui: ',taui
             nui=1.0_R8/taui
-            nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/
+            nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iFt)/
      1             epsilon**(1.5_R8)/vthi
             write(*,*) 'nustari: ',nustari
             mustari=nustari*(1.0_R8+1.54_R8*alpha)
             write(*,*) 'mustari: ',mustari
             chi=epsilon**(-1.5_R8)*
-     1             safetyfactor(iy)**2*rhoi**2/taui*
+     1             safetyfactor(iFt)**2*rhoi**2/taui*
      2             ((0.66_R8*(1.0_R8+1.54_R8*alpha)+
      3              (1.88_R8*epsilon**0.5_R8-1.54_R8*epsilon)*
      4              (1_R8+3.75_R8*alpha))/
@@ -1305,16 +1314,13 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
      8                 1.33_R8*alpha*(1.0_R8+0.60_R8*alpha)/
      9                 (1.0_R8+1.79_R8*alpha))*(f1-f2))
             write(*,*) 'chi: ',chi
-            transport(ix,iy,is)=chi
-            ix=rightix(ix,iy)
-            do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
-              transport(ix,iy,is)=chi
-              ix=rightix(ix,iy)
+            transport(iCv,is)=chi
+            do i=2,mpg%ftCvP(iFt,2)
+              transport(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),is)=chi
             enddo
           endif
         enddo
       enddo
-#endif
       call subend ()
       return
       end subroutine old_chang_hinton

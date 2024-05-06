@@ -95,9 +95,9 @@
 *   ..procedures
       intrinsic max
       real (kind=R8) ::
-     *  samax, scal10
+     *  damax, scal10
       logical strmas
-      external xertst, samax, b2scopy, sfill, scal10, strmas
+      external xertst, damax, b2scopy, sfill, scal10, strmas
       external b2xpne_st, b2xpni, b2xxgs, b2wgxp
 
 *-----------------------------------------------------------------------
@@ -117,7 +117,7 @@
 
 *   ..compute tthi
       tthi = ev*scal10(0.8_R8*
-     &  max(samax(n2,corte,1)/ev,samax(n2,corti,1)/ev))
+     &  max(damax(n2,corte,1)/ev,damax(n2,corti,1)/ev))
 *   ..set coordinates
       do ix = -1, nx
        xf(ix) = ix
@@ -146,7 +146,7 @@
      >       wrk0(ix,iy)=0.0_R8
          enddo
        enddo
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*damax(n2,wrk0,1))
        write (header,fmth) 'ELECTRON CONTINUITY RESID (1/s).', 
      &  t0/50.0_R8
        write (nprt,fmtp) '+cpne', header
@@ -171,7 +171,7 @@
      >       wrk0(ix,iy)=0.0_R8
          enddo
        enddo
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*damax(n2,wrk0,1))
        write (header,fmth) 'ALL ATOM CONTINUITY RESID (1/s).', 
      &  t0/50.0_R8
        write (nprt,fmtp) '+cpni', header
@@ -196,7 +196,7 @@
      >       wrk0(ix,iy)=0.0_R8
          enddo
        enddo
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*damax(n2,wrk0,1))
        write (header,fmth) 'ELECTRON HEAT RESIDUAL (W).', t0/50.0_R8
        write (nprt,fmtp) '+cpte', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
@@ -220,7 +220,7 @@
      >       wrk0(ix,iy)=0.0_R8
          enddo
        enddo
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*damax(n2,wrk0,1))
        write (header,fmth) 'ATOM HEAT RESIDUAL (W).', t0/50.0_R8
        write (nprt,fmtp) '+cpti', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
@@ -244,7 +244,7 @@
      >       wrk0(ix,iy)=0.0_R8
          enddo
        enddo
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*damax(n2,wrk0,1))
        write (header,fmth) 'EL. POTENTIAL RESIDUAL (A).', t0/50.0_R8
        write (nprt,fmtp) '+cppo', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
@@ -269,7 +269,7 @@
      >       wrk0(ix,iy)=0.0_R8
          enddo
        enddo
-        t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+        t0 = scal10(0.8_R8*damax(n2,wrk0,1))
         write (header,fmth2) 'CONTINUITY RESIDUAL (1/s).', is, 
      &   t0/50.0_R8
         write (nprt,fmtp) '+cpna', header
@@ -296,7 +296,7 @@
      >       wrk0(ix,iy)=0.0_R8
           enddo
         enddo
-        t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+        t0 = scal10(0.8_R8*damax(n2,wrk0,1))
         write (header,fmth2) 'PARALLEL MOMENTUM RESIDUAL (J/m).',
      &    is, t0/50.0_R8
         write (nprt,fmtp) '+cpua', header
@@ -322,7 +322,7 @@
      >       wrk0(ix,iy)=0.0_R8
          enddo
        enddo
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*damax(n2,wrk0,1))
        write (header,fmth)
      &  'PARALLEL MOMENTUM RESIDUAL (J/m), all species', t0/50.0_R8
        write (nprt,fmtp) '+cpua', header
@@ -335,7 +335,7 @@
 *   ..make contour plots of (pr) correction
       if (strmas(idout,'cppr')) then
        call b2xpni (n2, ns, corpa, wrk0)
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*damax(n2,wrk0,1))
        write (header,fmth) 'TOTAL PRESSURE CORRECTION (J/m**3).', 
      &  t0/50.0_R8
        write (nprt,fmtp) '+cppr', header
@@ -373,7 +373,7 @@
 *   ..make contour plots of (pa) correction
       if (strmas(idout,'cpna')) then
        do is = 0, ns-1
-        t0 = scal10(0.8_R8*samax(n2,corpa(-1,-1,is),1))
+        t0 = scal10(0.8_R8*damax(n2,corpa(-1,-1,is),1))
         write (header,fmth2) 'PRESSURE CORRECTION (J/m**3).', is, 
      &   t0/50.0_R8
         write (nprt,fmtp) '+cpna', header
@@ -385,7 +385,7 @@
 *   ..make contour plots of (ua) correction
       if (strmas(idout,'cpua')) then
        do is = 0, ns-1
-        t0 = scal10(0.8_R8*samax(n2,corua(-1,-1,is),1))
+        t0 = scal10(0.8_R8*damax(n2,corua(-1,-1,is),1))
         write (header,fmth2) 'VELOCITY CORRECTION (m/s).', is, 
      &   t0/50.0_R8
         write (nprt,fmtp) '+cpua', header
@@ -396,7 +396,7 @@
       endif
 *   ..make contour plots of (ua) correction, all species
       if (strmas(idout,'cput')) then
-       t0 = scal10(0.8_R8*samax(n2,corut,1))
+       t0 = scal10(0.8_R8*damax(n2,corut,1))
        write (header,fmth) 'VELOCITY CORRECTION (m/s), all species',
      &   t0/50.0_R8
        write (nprt,fmtp) '+cpua', header

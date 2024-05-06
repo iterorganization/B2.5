@@ -87,7 +87,7 @@
 #endif
 *   ..initialisation
       save ncall, style, acpar, cpu
-      data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/3/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -264,7 +264,7 @@
             i=i+1
 *   ..Case of left neighbor
             jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
-            if( jak.gt.i .and. aa11(ix,iy,-1) .ne. 0.0e0_R8 ) then
+            if( jak.gt.i .and. aa11(ix,iy,-1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-1)
               indexes(1,k)=ix
@@ -274,7 +274,7 @@
               ner = ner+1
             endif
 *   ..Case (ix,iy)
-            if( aa11(ix,iy,0) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,0) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,0)
               indexes(1,k)=ix
@@ -285,7 +285,7 @@
             endif
 *   ..Case of right neighbor
             jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-            if( jak.gt.i .and. aa11(ix,iy,1) .ne. 0.0e0_R8 ) then
+            if( jak.gt.i .and. aa11(ix,iy,1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,1)
               indexes(1,k)=ix
@@ -294,7 +294,7 @@
               ja(k) = jak
               ner = ner+1
             endif
-            if( aa11(ix,iy,2) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,2) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,2)
               indexes(1,k)=ix
@@ -303,7 +303,7 @@
               ja(k) =2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
               ner = ner+1
             endif
-            if( aa11(ix,iy,3) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,3) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,3)
               indexes(1,k)=ix

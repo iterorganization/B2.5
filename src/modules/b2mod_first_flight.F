@@ -49,7 +49,7 @@
       end subroutine dealloc_b2mod_first_flight
 
       subroutine setup_b2mod_first_flight
-     *  (mpg,geo,iCv0,orientation,output)
+     *  (mpg,geo,iCv0,iFc0,output)
       use b2us_map
       use b2us_geo
       use b2mod_constants
@@ -57,21 +57,20 @@
       implicit none
       type(mapping) :: mpg
       type(geometry) :: geo
-      integer iCv0,output
+      integer iCv0,iFc0,output
       integer iCv,ia,curr,cnt,new
 
       real (kind=R8) ::
      *    t1,x,y,dx,dy
       logical inside
-      character*1 orientation
       external xerrab
 
       call subini ('setup_b2mod_first_flight')
       ptr_index=ptr_index+1
       call xertst(ptr_index.le.no_of_start_points,
      * 'b2mod_first_flight: increase no_of_start_points')
-      write(6,'(a,i6,1x,a1,1x,2i6)') 'setup_b2mod_first_flight: ',
-     *     iCv0,orientation,ptr_index,ptr_table
+      write(*,'(a,4i6)') 'setup_b2mod_first_flight: ',
+     *     iCv0,iFc0,ptr_index,ptr_table
       do ia=1,no_of_slices
          index(ptr_index,ia,0)=0
          index(ptr_index,ia,1)=-1
@@ -79,36 +78,19 @@
          curr=-1
          new=-1
          iCv=iCv0
-#ifdef WG_TODO
-         if(orientation.eq.'W') then
-            t1=atan2(cry(ix,iy,2)-cry(ix,iy,0),
-     *           crx(ix,iy,2)-crx(ix,iy,0))-
-     *           pi/2e0_R8+angle(ia)
-            x=0.5_R8*(crx(ix,iy,2)+crx(ix,iy,0))
-            y=0.5_R8*(cry(ix,iy,2)+cry(ix,iy,0))
-         elseif(orientation.eq.'E') then
-            t1=atan2(cry(ix,iy,1)-cry(ix,iy,3),
-     *           crx(ix,iy,1)-crx(ix,iy,3))-
-     *           pi/2e0_R8+angle(ia)
-            x=0.5_R8*(crx(ix,iy,3)+crx(ix,iy,1))
-            y=0.5_R8*(cry(ix,iy,3)+cry(ix,iy,1))
-         elseif(orientation.eq.'N') then
-            t1=atan2(cry(ix,iy,3)-cry(ix,iy,2),
-     *           crx(ix,iy,3)-crx(ix,iy,2))-
-     *           pi/2e0_R8+angle(ia)
-            x=0.5_R8*(crx(ix,iy,3)+crx(ix,iy,2))
-            y=0.5_R8*(cry(ix,iy,3)+cry(ix,iy,2))
-         elseif(orientation.eq.'S') then
-            t1=atan2(cry(ix,iy,0)-cry(ix,iy,1),
-     *           crx(ix,iy,0)-crx(ix,iy,1))-
-     *           pi/2e0_R8+angle(ia)
-            x=0.5_R8*(crx(ix,iy,1)+crx(ix,iy,0))
-            y=0.5_R8*(cry(ix,iy,1)+cry(ix,iy,0))
-         else
-            write(*,*) 'Unknown orientation ',orientation,' at ',ix0,iy0
-            call xerrab ('Unknown orientation')
-         endif
-#endif
+cxpb We travel the boundary face so that the real cell is to the left
+cxpb Recall iCv is the guard cell
+         if (mpg%fcCv(iFc0,1).eq.iCv) then
+           t1=atan2(geo%cvY(mpg%fcVx(iFc0,1))-geo%cvY(mpg%fcVx(iFc0,2)),
+     *              geo%cvX(mpg%fcVx(iFc0,1))-geo%cvX(mpg%fcVx(iFc0,2)))
+     *       -pi/2.0_R8+angle(ia)
+         else if (mpg%fcCv(iFc0,2).eq.iCv) then
+           t1=atan2(geo%cvY(mpg%fcVx(iFc0,2))-geo%cvY(mpg%fcVx(iFc0,1)),
+     *              geo%cvX(mpg%fcVx(iFc0,2))-geo%cvX(mpg%fcVx(iFc0,1)))
+     *       -pi/2.0_R8+angle(ia)
+         end if
+         x=0.5_R8*(geo%cvX(mpg%fcVx(iFc0,1))+geo%cvX(mpg%fcVx(iFc0,2)))
+         y=0.5_R8*(geo%cvY(mpg%fcVx(iFc0,1))+geo%cvY(mpg%fcVx(iFc0,2)))
          inside=.true.
          if (output.ge.1) write(88,*) x,y,ia,iCv
          dx=dl*cos(t1)

@@ -55,10 +55,10 @@
       call subini ('b2tvspa')
 *   ..set internal parameters on first call
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 
-      dvpar     = 0.0e0_R8                                               !srv 24.06.99
-      if (switch%no_current.eq.0.and.switch%fhe_vis_par.ne.0.0e0_R8
+      dvpar     = 0.0_R8                                                 !srv 24.06.99
+      if (switch%no_current.eq.0.and.switch%fhe_vis_par.ne.0.0_R8
      &                          .and.maxval(fac_vis).ne.0.0_R8) then     !srv
 *     ..compute gradients of OnedBsq on cell faces
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
@@ -83,13 +83,13 @@
      &    switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,0)
      &    *geo%fcS*geo%fcQalf(:,1)
       else
-        fchvispar = 0.0e0_R8
+        fchvispar = 0.0_R8
       endif                                                              !srv
       do iFc = 1, nFc                                                    !lkw 20.06.2022{
         if ( .not. mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))  .and.
      &       .not. mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))  then
-          fchvispar(iFc,0) = 0.0e0_R8
-          fchvispar(iFc,1) = 0.0e0_R8
+          fchvispar(iFc,0) = 0.0_R8
+          fchvispar(iFc,1) = 0.0_R8
         endif
       enddo                                                              !lkw 20.06.2022}
 * ..return

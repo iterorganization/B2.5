@@ -175,6 +175,7 @@ cwdk move to dv
         real(R8), dimension(:,:), allocatable :: sch0, she0, shi0, sne0,
      .                                           shn0, skt0, szt0
         real(R8), dimension(:,:,:), allocatable :: smo0, smq0, sna0
+        real(R8), dimension(:,:), allocatable :: smcf, smpr, smpt, smfr
         real(R8), dimension(:), allocatable ::
      .            b2stbc_sch, b2stbc_she, b2stbc_shi, b2stbc_sne,
      .            b2stbc_shn, b2stbc_skt, b2stbc_szt
@@ -189,6 +190,8 @@ cwdk move to dv
      .            b2stbr_shn, b2stbr_skt, b2stbr_szt
         real(R8), dimension(:,:), allocatable ::
      .            b2stbr_smo, b2stbr_sna
+        real(R8), dimension(:,:,:), allocatable ::
+     .            b2npmo_smaf, b2npmo_smag, b2npmo_smav
         real(R8), dimension(:,:), allocatable :: rsana, rsahi, rsamo,
      .                                           rrana, rrahi, rramo,
      .                                           rcxna, rcxhi, rcxmo,
@@ -1526,6 +1529,11 @@ cwdk move to dv
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % sne0( nCv, 0:1 ), SOURCE=0._R8 )
 
+      allocate( srw % smcf( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smpr( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smpt( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smfr( nCv, 0:ns-1 ), SOURCE=0._R8 )
+
       allocate( srw % b2stbc_sch( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbc_she( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbc_shi( nCv ), SOURCE=0._R8 )
@@ -1545,6 +1553,10 @@ cwdk move to dv
       allocate( srw % b2stbr_shn( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbr_skt( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbr_szt( nCv ), SOURCE=0._R8 )
+
+      allocate( srw % b2npmo_smaf( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % b2npmo_smag( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % b2npmo_smav( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( srw % b2stbm_sch( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbm_she( nCv ), SOURCE=0._R8 )
@@ -1595,6 +1607,11 @@ cwdk move to dv
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ) )
       allocate( srw % sne0( nCv, 0:1 ) )
 
+      allocate( srw % smcf( nCv, 0:ns-1 ) )
+      allocate( srw % smpr( nCv, 0:ns-1 ) )
+      allocate( srw % smpt( nCv, 0:ns-1 ) )
+      allocate( srw % smfr( nCv, 0:ns-1 ) )
+
       allocate( srw % b2stbm_sch( nCv ) )
       allocate( srw % b2stbm_she( nCv ) )
       allocate( srw % b2stbm_shi( nCv ) )
@@ -1622,6 +1639,10 @@ cwdk move to dv
       allocate( srw % b2stbr_szt( nCv ) )
       allocate( srw % b2stbr_skt( nCv ) )
       allocate( srw % b2stbr_shn( nCv ) )
+
+      allocate( srw % b2npmo_smaf( nCv, 0:3, 0:ns-1 ) )
+      allocate( srw % b2npmo_smag( nCv, 0:3, 0:ns-1 ) )
+      allocate( srw % b2npmo_smav( nCv, 0:3, 0:ns-1 ) )
 
       allocate( srw % rsana( nCv, 0:ns-1 ) )
       allocate( srw % rsamo( nCv, 0:ns-1 ) )
@@ -1664,6 +1685,11 @@ cwdk move to dv
       srw % sna0 = 0._R8
       srw % sne0 = 0._R8
 
+      srw % smcf = 0._R8
+      srw % smpr = 0._R8
+      srw % smpt = 0._R8
+      srw % smfr = 0._R8
+
       srw % b2stbm_sch = 0._R8
       srw % b2stbm_she = 0._R8
       srw % b2stbm_shi = 0._R8
@@ -1691,6 +1717,10 @@ cwdk move to dv
       srw % b2stbr_shn = 0._R8
       srw % b2stbr_skt = 0._R8
       srw % b2stbr_szt = 0._R8
+
+      srw % b2npmo_smaf = 0._R8
+      srw % b2npmo_smag = 0._R8
+      srw % b2npmo_smav = 0._R8
 
       srw % rsana = 0.0_R8
       srw % rsamo = 0.0_R8
@@ -1742,6 +1772,11 @@ cwdk move to dv
       deallocate( srw % sna0 )
       deallocate( srw % sne0 )
 
+      deallocate( srw % smpr )
+      deallocate( srw % smpt )
+      deallocate( srw % smfr )
+      deallocate( srw % smcf )
+
       deallocate( srw % b2stbc_sch )
       deallocate( srw % b2stbc_she )
       deallocate( srw % b2stbc_shi )
@@ -1769,6 +1804,10 @@ cwdk move to dv
       deallocate( srw % b2stbm_smq )
       deallocate( srw % b2stbm_sna )
       deallocate( srw % b2stbm_sne )
+
+      deallocate( srw % b2npmo_smaf )
+      deallocate( srw % b2npmo_smag )
+      deallocate( srw % b2npmo_smav )
 
       deallocate( srw % rsana )
       deallocate( srw % rsamo )
@@ -2204,7 +2243,6 @@ cwdk move to dv
 
       return
       end subroutine destroyB2Update
-
 
 
 ! External plasma

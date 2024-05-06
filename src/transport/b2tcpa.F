@@ -63,7 +63,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tcpa')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2tcpa.lt.3) then
 *    ..test sign of ne, te, csig, calf
@@ -90,9 +90,9 @@
           fch_pi_f = 0.0_R8                                            !srv 04.04.17
         endif
         fch_p = fch_p - fch_pi_f                                       !srv 13.01.17 }
-        fch_p(:,1) = 0.0e0_R8
+        fch_p(:,1) = 0.0_R8
       else                                                             !srv 26.07.06 {
-        fch_p = 0.0e0_R8
+        fch_p = 0.0_R8
         ehx   = 0.0_R8
       endif                                                            !srv 26.07.06 }
 

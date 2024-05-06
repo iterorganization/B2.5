@@ -4,10 +4,8 @@
       subroutine b2stel (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
-!      use b2mod_diag
       use b2mod_tallies
       use b2mod_constants
-!      use b2mod_sources
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
@@ -72,8 +70,8 @@
      &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3),
      &  shn0_ion(nCv,0:3),        shn0_rec(nCv,0:3)
 *   ..procedures
-      real (kind=R8) :: samax
-      external xertst, ipgeti, ipgetr, samax, sfill
+      real (kind=R8) :: damax
+      external xertst, ipgeti, ipgetr, damax, sfill
       external b2xvsg
 *   ..initialisation
 
@@ -94,7 +92,7 @@
 !WG_TODO         end if !}
 !WG_TODO       end do !}
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      * 'faulty argument ismain')
@@ -119,9 +117,9 @@
 *    ..test rate coefficients
        do is = 0, ns-2
         if (.not.lnext(is,is+1)) then
-         call xertst (samax(nCv,rtw%rsa(1,is),1).eq.0.0_R8,
+         call xertst (damax(nCv,rtw%rsa(1,is),1).eq.0.0_R8,
      &     'faulty argument rsa: nonzero for unrelated species')
-         call xertst (samax(nCv,rtw%rra(1,is+1),1).eq.0.0_R8,
+         call xertst (damax(nCv,rtw%rra(1,is+1),1).eq.0.0_R8,
      &     'faulty argument rra: nonzero for unrelated species')
         endif
        enddo

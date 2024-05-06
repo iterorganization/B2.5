@@ -42,7 +42,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tlh0')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read input on first call
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality

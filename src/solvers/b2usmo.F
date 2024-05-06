@@ -67,7 +67,7 @@
 *   ..subprogram start-up calls
       call subini ('b2usmo')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls
@@ -98,7 +98,12 @@
      &    smb(iCv,3)*rob(iCv)+
      &    switch%cfc0*geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb*rob(iCv)
-         aa(mpg%cvNvP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
+         aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
+         if (switch%b2mndt_style.lt.2) then
+           aa(mpg%cvNvP(iCv,1)) = aad0(iCv) +abs(resmb(iCv))/(rxg*csb1)
+         else
+           aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
+         endif
         else
          aa(mpg%cvNvP(iCv,1)) = 1.0_R8
          aad0(iCv) = 0.0_R8
@@ -211,7 +216,7 @@
 ! $AD II-LOOP
       do iCv = 1, nCv
         aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) -
-     &    min(0.0e0_R8,ctcfb(iCv))
+     &    min(0.0_R8,ctcfb(iCv))
       enddo
 ! $AD II-LOOP
       do iCv = 1, nCv

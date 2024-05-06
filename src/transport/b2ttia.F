@@ -69,7 +69,7 @@
 *   ..subprogram start-up calls
       call subini ('b2ttia')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2ttia.lt.3) then
@@ -98,7 +98,7 @@
      &     (rz2(iCv,is)*ne2(iCv))
         enddo
        else
-        tauia(:,is) = 0.0e0_R8
+        tauia(:,is) = 0.0_R8
        endif
       enddo
 

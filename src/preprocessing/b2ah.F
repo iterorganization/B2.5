@@ -57,7 +57,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:0), nout(0:1), idum(0:9),ns, io
+      integer ninp(0:0), nout(0:1), ns, io
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen, cfruin, cfruch
@@ -97,7 +97,7 @@
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain ns
-      call b2ahx0 (ninp, ns)
+      call b2ahx0 (ninp(0), ns)
 *   ..call principal driver routine
       call b2ahdr (ninp, nout, ns)
 *   ..close graphics files

@@ -166,9 +166,8 @@ CONTAINS
     REAL(kind=r8), ALLOCATABLE :: pdum(:), pot(:), dext(:, :)
     CHARACTER(len=256) :: filename
     LOGICAL :: toread
-    EXTERNAL XERTST, XERRAB, OPEN_FILE, FIND_FILE, LNBLNK
+    EXTERNAL XERTST, XERRAB, OPEN_FILE, FIND_FILE
     LOGICAL :: OPEN_FILE
-    INTEGER :: LNBLNK
     INTRINSIC NINT
     INTRINSIC REAL
     INTRINSIC MAXVAL
@@ -237,7 +236,7 @@ CONTAINS
             am_ext(is) = 3.07832e-25_R8/mp
             arg1 = zn_ext(is)
             text_ext(is) = ' '//elements(NINT(arg1))
-            len = LNBLNK(text_ext(is))
+            len = LEN_TRIM(text_ext(is))
             IF (is1 .EQ. 0) THEN
               text_ext(is)(len+1:len+4) = '^{0}'
             ELSE IF (is1 .LT. 10) THEN
