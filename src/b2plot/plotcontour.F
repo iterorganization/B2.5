@@ -36,21 +36,21 @@ cxpb  INTEGER NNCUT_L
       REAL (KIND=R4), ALLOCATABLE :: RPNT(:)
       INTEGER, ALLOCATABLE :: nodelist(:,:), edgelist(:,:),
      . IEDG(:),ITRI(:),IBEG(:),IBPT(:)
-      INTEGER IPTP,IPTE,IPTT
+c$$$      INTEGER IPTP,IPTE,IPTT
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
       logical, allocatable :: done(:)
 
       integer ix,iy,ixstrt,ixend,iystrt,iyend
       integer nfmtz,noz,nozm,
-     .        i,j,k,l,ib,ic,ie,it,je,jt,
+     .        i,j,k,ib,ic,ie,it,je,jt,
      .        iCv,iCn,iFc,iVx,iVx1,iVx2,iVa,iVb
       real(kind=R4) :: rlo, rhi, zlo, zhi, zinc, zval, clv, special
       real(kind=R4) :: ctval(1000), rmax, rmin, zmax, zmin
       logical right_match_found, left_match_found
-      integer lnblnk, no_available_colors
-      real ceil
-      external lnblnk, no_available_colors, ceil, xertst
+      integer no_available_colors
+      real (kind=R4) :: ceil, sfloor
+      external no_available_colors, ceil, sfloor, xertst
       intrinsic mod
 
       EXTERNAL FILL,CPDRPL
@@ -158,9 +158,9 @@ C do something to avoid this
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -178,7 +178,7 @@ C do something to avoid this
           endif
         ELSE ! customised contouring
           write (*,*) 'CUSTOMISED CONTOURING'
-          ZLO=10.0_R4**FLOOR(LOG10(ZLO))
+          ZLO=10.0_R4**SFLOOR(LOG10(ZLO))
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
           NCONT=NOFCLS-1
           FMTZ='(1PG9.3)'
@@ -670,7 +670,7 @@ cxpb Obtaining the contour outlines of the plasma region to be plotted
           CALL CTSETI('CLU - CONTOUR LEVEL USE FLAG',3)
         END DO
         CALL CTSETC('ILT - INFORMATION LABEL TEXT STRING',
-     1   STRING(1:LNBLNK(STRING)))
+     1   TRIM(STRING))
         CALL CTSETR('ILX - INFORMATION LABEL X POSITION',0.5)
         CALL CTSETR('ILY - INFORMATION LABEL Y POSITION',0.95)
         CALL CTSETI('ILP - INFORMATION LABEL POSITION',-3)
@@ -742,7 +742,7 @@ c     1     CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
         END DO
         CALL CPSETC('ILT - INFORMATION LABEL TEXT STRING',
-     1   STRING(1:LNBLNK(STRING)))
+     1   TRIM(STRING))
         CALL CPSETR('ILX - INFORMATION LABEL X POSITION',0.5)
         CALL CPSETR('ILY - INFORMATION LABEL Y POSITION',0.95)
         CALL CPSETI('ILP - INFORMATION LABEL POSITION',-3)
@@ -861,6 +861,7 @@ C Draw Contours
 C            CALL CPCLDR(z,RWRK,IWRK)
           CALL CPCLDM(z,RWRK,IWRK,MAP,CPDRPL)
         ENDIF
+
  5152   CONTINUE
 
       ENDIF

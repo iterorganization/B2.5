@@ -18,7 +18,7 @@ files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 #done  > compare_results.log
 
 missing=0
-for f in $files; do 
+for f in $files; do
    if [ ! -f $1/$f ]; then
      echo "Error, file not found $1/$f";
      missing=$((missing+1))
@@ -28,7 +28,7 @@ for f in $files; do
    else
      check_b2_output $1/$f $2/$f
    fi
-done  > compare_results.log
+done > compare_results.log
 
 if [ $missing -gt 0 ]; then
   echo Results are NOT correct, files missing.

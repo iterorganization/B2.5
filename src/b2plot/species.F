@@ -7,9 +7,8 @@ c
       use b2mod_subsys
       implicit none
       character*(*) string
-      integer is,izn,izmax,izmin,imi,len,lnblnk
+      integer is,izn,izmax,izmin,imi,len
       logical decorate
-      external lnblnk
 
       call subini('species')
       izn=nint(zn(is))
@@ -31,7 +30,7 @@ c
           string=' '
           len=1
           if(decorate) string(len+1:len+2)='^{'
-          len=lnblnk(string)
+          len=len_trim(string)
           if(imi .lt. 10) then
             write(string(len+1:len+1),'(i1)') imi
           elseif (imi .lt. 100) then
@@ -39,21 +38,21 @@ c
           else
             write(string(len+1:len+3),'(i3)') imi
           endif
-          len=lnblnk(string)
+          len=len_trim(string)
           if(decorate) string(len+1:len+1)='}'
-          len=lnblnk(string)
-          write(string(len+1:len+lnblnk(elements(izn))),'(a)')
+          len=len_trim(string)
+          write(string(len+1:len+len_trim(elements(izn))),'(a)')
      .     trim(elements(izn))
         else
           string=' ' // trim(elements(izn))
         endif
       endif
-      len=lnblnk(string)
+      len=len_trim(string)
       if(decorate) string(len+1:len+2)='^{'
-      len=lnblnk(string)
+      len=len_trim(string)
       if(izmin .gt. 0) string(len+1:len+1)='+'
       if(izmin .lt. 0) string(len+1:len+1)='-'
-      len=lnblnk(string)
+      len=len_trim(string)
       if(abs(izmin) .lt. 10) then
         write(string(len+1:len+1),'(i1)')
      1   abs(izmin)
@@ -61,12 +60,12 @@ c
         write(string(len+1:len+2),'(i2)')
      1   abs(izmin)
       endif
-      len=lnblnk(string)
+      len=len_trim(string)
       if(izmax .ne. izmin) then
         string(len+1:len+1)='_'
         if(izmax .gt. 0) string(len+2:len+2)='+'
         if(izmax .lt. 0) string(len+2:len+2)='-'
-        len=lnblnk(string)
+        len=len_trim(string)
         if(abs(izmax) .lt. 10) then
           write(string(len+1:len+1),'(i1)')
      1     abs(izmax)
@@ -75,7 +74,7 @@ c
      1     abs(izmax)
         endif
       endif
-      len=lnblnk(string)
+      len=len_trim(string)
       if(decorate) string(len+1:len+1)='}'
       call subend()
       return

@@ -7,7 +7,7 @@
       character vrname*(*)
 *     -----------------------------------------------------------------
 *     B2XVFX verifies the zero entries in the edge locations of some
-*     quantity defined on x-faces of the b2 mesh.
+*     quantity defined on x-faces of the B2 mesh.
 *     The entries funx(-1,-1:ny) must vanish or the code will halt via
 *     a call to xertst/xerrab.
 *     vrname must be the name of the program variable in the calling
@@ -15,12 +15,12 @@
 *     -----------------------------------------------------------------
       character vrnam0*8
       real (kind=R8) ::
-     *   samax
-      external xertst, samax
+     *   damax
+      external xertst, damax
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvfx')
       vrnam0 = vrname
-      call xertst (samax(ny+2,funx(-1,-1),nx+2).eq.0,
+      call xertst (damax(ny+2,funx(-1,-1),nx+2).eq.0,
      &  'b2xvfx--faulty argument x-edge '//vrnam0)
 *$$$  call subend ()
       return

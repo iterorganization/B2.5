@@ -2197,7 +2197,6 @@
 !     Create b2.user.parameters file with definition of outer/inner midplanes
       call conv_midplane(nx,ny)
 
-
       ! Identify corner coordinates/vertices
       icount = 0
       allocate(icornvx(size(m%icornVx)))
@@ -2633,7 +2632,7 @@
       integer :: ix, iy, ic, iFc!, nfx
 
       call createB2State ( mpg%nCv, mpg%nFc, ns, st)
-      call createB2Diagnostic( mpg%nCv, ns, nnreg, st % diag )
+      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st % diag )
 
 !     nfx = (nx+1)*ny
 
@@ -4743,6 +4742,7 @@
 
         ! For now, only create a dummy external state.
         ! Functionality from b2mod_external to be carried over!
+        call xertst ( 0.le.nx.and.0.le.ny, 'faulty parameter nx, ny' )
         call createB2StateExt( nCv, nFc, ns, st_ext )
 
       end subroutine prep_plasma_ext
@@ -4969,8 +4969,6 @@
           endif
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
-
-
 
 #ifdef F2003
         open(newunit=iout,file='b2us.midplane.parameters')

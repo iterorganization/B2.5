@@ -4,8 +4,8 @@
       ! Subroutine to check that all boundary faces are assigned to
       ! a boundary condition or recycling strata.
       ! To do so, loop over all guard cells and get the face linked to
-      ! each of them. only one face per guard cell is possible! 
-      ! Then check that such face has a label different than zero and 
+      ! each of them. Only one face per guard cell is possible!
+      ! Then check that such face has a label different than zero and
       ! that is included in the lists bstart to bend
       ! Initialize
       !===========
@@ -36,8 +36,8 @@
         ! get the only face linked to the guard cell
         bnd_fc = m%cvFc(m%cvFcP(iCv,1))
         ! if face is towards core, for recycling we don't care about it
-        if (m%cvOnClosedSurface(m%fcCv(bnd_fc,1)) .or. 
-     &      m%cvOnClosedSurface(m%fcCv(bnd_fc,2)) .and. 
+        if (m%cvOnClosedSurface(m%fcCv(bnd_fc,1)) .or.
+     &      m%cvOnClosedSurface(m%fcCv(bnd_fc,2)) .and.
      &      .not. docore) cycle
         if (bnd_fc.eq.0) then
           write(*,*) 'guard cell iCv=',iCv
@@ -52,14 +52,14 @@
         do ib = 1, nb
           do ll = bstart(ib), bend(ib)
             if (m%fcLbl(bnd_fc).eq.ll) then
-                assigned = .true.
-                exit
+              assigned = .true.
+              exit
             endif
           enddo !ll
           if (assigned) exit
         enddo ! ib
         if (.not. assigned) then
-          write(*,*) 'ifc, label', bnd_fc, m%fcLbl(bnd_fc)
+          write(*,*) 'iFc, label', bnd_fc, m%fcLbl(bnd_fc)
           call xerrab('boundary face label not assigned to any BC/RC!')
         endif
       enddo !ic

@@ -97,7 +97,7 @@
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
-      call read_switch_afn(switch)
+      call read_first_switches(switch)
       call set_defaults_switches(switch,ns)
       call read_switches(switch)
       call check_switches(switch,ns)

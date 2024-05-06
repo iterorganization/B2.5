@@ -2,11 +2,13 @@
 *.specification
 
       subroutine b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
-     &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb)
+     &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb,
+     &   psnl)
       use b2mod_types
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_map
+      use b2us_plasma
       use b2mod_switches
       use b2mod_numerics_namelist
      , , only : corr_core_dn
@@ -21,6 +23,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (switches), intent (in) :: switch
+      type (B2PlasmaSnapshot), intent (inout) :: psnl
       real (kind=R8) ::
      *  rxf, pcm0, corpb(nCv), pccb0(nCv)
       logical ua_solve, solvereg(0:nregionv)
@@ -59,7 +62,7 @@
 *   ..subprogram start-up calls
       call subini ('b2upco')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf, pcm0
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      .  'faulty argument rxf')
@@ -81,9 +84,9 @@
       if(corr_core_dn(isb).ne.1.0_R8 .and.
      &               (.not. is_neutral(isb))) then
 *   ..smooth the correction for inner flux surfaces  !lk 30.06.2017{
-        tt0 = 0.0e0_R8
-        tt1 = 0.0e0_R8
-        tt2 = 0.0e0_R8
+        tt0 = 0.0_R8
+        tt1 = 0.0_R8
+        tt2 = 0.0_R8
         do iCv = 1, mpg%nCi
           if (mpg%cvOnClosedSurface(iCv)) then       ! IYS 27.03.2019
             iFt = mpg%cvFt(iCv)

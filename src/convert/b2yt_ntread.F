@@ -16,8 +16,10 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(
-     &  mpg, natm1, iatm1, nmol1, imol1, nion1, iion1)
+      subroutine b2yt_ntread
+#ifdef B25_EIRENE
+     & (mpg, natm1, iatm1, nmol1, imol1, nion1, iion1)
+#endif
 c
 c  version : 06.11.97 22:11
 c
@@ -44,13 +46,13 @@ c
       use b2us_map
       implicit none
 
+#ifdef B25_EIRENE
 *  -- INPUT ARGUMENTS --
       type(mapping), intent(in) :: mpg
       integer natm1, nmol1, nion1
       integer iatm1(natm), imol1(nmol), iion1(nion)
 
 *  -- LOCAL SCALARS --
-#ifdef B25_EIRENE
       integer jvft46
       integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
@@ -468,14 +470,14 @@ C
             triangle_vol(i)=triangle_area(i)*width
           end do
         else if (isymm.eq.1 .or. isymm.eq.2) then
-*    ..case of rotational symmetry about crx=0 axis
+*    ..case of rotational symmetry about r=0 axis
           do i=1,ntrii
             triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
      .       (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
      .        3.0_R8
           end do
         else if (isymm.eq.3 .or. isymm.eq.4) then
-*    ..case of rotational symmetry about cry=0 axis
+*    ..case of rotational symmetry about z=0 axis
           do i=1,ntrii
             triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
      .       (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/

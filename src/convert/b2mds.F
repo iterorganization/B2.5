@@ -276,7 +276,7 @@ cxpb  quantities before their mapping to cell centers
      1   nfla,NFL
       else
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
       endif
 c
       call initialise_potentials(ns)
@@ -1389,6 +1389,20 @@ c
       if (mpg%iFssep.ne.0) then
         do i = mpg%fsFcP(mpg%iFssep,1),
      1         mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+          iCv1 = mpg%fcCv(mpg%fsFc(i),1)
+          iCv2 = mpg%fcCv(mpg%fsFc(i),2)
+          if(mpg%cvOnClosedSurface(iCv1).neqv.
+     1       mpg%cvOnClosedSurface(iCv2)) then
+            fhesep=fhesep+state%dv%fhe(mpg%fsFc(i),1)
+            fhisep=fhisep+state%dv%fhi(mpg%fsFc(i),1)
+            fnesep=fnesep+state%dv%fne(mpg%fsFc(i),1)
+            fnisep=fnisep+state%dv%fni(mpg%fsFc(i),1)
+          endif
+        enddo
+      endif
+      if (mpg%iFssep2.ne.0) then
+        do i = mpg%fsFcP(mpg%iFssep2,1),
+     1         mpg%fsFcP(mpg%iFssep2,1) + mpg%fsFcP(mpg%iFssep2,2) - 1
           iCv1 = mpg%fcCv(mpg%fsFc(i),1)
           iCv2 = mpg%fcCv(mpg%fsFc(i),2)
           if(mpg%cvOnClosedSurface(iCv1).neqv.

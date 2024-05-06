@@ -6,7 +6,7 @@ endif
 LD_NAG    ?= `pkg-config openblas --libs`
 LD_NETCDF ?=
 
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 ifndef SOLPS_CPP
   DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF

@@ -23,8 +23,7 @@ c
       integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,iVx,nlist
       integer iystart,iyend
       integer len_of_digits
-      integer lnblnk
-      external xertst, lnblnk, len_of_digits
+      external xertst, len_of_digits
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
@@ -64,7 +63,8 @@ c     the line format common
      &           mpg%fcCv(iFc,2).eq.cvlist(iy-iystart+1)).or.
      &          (mpg%fcCv(iFc,2).eq.cvlist(iy-iystart).and.
      &           mpg%fcCv(iFc,1).eq.cvlist(iy-iystart+1))) then
-              if (mpg%fcFs(iFc).eq.mpg%iFssep) isep = iy-iystart
+              if (mpg%fcFs(iFc).eq.mpg%iFssep.or.
+     &            mpg%fcFs(iFc).eq.mpg%iFssep2) isep = iy-iystart
               if (isep.eq.0 .and. mpg%nXpt.gt.1) then
                 do j = 1, mpg%nXpt
                   if (mpg%vxFs(mpg%Xpt(j)).eq.mpg%fcFs(iFc)) then
@@ -278,9 +278,7 @@ c     the line format common
             write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
           endif
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           if(values(11).ne.init_value .and.
      &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
@@ -308,7 +306,7 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do iy=iystart,iyend
               iCv=mpg%imapCv(ix,iy)
               write(nwtf,*) wrk(iy),work(iCv,is,iwrk)
@@ -428,15 +426,13 @@ c     the line format common
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
           write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do iy=iystart,iyend
               iCv=mpg%imapCv(ix,iy)
               write(nwtf,*) wrk(iy),work(iCv,is,iwrk)
@@ -542,8 +538,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-      integer lnblnk
-      external lnblnk
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
@@ -637,9 +631,7 @@ c     the line format common
             write(tmpstring2,'(a)') ' (IMP)'
           endif
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           if(values(11).ne.init_value .and.
      &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
@@ -667,7 +659,7 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nimp
               write(nwtf,*) wrk(i),work(imp(i),is,iwrk)
             enddo
@@ -758,15 +750,13 @@ c     the line format common
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
           write(tmpstring2,'(a)') ' (IMP)'
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nimp
               write(nwtf,*) wrk(i),work(imp(i),is,iwrk)
             enddo
@@ -840,8 +830,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-      integer lnblnk
-      external lnblnk
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
@@ -935,9 +923,7 @@ c     the line format common
             write(tmpstring2,'(a)') ' (OMP)'
           endif
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           if(values(11).ne.init_value .and.
      &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
@@ -965,7 +951,7 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nomp
               write(nwtf,*) wrk(i),work(omp(i),is,iwrk)
             enddo
@@ -1056,15 +1042,13 @@ c     the line format common
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
           write(tmpstring2,'(a)') ' (OMP)'
           tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
+     1     trim(graphlabel(iwrk))//trim(tmpstring2)//trim(tmpstring1)
           call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+            write(nwtf,'(''# '',a)') trim(titlestring)
             do i=1,nomp
               write(nwtf,*) wrk(i),work(omp(i),is,iwrk)
             enddo
@@ -1215,7 +1199,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
      *   xmin,xmax,ymin,ymax
       logical open_file, is_comment
       external is_comment
-      integer lngarr,lnblnk,i,inc
+      integer lngarr,i,inc
       parameter (lngarr=100 000)
       real (kind=R8) ::
      *   xvalues(lngarr),yvalues(lngarr)
@@ -1229,8 +1213,8 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
         title = ''
    10   read(99,'(a)',end=40) line
         if(is_comment(line)) then
-          title = line(1:lnblnk(line))
-          write(*,*) line(1:lnblnk(line))
+          title = trim(line)
+          write(*,*) trim(line)
           goto 10
         endif
         backspace(99)
@@ -1279,13 +1263,12 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
         if(mod(linlog,2).eq.0.and.ymin.le.0.0_R8) ymin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.ymax.le.0.0_R8) ymax=1.0_R8
         call init_page(
-     1   title(1:lnblnk(title)),
+     1   trim(title),
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.true.)
          if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')
-     1     title(1:lnblnk(title))
+          write(nwtf,'(''# '',a)') trim(title)
           do i=1,inc
             write(nwtf,*) xvalues(i),yvalues(i)
           enddo
@@ -1362,7 +1345,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
      *   xmin,xmax,ymin,ymax
       logical open_file, is_comment
       external is_comment
-      integer lngarr,lnblnk,i,inc
+      integer lngarr,i,inc
       parameter (lngarr=100 000)
       real (kind=R8) ::
      *   xvalues(lngarr),yvalues(lngarr)
@@ -1388,8 +1371,8 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
         endif
    10   read(99,'(a)',end=40) line
         if(is_comment(line)) then
-          title = line(1:lnblnk(line))
-          write(*,*) line(1:lnblnk(line))
+          title = trim(line)
+          write(*,*) trim(line)
           goto 10
         endif
         backspace(99)
@@ -1438,13 +1421,12 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
         if(mod(wlinlog,2).eq.0.and.ymin.le.0.0_R8) ymin=1.0e-30_R8
         if(mod(wlinlog,2).eq.0.and.ymax.le.0.0_R8) ymax=1.0_R8
         call init_page(
-     1   title(1:lnblnk(title)),
+     1   trim(title),
      1   xmin,xmax,ymin,ymax,wlinlog,.false.,.false.,.true.)
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')
-     1     title(1:lnblnk(title))
+          write(nwtf,'(''# '',a)') trim(title)
           do i=1,inc
             write(nwtf,*) xvalues(i),yvalues(i)
           enddo
