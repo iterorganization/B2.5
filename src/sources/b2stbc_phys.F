@@ -245,7 +245,7 @@
        call xertst (use_astra.eq.0,
      .  'Compile with -DASTRA option to couple to ASTRA!')
 #else
-       call xertst (ny_astra.gt.0,
+       call xertst (use_astra.eq.0.or.ny_astra.gt.0,
      .  'Did not read any ASTRA data! Cannot couple.')
 #endif
        if (redef_gmtry.eq.0) then
