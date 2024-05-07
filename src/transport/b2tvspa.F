@@ -22,8 +22,6 @@
       use b2mod_subsys
       use b2mod_b2zhco
      , , only: zh_vis_type
-      use b2mod_rates
-     & , only : rza
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                        !srv 19.02.21
@@ -39,7 +37,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fchvispar_a_test(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvispar(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.documentation
@@ -63,14 +60,11 @@
      &  vis_par
       real (kind=R8) ::
      *   dvpar(-1:nx,-1:ny),
-     *   dvpar_test(-1:nx,-1:ny),
      *   wrk0(-1:nx,-1:ny),
      *   t0
       save ncall, vis_par
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
       integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
-      integer, save :: iout = 0
-      character chns*3
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -88,7 +82,6 @@
        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 16.08.21
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 16.08.21
        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)                !som 16.08.21
-       call ipgeti ('b2tvspa_iout', iout)
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -113,7 +106,6 @@ c Drift terms
       fchvispar =0.0e0_R8                                               !srv 09.07.99
       fchvispar_a=0.0e0_R8
       dvpar=0.0e0_R8                                                    !srv 24.06.99
-      dvpar_test=0.0e0_R8
       if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
      &   no_current.eq.0) then
        do is = 0, ns-1                                                  !srv 24.06.99
@@ -200,16 +192,6 @@ c Drift terms
      &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
      
-              dvpar_test(ix,iy) = 
-     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
-     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
-     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
-     &         cvsa_cl(ix,iy,0,is)*
-     &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
-     &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
-     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
-     
               do inucl=0,nspecies-1                                     !som 30.04.24
                if(inucl.ne.s2nucl(is)-1) then
                 t0=0.0e0_R8
@@ -235,34 +217,6 @@ c Drift terms
      &           t0            
                endif
               enddo
-              
-              t0=0.0e0_R8
-              do iz= 1, znnucl_int(s2nucl(is)-1)
-               if(iz.ne.nint(rza(ix,iy,is))) then
-                t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
-     &          ti(ix,iy)+
-     &          na(leftix(ix,iy),leftiy(ix,iy),
-     &          nucl2s(s2nucl(is)-1,iz))*
-     &          ti(leftix(ix,iy),leftiy(ix,iy)))*
-     &          (ua(ix,iy,nucl2s(s2nucl(is)-1,iz))*sqrt(bb(ix,iy,3)) -
-     &          ua(leftix(ix,iy),leftiy(ix,iy),
-     &          nucl2s(s2nucl(is)-1,iz))*
-     &          sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
-               endif
-              enddo
-              
-              dvpar(ix,iy) = dvpar(ix,iy) +
-     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
-     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
-     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
-     &         (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
-     &         na(leftix(ix,iy),leftiy(ix,iy),is)/
-     &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
-     &         0.5e0_R8*
-     &         (cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,s2nucl(is)-1)
-     &         -cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
-     &         t0 
          
              endif
             enddo
@@ -270,7 +224,6 @@ c Drift terms
           endif
          else
           dvpar=0.0_R8
-          dvpar_test=0.0_R8
          endif
         endif
 
@@ -314,46 +267,6 @@ c Drift terms
           enddo
          enddo
          fchvispar(:,:,:)=fchvispar(:,:,:)+fchvispar_a(:,:,:,is)
-         
-*       X-COMPONENT OF VISCOSITY PARALLEL CURRENT                       !srv
-         do iy = 0, ny-1                                                !srv
-          do ix = 0, nx                                                 !srv 01.07.99
-           if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
-            fchvispar_a_test(ix,iy,0,is) =                                   !srv 16.10.17
-     &        -vis_par*fac_vis(ix,iy)*                        !signmf*  !srv 25.04.00 05.02.05 22.06.08 11.01.13
-     &         2.0e0_R8*dvpar_test(ix,iy)                                    !srv 23.07.05
-     &        /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))            !srv 18.02.00
-     &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv
-     &        /3.0e0_R8                                                 !srv 18.02.00
-!     &        (dvpar(ix,iy)+dvpar(leftix(ix,iy),leftiy(ix,iy)))        !srv
-!     &        /(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !srv 18.02.00
-!     &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv
-!     &        /3.0e0_R8                                                !srv 18.02.00
-           endif                                                        !srv 26.11.02
-          enddo
-         enddo
-*        Y-COMPONENT OF VISCOSITY PARALLEL CURRENT                      !srv
-         wrk0 = 0.0e0_R8                                                !srv 23.07.05 {
-         do iy = -1, ny
-          do ix = 0, nx-1
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then
-             wrk0(ix,iy) = (dvpar_test(ix,iy)+
-     &         dvpar_test(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8           !srv 19.07.06
-           endif
-          enddo
-         enddo                                                          !srv 23.07.05 }
-         do iy = 0, ny                                                  !srv 01.07.99
-          do ix = 0, nx-1
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
-            fchvispar_a_test(ix,iy,1,is)=                                    !srv 16.10.17
-     &        vis_par*fac_vis(ix,iy)*                       ! signmf*   !srv 25.04.00 21.04.00 22.06.08 11.01.13
-     &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 23.07.05
-     &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 18.02.00
-     &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv
-     &       /3.0e0_R8                                                  !srv 18.02.00
-           endif                                                        !srv 26.11.02
-          enddo
-         enddo
        enddo
 
       endif                                                             !srv
@@ -373,34 +286,6 @@ c Drift terms
           end do
         end do
       end do
-      
-*  INTERIOR BOUNDARY AT DEAD REGIONS
-      DO IB=1,NNISO
-        DO IX=NXISO1(IB), NXISO2(IB)
-          DO IY=NYISO1(IB), NYISO2(IB)
-            fchvispar_a_test(ix,iy,0,:)=0.0e0_R8
-          end do
-        end do
-        DO IX=NXISO1(IB), NXISO2(IB)
-          DO IY=NYISO1(IB), NYISO2(IB)
-            fchvispar_a_test(ix,iy,1,:)=0.0e0_R8
-          end do
-        end do
-      end do
-      
-      if(iout.ne.0) then
-       do is = 0, ns-1
-        write (chns,'(i3.3)') is
-        call my_out(70,nx,ny,fchvispar_a(-1,-1,0,is),
-     &                      'b2tvspa_fchvispar_ax'//chns)
-        call my_out(70,nx,ny,fchvispar_a(-1,-1,1,is),
-     &                      'b2tvspa_fchvispar_ay'//chns)
-        call my_out(70,nx,ny,fchvispar_a_test(-1,-1,0,is),
-     &                      'b2tvspa_fchvispar_a_testx'//chns)
-        call my_out(70,nx,ny,fchvispar_a_test(-1,-1,1,is),
-     &                      'b2tvspa_fchvispar_a_testy'//chns)
-        enddo
-       endif  
 * ..return
       ncall = ncall+1
       call subend ()
