@@ -86,7 +86,7 @@ csw 10oct2012
       real (kind=R8) ::
      *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc), wrkf(nFc,0:1),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
-     *    fhe0_mdf(nFc,0:1), pe(nCv),
+     *    fhe0_mdf(nFc,0:1), pe(nCv), wrkc(nCv),
      *    dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1),
      *    dumm4(nFc,0:1)
 #ifdef WG_TODO
@@ -203,7 +203,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
      &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*
      &                                      switch%fch_pTe               !srv 30.12.09 13.01.17
        floe0_mdf(:,1) = 1.5_R8*dv%fne_he(:,1) +
-     &    co%chve(:,1)*nef - 5.0_R8/3.0_R8*fchstoch/qe                  !srv 11.05.99
+     &    co%chve(:,1)*nef - 5.0_R8/3.0_R8*fchstoch/qe                   !srv 11.05.99
 
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
@@ -238,14 +238,16 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
         dumm2 = 0.0_R8
         dumm3 = 0.0_R8
         dumm4 = 0.0_R8
+        wrkc = 1.5_R8*pl%te
+        wrkf = sign(dv%fne_he,floe0_mdf)
         call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
-     &    1.5_R8*pl%te,sign(dv%fne_he,floe0_mdf),dumm1,dumm2,fhe_32,
-     &    dumm3)
+     &    wrkc,wrkf,dumm1,dumm2,fhe_32,dumm3)
         fhe_32 = sign(fhe_32,dv%fne_he)
         fhe_52 = 0.0_R8
         dumm4(:,0) = -c071*dv%fch_p(:,0)/qe*switch%fch_pTe
+        wrkf = sign(dumm4,floe0_mdf)
         call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
-     &    pl%te,sign(dumm4,floe0_mdf),dumm1,dumm2,fhe_thermj,dumm3)
+     &    pl%te,wrkf,dumm1,dumm2,fhe_thermj,dumm3)
         fhe_thermj = sign(fhe_thermj,dumm4)
         fhe_thermj(:,0) = fhe_thermj(:,0) +
      &    switch%alfTeEh*alfe0*tefh*ehx
@@ -264,8 +266,9 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
         fhe_ecrb = 0.0_R8
         dumm4(:,0) = co%chve(:,0)*nef
         dumm4(:,1) = co%chve(:,1)*nef
+        wrkf = sign(dumm4,floe0_mdf)
         call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
-     &    pl%te,sign(dumm4,floe0_mdf),dumm1,dumm2,fhe_strange,dumm3)
+     &    pl%te,wrkf,dumm1,dumm2,fhe_strange,dumm3)
         fhe_strange = sign(fhe_strange,dumm4)
       endif
 
