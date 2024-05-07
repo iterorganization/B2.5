@@ -294,28 +294,29 @@ c*** The plasma flows across the boundaries
 
       ks=0
       do ls=1,nspecies
-        hlpic =0.0_R8
-        hlpit =0.0_R8
-        hlpiw =0.0_R8
+        hlpic=0.0_R8
+        hlpit=0.0_R8
+        hlpiw=0.0_R8
         hlpit_lp(ls)=0.0_R8
         hlpit_rp(ls)=0.0_R8
 c<<<
-        do ic=1,nbc
+        do ic=1,mpg%nbc
           hlp_pls(ic,ls)=0.0_R8
-          if (boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
+          if (boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .         geometryType).ne.NODIRECTION) kst_hlp=ic
         end do
 c>>>
         do is=1,nfluids(ls)
           ks=ks+1
           do 1100 ic = 1, mpg%nbc
-            if (boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
+            if (boundaryAssignments(
+     .           mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .           geometryType).eq.SOUTH) then
               do j = 1, ncbs
                 if(ic.eq.lcbs(j)) then
 c***     core boundary
-                  do i = 1, mpg%bcFcp(ic,2)
-                    ifc = mpg%bcFcP(ic,1)+i-1
+                  do i = 1, mpg%bcFcP(ic,2)
+                    iFc = mpg%bcFcP(ic,1)+i-1
                     hlpic=hlpic+
      .               st%dv%fna(iFc,1,ions_list(ks))
 c<<<
@@ -328,7 +329,7 @@ c>>>
               end do
 c***     wall in PFR
               do i = 1, mpg%bcFcP(ic,2)
-                ifc = mpg%bcFcP(ic,1)+i-1
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpiw=hlpiw+
      .           st%dv%fna(iFc,1,ions_list(ks))
 c<<<
@@ -337,11 +338,11 @@ c<<<
 c>>>
               end do
             else if (boundaryAssignments(
-     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .                geometryType).eq.NORTH) then
 c***     outer wall
               do i = 1, mpg%bcFcP(ic,2)
-                ifc = mpg%bcFcP(ic,1)+i-1
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpiw=hlpiw
      .           -st%dv%fna(iFc,1,ions_list(ks))
 c<<<
@@ -350,11 +351,11 @@ c<<<
 c>>>
               end do
             else if (boundaryAssignments(
-     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .                geometryType).eq.WEST) then
 c***     left target
               do i = 1, mpg%bcFcp(ic,2)
-                ifc = mpg%bcFcP(ic,1)+i-1
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpit=hlpit+
      .           st%dv%fna(iFc,0,ions_list(ks))
                 hlpit_lp(ls)=hlpit_lp(ls)+
@@ -365,11 +366,11 @@ c<<<
 c>>>
               end do
             else if (boundaryAssignments(
-     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .                geometryType).eq.EAST) then
 c***     right target
               do i = 1, mpg%bcFcP(ic,2)
-                ifc = mpg%bcFcP(ic,1)+i-1
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpit=hlpit-
      .           st%dv%fna(iFc,0,ions_list(ks))
                 hlpit_rp(ls)=hlpit_rp(ls)-
@@ -414,8 +415,8 @@ c
         hlpia =0.0_R8
         hlpis =0.0_R8
 c<<<
-        hlpit_l =0.0_R8
-        hlpit_r =0.0_R8
+        hlpit_l=0.0_R8
+        hlpit_r=0.0_R8
 c>>>
         do is=1,nfluids(ls)
           ks=ks+1

@@ -527,7 +527,12 @@ cwdk  now need to recompute full diamagnetic component for ud
             icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
             if (mpg%cvOnClosedSurface(icv)) then
              if(is.eq.ismain.and.switch%use_astra.ne.0) then
+#ifdef ASTRA
               CONPAR(IS,IB,1) = neb_astra                               !srv 28.07.11
+#else
+              call xerrab
+     .         ('Compile with -DASTRA option to couple to ASTRA!')
+#endif
              endif
              if (ishigh) call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 1')
@@ -768,7 +773,15 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           if(ncall_b2stbc_phys.eq.0) then
             if(is.eq.ismain.and.BCCHAR(IB).eq.'S'
      &                                   .and.switch%use_astra.ne.0)
-     >       CONPAR(IS,IB,1) = fneb_astra                               !srv 04.10.11
+     >       then
+#ifdef ASTRA
+              CONPAR(IS,IB,1) = fneb_astra                             !srv 04.10.11
+#else
+              call xerrab
+     .         ('Compile with -DASTRA option to couple to ASTRA!')
+#endif
+
+            end if
             write(*,'(a,1p,g14.7,a4,a1,a,a13,i3)')
      .       'BCCON =  8 : total particle flux ', CONPAR(IS,IB,1),
      1       ' on ', BCCHAR(IB), boundary_location(ib),

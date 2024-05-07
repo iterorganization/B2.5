@@ -80,8 +80,8 @@ cpax
       real (kind=R8) :: scur(nFc,0:1) !djm Jan2017
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
-c      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-c      integer, save :: b2kin=0, b2vis=0
+c      integer, save :: b2tfhi_hybr2 = 0, b2_upwind = 0, flo53 = 0
+c      integer, save :: b2kin = 0, b2vis = 0
 c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03
@@ -366,8 +366,9 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         dumm2 = 0.0_R8
         dumm3 = 0.0_R8
         dumm4 = 0.0_R8
+        wrkf = sign(1.5_R8*dv%fni_he,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(1.5_R8*dv%fni_he,floi0_mdf),dumm1,dumm2,fhi_32,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_32,dumm3)
         fhi_32 = sign(fhi_32,dv%fni_he)
         fhi_52 = 0.0_R8
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
@@ -384,33 +385,39 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         dumm1 = 0.0_R8
         dumm4(:,0) = co%chvi(:,0)*nif
         dumm4(:,1) = co%chvi(:,1)*nif
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_strange,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_strange,dumm3)
         fhi_strange = sign(fhi_strange,dumm4)
         dumm4(:,0) = 1.5_R8/qe*dv%fchinert(:,0)*switch%b2tfnb_xcur
         dumm4(:,1) = 1.5_R8/qe*dv%fchinert(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_inert,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_inert,dumm3)
         fhi_inert = sign(fhi_inert,dumm4)
         dumm4(:,0) = 1.5_R8/qe*dv%fchvispar(:,0)*switch%b2tfnb_xcur
         dumm4(:,1) = 1.5_R8/qe*dv%fchvispar(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_vispar,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_vispar,dumm3)
         fhi_vispar = sign(fhi_vispar,dumm4)
         dumm4(:,0) = 1.5_R8/qe*dv%fchvisper(:,0)*switch%b2tfnb_xcur
         dumm4(:,1) = 1.5_R8/qe*dv%fchvisper(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_visper,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_visper,dumm3)
         fhi_visper = sign(fhi_visper,dumm4)
         dumm4(:,0) = 1.5_R8/qe*dv%fchvisq(:,0)*switch%b2tfnb_xcur
         dumm4(:,1) = 1.5_R8/qe*dv%fchvisq(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_visq,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_visq,dumm3)
         fhi_visq = sign(fhi_visq,dumm4)
         dumm4(:,0) = 1.5_R8/qe*dv%fchanml(:,0)*switch%b2tfnb_xcur
         dumm4(:,1) = 1.5_R8/qe*dv%fchanml(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_anml,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_anml,dumm3)
         fhi_anml = sign(fhi_anml,dumm4)
       endif
 
@@ -420,14 +427,14 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
 
 csw 17feb2012
         if(no_Ptncr_x_hi.eq.0) then
-          coni0 = hybr(floi0,chci(ix,iy,0,0))-abs(floi0/2.e0)
+          coni0 = hybr(floi0,chci(ix,iy,0,0))-abs(floi0/2.0_R8)
         else
-          coni0 = chci(ix,iy,0,0)-abs(floi0/2.e0)
+          coni0 = chci(ix,iy,0,0)-abs(floi0/2.0_R8)
         endif
 
 cwdk 10.03.16 unified treatment of chvimx in b2tlhi.F. Test for b2tqca_model no longer required
         flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
-     &                          +ni(ix,iy,0))/2.d0
+     &                          +ni(ix,iy,0))/2.0_R8
         if(flomx.gt.0.0_R8) then
           t0 =coni0*abs(dti)/(flomx*
      &              max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
@@ -443,10 +450,10 @@ csw 13mar2013 modified hybrid SOLPS4 style (overwrite cone0)
 
 csw 30apr2014 for TESTING only
           if(flo53 .ne. 0) then
-            floi0=floi0*5.d0/3.d0
+            floi0=floi0*5.0_R8/3.0_R8
           endif
 
-          coni0=dim(chci(ix,iy,0,0)/(1.d0+t0), abs(floi0)*
+          coni0=dim(chci(ix,iy,0,0)/(1.0_R8+t0), abs(floi0)*
      .      max(0.0_R8,min(ti(ix,iy),ti(leftix(ix,iy),leftiy(ix,iy))))/
      .      max(b2tfhi_cutlo,ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy))))
         endif
@@ -482,7 +489,7 @@ csw 30apr2014 for SOLPS4 style
             floi(ix,iy,0,0) = floi0-
      &       sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &       min(0.0_R8,t1)**2
-            coni(ix,iy,0,0,0) = abs(floi0/2.e0)+coni0/(1+t0)            !srv 02.01.07
+            coni(ix,iy,0,0,0) = abs(floi0/2.0_R8)+coni0/(1.0_R8+t0)     !srv 02.01.07
           endif
 
         else
@@ -490,9 +497,9 @@ csw 30apr2014 for SOLPS4 style
 csw 17feb2012
           if(no_Ptncr_x_hi.eq.0) then
             coni0_mdf =
-     .        hybr(floi0_mdf,chci(ix,iy,0,0))-abs(floi0_mdf/2.0)        !srv 17.06.09 {
+     .        hybr(floi0_mdf,chci(ix,iy,0,0))-abs(floi0_mdf/2.0_R8)     !srv 17.06.09 {
           else
-            coni0_mdf = chci(ix,iy,0,0)-abs(floi0_mdf/2.0)
+            coni0_mdf = chci(ix,iy,0,0)-abs(floi0_mdf/2.0_R8)
           endif
 
 csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
