@@ -66,14 +66,17 @@
        return
        end subroutine set_exact_solution
 
-       subroutine calc_err(nCv, ns, pl, switch)
+       subroutine calc_err(nCv, ns, pl, switch, mpg)
        use b2mod_types
        use b2mod_constants
        use b2mod_switches
        use b2us_plasma
+       use b2us_map
+       use b2mod_numerics_namelist
        implicit none
        type (B2Plasma), intent (in) :: pl
-       type (switches), intent (inout) :: switch
+       type (switches), intent (in) :: switch
+       type (mapping), intent(in) :: mpg
        integer nCv, ns
        integer is, iCv, ind, i                                          !srv 09.07.18
        real (kind=R8) ::
@@ -93,17 +96,24 @@
        external norm2
 #endif
 
+!      Check equations to be solved first
        b2news_solving(1:4)=switch%no_solve.eq.0
        do i=1,4
          b2news_solving(i)=b2news_solving(i).or.
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
        enddo
+       call read_b2mod_numerics_namelist(nCv,ns,
+     &      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     &      switch%b2mndt_style)
 
        write (chnCv,'(i6.6)') nCv
        open(71, file='output/'//'errors_'//chnCv//'_us.dat')
 
-       if (b2news_solving(2)) then
+!      Perform error analysis
+
+       if (b2news_solving(2).and.
+     &     any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
          filename='exact_na_us.dat'
          call find_file(filename,l_exist)
          call xertst(l_exist,'No exact_na_us.dat file')
@@ -163,11 +173,16 @@
        endif
 
        if (b2news_solving(4)) then
-         call calc_err_cc(nCv, 'te', pl%te, exact_te, qe)                 !srv 29.12.18
-         call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe)
+         if (any(solveee(0:mpg%nnreg(0)))) then
+           call calc_err_cc(nCv, 'te', pl%te, exact_te, qe)                 !srv 29.12.18
+         endif
+         if (any(solveei(0:mpg%nnreg(0)))) then
+           call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe)
+         endif
        endif
 
-       if (b2news_solving(1)) then
+       if (b2news_solving(1).and.
+     &     any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
          filename='exact_ua_us.dat'
          call find_file(filename,l_exist)
          call xertst(l_exist,'No exact_ua_us.dat file')
@@ -226,7 +241,8 @@
          enddo
        endif
 
-       if (b2news_solving(3)) then
+       if (b2news_solving(3).and.
+     &     any(solvepo(0:mpg%nnreg(0)))) then
          call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8)
        endif
 

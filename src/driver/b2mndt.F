@@ -141,6 +141,7 @@ c      integer, save :: use_mms = 0
 *   ..initialisation
       data ramp_slow/0/
 *
+      character chns*3 !temp                                            !fc 22.04.24
 *-----------------------------------------------------------------------
 *.computation
 
@@ -169,10 +170,10 @@ c      integer, save :: use_mms = 0
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
 c       call ipgeti ('b2mndr_equation_sources', equation_sources)        !srv 26.02.18 {
        if(switch%equation_sources.ne.0)
-     &   call read_equation_sources(nCv, ns, switch, itim)
+     &   call read_equation_sources(nCv, ns, switch, itim, mpg)
 c       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
        if(switch%boundary_sources.ne.0)
-     &   call read_boundary_sources(nCv, ns, switch, itim)    !srv 26.02.18 }
+     &   call read_boundary_sources(nCv, ns, switch, itim, mpg)    !srv 26.02.18 }
 c       call ipgeti ('b2mndr_use_mms', use_mms)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
@@ -195,9 +196,9 @@ c       call ipgeti ('b2mndr_use_mms', use_mms)
 *   ..time-dependent MMS test                                            !fc 21.03.24
       if (switch%use_mms.eq.2.and.itim.gt.0) then
         if(switch%equation_sources.ne.0)
-     &    call read_equation_sources(nCv, ns, switch, itim)
+     &    call read_equation_sources(nCv, ns, switch, itim, mpg)
         if(switch%boundary_sources.ne.0)
-     &    call read_boundary_sources(nCv, ns, switch, itim)
+     &    call read_boundary_sources(nCv, ns, switch, itim, mpg)
       endif
 *   ..test nCv, nFc, ns, ismain
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -567,8 +568,19 @@ c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
 *   ..mms time-dependent error analysis
       if(switch%use_mms.eq.2.and.
      &  mod(ncall_b2mndt+1,ntim_step_out).eq.0) then
-        call calc_err(nCv, ns, st%pl, switch)
+        call calc_err(nCv, ns, st%pl, switch, mpg)
       endif
+
+!     Temporary way to have fluxes output at each outer iteration only    !fc.22.04.24
+!      if (switch%b2mndt_temp0.ne.1) then
+!       do is=0,ns-1
+!        write (chns,'(i3.3)') is
+!        call my_out_us(70,nFc,1,st%dv%fna(1,0,is),'b2npco_fna_th'//chns)
+!        call my_out_us(70,nFc,1,st%dv%fna(1,1,is),'b2npco_fna_r'//chns)
+!        call my_out_us(70,nFc,1,st%dv%fmo(1,0,is),'b2npmo_fmo_th'//chns)
+!        call my_out_us(70,nFc,1,st%dv%fmo(1,1,is),'b2npmo_fmo_r'//chns)
+!       enddo
+!      endif
 
       if (switch%iav_run > 0)
      . call running_average(nCv,ns,st%pl,st%srw,st_avg)
