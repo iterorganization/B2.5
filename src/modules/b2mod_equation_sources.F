@@ -43,11 +43,14 @@
        return
       end subroutine dealloc_b2mod_equation_sources
 
-      subroutine read_equation_sources(nCv, ns, switch, itim)
+      subroutine read_equation_sources(nCv, ns, switch, itim, mpg)
        use b2mod_types
        use b2mod_switches
+       use b2mod_numerics_namelist
+       use b2us_map
        implicit none
-       type (switches), intent (inout) :: switch
+       type (switches), intent (in) :: switch
+       type (mapping), intent (in) :: mpg
        integer nCv, ns
        integer is, iCv, i, itim
        logical b2news_solving(4)
@@ -55,14 +58,21 @@
        logical art_exists
        character*4 chitim
 
+!      Check equations to be solved first
        b2news_solving(1:4)=switch%no_solve.eq.0
        do i=1,4
          b2news_solving(i)=b2news_solving(i).or.
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
        enddo
+       call read_b2mod_numerics_namelist(nCv,ns,
+     &      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     &      switch%b2mndt_style)
 
-       if (b2news_solving(2)) then
+!      Read inputs
+     
+       if (b2news_solving(2).and.
+     &      any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
          if (switch%use_mms.eq.1) then
            filename = 'art_sna_us.dat'
            call find_file(filename,art_exists)
@@ -89,7 +99,8 @@
          endif
        endif
 
-       if (b2news_solving(1)) then
+       if (b2news_solving(1).and.
+     &      any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
          if (switch%use_mms.eq.1) then
            filename='art_smo_us.dat'
            call find_file(filename,art_exists)
@@ -117,29 +128,34 @@
        endif
 
        if (b2news_solving(4)) then
-         filename='art_she_us.dat'
-         call find_file(filename,art_exists)
-         if(art_exists) then
-           open(70,FILE=trim(filename))
-           read (70,"(1x,e24.16)")
-     &      (art_she(iCv,0),iCv=1,nCv)
-           close(70)
-         else
-           call xerrab('There is no art_she_us.dat file')
+         if (any(solveee(0:mpg%nnreg(0)))) then
+           filename='art_she_us.dat'
+           call find_file(filename,art_exists)
+           if(art_exists) then
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        (art_she(iCv,0),iCv=1,nCv)
+             close(70)
+           else
+             call xerrab('There is no art_she_us.dat file')
+           endif
          endif
-         filename='art_shi_us.dat'
-         call find_file(filename,art_exists)
-         if(art_exists) then
-           open(70,FILE=trim(filename))
-           read (70,"(1x,e24.16)")
-     &      (art_shi(iCv,0),iCv=1,nCv)
-           close(70)
-         else
-           call xerrab('There is no art_shi_us.dat file')
+         if (any(solveei(0:mpg%nnreg(0)))) then
+           filename='art_shi_us.dat'
+           call find_file(filename,art_exists)
+           if(art_exists) then
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        (art_shi(iCv,0),iCv=1,nCv)
+             close(70)
+           else
+             call xerrab('There is no art_shi_us.dat file')
+           endif
          endif
        endif
 
-       if (b2news_solving(3)) then
+       if (b2news_solving(3).and.
+     &     any(solvepo(0:mpg%nnreg(0)))) then
          filename='art_sch_us.dat'
          call find_file(filename,art_exists)
          if(art_exists) then
