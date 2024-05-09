@@ -12,7 +12,7 @@
       use b2mod_geo
       use b2mod_subsys
       use b2mod_zhfrtf
-     & , only : nal, Z_to_m1, Ia
+     & , only : nal, Z_to_m1_ast, Ia
       use b2mod_b2mrel
      & , only : amnucl, s2nucl
       use b2mod_b2zhco
@@ -560,7 +560,7 @@
      .                             bottomiy(ix,iy))) then
                     hip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      & /bb(ix,iy,0)/bbaverage2(iy))
-     & *(nal(ix,iy,inucl)*ti(ix,iy)/qe*Z_to_m1(ix,iy,inucl))*
+     & *(nal(ix,iy,inucl)*ti(ix,iy)/qe*Z_to_m1_ast(ix,iy,inucl))*
      &  (ti(topix(ix,iy),topiy(ix,iy))
      &  -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &  (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
@@ -615,7 +615,7 @@
      &               -2.5e0_R8*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bb(ix,iy,3)
      &               *(nal(ix,iy,inucl)*ti(ix,iy)/qe
-     &               *Z_to_m1(ix,iy,inucl))*
+     &               *Z_to_m1_ast(ix,iy,inucl))*
      &               (ti(topix(ix,iy),topiy(ix,iy))
      &               -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &               (hy1(ix,iy)+
