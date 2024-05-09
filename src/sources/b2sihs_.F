@@ -20,8 +20,10 @@
       use b2mod_b2zhco
      & , only: zhd_corr , zh_vis_type                                 !som 21.03.21  21.12.23
       use b2mod_zhfrtf
-     & , only: avm_u,                                                 !som 21.03.21 16.08.21
-     &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
+     & , only: avm_u, nal,                                            !som 21.03.21 16.08.21
+     &         b2mod_zhfrtf_avm_u, b2mod_zhfrtf_prep                  !som 18.08.21
+      use b2mod_b2mrel
+     & , only : s2nucl, nucl2s, znnucl_int
       use b2mod_geo
      & , only : hy1
       use b2mod_balance !djm Jan2017
@@ -71,7 +73,7 @@
 *   ..global named constants
 
 *   ..local variables
-      integer ncall, style, n2, ix, iy, is, isb, k
+      integer ncall, style, n2, ix, iy, is, isb, k, inucl, iz
       integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0,    !srv 11.09.09
      &                 iout_b2wdat = 0
       integer, save :: icase = 0
@@ -470,6 +472,8 @@
      &  Zhdanov_visu.eq.1) then                                       !som 18.08.21
 *   ..re-calculate mass-average velocity
         call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)
+*   ..re-calculate isonuclear density
+        call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)                        !som 09.05.24
       endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
@@ -521,6 +525,28 @@
             else
              wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
+             
+             do inucl=0,nspecies-1                                     !som 09.05.24
+              if(inucl.ne.s2nucl(is)-1) then
+               t0=0.0e0_R8
+               do iz= 1, znnucl_int(inucl)
+                t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(inucl,iz))*
+     &          ti(ix,iy)+
+     &          na(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
+     &          ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &          (ua(ix,iy,nucl2s(inucl,iz))
+     &          -ua(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz)))
+               enddo
+                
+               wrk0(ix,iy) = wrk0(ix,iy) +
+     &         (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &         na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &         0.5e0_R8*cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,inucl)*
+     &         t0*
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))           
+              endif
+             enddo
             endif
            enddo
           enddo

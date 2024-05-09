@@ -100,7 +100,7 @@
      &    Zhdanov_visu.ne.0) then
 *   ..re-calculate mass-averaged velocity
         call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)                     !som 16.08.21
-*   ..re-calculate mass-averaged velocity
+*   ..re-calculate isonuclear density
         call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)                          !som 30.04.24
       endif
 
