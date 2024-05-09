@@ -37,7 +37,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/lib/cpp
@@ -46,9 +46,9 @@ SED = sed s:\#PREC\#:d:g
 
 FC = f90
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -qfixed -qextchk
+  FCOPTS = -g -C -qfixed -qextchk
 else
-FCOPTS = -O3
+  FCOPTS = -O3
 endif
 
 DBLFC = ${FC}
@@ -66,7 +66,7 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 LD = f90

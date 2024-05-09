@@ -9,6 +9,7 @@ LD_NETCDF ?=
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 ifndef SOLPS_CPP
+  NO_MPI ?= true
   DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
@@ -25,7 +26,7 @@ ifndef SOLPS_CPP
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
@@ -40,8 +41,8 @@ MOD = mod
 OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
 
 ifdef USE_OPENMP
-FCOPTS += -openmp
-LDOPTS += -openmp
+  FCOPTS += -openmp
+  LDOPTS += -openmp
 endif
 
 BLD = ar rucv

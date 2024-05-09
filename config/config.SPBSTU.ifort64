@@ -38,7 +38,10 @@ FCOPTS  += -check all -fpe0
 endif
 endif
 else
-FCOPTS   = -O2 -xHost -fPIC -fp-model=precise -assume no2underscore
+FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -fp-model=precise
+endif
 ifdef USE_MPI
 FCOPTS  += ${MPI_CPP}
 else
