@@ -15,6 +15,7 @@ EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 # DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP
+  NO_MPI ?= true
   DEFINES += -DLEGACYCOMP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
