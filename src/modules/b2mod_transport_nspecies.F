@@ -3,7 +3,7 @@
       use b2mod_version
       implicit none
       real (kind=R8), allocatable, save ::
-     *  chci_al(:,:,:,:),
+     *  chci_al_ast(:,:,:,:),
      *  cvsa_hAdp_albe(:,:,:,:,:),
      *  cvsa_hBdp_al(:,:,:,:),                                        !som 20.10.21
      *  cvsa_uAdp_albe(:,:,:,:,:),
@@ -20,7 +20,7 @@
       integer nxd,nyd,nspecies
 
 !      print *, 'nspecies:', nspecies
-      allocate(chci_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))
+      allocate(chci_al_ast(-1:nxd,-1:nyd,0:1,0:nspecies-1))
       allocate(cvsa_hAdp_albe(-1:nxd,-1:nyd,0:1,
      &                         0:nspecies-1,0:nspecies-1))
       allocate(cvsa_hBdp_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))          !som 20.10.21
@@ -40,8 +40,8 @@
       subroutine dealloc_b2mod_transport_nspecies
       implicit none
 
-      if (.not.allocated(chci_al)) return
-      deallocate(chci_al)
+      if (.not.allocated(chci_al_ast)) return
+      deallocate(chci_al_ast)
       deallocate(cvsa_hAdp_albe)
       deallocate(cvsa_hBdp_al)                                        !som 08.10.21
       deallocate(cvsahz_hAdp_albe)

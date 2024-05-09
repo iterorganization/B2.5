@@ -323,7 +323,7 @@ ctmp.dpc
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      *       cvsahz_drho, cvsa_drho,                                     !som 18.08.21
-     *       chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,          !som 08.10.21
+     *       chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,      !som 08.10.21
      *       cvsa_hAdp_albe, cvsa_hBdp_al,                               !som 20.10.21
      *       cvsahz_uAdp_albe, cvsahz_uBdp_al,                           !som 22.12.23
      *       cvsa_uAdp_albe, cvsa_uBdp_al,                               !som 26.04.24
@@ -345,7 +345,7 @@ ctmp.dpc
      &                    fchvisper_a, fchvisper)
             call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,    !som 20.10.21
      &             fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
@@ -379,7 +379,7 @@ ctmp.dpc
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 18.08.21
-     &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
+     &     chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,            !som 20.10.21
      &     cvsa_uAdp_albe, cvsa_uBdp_al,                                 !som 26.04.24
      &     cvla, chce, chve, chci, chvi, calf,                           !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,

@@ -367,7 +367,7 @@ csw 01oct2012 initialize potential if necessary
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      * cvsahz_drho, cvsa_drho,                                           !som 18.08.21
-     * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,                !som 08.10.21
+     * chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,            !som 08.10.21
      * cvsa_hAdp_albe, cvsa_hBdp_al,                                     !som 20.10.21
      * cvsahz_uAdp_albe, cvsahz_uBdp_al,                                 !som 22.12.23
      * cvsa_uAdp_albe, cvsa_uBdp_al,                                     !som 26.04.24
@@ -392,7 +392,7 @@ csw 01oct2012 initialize potential if necessary
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,    !som 20.10.21
      &             fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -652,7 +652,7 @@ csw 16oct2012 init ier0
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,    !som 20.10.21
      &             fchvisq_a, fchvisq)
 
 *   ..iterate on momentum balance
@@ -730,7 +730,7 @@ c   extra call at this place within internal iteration)
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
-     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
+     &    chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,             !som 20.10.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
      &    cvla, chce, chve, chci, chvi, calf,                            !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
@@ -826,7 +826,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1, dtim,    !srv 13.01.17 24.05.21
      &   vol, hx, hz, bb, pbshz, lnlam,                                  !srv 23.07.99 09.01.01 01.07.09
      &   cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,                   !srv 19.07.02
-     &   alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,      !som 08.10.21
+     &   alpha1, chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,  !som 08.10.21
      *   cvsahz_uAdp_albe, cvsahz_uBdp_al,                               !som 22.12.23
      &   smo, smq, cthe, cthi, chci, smof,                               !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
@@ -852,7 +852,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &    vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
-     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
+     &    chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,             !som 20.10.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
      &    conc, avisper_a, bvisper_a, cvisper_a,
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
@@ -889,7 +889,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
      &      vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,    !som 18.08.21 !srv 24.08.21
-     &      chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               !som 20.10.21
+     &      chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,           !som 20.10.21
      &      cvsa_uAdp_albe, cvsa_uBdp_al,                                !som 26.04.24
      &      conc, avisper_a, bvisper_a, cvisper_a,
      &      fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,  !srv 08.09.21

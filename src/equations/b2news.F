@@ -337,7 +337,7 @@
      3   chvi, csig, csigin, calf, cthe, cthi,
      4   cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,     !srv 09.01.01 15.12.05
      *   cvsahz_drho, cvsa_drho,                                         !som 18.08.21
-     *   chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,              !som 08.10.21
+     *   chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,          !som 08.10.21
      *   cvsa_hAdp_albe, cvsa_hBdp_al,                                   !som 20.10.21
      *   cvsahz_uAdp_albe, cvsahz_uBdp_al,                               !som 22.12.23
      *   cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 26.04.24
@@ -365,7 +365,7 @@
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 20.10.21
-     &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
+     &     chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,            !som 20.10.21
      &     cvsa_uAdp_albe, cvsa_uBdp_al,                                 !som 26.04.24
      &     cvla, chce, chve, chci, chvi, calf,                           !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
@@ -407,7 +407,7 @@
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
-     &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
+     &                chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al, !som 20.10.21
      &                fchvisq_a, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
@@ -485,7 +485,7 @@
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
-     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
+     &    chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,             !som 20.10.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
      &    cvla, chce, chve, chci, chvi, calf,                            !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
@@ -555,7 +555,7 @@ cxpb
         call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1, dtim,  !srv 13.01.17 24.05.21
      &    vol, hx, hz, bb, pbshz, lnlam,                                 !srv 01.07.09
      &    cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,                  !srv 02.07.08 som 18.08.21
-     &    alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
+     &    alpha1, chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
      *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
      &    smo, smq, cthe, cthi, chci, smof,
      &    resmo, resmt, corua, corut, pcca, pccm, ier0)
@@ -578,7 +578,7 @@ cxpb
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
-     &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
+     &                chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al, !som 20.10.21
      &                fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -885,7 +885,7 @@ cxpb
      1         pz, ti, ni(-1,-1,1), na, fna, uadia, ua, fne_32, fne_52,  !xpb
      &         csig, csigin, csig_stoch, chce, chve, chci,               !srv 24.08.21
      &         calf, chvemx, cvsa_cl, cvsa_drho,                         !som 18.08.21
-     &         chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,            !som 20.10.21
+     &         chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &         cvsa_uAdp_albe, cvsa_uBdp_al,                             !som 26.04.24
      &         fch, conc, fchstoch, fchdia,                              !srv 17.12.13 16.10.17
      &         fch_p, fchvispar, fchvisq, fchin, fchinert,
@@ -925,7 +925,7 @@ cxpb
      &           fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,    !srv 21.10.02
      &           fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &           cdna, cdpa, cvsa_cl, cvsa_drho,                         !som 20.10.21
-     &           chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,          !som 20.10.21
+     &           chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,      !som 20.10.21
      &           cvsa_uAdp_albe, cvsa_uBdp_al,                           !som 26.04.24
      &           cvla, chce, chve, chci, chvi, calf,
      &           rlsa, rlra, rlqa, rlcx, rlrd,
@@ -1145,7 +1145,7 @@ c     with diamagnetic drift part                                        !xpb
      1   ti, ni(-1,-1,1), na, fna, uadia,                                !xpb
      &   ua, fne_32, fne_52, csig, csigin, csig_stoch,
      &   chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,             !srv 24.08.21 !som 18.08.21
-     &   chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                  !som 20.10.21
+     &   chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,              !som 20.10.21
      &   cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 26.04.24
      &   fch, conc, fchstoch, fchdia,                                    !srv 17.12.13 16.10.17
      &   fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,     !srv 25.11.08

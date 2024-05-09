@@ -4,7 +4,8 @@
       subroutine b2siav_zh (nx, ny, ns, isb, ismain, mb, zb,          !srv 19.02.21
      & ub, wbdia, vbecrb, te, ti, nb, ne2, lnlam,                     !srv 01.07.09
      & cvsbhz, cvsbhz_cl, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
-     & alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
+     & alpha1, chci_al_ast, chci_a,
+     & cvsahz_hAdp_albe, cvsahz_hBdp_al,                              !som 08.10.21
      * cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
      & wrk0, wrk1, wrk2, rho_rel, avm_u,
      & na, ua)
@@ -38,7 +39,7 @@
      &  cvsbhz(-1:nx,-1:ny,0:1),                                      !srv 04.10.99 09.01.01
      &  cvsbhz_cl(-1:nx,-1:ny,0:1),                                   !som 30.04.24
      &  cvsbhz_drho(-1:nx,-1:ny,0:1),                                 !som 18.08.21
-     &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                        !som 08.10.21
+     &  chci_al_ast(-1:nx,-1:ny,0:1,0:nspecies-1),                    !som 08.10.21
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                               !som 08.10.21
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),  !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 08.10.21
@@ -317,7 +318,7 @@
               do iy=0,ny-1
                 do ix=-1,nx
                   if(leftix(ix,iy).ne.-2) then                        !srv 26.11.02
-                    wrk0(ix,iy)=-chci_al(ix,iy,0,inucl)
+                    wrk0(ix,iy)=-chci_al_ast(ix,iy,0,inucl)
      &               *(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
                   endif
                 enddo
