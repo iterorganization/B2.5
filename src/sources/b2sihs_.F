@@ -547,6 +547,30 @@
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))           
               endif
              enddo
+             
+             t0=0.0e0_R8                                               !som 09.05.24
+             do iz= 1, znnucl_int(s2nucl(is)-1)
+              if(iz.ne.nint(rza(ix,iy,is))) then
+               t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
+     &         ti(ix,iy)+
+     &         na(leftix(ix,iy),leftiy(ix,iy),
+     &         nucl2s(s2nucl(is)-1,iz))*
+     &         ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &         (ua(ix,iy,nucl2s(s2nucl(is)-1,iz)) -
+     &         ua(leftix(ix,iy),leftiy(ix,iy),
+     &         nucl2s(s2nucl(is)-1,iz)))
+              endif
+             enddo
+             
+             wrk0(ix,iy) = wrk0(ix,iy) +
+     &        (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &        na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &        nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &        0.5e0_R8*
+     &        (cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,s2nucl(is)-1)
+     &        -cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
+     &        t0
+         
             endif
            enddo
           enddo
