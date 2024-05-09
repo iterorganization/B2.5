@@ -8,7 +8,7 @@
      3 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
      * cvsahz_drho, cvsa_drho,                                          !som 18.08.21
-     * chci_al_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,       !som 08.10.21
+     * chci_al_ast_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,   !som 08.10.21
      * cvsa_hAdp_luc, cvsa_hBdp_luc,                                    !som 20.10.21
      * cvsahz_uAdp_luc, cvsahz_uBdp_luc,                                !som 22.12.23
      * cvsa_uAdp_luc, cvsa_uBdp_luc,                                    !som 26.04.24                                      
@@ -33,6 +33,8 @@
      & , only: avm_u, w_out, hTdp_out, hwdp_out,
      &         rTdpgamma_out, rwdpgamma_out,
      &         piu_out
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int
       use b2mod_neoclassical
       use b2mod_subsys
       use b2mod_ipmain
@@ -77,7 +79,7 @@
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),                            !som 16.08.21
-     &  chci_al_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 08.10.21
+     &  chci_al_ast_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 09.05.24
      &  chci_a_luc(-1:nx,-1:ny,0:1,0:ns-1),                             !som 08.10.21
      &  cvsa_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
      &  cvsa_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                    !som 20.10.21
@@ -127,7 +129,7 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, is, is0, n2
+      integer ix, iy, is, is0, n2, inucl, iz
       integer ncall, pot_eq, no_current, no_solve, style, elm_count
       integer, save :: nnucl, zmaxmax                                   !som 09.02.21
       integer, save :: transport_namelist = 0
@@ -159,6 +161,7 @@
      &  cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  chci0_al(-1:nx,-1:ny,0:1,0:nspecies-1),                         !som 08.10.21
+     &  chci_al_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 08.10.21
      &  chci0_a(-1:nx,-1:ny,0:1,0:ns-1),                                !som 08.10.21
      &  cvsa0_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),          !som 20.10.21
      &  cvsa0_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
@@ -353,6 +356,16 @@
      &   cvsa_uAdp_fl, cvsa_uBdp_fl, cvsa_uAdp_luc ,cvsa_uBdp_luc,
      &   cvsahz_uAdp_fl, cvsahz_uBdp_fl, cvsahz_uAdp_luc,
      &   cvsahz_uBdp_luc)                                             !som 08.10.2021 22.12.23
+     
+*   ..compute ion heat conductivity summed over charge states  
+        chci_al_ast_luc = 0.0_R8
+        do inucl=0,nspecies-1
+         do iz= 1, znnucl_int(inucl)
+          chci_al_ast_luc(-1:nx,-1:ny,0,inucl) = 
+     &    chci_al_ast_luc(-1:nx,-1:ny,0,inucl) + 
+     &    chci_a_luc(-1:nx,-1:ny,0,nucl2s(inucl,iz))
+         enddo
+        enddo
 
         if (Zhdanov_test.eq.0 .and. Zhdanov_cond.eq.1) then           !som 10.08.21
           chci0(-1:nx,-1:ny,0:1)=chci0_luc(-1:nx,-1:ny,0:1)
@@ -413,6 +426,8 @@
      &       'b2trzh_fllim_chci_alx'//chns)
             call my_out(70,nx,ny,chci_al_luc(-1,-1,0,is),
      &       'b2trzh_luciani_fllim_chci_alx'//chns)
+            call my_out(70,nx,ny,chci_al_ast_luc(-1,-1,0,is),
+     &       'b2trzh_luciani_fllim_chci_ast_alx'//chns)
             do is0 = 0, nspecies-1
              write (chns0,'(i3.3)') is0
               call my_out(70,nx,ny,cvsa0_hAdp(-1,-1,0,is,is0),
