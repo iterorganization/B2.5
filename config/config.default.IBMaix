@@ -37,32 +37,32 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ccs/lib/cpp
 CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
-SED = 
+SED =
 
 FC = xlf90
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -qfixed -qextchk # -qrealsize=8 
+  FCOPTS = -g -C -qfixed -qextchk # -qrealsize=8
 else
-FCOPTS = -O2 -qarch=pwr -qfixed -qextchk -qflttrap=ov:zero:inv:en -pg # was -O3 -qhot -qrealsize=8 
-FCOPTS = -O2 -qarch=pwr -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -O3 -qhot -qrealsize=8 
-FCOPTS = -O2 -qhot -qarch=pwr2 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8 
-FCOPTS = -O2 -qarch=pwr2 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8 
-FCOPTS = -O2 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8 
-FCOPTS = -O3 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8 
-FCOPTS = -O3 -qstrict -qfixed -qextchk -qflttrap=ov:zero:inv:en -qspill=32704 # was -qrealsize=8 
-FCOPTS = -O3 -qstrict -qfixed -qextchk -qflttrap=ov:zero:inv:en -qspill=128400 -qmaxmem=-1 # was -qrealsize=8 
+  FCOPTS = -O2 -qarch=pwr -qfixed -qextchk -qflttrap=ov:zero:inv:en -pg # was -O3 -qhot -qrealsize=8
+  FCOPTS = -O2 -qarch=pwr -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -O3 -qhot -qrealsize=8
+  FCOPTS = -O2 -qhot -qarch=pwr2 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8
+  FCOPTS = -O2 -qarch=pwr2 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8
+  FCOPTS = -O2 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8
+  FCOPTS = -O3 -qfixed -qextchk -qflttrap=ov:zero:inv:en # was -qrealsize=8
+  FCOPTS = -O3 -qstrict -qfixed -qextchk -qflttrap=ov:zero:inv:en -qspill=32704 # was -qrealsize=8
+  FCOPTS = -O3 -qstrict -qfixed -qextchk -qflttrap=ov:zero:inv:en -qspill=128400 -qmaxmem=-1 # was -qrealsize=8
 endif
 
 DBLFC = ${FC}
 DBLOPTION = -qrealsize=8
 DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLSED =
 
 INCMOD = -I
 MOD = mod
@@ -76,7 +76,7 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF}
 # LDLIBES = -lblas ${NAG} -lmass
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 LD = xlf90
