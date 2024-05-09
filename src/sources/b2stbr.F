@@ -15,6 +15,7 @@
       use b2mod_first_flight
       use b2mod_constants
       use b2mod_neutrals_namelist
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
@@ -25,6 +26,7 @@
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
 #endif
      &          balance_netcdf
+#endif
       use b2mod_subsys
 #ifdef B25_EIRENE
       use b2mod_eirene
@@ -48,7 +50,9 @@
       use b2us_map
       use b2us_plasma
       use b2mod_ad
-     & , only : ncall_b2stbr, old_deposition, old_erosion
+     & , only : ncall_b2stbr, old_deposition, old_erosion,
+     &          in_no_of_start_points, in_no_of_angles,
+     &          in_size_of_table
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -129,7 +133,6 @@
      &  flxtmp(nCv)
 #endif
       integer sput_src,
-     *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
 #ifdef WG_TODO
      1  coreregn2,
 #endif
@@ -171,14 +174,11 @@
 #endif
 *   ..initialisation
       save sput_src,
-     *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
 #ifdef WG_TODO
      1     coreregn2,
 #endif
      5     sput_chem_model, reflection_on, sputter_energy_on
       data sput_src/1/,
-     *     in_no_of_angles/9/,
-     *     in_size_of_table/200000/,
 #ifdef WG_TODO
      1     coreregn2/4/,
 #endif
@@ -384,6 +384,7 @@ c   --> better solution wanted here..
        if (switch%b2stbr_neutrals_namelist.eq.1
      &                          .or. switch%use_eirene.ne.0) then
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
           snatmp=st%srw%sna0
@@ -391,6 +392,7 @@ c   --> better solution wanted here..
           shetmp=st%srw%she0
           shitmp=st%srw%shi0
         endif
+#endif
         call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
      &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
@@ -398,6 +400,7 @@ c   --> better solution wanted here..
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
      &   main_call, new_sputter_namelist, shi0_ff, f_redep)
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
           b2stbr_phys_sna0to1=st%srw%sna0-snatmp
@@ -405,9 +408,11 @@ c   --> better solution wanted here..
           b2stbr_phys_she0to3=st%srw%she0-shetmp
           b2stbr_phys_shi0to3=st%srw%shi0-shitmp
         endif
+#endif
        else
 #ifdef WG_TODO
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources beforehand
           snatmp=sna0
@@ -415,6 +420,7 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
+#endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
      &   na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
@@ -431,6 +437,7 @@ c   --> better solution wanted here..
      &   switch%b2stbr_sput_chem_cutoff_beta, shi0_ff,
      &   f_redep, switch%b2stbr_potential_at_guard_cell,
      &   switch%recycled_neutrals_contr)
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
           b2stbr_bas_sna0to1=sna0-snatmp
@@ -439,17 +446,20 @@ c   --> better solution wanted here..
           b2stbr_bas_shi0to3=shi0-shitmp
         endif
 #endif
+#endif
        endif
       endif
 
       if(switch%b2stbr_first_flight.ne.0) then
 #ifdef WG_TODO
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources beforehand
           snatmp=sna0
           shetmp=she0
           shitmp=shi0
         endif
+#endif
 #ifdef _OPENMP
         start_time = omp_get_wtime()
 #else
@@ -540,12 +550,14 @@ c   --> better solution wanted here..
 #endif
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
           b2stbr_first_flight_sna0to1=sna0-snatmp
           b2stbr_first_flight_she0to3=she0-shetmp
           b2stbr_first_flight_shi0to3=shi0-shitmp
         endif
+#endif
 #endif
       endif
 

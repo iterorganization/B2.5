@@ -8,7 +8,7 @@
 #ifndef TEST_MAP
       use b2mod_constants
       use b2mod_user_namelist
-     & , only : omp, nomp, icsepomp, psi_omp
+     & , only : omp, nomp, icsepomp, psi_omp, nromp
       use b2mod_b2cmpa
      & , only : am
 ! csc The following are not necessary for computation but are needed

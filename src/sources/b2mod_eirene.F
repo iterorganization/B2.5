@@ -19,6 +19,7 @@
       use b2mod_trace
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & ,only : eirene_mc_papl_sna0to1, eirene_mc_pmpl_sna0to1,
      &         eirene_mc_pael_sne0to1, eirene_mc_pmel_sne0to1,
@@ -36,6 +37,7 @@
      &         eirene_mc_pmio_sna_bal, eirene_mc_piio_sna_bal,
      &         alloc_b2mod_eirene_sources,
      &         balance_netcdf
+#endif
       use b2mod_recycle !nh Feb2020
      & ,only : fna_mol
 #ifdef B25_EIRENE
@@ -335,9 +337,11 @@ c not sure this is the right place
         allocate(sum_wld(4,2+NATM))
         allocate(NPTS_input(NSTRAI))
         allocate(tflux0(NSTRAI))
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
          call alloc_b2mod_eirene_sources(nCv,ns,natm,nmol,nion,nstrat)
         endif
+#endif
 
         write(*,*) 'Calling test_couple'
         call test_couple(nCv,nFc,nstra,nfl,natm,nmol,nion,nlimps)
@@ -1344,6 +1348,7 @@ c!###}
      *                   sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
                     smo(ic,fluids_list(is),istrai)=
      *                   smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then !djm Jan2017
                       sni_papl(ic,fluids_list(is),istrai)=
      *                     sni_papl(ic,fluids_list(is),istrai)*
@@ -1370,6 +1375,7 @@ c!###}
      *                     smo_cppv(ic,fluids_list(is),istrai)*
      *                     hlp_scl(ls)
                     endif
+#endif
                   end if !}
 !WG_TODO                  if(resignore(ix-1,iy-1,1).ne.0) then !{
                   hlp_s(ls)=hlp_s(ls)+
@@ -1550,6 +1556,7 @@ c>>>
      *                 sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
                     smo(ic,fluids_list(is),istrai)=
      *                 smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then !djm Jan2017
                       sni_papl(ic,fluids_list(is),istrai)=
      *                   sni_papl(ic,fluids_list(is),istrai)*
@@ -1576,6 +1583,7 @@ c>>>
      *                   smo_cppv(ic,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
                     endif
+#endif
                   end if !}
                 else !}{
                   sna_paat(ic,ls,istrai)=
@@ -1802,6 +1810,7 @@ c*** Here only the second pass of correction
      *                 sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
                     smo(ic,fluids_list(is),istrai)=
      *                 smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then !djm Jan2017
                       sni_papl(ic,fluids_list(is),istrai)=
      *                   sni_papl(ic,fluids_list(is),istrai)*
@@ -1828,6 +1837,7 @@ c*** Here only the second pass of correction
      *                   smo_cppv(ic,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
                     endif
+#endif
                   end do !}
                 end if
               else
@@ -2023,6 +2033,7 @@ c              it is NOT IYSs style)
         smo_av=0.0_R8
         see_av=0.0_R8
         sei_av=0.0_R8
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           allocate(sne_av_pael(size(see,1),size(see,2)))
           allocate(sne_av_pmel(size(see,1),size(see,2)))
@@ -2079,6 +2090,7 @@ c              it is NOT IYSs style)
           sei_av_eipl=0.0_R8
           sei_av_eppl=0.0_R8
         endif
+#endif
       endif
 
       if(neutr_avg .gt. 0) then
@@ -2090,6 +2102,7 @@ c              it is NOT IYSs style)
          smo_av=0.0_R8
          see_av=0.0_R8
          sei_av=0.0_R8
+#ifndef FIXED_POINT
          if (balance_netcdf.ne.0) then !djm Jan2017
            sne_av_pael=0.0_R8
            sne_av_pmel=0.0_R8
@@ -2119,6 +2132,7 @@ c              it is NOT IYSs style)
            sei_av_eipl=0.0_R8
            sei_av_eppl=0.0_R8
          endif
+#endif
          dab2_s=0.0_R8
          pfluxa_s=0.0_R8
          pfluxm_s=0.0_R8
@@ -2130,6 +2144,7 @@ c              it is NOT IYSs style)
         smo_av = smo_av + smo
         sei_av = sei_av + sei
         see_av = see_av + see
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           sne_av_pael = sne_av_pael + sne_pael
           sne_av_pmel = sne_av_pmel + sne_pmel
@@ -2159,6 +2174,7 @@ c              it is NOT IYSs style)
           see_av_eiel = see_av_eiel + see_eiel
           see_av_epel = see_av_epel + see_epel
         endif
+#endif
         dab2_s = dab2_s + dab2
         pfluxa_s = pfluxa_s + pfluxa
         pfluxm_s = pfluxm_s + pfluxm
@@ -2184,6 +2200,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
         smo_h(:,:,:,ihist) = smo
         see_h(:,:,ihist) = see
         sei_h(:,:,:,ihist) = sei
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           sna_h_paat(:,:,:,ihist) = sna_paat
           sna_h_pmat(:,:,:,ihist) = sna_pmat
@@ -2213,6 +2230,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           sei_h_eipl(:,:,:,ihist) = sei_eipl
           sei_h_eppl(:,:,:,ihist) = sei_eppl
         endif
+#endif
         do iatm = 1,nnatmi
          pfluxa_h(:,iatm,1,ihist) = pfluxa(:,iatm,1)
          rfluxa_h(:,iatm,1,ihist) = rfluxa(:,iatm,1)
@@ -2231,6 +2249,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
         smo_av = 0.0_R8
         see_av = 0.0_R8
         sei_av = 0.0_R8
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           sne_av_pael = 0.0_R8
           sne_av_pmel = 0.0_R8
@@ -2260,6 +2279,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           sei_av_eipl = 0.0_R8
           sei_av_eppl = 0.0_R8
         endif
+#endif
         dab2_s = 0.0_R8
         pfluxa_s = 0.0_R8
         pfluxm_s = 0.0_R8
@@ -2270,6 +2290,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
          smo_av = smo_av + smo_h(:,:,:,ih)
          see_av = see_av + see_h(:,:,ih)
          sei_av = sei_av + sei_h(:,:,:,ih)
+#ifndef FIXED_POINT
          if (balance_netcdf.ne.0) then !djm Jan2017
            sne_av_pael = sne_av_pael + sne_h_pael(:,:,ih)
            sne_av_pmel = sne_av_pmel + sne_h_pmel(:,:,ih)
@@ -2299,6 +2320,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
            sei_av_eipl = sei_av_eipl + sei_h_eipl(:,:,:,ih)
            sei_av_eppl = sei_av_eppl + sei_h_eppl(:,:,:,ih)
          endif
+#endif
          do iatm = 1,nnatmi
           dab2_s(:,iatm,1) = dab2_s(:,iatm,1)
      .                     + dab2_h(:,iatm,1,ih)
@@ -2338,6 +2360,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         smo_s = smo_s*relax + smo/dble(ih_end)
         see_s = see_s*relax + see/dble(ih_end)
         sei_s = sei_s*relax + sei/dble(ih_end)
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           sne_s_pael = sne_s_pael*relax + sne_pael/dble(ih_end)
           sne_s_pmel = sne_s_pmel*relax + sne_pmel/dble(ih_end)
@@ -2367,6 +2390,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
           sei_s_eipl = sei_s_eipl*relax + sei_eipl/dble(ih_end)
           sei_s_eppl = sei_s_eppl*relax + sei_eppl/dble(ih_end)
         endif
+#endif
         do iatm = 1,nnatmi
          dab2_s(:,iatm,1) = dab2_s(:,iatm,1)*relax
      .                      + dab2(:,iatm,1)/dble(ih_end)
@@ -2385,6 +2409,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         smo_av = smo_s*dble(ih_end)
         sei_av = sei_s*dble(ih_end)
         see_av = see_s*dble(ih_end)
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           sne_av_pael = sne_s_pael*dble(ih_end)
           sne_av_pmel = sne_s_pmel*dble(ih_end)
@@ -2414,6 +2439,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
           see_av_eiel = see_s_eiel*dble(ih_end)
           see_av_epel = see_s_epel*dble(ih_end)
         endif
+#endif
         dab2 = dab2_s
         pfluxa = pfluxa_s
         pfluxm = pfluxm_s
@@ -2426,6 +2452,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
        smo_av = smo
        sei_av = sei
        see_av = see
+#ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then !djm Jan2017
          sne_av_pael = sne_pael
          sne_av_pmel = sne_pmel
@@ -2455,6 +2482,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
          see_av_eiel = see_eiel
          see_av_epel = see_epel
        endif
+#endif
       endif
 
 csw 2012 fixed rescaling procedure
@@ -2645,6 +2673,7 @@ c   and apply linearisation
           enddo !}
         endif !}
       enddo !}
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then
         eirene_mc_pael_sne0to1 = 0.0_R8 !djm Jan2017
         eirene_mc_papl_sna0to1 = 0.0_R8
@@ -2665,6 +2694,7 @@ c   and apply linearisation
         eirene_mc_eipl_shi0to3 = 0.0_R8
         eirene_mc_eppl_shi0to3 = 0.0_R8
       endif
+#endif
       do istrai=1,nstrat !{
 * by ns
         recyc_hlp=0.0_R8
@@ -2704,6 +2734,7 @@ c     *             recyctmp*flux_scale(istrai)
                                                   ! original wrong code
                   else if(dpc_fix.eq.1) then
                     t0=t00                        ! dpc fix!
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       t0_a = sni_av_papl(ic,ifl,istrai)*  !djm Jan2017
      *                       tflux(istrai)*
@@ -2722,23 +2753,28 @@ c     *             recyctmp*flux_scale(istrai)
      *                       recyctmp*flux_scale(istrai)/
      *                       dble(ih_end)
                     endif
+#endif
                   else if(dpc_fix.eq.2) then
                     t0=0.0_R8                     ! at least get the wrong code to go wrong safely!
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       t0_a=0.0_R8 !djm Jan2017
                       t0_m=0.0_R8
                       t0_i=0.0_R8
                       t0_p=0.0_R8
                     endif
+#endif
                   endif
                   if(crcstra(istrai).ne.'V' .or. t00.gt.0.0_R8) then
                     t0=t00*sclalph(j,istrai)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then !djm Jan2017
                       t0_a=t0_a*sclalph(j,istrai)
                       t0_m=t0_m*sclalph(j,istrai)
                       t0_i=t0_i*sclalph(j,istrai)
                       t0_p=t0_p*sclalph(j,istrai)
                     endif
+#endif
                   endif
 
 c                  if (t0.lt.0.0_R8.and.main_call.and.
@@ -2760,6 +2796,7 @@ c                  end if !}
                     sna0(ic,0,is)=sna0(ic,0,is)+rf0*abs(t0)
                     sna0(ic,1,is)=sna0(ic,1,is)-
      1               rf0*abs(t0)/st%pl%na(ic,is)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                       if (t0.ge.0.0_R8) then
@@ -2827,8 +2864,10 @@ c$$$     &                   (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/na(ix,iy,is)
 c$$$                    endif
                       endif
                     endif
+#endif
                   elseif(linearisation.eq.0) then !}{
                     sna0(ic,0,is)=sna0(ic,0,is)+t0
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       eirene_mc_papl_sna0to1(ic,0,is,istrai)= !djm Jan2017
      &                 eirene_mc_papl_sna0to1(ic,0,is,istrai)+t0_a
@@ -2839,6 +2878,7 @@ c$$$                    endif
                       eirene_mc_pppl_sna0to1(ic,0,is,istrai)=
      &                 eirene_mc_pppl_sna0to1(ic,0,is,istrai)+t0_p
                     endif
+#endif
                   end if !}
                   if(crcstra(istrai).ne.'V' .or. t00.gt.0.0_R8)
      >             t0=t00*sclstra(j,istrai)
@@ -2881,6 +2921,7 @@ c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
                   t0=smo_av(ic,ifl,istrai)*tflux(istrai)*
      *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
      *             dble(ih_end)*geo%cvHz(ic)
+#ifndef FIXED_POINT
                   if (balance_netcdf.ne.0) then !djm Jan2017
                     t0_a=smo_av_mapl(ic,ifl,istrai)*
      *                   tflux(istrai)*
@@ -2899,6 +2940,7 @@ c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
      *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
      *                   dble(ih_end)*geo%cvHz(ic)
                   endif
+#endif
 
                   VTHE=SQRT(ST%PL%TE(IC)/me)
 c SCALE VTHE TO GET A VELOCITY CLOSER TO THE ION VELOCITIES
@@ -2922,6 +2964,7 @@ cxpb was     1               UA(RIGHTIX(IX,IY),RIGHTIY(IX,IY),IS)/VTHE
 cxpb was                    smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)=
 cxpb was     1               smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)-
 cxpb was     .               RF0*ABS((t0/2.0_R8))/VTHE
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                       if (t0.ge.0.0_R8) then
@@ -2990,8 +3033,10 @@ c$$$     &                          (t0_a+t0_m+t0_i+t0_p)*rf0/vthe
 c$$$                    endif
                       endif
                     endif
+#endif
                   elseif (linearisation.eq.0) then !}{
                     smo0(IC,0,IS)=smo0(IC,0,IS)+t0
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       eirene_mc_mapl_smo0to3(ic,0,is,istrai)= !djm Jan2017
      &                 eirene_mc_mapl_smo0to3(ic,0,is,istrai)+t0_a
@@ -3002,6 +3047,7 @@ c$$$                    endif
                       eirene_mc_cppv_smo0to3(ic,0,is,istrai)=
      &                 eirene_mc_cppv_smo0to3(ic,0,is,istrai)+t0_p
                     endif
+#endif
                   end if !}
                   SSMO(istrai,IS)=SSMO(istrai,IS)+t0
 c*** calculate the integral sources for nregion regions, 3 instants:
@@ -3034,6 +3080,7 @@ c*** before correction (r), after correction (c), after iteration (i)
           end if !}
         end do !}  ! is
 cnh  12.01.2024
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !{
           rf0=RF_NEUT(1)
           do is=1,nnatmi !{
@@ -3097,9 +3144,11 @@ cnh  12.01.2024
             end do !}  ! ic
           end do !}  ! nioni
         end if !}
+#endif
         do ic = 1, nCv
 * electron particle source
           rf0=RF_NEUT(1)
+#ifndef FIXED_POINT
           if (balance_netcdf.ne.0) then
             t0_a = sne_av_pael(ic,istrai)*tflux(istrai)* !djm Jan2017
      *       recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
@@ -3108,7 +3157,9 @@ cnh  12.01.2024
      *       recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *       dble(ih_end)
           endif
+#endif
           if (linearisation.eq.1) then !{
+#ifndef FIXED_POINT
             if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
               if (t0_a.ge.0.0_R8) then
@@ -3142,13 +3193,16 @@ cdjm Jan2017 Calculate linearised components of source
      &           (1.0_R8+rf0)*t0_m/st%dv%ne(ic)
               endif
             endif
+#endif
           elseif (linearisation.eq.0) then !}{
+#ifndef FIXED_POINT
             if (balance_netcdf.ne.0) then
               eirene_mc_pael_sne0to1(ic,0,istrai)= !djm Jan2017
      &         eirene_mc_pael_sne0to1(ic,0,istrai)+t0_a
               eirene_mc_pmel_sne0to1(ic,0,istrai)=
      &         eirene_mc_pmel_sne0to1(ic,0,istrai)+t0_m
             endif
+#endif
           end if !}
         end do
 
@@ -3173,6 +3227,7 @@ c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0=see_av(ic,istrai)*tflux(istrai)*
      *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *         dble(ih_end)
+#ifndef FIXED_POINT
               if (balance_netcdf.ne.0) then
                 t0_a = see_av_eael(ic,istrai)*tflux(istrai)* !djm Jan2017
      *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
@@ -3187,11 +3242,13 @@ c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
      *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *           dble(ih_end)
               endif
+#endif
 
               if (linearisation.eq.1) then !{
                 she0(ic,0)=she0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 she0(ic,1)=she0(ic,1)+
      1           (min(0.0_R8,t0)-abs(t0)*rf0)/st%pl%te(ic)
+#ifndef FIXED_POINT
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
@@ -3260,8 +3317,10 @@ c$$$     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/te(ix,iy)
 c$$$                    endif
                   endif
                 endif
+#endif
               elseif (linearisation.eq.0) then !}{
                 she0(ic,0)=she0(ic,0)+t0
+#ifndef FIXED_POINT
                 if (balance_netcdf.ne.0) then
                   eirene_mc_eael_she0to3(ic,0,istrai)= !djm Jan2017
      &             eirene_mc_eael_she0to3(ic,0,istrai)+t0_a
@@ -3272,6 +3331,7 @@ c$$$                    endif
                   eirene_mc_epel_she0to3(ic,0,istrai)=
      &             eirene_mc_epel_she0to3(ic,0,istrai)+t0_p
                 endif
+#endif
               end if !}
               ssee(istrai)=ssee(istrai)+t0
 c*** calculate the integral sources for nregion regions, 3 instants:
@@ -3327,6 +3387,7 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
      1                  dble(ih_end)
                  endif
               enddo
+#ifndef FIXED_POINT
               if (balance_netcdf.ne.0) then
                 if (switch%tn_style.ne.0) then
                   call xerrab('netcdf not yet for tn_style.ne.0')
@@ -3344,6 +3405,7 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
               endif
+#endif
               ssei(istrai)=ssei(istrai)+t0
 
 c ? RADARR ?
@@ -3377,12 +3439,14 @@ c*** before correction (r), after correction (c), after iteration (i)
                 src_ei(0,3)=src_ei(0,3)+t0
                 src_es(0,3)=src_es(0,3)+t0
               endif
+#ifndef FIXED_POINT
               if (balance_netcdf.ne.0) then
                 t1_apl=0.0_R8 !djm Jan2017
                 t1_mpl=0.0_R8
                 t1_ipl=0.0_R8
                 t1_ppl=0.0_R8
               endif
+#endif
 cxpb Correction of Eirene energy sources to B2 heat sources
 cxpb Only necessary for SOLPS5.0 equation formulation
               if (switch%BoRiS.eq.0.0_R8.and.no_sseicorr.eq.0) then !{
@@ -3416,6 +3480,7 @@ c     *               recyctmp*flux_scale(istrai)
                     t2=smo_av(ic,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
      *               dble(ih_end)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       t2_apl= !djm Jan2017
      *                 smo_av_mapl(ic,ifl,istrai)*tflux(istrai)*
@@ -3434,14 +3499,17 @@ c     *               recyctmp*flux_scale(istrai)
      *                 recyctmp*flux_scale(istrai)/
      *                 dble(ih_end)
                     endif
+#endif
 
                     t2=t2*sclstra(j,istrai)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       t2_apl=t2_apl*sclstra(j,istrai) !djm Jan2017
                       t2_mpl=t2_mpl*sclstra(j,istrai)
                       t2_ipl=t2_ipl*sclstra(j,istrai)
                       t2_ppl=t2_ppl*sclstra(j,istrai)
                     endif
+#endif
 
 csw 06mar2012 particle source
 csw 26feb2014 averaging
@@ -3450,6 +3518,7 @@ c     *               recyctmp*flux_scale(istrai)
                     t3=sni_av(ic,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
      *               dble(ih_end)
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       t3_apl= !djm Jan2017
      *                 sni_av_papl(ic,ifl,istrai)*tflux(istrai)*
@@ -3468,30 +3537,36 @@ c     *               recyctmp*flux_scale(istrai)
      *                 recyctmp*flux_scale(istrai)/
      *                 dble(ih_end)
                     endif
+#endif
 
 csw 26mar2013 (for TESTING)
                     if(iscltst .eq. 0) then
                       if(crcstra(istrai).ne.'V' .or. t3.gt.0.0_R8)
      -                 t3=t3*sclalph(j,istrai)
+#ifndef FIXED_POINT
                        if (balance_netcdf.ne.0) then
                          t3_apl=t3_apl*sclalph(j,istrai) !djm Jan2017
                          t3_mpl=t3_mpl*sclalph(j,istrai)
                          t3_ipl=t3_ipl*sclalph(j,istrai)
                          t3_ppl=t3_ppl*sclalph(j,istrai)
                        endif
+#endif
                     else
                       if(crcstra(istrai).ne.'V' .or. t3.gt.0.0_R8)
      -                 t3=t3*sclstra(j,istrai)
+#ifndef FIXED_POINT
                        if (balance_netcdf.ne.0) then
                          t3_apl=t3_apl*sclstra(j,istrai) !djm Jan2017
                          t3_mpl=t3_mpl*sclstra(j,istrai)
                          t3_ipl=t3_ipl*sclstra(j,istrai)
                          t3_ppl=t3_ppl*sclstra(j,istrai)
                        endif
+#endif
                     endif
 
 csw 06mar2012 total correction
                     t1=t1-st%pl%ua(ic,is)*t2+st%dv%kinrgy(ic,is)*t3
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       t1_apl=t1_apl-st%pl%ua(ic,is)*t2_apl+ !djm Jan2017
      &                       st%dv%kinrgy(ic,is)*t3_apl
@@ -3502,6 +3577,7 @@ csw 06mar2012 total correction
                       t1_ppl=t1_ppl-st%pl%ua(ic,is)*t2_ppl+
      &                       st%dv%kinrgy(ic,is)*t3_ppl
                     endif
+#endif
 cxpb 13feb2015 additional correction with second-order effects for large sources
 cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-counting
                     if (smo_tot(ic,ifl).ne.0.0_R8.and.
@@ -3512,6 +3588,7 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
      .                    t3*dtim*dtco(is,mpg%cvReg(ic)))/
      .                      (dtim*dtei(mpg%cvReg(ic)))*
      .                    0.5_R8*mp*am(is)*dua**2
+#ifndef FIXED_POINT
                       if (balance_netcdf.ne.0) then
                         t4_apl=(st%pl%na(ic,is)*geo%cvVol(ic)* !djm Jan2017
      .                      (t2_apl/smo_tot(ic,ifl))+
@@ -3534,23 +3611,28 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
      .                        (dtim*dtei(mpg%cvReg(ic)))*
      .                      0.5_R8*mp*am(is)*dua**2
                       endif
+#endif
                     else
                       t4=0.0_R8
+#ifndef FIXED_POINT
                       if (balance_netcdf.ne.0) then
                         t4_apl=0.0_R8 !djm Jan2017
                         t4_mpl=0.0_R8
                         t4_ipl=0.0_R8
                         t4_ppl=0.0_R8
                       endif
+#endif
                     endif
                     t1=t1-t4
                     sseistab(istrai)=sseistab(istrai)-t4
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
                       t1_apl=t1_apl-t4_apl !djm Jan2017
                       t1_mpl=t1_mpl-t4_mpl
                       t1_ipl=t1_ipl-t4_ipl
                       t1_ppl=t1_ppl-t4_ppl
                     endif
+#endif
                   end if !}
                   if (is_neutral(is).and.lneustra) then
                     t0n=t0n+t1                !! only necessary for kinetic -> fluid condensation
@@ -3560,12 +3642,14 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                 end do !} !is
               end if !}
               sseicorr(istrai)=sseicorr(istrai)+t1
+#ifndef FIXED_POINT
               if (balance_netcdf.ne.0) then
                 t0_a=t0_a+t1_apl !djm Jan2017
                 t0_m=t0_m+t1_mpl
                 t0_i=t0_i+t1_ipl
                 t0_p=t0_p+t1_ppl
               endif
+#endif
               if (linearisation.eq.1) then !{
                 shi0(ic,0)=shi0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 shi0(ic,1)=shi0(ic,1)+
@@ -3578,6 +3662,7 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                   shn0(ic,0) = 0.0_R8
                   shn0(ic,1) = 0.0_R8
                 endif
+#ifndef FIXED_POINT
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
@@ -3646,6 +3731,7 @@ c$$$     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/ti(ix,iy)
 c$$$                    endif
                   endif
                 endif
+#endif
               elseif (linearisation.eq.0) then !}{
                 shi0(ic,0)=shi0(ic,0)+t0
                 if (lneustra) then
@@ -3653,6 +3739,7 @@ c$$$                    endif
                 else
                   shn0(ic,0)=0.0_R8
                 endif
+#ifndef FIXED_POINT
                 if (balance_netcdf.ne.0) then !djm Jan2017
                   eirene_mc_eapl_shi0to3(ic,0,istrai)=
      &             eirene_mc_eapl_shi0to3(ic,0,istrai)+t0_a
@@ -3663,6 +3750,7 @@ c$$$                    endif
                   eirene_mc_eppl_shi0to3(ic,0,istrai)=
      &             eirene_mc_eppl_shi0to3(ic,0,istrai)+t0_p
                 endif
+#endif
               end if !}
 
             end if !}
@@ -3788,9 +3876,11 @@ cxpb  core recycling into ions of the highest ionisation stage
       if (switch%ionising_core.gt.0) then
 #ifdef WG_TODO
         rf0=RF_NEUT(1)
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
+#endif
         do iy = -1, ny
           do ix = -1, nx
             do j = 1, nnatmi
@@ -3801,15 +3891,18 @@ cxpb  core recycling into ions of the highest ionisation stage
                 if(linearisation.eq.1) then !{
                   if(t0.gt.0.0_R8) then !{
                     sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
 #ifdef WG_TODO
                       eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
      &                 eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+t0
 #endif
                     endif
+#endif
                   else !}{
                     sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))+
      1               t0/na(ix,iy,ishigh(j))
+#ifndef FIXED_POINT
                     if (balance_netcdf.ne.0) then
 #ifdef WG_TODO
                       eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))= !djm Jan2017
@@ -3817,9 +3910,11 @@ cxpb  core recycling into ions of the highest ionisation stage
      &                 t0/na(ix,iy,ishigh(j))
 #endif
                     endif
+#endif
                   end if !}
                   sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+
      1             rf0*abs(t0)
+#ifndef FIXED_POINT
                   if (balance_netcdf.ne.0) then
 #ifdef WG_TODO
                     eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
@@ -3827,8 +3922,10 @@ cxpb  core recycling into ions of the highest ionisation stage
      &               rf0*abs(t0)
 #endif
                   endif
+#endif
                   sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))-
      1             rf0*abs(t0)/na(ix,iy,ishigh(j))
+#ifndef FIXED_POINT
                   if (balance_netcdf.ne.0) then
 #ifdef WG_TODO
                     eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))= !djm Jan2017
@@ -3836,14 +3933,17 @@ cxpb  core recycling into ions of the highest ionisation stage
      &               rf0*abs(t0)/na(ix,iy,ishigh(j))
 #endif
                   endif
+#endif
                 elseif(linearisation.eq.0) then !}{
                   sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
+#ifndef FIXED_POINT
                   if (balance_netcdf.ne.0) then
 #ifdef WG_TODO
                     eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
      &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+t0
 #endif
                   endif
+#endif
                 end if !}
               endif
             enddo
@@ -4255,6 +4355,7 @@ c!###}
       allocate(see_h(size(see,1), size(see,2), nhistd))
       allocate(sei_h(size(sei,1),
      .               size(sei,2), size(sei,3), nhistd))
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sna_h_paat(size(sni,1),
      .                    nnatmi, size(sni,3), nhistd))
@@ -4307,6 +4408,7 @@ c!###}
         allocate(sei_h_eppl(size(sei,1),
      .                    size(sei,2), size(sei,3), nhistd))
       endif
+#endif
       allocate(pfluxa_h(size(pfluxa,1),size(pfluxa,2),1,nhistd))
       allocate(pfluxm_h(size(pfluxm,1),size(pfluxm,2),1,nhistd))
       allocate(rfluxa_h(size(rfluxa,1),size(rfluxa,2),1,nhistd))
@@ -4371,6 +4473,7 @@ c!###}
       rfluxa_h = 0.0_R8
       rfluxm_h = 0.0_R8
       dab2_h = 0.0_R8
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         sne_h_pael = 0.0_R8
         sne_h_pmel = 0.0_R8
@@ -4400,6 +4503,7 @@ c!###}
         sei_h_eipl = 0.0_R8
         sei_h_eppl = 0.0_R8
       endif
+#endif
       return
       end subroutine clear_hist_arrays                            !IYS 28.03.12 }
 
@@ -4419,6 +4523,7 @@ c!###}
       allocate(see_s(size(see,1), size(see,2)))
       allocate(sei_s(size(sei,1),
      .               size(sei,2), size(sei,3)))
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sna_s_paat(size(sni,1),
      .                      nnatmi, size(sni,3)))
@@ -4471,6 +4576,7 @@ c!###}
         allocate(sei_s_eppl(size(sei,1),
      .                      size(sei,2), size(sei,3)))
       endif
+#endif
       allocate(pfluxa_s(size(pfluxa,1),size(pfluxa,2),1))
       allocate(pfluxm_s(size(pfluxm,1),size(pfluxm,2),1))
       allocate(rfluxa_s(size(rfluxa,1),size(rfluxa,2),1))
@@ -4529,6 +4635,7 @@ c!###}
       smo_s = 0.0_R8
       see_s = 0.0_R8
       sei_s = 0.0_R8
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         sne_s_pael = 0.0_R8
         sne_s_pmel = 0.0_R8
@@ -4549,6 +4656,7 @@ c!###}
         sei_s_eipl = 0.0_R8
         sei_s_eppl = 0.0_R8
       endif
+#endif
       pfluxa_s = 0.0_R8
       pfluxm_s = 0.0_R8
       rfluxa_s = 0.0_R8

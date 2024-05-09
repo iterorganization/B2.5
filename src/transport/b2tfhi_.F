@@ -11,17 +11,19 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
      &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2tfhi
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : b2tfhi_cutlo
+     & , only : b2tfhi_cutlo, my_out_folder
 #endif
       use b2mod_subsys
       implicit none
@@ -360,6 +362,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
 
       endif
 
+#ifndef FIXED_POINT
 *   ..fluxes for balance.nc file                  !nh  Jan2024
       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
         dumm1 = 0.0_R8
@@ -413,6 +416,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
      &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_anml,dumm3)
         fhi_anml = sign(fhi_anml,dumm4)
       endif
+#endif
 
 #ifdef WG_TODO
       if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
@@ -508,6 +512,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
           t1_mdf = t0_mdf/(1.0_R8+t0_mdf)                              !srv 17.06.09 {
         endif
 
+#ifndef FIXED_POINT
         if (balance.and.
      &      (balance_netcdf.ne.0).and.
      &      (mdf_fhi.eq.0)) then !djm Jan2017
@@ -624,7 +629,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         fhi_ecrb(ix,iy,1,1) = 0.0_R8
         fhi_pschused(ix,iy,1,1) = -fhiPSch(ix,iy,1,1)
       endif
-
+#endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                    .or. iout_b2wdat.eq.4) then                 !srv 16.09.02 {
         if(mdf_fhi.eq.0) then                                         !srv 13.10.06 {
@@ -716,10 +721,12 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
+#ifndef FIXED_POINT
        call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
        call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
        call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
        call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+#endif
        call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfhi__fchvispar_th')
        call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfhi__fchvispar_r')
        call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfhi__fchvisq_th')
@@ -748,10 +755,12 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
+#ifndef FIXED_POINT
        call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
        call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
        call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
        call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+#endif
       endif
 
 * ..return
