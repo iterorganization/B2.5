@@ -7,6 +7,8 @@
      , , only: b2mn_init, b2mn_step, b2mn_fin
       use b2mod_ad
      , , only: nncf
+      use b2mod_par_opt
+     , , only: npar_opt, nsigma_opt, nmean_opt, nshift_opt, ncorr_opt
       use b2us_data
       implicit none
       real(kind=R8) J(nncf)

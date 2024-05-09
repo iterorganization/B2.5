@@ -13,9 +13,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
      2          b2srsm_shi0to3, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -322,6 +324,7 @@ c check electron particle number
 #endif
       endif
 
+#ifndef FIXED_POINT
 cdjm Store the total change in linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2srsm_sna0to1 = sr%sna-snatmp
@@ -329,6 +332,7 @@ cdjm Store the total change in linearised sources for balance
         b2srsm_she0to3 = sr%she-shetmp
         b2srsm_shi0to3 = sr%shi-shitmp
       endif
+#endif
 
 #ifdef WG_TODO
       if (switch%b2npmo_iout.eq.1) then                                     !srv 11.09.09 {

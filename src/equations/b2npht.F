@@ -14,11 +14,13 @@
       use b2us_plasma
       use b2mod_numerics_namelist                                     !srv 07.07.21 {
      & , only : time_factor, dtei, dtee, dten                         !srv 07.07.21 }
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
+#endif
       use b2mod_ad
-     & , only : ncall_b2npht
+     & , only : ncall_b2npht, rxg_npht
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -94,7 +96,6 @@
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv)
       character chns*3                                                  !srv 17.07.05
-      real (kind=R8), save :: rxg
       logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
@@ -141,7 +142,7 @@
      &              'equations but lacks theoretical development'
           endif
 *    ..make sure time-depndent equations are not altered by convergence tricks
-          rxg = huge(1.0_R8)
+          rxg_npht = huge(1.0_R8)
           if (switch%b2npht_pcm0.gt.0.0_R8) then
             call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
           endif
@@ -180,9 +181,10 @@
           if (warning_kt .or. warning_zt)
      .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
         else
-          rxg = 1.0_R8
+          rxg_npht = 1.0_R8
         endif                                                           !srv 07.07.21 }
-        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
+        call xertst (0.0_R8.lt.rxg_npht,
+     &   'faulty internal parameter rxg')
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then
@@ -291,10 +293,12 @@ cc while the second contribution corresponds to T dn/dt
         call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
 
+#ifndef FIXED_POINT
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
         call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
       endif
+#endif
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
@@ -353,9 +357,11 @@ c residuals for separate neutral energy equation
         shei(iCv) = 0.0_R8
       enddo
 
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then
         b2npht_shei_bal = shei                                           !djm Jan2017
       endif
+#endif
 
 *   ..compute final resht, reshe, reshi
 !      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18

@@ -45,10 +45,12 @@
       use b2mod_running_average
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : balance_netcdf, alloc_b2mod_balance, write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
+#endif
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
@@ -1003,11 +1005,13 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+#ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
+#endif
        call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
        call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
        call ipgeti ('b2mndr_boundary_sources', boundary_sources)
@@ -2025,6 +2029,9 @@ c new CDF movie option (1st frame at t=0)
      &          told, fna_mol
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_facdrift_ExB
+     & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
+     &          fac_vis_scalar
       use b2mod_ad
 #endif
       implicit none
@@ -2269,9 +2276,11 @@ csw 09oct2012 set default potential already at this point (BCs)
           close(nout(7))
         endif
 !djm Jun2017
+#ifndef FIXED_POINT
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(state,itim,ntim)
         endif
+#endif
 #endif
 *    ..increment
         itim = itim+1
@@ -3125,6 +3134,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           call tallies(ns,tim,mpg,geo,state,state_ext,switch)
         endif
       endif
+#ifndef FIXED_POINT
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
@@ -3137,6 +3147,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
+#endif
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
@@ -3447,7 +3458,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
+#ifndef FIXED_POINT
       call dealloc_b2mod_balance
+#endif
       call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
@@ -3465,7 +3478,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_RM      call dealloc_b2mod_ma28_for_7diag
 !WG_RM      call dealloc_b2mod_ma28_for_9diag
       call dealloc_b2mod_ma28_for_us
+#ifndef FIXED_POINT
       call dealloc_b2mod_eirene_sources
+#endif
 !WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption

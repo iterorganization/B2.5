@@ -13,9 +13,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
      2          b2srdt_shi0to3, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -238,6 +240,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
         sr%sne(iCv,:) = sr%sne(iCv,:)+sr%snedt(iCv,:)
       enddo
 
+#ifndef FIXED_POINT
 cdjm Store the total change in linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2srdt_sna0to1 = sr%snadt
@@ -245,6 +248,7 @@ cdjm Store the total change in linearised sources for balance
         b2srdt_she0to3 = sr%shedt
         b2srdt_shi0to3 = sr%shidt
       endif
+#endif
 
       if ((switch%b2npmo_iout.eq.1.or.
      &                   switch%iout_b2wdat .eq. 4).and.lout) then      !srv 11.09.09 {

@@ -15,11 +15,13 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
      &          b2sihs_joule0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
+#endif
       use b2mod_transport_fun                                         !srv 05.07.17
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -217,9 +219,11 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divue0to3 = shedu
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shedu, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from divergence ua
       b2divua=0.0_R8
@@ -277,9 +281,11 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
       endif
+#endif
       if (switch%tn_style.lt.2) then
         call b2saxpy (nCv*4, 1.0_R8, shidu, 1, shi0, 1)
       else
@@ -307,9 +313,11 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shedd, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
       b2exba=0.0_R8
@@ -336,9 +344,11 @@
         enddo
        endif
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shidd, 1, shi0, 1)                 !srv 11.09.09
 *   ..contribution from viscous heating
       b2visa=0.0_R8
@@ -411,9 +421,11 @@
         enddo
        endif                                                           !srv 29.08.02
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3 = shivc+shiva
       endif
+#endif
       if (switch%tn_style.lt.2) then
        call b2saxpy (nCv*4, 1.0_R8, shivc , 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0_R8, shiva , 1, shi0, 1)
@@ -546,10 +558,12 @@
           srw%b2sihs_joule(iCv)=t0
         endif                                                        !srv 26.11.02
        enddo
-      endif                                                           !srv 05.07.17
+      endif                                                          !srv 05.07.17
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_joule0to3 = shefr
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shefr, 1, she0, 1)                !srv 11.09.09
 *   ..contribution from atom-atom friction
       if(switch%b2sigp_style.ne.2) then                           !srv 05.07.17
@@ -584,9 +598,11 @@
         enddo
        enddo
       endif                                                           !srv 05.07.17
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_fraa0to3 = shifr
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shifr, 1, shi0, 1)                 !srv 11.09.09
       b2str=0.0_R8
       srw%b2sihs_str=0.0_R8
