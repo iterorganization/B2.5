@@ -3862,10 +3862,10 @@ c*******************************************************************************
           if(switch%keps_local.eq.1) then
 *   ..compute local Larmor radius
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
-     &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
+     &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
           else
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsepomp))/
-     &            (am(ismain)*mp))/abs(rt%rza(omp(icsepomp),ismain)*qe*
+     &            (am(ismain)*mp))/dabs(rt%rza(omp(icsepomp),ismain)*qe*
      &             geo%cvBb(omp(icsepomp),3))
           endif
 *       ..compute radial shear of diamagnetic ExB velocity
@@ -3879,14 +3879,14 @@ cwdk at the moment: assumption that kt is related to main ion species;
 cwdk same dna_ExB for all ion species
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
      &      (sqrt(pl%kt/(am(ismain)*mp))/rhol + switch%keps_shear*
-     &       abs(shear) + b2tqna_keps_eps)
+     &       dabs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
           elseif(switch%transport_keps.eq.2) then
 *   ..compute D according to KUL, using kt and zt
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
      &      (sqrt(pl%zt/(am(ismain)*mp)) + switch%keps_shear*
-     &       abs(shear) + b2tqna_keps_eps)
+     &       dabs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
           else
