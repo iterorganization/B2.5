@@ -1864,11 +1864,11 @@ c   --> better way doing this is necessary)
           call b2xpne (nCv, ns, state%rt%rza, state%pl%na,
      .       state_ext%ne, state%dv%ne)
           max_delta = max(
-     1     maxval(abs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
-     2     maxval(abs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
-     3     maxval(abs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
-     4     maxval(abs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
-     5     maxval(abs((state%dv%ne - state%psnc%ne)/
+     1     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
+     2     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
+     3     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
+     4     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
+     5     maxval(dabs((state%dv%ne - state%psnc%ne)/
      6       (state%dv%ne + na_eps))))
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
@@ -2291,41 +2291,41 @@ csw 09oct2012 set default potential already at this point (BCs)
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
      &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dtim
 #ifndef FIXED_POINT
-        write(*,*) 'delta na ',maxval(abs((state%pl%na-state%psnc%na)/
+        write(*,*) 'delta na ',maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps)))
-        write(*,*) 'delta te ',maxval(abs((state%pl%te-state%psnc%te)/
+        write(*,*) 'delta te ',maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev)))
-        write(*,*) 'delta ti ',maxval(abs((state%pl%ti-state%psnc%ti)/
+        write(*,*) 'delta ti ',maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev)))
-        write(*,*) 'delta tn ',maxval(abs((state%pl%tn-state%psnc%tn)/
+        write(*,*) 'delta tn ',maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev)))
-        write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
-     &    (abs(state%pl%po)+po_eps)))
-        write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
-     &    (abs(state%pl%kt)+kt_eps*ev)))
-        write(*,*) 'delta zt ',maxval(abs((state%pl%zt-state%psnc%zt)/
-     &    (abs(state%pl%zt)+zt_eps*ev)))
+        write(*,*) 'delta po ',maxval(dabs((state%pl%po-state%psnc%po)/
+     &    (dabs(state%pl%po)+po_eps)))
+        write(*,*) 'delta kt ',maxval(dabs((state%pl%kt-state%psnc%kt)/
+     &    (dabs(state%pl%kt)+kt_eps*ev)))
+        write(*,*) 'delta zt ',maxval(dabs((state%pl%zt-state%psnc%zt)/
+     &    (dabs(state%pl%zt)+zt_eps*ev)))
         write(*,*) 'delta ua ',
-     *   maxval(abs((state%pl%na*state%pl%ua-
+     *   maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps)))
         if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
           max_delta=max(
-     &     maxval(abs((state%pl%na-state%psnc%na)/
+     &     maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps))),
-     &     maxval(abs((state%pl%te-state%psnc%te)/
+     &     maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev))),
-     &     maxval(abs((state%pl%ti-state%psnc%ti)/
+     &     maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev))),
-     &     maxval(abs((state%pl%tn-state%psnc%tn)/
+     &     maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev))),
-     &     maxval(abs((state%pl%po-state%psnc%po)/
+     &     maxval(dabs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
-     &     maxval(abs((state%pl%kt-state%psnc%kt)/
+     &     maxval(dabs((state%pl%kt-state%psnc%kt)/
      &    (state%pl%kt+kt_eps*ev))),
-     &     maxval(abs((state%pl%zt-state%psnc%zt)/
+     &     maxval(dabs((state%pl%zt-state%psnc%zt)/
      &    (state%pl%zt+zt_eps*ev))),
-     &     maxval(abs((state%pl%na*state%pl%ua-
+     &     maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
           if(max_delta.gt.delta_max) then

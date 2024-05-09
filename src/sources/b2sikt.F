@@ -125,12 +125,12 @@ cwdk     parallel transport due to parallel current fluctuations
           csfs = cs
           connfs = geo%cvConn
           rhol = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
-     &       abs(rza(:,ismain)*qe*geo%cvBb(:,3))
+     &       dabs(rza(:,ismain)*qe*geo%cvBb(:,3))
         else
           csfs = cs(omp(icsepomp))
           connfs = geo%cvConn(omp(icsepomp))
           rhol = sqrt(2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp))/
-     &      abs(rza(omp(icsepomp),ismain)*qe*geo%cvBb(omp(icsepomp),3))
+     &      dabs(rza(omp(icsepomp),ismain)*qe*geo%cvBb(omp(icsepomp),3))
         endif
         call xertst(minval(connfs(1:mpg%nCi)).gt.0.0_R8,
      .    ' connfs in b2sikt <=0!!')
