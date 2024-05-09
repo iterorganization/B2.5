@@ -12,6 +12,8 @@
       use b2mod_ad
      & , only : ncall_b2ttia
 #endif
+      use b2mod_ad
+     & , only : nsmooth_tvsq
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -30,7 +32,6 @@
 
 *   ..local variables
       integer ic, iCv, iFc, iFt, is, k
-      integer, save :: nsmooth = 2
       integer, save :: ncall = 0
       real (kind=R8) ::
      *    fac_vism, wrkc(nCv), wrkf(nFc), wrkv(nVx), wght(nFc,2),       !srv 11.07.99
@@ -99,7 +100,7 @@
 
             !smoothing: interpolate to faces and back to cell centers
             wght = 1.0_R8
-            do k = 1, nsmooth
+            do k = 1, nsmooth_tvsq
              call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
              call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
              !copy value of qip0 across separatrix

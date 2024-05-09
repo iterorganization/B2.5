@@ -3819,6 +3819,10 @@ c*******************************************************************************
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tqna_keps_eps, ncall_transp_keps
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

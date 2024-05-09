@@ -22,7 +22,7 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2ttia
+     &          ncall_b2ttia, nsmooth_tvsq
 #endif
       use b2mod_subsys
       implicit none

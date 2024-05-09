@@ -2648,7 +2648,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        ii=minloc(abs(l_spcsrf))
+        ii=minloc(iabs(l_spcsrf))
         if (ii(1).eq.1) then
           is = 0
         else if (l_spcsrf(ii(1)).eq.0) then
