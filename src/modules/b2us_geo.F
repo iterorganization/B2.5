@@ -988,7 +988,7 @@
             end if
             gm%psi_increasing = gm%fsPsi(mpg%vxFs(iVx)).lt.
      &                          gm%fsPsi(mpg%vxFs(mpg%tgVx(1))).or.
-     &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
+     &                          maxval(dabs(gm%fsPsi)).eq.0.0_R8
           end if
         end do
       else if (mpg%nnreg(0).eq.4) then
@@ -1038,7 +1038,7 @@
             if (mpg%vxFs(mpg%cvVx(j)).eq.mpg%vxFs(mpg%Xpt(iXpt))) cycle
             gm%psi_increasing = gm%fsPsi(mpg%vxFs(mpg%cvVx(j))).lt.
      &                          gm%fsPsi(mpg%vxFs(mpg%Xpt(iXpt))).or.
-     &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
+     &                          maxval(dabs(gm%fsPsi)).eq.0.0_R8
             match_found = .true.
           end do
         end if
