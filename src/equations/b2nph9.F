@@ -258,8 +258,8 @@
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
      *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
-      call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
+      call b2saxpy (n2*4, 1.0_R8, she, 1, she0, 1)
+      call b2saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then

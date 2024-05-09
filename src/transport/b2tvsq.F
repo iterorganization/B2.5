@@ -53,9 +53,9 @@
       integer, save :: hstyle = 0                                        !lk 23.05.06 05.07.07 {
       integer, save :: no_current = 0
       integer, save :: use_9pt_stencil = 1
-      real (kind=R8), save :: vis_q = 1.0e0_R8                           !srv 11.07.99
-      real (kind=R8), save :: cqip1 = 0.5e0_R8                           !lk
-      real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                      !iyv 06.12.13
+      real (kind=R8), save :: vis_q = 1.0_R8                             !srv 11.07.99
+      real (kind=R8), save :: cqip1 = 0.5_R8                             !lk
+      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                        !iyv 06.12.13
       integer, save :: drift_style                                       !IYS 26.05.2020
       real (kind=R8) :: tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny)        !lk
      &                  , conn_(-1:ny), tt2(-1:ny), tt3(-1:ny)
@@ -105,8 +105,8 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 
-      fchvisq   = 0.0e0_R8                                               !srv 11.07.99
-      fchvisq_a = 0.0e0_R8
+      fchvisq   = 0.0_R8                                                 !srv 11.07.99
+      fchvisq_a = 0.0_R8
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8 .and.                !srv 16.10.17
      &   no_current.eq.0) then
@@ -127,22 +127,22 @@
          do is = 0,ns-1                                                  !srv 12.05.11
 !          if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then           !srv 12.05.11
           if(is.eq.ismain) then                                          !srv 19.02.21
-           hip0  = 0.0e0_R8
-           hip1  = 0.0e0_R8
-           hipgen= 0.0e0_R8
-           hip0a = 0.0e0_R8
-           hip0b = 0.0e0_R8
-           wrk0 = 0.0e0_R8
+           hip0  = 0.0_R8
+           hip1  = 0.0_R8
+           hipgen= 0.0_R8
+           hip0a = 0.0_R8
+           hip0b = 0.0_R8
+           wrk0 = 0.0_R8
 
            call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)               !srv 11.07.99
 
-           tt0 = 0.0e0_R8
-           tt1 = 0.0e0_R8
-           tt2 = 0.0e0_R8
-           tt3 = 0.0e0_R8
-           conn_ = 0.0e0_R8
-           bbaverage2 = 0.0e0_R8
-           eps1 = 0.0e0_R8
+           tt0 = 0.0_R8
+           tt1 = 0.0_R8
+           tt2 = 0.0_R8
+           tt3 = 0.0_R8
+           conn_ = 0.0_R8
+           bbaverage2 = 0.0_R8
+           eps1 = 0.0_R8
 
 !pbwdk           mintopcut = ny
            mintopcut = -2
@@ -179,7 +179,7 @@
              do ix = 0,nx
               if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
-               hip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
+               hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &          /bb(ix,iy,0)/bbaverage2(iy))
      &          *(ni(ix,iy)*ti(ix,iy)/qe)*dtir(ix,iy)
               endif
@@ -191,7 +191,7 @@
               if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                 hip0b(ix,iy) = 0.25e0_R8*(hip0a(ix,iy)*2.0e0_R8
+                 hip0b(ix,iy) = 0.25_R8*(hip0a(ix,iy)*2.0_R8
      &            +hip0a(leftix(ix,iy),leftiy(ix,iy))
      &            +hip0a(rightix(ix,iy),rightiy(ix,iy)))
                endif
@@ -204,7 +204,7 @@
               if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                 hip0(ix,iy) = 0.25e0_R8*(hip0b(ix,iy)*2.0e0_R8
+                 hip0(ix,iy) = 0.25_R8*(hip0b(ix,iy)*2.0_R8
      &            +hip0b(leftix(ix,iy),leftiy(ix,iy))
      &            +hip0b(rightix(ix,iy),rightiy(ix,iy)))
                endif
@@ -230,7 +230,7 @@
                hip0(ix,iy)=0.5e0_R8*(hip0a(ix,iy)+
      &          hip0a(rightix(ix,iy),rightiy(ix,iy)))
      &          *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &          -2.5e0_R8*bb(ix,iy,2)
+     &          -2.5_R8*bb(ix,iy,2)
      &          /bb(ix,iy,0)/bb(ix,iy,3)
      &          *(ni(ix,iy)*ti(ix,iy)/qe)*dtir(ix,iy)
               endif
@@ -258,32 +258,32 @@
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
               hipgen(ix,iy)=(wrk0(ix,iy)
-     &         +wrk0(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &         +wrk0(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
              endif
             enddo
            enddo
 
-           tauia1 = 0.0e0_R8
-           nu1 = 0.0e0_R8
-           alpha1 = 0.0e0_R8
+           tauia1 = 0.0_R8
+           nu1 = 0.0_R8
+           alpha1 = 0.0_R8
 
            do iy = 0,mintopcut
             do ix = 0,nx
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
               tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,is)/               !lk 20.11.07 { !iyv 06.12.13
-     &         (1.0e0_R8+15.12e16_R8/conn_(iy)*
+     &         (1.0_R8+15.12e16_R8/conn_(iy)*
      &         (ti(ix,iy)/ev)**2/ne2(ix,iy))
-     &         /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
+     &         /(1.0_R8+15.12e16_R8*eps1(iy)**1.5_R8
      &         /conn_(iy)*(ti(ix,iy)/ev)**2/ne2(ix,iy))
               nu1(ix,iy) = conn_(iy)/(tauia(ix,iy,is)
      &         *sqrt(ti(ix,iy)/(mp*am(is)))
-     &         *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
-              alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))+
-     &         2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
-     &         0.7e0_R8*sqrt(nu1(ix,iy))+nu1(ix,iy)**2*eps1(iy)**3)
-     &         -1.0e0_R8)
-     &         *0.533e0_R8                                              !lk 20.11.07 }
+     &         *2.0_R8*pi*eps1(iy)**1.5_R8)
+              alpha1(ix,iy) = ((-0.17_R8+1.05_R8*sqrt(nu1(ix,iy))+
+     &         2.7_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0_R8+
+     &         0.7_R8*sqrt(nu1(ix,iy))+nu1(ix,iy)**2*eps1(iy)**3)
+     &         -1.0_R8)
+     &         *0.533_R8                                                !lk 20.11.07 }
              endif
             enddo
            enddo                                                        !lk 23.05.06 05.07.07 }
@@ -297,7 +297,7 @@
                  if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
                    fchvisq_a(ix,iy,0,0,is) =                            !srv 16.10.17
-     &         -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*  !srv 11.01.13 16.10.17
+     &         -fac_vis(ix,iy)*0.24_R8*vis_q*(               ! signmf*  !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
      &         *alpha1(ix,iy)
@@ -312,14 +312,14 @@
      &         /bb(leftix(ix,iy),leftiy(ix,iy),3)
      &         *bb(leftix(ix,iy),leftiy(ix,iy),0)
      &         /sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))
-     &         )*0.5e0_R8
+     &         )*0.5_R8
      &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
      &         *dOnedBsq(ix,iy,0,1)
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
               if (use_9pt_stencil.ne.0) fchvisq_a(ix,iy,0,1,is) =       !srv 16.10.17
-     &        -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
+     &        -fac_vis(ix,iy)*0.24_R8*vis_q*(               ! signmf*   !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
      &         *alpha1(ix,iy)
@@ -334,7 +334,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      &         /bb(leftix(ix,iy),leftiy(ix,iy),3)
      &         *bb(leftix(ix,iy),leftiy(ix,iy),0)
      &         /sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))
-     &         )*0.5e0_R8
+     &         )*0.5_R8
      &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
      &         *dOnedBsq(ix,iy,0,0)*qs(ix,iy,0)*
      &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
@@ -350,23 +350,23 @@ cwdk cancellation of some terms in poloidal and radial current components
                  if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
                    fchvisq_a(ix,iy,0,0,is) =
-     &         -fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
+     &         -fac_vis(ix,iy)*0.24_R8*vis_q*(              ! signmf*    !srv 11.01.13 16.10.17
      &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
      &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
      &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
      &         /hx(leftix(ix,iy),leftiy(ix,iy))
-     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
      &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
      &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
      &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy,0)
      &         *dOnedBsq(ix,iy,0,1)
               if (use_9pt_stencil.ne.0) fchvisq_a(ix,iy,0,1,is) =                                 !srv 16.10.17
-     &        -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
+     &        -fac_vis(ix,iy)*0.24_R8*vis_q*(               ! signmf*   !srv 11.01.13 16.10.17
      &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
      &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
      &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
      &         /hx(leftix(ix,iy),leftiy(ix,iy))
-     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
      &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
      &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
      &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy,0)
@@ -388,7 +388,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      .                               bottomiy(ix,iy))) then
                   if(rightix(ix,iy).ne.nx+1) then
                     fchvisq_a(ix,iy,1,1,is) =
-     &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
+     &          fac_vis(ix,iy)*0.24_R8*vis_q*(               ! signmf*   !srv 11.01.13 16.10.17
      &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &          *tauia1(ix,iy)
      &          *alpha1(ix,iy)
@@ -403,12 +403,12 @@ cwdk cancellation of some terms in poloidal and radial current components
      &          /bb(bottomix(ix,iy),bottomiy(ix,iy),3)
      &          *bb(bottomix(ix,iy),bottomiy(ix,iy),0)
      &          /sqrt(bb(bottomix(ix,iy),bottomiy(ix,iy),3))
-     &                      )*0.5e0_R8
+     &                      )*0.5_R8
      &          *(hipgen(rightix(ix,iy),rightiy(ix,iy))
      &          +hipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
      &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
      &          -hipgen(ix,iy)-hipgen(bottomix(ix,iy),bottomiy(ix,iy))
-     &            )*0.5e0_R8
+     &            )*0.5_R8
      &          *dOnedBsq(ix,iy,1,0)
                   endif
                 endif                                                    !lk 23.05.06 05.07.07 }
@@ -423,17 +423,17 @@ cwdk cancellation of some terms in poloidal and radial current components
      .                               bottomiy(ix,iy))) then
                if(rightix(ix,iy).ne.nx+1) then
                 fchvisq_a(ix,iy,1,1,is) =
-     &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
+     &          fac_vis(ix,iy)*0.24_R8*vis_q*(              ! signmf*    !srv 11.01.13 16.10.17
      &          tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)**2
      &          +tauia1(bottomix(ix,iy),bottomiy(ix,iy))
      &          *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
      &          /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
-     &                      )*0.5e0_R8
+     &                      )*0.5_R8
      &          *(hipgen(rightix(ix,iy),rightiy(ix,iy))
      &          +hipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
      &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
      &          -hipgen(ix,iy)-hipgen(bottomix(ix,iy),bottomiy(ix,iy))
-     &            )*0.5e0_R8
+     &            )*0.5_R8
      &          *wbbv(ix,iy,2)/wbbv(ix,iy,3)
      &          *wbbv(ix,iy,0)/sqrt(wbbv(ix,iy,3))*gs(ix,iy,1)
      &          *dOnedBsq(ix,iy,1,0)
@@ -451,13 +451,13 @@ cwdk cancellation of some terms in poloidal and radial current components
 
          enddo
        else                                                              !som 20.10.21
-         tt0 = 0.0e0_R8
-         tt1 = 0.0e0_R8
-         tt2 = 0.0e0_R8
-         tt3 = 0.0e0_R8
-         conn_ = 0.0e0_R8
-         bbaverage2 = 0.0e0_R8
-         eps1 = 0.0e0_R8
+         tt0 = 0.0_R8
+         tt1 = 0.0_R8
+         tt2 = 0.0_R8
+         tt3 = 0.0_R8
+         conn_ = 0.0_R8
+         bbaverage2 = 0.0_R8
+         eps1 = 0.0_R8
 
 !pbwdk           mintopcut = ny
          mintopcut = -2
@@ -472,12 +472,12 @@ cwdk cancellation of some terms in poloidal and radial current components
          do iy = 0, mintopcut    ! for inner surfaces and first open surface
           do ix = 0, nx
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-            tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
-            tt1(iy) = tt1(iy) +vol(ix,iy)
+            tt0(iy) = tt0(iy) + bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
+            tt1(iy) = tt1(iy) + vol(ix,iy)
             conn_(iy) =
      &            conn_(iy)+hx(ix,iy)*abs(bb(ix,iy,3)/bb(ix,iy,0))       !srv 11.01.13
-            tt2(iy) = tt2(iy) +hx(ix,iy)
-            tt3(iy) = tt3(iy) +vol(ix,iy)/hy1(ix,iy)
+            tt2(iy) = tt2(iy) + hx(ix,iy)
+            tt3(iy) = tt3(iy) + vol(ix,iy)/hy1(ix,iy)
            endif
           enddo
          enddo
@@ -491,12 +491,12 @@ cwdk cancellation of some terms in poloidal and radial current components
 !          if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then           !srv 12.05.11
 !         if(is.eq.ismain) then                                          !srv 19.02.21
           if (.not.is_neutral(is)) then                                  !som 21.10.21
-           hip0  = 0.0e0_R8
-           hip1  = 0.0e0_R8
-           hipgen= 0.0e0_R8
-           hip0a = 0.0e0_R8
-           hip0b = 0.0e0_R8
-           wrk0 = 0.0e0_R8
+           hip0  = 0.0_R8
+           hip1  = 0.0_R8
+           hipgen= 0.0_R8
+           hip0a = 0.0_R8
+           hip0b = 0.0_R8
+           wrk0 = 0.0_R8
 
 !          call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)               !srv 11.07.99
 
@@ -507,7 +507,7 @@ cwdk cancellation of some terms in poloidal and radial current components
               do ix = 0, nx
                 if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
-                  hip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
+                  hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &             /bb(ix,iy,0)/bbaverage2(iy))
      &             *(na(ix,iy,is)*ti(ix,iy)/qe/rza(ix,iy,is))*
      &             dtir(ix,iy)
@@ -520,7 +520,7 @@ cwdk cancellation of some terms in poloidal and radial current components
                 if(on_closed_surface(bottomix(ix,iy),
      .                               bottomiy(ix,iy))) then
                   if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             hip0b(ix,iy) = 0.25e0_R8*(hip0a(ix,iy)*2.0e0_R8
+     >             hip0b(ix,iy) = 0.25_R8*(hip0a(ix,iy)*2.0e0_R8
      &              +hip0a(leftix(ix,iy),leftiy(ix,iy))
      &              +hip0a(rightix(ix,iy),rightiy(ix,iy)))
                 endif
@@ -532,7 +532,7 @@ cwdk cancellation of some terms in poloidal and radial current components
                 if(on_closed_surface(bottomix(ix,iy),
      .                               bottomiy(ix,iy))) then
                   if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             hip0(ix,iy) = 0.25e0_R8*(hip0b(ix,iy)*2.0e0_R8
+     >             hip0(ix,iy) = 0.25_R8*(hip0b(ix,iy)*2.0_R8
      &              +hip0b(leftix(ix,iy),leftiy(ix,iy))
      &              +hip0b(rightix(ix,iy),rightiy(ix,iy)))
                 endif
@@ -554,10 +554,10 @@ cwdk cancellation of some terms in poloidal and radial current components
              do ix = -1, nx-1
               if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
-               hip0(ix,iy)=0.5e0_R8*(hip0a(ix,iy)+
+               hip0(ix,iy)=0.5_R8*(hip0a(ix,iy)+
      &          hip0a(rightix(ix,iy),rightiy(ix,iy)))
      &          *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &          -2.5e0_R8*bb(ix,iy,2)
+     &          -2.5_R8*bb(ix,iy,2)
      &          /bb(ix,iy,0)/bb(ix,iy,3)
      &          *(na(ix,iy,is)*ti(ix,iy)/qe/rza(ix,iy,is))*
      &           dtir(ix,iy)
@@ -584,17 +584,17 @@ cwdk cancellation of some terms in poloidal and radial current components
 
 * ..calculate the parallel charge states averaged heat flux of all species
            do inucl= 0, nspecies-1
-            hip0 = 0.0e0_R8
+            hip0 = 0.0_R8
 
             if (hstyle .eq. 0) then
-              hip0a = 0.0e0_R8
-              hip0b = 0.0e0_R8
+              hip0a = 0.0_R8
+              hip0b = 0.0_R8
 
               do iy = 0,mintopcut-1    ! for inner surfaces
                 do ix = 0,nx
                   if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
-                    hip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
+                    hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      & /bb(ix,iy,0)/bbaverage2(iy))
      & *(nal(ix,iy,inucl)*ti(ix,iy)/qe*Z_to_m1(ix,iy,inucl))*
      & dtir(ix,iy)
@@ -607,7 +607,7 @@ cwdk cancellation of some terms in poloidal and radial current components
                   if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
                     if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >               hip0b(ix,iy) = 0.25e0_R8*(hip0a(ix,iy)*2.0e0_R8
+     >               hip0b(ix,iy) = 0.25_R8*(hip0a(ix,iy)*2.0_R8
      &                +hip0a(leftix(ix,iy),leftiy(ix,iy))
      &                +hip0a(rightix(ix,iy),rightiy(ix,iy)))
                   endif
@@ -619,7 +619,7 @@ cwdk cancellation of some terms in poloidal and radial current components
                 if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
                     if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >               hip0(ix,iy) = 0.25e0_R8*(hip0b(ix,iy)*2.0e0_R8
+     >               hip0(ix,iy) = 0.25_R8*(hip0b(ix,iy)*2.0_R8
      &                +hip0b(leftix(ix,iy),leftiy(ix,iy))
      &                +hip0b(rightix(ix,iy),rightiy(ix,iy)))
                   endif
@@ -642,10 +642,10 @@ cwdk cancellation of some terms in poloidal and radial current components
                 do ix = -1, nx-1
                   if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
-                     hip0(ix,iy) = 0.5e0_R8*(hip0a(ix,iy)+
+                     hip0(ix,iy) = 0.5_R8*(hip0a(ix,iy)+
      &                hip0a(rightix(ix,iy),rightiy(ix,iy)))
      &               *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &               -2.5e0_R8*bb(ix,iy,2)
+     &               -2.5_R8*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bb(ix,iy,3)
      &               *(nal(ix,iy,inucl)*ti(ix,iy)/qe
      &               *Z_to_m1(ix,iy,inucl))*
@@ -656,7 +656,7 @@ cwdk cancellation of some terms in poloidal and radial current components
 
             endif
 
-            hip1 = 0.0e0_R8
+            hip1 = 0.0_R8
             do iy = 0, ny-1
               do ix = 0, nx-1
                 hip1(ix,iy) = cqip1*
@@ -665,7 +665,7 @@ cwdk cancellation of some terms in poloidal and radial current components
               enddo
             enddo
 
-            hipgen_al(-1:nx,-1:ny,inucl) = 0.0e0_R8
+            hipgen_al(-1:nx,-1:ny,inucl) = 0.0_R8
             do iy=0,ny-1
               do ix=0,nx-1
                 hipgen_al(ix,iy,inucl)=hip1(ix,iy)*

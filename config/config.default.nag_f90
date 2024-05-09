@@ -29,7 +29,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C
@@ -42,7 +42,7 @@ INCMOD = -I
 MOD = mod
 
 ifdef USE_OPENMP
-FCOPTS += -openmp
+  FCOPTS += -openmp
 endif
 
 BLD = ar rucv
@@ -52,7 +52,7 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 LD = f90

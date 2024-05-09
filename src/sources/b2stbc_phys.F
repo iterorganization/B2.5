@@ -129,8 +129,8 @@
       integer, save :: use_astra
       integer, save :: drift_style
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
-      real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
-      real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
+      real (kind=R8) , save :: cbc = 1.0_R8, bc_ref = 0.01_R8           !srv 14.10.99
+      real (kind=R8) , save :: bc_ref_te = 0.01_R8, bc_ref_ti = 0.01_R8 !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar,                        !srv 16.02.12 29.09.15
      &                         sconpar(0:DEF_NSD-1), scurpar
       real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
@@ -157,11 +157,11 @@
       real (kind=R8), save ::                                           !srv 16.02.12
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
      *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
-      real (kind=R8), save :: xcur = 0.0e0_R8, ycur = 1.0e0_R8
+      real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
-      real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
-     &                        phm2 = 1.0e0_R8,
-     &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
+      real (kind=R8), save :: phm0 = 1.0_R8, phm1 = 1.0_R8,
+     &                        phm2 = 1.0_R8,
+     &                        corr_flux   = 0.0_R8                      !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       !iyv optional stabilisation coefficients for sheath BCENI/E = 15
       real (kind=R8), save :: stab_coeff_sheath_te = 0.0_R8,            !iyv 18.12.23
@@ -379,8 +379,8 @@
 *   ..find the average pressure for inner flux surface            !srv 24.03.99
       if (istyle_average_pr .eq.0) then                           !srv 08.08.02
        iy = -1                                                    !srv 24.03.99
-       pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
-       volsum=0.0e0_R8                                            !srv 24.03.99
+       pzsum =0.0_R8                                              !srv 24.03.99 18.01.02
+       volsum=0.0_R8                                              !srv 24.03.99
        do ix = -1, nx                                             !srv 26.11.02
         if (on_closed_surface(ix,iy)) then                        !srv 26.11.02
          pzsum=pzsum + pz(ix,iy)*vol(ix,iy)                       !srv 24.03.99 18.01.02
@@ -390,8 +390,8 @@
        if (volsum.gt.0.0_R8) pzaverage=pzsum/volsum               !srv 24.03.99 18.01.02
       else                                                        !srv 08.08.02
        iy = 0                                                     !srv 24.03.99  07.06.02 {
-       pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
-       volsum=0.0e0_R8                                            !srv 24.03.99
+       pzsum =0.0_R8                                              !srv 24.03.99 18.01.02
+       volsum=0.0_R8                                              !srv 24.03.99
        num_inner=0                                                !srv 26.11.02
        do ix = -1, nx                                             !srv 26.11.02
         if (on_closed_surface(ix,iy)) then                        !srv 26.11.02
@@ -401,15 +401,15 @@
          num_inner=num_inner+1                                    !srv 26.11.02
         endif                                                     !srv 26.11.02
        enddo                                                      !srv 24.03.99
-       if (num_inner.gt.0) pzaverage=pzsum*0.5e0_R8/num_inner     !srv 24.03.99 18.01.02 07.06.02 } 26.11.02
+       if (num_inner.gt.0) pzaverage=pzsum*0.5_R8/num_inner       !srv 24.03.99 18.01.02 07.06.02 } 26.11.02
       endif                                                       !srv 08.08.02
 *   ..find the average ne, te, ti, bb for inner flux surface      !srv 15.12.00 18.10.04
-      bbsum = 0.0e0_R8                                            !srv 18.10.04
-      nesum = 0.0e0_R8                                            !srv 15.12.00 25.01.02
-      tesum = 0.0e0_R8                                            !srv 15.12.00
-      tisum = 0.0e0_R8                                            !srv 15.12.00
-      bzhzsum  = 0.0e0_R8                                         !lk 20.11.07
-      bbaverage  = 0.0e0_R8                                       !lk 20.11.07
+      bbsum = 0.0_R8                                              !srv 18.10.04
+      nesum = 0.0_R8                                              !srv 15.12.00 25.01.02
+      tesum = 0.0_R8                                              !srv 15.12.00
+      tisum = 0.0_R8                                              !srv 15.12.00
+      bzhzsum  = 0.0_R8                                           !lk 20.11.07
+      bbaverage  = 0.0_R8                                         !lk 20.11.07
       do ix = -1, nx                                              !srv 26.11.02
        if (on_closed_surface(ix,iy)) then                         !srv 26.11.02
         bbsum=bbsum + bb(ix,iy,3)*vol(ix,iy)                      !srv 18.10.04
@@ -426,24 +426,24 @@
       end if
 *   ..find the average ua**2, na for inner flux surface           !srv 22.01.02 {
       do is = 0, ns-1
-       uasum  = 0.0e0_R8                                           !srv 15.02.02
-       ua2sum = 0.0e0_R8                                           !srv 07.04.00 15.02.02
-       nasum  = 0.0e0_R8
-       do ix = -1, nx                                              !srv 26.11.02
-        if (on_closed_surface(ix,iy)) then                         !srv 26.11.02
-         ua2sum = ua2sum + ua(ix,iy,is)**2*vol(ix,iy)              !srv 07.04.00 15.02.02
-         uasum  = uasum  + ua(ix,iy,is)*vol(ix,iy)                 !srv 15.02.02
+       uasum  = 0.0_R8                                            !srv 15.02.02
+       ua2sum = 0.0_R8                                            !srv 07.04.00 15.02.02
+       nasum  = 0.0_R8
+       do ix = -1, nx                                             !srv 26.11.02
+        if (on_closed_surface(ix,iy)) then                        !srv 26.11.02
+         ua2sum = ua2sum + ua(ix,iy,is)**2*vol(ix,iy)             !srv 07.04.00 15.02.02
+         uasum  = uasum  + ua(ix,iy,is)*vol(ix,iy)                !srv 15.02.02
          nasum  = nasum  + na(ix,iy,is)*vol(ix,iy)
-        endif                                                      !srv 26.11.02
+        endif                                                     !srv 26.11.02
        enddo
        if (volsum.gt.0.0_R8) then
-        ua2average(is) = ua2sum/volsum                             !srv 07.04.00 15.02.02
-        uaaverage(is) = uasum/volsum                               !srv 07.04.00 15.02.02 16.04.02
+        ua2average(is) = ua2sum/volsum                            !srv 07.04.00 15.02.02
+        uaaverage(is) = uasum/volsum                              !srv 07.04.00 15.02.02 16.04.02
         naaverage(is) = nasum/volsum
        end if
-      enddo                                                        !srv 22.01.02 }
+      enddo                                                       !srv 22.01.02 }
 
-      call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 01.02.09
+      call b2xpro (nx, ny, ns, mp, am, na, ro)                    !srv 01.02.09
       call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       wdia(:,:)=(ne(:,:)*te(:,:)+ni(:,:,1)*ti(:,:))*bb(:,:,2)
@@ -457,7 +457,7 @@
             sx(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)
             if (area_fix.ge.3)
      >       sx(ix,iy) = sx(ix,iy)*qc(rightix(ix,iy),rightiy(ix,iy),0)
-            sxhz(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)*       !srv 24.08.08
+            sxhz(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)*      !srv 24.08.08
      &                  hzf(rightix(ix,iy),rightiy(ix,iy),0)
 !     &                  hz(ix,iy)
 !     &                  hz(rightix(ix,iy),rightiy(ix,iy))
@@ -466,7 +466,7 @@
      >         qc(rightix(ix,iy),rightiy(ix,iy),0)
           else
             sx(ix,iy)=0.0_R8
-            sxhz(ix,iy)=0.0_R8                                     !srv 24.08.08
+            sxhz(ix,iy)=0.0_R8                                    !srv 24.08.08
           endif
           if (leftix(ix,iy).ne.-2) then
             do is = 0, ns-1
