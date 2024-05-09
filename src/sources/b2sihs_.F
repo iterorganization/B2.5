@@ -569,7 +569,8 @@
      &        0.5e0_R8*
      &        (cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,s2nucl(is)-1)
      &        -cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
-     &        t0
+     &        t0*
+     &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))
          
             endif
            enddo
