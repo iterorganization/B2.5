@@ -662,10 +662,9 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        w6=0.0_R8;
       endif                                                 !srv 16.09.02 }
 
-
-        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &          .or. iout_b2wdat.eq.4) then                 !srv 16.09.02 {
-         if(mdf_fhi.eq.0) then                              !srv 13.10.06 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &   .or. iout_b2wdat.eq.4) then                        !srv 16.09.02 {
+        if(mdf_fhi.eq.0) then                               !srv 13.10.06 {
           w1(ix,iy)=1.5_R8*fni_he(ix,iy,1,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
           w2(ix,iy)=flidia(ix,iy,1,1)*
@@ -674,7 +673,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
      1    (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
           w4(ix,iy)=0.0_R8
           w6(ix,iy)=coni0
-         else
+        else
           w1(ix,iy)=1.5_R8*fni_he(ix,iy,1,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
           w2(ix,iy)=0.0_R8
@@ -682,11 +681,10 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
      1     (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
           w4(ix,iy)=0.0_R8
           w6(ix,iy)=coni0_mdf
-         endif
-         w5(ix,iy)=flidia(ix,iy,1,1)*
+        endif
+        w5(ix,iy)=flidia(ix,iy,1,1)*
      &            (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-
-        endif                                                           !srv 16.09.02 }
+      endif                                                    !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &           .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {

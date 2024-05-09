@@ -34,7 +34,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /opt/ctl/cf90/cf90/lib/ftpp -F
@@ -44,10 +44,10 @@ SED = sed s:\#PREC\#:d:g
 
 FC = f90
 ifdef SOLPS_DEBUG
-FCOPTS = -v -g -dp
+  FCOPTS = -v -g -dp
 else
-FCOPTS = -O3 -v -Ounroll2 -eA -X1 -dp
-FCOPTS = -O3 -v -Ounroll2 -dp
+  FCOPTS = -O3 -v -Ounroll2 -eA -X1 -dp
+  FCOPTS = -O3 -v -Ounroll2 -dp
 endif
 INCMOD = -p
 MOD = o
@@ -59,7 +59,7 @@ PLLIBES = $(LD_MSCL)
 LDLIBES = $(LD_NAG)
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 LD = f90 -lapp
