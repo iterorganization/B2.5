@@ -362,7 +362,7 @@ ctmp.dpc
      &             fchvisq_a, fchvisq)
           call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, bb,
+     &              vol, gs, hx, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities

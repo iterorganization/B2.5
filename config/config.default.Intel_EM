@@ -32,7 +32,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 FC       = ifort
@@ -43,9 +43,9 @@ CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 #FCOPTS   = -r8 -O0 -check -g -traceback -save -fpconstant -ftz
 #FCOPTS   = -r8 -O -g -traceback -save -fpconstant -ftz
 ifdef SOLPS_DEBUG
-FCOPTS   = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS   = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
 else
-FCOPTS   = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS   = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
 endif
 
 DBLFC    = ${FC}
@@ -60,11 +60,11 @@ PLLIBES  = ${LD_MSCL}
 LDLIBES  = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD       = ${FC}

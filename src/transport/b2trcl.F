@@ -217,7 +217,7 @@ csw 13mar2012
       do is = 0, ns-1
        call b2txcx (nx, ny, mode, wrk, gs, hx, qz,                       !srv 01.07.05 {
      &   vsa(-1,-1,0,is), cvsahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, wrk, gs, hy, qz,
+       call b2txcy (nx, ny, mode, wrk, gs,
      &   vsa(-1,-1,1,is), cvsahz(-1,-1,1,is))                            !srv 01.07.05 }
       enddo                                                              !srv 09.01.01
 *   ..incorporate geometry
@@ -225,14 +225,14 @@ csw 13mar2012
       do is = 0, ns-1
        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
      &   vsa(-1,-1,0,is), cvsa(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+       call b2txcy (nx, ny, mode, vol, gs,
      &   vsa(-1,-1,1,is), cvsa(-1,-1,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
            call b2txcx (nx, ny, mode, vol, gs, hx, qz,                   !srv
      &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,is,is0))                !srv 01.07.99
-           call b2txcy (nx, ny, mode, vol, gs, hy, qz,                   !srv
+           call b2txcy (nx, ny, mode, vol, gs,                           !srv
      &       sigin(-1,-1,1,is,k), csigin(-1,-1,1,is,is0))                !srv
         endif
        enddo
@@ -240,19 +240,19 @@ csw 13mar2012
 
       call b2txcx (nx, ny, mode, vol, gs, hx, qz,
      & hce(-1,-1,0), chce(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+      call b2txcy (nx, ny, mode, vol, gs,
      & hce(-1,-1,1), chce(-1,-1,1))
       call b2txcx (nx, ny, mode, vol, gs, hx, qz,
      & hci(-1,-1,0), chci(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+      call b2txcy (nx, ny, mode, vol, gs,
      & hci(-1,-1,1), chci(-1,-1,1))
       call b2txcx (nx, ny, mode, vol, gs, hx, qz,
      & sig(-1,-1,0), csig(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+      call b2txcy (nx, ny, mode, vol, gs,
      & sig(-1,-1,1), csig(-1,-1,1))
       call b2txcx (nx, ny, -1, vol, gs, hx, qz,
      & alf(-1,-1,0), calf(-1,-1,0))
-      call b2txcy (nx, ny, -1, vol, gs, hy, qz,
+      call b2txcy (nx, ny, -1, vol, gs,
      & alf(-1,-1,1), calf(-1,-1,1))
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 ) then

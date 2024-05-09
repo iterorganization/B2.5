@@ -3,7 +3,7 @@
 
       subroutine b2tinnt (nx, ny, ns, nscx, iscx,
      &       facdrift, fac_ExB,
-     &       vol, gs, hx, hy, hz, qz, qc, bb,                           !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
+     &       vol, gs, hx, hz, qz, qc, bb,                               !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
      &       te, po, ti, na, fna, csigin, fchin_a, fchin)               !srv 08.03.99 16.06.09, IYS 17.10.2023
       use b2mod_types
       use b2mod_indirect
@@ -28,7 +28,7 @@
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                     !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     1 qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1),
      & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny),
@@ -204,11 +204,11 @@
              enddo
              call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
      &                                             csigia(-1,-1,0))
-             call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigi,
+             call b2txcy (nx, ny, mode, vol, gs, sigi,
      &                                             csigia(-1,-1,1))
              call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigia,
      &                                 csigin(-1,-1,0,is,is0))          !som 04.11.21
-             call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigia,
+             call b2txcy (nx, ny, mode, vol, gs, sigia,
      &                                 csigin(-1,-1,1,is,is0))          !som 04.11.21
              if (iout.ne.0) then
                write (chns,'(i3.3)') is

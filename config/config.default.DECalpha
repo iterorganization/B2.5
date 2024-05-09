@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ucb/cpp -C
@@ -37,9 +37,9 @@ SED = sed s:\#PREC\#:d:g
 
 FC = f90
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C # -real_size 64
+  FCOPTS = -g -C # -real_size 64
 else
-FCOPTS = -O5 # -real_size 64
+  FCOPTS = -O5 # -real_size 64
 endif
 
 DBLFC = ${FC}
