@@ -4,7 +4,9 @@
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
      *  hx, hy, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,               !srv 07.06.00 02.06.99 07.05.08 05.07.17
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho, she0, shi0)                                         !som 16.08.21 !srv 28.06.03 07.07.09
+     *  cvsa_drho,                                                     !som 16.08.21 
+     *  cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 08.05.24
+     *  she0, shi0)                                                    !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -47,6 +49,8 @@
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                            !som 16.08.21
+     &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 08.05.24
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 08.05.24
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -485,7 +489,7 @@
           enddo
          enddo
         else
-         if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then             !som 13.01.22 21.12.23
+         if (zh_vis_type.eq.0) then                                   !som 13.01.22
           do iy = -1, ny                                              !srv 28.08.02 21.07.05 16.10.17 {
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
@@ -506,6 +510,17 @@
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
      &         ft*cvsa_drho(ix,iy,0,is)*
      &        (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))**2    !som 16.08.21
+            endif
+           enddo
+          enddo
+         else if (zh_vis_type.eq.2) then                              !som 08.05.24
+          do iy = -1, ny                                              
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+            else
+             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
             endif
            enddo
           enddo
