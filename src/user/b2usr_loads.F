@@ -11,9 +11,8 @@ C
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-
+      use b2mod_dimensions
       IMPLICIT NONE
-#     include <DIMENSIONS.F>
 
       integer nx, ny, nxtl, nxtr
       real (kind=R8) :: BoRiS
@@ -51,11 +50,11 @@ C PREPARING GEOMETRY DATA
             do k = 1, nbc
               if(bcchar(k).eq.'E'.and.bcpos(k).eq.-1) then
                 target_east = bcene(k).eq.3 .or. bcene(k).eq.12 .or.
-     &                        bcene(k).eq.15
+     &                        bcene(k).eq.15 .or. target_east
               end if
               if(bcchar(k).eq.'W'.and.bcpos(k).eq.nx) then
                 target_west = bcene(k).eq.3 .or. bcene(k).eq.12 .or.
-     &                        bcene(k).eq.15
+     &                        bcene(k).eq.15 .or. target_west
               end if
             end do
             if (target_west) then

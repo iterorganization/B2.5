@@ -99,14 +99,17 @@
      *  smbtfial_nofl(-1:nx,-1:ny,0:3),                                 !som 06.03.21
      *  smbtfial_test_nofl(-1:nx,-1:ny,0:3)                             !som 06.03.21
       real (kind=R8) :: temp
-      logical :: do_parallel
+      real (kind=R8) :: rz2_temp(1:ns*(nx+2)*(ny+2)),
+     &                  na_temp(1:ns*(nx+2)*(ny+2)),
+     &                  am_sqrt(0:ns-1, 0:ns-1)
+      integer :: ctr, i, j
+#if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
+      logical :: make_parallel
+#endif
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-#ifdef NO_IEEE
-      logical, external :: my_isnan
-#endif
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
       !$OMP THREADPRIVATE(ncall, phm1, phm2)
@@ -157,7 +160,9 @@
        call xertst (0.eq.icase .or. 1.eq.icase,
      &              'faulty input b2tlnl_ii')
       endif
-      do_parallel = .not. in_parallel()
+#if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
+      make_parallel = .not. in_parallel()
+#endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -183,10 +188,31 @@
       call sfill (n2*4, 0.0e0_R8, smbtfial, 1)
       call sfill (n2*4, 0.0e0_R8, smbtfial_nofl, 1)
       call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
+
+*   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
+      ctr = 1
+      do iy = -1, ny
+        do ix = -1, nx
+#ifndef LEGACYCOMP
+!$OMP SIMD
+#endif
+          do is = 0, ns-1
+            rz2_temp(ctr) = rz2(ix,iy,is)
+            na_temp(ctr) = na(ix,iy,is)
+            ctr = ctr + 1
+          end do
+        end do
+      end do
+      do j = 0, ns-1
+        do i = 0, ns-1
+          am_sqrt(i,j) = sqrt(am(j)*am(i)/(am(j)+am(i)))
+        end do
+      end do
+
 * ..compute friction
 *   ..loop over all other species
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%start("parallel")
+      if (make_parallel) call timer%start("parallel")
 #endif
 *     ..contribution from friction between ions
       if (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
@@ -215,7 +241,7 @@
           enddo
         enddo
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
@@ -235,7 +261,6 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction_1)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -251,7 +276,6 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction_1)
             endif
            enddo
           enddo
@@ -260,7 +284,7 @@
       else
 *     ..standard friction force calculation
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
@@ -281,7 +305,6 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction_2)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -297,7 +320,6 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction_2)
             endif
            enddo
           enddo
@@ -306,7 +328,7 @@
       endif
       call nancheck(nx, ny, smbfrial(:,:,0), 'smbfrial(,,0)')
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%stop("parallel")
+      if (make_parallel) call timer%stop("parallel")
 #endif
 !*   ..compute ue, electron parallel velocity
 !      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
@@ -346,7 +368,7 @@
       endif
 *   ..contribution from ions thermal force
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%start("parallel")
+      if (make_parallel) call timer%start("parallel")
 #endif
       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
      &   Zhdanov_tf_fr.eq.1) then                                       !som 01.07.2021
@@ -378,13 +400,14 @@
          enddo
         enddo
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface, ka)
+!$OMP& SHARED(rz2_temp, na_temp, am_sqrt)
 !$OMP& SHARED(ismain, cimp1, cimp2)
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
@@ -397,7 +420,10 @@
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              Kabtf(ix,iy) = fkabtf(ix,iy,isb,is)
              Kbatf(ix,iy) = fkabtf(ix,iy,is,isb)
-             kb(ix,iy)    = fka(ix,iy,is)
+c            kb(ix,iy)    = fka(ix,iy,is)
+c            kb(ix,iy)    = fka_new(ix,iy,is,rz2_temp,na_temp)
+             kb(ix,iy)    =
+     &                 fka_new_opt(ix,iy,is,rz2_temp,na_temp,am_sqrt)
              KabVp(ix,iy) = fkabvp(ix,iy,isb,is)
 c        .. calculations could be simplified
 c        .. but we did not do it in order to have the same formulae as manual
@@ -438,7 +464,7 @@ c   .... apply flux limit
          enddo
         enddo
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (do_parallel)
+!$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
@@ -446,6 +472,7 @@ c   .... apply flux limit
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(ismain, cimp1, cimp2)
 !$OMP& SHARED(on_closed_surface, ka)
+!$OMP& SHARED(rz2_temp, na_temp, am_sqrt)
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
@@ -458,7 +485,10 @@ c   .... apply flux limit
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              Kabtf(ix,iy) = fkabtf(ix,iy,isb,is)
              Kbatf(ix,iy) = fkabtf(ix,iy,is,isb)
-             kb(ix,iy)    = fka(ix,iy,is)
+c            kb(ix,iy)    = fka(ix,iy,is)
+c            kb(ix,iy)    = fka_new(ix,iy,is,rz2_temp,na_temp)
+             kb(ix,iy)    =
+     &                 fka_new_opt(ix,iy,is,rz2_temp,na_temp,am_sqrt)
              KabVp(ix,iy) = fkabvp(ix,iy,isb,is)
 c        .. calculations could be simplified
 c        .. but we did not do it in order to have the same formulae as manual
@@ -494,7 +524,7 @@ c   .... apply flux limit
       endif
       call nancheck(nx, ny, smbtfial(:,:,0), 'smbtfial(,,0)')
 #ifdef WITH_FTIMINGS
-      if (do_parallel) call timer%stop("parallel")
+      if (make_parallel) call timer%stop("parallel")
 #endif
       smbtf = smbtfeal + smbtfial
 
@@ -648,6 +678,9 @@ c   .... apply flux limit
       real (kind=R8) :: fka
       integer r
       fka = 0.0_R8
+#ifndef LEGACYCOMP
+!$OMP SIMD REDUCTION(+:fka)
+#endif
       do r = 0, ns-1
         fka = fka + rz2(ix,iy,r)*na(ix,iy,r)*sqrt(mp)*
      &          sqrt(am(a)*am(r)/(am(a)+am(r)))
@@ -655,6 +688,47 @@ c   .... apply flux limit
       fka = fka*rz2(ix,iy,a)
       return
       end function fka
+
+      function fka_new(ix, iy, a, rz2_temp, na_temp)
+      implicit none
+      integer, intent(in) :: ix, iy, a
+      real(kind=R8) :: fka_new
+      real(kind=R8) :: rz2_temp(1:ns*(nx+2)*(ny+2))
+      real(kind=R8) :: na_temp(1:ns*(nx+2)*(ny+2))
+      integer r, ind
+      fka_new = 0.0_R8
+      ind = (ix+1)*ns+(iy+1)*ns*(nx+2)
+#ifndef LEGACYCOMP
+!$OMP SIMD REDUCTION(+:fka_new)
+#endif
+      do r = 0, ns-1
+        fka_new = fka_new + rz2_temp(ind+r+1)*na_temp(ind+r+1)*
+     &   sqrt(mp)*sqrt(am(a)*am(r)/(am(a)+am(r)))
+      end do
+      fka_new = fka_new*rz2_temp(ind+a+1)
+      return
+      end function fka_new
+
+      function fka_new_opt(ix, iy, a, rz2_temp, na_temp, am_sqrt)
+      implicit none
+      integer, intent(in) :: ix, iy, a
+      real(kind=R8) :: fka_new_opt
+      real(kind=R8) :: rz2_temp(1:ns*(nx+2)*(ny+2))
+      real(kind=R8) :: na_temp(1:ns*(nx+2)*(ny+2))
+      real(kind=R8) :: am_sqrt(0:ns-1,0:ns-1)
+      integer r, ind
+      fka_new_opt = 0.0_R8
+      ind = (ix+1)*ns+(iy+1)*ns*(nx+2)
+#ifndef LEGACYCOMP
+!$OMP SIMD REDUCTION(+:fka_new_opt)
+#endif
+      do r = 0, ns-1
+        fka_new_opt = fka_new_opt + rz2_temp(ind+r+1)*na_temp(ind+r+1)*
+     &   sqrt(mp)*am_sqrt(r,a)
+      end do
+      fka_new_opt = fka_new_opt*rz2_temp(ind+a+1)
+      return
+      end function fka_new_opt
 
 *-----------------------------------------------------------------------
 *.end b2sifrtf

@@ -5,7 +5,7 @@ LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
 MSCL_ROOT   ?= /pfs/work/g2dpc/SOLPS-ITER/mscl
 LD_MSCL     ?= -L${MSCL_ROOT}/lib -lmscl
 NCARG_ROOT  ?= /pfs/work/g2dpc/SOLPS-ITER/NCARG
-LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR      ?= /pfs/work/g2dpc/SOLPS-ITER/nag
 LD_NAG      ?= -L${NAGDIR} -lnag
@@ -26,10 +26,14 @@ endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
+FCOPTS   = -fPIC -assume no2underscore
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
+FCOPTS  += -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model precise
+FCOPTS  += -O2 -xHost
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -fp-model=precise
+endif
 endif
 
 ifdef USE_OPENMP
@@ -63,13 +67,13 @@ else
   ifdef ITM_ENVIRONMENT_LOADED
     DEFINES += -DGOT_AMNSPROTO
     INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
-    IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
+    IMASLIBS = ${LD_AL} -lUALFORTRANInterface_ifort
   endif
 endif
 
 SOLPSINCLUDE += `pkg-config netcdf-fortran --cflags`
 
-LD_UAL += -lxml2 -lstdc++
+LD_AL += -lxml2 -lstdc++
 
 #!!!Local Variables:
 #!!! mode: Makefile

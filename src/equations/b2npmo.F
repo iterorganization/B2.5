@@ -38,7 +38,7 @@
      4         eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3,
      5         eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3,
      6         eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3,
-     7         eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3,
+     7         eirene_mc_mppl_smo_bal, eirene_mc_mppl_smo0to3,
      8         b2stbm_smo_bal, b2stbm_smo0to3,
      9         ext_smo_bal, ext_smo0to3,
      *         tot_smo_bal, tot_smo0to3,
@@ -496,7 +496,7 @@
 !$OMP& SHARED(eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3)
 !$OMP& SHARED(eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3)
 !$OMP& SHARED(eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3)
-!$OMP& SHARED(eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3)
+!$OMP& SHARED(eirene_mc_mppl_smo_bal, eirene_mc_mppl_smo0to3)
 !$OMP& SHARED(b2stbm_smo_bal, b2stbm_smo0to3)
 !$OMP& SHARED(ext_smo_bal, ext_smo0to3)
 !$OMP& SHARED(tot_smo_bal, tot_smo0to3)
@@ -533,16 +533,8 @@
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al_ast, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
-#ifndef GFORTRAN
-#ifndef PGF90
-#ifndef CRAY
+#if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
 !$OMP& COPYIN(last_solve_5)
-#else
-!$OMP& PRIVATE(last_solve_5)
-#endif
-#else
-!$OMP& PRIVATE(last_solve_5)
-#endif
 #else
 !$OMP& PRIVATE(last_solve_5)
 #endif
@@ -742,10 +734,6 @@ cdjm Jan2017 update momentum source components for balance
      &   ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
         fmo(:,:,:,is)=wrkf
-        if(style_b2mndt.eq.2) then                                     !srv 10.10.22 {
-          resmo(:,:,is)=resmo(:,:,is)+(ua(:,:,is)-uap(:,:,is))*
-     &       am(is)*mp*na(:,:,is)*smodt(:,:,3,is)
-        endif                                                          !srv 10.10.22 }
 
 cdjm Mar2019 output the total momentum flux and source for balance
         if (balance_netcdf.ne.0) then

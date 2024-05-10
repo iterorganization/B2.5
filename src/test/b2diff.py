@@ -65,7 +65,7 @@ parser = argparse.ArgumentParser(description = "Post process the results from "
 parser.add_argument("filename", type=str, default="(stdin)", nargs='?',
            help="name of the input files")
 parser.add_argument("-t", "--tolerance", type=float, default=tolerance,
-           help="numerical differences below this treshold will be "
+           help="numerical differences below this threshold will be "
                 "ignored (default: " + str(tolerance) + ")")
 parser.add_argument("-s", "--specific-tolerance", type=str, help="you can set "
            "a specific tolerance for certain variables, like -s 'var1 1e-7 "

@@ -35,6 +35,11 @@
       call subini ('b2co_movies_cdf')
       write(*,*) 'b2co_movies_cdf ...'
 
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.lt.ns, 'faulty argument ns')
+      call xertst (0.le.natm, 'faulty argument natm')
+      call xertst (0.le.nmol, 'faulty argument nmol')
 #ifndef NO_CDF
 c access the b2movies.nc file
       filename='b2movies.nc'

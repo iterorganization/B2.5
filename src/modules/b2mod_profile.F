@@ -2,9 +2,12 @@
       use b2mod_types
       use b2mod_boundary_namelist
 #ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
 #endif
+      implicit none
+
       contains
+
       subroutine read_profile(filename,bc1,bc2,pos_in,
      .     profile,ny,max_profile,scale)
 *-----------------------------------------------------------------------

@@ -24,6 +24,7 @@
      , , only: f_luc_ki, f_luc_et, alpha1
       use b2mod_transport_namelist
       use b2mod_indirect
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, znmax, mode
@@ -150,7 +151,6 @@
      &  hci0_al(-1:nx,-1:ny,0:nspecies-1),
      &  hciB_al_nofl(0:nspecies-1),
      &  hciB_al(0:nspecies-1),
-     &  hci0_a_nofl(-1:nx,-1:ny,0:ns-1),
      &  hci0_a(-1:nx,-1:ny,0:ns-1),
      &  c_hw(0:nspecies-1,0:nspecies-1),c_rw(0:nspecies-1,0:nspecies-1),
      &  c_hwA(0:nspecies-1,0:nspecies-1),
@@ -161,9 +161,11 @@
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
-
+      character*80 cvalip
+*   ..initialisation
       save ncall
       data ncall/0/
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -178,6 +180,11 @@
         if (zh_dist_fun.eq.1) then
           call alloc_b2mod_zhfrtf_df(nx, ny, ns)
         endif
+        cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
+        call ipgetc ('b2tral_zh_tf_toff', cvalip)                 !som 26.06.21
+        do is = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+          zh_tf_toff(is) = cvalip(is:is)
+        end do
 
 *   ..calculate the atom number and the atomic mass of each isonuclear sequence
         inucl=1
@@ -217,7 +224,7 @@
           i=nspecies-1
           j=i-1
           do is = (nspecies*(nspecies+1))/2-nspecies, 1, -1
-            if (zh_tf_toff(is:is).eq.'1') then
+            if (zh_tf_toff(is).eq.'1') then
               tf_ton_mat(i,j)=0.0_R8
               tf_ton_mat(j,i)=0.0_R8
             else
@@ -649,14 +656,9 @@
      &     hciB_al(0:nspecies-1)*(I_al(0:nspecies-1)-1.0_R8))
 
 *   ..ion heat conductivity for each charge state
-          hci0_a_nofl(ix,iy,0:ns-1) = 0.0_R8
           hci0_a(ix,iy,0:ns-1) = 0.0_R8
           do i = 0, nspecies-1
             do iz= 1, znnucl_int(i)
-              hci0_a_nofl(ix,iy,nucl2s(i,iz)) =
-     &         na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
-     &        (hci0_al_nofl(ix,iy,i)+zhcscorr*hciB_al_nofl(i)*
-     &        (z2n_xy(ix,iy,i)/(nal(ix,iy,i)*iz**2)-1.0_R8))
               hci0_a(ix,iy,nucl2s(i,iz)) =
      &         na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
      &        (hci0_al(ix,iy,i)+zhcscorr*hciB_al(i)*

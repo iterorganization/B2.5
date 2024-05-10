@@ -10,7 +10,7 @@
       use b2mod_indirect
       use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
 #endif
       implicit none
 

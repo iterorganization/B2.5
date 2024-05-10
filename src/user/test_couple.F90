@@ -11,6 +11,9 @@
 
       call subini ('test_couple')
       error=.false.
+      error=error.or.nxdd_b2.le.0.or.nydd_b2.le.0.or.nstra_b2.lt.0 &
+     &           .or.nfl_b2 .le.0.or.natm_b2.lt.0.or.nmol_b2.lt.0  &
+     &           .or.nion_b2.lt.0.or.nlimps_b2.lt.0
 #ifdef B25_EIRENE
       if(nxdd_b2.ne.ndx) then
         write(*,*) 'NXDD(B2) <> NDX(EIRENE) ',nxdd_b2,ndx
@@ -48,7 +51,7 @@
       if(error) then
         write(*,*) 'ERROR IN COUPLING PARAMETERS'
         write(*,*) 'PLEASE CHECK THAT BOTH EIRENE AND B2.5 ARE COMPILED'
-        write(*,*) 'WITH THE SAME PARAMETERS FROM THE DIMENSIONS.F FILE'
+        write(*,*) 'WITH THE SAME PARAMETERS FROM THE b2mod_dimensions.F FILE'
         write(*,*) 'COUPLING TEST FAILED'
       else      
         write(*,*) 'COUPLING TEST PASSED'

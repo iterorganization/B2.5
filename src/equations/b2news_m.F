@@ -373,11 +373,6 @@ csw 01oct2012 initialize potential if necessary
      * cvsa_uAdp_albe, cvsa_uBdp_al,                                     !som 26.04.24
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
 *                                                                        !srv 09.03.21 {
-*   ..set nep
-*     (= ne before continuity update)
-      call b2scopy (n2, ne, 1, nep, 1)
-      nip = ni
-      uap = ua                                                           !srv 24.05.21
 *   ..recompute currents
       call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 !som 02.11.21
@@ -390,10 +385,14 @@ csw 01oct2012 initialize potential if necessary
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 02.11.21
      &              po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
-      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,    !som 20.10.21
      &             fchvisq_a, fchvisq)
+      call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
+     &              vol, gs, hx, hz, qz, qc, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
 *     ..iterate on particle balance
 
@@ -417,19 +416,9 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& PRIVATE(new_matrix)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 !$OMP& LASTPRIVATE(pb, flob, conb)
-#ifndef GFORTRAN
-#ifndef PGF90
-#ifndef CRAY
+#if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
 !$OMP& COPYIN(last_solve_5, last_solve_7)
 !$OMP& COPYIN(last_solve_9, last_solve_11)
-#else
-!$OMP& PRIVATE(last_solve_5, last_solve_7)
-!$OMP& PRIVATE(last_solve_9, last_solve_11)
-#endif
-#else
-!$OMP& PRIVATE(last_solve_5, last_solve_7)
-!$OMP& PRIVATE(last_solve_9, last_solve_11)
-#endif
 #else
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)
@@ -443,10 +432,10 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(cssb, vaecrb, vadia)
 !$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, po)
 !$OMP& SHARED(cvla, cdna, cdpa, cddi, cdde, cvlahz, cdnahz, cdpahz)
-!$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq, fchin)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
-!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
-!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
+!$OMP& SHARED(fchin_a, fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
+!$OMP& SHARED(fna_mdf, fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
 !$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa, b2stbr_sna)
 !$OMP& SHARED(b2stbm_sna,ext_sna)
@@ -466,14 +455,14 @@ csw 01oct2012 initialize potential if necessary
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,          !srv 19.05.03 08.10.04  04.02.05
+     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,          !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
      &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
      &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
+     &   fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                     !srv 20.09.06, IYS 17.10.2023
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -595,7 +584,7 @@ csw 16oct2012 init ier0
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
      &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
      &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
+     &   fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                     !srv 20.09.06, IYS 17.10.2023
      1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -654,6 +643,10 @@ csw 16oct2012 init ier0
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,    !som 20.10.21
      &             fchvisq_a, fchvisq)
+      call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
+     &              vol, gs, hx, hz, qz, qc, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
@@ -668,10 +661,10 @@ csw 16oct2012 init ier0
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
-!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq, fchin)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
-!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
-!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
+!$OMP& SHARED(fchin_a, fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
+!$OMP& SHARED(fna_mdf, fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna)
 #endif
 !        do is=0,ns-1                                                    !srv 01.10.99
@@ -690,7 +683,7 @@ csw 16oct2012 init ier0
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
      &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
      &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
+     &   fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                     !srv 20.09.06, IYS 17.10.2023
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -727,12 +720,12 @@ c   extra call at this place within internal iteration)
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
-     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
-     &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &    fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,  !srv 21.10.02, IYS 17.10.2023
+     &    fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
      &    chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,             !som 20.10.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
-     &    cvla, chce, chve, chci, chvi, calf,                            !xpb
+     &    cvla, chce, chve, chci, chvi, calf, csigin,                    !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
@@ -849,14 +842,14 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 *   ..compute currents
         call b2tfch_ (nx, ny, ns, nscx, ismain, iscx,
      &    facdrift, fac_ExB, fac_vis,                                    !srv 09.01.20
-     &    vol, gs, hx, hy, qz, qc, bb, te, po, ne,
+     &    vol, gs, hx, hz, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
      &    chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,             !som 20.10.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
      &    conc, avisper_a, bvisper_a, cvisper_a,
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
-     &    fch, fch_p, fchdia, fchin,
+     &    fchin_a, fch, fch_p, fchdia, fchin,                            !IYS 17.10.2023
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
         if (solving(3)) then
 *   ..solve the potential equation
@@ -886,14 +879,14 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
 *   ..recompute currents
           call b2tfch_ (nx, ny, ns, nscx, ismain, iscx,
      &      facdrift, fac_ExB, fac_vis,                                  !srv 09.01.20
-     &      vol, gs, hx, hy, qz, qc, bb, te, po, ne,
+     &      vol, gs, hx, hz, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,    !som 18.08.21 !srv 24.08.21
      &      chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,           !som 20.10.21
      &      cvsa_uAdp_albe, cvsa_uBdp_al,                                !som 26.04.24
      &      conc, avisper_a, bvisper_a, cvisper_a,
      &      fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,  !srv 08.09.21
-     &      fch, fch_p, fchdia, fchin,
+     &      fchin_a, fch, fch_p, fchdia, fchin,                          !IYS 17.10.2023
      &      fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
 *   ..compute new residual following the tradition
           call b2ursd (nx, ny, ne, po, sch, fch, wrk0)
@@ -938,10 +931,10 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
-!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq, fchin)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
-!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
-!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
+!$OMP& SHARED(fchin_a, fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
+!$OMP& SHARED(fna_mdf, fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna)
 #endif
       do is = 0, ns-1
@@ -963,7 +956,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &     cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
      &     fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),             !srv 08.09.21
      &     fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &     fchvisq_a(-1,-1,0,is),                                        !srv 20.09.06
+     &     fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                   !srv 20.09.06, IYS 17.10.2023
      &     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &     fna_fcor(-1,-1,0,is),
      &     fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -998,7 +991,7 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB,
+      call b2tfhe_ (nx, ny, ns, ismain, facdrift,
      & vol, hx,                                                          !srv 29.01.20
      1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 11.07.99 18.01.02 01.07.09
      2 chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21
@@ -1139,7 +1132,7 @@ c   recompute particle fluxes
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
      &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
      &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
+     &   fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                     !srv 20.09.06, IYS 17.10.2023
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -1267,7 +1260,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
      &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
      &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
+     &   fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                     !srv 20.09.06, IYS 17.10.2023
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),

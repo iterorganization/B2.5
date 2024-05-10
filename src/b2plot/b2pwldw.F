@@ -17,6 +17,7 @@
 #else
       use b2mod_eirbra
 #endif
+      use b2mod_dimensions
 c
 c  version : 12.01.2002 01:19
 c
@@ -81,7 +82,6 @@ c***  Neutral flux total     |  for each species
 c***  Net particle flux     /
 c=======================================================================
       implicit none
-#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
@@ -840,8 +840,8 @@ c                    print *,'j,js,wo = ',j,js,wo    !###
      >           wpttrg(iy,itrg(j))+wrdtrg(iy,itrg(j),0)
               end do !}
             end do !}
-            write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for Wn : ',
-     ,                                    (wi(itrg(i)),i=1,ntrgts)
+            if (ntrgts.gt.0) write(*,'(1x,a,1p,16e12.3)')
+     ,       'Scaling factors for Wn : ', (wi(itrg(i)),i=1,ntrgts)
 
 c*** Particle fluxes and energies
             i2=0

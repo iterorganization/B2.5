@@ -216,7 +216,7 @@ module b2_file_io
       !> Buffers to store real, integer or character data
       real(kind=R8), dimension(:), allocatable, intent(out) :: refun
       integer, dimension(:), allocatable, intent(out) :: infun
-#ifdef F2003
+#ifndef LEGACYCOMP
       character(len=:), allocatable, intent(out) :: chfun
 #else
       integer, parameter :: strmax = 512
@@ -255,7 +255,7 @@ module b2_file_io
           endif
         case ('char')
           n = n1
-#ifdef F2003
+#ifndef LEGACYCOMP
           allocate(character(len=n) :: chfun)
 #else
           call xertst(n.le.strmax, 'increase size of strmax in check_b2_output')
@@ -285,7 +285,7 @@ program test_b2output
   integer :: u1, u2, idx
   real (kind=R8), dimension(:), allocatable :: r1, r2
   integer, dimension(:), allocatable :: i1, i2
-#ifdef F2003
+#ifndef LEGACYCOMP
   character(len=:), allocatable :: ch1, ch2
 #else
   integer, parameter :: strmax = 512
@@ -309,22 +309,27 @@ program test_b2output
       write(*,*) 'Error, variable name or type differ'
       write(*,*) trim(vname1), ' ', idtyp1
       write(*,*) trim(vname2), ' ', idtyp2
+      n_errors = n_errors + 1
+    else if (size_n1 /= size_n2) then
+      write(*,*) 'Error, variable sizes differ'
+      write(*,*) trim(vname1), ' ', size_n1
+      write(*,*) trim(vname2), ' ', size_n2
+      n_errors = n_errors + 1
     else
-
-        select case(idtyp1)
-          case ('real')
-            write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
-            n_errors = n_errors + check_variable(r1, r2, vname1)
-          case ('int')
-             write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
-            n_errors = n_errors + check_variable(i1, i2, vname1)
-          case ('char')
-             write(*,'(a16,a12,a6,i8)') 'Skipping string ', vname1, 'size: ', size_n1
-             ! might contain time when the simulation was started
-            !n_errors = n_errors + check_variable(ch1, ch2, vname1)
-          case default
-            write(*,*) 'unknown type', idtyp1, ' for variable ', vname1
-        end select
+      select case(idtyp1)
+        case ('real')
+          write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
+          n_errors = n_errors + check_variable(r1, r2, vname1)
+        case ('int')
+          write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
+          n_errors = n_errors + check_variable(i1, i2, vname1)
+        case ('char')
+          write(*,'(a16,a12,a6,i8)') 'Skipping string ', vname1, 'size: ', size_n1
+          ! might contain time when the simulation was started
+          !n_errors = n_errors + check_variable(ch1, ch2, vname1)
+        case default
+          write(*,*) 'unknown type', idtyp1, ' for variable ', vname1
+      end select
     endif
     call read_unknown_type (u1, size_n1, r1, i1, ch1, vname1, idtyp1)
     call read_unknown_type (u2, size_n2, r2, i2, ch2, vname2, idtyp2)
@@ -370,6 +375,7 @@ program test_b2output
 
   write (*,*) 'File1: ', trim(input1)
   write (*,*) 'File2: ', trim(input2)
+  return
  end subroutine
 
  function open_file(filename) result(my_unit)
@@ -382,12 +388,12 @@ program test_b2output
    character(len=10) :: version_in
    character(len=7) :: label
    integer :: ierr
-#ifndef F2003
-   integer :: newunit
+#ifdef LEGACYCOMP
+   integer newunit
    external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
    open(newunit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
 #else
    my_unit=newunit()
@@ -405,7 +411,7 @@ program test_b2output
        ! If it does not match, then it should be a binary file
        close(my_unit)
        ! reopen in UNFORMATTED mode
-#ifdef F2003
+#ifndef LEGACYCOMP
        open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #else
        open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)

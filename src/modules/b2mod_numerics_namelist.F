@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_indirect
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -28,7 +31,6 @@
      *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
 #else
-#     include "DIMENSIONS.F"
       integer NSDMAX, NATMMAX
       parameter (NSDMAX=DEF_NSD, NATMMAX=DEF_NATM)
       real (kind=R8), save ::
@@ -115,7 +117,7 @@
       allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
 #else
       call xertst (nsd.le.nsdmax,
-     1 'increase DEF_NSD in DIMENSIONS.F')
+     1 'increase DEF_NSD in b2mod_dimensions')
       call xertst (nnreg(0).le.nnregmax,
      1 'increase NNREGMAX in b2mod_indirect')
 #endif

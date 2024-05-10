@@ -34,7 +34,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, k
+      integer ncall, n2, ix, iy, k
       integer, save :: iout = 0
       character chns*3, chark*1
       real (kind=R8) ::
@@ -42,7 +42,7 @@
       save ncall, phm0
       !$OMP THREADPRIVATE(ncall, phm0, iout)
 *   ..procedures
-      external xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg
 *   ..initialization
       data ncall/0/, phm0/1.0e0_R8/
@@ -53,6 +53,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sian')
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.isb, 'faulty argument isb')
+      call xertst (0.le.ismain, 'faulty argument ismain')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2sian_phm0', phm0)
@@ -66,8 +70,9 @@
        end if
       endif
 *   ..test nx, ny
+      n2 = (nx+2)*(ny+2)
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      smban = 0.0_R8
+      call sfill (n2*4, 0.0_R8, smban, 1)
 !      if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
 !      if (isb.eq.ismain) then                                           !srv 19.02.21
       if (.not.is_neutral(isb)) then                                     !som 03.11.21

@@ -3,8 +3,8 @@
 
       subroutine b2tinnt (nx, ny, ns, nscx, iscx,
      &       facdrift, fac_ExB,
-     &       vol, gs, hx, hy, qz, qc, bb,                               !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
-     &       te, po, ti, na, fna, csigin, fchin)                        !srv 08.03.99 16.06.09
+     &       vol, gs, hx, hz, qz, qc, bb,                               !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
+     &       te, po, ti, na, fna, csigin, fchin_a, fchin)               !srv 08.03.99 16.06.09, IYS 17.10.2023
       use b2mod_types
       use b2mod_indirect
       use b2mod_rates
@@ -15,6 +15,8 @@
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_wneutrals
+      use b2mod_sources
+     ,   , only: smo0_eir_tot, smr0_eir_tot, smd0_eir_tot
 #endif
       use b2mod_geo
      , , only : hy1
@@ -26,20 +28,21 @@
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                     !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     1 qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1),
-     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny)
+     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny),
+     & hz(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fchin(-1:nx,-1:ny,0:1)
+     & fchin(-1:nx,-1:ny,0:1), fchin_a(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2TINNT computes the ion-neutral current
+*     B2TINNT computes the ion-neutral current.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -51,6 +54,7 @@
       integer, save :: use_eirene, area_fix
       integer, save :: fchin_in_core = 0                                !srv 16.11.17
       integer, save :: no_current = 0
+      integer, save :: use_kinetic = 0                                  !IYS 17.10.2023
       integer n2, ix, iy, is, is0, ia, k                                !som 04.11.21
 #ifdef B25_EIRENE
       integer im
@@ -63,7 +67,7 @@
      *   fnac(-1:nx,-1:ny,0:1,0:ns-1), vntrc(-1:nx,-1:ny,0:1),          !srv 08.07.09
      *   vntrl(-1:nx,-1:ny), vntrb(-1:nx,-1:ny),
      *   til(-1:nx,-1:ny), tib(-1:nx,-1:ny),
-     *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
+     *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:2,0:ns-1),
      *   fnal(-1:nx,-1:ny,0:1,0:ns-1),
      *   fnav(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
@@ -84,6 +88,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tinnt')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tinnt_iout', iout)
@@ -95,14 +103,28 @@
         call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
         call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
         call ipgeti ('b2tfhe_no_current', no_current)
-        call ipgeti ('b2tqin_csigin_style', style)
+        call ipgeti ('b2tqin_csigin_style', csigin_style)
         call ipgetr ('b2sqcx_phm0', phm0)
+        call ipgeti ('b2tinnt_kinetic', use_kinetic)
+        if (use_kinetic.eq.1) then
+#ifdef B25_EIRENE
+          if (use_eirene.eq.0) then
+            write(*,*) ' USE_KINETIC == 1 while USE_EIRENE == 0!!!'
+            call xerrab
+     & ('Impossible to use kinetic momentum sources for fluid neutrals')
+          endif
+#else
+          call xerrab
+     &     ('b2tinnt not compiled with the B25_EIRENE option')
+#endif
+          if (style.eq.0)
+     &     call xerrab ('b2tinnt_style = 0 is obsolete '//
+     &      'and not compatible with b2tinnt_kinetic = 1')
+        endif
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+
       fchin     = 0.0e0_R8                                              !srv 09.07.99
+      fchin_a   = 0.0_R8                                                !IYS 17.10.2023
       facdriftm = maxval(facdrift)                                      !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
@@ -122,38 +144,40 @@
          enddo
        endif
        if (use_eirene.ne.0) then
-        fchin = 0.0e0_R8                                                !srv 15.02.11 {
+!        fchin = 0.0e0_R8
+
+        if (use_kinetic.eq.0) then                                      !srv 15.02.11 {
 *   ..calculate section
-        do is0 = 0, ns-1                                                !som 04.11.21 {
-         if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
+         do is0 = 0, ns-1                                               !som 04.11.21 {
+          if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
 *   ..identify matching CX rate
-          k = 0
-          found = .false.
-          do while (.not.found .and. k.lt.nscx)
+           k = 0
+           found = .false.
+           do while (.not.found .and. k.lt.nscx)
             found = iscx(k).eq.is0
             if (.not.found) k = k + 1
-          enddo
-*   ..get Eirene neutral fluxes divided by area
-          fnan = 0.0_R8
-          do ia = 1, nnatmi
-           if (b2espcr(is0).ne.latmscl(ia)) cycle
-           do iy=-1,ny
-            do ix=-1,nx
-             if(leftix(ix,iy).ne.-2) fnan(ix,iy,0,is0)=
-     .         fnan(ix,iy,0,is0)+pfluxa(ix+1,iy+1,ia,1) !/gs(ix,iy,0)   !som 04.11.21
-             if(bottomiy(ix,iy).ne.-2) fnan(ix,iy,1,is0)=
-     .         fnan(ix,iy,1,is0)+rfluxa(ix+1,iy+1,ia,1) !/gs(ix,iy,1)   !som 04.11.21
-            enddo
            enddo
-          end do
+*   ..get Eirene neutral fluxes divided by area
+           fnan = 0.0_R8
+           do ia = 1, nnatmi
+            if (b2espcr(is0).ne.latmscl(ia)) cycle
+            do iy=-1,ny
+             do ix=-1,nx
+              if(leftix(ix,iy).ne.-2) fnan(ix,iy,0,is0)=
+     .         fnan(ix,iy,0,is0)+pfluxa(ix+1,iy+1,ia,1) !/gs(ix,iy,0)   !som 04.11.21
+              if(bottomiy(ix,iy).ne.-2) fnan(ix,iy,1,is0)=
+     .         fnan(ix,iy,1,is0)+rfluxa(ix+1,iy+1,ia,1) !/gs(ix,iy,1)   !som 04.11.21
+             enddo
+            enddo
+           end do
 *   ..get fluxes in the cell centre
-          fnac(:,:,:,is0) = fnan(:,:,:,is0)                             !som 04.11.21
+           fnac(:,:,:,is0) = fnan(:,:,:,is0)                            !som 04.11.21
 *   ..interpolate fluxes in the cell face
-          call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,is0),
+           call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,is0),
      &                                          fnal(-1,-1,0,is0))      !som 04.11.21
-          call intfacev(nx, ny, bottomix, bottomiy, vol,
+           call intfacev(nx, ny, bottomix, bottomiy, vol,
      &                       fnac(-1,-1,0,is0), fnav(-1,-1,1,is0))
-          do is = 0, ns-1
+           do is = 0, ns-1
             if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
              sigia = 0.0_R8
              mu=am(is)*am(is0)/(am(is)+am(is0))                         !som 05.11.21
@@ -180,11 +204,11 @@
              enddo
              call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
      &                                             csigia(-1,-1,0))
-             call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigi,
+             call b2txcy (nx, ny, mode, vol, gs, sigi,
      &                                             csigia(-1,-1,1))
              call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigia,
      &                                 csigin(-1,-1,0,is,is0))          !som 04.11.21
-             call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigia,
+             call b2txcy (nx, ny, mode, vol, gs, sigia,
      &                                 csigin(-1,-1,1,is,is0))          !som 04.11.21
              if (iout.ne.0) then
                write (chns,'(i3.3)') is
@@ -274,9 +298,48 @@
              endif                                                      !srv 15.02.11 }
 
             endif
-          enddo ! is
-         endif
-        enddo ! is0                                                     !som 04.11.21 }
+           enddo ! is
+          endif
+         enddo ! is0                                                    !som 04.11.21 }
+
+#ifdef B25_EIRENE
+        else !if (use_kinetic .eq. 1) then                              !IYS 17.10.2023
+
+         do is = 0,ns-1
+! interpolate kinetic momentum source densities to cell faces
+          sec(-1:nx,-1:ny) = smr0_eir_tot(-1:nx,-1:ny,is)
+     &                             / hz(-1:nx,-1:ny) / vol(-1:nx,-1:ny)
+          call intfaceh(nx,ny,leftix,leftiy,vol,
+     &                       sec(-1,-1),work(-1,-1,1,is))
+          sec(-1:nx,-1:ny) = smd0_eir_tot(-1:nx,-1:ny,is)
+     &                             / hz(-1:nx,-1:ny) / vol(-1:nx,-1:ny)
+          call intfacev(nx, ny, bottomix, bottomiy, vol,
+     &                       sec(-1,-1),work(-1,-1,0,is))      
+          call intfaceh(nx,ny,leftix,leftiy,vol,
+     &                       sec(-1,-1),work(-1,-1,2,is))      
+! HERE:
+!   work(:,:,1,is) is the y-component of momentum source density (interpolated to the left cell face)
+!   work(:,:,0,is) is the DIAMAGNETIC component of momentum source density (interpolated to the bottom cell face),
+!                  and the sign convention should be EIRENE-compatible
+!   work(:,:,2,is) is the DIAMAGNETIC component of momentum source density (interpolated to the left cell face),
+!                  and the sign convention should be EIRENE-compatible
+          do ix=-1,nx
+           do iy=-1,ny
+            if (leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
+     &         .and. topiy(ix,iy).ne.ny+1) 
+     &       fchin_a(ix,iy,0,is) = gs(ix,iy,0) * (
+     & qc(ix,iy) * wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2 * work(ix,iy,1,is) -
+     &  sqrt(1 - qc(ix,iy)**2) * work(ix,iy,2,is) / wbbl(ix,iy,3) )
+            if (leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
+     &         .and. rightix(ix,iy).ne.nx+1) 
+     &            fchin_a(ix,iy,1,is) =  gs(ix,iy,1) * 
+     &                                 work(ix,iy,0,is) / wbbv(ix,iy,3)  ! Mind the sign!!!!
+            fchin(ix,iy,0) = fchin(ix,iy,0) + fchin_a(ix,iy,0,is)
+           enddo
+          enddo
+         enddo
+#endif
+        endif ! use_kinetic
 
         if(fchin_in_core.eq.0) then                                     !srv 16.11.17 {
           do iy=-1,ny
@@ -305,7 +368,7 @@
          enddo
         endif
 *   ..calculate the contribution of ion-neutral current
-        fchin = 0.0e0_R8
+!        fchin = 0.0e0_R8
         do is0 = 0, ns-1
          if (is_neutral(is0).and.nint(zn(is0)).eq.1) then               !srv 20.10.17
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
@@ -441,8 +504,8 @@
      &              'b2tinnt_dmb2_eir'//chns)
        enddo
        do is0 = 0, ns-1                                                 !som 04.11.21 {
+        write (chns0,'(i3.3)') is0
         if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
-         write (chns0,'(i3.3)') is0
          do is = 0, ns-1
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
            write (chns,'(i3.3)') is
@@ -459,6 +522,16 @@
          call my_out(70,nx,ny,fnan(-1,-1,1,is0),'b2tinnt_fnany'
      &                                       //chns0)
         endif
+        if (use_kinetic.eq.1) then
+          call my_out(70,nx,ny,smo0_eir_tot(-1,-1,is0),
+     &                                   'b2tinnt_smo'//chns0)
+          call my_out(70,nx,ny,smr0_eir_tot(-1,-1,is0),
+     &                                   'b2tinnt_smr'//chns0)
+          call my_out(70,nx,ny,smd0_eir_tot(-1,-1,is0),
+     &                                   'b2tinnt_smd'//chns0)
+        endif
+      call my_out(70,nx,ny,fchin_a(-1,-1,0,is0),'b2tinnt_fchinx'//chns0)
+      call my_out(70,nx,ny,fchin_a(-1,-1,1,is0),'b2tinnt_fchiny'//chns0)
        enddo                                                            !som 04.11.21 }
        call my_out(70,nx,ny,fchin(-1,-1,0),'b2tinnt_fchinx')
        call my_out(70,nx,ny,fchin(-1,-1,1),'b2tinnt_fchiny')

@@ -243,7 +243,6 @@
         call ipgeti ('b2tral_zh_imp_analyt', zh_imp_analyt)       !som 21.03.21
         call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.21
         call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 10.06.21
-        call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)             !som 26.06.21
         call ipgeti ('b2tral_zh_vis_type', zh_vis_type)           !som 13.01.22
         call ipgeti ('b2tral_mode', mode)                         !som 15.03.21
         call ipgeti ('b2tral_amfact_on', amfact_on)             ! !som 28.01.22
@@ -585,8 +584,8 @@
          enddo
         enddo
        enddo                                                           !IYS 15.09.22 }
-       
-      endif                                                                       
+
+      endif
 
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {

@@ -11,7 +11,7 @@
 *
 *     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
 *     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     and cosang(p0x,p0y,p1x,p1y) is cos(t), where t is the complementary 
+*     and cosang(p0x,p0y,p1x,p1y) is cos(t), where t is the complementary
 *     angle between p0 and p1.
 *     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
 *     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.

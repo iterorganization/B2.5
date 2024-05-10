@@ -14,6 +14,7 @@
       use b2mod_indirect
       use b2mod_tallies
       use b2mod_b2cmpa
+      use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
@@ -213,6 +214,10 @@
 *    ..test edge values of the fluxes
        call b2xvff (nx, ny, fhe, 'fhe')
        call b2xvff (nx, ny, fhi, 'fhi')
+*    ..test velocities
+       call xertst (max(maxval(abs(ua)),maxval(abs(ue)),
+     &   maxval(abs(uadia)),maxval(abs(vadia)),maxval(abs(wadia)),
+     &   maxval(abs(vaecrb))).lt.c, 'Supra-luminal velocities !')
 *    ..test fac_ExB
        call xertst (0.0_R8.le.minval(fac_ExB) .and.
      &       1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
@@ -310,16 +315,10 @@ cdjm Jan2017 update particle source components for balance
       if ((solving(4).and.any(solvereg(0:nregionv))).or.
      &                    get_residuals.eq.1) then                      !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
-        if(style_b2mndt.eq.2) then                                      !srv 10.10.22 {
-          reshe=reshe+(te-tep)*ne*shedt(:,:,3)
-        endif                                                           !srv 10.10.22 }
       endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
      &                   get_residuals.eq.1) then                       !srv 22.05.18
         call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
-        if(style_b2mndt.eq.2) then                                      !srv 10.10.22 {
-          reshi=reshi+(ti-tip)*ni(:,:,0)*shidt(:,:,3)
-        endif                                                           !srv 10.10.22 }
       endif                                                             !srv 22.05.18
 *   ..compute heat source due to electron-ions collisions               !srv 18.09.09 30.01.10 {
       do iy = -1, ny

@@ -15,14 +15,14 @@ ifndef LD_SONNET
   $(error LD_SONNET not defined)
 endif
 
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 # DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    IMAS_PKG_LIST = fundamental_constants
+    IMAS_PKG_LIST = fundamental-constants
   endif
 endif
 
@@ -31,28 +31,28 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = lf95
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g --trace --trap --chk asu
+  FCOPTS = -g --trace --trap --chk asu
 else
-FCOPTS = -O --trace --trap 
-LDOPTS += --trace --trap
+  FCOPTS = -O --trace --trap
+  LDOPTS += --trace --trap
 endif
 
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
 DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLSED =
 
 INCMOD = -M
 MOD = mod
@@ -65,11 +65,11 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = lf95

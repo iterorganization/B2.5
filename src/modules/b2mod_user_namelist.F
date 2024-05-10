@@ -1,7 +1,8 @@
       module b2mod_user_namelist
       use b2mod_types
       use b2mod_diag
-#     include "DIMENSIONS.F"
+      use b2mod_dimensions
+      implicit none
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)
       integer nhetrgtx
@@ -60,7 +61,7 @@ c*** npfrgrp   :  actual number of surface groups for PFR flows
 c*** lpfrgrp   :  list of surface segments for PFR flows
 c*** [ij]pfrgrp:  first and last positions in this list for each group
 c*** gpfrgrp   :  identifiers for the PFR surface groups
-c*** nntrgrpd  :  max. number of surface groups for neutral data 
+c*** nntrgrpd  :  max. number of surface groups for neutral data
 c*** nntrgrp   :  actual number of surface groups for neutral data
 c*** lntrgrp   :  list of surface segments for neutral data
 c*** [ij]ntrgrp:  first and last positions in this list for each group
@@ -87,7 +88,7 @@ c----------------------------------------------------------------------
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
       allocate(l_h_mol(nmol,3))
 #endif
-      
+
 c*** PFR specification - for He enrichment and neutral pressure
 c***  Standard set-up:
       lpfrs_pmp=0            ! no pumping
@@ -296,7 +297,7 @@ c*** Set default values according to current species list
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
       if (filedata(ntrc_uss)) call xertst(nlim.le.DEF_NLIM,
-     . 'insufficient size of DEF_NLIM in DIMENSIONS.F !')
+     . 'insufficient size of DEF_NLIM in b2mod_dimensions.F !')
 
       call subend ()
       return

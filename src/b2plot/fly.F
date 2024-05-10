@@ -19,4 +19,4 @@ c
       call fy(ix)
       linlog=linlog-iadd
       return
-      end
+      end subroutine fly

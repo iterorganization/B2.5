@@ -16,10 +16,9 @@
 #ifdef B25_EIRENE
       use eirmod_infcop
 #endif
-
+      use b2mod_dimensions
       implicit none
 
-#include "DIMENSIONS.F"
 #ifndef NO_CDF
 #     include <netcdf.inc>
 
@@ -46,7 +45,7 @@
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
       intrinsic floor
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -54,7 +53,7 @@
       naver = 0
       ntotdt = 0
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file='b2favere',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
 #else
@@ -180,7 +179,7 @@
 
 *  write table of statistical errors
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iout,file='b2ye.prt')
 #else
       iout = newunit()

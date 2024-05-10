@@ -26,8 +26,8 @@ C =====================================================================
      1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
       integer ix,iy,icol,ici,n,i,ic,
      2 no_available_colors,noz,nozm,nfmtz
-      real floor,ceil
-      external floor,ceil
+      real (kind=R4) :: sfloor,ceil
+      external sfloor,ceil
 
       zlo=real(zlod,R4)
       zhi=real(zhid,R4)
@@ -35,7 +35,7 @@ C =====================================================================
       RHI=real(work(0,0),R4)
       do IY=-1,NY
         do IX=-1,NX
-          if(.not.physical.or.region(ix,iy,0).ne.0)then
+          if(.not.physical.or.region(ix,iy,0).ne.0) then
             RLO=MIN(RLO,REAL(work(IX,IY),R4))
             RHI=MAX(RHI,REAL(work(IX,IY),R4))
           endif
@@ -87,9 +87,9 @@ C =====================================================================
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -102,8 +102,8 @@ C =====================================================================
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               clval(i)=zval
             enddo
           else
@@ -247,8 +247,8 @@ c
 #ifndef PLPLOT
       real (kind=R4) :: px,py,qx,qy,zmin,zmax
       real (kind=R4) :: clvl(100),sclvl(100)
-      real (kind=R4) :: clv,zval,zinc,ceil,floor
-      external ceil,floor
+      real (kind=R4) :: clv,zval,zinc,ceil,sfloor
+      external ceil,sfloor
       integer noz,nozm,nfmtz,ncnt,i
       integer isclvl(100)
       CHARACTER*20 LBLS(100)
@@ -273,19 +273,19 @@ c
         endif
         zmax=10.0_R4**ceil(log10(zmax))
         if(zmin.gt.0.0_R4) then
-          zmin=max(10.0_R4**floor(log10(zmin)),10.0_R4**(-ndec)*zmax)
+          zmin=max(10.0_R4**sfloor(log10(zmin)),10.0_R4**(-ndec)*zmax)
         else
           zmin=10.0_R4**(-ndec)*zmax
         endif
         write(*,*) 'zmin,zmax = ',zmin,zmax
-        NCNT=INT(CEIL(LOG10(ZMAX))-FLOOR(LOG10(ZMIN)))
+        NCNT=INT(CEIL(LOG10(ZMAX))-SFLOOR(LOG10(ZMIN)))
         write(*,*) 'ncnt = ',ncnt
         if(ncnt.lt.5) then
           ncnt=ncnt*3
           do i=1,ncnt+1
             zval=10.0_R4**((i-1)/3)*zmin
-            if(mod(i-1,3).eq.1) zval=zval*2
-            if(mod(i-1,3).eq.2) zval=zval*5
+            if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+            if(mod(i-1,3).eq.2) zval=zval*5.0_R4
             clvl(i)=zval
           enddo
         else

@@ -13,6 +13,7 @@ SED = sed s:\#PREC\#:d:g
 
 ifndef SOLPS_CPP
 DEFINES += -DNO_NAG -DNO_21
+NO_MPI  ?= true
 endif
 
 LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET

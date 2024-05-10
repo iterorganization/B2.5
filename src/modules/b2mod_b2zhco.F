@@ -1,17 +1,11 @@
       module b2mod_b2zhco
       use b2mod_types
-#include "DIMENSIONS.F"
       implicit none
       integer :: zhd_corr=1, zhd_corrT=1, zhcscorr=1, zhcscorr_vq=1,
      &  zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0,
      &  zh_vis_type=0,
      &  amfact_on=0
-#if DEF_NATM > 1
-      character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff =
-     & repeat('0',max(1,(DEF_NATM*(DEF_NATM+1))/2-DEF_NATM))
-#else
-      character*1 :: zh_tf_toff = '0'
-#endif
+      character*1, allocatable :: zh_tf_toff(:)
       real (kind=R8) :: zhflcorr=3.0_R8
       real (kind=R8) :: zhflcorrh=0.4_R8
       real (kind=R8), allocatable, save ::
@@ -66,8 +60,10 @@
       allocate(c_R_wB(-1:nx,-1:ny,0:nnucl-1,0:nnucl-1))
       allocate(c_R_w(-1:nx,-1:ny,0:nnucl-1,0:nnucl-1))
       allocate(tf_ton_mat(0:nnucl-1,0:nnucl-1))
+      allocate(zh_tf_toff(max(1,(nnucl*(nnucl+1))/2-nnucl)))
       tf_ton_mat=1.0_R8
 
+      return
       end subroutine alloc_b2mod_zhco
       
       subroutine alloc_b2mod_zhco_amfact(nnucl)
@@ -89,9 +85,11 @@
       deallocate(c_R_wB)
       deallocate(c_R_w)
       deallocate(tf_ton_mat)
+      deallocate(zh_tf_toff)
       if(.not.allocated(amfact)) return
       deallocate(amfact)
 
+      return
       end subroutine dealloc_b2mod_zhco
 
       end module b2mod_b2zhco

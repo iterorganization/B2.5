@@ -101,7 +101,7 @@ c*** Column headers:
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
 c
 c  version : 19.07.2001 18:46
 c
@@ -273,9 +273,9 @@ c<<<
             write(*,hlp_prt) j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
      ,                                       (hlpit_pl(i),i=1,nspecies)
-           end do
-         end do
-       end if
+          end do
+        end do
+      end if
 c>>>
 
 c*** The plasma flows across the boundaries
@@ -847,13 +847,13 @@ c
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
-c     
+c
       logical file_open
 
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)
-        
+
       return
       end subroutine b2blncf
 c======================================================================

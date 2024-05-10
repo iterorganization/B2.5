@@ -15,10 +15,11 @@ ifndef LD_SONNET
   $(error LD_SONNET not defined)
 endif
 
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 # DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP
+  DEFINES += -DLEGACYCOMP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
@@ -31,7 +32,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional

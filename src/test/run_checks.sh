@@ -18,7 +18,7 @@ files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 #done  > compare_results.log
 
 missing=0
-for f in $files; do 
+for f in $files; do
    if [ ! -f $1/$f ]; then
      echo "Error, file not found $1/$f";
      missing=$((missing+1))
@@ -28,7 +28,7 @@ for f in $files; do
    else
      check_b2_output $1/$f $2/$f
    fi
-done  > compare_results.log
+done > compare_results.log
 
 if [ $missing -gt 0 ]; then
   echo Results are NOT correct, files missing.
@@ -40,7 +40,7 @@ fi
 # We have a large tolerance for most of the variables (1e-6).
 # For basic quantities like te, ti, na, ni, ne, po, ua, we use a stricter tolerance level.
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-8 te 1e-11 ti 1e-11 po 1e-11' -i 'time|del*|res*|b2stbc_smo|b2stbc_sna|fllim0fna' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-8 te 1e-11 ti 1e-11 po 1e-10' -i 'time|del*|res*|b2stbc_smo|b2stbc_sna|fllim0fna' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successfull

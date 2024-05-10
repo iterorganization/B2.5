@@ -46,10 +46,17 @@ c----------------------------------------------------------------------
 #ifdef B25_EIRENE
       integer ix, iy, is, istra
       real (kind=R8) :: recyctmp
+#endif
 c----------------------------------------------------------------------
 c
 c*** Correct the neutral fluxes according to recyc values
 c
+*   ..test nx, ny, ns
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
+#ifdef B25_EIRENE
       write(*,'(a,6i5)')
      , 'nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi =',
      1  nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi
@@ -263,4 +270,5 @@ c*** Finalization call
       return
       end subroutine b2trcf
 c======================================================================
+
       end module b2mod_trace

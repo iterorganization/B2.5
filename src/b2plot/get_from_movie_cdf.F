@@ -10,6 +10,7 @@
       use b2mod_eirdiag
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>

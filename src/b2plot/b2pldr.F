@@ -34,7 +34,7 @@
 *   ..local variables
       integer is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
       integer numerics_namelist, external_species
-      integer itim, itcnt, n2, nsmin, nsmax
+      integer n2, nsmin, nsmax
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
       real (kind=R8) ::
@@ -139,8 +139,6 @@
    10 if (.not.cfendf(ninp(6))) then
 *    ..get itim, itcnt
        call cfruin (ninp(6), 2, idum, 'itim,itcnt')
-       itim = idum(0)
-       itcnt = idum(1)
 *    ..get residuals and corrections
        call cfrure (ninp(6), n2*ns, resco, 'resco')
        call cfrure (ninp(6), n2*ns, corpa, 'corpa')

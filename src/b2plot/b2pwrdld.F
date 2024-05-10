@@ -14,13 +14,14 @@ c======================================================================
       use b2mod_sources
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
+      use b2mod_dimensions
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
       implicit none
-#     include "DIMENSIONS.F"
 #     include "rdload.inc"
-      integer i,j,k,l,m,is,ix,iy,n_hlperr,iatm,imol,iion,
+      integer iatm,imol,iion
+      integer i,j,k,l,m,is,ix,iy,n_hlperr,
      ,        l_errt(nsgmx),l_errs(nsgmx)
       real (kind=R8) ::
      *   u

@@ -11,12 +11,12 @@
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
      &  fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,      !srv 08.09.21
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
-     &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper,             !srv 21.10.02, IYS 17.10.2023
+     &  fchvisq, fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  cdna, cdpa, cvsa_cl, cvsa_drho,                                  !som 18.08.21
      &  chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               !som 20.10.21
      &  cvsa_uAdp_albe, cvsa_uBdp_al,                                    !som 26.04.24
-     &  cvla, chce, chve, chci, chvi, calf,                              !xpb
+     &  cvla, chce, chve, chci, chvi, calf, csigin,                      !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
@@ -102,7 +102,8 @@
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
      &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 26.04.24
      &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 26.04.24 
-     6  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
+     6  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
      *  rlsa(-1:nx,-1:ny,0:1,0:ns-1), rlra(-1:nx,-1:ny,0:1,0:ns-1),
@@ -118,6 +119,7 @@
      &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 08.09.21 }
+     &  fchin_a(-1:nx,-1:ny,0:1,0:ns-1),                                !IYS 17.10.2023
      &  fchvispar(-1:nx,-1:ny,0:1),                                     !srv 21.10.02 {
      &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
@@ -331,13 +333,17 @@
      &               ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
      &               chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al, !som 20.10.21
      &               fchvisq_a, fchvisq)
+      call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
+     &              vol, gs, hx, hz, qz, qc, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)        !IYS 17.10.2023
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, ismain, guard_flows,                    !srv 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
      &  vol, hx, gs, qc, bb, pbs,
      &  ua, na, ne, te, ti, po, fch_p,
      &  fchvispar_a, fchvisper_a, fchinert_a, fchanml_a, fchvisq_a,     !srv 08.09.21
-     &  fne, cvla, cdna, cdpa, chce, chci,
+     &  fchin_a, fne, cvla, cdna, cdpa, chce, chci,
      &  veecrb, vaecrb, wadia, ve, wedia,                               !srv 05.06.18
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }

@@ -84,9 +84,9 @@ c-----------------------------------------------------------------------
 #else
       use b2mod_eirbra
 #endif
+      use b2mod_dimensions
       implicit none
 c
-#     include <DIMENSIONS.F>
       integer nx, ny, ns
 c
 c

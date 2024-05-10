@@ -14,8 +14,8 @@
 #if ( defined(USE_MPI) || defined(USE_IMPGYRO) )
       integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
-#endif
       logical :: last
+#endif
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
      &                      !    by ionisation/recombination
@@ -48,7 +48,7 @@
       external xertst, xerrab, open_file
       logical brestarted
       integer fd
- 
+
 *   ..test arguments
       call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
       call xertst (1.le.nsd, 'faulty argument nsd')
@@ -61,9 +61,8 @@
 
       write (*,*) 'b2ig: Entering impgyro_init'
 
-      last = .false.
-
 #ifdef USE_MPI
+      last = .false.
       write (*,*) 'b2ig: Calling MPI COMM FLAG=MPI'
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
@@ -217,25 +216,25 @@ c     read the file if exists
 
       end if
 
-         call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
-         call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
-         call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
+      call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
+      call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
+      call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
 
 cxpb
 cxpb  Here are computed the derived quantities
 cxpb
-        ne_ext = 0.0_R8
-        ni_ext = 0.0_R8
-        ue_ext = 0.0_R8
-        ne2_ext = 0.0_R8
-        do is = 0, ns_ext-1
-          ne_ext(-1:nxd,-1:nyd) = ne_ext(-1:nxd,-1:nyd) +
+      ne_ext = 0.0_R8
+      ni_ext = 0.0_R8
+      ue_ext = 0.0_R8
+      ne2_ext = 0.0_R8
+      do is = 0, ns_ext-1
+        ne_ext(-1:nxd,-1:nyd) = ne_ext(-1:nxd,-1:nyd) +
      .     za_ext(-1:nxd,-1:nyd,is) * na_ext(-1:nxd,-1:nyd,is)
-          ne2_ext(-1:nxd,-1:nyd) = ne2_ext(-1:nxd,-1:nyd) +
+        ne2_ext(-1:nxd,-1:nyd) = ne2_ext(-1:nxd,-1:nyd) +
      .     za2_ext(-1:nxd,-1:nyd,is) * na_ext(-1:nxd,-1:nyd,is)
-          ni_ext(-1:nxd,-1:nyd,0) = ni_ext(-1:nxd,-1:nyd,0) +
+        ni_ext(-1:nxd,-1:nyd,0) = ni_ext(-1:nxd,-1:nyd,0) +
      .     na_ext(-1:nxd,-1:nyd,is)
-          if (.not.is_ext_neutral(is)) ni_ext(-1:nxd,-1:nyd,1) = 
+        if (.not.is_ext_neutral(is)) ni_ext(-1:nxd,-1:nyd,1) =
      .     ni_ext(-1:nxd,-1:nyd,1) + na_ext(-1:nxd,-1:nyd,is)
 cxpb Computing ua from fa is what we really want to do
         if (.false.) then
@@ -248,12 +247,12 @@ cxpb Computing ua from fa is what we really want to do
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0))/
      .           na_ext(ix,iy,is)
               else if (leftix(ix,iy).eq.-2) then
-                ua_ext(ix,iy,is) = 
+                ua_ext(ix,iy,is) =
      .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0)/
      .            na_ext(ix,iy,is)
               else if (rightix(ix,iy).eq.nxd+1) then
-                ua_ext(ix,iy,is) = 
+                ua_ext(ix,iy,is) =
      .           fa_ext(ix,iy,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
               end if
             end do
@@ -281,16 +280,17 @@ cxpb
         ue_ext(-1:nxd,-1:nyd) = ue_ext(-1:nxd,-1:nyd) +
      .     za_ext(-1:nxd,-1:nyd,is) * ua_ext(-1:nxd,-1:nyd,is) *
      .     na_ext(-1:nxd,-1:nyd,is)
-        end do
-        do ix = -1, nxd
-          do iy = -1, nyd
-            if (ne_ext(ix,iy).gt.0.0_R8) then
-              ue_ext(ix,iy) = ue_ext(ix,iy)/ne_ext(ix,iy)
-            else
-              ue_ext(ix,iy) = 0.0_R8
-            endif
-          enddo
+      end do
+
+      do ix = -1, nxd
+        do iy = -1, nyd
+          if (ne_ext(ix,iy).gt.0.0_R8) then
+            ue_ext(ix,iy) = ue_ext(ix,iy)/ne_ext(ix,iy)
+          else
+            ue_ext(ix,iy) = 0.0_R8
+          endif
         enddo
+      enddo
 
       write (*,*) 'b2ig: Leaving impgyro_init'
 
@@ -400,7 +400,7 @@ cxpb
       b2znw = 0
       b2zfw = 0
       b2ztw = 0
-      write (*,*) 'b2ig: IMPGYRO run failed!' 
+      write (*,*) 'b2ig: IMPGYRO run failed!'
       write (*,*) 'b2ig: All external species information set to zero.'
       write (*,*) 'b2ig: You may have forgotten set_ig option!'
 #endif
@@ -438,7 +438,7 @@ cxpb
         end do
       end do
 
-      !yamoto check whether the B2 receives na,ua,ta_ext properly or not. 
+      !yamoto check whether the B2 receives na,ua,ta_ext properly or not.
       !yamoto these summation have no physical meanings.
 
       write(*,*) 'b2ig: total impurity density in the system'
@@ -460,9 +460,8 @@ cxpb
 
       write (*,*) 'b2ig: Entering impgyro_last'
 
-      last = .true.
-
 #if ( defined(USE_MPI) || defined(USE_IMPGYRO) )
+      last = .true.
       call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #endif

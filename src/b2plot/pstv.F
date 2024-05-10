@@ -7,10 +7,9 @@ c
 #ifdef B25_EIRENE
       use eirmod_ctrig
       implicit none
-      integer it,is,lnblnk
+      integer it,is
       character*256 stmp
       intrinsic min,max
-      external lnblnk
 
       values(38)=eirene_stack(1,0,iewrk)/triangle_vol(1)
       values(39)=eirene_stack(1,0,iewrk)/triangle_vol(1)
@@ -22,8 +21,7 @@ c
           values(39)=max(values(39),eirene_stack(it,is,iewrk))
         enddo
       enddo
-      stmp=
-     . eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk)))//'/(m^{3})'
+      stmp=trim(eirene_label(iewrk))//'/(m^{3})'
       call customise_label(stmp,eirene_label(iewrk))
 #endif
       return
