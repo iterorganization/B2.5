@@ -1360,6 +1360,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2trcl_luc_et_form</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					This switch is in action only, if lluciani.eq.3.
+					If luc_et_form.eq.0, the Spb's form Luciani's coefficient, which is applied correctly only for hydrogen isotopes + imp plasmas. It is applied incorrectly for helium plasmas.
+					If luc_et_form.eq.1, the generalization of the Spb's form Luciani's coefficient. If b2tral_Zhdanov_closure.eq.0, then the result is the same as the Spb's form Luciani's coefficient is used (correct only for hydrogen isotopes + imp plasmas). If b2tral_Zhdanov_closure.eq.1, then the multi-ion gerneralized Spb's form Luciani's coefficient is used (correct for arbitrary plasma mixtures).
+				</description>
+			</switch>
+			<switch>
 				<name>b2trcl_lthf21</name>
 				<default>0</default>
 				<type>integer</type>
