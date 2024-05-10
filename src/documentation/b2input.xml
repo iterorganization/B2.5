@@ -1535,6 +1535,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tral_amfact_on</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_amfact_on.eq.1, the mass correction for the thermal and friction force calculation is applied.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_***</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					If b2tral_amfact_on.eq.1, this multiplier applied for the mass of the species that is defined by {\tt '***'}. The numeration is performed for the isonuclear sequece (e.g. {\tt b2tral\_amfact\_000}, {\tt b2tral\_amfact\_001}, ...).
+				</description>
+			</switch>
+			<switch>
 			    <name>b2npmo_impr_form_fr</name>
 				<default>0</default>
 				<type>integer</type>
