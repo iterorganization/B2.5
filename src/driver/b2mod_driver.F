@@ -2167,8 +2167,10 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
      3    chvi, csig, csigin, calf, cthe, cthi,
      4    cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      *    cvsahz_drho, cvsa_drho,
-     *    chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
+     *    chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,      
      *    cvsa_hAdp_albe, cvsa_hBdp_al,
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                           
+     *    cvsa_uAdp_albe, cvsa_uBdp_al,                               
      5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &    csig_stoch, chce_stoch)
         call b2xpen (nx, ny, ns,
@@ -2564,8 +2566,10 @@ csw 09oct2012 set default potential already at this point (BCs)
      3    chvi, csig, csigin, calf, cthe, cthi,
      4    cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      *    cvsahz_drho, cvsa_drho,
-     *    chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
+     *    chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,      
      *    cvsa_hAdp_albe, cvsa_hBdp_al,
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                           
+     *    cvsa_uAdp_albe, cvsa_uBdp_al,
      5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &    csig_stoch, chce_stoch)
         call b2xpen (nx, ny, ns,

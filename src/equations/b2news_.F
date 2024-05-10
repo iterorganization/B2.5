@@ -477,14 +477,9 @@ c   extra call at this place within internal iteration)
      &    fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,  !srv 21.10.02
      &    fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
-<<<<<<< HEAD
      &    chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,             !som 20.10.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 26.04.24
-     &    cvla, chce, chve, chci, chvi, calf,                            !xpb
-=======
-     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
      &    cvla, chce, chve, chci, chvi, calf, csigin,                    !xpb
->>>>>>> develop
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)

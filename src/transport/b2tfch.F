@@ -50,7 +50,7 @@
      & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
      & cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 26.04.24
      & cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 26.04.24     
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     1 hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny), BoRiS,
      3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
