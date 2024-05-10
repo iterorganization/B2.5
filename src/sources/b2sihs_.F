@@ -18,7 +18,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_b2zhco
-     & , only: zhd_corr , zh_vis_type                                 !som 21.03.21  21.12.23
+     & , only: zhd_corr , zh_vis_type, zhcscorr                       !som 21.03.21  21.12.23
       use b2mod_zhfrtf
      & , only: avm_u, nal,                                            !som 21.03.21 16.08.21
      &         b2mod_zhfrtf_avm_u, b2mod_zhfrtf_prep                  !som 18.08.21
@@ -568,7 +568,7 @@
      &        nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
      &        0.5e0_R8*
      &        (cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,s2nucl(is)-1)
-     &        -cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
+     &        -zhcscorr*cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
      &        t0*
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))
          

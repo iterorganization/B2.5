@@ -609,7 +609,7 @@
      &         nb(leftix(ix,iy),leftiy(ix,iy))/
      &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))*
      &         ft*(cvsahz_uAdp_albe(ix,iy,0,s2nucl(isb)-1,s2nucl(isb)-1)
-     &         -cvsahz_uBdp_al(ix,iy,0,s2nucl(isb)-1))/
+     &         -zhcscorr*cvsahz_uBdp_al(ix,iy,0,s2nucl(isb)-1))/
      &         (bb(ix,iy,0)*bb(ix,iy,3)*
      &         vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),0)*

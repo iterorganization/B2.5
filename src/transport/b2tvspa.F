@@ -21,7 +21,7 @@
      & , only : s2nucl, nucl2s, znnucl_int
       use b2mod_subsys
       use b2mod_b2zhco
-     , , only: zh_vis_type
+     , , only: zh_vis_type, zhcscorr
       use b2mod_rates                                                   !som 07.05.24
      & , only : rza
       implicit none
@@ -245,7 +245,7 @@ c Drift terms
      &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
      &         0.5e0_R8*
      &         (cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,s2nucl(is)-1)
-     &         -cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
+     &         -zhcscorr*cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
      &         t0
          
              endif
