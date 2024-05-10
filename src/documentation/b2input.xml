@@ -1533,6 +1533,7 @@
 				<description>
 					If b2tral_zh_vis_type.eq.0, the Braginskii-like velocity-dependent stress-viscosity is used.
 					If b2tral_zh_vis_type.eq.1, the Zhdanov-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.2, the Makarov-like velocity-dependent stress-viscosity is used.
 				</description>
 			</switch>
 			<switch>
