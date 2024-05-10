@@ -935,18 +935,7 @@
             endif
           enddo
         enddo
-      enddo
-      
-      if (ncall.eq.0) then
-       if (amfact_on.ne.0) then
-        print *, 'checkpoint: amfact:'
-        print *, (amfact(j), j=0,nspecies-1 )
-        print *, 'checkpoint: mu_mdf:'
-        do, i=0,nspecies-1
-          print *, (mu_mdf(i,j), j=0,nspecies-1 )
-        enddo
-       endif
-      endif  
+      enddo  
 
       ncall = ncall+1
       call subend ()
