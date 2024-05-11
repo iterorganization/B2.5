@@ -70,7 +70,7 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF}
 # LDLIBES = -lblas ${NAG} -lmass
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 LD = xlf90

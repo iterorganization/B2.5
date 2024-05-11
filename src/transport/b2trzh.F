@@ -210,12 +210,12 @@
         call b2trcn (nspecies, amnucl, N2, N3, N4, N5, N6, N8, N9,
      &    N10, N11, N12, N13, N14, N15, N16, mu, rmu, rmd2, mum, mdm)   !som 02.08.2021
         if (amfact_on.ne.0) then
-*   ..correct mass if is needed    
+*   ..correct mass if is needed
           amnucl_mdf(0:nspecies-1)=
      &    amnucl(0:nspecies-1)*amfact(0:nspecies-1)
           call b2trcn (nspecies, amnucl_mdf, N2_mdf, N3_mdf, N4_mdf,
      &     N5_mdf, N6_mdf, N8_mdf, N9_mdf,
-     &     N10_mdf, N11_mdf, N12_mdf, N13_mdf, N14_mdf, N15_mdf, 
+     &     N10_mdf, N11_mdf, N12_mdf, N13_mdf, N14_mdf, N15_mdf,
      &     N16_mdf, mu_mdf, rmu_mdf, rmd2_mdf, mum_mdf, mdm_mdf)        !som 28.01.2022
         endif
 
@@ -341,12 +341,12 @@
      &          3.5_R8*Cinv(0:nspecies-1,j+nspecies))
      &         /rmu(0:nspecies-1,j)
             enddo
-*    ..correct the thermal force       
+*    ..correct the thermal force
             if (amfact_on.ne.0) then
               amti_mdf=amnucl_mdf*mp/ti(ix,iy)
 
 *    ..calculate the inverted matrix for the heat flux/R-moment
-              call b2trca(nspecies, amti_mdf, N5_mdf, 
+              call b2trca(nspecies, amti_mdf, N5_mdf,
      &         N6_mdf, N9_mdf,
      &         N10_mdf, N11_mdf, N12_mdf, nz2n, Ainv)
 
@@ -375,7 +375,7 @@
      &         c_hwA_mdf(0:nspecies-1,0:nspecies-1),
      &         c_rwA_mdf(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting
-              call b2trtf(nspecies, G2, G8, 
+              call b2trtf(nspecies, G2, G8,
      &          mum_mdf, mdm_mdf, Ainv, Ainv_mdf,
      &          wrkcc)
               c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
@@ -551,13 +551,13 @@
             enddo
 
             eta_hBdp(ix,iy,i) = 2.0_R8*c_pi_hB(i)*tau_Zh(i,i)
-            
+
 *    ..the effective velocity-dependent part for the flux limiting
             eta_cl_al_eff_xy(i) = 0.0_R8
             do j = 0, nspecies-1
               eta_cl_al_eff_xy(i) = eta_cl_al_eff_xy(i) +
      &         eta_uAdp(ix,iy,i,j) * ti(ix,iy) * na(ix,iy,j)
-              
+
             enddo
           enddo
 
@@ -566,7 +566,7 @@
           eta_cl_xy(0:ns-1) = eta_cl(ix,iy,0:ns-1)
           call b2trfl_vis (ix, iy, ns,
      &     eta_cl_xy, nati, gamma, cfl(ix,iy), cF_limv)
-     
+
           nalti(0:nspecies-1) = nal(ix,iy,0:nspecies-1)*ti(ix,iy)
           call b2trfl_vis (ix, iy, nspecies,
      &     eta_cl_al_eff_xy, nalti, gamma, cfl(ix,iy), cF_limv_al)
@@ -605,7 +605,7 @@
      &         cF_limv_al(i)
 
               do j = 0, nspecies-1
-                eta_uAdp_fl(ix,iy,i,j) = 
+                eta_uAdp_fl(ix,iy,i,j) =
      &           eta_uAdp(ix,iy,i,j)*
      &           cF_limv_al(i)
               enddo
@@ -718,8 +718,8 @@
      &           sum(c_rw(0:nspecies-1,inucl)*
      &              (ua(ix,iy,nucl2s(inucl,iz))-
      &               av_ualpha(ix,iy,0:nspecies-1)))
-     
-                piu_out(ix,iy,nucl2s(inucl,iz)) = 
+
+                piu_out(ix,iy,nucl2s(inucl,iz)) =
      &      -4.0e0_R8/3.0e0_R8*eta_cl(ix,iy,nucl2s(inucl,iz))/
      &      ((bb(ix,iy,0)/bb(ix,iy,3))**2)*gavm_uc(ix,iy)
               enddo
@@ -748,7 +748,7 @@
       cvsahz_drho = 0.0_R8                                               !srv 30.01.23
       cvsa0 = 0.0_R8                                                     !som 19.12.23
       cvsahz0 = 0.0_R8                                                   !som 20.12.23
-      
+
       volhz = hz*vol
       if (zh_vis_type.eq.0 .or. zh_vis_type.eq.1) then
         do is = 0, ns-1
@@ -776,7 +776,7 @@
           call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
      &     eta_cl_a_only(-1:nx,-1:ny,is), cvsahz0_nofl(-1,-1,0,is))
         enddo
-      endif 
+      endif
 
 *    ..additional velocity-dependent viscosity on the cell boundary
       do i = 0, nspecies-1
@@ -866,7 +866,7 @@
         enddo
       enddo
 
-*    ..apply Luciani correction for the addtional part of the 
+*    ..apply Luciani correction for the addtional part of the
 *      velocity-dependent viscosity
       do i = 0, nspecies-1
         do j = 0, nspecies-1
@@ -937,7 +937,7 @@
             endif
           enddo
         enddo
-      enddo  
+      enddo
 
       ncall = ncall+1
       call subend ()

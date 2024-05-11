@@ -179,6 +179,9 @@ csw 13mar2012
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 22.06.21
         call ipgeti ('b2tral_Zhdanov_cond', Zhdanov_cond)                !som 22.06.21
         call ipgeti ('b2trcl_luc_et_form', luc_et_form)                  !som 01.09.22
+        call xertst (luc_et_form.eq.1.or.nint(zn(ismain)).eq.1,
+     .   'b2trcl_luc_et_form value not appropriate for '//
+     .   'non-hydrogenic plasmas!')
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -378,7 +381,7 @@ csw 13mar2012
           else
             mintopcut=minval(topcut(1:nncut))
           endif
-        endif 
+        endif
 
         do iy = -1,mintopcut-1    ! for inner surfaces                   !srv 22.04.16
          do ix = -1,nx
@@ -473,7 +476,7 @@ csw 13mar2012
      1        (1.0e0_R8+2.0e0_R8/eps1(iy)**1.5e0_R8/
      2        (nu2(ix,iy)+nu2(leftix(ix,iy),leftiy(ix,iy))))
      3        /(1.0e0_R8+2.0e0_R8/
-     4        (nu2(ix,iy)+nu2(leftix(ix,iy),leftiy(ix,iy)))) 
+     4        (nu2(ix,iy)+nu2(leftix(ix,iy),leftiy(ix,iy))))
            endif
            f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
            f_luc_al(ix,iy)=f_luc_ke(ix,iy)

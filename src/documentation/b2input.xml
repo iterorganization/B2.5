@@ -1364,9 +1364,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					This switch is in action only, if lluciani.eq.3.
-					If luc_et_form.eq.0, the Spb's form Luciani's coefficient, which is applied correctly only for hydrogen isotopes + imp plasmas. It is applied incorrectly for helium plasmas.
-					If luc_et_form.eq.1, the generalization of the Spb's form Luciani's coefficient. If b2tral_Zhdanov_closure.eq.0, then the result is the same as the Spb's form Luciani's coefficient is used (correct only for hydrogen isotopes + imp plasmas). If b2tral_Zhdanov_closure.eq.1, then the multi-ion gerneralized Spb's form Luciani's coefficient is used (correct for arbitrary plasma mixtures).
+					Only active if b2trcl_lluciani.eq.3 (default).
+					If luc_et_form.eq.0, the SPb form of the Luciani coefficient is applied. This is correct only for hydrogenic majority plasmas.
+					If luc_et_form.eq.1 (default), the generalized form of the SPb Luciani coefficient is used. If b2tral_Zhdanov_closure.eq.0 (default), then the result is the same as if the SPb form of the Luciani coefficient is used (and correct only for hydrogenic majority plasmas). If b2tral_Zhdanov_closure.eq.1, then the multi-ion generalized form of the SPb Luciani coefficient is used (correct for arbitrary plasma mixtures).
 				</description>
 			</switch>
 			<switch>
@@ -1558,7 +1558,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					If b2tral_amfact_on.eq.1, this multiplier applied for the mass of the species that is defined by {\tt '***'}. The numeration is performed for the isonuclear sequece (e.g. {\tt b2tral\_amfact\_000}, {\tt b2tral\_amfact\_001}, ...).
+					If b2tral_amfact_on.eq.1, this multiplier is applied for the mass of the species corresponding to isonuclear sequence number '***'. Recall the sequence numbering starts at zero (e.g. b2tral_amfact_000, b2tral_amfact_001, ...).
 				</description>
 			</switch>
 			<switch>

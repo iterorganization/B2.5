@@ -75,19 +75,23 @@
 
       subroutine dealloc_b2mod_zhco
       implicit none
-      if(.not.allocated(c_R_TA)) return
-      deallocate(c_hw_save)
-      deallocate(c_R_TA)
-      deallocate(c_R_TA_nofl)
-      deallocate(c_R_wA)
-      deallocate(c_R_TB)
-      deallocate(c_R_TB_nofl)
-      deallocate(c_R_wB)
-      deallocate(c_R_w)
-      deallocate(tf_ton_mat)
-      deallocate(zh_tf_toff)
-      if(.not.allocated(amfact)) return
-      deallocate(amfact)
+
+      if(allocated(c_R_TA)) then
+        deallocate(c_hw_save)
+        deallocate(c_R_TA)
+        deallocate(c_R_TA_nofl)
+        deallocate(c_R_wA)
+        deallocate(c_R_TB)
+        deallocate(c_R_TB_nofl)
+        deallocate(c_R_wB)
+        deallocate(c_R_w)
+        deallocate(tf_ton_mat)
+        deallocate(zh_tf_toff)
+      end if
+
+      if(allocated(amfact)) then
+        deallocate(amfact)
+      end if
 
       return
       end subroutine dealloc_b2mod_zhco

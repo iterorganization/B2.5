@@ -772,7 +772,7 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
       real (kind=R8) :: vla0_cnv(-1:nx,-1:ny,0:1,0:ns-1)
-      real (kind=R8) ::  vout_cnv_single, pw0_cnv_single,
+      real (kind=R8) :: vout_cnv_single, pw0_cnv_single,
      &  pw1_cnv_single, pw2_cnv_single
 *   ..common blocks
 *   ..local variables
@@ -1027,7 +1027,7 @@ c
       call set_transport_blob(nx, ny, ns, jsep_cnv, jxa_cnv, vla0_cnv)
       vla0 = vla0 + vla0_cnv
 
-      if(iout.ne.0) then                             !srv 15.06.08 {
+      if(iout.ne.0) then                                              !srv 15.06.08 {
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call my_out(70,nx,ny,dna0(-1,-1,is),
@@ -1058,7 +1058,7 @@ c
       call subend ()
       return
 
-      contains                          !srv 24.04.02 {
+      contains                                                        !srv 24.04.02 {
 
        function barrier1(x, x1, level1, x2, level2, x3, level3)
         implicit none
@@ -1097,27 +1097,27 @@ c
      ,  , only : hy1
         implicit none
         integer :: nx, ny, itype, ns
-        real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                    !srv 17.04.06 {
-        real(kind=R8) :: fvlc(-1:nx,-1:ny,0:1,0:ns-1)                !srv 09.03.17
+        real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                     !srv 17.04.06 {
+        real(kind=R8) :: fvlc(-1:nx,-1:ny,0:1,0:ns-1)                 !srv 09.03.17
         real(kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1)
-        real(kind=R8) :: ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1) !srv 17.04.06 }
+        real(kind=R8) :: ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1)  !srv 17.04.06 }
 
         logical :: exist_file(0:2)
         character*256 :: filename(0:2)
-        integer ix, iy, is, nc_c_m_f(1)                           !srv 05.07.04
+        integer ix, iy, is, nc_c_m_f(1)                               !srv 05.07.04
         integer, save :: ncall = 0, bottomdelta1, topdelta2, mintopcut !srv 28.07.10
         real (kind=R8) :: width, bbaverage, t0, t1, step
         real (kind=R8), allocatable, save :: coord(:), fun(:,:)
 
         fdnc = 1.0e0_R8
-        fvsc = 1.0e0_R8                                           !srv 17.04.06 {
+        fvsc = 1.0e0_R8                                               !srv 17.04.06 {
         ftec = 1.0e0_R8
-        ftic = 1.0e0_R8                                           !srv 17.04.06 }
-        fvlc = 1.0e0_R8                                           !srv 19.04.10 }
+        ftic = 1.0e0_R8                                               !srv 17.04.06 }
+        fvlc = 1.0e0_R8                                               !srv 19.04.10 }
 
-       if(nncut > 0) then                                         !srv 25.02.16
+       if(nncut > 0) then                                             !srv 25.02.16
         select case (itype)
-         case (10)                                                !etm 24.07.19 {
+         case (10)                                                    !etm 24.07.19 {
           if (nnreg(0).eq.7) then
             mintopcut=topcut(1)
           else
@@ -1185,7 +1185,7 @@ c
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
             endif
            enddo
-          enddo                                                   !srv 2.05.09 }
+          enddo                                                       !srv 22.05.09 }
 
           do iy = -1, ny                  ! special multiplier below X-pt
            do ix = -1, nx
@@ -1202,7 +1202,7 @@ c
             endif
            enddo
           enddo
-         case(9)                                                !srv 22.05.09 {
+         case(9)                                                      !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
 *   ..modification of case (5). It is used barrier function
           do iy = -1, ny                  ! for SOL and PR region
@@ -1266,27 +1266,27 @@ c
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
             endif
            enddo
-          enddo                                                   !srv 2.05.09 }
+          enddo                                                       !srv 22.05.09 }
 
-         case (8)                                                 !srv 01.03.07 {
+         case (8)                                                     !srv 01.03.07 {
 *   ..setting of transport coefficients from files
           if(ncall.eq.0) then
            if(nncut.eq.2) then
             if(nnreg(0).eq.8) then
              nmdpl = rightcut(nncut)
              do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
-              if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+              if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix !srv 11.01.13
              enddo
             else
              nmdpl = leftcut(1)
              do ix = leftcut(1)+1, rightcut(1)-1
-              if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+              if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix !srv 11.01.13
              enddo
             endif
            elseif(nncut.eq.1) then
             nmdpl = leftcut(nncut)
             do ix = leftcut(nncut)+1, rightcut(nncut)-1
-             if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+             if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix !srv 11.01.13
             enddo
            else
             write(*,*) ' b2tqna: nncut not equal 1 or 2'
@@ -1295,9 +1295,9 @@ c
            write(*,"(/' Parameters of H-regime')")
            write(*,"(' Number of midplane cell =',i4)") nmdpl
            call xertst(0.0e0_R8.le.delta1,
-     &                 'faulty argument b2tqna_delta1') !srv 15.05.09
+     &                 'faulty argument b2tqna_delta1')               !srv 15.05.09
            call xertst(0.0e0_R8.le.delta2,
-     &                 'faulty argument b2tqna_delta2') !srv 15.05.09
+     &                 'faulty argument b2tqna_delta2')               !srv 15.05.09
 
            allocate(coord(-1:ny), fun(-1:ny,0:2))
 
@@ -1381,7 +1381,7 @@ c
            enddo
           enddo
 
-         case (7)                                                  !srv 05.07.04 {
+         case (7)                                                     !srv 05.07.04 {
 *   ..calculate
           do is = 0, ns-1
            if(.not.is_neutral(is)) then
@@ -1406,9 +1406,9 @@ c
               endif
              enddo
             enddo
-           endif                                                     !srv 05.07.04 }
+           endif                                                      !srv 05.07.04 }
           enddo
-         case (6)                                                  !srv 05.11.03 {
+         case (6)                                                     !srv 05.11.03 {
 
 *   ..calculate poloidal variation of transport coefficients
           do is = 0, ns-1
@@ -1434,22 +1434,22 @@ c
             else
              fdnc(:,:,is) = 1.0e0_R8
             endif
-           endif                                     !srv 05.11.03 }
+           endif                                                      !srv 05.11.03 }
           enddo
-         case (5)                                               !srv 13.11.02 12.07.10 {
+         case (5)                                                     !srv 13.11.02 12.07.10 {
 
           if(ncall.eq.0) then
            mintopcut=minval(topcut(1:nncut))
            call xertst(0.0e0_R8.le.delta1,
-     *         'faulty argument b2tqna_delta1') !srv 15.05.09
+     *         'faulty argument b2tqna_delta1')                       !srv 15.05.09
            call xertst(0.0e0_R8.le.delta2,
-     *         'faulty argument b2tqna_delta2') !srv 15.05.09
+     *         'faulty argument b2tqna_delta2')                       !srv 15.05.09
            if(delta1.eq.0) then
             bottomdelta1 = mintopcut
-           elseif(delta1.lt.lengthy(nmdpl,mintopcut)) then              !srv 15.05.09 {
+           elseif(delta1.lt.lengthy(nmdpl,mintopcut)) then            !srv 15.05.09 {
             bottomdelta1 = mintopcut
             width = 0.0e0_R8
-            do iy =mintopcut-1,-1,-1               ! srv 15.05.09 was topcut(1)-1,0,-1
+            do iy =mintopcut-1,-1,-1                                  !srv 15.05.09 was topcut(1)-1,0,-1
              width = width + hy(nmdpl,iy)
              if(width.ge.delta1) then
               bottomdelta1 = iy
@@ -1464,20 +1464,20 @@ c
             topdelta2 = mintopcut-1
            elseif(delta2.lt.
      &           lengthy(nmdpl,ny)-lengthy(nmdpl,mintopcut)) then
-            topdelta2 = mintopcut                 !srv 24.06.03 {
+            topdelta2 = mintopcut                                     !srv 24.06.03 {
             width = 0.0e0_R8
-            do iy = mintopcut,ny                                       !srv 23.01.18
+            do iy = mintopcut,ny                                      !srv 23.01.18
              width = width + hy(nmdpl,iy)
              if(width.ge.delta2) then
               topdelta2 = iy
               exit
              endif
-            enddo                                !srv 24.06.03 {
+            enddo                                                     !srv 24.06.03 {
            else
             topdelta2 = ny
-           endif                                                       !srv 15.05.09 }
+           endif                                                      !srv 15.05.09 }
            if(iout.ne.0) then
-            open(70,file= 'output/Parameters_of_H-regime.dat')         !srv 23.01.18
+            open(70,file= 'output/Parameters_of_H-regime.dat')        !srv 23.01.18
             write(70,"(/' Parameters of H-regime')")
             write(70,"(' Number of midplane cell =',i4)") nmdpl
             write(70,'(a,2i5)')
@@ -1485,12 +1485,12 @@ c
      &        ' coefficients are changed', bottomdelta1
             write(70,'(a,2i5)')
      &        ' Number of last  cell in SOL  where transport '//
-     &        ' coefficients are changed', topdelta2                   !srv 23.01.18
+     &        ' coefficients are changed', topdelta2                  !srv 23.01.18
             close(70)
            endif
           endif
 
-          do iy = -1, ny                  ! for SOL and PR region  !srv 13.03.07
+          do iy = -1, ny                  ! for SOL and PR region     !srv 13.03.07
            do ix = -1, nx
             if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
@@ -1498,7 +1498,7 @@ c
                fdnc(ix,iy,is) =    alfa3
                fvsc(ix,iy,is) = vs_alfa3
                ftic(ix,iy,is) = ti_alfa3
-               fvlc(ix,iy,1,is) = vl_alfa3                      !srv 19.04.10
+               fvlc(ix,iy,1,is) = vl_alfa3                            !srv 19.04.10
               endif
              enddo
              ftec(ix,iy) = te_alfa3
@@ -1506,15 +1506,15 @@ c
            enddo
           enddo
 
-          do iy = mintopcut,topdelta2          ! for SOL region !srv 24.06.03
-           do ix=-1,nx                                          !srv 10.03.06
+          do iy = mintopcut,topdelta2          ! for SOL region       !srv 24.06.03
+           do ix=-1,nx                                                !srv 10.03.06
             if(mod(region(ix,iy,0),4).eq.2) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is) = alfa2
                fvsc(ix,iy,is) = vs_alfa2
                ftic(ix,iy,is) = ti_alfa2
-               fvlc(ix,iy,1,is) = vl_alfa2                        !srv 19.04.10
+               fvlc(ix,iy,1,is) = vl_alfa2                            !srv 19.04.10
               endif
              enddo
              ftec(ix,iy) = te_alfa2
@@ -1523,14 +1523,14 @@ c
           enddo
 
           do iy = bottomdelta1, mintopcut-1   ! for inner surfaces
-           do ix=-1,nx                                          !srv 10.03.06
+           do ix=-1,nx                                                !srv 10.03.06
             if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is) = alfa1
                fvsc(ix,iy,is) = vs_alfa1
                ftic(ix,iy,is) = ti_alfa1
-               fvlc(ix,iy,1,is) = vl_alfa1                        !srv 19.04.10
+               fvlc(ix,iy,1,is) = vl_alfa1                            !srv 19.04.10
               endif
              enddo
              ftec(ix,iy) = te_alfa1
@@ -1538,7 +1538,7 @@ c
            enddo
           enddo
 
-          do iy = -1, ny                  ! correction for   !IYS 29.11.12
+          do iy = -1, ny                  ! correction for            !IYS 29.11.12
            do ix = -1, nx
             if(mod(region(ix,iy,0),4).ne.1 .and.    ! NOT Core
      &         mod(region(ix,iy,0),4).ne.2) then    ! NOT SOL
@@ -1556,7 +1556,7 @@ c
           enddo
 
 *   ..take into account poloidal variation of transport coefficients
-          if(alf .ne. 0.0e0_R8) then                                     !srv 04.07.06 {
+          if(alf .ne. 0.0e0_R8) then                                  !srv 04.07.06 {
            t0 = 0.0e0_R8
            t1 = 0.0e0_R8
            do iy = 0, mintopcut-1   ! for inner surfaces

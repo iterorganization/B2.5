@@ -1528,11 +1528,11 @@ cwdk  now need to recompute full diamagnetic component for ud
      .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
      3         (am(is)*mp))*
      2         CONPAR(IS,IB,1)
-	    sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
-     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
-     &            s0*min(0.0e0_R8,
-     &           vla0(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)) !som 18.07.19
+              sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
+     &          s0*min(0.0e0_R8,
+     &          vla0(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &               topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is))   !som 18.07.19
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is) =
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)+
      &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)            !srv 23.09.08
@@ -1588,10 +1588,10 @@ cwdk  now need to recompute full diamagnetic component for ud
      .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
      3         (am(is)*mp))*
      2         CONPAR(IS,IB,1)
-	    sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
-     .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
-     &           max(0.0e0_R8,
-     .               s0*vla0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)) !som 18.07.19	
+              sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     .         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
+     &          max(0.0e0_R8,
+     .              s0*vla0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is))   !som 18.07.19
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is) =
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)+
      &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)            !srv 23.09.08

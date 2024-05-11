@@ -47,16 +47,16 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 
 FCOPTS = -e0 -ez
 ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
-FCOPTS += -homp
-endif
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
+    FCOPTS += -homp
+  endif
 else
-FCOPTS += -hnoomp
+  FCOPTS += -hnoomp
 endif
 ifdef SOLPS_DEBUG
-FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
+  FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
 else
-FCOPTS += -O2 -hfp2
+  FCOPTS += -O2 -hfp2
 endif
 OBJDEST = -ef -em -J${OBJDIR}
 INCMOD = -p
@@ -72,9 +72,9 @@ LD = ftn
 LDOPTS = -dynamic -hpic
 # JFRS OPENMP
 ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
-LDOPTS += -homp
-endif
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
+    LDOPTS += -homp
+  endif
 endif
 
 #!!!Local Variables:

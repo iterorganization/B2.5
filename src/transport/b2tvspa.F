@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tvspa (nx, ny, ns, ismain, bb,                       !srv 20.09.06 { 16.10.17 19.02.21
-     &  na, ua, ti, cvsa_cl, cvsa_drho, fac_vis, 
+     &  na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,
      &  cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 26.04.24
      &  fchvispar_a, fchvispar)                                         !srv 22.06.08 som 18.08.21
       use b2mod_types
@@ -33,7 +33,7 @@
      &  ti(-1:nx,-1:ny),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 16.10.17
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 18.08.21
-     1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny),                       !srv 22.06.08
+     1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny),                      !srv 22.06.08
      &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 26.04.24
      &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1)                      !som 26.04.24
 *   ..output arguments (unspecified on entry)
@@ -65,8 +65,8 @@
      *   wrk0(-1:nx,-1:ny),
      *   t0
       save ncall, vis_par
-      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
-      integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0            !som 16.08.21
+      integer, save :: Zhdanov_visu = 1                                 !som 16.08.21
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -193,7 +193,7 @@ c Drift terms
      &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
      &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
-     
+
               do inucl=0,nspecies-1                                     !som 30.04.24
                if(inucl.ne.s2nucl(is)-1) then
                 t0=0.0e0_R8
@@ -206,7 +206,7 @@ c Drift terms
      &           -ua(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
      &           sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
                 enddo
-                
+
                 dvpar(ix,iy) = dvpar(ix,iy) +
      &          (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &           bb(leftix(ix,iy),leftiy(ix,iy),2)*
@@ -216,10 +216,10 @@ c Drift terms
      &           na(leftix(ix,iy),leftiy(ix,iy),is)/
      &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
      &           0.5e0_R8*cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,inucl)*
-     &           t0            
+     &           t0
                endif
               enddo
-              
+
               t0=0.0e0_R8                                               !som 07.05.24
               do iz= 1, znnucl_int(s2nucl(is)-1)
                if(iz.ne.nint(rza(ix,iy,is))) then
@@ -234,7 +234,7 @@ c Drift terms
      &          sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
                endif
               enddo
-              
+
               dvpar(ix,iy) = dvpar(ix,iy) +
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
@@ -247,7 +247,7 @@ c Drift terms
      &         (cvsa_uAdp_albe(ix,iy,0,s2nucl(is)-1,s2nucl(is)-1)
      &         -zhcscorr*cvsa_uBdp_al(ix,iy,0,s2nucl(is)-1))*
      &         t0
-         
+
              endif
             enddo
            enddo

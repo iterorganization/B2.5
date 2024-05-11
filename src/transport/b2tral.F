@@ -11,7 +11,7 @@
      * chci_al_ast_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,   !som 08.10.21
      * cvsa_hAdp_luc, cvsa_hBdp_luc,                                    !som 20.10.21
      * cvsahz_uAdp_luc, cvsahz_uBdp_luc,                                !som 22.12.23
-     * cvsa_uAdp_luc, cvsa_uBdp_luc,                                    !som 26.04.24                                      
+     * cvsa_uAdp_luc, cvsa_uBdp_luc,                                    !som 26.04.24
      4 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)  !srv 24.08.21
       use b2mod_types
       use b2mod_indirect
@@ -26,7 +26,7 @@
       use b2mod_b2zhco
      & , only: zhflcorr, zhcscorr, zhcscorr_vq,                         !som 21.03.21
      &         zh_imp_analyt, zh_analyt_mdf,
-     &         zhflcorrh, zh_dist_fun, zh_vis_type, zh_tf_toff, 
+     &         zhflcorrh, zh_dist_fun, zh_vis_type,
      &         alloc_b2mod_zhco_amfact, amfact,
      &         amfact_on
       use b2mod_zhfrtf
@@ -88,7 +88,7 @@
      &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),             !som 22.12.23
      &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
-     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1), 
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
      1  fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1),
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
@@ -170,7 +170,7 @@
      &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),              !som 22.12.23
      &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
-     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1), 
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
@@ -355,13 +355,13 @@
      &   cvsa_uAdp_fl, cvsa_uBdp_fl, cvsa_uAdp_luc ,cvsa_uBdp_luc,
      &   cvsahz_uAdp_fl, cvsahz_uBdp_fl, cvsahz_uAdp_luc,
      &   cvsahz_uBdp_luc)                                             !som 08.10.2021 22.12.23
-     
-*   ..compute ion heat conductivity summed over charge states  
+
+*   ..compute ion heat conductivity summed over charge states
         chci_al_ast_luc = 0.0_R8
         do inucl=0,nspecies-1
          do iz= 1, znnucl_int(inucl)
-          chci_al_ast_luc(-1:nx,-1:ny,0,inucl) = 
-     &    chci_al_ast_luc(-1:nx,-1:ny,0,inucl) + 
+          chci_al_ast_luc(-1:nx,-1:ny,0,inucl) =
+     &    chci_al_ast_luc(-1:nx,-1:ny,0,inucl) +
      &    chci_a_luc(-1:nx,-1:ny,0,nucl2s(inucl,iz))
          enddo
         enddo

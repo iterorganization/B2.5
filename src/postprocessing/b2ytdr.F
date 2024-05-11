@@ -189,7 +189,7 @@ c 2002-09-11: logic revised
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
-      character id0*8
+      character id0*8, chns*3
       character*4 solps_version
       data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
@@ -270,7 +270,7 @@ c 2002-09-11: logic revised
      5 na_feedback_actuator_min1(:), na_feedback_actuator_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:),
-     8 sna_corr1(:), taumax1(:)
+     8 sna_corr1(:), taumax1(:), amfact1(:)
       real (kind=R8) ::
      & cbsna1(0:7,0:ns-1,0:cbnrmx-1),
      & cbsmo1(0:7,0:ns-1,0:cbnrmx-1),
@@ -1487,6 +1487,15 @@ c 2002-09-11: logic revised
       do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
         zh_tf_toff(i) = cvalip(i:i)
       end do
+      call alloc_b2mod_zhco_amfact(nspecies)
+      allocate(amfact1(0:nspecies1-1))
+      amfact(0:nspecies-1) = 1.0_R8
+      do i = 0, nspecies-1
+        write (chns,'(i3.3)') is
+        call ipgetr ('b2tral_amfact_'//chns, amfact(i))
+        j = ispecies1(i+1)
+        if (j.gt.0) amfact1(j-1)=amfact(i)
+      end do
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -2003,6 +2012,18 @@ c 2002-09-11: logic revised
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
+      if (cnamip(1:14).eq.'b2tral_amfact_') then
+        read (cnamip(15:17),'(i3.3)') i
+        j = ispecies1(i+1)
+        if (j.gt.0) then
+          todo = .true.
+          rswitch = amfact1(j-1)
+          write (cnamip,'(a14,i3.3)') 'b2tral_amfact_', j-1
+        else
+          todo = .false.
+          wait = .true.
+        end if
+      end if
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
 *   ..character string switches
       todo = .true.
@@ -2087,6 +2108,7 @@ c 2002-09-11: logic revised
       if (ycur.ne.1.0_R8 .and. .not.ycur_done)
      >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
       deallocate(zh_tf_toff)
+      deallocate(amfact1)
 
 *  ..rewrite boundary namelist
       first_pass = .true.

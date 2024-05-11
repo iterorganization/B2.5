@@ -8,7 +8,7 @@
      1 csig, csigin, csig_stoch,                                         !srv 24.08.21
      & chci, calf, cvsa_cl, cvsa_drho,                                   !som 18.08.21
      & chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
-     & cvsa_uAdp_albe, cvsa_uBdp_al,                                     !som 26.04.24     
+     & cvsa_uAdp_albe, cvsa_uBdp_al,                                     !som 26.04.24
      & conc, avisper_a, bvisper_a, cvisper_a,
      & fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,       !srv 08.09.21
      & fchin_a, fch, fch_p, fchdia, fchin,
@@ -41,7 +41,7 @@
      &   cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 20.10.21
      &   cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 20.10.21
      &   cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 26.04.24
-     &   cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 26.04.24   
+     &   cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 26.04.24
      &   lnlam(-1:nx,-1:ny), hx(-1:nx,-1:ny),                            !srv 13.10.06 01.07.09
      1   hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
