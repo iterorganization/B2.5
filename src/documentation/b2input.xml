@@ -2182,6 +2182,60 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switchgroup>
+				<name>*_CNV</name>
+				<description>
+					The anomalous radial convection velocity mimicking "blob" transport. The radial convection velocity for all species in SOL is calculated by the formula: vla0=vout_cnv*y^pw0_cnv*(1-x^pw1_cnv)^pw2_cnv where x is the normalized poloidal coordinate such that at the X-point it is equal to 1, and at jxa_cnv is 0, and y is the normalized radial coordinate, such that at jsep_cnv it is equal to 0, and at the North boundary 1. The six *_CNV parameters are only activated if 'b2tqna_user_transport' is set to '6'.
+				</description>
+				<switch>
+					<name>b2tqna_vout_cnv</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Value of the "blob" convection velocity at the North boundary (in m/s).
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_pw0_cnv</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Exponent in a radial profile of the "blob" velocity.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_pw1_cnv</name>
+					<default>5.0</default>
+					<type>real</type>
+					<description>
+						First exponent in a poloidal profile of the "blob" velocity.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_pw2_cnv</name>
+					<default>2.0</default>
+					<type>real</type>
+					<description>
+						Second exponent in a poloidal profile of the "blob" velocity.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_jsep_cnv</name>
+					<default>separatrix radial index</default>
+					<type>integer</type>
+					<description>
+						Radial index where the "blob" convection velocity starts increasing from 0.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_jxa_cnv</name>
+					<default>outer midplane poloidal index</default>
+					<type>integer</type>
+					<description>
+						Poloidal index where the "blob" convection velocity has its maximum.
+					</description>
+				</switch>
+			</switchgroup>
 			<switch>
 				<name>b2tqna_pfr_rescale</name>
 				<default>1.0</default>
