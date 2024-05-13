@@ -1895,6 +1895,10 @@ c 2002-09-11: logic revised
           iswitch = mw_jxa1
         case('b2tqna_mw_jsep')
           iswitch = mw_jsep1
+        case('b2tqna_jxa_cnv')
+          iswitch = jxa1cnv
+        case('b2tqna_jsep_cnv')
+          iswitch = jsep1cnv
         case('b2mwti_jxa')
           iswitch = jxa1
         case('b2mwti_jxi')
