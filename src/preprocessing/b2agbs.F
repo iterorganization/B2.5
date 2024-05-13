@@ -154,6 +154,7 @@
           if (region(ix,iy,0).eq.0) cycle
           if (iseg(ix,iy).eq.0) cycle
           if (ixref(iseg(ix,iy),iy).eq.-2) cycle
+          if (isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 
           if (leftix(ixref(iseg(ix,iy),iy),iy).ne.-2) then
             pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
