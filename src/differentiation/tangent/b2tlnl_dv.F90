@@ -108,7 +108,7 @@ SUBROUTINE B2TLNL_DV(ncv, switch, switchd, icase, te, ted, ti, tid, ne, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlnl')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2tlnl .LT. 3) THEN
 !    ..test state
@@ -352,7 +352,7 @@ SUBROUTINE B2TLNL_NODIFF(ncv, switch, icase, te, ti, ne, lnlam)
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlnl')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2tlnl .LT. 3) THEN
 !    ..test state

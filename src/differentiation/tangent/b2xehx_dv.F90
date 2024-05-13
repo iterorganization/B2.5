@@ -21,8 +21,8 @@
 !.specification
 !
 !srv 13.01.17
-SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
-& , pod, ne, ned, ehx, ehxd, nbdirs)
+SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
+& ted, po, pod, ne, ned, ehx, ehxd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_GEO_DIFFV
@@ -45,6 +45,7 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: te(ncv), po(ncv), ne(ncv)
   REAL(kind=r8) :: ted(nbdirsmax, ncv), pod(nbdirsmax, ncv), ned(&
 & nbdirsmax, ncv)
@@ -90,7 +91,7 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
 !   ..subprogram start-up calls
   CALL SUBINI('b2xehx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2xehx .LT. 3) THEN
 !    ..test sign of ne, te, csig
@@ -119,13 +120,13 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
-&            dpop, dpopd, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
+&            wrkvd, dpop, dpopd, nbdirs)
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, nete, neted, wrkv, wrkvd&
-&            , wrk0, wrk0d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, nete, neted, wrkv, &
+&            wrkvd, wrk0, wrk0d, nbdirs)
 !       ..interpolate ne to faces
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
@@ -151,13 +152,13 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
-&            dpop, dpopd, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
+&            wrkvd, dpop, dpopd, nbdirs)
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, nete, neted, wrkv, wrkvd&
-&            , wrk0, wrk0d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, nete, neted, wrkv, &
+&            wrkvd, wrk0, wrk0d, nbdirs)
 !       ..interpolate ne to faces
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
@@ -180,13 +181,13 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
-&            dpop, dpopd, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
+&            wrkvd, dpop, dpopd, nbdirs)
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, te, ted, wrkv, wrkvd, &
-&            wrk0, wrk0d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, te, ted, wrkv, &
+&            wrkvd, wrk0, wrk0d, nbdirs)
     DO nd=1,nbdirs
       arg1d(nd, :) = ned(nd, :)/ne
     END DO
@@ -194,8 +195,8 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, arg1(:), arg1d(:, :), &
-&            wrkv, wrkvd, wrk1, wrk1d, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, arg1(:), arg1d(:, :&
+&            ), wrkv, wrkvd, wrk1, wrk1d, nbdirs)
 !       ..interpolate te to faces
     DO nd=1,nbdirsmax
       wrk2d(nd, :) = 0.D0
@@ -288,7 +289,7 @@ SUBROUTINE B2XEHX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, te, po, ne, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2xehx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2xehx .LT. 3) THEN
 !    ..test sign of ne, te, csig

@@ -101,7 +101,7 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
   CALL SUBINI('b2nxfc')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxfc .LT. 3) THEN
     IF (ncall_b2nxfc .EQ. switch%b2news_ncallout) THEN
@@ -137,12 +137,12 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
     DO ifc=1,nfc
       temp = rob(mpg%fccv(ifc, 1)) + rob(mpg%fccv(ifc, 2))
       DO nd=1,nbdirs
-        flcbd(nd, ifc, 0) = flubd(nd, ifc, 0) + geo%fcpbshz(ifc)*&
-&         0.5e0_R8*(temp*wrkfd(nd, ifc)+wrkf(ifc)*(robd(nd, mpg%fccv(ifc&
-&         , 1))+robd(nd, mpg%fccv(ifc, 2))))
+        flcbd(nd, ifc, 0) = flubd(nd, ifc, 0) + geo%fcpbshz(ifc)*0.5_R8*&
+&         (temp*wrkfd(nd, ifc)+wrkf(ifc)*(robd(nd, mpg%fccv(ifc, 1))+&
+&         robd(nd, mpg%fccv(ifc, 2))))
       END DO
-      flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*0.5e0_R8*(wrkf(ifc)&
-&       *temp)
+      flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*0.5_R8*(wrkf(ifc)*&
+&       temp)
     END DO
     DO nd=1,nbdirs
       cvcbd(nd, :, 0) = cvsbd(nd, :, 0)
@@ -267,7 +267,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
   CALL SUBINI('b2nxfc')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxfc .LT. 3) THEN
     IF (ncall_b2nxfc .EQ. switch%b2news_ncallout) THEN
@@ -293,7 +293,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
 !     ..compute flcbx, cvcbx        
     DO ifc=1,nfc
       flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*wrkf(ifc)*(rob(mpg%&
-&       fccv(ifc, 1))+rob(mpg%fccv(ifc, 2)))*0.5e0_R8
+&       fccv(ifc, 1))+rob(mpg%fccv(ifc, 2)))*0.5_R8
     END DO
     cvcb(:, 0) = cvsb(:, 0)
   END IF

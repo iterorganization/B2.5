@@ -91,7 +91,7 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, switch, geo, mpg, pl, dv, diag)
   CALL SUBINI('b2mxar')
 !   ..set internal parameters on first call
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 ! ..compute scaled norms

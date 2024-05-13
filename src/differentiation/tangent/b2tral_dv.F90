@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tral in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci tdata *(dv.lnlam) *(co.csig)
+!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci *(dv.lnlam) *(co.csig)
 !                *(co.calf) *(co.csig_an) *(co.csigin) *(co.chce)
 !                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
 !                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
@@ -17,9 +17,9 @@
 !                *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
-!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
@@ -43,27 +43,27 @@
 !                *(co.f_luc_al) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
 !                *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
-!                dv.vaecrb:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvqgam:in geo.cvvol:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.fcbzb:in geo.vxvol:in geo.ftconn:in
-!                geo.fsconn:in geo.fteps:in st_ext.am:in st_ext.za2:in
-!                st_ext.na:in st_ext.ni:in rt.rlcx:in rt.rlsa:in
-!                rt.rza:in rt.rz2:in co.csig:in co.calf:in co.csig_an:in
-!                co.calf_an:in co.csig_cl:in co.calf_cl:in co.csigin:in
-!                co.chve:in co.chce:in co.chce_exb:in co.chvi:in
-!                co.chci:in co.chci_exb:in co.chcn:in co.cdkt:in
-!                co.cdzt:in co.chvemx:in co.chvimx:in co.cvla:in
-!                co.cdna:in co.cdna_exb:in co.cdpa:in co.cvsa:in
-!                co.cvlahz:in co.cdnahz:in co.cdpahz:in co.cvsahz:in
-!                co.cddi:in co.cvsahz_cl:in co.chcb:in co.cvsa_an:in
-!                co.cvmahz:in co.cthe:in co.cthi:in co.cvsa_cl:in
-!                co.fllim0fhi:in co.fllimvisc:in co.vsaf_cl:in
-!                co.sig0:in co.hce0:in co.hci0:in co.hcn0:in co.alf0:in
-!                co.dkt0:in co.dzt0:in co.dna_exb:in co.hce_exb:in
-!                co.hci_exb:in co.dpa0:in co.dna0:in co.vsa0:in
-!                co.hcib:in co.vla0:in co.vma0:in co.alfx_c:in
+!                dv.vaecrb:in mpg.intcellp:in mpg.intcellr:in geo.cvbb:in
+!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvqgam:in
+!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcbzb:in
+!                geo.vxvol:in geo.ftconn:in geo.fsconn:in geo.fteps:in
+!                st_ext.am:in st_ext.za2:in st_ext.na:in st_ext.ni:in
+!                rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in
+!                co.calf:in co.csig_an:in co.calf_an:in co.csig_cl:in
+!                co.calf_cl:in co.csigin:in co.chve:in co.chce:in
+!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.chvemx:in
+!                co.chvimx:in co.cvla:in co.cdna:in co.cdna_exb:in
+!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
+!                co.cdpahz:in co.cvsahz:in co.cddi:in co.cvsahz_cl:in
+!                co.chcb:in co.cvsa_an:in co.cvmahz:in co.cthe:in
+!                co.cthi:in co.cvsa_cl:in co.fllim0fhi:in co.fllimvisc:in
+!                co.vsaf_cl:in co.sig0:in co.hce0:in co.hci0:in
+!                co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in co.dna_exb:in
+!                co.hce_exb:in co.hci_exb:in co.dpa0:in co.dna0:in
+!                co.vsa0:in co.hcib:in co.vla0:in co.vma0:in co.alfx_c:in
 !                co.sigx_c:in co.sigx_kt:in co.hcix_c:in co.fllim_ki:in
 !                co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
 !                co.fllim_ki_c:in co.f_luc_ke:in co.f_luc_ki:in
@@ -84,8 +84,8 @@
 !.specification
 !
 SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
-& switch, switchd, geo, geod, mpg, pl, pld, dv, dvd, rt, rtd, st_ext, &
-& st_extd, co, cod, nbdirs)
+& switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, &
+& st_ext, st_extd, co, cod, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -136,6 +136,7 @@ SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
@@ -241,7 +242,7 @@ SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..read data on first call
   IF (ncall_b2tral .EQ. 0) THEN
@@ -264,8 +265,8 @@ SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 ! ..compute transport coefficients
 !   ..compute anomalous terms
   CALL B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, switch&
-&          , switchd, geo, geod, mpg, pl, pld, dv, dvd, rt, rtd, st_ext&
-&          , st_extd, co, cod, nbdirs)
+&          , switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, &
+&          st_ext, st_extd, co, cod, nbdirs)
 !   ..compute classical terms
 !srv 23.11.10
 !srv 09.01.01 03.06.03
@@ -277,16 +278,16 @@ SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     dummyzerodiffd(nd, :, :) = 0.D0
   END DO
   CALL B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, switchd&
-&          , geo, geod, mpg, pl, pld, dv, dvd, rt, rtd, co, cod, st_ext&
-&          , st_extd, cvsahz0, cvsahz0d, cvsa0, cvsa0d, chce0, chce0d, &
-&          chve0, chve0d, chci0, chci0d, chvi0, chvi0d, csig0, csig0d, &
-&          calf0, calf0d, cdkt0, cdkt0d, co%csigin, cod%csigin, co%cthe&
-&          , dummyzerodiffd0, co%cthi, dummyzerodiffd, co%vsaf_cl, cod%&
-&          vsaf_cl, co%cvsa_cl, cod%cvsa_cl, co%cvsahz_cl, cod%cvsahz_cl&
-&          , co%fllimvisc, co%csig_cl, co%calf_cl, nbdirs)
+&          , geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, co, cod, &
+&          st_ext, st_extd, cvsahz0, cvsahz0d, cvsa0, cvsa0d, chce0, &
+&          chce0d, chve0, chve0d, chci0, chci0d, chvi0, chvi0d, csig0, &
+&          csig0d, calf0, calf0d, cdkt0, cdkt0d, co%csigin, cod%csigin, &
+&          co%cthe, dummyzerodiffd0, co%cthi, dummyzerodiffd, co%vsaf_cl&
+&          , cod%vsaf_cl, co%cvsa_cl, cod%cvsa_cl, co%cvsahz_cl, cod%&
+&          cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl, nbdirs)
 !   ..add to previous contributions=
 !srv 16.10.17 {
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       DO nd=1,nbdirs
@@ -739,7 +740,7 @@ SUBROUTINE B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..read data on first call
   IF (ncall_b2tral .EQ. 0) THEN
@@ -774,7 +775,7 @@ SUBROUTINE B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 &              fllimvisc, co%csig_cl, co%calf_cl)
 !   ..add to previous contributions=
 !srv 16.10.17 {
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       co%cvsa(:, 0, is) = ft*co%cvsa_cl(:, 0, is) + co%cvsa(:, 0, is)

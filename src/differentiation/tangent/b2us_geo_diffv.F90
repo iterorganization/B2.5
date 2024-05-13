@@ -40,6 +40,9 @@ MODULE B2US_GEO_DIFFV
 ! 1/B**2 in cell centers
 ! Factor for P-S/mdf flows
 ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
+! Direction of poloidal field
+! +1: Going clockwise around plasma
+! -1: Going counterclockwise around plasma
 ! Psi in each cell
 !
 !  face based quantities
@@ -96,6 +99,7 @@ MODULE B2US_GEO_DIFFV
       REAL(kind=r8), ALLOCATABLE :: cvonedbsq(:)
       REAL(kind=r8), ALLOCATABLE :: cvbzb(:)
       REAL(kind=r8), ALLOCATABLE :: cveb(:, :)
+      REAL(kind=r8) :: signmf
       REAL(kind=r8), ALLOCATABLE :: cvfpsi(:)
       REAL(kind=r8), ALLOCATABLE :: fcbb(:, :)
       REAL(kind=r8), ALLOCATABLE :: fcs(:)
@@ -143,6 +147,7 @@ MODULE B2US_GEO_DIFFV
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: cvonedbsq
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: cvbzb
       REAL(kind=r8), DIMENSION(:, :, :), ALLOCATABLE :: cveb
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: signmf
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: cvfpsi
       REAL(kind=r8), DIMENSION(:, :, :), ALLOCATABLE :: fcbb
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: fcs
@@ -1016,10 +1021,10 @@ CONTAINS
 !
 !**********************************************************************
 !
-  SUBROUTINE WRITE_GEOMETRY(nout, ncv, nfc, nvx, nfs, nft, nvmxcv, gm)
+  SUBROUTINE WRITE_GEOMETRY(nout, ncv, nfc, nvx, nfs, gm)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: nout, ncv, nfc, nvx, nfs, nft, nvmxcv
+    INTEGER, INTENT(IN) :: nout, ncv, nfc, nvx, nfs
     TYPE(GEOMETRY), INTENT(IN) :: gm
     EXTERNAL CFWURE
     INTEGER :: arg1
@@ -1113,23 +1118,24 @@ CONTAINS
     USE B2MOD_SWITCHES_DIFFV
     USE B2US_MAP_DIFFV
 !  Hint: ISIZE1OFresult1 should be the size of dimension 1 of array result1
-!  Hint: mpg%nFc should be the size of dimension 1 of array fceb
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: gm
-    INTEGER :: i, j, k, l, ncv, nfc, nvx, nfx, icv, ifc, ivx, incv, ixpt&
-&   , ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx), vv(2)
+    INTEGER :: i, j, k, l, ncv, nfc, nvx, nfx, icv, ifc, ift, ivx, incv&
+&   , ixpt, ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx), vv(2)
+    INTEGER :: count_up, count_down, count_eq
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
-    REAL(kind=r8) :: hzconst, dux, duy, du, sbf, psi1, psi2, count_up, &
-&   count_down, count_eq, dpsi(mpg%ncv), dpsi_max_down, dpsi_max_up
+    REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
+&   , dpsi(mpg%ncv), dpsi_max_down, dpsi_max_up
     LOGICAL :: active, match_found
     INTRINSIC MAXVAL, MAXLOC, MINLOC, ABS, SQRT
     EXTERNAL B2XBZB_NODIFF, INTFACE, INTVERTEX_NODIFF, XERRAB, XERTST
     INTRINSIC MOD
     INTRINSIC MINVAL
     INTRINSIC SUM
+    INTRINSIC REAL
     INTRINSIC SIGN
     REAL(kind=r8) :: x1
     REAL(kind=r8), DIMENSION(mpg%nFs) :: abs0
@@ -1142,9 +1148,7 @@ CONTAINS
     INTEGER :: result12
     INTEGER :: result13
     REAL(r8) :: result14
-    REAL(kind=r8), DIMENSION(mpg%nFc) :: arg11
-    REAL(kind=r8), DIMENSION(mpg%nFc) :: result15
-    REAL(kind=r8) :: result16
+    REAL(kind=r8) :: result15
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
@@ -1248,17 +1252,17 @@ CONTAINS
 ! Exceptional case: equal Psi (pentagon splitting);
 ! will also catch case where Psi = 0 everywhere
       DO ivx=1,nvx
-        count_down = 0.0_R8
-        count_up = 0.0_R8
-        count_eq = 0.0_R8
+        count_down = 0
+        count_up = 0
+        count_eq = 0
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
-            count_up = count_up + 1.0e0_R8
+            count_up = count_up + 1
           ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
-            count_down = count_down + 1.0e0_R8
+            count_down = count_down + 1
           ELSE
-            count_eq = count_eq + 1.0e0_R8
+            count_eq = count_eq + 1
           END IF
         END DO
         DO incv=1,mpg%vxcvp(ivx, 2)
@@ -1282,7 +1286,7 @@ CONTAINS
 ! equal weight for each cell around the vertex
       gm%vxvol = 1.0_R8
     ELSE IF (switch%vxvol_style .EQ. 4) THEN
-! try-out: 
+! try-out:
 ! assign 1/4, except guard cells
       DO ivx=1,nvx
         DO incv=1,mpg%vxcvp(ivx, 2)
@@ -1320,12 +1324,11 @@ CONTAINS
         END DO
       END DO
     ELSE IF (switch%vxvol_style .EQ. 6) THEN
-! try-out: 
+! try-out:
 ! assign 1/4, except guard cells
 ! 1/8 for pent at common vertex
 ! 1/2 for pent at flux surface verts
       DO ivx=1,nvx
-!
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (icv .LE. mpg%nci) THEN
@@ -1336,7 +1339,6 @@ CONTAINS
             gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = 0.25e-3_R8
           END IF
         END DO
-!
         IF (mpg%vxcvp(ivx, 2) .EQ. 3) THEN
           DO incv=1,mpg%vxcvp(ivx, 2)
             icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
@@ -1353,7 +1355,6 @@ CONTAINS
             END IF
           END DO
         ELSE IF (mpg%vxcvp(ivx, 2) .EQ. 4) THEN
-!
           DO incv=1,mpg%vxcvp(ivx, 2)
             icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
             IF (icv .LE. mpg%nci) THEN
@@ -1361,14 +1362,13 @@ CONTAINS
             ELSE
 ! Make sure guard cells dominate in the interpolation
 ! to vertices => use volume
-              gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = gm%cvvol(icv)/1e2_R8
+              gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = gm%cvvol(icv)/&
+&               1.0e2_R8
             END IF
           END DO
         END IF
       END DO
     ELSE IF (switch%vxvol_style .EQ. 7) THEN
-!
-!
 !recalculate cvFpsi
       DO icv=1,ncv
         ALLOCATE(verts(1:mpg%cvvxp(icv, 2)))
@@ -1388,28 +1388,28 @@ CONTAINS
       END DO
 !count cells per vertex with higher and lower Psi
       DO ivx=1,nvx
-        count_down = 0.0_R8
-        count_up = 0.0_R8
+        count_down = 0
+        count_up = 0
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
-            count_up = count_up + 1.0e0_R8
+            count_up = count_up + 1
           ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
-            count_down = count_down + 1.0e0_R8
+            count_down = count_down + 1
           END IF
         END DO
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (icv .LE. mpg%nci) THEN
             IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
-              gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_up/mpg%vxcvp(&
-&               ivx, 2)
+              gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = REAL(count_up, r8)/&
+&               mpg%vxcvp(ivx, 2)
             ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
-              gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_down/mpg%vxcvp(&
-&               ivx, 2)
+              gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = REAL(count_down, r8)/&
+&               mpg%vxcvp(ivx, 2)
             END IF
           ELSE
-! Make guards cells dominate and account for 
+! Make guards cells dominate and account for
 ! length difference via distance to vertex
             arg10 = (gm%cvx(icv)-gm%vxx(ivx))**2 + (gm%cvy(icv)-gm%vxy(&
 &             ivx))**2
@@ -1437,10 +1437,7 @@ CONTAINS
         END IF
       END DO
     ELSE IF (switch%vxvol_style .EQ. 8) THEN
-!
-!
-!
-!Same as style 2 but with weighting for boundary vertices
+! Same as style 2 but with weighting for boundary vertices
 ! assign 1/4, except guard cells
       DO ivx=1,nvx
         DO incv=1,mpg%vxcvp(ivx, 2)
@@ -1458,7 +1455,6 @@ CONTAINS
         END DO
       END DO
     ELSE IF (switch%vxvol_style .EQ. 9) THEN
-!
 !recalculate cvFpsi
       DO icv=1,ncv
         ALLOCATE(verts(1:mpg%cvvxp(icv, 2)))
@@ -1478,17 +1474,17 @@ CONTAINS
       END DO
 !count cells per vertex with higher and lower Psi
       DO ivx=1,nvx
-        count_down = 0.0_R8
-        count_up = 0.0_R8
+        count_down = 0
+        count_up = 0
         dpsi_max_down = 0.0_R8
         dpsi_max_up = 0.0_R8
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
           IF (gm%cvfpsi(icv) .GT. gm%vxfpsi(ivx)) THEN
-            count_up = count_up + 1.0e0_R8
+            count_up = count_up + 1
             IF (dpsi(icv) .GT. dpsi_max_up) dpsi_max_up = dpsi(icv)
           ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
-            count_down = count_down + 1.0e0_R8
+            count_down = count_down + 1
             IF (dpsi(icv) .GT. dpsi_max_down) dpsi_max_down = dpsi(icv)
           END IF
         END DO
@@ -1500,26 +1496,26 @@ CONTAINS
                 result14 = SQRT(2.0_R8)
                 arg10 = dpsi_max_up/dpsi(icv)
                 result2 = SQRT(arg10)
-                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_up/(mpg%vxcvp&
-&                 (ivx, 2)*result14*result2)
+                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = REAL(count_up, r8)/&
+&                 (mpg%vxcvp(ivx, 2)*result14*result2)
               ELSE
-                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_up/mpg%vxcvp(&
-&                 ivx, 2)
+                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = REAL(count_up, r8)/&
+&                 mpg%vxcvp(ivx, 2)
               END IF
             ELSE IF (gm%cvfpsi(icv) .LT. gm%vxfpsi(ivx)) THEN
               IF (mpg%cvvxp(icv, 2) .EQ. 3) THEN
                 result14 = SQRT(2.0_R8)
                 arg10 = dpsi_max_up/dpsi(icv)
                 result2 = SQRT(arg10)
-                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_down/(mpg%&
-&                 vxcvp(ivx, 2)*result14*result2)
+                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = REAL(count_down, r8&
+&                 )/(mpg%vxcvp(ivx, 2)*result14*result2)
               ELSE
-                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = count_down/mpg%&
-&                 vxcvp(ivx, 2)
+                gm%vxvol(mpg%vxcvp(ivx, 1)+incv-1) = REAL(count_down, r8&
+&                 )/mpg%vxcvp(ivx, 2)
               END IF
             END IF
           ELSE
-! Make guards cells dominate and account for 
+! Make guards cells dominate and account for
 ! length difference via distance to vertex
             arg10 = (gm%cvx(icv)-gm%vxx(ivx))**2 + (gm%cvy(icv)-gm%vxy(&
 &             ivx))**2
@@ -1547,10 +1543,6 @@ CONTAINS
         END IF
       END DO
     ELSE IF (switch%vxvol_style .EQ. 10) THEN
-!
-!
-!
-!
       DO ivx=1,nvx
         DO incv=1,mpg%vxcvp(ivx, 2)
           icv = mpg%vxcv(mpg%vxcvp(ivx, 1)+incv-1)
@@ -1569,7 +1561,7 @@ CONTAINS
         END DO
       END DO
     ELSE IF (switch%vxvol_style .EQ. 11) THEN
-! Check which type to interpolation type to use 
+! Check which type to interpolation type to use
       inv_dist(:) = 0
       DO ivx=1,nvx
         DO incv=1,mpg%vxcvp(ivx, 2)
@@ -1631,20 +1623,17 @@ CONTAINS
 &       0)*dux+sbf*gm%fcqalf(ifc, 1)*duy)
       gm%fceb(ifc, 1) = gm%fcbb(ifc, 0)/gm%fcbb(ifc, 3)*(-(sbf*gm%fcqalf&
 &       (ifc, 1)*dux)+gm%fcqalf(ifc, 0)*duy)
+! Normalize
       gm%fceb(ifc, 2) = sbf*gm%fcbb(ifc, 2)/gm%fcbb(ifc, 3)
+!
+      arg10 = gm%fceb(ifc, 0)**2 + gm%fceb(ifc, 1)**2 + gm%fceb(ifc, 2)&
+&       **2
+      du = SQRT(arg10)
+      gm%fceb(ifc, 0) = gm%fceb(ifc, 0)/du
+      gm%fceb(ifc, 1) = gm%fceb(ifc, 1)/du
+      gm%fceb(ifc, 2) = gm%fceb(ifc, 2)/du
     END DO
 !
-! normalize
-!
-    arg11 = gm%fceb(:, 0)**2 + gm%fceb(:, 1)**2 + gm%fceb(:, 2)**2
-    result15 = SQRT(arg11)
-    gm%fceb(:, 0) = gm%fceb(:, 0)/result15
-    arg11 = gm%fceb(:, 0)**2 + gm%fceb(:, 1)**2 + gm%fceb(:, 2)**2
-    result15 = SQRT(arg11)
-    gm%fceb(:, 1) = gm%fceb(:, 1)/result15
-    arg11 = gm%fceb(:, 0)**2 + gm%fceb(:, 1)**2 + gm%fceb(:, 2)**2
-    result15 = SQRT(arg11)
-    gm%fceb(:, 2) = gm%fceb(:, 2)/result15
 !
 !WG_TODO: Need to provide a calculation for gm%vxEb
 !
@@ -1654,24 +1643,24 @@ CONTAINS
 ! for ASDEX-UPGRADE for testing
     hzconst = 2.0_R8*pi*1.6_R8
     hzconst = 1.0_R8
-    gm%cvhz = hzconst*(1.0e0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*gm%&
+    gm%cvhz = hzconst*(1.0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*gm%&
 &     cvvol/gm%cvsz
 !
 !   ..compute fcHz and fcPbshz
     IF (switch%fchz_style .EQ. 0) THEN
       CALL INTFACE(ncv, nfc, mpg%fccv, gm%fcvol, gm%cvhz, gm%fchz)
     ELSE IF (isymm .EQ. 0) THEN
-      gm%fchz = hzconst*(1.0e0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
+      gm%fchz = hzconst*(1.0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
 &       switch%b2agmt_width
     ELSE IF (isymm .EQ. 1 .OR. isymm .EQ. 2) THEN
       DO ifc=1,mpg%nfc
-        gm%fchz(ifc) = hzconst*(1.0e0_R8-switch%b2mndr_hz) + switch%&
+        gm%fchz(ifc) = hzconst*(1.0_R8-switch%b2mndr_hz) + switch%&
 &         b2mndr_hz*pi*(gm%vxx(mpg%fcvx(ifc, 1))+gm%vxx(mpg%fcvx(ifc, 2)&
 &         ))
       END DO
     ELSE IF (isymm .EQ. 3 .OR. isymm .EQ. 4) THEN
       DO ifc=1,mpg%nfc
-        gm%fchz(ifc) = hzconst*(1.0e0_R8-switch%b2mndr_hz) + switch%&
+        gm%fchz(ifc) = hzconst*(1.0_R8-switch%b2mndr_hz) + switch%&
 &         b2mndr_hz*pi*(gm%vxy(mpg%fcvx(ifc, 1))+gm%vxy(mpg%fcvx(ifc, 2)&
 &         ))
       END DO
@@ -1682,13 +1671,13 @@ CONTAINS
     IF (switch%vxhz_style .EQ. 0) THEN
       CALL INTVERTEX_NODIFF(ncv, nvx, mpg, gm%vxvol, gm%cvhz, gm%vxhz)
     ELSE IF (isymm .EQ. 0) THEN
-      gm%vxhz = hzconst*(1.0e0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
+      gm%vxhz = hzconst*(1.0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
 &       switch%b2agmt_width
     ELSE IF (isymm .EQ. 1 .OR. isymm .EQ. 2) THEN
-      gm%vxhz = hzconst*(1.0e0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
+      gm%vxhz = hzconst*(1.0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
 &       2.0_R8*pi*gm%vxx
     ELSE IF (isymm .EQ. 3 .OR. isymm .EQ. 4) THEN
-      gm%vxhz = hzconst*(1.0e0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
+      gm%vxhz = hzconst*(1.0_R8-switch%b2mndr_hz) + switch%b2mndr_hz*&
 &       2.0_R8*pi*gm%vxy
     END IF
 !
@@ -1779,6 +1768,7 @@ CONTAINS
         END IF
       END IF
     END IF
+! Compute signmf
     IF (ixpt .NE. 0) THEN
       match_found = .false.
       DO i=mpg%vxcvp(mpg%xpt(ixpt), 1),mpg%vxcvp(mpg%xpt(ixpt), 1)+mpg%&
@@ -1808,13 +1798,53 @@ CONTAINS
       END DO
     END IF
 !
+    r0 = 0.0_R8
+    z0 = 0.0_R8
+    t0 = 0.0_R8
+    ift = 0
+    gm%signmf = 0.0_R8
+    DO WHILE (t0 .EQ. 0.0_R8 .OR. ift .LT. mpg%nft)
+      ift = ift + 1
+      icv = mpg%ftcv(mpg%ftcvp(ift, 1))
+      IF (mpg%cvonclosedsurface(icv)) THEN
+        DO i=1,mpg%ftcvp(ift, 2)
+          r0 = r0 + gm%cvx(mpg%ftcv(mpg%ftcvp(ift, 1)+i-1))*gm%cvhx(mpg%&
+&           ftcv(mpg%ftcvp(ift, 1)+i-1))
+          z0 = z0 + gm%cvy(mpg%ftcv(mpg%ftcvp(ift, 1)+i-1))*gm%cvhx(mpg%&
+&           ftcv(mpg%ftcvp(ift, 1)+i-1))
+          t0 = t0 + gm%cvhx(mpg%ftcv(mpg%ftcvp(ift, 1)+i-1))
+        END DO
+      END IF
+    END DO
+    IF (t0 .GT. 0.0_R8) THEN
+      r0 = r0/t0
+      z0 = z0/t0
+      ift = 0
+      DO WHILE (gm%signmf .EQ. 0.0_R8 .OR. ift .LT. mpg%nft)
+        ift = ift + 1
+        icv = mpg%ftcv(mpg%ftcvp(ift, 1))
+        IF (mpg%cvonclosedsurface(icv)) THEN
+          DO i=1,mpg%ftcvp(ift, 2)
+            gm%signmf = gm%signmf - (gm%cvx(mpg%ftcv(mpg%ftcvp(ift, 1)+i&
+&             -1))-r0)*gm%cveb(mpg%ftcv(mpg%ftcvp(ift, 1)+i-1), 1) + (gm&
+&             %cvy(mpg%ftcv(mpg%ftcvp(ift, 1)+i-1))-z0)*gm%cveb(mpg%ftcv&
+&             (mpg%ftcvp(ift, 1)+i-1), 0)
+          END DO
+        END IF
+      END DO
+! signmf is positive if the poloidal field travels clockwise around the O-point
+      gm%signmf = SIGN(1.0_R8, gm%signmf)
+    ELSE
+      gm%signmf = SIGN(1.0_R8, gm%cveb(1, 0))
+    END IF
+!
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-    result16 = MAXVAL(mpg%strdiv)
-    DO i=1,result16
+    result15 = MAXVAL(mpg%strdiv)
+    DO i=1,result15
       match_found = .false.
       k = 1
-      result16 = MAXVAL(mpg%strdiv)
+      result15 = MAXVAL(mpg%strdiv)
       DO WHILE (.NOT.match_found)
         ifc1 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
 !nh check if the vertices belong to a flux surface
@@ -1890,8 +1920,7 @@ CONTAINS
         ivx2 = mpg%fcvx(mpg%divfc(j), 2)
         DO k=1,mpg%nxpt
           DO l=mpg%strvxp(k, 1),mpg%strvxp(k, 1)+mpg%strvxp(k, 2)-1
-            IF (ivx1 .EQ. mpg%strvx(l) .AND. mpg%vxfs(ivx1) .EQ. mpg%&
-&               vxfs(mpg%xpt(k))) THEN
+            IF (ivx1 .EQ. mpg%strvx(l)) THEN
               IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx1) .LE. gm%&
 &                 vxfpsi(ivx2)) .OR. (.NOT.gm%psi_increasing .AND. gm%&
 &                 vxfpsi(ivx1) .GT. gm%vxfpsi(ivx2))) THEN
@@ -1899,15 +1928,16 @@ CONTAINS
                   match_found = .true.
                   mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
                   mpg%ivdiv(i) = ivx1
-                ELSE IF (mpg%vxfs(ivx1) .EQ. mpg%ifssep) THEN
+                ELSE IF (mpg%vxfs(ivx1) .EQ. mpg%ifssep .OR. (mpg%vxfs(&
+&                   ivx1) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 .GT. 0)) &
+&               THEN
 ! Two strike points on the same target
 ! We label the active one only
                   mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
                   mpg%ivdiv(i) = ivx1
                 END IF
               END IF
-            ELSE IF (ivx2 .EQ. mpg%strvx(l) .AND. mpg%vxfs(ivx2) .EQ. &
-&               mpg%vxfs(mpg%xpt(k))) THEN
+            ELSE IF (ivx2 .EQ. mpg%strvx(l)) THEN
               IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx2) .LE. gm%&
 &                 vxfpsi(ivx1)) .OR. (.NOT.gm%psi_increasing .AND. gm%&
 &                 vxfpsi(ivx2) .GT. gm%vxfpsi(ivx1))) THEN
@@ -1915,7 +1945,9 @@ CONTAINS
                   match_found = .true.
                   mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
                   mpg%ivdiv(i) = ivx2
-                ELSE IF (mpg%vxfs(ivx2) .EQ. mpg%ifssep) THEN
+                ELSE IF (mpg%vxfs(ivx2) .EQ. mpg%ifssep .OR. (mpg%vxfs(&
+&                   ivx2) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 .GT. 0)) &
+&               THEN
 ! Two strike points on the same target
 ! We label the active one only
                   mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
@@ -1934,7 +1966,6 @@ CONTAINS
   END SUBROUTINE INIT_GEOMETRY
 
 !
-!
 !**********************************************************************
 !
   SUBROUTINE CALC_CONN(mpg, gm)
@@ -1943,7 +1974,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: gm
-    INTEGER :: nfx, icv, icv1, icv2, ic
+    INTEGER :: icv, icv1, icv2, ic
     INTEGER :: ifc, ifs, ift, ivx, i, j
     INTEGER, SAVE :: conn_style=0
     INTEGER, SAVE :: iout=0
@@ -2063,9 +2094,10 @@ CONTAINS
       ifc = mpg%fsfc(mpg%fsfcp(ifs, 1))
       icv1 = mpg%fccv(ifc, 1)
       icv2 = mpg%fccv(ifc, 2)
-      IF (((mpg%cvonclosedsurface(icv1) .OR. icv1 .GT. mpg%nci) .AND. (&
+      IF ((((mpg%cvonclosedsurface(icv1) .OR. icv1 .GT. mpg%nci) .AND. (&
 &         mpg%cvonclosedsurface(icv2) .OR. icv2 .GT. mpg%nci)) .OR. ifs &
-&         .EQ. mpg%ifssep) THEN
+&         .EQ. mpg%ifssep) .OR. (ifs .EQ. mpg%ifssep2 .AND. mpg%ifssep2 &
+&         .GT. 0)) THEN
         DO j=mpg%fsvxp(ifs, 1),mpg%fsvxp(ifs, 1)+mpg%fsvxp(ifs, 2)-1
           ivx = mpg%fsvx(j)
           gm%vxconn(ivx) = gm%fsconn(ifs)

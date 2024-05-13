@@ -99,7 +99,7 @@ SUBROUTINE B2TREQ_DV(ncv, switch, switchd, vol, vold, te, ted, ti, tid, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2treq')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2treq .LT. 3) THEN
 !    ..test vol, state
@@ -218,7 +218,7 @@ SUBROUTINE B2TREQ_NODIFF(ncv, switch, vol, te, ti, ne, ni, ne2m, lnlam, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2treq')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2treq .LT. 3) THEN
 !    ..test vol, state

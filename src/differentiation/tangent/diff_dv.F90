@@ -19,8 +19,8 @@
 !
 !-----------------------------------------------------------------------
 !.specification
-SUBROUTINE DIFF_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, funv&
-& , funvd, dfun, dfund, nbdirs)
+SUBROUTINE DIFF_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, fund&
+& , funv, funvd, dfun, dfund, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -36,6 +36,7 @@ SUBROUTINE DIFF_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, funv&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fun(ncv), funv(nvx)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
 !   ..output arguments
@@ -72,10 +73,10 @@ SUBROUTINE DIFF_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, funv&
 &                              , funv, funvd, nbdirs)
 !
 !   ..compute poloidal and radial differences
-  CALL DIFF_P_DV(ncv, nfc, nvx, 1, geo, mpg, fun, fund, funv, funvd, &
-&          dfun(:, 0), dfund(:, :, 0), nbdirs)
-  CALL DIFF_R_DV(ncv, nfc, nvx, 1, geo, mpg, fun, fund, funv, funvd, &
-&          dfun(:, 1), dfund(:, :, 1), nbdirs)
+  CALL DIFF_P_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, funv, &
+&          funvd, dfun(:, 0), dfund(:, :, 0), nbdirs)
+  CALL DIFF_R_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, funv, &
+&          funvd, dfun(:, 1), dfund(:, :, 1), nbdirs)
 !
 !   ..return
   RETURN

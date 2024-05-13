@@ -36,17 +36,18 @@ CONTAINS
 !   Plus diff mem management of: gm.cvbb:in-out gm.cvx:in-out gm.cvy:in-out
 !                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvqgam:in-out
 !                gm.cvvol:in-out gm.cvonedbsq:in-out gm.cvbzb:in-out
-!                gm.cveb:in-out gm.fcbb:in-out gm.fcs:in-out gm.fchc:in-out
-!                gm.fcht:in-out gm.fchz:in-out gm.fcvol:in-out
-!                gm.fcqgam:in-out gm.fcqalf:in-out gm.fcqbet:in-out
-!                gm.fcpbs:in-out gm.fcpbshz:in-out gm.fcbzb:in-out
-!                gm.fceb:in-out gm.vxbb:in-out gm.vxx:in-out gm.vxy:in-out
-!                gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
-!                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
-!                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
-!                gm.ftbbav2:in-out gm.fspsi:in-out mpg.intcellp:in-out
-!                mpg.intcellr:in-out mpg.divfcor:in-out
+!                gm.cveb:in-out gm.cvfpsi:in-out gm.fcbb:in-out
+!                gm.fcs:in-out gm.fchc:in-out gm.fcht:in-out gm.fchz:in-out
+!                gm.fcvol:in-out gm.fcqgam:in-out gm.fcqalf:in-out
+!                gm.fcqbet:in-out gm.fcpbs:in-out gm.fcpbshz:in-out
+!                gm.fcbzb:in-out gm.fceb:in-out gm.fcfpsi:in-out
+!                gm.vxbb:in-out gm.vxx:in-out gm.vxy:in-out gm.vxhz:in-out
+!                gm.vxvol:in-out gm.vxffbz:in-out gm.vxfpsi:in-out
+!                gm.vxonedbsq:in-out gm.vxbzb:in-out gm.vxeb:in-out
+!                gm.cvconn:in-out gm.vxconn:in-out gm.ftconn:in-out
+!                gm.fsconn:in-out gm.fteps:in-out gm.ftbbav2:in-out
+!                gm.fspsi:in-out mpg.intcellp:in-out mpg.intcellr:in-out
+!                mpg.divfcor:in-out
 !
 !
 !**********************************************************************
@@ -71,6 +72,8 @@ CONTAINS
     CALL READ_MAPPING_DV(ninp, mpg, mpgd, nbdirs)
     CALL READ_GEOMETRY_DV(ninp, mpg%ncv, mpg%nfc, mpg%nvx, mpg%nfs, mpg%&
 &                   nft, mpg%nvmxcv, gm, gmd, nbdirs)
+!
+    RETURN
   END SUBROUTINE READ_B2FGMTRY_DV
 
 !
@@ -93,6 +96,8 @@ CONTAINS
     CALL READ_MAPPING(ninp, mpg)
     CALL READ_GEOMETRY(ninp, mpg%ncv, mpg%nfc, mpg%nvx, mpg%nfs, mpg%nft&
 &                , mpg%nvmxcv, gm)
+!
+    RETURN
   END SUBROUTINE READ_B2FGMTRY
 
 !
@@ -108,8 +113,9 @@ CONTAINS
 ! ..write the mapping and geometry
 !
     CALL WRITE_MAPPING(nout, mpg)
-    CALL WRITE_GEOMETRY(nout, mpg%ncv, mpg%nfc, mpg%nvx, mpg%nfs, mpg%&
-&                 nft, mpg%nvmxcv, gm)
+    CALL WRITE_GEOMETRY(nout, mpg%ncv, mpg%nfc, mpg%nvx, mpg%nfs, gm)
+!
+    RETURN
   END SUBROUTINE WRITE_B2FGMTRY
 
 !  Differentiation of read_b2fstate as a context to call tangent code (with options multiDirectional context noISIZE r8):
@@ -191,19 +197,22 @@ CONTAINS
 !                st.sr.skt_prod:in-out st.srw.sch0:in-out st.srw.she0:in-out
 !                st.srw.shi0:in-out st.srw.sne0:in-out st.srw.shn0:in-out
 !                st.srw.skt0:in-out st.srw.szt0:in-out st.srw.smo0:in-out
-!                st.srw.smq0:in-out st.srw.sna0:in-out st.srw.b2stbc_sch:in-out
-!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
-!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
-!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
-!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
-!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
-!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
-!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:out
-!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
-!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
-!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
-!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
-!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.smq0:in-out st.srw.sna0:in-out st.srw.smcf:in-out
+!                st.srw.smpr:in-out st.srw.smpt:in-out st.srw.smfr:in-out
+!                st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
+!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
+!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
+!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
+!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
+!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
+!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
+!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
+!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
+!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
+!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
+!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
+!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
+!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
 !                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
 !                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
 !                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
@@ -223,10 +232,10 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:out st.psnl.po:out st.psnl.te:in-out
+!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:out st.psnl.fch:out st.psnl.fna:in-out
+!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
 !                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
 !                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
 !                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
@@ -254,6 +263,8 @@ CONTAINS
 ! ..read the state
 !
     CALL READ_STATE_DV(ninp, ncv, nfc, ns, nsd, st, std, nbdirs)
+!
+    RETURN
   END SUBROUTINE READ_B2FSTATE_DV
 
 !
@@ -268,6 +279,8 @@ CONTAINS
 ! ..read the state
 !
     CALL READ_STATE(ninp, ncv, nfc, ns, st)
+!
+    RETURN
   END SUBROUTINE READ_B2FSTATE
 
 !
@@ -282,6 +295,8 @@ CONTAINS
 ! ..write the state
 !
     CALL WRITE_STATE(nout, ncv, nfc, ns, st)
+!
+    RETURN
   END SUBROUTINE WRITE_B2FSTATE
 
 !
@@ -296,6 +311,8 @@ CONTAINS
 ! ..read the plasma state
 !
     CALL READ_PLASMA(ninp, ncv, nfc, ns, st)
+!
+    RETURN
   END SUBROUTINE READ_B2FPLASMA
 
 !
@@ -310,6 +327,8 @@ CONTAINS
 ! ..write the plasma state
 !
     CALL WRITE_PLASMA(nout, ncv, nfc, ns, st)
+!
+    RETURN
   END SUBROUTINE WRITE_B2FPLASMA
 
 END MODULE B2US_IO_DIFFV

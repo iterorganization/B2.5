@@ -46,6 +46,8 @@ MODULE B2MOD_B2PLOT_DIFFV
 & ), wall_area(:), incident_energy(:, :), wall_heatflux(:), wall_temp(:)&
 & , target_stack(:, :, :)
 !
+  LOGICAL, ALLOCATABLE, SAVE :: ic_active(:)
+!
   INTEGER :: wklng
   PARAMETER (wklng=10)
 !
@@ -98,6 +100,8 @@ CONTAINS
     INTRINSIC MAX
     INTEGER :: max1
     INTEGER :: max2
+    INTEGER :: max3
+    INTEGER :: y1
     IF (nsd + 3 .LT. (nsd+1)*(nsd+1) - 1) THEN
       IF ((nsd+1)*(nsd+1) - 1 .LT. ns_ext) THEN
         nsw = ns_ext
@@ -113,11 +117,17 @@ CONTAINS
     ALLOCATE(work(1:ncv, 0:nsw, 1:wklngd))
     ALLOCATE(wrkc(1:ncv))
     IF (nsd .LT. ns_ext) THEN
-      max1 = ns_ext
+      max3 = ns_ext
     ELSE
-      max1 = nsd
+      max3 = nsd
     END IF
-    ALLOCATE(wrkcs(1:ncv, 0:max1-1))
+    y1 = max3 - 1
+    IF (2 .LT. y1) THEN
+      max1 = y1
+    ELSE
+      max1 = 2
+    END IF
+    ALLOCATE(wrkcs(1:ncv, 0:max1))
     ALLOCATE(wrkf(1:nfc))
     ALLOCATE(wrkfs(1:nfc, 0:nsd-1))
     ALLOCATE(wrkv(1:nvx))
@@ -141,6 +151,7 @@ CONTAINS
     ALLOCATE(fcyiy(1:nfc))
     ALLOCATE(vxix(1:nvx))
     ALLOCATE(vxiy(1:nvx))
+    ALLOCATE(ic_active(1:ncv))
     ALLOCATE(textpl(0:nsd-1))
     ALLOCATE(textplel(0:nsd))
     ALLOCATE(textplel2(0:nsd, 0:nsd))
@@ -308,6 +319,7 @@ CONTAINS
       DEALLOCATE(fcyiy)
       DEALLOCATE(vxix)
       DEALLOCATE(vxiy)
+      DEALLOCATE(ic_active)
       DEALLOCATE(textpl)
       DEALLOCATE(textplel)
       DEALLOCATE(textplel2)

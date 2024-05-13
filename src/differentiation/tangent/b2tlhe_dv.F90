@@ -55,7 +55,7 @@ SUBROUTINE B2TLHE_NODIFF(ncv, nfc, me, cflme, switch, geo, mpg, ne, te, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlhe')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test me, cflme
   CALL XERTST(0.0_R8 .LT. me, 'faulty argument me')
   CALL XERTST(0.0_R8 .LE. cflme, 'faulty argument cflme')
@@ -241,7 +241,7 @@ SUBROUTINE B2TLHE_DV(ncv, nfc, me, cflme, switch, switchd, geo, geod, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlhe')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test me, cflme
   CALL XERTST(0.0_R8 .LT. me, 'faulty argument me')
   CALL XERTST(0.0_R8 .LE. cflme, 'faulty argument cflme')

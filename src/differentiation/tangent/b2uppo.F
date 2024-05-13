@@ -1,29 +1,29 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxst (nCv, rob, smb, ro, smt)
+      subroutine b2uppo (nCv, rxf, corpo, po)
       use b2mod_types
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
       real (kind=R8) ::
-     *   rob(nCv), smb(nCv,0:3), ro(nCv)
+     *   rxf, corpo(nCv)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   smt(nCv,0:3)
+     *   po(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2NXST accumulates the parallel momentum source linearisation over
-*     the distinct atomic species.
+*     B2UPPO corrects the electric potential po.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
+*   ..local variables
 *   ..procedures
       external xertst
 *   ..initialisation
@@ -31,19 +31,24 @@
 *-----------------------------------------------------------------------
 *.computation
 
+* ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2nxst')
+      call subini ('b2uppo')
 *   ..test nCv
       call xertst (0.lt.nCv, 'faulty argument nCv')
-*   ..update smt
-      smt(:,1) = smt(:,1) + smb(:,1)
-      smt(:,3) = smt(:,3) + smb(:,3)*rob/ro
+*   ..test rxf
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
+     . 'faulty argument rxf')
+
+* ..implement the correction
+*   ..compute new po
+      po = po + rxf*corpo
 
 * ..return
       call subend ()
       return
 
 *-----------------------------------------------------------------------
-*.end b2nxst
+*.end b2uppo
 
-      end subroutine b2nxst
+      end subroutine b2uppo

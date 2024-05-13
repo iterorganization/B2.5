@@ -80,7 +80,7 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2mxzr')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 !   ..zero-out parts of (na) residual
@@ -222,7 +222,7 @@ SUBROUTINE B2MXZR_NODIFF(ncv, ns, mpg, resco, resmo, resmt, reshe, reshi&
 !   ..subprogram start-up calls
   CALL SUBINI('b2mxzr')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 !   ..zero-out parts of (na) residual

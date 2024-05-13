@@ -91,6 +91,7 @@ CONTAINS
   SUBROUTINE DEALLOC_B2MOD_GEO()
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    LOGICAL :: mapinitialized
 !
     IF (b2mod_geo_allocated) THEN
 !

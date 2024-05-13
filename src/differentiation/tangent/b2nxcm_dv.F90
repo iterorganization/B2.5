@@ -67,7 +67,7 @@ SUBROUTINE B2NXCM_DV(ncv, ns, pccm, pccmd, pcca, pccad, nbdirs)
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxcm')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !
 !   ..update pcca
   DO is=0,ns-1

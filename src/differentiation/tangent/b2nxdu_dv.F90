@@ -77,7 +77,7 @@ SUBROUTINE B2NXDU_DV(ncv, ns, na, nad, ua, uad, smq, smqd, smqdu, smqdud&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxdu')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdu .LT. 3) THEN
 !    ..test sign of smq
@@ -200,7 +200,7 @@ SUBROUTINE B2NXDU_NODIFF(ncv, ns, na, ua, smq, smqdu, wrk0, wrk1)
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxdu')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdu .LT. 3) THEN
 !    ..test sign of smq

@@ -21,8 +21,8 @@
 !.specification
 !
 !srv 13.01.17
-SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
-& , pod, ne, ned, ehy, ehyd, nbdirs)
+SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
+& ted, po, pod, ne, ned, ehy, ehyd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
@@ -45,6 +45,7 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: te(ncv), po(ncv), ne(ncv)
   REAL(kind=r8) :: ted(nbdirsmax, ncv), pod(nbdirsmax, ncv), ned(&
 & nbdirsmax, ncv)
@@ -88,7 +89,7 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
 !   ..subprogram start-up calls
   CALL SUBINI('b2xehy')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2xehy .LT. 3) THEN
 !    ..test sign of ne, te, csig
@@ -113,8 +114,8 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
-&            dpor, dpord, nbdirs)
+    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
+&            wrkvd, dpor, dpord, nbdirs)
     DO nd=1,nbdirs
       workd(nd, :) = te*ned(nd, :) + ne*ted(nd, :)
     END DO
@@ -122,8 +123,8 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, work, workd, wrkv, wrkvd&
-&            , wrk0, wrk0d, nbdirs)
+    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, work, workd, wrkv, &
+&            wrkvd, wrk0, wrk0d, nbdirs)
 !       ..interpolate ne to faces
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
@@ -144,8 +145,8 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
-&            dpor, dpord, nbdirs)
+    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
+&            wrkvd, dpor, dpord, nbdirs)
     DO nd=1,nbdirs
       workd(nd, :) = te*ned(nd, :) + ne*ted(nd, :)
     END DO
@@ -153,8 +154,8 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, work, workd, wrkv, wrkvd&
-&            , wrk0, wrk0d, nbdirs)
+    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, work, workd, wrkv, &
+&            wrkvd, wrk0, wrk0d, nbdirs)
 !       ..interpolate ne to faces
 !wdk small loss of backwards compatibility:
 !wdk now inverse distance weighting based on full distance cell center to face center ("hy")
@@ -180,13 +181,13 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd, &
-&            dpor, dpord, nbdirs)
+    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
+&            wrkvd, dpor, dpord, nbdirs)
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
-    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, te, ted, wrkv, wrkvd, &
-&            wrk0, wrk0d, nbdirs)
+    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, te, ted, wrkv, &
+&            wrkvd, wrk0, wrk0d, nbdirs)
     DO nd=1,nbdirs
       workd(nd, :) = ned(nd, :)/ne
     END DO
@@ -194,8 +195,8 @@ SUBROUTINE B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
     DO nd=1,nbdirsmax
       wrk1d(nd, :) = 0.D0
     END DO
-    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, work, workd, wrkv, wrkvd&
-&            , wrk1, wrk1d, nbdirs)
+    CALL DIFF_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, work, workd, wrkv, &
+&            wrkvd, wrk1, wrk1d, nbdirs)
 !       ..interpolate te to faces
     DO nd=1,nbdirsmax
       wrk2d(nd, :) = 0.D0
@@ -287,7 +288,7 @@ SUBROUTINE B2XEHY_NODIFF(ncv, nfc, nvx, switch, geo, mpg, te, po, ne, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2xehy')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2xehy .LT. 3) THEN
 !    ..test sign of ne, te, csig

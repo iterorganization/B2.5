@@ -119,7 +119,7 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, te, ted, rt, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqel')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
@@ -381,7 +381,7 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqel')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')

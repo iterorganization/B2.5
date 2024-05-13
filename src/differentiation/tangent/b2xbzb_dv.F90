@@ -32,8 +32,8 @@ SUBROUTINE B2XBZB_NODIFF(ncv, nfc, nvx, mpg, bb, bbf, bbv, vol, bzb, &
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xbzb')
 !
-  bbsum = 0.0e0_R8
-  volsum = 0.0e0_R8
+  bbsum = 0.0_R8
+  volsum = 0.0_R8
   DO icv=1,ncv
     IF (mpg%cvonclosedsurface(icv)) THEN
 ! for CORE

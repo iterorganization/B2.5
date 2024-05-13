@@ -102,7 +102,7 @@ CONTAINS
 !! default, use total momentum equation
         solvemt = .true.
       ELSE
-!! in case of KUL fluid neutrals, don't use total momentum equation
+!! in case of KUL fluid neutrals, do not use total momentum equation
         solvemt = .false.
       END IF
       solvepo = .true.
@@ -114,6 +114,11 @@ CONTAINS
       solveet = .true.
       solvekt = .true.
       solvezt = .true.
+      IF (switch%b2mndt_style .EQ. 2) THEN
+!! do not solve total momentum and energy equation in time-dependent mode
+        solveet = .false.
+        solvemt = .false.
+      END IF
       last_solve_5 = .true.
       last_solve_9 = .true.
       numerics_filename = 'b2.numerics.parameters'
@@ -144,13 +149,13 @@ CONTAINS
 
 !
   SUBROUTINE READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, nsmin, nsmax, nnreg, &
-&   cvonclosedsurface)
+&   cvonclosedsurface, b2mndt_style)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
     INTEGER :: ncv, ns, nsmin, nsmax, nnreg(0:1)
     LOGICAL :: file_ok, cvonclosedsurface(ncv)
-    INTEGER :: icv, is, ireg
+    INTEGER :: icv, is, ireg, b2mndt_style
     REAL(kind=r8) :: ttf
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE
@@ -174,9 +179,15 @@ CONTAINS
       DO ireg=0,nnreg(0)
         solveet(ireg) = solveee(ireg) .AND. solveei(ireg) .AND. solveet(&
 &         ireg)
+        IF (solveet(ireg) .AND. b2mndt_style .EQ. 2) CALL XERRAB(&
+&                           'time-dependent mode requires solveet=false'&
+&                                                         )
         DO is=nsmin,nsmax-1
           solvemt(ireg) = solvemt(ireg) .AND. solvemo(is, ireg)
         END DO
+        IF (solvemt(ireg) .AND. b2mndt_style .EQ. 2) CALL XERRAB(&
+&                           'time-dependent mode requires solvemt=false'&
+&                                                         )
       END DO
     ELSE
 !srv 22.05.18 }

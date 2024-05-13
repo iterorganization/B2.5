@@ -138,6 +138,9 @@ FUNCTION CHORD_VALUE_NODIFF(ncv, tt, xp, yp, zp, dxp, dyp, dzp, vector) &
   ELSE
 !
     IF (vector) THEN
+! in r,z,phi
+      dbr = geo%cveb(icv, 0)
+      dbz = geo%cveb(icv, 1)
       arg1 = dbr**2 + dbz**2
       dbs = SQRT(arg1)
       result1 = PITCH(geo, icv)
@@ -195,6 +198,10 @@ SUBROUTINE CHORD_FIND_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
   USE B2US_MAP_DIFFV
   USE B2US_GEO_DIFFV
   USE B2MOD_SUBSYS
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+  USE B2MOD_AD_DIFFV, ONLY : covered, rmin, rmax, zmin, zmax, first, &
+& cvcov, icov, icvsv, lngind, lngcov
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -208,33 +215,36 @@ SUBROUTINE CHORD_FIND_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
   LOGICAL :: found
   INTEGER :: cvpos
 !
-  INTEGER :: icv, icnt1, icnt2
-  REAL(kind=r8) :: x, y, z, r, rmin, rmax, zmin, zmax
+  LOGICAL :: INSIDE_CELL_NODIFF
+  INTEGER :: icnt1, icnt2
+  REAL(kind=r8) :: x, y, z, r
 !
-  LOGICAL :: first
   INTEGER :: ir, iz
-  INTEGER :: lngcov, lngind
-  PARAMETER (lngcov=200, lngind=500000)
-  INTEGER :: covered(lngcov, lngcov), cvcov(lngind), icov(lngind), ipos&
-& , jpos
 !
-  INTEGER :: ip
+  INTEGER :: ipos, jpos
+!
+  INTEGER :: ip, ifc
+  INTEGER :: irmin, irmax, izmin, izmax
+  REAL(kind=r8) :: r1, r2, z1, z2
   INTEGER :: xmin(lngcov), xmax(lngcov), ymin, ymax
 !
   REAL(kind=r8) :: rshift, zshift, r0, z0, a0, b0, tt0
   COMMON /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 !
   EXTERNAL XERRAB
-  SAVE covered, rmin, rmax, zmin, zmax, first, cvcov, icov, icv
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
+  INTRINSIC MIN
+  INTRINSIC MAX
   INTRINSIC SQRT
+  REAL(kind=r8) :: min1
+  REAL(kind=r8) :: max1
+  REAL(kind=r8) :: min2
+  REAL(kind=r8) :: max2
   REAL(kind=r8) :: arg1
   REAL(kind=r8) :: result1
   INTEGER :: result10
   INTEGER :: result2
-!
-  DATA first /.true./
 !
   CALL SUBINI('chord_find')
   IF (first) THEN
@@ -253,21 +263,143 @@ SUBROUTINE CHORD_FIND_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
     ipos = 0
     icnt2 = 0
 !
-    DO icv=1,mpg%nci
+    DO icvsv=1,mpg%nci
       DO ip=1,lngcov
         xmin(ip) = lngcov + 1
         xmax(ip) = 0
       END DO
       ymin = lngcov + 1
       ymax = 0
+      DO ip=1,mpg%cvfcp(icvsv, 2)
+        ifc = mpg%cvfc(mpg%cvfcp(icvsv, 1)+ip-1)
+        r1 = geo%cvx(mpg%fcvx(ifc, 1))
+        z1 = geo%cvy(mpg%fcvx(ifc, 1))
+        r2 = geo%cvx(mpg%fcvx(ifc, 2))
+        z2 = geo%cvy(mpg%fcvx(ifc, 2))
+        ir = IRPOS(r1)
+        iz = IZPOS(z1)
+        IF (ymin .GT. iz) THEN
+          ymin = iz
+        ELSE
+          ymin = ymin
+        END IF
+        IF (ymax .LT. iz) THEN
+          ymax = iz
+        ELSE
+          ymax = ymax
+        END IF
+        IF (xmin(iz) .GT. ir) THEN
+          xmin(iz) = ir
+        ELSE
+          xmin(iz) = xmin(iz)
+        END IF
+        IF (xmax(iz) .LT. ir) THEN
+          xmax(iz) = ir
+        ELSE
+          xmax(iz) = xmax(iz)
+        END IF
+        IF (r1 .GT. r2) THEN
+          min1 = r2
+        ELSE
+          min1 = r1
+        END IF
+! look for intersections for integer ir
+!       write(*,*) 'r1,r2 ',r1,r2
+        irmin = IRPOS(min1)
+        IF (r1 .LT. r2) THEN
+          max1 = r2
+        ELSE
+          max1 = r1
+        END IF
+        irmax = IRPOS(max1)
+!       write(*,*) 'irmin,irmax ',irmin,irmax
+        DO ir=irmin+1,irmax
+          r = RPOS(ir)
+          z = z1 + (z2-z1)/(r2-r1)*(r-r1)
+          iz = IZPOS(z)
+          IF (ymin .GT. iz) THEN
+            ymin = iz
+          ELSE
+            ymin = ymin
+          END IF
+          IF (ymax .LT. iz) THEN
+            ymax = iz
+          ELSE
+            ymax = ymax
+          END IF
+          IF (xmin(iz) .GT. ir - 1) THEN
+            xmin(iz) = ir - 1
+          ELSE
+            xmin(iz) = xmin(iz)
+          END IF
+          IF (xmax(iz) .LT. ir) THEN
+            xmax(iz) = ir
+          ELSE
+            xmax(iz) = xmax(iz)
+          END IF
+        END DO
+        IF (z1 .GT. z2) THEN
+          min2 = z2
+        ELSE
+          min2 = z1
+        END IF
+! look for intersections for integer iz
+!       write(*,*) 'z1,z2 ',z1,z2
+        izmin = IZPOS(min2)
+        IF (z1 .LT. z2) THEN
+          max2 = z2
+        ELSE
+          max2 = z1
+        END IF
+        izmax = IZPOS(max2)
+!       write(*,*) 'izmin,izmax ',izmin,izmax
+        DO iz=izmin+1,izmax
+          z = ZPOS(iz)
+          r = r1 + (r2-r1)/(z2-z1)*(z-z1)
+          ir = IRPOS(r)
+          IF (ymin .GT. iz - 1) THEN
+            ymin = iz - 1
+          ELSE
+            ymin = ymin
+          END IF
+          IF (ymax .LT. iz) THEN
+            ymax = iz
+          ELSE
+            ymax = ymax
+          END IF
+          IF (xmin(iz-1) .GT. ir) THEN
+            xmin(iz-1) = ir
+          ELSE
+            xmin(iz-1) = xmin(iz-1)
+          END IF
+          IF (xmax(iz-1) .LT. ir) THEN
+            xmax(iz-1) = ir
+          ELSE
+            xmax(iz-1) = xmax(iz-1)
+          END IF
+          IF (xmin(iz) .GT. ir) THEN
+            xmin(iz) = ir
+          ELSE
+            xmin(iz) = xmin(iz)
+          END IF
+          IF (xmax(iz) .LT. ir) THEN
+            xmax(iz) = ir
+          ELSE
+            xmax(iz) = xmax(iz)
+          END IF
+        END DO
+      END DO
+!       write(*,*) 'ymin,ymax ',ymin,ymax
+!       write(*,*) 'xmin ',xmin
+!       write(*,*) 'xmax ',xmax
       DO iz=ymin,ymax
         DO ir=xmin(iz),xmax(iz)
           ipos = ipos + 1
           IF (ipos .GT. lngind) THEN
-            WRITE(*, *) 'iCv ', icv
+            WRITE(*, *) 'iCv ', icvsv
             CALL XERRAB('increase lngind')
           END IF
-          cvcov(ipos) = icv
+          cvcov(ipos) = icvsv
           icov(ipos) = 0
           icnt2 = 1
           IF (covered(ir, iz) .EQ. 0) THEN
@@ -296,7 +428,7 @@ SUBROUTINE CHORD_FIND_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
     WRITE(*, *) 100.0*icnt1/(lngcov*lngcov), ' % covered'
     WRITE(*, *) ipos, ' positions used'
     WRITE(*, *) icnt2, ' is the maximum chain length'
-    icv = 1
+    icvsv = 1
 !DIAG   rectangles=0      ! diag
 !DIAG   triangles=0      ! diag
 !DIAG   chain=0      ! diag
@@ -318,12 +450,21 @@ SUBROUTINE CHORD_FIND_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
     result10 = IZPOS(z)
     result2 = IRPOS(r)
     jpos = covered(result2, result10)
+    IF (jpos .NE. 0) THEN
+      IF (INSIDE_CELL_NODIFF(mpg, geo, r, z, icvsv)) GOTO 2100
+    END IF
 ! next try the chain
     DO WHILE (jpos .NE. 0)
 !DIAG   chain=chain+1      ! diag
-      icv = cvcov(jpos)
+      icvsv = cvcov(jpos)
       jpos = icov(jpos)
+      IF (INSIDE_CELL_NODIFF(mpg, geo, r, z, icvsv)) GOTO 2100
     END DO
+    CALL SUBEND()
+    RETURN
+!
+ 2100 cvpos = icvsv
+    found = .true.
     CALL SUBEND()
     RETURN
   END IF
@@ -379,4 +520,111 @@ CONTAINS
   END FUNCTION ZPOS
 
 END SUBROUTINE CHORD_FIND_NODIFF
+
+!
+FUNCTION INSIDE_CELL_NODIFF(mpg, geo, r, z, icv) RESULT (inside_cell)
+  USE B2MOD_TYPES
+  USE B2US_MAP_DIFFV
+  USE B2US_GEO_DIFFV
+  USE B2MOD_CONSTANTS
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  INTEGER, INTENT(IN) :: icv
+  REAL(kind=r8), INTENT(IN) :: r, z
+  LOGICAL :: inside_cell
+  INTEGER :: i, ifc, ivx, ivx1, ivx2
+  REAL(kind=r8) :: r1, r2, z1, z2, angle
+  LOGICAL, ALLOCATABLE :: done(:)
+  INTRINSIC SQRT
+  INTRINSIC ASIN
+  INTRINSIC NINT
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8) :: result1
+  REAL(kind=r8) :: arg2
+  REAL(kind=r8) :: result2
+  REAL(kind=r8) :: arg3
+  REAL(kind=r8) :: result3
+!
+!xpb  We use the subtended angle method to handle arbitrary cell shapes
+!xpb  The cell sides must be travelled in order
+!
+  IF (icv .LE. 0 .OR. icv .GT. mpg%nci) THEN
+    inside_cell = .false.
+    RETURN
+  ELSE
+    ALLOCATE(done(mpg%cvfcp(icv, 2)))
+    done = .false.
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    ivx1 = mpg%fcvx(ifc, 1)
+    ivx2 = mpg%fcvx(ifc, 2)
+    r1 = geo%vxx(ivx1)
+    z1 = geo%vxy(ivx1)
+    r2 = geo%vxx(ivx2)
+    z2 = geo%vxy(ivx2)
+    arg1 = (r1-r)**2 + (z1-z)**2
+    result1 = SQRT(arg1)
+    arg2 = (r2-r)**2 + (z2-z)**2
+    result2 = SQRT(arg2)
+    arg3 = ((r1-r)*(z2-z)-(z1-z)*(r2-r))/(result1*result2)
+    angle = ASIN(arg3)
+    done(1) = .true.
+    DO WHILE (ivx1 .NE. ivx2)
+      DO i=2,mpg%cvfcp(icv, 2)
+        IF (.NOT.done(i)) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+          ivx = mpg%fcvx(ifc, 1)
+          IF (ivx .EQ. ivx1) THEN
+            r1 = geo%vxx(mpg%fcvx(ifc, 2))
+            z1 = geo%vxy(mpg%fcvx(ifc, 2))
+            r2 = geo%vxx(mpg%fcvx(ifc, 1))
+            z2 = geo%vxy(mpg%fcvx(ifc, 1))
+            ivx1 = mpg%fcvx(ifc, 2)
+            done(i) = .true.
+          ELSE IF (ivx .EQ. ivx2) THEN
+            r2 = geo%vxx(mpg%fcvx(ifc, 2))
+            z2 = geo%vxy(mpg%fcvx(ifc, 2))
+            r1 = geo%vxx(mpg%fcvx(ifc, 1))
+            z1 = geo%vxy(mpg%fcvx(ifc, 1))
+            ivx2 = mpg%fcvx(ifc, 2)
+            done(i) = .true.
+          END IF
+          IF (.NOT.done(i)) THEN
+            ivx = mpg%fcvx(ifc, 2)
+            IF (ivx .EQ. ivx1) THEN
+              r1 = geo%vxx(mpg%fcvx(ifc, 1))
+              z1 = geo%vxy(mpg%fcvx(ifc, 1))
+              r2 = geo%vxx(mpg%fcvx(ifc, 2))
+              z2 = geo%vxy(mpg%fcvx(ifc, 2))
+              ivx1 = mpg%fcvx(ifc, 1)
+              done(i) = .true.
+            ELSE IF (ivx .EQ. ivx2) THEN
+              r2 = geo%vxx(mpg%fcvx(ifc, 1))
+              z2 = geo%vxy(mpg%fcvx(ifc, 1))
+              r1 = geo%vxx(mpg%fcvx(ifc, 2))
+              z1 = geo%vxy(mpg%fcvx(ifc, 2))
+              ivx2 = mpg%fcvx(ifc, 1)
+              done(i) = .true.
+            END IF
+          END IF
+          IF (done(i)) THEN
+            arg1 = (r1-r)**2 + (z1-z)**2
+            result1 = SQRT(arg1)
+            arg2 = (r2-r)**2 + (z2-z)**2
+            result2 = SQRT(arg2)
+            arg3 = ((r1-r)*(z2-z)-(z1-z)*(r2-r))/(result1*result2)
+            result3 = ASIN(arg3)
+            angle = angle + result3
+          END IF
+        END IF
+      END DO
+    END DO
+    arg1 = angle/(2.0_R8*pi)
+    inside_cell = NINT(arg1) .NE. 0
+    DEALLOCATE(done)
+!
+    RETURN
+  END IF
+END FUNCTION INSIDE_CELL_NODIFF
 

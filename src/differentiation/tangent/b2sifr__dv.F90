@@ -24,15 +24,11 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
   USE B2MOD_CONSTANTS
 !WG_RM      use b2mod_external
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sifr_smotf_ehxp0to3, &
-& b2sifr_smotf_cthe0to3, b2sifr_smotf_cthi0to3, b2sifr_smoch0to3, &
-& balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifr
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifr, icase_sifr
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
@@ -83,7 +79,6 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
   INTEGER :: icv, is, k
 !srv 17.06.02
   INTEGER, SAVE :: iout=0
-  INTEGER, SAVE :: icase=0
 !srv 17.06.02
   CHARACTER :: chns*3, chk*1
   REAL(kind=r8) :: ctaup, coef, t0, t1, wrkv(nvx)
@@ -128,12 +123,12 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
 &         'faulty internal parameter limthii, limthee')
     CALL IPGETI('b2sifr_iout', iout)
 !srv 17.06.02
-    CALL IPGETI('b2tlnl_ii', icase)
-    CALL XERTST(0 .EQ. icase .OR. 1 .EQ. icase, 'faulty input b2tlnl_ii'&
-&        )
+    CALL IPGETI('b2tlnl_ii', icase_sifr)
+    CALL XERTST(0 .EQ. icase_sifr .OR. 1 .EQ. icase_sifr, &
+&         'faulty input b2tlnl_ii')
   END IF
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2sifr .LT. 3) THEN
 !    ..test sign of vol
@@ -164,7 +159,7 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
   result1 = SQRT(mp)
   ctaup = t0*result1
 !   ..compute the Coulomb logarithm
-  CALL B2TLNL_NODIFF(ncv, switch, icase, te, ti, ne, lnlam)
+  CALL B2TLNL_NODIFF(ncv, switch, icase_sifr, te, ti, ne, lnlam)
 !   ..compute vti32
   arg11(:) = ti/ev
   result10 = SQRT(arg11(:))
@@ -256,7 +251,7 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
         END IF
         delti = SIGN(min2, delti)
       END IF
-!        if(cthi(iCv,isb).ne.2.65e0_R8)
+!        if(cthi(iCv,isb).ne.2.65_R8)
 !     1    write(*,*) iCv,isb,cthi(iCv,isb)
 !srv 01.07.05
       smbtf(icv, 0) = smbtf(icv, 0) + t0*(switch%b2sifr_phm1*ehxp(icv)-(&
@@ -269,15 +264,6 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
 &       cthe(icv, isb)*delte*ne(icv)+switch%b2sifr_phm3*cthi(icv, isb)*&
 &       delti*(ne(icv)-st_ext%ne(icv)))*geo%cvvol(icv)*geo%cvbb(icv, 0)/&
 &       geo%cvbb(icv, 3)
-      IF (balance_netcdf .NE. 0) THEN
-!djm Jul2018
-        smbtf_cthe(icv) = smbtf_cthe(icv) - t0*switch%b2sifr_phm2*cthe(&
-&         icv, isb)*delte*ne(icv)*geo%cvvol(icv)*geo%cvbb(icv, 0)/geo%&
-&         cvbb(icv, 3)*geo%cvhz(icv)
-        smbtf_cthi(icv) = smbtf_cthi(icv) - t0*switch%b2sifr_phm3*cthi(&
-&         icv, isb)*delti*(ne(icv)-st_ext%ne(icv))*geo%cvvol(icv)*geo%&
-&         cvbb(icv, 0)/geo%cvbb(icv, 3)*geo%cvhz(icv)
-      END IF
     END DO
   END IF
 !srv 17.06.02 }
@@ -301,14 +287,6 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
   END IF
 !srv 07.02.12
 !
-!djm Jan2017 Store the linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jul2018
-    b2sifr_smotf_ehxp0to3(1:ncv, 0, isb) = smprb
-    b2sifr_smotf_cthe0to3(1:ncv, 0, isb) = smbtf_cthe
-    b2sifr_smotf_cthi0to3(1:ncv, 0, isb) = smbtf_cthi
-    b2sifr_smoch0to3(1:ncv, 0:3, isb) = smbch
-  END IF
 !
 ! ..return
   ncall_b2sifr = ncall_b2sifr + 1
@@ -338,9 +316,9 @@ END SUBROUTINE B2SIFR__NODIFF
 !   variations   of useful results: smbtf vti32 gte lnlam gti smbch
 !   with respect to varying inputs: ti na ne ua rza ehxp lnlam
 !                rz2 ne2 te
-!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.cvhz:in
+!                geo.cvvol:in geo.fchc:in geo.fcht:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -356,25 +334,21 @@ END SUBROUTINE B2SIFR__NODIFF
 !.specification
 !
 SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
-& , mpg, na, nad, ua, uad, te, ted, ti, tid, ni, nid, ne, ned, ne2, ne2d&
-& , rza, rzad, rz2, rz2d, ehxp, ehxpd, lnlam, lnlamd, cthe, cthi, st_ext&
-& , smbch, smbchd, smbtf, smbtfd, smprb, smptb, smfrb, vti32, vti32d, &
-& gti, gtid, gte, gted, nbdirs)
+& , mpg, mpgd, na, nad, ua, uad, te, ted, ti, tid, ni, nid, ne, ned, ne2&
+& , ne2d, rza, rzad, rz2, rz2d, ehxp, ehxpd, lnlam, lnlamd, cthe, cthi, &
+& st_ext, smbch, smbchd, smbtf, smbtfd, smprb, smptb, smfrb, vti32, &
+& vti32d, gti, gtid, gte, gted, nbdirs)
   USE B2MOD_TYPES
 !WG_RM      use b2mod_rates
 !WG_RM      use b2mod_indirect
   USE B2MOD_CONSTANTS
 !WG_RM      use b2mod_external
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sifr_smotf_ehxp0to3, &
-& b2sifr_smotf_cthe0to3, b2sifr_smotf_cthi0to3, b2sifr_smoch0to3, &
-& balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifr
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifr, icase_sifr
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
@@ -390,6 +364,7 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & ni(ncv, 0:1), ne(ncv), ne2(ncv), rza(ncv, 0:ns-1), rz2(ncv, 0:ns-1), &
@@ -437,7 +412,6 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   INTEGER :: icv, is, k
 !srv 17.06.02
   INTEGER, SAVE :: iout=0
-  INTEGER, SAVE :: icase=0
 !srv 17.06.02
   CHARACTER :: chns*3, chk*1
   REAL(kind=r8) :: ctaup, coef, t0, t1, wrkv(nvx)
@@ -500,12 +474,12 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
 &         'faulty internal parameter limthii, limthee')
     CALL IPGETI('b2sifr_iout', iout)
 !srv 17.06.02
-    CALL IPGETI('b2tlnl_ii', icase)
-    CALL XERTST(0 .EQ. icase .OR. 1 .EQ. icase, 'faulty input b2tlnl_ii'&
-&        )
+    CALL IPGETI('b2tlnl_ii', icase_sifr)
+    CALL XERTST(0 .EQ. icase_sifr .OR. 1 .EQ. icase_sifr, &
+&         'faulty input b2tlnl_ii')
   END IF
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2sifr .LT. 3) THEN
 !    ..test sign of vol
@@ -536,8 +510,8 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   result1 = SQRT(mp)
   ctaup = t0*result1
 !   ..compute the Coulomb logarithm
-  CALL B2TLNL_DV(ncv, switch, switchd, icase, te, ted, ti, tid, ne, ned&
-&          , lnlam, lnlamd, nbdirs)
+  CALL B2TLNL_DV(ncv, switch, switchd, icase_sifr, te, ted, ti, tid, ne&
+&          , ned, lnlam, lnlamd, nbdirs)
   arg11(:) = ti/ev
   temp = SQRT(arg11(:))
   DO nd=1,nbdirs
@@ -560,10 +534,10 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ti, tid, wrkv, wrkvd&
-&           , gti, gtid, nbdirs)
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, te, ted, wrkv, wrkvd&
-&           , gte, gted, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, wrkv&
+&           , wrkvd, gti, gtid, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, te, ted, wrkv&
+&           , wrkvd, gte, gted, nbdirs)
 ! ..compute friction
 !   ..initialise to 0
   smbch = 0.0_R8
@@ -754,7 +728,7 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
         END DO
         delti = SIGN(min2, delti)
       END IF
-!        if(cthi(iCv,isb).ne.2.65e0_R8)
+!        if(cthi(iCv,isb).ne.2.65_R8)
 !     1    write(*,*) iCv,isb,cthi(iCv,isb)
 !srv 01.07.05
       temp2 = switch%b2sifr_phm3*cthi(icv, isb)
@@ -775,15 +749,6 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
 &       cthe(icv, isb)*delte*ne(icv)+switch%b2sifr_phm3*cthi(icv, isb)*&
 &       delti*(ne(icv)-st_ext%ne(icv)))*geo%cvvol(icv)*geo%cvbb(icv, 0)/&
 &       geo%cvbb(icv, 3)
-      IF (balance_netcdf .NE. 0) THEN
-!djm Jul2018
-        smbtf_cthe(icv) = smbtf_cthe(icv) - t0*switch%b2sifr_phm2*cthe(&
-&         icv, isb)*delte*ne(icv)*geo%cvvol(icv)*geo%cvbb(icv, 0)/geo%&
-&         cvbb(icv, 3)*geo%cvhz(icv)
-        smbtf_cthi(icv) = smbtf_cthi(icv) - t0*switch%b2sifr_phm3*cthi(&
-&         icv, isb)*delti*(ne(icv)-st_ext%ne(icv))*geo%cvvol(icv)*geo%&
-&         cvbb(icv, 0)/geo%cvbb(icv, 3)*geo%cvhz(icv)
-      END IF
     END DO
   ELSE
     DO nd=1,nbdirsmax
@@ -811,14 +776,6 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   END IF
 !srv 07.02.12
 !
-!djm Jan2017 Store the linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jul2018
-    b2sifr_smotf_ehxp0to3(1:ncv, 0, isb) = smprb
-    b2sifr_smotf_cthe0to3(1:ncv, 0, isb) = smbtf_cthe
-    b2sifr_smotf_cthi0to3(1:ncv, 0, isb) = smbtf_cthi
-    b2sifr_smoch0to3(1:ncv, 0:3, isb) = smbch
-  END IF
 !
 ! ..return
   ncall_b2sifr = ncall_b2sifr + 1

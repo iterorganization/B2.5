@@ -29,8 +29,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_SOURCES_DIFFV
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : balance_netcdf
 !srv 05.07.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
 !srv 05.07.17
@@ -42,10 +40,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 !-----------------------------------------------------------------------
 !.end b2sihs
 !
-!       ..contribution from friction involving neutral species
-!         (We ignore such a term, except for charge exchange friction
-!         between H0 and H1. That term is calculated via the atomic
-!         physics routines.)
 !   ..input arguments (unchanged on exit)
 !xpb !srv 05.07.15
   INTEGER :: nx, ny, ns, ismain
@@ -82,7 +76,7 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
   INTEGER, SAVE :: b2sigp_style=2
   INTEGER, SAVE :: use_eirene=0
 !lk 31.01.08 {
-  REAL(kind=r8), SAVE :: fch_stochastic=0.0e0_R8
+  REAL(kind=r8), SAVE :: fch_stochastic=0.0_R8
 !lk 31.01.08 }
   REAL(kind=r8) :: csig_stoch(-1:nx, -1:ny), fchstoch(-1:nx, -1:ny)
   REAL(kind=r8) :: vti32(-1:nx, -1:ny)
@@ -186,6 +180,13 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2sihs')
+!   ..set n2
+  n2 = (nx+2)*(ny+2)
+!   ..test nx, ny, ns
+  CALL XERTST(0 .LE. nx .AND. 0 .LE. ny, 'faulty argument nx, ny')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
+  CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
+&       'faulty argument ismain')
 !   ..set internal parameters on first call
   IF (ncall .EQ. 0) THEN
     nsmin = 0
@@ -240,11 +241,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 !srv 05.07.17
     CALL IPGETI('b2mndr_eirene', use_eirene)
   END IF
-!   ..set n2
-  n2 = (nx+2)*(ny+2)
-!   ..test nx, ny, ns
-  CALL XERTST(0 .LE. nx .AND. 0 .LE. ny, 'faulty argument nx, ny')
-  CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of hx, hy, vol
@@ -305,12 +301,12 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
   arg1 = n2*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = n2*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shest, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shest, 1)
 !lk 31.01.08 }
 !srv 17.12.13
 !   ..compute the Coulomb logarithm
 !   ..contribution from stochastic electron flow
-  IF (fch_stochastic .NE. 0.0e0_R8) THEN
+  IF (fch_stochastic .NE. 0.0_R8) THEN
 !lk 31.01.08 { !srv 17.12.13
     CALL B2TSTCH_NODIFF(nx, ny, po, te, ne, csig_stoch, fchstoch)
     DO iy=0,ny-1
@@ -328,12 +324,12 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 &           result1+result2)/(vol(ix, iy)+vol(bottomix(ix, iy), bottomiy&
 &           (ix, iy)))+fchstoch(topix(ix, iy), topiy(ix, iy))*(result3+&
 &           result4)/(vol(ix, iy)+vol(topix(ix, iy), topiy(ix, iy))))/&
-&           4.0e0_R8
+&           4.0_R8
         END IF
       END DO
     END DO
     arg1 = n2*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shest, 1, she0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shest, 1, she0, 1)
 !srv 17.12.13
   END IF
 !   ..contribution from divergence(ue,ve)
@@ -389,8 +385,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
       END IF
     END DO
   END DO
-!djm Jan2017
-!WG_TODO        b2sihs_divue0to3=she0-shetmp
 !   ..contribution from divergence(ua,va)
   b2divua = 0.0_R8
   b2sihs_divua = 0.0_R8
@@ -445,8 +439,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
       END DO
     END DO
   END DO
-!djm Jan2017
-!WG_TODO        b2sihs_divua0to3=shi0-shitmp
 !   ..contribution from divergence of the electrical drift       !sv 02.06.99
   CALL INTFACEV(nx, ny, bottomix, bottomiy, vol, po, wpov)
   CALL INTFACEH(nx, ny, leftix, leftiy, vol, po, wpoh)
@@ -494,8 +486,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
       END IF
     END DO
   END DO
-!djm Jan2017
-!WG_TODO        b2sihs_exbe0to3=she0-shetmp
 !   ..contribution from divergence of the electrical drift    !sv 02.06.99
   b2exba = 0.0_R8
   b2sihs_exba = 0.0_R8
@@ -541,8 +531,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
       END DO
     END IF
   END DO
-!djm Jan2017
-!WG_TODO        b2sihs_exba0to3=shi0-shitmp
 !   ..contribution from viscous heating
   b2visa = 0.0_R8
   b2sihs_visa = 0.0_R8
@@ -553,7 +541,7 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
           IF (leftix(ix, iy) .NE. -2 .AND. rightix(ix, iy) .NE. nx + 1 &
 &             .AND. bottomiy(ix, iy) .NE. -2 .AND. topiy(ix, iy) .NE. ny&
 &             + 1 .AND. region(ix, iy, 0) .NE. 0) THEN
-! 4.0e0_R8/3.0e0_R8* cvsa already has 4/3 !srv 16.10.17
+! 4.0_R8/3.0_R8* cvsa already has 4/3 !srv 16.10.17
             t0 = phm2*vol(ix, iy)*(1.0_R8-boris)*(cvsa(ix, iy, 0, 0, is)&
 &             *(ua(ix, iy, is)-ua(leftix(ix, iy), leftiy(ix, iy), is))**&
 &             2/(vol(leftix(ix, iy), leftiy(ix, iy))+vol(ix, iy))+cvsa(&
@@ -571,8 +559,6 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
       END DO
     END IF
   END DO
-!djm Jan2017
-!WG_TODO        b2sihs_visa0to3=shi0-shitmp
 !srv 05.07.17
 !
 !   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
@@ -598,10 +584,10 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 &           .AND. bottomiy(ix, iy) .NE. -2 .AND. topiy(ix, iy) .NE. ny +&
 &           1 .AND. region(ix, iy, 0) .NE. 0) THEN
           t0 = phm3*vol(ix, iy)*shefr(ix, iy, 0)
-          IF (0.0e0_R8 .LT. t0) THEN
+          IF (0.0_R8 .LT. t0) THEN
             max5 = t0
           ELSE
-            max5 = 0.0e0_R8
+            max5 = 0.0_R8
           END IF
           IF (t0 .GE. 0.) THEN
             abs9 = t0
@@ -610,10 +596,10 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
           END IF
 !            shefr(ix,iy,0) = t0
           shefr(ix, iy, 0) = max5 + rf3*abs9
-          IF (0.0e0_R8 .GT. t0) THEN
+          IF (0.0_R8 .GT. t0) THEN
             min5 = t0
           ELSE
-            min5 = 0.0e0_R8
+            min5 = 0.0_R8
           END IF
           IF (t0 .GE. 0.) THEN
             abs10 = t0
@@ -624,10 +610,10 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
           b2joule(region(ix, iy, 0)) = b2joule(region(ix, iy, 0)) + t0
           b2sihs_joule(ix, iy) = t0
           t0 = -(phm4*vol(ix, iy)*shifr(ix, iy, 0))
-          IF (0.0e0_R8 .LT. t0) THEN
+          IF (0.0_R8 .LT. t0) THEN
             max6 = t0
           ELSE
-            max6 = 0.0e0_R8
+            max6 = 0.0_R8
           END IF
           IF (t0 .GE. 0.) THEN
             abs11 = t0
@@ -635,13 +621,13 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
             abs11 = -t0
           END IF
 !            shifr(ix,iy,0) = t0
-!             shifr(ix,iy,0) = (2.5e0_R8+rf4)*t0
-!             shifr(ix,iy,3) = -(1.5e0_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
+!             shifr(ix,iy,0) = (2.5_R8+rf4)*t0
+!             shifr(ix,iy,3) = -(1.5_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
           shifr(ix, iy, 0) = max6 + rf4*abs11
-          IF (0.0e0_R8 .GT. t0) THEN
+          IF (0.0_R8 .GT. t0) THEN
             min6 = t0
           ELSE
-            min6 = 0.0e0_R8
+            min6 = 0.0_R8
           END IF
           IF (t0 .GE. 0.) THEN
             abs12 = t0
@@ -655,9 +641,9 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
       END DO
     END DO
     arg1 = n2*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shefr, 1, she0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shefr, 1, she0, 1)
     arg1 = n2*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shifr, 1, shi0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shifr, 1, shi0, 1)
   ELSE
 !srv 05.07.17
 !
@@ -703,8 +689,10 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
       END DO
     END DO
   END IF
-!djm Jan2017
-!WG_TODO        b2sihs_fraa0to3=shi0-shitmp
+!       ..contribution from friction involving neutral species
+!         (We ignore such a term, except for charge exchange friction
+!         between H0 and H1. That term is calculated via the atomic
+!         physics routines.)
 !
   b2str = 0.0_R8
   b2sihs_str = 0.0_R8
@@ -968,8 +956,6 @@ SUBROUTINE B2SDIA_NODIFF(nx, ny, ns, na, ne, ti, te, she, shi, facdrift)
   USE B2MOD_GEO_CORNER
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : balance_netcdf
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -1111,8 +1097,6 @@ SUBROUTINE B2SDIA_NODIFF(nx, ny, ns, na, ne, ti, te, she, shi, facdrift)
         END DO
       END IF
     END DO
-!djm Jan2017
-!WG_TODO          b2sihs_diaa0to3=shi-shitmp
     b2wrong3 = 0.0_R8
     DO iy=-1,ny
       DO ix=-1,nx
@@ -1182,8 +1166,6 @@ SUBROUTINE B2SDIA_NODIFF(nx, ny, ns, na, ne, ti, te, she, shi, facdrift)
       END DO
     END DO
   END IF
-!djm Jan2017
-!WG_TODO         b2sihs_diae0to3=she-shetmp
 !
 ! ..return
   ncall = ncall + 1

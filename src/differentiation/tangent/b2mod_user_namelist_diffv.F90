@@ -226,7 +226,8 @@ CONTAINS
     DO WHILE (ic .LE. nomp .AND. (.NOT.found))
       DO i=m%cvfcp(omp(ic), 1),m%cvfcp(omp(ic), 1)+m%cvfcp(omp(ic), 2)-1
         ifc = m%cvfc(i)
-        IF (m%fcfs(ifc) .EQ. m%ifssep .AND. m%ifssep .NE. 0) THEN
+        IF ((m%fcfs(ifc) .EQ. m%ifssep .AND. m%ifssep .NE. 0) .OR. (m%&
+&           fcfs(ifc) .EQ. m%ifssep2 .AND. m%ifssep2 .NE. 0)) THEN
           icsepomp = ic + 1
           ifsepomp = ifc
           found = .true.
@@ -379,7 +380,8 @@ CONTAINS
     DO WHILE (ic .LE. nimp .AND. (.NOT.found))
       DO i=m%cvfcp(imp(ic), 1),m%cvfcp(imp(ic), 1)+m%cvfcp(imp(ic), 2)-1
         ifc = m%cvfc(i)
-        IF (m%fcfs(ifc) .EQ. m%ifssep .AND. m%ifssep .NE. 0) THEN
+        IF ((m%fcfs(ifc) .EQ. m%ifssep .AND. m%ifssep .NE. 0) .OR. (m%&
+&           fcfs(ifc) .EQ. m%ifssep2 .AND. m%ifssep2 .NE. 0)) THEN
           icsepimp = ic + 1
           ifsepimp = ifc
           found = .true.
@@ -395,6 +397,9 @@ CONTAINS
     IF (m%isclassicalgrid .EQ. 1) CALL XERTST(m%fsfcp(m%ifssep, 2) .GT. &
 &                                       0, 'No separatrix faces!')
     WRITE(*, *) 'SEPARATRIX FLUX SURFACE AT iFs=', m%ifssep
+    IF (m%ifssep2 .GT. 0) WRITE(*, *) &
+&                   'SECOND HALF OF CDN SEPARATRIX FLUX SURFACE AT iFs='&
+&                         , m%ifssep2
 !
     CALL SUBEND()
     RETURN
@@ -415,5 +420,4 @@ CONTAINS
   END SUBROUTINE WRITE_B2MOD_USER_NAMELIST
 
 END MODULE B2MOD_USER_NAMELIST_DIFFV
-!
 

@@ -90,7 +90,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
 !srv 11.09.09
   REAL(kind=r8) :: fki, fxi, eta, ctaup, ctaui, ci, t, t0, t1, tau(ncv)&
 & , tnp, w
-  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9e0_R8)
+  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9_R8)
 !   ..procedures
   INTRINSIC ABS, SQRT
   EXTERNAL XERTST, SFILL_NODIFF
@@ -131,7 +131,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqca')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqca .LT. 3) THEN
@@ -418,7 +418,7 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
 & , tnp, w
   REAL(kind=r8) :: fxid(nbdirsmax), ctauid(nbdirsmax), td(nbdirsmax), &
 & t0d(nbdirsmax), taud(nbdirsmax, ncv), tnpd(nbdirsmax), wd(nbdirsmax)
-  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9e0_R8)
+  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9_R8)
 !   ..procedures
   INTRINSIC ABS, SQRT
   EXTERNAL XERTST, SFILL_NODIFF
@@ -473,7 +473,7 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqca')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqca .LT. 3) THEN

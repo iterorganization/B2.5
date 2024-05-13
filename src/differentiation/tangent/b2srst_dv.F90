@@ -26,17 +26,13 @@
 !
 !srv 01.07.08
 SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
-& , tn, tnd, po, pod, ne, ned, ni, nid, nn, kt, ktd, zt, ztd, sr, srd, &
-& nbdirs)
+& , tn, tnd, po, pod, ne, ned, ni, nid, nn, nnd, kt, ktd, zt, ztd, sr, &
+& srd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2srst_sna0to1, b2srst_smo0to3, &
-& b2srst_she0to3, b2srst_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
@@ -57,7 +53,7 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
 & pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
-& ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
+& nnd(nbdirsmax, ncv), ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
@@ -129,7 +125,7 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
   CALL SUBINI('b2srst')
 !   ..set internal parameters on first call
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test sign of na, ni, ne, te, ti
   IF (ncall_b2srst .LT. 3) THEN
@@ -137,6 +133,7 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -891,13 +888,6 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
   sktst = sr%skt - sktst
   sztst = sr%szt - sztst
 !
-!djm Jan2017 Store for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2srst_sna0to1 = snast
-    b2srst_smo0to3 = smost
-    b2srst_she0to3 = shest
-    b2srst_shi0to3 = shist
-  END IF
 !
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1
@@ -986,11 +976,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2srst_sna0to1, b2srst_smo0to3, &
-& b2srst_she0to3, b2srst_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
@@ -1060,7 +1046,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
   CALL SUBINI('b2srst')
 !   ..set internal parameters on first call
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test sign of na, ni, ne, te, ti
   IF (ncall_b2srst .LT. 3) THEN
@@ -1068,6 +1054,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -1511,13 +1498,6 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
   sktst = sr%skt - sktst
   sztst = sr%szt - sztst
 !
-!djm Jan2017 Store for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2srst_sna0to1 = snast
-    b2srst_smo0to3 = smost
-    b2srst_she0to3 = shest
-    b2srst_shi0to3 = shist
-  END IF
 !
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1

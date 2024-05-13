@@ -132,7 +132,7 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqin')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqin .LT. 3) THEN
@@ -359,7 +359,7 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqin')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqin .LT. 3) THEN

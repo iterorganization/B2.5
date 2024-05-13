@@ -67,7 +67,7 @@ SUBROUTINE B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
 !   ..subprogram start-up calls
   CALL SUBINI('b2xvps')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 ! ..test state

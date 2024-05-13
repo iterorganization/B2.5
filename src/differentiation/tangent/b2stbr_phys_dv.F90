@@ -143,7 +143,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     WRITE(*, *) 'First call of b2stbr_phys'
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..automatic spatial hybrid not allowed for multispecies
   IF (switch%use_auto_spatial_hyb .NE. 0 .AND. ns .GT. 1) CALL XERRAB(&
@@ -388,7 +388,6 @@ CONTAINS
     REAL(kind=r8) :: max8
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: abs3
-    REAL(kind=r8) :: abs4
     REAL(r8) :: max9
     REAL(r8) :: arg11
 !
@@ -782,7 +781,6 @@ CONTAINS
 &             switch%neutral_sources_rescale*strasclfl(istra)
             snan = fnnrefl
 !
-!
             IF (switch%afn_out .NE. 0) THEN
               fmomni_out(icv) = fmomni
               fmomrefl_out(icv) = fmomrefl
@@ -817,13 +815,8 @@ CONTAINS
           IF (NINT(zamax(is)) .EQ. NINT(zn(is))) THEN
 !! see eq. 62-63 of the main reference.
             IF (nnsum .EQ. 0.0_R8) nnsum = 1.0_R8
-            IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-              abs2 = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
-            ELSE
-              abs2 = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
-            END IF
             smon = -(isign*cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/nnsum*&
-&             farea*abs2*geo%cvhz(icv))
+&             farea*geo%cvbb(icv, 0)/geo%cvbb(icv, 3)*geo%cvhz(icv))
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*switch%&
 &             neutral_sources_rescale*strasclfl(istra)
             nnsum = 0.0_R8
@@ -847,20 +840,20 @@ CONTAINS
         is1 = ns - 1
         DO is=nsmax,nsmin,-1
           IF (am(is0) - am(is) .GE. 0.) THEN
-            abs3 = am(is0) - am(is)
+            abs2 = am(is0) - am(is)
           ELSE
-            abs3 = -(am(is0)-am(is))
+            abs2 = -(am(is0)-am(is))
           END IF
-          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) is0&
+          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs2) is0&
 &            = is
 !xpb
           IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
           IF (am(is1) - am(is) .GE. 0.) THEN
-            abs4 = am(is1) - am(is)
+            abs3 = am(is1) - am(is)
           ELSE
-            abs4 = -(am(is1)-am(is))
+            abs3 = -(am(is1)-am(is))
           END IF
-          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs4) &
+          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) &
 &           WRITE(*, '(a,3i3)') 'b2stbr problem: is, is0, is1 ', is, is0&
 &           , is1
           IF (is0 .NE. is1) THEN
@@ -916,13 +909,13 @@ END SUBROUTINE B2STBR_PHYS_NODIFF
 !   Plus diff mem management of: dv.fna:in dv.fne:in dv.fhe:in
 !                dv.fhi:in dv.fnn_inc:in dv.fhm:in dv.kin_frac_hyb:in
 !                dv.fluid_frac_hyb:in dv.kinrgy:in dv.ne:in dv.ni:in
-!                geo.cvbb:in geo.cvhz:in geo.cvqgam:in geo.cvvol:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.vxvol:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rpt:in
-!                srw.she0:in srw.shi0:in srw.shn0:in srw.smo0:in
-!                srw.sna0:in pl.na:in pl.ua:in pl.po:in pl.te:in
-!                pl.ti:in pl.tn:in
+!                mpg.rcfcor:in geo.cvbb:in geo.cvhz:in geo.cvqgam:in
+!                geo.cvvol:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.vxvol:in rt.rlcx:in rt.rlsa:in
+!                rt.rza:in rt.rpt:in srw.she0:in srw.shi0:in srw.shn0:in
+!                srw.smo0:in srw.sna0:in pl.na:in pl.ua:in pl.po:in
+!                pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -938,9 +931,9 @@ END SUBROUTINE B2STBR_PHYS_NODIFF
 !.specification
 !
 SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
-& switch, switchd, geo, geod, mpg, pl, pld, dv, dvd, co, rt, rtd, rtw, &
-& st_ext, srw, srwd, tchem, tchee, tphys, tphye, thevp, thvpe, trese, &
-& tresn, trfln, trfle, sput_src, sput_chem_model, reflection_on, &
+& switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, rt, rtd, &
+& rtw, st_ext, srw, srwd, tchem, tchee, tphys, tphye, thevp, thvpe, &
+& trese, tresn, trfln, trfle, sput_src, sput_chem_model, reflection_on, &
 & sputter_energy_on, main_call, new_sputter_namelist, shi0_ff, f_redep, &
 & nbdirs)
   USE B2MOD_TYPES
@@ -978,6 +971,7 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
@@ -1079,7 +1073,7 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
     WRITE(*, *) 'First call of b2stbr_phys'
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..automatic spatial hybrid not allowed for multispecies
   IF (switch%use_auto_spatial_hyb .NE. 0 .AND. ns .GT. 1) CALL XERRAB(&
@@ -1154,8 +1148,8 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
     fna_mol = 0.0_R8
 !
     CALL PRECOMPUTE_KUL_QUANT_DV(ncv, nfc, nvx, switch, geo, geod, mpg, &
-&                          pl, pld, dv, dvd, co, rt, rtd, dnn, dnnd, &
-&                          nbdirs)
+&                          mpgd, pl, pld, dv, dvd, co, rt, rtd, dnn, &
+&                          dnnd, nbdirs)
   ELSE
     DO nd=1,nbdirsmax
       dnnd(nd, :, :) = 0.D0
@@ -1368,7 +1362,6 @@ CONTAINS
     REAL(kind=r8) :: max8
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: abs3
-    REAL(kind=r8) :: abs4
     REAL(r8) :: max9
     REAL(r8), DIMENSION(nbdirsmax) :: max9d
     REAL(r8) :: arg11
@@ -1377,6 +1370,7 @@ CONTAINS
     REAL(kind=r8) :: temp0
     REAL(r8) :: temp1
     REAL(kind=r8) :: temp2
+    REAL(r8) :: temp3
     INTEGER :: nbdirs
 !
 !
@@ -1699,8 +1693,8 @@ CONTAINS
 &                                  istra), dv%fluid_frac_hyb(ifc), dvd%&
 &                                  fluid_frac_hyb(1, ifc), pl, pld, tif&
 &                                  , tifd, tef, pof, pofd, pl%na(icv, is&
-&                                  ), dv%ne(icv), geo, mpg, t0, t0d, &
-&                                  cosa, sina, switch%use_uy_uz_0, &
+&                                  ), dv%ne(icv), geo, geod, mpg, t0, &
+&                                  t0d, cosa, sina, switch%use_uy_uz_0, &
 &                                  fnnrec, fnnrecd, fmomrec, fmomrecd, &
 &                                  nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
 &                                  fenerec, fenerecd, nbdirs)
@@ -1833,11 +1827,11 @@ CONTAINS
             ELSE IF (maxw(istra) .EQ. 1) THEN
               CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, is0, isign&
 &                                            , istra, farea, pl, pld, &
-&                                            tnf, tnfd, geo, cosa, sina&
-&                                            , fnni, fnnid, fmomni, &
-&                                            fmomnid, nni, nnid, nnwwni&
-&                                            , nnwwnid, feneni, fenenid&
-&                                            , nbdirs)
+&                                            tnf, tnfd, geo, geod, cosa&
+&                                            , sina, fnni, fnnid, fmomni&
+&                                            , fmomnid, nni, nnid, &
+&                                            nnwwni, nnwwnid, feneni, &
+&                                            fenenid, nbdirs)
             ELSE IF (maxw(istra) .EQ. 2) THEN
               CALL CALCINCIDENTFLUXESKN_DV(switch%kn_b1, switch%kn_b2, &
 &                                    icv, icn, ifc, isign, is0, is2, isi&
@@ -1914,9 +1908,9 @@ CONTAINS
 &                                               fluid_frac_hyb(ifc), dvd&
 &                                               %fluid_frac_hyb(1, ifc)&
 &                                               , pl, pld, tnf, tnfd, &
-&                                               geo, mpg, cosa, sina, &
-&                                               fnnrefl, fnnrefld, &
-&                                               fmomrefl, fmomrefld, &
+&                                               geo, geod, mpg, cosa, &
+&                                               sina, fnnrefl, fnnrefld&
+&                                               , fmomrefl, fmomrefld, &
 &                                               nnrefl, nnrefld, &
 &                                               nnwwnrefl, nnwwnrefld, &
 &                                               fenerefl, fenerefld, &
@@ -2000,7 +1994,6 @@ CONTAINS
 &             switch%neutral_sources_rescale*strasclfl(istra)
             snan = fnnrefl
 !
-!
             IF (switch%afn_out .NE. 0) THEN
               fmomni_out(icv) = fmomni
               fmomrefl_out(icv) = fmomrefl
@@ -2065,22 +2058,19 @@ CONTAINS
                 nnsumd(nd) = 0.D0
               END DO
             END IF
-            IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-              abs2 = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
-            ELSE
-              abs2 = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
-            END IF
-            temp2 = am(is0)*abs2*mp*farea
-            temp0 = isign*cosa*geo%cvhz(icv)
-            temp = nnwwnsum*nnwwnsum/(3.0_R8*nnsum)
+            temp2 = isign*cosa*geo%cvbb(icv, 0)*mp*farea*am(is0)*geo%&
+&             cvhz(icv)
+            temp1 = 3.0_R8*geo%cvbb(icv, 3)
+            temp3 = temp1*nnsum
+            temp0 = nnwwnsum*nnwwnsum/temp3
             DO nd=1,nbdirs
-              smond(nd) = -(temp2*temp0*(2*nnwwnsum*nnwwnsumd(nd)-temp*&
-&               3.0_R8*nnsumd(nd))/(3.0_R8*nnsum))
+              smond(nd) = -(temp2*(2*nnwwnsum*nnwwnsumd(nd)-temp0*temp1*&
+&               nnsumd(nd))/temp3)
               srwd%smo0(nd, icv, 0, is0) = srwd%smo0(nd, icv, 0, is0) + &
 &               strasclfl(istra)*switch%neutral_sources_rescale*smond(nd&
 &               )
             END DO
-            smon = -(temp2*(temp0*temp))
+            smon = -(temp2*temp0)
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*switch%&
 &             neutral_sources_rescale*strasclfl(istra)
             nnsum = 0.0_R8
@@ -2117,20 +2107,20 @@ CONTAINS
         is1 = ns - 1
         DO is=nsmax,nsmin,-1
           IF (am(is0) - am(is) .GE. 0.) THEN
-            abs3 = am(is0) - am(is)
+            abs2 = am(is0) - am(is)
           ELSE
-            abs3 = -(am(is0)-am(is))
+            abs2 = -(am(is0)-am(is))
           END IF
-          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) is0&
+          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs2) is0&
 &            = is
 !xpb
           IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
           IF (am(is1) - am(is) .GE. 0.) THEN
-            abs4 = am(is1) - am(is)
+            abs3 = am(is1) - am(is)
           ELSE
-            abs4 = -(am(is1)-am(is))
+            abs3 = -(am(is1)-am(is))
           END IF
-          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs4) &
+          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) &
 &           WRITE(*, '(a,3i3)') 'b2stbr problem: is, is0, is1 ', is, is0&
 &           , is1
           IF (is0 .NE. is1) THEN
@@ -2238,7 +2228,6 @@ CONTAINS
     REAL(kind=r8) :: max8
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: abs3
-    REAL(kind=r8) :: abs4
     REAL(r8) :: max9
     REAL(r8) :: arg11
 !
@@ -2632,7 +2621,6 @@ CONTAINS
 &             switch%neutral_sources_rescale*strasclfl(istra)
             snan = fnnrefl
 !
-!
             IF (switch%afn_out .NE. 0) THEN
               fmomni_out(icv) = fmomni
               fmomrefl_out(icv) = fmomrefl
@@ -2667,13 +2655,8 @@ CONTAINS
           IF (NINT(zamax(is)) .EQ. NINT(zn(is))) THEN
 !! see eq. 62-63 of the main reference.
             IF (nnsum .EQ. 0.0_R8) nnsum = 1.0_R8
-            IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-              abs2 = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
-            ELSE
-              abs2 = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
-            END IF
             smon = -(isign*cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/nnsum*&
-&             farea*abs2*geo%cvhz(icv))
+&             farea*geo%cvbb(icv, 0)/geo%cvbb(icv, 3)*geo%cvhz(icv))
             srw%smo0(icv, 0, is0) = srw%smo0(icv, 0, is0) + smon*switch%&
 &             neutral_sources_rescale*strasclfl(istra)
             nnsum = 0.0_R8
@@ -2697,20 +2680,20 @@ CONTAINS
         is1 = ns - 1
         DO is=nsmax,nsmin,-1
           IF (am(is0) - am(is) .GE. 0.) THEN
-            abs3 = am(is0) - am(is)
+            abs2 = am(is0) - am(is)
           ELSE
-            abs3 = -(am(is0)-am(is))
+            abs2 = -(am(is0)-am(is))
           END IF
-          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) is0&
+          IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs2) is0&
 &            = is
 !xpb
           IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
           IF (am(is1) - am(is) .GE. 0.) THEN
-            abs4 = am(is1) - am(is)
+            abs3 = am(is1) - am(is)
           ELSE
-            abs4 = -(am(is1)-am(is))
+            abs3 = -(am(is1)-am(is))
           END IF
-          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs4) &
+          IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) &
 &           WRITE(*, '(a,3i3)') 'b2stbr problem: is, is0, is1 ', is, is0&
 &           , is1
           IF (is0 .NE. is1) THEN

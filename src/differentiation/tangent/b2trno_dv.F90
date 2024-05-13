@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2trno in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci tdata *(co.csig) *(co.calf)
+!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci *(co.csig) *(co.calf)
 !                *(co.csig_an) *(co.chce) *(co.chce_exb) *(co.chci)
 !                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)
 !                *(co.cvla) *(co.cdna) *(co.cdna_exb) *(co.cdpa)
@@ -12,9 +12,9 @@
 !                *(co.alf0) *(co.dkt0) *(co.dzt0) *(co.dna_exb)
 !                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
 !                *(co.vsa0) *(co.hcib) *(co.vla0)
-!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
 !                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -31,22 +31,23 @@
 !                *(co.vsa0) *(co.hcib) *(co.vla0) *(pl.na) *(pl.ua)
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
-!                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvhz:in
-!                geo.cvqgam:in geo.cvvol:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                st_ext.ni:in rt.rlcx:in rt.rlsa:in rt.rza:in co.csig:in
-!                co.calf:in co.csig_an:in co.calf_an:in co.chve:in
-!                co.chce:in co.chce_exb:in co.chvi:in co.chci:in
-!                co.chci_exb:in co.chcn:in co.cdkt:in co.cdzt:in
-!                co.cvla:in co.cdna:in co.cdna_exb:in co.cdpa:in
-!                co.cvsa:in co.cvlahz:in co.cdnahz:in co.cdpahz:in
-!                co.cvsahz:in co.chcb:in co.cvsa_an:in co.cvmahz:in
-!                co.fllim0fhi:in co.sig0:in co.hce0:in co.hci0:in
-!                co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.dpa0:in co.dna0:in
-!                co.vsa0:in co.hcib:in co.vla0:in co.vma0:in pl.na:in
-!                pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
+!                geo.cvhz:in geo.cvqgam:in geo.cvvol:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in st_ext.ni:in rt.rlcx:in rt.rlsa:in
+!                rt.rza:in co.csig:in co.calf:in co.csig_an:in
+!                co.calf_an:in co.chve:in co.chce:in co.chce_exb:in
+!                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
+!                co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
+!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
+!                co.cdpahz:in co.cvsahz:in co.chcb:in co.cvsa_an:in
+!                co.cvmahz:in co.fllim0fhi:in co.sig0:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
+!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
+!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
+!                pl.zt:in
 !
 !
 !
@@ -62,8 +63,8 @@
 !.specification
 !
 SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
-& switch, switchd, geo, geod, mpg, pl, pld, dv, dvd, rt, rtd, st_ext, &
-& st_extd, co, cod, nbdirs)
+& switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, &
+& st_ext, st_extd, co, cod, nbdirs)
   USE B2MOD_TYPES
 !      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
@@ -113,6 +114,7 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
@@ -216,7 +218,7 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trno')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2trno .LT. 3) THEN
@@ -258,13 +260,14 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     dummyzerodiffd(nd, :, :, :) = 0.D0
   END DO
   CALL B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, switch&
-&          , switchd, geo, geod, mpg, pl, pld, dv, dvd, rt, rtd, st_ext&
-&          , co%dna0, cod%dna0, co%dpa0, cod%dpa0, co%vla0, cod%vla0, co&
-&          %vma0, dummyzerodiffd, co%vsa0, cod%vsa0, co%hci0, cod%hci0, &
-&          co%hcn0, cod%hcn0, co%hcib, cod%hcib, co%hce0, cod%hce0, co%&
-&          sig0, cod%sig0, co%alf0, cod%alf0, hvi0, hvi0d, hve0, hve0d, &
-&          co%dkt0, cod%dkt0, co%dzt0, cod%dzt0, co%dna_exb, cod%dna_exb&
-&          , co%hce_exb, cod%hce_exb, co%hci_exb, cod%hci_exb, nbdirs)
+&          , switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, &
+&          st_ext, co%dna0, cod%dna0, co%dpa0, cod%dpa0, co%vla0, cod%&
+&          vla0, co%vma0, dummyzerodiffd, co%vsa0, cod%vsa0, co%hci0, &
+&          cod%hci0, co%hcn0, cod%hcn0, co%hcib, cod%hcib, co%hce0, cod%&
+&          hce0, co%sig0, cod%sig0, co%alf0, cod%alf0, hvi0, hvi0d, hve0&
+&          , hve0d, co%dkt0, cod%dkt0, co%dzt0, cod%dzt0, co%dna_exb, &
+&          cod%dna_exb, co%hce_exb, cod%hce_exb, co%hci_exb, cod%hci_exb&
+&          , nbdirs)
   DO nd=1,nbdirsmax
     chcibd(nd, :, :) = 0.D0
   END DO
@@ -361,7 +364,6 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 01.07.05 }
 !srv 09.01.01
 !
-!
 !   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 !   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
   IF (switch%transport_afn .EQ. 1) THEN
@@ -381,7 +383,6 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       END IF
     END DO
   END IF
-!
 !
 !   ..save the anomalous transport coefficients                       !srv 04.10.99
 !srv 04.10.99
@@ -443,13 +444,13 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     DO nd=1,nbdirsmax
       dummyzerodiffd0(nd) = 0.D0
     END DO
-    CALL SFILL_DV(nfc, 0.0e0_R8, dummyzerodiffd0, co%csig(1, 0), cod%&
-&           csig(:, 1, 0), 1, nbdirs)
+    CALL SFILL_DV(nfc, 0.0_R8, dummyzerodiffd0, co%csig(1, 0), cod%csig(&
+&           :, 1, 0), 1, nbdirs)
     DO nd=1,nbdirsmax
       dummyzerodiffd1(nd) = 0.D0
     END DO
-    CALL SFILL_DV(nfc, 0.0e0_R8, dummyzerodiffd1, co%calf(1, 0), cod%&
-&           calf(:, 1, 0), 1, nbdirs)
+    CALL SFILL_DV(nfc, 0.0_R8, dummyzerodiffd1, co%calf(1, 0), cod%calf(&
+&           :, 1, 0), 1, nbdirs)
   END IF
 !   ..set strange velocities chve, chvi
 !      call sfill (nFc*2, 0.0_R8, co%chve, 1)
@@ -458,7 +459,7 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 20.09.17
   chce_stoch = 0.0_R8
 !lk 31.01.08 } !srv 17.12.13
-  IF (switch%fch_stochastic .NE. 0.0e0_R8) THEN
+  IF (switch%fch_stochastic .NE. 0.0_R8) THEN
 !lk 31.01.08 { !srv 17.12.13
     CALL XERRAB('b2trno -- option to be adapted for WG')
   END IF
@@ -517,27 +518,27 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 15.06.08 {
 !   .. apply flux limit to neutrals contribution to cdpa and cdpahz
     CALL B2TLC0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
-&            pl%na, pld%na, pl%te, pld%te, pl%ti, pld%ti, pl%tn, pld%tn&
-&            , rt%rza, rtd%rza, cdpa0, cdpa0d, co%cdpa, cod%cdpa, co%&
-&            cdpahz, cod%cdpahz, flc, flcd, nbdirs)
+&            mpgd, pl%na, pld%na, pl%te, pld%te, pl%ti, pld%ti, pl%tn, &
+&            pld%tn, rt%rza, rtd%rza, cdpa0, cdpa0d, co%cdpa, cod%cdpa, &
+&            co%cdpahz, cod%cdpahz, flc, flcd, nbdirs)
   END IF
 !
   IF (switch%flux_limit_to_vsa .NE. 0) THEN
 !srv 15.06.08 {
 !   .. apply flux limit to neutrals contribution to cvsa and cvsahz
     CALL B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
-&            pl%na, pld%na, pl%ua, pld%ua, pl%te, pl%tn, pld%tn, rt%rza&
-&            , cvsa0, cvsa0d, co%cvsa, cod%cvsa, co%cvsahz, cod%cvsahz, &
-&            flv, flvd, nbdirs)
+&            mpgd, pl%na, pld%na, pl%ua, pld%ua, pl%te, pl%tn, pld%tn, &
+&            rt%rza, cvsa0, cvsa0d, co%cvsa, cod%cvsa, co%cvsahz, cod%&
+&            cvsahz, flv, flvd, nbdirs)
   END IF
 !
 !   ..apply flux limit to neutrals contribution to chcb
   DO nd=1,nbdirsmax
     dummyzerodiffd2(nd, :, :, :) = 0.D0
   END DO
-  CALL B2TLH0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, pl%&
-&          na, pld%na, pl%ti, pl%tn, pld%tn, chcib, chcibd, co%chcb, cod&
-&          %chcb, co%fllim0fhi, dummyzerodiffd2, nbdirs)
+  CALL B2TLH0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
+&          mpgd, pl%na, pld%na, pl%ti, pl%tn, pld%tn, chcib, chcibd, co%&
+&          chcb, cod%chcb, co%fllim0fhi, dummyzerodiffd2, nbdirs)
   DO nd=1,nbdirs
     cod%chci(nd, :, :) = 0.D0
     cod%chcn(nd, :, :) = 0.D0
@@ -885,7 +886,7 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..subprogram start-up calls
   CALL SUBINI('b2trno')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2trno .LT. 3) THEN
@@ -994,7 +995,6 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !srv 01.07.05 }
 !srv 09.01.01
 !
-!
 !   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 !   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
   IF (switch%transport_afn .EQ. 1) THEN
@@ -1008,7 +1008,6 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       END IF
     END DO
   END IF
-!
 !
 !   ..save the anomalous transport coefficients                       !srv 04.10.99
 !srv 04.10.99
@@ -1055,8 +1054,8 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !
 !   ..set csigx = 0 and calfx = 0
   IF (switch%csig_an_style .EQ. 1) THEN
-    CALL SFILL_NODIFF(nfc, 0.0e0_R8, co%csig(1, 0), 1)
-    CALL SFILL_NODIFF(nfc, 0.0e0_R8, co%calf(1, 0), 1)
+    CALL SFILL_NODIFF(nfc, 0.0_R8, co%csig(1, 0), 1)
+    CALL SFILL_NODIFF(nfc, 0.0_R8, co%calf(1, 0), 1)
   END IF
 !   ..set strange velocities chve, chvi
 !      call sfill (nFc*2, 0.0_R8, co%chve, 1)
@@ -1065,7 +1064,7 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !srv 20.09.17
   chce_stoch = 0.0_R8
 !lk 31.01.08 } !srv 17.12.13
-  IF (switch%fch_stochastic .NE. 0.0e0_R8) THEN
+  IF (switch%fch_stochastic .NE. 0.0_R8) THEN
 !lk 31.01.08 { !srv 17.12.13
     CALL XERRAB('b2trno -- option to be adapted for WG')
   END IF

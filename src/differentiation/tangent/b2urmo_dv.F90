@@ -22,19 +22,17 @@
 !.specification
 !
 !srv 02.06.11
-SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, isb, ub, ubd&
-& , rob, robd, smb, smbd, flub, flubd, flubv, flubvd, cvsb, cvsbd, resmb&
-& , resmbd, fmb, fmbd, fkb, fkbd, cvsb_eff, cvsb_effd, nbdirs)
+SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, isb, &
+& ub, ubd, rob, robd, smb, smbd, flub, flubd, flubv, flubvd, cvsb, cvsbd&
+& , resmb, resmbd, fmb, fmbd, fkb, fkbd, cvsb_eff, cvsb_effd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : fmo_flua, fmo_cvsa, fmo_hybr, &
-& balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2urmo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -49,6 +47,7 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, isb, ub, ubd&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: ub(ncv), rob(ncv), smb(ncv, 0:3), flub(nfc, 0:1), &
 & flubv(nfc, 0:1), cvsb(nfc, 0:1)
   REAL(kind=r8) :: ubd(nbdirsmax, ncv), robd(nbdirsmax, ncv), smbd(&
@@ -123,7 +122,7 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, isb, ub, ubd&
 !   ..subprogram start-up calls
   CALL SUBINI('b2urmo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2urmo .LT. 3) THEN
 !    ..test sign of rob, smb1, smb3
@@ -155,31 +154,24 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, isb, ub, ubd&
     flfd(nd, :, :) = 0.D0
   END DO
   CALL CALCFLOW_DV(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, geod, &
-&            mpg, ub, ubd, flub, flubd, cvsb, cvsbd, fmb, fmbd, flf, &
-&            flfd, flv, flvd, nbdirs)
+&            mpg, mpgd, ub, ubd, flub, flubd, cvsb, cvsbd, fmb, fmbd, &
+&            flf, flfd, flv, flvd, nbdirs)
 !wdk store effective viscosity, for use in viscous heating
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ub, ubd, wrkv, wrkvd, &
-&        wrkf, wrkfd, nbdirs)
+  CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ub, ubd, wrkv, &
+&        wrkvd, wrkf, wrkfd, nbdirs)
   DO nd=1,nbdirs
     cvsb_effd(nd, :, :) = -((flvd(nd, :, :)-flv*wrkfd(nd, :, :)/(eps+&
 &     wrkf))/(eps+wrkf))
   END DO
   cvsb_eff = -(flv/(wrkf+eps))
-!
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    fmo_flua(:, :, isb) = flf
-    CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ub, ubv, dub)
-    fmo_cvsa(:, :, isb) = -(cvsb*dub)
-    fmo_hybr(:, :, isb) = fmb - fmo_cvsa(:, :, isb)
-  END IF
 ! Note: flf and flv used as dummy arrays in this call !!
 ! To be checked:
 ! - consistency in case of drifts (in particular: fna_cor?)
 ! - should contribution from flubv be in here?
+!
 !
   IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
     WRITE(chns, '(i3.3)') isb
@@ -203,8 +195,8 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, isb, ub, ubd&
   wrk = 0.5_R8*ub**2
   wrkf = flub + flubv
   CALL CALCFLOW_DV(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, geod, &
-&            mpg, wrk, wrkd, wrkf, wrkfd, cvsb, cvsbd, fkb, fkbd, flf, &
-&            flfd, flv, flvd, nbdirs)
+&            mpg, mpgd, wrk, wrkd, wrkf, wrkfd, cvsb, cvsbd, fkb, fkbd, &
+&            flf, flfd, flv, flvd, nbdirs)
   DO nd=1,nbdirs
     fkbd(nd, :, 0) = fkbd(nd, :, 0)/geo%fchz
     fkbd(nd, :, 1) = fkbd(nd, :, 1)/geo%fchz
@@ -254,12 +246,10 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : fmo_flua, fmo_cvsa, fmo_hybr, &
-& balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2urmo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -335,7 +325,7 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2urmo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2urmo .LT. 3) THEN
 !    ..test sign of rob, smb1, smb3
@@ -357,18 +347,11 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
 !wdk store effective viscosity, for use in viscous heating
   CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ub, wrkv, wrkf)
   cvsb_eff = -(flv/(wrkf+eps))
-!
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    fmo_flua(:, :, isb) = flf
-    CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ub, ubv, dub)
-    fmo_cvsa(:, :, isb) = -(cvsb*dub)
-    fmo_hybr(:, :, isb) = fmb - fmo_cvsa(:, :, isb)
-  END IF
 ! Note: flf and flv used as dummy arrays in this call !!
 ! To be checked:
 ! - consistency in case of drifts (in particular: fna_cor?)
 ! - should contribution from flubv be in here?
+!
 !
   IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
     WRITE(chns, '(i3.3)') isb

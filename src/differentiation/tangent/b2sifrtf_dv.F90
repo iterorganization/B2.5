@@ -31,9 +31,6 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifrtf
   USE B2MOD_SUBSYS
-!djm Jun2019
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sifr_smofrea0to3, b2sifr_smofria0to3&
-& , b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -132,7 +129,7 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     CALL IPGETI('b2npmo_iout', iout_b2npmo)
   END IF
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2sifrtf .LT. 3) THEN
 !    ..test sign of vol
@@ -142,6 +139,7 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, ne2, 1, 'ne2', '.gt.')
@@ -149,20 +147,20 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !
 !   ..initialize to 0
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbch, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbch, 1)
 !srv 11.09.09
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtf, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbtf, 1)
 !srv 11.09.09
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbfrial, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbfrial, 1)
 !srv 13.01.17 { !srv 05.07.17
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbfreal, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbfreal, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfial, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbtfial, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfeal, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbtfeal, 1)
 !srv 13.01.17 }
 !
 !   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
@@ -276,7 +274,7 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
             abs0 = -(calfab*gti(icv))
           END IF
           t0 = abs0/(cflim(4)*jabmax)
-          fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+          fllim_al_ab = 1.0_R8/(1.0_R8+t0)
         ELSE
           fllim_al_ab = 1.0_R8
         END IF
@@ -295,19 +293,6 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   smbtfia = smbtfial
   smbtfea = smbtfeal
 !
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jun2019
-    DO icv=1,ncv
-      b2sifr_smofria0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbfria(icv, 0:3)
-      b2sifr_smofrea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbfrea(icv, 0:3)
-      b2sifr_smotfia0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbtfia(icv, 0:3)
-      b2sifr_smotfea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbtfea(icv, 0:3)
-    END DO
-  END IF
 !
   IF (iout .NE. 0) THEN
 !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
@@ -494,7 +479,7 @@ END SUBROUTINE B2SIFRTF_NODIFF
 !   with respect to varying inputs: ti cimp1 cimp2 na sigx_c ne
 !                ce1 ua zeff ue zetae zetap f_luc_sg alfx_c gte
 !                gti rz2
-!   Plus diff mem management of: geo.cvvol:in
+!   Plus diff mem management of: mpg.intcellp:in geo.cvvol:in
 !
 !
 !
@@ -510,12 +495,12 @@ END SUBROUTINE B2SIFRTF_NODIFF
 !.specification
 !
 SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
-& , mpg, na, nad, ua, uad, ue, ued, te, ti, tid, ni, nid, ne, ned, ne2, &
-& ne2d, rza, rz2, rz2d, po, zetap, zetapd, zetae, zetaed, gti, gtid, gte&
-& , gted, ce1, ce1d, ce2, cimp1, cimp1d, cimp2, cimp2d, zeff, zeffd, &
-& f_luc_sg, f_luc_sgd, alfx_c, alfx_cd, sigx_c, sigx_cd, st_ext, smbfrea&
-& , smbfread, smbfria, smbfriad, smbtfea, smbtfead, smbtfia, smbtfiad, &
-& smbch, smbchd, smbtf, smbtfd, nbdirs)
+& , mpg, mpgd, na, nad, ua, uad, ue, ued, te, ted, ti, tid, ni, nid, ne&
+& , ned, ne2, ne2d, rza, rz2, rz2d, po, zetap, zetapd, zetae, zetaed, &
+& gti, gtid, gte, gted, ce1, ce1d, ce2, cimp1, cimp1d, cimp2, cimp2d, &
+& zeff, zeffd, f_luc_sg, f_luc_sgd, alfx_c, alfx_cd, sigx_c, sigx_cd, &
+& st_ext, smbfrea, smbfread, smbfria, smbfriad, smbtfea, smbtfead, &
+& smbtfia, smbtfiad, smbch, smbchd, smbtf, smbtfd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -528,9 +513,6 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifrtf
   USE B2MOD_SUBSYS
-!djm Jun2019
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sifr_smofrea0to3, b2sifr_smofria0to3&
-& , b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -544,6 +526,7 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !srv 13.01.17
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ue(ncv), te(ncv), &
@@ -552,12 +535,13 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 & , ce2(ncv), cimp1(ncv), cimp2(ncv), zeff(ncv), f_luc_sg(nfc), alfx_c(&
 & ncv), sigx_c(ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ued(nbdirsmax, ncv), tid(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1&
-& ), ned(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), rz2d(nbdirsmax, ncv, 0:&
-& ns-1), zetapd(nbdirsmax, ncv), zetaed(nbdirsmax, ncv), gtid(nbdirsmax&
-& , ncv), gted(nbdirsmax, ncv), ce1d(nbdirsmax, ncv), cimp1d(nbdirsmax, &
-& ncv), cimp2d(nbdirsmax, ncv), zeffd(nbdirsmax, ncv), f_luc_sgd(&
-& nbdirsmax, nfc), alfx_cd(nbdirsmax, ncv), sigx_cd(nbdirsmax, ncv)
+& -1), ued(nbdirsmax, ncv), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), &
+& nid(nbdirsmax, ncv, 0:1), ned(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), &
+& rz2d(nbdirsmax, ncv, 0:ns-1), zetapd(nbdirsmax, ncv), zetaed(nbdirsmax&
+& , ncv), gtid(nbdirsmax, ncv), gted(nbdirsmax, ncv), ce1d(nbdirsmax, &
+& ncv), cimp1d(nbdirsmax, ncv), cimp2d(nbdirsmax, ncv), zeffd(nbdirsmax&
+& , ncv), f_luc_sgd(nbdirsmax, nfc), alfx_cd(nbdirsmax, ncv), sigx_cd(&
+& nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
 !srv 13.01.17 05.07.17
   REAL(kind=r8) :: smbfria(ncv, 0:3), smbfrea(ncv, 0:3), smbtfia(ncv, 0:&
@@ -666,7 +650,7 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
     CALL IPGETI('b2npmo_iout', iout_b2npmo)
   END IF
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2sifrtf .LT. 3) THEN
 !    ..test sign of vol
@@ -676,6 +660,7 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, ne2, 1, 'ne2', '.gt.')
@@ -683,20 +668,20 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 !
 !   ..initialize to 0
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbch, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbch, 1)
 !srv 11.09.09
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtf, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbtf, 1)
 !srv 11.09.09
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbfrial, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbfrial, 1)
 !srv 13.01.17 { !srv 05.07.17
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbfreal, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbfreal, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfial, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbtfial, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfeal, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smbtfeal, 1)
 !srv 13.01.17 }
 !
 !   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
@@ -963,9 +948,9 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
           DO nd=1,nbdirs
             t0d(nd) = (abs0d(nd)-temp5*cflim(4)*jabmaxd(nd))/(cflim(4)*&
 &             jabmax)
-            fllim_al_abd(nd) = -(t0d(nd)/(t0+1.0e0_R8)**2)
+            fllim_al_abd(nd) = -(t0d(nd)/(t0+1.0_R8)**2)
           END DO
-          fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+          fllim_al_ab = 1.0_R8/(1.0_R8+t0)
         ELSE
           fllim_al_ab = 1.0_R8
           DO nd=1,nbdirsmax
@@ -1004,19 +989,6 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   smbtfia = smbtfial
   smbtfea = smbtfeal
 !
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jun2019
-    DO icv=1,ncv
-      b2sifr_smofria0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbfria(icv, 0:3)
-      b2sifr_smofrea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbfrea(icv, 0:3)
-      b2sifr_smotfia0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbtfia(icv, 0:3)
-      b2sifr_smotfea0to3(icv, 0:3, isb) = geo%cvvol(icv)*geo%cvhz(icv)*&
-&       smbtfea(icv, 0:3)
-    END DO
-  END IF
 !
   IF (iout .NE. 0) THEN
 !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17

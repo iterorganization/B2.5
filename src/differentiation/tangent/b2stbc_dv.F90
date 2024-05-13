@@ -8,6 +8,7 @@
 !                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fna)
 !                *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch)
 !                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
+!                *(psnl.na) *(psnl.ne) *(psnl.ni) *(psnl.kinrgy)
 !                *(srw.sch0) *(srw.she0) *(srw.shi0) *(srw.shn0)
 !                *(srw.skt0) *(srw.smo0) *(srw.sna0) *(pl.na)
 !   with respect to varying inputs: enepar conpar enkpar potpar
@@ -21,7 +22,8 @@
 !                *(dv.fna_eir) *(dv.fhe) *(dv.fhepsch) *(dv.fhi)
 !                *(dv.fhipsch) *(dv.fhm) *(dv.fkt) *(dv.kinrgy)
 !                *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
-!                *(dv.veecrb) *(rt.rza) *(srw.sch0) *(srw.she0)
+!                *(dv.veecrb) *(psnl.na) *(psnl.ne) *(psnl.ni)
+!                *(psnl.kinrgy) *(rt.rza) *(srw.sch0) *(srw.she0)
 !                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.smo0)
 !                *(srw.sna0) switch.b2tfhi_fflokt *(co.chce) *(co.chci)
 !                *(co.cdna) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0)
@@ -36,21 +38,22 @@
 !                dv.fhe:in dv.fhepsch:in dv.fhi:in dv.fhipsch:in
 !                dv.fhm:in dv.fkt:in dv.kinrgy:in dv.ne:in dv.ni:in-out
 !                dv.nn:in-out dv.vadia:in dv.vaecrb:in dv.vedia:in
-!                dv.veecrb:in dv.facdrift:in psnl.na:in psnl.ne:in
-!                psnl.ni:in psnl.fna:in psnl.kinrgy:in geo.cvbb:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in st_ext.am:in
-!                st_ext.na:in st_ext.ta:in rt.rza:in srw.sch0:in
-!                srw.she0:in srw.shi0:in srw.sne0:in srw.shn0:in
-!                srw.skt0:in srw.szt0:in srw.smo0:in srw.sna0:in
-!                srw.b2stbc_sch:in srw.b2stbc_she:in srw.b2stbc_shi:in
-!                srw.b2stbc_sne:in srw.b2stbc_shn:in srw.b2stbc_skt:in
-!                srw.b2stbc_szt:in srw.b2stbc_smo:in srw.b2stbc_sna:in
-!                co.chce:in co.chci:in co.cdna:in co.hce0:in co.hci0:in
-!                co.hcn0:in co.dpa0:in co.dna0:in pl.na:in pl.ua:in
-!                pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                dv.veecrb:in dv.facdrift:in mpg.bcfcor:in psnl.na:in
+!                psnl.ne:in psnl.ni:in psnl.fna:in psnl.kinrgy:in
+!                geo.cvbb:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in
+!                st_ext.am:in st_ext.na:in st_ext.ta:in rt.rza:in
+!                srw.sch0:in srw.she0:in srw.shi0:in srw.sne0:in
+!                srw.shn0:in srw.skt0:in srw.szt0:in srw.smo0:in
+!                srw.sna0:in srw.b2stbc_sch:in srw.b2stbc_she:in
+!                srw.b2stbc_shi:in srw.b2stbc_sne:in srw.b2stbc_shn:in
+!                srw.b2stbc_skt:in srw.b2stbc_szt:in srw.b2stbc_smo:in
+!                srw.b2stbc_sna:in co.chce:in co.chci:in co.cdna:in
+!                co.hce0:in co.hci0:in co.hcn0:in co.dpa0:in co.dna0:in
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                pl.kt:in pl.zt:in
 !
 !
 !
@@ -66,14 +69,12 @@
 !.specification
 !
 SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
-& , geo, geod, mpg, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd&
-& , srw, srwd, psnc, psncd, psnl, psnld, wrong_flow, main_call, nbdirs)
+& , geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, &
+& st_extd, srw, srwd, psnc, psncd, psnl, psnld, wrong_flow, main_call, &
+& nbdirs)
   USE B2MOD_TYPES
 !      use b2mod_geo_corner
   USE B2MOD_CONSTANTS
-!djm Jan 2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stbc_sna0to1, b2stbc_smo0to3, &
-& b2stbc_she0to3, b2stbc_shi0to3, balance_netcdf
   USE B2US_FEEDBACK_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_TIME
@@ -106,6 +107,7 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(INOUT) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
@@ -184,7 +186,7 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
     lfeedback = switch%b2stbc_feedback .NE. 0
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -316,8 +318,8 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 !
     IF (ncall_b2stbc .EQ. 0) WRITE(*, *) ' b2stbc_phys called'
     CALL B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
-&                 switchd, geo, geod, mpg, pl, pld, dv, dvd, co, cod, rt&
-&                 , rtd, st_ext, st_extd, srw, srwd, wrong_flow, &
+&                 switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, &
+&                 cod, rt, rtd, st_ext, st_extd, srw, srwd, wrong_flow, &
 &                 main_call, praverage, nbdirs)
     IF (wrong_flow) WRITE(*, *) &
 &                   'b2stbc: wrong_flow returned from b2stbc_phys'
@@ -357,13 +359,6 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   srw%b2stbc_sne(:) = srw%sne0(:, 0) + srw%sne0(:, 1)*dv%ne(:)
 !      write(*,*) 'Copied s..0 to b2stbc_s..'
 !
-!djm Jan2017 Keep linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2stbc_sna0to1 = srw%sna0
-    b2stbc_smo0to3 = srw%smo0
-    b2stbc_she0to3 = srw%she0
-    b2stbc_shi0to3 = srw%shi0
-  END IF
 !
   IF (ncall_b2stbc .EQ. 0 .OR. main_call) ncall_b2stbc = ncall_b2stbc + &
 &     1
@@ -390,9 +385,6 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   USE B2MOD_TYPES
 !      use b2mod_geo_corner
   USE B2MOD_CONSTANTS
-!djm Jan 2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stbc_sna0to1, b2stbc_smo0to3, &
-& b2stbc_she0to3, b2stbc_shi0to3, balance_netcdf
   USE B2US_FEEDBACK_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_TIME
@@ -476,7 +468,7 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
     lfeedback = switch%b2stbc_feedback .NE. 0
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -604,13 +596,6 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   srw%b2stbc_sne(:) = srw%sne0(:, 0) + srw%sne0(:, 1)*dv%ne(:)
 !      write(*,*) 'Copied s..0 to b2stbc_s..'
 !
-!djm Jan2017 Keep linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2stbc_sna0to1 = srw%sna0
-    b2stbc_smo0to3 = srw%smo0
-    b2stbc_she0to3 = srw%she0
-    b2stbc_shi0to3 = srw%shi0
-  END IF
 !
   IF (ncall_b2stbc .EQ. 0 .OR. main_call) ncall_b2stbc = ncall_b2stbc + &
 &     1

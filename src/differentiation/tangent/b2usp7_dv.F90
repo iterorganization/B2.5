@@ -78,7 +78,7 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !   ..initialisation
 !srv 27.01.00
   DATA ncall /0/
-  DATA vis_per /0.0e0_R8/
+  DATA vis_per /0.0_R8/
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -225,8 +225,8 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !WDK tmp: ignore this      
 !WDK will require complex stencil!
 !*   ..compute the seven-point matrix                               !srv 26.01.00
-!      aa11(:,:,-3) = 0.0e0_R8
-!      aa11(:,:, 3) = 0.0e0_R8
+!      aa11(:,:,-3) = 0.0_R8
+!      aa11(:,:, 3) = 0.0_R8
 !
 !      do iy = -1, ny
 !       do ix = -1, nx                                              !srv 26.11.02

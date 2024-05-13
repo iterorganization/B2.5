@@ -962,12 +962,12 @@ CONTAINS
 &                     bcfcor, m, idb)
           END DO
 ! iss
-          WRITE(ss, '(I0)') ib
+          WRITE(ss, '(i3)') ib
           CALL XERTST(nbcfc .GT. 0, &
 &               'No faces found for boundary condition = '//ss)
           m%bcfcp(ib, 2) = nbcfc
         ELSE
-          CALL XERRAB('BCCHAR /= A ')
+          CALL XERRAB('BCCHAR /= A')
         END IF
       END DO
       CLOSE(idb) 
@@ -1148,12 +1148,12 @@ CONTAINS
 &                     bcfcor, m, idb)
           END DO
 ! iss
-          WRITE(ss, '(I0)') ib
+          WRITE(ss, '(i3)') ib
           CALL XERTST(nbcfc .GT. 0, &
 &               'No faces found for boundary condition = '//ss)
           m%bcfcp(ib, 2) = nbcfc
         ELSE
-          CALL XERRAB('BCCHAR /= A ')
+          CALL XERRAB('BCCHAR /= A')
         END IF
       END DO
       CLOSE(idb) 
@@ -1589,6 +1589,9 @@ CONTAINS
 &                   bcfcor, m, idb)
         END DO
 ! iss
+        WRITE(ss, '(i3)') ib
+        CALL XERTST(bcl(ib) .GT. 0, &
+&             'No faces found for boundary condition = '//ss)
         m%bcfcp(ib, 2) = bcl(ib)
       ELSE
         CALL XERRAB('conv_bcparms -- wrong BCCHAR')
@@ -1656,7 +1659,6 @@ CONTAINS
     USE B2MOD_VERSION_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
     INTEGER, INTENT(IN) :: ns
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: ib, iout, is
@@ -1668,7 +1670,7 @@ CONTAINS
     CALL CFVERW(iout, newversion)
 !
     WRITE(iout, '(1x,a)') '&boundary'
-    WRITE(iout, '(1x,a,i0)') 'NBC     = ', m%nbc
+    WRITE(iout, '(1x,a,i3,a)') 'NBC     = ', m%nbc, ','
     WRITE(iout, '(1x,a,(1x,T14,10(2x,4a1)))') 'BCCHAR  =  ', (ap, acchar&
 &   (ib), ap, ',', ib=1,m%nbc)
 !
@@ -1735,7 +1737,7 @@ CONTAINS
     WRITE(iout, '(1x,a,l1,a1)') 'LBNDUSR=', lbndusr, ','
     WRITE(iout, '(1x,a,l1,a1)') 'LFEEDBACK=', lfeedback, ','
 !
-    WRITE(iout, '(1x,a,i0,a1)') 'NNISO = ', nniso, ','
+    WRITE(iout, '(1x,a,i2,a1)') 'NNISO = ', nniso, ','
 !
     IF (nniso .GT. 0) CALL XERRAB('write_bcparms -- nniso > 0')
 !
@@ -1758,6 +1760,8 @@ CONTAINS
 !
     WRITE(iout, '(1x,a)') '/'
     CLOSE(iout) 
+!
+    RETURN
   END SUBROUTINE WRITE_BCPARMS
 
 !
@@ -1765,7 +1769,6 @@ CONTAINS
   SUBROUTINE REPLACE_OUTDATED_BCPARMS(ns, m)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
     INTEGER, INTENT(IN) :: ns
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: ib, is
@@ -1778,15 +1781,14 @@ CONTAINS
 !
     changed = .false.
     DO ib=1,m%nbc
-      DO is=0,ns-1
 !c BCMOM
+      DO is=0,ns-1
         IF (bcmom(is, ib) .EQ. 3) THEN
           bcmom(is, ib) = 13
           WRITE(*, *) 'Automatically changing BCMOM from 3 to 13'
           changed = .true.
         END IF
       END DO
-!
 !c BCENE
       IF (bcene(ib) .EQ. 3) THEN
         bcene(ib) = 15
@@ -1809,9 +1811,7 @@ CONTAINS
         WRITE(*, *) 'Automatically changing BCENI from 12 to 15'
         changed = .true.
       END IF
-!
 !c BCPOT
-!
       IF (bcpot(ib) .EQ. 3) THEN
         bcpot(ib) = 11
         WRITE(*, *) 'Automatically changing BCPOT from 3 to 11'
@@ -1819,12 +1819,13 @@ CONTAINS
       END IF
     END DO
 !
-!
     IF (changed) THEN
       WRITE(*, *) 'Some outdated BCs'//&
 &     ' in WG have been replaced automatically.'
       WRITE(*, *) 'See lines above.'
     END IF
+!
+    RETURN
   END SUBROUTINE REPLACE_OUTDATED_BCPARMS
 
 !  Differentiation of bc_to_struct as a context to call tangent code (with options multiDirectional context noISIZE r8):
@@ -1905,6 +1906,7 @@ CONTAINS
         END DO
       END DO
     END IF
+    RETURN
   END SUBROUTINE BC_TO_STRUCT_DV
 
 !
@@ -1973,6 +1975,7 @@ CONTAINS
         END DO
       END DO
     END IF
+    RETURN
   END SUBROUTINE BC_TO_STRUCT
 
 END MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV

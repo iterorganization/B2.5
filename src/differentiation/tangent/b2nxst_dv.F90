@@ -62,7 +62,7 @@ SUBROUTINE B2NXST_DV(ncv, rob, robd, smb, smbd, ro, rod, smt, smtd, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxst')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   temp = rob/ro
   DO nd=1,nbdirs
 !   ..update smt

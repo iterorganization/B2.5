@@ -352,6 +352,8 @@ CONTAINS
     INTEGER :: ic
     INTRINSIC ABS
     INTRINSIC LOG
+    REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
     REAL(kind=r8) :: arg1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
     REAL(r8) :: arg2
@@ -378,16 +380,18 @@ CONTAINS
     END DO
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
     DO nd=1,nbdirs
 !mb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upfd(nd) = pld%ua(nd, icn, isi)
@@ -600,10 +604,10 @@ CONTAINS
 !ellian anyway
     IF (fnni .LT. 0.0_R8 .AND. safeguard .EQ. 1) CALL &
 &     CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, area&
-&                               , pl, pld, tnf, tnfd, geo, cosa, sina, &
-&                               fnni, fnnid, fmomni, fmomnid, nni, nnid&
-&                               , nnwwni, nnwwnid, feneni, fenenid, &
-&                               nbdirs)
+&                               , pl, pld, tnf, tnfd, geo, geod, cosa, &
+&                               sina, fnni, fnnid, fmomni, fmomnid, nni&
+&                               , nnid, nnwwni, nnwwnid, feneni, fenenid&
+&                               , nbdirs)
 !
     CALL SUBEND()
     RETURN
@@ -646,6 +650,8 @@ CONTAINS
     INTEGER :: ic
     INTRINSIC ABS
     INTRINSIC LOG
+    REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
     REAL(kind=r8) :: arg1
     REAL(r8) :: arg2
     REAL(kind=r8) :: result1
@@ -654,16 +660,18 @@ CONTAINS
 !     Initialize/calculate some variables
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
 !mb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
     upf = pl%ua(icn, isi)
     ux = upf*pit2
@@ -901,18 +909,18 @@ CONTAINS
     ELSE IF (kn .GT. kn_b2) THEN
 !
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, cosa&
-&                                    , sina, fnni, fnnid0, fmomni, &
-&                                    fmomnid0, nni, nnid0, nnwwni, &
+&                                    area, pl, pld, tnf, tnfd, geo, geod&
+&                                    , cosa, sina, fnni, fnnid0, fmomni&
+&                                    , fmomnid0, nni, nnid0, nnwwni, &
 &                                    nnwwnid0, feneni, fenenid0, nbdirs)
 !
     ELSE
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, cosa&
-&                                    , sina, fnnim, fnnimd, fmomnim, &
-&                                    fmomnimd, nnim, nnimd, nnwwnim, &
-&                                    nnwwnimd, fenenim, fenenimd, nbdirs&
-&                                   )
+&                                    area, pl, pld, tnf, tnfd, geo, geod&
+&                                    , cosa, sina, fnnim, fnnimd, &
+&                                    fmomnim, fmomnimd, nnim, nnimd, &
+&                                    nnwwnim, nnwwnimd, fenenim, &
+&                                    fenenimd, nbdirs)
 !! <- '1': = safeguard for diffusion BCs
       CALL CALCINCIDENTFLUXESDIFFUSION_DV(icv, icn, ifc, isign, isn, &
 &                                   iscx0, isi, istra, phi_app, area, pl&
@@ -1103,8 +1111,8 @@ CONTAINS
 &                                   nnwwnid, feneni, fenenid, nbdirs)
     ELSE
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, cosa&
-&                                    , sina, fnni, fnnid, fmomni, &
+&                                    area, pl, pld, tnf, tnfd, geo, geod&
+&                                    , cosa, sina, fnni, fnnid, fmomni, &
 &                                    fmomnid, nni, nnid, nnwwni, nnwwnid&
 &                                    , feneni, fenenid, nbdirs)
     END IF
@@ -1171,8 +1179,8 @@ CONTAINS
 !   Plus diff mem management of: pl.na:in pl.ua:in
 !
   SUBROUTINE CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra&
-&   , area, pl, pld, tf, tfd, geo, cosa, sina, fnni, fnnid, fmomni, &
-&   fmomnid, nni, nnid, nnwwni, nnwwnid, feneni, fenenid, nbdirs)
+&   , area, pl, pld, tf, tfd, geo, geod, cosa, sina, fnni, fnnid, fmomni&
+&   , fmomnid, nni, nnid, nnwwni, nnwwnid, feneni, fenenid, nbdirs)
 !nh   08.05.2018
 !     This routine calculates the incident neutral particle fluxes based on
 !     a truncated Maxwellian for the incident neutrals. These particle fluxes
@@ -1191,6 +1199,7 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
+    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     INTEGER, INTENT(IN) :: icv, ifc, isn, istra
     REAL(kind=r8), INTENT(IN) :: area, tf, isign, cosa, sina
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: tfd
@@ -1206,6 +1215,8 @@ CONTAINS
 &   i1ld, i2ld, i3ld, i4ld, fmoxd, fmoyd, fmozd, pnd, fmomnipd, fmomnitd&
 &   , unfd
     INTRINSIC ABS
+    REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
     INTEGER :: nd
     REAL(r8) :: temp
     REAL(kind=r8) :: temp0
@@ -1219,16 +1230,18 @@ CONTAINS
     END DO
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
     DO nd=1,nbdirs
 !nh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neu
 !tral parallel
@@ -1333,21 +1346,25 @@ CONTAINS
 &   , i2l, i2r, i3l, i3r, i4l, i4r, i5l, i5r, i6l, i6r, fmox, fmoy, fmoz&
 &   , pn, fmomnip, fmomnit, unf
     INTRINSIC ABS
+    REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
 !
     CALL SUBINI('CalcIncidentFluxesMaxwellian')
 !     Initialize/calculate some variables
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
 !nh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neu
 !tral parallel
 !     velocity component
@@ -1404,8 +1421,8 @@ CONTAINS
   SUBROUTINE CALCRECYCLEDFLUXES_DV(icv, nci, ifc, isign, isn, iscx0, isi&
 &   , istra, iwall, phi_app, phi_appd, area, recyc0, recyc0d, recycm, &
 &   fluid_frac_hyb, fluid_frac_hybd, pl, pld, tif, tifd, tef, pof, pofd&
-&   , nif, nef, geo, mpg, t0, t0d, cosa, sina, use_uy_uz_0, fnnrec, &
-&   fnnrecd, fmomrec, fmomrecd, nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
+&   , nif, nef, geo, geod, mpg, t0, t0d, cosa, sina, use_uy_uz_0, fnnrec&
+&   , fnnrecd, fmomrec, fmomrecd, nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
 &   fenerec, fenerecd, nbdirs)
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
@@ -1424,6 +1441,7 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
+    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
 !!      type (B2Rates), intent (in) :: rt
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iscx0, isi, iwall, istra&
@@ -1461,7 +1479,9 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC SIGN
     REAL(kind=r8) :: abs0
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
+    REAL(kind=r8) :: abs1
+    REAL(kind=r8) :: abs2
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
     REAL(kind=r8) :: min1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
     REAL(kind=r8) :: min2
@@ -1478,16 +1498,18 @@ CONTAINS
     CALL SUBINI('CalcRecycledFluxes')
 !     Initialize/calculate some variables
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
     DO nd=1,nbdirs
 !mb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upfd(nd) = pld%ua(nd, icv, isi)
@@ -1520,7 +1542,6 @@ CONTAINS
     temp = SQRT(arg1)
     DO nd=1,nbdirs
 !
-!
 !     Interpolate tables to find recycling values
 !       Isothermal speed of sound and Mach number
       arg1d(nd) = 2.0_R8*tifd(nd)/mn
@@ -1533,24 +1554,24 @@ CONTAINS
     cs = temp
     IF (ux .GE. 0.) THEN
       DO nd=1,nbdirs
-        abs0d(nd) = uxd(nd)
+        abs2d(nd) = uxd(nd)
       END DO
-      abs0 = ux
+      abs2 = ux
     ELSE
       DO nd=1,nbdirs
-        abs0d(nd) = -uxd(nd)
+        abs2d(nd) = -uxd(nd)
       END DO
-      abs0 = -ux
+      abs2 = -ux
     END IF
 !       Shpottau value: sheath_potential devided by tau (Ti/Te)
     temp = (pof-phi_app)/tif
     DO nd=1,nbdirs
-      mjd(nd) = (abs0d(nd)-abs0*csd(nd)/cs)/cs
+      mjd(nd) = (abs2d(nd)-abs2*csd(nd)/cs)/cs
       tifevd(nd) = tifd(nd)/ev
       shpottaujd(nd) = accel_ion(istra)*qe*(pofd(nd)-phi_appd(nd)-temp*&
 &       tifd(nd))/tif
     END DO
-    mj = abs0/cs
+    mj = abs2/cs
     tifev = tif/ev
     is = recycle_index(isn)
     it = target_index(istra)
@@ -1857,6 +1878,8 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC SIGN
     REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
+    REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
     REAL(kind=r8) :: min2
     REAL(r8) :: arg1
@@ -1864,16 +1887,18 @@ CONTAINS
     CALL SUBINI('CalcRecycledFluxes')
 !     Initialize/calculate some variables
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
 !mb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
     upf = pl%ua(icv, isi)
     ux = upf*pit2
@@ -1890,17 +1915,16 @@ CONTAINS
     CALL CALCMOMENTSMAXWELLIAN(uz, tif, mn, i0l, i0r, i1l, i1r, i2l, i2r&
 &                        , i3l, i3r, i4l, i4r, i5l, i5r, i6l, i6r)
 !
-!
 !     Interpolate tables to find recycling values
 !       Isothermal speed of sound and Mach number
     arg1 = 2.0_R8*tif/mn
     cs = SQRT(arg1)
     IF (ux .GE. 0.) THEN
-      abs0 = ux
+      abs2 = ux
     ELSE
-      abs0 = -ux
+      abs2 = -ux
     END IF
-    mj = abs0/cs
+    mj = abs2/cs
     tifev = tif/ev
     is = recycle_index(isn)
     it = target_index(istra)
@@ -2113,7 +2137,9 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC SIGN
     REAL(kind=r8) :: abs0
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
+    REAL(kind=r8) :: abs1
+    REAL(kind=r8) :: abs2
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
     REAL(kind=r8) :: min1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
     REAL(kind=r8) :: min2
@@ -2145,19 +2171,21 @@ CONTAINS
     END DO
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
     DO nd=1,nbdirs
 !mb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-!! We use iCn instead of iCv because EIRENE doesn't see the value in the guard cell and the difference can be large.
+!! We use iCn instead of iCv because EIRENE does not see the value in the guard cell and the difference can be large.
       upfd(nd) = pld%ua(nd, icn, isi)
       uxd(nd) = pit2*upfd(nd)
       uyd(nd) = -(sina*isign*pit*upfd(nd))
@@ -2257,7 +2285,6 @@ CONTAINS
     temp1 = SQRT(arg10)
     DO nd=1,nbdirs
 !
-!
 !     Interpolate tables to find recycling values
 !       Isothermal speed of sound and Mach number
       arg10d(nd) = 2.0_R8*tifd(nd)/mn
@@ -2270,20 +2297,20 @@ CONTAINS
     cs = temp1
     IF (ux .GE. 0.) THEN
       DO nd=1,nbdirs
-        abs0d(nd) = uxd(nd)
+        abs2d(nd) = uxd(nd)
       END DO
-      abs0 = ux
+      abs2 = ux
     ELSE
       DO nd=1,nbdirs
-        abs0d(nd) = -uxd(nd)
+        abs2d(nd) = -uxd(nd)
       END DO
-      abs0 = -ux
+      abs2 = -ux
     END IF
     DO nd=1,nbdirs
-      mjd(nd) = (abs0d(nd)-abs0*csd(nd)/cs)/cs
+      mjd(nd) = (abs2d(nd)-abs2*csd(nd)/cs)/cs
       tifevd(nd) = tifd(nd)/ev
     END DO
-    mj = abs0/cs
+    mj = abs2/cs
     tifev = tif/ev
     is = recycle_index(isn)
     it = target_index(istra)
@@ -2696,9 +2723,9 @@ CONTAINS
 &     CALCREFLECTEDFLUXESMAXWELLIAN_DV(icv, nci, ifc, isign, isn, istra&
 &                                , iwall, area, recyc0, recyc0d, recycm&
 &                                , fluid_frac_hyb, fluid_frac_hybd, pl, &
-&                                pld, tnf, tnfd, geo, mpg, cosa, sina, &
-&                                fnnrefl, fnnrefld, fmomrefl, fmomrefld&
-&                                , nnrefl, nnrefld, nnwwnrefl, &
+&                                pld, tnf, tnfd, geo, geod, mpg, cosa, &
+&                                sina, fnnrefl, fnnrefld, fmomrefl, &
+&                                fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
 &                                nnwwnrefld, fenerefl, fenerefld, &
 &                                fene_el, fene_eld, nbdirs)
 !
@@ -2757,6 +2784,8 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC SIGN
     REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
+    REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
     REAL(kind=r8) :: min2
     REAL(kind=r8) :: arg1
@@ -2769,18 +2798,20 @@ CONTAINS
 !     Initialize/calculate some variables
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
 !mb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-!! We use iCn instead of iCv because EIRENE doesn't see the value in the guard cell and the difference can be large.
+!! We use iCn instead of iCv because EIRENE does not see the value in the guard cell and the difference can be large.
     upf = pl%ua(icn, isi)
     ux = upf*pit2
     uy = -(sina*isign*upf*pit)
@@ -2827,17 +2858,16 @@ CONTAINS
     CALL CALCMOMENTSMAXWELLIAN(uz, tif, mn, i0l, i0r, i1l, i1r, i2l, i2r&
 &                        , i3l, i3r, i4l, i4r, i5l, i5r, i6l, i6r)
 !
-!
 !     Interpolate tables to find recycling values
 !       Isothermal speed of sound and Mach number
     arg10 = 2.0_R8*tif/mn
     cs = SQRT(arg10)
     IF (ux .GE. 0.) THEN
-      abs0 = ux
+      abs2 = ux
     ELSE
-      abs0 = -ux
+      abs2 = -ux
     END IF
-    mj = abs0/cs
+    mj = abs2/cs
     tifev = tif/ev
     is = recycle_index(isn)
     it = target_index(istra)
@@ -3205,7 +3235,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, mpg, cosa, sina, &
+&                                     tnfd, geo, geod, mpg, cosa, sina, &
 &                                     fnnrefl, fnnrefld0, fmomrefl, &
 &                                     fmomrefld0, nnrefl, nnrefld0, &
 &                                     nnwwnrefl, nnwwnrefld0, fenerefl, &
@@ -3216,7 +3246,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, mpg, cosa, sina, &
+&                                     tnfd, geo, geod, mpg, cosa, sina, &
 &                                     fnnreflm, fnnreflmd, fmomreflm, &
 &                                     fmomreflmd, nnreflm, nnreflmd, &
 &                                     nnwwnreflm, nnwwnreflmd, fenereflm&
@@ -3446,7 +3476,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, mpg, cosa, sina, &
+&                                     tnfd, geo, geod, mpg, cosa, sina, &
 &                                     fnnrefl, fnnrefld, fmomrefl, &
 &                                     fmomrefld, nnrefl, nnrefld, &
 &                                     nnwwnrefl, nnwwnrefld, fenerefl, &
@@ -3527,8 +3557,8 @@ CONTAINS
 !
   SUBROUTINE CALCREFLECTEDFLUXESMAXWELLIAN_DV(icv, nci, ifc, isign, isn&
 &   , istra, iwall, area, recyc0, recyc0d, recycm, fluid_frac_hyb, &
-&   fluid_frac_hybd, pl, pld, tf, tfd, geo, mpg, cosa, sina, fnnrefl, &
-&   fnnrefld, fmomrefl, fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
+&   fluid_frac_hybd, pl, pld, tf, tfd, geo, geod, mpg, cosa, sina, &
+&   fnnrefl, fnnrefld, fmomrefl, fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
 &   nnwwnrefld, fenerefl, fenerefld, fene_el, fene_eld, nbdirs)
 !nh   11.06.18
 !     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a tr
@@ -3546,6 +3576,7 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
+    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iwall, istra
     REAL(kind=r8), INTENT(IN) :: area, recyc0, recycm, isign, tf, sina, &
@@ -3579,7 +3610,9 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC SIGN
     REAL(kind=r8) :: abs0
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
+    REAL(kind=r8) :: abs1
+    REAL(kind=r8) :: abs2
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
     REAL(kind=r8) :: min1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
     REAL(kind=r8) :: min2
@@ -3601,16 +3634,18 @@ CONTAINS
     END DO
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
     arg1 = 2.0_R8*tf/mn
     temp = SQRT(arg1)
     DO nd=1,nbdirs
@@ -3646,20 +3681,20 @@ CONTAINS
     cs = temp
     IF (ux .GE. 0.) THEN
       DO nd=1,nbdirs
-        abs0d(nd) = uxd(nd)
+        abs2d(nd) = uxd(nd)
       END DO
-      abs0 = ux
+      abs2 = ux
     ELSE
       DO nd=1,nbdirs
-        abs0d(nd) = -uxd(nd)
+        abs2d(nd) = -uxd(nd)
       END DO
-      abs0 = -ux
+      abs2 = -ux
     END IF
     DO nd=1,nbdirs
-      mjd(nd) = (abs0d(nd)-abs0*csd(nd)/cs)/cs
+      mjd(nd) = (abs2d(nd)-abs2*csd(nd)/cs)/cs
       tfevd(nd) = tfd(nd)/ev
     END DO
-    mj = abs0/cs
+    mj = abs2/cs
     tfev = tf/ev
     is = recycle_index(isn)
     it = target_index(istra)
@@ -4008,6 +4043,8 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC SIGN
     REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
+    REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
     REAL(kind=r8) :: min2
     REAL(r8) :: arg1
@@ -4017,16 +4054,18 @@ CONTAINS
 !     Initialize/calculate some variables
     nnf = pl%na(icv, isn)
     mn = am(isn)*mp
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs0 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs0 = -geo%cvbb(icv, 0)
     END IF
-    IF (geo%cvbb(icv, 2)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit2 = geo%cvbb(icv, 2)/geo%cvbb(icv, 3)
+    pit = abs0/geo%cvbb(icv, 3)
+    IF (geo%cvbb(icv, 2) .GE. 0.) THEN
+      abs1 = geo%cvbb(icv, 2)
     ELSE
-      pit2 = -(geo%cvbb(icv, 2)/geo%cvbb(icv, 3))
+      abs1 = -geo%cvbb(icv, 2)
     END IF
+    pit2 = abs1/geo%cvbb(icv, 3)
 !     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
     unf = pl%ua(icv, isn)
     ux = unf*pit2
@@ -4044,11 +4083,11 @@ CONTAINS
     arg1 = 2.0_R8*tf/mn
     cs = SQRT(arg1)
     IF (ux .GE. 0.) THEN
-      abs0 = ux
+      abs2 = ux
     ELSE
-      abs0 = -ux
+      abs2 = -ux
     END IF
-    mj = abs0/cs
+    mj = abs2/cs
     tfev = tf/ev
     is = recycle_index(isn)
     it = target_index(istra)
@@ -4946,7 +4985,7 @@ CONTAINS
 !                rt.rlsa:in pl.na:in pl.te:in pl.ti:in pl.tn:in
 !
   SUBROUTINE PRECOMPUTE_KUL_QUANT_DV(ncv, nfc, nvx, switch, geo, geod, &
-&   mpg, pl, pld, dv, dvd, co, rt, rtd, dnn, dnnd, nbdirs)
+&   mpg, mpgd, pl, pld, dv, dvd, co, rt, rtd, dnn, dnnd, nbdirs)
     USE B2MOD_TYPES
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2US_GEO_DIFFV
@@ -4961,6 +5000,7 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
@@ -4994,8 +5034,8 @@ CONTAINS
 &               , :, isn), nnvx, nnvxd, nbdirs)
     CALL INTVERTEX_NODIFF(ncv, nvx, mpg, geo%vxvol, dv%ne, nevx)
     CALL INTVERTEX_NODIFF(ncv, nvx, mpg, geo%vxvol, pl%ti, tivx)
-    CALL GRAD_NT_DV(ncv, nfc, nvx, 1, geo, geod, mpg, pl%na(:, isn), pld&
-&             %na(:, :, isn), nnvx, nnvxd, dnn, dnnd, nbdirs)
+    CALL GRAD_NT_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, pl%na(:, isn&
+&             ), pld%na(:, :, isn), nnvx, nnvxd, dnn, dnnd, nbdirs)
     CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, pl%ti, tivx, dti)
     CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, dv%ne, nevx, dne)
 !

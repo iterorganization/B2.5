@@ -27,9 +27,6 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2srsm_sna0to1, b2srsm_smo0to3, &
-& b2srsm_she0to3, b2srsm_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srsm
@@ -75,7 +72,11 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 & shetmp(ncv, 0:3), shitmp(ncv, 0:3)
 !   ..procedures
   EXTERNAL XERTST, IPGETI, B2XVSG
+  INTRINSIC DABS
+  INTRINSIC MAXVAL
   EXTERNAL XERRAB
+  DOUBLE PRECISION, DIMENSION(ncv, 0:ns-1) :: dabs0
+  DOUBLE PRECISION :: result1
   CHARACTER(len=12) :: arg1
 !-----------------------------------------------------------------------
 !.computation
@@ -84,7 +85,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 !   ..subprogram start-up calls
   CALL SUBINI('b2srsm')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test dtim
   CALL XERTST(0 .LT. dtim, 'faulty argument dtim')
@@ -95,9 +96,17 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
   DO is=0,1
     CALL B2XVSG(ncv, ni(1, is), 1, 'ni', '.gt.')
   END DO
+  CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
   CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+  WHERE (ua .GE. 0.) 
+    dabs0 = ua
+  ELSEWHERE
+    dabs0 = -ua
+  END WHERE
+  result1 = MAXVAL(dabs0)
+  CALL XERTST(result1 .LT. c, 'Supra-luminal velocities !')
 !   ..obtain input
   IF (ncall_b2srsm .EQ. 0) THEN
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -114,15 +123,8 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 !
   IF (switch%b2srsm_enable .NE. 0) CALL XERRAB(&
 &                                        'b2srsm not adapted for WG')
-!
-!djm Store the total change in linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2srsm_sna0to1 = sr%sna - snatmp
-    b2srsm_smo0to3 = sr%smo - smotmp
-    b2srsm_she0to3 = sr%she - shetmp
-    b2srsm_shi0to3 = sr%shi - shitmp
-  END IF
 !srv 11.09.09 }
+!
 !
 !
   IF (switch%b2srsm_iout .EQ. 1) THEN

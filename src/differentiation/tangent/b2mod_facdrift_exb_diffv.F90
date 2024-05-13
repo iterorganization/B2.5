@@ -24,15 +24,15 @@ MODULE B2MOD_FACDRIFT_EXB_DIFFV
 & facvis_tanh_a, facvis_tanh_b
   REAL(kind=r8), DIMENSION(nbdirsmax) :: fac_exb_scalard, &
 & fac_vis_scalard
-  INTEGER :: ncall, iy_nocoreexb, fac_ref
-  SAVE facdrift_scalar, fac_exb_scalar, ncall, iy_nocoreexb, &
+  INTEGER :: ncall_drift, iy_nocoreexb, fac_ref
+  SAVE facdrift_scalar, fac_exb_scalar, ncall_drift, iy_nocoreexb, &
 &     facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
 &     fac_ref, fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
   SAVE fac_exb_scalard, fac_vis_scalard
   DATA facdrift_scalar /0.0_R8/
   DATA fac_exb_scalar /0.0_R8/
   DATA fac_vis_scalar /0.0_R8/
-  DATA ncall /0/
+  DATA ncall_drift /0/
   DATA iy_nocoreexb /-2/
   DATA facdrift_tanh_a /0.0_R8/
   DATA facdrift_tanh_b /0.0_R8/
@@ -55,7 +55,7 @@ CONTAINS
 !      integer ix, iy, jxi, jxa, jsep
 !      real (kind=R8) :: dssep
 !
-    IF (ncall .EQ. 0) THEN
+    IF (ncall_drift .EQ. 0) THEN
       facdrift_scalar = sw%facdrift_start
       IF (sw%facdrift_start .EQ. sw%facdrift_target .AND. sw%&
 &         facdrift_start .NE. 0.0_R8) THEN
@@ -144,7 +144,7 @@ CONTAINS
 &   (nfc)
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTRINSIC MIN
-    CALL XERTST(0 .LT. ncall, &
+    CALL XERTST(0 .LT. ncall_drift, &
 &         'b2news_facdrift_fac_ExB_inc called before initialisation')
     IF (facdrift_scalar*sw%facdrift_inc .GT. sw%facdrift_target) THEN
       facdrift_scalar = sw%facdrift_target
@@ -175,7 +175,7 @@ CONTAINS
 &   (nfc)
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTRINSIC MAX
-    CALL XERTST(0 .LT. ncall, &
+    CALL XERTST(0 .LT. ncall_drift, &
 &         'b2news_facdrift_fac_ExB_dec called before initialisation')
     IF (facdrift_scalar*sw%facdrift_dec .LT. sw%facdrift_start) THEN
       facdrift_scalar = sw%facdrift_start
@@ -227,7 +227,7 @@ CONTAINS
     result6 = MAXVAL(fac_vis)
     WRITE(*, '(1x,a,1p,6g12.5)') 'facdrift, fac_ExB, fac_vis', result1, &
 &   result2, result3, result4, result5, result6
-    ncall = ncall + 1
+    ncall_drift = ncall_drift + 1
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_UPDATE
 

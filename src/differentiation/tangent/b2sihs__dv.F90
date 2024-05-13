@@ -6,11 +6,12 @@
 !   with respect to varying inputs: ti tn na sigx_c ne ni nn ua
 !                ue cvsahz_eff f_luc_sg alfx_c cvsa lnlam po rz2
 !                fch te
-!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in
-!                st_ext.ne2:in st_ext.za2:in st_ext.na:in srw.b2sihs_joule:in
+!   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in st_ext.ne2:in
+!                st_ext.za2:in st_ext.na:in srw.b2sihs_joule:in
 !                srw.b2sihs_divue:in srw.b2sihs_divua:in srw.b2sihs_exbe:in
 !                srw.b2sihs_exba:in srw.b2sihs_visa:in srw.b2sihs_fraa:in
 !                srw.b2sihs_str:in
@@ -29,11 +30,11 @@
 !.specification
 !
 SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
-& , ismain, fac_exb, lnlam, lnlamd, na, nad, ua, uad, ue, ued, te, ted, &
-& ti, tid, tn, tnd, po, pod, ne, ned, ni, nid, nn, nnd, fna_fcor, fne, &
-& fch, fchd, cvsa, cvsad, cvsahz_eff, cvsahz_effd, f_luc_sg, f_luc_sgd, &
-& alfx_c, alfx_cd, sigx_c, sigx_cd, rza, rz2, rz2d, st_ext, st_extd, &
-& she0, she0d, shi0, shi0d, shn0, shn0d, srw, srwd, nbdirs)
+& , mpgd, ismain, fac_exb, lnlam, lnlamd, na, nad, ua, uad, ue, ued, te&
+& , ted, ti, tid, tn, tnd, po, pod, ne, ned, ni, nid, nn, nnd, fna_fcor&
+& , fne, fch, fchd, cvsa, cvsad, cvsahz_eff, cvsahz_effd, f_luc_sg, &
+& f_luc_sgd, alfx_c, alfx_cd, sigx_c, sigx_cd, rza, rz2, rz2d, st_ext, &
+& st_extd, she0, she0d, shi0, shi0d, shn0, shn0d, srw, srwd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_TALLIES_DIFFV
 !      use b2mod_anomalous_transport
@@ -44,10 +45,6 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sihs_divue0to3, b2sihs_exbe0to3, &
-& b2sihs_joule0to3, b2sihs_divua0to3, b2sihs_exba0to3, b2sihs_visa0to3, &
-& b2sihs_fraa0to3, balance_netcdf
 !srv 05.07.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
 ! csc The following are not necessary for computation but are needed
@@ -70,6 +67,7 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
@@ -283,7 +281,7 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !   ..subprogram start-up calls
   CALL SUBINI('b2sihs_')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2sihs_ .LT. 3) THEN
@@ -341,38 +339,38 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 ! ..compute heat source terms
 !   ..initialize sources to zero
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shn0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shn0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shedu, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shedu, 1)
 !srv 11.09.09 {
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shedd, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shedd, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shefr, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shefr, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shidu, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shidu, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shidun, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shidun, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shidd, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shidd, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shifr, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shifr, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shiva, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shiva, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shivc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shivc, 1)
 !srv 11.09.09 }
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shivan, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shivan, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shivcn, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shivcn, 1)
 !srv 11.09.09 }
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shest, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shest, 1)
 !srv 17.12.13
 !   ..compute the Coulomb logarithm
   CALL B2TLNL_DV(ncv, switch, switchd, switch%icase_ii, te, ted, ti, tid&
@@ -380,12 +378,12 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !lk 31.01.08 }
 !srv 01.07.09  20.09.11
 !   ..contribution from stochastic electron flow
-  IF (switch%fch_stochastic .NE. 0.0e0_R8) THEN
+  IF (switch%fch_stochastic .NE. 0.0_R8) THEN
 !lk 31.01.08 { !srv 17.12.13
     CALL XERRAB('b2sihs_: fch_stochastic not yet available for WG')
   END IF
   arg1 = ncv*4
-  CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shest, 1, she0, 1)
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shest, 1, she0, 1)
 !srv 17.12.13
 !   ..contribution from divergence ue
   IF (switch%b2sihs_style_int_vel .EQ. 0) THEN
@@ -418,13 +416,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &       ))
     END DO
     t0 = -(switch%b2sihs_phm0*(1.0_R8-switch%boris)*wrkc(icv))
-    IF (0.0e0_R8 .LT. t0) THEN
+    IF (0.0_R8 .LT. t0) THEN
       DO nd=1,nbdirs
         max1d(nd) = t0d(nd)
       END DO
       max1 = t0
     ELSE
-      max1 = 0.0e0_R8
+      max1 = 0.0_R8
       DO nd=1,nbdirsmax
         max1d(nd) = 0.D0
       END DO
@@ -447,13 +445,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &       *ned(nd, icv)+ne(icv)*ted(nd, icv))
     END DO
     shedu(icv, 0) = shedu(icv, 0) + (max1+switch%b2sihs__rf0*abs0)*temp
-    IF (0.0e0_R8 .GT. t0) THEN
+    IF (0.0_R8 .GT. t0) THEN
       DO nd=1,nbdirs
         min1d(nd) = t0d(nd)
       END DO
       min1 = t0
     ELSE
-      min1 = 0.0e0_R8
+      min1 = 0.0_R8
       DO nd=1,nbdirsmax
         min1d(nd) = 0.D0
       END DO
@@ -478,16 +476,12 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &     icv)
     srw%b2sihs_divue(icv) = t0*ne(icv)*te(icv)
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_divue0to3 = shedu
-  END IF
   arg1 = ncv*4
   DO nd=1,nbdirsmax
     she0d(nd, :, :) = 0.D0
   END DO
-  CALL B2SAXPY_DV(arg1, 1.0e0_R8, shedu, shedud, 1, she0, she0d, 1, &
-&           nbdirs)
+  CALL B2SAXPY_DV(arg1, 1.0_R8, shedu, shedud, 1, she0, she0d, 1, nbdirs&
+&          )
 !srv 11.09.09
 !   ..contribution from divergence ua
   b2divua = 0.0_R8
@@ -523,13 +517,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       t0 = -(switch%b2sihs_phm1*(1.0_R8-switch%boris)*(na(icv, is)*temp)&
 &       )
       IF (switch%tn_style .EQ. 0) THEN
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           DO nd=1,nbdirs
             max2d(nd) = t0d(nd)
           END DO
           max2 = t0
         ELSE
-          max2 = 0.0e0_R8
+          max2 = 0.0_R8
           DO nd=1,nbdirsmax
             max2d(nd) = 0.D0
           END DO
@@ -553,13 +547,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
         END DO
         shidu(icv, 0) = shidu(icv, 0) + (max2+switch%b2sihs__rf1*abs2)*&
 &         temp
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           DO nd=1,nbdirs
             min2d(nd) = t0d(nd)
           END DO
           min2 = t0
         ELSE
-          min2 = 0.0e0_R8
+          min2 = 0.0_R8
           DO nd=1,nbdirsmax
             min2d(nd) = 0.D0
           END DO
@@ -584,13 +578,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &         )*ti(icv)
       ELSE IF (switch%tn_style .EQ. 1) THEN
         IF (.NOT.is_neutral(is)) THEN
-          IF (0.0e0_R8 .LT. t0) THEN
+          IF (0.0_R8 .LT. t0) THEN
             DO nd=1,nbdirs
               max3d(nd) = t0d(nd)
             END DO
             max3 = t0
           ELSE
-            max3 = 0.0e0_R8
+            max3 = 0.0_R8
             DO nd=1,nbdirsmax
               max3d(nd) = 0.D0
             END DO
@@ -614,13 +608,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           END DO
           shidu(icv, 0) = shidu(icv, 0) + (max3+switch%b2sihs__rf1*abs4)&
 &           *temp
-          IF (0.0e0_R8 .GT. t0) THEN
+          IF (0.0_R8 .GT. t0) THEN
             DO nd=1,nbdirs
               min3d(nd) = t0d(nd)
             END DO
             min3 = t0
           ELSE
-            min3 = 0.0e0_R8
+            min3 = 0.0_R8
             DO nd=1,nbdirsmax
               min3d(nd) = 0.D0
             END DO
@@ -645,13 +639,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &           , 0)*ti(icv)
         END IF
       ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           DO nd=1,nbdirs
             max4d(nd) = t0d(nd)
           END DO
           max4 = t0
         ELSE
-          max4 = 0.0e0_R8
+          max4 = 0.0_R8
           DO nd=1,nbdirsmax
             max4d(nd) = 0.D0
           END DO
@@ -675,13 +669,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
         END DO
         shidu(icv, 0) = shidu(icv, 0) + (max4+switch%b2sihs__rf1*abs6)*&
 &         temp
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           DO nd=1,nbdirs
             min4d(nd) = t0d(nd)
           END DO
           min4 = t0
         ELSE
-          min4 = 0.0e0_R8
+          min4 = 0.0_R8
           DO nd=1,nbdirsmax
             min4d(nd) = 0.D0
           END DO
@@ -711,13 +705,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &           nd, icv))/nn(icv)
         END DO
         t0 = ni(icv, 0)*temp
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           DO nd=1,nbdirs
             max5d(nd) = t0d(nd)
           END DO
           max5 = t0
         ELSE
-          max5 = 0.0e0_R8
+          max5 = 0.0_R8
           DO nd=1,nbdirsmax
             max5d(nd) = 0.D0
           END DO
@@ -741,13 +735,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
         END DO
         shidun(icv, 0) = shidun(icv, 0) + (max5+switch%b2sihs__rf1*abs8)&
 &         *temp
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           DO nd=1,nbdirs
             min5d(nd) = t0d(nd)
           END DO
           min5 = t0
         ELSE
-          min5 = 0.0e0_R8
+          min5 = 0.0_R8
           DO nd=1,nbdirsmax
             min5d(nd) = 0.D0
           END DO
@@ -775,16 +769,12 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &       icv)
     END DO
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_divua0to3 = shidu
-  END IF
   IF (switch%tn_style .LT. 2) THEN
     arg1 = ncv*4
     DO nd=1,nbdirsmax
       shi0d(nd, :, :) = 0.D0
     END DO
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shidu, shidud, 1, shi0, shi0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shidu, shidud, 1, shi0, shi0d, 1, &
 &             nbdirs)
     DO nd=1,nbdirsmax
       shn0d(nd, :, :) = 0.D0
@@ -794,13 +784,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     DO nd=1,nbdirsmax
       shi0d(nd, :, :) = 0.D0
     END DO
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shidu, shidud, 1, shi0, shi0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shidu, shidud, 1, shi0, shi0d, 1, &
 &             nbdirs)
     arg1 = ncv*4
     DO nd=1,nbdirsmax
       shn0d(nd, :, :) = 0.D0
     END DO
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shidun, shidund, 1, shn0, shn0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shidun, shidund, 1, shn0, shn0d, 1, &
 &             nbdirs)
   END IF
 !
@@ -808,8 +798,8 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, po, pod, wrkv, wrkvd, &
-&         dpoc, dpocd, nbdirs)
+  CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, wrkv, &
+&         wrkvd, dpoc, dpocd, nbdirs)
   CALL GRADC_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvonedbsq, geo%&
 &             vxonedbsq, donedbsqc)
 !srv 11.01.13
@@ -832,13 +822,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       t0d(nd) = switch%b2sihs_phm5*fac_exb_c*wrkcd(nd, icv)
     END DO
     t0 = switch%b2sihs_phm5*fac_exb_c*wrkc(icv)
-    IF (0.0e0_R8 .LT. t0) THEN
+    IF (0.0_R8 .LT. t0) THEN
       DO nd=1,nbdirs
         max6d(nd) = t0d(nd)
       END DO
       max6 = t0
     ELSE
-      max6 = 0.0e0_R8
+      max6 = 0.0_R8
       DO nd=1,nbdirsmax
         max6d(nd) = 0.D0
       END DO
@@ -861,13 +851,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &       icv)*ned(nd, icv)+ne(icv)*ted(nd, icv))
     END DO
     shedd(icv, 0) = shedd(icv, 0) + (max6+switch%b2sihs__rf0*abs10)*temp
-    IF (0.0e0_R8 .GT. t0) THEN
+    IF (0.0_R8 .GT. t0) THEN
       DO nd=1,nbdirs
         min6d(nd) = t0d(nd)
       END DO
       min6 = t0
     ELSE
-      min6 = 0.0e0_R8
+      min6 = 0.0_R8
       DO nd=1,nbdirsmax
         min6d(nd) = 0.D0
       END DO
@@ -891,13 +881,9 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     b2exbe(mpg%cvreg(icv)) = b2exbe(mpg%cvreg(icv)) + t0*ne(icv)*te(icv)
     srw%b2sihs_exbe(icv) = t0*ne(icv)*te(icv)
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_exbe0to3 = shedd
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_DV(arg1, 1.0e0_R8, shedd, sheddd, 1, she0, she0d, 1, &
-&           nbdirs)
+  CALL B2SAXPY_DV(arg1, 1.0_R8, shedd, sheddd, 1, she0, she0d, 1, nbdirs&
+&          )
 !srv 11.09.09
 !   ..contribution from divergence of the electrical drift            !srv 02.06.99                                              
 ! !srv 02.06.99
@@ -919,13 +905,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &           )
         END DO
         t0 = switch%b2sihs_phm6*fac_exb_c*(na(icv, is)*temp)
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           DO nd=1,nbdirs
             max7d(nd) = t0d(nd)
           END DO
           max7 = t0
         ELSE
-          max7 = 0.0e0_R8
+          max7 = 0.0_R8
           DO nd=1,nbdirsmax
             max7d(nd) = 0.D0
           END DO
@@ -949,13 +935,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
         END DO
         shidd(icv, 0) = shidd(icv, 0) + (max7+switch%b2sihs__rf1*abs12)*&
 &         temp
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           DO nd=1,nbdirs
             min7d(nd) = t0d(nd)
           END DO
           min7 = t0
         ELSE
-          min7 = 0.0e0_R8
+          min7 = 0.0_R8
           DO nd=1,nbdirsmax
             min7d(nd) = 0.D0
           END DO
@@ -972,13 +958,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           abs13 = -t0
         END IF
 !          shi0(iCv,0) = shi0(iCv,0)+
-!     &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
+!     &      (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
         DO nd=1,nbdirs
           shiddd(nd, icv, 3) = shiddd(nd, icv, 3) + min7d(nd) - switch%&
 &           b2sihs__rf1*abs13d(nd)
         END DO
         shidd(icv, 3) = shidd(icv, 3) + min7 - switch%b2sihs__rf1*abs13
-!          shi0(iCv,3) = shi0(iCv,3)+min(0.0e0_R8,t0)-switch%b2sihs__rf1*abs(t0)
+!          shi0(iCv,3) = shi0(iCv,3)+min(0.0_R8,t0)-switch%b2sihs__rf1*abs(t0)
         b2exba(mpg%cvreg(icv)) = b2exba(mpg%cvreg(icv)) + t0*ni(icv, 0)*&
 &         ti(icv)
         srw%b2sihs_exba(icv) = srw%b2sihs_exba(icv) + t0*ni(icv, 0)*ti(&
@@ -986,13 +972,9 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       END DO
     END IF
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_exba0to3 = shidd
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_DV(arg1, 1.0e0_R8, shidd, shiddd, 1, shi0, shi0d, 1, &
-&           nbdirs)
+  CALL B2SAXPY_DV(arg1, 1.0_R8, shidd, shiddd, 1, shi0, shi0d, 1, nbdirs&
+&          )
 !srv 11.09.09
 !   ..contribution from viscous heating
   b2visa = 0.0_R8
@@ -1018,8 +1000,8 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     IF (((.NOT.is_neutral(is)) .OR. switch%use_eirene .EQ. 0) .OR. &
 &       switch%spatial_hybrid .EQ. 1) THEN
       IF (switch%style_visc .EQ. 0) THEN
-        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ua(:, is), uad(:&
-&              , :, is), wrkv, wrkvd, wrkf, wrkfd, nbdirs)
+        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ua(:, is), &
+&              uad(:, :, is), wrkv, wrkvd, wrkf, wrkfd, nbdirs)
         temp0 = cvsa(:, :, is)/(geo%fcqalf+eps)
         DO nd=1,nbdirs
           wrkfd(nd, :, :) = wrkf**2*cvsad(nd, :, :, is)/(geo%fcqalf+eps)&
@@ -1034,8 +1016,8 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !wdk use effective viscous momentum terms from the hybrid scheme
 !wdk avoids excessive heating in convection-dominated regions
 !wdk (improved total energy conservation at discretized level)
-        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ua(:, is), uad(:&
-&              , :, is), wrkv, wrkvd, wrkf, wrkfd, nbdirs)
+        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ua(:, is), &
+&              uad(:, :, is), wrkv, wrkvd, wrkf, wrkfd, nbdirs)
         temp0 = cvsahz_eff(:, :, is)/(geo%fcqalf+eps)
         DO nd=1,nbdirs
           wrkfd(nd, :, :) = wrkf**2*cvsahz_effd(nd, :, :, is)/(geo%&
@@ -1064,18 +1046,16 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           temp = ni(icv, 0)*ti(icv)
           DO nd=1,nbdirs
             shivcd(nd, icv, 0) = shivcd(nd, icv, 0) + (switch%&
-&             b2sihs__rf2+1.0e0_R8)*t0d(nd)
+&             b2sihs__rf2+1.0_R8)*t0d(nd)
             shivcd(nd, icv, 3) = shivcd(nd, icv, 3) - switch%b2sihs__rf2&
 &             *(t0d(nd)-t0*(ti(icv)*nid(nd, icv, 0)+ni(icv, 0)*tid(nd, &
 &             icv))/temp)/temp
             shivad(nd, icv, 0) = shivad(nd, icv, 0) + (switch%&
-&             b2sihs__rf2+1.0e0_R8)*t1d(nd)
+&             b2sihs__rf2+1.0_R8)*t1d(nd)
           END DO
-          shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t0
+          shivc(icv, 0) = shivc(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t0
           shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*(t0/temp)
-          shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t1
+          shiva(icv, 0) = shiva(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t1
           temp = ni(icv, 0)*ti(icv)
           DO nd=1,nbdirs
             shivad(nd, icv, 3) = shivad(nd, icv, 3) - switch%b2sihs__rf2&
@@ -1088,18 +1068,18 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
             temp = ni(icv, 0)*ti(icv)
             DO nd=1,nbdirs
               shivcd(nd, icv, 0) = shivcd(nd, icv, 0) + (switch%&
-&               b2sihs__rf2+1.0e0_R8)*t0d(nd)
+&               b2sihs__rf2+1.0_R8)*t0d(nd)
               shivcd(nd, icv, 3) = shivcd(nd, icv, 3) - switch%&
 &               b2sihs__rf2*(t0d(nd)-t0*(ti(icv)*nid(nd, icv, 0)+ni(icv&
 &               , 0)*tid(nd, icv))/temp)/temp
               shivad(nd, icv, 0) = shivad(nd, icv, 0) + (switch%&
-&               b2sihs__rf2+1.0e0_R8)*t1d(nd)
+&               b2sihs__rf2+1.0_R8)*t1d(nd)
             END DO
-            shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&             )*t0
+            shivc(icv, 0) = shivc(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&             t0
             shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*(t0/temp)
-            shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&             )*t1
+            shiva(icv, 0) = shiva(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&             t1
             temp = ni(icv, 0)*ti(icv)
             DO nd=1,nbdirs
               shivad(nd, icv, 3) = shivad(nd, icv, 3) - switch%&
@@ -1112,18 +1092,16 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           temp = ni(icv, 0)*ti(icv)
           DO nd=1,nbdirs
             shivcd(nd, icv, 0) = shivcd(nd, icv, 0) + (switch%&
-&             b2sihs__rf2+1.0e0_R8)*t0d(nd)
+&             b2sihs__rf2+1.0_R8)*t0d(nd)
             shivcd(nd, icv, 3) = shivcd(nd, icv, 3) - switch%b2sihs__rf2&
 &             *(t0d(nd)-t0*(ti(icv)*nid(nd, icv, 0)+ni(icv, 0)*tid(nd, &
 &             icv))/temp)/temp
             shivad(nd, icv, 0) = shivad(nd, icv, 0) + (switch%&
-&             b2sihs__rf2+1.0e0_R8)*t1d(nd)
+&             b2sihs__rf2+1.0_R8)*t1d(nd)
           END DO
-          shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t0
+          shivc(icv, 0) = shivc(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t0
           shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*(t0/temp)
-          shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t1
+          shiva(icv, 0) = shiva(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t1
           temp = ni(icv, 0)*ti(icv)
           DO nd=1,nbdirs
             shivad(nd, icv, 3) = shivad(nd, icv, 3) - switch%b2sihs__rf2&
@@ -1135,18 +1113,18 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           temp = nn(icv)*tn(icv)
           DO nd=1,nbdirs
             shivcnd(nd, icv, 0) = shivcnd(nd, icv, 0) + (switch%&
-&             b2sihs__rf2+1.0e0_R8)*t0d(nd)
+&             b2sihs__rf2+1.0_R8)*t0d(nd)
             shivcnd(nd, icv, 3) = shivcnd(nd, icv, 3) - switch%&
 &             b2sihs__rf2*(t0d(nd)-t0*(tn(icv)*nnd(nd, icv)+nn(icv)*tnd(&
 &             nd, icv))/temp)/temp
             shivand(nd, icv, 0) = shivand(nd, icv, 0) + (switch%&
-&             b2sihs__rf2+1.0e0_R8)*t1d(nd)
+&             b2sihs__rf2+1.0_R8)*t1d(nd)
           END DO
-          shivcn(icv, 0) = shivcn(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&           )*t0
+          shivcn(icv, 0) = shivcn(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&           t0
           shivcn(icv, 3) = shivcn(icv, 3) - switch%b2sihs__rf2*(t0/temp)
-          shivan(icv, 0) = shivan(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&           )*t1
+          shivan(icv, 0) = shivan(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&           t1
           temp = nn(icv)*tn(icv)
           DO nd=1,nbdirs
             shivand(nd, icv, 3) = shivand(nd, icv, 3) - switch%&
@@ -1160,29 +1138,25 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       END DO
     END IF
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_visa0to3 = shivc + shiva
-  END IF
   IF (switch%tn_style .LT. 2) THEN
     arg1 = ncv*4
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shivc, shivcd, 1, shi0, shi0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shivc, shivcd, 1, shi0, shi0d, 1, &
 &             nbdirs)
     arg1 = ncv*4
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shiva, shivad, 1, shi0, shi0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shiva, shivad, 1, shi0, shi0d, 1, &
 &             nbdirs)
   ELSE IF (switch%tn_style .EQ. 2) THEN
     arg1 = ncv*4
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shivc, shivcd, 1, shi0, shi0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shivc, shivcd, 1, shi0, shi0d, 1, &
 &             nbdirs)
     arg1 = ncv*4
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shiva, shivad, 1, shi0, shi0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shiva, shivad, 1, shi0, shi0d, 1, &
 &             nbdirs)
     arg1 = ncv*4
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shivcn, shivcnd, 1, shn0, shn0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shivcn, shivcnd, 1, shn0, shn0d, 1, &
 &             nbdirs)
     arg1 = ncv*4
-    CALL B2SAXPY_DV(arg1, 1.0e0_R8, shivan, shivand, 1, shn0, shn0d, 1, &
+    CALL B2SAXPY_DV(arg1, 1.0_R8, shivan, shivand, 1, shn0, shn0d, 1, &
 &             nbdirs)
   END IF
 !srv 05.07.17
@@ -1264,10 +1238,10 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     END DO
     zetae = czetae*temp1
 !   ..compute gti,gte at cell centers
-    CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ti, tid, wrkv, &
-&             wrkvd, gti, gtid, nbdirs)
-    CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, te, ted, wrkv, &
-&             wrkvd, gte, gted, nbdirs)
+    CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, &
+&             wrkv, wrkvd, gti, gtid, nbdirs)
+    CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, te, ted, &
+&             wrkv, wrkvd, gte, gted, nbdirs)
     shifr = 0.0_R8
     shefr = 0.0_R8
     DO nd=1,nbdirsmax
@@ -1279,14 +1253,14 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
         CALL B2SIFRTF_DV(ncv, nfc, nvx, ns, is, ismain, switch, geo, &
-&                  geod, mpg, na, nad, ua, uad, ue, ued, te, ti, tid, ni&
-&                  , nid, ne, ned, ne2, ne2d, rza, rz2, rz2d, po, zetap&
-&                  , zetapd, zetae, zetaed, gti, gtid, gte, gted, ce1, &
-&                  ce1d, ce2, cimp1, cimp1d, cimp2, cimp2d, zeff, zeffd&
-&                  , f_luc_sg, f_luc_sgd, alfx_c, alfx_cd, sigx_c, &
-&                  sigx_cd, st_ext, smbfrea, smbfread, smbfria, smbfriad&
-&                  , smbtfea, smbtfead, smbtfia, smbtfiad, smbch, smbchd&
-&                  , smbtf, smbtfd, nbdirs)
+&                  geod, mpg, mpgd, na, nad, ua, uad, ue, ued, te, ted, &
+&                  ti, tid, ni, nid, ne, ned, ne2, ne2d, rza, rz2, rz2d&
+&                  , po, zetap, zetapd, zetae, zetaed, gti, gtid, gte, &
+&                  gted, ce1, ce1d, ce2, cimp1, cimp1d, cimp2, cimp2d, &
+&                  zeff, zeffd, f_luc_sg, f_luc_sgd, alfx_c, alfx_cd, &
+&                  sigx_c, sigx_cd, st_ext, smbfrea, smbfread, smbfria, &
+&                  smbfriad, smbtfea, smbtfead, smbtfia, smbtfiad, smbch&
+&                  , smbchd, smbtf, smbtfd, nbdirs)
         wrks = smbfrea(:, 0) + smbfrea(:, 1)*ua(:, is) + smbfrea(:, 2)*&
 &         na(:, is)*mp*am(is) + smbfrea(:, 3)*ua(:, is)*na(:, is)*mp*am(&
 &         is) + (smbtfea(:, 0)+smbtfea(:, 1)*ua(:, is)+smbtfea(:, 2)*na(&
@@ -1340,13 +1314,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           t0d(nd) = temp*shefrd(nd, icv, 0)
         END DO
         t0 = temp*shefr(icv, 0)
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           DO nd=1,nbdirs
             max8d(nd) = t0d(nd)
           END DO
           max8 = t0
         ELSE
-          max8 = 0.0e0_R8
+          max8 = 0.0_R8
           DO nd=1,nbdirsmax
             max8d(nd) = 0.D0
           END DO
@@ -1367,13 +1341,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           shefrd(nd, icv, 0) = max8d(nd) + switch%b2sihs__rf3*abs14d(nd)
         END DO
         shefr(icv, 0) = max8 + switch%b2sihs__rf3*abs14
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           DO nd=1,nbdirs
             min8d(nd) = t0d(nd)
           END DO
           min8 = t0
         ELSE
-          min8 = 0.0e0_R8
+          min8 = 0.0_R8
           DO nd=1,nbdirsmax
             min8d(nd) = 0.D0
           END DO
@@ -1402,13 +1376,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
         srw%b2sihs_joule(icv) = t0
         t0 = -(switch%b2sihs_phm4*(1.0_R8-switch%boris)*geo%cvvol(icv)*&
 &         shifr(icv, 0))
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           DO nd=1,nbdirs
             max9d(nd) = t0d(nd)
           END DO
           max9 = t0
         ELSE
-          max9 = 0.0e0_R8
+          max9 = 0.0_R8
           DO nd=1,nbdirsmax
             max9d(nd) = 0.D0
           END DO
@@ -1425,19 +1399,19 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           abs16 = -t0
         END IF
 !          shifr(iCv,0) = t0
-!           shifr(iCv,0) = (2.5e0_R8+switch%b2sihs__rf4)*t0
-!           shifr(iCv,3) = -(1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
+!           shifr(iCv,0) = (2.5_R8+switch%b2sihs__rf4)*t0
+!           shifr(iCv,3) = -(1.5_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
         DO nd=1,nbdirs
           shifrd(nd, icv, 0) = max9d(nd) + switch%b2sihs__rf4*abs16d(nd)
         END DO
         shifr(icv, 0) = max9 + switch%b2sihs__rf4*abs16
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           DO nd=1,nbdirs
             min9d(nd) = t0d(nd)
           END DO
           min9 = t0
         ELSE
-          min9 = 0.0e0_R8
+          min9 = 0.0_R8
           DO nd=1,nbdirsmax
             min9d(nd) = 0.D0
           END DO
@@ -1480,12 +1454,12 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !     in case of arbitrary impurity amount see above for b2sigp_style.eq.2
   IF (switch%b2sigp_style .NE. 2) THEN
 !srv 05.07.17
-    CALL B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po, &
-&            pod, ne, ned, ehx, ehxd, nbdirs)
+    CALL B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, ted&
+&            , po, pod, ne, ned, ehx, ehxd, nbdirs)
 !srv 13.01.17
     IF (switch%istyle_joule_heating .EQ. 0) THEN
-      CALL B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po&
-&              , pod, ne, ned, ehy, ehyd, nbdirs)
+      CALL B2XEHY_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
+&              ted, po, pod, ne, ned, ehy, ehyd, nbdirs)
     ELSE
       DO nd=1,nbdirsmax
         ehyd(nd, :) = 0.D0
@@ -1529,13 +1503,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
           t0d(nd) = geo%cvvol(icv)*switch%b2sihs_phm3*wrkcd(nd, icv)
         END DO
         t0 = switch%b2sihs_phm3*geo%cvvol(icv)*wrkc(icv)
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           DO nd=1,nbdirs
             max10d(nd) = t0d(nd)
           END DO
           max10 = t0
         ELSE
-          max10 = 0.0e0_R8
+          max10 = 0.0_R8
           DO nd=1,nbdirsmax
             max10d(nd) = 0.D0
           END DO
@@ -1556,13 +1530,13 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &           b2sihs__rf3*abs18d(nd)
         END DO
         shefr(icv, 0) = shefr(icv, 0) + max10 + switch%b2sihs__rf3*abs18
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           DO nd=1,nbdirs
             min10d(nd) = t0d(nd)
           END DO
           min10 = t0
         ELSE
-          min10 = 0.0e0_R8
+          min10 = 0.0_R8
           DO nd=1,nbdirsmax
             min10d(nd) = 0.D0
           END DO
@@ -1591,13 +1565,9 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       END IF
     END DO
   END IF
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_joule0to3 = shefr
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_DV(arg1, 1.0e0_R8, shefr, shefrd, 1, she0, she0d, 1, &
-&           nbdirs)
+  CALL B2SAXPY_DV(arg1, 1.0_R8, shefr, shefrd, 1, she0, she0d, 1, nbdirs&
+&          )
 !srv 05.07.17
 !srv 11.09.09
 !   ..contribution from atom-atom friction
@@ -1634,19 +1604,19 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &               isb)+rz2(icv, isb)*vti32d(nd, icv))+temp3*(na(icv, is)*&
 &               rz2d(nd, icv, is)+rz2(icv, is)*nad(nd, icv, is))))
               shifrd(nd, icv, 0) = shifrd(nd, icv, 0) + (switch%&
-&               b2sihs__rf4+2.5e0_R8)*t0d(nd)
+&               b2sihs__rf4+2.5_R8)*t0d(nd)
             END DO
             t0 = coef*(1.0_R8-switch%boris)*(temp8*temp4)
-            shifr(icv, 0) = shifr(icv, 0) + (2.5e0_R8+switch%b2sihs__rf4&
-&             )*t0
+            shifr(icv, 0) = shifr(icv, 0) + (2.5_R8+switch%b2sihs__rf4)*&
+&             t0
             temp8 = ni(icv, 0)*ti(icv)
             DO nd=1,nbdirs
               shifrd(nd, icv, 3) = shifrd(nd, icv, 3) - (switch%&
-&               b2sihs__rf4+1.5e0_R8)*(t0d(nd)-t0*(ti(icv)*nid(nd, icv, &
-&               0)+ni(icv, 0)*tid(nd, icv))/temp8)/temp8
+&               b2sihs__rf4+1.5_R8)*(t0d(nd)-t0*(ti(icv)*nid(nd, icv, 0)&
+&               +ni(icv, 0)*tid(nd, icv))/temp8)/temp8
             END DO
-            shifr(icv, 3) = shifr(icv, 3) - (switch%b2sihs__rf4+1.5e0_R8&
-&             )*(t0/temp8)
+            shifr(icv, 3) = shifr(icv, 3) - (switch%b2sihs__rf4+1.5_R8)*&
+&             (t0/temp8)
             b2fraa(mpg%cvreg(icv)) = b2fraa(mpg%cvreg(icv)) + t0
             srw%b2sihs_fraa(icv) = srw%b2sihs_fraa(icv) + t0
           END DO
@@ -1658,13 +1628,9 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !        (We ignore such a term, except for charge exchange friction
 !        between H0 and H1.d0 That term is calculated via the atomic
 !        physics routines.)
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_fraa0to3 = shifr
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_DV(arg1, 1.0e0_R8, shifr, shifrd, 1, shi0, shi0d, 1, &
-&           nbdirs)
+  CALL B2SAXPY_DV(arg1, 1.0_R8, shifr, shifrd, 1, shi0, shi0d, 1, nbdirs&
+&          )
 !srv 11.09.09
   b2str = 0.0_R8
   srw%b2sihs_str = 0.0_R8
@@ -1787,10 +1753,6 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sihs_divue0to3, b2sihs_exbe0to3, &
-& b2sihs_joule0to3, b2sihs_divua0to3, b2sihs_exba0to3, b2sihs_visa0to3, &
-& b2sihs_fraa0to3, balance_netcdf
 !srv 05.07.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
 ! csc The following are not necessary for computation but are needed
@@ -1936,7 +1898,7 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sihs_')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2sihs_ .LT. 3) THEN
@@ -1977,50 +1939,50 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 ! ..compute heat source terms
 !   ..initialize sources to zero
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shn0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shn0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shedu, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shedu, 1)
 !srv 11.09.09 {
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shedd, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shedd, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shefr, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shefr, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shidu, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shidu, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shidun, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shidun, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shidd, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shidd, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shifr, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shifr, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shiva, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shiva, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shivc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shivc, 1)
 !srv 11.09.09 }
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shivan, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shivan, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shivcn, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shivcn, 1)
 !srv 11.09.09 }
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shest, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shest, 1)
 !srv 17.12.13
 !   ..compute the Coulomb logarithm
   CALL B2TLNL_NODIFF(ncv, switch, switch%icase_ii, te, ti, ne, lnlam)
 !lk 31.01.08 }
 !srv 01.07.09  20.09.11
 !   ..contribution from stochastic electron flow
-  IF (switch%fch_stochastic .NE. 0.0e0_R8) THEN
+  IF (switch%fch_stochastic .NE. 0.0_R8) THEN
 !lk 31.01.08 { !srv 17.12.13
     CALL XERRAB('b2sihs_: fch_stochastic not yet available for WG')
   END IF
   arg1 = ncv*4
-  CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shest, 1, she0, 1)
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shest, 1, she0, 1)
 !srv 17.12.13
 !   ..contribution from divergence ue
   IF (switch%b2sihs_style_int_vel .EQ. 0) THEN
@@ -2034,10 +1996,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
   srw%b2sihs_divue = 0.0_R8
   DO icv=1,mpg%nci
     t0 = -(switch%b2sihs_phm0*(1.0_R8-switch%boris)*wrkc(icv))
-    IF (0.0e0_R8 .LT. t0) THEN
+    IF (0.0_R8 .LT. t0) THEN
       max1 = t0
     ELSE
-      max1 = 0.0e0_R8
+      max1 = 0.0_R8
     END IF
     IF (t0 .GE. 0.) THEN
       abs0 = t0
@@ -2046,10 +2008,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
     END IF
     shedu(icv, 0) = shedu(icv, 0) + (max1+switch%b2sihs__rf0*abs0)*ne(&
 &     icv)*te(icv)
-    IF (0.0e0_R8 .GT. t0) THEN
+    IF (0.0_R8 .GT. t0) THEN
       min1 = t0
     ELSE
-      min1 = 0.0e0_R8
+      min1 = 0.0_R8
     END IF
     IF (t0 .GE. 0.) THEN
       abs1 = t0
@@ -2061,12 +2023,8 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 &     icv)
     srw%b2sihs_divue(icv) = t0*ne(icv)*te(icv)
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_divue0to3 = shedu
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shedu, 1, she0, 1)
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shedu, 1, she0, 1)
 !srv 11.09.09
 !   ..contribution from divergence ua
   b2divua = 0.0_R8
@@ -2084,10 +2042,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
       t0 = -(switch%b2sihs_phm1*(na(icv, is)/ni(icv, 0))*(1.0_R8-switch%&
 &       boris)*wrkc(icv))
       IF (switch%tn_style .EQ. 0) THEN
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           max2 = t0
         ELSE
-          max2 = 0.0e0_R8
+          max2 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs2 = t0
@@ -2096,10 +2054,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
         END IF
         shidu(icv, 0) = shidu(icv, 0) + (max2+switch%b2sihs__rf1*abs2)*&
 &         ni(icv, 0)*ti(icv)
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           min2 = t0
         ELSE
-          min2 = 0.0e0_R8
+          min2 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs3 = t0
@@ -2111,10 +2069,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 &         )*ti(icv)
       ELSE IF (switch%tn_style .EQ. 1) THEN
         IF (.NOT.is_neutral(is)) THEN
-          IF (0.0e0_R8 .LT. t0) THEN
+          IF (0.0_R8 .LT. t0) THEN
             max3 = t0
           ELSE
-            max3 = 0.0e0_R8
+            max3 = 0.0_R8
           END IF
           IF (t0 .GE. 0.) THEN
             abs4 = t0
@@ -2123,10 +2081,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
           END IF
           shidu(icv, 0) = shidu(icv, 0) + (max3+switch%b2sihs__rf1*abs4)&
 &           *ni(icv, 0)*ti(icv)
-          IF (0.0e0_R8 .GT. t0) THEN
+          IF (0.0_R8 .GT. t0) THEN
             min3 = t0
           ELSE
-            min3 = 0.0e0_R8
+            min3 = 0.0_R8
           END IF
           IF (t0 .GE. 0.) THEN
             abs5 = t0
@@ -2138,10 +2096,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 &           , 0)*ti(icv)
         END IF
       ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           max4 = t0
         ELSE
-          max4 = 0.0e0_R8
+          max4 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs6 = t0
@@ -2150,10 +2108,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
         END IF
         shidu(icv, 0) = shidu(icv, 0) + (max4+switch%b2sihs__rf1*abs6)*&
 &         ni(icv, 0)*ti(icv)
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           min4 = t0
         ELSE
-          min4 = 0.0e0_R8
+          min4 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs7 = t0
@@ -2165,10 +2123,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 &         )*ti(icv)
       ELSE
         t0 = t0*ni(icv, 0)/nn(icv)
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           max5 = t0
         ELSE
-          max5 = 0.0e0_R8
+          max5 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs8 = t0
@@ -2177,10 +2135,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
         END IF
         shidun(icv, 0) = shidun(icv, 0) + (max5+switch%b2sihs__rf1*abs8)&
 &         *nn(icv)*tn(icv)
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           min5 = t0
         ELSE
-          min5 = 0.0e0_R8
+          min5 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs9 = t0
@@ -2195,18 +2153,14 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 &       icv)
     END DO
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_divua0to3 = shidu
-  END IF
   IF (switch%tn_style .LT. 2) THEN
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shidu, 1, shi0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shidu, 1, shi0, 1)
   ELSE
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shidu, 1, shi0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shidu, 1, shi0, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shidun, 1, shn0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shidun, 1, shn0, 1)
   END IF
 !
 !   ..contribution from divergence of the electrical drift            !srv 02.06.99
@@ -2223,10 +2177,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
     fac_exb_c = fac_exb(mpg%cvfc(mpg%cvfcp(icv, 1)))
 !srv 07.06.00 02.06.99
     t0 = switch%b2sihs_phm5*fac_exb_c*wrkc(icv)
-    IF (0.0e0_R8 .LT. t0) THEN
+    IF (0.0_R8 .LT. t0) THEN
       max6 = t0
     ELSE
-      max6 = 0.0e0_R8
+      max6 = 0.0_R8
     END IF
     IF (t0 .GE. 0.) THEN
       abs10 = t0
@@ -2235,10 +2189,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
     END IF
     shedd(icv, 0) = shedd(icv, 0) + (max6+switch%b2sihs__rf0*abs10)*ne(&
 &     icv)*te(icv)
-    IF (0.0e0_R8 .GT. t0) THEN
+    IF (0.0_R8 .GT. t0) THEN
       min6 = t0
     ELSE
-      min6 = 0.0e0_R8
+      min6 = 0.0_R8
     END IF
     IF (t0 .GE. 0.) THEN
       abs11 = t0
@@ -2249,12 +2203,8 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
     b2exbe(mpg%cvreg(icv)) = b2exbe(mpg%cvreg(icv)) + t0*ne(icv)*te(icv)
     srw%b2sihs_exbe(icv) = t0*ne(icv)*te(icv)
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_exbe0to3 = shedd
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shedd, 1, she0, 1)
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shedd, 1, she0, 1)
 !srv 11.09.09
 !   ..contribution from divergence of the electrical drift            !srv 02.06.99                                              
 ! !srv 02.06.99
@@ -2268,10 +2218,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 !srv 07.06.00 02.06.99
         t0 = switch%b2sihs_phm6*fac_exb_c*(na(icv, is)/ni(icv, 0))*wrkc(&
 &         icv)
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           max7 = t0
         ELSE
-          max7 = 0.0e0_R8
+          max7 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs12 = t0
@@ -2280,10 +2230,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
         END IF
         shidd(icv, 0) = shidd(icv, 0) + (max7+switch%b2sihs__rf1*abs12)*&
 &         ni(icv, 0)*ti(icv)
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           min7 = t0
         ELSE
-          min7 = 0.0e0_R8
+          min7 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs13 = t0
@@ -2291,9 +2241,9 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
           abs13 = -t0
         END IF
 !          shi0(iCv,0) = shi0(iCv,0)+
-!     &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
+!     &      (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
         shidd(icv, 3) = shidd(icv, 3) + min7 - switch%b2sihs__rf1*abs13
-!          shi0(iCv,3) = shi0(iCv,3)+min(0.0e0_R8,t0)-switch%b2sihs__rf1*abs(t0)
+!          shi0(iCv,3) = shi0(iCv,3)+min(0.0_R8,t0)-switch%b2sihs__rf1*abs(t0)
         b2exba(mpg%cvreg(icv)) = b2exba(mpg%cvreg(icv)) + t0*ni(icv, 0)*&
 &         ti(icv)
         srw%b2sihs_exba(icv) = srw%b2sihs_exba(icv) + t0*ni(icv, 0)*ti(&
@@ -2301,12 +2251,8 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
       END DO
     END IF
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_exba0to3 = shidd
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shidd, 1, shi0, 1)
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shidd, 1, shi0, 1)
 !srv 11.09.09
 !   ..contribution from viscous heating
   b2visa = 0.0_R8
@@ -2342,41 +2288,37 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
         t0 = switch%b2sihs_phm2*(1.0_R8-switch%boris)*visc(icv, 0)
         t1 = switch%b2sihs_phm8*(1.0_R8-switch%boris)*visc(icv, 1)
         IF (switch%tn_style .EQ. 0) THEN
-          shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t0
+          shivc(icv, 0) = shivc(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t0
           shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*t0/(ni(icv&
 &           , 0)*ti(icv))
-          shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t1
+          shiva(icv, 0) = shiva(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t1
           shiva(icv, 3) = shiva(icv, 3) - switch%b2sihs__rf2*t1/(ni(icv&
 &           , 0)*ti(icv))
         ELSE IF (switch%tn_style .EQ. 1) THEN
           IF (.NOT.is_neutral(is)) THEN
-            shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&             )*t0
+            shivc(icv, 0) = shivc(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&             t0
             shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*t0/(ni(&
 &             icv, 0)*ti(icv))
-            shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&             )*t1
+            shiva(icv, 0) = shiva(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&             t1
             shiva(icv, 3) = shiva(icv, 3) - switch%b2sihs__rf2*t1/(ni(&
 &             icv, 0)*ti(icv))
           END IF
         ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
-          shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t0
+          shivc(icv, 0) = shivc(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t0
           shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*t0/(ni(icv&
 &           , 0)*ti(icv))
-          shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
-&           t1
+          shiva(icv, 0) = shiva(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*t1
           shiva(icv, 3) = shiva(icv, 3) - switch%b2sihs__rf2*t1/(ni(icv&
 &           , 0)*ti(icv))
         ELSE
-          shivcn(icv, 0) = shivcn(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&           )*t0
+          shivcn(icv, 0) = shivcn(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&           t0
           shivcn(icv, 3) = shivcn(icv, 3) - switch%b2sihs__rf2*t0/(nn(&
 &           icv)*tn(icv))
-          shivan(icv, 0) = shivan(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
-&           )*t1
+          shivan(icv, 0) = shivan(icv, 0) + (1.0_R8+switch%b2sihs__rf2)*&
+&           t1
           shivan(icv, 3) = shivan(icv, 3) - switch%b2sihs__rf2*t1/(nn(&
 &           icv)*tn(icv))
         END IF
@@ -2385,24 +2327,20 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
       END DO
     END IF
   END DO
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_visa0to3 = shivc + shiva
-  END IF
   IF (switch%tn_style .LT. 2) THEN
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shivc, 1, shi0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shivc, 1, shi0, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shiva, 1, shi0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shiva, 1, shi0, 1)
   ELSE IF (switch%tn_style .EQ. 2) THEN
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shivc, 1, shi0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shivc, 1, shi0, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shiva, 1, shi0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shiva, 1, shi0, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shivcn, 1, shn0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shivcn, 1, shn0, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shivan, 1, shn0, 1)
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shivan, 1, shn0, 1)
   END IF
 !srv 05.07.17
 !
@@ -2472,10 +2410,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
     DO icv=1,mpg%nci
       IF (mpg%cvreg(icv) .NE. 0) THEN
         t0 = switch%b2sihs_phm3*geo%cvvol(icv)*shefr(icv, 0)
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           max8 = t0
         ELSE
-          max8 = 0.0e0_R8
+          max8 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs14 = t0
@@ -2484,10 +2422,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
         END IF
 !          shefr(iCv,0) = t0
         shefr(icv, 0) = max8 + switch%b2sihs__rf3*abs14
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           min8 = t0
         ELSE
-          min8 = 0.0e0_R8
+          min8 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs15 = t0
@@ -2500,10 +2438,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
         srw%b2sihs_joule(icv) = t0
         t0 = -(switch%b2sihs_phm4*(1.0_R8-switch%boris)*geo%cvvol(icv)*&
 &         shifr(icv, 0))
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           max9 = t0
         ELSE
-          max9 = 0.0e0_R8
+          max9 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs16 = t0
@@ -2511,13 +2449,13 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
           abs16 = -t0
         END IF
 !          shifr(iCv,0) = t0
-!           shifr(iCv,0) = (2.5e0_R8+switch%b2sihs__rf4)*t0
-!           shifr(iCv,3) = -(1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
+!           shifr(iCv,0) = (2.5_R8+switch%b2sihs__rf4)*t0
+!           shifr(iCv,3) = -(1.5_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
         shifr(icv, 0) = max9 + switch%b2sihs__rf4*abs16
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           min9 = t0
         ELSE
-          min9 = 0.0e0_R8
+          min9 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs17 = t0
@@ -2567,10 +2505,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 !srv 26.11.02
       IF (mpg%cvreg(icv) .NE. 0) THEN
         t0 = switch%b2sihs_phm3*geo%cvvol(icv)*wrkc(icv)
-        IF (0.0e0_R8 .LT. t0) THEN
+        IF (0.0_R8 .LT. t0) THEN
           max10 = t0
         ELSE
-          max10 = 0.0e0_R8
+          max10 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs18 = t0
@@ -2578,10 +2516,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
           abs18 = -t0
         END IF
         shefr(icv, 0) = shefr(icv, 0) + max10 + switch%b2sihs__rf3*abs18
-        IF (0.0e0_R8 .GT. t0) THEN
+        IF (0.0_R8 .GT. t0) THEN
           min10 = t0
         ELSE
-          min10 = 0.0e0_R8
+          min10 = 0.0_R8
         END IF
         IF (t0 .GE. 0.) THEN
           abs19 = t0
@@ -2595,12 +2533,8 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
       END IF
     END DO
   END IF
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_joule0to3 = shefr
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shefr, 1, she0, 1)
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shefr, 1, she0, 1)
 !srv 05.07.17
 !srv 11.09.09
 !   ..contribution from atom-atom friction
@@ -2624,10 +2558,10 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
             t0 = rz2(icv, isb)*rz2(icv, is)*(coef*lnlam(icv)/4.0_R8)*(&
 &             1.0_R8-switch%boris)*na(icv, is)*na(icv, isb)*vti32(icv)*(&
 &             ua(icv, is)-ua(icv, isb))**2
-            shifr(icv, 0) = shifr(icv, 0) + (2.5e0_R8+switch%b2sihs__rf4&
-&             )*t0
-            shifr(icv, 3) = shifr(icv, 3) - (1.5e0_R8+switch%b2sihs__rf4&
-&             )*t0/(ni(icv, 0)*ti(icv))
+            shifr(icv, 0) = shifr(icv, 0) + (2.5_R8+switch%b2sihs__rf4)*&
+&             t0
+            shifr(icv, 3) = shifr(icv, 3) - (1.5_R8+switch%b2sihs__rf4)*&
+&             t0/(ni(icv, 0)*ti(icv))
             b2fraa(mpg%cvreg(icv)) = b2fraa(mpg%cvreg(icv)) + t0
             srw%b2sihs_fraa(icv) = srw%b2sihs_fraa(icv) + t0
           END DO
@@ -2639,12 +2573,8 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 !        (We ignore such a term, except for charge exchange friction
 !        between H0 and H1.d0 That term is calculated via the atomic
 !        physics routines.)
-  IF (balance_netcdf .NE. 0) THEN
-!djm Jan2017
-    b2sihs_fraa0to3 = shifr
-  END IF
   arg1 = ncv*4
-  CALL B2SAXPY_NODIFF(arg1, 1.0e0_R8, shifr, 1, shi0, 1)
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shifr, 1, shi0, 1)
 !srv 11.09.09
   b2str = 0.0_R8
   srw%b2sihs_str = 0.0_R8

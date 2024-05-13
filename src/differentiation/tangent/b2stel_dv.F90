@@ -18,18 +18,11 @@
 SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 & , rt, rtw, srw)
   USE B2MOD_TYPES
-!      use b2mod_diag
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
-!      use b2mod_sources
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMRC_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stel_sna_ion0to1, b2stel_sna_rec0to1&
-& , b2stel_smq_ion0to3, b2stel_smq_rec0to3, b2stel_she0to3, &
-& b2stel_she_ion0to3, b2stel_she_rec0to3, b2stel_shi_ion0to3, &
-& b2stel_shi_rec0to3, balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -79,9 +72,9 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 & ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), she0_ion(&
 & ncv, 0:3), she0_rec(ncv, 0:3), shi0_ion(ncv, 0:3), shi0_rec(ncv, 0:3)&
 & , shn0_ion(ncv, 0:3), shn0_rec(ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, samax, SFILL_NODIFF
+  EXTERNAL XERTST, IPGETI, IPGETR, damax, SFILL_NODIFF
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -117,7 +110,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 !WG_TODO         end if !}
 !WG_TODO       end do !}
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
@@ -149,10 +142,10 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 !    ..test rate coefficients
     DO is=0,ns-2
       IF (.NOT.LNEXT(is, is + 1)) THEN
-        result10 = samax(ncv, rtw%rsa(1, is), 1)
+        result10 = damax(ncv, rtw%rsa(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rsa: nonzero for unrelated species')
-        result10 = samax(ncv, rtw%rra(1, is+1), 1)
+        result10 = damax(ncv, rtw%rra(1, is+1), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rra: nonzero for unrelated species')
       END IF
@@ -509,11 +502,6 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
         srw%she0(icv, 0) = srw%she0(icv, 0) + rf0*t0
         srw%she0(icv, 3) = srw%she0(icv, 3) - (1.0_R8+rf0)*t0/(dv%ne(icv&
 &         )*pl%te(icv))
-        IF (balance_netcdf .NE. 0) THEN
-          b2stel_she0to3(icv, 0, is) = rf0*t0
-          b2stel_she0to3(icv, 3, is) = -((1.0_R8+rf0)*t0/(dv%ne(icv)*pl%&
-&           te(icv)))
-        END IF
         srw%rqahe(icv, is) = srw%rqahe(icv, is) + t0
         rqahereg(mpg%cvreg(icv), is) = rqahereg(mpg%cvreg(icv), is) + t0
 !      ..compute line radiation rate for is->any
@@ -625,17 +613,6 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
   END IF
 !srv 03.02.12 }
 !
-!djm Jan2017 Keep linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2stel_sna_ion0to1 = sna0_ion
-    b2stel_sna_rec0to1 = sna0_rec
-    b2stel_smq_ion0to3 = smq0_ion
-    b2stel_smq_rec0to3 = smq0_rec
-    b2stel_she_ion0to3 = she0_ion
-    b2stel_she_rec0to3 = she0_rec
-    b2stel_shi_ion0to3 = shi0_ion
-    b2stel_shi_rec0to3 = shi0_rec
-  END IF
 !
 ! ..return
   ncall_b2stel = ncall_b2stel + 1
@@ -694,18 +671,11 @@ END SUBROUTINE B2STEL_NODIFF
 SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl, &
 & pld, dv, dvd, rt, rtd, rtw, rtwd, srw, srwd, nbdirs)
   USE B2MOD_TYPES
-!      use b2mod_diag
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
-!      use b2mod_sources
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMRC_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stel_sna_ion0to1, b2stel_sna_rec0to1&
-& , b2stel_smq_ion0to3, b2stel_smq_rec0to3, b2stel_she0to3, &
-& b2stel_she_ion0to3, b2stel_she_rec0to3, b2stel_shi_ion0to3, &
-& b2stel_shi_rec0to3, balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -769,10 +739,10 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl, &
 & smq0_recd(nbdirsmax, ncv, 0:3, 0:ns-1), shi0_iond(nbdirsmax, ncv, 0:3)&
 & , shi0_recd(nbdirsmax, ncv, 0:3), shn0_iond(nbdirsmax, ncv, 0:3), &
 & shn0_recd(nbdirsmax, ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, samax, SFILL_NODIFF
+  EXTERNAL XERTST, IPGETI, IPGETR, damax, SFILL_NODIFF
   EXTERNAL SFILL_DV
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -821,7 +791,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl, &
 !WG_TODO         end if !}
 !WG_TODO       end do !}
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
@@ -853,10 +823,10 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl, &
 !    ..test rate coefficients
     DO is=0,ns-2
       IF (.NOT.LNEXT(is, is + 1)) THEN
-        result10 = samax(ncv, rtw%rsa(1, is), 1)
+        result10 = damax(ncv, rtw%rsa(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rsa: nonzero for unrelated species')
-        result10 = samax(ncv, rtw%rra(1, is+1), 1)
+        result10 = damax(ncv, rtw%rra(1, is+1), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rra: nonzero for unrelated species')
       END IF
@@ -1553,11 +1523,6 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl, &
 &           icv)*pld%te(nd, icv)))/temp2
         END DO
         srw%she0(icv, 3) = srw%she0(icv, 3) - temp
-        IF (balance_netcdf .NE. 0) THEN
-          b2stel_she0to3(icv, 0, is) = rf0*t0
-          b2stel_she0to3(icv, 3, is) = -((1.0_R8+rf0)*t0/(dv%ne(icv)*pl%&
-&           te(icv)))
-        END IF
         srw%rqahe(icv, is) = srw%rqahe(icv, is) + t0
         rqahereg(mpg%cvreg(icv), is) = rqahereg(mpg%cvreg(icv), is) + t0
 !      ..compute line radiation rate for is->any
@@ -1677,17 +1642,6 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl, &
   END IF
 !srv 03.02.12 }
 !
-!djm Jan2017 Keep linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2stel_sna_ion0to1 = sna0_ion
-    b2stel_sna_rec0to1 = sna0_rec
-    b2stel_smq_ion0to3 = smq0_ion
-    b2stel_smq_rec0to3 = smq0_rec
-    b2stel_she_ion0to3 = she0_ion
-    b2stel_she_rec0to3 = she0_rec
-    b2stel_shi_ion0to3 = shi0_ion
-    b2stel_shi_rec0to3 = shi0_rec
-  END IF
 !
 ! ..return
   ncall_b2stel = ncall_b2stel + 1

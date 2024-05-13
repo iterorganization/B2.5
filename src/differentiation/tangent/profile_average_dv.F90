@@ -27,6 +27,7 @@ SUBROUTINE PROFILE_AVERAGE_NODIFF(laststep, itim, ntim_batch, nx, ny, ns&
 !
   INTEGER, INTENT(IN) :: itim, ntim_batch, nx, ny, ns
   LOGICAL, INTENT(IN) :: laststep
+!
   REAL(kind=r8), ALLOCATABLE, SAVE :: na_mean(:, :, :), te_mean(:, :), &
 & ti_mean(:, :), ua_mean(:, :, :), po_mean(:, :), kt_mean(:, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: e_na(:, :, :), e_te(:, :), e_ti(:&
@@ -107,6 +108,7 @@ SUBROUTINE PROFILE_AVERAGE_NODIFF(laststep, itim, ntim_batch, nx, ny, ns&
     e_shi = 0.0_R8
     e_sch = 0.0_R8
     e_smo = 0.0_R8
+!
     iun = 3
     OPEN(unit=iun, file='aver.dat', access='SEQUENTIAL', form=&
 &  'FORMATTED', status='OLD', iostat=io) 
@@ -232,6 +234,7 @@ SUBROUTINE PROFILE_AVERAGE_NODIFF(laststep, itim, ntim_batch, nx, ny, ns&
     CALL BATCH_AVERAGE_SQ(n2, sch, e_sch, itp, ntim_batch)
     arg1 = n2*ns
     CALL BATCH_AVERAGE_SQ(arg1, smo, e_smo, itp, ntim_batch)
+!
 !        gnew = 1.0_R8 / naver
 !        gold = (naver - 1) * gnew
 !
@@ -339,27 +342,27 @@ SUBROUTINE PROFILE_AVERAGE_NODIFF(laststep, itim, ntim_batch, nx, ny, ns&
     CALL CFWURE(iun, n2, sch_mean, 'sch_mean')
     arg1 = n2*ns
     CALL CFWURE(iun, arg1, smo_mean, 'smo_mean')
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_te(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_ti(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_po(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        (((e_sna(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_sne(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_she(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_shi(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .        ((e_sch(ix,iy),ix=-1,nx),iy=-1,ny)
-!        write (iun,'(6es24.16)') 
+!        write (iun,'(6es24.16)')
 !     .       (((e_smo(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 !
     CLOSE(iun) 

@@ -76,11 +76,11 @@ FUNCTION SFLUXAV_NODIFF(quant, mpg, geo, ift, nlambda, bmax) RESULT (&
       ELSE
         icp = mpg%ftcv(mpg%ftcvp(ift, 1))
       END IF
-      arg1 = 1._R8 - nlambda*geo%cvbb(icm, 3)/bmax
+      arg1 = 1.0_R8 - nlambda*geo%cvbb(icm, 3)/bmax
       quantn(icm) = SQRT(arg1)
-      arg1 = 1._R8 - nlambda*geo%cvbb(icv, 3)/bmax
+      arg1 = 1.0_R8 - nlambda*geo%cvbb(icv, 3)/bmax
       quantn(icv) = SQRT(arg1)
-      arg1 = 1._R8 - nlambda*geo%cvbb(icp, 3)/bmax
+      arg1 = 1.0_R8 - nlambda*geo%cvbb(icp, 3)/bmax
       quantn(icp) = SQRT(arg1)
       qm = (quantn(icm)*geo%cvhx(icv)/geo%cvbb(icv, 0)+quantn(icv)*geo%&
 &       cvhx(icm)/geo%cvbb(icm, 0))/(geo%cvhx(icm)/geo%cvbb(icm, 0)+geo%&

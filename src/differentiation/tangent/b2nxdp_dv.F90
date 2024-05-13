@@ -47,7 +47,7 @@ SUBROUTINE B2NXDP_DV(ncv, mpg, solvereg, qe, te, ted, nep, nepd, ne, ned&
 !   ..initialisation
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdp')
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(0.0_R8 .LT. qe, 'faulty argument qe')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdp .LT. 3) THEN
@@ -114,7 +114,7 @@ SUBROUTINE B2NXDP_NODIFF(ncv, mpg, solvereg, qe, te, nep, ne, delpo)
 !   ..initialisation
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdp')
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(0.0_R8 .LT. qe, 'faulty argument qe')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdp .LT. 3) THEN

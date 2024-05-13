@@ -10,12 +10,12 @@
 !                *(co.hci_exb) *(co.sigx_kt) *(pl.na) *(pl.te)
 !                *(pl.ti) *(pl.kt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.vaecrb:in
-!                geo.cvbb:in geo.cvvol:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in geo.cvconn:in
-!                st_ext.am:in st_ext.na:in st_ext.ta:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.sigx_kt:in pl.na:in
-!                pl.te:in pl.ti:in pl.kt:in
+!                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvvol:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in geo.cvconn:in st_ext.am:in st_ext.na:in
+!                st_ext.ta:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.sigx_kt:in pl.na:in pl.te:in pl.ti:in pl.kt:in
 !
 !
 !
@@ -31,8 +31,8 @@
 !.specification
 !
 SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
-& geod, mpg, pl, pld, dv, dvd, rza, co, cod, st_ext, st_extd, she0, &
-& she0d, shi0, shi0d, skt0, skt0d, skt_prod, skt_prodd, skt_diss, &
+& geod, mpg, mpgd, pl, pld, dv, dvd, rza, co, cod, st_ext, st_extd, she0&
+& , she0d, shi0, shi0d, skt0, skt0d, skt_prod, skt_prodd, skt_diss, &
 & skt_dissd, nbdirs)
   USE B2MOD_TYPES
 !      use b2mod_indirect
@@ -76,6 +76,7 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(IN) :: dv
@@ -174,7 +175,7 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
     END IF
   END IF
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2sikt .LT. 3) THEN
@@ -194,23 +195,22 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 ! ..compute heat source terms
 !   ..initialize sources to zero
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, skt0, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_prod, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_diss, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, skt0, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_prod, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_diss, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dnac, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dnac, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dlbc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dlbc, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtec, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtec, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtic, 1)
-  arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dktc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtic, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, dktc, 1)
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
@@ -274,17 +274,18 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
       DO nd=1,nbdirsmax
         wrkvd(nd, :) = 0.D0
       END DO
-      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%na(:, ismain), &
-&             pld%na(:, :, ismain), wrkv, wrkvd, dnac, dnacd, nbdirs)
+      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%na(:, &
+&             ismain), pld%na(:, :, ismain), wrkv, wrkvd, dnac, dnacd, &
+&             nbdirs)
       DO nd=1,nbdirsmax
         wrksd(nd, :) = 0.D0
       END DO
-      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrks, wrksd, wrkv&
-&             , wrkvd, dlbc, dlbcd, nbdirs)
-      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%te, pld%te, &
-&             wrkv, wrkvd, dtec, dtecd, nbdirs)
-      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%ti, pld%ti, &
-&             wrkv, wrkvd, dtic, dticd, nbdirs)
+      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrks, wrksd&
+&             , wrkv, wrkvd, dlbc, dlbcd, nbdirs)
+      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%te, pld%&
+&             te, wrkv, wrkvd, dtec, dtecd, nbdirs)
+      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%ti, pld%&
+&             ti, wrkv, wrkvd, dtic, dticd, nbdirs)
 !      ..computations for sink due to Reynolds stress
       IF (switch%b2sikt_fac_vis_rs .NE. 0.0_R8) THEN
         CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, dv%vaecrb(:, 0, &
@@ -297,11 +298,11 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
         temp = am(ismain)*mp*co%dna_exb*switch%b2sikt_fac_vis_rs*wrk2 + &
 &         pl%kt
         temp0 = pl%na(:, ismain)*wrk2/3.0_R8
-        CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, wrk0, wrk0d&
-&                   , dv%vaecrb(:, 0, ismain), dvd%vaecrb(:, :, 0, &
+        CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, wrk0, &
+&                   wrk0d, dv%vaecrb(:, 0, ismain), dvd%vaecrb(:, :, 0, &
 &                   ismain), wrkg0, wrkg0d, nbdirs)
-        CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, wrk1, wrk1d&
-&                   , dv%vaecrb(:, 1, ismain), dvd%vaecrb(:, :, 1, &
+        CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, wrk1, &
+&                   wrk1d, dv%vaecrb(:, 1, ismain), dvd%vaecrb(:, :, 1, &
 &                   ismain), wrkg1, wrkg1d, nbdirs)
         DO nd=1,nbdirs
           wrk2d(nd, :) = dlbc(:, 0)*wrk0d(nd, :) + wrk0*dlbcd(nd, :, 0) &
@@ -318,8 +319,8 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
         wrks = -(geo%cvvol*2.0_R8*(temp0*temp))
         wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
         wrk2 = wrk0*geo%cvbb(:, 3)/geo%cvbb(:, 2)
-        CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, wrk2, wrk2d&
-&                   , wrkf, wrkfd, wrkg2, wrkg2d, nbdirs)
+        CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, wrk2, &
+&                   wrk2d, wrkf, wrkfd, wrkg2, wrkg2d, nbdirs)
         temp1 = 2.0_R8*geo%cvvol*am(ismain)*mp
         temp = wrkg0(:, 0)*wrkg0(:, 0) + wrkg1(:, 1)*wrkg1(:, 1) + &
 &         0.5_R8*(wrkg0(:, 1)*wrkg0(:, 1)+wrkg1(:, 0)*wrkg1(:, 0)+wrkg2(&
@@ -419,8 +420,8 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
           END WHERE
         END DO
         result12 = temp6
-        CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, result12, &
-&                 result12d, wrkv, wrkvd, dktc, dktcd, nbdirs)
+        CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, result12&
+&                 , result12d, wrkv, wrkvd, dktc, dktcd, nbdirs)
         DO nd=1,nbdirs
           wrk3d(nd, :) = geo%cvvol*(dktc**2*cod%sigx_kt(nd, :)+co%&
 &           sigx_kt*2*dktc*dktcd(nd, :))
@@ -624,12 +625,12 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
     wrks = -(2.0_R8/3.0_R8*geo%cvvol*pl%na(:, ismain)*wrk2*(switch%&
 &     b2sikt_fac_vis_rs*co%dna_exb*am(ismain)*mp*wrk2+pl%kt))
     CALL MY_OUT_US(70, ncv, 0, wrks, 'b2sikt_RS_symmetric')
-    CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, wrk0, wrk0d, dv%&
-&               vaecrb(:, 0, ismain), dvd%vaecrb(:, :, 0, ismain), wrkg0&
-&               , wrkg0d, nbdirs)
-    CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, wrk1, wrk1d, dv%&
-&               vaecrb(:, 1, ismain), dvd%vaecrb(:, :, 1, ismain), wrkg1&
-&               , wrkg1d, nbdirs)
+    CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, wrk0, &
+&               wrk0d, dv%vaecrb(:, 0, ismain), dvd%vaecrb(:, :, 0, &
+&               ismain), wrkg0, wrkg0d, nbdirs)
+    CALL GRADC_DIV_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, wrk1, &
+&               wrk1d, dv%vaecrb(:, 1, ismain), dvd%vaecrb(:, :, 1, &
+&               ismain), wrkg1, wrkg1d, nbdirs)
     wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
     wrk2 = wrk0*geo%cvbb(:, 3)/geo%cvbb(:, 2)
     CALL GRADC_DIV_NODIFF(ncv, nfc, nvx, 1, geo, mpg, wrk2, wrkf, wrkg2)
@@ -645,8 +646,6 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2SIKT_DV
-!
-!
 
 !
 !
@@ -766,7 +765,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
     END IF
   END IF
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2sikt .LT. 3) THEN
@@ -786,23 +785,22 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 ! ..compute heat source terms
 !   ..initialize sources to zero
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, skt0, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_prod, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_diss, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, skt0, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_prod, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_diss, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dnac, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dnac, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dlbc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dlbc, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtec, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtec, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtic, 1)
-  arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dktc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtic, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, dktc, 1)
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
@@ -1015,6 +1013,4 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2SIKT_NODIFF
-!
-!
 

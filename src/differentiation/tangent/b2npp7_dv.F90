@@ -80,8 +80,7 @@ SUBROUTINE B2NPP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, rxf, ne, te&
 !   ..procedures
   EXTERNAL XERTST
 !srv 06.07.00
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USP7_NODIFF, &
-&     B2UPPO_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USP7_NODIFF, B2UPPO
   INTEGER :: arg1
 !   ..initialisation
   DATA ncall /0/

@@ -98,7 +98,7 @@ SUBROUTINE B2SQCX_DV(ncv, ns, ev, switch, amh0, th0, th0d, thn0, thn0d, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqcx')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev, amh0
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
@@ -244,7 +244,7 @@ SUBROUTINE B2SQCX_NODIFF(ncv, ns, ev, switch, amh0, th0, thn0, rlcx0, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqcx')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev, amh0
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')

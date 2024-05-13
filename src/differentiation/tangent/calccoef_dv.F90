@@ -40,10 +40,10 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo, flod, con, cond, &
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     CALCCOEF computes the coefficients flo0 and con0 for the 
+!     CALCCOEF computes the coefficients flo0 and con0 for the
 !     linearization of the total (poloidal + radial) convective-conductive
 !     flow across a face in the standardized form
-!     
+!
 !     flow = 0.5*flo0(,0)*(phi_c1 + phi_c2) - con0(,0)*(phi_c2 - phi_c1)
 !          + 0.5*flo0(,1)*(phi_v1 + phi_v2) - con0(,1)*(phi_v2 - phi_v1)
 !
@@ -52,7 +52,6 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo, flod, con, cond, &
 !     flo(nFc,1) contains the convective coefficient, radial direction
 !     con(nFc,0) contains the conductive coefficient, poloidal direction
 !     con(nFc,1) contains the conductive coefficient, radial direction
-!     
 !
 !-----------------------------------------------------------------------
 !.declarations
@@ -89,7 +88,7 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo, flod, con, cond, &
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
   IF (meth .EQ. 0) THEN
 ! CENTRAL scheme
@@ -228,7 +227,7 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo, flod, con, cond, &
 !        t00 = geo%fcQalf(iFc,0)
       t01 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 1)/(geo%fcqalf(ifc, 0)+eps)
-!        t10 = geo%fcQalf(iFc,1) 
+!        t10 = geo%fcQalf(iFc,1)
       t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 0)/(geo%fcqalf(ifc, 1)+eps)
       flo0(ifc, 0) = flo(ifc, 0) + flo(ifc, 1)
@@ -268,20 +267,19 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo, flod, con, cond, &
     END DO
   ELSE IF (meth .EQ. 3) THEN
 !
-!
 ! SOLPS4 continuity scheme
 !
     CALL XERRAB('calccoef -- meth 3 to be implemented')
 !
   ELSE
-    CALL XERRAB('calccoef -- wrong value of meth')
-  END IF
 !
+    CALL XERRAB('calccoef -- wrong value of meth')
+!
+  END IF
 !
 !   ..return
   RETURN
 END SUBROUTINE CALCCOEF_DV
-!
 
 !
 !
@@ -315,10 +313,10 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     CALCCOEF computes the coefficients flo0 and con0 for the 
+!     CALCCOEF computes the coefficients flo0 and con0 for the
 !     linearization of the total (poloidal + radial) convective-conductive
 !     flow across a face in the standardized form
-!     
+!
 !     flow = 0.5*flo0(,0)*(phi_c1 + phi_c2) - con0(,0)*(phi_c2 - phi_c1)
 !          + 0.5*flo0(,1)*(phi_v1 + phi_v2) - con0(,1)*(phi_v2 - phi_v1)
 !
@@ -327,7 +325,6 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
 !     flo(nFc,1) contains the convective coefficient, radial direction
 !     con(nFc,0) contains the conductive coefficient, poloidal direction
 !     con(nFc,1) contains the conductive coefficient, radial direction
-!     
 !
 !-----------------------------------------------------------------------
 !.declarations
@@ -352,7 +349,7 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
   REAL(kind=r8) :: result1
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
   IF (meth .EQ. 0) THEN
 ! CENTRAL scheme
@@ -435,7 +432,7 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
 !        t00 = geo%fcQalf(iFc,0)
       t01 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 1)/(geo%fcqalf(ifc, 0)+eps)
-!        t10 = geo%fcQalf(iFc,1) 
+!        t10 = geo%fcQalf(iFc,1)
       t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 0)/(geo%fcqalf(ifc, 1)+eps)
 !    ..convective contributions to flob0, conb0
@@ -459,18 +456,17 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
     END DO
   ELSE IF (meth .EQ. 3) THEN
 !
-!
 ! SOLPS4 continuity scheme
 !
     CALL XERRAB('calccoef -- meth 3 to be implemented')
 !
   ELSE
-    CALL XERRAB('calccoef -- wrong value of meth')
-  END IF
 !
+    CALL XERRAB('calccoef -- wrong value of meth')
+!
+  END IF
 !
 !   ..return
   RETURN
 END SUBROUTINE CALCCOEF_NODIFF
-!
 

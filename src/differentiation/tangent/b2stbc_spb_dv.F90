@@ -134,40 +134,40 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv
   REAL(kind=r8) :: fchy_dia
 !sv 25.04.00
-  REAL(kind=r8), SAVE :: y_dia=1.0e0_R8
-  REAL(kind=r8), SAVE :: y_inertia=1.0e0_R8
+  REAL(kind=r8), SAVE :: y_dia=1.0_R8
+  REAL(kind=r8), SAVE :: y_inertia=1.0_R8
 !sv 31.08.00
-  REAL(kind=r8), SAVE :: biasing_cur=0.0e0_R8
+  REAL(kind=r8), SAVE :: biasing_cur=0.0_R8
 !sv 09.07.99
 !sv 21.10.02
 !sv 21.10.02
 !sv 21.10.02
-  REAL(kind=r8), SAVE :: fchy_dia_at_pr=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_in_at_pr=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_vispar_at_pr=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_visq_at_pr=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_visper_at_pr=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_inert_at_pr=0.0e0_R8
+  REAL(kind=r8), SAVE :: fchy_dia_at_pr=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_in_at_pr=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_vispar_at_pr=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_visq_at_pr=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_visper_at_pr=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_inert_at_pr=0.0_R8
 !sv 09.07.99
 !sv 21.10.02
 !sv 21.10.02
 !sv 21.10.02
 !sv 21.10.02
 !sv 21.10.02
-  REAL(kind=r8), SAVE :: fchy_dia_at_north=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_in_at_north=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_vispar_at_north=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_visq_at_north=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_visper_at_north=0.0e0_R8
-  REAL(kind=r8), SAVE :: fchy_inert_at_north=0.0e0_R8
+  REAL(kind=r8), SAVE :: fchy_dia_at_north=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_in_at_north=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_vispar_at_north=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_visq_at_north=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_visper_at_north=0.0_R8
+  REAL(kind=r8), SAVE :: fchy_inert_at_north=0.0_R8
 !sv 16.11.04
-  REAL(kind=r8), SAVE :: po_in_lower=0.0e0_R8
-  REAL(kind=r8), SAVE :: po_in_upper=0.0e0_R8
+  REAL(kind=r8), SAVE :: po_in_lower=0.0_R8
+  REAL(kind=r8), SAVE :: po_in_upper=0.0_R8
 !iyv 22.04.08
-  REAL(kind=r8), SAVE :: phm0=1.0e0_R8
-  REAL(kind=r8), SAVE :: phm1=1.0e0_R8
-  REAL(kind=r8), SAVE :: phm2=1.0e0_R8
-  REAL(kind=r8), SAVE :: ubig0=0.0e0_R8
+  REAL(kind=r8), SAVE :: phm0=1.0_R8
+  REAL(kind=r8), SAVE :: phm1=1.0_R8
+  REAL(kind=r8), SAVE :: phm2=1.0_R8
+  REAL(kind=r8), SAVE :: ubig0=0.0_R8
 !sv 11.07.05
   CHARACTER :: chns*3, chk*1
 !sv 11.07.05
@@ -180,6 +180,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 18.01.02
   EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XXGS, B2XPPZ_NODIFF
   INTRINSIC MAXVAL
+  INTRINSIC REAL
   REAL(r8) :: y1
   REAL(r8) :: y2
   REAL(kind=r8) :: y3
@@ -308,7 +309,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
     CALL IPGETI('b2stbc_iout', iout)
 !sv 11.07.05
     CALL IPGETR('b2stbc_ubig0', ubig0)
-!iyv 22.04.08 
+!iyv 22.04.08
     CALL IPGETI('b2stbc_istyle_cs', istyle_cs)
 !sv 25.04.08
   END IF
@@ -333,15 +334,15 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
   END IF
 !   ..initialize sources to 0
   arg1 = n2*2*ns
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, sna0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, sna0, 1)
   arg1 = n2*4*ns
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, smo0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smo0, 1)
   arg1 = n2*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0, 1)
   arg1 = n2*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = n2*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, sch0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, sch0, 1)
 !srv 29.07.08
   facdriftm = MAXVAL(facdrift)
 !
@@ -369,9 +370,9 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 24.03.99
       iy = -1
 !sv 24.03.99 18.01.02
-      pzsum = 0.0e0_R8
+      pzsum = 0.0_R8
 !sv 24.03.99
-      volsum = 0.0e0_R8
+      volsum = 0.0_R8
 !sv 26.11.02
       DO ix=-1,nx
 !sv 26.11.02
@@ -391,9 +392,9 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 24.03.99  07.06.02 {
       iy = 0
 !sv 24.03.99 18.01.02
-      pzsum = 0.0e0_R8
+      pzsum = 0.0_R8
 !sv 24.03.99
-      volsum = 0.0e0_R8
+      volsum = 0.0_R8
 !sv 26.11.02
       num_inner = 0
 !sv 26.11.02
@@ -412,21 +413,21 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
       END DO
 !sv 24.03.99
 !sv 24.03.99 18.01.02 07.06.02 } 26.11.02
-      pzaverage = pzsum*0.5e0_R8/num_inner
+      pzaverage = pzsum*0.5_R8/REAL(num_inner, r8)
     END IF
 !   ..find the average ne, te, ti, bb for inner flux surface      !sv 15.12.00 18.10.04
 !sv 18.10.04
-    bbsum = 0.0e0_R8
+    bbsum = 0.0_R8
 !sv 15.12.00 25.01.02
-    nesum = 0.0e0_R8
+    nesum = 0.0_R8
 !sv 15.12.00
-    tesum = 0.0e0_R8
+    tesum = 0.0_R8
 !sv 15.12.00
-    tisum = 0.0e0_R8
+    tisum = 0.0_R8
 !lk 20.11.07
-    bzhzsum = 0.0e0_R8
+    bzhzsum = 0.0_R8
 !lk 20.11.07
-    bbaverage = 0.0e0_R8
+    bbaverage = 0.0_R8
 !sv 26.11.02
     DO ix=-1,nx
 !sv 26.11.02
@@ -454,10 +455,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !   ..find the average ua**2, na for inner flux surface           !sv 22.01.02 {
     DO is=0,ns-1
 !sv 15.02.02
-      uasum = 0.0e0_R8
+      uasum = 0.0_R8
 !sv 07.04.00 15.02.02
-      ua2sum = 0.0e0_R8
-      nasum = 0.0e0_R8
+      ua2sum = 0.0_R8
+      nasum = 0.0_R8
 !sv 26.11.02
       DO ix=-1,nx
 !sv 26.11.02
@@ -480,7 +481,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !   ..loop over boundary cells
     DO ix=-1,nx
 !    ..update ireg
- 1    IF (cbrbrk(ireg)*nx .LT. ix + 0.5e0_R8) THEN
+ 1    IF (cbrbrk(ireg)*nx .LT. ix + 0.5_R8) THEN
         CALL XERTST(ireg .LT. cbirso + cbnrso - 1, &
 &             'error in computing region on south boundary')
         ireg = ireg + 1
@@ -529,19 +530,19 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
         result2 = EXPU2(arg2)
         fche = result1*qe*ne(ix, -1)*vte*s1*result2
 !sv 01.07.99
-        fchy_dia = 0.0e0_R8
+        fchy_dia = 0.0_R8
 !sv 07.04.00
-        fchy_inertia = 0.0e0_R8
+        fchy_inertia = 0.0_R8
 !sv 31.08.00
-        fchy_biasing_cur = 0.0e0_R8
+        fchy_biasing_cur = 0.0_R8
 !sv 09.07.99
-        IF (facdriftm .NE. 0.0e0_R8) THEN
+        IF (facdriftm .NE. 0.0_R8) THEN
 !sv
 !sv 09.07.99
           IF (.NOT.on_closed_surface(ix, -1)) THEN
 !sv 26.11.02
 !           for PR
-            IF (fchy_dia_at_pr .NE. 0.0e0_R8) THEN
+            IF (fchy_dia_at_pr .NE. 0.0_R8) THEN
 !sv 09.07.99
 !sv 21.10.02
               iy = 0
@@ -549,7 +550,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
               fchy_dia = fchdia(ix, iy, 1, 1)
             ELSE
 !sv 09.07.99
-              fchy_dia = 0.0e0_R8
+              fchy_dia = 0.0_R8
             END IF
           ELSE
 !sv
@@ -564,30 +565,30 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &             onedbsqc(rightix(ix, iy), rightiy(ix, iy))-onedbsqc(ix, iy&
 &             )))
 !     &      *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 01.07.99 20.11.07 {
-!     ^       /2.0e0_R8                                           !sv 01.07.99
+!     ^       /2.0_R8                                             !sv 01.07.99
 !     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))   !sv 01.07.99
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 01.07.99
 !sv 25.06.03
-            fchy_inertia = 0.0e0_R8
+            fchy_inertia = 0.0_R8
 !sv 25.06.03
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) THEN
 !sv 25.06.03
 !sv 07.04.00 25.06.03
 ! *signmf !sv 07.04.00 21.04.00 21.10.02 11.01.13
-!lk 20.11.07                       !sv 07.04.00
+!lk 20.11.07  !sv 07.04.00
 !sv 07.04.00 15.02.02
 !lk 20.11.07
 !sv 07.04.00
-                fchy_inertia = fchy_inertia - 0.5e0_R8*am(is)*mp*&
-&                 facdrift(ix, iy)*phm1*naaverage(is)*ua2average(is)*&
-&                 bzhzaverage*(onedbsqc(rightix(ix, iy), rightiy(ix, iy)&
-&                 )-onedbsqc(ix, iy))
+                fchy_inertia = fchy_inertia - 0.5_R8*am(is)*mp*facdrift(&
+&                 ix, iy)*phm1*naaverage(is)*ua2average(is)*bzhzaverage*&
+&                 (onedbsqc(rightix(ix, iy), rightiy(ix, iy))-onedbsqc(&
+&                 ix, iy))
 !     &        *(                                                 !sv 07.04.00
 !     &          na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)   !sv 07.04.00
-!     &         )/2.0e0_R8                                        !sv 07.04.00
+!     &         )/2.0_R8                                          !sv 07.04.00
 !     &        *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 07.04.00
-!     &         /2.0e0_R8                                         !sv 07.04.00
+!     &         /2.0_R8                                           !sv 07.04.00
 !     &        *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy))) !sv 07.04.00
 !     &        /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 07.04.00
               END IF
@@ -643,22 +644,22 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 02.03.05 }
 !    ..drifts to the wall                                         !sv 02.03.05 {
           IF (idrifts_to_the_wall .NE. 0) THEN
-            IF (.NOT.is_neutral(is) .AND. cbsna(2, is, ireg) .NE. &
-&               0.0e0_R8) THEN
+            IF (.NOT.is_neutral(is) .AND. cbsna(2, is, ireg) .NE. 0.0_R8&
+&           ) THEN
               IF (mdf_fnb .EQ. 0) THEN
-                IF (0.0e0_R8 .GT. s0*(vadia(ix, 0, 1, 1, is)+vaecrb(ix, &
-&                   0, 1, 1, is))) THEN
+                IF (0.0_R8 .GT. s0*(vadia(ix, 0, 1, 1, is)+vaecrb(ix, 0&
+&                   , 1, 1, is))) THEN
                   min1 = s0*(vadia(ix, 0, 1, 1, is)+vaecrb(ix, 0, 1, 1, &
 &                   is))
                 ELSE
-                  min1 = 0.0e0_R8
+                  min1 = 0.0_R8
                 END IF
                 sna0(ix, -1, 1, is) = sna0(ix, -1, 1, is) + min1
               ELSE
-                IF (0.0e0_R8 .GT. s0*vaecrb(ix, 0, 1, 1, is)) THEN
+                IF (0.0_R8 .GT. s0*vaecrb(ix, 0, 1, 1, is)) THEN
                   min2 = s0*vaecrb(ix, 0, 1, 1, is)
                 ELSE
-                  min2 = 0.0e0_R8
+                  min2 = 0.0_R8
                 END IF
                 sna0(ix, -1, 1, is) = sna0(ix, -1, 1, is) + min2
               END IF
@@ -670,7 +671,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 15.02.02
 ! only core region and drifts !sv 27.07.05
             IF (.NOT.is_neutral(is)) THEN
-!     &     *(2.0e0_R8*vadia(ix,iy,1,1,is))
+!     &     *(2.0_R8*vadia(ix,iy,1,1,is))
 !sv 25.07.05
 !sv 15.02.02 {
               SELECT CASE  (iform_corr_dia) 
@@ -686,13 +687,13 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 15.02.02
 !sv 08.09.03 25.07.05
                 smo0(ix, -1, 0, is) = smo0(ix, -1, 0, is) + s0hz*(am(is)&
-&                 *mp)*naaverage(is)*(-(2.0e0_R8*facdrift(ix, iy)*phm2*&
+&                 *mp)*naaverage(is)*(-(2.0_R8*facdrift(ix, iy)*phm2*&
 &                 tiaverage*bb(ix, iy, 2)/(qe*rza(ix, iy, is)*hx(ix, iy)&
 &                 )*(onedbsqc(rightix(ix, iy), rightiy(ix, iy))-onedbsqc&
 &                 (ix, iy))))*uaaverage(is) + switch%b2stbc_corr_flux*&
 &                 s0hz
               CASE (1) 
-!     &     *(2.0e0_R8*vadia(ix,iy,1,is))
+!     &     *(2.0_R8*vadia(ix,iy,1,is))
 !sv 15.02.02
                 iy = -1
 !sv 09.01.01 01.07.05
@@ -703,7 +704,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 25.07.05
 !sv 08.09.03 25.07.05
                 smo0(ix, -1, 0, is) = smo0(ix, -1, 0, is) + s0hz*(am(is)&
-&                 *mp)*naaverage(is)*(-(2.0e0_R8*facdrift(ix, iy)*phm2*&
+&                 *mp)*naaverage(is)*(-(2.0_R8*facdrift(ix, iy)*phm2*&
 &                 tiaverage*bb(ix, iy, 2)/(qe*rza(ix, iy, is)*hx(ix, iy)&
 &                 )*(onedbsqc(rightix(ix, iy), rightiy(ix, iy))-onedbsqc&
 &                 (ix, iy))))*ua(ix, iy, is) + switch%b2stbc_corr_flux*&
@@ -716,10 +717,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &           *s0hz
 !sv 01.07.05
           smo0(ix, -1, 1, is) = smo0(ix, -1, 1, is)
-          IF (0.0e0_R8 .LT. fna_fcor(ix, 0, 1, 1, is)) THEN
+          IF (0.0_R8 .LT. fna_fcor(ix, 0, 1, 1, is)) THEN
             max1 = fna_fcor(ix, 0, 1, 1, is)
           ELSE
-            max1 = 0.0e0_R8
+            max1 = 0.0_R8
           END IF
 !sv 01.07.05
 !sv 09.01.01
@@ -732,10 +733,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 18.10.04 }
           smo0(ix, -1, 2, is) = smo0(ix, -1, 2, is) + cbsmo(7, is, ireg)&
 &           *s0hz*(bbaverage/bb(ix, iy, 3))
-          IF (0.0e0_R8 .LT. -fna_fcor(ix, 0, 1, 1, is)) THEN
+          IF (0.0_R8 .LT. -fna_fcor(ix, 0, 1, 1, is)) THEN
             max2 = -fna_fcor(ix, 0, 1, 1, is)
           ELSE
-            max2 = 0.0e0_R8
+            max2 = 0.0_R8
           END IF
 !sv 01.07.05
 !sv 09.01.01
@@ -747,10 +748,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &           (ix, -1, is)
 !     ..compute atom heat source
           t0 = na(ix, -1, is)/ni(ix, -1, 0)
-          IF (0.0e0_R8 .LT. fna(ix, 0, 1, 1, is)) THEN
+          IF (0.0_R8 .LT. fna(ix, 0, 1, 1, is)) THEN
             max3 = fna(ix, 0, 1, 1, is)
           ELSE
-            max3 = 0.0e0_R8
+            max3 = 0.0_R8
           END IF
           shi0(ix, -1, 0) = shi0(ix, -1, 0) + cbshi(0, is, ireg)*t0*s0 +&
 &           cbshi(6, is, ireg)*max3
@@ -759,27 +760,27 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &           s0 + cbshi(3, is, ireg)*t0*csb*s1 + cbshi(4, is, ireg)*t0*&
 &           cst*s0 + cbshi(5, is, ireg)*t0*cst*s1
         END DO
-        IF (0.0e0_R8 .LT. -floi_noc(ix, 0, 1, 1)) THEN
+        IF (0.0_R8 .LT. -floi_noc(ix, 0, 1, 1)) THEN
           max4 = -floi_noc(ix, 0, 1, 1)
         ELSE
-          max4 = 0.0e0_R8
+          max4 = 0.0_R8
         END IF
-!     &   +cbshi(7,is,ireg)*max(0.0e0_R8,-fna(ix,0,1,1,is))/ni(ix,-1,0) !sv 28.10.02
+!     &   +cbshi(7,is,ireg)*max(0.0_R8,-fna(ix,0,1,1,is))/ni(ix,-1,0) !sv 28.10.02
 !sv 28.10.02
 !sv 28.10.02
         shi0(ix, -1, 1) = shi0(ix, -1, 1) + cbshi(7, 0, ireg)*max4
-        IF (0.0e0_R8 .LT. fne(ix, 0, 1, 1)) THEN
+        IF (0.0_R8 .LT. fne(ix, 0, 1, 1)) THEN
           max5 = fne(ix, 0, 1, 1)
         ELSE
-          max5 = 0.0e0_R8
+          max5 = 0.0_R8
         END IF
 !    ..compute electron heat source
         she0(ix, -1, 0) = she0(ix, -1, 0) + cbshe(0, ireg)*s0 + cbshe(6&
 &         , ireg)*max5
-        IF (0.0e0_R8 .LT. -floe_noc(ix, 0, 1, 1)) THEN
+        IF (0.0_R8 .LT. -floe_noc(ix, 0, 1, 1)) THEN
           max6 = -floe_noc(ix, 0, 1, 1)
         ELSE
-          max6 = 0.0e0_R8
+          max6 = 0.0_R8
         END IF
 !sv 28.10.02
         she0(ix, -1, 1) = she0(ix, -1, 1) + cbshe(1, ireg)*s0 + cbshe(7&
@@ -787,7 +788,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
         she0(ix, -1, 3) = she0(ix, -1, 3) + cbshe(2, ireg)*vte*s0 + &
 &         cbshe(3, ireg)*vte*s1 + cbshe(4, ireg)*cst*s0 + cbshe(5, ireg)&
 &         *cst*s1
-!     &  +cbshe(7,ireg)*max(0.0e0_R8,-fne(ix,0,1,1))/ne(ix,-1)    !sv 28.10.02
+!     &  +cbshe(7,ireg)*max(0.0_R8,-fne(ix,0,1,1))/ne(ix,-1)      !sv 28.10.02
 !    ..compute charge source
         sch0(ix, -1, 2) = sch0(ix, -1, 2) + cbsch(2, ireg)*qe*vte*s1 + &
 &         cbsch(4, ireg)*qe*cst*s1
@@ -812,27 +813,27 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 21.10.02
 !sv 26.11.02
 ! for PR
-          IF (fchy_in_at_pr .NE. 0.0e0_R8) THEN
+          IF (fchy_in_at_pr .NE. 0.0_R8) THEN
 !sv 21.10.02
             sch0(ix, -1, 0) = sch0(ix, -1, 0) + fchin(ix, 0, 1, 1)
           END IF
 !sv 21.10.02
-          IF (fchy_vispar_at_pr .NE. 0.0e0_R8) THEN
+          IF (fchy_vispar_at_pr .NE. 0.0_R8) THEN
 !sv 21.10.02
             sch0(ix, -1, 0) = sch0(ix, -1, 0) + fchvispar(ix, 0, 1, 1)
           END IF
 !sv 21.10.02
-          IF (fchy_visq_at_pr .NE. 0.0e0_R8) THEN
+          IF (fchy_visq_at_pr .NE. 0.0_R8) THEN
 !sv 21.10.02
             sch0(ix, -1, 0) = sch0(ix, -1, 0) + fchvisq(ix, 0, 1, 1)
           END IF
 !sv 21.10.02
-          IF (fchy_visper_at_pr .NE. 0.0e0_R8) THEN
+          IF (fchy_visper_at_pr .NE. 0.0_R8) THEN
 !sv 21.10.02
             sch0(ix, -1, 0) = sch0(ix, -1, 0) + fchvisper(ix, 0, 1, 1)
           END IF
 !sv 21.10.02
-          IF (fchy_inert_at_pr .NE. 0.0e0_R8) THEN
+          IF (fchy_inert_at_pr .NE. 0.0_R8) THEN
 !sv 21.10.02
             sch0(ix, -1, 0) = sch0(ix, -1, 0) + fchinert(ix, 0, 1, 1)
           END IF
@@ -851,7 +852,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !   ..loop over boundary cells
     DO ix=-1,nx
 !    ..update ireg
- 2    IF (cbrbrk(ireg)*nx .LT. ix + 0.5e0_R8) THEN
+ 2    IF (cbrbrk(ireg)*nx .LT. ix + 0.5_R8) THEN
         CALL XERTST(ireg .LT. cbirno + cbnrno - 1, &
 &             'error in computing region on north boundary')
         ireg = ireg + 1
@@ -900,9 +901,9 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
         result2 = EXPU2(arg2)
         fche = result1*qe*ne(ix, ny)*vte*s1*result2
 !sv
-!        fchy_dia = 0.0e0_R8                                           !sv 01.07.99
-!        if(facdriftm.ne.0.0e0_R8) then                                !sv 09.07.99
-        IF (fchy_dia_at_north .NE. 0.0e0_R8) THEN
+!        fchy_dia = 0.0_R8                                             !sv 01.07.99
+!        if(facdriftm.ne.0.0_R8) then                                  !sv 09.07.99
+        IF (fchy_dia_at_north .NE. 0.0_R8) THEN
 !sv 09.07.99
 !         iy=ny                                                        !sv 01.07.99 { 18.05.02
 !         fchy_dia =-signmf*pz(ix,iy)*bb(ix,iy,2)                      !sv 31.03.00 18.01.02
@@ -916,14 +917,14 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !         fchy_dia =-signmf*                                           !sv 09.07.99 21.04.00
 !     &       (pz(ix,iy)*bb(ix,iy,2)+                                  !sv 31.03.00 18.01.02 08.06.02
 !     &        pz(bottomix(ix,iy),bottomiy(ix,iy))                     !sv 31.03.00 18.01.02 08.06.02
-!     &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))*0.5e0_R8         !sv 31.03.00
+!     &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))*0.5_R8           !sv 31.03.00
 !     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))        !sv 01.07.99
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))      !sv 01.07.99
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))!sv 01.07.99
         ELSE
 !sv
 !sv
-          fchy_dia = 0.0e0_R8
+          fchy_dia = 0.0_R8
         END IF
 !        fchy_dia = fchy_dia*facdrift(ix,iy)                           !sv 09.07.99
 !       endif                                                          !sv 09.07.99
@@ -948,16 +949,16 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 02.03.05 {
 !    ..drifts to the wall                                              !sv 02.03.05 {
           IF (idrifts_to_the_wall .NE. 0) THEN
-            IF (.NOT.is_neutral(is) .AND. cbsna(2, is, ireg) .NE. &
-&               0.0e0_R8) THEN
+            IF (.NOT.is_neutral(is) .AND. cbsna(2, is, ireg) .NE. 0.0_R8&
+&           ) THEN
 !sv 09.11.06 }
               IF (mdf_fnb .EQ. 0) THEN
                 y1 = s0*(vadia(ix, ny, 1, 1, is)+vaecrb(ix, ny, 1, 1, is&
 &                 ))
-                IF (0.0e0_R8 .LT. y1) THEN
+                IF (0.0_R8 .LT. y1) THEN
                   max8 = y1
                 ELSE
-                  max8 = 0.0e0_R8
+                  max8 = 0.0_R8
                 END IF
 !sv 09.11.06 {
                 sna0(ix, ny, 1, is) = sna0(ix, ny, 1, is) - max8
@@ -966,10 +967,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
                 result2 = HY1(bottomix(ix, ny), bottomiy(ix, ny))
                 y2 = (vol(ix, ny)+vol(bottomix(ix, ny), bottomiy(ix, ny)&
 &                 ))/(result1+result2)*vaecrb(ix, ny, 1, 1, is)
-                IF (0.0e0_R8 .LT. y2) THEN
+                IF (0.0_R8 .LT. y2) THEN
                   max9 = y2
                 ELSE
-                  max9 = 0.0e0_R8
+                  max9 = 0.0_R8
                 END IF
 !lk 12.12.07 {
 !sv 07.05.08
@@ -984,10 +985,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
           smo0(ix, ny, 0, is) = smo0(ix, ny, 0, is) + cbsmo(0, is, ireg)&
 &           *s0hz
           smo0(ix, ny, 1, is) = smo0(ix, ny, 1, is)
-          IF (0.0e0_R8 .LT. -fna_fcor(ix, ny, 1, 1, is)) THEN
+          IF (0.0_R8 .LT. -fna_fcor(ix, ny, 1, 1, is)) THEN
             max10 = -fna_fcor(ix, ny, 1, 1, is)
           ELSE
-            max10 = 0.0e0_R8
+            max10 = 0.0_R8
           END IF
 !sv 01.07.05
 !sv 09.01.01
@@ -996,10 +997,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
           smo0(ix, ny, 2, is) = smo0(ix, ny, 2, is) + cbsmo(1, is, ireg)&
 &           *csb*pbshz(ix, ny, 1) + cbsmo(2, is, ireg)*cst*pbshz(ix, ny&
 &           , 1) + cbsmo(5, is, ireg)*max10/na(ix, ny, is)
-          IF (0.0e0_R8 .LT. fna_fcor(ix, ny, 1, 1, is)) THEN
+          IF (0.0_R8 .LT. fna_fcor(ix, ny, 1, 1, is)) THEN
             max11 = fna_fcor(ix, ny, 1, 1, is)
           ELSE
-            max11 = 0.0e0_R8
+            max11 = 0.0_R8
           END IF
 !sv 01.07.05
 !sv 09.01.01
@@ -1011,10 +1012,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &           na(ix, ny, is)
 !     ..compute atom heat source
           t0 = na(ix, ny, is)/ni(ix, ny, 0)
-          IF (0.0e0_R8 .LT. -fna(ix, ny, 1, 1, is)) THEN
+          IF (0.0_R8 .LT. -fna(ix, ny, 1, 1, is)) THEN
             max12 = -fna(ix, ny, 1, 1, is)
           ELSE
-            max12 = 0.0e0_R8
+            max12 = 0.0_R8
           END IF
           shi0(ix, ny, 0) = shi0(ix, ny, 0) + cbshi(0, is, ireg)*t0*s0 +&
 &           cbshi(6, is, ireg)*max12
@@ -1023,19 +1024,19 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &           s0 + cbshi(3, is, ireg)*t0*csb*s1 + cbshi(4, is, ireg)*t0*&
 &           cst*s0 + cbshi(5, is, ireg)*t0*cst*s1
         END DO
-        IF (0.0e0_R8 .LT. floi_noc(ix, ny, 1, 1)) THEN
+        IF (0.0_R8 .LT. floi_noc(ix, ny, 1, 1)) THEN
           max13 = floi_noc(ix, ny, 1, 1)
         ELSE
-          max13 = 0.0e0_R8
+          max13 = 0.0_R8
         END IF
-!     &   +cbshi(7,is,ireg)*max(0.0e0_R8,fna(ix,ny,1,1,is))/ni(ix,ny,0) !sv 28.10.02
+!     &   +cbshi(7,is,ireg)*max(0.0_R8,fna(ix,ny,1,1,is))/ni(ix,ny,0)  !sv 28.10.02
 !sv 28.10.02 {
 !sv 28.10.02 }
         shi0(ix, ny, 1) = shi0(ix, ny, 1) + cbshi(7, 0, ireg)*max13
-        IF (0.0e0_R8 .LT. -fne(ix, ny, 1, 1)) THEN
+        IF (0.0_R8 .LT. -fne(ix, ny, 1, 1)) THEN
           max14 = -fne(ix, ny, 1, 1)
         ELSE
-          max14 = 0.0e0_R8
+          max14 = 0.0_R8
         END IF
 !    ..compute electron heat source
         she0(ix, ny, 0) = she0(ix, ny, 0) + cbshe(0, ireg)*s0 + cbshe(6&
@@ -1044,12 +1045,12 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
         she0(ix, ny, 3) = she0(ix, ny, 3) + cbshe(2, ireg)*vte*s0 + &
 &         cbshe(3, ireg)*vte*s1 + cbshe(4, ireg)*cst*s0 + cbshe(5, ireg)&
 &         *cst*s1
-        IF (0.0e0_R8 .LT. floe_noc(ix, ny, 1, 1)) THEN
+        IF (0.0_R8 .LT. floe_noc(ix, ny, 1, 1)) THEN
           max15 = floe_noc(ix, ny, 1, 1)
         ELSE
-          max15 = 0.0e0_R8
+          max15 = 0.0_R8
         END IF
-!     &  +cbshe(7,ireg)*max(0.0e0_R8,fne(ix,ny,1,1))/ne(ix,ny)         !sv 28.10.02
+!     &  +cbshe(7,ireg)*max(0.0_R8,fne(ix,ny,1,1))/ne(ix,ny)           !sv 28.10.02
 !sv 28.10.02 {
 !sv 28.10.02 }
         she0(ix, ny, 1) = she0(ix, ny, 1) + cbshe(7, ireg)*max15
@@ -1067,37 +1068,37 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
         t0 = max16*qe/te(ix, ny)
 !sv 21.10.02
 !       sch0(ix,ny,0) = sch0(ix,ny,0)-fchy_dia*y_dia                   !sv  minus 01.07.99 25.04.00
-        IF (fchy_dia_at_north .NE. 0.0e0_R8) THEN
+        IF (fchy_dia_at_north .NE. 0.0_R8) THEN
 !sv 21.10.02
 !sv 21.10.02
           sch0(ix, ny, 0) = sch0(ix, ny, 0) - fchdia(ix, ny, 1, 1)*y_dia
         END IF
 !sv 21.10.02
-        IF (fchy_in_at_north .NE. 0.0e0_R8) THEN
+        IF (fchy_in_at_north .NE. 0.0_R8) THEN
 !sv 21.10.02
 !sv 21.10.02
           sch0(ix, ny, 0) = sch0(ix, ny, 0) - fchin(ix, ny, 1, 1)
         END IF
 !sv 21.10.02
-        IF (fchy_vispar_at_north .NE. 0.0e0_R8) THEN
+        IF (fchy_vispar_at_north .NE. 0.0_R8) THEN
 !sv 21.10.02
 !sv 21.10.02
           sch0(ix, ny, 0) = sch0(ix, ny, 0) - fchvispar(ix, ny, 1, 1)
         END IF
 !sv 21.10.02
-        IF (fchy_visq_at_north .NE. 0.0e0_R8) THEN
+        IF (fchy_visq_at_north .NE. 0.0_R8) THEN
 !sv 21.10.02
 !sv 21.10.02
           sch0(ix, ny, 0) = sch0(ix, ny, 0) - fchvisq(ix, ny, 1, 1)
         END IF
 !sv 21.10.02
-        IF (fchy_visper_at_north .NE. 0.0e0_R8) THEN
+        IF (fchy_visper_at_north .NE. 0.0_R8) THEN
 !sv 21.10.02
 !sv 21.10.02
           sch0(ix, ny, 0) = sch0(ix, ny, 0) - fchvisper(ix, ny, 1, 1)
         END IF
 !sv 21.10.02
-        IF (fchy_inert_at_north .NE. 0.0e0_R8) THEN
+        IF (fchy_inert_at_north .NE. 0.0_R8) THEN
 !sv 21.10.02
 !sv 21.10.02
           sch0(ix, ny, 0) = sch0(ix, ny, 0) - fchinert(ix, ny, 1, 1)
@@ -1120,7 +1121,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !   ..loop over boundary cells
         DO iy=-1,ny
 !    ..update ireg
- 3        IF (cbrbrk(ireg)*ny .LT. iy + 0.5e0_R8) THEN
+ 3        IF (cbrbrk(ireg)*ny .LT. iy + 0.5_R8) THEN
             CALL XERTST(ireg .LT. cbirwe + cbnrwe - 1, &
 &                 'error in computing region on west boundary')
             ireg = ireg + 1
@@ -1164,7 +1165,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 14.02.05 }
             IF (istyle_fchi .EQ. 0) THEN
 !sv 14.02.05
-              t0 = 0.0e0_R8
+              t0 = 0.0_R8
               DO is=0,ns-1
 !sv 26.11.02
                 t0 = t0 - rza(rightix(ix, iy), rightiy(ix, iy), is)*fna(&
@@ -1173,7 +1174,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
             ELSE
 !sv 14.02.05 {
 !    ..set boundary condition in explicit form (the same form as fna)
-              t0 = 0.0e0_R8
+              t0 = 0.0_R8
               DO is=0,ns-1
                 t0 = t0 - rza(ix, iy, is)*cbsna(7, is, ireg)*cst*s1*na(&
 &                 ix, iy, is)
@@ -1191,7 +1192,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !         write(*,"(4x,' is=',i2,' fnax(ix,iy,is)=',es9.2)")
 !     &      is, fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)               !sv 26.11.02
 !        enddo                                                           !sv 20.02.03 }
-!         fchi=0.0e0_R8                            ! was commented
+!         fchi=0.0_R8                            ! was commented
 !       endif
             IF (ix .EQ. -1) THEN
 !sv 16.11.04 {
@@ -1215,15 +1216,15 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
               arg10 = (rza(ix, iy, is)*te(ix, iy)+ti(ix, iy))/(am(is)*mp&
 &               )
               csb = SQRT(arg10)
-              y3 = 0.1e0_R8*csb + uadia(0, iy, 0, 0, is)*bb(ix, iy, 2)/&
-&               bb(ix, iy, 0)
+              y3 = 0.1_R8*csb + uadia(0, iy, 0, 0, is)*bb(ix, iy, 2)/bb(&
+&               ix, iy, 0)
               IF (csb .LT. y3) THEN
                 csbm = y3
               ELSE
                 csbm = csb
               END IF
-              y4 = 0.1e0_R8*cst + uadia(0, iy, 0, 0, is)*bb(ix, iy, 2)/&
-&               bb(ix, iy, 0)
+              y4 = 0.1_R8*cst + uadia(0, iy, 0, 0, is)*bb(ix, iy, 2)/bb(&
+&               ix, iy, 0)
               IF (cst .LT. y4) THEN
                 cstm = y4
               ELSE
@@ -1262,14 +1263,14 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
                   abs0 = -vwest
                 END IF
 !sv 28.01.05
-                vminus = (vwest-abs0)*0.5e0_R8
+                vminus = (vwest-abs0)*0.5_R8
               END IF
               y5 = ua(ix, iy, is)*pbs(rightix(ix, iy), rightiy(ix, iy), &
 &               0)
-              IF (0.0e0_R8 .LT. y5) THEN
+              IF (0.0_R8 .LT. y5) THEN
                 max17 = y5
               ELSE
-                max17 = 0.0e0_R8
+                max17 = 0.0_R8
               END IF
 !     ..compute particle source
 !sv 26.11.02
@@ -1284,17 +1285,17 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &                 rightix(ix, iy), rightiy(ix, iy), 0, 0, is)
               END IF
 !iyv 22.04.08 {
-              IF (ubig0 .GT. 0.0e0_R8) sna0(ix, iy, 0, is) = sna0(ix, iy&
-&                 , 0, is) - cbsna(7, is, ireg)*ubig0*s0*na(rightix(ix, &
-&                 iy), rightiy(ix, iy), is)
+              IF (ubig0 .GT. 0.0_R8) sna0(ix, iy, 0, is) = sna0(ix, iy, &
+&                 0, is) - cbsna(7, is, ireg)*ubig0*s0*na(rightix(ix, iy&
+&                 ), rightiy(ix, iy), is)
 !sv 26.11.02
               sna0(ix, iy, 1, is) = sna0(ix, iy, 1, is) + cbsna(1, is, &
 &               ireg)*s0 + cbsna(2, is, ireg)*csbm*s0 + cbsna(3, is, &
 &               ireg)*csbm*s1 + cbsna(4, is, ireg)*cstm*s0 + cbsna(5, is&
 &               , ireg)*cstm*s1
 !iyv 22.04.08 }
-!    &      cbsna(7,is,ireg)*max(0.0e0_R8,-ua(0,iy,is)*pbs(0,iy,0))
-              IF (ubig0 .GT. 0.0e0_R8) THEN
+!    &      cbsna(7,is,ireg)*max(0.0_R8,-ua(0,iy,is)*pbs(0,iy,0))
+              IF (ubig0 .GT. 0.0_R8) THEN
 !iyv 22.04.08 {
                 sna0(ix, iy, 1, is) = sna0(ix, iy, 1, is) + cbsna(7, is&
 &                 , ireg)*ubig0*s0
@@ -1311,12 +1312,12 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
               END IF
 !       if(wrong_flow.gt.0) then
 !         write(*,*) 'b2stbc_west density set to zero:iy,fchi',iy,fchi
-!rfs force density to 0.0e0_R8 if flux has wrong direction
-!         sna0(-1,iy,0,1) = 0.0e0_R8
-!         sna0(-1,iy,1,1) = -1.0d60
+!rfs force density to 0.0_R8 if flux has wrong direction
+!         sna0(-1,iy,0,1) = 0.0_R8
+!         sna0(-1,iy,1,1) = -1.0e60_R8
 !       endif
 !     ..compute momentum source
-!       if (0.0e0_R8 .le. vwest) then                                    !sv 02.11.99
+!       if (0.0_R8 .le. vwest) then                                      !sv 02.11.99
 !         write(*,'(a,i3,a,i3,a,i3)') ' west: ix =', rightix(ix,iy),     !sv 25.11.04
 !     *       '  iy =',rightiy(ix,iy), '  Switch in bc for Upar, is =',is!sv 02.11.99 20.02.03
 !         write(*,*) '     cst*pbshz(ix,iy,0) = ',
@@ -1324,18 +1325,18 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !          write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
 !     &           *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*switch%b2stbc_cbc
-!!         vwest = 0.0e0_R8                                              !sv 02.11.99
+!!         vwest = 0.0_R8                                                !sv 02.11.99
 !        endif
 !sv 26.11.02
 !sv 09.01.01
               smo0(ix, iy, 0, is) = smo0(ix, iy, 0, is) + cbsmo(0, is, &
 &               ireg)*s0hz
-              IF (0.0e0_R8 .LT. fna_fcor(rightix(ix, iy), rightiy(ix, iy&
-&                 ), 0, 0, is)) THEN
+              IF (0.0_R8 .LT. fna_fcor(rightix(ix, iy), rightiy(ix, iy)&
+&                 , 0, 0, is)) THEN
                 max18 = fna_fcor(rightix(ix, iy), rightiy(ix, iy), 0, 0&
 &                 , is)
               ELSE
-                max18 = 0.0e0_R8
+                max18 = 0.0_R8
               END IF
 !sv 26.11.02
 !sv 09.01.01 26.11.02
@@ -1345,12 +1346,12 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &               ireg)*(-csbm)*pbshz(rightix(ix, iy), rightiy(ix, iy), 0)&
 &               + cbsmo(2, is, ireg)*vminus + cbsmo(5, is, ireg)*max18/&
 &               na(ix, iy, is)
-              IF (0.0e0_R8 .LT. -fna_fcor(rightix(ix, iy), rightiy(ix, &
-&                 iy), 0, 0, is)) THEN
+              IF (0.0_R8 .LT. -fna_fcor(rightix(ix, iy), rightiy(ix, iy)&
+&                 , 0, 0, is)) THEN
                 max19 = -fna_fcor(rightix(ix, iy), rightiy(ix, iy), 0, 0&
 &                 , is)
               ELSE
-                max19 = 0.0e0_R8
+                max19 = 0.0_R8
               END IF
 !sv 26.11.02
 !sv 09.01.01
@@ -1362,11 +1363,11 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !     ..compute atom heat source
 !sv 26.11.02
               t0 = na(ix, iy, is)/ni(ix, iy, 0)
-              IF (0.0e0_R8 .LT. fna(rightix(ix, iy), rightiy(ix, iy), 0&
-&                 , 0, is)) THEN
+              IF (0.0_R8 .LT. fna(rightix(ix, iy), rightiy(ix, iy), 0, 0&
+&                 , is)) THEN
                 max20 = fna(rightix(ix, iy), rightiy(ix, iy), 0, 0, is)
               ELSE
-                max20 = 0.0e0_R8
+                max20 = 0.0_R8
               END IF
 !sv 26.11.02
               shi0(ix, iy, 0) = shi0(ix, iy, 0) + cbshi(0, is, ireg)*t0*&
@@ -1382,7 +1383,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &               (7, is, ireg)*t0*cst*pbs(rightix(ix, iy), rightiy(ix, iy&
 &               ), 0)
             END DO
-!     &    cbshi(7,is,ireg)*max(0.0e0_R8,-fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)) !sv 26.11.02 28.01.03
+!     &    cbshi(7,is,ireg)*max(0.0_R8,-fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)) !sv 26.11.02 28.01.03
 !     &                                  /ni(ix,iy,0)                    !sv 26.11.02 28.01.03
 !sv 13.10.06 }
             IF (mdf_fhi .NE. 0) THEN
@@ -1390,11 +1391,11 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
               shi0(ix, iy, 0) = shi0(ix, iy, 0) - fhipsch(rightix(ix, iy&
 &               ), rightiy(ix, iy), 0, 0)
             END IF
-            IF (0.0e0_R8 .LT. fne(rightix(ix, iy), rightiy(ix, iy), 0, 0&
-&               )) THEN
+            IF (0.0_R8 .LT. fne(rightix(ix, iy), rightiy(ix, iy), 0, 0)&
+&           ) THEN
               max21 = fne(rightix(ix, iy), rightiy(ix, iy), 0, 0)
             ELSE
-              max21 = 0.0e0_R8
+              max21 = 0.0_R8
             END IF
 !    ..compute electron heat source
 !sv 26.11.02
@@ -1405,10 +1406,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
             she0(ix, iy, 1) = she0(ix, iy, 1) + cbshe(1, ireg)*s0
             y6 = pbs(rightix(ix, iy), rightiy(ix, iy), 0)*cst + fch_p(&
 &             rightix(ix, iy), rightiy(ix, iy), 0, 0)/qe/ne(ix, iy)
-            IF (0.0e0_R8 .LT. y6) THEN
+            IF (0.0_R8 .LT. y6) THEN
               max22 = y6
             ELSE
-              max22 = 0.0e0_R8
+              max22 = 0.0_R8
             END IF
 !sv 26.11.02
 !sv 11.02.00
@@ -1417,11 +1418,11 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 25.12.06
             she0(ix, iy, 3) = she0(ix, iy, 3) + cbshe(2, ireg)*vte*s0 + &
 &             cbshe(3, ireg)*vte*s1 + cbshe(4, ireg)*cstm*s0 + cbshe(5, &
-&             ireg)*cstm*s1 + cbshe(7, ireg)*((2.0e0_R8-1.0e0_R8)/&
-&             1.0e0_R8+3.0e0_R8)*max22
+&             ireg)*cstm*s1 + cbshe(7, ireg)*((2.0_R8-1.0_R8)/1.0_R8+&
+&             3.0_R8)*max22
 !sv 01.06.06 }
-!     &   cbshe(7,ireg)*((2.0e0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0e0_R8)!sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-!     &    *max(0.0e0_R8,-fne(rightix(ix,iy),rightiy(ix,iy),0,0))/ne(ix,iy)          !sv 11.02.00 26.11.02 25.12.06
+!     &   cbshe(7,ireg)*((2.0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0_R8)    !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
+!     &    *max(0.0_R8,-fne(rightix(ix,iy),rightiy(ix,iy),0,0))/ne(ix,iy) !sv 11.02.00 26.11.02 25.12.06
 !         write(*,"('pbs*cst=',es10.3,' fch_p/qe/ne=',es10.3)")
 !     &             pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst,
 !     &           fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)
@@ -1469,7 +1470,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !   ..loop over boundary cells
         DO iy=-1,ny
 !    ..update ireg
- 4        IF (cbrbrk(ireg)*ny .LT. iy + 0.5e0_R8) THEN
+ 4        IF (cbrbrk(ireg)*ny .LT. iy + 0.5_R8) THEN
             CALL XERTST(ireg .LT. cbirea + cbnrea - 1, &
 &                 'error in computing region on east boundary')
             ireg = ireg + 1
@@ -1521,7 +1522,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
             ELSE
 !sv 14.02.05 {
 !    ..set boundary condition in explicit form (the same form as fna)
-              t0 = 0.0e0_R8
+              t0 = 0.0_R8
               DO is=0,ns-1
                 t0 = t0 - rza(ix, iy, is)*cbsna(7, is, ireg)*cst*s1*na(&
 &                 ix, iy, is)
@@ -1539,7 +1540,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !           write(*,"(4x,' is=',i2,' fnax(ix,iy,is)=',es9.2)")
 !     &           is, fna(ix,iy,0,0,is)                                  !sv 26.11.02
 !         enddo                                                          !sv 20.02.03 }
-!         fchi=0.0e0_R8                      !sv was commented
+!         fchi=0.0_R8                      !sv was commented
 !       endif
             IF (ix .NE. nx) THEN
 !sv 16.11.04 {
@@ -1563,17 +1564,17 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
               arg10 = (rza(ix, iy, is)*te(ix, iy)+ti(ix, iy))/(am(is)*mp&
 &               )
               csb = SQRT(arg10)
-              IF (csb .LT. 0.1e0_R8*csb - uadia(ix, iy, 0, 0, is)*bb(ix&
-&                 , iy, 2)/bb(ix, iy, 0)) THEN
-                csbm = 0.1e0_R8*csb - uadia(ix, iy, 0, 0, is)*bb(ix, iy&
-&                 , 2)/bb(ix, iy, 0)
+              IF (csb .LT. 0.1_R8*csb - uadia(ix, iy, 0, 0, is)*bb(ix, &
+&                 iy, 2)/bb(ix, iy, 0)) THEN
+                csbm = 0.1_R8*csb - uadia(ix, iy, 0, 0, is)*bb(ix, iy, 2&
+&                 )/bb(ix, iy, 0)
               ELSE
                 csbm = csb
               END IF
-              IF (cst .LT. 0.1e0_R8*cst - uadia(ix, iy, 0, 0, is)*bb(ix&
-&                 , iy, 2)/bb(ix, iy, 0)) THEN
-                cstm = 0.1e0_R8*cst - uadia(ix, iy, 0, 0, is)*bb(ix, iy&
-&                 , 2)/bb(ix, iy, 0)
+              IF (cst .LT. 0.1_R8*cst - uadia(ix, iy, 0, 0, is)*bb(ix, &
+&                 iy, 2)/bb(ix, iy, 0)) THEN
+                cstm = 0.1_R8*cst - uadia(ix, iy, 0, 0, is)*bb(ix, iy, 2&
+&                 )/bb(ix, iy, 0)
               ELSE
                 cstm = cst
               END IF
@@ -1608,12 +1609,12 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
                   abs1 = -veast
                 END IF
 !sv 28.01.05
-                vplus = (veast+abs1)*0.5e0_R8
+                vplus = (veast+abs1)*0.5_R8
               END IF
-              IF (0.0e0_R8 .LT. -(ua(ix, iy, is)*pbs(ix, iy, 0))) THEN
+              IF (0.0_R8 .LT. -(ua(ix, iy, is)*pbs(ix, iy, 0))) THEN
                 max24 = -(ua(ix, iy, is)*pbs(ix, iy, 0))
               ELSE
-                max24 = 0.0e0_R8
+                max24 = 0.0_R8
               END IF
 !        v0 =vol(ix,iy)/hx(ix,iy)*bb(ix,iy,2)/bb(ix,iy,3)                !sv 18.07.03 {
 !     &      *vaecrb(ix,iy,0,0,is)*switch%b2stbc_cbc*signmf
@@ -1629,17 +1630,17 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &                 iy, 0, 0, is)
               END IF
 !iyv 22.04.08
-              IF (ubig0 .GT. 0.0e0_R8) sna0(ix, iy, 0, is) = sna0(ix, iy&
-&                 , 0, is) - cbsna(7, is, ireg)*ubig0*s0*na(leftix(ix, &
-&                 iy), iy, is)
+              IF (ubig0 .GT. 0.0_R8) sna0(ix, iy, 0, is) = sna0(ix, iy, &
+&                 0, is) - cbsna(7, is, ireg)*ubig0*s0*na(leftix(ix, iy)&
+&                 , iy, is)
 !sv 26.11.02
               sna0(ix, iy, 1, is) = sna0(ix, iy, 1, is) + cbsna(1, is, &
 &               ireg)*s0 + cbsna(2, is, ireg)*csbm*s0 + cbsna(3, is, &
 &               ireg)*csbm*s1 + cbsna(4, is, ireg)*cstm*s0 + cbsna(5, is&
 &               , ireg)*cstm*s1
 !iyv 22.04.08 }
-!     &   +cbsna(7,is,ireg)*max(0.0e0_R8,ua(nx,iy,is)*pbs(nx,iy,0))
-              IF (ubig0 .GT. 0.0e0_R8) THEN
+!     &   +cbsna(7,is,ireg)*max(0.0_R8,ua(nx,iy,is)*pbs(nx,iy,0))
+              IF (ubig0 .GT. 0.0_R8) THEN
 !iyv 22.04.08 {
                 sna0(ix, iy, 1, is) = sna0(ix, iy, 1, is) + cbsna(7, is&
 &                 , ireg)*ubig0*s0
@@ -1656,28 +1657,28 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
               END IF
 !       if(wrong_flow) then
 !         write(*,*) 'b2stbc_east density set to zero:iy,fchi',iy,fchi
-!rfs force density to 0.0e0_R8 if flux has wrong direction
-!         sna0(nx,iy,0,1) = 0.0e0_R8
-!         sna0(nx,iy,1,1) = -1.0d160
+!rfs force density to 0.0_R8 if flux has wrong direction
+!         sna0(nx,iy,0,1) = 0.0_R8
+!         sna0(nx,iy,1,1) = -1.0e60_R8
 !       endif
 !     ..compute momentum source
-!       if (0.0e0_R8 .ge. veast) then                                    !sv 02.11.99
+!       if (0.0_R8 .ge. veast) then                                      !sv 02.11.99
 !         write(*,'(a,i3,a,i3,a,i3)') ' east: ix =', ix,'  iy =',iy,     !sv 25.11.04
 !     *    '  Switch in bc for Upar, is =',is                            !sv 02.11.99 20.02.03
 !         write(*,*) '     cst*pbshz(ix,iy,0) = ',cst*pbshz(ix,iy,0)
 !         write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
 !     &           *(-vaecrb(ix,iy,0,0,is))*switch%b2stbc_cbc
-!!        veast = 0.0e0_R8                                               !sv 02.11.99
+!!        veast = 0.0_R8                                                 !sv 02.11.99
 !        endif
 !sv 26.11.02
 !sv 09.01.01
               smo0(ix, iy, 0, is) = smo0(ix, iy, 0, is) + cbsmo(0, is, &
 &               ireg)*s0hz
-              IF (0.0e0_R8 .LT. -fna_fcor(ix, iy, 0, 0, is)) THEN
+              IF (0.0_R8 .LT. -fna_fcor(ix, iy, 0, 0, is)) THEN
                 max25 = -fna_fcor(ix, iy, 0, 0, is)
               ELSE
-                max25 = 0.0e0_R8
+                max25 = 0.0_R8
               END IF
 !sv 26.11.02
 !sv 09.01.01 26.11.02
@@ -1688,10 +1689,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &               ireg)*csbm*pbshz(ix, iy, 0) + cbsmo(2, is, ireg)*vplus +&
 &               cbsmo(5, is, ireg)*max25*2/(na(leftix(ix, iy), iy, is)+&
 &               na(ix, iy, is))
-              IF (0.0e0_R8 .LT. fna_fcor(ix, iy, 0, 0, is)) THEN
+              IF (0.0_R8 .LT. fna_fcor(ix, iy, 0, 0, is)) THEN
                 max26 = fna_fcor(ix, iy, 0, 0, is)
               ELSE
-                max26 = 0.0e0_R8
+                max26 = 0.0_R8
               END IF
 !sv 26.11.02
 !sv 09.01.01
@@ -1704,10 +1705,10 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !     ..compute atom heat source
 !sv 26.11.02
               t0 = na(ix, iy, is)/ni(ix, iy, 0)
-              IF (0.0e0_R8 .LT. -fna(ix, iy, 0, 0, is)) THEN
+              IF (0.0_R8 .LT. -fna(ix, iy, 0, 0, is)) THEN
                 max27 = -fna(ix, iy, 0, 0, is)
               ELSE
-                max27 = 0.0e0_R8
+                max27 = 0.0_R8
               END IF
 !sv 26.11.02
 !sv 26.11.02
@@ -1723,16 +1724,16 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &               ireg)*t0*cstm*s0 + cbshi(5, is, ireg)*t0*cstm*s1 + cbshi&
 &               (7, is, ireg)*t0*cst*pbs(ix, iy, 0)
             END DO
-!     &    cbshi(7,is,ireg)*max(0.0e0_R8,fna(ix,iy,0,0,is))/ni(ix,iy,0)  !sv 26.11.02
+!     &    cbshi(7,is,ireg)*max(0.0_R8,fna(ix,iy,0,0,is))/ni(ix,iy,0)    !sv 26.11.02
 !sv 13.10.06 }
             IF (mdf_fhi .NE. 0) THEN
 !sv 13.10.06 {
               shi0(ix, iy, 0) = shi0(ix, iy, 0) + fhipsch(ix, iy, 0, 0)
             END IF
-            IF (0.0e0_R8 .LT. -fne(ix, iy, 0, 0)) THEN
+            IF (0.0_R8 .LT. -fne(ix, iy, 0, 0)) THEN
               max28 = -fne(ix, iy, 0, 0)
             ELSE
-              max28 = 0.0e0_R8
+              max28 = 0.0_R8
             END IF
 !    ..compute electron heat source
 !sv 26.11.02
@@ -1741,12 +1742,12 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 &             cbshe(6, ireg)*max28
 !sv 26.11.02
             she0(ix, iy, 1) = she0(ix, iy, 1) + cbshe(1, ireg)*s0
-            IF (0.0e0_R8 .LT. pbs(ix, iy, 0)*cst - fch_p(ix, iy, 0, 0)/&
-&               qe/ne(ix, iy)) THEN
+            IF (0.0_R8 .LT. pbs(ix, iy, 0)*cst - fch_p(ix, iy, 0, 0)/qe/&
+&               ne(ix, iy)) THEN
               max29 = pbs(ix, iy, 0)*cst - fch_p(ix, iy, 0, 0)/qe/ne(ix&
 &               , iy)
             ELSE
-              max29 = 0.0e0_R8
+              max29 = 0.0_R8
             END IF
 !sv 26.11.02
 !sv 11.02.00
@@ -1754,11 +1755,11 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !sv 25.12.06
             she0(ix, iy, 3) = she0(ix, iy, 3) + cbshe(2, ireg)*vte*s0 + &
 &             cbshe(3, ireg)*vte*s1 + cbshe(4, ireg)*cstm*s0 + cbshe(5, &
-&             ireg)*cstm*s1 + cbshe(7, ireg)*((2.0e0_R8-1.0e0_R8)/&
-&             1.0e0_R8+3.0e0_R8)*max29
+&             ireg)*cstm*s1 + cbshe(7, ireg)*((2.0_R8-1.0_R8)/1.0_R8+&
+&             3.0_R8)*max29
 !sv 13.10.06 }
-!     &   cbshe(7,ireg)*((2.0e0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0e0_R8)!sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-!     &                *max(0.0e0_R8,fne(ix,iy,0,0))/ne(ix,iy)           !sv 11.02.00 26.11.02 25.12.06
+!     &   cbshe(7,ireg)*((2.0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0_R8)    !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
+!     &                *max(0.0_R8,fne(ix,iy,0,0))/ne(ix,iy)             !sv 11.02.00 26.11.02 25.12.06
             IF (mdf_fhe .NE. 0) THEN
 !sv 13.10.06 {
 !sv 09.11.08
@@ -1778,11 +1779,11 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
             ELSE
               max30 = cbsch(6, ireg)*fchi
             END IF
-!         if (po(ix,iy).ge.0.0e0_R8) then                                !sv 15.09.98 26.11.02
+!         if (po(ix,iy).ge.0.0_R8) then                                  !sv 15.09.98 26.11.02
 !sv 26.11.02
             t0 = max30*qe/te(ix, iy)
 !         else                                                           !sv 15.09.98
-!           t0 = 0.0e0_R8                                                !sv 15.09.98
+!           t0 = 0.0_R8                                                  !sv 15.09.98
 !         endif                                                          !sv 15.09.98
 !sv 26.11.02
 !sv 26.11.02
@@ -1805,9 +1806,9 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
 !   ..loop over species
   DO is=0,ns-1
 !    ..set momentum source
-    CALL B2XXGS(nx, ny, 0.0e0_R8, smo0(-1, -1, 0, is), 1)
-    CALL B2XXGS(nx, ny, 0.0e0_R8, smo0(-1, -1, 1, is), 1)
-    CALL B2XXGS(nx, ny, 0.0e0_R8, smo0(-1, -1, 2, is), 1)
+    CALL B2XXGS(nx, ny, 0.0_R8, smo0(-1, -1, 0, is), 1)
+    CALL B2XXGS(nx, ny, 0.0_R8, smo0(-1, -1, 1, is), 1)
+    CALL B2XXGS(nx, ny, 0.0_R8, smo0(-1, -1, 2, is), 1)
     CALL B2XXGS(nx, ny, -t0, smo0(-1, -1, 3, is), 1)
   END DO
 !sv 11.07.05 }

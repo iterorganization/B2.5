@@ -5,10 +5,11 @@
 !   variations   of useful results: fchin
 !   with respect to varying inputs: fna *(rt.rza) csigin *(pl.na)
 !                *(pl.ua) *(pl.po) *(pl.ti)
-!   Plus diff mem management of: geo.cvbb:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in rt.rza:in
-!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in
+!   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in rt.rza:in pl.na:in
+!                pl.ua:in pl.po:in pl.te:in pl.ti:in
 !
 !
 !
@@ -24,9 +25,9 @@
 !.specification
 !
 !srv 08.03.99 16.06.09
-SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
-& , facdrift, fac_exb, ismain, ismain0, pl, pld, fna, fnad, csigin, &
-& csigind, fchin, fchind, nbdirs)
+SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
+& rt, rtd, facdrift, fac_exb, ismain, ismain0, pl, pld, fna, fnad, &
+& csigin, csigind, fchin, fchind, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
@@ -37,7 +38,6 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_EIRDIAG, ONLY : dab2, rfluxa, pfluxa, tfluxa
-!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nFc should be the size of dimension 1 of array fcqalf
 !  Hint: nFc should be the size of dimension 1 of array fchc
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -60,6 +60,7 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
 !   ..output arguments (unspecified on entry)
@@ -130,10 +131,15 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
 !        call ipgeti ('b2tinnt_iout', iout)
 !        call ipgeti ('b2tral_mode', mode)
 !        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!   ..test input
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
+  CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
+&       'faulty argument ismain')
+  CALL XERTST(0 .LE. ismain0 .AND. ismain0 .LT. ns .AND. (is_neutral(&
+&       ismain0) .OR. ismain0 .EQ. ismain), 'faulty argument ismain0')
 !srv 09.07.99
-  fchin = 0.0e0_R8
+  fchin = 0.0_R8
 !srv 20.10.17
   facdriftm = MAXVAL(facdrift)
   fac_exbm = MAXVAL(fac_exb)
@@ -141,7 +147,7 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
 !
   IF (switch%pot_eq .EQ. 1 .AND. (facdriftm .GT. 0.0_R8 .OR. fac_exbm &
 &     .GT. 0.0_R8) .AND. switch%no_current .EQ. 0 .AND. switch%&
-&     fch_ion_neutral .NE. 0.0e0_R8) THEN
+&     fch_ion_neutral .NE. 0.0_R8) THEN
 !srv 26.07.06 01.07.99
 !
 !   ..extensive tests on first few calls
@@ -224,8 +230,8 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
       DO nd=1,nbdirsmax
         wrkvxd(nd, :) = 0.D0
       END DO
-      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%po, pld%po, &
-&            wrkvx, wrkvxd, dpo, dpod, nbdirs)
+      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%po, pld%po&
+&            , wrkvx, wrkvxd, dpo, dpod, nbdirs)
       DO nd=1,nbdirsmax
         wrk0d(nd, :, :, :) = 0.D0
       END DO
@@ -235,14 +241,15 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
           wrkd(nd, :) = na_totd(nd, :, is)/na_tot(:, is)
         END DO
         wrk = LOG(na_tot(:, is))
-        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk, wrkd, wrkvx&
-&              , wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is), nbdirs)
+        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk, wrkd, &
+&              wrkvx, wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is), nbdirs&
+&             )
       END DO
       DO nd=1,nbdirsmax
         wrk1d(nd, :, :) = 0.D0
       END DO
-      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%ti, pld%ti, &
-&            wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
+      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%ti, pld%ti&
+&            , wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
       DO nd=1,nbdirsmax
         fchind(nd, :, :) = 0.D0
       END DO
@@ -276,14 +283,15 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, rt, rtd&
 &           , :)
         END DO
         wrk = pl%na(:, is)*pl%ti
-        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk, wrkd, wrkvx&
-&              , wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is), nbdirs)
+        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk, wrkd, &
+&              wrkvx, wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is), nbdirs&
+&             )
       END DO
       DO nd=1,nbdirsmax
         dpod(nd, :, :) = 0.D0
       END DO
-      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%po, pld%po, &
-&            wrkvx, wrkvxd, dpo, dpod, nbdirs)
+      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%po, pld%po&
+&            , wrkvx, wrkvxd, dpo, dpod, nbdirs)
       DO nd=1,nbdirsmax
         fchind(nd, :, :) = 0.D0
       END DO
@@ -533,7 +541,6 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_EIRDIAG, ONLY : dab2, rfluxa, pfluxa, tfluxa
-!  Hint: nCv should be the size of dimension 1 of array cvbb
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -602,10 +609,15 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 !        call ipgeti ('b2tinnt_iout', iout)
 !        call ipgeti ('b2tral_mode', mode)
 !        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!   ..test input
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
+  CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
+&       'faulty argument ismain')
+  CALL XERTST(0 .LE. ismain0 .AND. ismain0 .LT. ns .AND. (is_neutral(&
+&       ismain0) .OR. ismain0 .EQ. ismain), 'faulty argument ismain0')
 !srv 09.07.99
-  fchin = 0.0e0_R8
+  fchin = 0.0_R8
 !srv 20.10.17
   facdriftm = MAXVAL(facdrift)
   fac_exbm = MAXVAL(fac_exb)
@@ -613,7 +625,7 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 !
   IF (switch%pot_eq .EQ. 1 .AND. (facdriftm .GT. 0.0_R8 .OR. fac_exbm &
 &     .GT. 0.0_R8) .AND. switch%no_current .EQ. 0 .AND. switch%&
-&     fch_ion_neutral .NE. 0.0e0_R8) THEN
+&     fch_ion_neutral .NE. 0.0_R8) THEN
 !srv 26.07.06 01.07.99
 !
 !   ..extensive tests on first few calls

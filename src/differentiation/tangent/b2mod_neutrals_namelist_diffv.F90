@@ -357,7 +357,7 @@ CONTAINS
     itsput_chemical = 0
     issput_chemical = 0
     eirene_step_cpu = 0.0_R8
-    eirene_step_dt = 1.0e-3_R8
+    eirene_step_dt = 0.0_R8
     eirene_mod = 1
     volrecstart(:) = 1.0e21_R8
     volrecinc = 0.0_R8
@@ -631,7 +631,7 @@ CONTAINS
     CALL XERTST(0 .LT. maxpoin, 'faulty input maxpoin')
     CALL XERTST(0.0_R8 .LE. eirene_step_cpu, &
 &         'faulty input eirene_step_cpu')
-    CALL XERTST(0.0_R8 .LT. eirene_step_dt, &
+    CALL XERTST(0.0_R8 .LE. eirene_step_dt, &
 &         'faulty input eirene_step_dt')
     CALL XERTST(1.0_R8 .LT. neut_scl_lim, 'faulty input neut_scl_lim')
     CALL XERTST(0.0_R8 .LE. volrecinc, 'faulty input volrecinc')
@@ -1209,7 +1209,7 @@ CONTAINS
 &                     rcfcor, m, idb)
           END DO
 ! iss
-          WRITE(ss, '(I0)') istra
+          WRITE(ss, '(i3)') istra
           CALL XERTST(nrcl .GT. 0, &
 &               'No faces found for neutrals stratum = '//ss)
           m%rcfcp(istra, 2) = nrcl
@@ -1287,7 +1287,7 @@ CONTAINS
     CALL XERTST(0 .LT. maxpoin, 'faulty input maxpoin')
     CALL XERTST(0.0_R8 .LE. eirene_step_cpu, &
 &         'faulty input eirene_step_cpu')
-    CALL XERTST(0.0_R8 .LT. eirene_step_dt, &
+    CALL XERTST(0.0_R8 .LE. eirene_step_dt, &
 &         'faulty input eirene_step_dt')
     CALL XERTST(1.0_R8 .LT. neut_scl_lim, 'faulty input neut_scl_lim')
     CALL XERTST(0.0_R8 .LE. volrecinc, 'faulty input volrecinc')
@@ -1612,7 +1612,7 @@ CONTAINS
 &                     rcfcor, m, idb)
           END DO
 ! iss
-          WRITE(ss, '(I0)') istra
+          WRITE(ss, '(i3)') istra
           CALL XERTST(nrcl .GT. 0, &
 &               'No faces found for neutrals stratum = '//ss)
           m%rcfcp(istra, 2) = nrcl
@@ -1690,7 +1690,7 @@ CONTAINS
     CALL XERTST(0 .LT. maxpoin, 'faulty input maxpoin')
     CALL XERTST(0.0_R8 .LE. eirene_step_cpu, &
 &         'faulty input eirene_step_cpu')
-    CALL XERTST(0.0_R8 .LT. eirene_step_dt, &
+    CALL XERTST(0.0_R8 .LE. eirene_step_dt, &
 &         'faulty input eirene_step_dt')
     CALL XERTST(1.0_R8 .LT. neut_scl_lim, 'faulty input neut_scl_lim')
     CALL XERTST(0.0_R8 .LE. volrecinc, 'faulty input volrecinc')
@@ -2227,7 +2227,7 @@ CONTAINS
 &                   rcfcor, m, idb)
         END DO
 ! iss
-        WRITE(ss, '(I0)') istra
+        WRITE(ss, '(i3)') istra
         CALL XERTST(rcl(istra) .GT. 0, &
 &             'No faces found for neutrals stratum = '//ss)
         m%rcfcp(istra, 2) = rcl(istra)
@@ -2258,6 +2258,67 @@ CONTAINS
     END IF
     RETURN
   END SUBROUTINE CONV_RCPARMS
+
+!  Differentiation of rc_to_struct in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: m.rcfcor:in-out
+!
+!**********************************************************************
+!
+  SUBROUTINE RC_TO_STRUCT_DV0(m, md0, nbdirs)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    TYPE(MAPPING), INTENT(INOUT) :: m
+    TYPE(MAPPING_DIFFV), INTENT(INOUT) :: md0
+    INTEGER :: istra, instra, istrac, ifc, ic1, ic2
+    INTRINSIC SUM
+    INTRINSIC MIN
+    INTRINSIC MAX
+    EXTERNAL XERRAB
+    INTEGER :: nbdirs
+!
+    m%nrc = nstrai
+!pb   m%mxnRc = sum(nrcfaces(1:nstrai))       ! number of cells with imposed stratum
+! number of cells with imposed stratum
+    m%mxnrc = SUM(m%rcfcp(1:nstrai, 2))
+!
+    CALL ALLOC_MAPPING_RC_DV0(m, md0, nbdirs)
+!
+! index in rcCv
+    instra = 0
+    DO istra=1,m%nrc
+      m%rccvp(istra, 1) = instra + 1
+!pb     m%rcCvP(istra,2) = nrcfaces(istra)
+      m%rccvp(istra, 2) = m%rcfcp(istra, 2)
+      m%rcfcp(istra, 1) = instra + 1
+!pb     m%rcFcP(istra,2) = nrcfaces(istra)
+!pb     do istrac = 1, nrcfaces(istra)
+      DO istrac=1,m%rcfcp(istra, 2)
+        instra = instra + 1
+!pb       ifc = rc_faces(istrac,istra)
+        ifc = m%rcfc(m%rcfcp(istra, 1)+istrac-1)
+        IF (m%fccv(ifc, 1) .GT. m%fccv(ifc, 2)) THEN
+          ic1 = m%fccv(ifc, 2)
+        ELSE
+          ic1 = m%fccv(ifc, 1)
+        END IF
+        IF (m%fccv(ifc, 1) .LT. m%fccv(ifc, 2)) THEN
+          ic2 = m%fccv(ifc, 2)
+        ELSE
+          ic2 = m%fccv(ifc, 1)
+        END IF
+        IF (ic1 .LE. m%nci .AND. ic2 .GT. m%nci) THEN
+          m%rccv(instra, 1) = ic2
+          m%rccv(instra, 2) = ic1
+!pb         m%rcFcOr(instra) = rc_face_ori(istrac,istra)
+!pb         m%rcFc(instra) = ifc
+        ELSE
+          CALL XERRAB('rc_to_struct -- problem with boundary face')
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE RC_TO_STRUCT_DV0
 
 !  Differentiation of rc_to_struct as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: m.rcfcor:in-out
@@ -2407,11 +2468,13 @@ CONTAINS
     CALL CFVERW(iout, newversion)
 !
     WRITE(iout, '(1x,a)') '&NEUTRALS'
-    WRITE(iout, '(1x,a,es9.2)') 'EIRENE_STEP_CPU = ', eirene_step_cpu
-    WRITE(iout, '(1x,a,es9.2)') 'EIRENE_STEP_DT  = ', eirene_step_dt
-    WRITE(iout, '(1x,a,i0)') 'EIRENE_MOD = ', eirene_mod
+    WRITE(iout, '(1x,a,es9.2,a1)') 'EIRENE_STEP_CPU = ', eirene_step_cpu&
+&   , ','
+    WRITE(iout, '(1x,a,es9.2,a1)') 'EIRENE_STEP_DT  = ', eirene_step_dt&
+&   , ','
+    WRITE(iout, '(1x,a,i3,a1)') 'EIRENE_MOD = ', eirene_mod, ','
 !
-    WRITE(iout, '(1x,a,i0)') 'NSTRAI     = ', m%nrc
+    WRITE(iout, '(1x,a,i3,a1)') 'NSTRAI     = ', m%nrc, ','
     WRITE(iout, '(1x,a,(1x,T14,10(2x,4a1)))') 'CRCSTRA = ', (ap, arcstra&
 &   (istra), ap, ',', istra=1,m%nrc)
 !

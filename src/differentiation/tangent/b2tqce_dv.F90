@@ -88,7 +88,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   INTEGER :: icv
 !srv 11.09.09
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
-  PARAMETER (ce=3.16e0_R8)
+  PARAMETER (ce=3.16_R8)
 !xpb      parameter (lnlam=12.0_R8)
 !   ..procedures
   INTRINSIC SQRT
@@ -135,7 +135,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqce')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqce .LT. 3) THEN
 !    ..test bb
@@ -473,7 +473,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
   REAL(kind=r8) :: t0d(nbdirsmax), zd(nbdirsmax), taud(nbdirsmax, ncv), &
 & tnpd(nbdirsmax)
-  PARAMETER (ce=3.16e0_R8)
+  PARAMETER (ce=3.16_R8)
 !xpb      parameter (lnlam=12.0_R8)
 !   ..procedures
   INTRINSIC SQRT
@@ -531,7 +531,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqce')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqce .LT. 3) THEN
 !    ..test bb

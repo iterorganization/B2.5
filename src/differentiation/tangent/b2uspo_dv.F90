@@ -20,8 +20,8 @@
 !
 !srv 18.03.10
 SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
-& geo, mpg, ne, ned, te, ted, conc, concd, sch, schd, respo, respod, &
-& corpo, corpod, aa, aad, name, nbdirs)
+& geo, mpg, mpgd, ne, ned, te, ted, conc, concd, sch, schd, respo, &
+& respod, corpo, corpod, aa, aad, name, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -46,6 +46,7 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: ne(ncv), te(ncv), conc(nfc, 0:1), sch(ncv, 0:3), &
 & respo(ncv)
   REAL(kind=r8) :: ned(nbdirsmax, ncv), ted(nbdirsmax, ncv), concd(&
@@ -91,7 +92,7 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls
@@ -382,7 +383,7 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls

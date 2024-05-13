@@ -20,9 +20,6 @@
 !
 SUBROUTINE B2UPPO_DV(ncv, rxf, corpo, corpod, po, pod, nbdirs)
   USE B2MOD_TYPES
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uppo
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -31,7 +28,6 @@ SUBROUTINE B2UPPO_DV(ncv, rxf, corpo, corpod, po, pod, nbdirs)
 !-----------------------------------------------------------------------
 !.end b2uppo
 !
-!   ..extensive tests on first few calls
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv
   REAL(kind=r8) :: rxf, corpo(ncv)
@@ -64,9 +60,10 @@ SUBROUTINE B2UPPO_DV(ncv, rxf, corpo, corpod, po, pod, nbdirs)
 !   ..subprogram start-up calls
   CALL SUBINI('b2uppo')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..test rxf
-  CALL XERTST(0 .LE. rxf .AND. rxf .LE. 1, 'faulty argument rxf')
+  CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
+&       'faulty argument rxf')
 !
 ! ..implement the correction
 !   ..compute new po
@@ -76,77 +73,7 @@ SUBROUTINE B2UPPO_DV(ncv, rxf, corpo, corpod, po, pod, nbdirs)
   po = po + rxf*corpo
 !
 ! ..return
-  ncall_b2uppo = ncall_b2uppo + 1
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2UPPO_DV
-
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!-----------------------------------------------------------------------
-!.specification
-!
-SUBROUTINE B2UPPO_NODIFF(ncv, rxf, corpo, po)
-  USE B2MOD_TYPES
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uppo
-  USE B2MOD_SUBSYS
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-!
-!-----------------------------------------------------------------------
-!.end b2uppo
-!
-!   ..extensive tests on first few calls
-!   ..input arguments (unchanged on exit)
-  INTEGER :: ncv
-  REAL(kind=r8) :: rxf, corpo(ncv)
-!   ..input/output arguments
-  REAL(kind=r8) :: po(ncv)
-!
-!-----------------------------------------------------------------------
-!.documentation
-!
-!  1. purpose
-!
-!     B2UPPO corrects the electric potential po.
-!
-!-----------------------------------------------------------------------
-!.declarations
-!
-!   ..local variables
-!   ..procedures
-  EXTERNAL XERTST
-!   ..initialisation
-!
-!-----------------------------------------------------------------------
-!.computation
-!
-! ..preliminaries
-!   ..subprogram start-up calls
-  CALL SUBINI('b2uppo')
-!   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
-!   ..test rxf
-  CALL XERTST(0 .LE. rxf .AND. rxf .LE. 1, 'faulty argument rxf')
-!
-! ..implement the correction
-!   ..compute new po
-  po = po + rxf*corpo
-!
-! ..return
-  ncall_b2uppo = ncall_b2uppo + 1
-  CALL SUBEND()
-  RETURN
-END SUBROUTINE B2UPPO_NODIFF
 

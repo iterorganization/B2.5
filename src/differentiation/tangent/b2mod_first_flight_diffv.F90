@@ -78,8 +78,7 @@ CONTAINS
   END SUBROUTINE DEALLOC_B2MOD_FIRST_FLIGHT
 
 !
-  SUBROUTINE SETUP_B2MOD_FIRST_FLIGHT(mpg, geo, icv0, orientation, &
-&   output)
+  SUBROUTINE SETUP_B2MOD_FIRST_FLIGHT(mpg, geo, icv0, ifc0, output)
     USE B2US_MAP_DIFFV
     USE B2US_GEO_DIFFV
     USE B2MOD_CONSTANTS
@@ -88,22 +87,24 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MAPPING) :: mpg
     TYPE(GEOMETRY) :: geo
-    INTEGER :: icv0, output
+    INTEGER :: icv0, ifc0, output
     INTEGER :: icv, ia, curr, cnt, new
 !
     REAL(kind=r8) :: t1, x, y, dx, dy
     LOGICAL :: inside
-    CHARACTER(len=1) :: orientation
     EXTERNAL XERRAB
+    INTRINSIC ATAN2
     INTRINSIC COS
     INTRINSIC SIN
+    REAL(kind=r8) :: arg1
+    REAL(kind=r8) :: arg2
 !
     CALL SUBINI('setup_b2mod_first_flight')
     ptr_index = ptr_index + 1
     CALL XERTST(ptr_index .LE. no_of_start_points, &
 &         'b2mod_first_flight: increase no_of_start_points')
-    WRITE(6, '(a,i6,1x,a1,1x,2i6)') 'setup_b2mod_first_flight: ', icv0, &
-&   orientation, ptr_index, ptr_table
+    WRITE(*, '(a,4i6)') 'setup_b2mod_first_flight: ', icv0, ifc0, &
+&   ptr_index, ptr_table
     DO ia=1,no_of_slices
       index(ptr_index, ia, 0) = 0
       index(ptr_index, ia, 1) = -1
@@ -111,6 +112,19 @@ CONTAINS
       curr = -1
       new = -1
       icv = icv0
+!xpb We travel the boundary face so that the real cell is to the left
+!xpb Recall iCv is the guard cell
+      IF (mpg%fccv(ifc0, 1) .EQ. icv) THEN
+        arg1 = geo%cvy(mpg%fcvx(ifc0, 1)) - geo%cvy(mpg%fcvx(ifc0, 2))
+        arg2 = geo%cvx(mpg%fcvx(ifc0, 1)) - geo%cvx(mpg%fcvx(ifc0, 2))
+        t1 = ATAN2(arg1, arg2) - pi/2.0_R8 + angle(ia)
+      ELSE IF (mpg%fccv(ifc0, 2) .EQ. icv) THEN
+        arg1 = geo%cvy(mpg%fcvx(ifc0, 2)) - geo%cvy(mpg%fcvx(ifc0, 1))
+        arg2 = geo%cvx(mpg%fcvx(ifc0, 2)) - geo%cvx(mpg%fcvx(ifc0, 1))
+        t1 = ATAN2(arg1, arg2) - pi/2.0_R8 + angle(ia)
+      END IF
+      x = 0.5_R8*(geo%cvx(mpg%fcvx(ifc0, 1))+geo%cvx(mpg%fcvx(ifc0, 2)))
+      y = 0.5_R8*(geo%cvy(mpg%fcvx(ifc0, 1))+geo%cvy(mpg%fcvx(ifc0, 2)))
       inside = .true.
       IF (output .GE. 1) WRITE(88, *) x, y, ia, icv
       dx = dl*COS(t1)

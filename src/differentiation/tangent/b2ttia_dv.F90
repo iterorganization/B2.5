@@ -101,7 +101,7 @@ SUBROUTINE B2TTIA_DV(ncv, ns, ti, tid, rz2, rz2d, ne2, ne2d, lnlam, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2ttia')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2ttia .LT. 3) THEN
@@ -157,7 +157,7 @@ SUBROUTINE B2TTIA_DV(ncv, ns, ti, tid, rz2, rz2d, ne2, ne2d, lnlam, &
       DO nd=1,nbdirs
         tauiad(nd, :, is) = 0.D0
       END DO
-      tauia(:, is) = 0.0e0_R8
+      tauia(:, is) = 0.0_R8
     END IF
   END DO
 !
@@ -253,7 +253,7 @@ SUBROUTINE B2TTIA_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
 !   ..subprogram start-up calls
   CALL SUBINI('b2ttia')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2ttia .LT. 3) THEN
@@ -290,7 +290,7 @@ SUBROUTINE B2TTIA_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
 &         is)*ne2(icv))
       END DO
     ELSE
-      tauia(:, is) = 0.0e0_R8
+      tauia(:, is) = 0.0_R8
     END IF
   END DO
 !
