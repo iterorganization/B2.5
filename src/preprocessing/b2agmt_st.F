@@ -766,13 +766,6 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &       ecc(bottomix(ix,iy),bottomiy(ix,iy),3,1))/
      &       (hc(bottomix(ix,iy),bottomiy(ix,iy),3)+hc(ix,iy,1))
 
-          ! angles at bottom face
-          qc(ix,iy,1) = cosang (
-     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
-     &      ecf(0), ecf(1))
-          qs(ix,iy,1) = sinang (
-     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
-     &      ecf(0), ecf(1))
 
           qac(ix,iy,1) = cosang (
      &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
@@ -780,6 +773,24 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
           qas(ix,iy,1) = sinang (
      &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
      &      ebf(0), ebf(1))
+          if (abs(qac(ix,iy,1)) .ge. 5e-2) then
+               ! Connector line is purely poloidal: equal to ebf,
+               ! but possibly with sign difference
+               t0 = ebf(0)*(cry(ix,iy,0) - cry(ix,iy,1)) -
+     &              ebf(1)*(crx(ix,iy,0) - crx(ix,iy,1))
+               if (t0.ge.0.0_R8) then
+               ecf = ebf
+               else
+               ecf = -ebf
+               endif
+          endif 
+          ! angles at bottom face
+          qc(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
+          qs(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
 
         endif
 

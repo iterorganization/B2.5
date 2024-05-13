@@ -153,7 +153,22 @@
 
 *   ..correct fcPbs (pbsx), cvHx (hx), and cvHy (hy) to enforce:
 *   ..B_{pol}*hy1*hz constant (on western cell faces and at cell centers)
-*   ..vol = hy1*hx*hz - (already determined by cvHz = cvVol/cvSz?)
+*   ..vol = hy1*hx*hz
+      do iy = -1, ny
+        do ix = -1, nx
+          if (region(ix,iy,0).eq.0) cycle
+          if (iseg(ix,iy).eq.0) cycle
+          if (ixref(iseg(ix,iy),iy).eq.-2) cycle
+          if (isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+
+          if (leftix(ixref(iseg(ix,iy),iy),iy).ne.-2) then
+            pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
+     &                   gs(ixref(iseg(ix,iy),iy),iy,0) *
+     &                   qc(ixref(iseg(ix,iy),iy),iy,0)
+          else
+            pol_flux = bb(ixref(iseg(ix,iy),iy),iy,0) *
+     &                 hy(ixref(iseg(ix,iy),iy),iy)
+          end if
 
       ! Compute psi width of faces
       do iFc = 1,m%nFc
