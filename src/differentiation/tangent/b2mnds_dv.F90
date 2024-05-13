@@ -93,7 +93,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
 !     nCv, nFc - integer, input.
 !     nCv and nFc specify the number of cells and faces in the
 !     unstructured data format.
-!     It will hold that 0.le.nCv and 0.le.nFc.
+!     It will hold that 0.lt.nCv and 0.lt.nFc.
 !
 !     ns - integer, input.
 !     ns specifies the number of atomic species in the calculation.
@@ -182,7 +182,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
 &       .AND. 1 .LE. nout(5) .AND. 1 .LE. nout(9) .AND. 1 .LE. nout(10)&
 &       , 'faulty argument ninp, nout')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(ns .LE. nsdecl, 'faulty parameter nsdecl')
 !
@@ -323,8 +323,8 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
 ! different functions/subroutines to reduce code duplication
 ! and to centralize consistency checks on the switches.
 !
-! read main switch afn to correctly set the corresponding default switches
-  CALL READ_SWITCH_AFN(switch)
+! read main model switches to correctly set the corresponding defaults
+  CALL READ_FIRST_SWITCHES(switch)
 ! load default values of switches
   CALL SET_DEFAULTS_SWITCHES(switch, ns)
 ! overwrite with values provided in b2mn.dat
@@ -435,7 +435,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !     nCv, nFc - integer, input.
 !     nCv and nFc specify the number of cells and faces in the
 !     unstructured data format.
-!     It will hold that 0.le.nCv and 0.le.nFc.
+!     It will hold that 0.lt.nCv and 0.lt.nFc.
 !
 !     ns - integer, input.
 !     ns specifies the number of atomic species in the calculation.
@@ -522,7 +522,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 &       .AND. 1 .LE. nout(5) .AND. 1 .LE. nout(9) .AND. 1 .LE. nout(10)&
 &       , 'faulty argument ninp, nout')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(ns .LE. nsdecl, 'faulty parameter nsdecl')
 !
@@ -657,8 +657,8 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 ! different functions/subroutines to reduce code duplication
 ! and to centralize consistency checks on the switches.
 !
-! read main switch afn to correctly set the corresponding default switches
-  CALL READ_SWITCH_AFN(switch)
+! read main model switches to correctly set the corresponding defaults
+  CALL READ_FIRST_SWITCHES(switch)
 ! load default values of switches
   CALL SET_DEFAULTS_SWITCHES(switch, ns)
 ! overwrite with values provided in b2mn.dat

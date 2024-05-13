@@ -3,31 +3,32 @@
 !
 !  Differentiation of b2sral in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
-!                userfluxparm int4l int1l int2l int3l int0l fb_target
-!                fb_prev fb_current fb_const charge_frac saved_fb_actuator
-!                fb_rescale *(st.pl.na) *(st.dv.fchvispar) *(st.dv.fchinert)
-!                *(st.dv.fchanml) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.kin_frac_hyb)
-!                *(st.dv.fluid_frac_hyb) *(st.dv.kinrgy) *(st.dv.ne)
-!                *(st.dv.pa) *(st.sr.sch) *(st.sr.she) *(st.sr.shi)
-!                *(st.sr.shn) *(st.sr.skt) *(st.sr.smo) *(st.sr.smq)
-!                *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
-!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0)
-!                *(st.srw.sna0) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
-!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ne)
-!                *(st.psnc.ni) *(st.psnc.kinrgy)
+!                b2recyc userfluxparm int4l int1l int2l int3l int0l
+!                fb_target fb_prev fb_current fb_const charge_frac
+!                saved_fb_actuator fb_rescale *(st.pl.na) *(st.dv.fchvispar)
+!                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fna)
+!                *(st.dv.fna_mdf) *(st.dv.fna_32) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
+!                *(st.dv.kinrgy) *(st.dv.ne) *(st.dv.pa) *(st.sr.sch)
+!                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
+!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0)
+!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza)
+!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
+!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
+!                *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar userfluxparm int4l int1l int2l int3l
-!                int0l fb_target fb_prev fb_current fb_const charge_frac
-!                saved_fb_actuator fb_rescale switch.b2tfhi_fflokt
-!                *(st.pl.na) *(st.pl.ua) *(st.pl.po) *(st.pl.te)
-!                *(st.pl.ti) *(st.pl.tn) *(st.pl.kt) *(st.co.csig_an)
-!                *(st.co.chce) *(st.co.chci) *(st.co.cvla) *(st.co.cdna)
-!                *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0) *(st.co.hci0)
-!                *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0) *(st.dv.fch)
-!                *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
+!                mompar enipar b2recyc userfluxparm int4l int1l
+!                int2l int3l int0l fb_target fb_prev fb_current
+!                fb_const charge_frac saved_fb_actuator fb_rescale
+!                switch.b2tfhi_fflokt *(st.pl.na) *(st.pl.ua) *(st.pl.po)
+!                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.pl.kt)
+!                *(st.co.csig_an) *(st.co.chce) *(st.co.chci) *(st.co.cvla)
+!                *(st.co.cdna) *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0)
+!                *(st.co.hci0) *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0)
+!                *(st.dv.fch) *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
 !                *(st.dv.fchvispar) *(st.dv.fchvisper) *(st.dv.fchvisq)
 !                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fchviskt)
 !                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
@@ -46,13 +47,16 @@
 !                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
 !                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
 !                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ne)
-!                *(st.psnc.ni) *(st.psnc.kinrgy) (global)b2recyc[1:nstraid,0:nsdmax-1]
-!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvhx:in
-!                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
+!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
+!   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
+!                mpg.intcellp:in geo.cvbb:in geo.cvx:in geo.cvy:in
+!                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
+!                geo.vxx:in geo.vxy:in geo.vxvol:in geo.vxonedbsq:in
 !                st_ext.am:in st_ext.za:in st_ext.za2:in st_ext.pt:in
 !                st_ext.na:in st_ext.ua:in st_ext.ta:in st_ext.fhi:in
 !                st_ext.fa:in st_ext.sne:in st_ext.she:in st_ext.shi:in
@@ -117,8 +121,8 @@
 !.specification
 !
 SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
-& ismain0, dtim, switch, switchd, geo, geod, mpg, st, std, st_ext, &
-& st_extd, st_avg, wrong_flow, main_call, nbdirs)
+& ismain0, dtim, switch, switchd, geo, geod, mpg, mpgd, st, std, st_ext&
+& , st_extd, st_avg, wrong_flow, main_call, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_TALLIES_DIFFV
@@ -138,8 +142,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff, nstraid, &
-& userfluxparm, userfluxparmd
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV
+!     & , only : maxw_eff, nstraid, userfluxparm
   USE B2MOD_RECYCLE_DIFFV, ONLY : int0r, int0l, int0ld, int3r, int3l, &
 & int3ld, int6r, int6l, int2r, int2l, int2ld, int5r, int5l, int1r, int1l&
 & , int1ld, int4r, int4l, int4ld, fna_mol
@@ -152,11 +156,12 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & fb_rescale, fb_rescaled, dt_prev, feedback_namelist_used
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbr_phys, &
-& ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax, &
-& ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall, ncall_b2tfrn,&
-& ncall_b2tiner
+  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa&
+& , tfluxa
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, in_no_of_start_points, &
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -174,6 +179,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(INOUT) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
 !   ..input/output arguments
   TYPE(B2STATE), INTENT(INOUT) :: st
   TYPE(B2STATE_DIFFV), INTENT(INOUT) :: std
@@ -243,9 +249,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   REAL(r8) :: result20
   CHARACTER(len=11) :: arg11
   CHARACTER(len=10) :: arg12
-  TYPE(B2PLASMASNAPSHOT_DIFFV) :: dummyzerodiffd
   INTEGER :: nd
-  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd0
+  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nbdirs
 !   ..initialisation
   DATA sources_inputfile /0/
@@ -256,7 +261,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -313,7 +318,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     IF (switch%b2srdt_numerics_namelist .GE. 1) THEN
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -334,7 +340,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       WRITE(*, *) 'b2sral: catching up ...'
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -370,7 +377,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       END IF
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -386,18 +394,18 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !wdk      if(switch%use_eirene.ne.0 .or. switch%save_f31.ne.0) then     !srv 14.07.10 {
 !wdk may want these *_eir-fluxes also without Eirene
 !   ..recompute currents
-  CALL B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, st%co%csig_an, &
-&           std%co%csig_an, st%pl%po, std%pl%po, st%dv%fchanml, std%dv%&
-&           fchanml, nbdirs)
-  CALL B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, st%pl%ua, &
-&           std%pl%ua, st%co%vsaf_cl, std%co%vsaf_cl, st%dv%fac_vis, st%&
-&           dv%fchvispar, std%dv%fchvispar, nbdirs)
-  CALL B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, st%pl%na, &
-&           std%pl%na, st%pl%ua, std%pl%ua, st%dv%facdrift, st%dv%&
+  CALL B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, st%co%&
+&           csig_an, std%co%csig_an, st%pl%po, std%pl%po, st%dv%fchanml&
+&           , std%dv%fchanml, nbdirs)
+  CALL B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
+&           %ua, std%pl%ua, st%co%vsaf_cl, std%co%vsaf_cl, st%dv%fac_vis&
+&           , st%dv%fchvispar, std%dv%fchvispar, nbdirs)
+  CALL B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
+&           %na, std%pl%na, st%pl%ua, std%pl%ua, st%dv%facdrift, st%dv%&
 &           fchinert, std%dv%fchinert, nbdirs)
-  CALL B2TFRN_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, st%&
-&          pl, std%pl, st%dv, std%dv, st%co, std%co, st%rt, std%rt, &
-&          st_ext, st_extd, nbdirs)
+  CALL B2TFRN_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
+&          mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, st%rt, std&
+&          %rt, st_ext, st_extd, nbdirs)
 !wdk      endif                                                         !srv 14.07.10 }
 !
 ! ..compute source coefficients
@@ -412,30 +420,11 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 28.07.08 03.11.17
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
-    dummyzerodiffd%na = 0.0_R8
-    dummyzerodiffd%ua = 0.0_R8
-    dummyzerodiffd%po = 0.0_R8
-    dummyzerodiffd%te = 0.0_R8
-    dummyzerodiffd%ti = 0.0_R8
-    dummyzerodiffd%tn = 0.0_R8
-    dummyzerodiffd%kt = 0.0_R8
-    dummyzerodiffd%zt = 0.0_R8
-    dummyzerodiffd%ne = 0.0_R8
-    dummyzerodiffd%ni = 0.0_R8
-    dummyzerodiffd%nn = 0.0_R8
-    dummyzerodiffd%fch = 0.0_R8
-    dummyzerodiffd%fna = 0.0_R8
-    dummyzerodiffd%fhi = 0.0_R8
-    dummyzerodiffd%fhe = 0.0_R8
-    dummyzerodiffd%fhn = 0.0_R8
-    dummyzerodiffd%fkt = 0.0_R8
-    dummyzerodiffd%fzt = 0.0_R8
-    dummyzerodiffd%kinrgy = 0.0_R8
     CALL B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd, &
-&            geo, geod, mpg, st%pl, std%pl, st%dv, std%dv, st%co, std%co&
-&            , st%rt, std%rt, st_ext, st_extd, st%srw, std%srw, st%psnc&
-&            , std%psnc, st%psnl, dummyzerodiffd, wrong_flow, main_call&
-&            , nbdirs)
+&            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
+&            std%co, st%rt, std%rt, st_ext, st_extd, st%srw, std%srw, st&
+&            %psnc, std%psnc, st%psnl, std%psnl, wrong_flow, main_call, &
+&            nbdirs)
     DO nd=1,nbdirs
 !   .. store contributions from BCs
       std%sr%sna(nd, :, :, :) = std%srw%sna0(nd, :, :, :)
@@ -466,14 +455,14 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..initialise smq to 0
   arg1 = ncv*4*ns
   DO nd=1,nbdirsmax
-    dummyzerodiffd0(nd) = 0.D0
+    dummyzerodiffd(nd) = 0.D0
   END DO
-  CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd0, st%sr%smq, std%sr%smq, 1&
-&         , nbdirs)
+  CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd, st%sr%smq, std%sr%smq, 1, &
+&         nbdirs)
 !   ..compute special contributions (boundaries and recycling)
   CALL B2STBR_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim, &
-&          switch, switchd, geo, geod, mpg, st, std, st_ext, st_extd, &
-&          st_avg, main_call, nbdirs)
+&          switch, switchd, geo, geod, mpg, mpgd, st, std, st_ext, &
+&          st_extd, st_avg, main_call, nbdirs)
 !   ..zero out contributions in dead cells
   DO is=0,ns-1
     CALL B2XZDD_DV(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), std%srw%&
@@ -800,8 +789,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff, nstraid, &
-& userfluxparm
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV
+!     & , only : maxw_eff, nstraid, userfluxparm
   USE B2MOD_RECYCLE_DIFFV, ONLY : int0r, int0l, int3r, int3l, int6r, &
 & int6l, int2r, int2l, int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV, ONLY : conpar, enepar, enipar, nbcd&
@@ -811,11 +800,12 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & dt_prev, feedback_namelist_used
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
-  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbr_phys, &
-& ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax, &
-& ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall, ncall_b2tfrn,&
-& ncall_b2tiner
+  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa&
+& , tfluxa
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, in_no_of_start_points, &
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -901,7 +891,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..subprogram start-up calls
   CALL SUBINI('b2sral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -958,7 +948,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     IF (switch%b2srdt_numerics_namelist .GE. 1) THEN
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -979,7 +970,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       WRITE(*, *) 'b2sral: catching up ...'
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1015,7 +1007,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       END IF
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF

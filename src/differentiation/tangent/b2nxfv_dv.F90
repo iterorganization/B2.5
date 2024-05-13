@@ -21,7 +21,7 @@
 !.specification
 !
 !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
-SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, &
+SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 & cvsbhz_cl, cvsbhz_cld, cvsbhz, cvsbhzd, flubv, flubvd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
@@ -42,6 +42,7 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
 !srv 16.10.17
   REAL(kind=r8), INTENT(IN) :: cvsbhz_cl(nfc, 0:1), cvsbhz(nfc, 0:1)
   REAL(kind=r8), INTENT(IN) :: cvsbhz_cld(nbdirsmax, nfc, 0:1), cvsbhzd(&
@@ -85,7 +86,7 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfv')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 ! ..compute convection term
   ft = 4.0_R8/3.0_R8
@@ -216,7 +217,7 @@ SUBROUTINE B2NXFV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, cvsbhz_cl&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfv')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 ! ..compute convection term
   ft = 4.0_R8/3.0_R8

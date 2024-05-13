@@ -4,9 +4,9 @@
 !  Differentiation of b2sicf in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: wrk0 ctcf smbcf
 !   with respect to varying inputs: nb ub wrk0
-!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxhz:in geo.vxvol:in
+!   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.cvhz:in
+!                geo.cvvol:in geo.fchc:in geo.fcht:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxhz:in geo.vxvol:in
 !
 !
 !
@@ -23,16 +23,14 @@
 !
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
-SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, nb&
-& , nbd, ub, ubd, smbcf, smbcfd, smbcb, ctcf, ctcfd, wrk0, wrk0d, nbdirs&
-&)
+SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
+& mpgd, nb, nbd, ub, ubd, smbcf, smbcfd, smbcb, ctcf, ctcfd, wrk0, wrk0d&
+& , nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sicf_smo0to3, balance_netcdf
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sicf
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -49,6 +47,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, nb&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: mb, nb(ncv), ub(ncv)
   REAL(kind=r8) :: nbd(nbdirsmax, ncv), ubd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
@@ -92,7 +91,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, nb&
   CALL SUBINI('b2sicf')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test mb
   CALL XERTST(0 .LE. mb, 'faulty argument mb')
 !   ..extensive tests on first few calls
@@ -102,9 +101,9 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, nb&
   END IF
 !
 ! ..compute centrifugal force
-  smbcf = 0.0e0_R8
+  smbcf = 0.0_R8
 !srv 06.04.07
-  ctcf = 0.0e0_R8
+  ctcf = 0.0_R8
   IF (switch%b2sicf_style .EQ. 0) THEN
     CALL GRADC_P_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvhz, geo%vxhz, &
 &                 wrk0)
@@ -129,7 +128,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, nb&
       smbcf(icv, 0) = temp*(ub(icv)*ub(icv)*temp0)
 !srv 06.04.07 {
 !srv 06.04.07 }
-      temp0 = 2.0e0_R8*geo%cvvol(icv)*wrk0(icv)*switch%b2sicf_phm1*mb*&
+      temp0 = 2.0_R8*geo%cvvol(icv)*wrk0(icv)*switch%b2sicf_phm1*mb*&
 &       switch%b2sicf_phm0*geo%cvbb(icv, 0)
       DO nd=1,nbdirs
         ctcfd(nd, icv) = temp0*(nb(icv)*ubd(nd, icv)+ub(icv)*nbd(nd, icv&
@@ -157,10 +156,8 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, nb&
       smbcfd(nd, :, :) = 0.D0
     END DO
   END IF
-!
-!djm Store linearised source for balance
-  IF (balance_netcdf .NE. 0) b2sicf_smo0to3(1:ncv, 0:3, isb) = smbcf
 !srv 17.06.02 }
+!
 !
   IF (switch%b2sicf_iout .NE. 0) THEN
 !srv 17.06.02 {
@@ -207,8 +204,6 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sicf_smo0to3, balance_netcdf
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sicf
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
@@ -259,7 +254,7 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   CALL SUBINI('b2sicf')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test mb
   CALL XERTST(0 .LE. mb, 'faulty argument mb')
 !   ..extensive tests on first few calls
@@ -269,9 +264,9 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   END IF
 !
 ! ..compute centrifugal force
-  smbcf = 0.0e0_R8
+  smbcf = 0.0_R8
 !srv 06.04.07
-  ctcf = 0.0e0_R8
+  ctcf = 0.0_R8
   IF (switch%b2sicf_style .EQ. 0) THEN
     CALL GRADC_P_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvhz, geo%vxhz, &
 &                 wrk0)
@@ -285,17 +280,15 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
 !srv 06.04.07 {
 !srv 06.04.07 }
       ctcf(icv) = switch%b2sicf_phm0*switch%b2sicf_phm1*geo%cvvol(icv)*(&
-&       geo%cvbb(icv, 0)/geo%cvbb(icv, 3))*mb*2.0e0_R8*ub(icv)*nb(icv)*&
+&       geo%cvbb(icv, 0)/geo%cvbb(icv, 3))*mb*2.0_R8*ub(icv)*nb(icv)*&
 &       wrk0(icv)
     END DO
   ELSE IF (switch%b2sicf_style .EQ. 1) THEN
 !
     CALL XERRAB('b2sicf -- style 1 not for WG')
   END IF
-!
-!djm Store linearised source for balance
-  IF (balance_netcdf .NE. 0) b2sicf_smo0to3(1:ncv, 0:3, isb) = smbcf
 !srv 17.06.02 }
+!
 !
   IF (switch%b2sicf_iout .NE. 0) THEN
 !srv 17.06.02 {

@@ -5,10 +5,11 @@
 !   variations   of useful results: wrk0 wrk1 smbvh smbvv
 !   with respect to varying inputs: ti hcix_c ni ub wrk0 wrk1 lnlam
 !                rz2 cvsbhz_cl ne2 te
-!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.fcbb:in geo.fchc:in geo.fcht:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxbb:in geo.vxhz:in
-!                geo.vxvol:in geo.ftconn:in geo.fteps:in geo.ftbbav2:in
+!   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.fcbb:in
+!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxbb:in geo.vxhz:in geo.vxvol:in
+!                geo.ftconn:in geo.fteps:in geo.ftbbav2:in
 !
 !
 !
@@ -24,20 +25,17 @@
 !.specification
 !
 !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
-SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
-& , ub, ubd, te, ted, ti, tid, nb, ni, nid, ne2, ne2d, rz2, rz2d, lnlam&
-& , lnlamd, hcix_c, hcix_cd, cvsbhz_cl, cvsbhz_cld, smbvh, smbvhd, smbvv&
-& , smbvvd, kt_neo, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
+SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
+& mpgd, mb, ub, ubd, te, ted, ti, tid, nb, ni, nid, ne2, ne2d, rz2, rz2d&
+& , lnlam, lnlamd, hcix_c, hcix_cd, cvsbhz_cl, cvsbhz_cld, smbvh, smbvhd&
+& , smbvv, smbvvd, kt_neo, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2siav_smovh0to3, b2siav_smovv0to3, &
-& balance_netcdf
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav, nsmooth_siav
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2ttia
@@ -57,6 +55,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(SWITCHES), INTENT(IN) :: switch
 !srv 01.07.09
 !srv 31.07.02
@@ -88,7 +87,6 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
 !
 !   ..local variables
   INTEGER :: ic, icv, ifc, ift, k
-  INTEGER, SAVE :: nsmooth=2
 !srv 17.06.02
   CHARACTER :: chns*3, chk*1
 !srv 16.10.17
@@ -152,7 +150,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
   CALL SUBINI('b2siav')
 !
 !srv 16.10.17
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
 !iyv 02.12.13
   s2 = SQRT(2.0_R8)
   smbvh = 0.0_R8
@@ -177,11 +175,11 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
       DO nd=1,nbdirsmax
         wrkvd(nd, :) = 0.D0
       END DO
-      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ti, tid, wrkv, &
-&             wrkvd, gti, gtid, nbdirs)
+      CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, &
+&             wrkv, wrkvd, gti, gtid, nbdirs)
 !
 !       ..calculate the parallel heat flux of ions in the center of the cell
-      qip0 = 0.0e0_R8
+      qip0 = 0.0_R8
 !
       IF (switch%b2siav_qstyle .EQ. 0) THEN
         DO nd=1,nbdirsmax
@@ -193,7 +191,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
             DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-&
 &               1
               icv = mpg%ftcv(ic)
-              temp = 2.5e0_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)
+              temp = 2.5_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)
               temp0 = geo%cvbb(icv, 0)*geo%ftbbav2(ift)*qe
               temp1 = ni(icv)*ti(icv)
               DO nd=1,nbdirs
@@ -231,7 +229,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
         DO nd=1,nbdirsmax
           wrkfd(nd, :) = 0.D0
         END DO
-        DO k=1,nsmooth
+        DO k=1,nsmooth_siav
           CALL INTFACE_DV(ncv, nfc, mpg%fccv, wght, qip0, qip0d, wrkf, &
 &                   wrkfd, nbdirs)
           CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, qip0&
@@ -274,7 +272,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
             DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-&
 &               1
               icv = mpg%ftcv(ic)
-              temp1 = 2.5e0_R8*geo%cvbb(icv, 2)
+              temp1 = 2.5_R8*geo%cvbb(icv, 2)
               temp0 = geo%cvbb(icv, 0)*qe*geo%cvbb(icv, 3)
               temp = ni(icv)*ti(icv)
               DO nd=1,nbdirs
@@ -311,11 +309,11 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
       END IF
 !
 !
-      tauia1 = 0.0e0_R8
-      nu1 = 0.0e0_R8
-      alpha1 = 0.0e0_R8
+      tauia1 = 0.0_R8
+      nu1 = 0.0_R8
+      alpha1 = 0.0_R8
 !iyv 02.12.13
-      kt_neo = 0.0e0_R8
+      kt_neo = 0.0_R8
       DO nd=1,nbdirsmax
         alpha1d(nd, :) = 0.D0
       END DO
@@ -333,18 +331,18 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
 !lk 20.11.07 { iyv 06.12.13
               temp1 = geo%ftconn(ift)*(ev*ev)
               temp0 = ti(icv)*ti(icv)/(temp1*ne2(icv))
-              temp = 15.12e16_R8*geo%fteps(ift)**1.5e0_R8
+              temp = 15.12e16_R8*geo%fteps(ift)**1.5_R8
               temp2 = geo%ftconn(ift)*(ev*ev)
               temp3 = ti(icv)*ti(icv)/(temp2*ne2(icv))
-              temp4 = (15.12e16_R8*temp3+1.0e0_R8)*(temp*temp0+1.0e0_R8)
+              temp4 = (15.12e16_R8*temp3+1.0_R8)*(temp*temp0+1.0_R8)
               temp5 = tauia(icv, isb)/temp4
               DO nd=1,nbdirs
                 tauia1d(nd, icv) = switch%cvsa_mltpl*(tauiad(nd, icv, &
-&                 isb)-temp5*((temp*temp0+1.0e0_R8)*15.12e16_R8*(2*ti(&
-&                 icv)*tid(nd, icv)-temp3*temp2*ne2d(nd, icv))/(temp2*&
-&                 ne2(icv))+(15.12e16_R8*temp3+1.0e0_R8)*temp*(2*ti(icv)&
-&                 *tid(nd, icv)-temp0*temp1*ne2d(nd, icv))/(temp1*ne2(&
-&                 icv))))/temp4
+&                 isb)-temp5*((temp*temp0+1.0_R8)*15.12e16_R8*(2*ti(icv)&
+&                 *tid(nd, icv)-temp3*temp2*ne2d(nd, icv))/(temp2*ne2(&
+&                 icv))+(15.12e16_R8*temp3+1.0_R8)*temp*(2*ti(icv)*tid(&
+&                 nd, icv)-temp0*temp1*ne2d(nd, icv))/(temp1*ne2(icv))))&
+&                 /temp4
               END DO
               tauia1(icv) = switch%cvsa_mltpl*temp5
             ELSE IF (switch%lluciani .EQ. 1) THEN
@@ -376,7 +374,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
             result1 = temp5
             arg2 = geo%fteps(ift)**3
             result2 = SQRT(arg2)
-            temp4 = 2.0e0_R8*pi*result2
+            temp4 = 2.0_R8*pi*result2
             temp5 = geo%ftconn(ift)/(temp4*tauia(icv, isb)*result1)
             DO nd=1,nbdirs
               nu1d(nd, icv) = -(temp5*(result1*tauiad(nd, icv, isb)+&
@@ -403,25 +401,24 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
             END DO
             result2 = temp5
             temp5 = geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift)
-            temp4 = 0.7e0_R8*result2 + temp5*(nu1(icv)*nu1(icv)) + &
-&             1.0e0_R8
+            temp4 = 0.7_R8*result2 + temp5*(nu1(icv)*nu1(icv)) + 1.0_R8
             temp3 = geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift)
-            temp6 = (1.05e0_R8*result1+2.7e0_R8*temp3*(nu1(icv)*nu1(icv)&
-&             )-0.17e0_R8)/temp4
+            temp6 = (1.05_R8*result1+2.7_R8*temp3*(nu1(icv)*nu1(icv))-&
+&             0.17_R8)/temp4
             DO nd=1,nbdirs
-              alpha1d(nd, icv) = 0.533e0_R8*(1.05e0_R8*result1d(nd)+&
-&               temp3*2.7e0_R8*2*nu1(icv)*nu1d(nd, icv)-temp6*(0.7e0_R8*&
-&               result2d(nd)+temp5*2*nu1(icv)*nu1d(nd, icv)))/temp4
+              alpha1d(nd, icv) = 0.533_R8*(1.05_R8*result1d(nd)+temp3*&
+&               2.7_R8*2*nu1(icv)*nu1d(nd, icv)-temp6*(0.7_R8*result2d(&
+&               nd)+temp5*2*nu1(icv)*nu1d(nd, icv)))/temp4
             END DO
-            alpha1(icv) = 0.533e0_R8*(temp6-1.0e0_R8)
+            alpha1(icv) = 0.533_R8*(temp6-1.0_R8)
 !iyv 02.12.13
             arg1 = nu1(icv)*s2
             result1 = SQRT(arg1)
             arg2 = nu1(icv)*s2
             result2 = SQRT(arg2)
-            kt_neo(icv) = (-0.17e0_R8+1.05e0_R8*result1+2.7e0_R8*(nu1(&
-&             icv)*s2)**2*geo%fteps(ift)**3)/(1.0e0_R8+0.7e0_R8*result2+&
-&             (nu1(icv)*s2)**2*geo%fteps(ift)**3)
+            kt_neo(icv) = (-0.17_R8+1.05_R8*result1+2.7_R8*(nu1(icv)*s2)&
+&             **2*geo%fteps(ift)**3)/(1.0_R8+0.7_R8*result2+(nu1(icv)*s2&
+&             )**2*geo%fteps(ift)**3)
           END DO
         END IF
       END DO
@@ -487,8 +484,8 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
       qipgen = result11*(qip1*temp8)
 !
 !       ..gradient qipgen in cell centers   
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, qipgen, qipgend&
-&               , wrkv, wrkvd, wrk0, wrk0d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, qipgen, &
+&               qipgend, wrkv, wrkvd, wrk0, wrk0d, nbdirs)
       temp9 = geo%cvbb(:, 3)*geo%cvbb(:, 3)*geo%cvbb(:, 3)
       DO nd=1,nbdirs
         wrk0d(nd, :) = geo%cvbb(:, 0)*(alpha1*(tauia1*wrk0d(nd, :)+wrk0*&
@@ -497,8 +494,8 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
       wrk0 = geo%cvbb(:, 0)*(wrk0*tauia1*alpha1/temp9)
 !       ..finally calculate the r.h.s. contribution to the parallel balance
 !         corresponding to parallel viscosity connected with heat flow
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk0, wrk0d, &
-&               wrkv, wrkvd, wrk1, wrk1d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk0, &
+&               wrk0d, wrkv, wrkvd, wrk1, wrk1d, nbdirs)
 !zero out spurious contributions outside of separatrix
 !wdk todo: rationalize this when separatrix-structure is introduced?
 !
@@ -557,8 +554,8 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
       DO nd=1,nbdirsmax
         wrk1d(nd, :) = 0.D0
       END DO
-      CALL DIFF_P_DV(ncv, nfc, nvx, 1, geo, mpg, wrk1, wrk1d, wrkv, &
-&              wrkvd, wrkf, wrkfd, nbdirs)
+      CALL DIFF_P_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, wrk1, wrk1d, wrkv&
+&              , wrkvd, wrkf, wrkfd, nbdirs)
 !
 !       ..compute flow and its divergence
       arg13(:) = geo%fcbb(:, 3)
@@ -580,7 +577,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
           t0d(nd) = wrk2(icv)*wrk0d(nd, icv)
         END DO
         t0 = wrk0(icv)*wrk2(icv)
-        IF (t0 .GT. 0.0e0_R8) THEN
+        IF (t0 .GT. 0.0_R8) THEN
           DO nd=1,nbdirs
             smbvvd(nd, icv, 0) = ub(icv)*t0d(nd) + t0*ubd(nd, icv)
           END DO
@@ -639,11 +636,6 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, mb&
     CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 1), arg16(:))
   END IF
 !
-!djm Jan2017 Store linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2siav_smovh0to3(1:ncv, 0:3, isb) = smbvh
-    b2siav_smovv0to3(1:ncv, 0:3, isb) = smbvv
-  END IF
 !
 ! ..return
   ncall_b2siav = ncall_b2siav + 1
@@ -675,10 +667,7 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2siav_smovh0to3, b2siav_smovv0to3, &
-& balance_netcdf
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav, nsmooth_siav
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2ttia
@@ -720,7 +709,6 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
 !
 !   ..local variables
   INTEGER :: ic, icv, ifc, ift, k
-  INTEGER, SAVE :: nsmooth=2
 !srv 17.06.02
   CHARACTER :: chns*3, chk*1
 !srv 16.10.17
@@ -761,7 +749,7 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
   CALL SUBINI('b2siav')
 !
 !srv 16.10.17
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
 !iyv 02.12.13
   s2 = SQRT(2.0_R8)
   smbvh = 0.0_R8
@@ -782,7 +770,7 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
       CALL GRADC_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ti, wrkv, gti)
 !
 !       ..calculate the parallel heat flux of ions in the center of the cell
-      qip0 = 0.0e0_R8
+      qip0 = 0.0_R8
 !
       IF (switch%b2siav_qstyle .EQ. 0) THEN
 !
@@ -791,7 +779,7 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
             DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-&
 &               1
               icv = mpg%ftcv(ic)
-              qip0(icv) = -(2.5e0_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)/(&
+              qip0(icv) = -(2.5_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)/(&
 &               geo%cvbb(icv, 0)*geo%ftbbav2(ift))*(ni(icv)*ti(icv)/qe)*&
 &               gti(icv, 1))
             END DO
@@ -812,7 +800,7 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
 !smoothing: interpolate to faces and back to cell centers
 !
         wght = 1.0_R8
-        DO k=1,nsmooth
+        DO k=1,nsmooth_siav
           CALL INTFACE(ncv, nfc, mpg%fccv, wght, qip0, wrkf)
           CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, qip0)
 !copy value of qip0 across separatrix
@@ -837,8 +825,8 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
 &               1
               icv = mpg%ftcv(ic)
               qip0(icv) = -(hcix_c(icv)*gti(icv, 0)*geo%cvbb(icv, 3)/geo&
-&               %cvbb(icv, 0)) - 2.5e0_R8*geo%cvbb(icv, 2)/(geo%cvbb(icv&
-&               , 0)*geo%cvbb(icv, 3))*(ni(icv)*ti(icv)/qe)*gti(icv, 1)
+&               %cvbb(icv, 0)) - 2.5_R8*geo%cvbb(icv, 2)/(geo%cvbb(icv, &
+&               0)*geo%cvbb(icv, 3))*(ni(icv)*ti(icv)/qe)*gti(icv, 1)
             END DO
           END IF
         END DO
@@ -857,21 +845,21 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
       END IF
 !
 !
-      tauia1 = 0.0e0_R8
-      nu1 = 0.0e0_R8
-      alpha1 = 0.0e0_R8
+      tauia1 = 0.0_R8
+      nu1 = 0.0_R8
+      alpha1 = 0.0_R8
 !iyv 02.12.13
-      kt_neo = 0.0e0_R8
+      kt_neo = 0.0_R8
       DO ift=1,mpg%nft
         IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
           DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
             icv = mpg%ftcv(ic)
             IF (switch%lluciani .EQ. 3) THEN
 !lk 20.11.07 { iyv 06.12.13
-              tauia1(icv) = switch%cvsa_mltpl*tauia(icv, isb)/(1.0e0_R8+&
+              tauia1(icv) = switch%cvsa_mltpl*tauia(icv, isb)/(1.0_R8+&
 &               15.12e16_R8/geo%ftconn(ift)*(ti(icv)/ev)**2/ne2(icv))/(&
-&               1.0e0_R8+15.12e16_R8*geo%fteps(ift)**1.5e0_R8/geo%ftconn&
-&               (ift)*(ti(icv)/ev)**2/ne2(icv))
+&               1.0_R8+15.12e16_R8*geo%fteps(ift)**1.5_R8/geo%ftconn(ift&
+&               )*(ti(icv)/ev)**2/ne2(icv))
             ELSE IF (switch%lluciani .EQ. 1) THEN
               tauia1(icv) = tauia(icv, isb)/(1.0_R8+7.5e16_R8/geo%ftconn&
 &               (ift)*(ti(icv)/ev)**2/ne2(icv))
@@ -882,22 +870,22 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
             result1 = SQRT(arg1)
             arg2 = geo%fteps(ift)**3
             result2 = SQRT(arg2)
-            nu1(icv) = geo%ftconn(ift)/(tauia(icv, isb)*result1*2.0e0_R8&
-&             *pi*result2)
+            nu1(icv) = geo%ftconn(ift)/(tauia(icv, isb)*result1*2.0_R8*&
+&             pi*result2)
 !lk 20.11.07 }
             result1 = SQRT(nu1(icv))
             result2 = SQRT(nu1(icv))
-            alpha1(icv) = ((-0.17e0_R8+1.05e0_R8*result1+2.7e0_R8*nu1(&
-&             icv)**2*geo%fteps(ift)**3)/(1.0e0_R8+0.7e0_R8*result2+nu1(&
-&             icv)**2*geo%fteps(ift)**3)-1.0e0_R8)*0.533e0_R8
+            alpha1(icv) = ((-0.17_R8+1.05_R8*result1+2.7_R8*nu1(icv)**2*&
+&             geo%fteps(ift)**3)/(1.0_R8+0.7_R8*result2+nu1(icv)**2*geo%&
+&             fteps(ift)**3)-1.0_R8)*0.533_R8
 !iyv 02.12.13
             arg1 = nu1(icv)*s2
             result1 = SQRT(arg1)
             arg2 = nu1(icv)*s2
             result2 = SQRT(arg2)
-            kt_neo(icv) = (-0.17e0_R8+1.05e0_R8*result1+2.7e0_R8*(nu1(&
-&             icv)*s2)**2*geo%fteps(ift)**3)/(1.0e0_R8+0.7e0_R8*result2+&
-&             (nu1(icv)*s2)**2*geo%fteps(ift)**3)
+            kt_neo(icv) = (-0.17_R8+1.05_R8*result1+2.7_R8*(nu1(icv)*s2)&
+&             **2*geo%fteps(ift)**3)/(1.0_R8+0.7_R8*result2+(nu1(icv)*s2&
+&             )**2*geo%fteps(ift)**3)
           END DO
         END IF
       END DO
@@ -984,7 +972,7 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
       DO icv=1,mpg%nci
 !srv 01.07.05 }
         t0 = wrk0(icv)*wrk2(icv)
-        IF (t0 .GT. 0.0e0_R8) THEN
+        IF (t0 .GT. 0.0_R8) THEN
           smbvv(icv, 0) = t0*ub(icv)
         ELSE
           smbvv(icv, 1) = t0
@@ -1023,11 +1011,6 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb, &
     CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 1), arg16(:))
   END IF
 !
-!djm Jan2017 Store linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2siav_smovh0to3(1:ncv, 0:3, isb) = smbvh
-    b2siav_smovv0to3(1:ncv, 0:3, isb) = smbvv
-  END IF
 !
 ! ..return
   ncall_b2siav = ncall_b2siav + 1

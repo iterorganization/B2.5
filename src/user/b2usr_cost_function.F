@@ -263,7 +263,7 @@
           if (cfread(icf)) then
             ! Always calculate the least squares value in these cases (i.e. not cftypes 4,5,6,11)
             call map_and_interpolate_cf(n1, n2, nomp, b2psi(icf,1:n1),
-     &        b2rr(icf,1:n1), psi_omp, b2data(1:n1),
+     &        b2rr(icf,1:n1), psi_omp(1:nomp), b2data(1:n1),
      &        cfdata(icf,1,1:n2), b2dataOnCf(1:n2), mapToOmp(icf),
      &        ompind(icf,1:2), curr_shift)
             do iCv = 1, n2

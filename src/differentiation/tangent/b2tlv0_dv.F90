@@ -18,8 +18,8 @@
 !
 !
 SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
-& , na, nad, ua, uad, te, tn, tnd, rza, cvsa0, cvsa0d, cvsa, cvsad, &
-& cvsahz, cvsahzd, flv, flvd, nbdirs)
+& , mpgd, na, nad, ua, uad, te, tn, tnd, rza, cvsa0, cvsa0d, cvsa, cvsad&
+& , cvsahz, cvsahzd, flv, flvd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -29,6 +29,7 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2tlv0_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -41,6 +42,7 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), tn(ncv), &
 & rza(ncv, 0:ns-1), cvsa0(nfc, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
@@ -98,7 +100,7 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlv0')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
   arg1 = nfc*2*ns
@@ -120,8 +122,8 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       DO is=0,ns-1
         IF (is_neutral(is)) THEN
 !    ..compute differences of parallel velocity
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ua(1, is), uad(&
-&                :, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
+          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ua(1, is)&
+&                , uad(:, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
           DO ifc=1,nfc
             IF (cvsa(ifc, 0, is)*dubf(ifc, 0) .GE. 0.) THEN
               DO nd=1,nbdirs
@@ -290,8 +292,8 @@ SUBROUTINE B2TLV0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       DO is=0,ns-1
         IF (is_neutral(is)) THEN
 !    ..compute differences of parallel velocity
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ua(1, is), uad(&
-&                :, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
+          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ua(1, is)&
+&                , uad(:, 1, is), ubv, ubvd, dubf, dubfd, nbdirs)
           DO ifc=1,nfc
             arg10 = dubf(ifc, 0)**2 + dubf(ifc, 1)**2
             temp1 = SQRT(arg10)
@@ -430,6 +432,7 @@ SUBROUTINE B2TLV0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, te&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2tlv0_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -476,7 +479,7 @@ SUBROUTINE B2TLV0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, te&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlv0')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
   arg1 = nfc*2*ns

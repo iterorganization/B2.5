@@ -20,8 +20,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE GRADC_DIV_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, &
-& funf, funfd, gfun, gfund, nbdirs)
+SUBROUTINE GRADC_DIV_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
+& fund, funf, funfd, gfun, gfund, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -37,6 +37,7 @@ SUBROUTINE GRADC_DIV_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fun(ncv), funf(nfc)
   REAL(kind=r8) :: fund(nbdirsmax, ncv), funfd(nbdirsmax, nfc)
 !   ..output arguments
@@ -75,10 +76,10 @@ SUBROUTINE GRADC_DIV_DV(ncv, nfc, nvx, mode, geo, geod, mpg, fun, fund, &
 &                            fund, funf, funfd, nbdirs)
 !
 !   ..compute poloidal and radial gradients
-  CALL GRADC_DIV_P_DV(ncv, nfc, nvx, 1, geo, mpg, fun, fund, funf, funfd&
-&               , gfun(:, 0), gfund(:, :, 0), nbdirs)
-  CALL GRADC_DIV_R_DV(ncv, nfc, nvx, 1, geo, mpg, fun, fund, funf, funfd&
-&               , gfun(:, 1), gfund(:, :, 1), nbdirs)
+  CALL GRADC_DIV_P_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, funf&
+&               , funfd, gfun(:, 0), gfund(:, :, 0), nbdirs)
+  CALL GRADC_DIV_R_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, funf&
+&               , funfd, gfun(:, 1), gfund(:, :, 1), nbdirs)
 !
 !   ..return
   RETURN

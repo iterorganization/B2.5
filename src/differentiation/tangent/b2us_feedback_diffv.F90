@@ -878,7 +878,7 @@ CONTAINS
 &       .EQ. 28)))
     END DO
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
-!     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC 
+!     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
     consistent = ((consistent .OR. lbndusr) .OR. b2sral_style .EQ. 1) &
 &     .OR. switch%b2stbc_boundary_namelist .LT. 1
@@ -984,6 +984,7 @@ CONTAINS
 !                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fna)
 !                *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch)
 !                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
+!                *(psnl.na) *(psnl.ne) *(psnl.ni) *(psnl.kinrgy)
 !                *(pl.na)
 !   with respect to varying inputs: enepar conpar potpar enipar
 !                userfluxparm fb_target fb_prev fb_current fb_const
@@ -991,7 +992,8 @@ CONTAINS
 !                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fch)
 !                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
 !                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir) *(dv.fhe)
-!                *(dv.fhi) *(dv.kinrgy) *(dv.ne) *(dv.ni) *(rt.rza)
+!                *(dv.fhi) *(dv.kinrgy) *(dv.ne) *(dv.ni) *(psnl.na)
+!                *(psnl.ne) *(psnl.ni) *(psnl.kinrgy) *(rt.rza)
 !                *(pl.na)
 !   Plus diff mem management of: psnc.na:in psnc.ne:in psnc.ni:in
 !                psnc.fna:in psnc.kinrgy:in dv.fch:in dv.fna:in
@@ -1053,7 +1055,7 @@ CONTAINS
     CALL SUBINI('compute_feedback')
     IF (ncall .EQ. 0) THEN
 !   ..test nCv, nFc, ns
-      CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, &
+      CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, &
 &           'faulty argument nCv, nFc')
       CALL XERTST(1 .LE. ns, 'faulty argument ns')
       CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
@@ -1067,7 +1069,7 @@ CONTAINS
     IF (result1 .GT. 0.0_R8 .OR. result2 .GT. 0) THEN
 ! we have a request for feedback control
 ! the idea here is to break the actions into 3 phases
-! 1/ calculate something based on the present state of the plasma depending on 
+! 1/ calculate something based on the present state of the plasma depending on
 !    "fb_type"
 ! 2/ compare this with the reference value and calculate a change
 ! 3/ apply this in some way based on "fb_actuator"
@@ -1360,6 +1362,32 @@ CONTAINS
                       END IF
                     END IF
                   END DO
+                  IF (mpg%ifssep2 .GT. 0) THEN
+                    ifc1 = mpg%fsfcp(mpg%ifssep2, 1)
+                    ifc2 = ifc1 + mpg%fsfcp(mpg%ifssep2, 2) - 1
+                    DO ifc=ifc1,ifc2
+                      ic1 = mpg%fccv(mpg%fsfc(ifc), 1)
+                      ic2 = mpg%fccv(mpg%fsfc(ifc), 2)
+                      IF (mpg%cvonclosedsurface(ic1) .OR. mpg%&
+&                         cvonclosedsurface(ic2)) THEN
+                        DO nd=1,nbdirs
+                          fb_currentd(nd, ifb) = fb_currentd(nd, ifb) + &
+&                           geo%fcs(mpg%fsfc(ifc))*(pld%na(nd, ic1, is)+&
+&                           pld%na(nd, ic2, is))
+                        END DO
+                        fb_current(ifb) = fb_current(ifb) + (pl%na(ic1, &
+&                         is)+pl%na(ic2, is))*geo%fcs(mpg%fsfc(ifc))
+                        IF (is .EQ. is_start + 1) THEN
+                          DO nd=1,nbdirs
+                            sum_ed(nd) = sum_ed(nd) + geo%fcs(mpg%fsfc(&
+&                             ifc))*(dvd%ne(nd, ic1)+dvd%ne(nd, ic2))
+                          END DO
+                          sum_e = sum_e + (dv%ne(ic1)+dv%ne(ic2))*geo%&
+&                           fcs(mpg%fsfc(ifc))
+                        END IF
+                      END IF
+                    END DO
+                  END IF
                   is_end = is
                 END IF
               END IF
@@ -1829,9 +1857,9 @@ CONTAINS
 
           END SELECT
 !
-          WRITE(*, '(a,1x,1p,i3,6g15.6)') 'feedback_rescale ', b2espcr(&
-&         fb_species(ifb)), fb_current(ifb), fb_target(ifb), fb_rescale(&
-&         ifb), fb_prev(ifb), ddtim, dt_prev
+          WRITE(*, '(a,1x,1p,i3,6g15.6)') 'feedback_rescale ', b2espcr&
+&           (fb_species(ifb)), fb_current(ifb), fb_target(ifb), &
+&           fb_rescale(ifb), fb_prev(ifb), ddtim, dt_prev
 !
 !
 ! phase 3:
@@ -1990,30 +2018,33 @@ CONTAINS
               END DO
               dv%ne = dv%ne + temp1*rt%rza(:, is)
               dv%fna(:, 0:1, is) = dv%fna(:, 0:1, is)*fb_rescale(ifb)
-              dv%fna_mdf(:, 0:1, is) = dv%fna_mdf(:, 0:1, is)*fb_rescale&
-&               (ifb)
+              dv%fna_mdf(:, 0:1, is) = dv%fna_mdf(:, 0:1, is)*&
+&               fb_rescale(ifb)
               dv%fna_fcor(:, 0:1, is) = dv%fna_fcor(:, 0:1, is)*&
 &               fb_rescale(ifb)
               dv%fna_nodrift(:, 0:1, is) = dv%fna_nodrift(:, 0:1, is)*&
 &               fb_rescale(ifb)
-              dv%fna_he(:, 0:1, is) = dv%fna_he(:, 0:1, is)*fb_rescale(&
-&               ifb)
-              dv%fnapsch(:, 0:1, is) = dv%fnapsch(:, 0:1, is)*fb_rescale&
+              dv%fna_he(:, 0:1, is) = dv%fna_he(:, 0:1, is)*fb_rescale&
 &               (ifb)
-              dv%fna_eir(:, 0:1, is) = dv%fna_eir(:, 0:1, is)*fb_rescale&
+              dv%fnapsch(:, 0:1, is) = dv%fnapsch(:, 0:1, is)*&
+&               fb_rescale(ifb)
+              dv%fna_eir(:, 0:1, is) = dv%fna_eir(:, 0:1, is)*&
+&               fb_rescale(ifb)
+              dv%fna_32(:, 0:1, is) = dv%fna_32(:, 0:1, is)*fb_rescale&
 &               (ifb)
-              dv%fna_32(:, 0:1, is) = dv%fna_32(:, 0:1, is)*fb_rescale(&
-&               ifb)
-              dv%fna_52(:, 0:1, is) = dv%fna_52(:, 0:1, is)*fb_rescale(&
-&               ifb)
+              dv%fna_52(:, 0:1, is) = dv%fna_52(:, 0:1, is)*fb_rescale&
+&               (ifb)
             END DO
-!   ..initialise previous state and fluxes
-            psnl%na = pl%na
             DO nd=1,nbdirs
+!   ..initialise previous state and fluxes
+              psnld%na(nd, :, :) = pld%na(nd, :, :)
               psncd%na(nd, :, :) = pld%na(nd, :, :)
+              psnld%ne(nd, :) = dvd%ne(nd, :)
               psncd%ne(nd, :) = dvd%ne(nd, :)
+              psnld%kinrgy(nd, :, :) = dvd%kinrgy(nd, :, :)
               psncd%kinrgy(nd, :, :) = dvd%kinrgy(nd, :, :)
             END DO
+            psnl%na = pl%na
             psnc%na = pl%na
             psnl%ne = dv%ne
             psnc%ne = dv%ne
@@ -2024,11 +2055,12 @@ CONTAINS
 !   ..compute initial ni
             CALL B2XPNI_NODIFF(ncv, ns, pl%na, dv%ni)
             CALL B2XPNN_NODIFF(ncv, ns, pl%na, dv%nn)
-!   ..compute ni0
-            psnl%ni = dv%ni
             DO nd=1,nbdirs
+!   ..compute ni0
+              psnld%ni(nd, :, :) = dvd%ni(nd, :, :)
               psncd%ni(nd, :, :) = dvd%ni(nd, :, :)
             END DO
+            psnl%ni = dv%ni
             psnc%ni = dv%ni
           CASE (3) 
 !
@@ -2036,12 +2068,12 @@ CONTAINS
 !
             IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
 &                             'compute_feedback_actuator: using ', &
-&                             'boundary flux condition for sequence ', &
-&                             b2espcr(fb_species(ifb))
+&                             'boundary flux condition for sequence '&
+&                             , b2espcr(fb_species(ifb))
 !
             is_start = eb2spcr(b2espcr(fb_species(ifb))) + 1
-            is_end = eb2spcr(b2espcr(fb_species(ifb))) + nfluids(b2espcr&
-&             (fb_species(ifb)))
+            is_end = eb2spcr(b2espcr(fb_species(ifb))) + nfluids(&
+&             b2espcr(fb_species(ifb)))
 !
             IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
 &               saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
@@ -2096,8 +2128,8 @@ CONTAINS
               END IF
             END IF
 !
-            IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) .GT.&
-&               fb_target(ifb)*fb_overshoot(ifb)) THEN
+            IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) &
+&               .GT. fb_target(ifb)*fb_overshoot(ifb)) THEN
               total_flux = 0.0_R8
               DO nd=1,nbdirsmax
                 total_fluxd(nd) = 0.D0
@@ -2116,7 +2148,8 @@ CONTAINS
                   conpard(nd, is, fb_ib(ifb), 1) = charge_frac(iss)*&
 &                   total_fluxd(nd) + total_flux*charge_fracd(nd, iss)
                 END DO
-                conpar(is, fb_ib(ifb), 1) = total_flux*charge_frac(iss)
+                conpar(is, fb_ib(ifb), 1) = total_flux*charge_frac(iss&
+&                 )
               END DO
             ELSE
               DO nd=1,nbdirs
@@ -2148,8 +2181,8 @@ CONTAINS
 &                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
 &                 *fb_rescaled(nd, ifb)
               END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&               fb_rescale(ifb)
             ELSE
               DO nd=1,nbdirs
                 saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
@@ -2184,8 +2217,8 @@ CONTAINS
 &                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
 &                 *fb_rescaled(nd, ifb)
               END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&               fb_rescale(ifb)
             ELSE
               DO nd=1,nbdirs
                 saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
@@ -2220,8 +2253,8 @@ CONTAINS
 &                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
 &                 *fb_rescaled(nd, ifb)
               END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&               fb_rescale(ifb)
             ELSE
               DO nd=1,nbdirs
                 saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
@@ -2239,8 +2272,8 @@ CONTAINS
 !
             IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
 &                             'compute_feedback_actuator: using ', &
-&                             'density condition for sequence ', b2espcr&
-&                             (fb_species(ifb))
+&                             'density condition for sequence ', &
+&                             b2espcr(fb_species(ifb))
 !
             IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
 &               saved_fb_actuator(ifb) .EQ. 0.0_R8) THEN
@@ -2258,8 +2291,8 @@ CONTAINS
 &                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
 &                 *fb_rescaled(nd, ifb)
               END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&               fb_rescale(ifb)
             ELSE
               DO nd=1,nbdirs
                 saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
@@ -2271,8 +2304,8 @@ CONTAINS
               conpard(nd, fb_species(ifb), fb_ib(ifb), 1) = &
 &               saved_fb_actuatord(nd, ifb)
             END DO
-            conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator(&
-&             ifb)
+            conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator&
+&             (ifb)
           CASE DEFAULT
 !
             WRITE(*, *) 'fb_actuator not coded ', fb_type(ifb)
@@ -2336,7 +2369,7 @@ CONTAINS
     CALL SUBINI('compute_feedback')
     IF (ncall .EQ. 0) THEN
 !   ..test nCv, nFc, ns
-      CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, &
+      CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, &
 &           'faulty argument nCv, nFc')
       CALL XERTST(1 .LE. ns, 'faulty argument ns')
       CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
@@ -2350,7 +2383,7 @@ CONTAINS
     IF (result1 .GT. 0.0_R8 .OR. result2 .GT. 0) THEN
 ! we have a request for feedback control
 ! the idea here is to break the actions into 3 phases
-! 1/ calculate something based on the present state of the plasma depending on 
+! 1/ calculate something based on the present state of the plasma depending on
 !    "fb_type"
 ! 2/ compare this with the reference value and calculate a change
 ! 3/ apply this in some way based on "fb_actuator"
@@ -2559,6 +2592,21 @@ CONTAINS
 &                         ic1)+dv%ne(ic2))*geo%fcs(mpg%fsfc(ifc))
                     END IF
                   END DO
+                  IF (mpg%ifssep2 .GT. 0) THEN
+                    ifc1 = mpg%fsfcp(mpg%ifssep2, 1)
+                    ifc2 = ifc1 + mpg%fsfcp(mpg%ifssep2, 2) - 1
+                    DO ifc=ifc1,ifc2
+                      ic1 = mpg%fccv(mpg%fsfc(ifc), 1)
+                      ic2 = mpg%fccv(mpg%fsfc(ifc), 2)
+                      IF (mpg%cvonclosedsurface(ic1) .OR. mpg%&
+&                         cvonclosedsurface(ic2)) THEN
+                        fb_current(ifb) = fb_current(ifb) + (pl%na(ic1, &
+&                         is)+pl%na(ic2, is))*geo%fcs(mpg%fsfc(ifc))
+                        IF (is .EQ. is_start + 1) sum_e = sum_e + (dv%ne&
+&                           (ic1)+dv%ne(ic2))*geo%fcs(mpg%fsfc(ifc))
+                      END IF
+                    END DO
+                  END IF
                   is_end = is
                 END IF
               END IF

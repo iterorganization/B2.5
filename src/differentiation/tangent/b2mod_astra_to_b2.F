@@ -187,8 +187,8 @@
      &           (a_astra(iy)-a_astra(iy-1))
        enddo
        b(ny_astra) = b(ny_astra-1)
-       c = 0.0e0_R8
-       d = 0.0e0_R8
+       c = 0.0_R8
+       d = 0.0_R8
 !       do i = -1, n 
 !        fun(i) = dseval(ny_astra, coord(i), a_astra, Rmaj_astra, b, c, d)
 !        write(*,*) coord(i), fun(i)

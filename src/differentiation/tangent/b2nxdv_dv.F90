@@ -20,8 +20,6 @@ SUBROUTINE B2NXDV_DV(ncv, isb, switch, mpg, rob, robd, smqb, smqbd, &
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2nxdv_smo0to3, balance_netcdf
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -48,7 +46,7 @@ SUBROUTINE B2NXDV_DV(ncv, isb, switch, mpg, rob, robd, smqb, smqbd, &
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdv')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !
 !djm Jan2017 Keep source at the start to calculate total change for balance routines
   smbtmp = smb
@@ -75,9 +73,6 @@ SUBROUTINE B2NXDV_DV(ncv, isb, switch, mpg, rob, robd, smqb, smqbd, &
     END DO
   END IF
 !
-!djm Store the total change in linearised source for balance
-  IF (balance_netcdf .NE. 0) b2nxdv_smo0to3(1:ncv, 0:3, isb) = smb - &
-&     smbtmp
 !
   CALL SUBEND()
   RETURN
@@ -98,8 +93,6 @@ SUBROUTINE B2NXDV_NODIFF(ncv, isb, switch, mpg, rob, smqb, smqdu, smb)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2nxdv_smo0to3, balance_netcdf
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -120,7 +113,7 @@ SUBROUTINE B2NXDV_NODIFF(ncv, isb, switch, mpg, rob, smqb, smqdu, smb)
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdv')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !
 !djm Jan2017 Keep source at the start to calculate total change for balance routines
   smbtmp = smb
@@ -135,9 +128,6 @@ SUBROUTINE B2NXDV_NODIFF(ncv, isb, switch, mpg, rob, smqb, smqdu, smb)
     END DO
   END IF
 !
-!djm Store the total change in linearised source for balance
-  IF (balance_netcdf .NE. 0) b2nxdv_smo0to3(1:ncv, 0:3, isb) = smb - &
-&     smbtmp
 !
   CALL SUBEND()
   RETURN

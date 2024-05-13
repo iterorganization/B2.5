@@ -44,7 +44,7 @@ SUBROUTINE B2TXSX_DV(ncv, nfc, geo, mpg, fcvol, fcs, fun, fund, funsx, &
 !     ------------------------------------------------------------------
   CALL SUBINI('b2txsx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv,nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv,nFc')
 !   ..compute funsx
   DO ifc=1,nfc
     temp = fcs(ifc)*geo%fcqalf(ifc, 0)
@@ -94,7 +94,7 @@ SUBROUTINE B2TXSX_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsx)
 !     ------------------------------------------------------------------
   CALL SUBINI('b2txsx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv,nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv,nFc')
 !   ..compute funsx
   DO ifc=1,nfc
     funsx(ifc) = fcs(ifc)*geo%fcqalf(ifc, 0)*(fcvol(ifc, 2)*fun(mpg%fccv&

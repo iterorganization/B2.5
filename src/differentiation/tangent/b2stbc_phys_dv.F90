@@ -84,7 +84,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 & ibc0, k
   INTEGER, SAVE :: bccon_flux_fb_style=0
 !srv 19.04.13
-  INTEGER, SAVE :: bcene_15_style=0
+  INTEGER, SAVE :: bcene_15_style=1
 !srv 19.04.13
   INTEGER, SAVE :: bceni_15_style=0
 !srv 19.04.13
@@ -183,6 +183,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8) :: abs5
+  REAL(kind=r8) :: abs6
+  REAL(kind=r8) :: abs7
   REAL(r8) :: max19
   REAL(r8) :: min13
   REAL(kind=r8) :: max20
@@ -193,10 +195,10 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   REAL(kind=r8) :: max24
   REAL(kind=r8) :: max25
   REAL(kind=r8) :: max26
-  REAL(kind=r8) :: abs6
-  REAL(kind=r8) :: max27
-  REAL(kind=r8) :: abs7
   REAL(kind=r8) :: abs8
+  REAL(kind=r8) :: max27
+  REAL(kind=r8) :: abs9
+  REAL(kind=r8) :: abs10
   REAL(r8) :: result1
   REAL(r8) :: result2
   INTEGER :: arg1
@@ -249,7 +251,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -309,7 +311,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvonedbsq, geo%&
 &            vxonedbsq, gonedbsq)
   pzsum = 0.0_R8
-  naua2sum = 0.0e0_R8
+  naua2sum = 0.0_R8
   volsum = 0.0_R8
   bzsum = 0.0_R8
 ! identify core boundaries; assume all core boundaries
@@ -759,10 +761,10 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             )+geo%fcs(ifc)*geo%fcqalf(ifc, 1)*(dv%vadia(ifc, 1, is)+dv&
 &             %vaecrb(ifc, 1, is)))*0.5_R8*(pl%na(icv1, is)+pl%na(icv2, &
 &             is))/pl%na(icv1, is)
-            IF (0.0e0_R8 .LT. y1) THEN
+            IF (0.0_R8 .LT. y1) THEN
               max3 = y1
             ELSE
-              max3 = 0.0e0_R8
+              max3 = 0.0_R8
             END IF
             srw%sna0(icv1, 1, is) = srw%sna0(icv1, 1, is) - max3
           ELSE
@@ -770,10 +772,10 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             fcqalf(ifc, 0)*dv%vaecrb(ifc, 0, is)+geo%fcs(ifc)*geo%&
 &             fcqalf(ifc, 1)*dv%vaecrb(ifc, 1, is))*0.5_R8*(pl%na(icv1, &
 &             is)+pl%na(icv2, is))/pl%na(icv1, is)
-            IF (0.0e0_R8 .LT. y2) THEN
+            IF (0.0_R8 .LT. y2) THEN
               max4 = y2
             ELSE
-              max4 = 0.0e0_R8
+              max4 = 0.0_R8
             END IF
             srw%sna0(icv1, 1, is) = srw%sna0(icv1, 1, is) - max4
             t0 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*(dv%fnapsch(ifc, 0, &
@@ -818,11 +820,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &               'imposed flux adapted due to ionising_core switch usage'
         END IF
 !       ..compute average density on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 !wdk Note on backwards compatibility: feedback now always on
 !wdk flux through the boundary itself (no offset)
-        totflux = 0.0e0_R8
+        totflux = 0.0_R8
 ! loop over number of cells in the boundary
         DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -913,13 +915,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           cs = SQRT(arg10)
           srw%sna0(icv1, 0, is) = 0.0_R8
           srw%sna0(icv1, 1, is) = -(s1*conpar(is, ib, 1)*cs)
-          IF (switch%bccon14_gradpar_0 .EQ. 1) THEN
-            srw%sna0(icv1, 0, is) = srw%sna0(icv1, 0, is) - mpg%bcfcor(&
-&             mpg%bccvp(ib, 1)+ibc-1)*dv%fna(ifc, 1, is)
-          ELSE IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
-            srw%sna0(icv1, 1, is) = srw%sna0(icv1, 1, is) - co%dna0(icv1&
-&             , is)/conpar(is, ib, 2)*geo%fcs(ifc)
-          END IF
+          IF (conpar(is, ib, 2) .GT. 0.0_R8) srw%sna0(icv1, 1, is) = srw&
+&             %sna0(icv1, 1, is) - co%dna0(icv1, is)/conpar(is, ib, 2)*&
+&             geo%fcs(ifc)
           sna0_no_mdf(icv1, :, is) = srw%sna0(icv1, :, is)
           IF (switch%mdf_fnb .NE. 0) THEN
             t0 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*(dv%fnapsch(ifc, 0, &
@@ -1111,8 +1109,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &               'BCCON = 28, conpar(,,1) !> 0')
         END IF
 !       ..compute average density on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -1163,11 +1161,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           END DO
         END IF
 !       ..compute average density on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        t2 = 0.0e0_R8
-        totflux = 0.0e0_R8
-        totpar = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        t2 = 0.0_R8
+        totflux = 0.0_R8
+        totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -1493,12 +1491,12 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           srw%smo0(icv1, 0, is) = 0.0_R8
           srw%smo0(icv1, 1, is) = 0.0_R8
           srw%smo0(icv1, 2, is) = 0.0_R8
-          IF (0.0e0_R8 .LT. mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*dv%&
-&             fna_fcor(ifc, 1, is)) THEN
+          IF (0.0_R8 .LT. mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*dv%fna_fcor&
+&             (ifc, 1, is)) THEN
             max8 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*dv%fna_fcor(ifc, 1&
 &             , is)
           ELSE
-            max8 = 0.0e0_R8
+            max8 = 0.0_R8
           END IF
           srw%smo0(icv1, 3, is) = srw%smo0(icv1, 3, is) + mompar(is, ib&
 &           , 2)*geo%fcs(ifc)*geo%fchz(ifc) + mompar(is, ib, 1)*max8/pl%&
@@ -1526,8 +1524,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           END DO
         END IF
 !       ..compute average parallel velocity on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -1950,16 +1948,16 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &               , is)*pl%na(icv1, is)
           END DO
           IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            abs8 = geo%fcpbs(ifc)
+            abs10 = geo%fcpbs(ifc)
           ELSE
-            abs8 = -geo%fcpbs(ifc)
+            abs10 = -geo%fcpbs(ifc)
           END IF
-          y5 = abs8*t0*cs - dv%fch_p(ifc, 0)*mpg%bcfcor(mpg%bccvp(ib, 1)&
-&           +ibc-1)/qe
-          IF (0.0e0_R8 .LT. y5) THEN
+          y5 = abs10*t0*cs - dv%fch_p(ifc, 0)*mpg%bcfcor(mpg%bccvp(ib, 1&
+&           )+ibc-1)/qe
+          IF (0.0_R8 .LT. y5) THEN
             t0 = y5
           ELSE
-            t0 = 0.0e0_R8
+            t0 = 0.0_R8
           END IF
           t1 = t1*geo%fcs(ifc)
 !srv 27.02.13 }
@@ -1968,8 +1966,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !srv 11.03.09 {
 !srv 19.04.13
 !wdk to check: correct for gammae?
-            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0e0_R8+gammae)/(&
-&             1.0e0_R8-gammae)*t0 - enepar(ib, 2)*t1
+            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0_R8+gammae)/(&
+&             1.0_R8-gammae)*t0 - enepar(ib, 2)*t1
 !srv 07.11.12
             srw%she0(icv1, 0) = srw%she0(icv1, 0) - qe*(pl%po(icv1)-&
 &             potpar(ib, 2))*(t0+t1)
@@ -1978,8 +1976,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !srv 11.03.09 {
 !srv 19.04.13
 !wdk to check: correct for gammae?
-            srw%she0(icv1, 1) = srw%she0(icv1, 1) - ((1.0e0_R8+gammae)/(&
-&             1.0e0_R8-gammae)+switch%delpo)*t0 - (enepar(ib, 2)+switch%&
+            srw%she0(icv1, 1) = srw%she0(icv1, 1) - ((1.0_R8+gammae)/(&
+&             1.0_R8-gammae)+switch%delpo)*t0 - (enepar(ib, 2)+switch%&
 &             delpo)*t1
           END IF
           IF (switch%mdf_fhe .NE. 0) THEN
@@ -2050,21 +2048,21 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           t1 = t1*geo%fcs(ifc)
           IF (switch%pot_eq .EQ. 1) THEN
 !wdk to check: correct 2nd term for gammae?
-            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0e0_R8+gammae)*t0&
-&             - enepar(ib, 2)*t1
+            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0_R8+gammae+&
+&             switch%stab_coeff_sheath_te)*t0 - enepar(ib, 2)*t1
 !lkw 31.03.2023
 !wdk to check: correct 2nd term for gammae?
-            srw%she0(icv1, 0) = srw%she0(icv1, 0) - (1.0e0_R8-gammae)*qe&
-&             *(pl%po(icv1)-potpar(ib, 2))*t0 - qe*(pl%po(icv1)-potpar(&
-&             ib, 2))*t1
+            srw%she0(icv1, 0) = srw%she0(icv1, 0) - ((1.0_R8-gammae)*qe*&
+&             (pl%po(icv1)-potpar(ib, 2))-switch%stab_coeff_sheath_te*pl&
+&             %te(icv1))*t0 - qe*(pl%po(icv1)-potpar(ib, 2))*t1
           ELSE
             arg10 = pz(icv1)/rz(icv1)
             cs = SQRT(arg10)
 !srv 11.03.09 {
 !wdk to check: correct for gammae?
             srw%she0(icv1, 1) = srw%she0(icv1, 1) - s1*dv%ne(icv1)*cs*(&
-&             1.0e0_R8+gammae+(1.0e0_R8-gammae)*switch%delpo) - (enepar(&
-&             ib, 2)+switch%delpo)*t1
+&             1.0_R8+gammae+(1.0_R8-gammae)*switch%delpo) - (enepar(ib, &
+&             2)+switch%delpo)*t1
           END IF
           IF (switch%mdf_fhe .NE. 0) THEN
             srw%she0(icv1, 0) = srw%she0(icv1, 0) + mpg%bcfcor(mpg%bccvp&
@@ -2108,11 +2106,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           CALL XERTST(enepar(ib, 2) .GE. 0, 'faulty parameter enepar2')
         END IF
 !       ..compute average temperature on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 !wdk Note on backwards compatibility: feedback now always on
 !wdk flux through the boundary itself (no offset)
-        totflux = 0.0e0_R8
+        totflux = 0.0_R8
 ! loop over number of cells in the boundary
         DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -2235,8 +2233,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             'BCENE = 23, ENEPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -2290,11 +2288,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             'BCENE = 24, ENEPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -2717,8 +2715,17 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           END IF
 !srv 11.03.09 {
 !srv 19.04.13
-          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - enipar(ib, 1)*t0*cs*&
-&           abs2 - enipar(ib, 2)*t1*geo%fcs(ifc)
+          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - (enipar(ib, 1)+switch%&
+&           stab_coeff_sheath_ti)*t0*cs*abs2 - enipar(ib, 2)*t1*geo%fcs(&
+&           ifc)
+          IF (geo%fcpbs(ifc) .GE. 0.) THEN
+            abs3 = geo%fcpbs(ifc)
+          ELSE
+            abs3 = -geo%fcpbs(ifc)
+          END IF
+!srv 11.03.09 {
+          srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + switch%&
+&           stab_coeff_sheath_ti*t0*cs*abs3
         ELSE
 !wdk sheath transmission factor consistent with truncated
 !    Maxwellian distribution on Eirene side (NEMODS=7)
@@ -2728,20 +2735,20 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
               arg11 = 2.0_R8*pl%ti(icv1)/(am(is)*mp)
               vt = SQRT(arg11)
               IF (geo%fcqalf(ifc, 0) .GE. 0.) THEN
-                abs3 = geo%fcqalf(ifc, 0)
+                abs4 = geo%fcqalf(ifc, 0)
               ELSE
-                abs3 = -geo%fcqalf(ifc, 0)
+                abs4 = -geo%fcqalf(ifc, 0)
               END IF
               result10 = PIT(icv1)
-              t3 = result10*abs3*cs/vt
+              t3 = result10*abs4*cs/vt
               IF (geo%fcqalf(ifc, 1) .GE. 0.) THEN
-                abs4 = geo%fcqalf(ifc, 1)
+                abs5 = geo%fcqalf(ifc, 1)
               ELSE
-                abs4 = -geo%fcqalf(ifc, 1)
+                abs5 = -geo%fcqalf(ifc, 1)
               END IF
 !WG_TODO correct for drift contributions!
               result10 = PIT(icv1)
-              arg10 = (result10*abs4*cs/vt)**2 + (geo%cvbb(icv1, 2)/geo%&
+              arg10 = (result10*abs5*cs/vt)**2 + (geo%cvbb(icv1, 2)/geo%&
 &               cvbb(icv1, 3)*cs/vt)**2
               t4 = SQRT(arg10)
 !corrected for factor 3/2 in parallel convection
@@ -2756,12 +2763,20 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
             END IF
           END DO
           IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            abs5 = geo%fcpbs(ifc)
+            abs6 = geo%fcpbs(ifc)
           ELSE
-            abs5 = -geo%fcpbs(ifc)
+            abs6 = -geo%fcpbs(ifc)
           END IF
-          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - t0*cs*abs5 - t1*geo%&
-&           fcs(ifc) + t2*mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
+          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - (1.0_R8+switch%&
+&           stab_coeff_sheath_ti)*t0*cs*abs6 - t1*geo%fcs(ifc) + t2*mpg%&
+&           bcfcor(mpg%bccvp(ib, 1)+ibc-1)
+          IF (geo%fcpbs(ifc) .GE. 0.) THEN
+            abs7 = geo%fcpbs(ifc)
+          ELSE
+            abs7 = -geo%fcpbs(ifc)
+          END IF
+          srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + switch%&
+&           stab_coeff_sheath_ti*t0*cs*abs7
         END IF
         IF (switch%mdf_fhi .NE. 0) THEN
           srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + mpg%bcfcor(mpg%bccvp(&
@@ -2805,11 +2820,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           CALL XERTST(enipar(ib, 2) .GE. 0, 'faulty parameter enipar2')
         END IF
 !       ..compute average temperature on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 !wdk Note on backwards compatibility: feedback now always on
 !wdk flux through the boundary itself (no offset)
-        totflux = 0.0e0_R8
+        totflux = 0.0_R8
 ! loop over number of cells in the boundary
         DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -2989,8 +3004,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             'BCENI = 28, ENIPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -3043,11 +3058,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             'BCENI = 29, ENIPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -3360,7 +3375,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) fchy_inertia = fchy_inertia - mpg&
 &                 %bcfcor(mpg%bccvp(ib, 1)+ibc-1)*switch%b2stbc_phm1*&
-&                 0.5e0_R8*am(is)*mp*naua2average(is)*dv%facdrift(ifc)*&
+&                 0.5_R8*am(is)*mp*naua2average(is)*dv%facdrift(ifc)*&
 &                 bzaverage*gonedbsq(ifc, 0)*geo%fcs(ifc)*geo%fcqalf(ifc&
 &                 , 1)
             END DO
@@ -3382,9 +3397,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) fchy_inertia = fchy_inertia - mpg&
 &                 %bcfcor(mpg%bccvp(ib, 1)+ibc-1)*switch%b2stbc_phm1*&
-&                 0.5e0_R8*am(is)*mp*naua2average(is)*dv%facdrift(ifc)*&
-&                 geo%fcbb(ifc, 2)*gonedbsq(ifc, 0)*geo%fcs(ifc)*geo%&
-&                 fcqalf(ifc, 1)
+&                 0.5_R8*am(is)*mp*naua2average(is)*dv%facdrift(ifc)*geo&
+&                 %fcbb(ifc, 2)*gonedbsq(ifc, 0)*geo%fcs(ifc)*geo%fcqalf&
+&                 (ifc, 1)
             END DO
             srw%sch0(icv1, 0) = srw%sch0(icv1, 0) - fchy_inertia
           END DO
@@ -3410,11 +3425,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !    domain) such that total current through core
 !    is sum of dia + inert currents
 !     ..compute average potential on core boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
-          t2 = 0.0e0_R8
-          totflux = 0.0e0_R8
-          totpar = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          t2 = 0.0_R8
+          totflux = 0.0_R8
+          totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -3556,9 +3571,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &                          'BCPOT = 15 : zero net anomalous current on '&
 &                                   , bcchar(ib), boundary_location(ib)
 !     ..compute average potential on boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      totflux = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      totflux = 0.0_R8
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -3622,10 +3637,10 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &                                   'BCPOT = 17 : imposed current on ', &
 &                                   bcchar(ib), boundary_location(ib)
 !     ..compute average potential on boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -3717,8 +3732,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         END DO
       END IF
 !     ..compute average potential on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -3772,13 +3787,13 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         END DO
       END IF
 !     ..compute average potential on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
 !lkw
-      t4 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t4 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -3938,8 +3953,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &       (ib, 1), ' on ', bcchar(ib), boundary_location(ib)
       END IF
 !     ..compute total ion+electron heat flux, and total kt flux
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -3991,8 +4006,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &       (ib, 1), ' on ', bcchar(ib), boundary_location(ib)
       END IF
 !     ..compute total particle flux, and total kt flux
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -4119,11 +4134,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           END IF
         END DO
         IF (geo%fcpbs(ifc) .GE. 0.) THEN
-          abs6 = geo%fcpbs(ifc)
+          abs8 = geo%fcpbs(ifc)
         ELSE
-          abs6 = -geo%fcpbs(ifc)
+          abs8 = -geo%fcpbs(ifc)
         END IF
-        srw%skt0(icv1, 1) = srw%skt0(icv1, 1) - enkpar(ib, 1)*t0*cs*abs6&
+        srw%skt0(icv1, 1) = srw%skt0(icv1, 1) - enkpar(ib, 1)*t0*cs*abs8&
 &         *(1.0_R8+switch%b2tfhi_fflokt) - enkpar(ib, 2)*t1*geo%fcs(ifc)
       END DO
     CASE (16) 
@@ -4145,8 +4160,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             'BCENK = 16, ENKPAR(,1) !> 0')
       END IF
 !     ..compute average kt on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -4201,11 +4216,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             'BCENK = 17, ENKPAR(,1) !> 0')
       END IF
 !     ..compute average kt on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -4424,11 +4439,11 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           END IF
         END DO
         IF (geo%fcpbs(ifc) .GE. 0.) THEN
-          abs7 = geo%fcpbs(ifc)
+          abs9 = geo%fcpbs(ifc)
         ELSE
-          abs7 = -geo%fcpbs(ifc)
+          abs9 = -geo%fcpbs(ifc)
         END IF
-        srw%szt0(icv1, 1) = srw%szt0(icv1, 1) - enzpar(ib, 1)*t0*cs*abs7&
+        srw%szt0(icv1, 1) = srw%szt0(icv1, 1) - enzpar(ib, 1)*t0*cs*abs9&
 &         *(1.0_R8+switch%b2tfhi_fflozt) - enzpar(ib, 2)*t1*geo%fcs(ifc)
       END DO
     CASE (16) 
@@ -4449,8 +4464,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             'BCENZ = 16, ENZPAR(,1) !> 0')
       END IF
 !     ..compute average zt on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -4590,11 +4605,14 @@ CONTAINS
     INTEGER, INTENT(IN) :: icv
     REAL(kind=r8) :: pit
     INTRINSIC ABS
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    REAL(kind=r8) :: abs11
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs11 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs11 = -geo%cvbb(icv, 0)
     END IF
+!
+    pit = abs11/geo%cvbb(icv, 3)
 !
     RETURN
   END FUNCTION PIT
@@ -4623,17 +4641,17 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 !                dv.fna_fcor:in dv.fna_eir:in dv.fhe:in dv.fhepsch:in
 !                dv.fhi:in dv.fhipsch:in dv.fhm:in dv.fkt:in dv.kinrgy:in
 !                dv.ne:in dv.ni:in dv.vadia:in dv.vaecrb:in dv.vedia:in
-!                dv.veecrb:in dv.facdrift:in geo.cvbb:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
-!                geo.vxvol:in geo.vxonedbsq:in st_ext.am:in st_ext.na:in
-!                st_ext.ta:in rt.rza:in srw.sch0:in srw.she0:in
-!                srw.shi0:in srw.skt0:in srw.szt0:in srw.smo0:in
-!                srw.sna0:in co.chce:in co.chci:in co.cdna:in co.hce0:in
-!                co.hci0:in co.hcn0:in co.dpa0:in co.dna0:in pl.na:in
-!                pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
-!                pl.zt:in
+!                dv.veecrb:in dv.facdrift:in mpg.bcfcor:in geo.cvbb:in
+!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in st_ext.am:in
+!                st_ext.na:in st_ext.ta:in rt.rza:in srw.sch0:in
+!                srw.she0:in srw.shi0:in srw.skt0:in srw.szt0:in
+!                srw.smo0:in srw.sna0:in co.chce:in co.chci:in
+!                co.cdna:in co.hce0:in co.hci0:in co.hcn0:in co.dpa0:in
+!                co.dna0:in pl.na:in pl.ua:in pl.po:in pl.te:in
+!                pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -4648,8 +4666,8 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
-& switchd, geo, geod, mpg, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, &
-& st_extd, srw, srwd, wrong_flow, main_call, praverage, nbdirs)
+& switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, cod, rt, rtd, &
+& st_ext, st_extd, srw, srwd, wrong_flow, main_call, praverage, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_FEEDBACK_DIFFV
@@ -4689,6 +4707,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
@@ -4726,7 +4745,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 & ibc0, k
   INTEGER, SAVE :: bccon_flux_fb_style=0
 !srv 19.04.13
-  INTEGER, SAVE :: bcene_15_style=0
+  INTEGER, SAVE :: bcene_15_style=1
 !srv 19.04.13
   INTEGER, SAVE :: bceni_15_style=0
 !srv 19.04.13
@@ -4889,6 +4908,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8) :: abs5
+  REAL(kind=r8) :: abs6
+  REAL(kind=r8) :: abs7
   REAL(r8) :: max19
   REAL(r8), DIMENSION(nbdirsmax) :: max19d
   REAL(r8) :: min13
@@ -4909,11 +4930,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max25d
   REAL(kind=r8) :: max26
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max26d
-  REAL(kind=r8) :: abs6
+  REAL(kind=r8) :: abs8
   REAL(kind=r8) :: max27
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max27d
-  REAL(kind=r8) :: abs7
-  REAL(kind=r8) :: abs8
+  REAL(kind=r8) :: abs9
+  REAL(kind=r8) :: abs10
   REAL(r8) :: result1
   REAL(r8), DIMENSION(nbdirsmax) :: result1d
   REAL(r8) :: result2
@@ -4982,7 +5003,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -5049,7 +5070,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvonedbsq, geo%&
 &            vxonedbsq, gonedbsq)
   pzsum = 0.0_R8
-  naua2sum = 0.0e0_R8
+  naua2sum = 0.0_R8
   volsum = 0.0_R8
   bzsum = 0.0_R8
   DO nd=1,nbdirsmax
@@ -5700,13 +5721,13 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &               is))
             END DO
             y1 = temp3*(temp0*temp4)
-            IF (0.0e0_R8 .LT. y1) THEN
+            IF (0.0_R8 .LT. y1) THEN
               DO nd=1,nbdirs
                 max3d(nd) = y1d(nd)
               END DO
               max3 = y1
             ELSE
-              max3 = 0.0e0_R8
+              max3 = 0.0_R8
               DO nd=1,nbdirsmax
                 max3d(nd) = 0.D0
               END DO
@@ -5729,13 +5750,13 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &               %na(nd, icv1, is)+pld%na(nd, icv2, is))/pl%na(icv1, is))
             END DO
             y2 = temp3*(temp0*temp4)
-            IF (0.0e0_R8 .LT. y2) THEN
+            IF (0.0_R8 .LT. y2) THEN
               DO nd=1,nbdirs
                 max4d(nd) = y2d(nd)
               END DO
               max4 = y2
             ELSE
-              max4 = 0.0e0_R8
+              max4 = 0.0_R8
               DO nd=1,nbdirsmax
                 max4d(nd) = 0.D0
               END DO
@@ -5813,11 +5834,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &               'imposed flux adapted due to ionising_core switch usage'
         END IF
 !       ..compute average density on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 !wdk Note on backwards compatibility: feedback now always on
 !wdk flux through the boundary itself (no offset)
-        totflux = 0.0e0_R8
+        totflux = 0.0_R8
         DO nd=1,nbdirsmax
           totfluxd(nd) = 0.D0
         END DO
@@ -5990,15 +6011,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END DO
           srw%sna0(icv1, 0, is) = 0.0_R8
           srw%sna0(icv1, 1, is) = -(s1*conpar(is, ib, 1)*cs)
-          IF (switch%bccon14_gradpar_0 .EQ. 1) THEN
-            temp3 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
-            DO nd=1,nbdirs
-              srwd%sna0(nd, icv1, 0, is) = srwd%sna0(nd, icv1, 0, is) - &
-&               temp3*dvd%fna(nd, ifc, 1, is)
-            END DO
-            srw%sna0(icv1, 0, is) = srw%sna0(icv1, 0, is) - temp3*dv%fna&
-&             (ifc, 1, is)
-          ELSE IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
+          IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
             temp4 = co%dna0(icv1, is)/conpar(is, ib, 2)
             DO nd=1,nbdirs
               srwd%sna0(nd, icv1, 1, is) = srwd%sna0(nd, icv1, 1, is) - &
@@ -6252,8 +6265,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &               'BCCON = 28, conpar(,,1) !> 0')
         END IF
 !       ..compute average density on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
         DO nd=1,nbdirsmax
           t1d(nd) = 0.D0
         END DO
@@ -6319,11 +6332,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END DO
         END IF
 !       ..compute average density on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
-        t2 = 0.0e0_R8
-        totflux = 0.0e0_R8
-        totpar = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        t2 = 0.0_R8
+        totflux = 0.0_R8
+        totpar = 0.0_R8
         DO nd=1,nbdirsmax
           totfluxd(nd) = 0.D0
         END DO
@@ -6814,15 +6827,15 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           srw%smo0(icv1, 0, is) = 0.0_R8
           srw%smo0(icv1, 1, is) = 0.0_R8
           srw%smo0(icv1, 2, is) = 0.0_R8
-          IF (0.0e0_R8 .LT. mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*dv%&
-&             fna_fcor(ifc, 1, is)) THEN
+          IF (0.0_R8 .LT. mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*dv%fna_fcor&
+&             (ifc, 1, is)) THEN
             temp5 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
             DO nd=1,nbdirs
               max8d(nd) = temp5*dvd%fna_fcor(nd, ifc, 1, is)
             END DO
             max8 = temp5*dv%fna_fcor(ifc, 1, is)
           ELSE
-            max8 = 0.0e0_R8
+            max8 = 0.0_R8
             DO nd=1,nbdirsmax
               max8d(nd) = 0.D0
             END DO
@@ -6860,8 +6873,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END DO
         END IF
 !       ..compute average parallel velocity on core boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
         DO nd=1,nbdirsmax
           t1d(nd) = 0.D0
         END DO
@@ -7526,23 +7539,23 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             END IF
           END DO
           IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            abs8 = geo%fcpbs(ifc)
+            abs10 = geo%fcpbs(ifc)
           ELSE
-            abs8 = -geo%fcpbs(ifc)
+            abs10 = -geo%fcpbs(ifc)
           END IF
           temp5 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
           DO nd=1,nbdirs
-            y5d(nd) = abs8*(cs*t0d(nd)+t0*csd(nd)) - temp5*dvd%fch_p(nd&
+            y5d(nd) = abs10*(cs*t0d(nd)+t0*csd(nd)) - temp5*dvd%fch_p(nd&
 &             , ifc, 0)/qe
           END DO
-          y5 = abs8*(t0*cs) - temp5*(dv%fch_p(ifc, 0)/qe)
-          IF (0.0e0_R8 .LT. y5) THEN
+          y5 = abs10*(t0*cs) - temp5*(dv%fch_p(ifc, 0)/qe)
+          IF (0.0_R8 .LT. y5) THEN
             DO nd=1,nbdirs
               t0d(nd) = y5d(nd)
             END DO
             t0 = y5
           ELSE
-            t0 = 0.0e0_R8
+            t0 = 0.0_R8
             DO nd=1,nbdirsmax
               t0d(nd) = 0.D0
             END DO
@@ -7561,21 +7574,21 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !srv 19.04.13
 !wdk to check: correct for gammae?
               srwd%she0(nd, icv1, 1) = srwd%she0(nd, icv1, 1) - (gammae+&
-&               1.0e0_R8)*t0d(nd)/(1.0e0_R8-gammae) - t1*enepard(nd, ib&
-&               , 2) - enepar(ib, 2)*t1d(nd)
+&               1.0_R8)*t0d(nd)/(1.0_R8-gammae) - t1*enepard(nd, ib, 2) &
+&               - enepar(ib, 2)*t1d(nd)
               srwd%she0(nd, icv1, 0) = srwd%she0(nd, icv1, 0) - qe*((t0+&
 &               t1)*(pld%po(nd, icv1)-potpard(nd, ib, 2))+temp6*(t0d(nd)&
 &               +t1d(nd)))
             END DO
-            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0e0_R8+gammae)/(&
-&             1.0e0_R8-gammae)*t0 - enepar(ib, 2)*t1
+            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0_R8+gammae)/(&
+&             1.0_R8-gammae)*t0 - enepar(ib, 2)*t1
             srw%she0(icv1, 0) = srw%she0(icv1, 0) - qe*(temp6*(t0+t1))
           ELSE
 !srv 27.02.13
 !srv 11.03.09 {
 !srv 19.04.13
 !wdk to check: correct for gammae?
-            temp5 = (gammae+1.0e0_R8)/(-gammae+1.0e0_R8) + switch%delpo
+            temp5 = (gammae+1.0_R8)/(-gammae+1.0_R8) + switch%delpo
             DO nd=1,nbdirs
               srwd%she0(nd, icv1, 1) = srwd%she0(nd, icv1, 1) - temp5*&
 &               t0d(nd) - t1*enepard(nd, ib, 2) - (switch%delpo+enepar(&
@@ -7731,22 +7744,24 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           IF (switch%pot_eq .EQ. 1) THEN
 !lkw 31.03.2023
 !wdk to check: correct 2nd term for gammae?
-            temp6 = pl%po(icv1) - potpar(ib, 2)
+            temp6 = (-gammae+1.0_R8)*qe*(pl%po(icv1)-potpar(ib, 2)) - &
+&             switch%stab_coeff_sheath_te*pl%te(icv1)
             temp4 = pl%po(icv1) - potpar(ib, 2)
             DO nd=1,nbdirs
 !wdk to check: correct 2nd term for gammae?
               srwd%she0(nd, icv1, 1) = srwd%she0(nd, icv1, 1) - (gammae+&
-&               1.0e0_R8)*t0d(nd) - t1*enepard(nd, ib, 2) - enepar(ib, 2&
-&               )*t1d(nd)
-              srwd%she0(nd, icv1, 0) = srwd%she0(nd, icv1, 0) - (&
-&               1.0e0_R8-gammae)*qe*(t0*(pld%po(nd, icv1)-potpard(nd, ib&
-&               , 2))+temp6*t0d(nd)) - qe*(t1*(pld%po(nd, icv1)-potpard(&
-&               nd, ib, 2))+temp4*t1d(nd))
+&               switch%stab_coeff_sheath_te+1.0_R8)*t0d(nd) - t1*enepard&
+&               (nd, ib, 2) - enepar(ib, 2)*t1d(nd)
+              srwd%she0(nd, icv1, 0) = srwd%she0(nd, icv1, 0) - t0*((&
+&               1.0_R8-gammae)*qe*(pld%po(nd, icv1)-potpard(nd, ib, 2))-&
+&               switch%stab_coeff_sheath_te*pld%te(nd, icv1)) - temp6*&
+&               t0d(nd) - qe*(t1*(pld%po(nd, icv1)-potpard(nd, ib, 2))+&
+&               temp4*t1d(nd))
             END DO
-            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0e0_R8+gammae)*t0&
-&             - enepar(ib, 2)*t1
-            srw%she0(icv1, 0) = srw%she0(icv1, 0) - (1.0e0_R8-gammae)*qe&
-&             *(temp6*t0) - qe*(temp4*t1)
+            srw%she0(icv1, 1) = srw%she0(icv1, 1) - (1.0_R8+gammae+&
+&             switch%stab_coeff_sheath_te)*t0 - enepar(ib, 2)*t1
+            srw%she0(icv1, 0) = srw%she0(icv1, 0) - temp6*t0 - qe*(temp4&
+&             *t1)
           ELSE
             temp5 = pz(icv1)/rz(icv1)
             DO nd=1,nbdirs
@@ -7764,7 +7779,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             cs = temp5
 !srv 11.03.09 {
 !wdk to check: correct for gammae?
-            temp5 = gammae + (-gammae+1.0e0_R8)*switch%delpo + 1.0e0_R8
+            temp5 = gammae + (-gammae+1.0_R8)*switch%delpo + 1.0_R8
             DO nd=1,nbdirs
               srwd%she0(nd, icv1, 1) = srwd%she0(nd, icv1, 1) - temp5*s1&
 &               *(cs*dvd%ne(nd, icv1)+dv%ne(icv1)*csd(nd)) - t1*enepard(&
@@ -7852,11 +7867,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL XERTST(enepar(ib, 2) .GE. 0, 'faulty parameter enepar2')
         END IF
 !       ..compute average temperature on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 !wdk Note on backwards compatibility: feedback now always on
 !wdk flux through the boundary itself (no offset)
-        totflux = 0.0e0_R8
+        totflux = 0.0_R8
         DO nd=1,nbdirsmax
           totfluxd(nd) = 0.D0
         END DO
@@ -8063,8 +8078,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             'BCENE = 23, ENEPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
       DO nd=1,nbdirsmax
         t1d(nd) = 0.D0
       END DO
@@ -8132,11 +8147,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             'BCENE = 24, ENEPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -8843,12 +8858,25 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !srv 19.04.13
           DO nd=1,nbdirs
             srwd%shi0(nd, icv1, 1) = srwd%shi0(nd, icv1, 1) - abs2*(t0*&
-&             cs*enipard(nd, ib, 1)+enipar(ib, 1)*(cs*t0d(nd)+t0*csd(nd)&
-&             )) - geo%fcs(ifc)*(t1*enipard(nd, ib, 2)+enipar(ib, 2)*t1d&
-&             (nd))
+&             cs*enipard(nd, ib, 1)+(switch%stab_coeff_sheath_ti+enipar(&
+&             ib, 1))*(cs*t0d(nd)+t0*csd(nd))) - geo%fcs(ifc)*(t1*&
+&             enipard(nd, ib, 2)+enipar(ib, 2)*t1d(nd))
           END DO
-          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - enipar(ib, 1)*t0*cs*&
-&           abs2 - enipar(ib, 2)*t1*geo%fcs(ifc)
+          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - (enipar(ib, 1)+switch%&
+&           stab_coeff_sheath_ti)*t0*cs*abs2 - enipar(ib, 2)*t1*geo%fcs(&
+&           ifc)
+          IF (geo%fcpbs(ifc) .GE. 0.) THEN
+            abs3 = geo%fcpbs(ifc)
+          ELSE
+            abs3 = -geo%fcpbs(ifc)
+          END IF
+!srv 11.03.09 {
+          DO nd=1,nbdirs
+            srwd%shi0(nd, icv1, 0) = srwd%shi0(nd, icv1, 0) + switch%&
+&             stab_coeff_sheath_ti*abs3*(cs*t0d(nd)+t0*csd(nd))
+          END DO
+          srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + switch%&
+&           stab_coeff_sheath_ti*t0*cs*abs3
         ELSE
           DO nd=1,nbdirsmax
             t0d(nd) = 0.D0
@@ -8876,29 +8904,29 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
               END DO
               vt = temp7
               IF (geo%fcqalf(ifc, 0) .GE. 0.) THEN
-                abs3 = geo%fcqalf(ifc, 0)
+                abs4 = geo%fcqalf(ifc, 0)
               ELSE
-                abs3 = -geo%fcqalf(ifc, 0)
+                abs4 = -geo%fcqalf(ifc, 0)
               END IF
               result10 = PIT(icv1)
               DO nd=1,nbdirs
-                t3d(nd) = result10*abs3*(csd(nd)-cs*vtd(nd)/vt)/vt
+                t3d(nd) = result10*abs4*(csd(nd)-cs*vtd(nd)/vt)/vt
               END DO
-              t3 = result10*abs3*cs/vt
+              t3 = result10*abs4*cs/vt
               IF (geo%fcqalf(ifc, 1) .GE. 0.) THEN
-                abs4 = geo%fcqalf(ifc, 1)
+                abs5 = geo%fcqalf(ifc, 1)
               ELSE
-                abs4 = -geo%fcqalf(ifc, 1)
+                abs5 = -geo%fcqalf(ifc, 1)
               END IF
 !WG_TODO correct for drift contributions!
               result10 = PIT(icv1)
               temp5 = geo%cvbb(icv1, 3)*vt
               DO nd=1,nbdirs
-                arg10d(nd) = 2*result10**2*abs4**2*cs*(csd(nd)-cs*vtd(nd&
+                arg10d(nd) = 2*result10**2*abs5**2*cs*(csd(nd)-cs*vtd(nd&
 &                 )/vt)/vt**2 + 2*geo%cvbb(icv1, 2)**2*cs*(csd(nd)-cs*&
 &                 geo%cvbb(icv1, 3)*vtd(nd)/temp5)/temp5**2
               END DO
-              arg10 = result10*abs4*(cs/vt)*(result10*abs4*(cs/vt)) + &
+              arg10 = result10*abs5*(cs/vt)*(result10*abs5*(cs/vt)) + &
 &               geo%cvbb(icv1, 2)*(cs/temp5)*(geo%cvbb(icv1, 2)*(cs/&
 &               temp5))
               temp5 = SQRT(arg10)
@@ -8945,17 +8973,30 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             END IF
           END DO
           IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            abs5 = geo%fcpbs(ifc)
+            abs6 = geo%fcpbs(ifc)
           ELSE
-            abs5 = -geo%fcpbs(ifc)
+            abs6 = -geo%fcpbs(ifc)
           END IF
           temp5 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
           DO nd=1,nbdirs
-            srwd%shi0(nd, icv1, 1) = srwd%shi0(nd, icv1, 1) - abs5*(cs*&
-&             t0d(nd)+t0*csd(nd)) + temp5*t2d(nd) - geo%fcs(ifc)*t1d(nd)
+            srwd%shi0(nd, icv1, 1) = srwd%shi0(nd, icv1, 1) - (switch%&
+&             stab_coeff_sheath_ti+1.0_R8)*abs6*(cs*t0d(nd)+t0*csd(nd)) &
+&             + temp5*t2d(nd) - geo%fcs(ifc)*t1d(nd)
           END DO
-          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - abs5*(t0*cs) + temp5*&
-&           t2 - geo%fcs(ifc)*t1
+          srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - (switch%&
+&           stab_coeff_sheath_ti+1.0_R8)*abs6*(t0*cs) + temp5*t2 - geo%&
+&           fcs(ifc)*t1
+          IF (geo%fcpbs(ifc) .GE. 0.) THEN
+            abs7 = geo%fcpbs(ifc)
+          ELSE
+            abs7 = -geo%fcpbs(ifc)
+          END IF
+          DO nd=1,nbdirs
+            srwd%shi0(nd, icv1, 0) = srwd%shi0(nd, icv1, 0) + switch%&
+&             stab_coeff_sheath_ti*abs7*(cs*t0d(nd)+t0*csd(nd))
+          END DO
+          srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + switch%&
+&           stab_coeff_sheath_ti*t0*cs*abs7
         END IF
         IF (switch%mdf_fhi .NE. 0) THEN
           temp5 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
@@ -9038,11 +9079,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL XERTST(enipar(ib, 2) .GE. 0, 'faulty parameter enipar2')
         END IF
 !       ..compute average temperature on boundary
-        t0 = 0.0e0_R8
-        t1 = 0.0e0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
 !wdk Note on backwards compatibility: feedback now always on
 !wdk flux through the boundary itself (no offset)
-        totflux = 0.0e0_R8
+        totflux = 0.0_R8
         DO nd=1,nbdirsmax
           totfluxd(nd) = 0.D0
         END DO
@@ -9312,8 +9353,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             'BCENI = 28, ENIPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
       DO nd=1,nbdirsmax
         t1d(nd) = 0.D0
       END DO
@@ -9380,11 +9421,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             'BCENI = 29, ENIPAR(,1) !> 0')
       END IF
 !     ..compute average temperature on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -9864,7 +9905,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             END DO
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) THEN
-                temp5 = 0.5e0_R8*switch%b2stbc_phm1*geo%fcs(ifc)*dv%&
+                temp5 = 0.5_R8*switch%b2stbc_phm1*geo%fcs(ifc)*dv%&
 &                 facdrift(ifc)*gonedbsq(ifc, 0)
                 temp3 = mp*bzaverage*geo%fcqalf(ifc, 1)
                 temp2 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
@@ -9908,7 +9949,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             END DO
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) THEN
-                temp5 = 0.5e0_R8*switch%b2stbc_phm1*geo%fcbb(ifc, 2)*&
+                temp5 = 0.5_R8*switch%b2stbc_phm1*geo%fcbb(ifc, 2)*&
 &                 gonedbsq(ifc, 0)*geo%fcs(ifc)
                 temp3 = am(is)*mp*geo%fcqalf(ifc, 1)
                 temp2 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
@@ -9961,11 +10002,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !    domain) such that total current through core
 !    is sum of dia + inert currents
 !     ..compute average potential on core boundary
-          t0 = 0.0e0_R8
-          t1 = 0.0e0_R8
-          t2 = 0.0e0_R8
-          totflux = 0.0e0_R8
-          totpar = 0.0e0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          t2 = 0.0_R8
+          totflux = 0.0_R8
+          totpar = 0.0_R8
           DO nd=1,nbdirsmax
             totfluxd(nd) = 0.D0
           END DO
@@ -10198,9 +10239,9 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &                          'BCPOT = 15 : zero net anomalous current on '&
 &                                   , bcchar(ib), boundary_location(ib)
 !     ..compute average potential on boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      totflux = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      totflux = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -10323,10 +10364,10 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &                                   'BCPOT = 17 : imposed current on ', &
 &                                   bcchar(ib), boundary_location(ib)
 !     ..compute average potential on boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -10478,8 +10519,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         END DO
       END IF
 !     ..compute average potential on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
       DO nd=1,nbdirsmax
         t1d(nd) = 0.D0
       END DO
@@ -10547,13 +10588,13 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         END DO
       END IF
 !     ..compute average potential on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
 !lkw
-      t4 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t4 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -10800,8 +10841,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &       (ib, 1), ' on ', bcchar(ib), boundary_location(ib)
       END IF
 !     ..compute total ion+electron heat flux, and total kt flux
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -10876,8 +10917,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &       (ib, 1), ' on ', bcchar(ib), boundary_location(ib)
       END IF
 !     ..compute total particle flux, and total kt flux
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -11075,19 +11116,19 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END IF
         END DO
         IF (geo%fcpbs(ifc) .GE. 0.) THEN
-          abs6 = geo%fcpbs(ifc)
+          abs8 = geo%fcpbs(ifc)
         ELSE
-          abs6 = -geo%fcpbs(ifc)
+          abs8 = -geo%fcpbs(ifc)
         END IF
         temp5 = enkpar(ib, 1)*(switch%b2tfhi_fflokt+1.0_R8)
         DO nd=1,nbdirs
-          srwd%skt0(nd, icv1, 1) = srwd%skt0(nd, icv1, 1) - abs6*(t0*cs*&
+          srwd%skt0(nd, icv1, 1) = srwd%skt0(nd, icv1, 1) - abs8*(t0*cs*&
 &           ((switch%b2tfhi_fflokt+1.0_R8)*enkpard(nd, ib, 1)+enkpar(ib&
 &           , 1)*switchd%b2tfhi_fflokt(nd))+temp5*(cs*t0d(nd)+t0*csd(nd)&
 &           )) - geo%fcs(ifc)*(t1*enkpard(nd, ib, 2)+enkpar(ib, 2)*t1d(&
 &           nd))
         END DO
-        srw%skt0(icv1, 1) = srw%skt0(icv1, 1) - abs6*(temp5*(t0*cs)) - &
+        srw%skt0(icv1, 1) = srw%skt0(icv1, 1) - abs8*(temp5*(t0*cs)) - &
 &         geo%fcs(ifc)*(enkpar(ib, 2)*t1)
       END DO
     CASE (16) 
@@ -11109,8 +11150,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             'BCENK = 16, ENKPAR(,1) !> 0')
       END IF
 !     ..compute average kt on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
       DO nd=1,nbdirsmax
         t1d(nd) = 0.D0
       END DO
@@ -11179,11 +11220,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             'BCENK = 17, ENKPAR(,1) !> 0')
       END IF
 !     ..compute average kt on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
-      t2 = 0.0e0_R8
-      totflux = 0.0e0_R8
-      totpar = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
+      totflux = 0.0_R8
+      totpar = 0.0_R8
       DO nd=1,nbdirsmax
         totfluxd(nd) = 0.D0
       END DO
@@ -11471,11 +11512,11 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END IF
         END DO
         IF (geo%fcpbs(ifc) .GE. 0.) THEN
-          abs7 = geo%fcpbs(ifc)
+          abs9 = geo%fcpbs(ifc)
         ELSE
-          abs7 = -geo%fcpbs(ifc)
+          abs9 = -geo%fcpbs(ifc)
         END IF
-        srw%szt0(icv1, 1) = srw%szt0(icv1, 1) - enzpar(ib, 1)*t0*cs*abs7&
+        srw%szt0(icv1, 1) = srw%szt0(icv1, 1) - enzpar(ib, 1)*t0*cs*abs9&
 &         *(1.0_R8+switch%b2tfhi_fflozt) - enzpar(ib, 2)*t1*geo%fcs(ifc)
       END DO
     CASE (16) 
@@ -11496,8 +11537,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             'BCENZ = 16, ENZPAR(,1) !> 0')
       END IF
 !     ..compute average zt on core boundary
-      t0 = 0.0e0_R8
-      t1 = 0.0e0_R8
+      t0 = 0.0_R8
+      t1 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -11677,11 +11718,14 @@ CONTAINS
     INTEGER, INTENT(IN) :: icv
     REAL(kind=r8) :: pit
     INTRINSIC ABS
-    IF (geo%cvbb(icv, 0)/geo%cvbb(icv, 3) .GE. 0.) THEN
-      pit = geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+    REAL(kind=r8) :: abs11
+    IF (geo%cvbb(icv, 0) .GE. 0.) THEN
+      abs11 = geo%cvbb(icv, 0)
     ELSE
-      pit = -(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))
+      abs11 = -geo%cvbb(icv, 0)
     END IF
+!
+    pit = abs11/geo%cvbb(icv, 3)
 !
     RETURN
   END FUNCTION PIT

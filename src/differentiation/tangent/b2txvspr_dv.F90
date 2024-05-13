@@ -46,7 +46,7 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
   INTEGER, SAVE :: ncall=0
   INTEGER, SAVE :: iout=0
 !srv 22.11.99
-  REAL(kind=r8), SAVE :: vis_per=0.0e0_R8
+  REAL(kind=r8), SAVE :: vis_per=0.0_R8
   REAL(kind=r8) :: fac_vism, t0, wrk0(-1:nx, -1:ny)
   CHARACTER(len=3) :: chns
 !   ..procedures
@@ -74,13 +74,13 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
 !   ..test nx, ny
   CALL XERTST(0 .LE. nx .AND. 0 .LE. ny, 'faulty argument nx, ny')
 !   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 
-  avisper = 0.0e0_R8
-  bvisper = 0.0e0_R8
+  avisper = 0.0_R8
+  bvisper = 0.0_R8
 !srv 27.01.00 22.03.02
-  cvisper = 0.0e0_R8
+  cvisper = 0.0_R8
   fac_vism = MAXVAL(fac_vis)
 !srv 22.11.99
-  IF (fac_vism .NE. 0.0_R8 .AND. vis_per .NE. 0.0e0_R8) THEN
+  IF (fac_vism .NE. 0.0_R8 .AND. vis_per .NE. 0.0_R8) THEN
 !srv 22.11.99
 !
 !srv 16.10.17

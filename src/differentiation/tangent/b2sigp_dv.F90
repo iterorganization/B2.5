@@ -5,10 +5,9 @@
 !   variations   of useful results: smbgp wrk0 wrk1
 !   with respect to varying inputs: ti tn nb ne smbgp rzb wrk0
 !                wrk1 po te
-!   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.cvhz:in
+!                geo.cvvol:in geo.fchc:in geo.fcht:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -23,9 +22,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
-& rzbd, nb, nbd, ti, tid, tn, tnd, ne, ned, te, ted, po, pod, smbgp, &
-& smbgpd, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
+SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
+& rzb, rzbd, nb, nbd, ti, tid, tn, tnd, ne, ned, te, ted, po, pod, smbgp&
+& , smbgpd, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
   USE B2MOD_TYPES
 !srv 23.03.10
   USE B2MOD_CONSTANTS
@@ -33,11 +32,6 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-!djm Jul2018
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sigp_smogp0to3, b2sigp_pstat0to3, &
-& balance_netcdf, b2sigp_pstati0to3, b2sigp_pstate0to3, &
-& b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sigp
@@ -55,6 +49,7 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: rzb(ncv), nb(ncv), ti(ncv), tn(ncv), ne(ncv), te(ncv)&
 & , po(ncv)
   REAL(kind=r8) :: rzbd(nbdirsmax, ncv), nbd(nbdirsmax, ncv), tid(&
@@ -114,7 +109,7 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sigp')
 !   ..test nCv, nFv
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2sigp .LT. 3) THEN
 !    ..test sign of nb, ti, tn, ne, te, rzb
@@ -168,14 +163,14 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
       DO nd=1,nbdirsmax
         wrkvd(nd, :) = 0.D0
       END DO
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk3, wrk3d, &
-&               wrkv, wrkvd, wrk0, wrk0d, nbdirs)
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, nete, neted, &
-&               wrkv, wrkvd, wrk1, wrk1d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk3, &
+&               wrk3d, wrkv, wrkvd, wrk0, wrk0d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, nete, &
+&               neted, wrkv, wrkvd, wrk1, wrk1d, nbdirs)
 ! ..compute pressure gradient term
-      smbgp = 0.0e0_R8
-      wrk5 = 0.0e0_R8
-      wrk6 = 0.0e0_R8
+      smbgp = 0.0_R8
+      wrk5 = 0.0_R8
+      wrk6 = 0.0_R8
       DO nd=1,nbdirsmax
         smbgpd(nd, :, :) = 0.D0
       END DO
@@ -203,40 +198,26 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
         wrk6(icv) = -(t0*(temp0*temp))
         smbgp(icv, 0) = wrk5(icv) + wrk6(icv)
       END DO
-!djm compute b2sigp_pstat0to3 on cell face
-      IF (balance_netcdf .NE. 0) THEN
-        b2sigp_pstat0to3 = 0.0_R8
-        b2sigp_pstati0to3 = 0.0_R8
-        b2sigp_pstate0to3 = 0.0_R8
-        DO ifc=1,nfc
-          t0 = geo%fchz(ifc)*geo%fcs(ifc)*geo%fcbb(ifc, 0)/geo%fcbb(ifc&
-&           , 3)*geo%fcqalf(ifc, 0)
-          b2sigp_pstat0to3(ifc, 0, isb) = t0*(nbf(ifc)*tbf(ifc)+rzbf(ifc&
-&           )*nbf(ifc)*tef(ifc))
-          b2sigp_pstati0to3(ifc, 0, isb) = t0*nbf(ifc)*tbf(ifc)
-          b2sigp_pstate0to3(ifc, 0) = t0*rzbf(ifc)*nbf(ifc)*tef(ifc)
-        END DO
-      END IF
     ELSE
 !srv 23.03.10 {
       CALL XERTST(switch%pot_eq .EQ. 1, &
 &           'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 ! ..compute pressure gradient term
-      smbgp = 0.0e0_R8
+      smbgp = 0.0_R8
       DO nd=1,nbdirs
         wrk3d(nd, :) = tb*nbd(nd, :) + nb*tbd(nd, :)
       END DO
       wrk3 = nb*tb
-      wrk5 = 0.0e0_R8
-      wrk6 = 0.0e0_R8
+      wrk5 = 0.0_R8
+      wrk6 = 0.0_R8
 !   ..  compute gradients in cell centers
       DO nd=1,nbdirsmax
         wrkvd(nd, :) = 0.D0
       END DO
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk3, wrk3d, &
-&               wrkv, wrkvd, wrk0, wrk0d, nbdirs)
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, po, pod, wrkv, &
-&               wrkvd, wrk1, wrk1d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk3, &
+&               wrk3d, wrkv, wrkvd, wrk0, wrk0d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, &
+&               wrkv, wrkvd, wrk1, wrk1d, nbdirs)
       DO nd=1,nbdirsmax
         smbgpd(nd, :, :) = 0.D0
       END DO
@@ -261,26 +242,8 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
         wrk6(icv) = -(t0*qe*(temp0*wrk1(icv)))
         smbgp(icv, 0) = wrk5(icv) + wrk6(icv)
       END DO
-!srv 23.03.10 }
-!djm compute b2sigp_pstat0to3 on cell face
-      IF (balance_netcdf .NE. 0) THEN
-        b2sigp_pstat0to3 = 0.0_R8
-!WG_TODO          do iFc = 1,mpg%nFc
-!WG_TODO             t0=geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
-!WG_TODO      &        geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
-!WG_TODO             b2sigp_pstat0to3(iFc,0,isb) =
-!WG_TODO      &         -t0*wrk0(ix,iy)
-!WG_TODO      &         -t0*qe*wrk1(ix,iy)*
-!WG_TODO      &         (rzb(ix,iy)*nb(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+
-!WG_TODO      &          rzb(leftix(ix,iy),leftiy(ix,iy))*
-!WG_TODO      &          nb(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/
-!WG_TODO      &         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-!WG_TODO               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-!WG_TODO               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-!WG_TODO               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-!WG_TODO          enddo
-      END IF
     END IF
+!srv 23.03.10 }
 !
 !djm Jul2018
     smbgp_b4gr = smbgp
@@ -298,8 +261,8 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
       CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, wrk1, &
 &               wrk1d, nbdirs)
       DO icv=1,mpg%nci
-        IF (nb(icv)/ne(icv) .LT. 0.1e0_R8) THEN
-          IF (1.0e0_R8 .GT. wrk0(icv)/wrk1(icv)) THEN
+        IF (nb(icv)/ne(icv) .LT. 0.1_R8) THEN
+          IF (1.0_R8 .GT. wrk0(icv)/wrk1(icv)) THEN
             temp0 = wrk0(icv)/wrk1(icv)
             DO nd=1,nbdirs
               min1d(nd) = (wrk0d(nd, icv)-temp0*wrk1d(nd, icv))/wrk1(icv&
@@ -307,7 +270,7 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
             END DO
             min1 = temp0
           ELSE
-            min1 = 1.0e0_R8
+            min1 = 1.0_R8
             DO nd=1,nbdirsmax
               min1d(nd) = 0.D0
             END DO
@@ -355,16 +318,6 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, rzb, &
     END IF
   END IF
 !
-!djm Jan2017 Store linearised source for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2sigp_smogp0to3(1:ncv, 0:3, isb) = smbgp
-!djm Jul2018
-    b2sigp_smogpi0to3(1:ncv, 0, isb) = wrk5
-!djm Jul2018
-    b2sigp_smogpe0to3(1:ncv, 0, isb) = wrk6
-    b2sigp_smogpgr0to3(1:ncv, 0:3, isb) = smbgp - smbgp_b4gr
-  END IF
-!
 ! ..return
   ncall_b2sigp = ncall_b2sigp + 1
   CALL SUBEND()
@@ -394,11 +347,6 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-!djm Jul2018
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sigp_smogp0to3, b2sigp_pstat0to3, &
-& balance_netcdf, b2sigp_pstati0to3, b2sigp_pstate0to3, &
-& b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sigp
@@ -460,7 +408,7 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sigp')
 !   ..test nCv, nFv
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2sigp .LT. 3) THEN
 !    ..test sign of nb, ti, tn, ne, te, rzb
@@ -504,9 +452,9 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrk3, wrkv, wrk0)
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, nete, wrkv, wrk1)
 ! ..compute pressure gradient term
-      smbgp = 0.0e0_R8
-      wrk5 = 0.0e0_R8
-      wrk6 = 0.0e0_R8
+      smbgp = 0.0_R8
+      wrk5 = 0.0_R8
+      wrk6 = 0.0_R8
 !   ..  compute smbgp
       DO icv=1,mpg%nci
 !srv 18.10.02 10.06.05
@@ -516,29 +464,15 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
         wrk6(icv) = -(t0*rzb(icv)*(nb(icv)/ne(icv))*wrk1(icv))
         smbgp(icv, 0) = wrk5(icv) + wrk6(icv)
       END DO
-!djm compute b2sigp_pstat0to3 on cell face
-      IF (balance_netcdf .NE. 0) THEN
-        b2sigp_pstat0to3 = 0.0_R8
-        b2sigp_pstati0to3 = 0.0_R8
-        b2sigp_pstate0to3 = 0.0_R8
-        DO ifc=1,nfc
-          t0 = geo%fchz(ifc)*geo%fcs(ifc)*geo%fcbb(ifc, 0)/geo%fcbb(ifc&
-&           , 3)*geo%fcqalf(ifc, 0)
-          b2sigp_pstat0to3(ifc, 0, isb) = t0*(nbf(ifc)*tbf(ifc)+rzbf(ifc&
-&           )*nbf(ifc)*tef(ifc))
-          b2sigp_pstati0to3(ifc, 0, isb) = t0*nbf(ifc)*tbf(ifc)
-          b2sigp_pstate0to3(ifc, 0) = t0*rzbf(ifc)*nbf(ifc)*tef(ifc)
-        END DO
-      END IF
     ELSE
 !srv 23.03.10 {
       CALL XERTST(switch%pot_eq .EQ. 1, &
 &           'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 ! ..compute pressure gradient term
-      smbgp = 0.0e0_R8
+      smbgp = 0.0_R8
       wrk3 = nb*tb
-      wrk5 = 0.0e0_R8
-      wrk6 = 0.0e0_R8
+      wrk5 = 0.0_R8
+      wrk6 = 0.0_R8
 !   ..  compute gradients in cell centers
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrk3, wrkv, wrk0)
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkv, wrk1)
@@ -550,26 +484,8 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
         wrk6(icv) = -(t0*qe*rzb(icv)*nb(icv)*wrk1(icv))
         smbgp(icv, 0) = wrk5(icv) + wrk6(icv)
       END DO
-!srv 23.03.10 }
-!djm compute b2sigp_pstat0to3 on cell face
-      IF (balance_netcdf .NE. 0) THEN
-        b2sigp_pstat0to3 = 0.0_R8
-!WG_TODO          do iFc = 1,mpg%nFc
-!WG_TODO             t0=geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
-!WG_TODO      &        geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
-!WG_TODO             b2sigp_pstat0to3(iFc,0,isb) =
-!WG_TODO      &         -t0*wrk0(ix,iy)
-!WG_TODO      &         -t0*qe*wrk1(ix,iy)*
-!WG_TODO      &         (rzb(ix,iy)*nb(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+
-!WG_TODO      &          rzb(leftix(ix,iy),leftiy(ix,iy))*
-!WG_TODO      &          nb(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/
-!WG_TODO      &         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-!WG_TODO               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-!WG_TODO               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-!WG_TODO               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-!WG_TODO          enddo
-      END IF
     END IF
+!srv 23.03.10 }
 !
 !djm Jul2018
     smbgp_b4gr = smbgp
@@ -579,11 +495,11 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
       CALL INTFACE(ncv, nfc, mpg%fccv, geo%fchc, wrk0, wrkf)
       CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, wrk1)
       DO icv=1,mpg%nci
-        IF (nb(icv)/ne(icv) .LT. 0.1e0_R8) THEN
-          IF (1.0e0_R8 .GT. wrk0(icv)/wrk1(icv)) THEN
+        IF (nb(icv)/ne(icv) .LT. 0.1_R8) THEN
+          IF (1.0_R8 .GT. wrk0(icv)/wrk1(icv)) THEN
             min1 = wrk0(icv)/wrk1(icv)
           ELSE
-            min1 = 1.0e0_R8
+            min1 = 1.0_R8
           END IF
           smbgp(icv, 0) = smbgp(icv, 0)*min1
         END IF
@@ -619,16 +535,6 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
       arg10(:) = 'b2sigp_smogpo'//chns
       CALL MY_OUT_US(70, ncv, 0, wrk6, arg10(:))
     END IF
-  END IF
-!
-!djm Jan2017 Store linearised source for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2sigp_smogp0to3(1:ncv, 0:3, isb) = smbgp
-!djm Jul2018
-    b2sigp_smogpi0to3(1:ncv, 0, isb) = wrk5
-!djm Jul2018
-    b2sigp_smogpe0to3(1:ncv, 0, isb) = wrk6
-    b2sigp_smogpgr0to3(1:ncv, 0:3, isb) = smbgp - smbgp_b4gr
   END IF
 !
 ! ..return

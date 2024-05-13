@@ -25,9 +25,10 @@
 !
 !srv 13.01.17
 SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
-& , te, ted, po, pod, ne, ned, na, nad, ua, uad, rza, rzad, rz2, rz2d, &
-& zeff, zeffd, csig, csigd, calf, calfd, ehx, ehxd, st_ext, st_extd, &
-& fch_p, fch_pd, fch_pi_c, fch_pi_cd, fch_pi_f, fch_pi_fd, nbdirs)
+& , mpgd, te, ted, po, pod, ne, ned, na, nad, ua, uad, rza, rzad, rz2, &
+& rz2d, zeff, zeffd, csig, csigd, calf, calfd, ehx, ehxd, st_ext, &
+& st_extd, fch_p, fch_pd, fch_pi_c, fch_pi_cd, fch_pi_f, fch_pi_fd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -54,6 +55,7 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
   REAL(kind=r8) :: te(ncv), po(ncv), ne(ncv), na(ncv, 0:ns-1), ua(ncv, 0&
@@ -103,7 +105,7 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tcpa')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tcpa .LT. 3) THEN
 !    ..test sign of ne, te, csig, calf
@@ -121,8 +123,8 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 ! ..compute parallel current
   IF (switch%pot_eq .EQ. 1 .AND. switch%no_current .EQ. 0) THEN
 !srv 26.07.06 27.02.13
-    CALL B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, te, ted, po, &
-&            pod, ne, ned, ehx, ehxd, nbdirs)
+    CALL B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, ted&
+&            , po, pod, ne, ned, ehx, ehxd, nbdirs)
 !srv 13.01.17 29.01.20
 !   ..compute poloidal differences of te
     DO nd=1,nbdirsmax
@@ -131,8 +133,8 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     DO nd=1,nbdirsmax
       tevd(nd, :) = 0.D0
     END DO
-    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, te, ted, tev, tevd, dtep&
-&            , dtepd, nbdirs)
+    CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, te, ted, tev, tevd&
+&            , dtep, dtepd, nbdirs)
 !   ..compute fch_p
     DO nd=1,nbdirs
       fch_pd(nd, :, 0) = switch%prl_cur*(ehx*csigd(nd, :, 0)+csig(:, 0)*&
@@ -161,10 +163,10 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       fch_pd(nd, :, 1) = 0.D0
     END DO
     fch_p = fch_p - fch_pi_f
-    fch_p(:, 1) = 0.0e0_R8
+    fch_p(:, 1) = 0.0_R8
   ELSE
 !srv 26.07.06 {
-    fch_p = 0.0e0_R8
+    fch_p = 0.0_R8
     ehx = 0.0_R8
     DO nd=1,nbdirsmax
       fch_pd(nd, :, :) = 0.D0
@@ -255,7 +257,7 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tcpa')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tcpa .LT. 3) THEN
 !    ..test sign of ne, te, csig, calf
@@ -288,10 +290,10 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
     END IF
 !srv 13.01.17 }
     fch_p = fch_p - fch_pi_f
-    fch_p(:, 1) = 0.0e0_R8
+    fch_p(:, 1) = 0.0_R8
   ELSE
 !srv 26.07.06 {
-    fch_p = 0.0e0_R8
+    fch_p = 0.0_R8
     ehx = 0.0_R8
   END IF
 !

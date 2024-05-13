@@ -5,10 +5,11 @@
 !   variations   of useful results: fchvisq
 !   with respect to varying inputs: ti hcix_c ni lnlam rz2 ne2
 !                te
-!   Plus diff mem management of: geo.cvbb:in geo.cvonedbsq:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.ftconn:in geo.fteps:in geo.ftbbav2:in
+!   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in geo.vxonedbsq:in geo.ftconn:in
+!                geo.fteps:in geo.ftbbav2:in
 !
 !
 !
@@ -20,9 +21,9 @@
 !
 !
 !
-SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
-& , ne2, ne2d, rz2, rz2d, lnlam, lnlamd, te, ted, ti, tid, ni, nid, &
-& hcix_c, hcix_cd, fchvisq, fchvisqd, nbdirs)
+SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
+& fac_vis, ne2, ne2d, rz2, rz2d, lnlam, lnlamd, te, ted, ti, tid, ni, &
+& nid, hcix_c, hcix_cd, fchvisq, fchvisqd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -32,6 +33,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2ttia
+  USE B2MOD_AD_DIFFV, ONLY : nsmooth_tvsq
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nFc should be the size of dimension 1 of array fcbb
@@ -48,6 +50,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fac_vis(nfc), ne2(ncv), lnlam(ncv), te(ncv), ti(ncv)&
 & , ni(ncv), rz2(ncv, 0:ns-1), hcix_c(ncv)
   REAL(kind=r8) :: ne2d(nbdirsmax, ncv), lnlamd(nbdirsmax, ncv), ted(&
@@ -62,7 +65,6 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
 !
 !   ..local variables
   INTEGER :: ic, icv, ifc, ift, is, k
-  INTEGER, SAVE :: nsmooth=2
   INTEGER, SAVE :: ncall=0
 !srv 11.07.99
 !srv 20.12.99
@@ -119,20 +121,20 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvsq')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !srv 11.07.99
-  fchvisq = 0.0e0_R8
+  fchvisq = 0.0_R8
   fac_vism = MAXVAL(fac_vis)
 !srv 16.10.17
-  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_q .NE. 0.0e0_R8 .AND. &
+  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_q .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !
 !     ..compute gradients of ti in cell centers
     DO nd=1,nbdirsmax
       wrkvd(nd, :) = 0.D0
     END DO
-    CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, ti, tid, wrkv, wrkvd&
-&           , gti, gtid, nbdirs)
+    CALL GRADC_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, wrkv&
+&           , wrkvd, gti, gtid, nbdirs)
 !
 !     ..compute gradients of OnedBsq on cell faces
     CALL GRAD_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvonedbsq, geo%&
@@ -161,7 +163,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
 !
 !       ..calculate the parallel heat flux of ion at the center of cell !lk 23.05.06 05.07.07 {
 !
-        qip0 = 0.0e0_R8
+        qip0 = 0.0_R8
 !
         IF (switch%b2siav_qstyle .EQ. 0) THEN
           DO nd=1,nbdirsmax
@@ -173,7 +175,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
               DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2&
 &                 )-1
                 icv = mpg%ftcv(ic)
-                temp = 2.5e0_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)
+                temp = 2.5_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)
                 temp0 = geo%cvbb(icv, 0)*geo%ftbbav2(ift)*qe
                 temp1 = ni(icv)*ti(icv)
                 DO nd=1,nbdirs
@@ -210,7 +212,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
 !smoothing: interpolate to faces and back to cell centers
 !
           wght = 1.0_R8
-          DO k=1,nsmooth
+          DO k=1,nsmooth_tvsq
             CALL INTFACE_DV(ncv, nfc, mpg%fccv, wght, qip0, qip0d, wrkf&
 &                     , wrkfd, nbdirs)
             CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, &
@@ -250,7 +252,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
               DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2&
 &                 )-1
                 icv = mpg%ftcv(ic)
-                temp1 = 2.5e0_R8*geo%cvbb(icv, 2)
+                temp1 = 2.5_R8*geo%cvbb(icv, 2)
                 temp0 = geo%cvbb(icv, 0)*qe*geo%cvbb(icv, 3)
                 temp = ni(icv)*ti(icv)
                 DO nd=1,nbdirs
@@ -319,8 +321,8 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
 &           )/(1.D0+arg1(:)**2))
         END DO
         qipgen = result10*(qip1*temp3)
-        CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, qipgen, qipgend, wrkv&
-&                , wrkvd, gqipgen, gqipgend, nbdirs)
+        CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, qipgen, qipgend&
+&                , wrkv, wrkvd, gqipgen, gqipgend, nbdirs)
 !set gqipgen to zero on faces not in touch with core
 !wdk todo: rationalize this when separatrix-structure is introduced?
 !
@@ -335,9 +337,9 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
         END DO
 !
 !       ..compute tau, nu, alpha, and interpolate to faces
-        tauia1 = 0.0e0_R8
-        nu1 = 0.0e0_R8
-        alpha1 = 0.0e0_R8
+        tauia1 = 0.0_R8
+        nu1 = 0.0_R8
+        alpha1 = 0.0_R8
         DO nd=1,nbdirsmax
           alpha1d(nd, :) = 0.D0
         END DO
@@ -356,19 +358,18 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
 !lk 20.11.07 { iyv 06.12.13
                 temp1 = geo%ftconn(ift)*(ev*ev)
                 temp0 = ti(icv)*ti(icv)/(temp1*ne2(icv))
-                temp = 15.12e16_R8*geo%fteps(ift)**1.5e0_R8
+                temp = 15.12e16_R8*geo%fteps(ift)**1.5_R8
                 temp4 = geo%ftconn(ift)*(ev*ev)
                 temp5 = ti(icv)*ti(icv)/(temp4*ne2(icv))
-                temp6 = (15.12e16_R8*temp5+1.0e0_R8)*(temp*temp0+&
-&                 1.0e0_R8)
+                temp6 = (15.12e16_R8*temp5+1.0_R8)*(temp*temp0+1.0_R8)
                 temp7 = tauia(icv, is)/temp6
                 DO nd=1,nbdirs
                   tauia1d(nd, icv) = switch%cvsa_mltpl*(tauiad(nd, icv, &
-&                   is)-temp7*((temp*temp0+1.0e0_R8)*15.12e16_R8*(2*ti(&
-&                   icv)*tid(nd, icv)-temp5*temp4*ne2d(nd, icv))/(temp4*&
-&                   ne2(icv))+(15.12e16_R8*temp5+1.0e0_R8)*temp*(2*ti(&
-&                   icv)*tid(nd, icv)-temp0*temp1*ne2d(nd, icv))/(temp1*&
-&                   ne2(icv))))/temp6
+&                   is)-temp7*((temp*temp0+1.0_R8)*15.12e16_R8*(2*ti(icv&
+&                   )*tid(nd, icv)-temp5*temp4*ne2d(nd, icv))/(temp4*ne2&
+&                   (icv))+(15.12e16_R8*temp5+1.0_R8)*temp*(2*ti(icv)*&
+&                   tid(nd, icv)-temp0*temp1*ne2d(nd, icv))/(temp1*ne2(&
+&                   icv))))/temp6
                 END DO
                 tauia1(icv) = switch%cvsa_mltpl*temp7
               ELSE IF (switch%lluciani .EQ. 1) THEN
@@ -400,7 +401,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
               result11 = temp7
               arg2 = geo%fteps(ift)**3
               result2 = SQRT(arg2)
-              temp6 = 2.0e0_R8*pi*result2
+              temp6 = 2.0_R8*pi*result2
               temp7 = geo%ftconn(ift)/(temp6*tauia(icv, is)*result11)
               DO nd=1,nbdirs
                 nu1d(nd, icv) = -(temp7*(result11*tauiad(nd, icv, is)+&
@@ -428,18 +429,17 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
               END DO
               result2 = temp7
               temp7 = geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift)
-              temp6 = 0.7e0_R8*result2 + temp7*(nu1(icv)*nu1(icv)) + &
-&               1.0e0_R8
+              temp6 = 0.7_R8*result2 + temp7*(nu1(icv)*nu1(icv)) + &
+&               1.0_R8
               temp5 = geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift)
-              temp8 = (1.05e0_R8*result11+2.7e0_R8*temp5*(nu1(icv)*nu1(&
-&               icv))-0.17e0_R8)/temp6
+              temp8 = (1.05_R8*result11+2.7_R8*temp5*(nu1(icv)*nu1(icv))&
+&               -0.17_R8)/temp6
               DO nd=1,nbdirs
-                alpha1d(nd, icv) = 0.533e0_R8*(1.05e0_R8*result11d(nd)+&
-&                 temp5*2.7e0_R8*2*nu1(icv)*nu1d(nd, icv)-temp8*(&
-&                 0.7e0_R8*result2d(nd)+temp7*2*nu1(icv)*nu1d(nd, icv)))&
-&                 /temp6
+                alpha1d(nd, icv) = 0.533_R8*(1.05_R8*result11d(nd)+temp5&
+&                 *2.7_R8*2*nu1(icv)*nu1d(nd, icv)-temp8*(0.7_R8*&
+&                 result2d(nd)+temp7*2*nu1(icv)*nu1d(nd, icv)))/temp6
               END DO
-              alpha1(icv) = 0.533e0_R8*(temp8-1.0e0_R8)
+              alpha1(icv) = 0.533_R8*(temp8-1.0_R8)
             END DO
           END IF
         END DO
@@ -490,19 +490,19 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, fac_vis&
         DO nd=1,nbdirs
           wrkfd(nd, :) = temp9*wrkfd(nd, :)/(geo%fcbb(:, 3)*result12)
           fchvisqd(nd, :, 0) = fchvisqd(nd, :, 0) - temp10*switch%&
-&           fhe_vis_q*0.24e0_R8*(gqipgen*wrkfd(nd, :)+wrkf*gqipgend(nd, &
-&           :))
+&           fhe_vis_q*0.24_R8*(gqipgen*wrkfd(nd, :)+wrkf*gqipgend(nd, :)&
+&           )
         END DO
-        fchvisq(:, 0) = fchvisq(:, 0) - temp10*(switch%fhe_vis_q*&
-&         0.24e0_R8*(wrkf*gqipgen))
+        fchvisq(:, 0) = fchvisq(:, 0) - temp10*(switch%fhe_vis_q*0.24_R8&
+&         *(wrkf*gqipgen))
         temp10 = fac_vis*geo%fcs*gonedbsq(:, 0)*geo%fcqalf(:, 1)
         DO nd=1,nbdirs
           fchvisqd(nd, :, 1) = fchvisqd(nd, :, 1) + temp10*switch%&
-&           fhe_vis_q*0.24e0_R8*(gqipgen*wrkfd(nd, :)+wrkf*gqipgend(nd, &
-&           :))
+&           fhe_vis_q*0.24_R8*(gqipgen*wrkfd(nd, :)+wrkf*gqipgend(nd, :)&
+&           )
         END DO
-        fchvisq(:, 1) = fchvisq(:, 1) + temp10*(switch%fhe_vis_q*&
-&         0.24e0_R8*(wrkf*gqipgen))
+        fchvisq(:, 1) = fchvisq(:, 1) + temp10*(switch%fhe_vis_q*0.24_R8&
+&         *(wrkf*gqipgen))
 !
       END IF
     END DO
@@ -539,6 +539,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2ttia
+  USE B2MOD_AD_DIFFV, ONLY : nsmooth_tvsq
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nFc should be the size of dimension 1 of array fcbb
@@ -563,7 +564,6 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 !
 !   ..local variables
   INTEGER :: ic, icv, ifc, ift, is, k
-  INTEGER, SAVE :: nsmooth=2
   INTEGER, SAVE :: ncall=0
 !srv 11.07.99
 !srv 20.12.99
@@ -596,12 +596,12 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvsq')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !srv 11.07.99
-  fchvisq = 0.0e0_R8
+  fchvisq = 0.0_R8
   fac_vism = MAXVAL(fac_vis)
 !srv 16.10.17
-  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_q .NE. 0.0e0_R8 .AND. &
+  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_q .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !
 !     ..compute gradients of ti in cell centers
@@ -621,7 +621,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 !
 !       ..calculate the parallel heat flux of ion at the center of cell !lk 23.05.06 05.07.07 {
 !
-        qip0 = 0.0e0_R8
+        qip0 = 0.0_R8
 !
         IF (switch%b2siav_qstyle .EQ. 0) THEN
 !
@@ -630,9 +630,9 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
               DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2&
 &                 )-1
                 icv = mpg%ftcv(ic)
-                qip0(icv) = -(2.5e0_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)&
-&                 /(geo%cvbb(icv, 0)*geo%ftbbav2(ift))*(ni(icv)*ti(icv)/&
-&                 qe)*gti(icv, 1))
+                qip0(icv) = -(2.5_R8*geo%cvbb(icv, 3)*geo%cvbb(icv, 2)/(&
+&                 geo%cvbb(icv, 0)*geo%ftbbav2(ift))*(ni(icv)*ti(icv)/qe&
+&                 )*gti(icv, 1))
               END DO
             END IF
           END DO
@@ -651,7 +651,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 !smoothing: interpolate to faces and back to cell centers
 !
           wght = 1.0_R8
-          DO k=1,nsmooth
+          DO k=1,nsmooth_tvsq
             CALL INTFACE(ncv, nfc, mpg%fccv, wght, qip0, wrkf)
             CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, qip0)
 !copy value of qip0 across separatrix
@@ -676,9 +676,9 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 &                 )-1
                 icv = mpg%ftcv(ic)
                 qip0(icv) = -(hcix_c(icv)*gti(icv, 0)*geo%cvbb(icv, 3)/&
-&                 geo%cvbb(icv, 0)) - 2.5e0_R8*geo%cvbb(icv, 2)/(geo%&
-&                 cvbb(icv, 0)*geo%cvbb(icv, 3))*(ni(icv)*ti(icv)/qe)*&
-&                 gti(icv, 1)
+&                 geo%cvbb(icv, 0)) - 2.5_R8*geo%cvbb(icv, 2)/(geo%cvbb(&
+&                 icv, 0)*geo%cvbb(icv, 3))*(ni(icv)*ti(icv)/qe)*gti(icv&
+&                 , 1)
               END DO
             END IF
           END DO
@@ -721,9 +721,9 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
         END DO
 !
 !       ..compute tau, nu, alpha, and interpolate to faces
-        tauia1 = 0.0e0_R8
-        nu1 = 0.0e0_R8
-        alpha1 = 0.0e0_R8
+        tauia1 = 0.0_R8
+        nu1 = 0.0_R8
+        alpha1 = 0.0_R8
         DO ift=1,mpg%nft
           IF (mpg%cvonclosedsurface(mpg%ftcv(mpg%ftcvp(ift, 1)))) THEN
             DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-&
@@ -731,10 +731,10 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
               icv = mpg%ftcv(ic)
               IF (switch%lluciani .EQ. 3) THEN
 !lk 20.11.07 { iyv 06.12.13
-                tauia1(icv) = switch%cvsa_mltpl*tauia(icv, is)/(1.0e0_R8&
-&                 +15.12e16_R8/geo%ftconn(ift)*(ti(icv)/ev)**2/ne2(icv))&
-&                 /(1.0e0_R8+15.12e16_R8*geo%fteps(ift)**1.5e0_R8/geo%&
-&                 ftconn(ift)*(ti(icv)/ev)**2/ne2(icv))
+                tauia1(icv) = switch%cvsa_mltpl*tauia(icv, is)/(1.0_R8+&
+&                 15.12e16_R8/geo%ftconn(ift)*(ti(icv)/ev)**2/ne2(icv))/&
+&                 (1.0_R8+15.12e16_R8*geo%fteps(ift)**1.5_R8/geo%ftconn(&
+&                 ift)*(ti(icv)/ev)**2/ne2(icv))
               ELSE IF (switch%lluciani .EQ. 1) THEN
                 tauia1(icv) = tauia(icv, is)/(1.0_R8+7.5e16_R8/geo%&
 &                 ftconn(ift)*(ti(icv)/ev)**2/ne2(icv))
@@ -745,14 +745,14 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
               result11 = SQRT(arg10)
               arg2 = geo%fteps(ift)**3
               result2 = SQRT(arg2)
-              nu1(icv) = geo%ftconn(ift)/(tauia(icv, is)*result11*&
-&               2.0e0_R8*pi*result2)
+              nu1(icv) = geo%ftconn(ift)/(tauia(icv, is)*result11*2.0_R8&
+&               *pi*result2)
 !lk 20.11.07 }
               result11 = SQRT(nu1(icv))
               result2 = SQRT(nu1(icv))
-              alpha1(icv) = ((-0.17e0_R8+1.05e0_R8*result11+2.7e0_R8*nu1&
-&               (icv)**2*geo%fteps(ift)**3)/(1.0e0_R8+0.7e0_R8*result2+&
-&               nu1(icv)**2*geo%fteps(ift)**3)-1.0e0_R8)*0.533e0_R8
+              alpha1(icv) = ((-0.17_R8+1.05_R8*result11+2.7_R8*nu1(icv)&
+&               **2*geo%fteps(ift)**3)/(1.0_R8+0.7_R8*result2+nu1(icv)**&
+&               2*geo%fteps(ift)**3)-1.0_R8)*0.533_R8
             END DO
           END IF
         END DO
@@ -783,10 +783,10 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 !
 !       ..calculate the x-component of the parallel viscosity current
 !         connected with the heat flux 
-        fchvisq(:, 0) = fchvisq(:, 0) - 0.24e0_R8*switch%fhe_vis_q*&
-&         fac_vis*wrkf*gonedbsq(:, 1)*gqipgen*geo%fcs*geo%fcqalf(:, 0)
-        fchvisq(:, 1) = fchvisq(:, 1) + 0.24e0_R8*switch%fhe_vis_q*&
-&         fac_vis*wrkf*gonedbsq(:, 0)*gqipgen*geo%fcs*geo%fcqalf(:, 1)
+        fchvisq(:, 0) = fchvisq(:, 0) - 0.24_R8*switch%fhe_vis_q*fac_vis&
+&         *wrkf*gonedbsq(:, 1)*gqipgen*geo%fcs*geo%fcqalf(:, 0)
+        fchvisq(:, 1) = fchvisq(:, 1) + 0.24_R8*switch%fhe_vis_q*fac_vis&
+&         *wrkf*gonedbsq(:, 0)*gqipgen*geo%fcs*geo%fcqalf(:, 1)
 !
       END IF
     END DO

@@ -24,8 +24,8 @@
 !
 !srv 22.05.18
 SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
-& rxf, switch, switchd, geo, geod, mpg, pl, pld, dv, dvd, sr, srd, ierr&
-& , nbdirs)
+& rxf, switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, sr, srd&
+& , ierr, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -36,8 +36,7 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uppo, ncall_b2uspo, my_out_folder, &
-& ncall_b2ursd
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uspo, my_out_folder, ncall_b2ursd
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -53,6 +52,7 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: rxf
 !srv 22.05.18
   LOGICAL :: solving, solvereg(0:nregionv)
@@ -96,8 +96,7 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
-&     B2UPPO_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   EXTERNAL B2URSD_DV, B2USPO_DV, B2UPPO_DV
   INTRINSIC ANY
   REAL(r8), DIMENSION(nbdirsmax, SIZE(pl%te, 1)) :: dummyzerodiffd
@@ -112,7 +111,7 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nppo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
 &       'faulty argument rxf')
@@ -153,9 +152,9 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
       dummyzerodiffd(nd, :) = 0.D0
     END DO
     CALL B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, geo&
-&            , mpg, dv%ne, dvd%ne, pl%te, dummyzerodiffd, dv%conc, dvd%&
-&            conc, sr%sch, srd%sch, dv%respo, dvd%respo, dv%corpo, dvd%&
-&            corpo, aa, aad, 'b2nppo', nbdirs)
+&            , mpg, mpgd, dv%ne, dvd%ne, pl%te, dummyzerodiffd, dv%conc&
+&            , dvd%conc, sr%sch, srd%sch, dv%respo, dvd%respo, dv%corpo&
+&            , dvd%corpo, aa, aad, 'b2nppo', nbdirs)
 !   ..apply correction
     CALL B2UPPO_DV(ncv, rxf, dv%corpo, dvd%corpo, pl%po, pld%po, nbdirs)
   END IF
@@ -214,8 +213,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uppo, ncall_b2uspo, my_out_folder, &
-& ncall_b2ursd
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uspo, my_out_folder, ncall_b2ursd
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -267,8 +265,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
-&     B2UPPO_NODIFF
+  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   INTRINSIC ANY
 !   ..initialisation
 !
@@ -279,7 +276,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nppo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
 &       'faulty argument rxf')
@@ -320,7 +317,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 &                , geo, mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv&
 &                %corpo, aa, 'b2nppo')
 !   ..apply correction
-    CALL B2UPPO_NODIFF(ncv, rxf, dv%corpo, pl%po)
+    CALL B2UPPO(ncv, rxf, dv%corpo, pl%po)
   END IF
 !srv 11.09.09 }
 !

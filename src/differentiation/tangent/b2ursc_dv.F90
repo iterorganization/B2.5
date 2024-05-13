@@ -89,7 +89,7 @@ SUBROUTINE B2URSC_DV(ncv, nfc, mpg, fun, fund, sfn, sfnd, ffn, ffnd, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2ursc')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2ursc .LT. 3) THEN
 !    ..test sign of sfn
@@ -202,7 +202,7 @@ SUBROUTINE B2URSC_NODIFF(ncv, nfc, mpg, fun, sfn, ffn, resfn)
 !   ..subprogram start-up calls
   CALL SUBINI('b2ursc')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2ursc .LT. 3) THEN
 !    ..test sign of sfn

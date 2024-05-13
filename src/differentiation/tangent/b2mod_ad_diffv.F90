@@ -54,6 +54,10 @@ MODULE B2MOD_AD_DIFFV
   REAL(kind=r8), SAVE :: b2srst_kt_eps=1.0e-60_R8
   REAL(kind=r8), SAVE :: b2srst_zt_eps=1.0e-60_R8
 !
+  REAL(kind=r8), SAVE :: rxg_npco=1.0_R8
+  REAL(kind=r8), SAVE :: rxg_npmo=1.0_R8
+  REAL(kind=r8), SAVE :: rxg_npht=1.0e6_R8
+!
   LOGICAL, SAVE :: b2npmo_solvedum(0:cvregmax)=.true.
 !
 !srv 06.07.00
@@ -71,6 +75,20 @@ MODULE B2MOD_AD_DIFFV
 !
   LOGICAL, SAVE :: test_residual=.false.
   INTEGER, SAVE :: b2mndt_itcnt=0
+  INTEGER, SAVE :: nsmooth_tvsq=2
+  INTEGER, SAVE :: nsmooth_siav=2
+  INTEGER, SAVE :: in_no_of_start_points=0
+  INTEGER, SAVE :: in_no_of_angles=9
+  INTEGER, SAVE :: in_size_of_table=200000
+  INTEGER, SAVE :: icase_sifr=0
+!
+! some variables for chord_find
+  INTEGER :: lngcov, lngind
+  PARAMETER (lngcov=200, lngind=500000)
+  INTEGER, SAVE :: covered(lngcov, lngcov), cvcov(lngind), icov(lngind)&
+& , icvsv
+  REAL(kind=r8), SAVE :: rmin, rmax, zmin, zmax
+  LOGICAL, SAVE :: first=.true.
 !
 !srv 16.02.12 29.09.15
   REAL(kind=r8), SAVE :: senepar, senipar, sconpar(0:def_nsd-1), scurpar
@@ -98,7 +116,6 @@ MODULE B2MOD_AD_DIFFV
   INTEGER, SAVE :: ncall_b2tfhi=0
   INTEGER, SAVE :: ncall_b2tfnb=0
   INTEGER, SAVE :: ncall_b2tfrn=0
-  INTEGER, SAVE :: ncall_b2tiner=0
   INTEGER, SAVE :: ncall_b2tlh0=0
   INTEGER, SAVE :: ncall_b2tlhe=0
   INTEGER, SAVE :: ncall_b2tlmv=0
@@ -136,6 +153,9 @@ MODULE B2MOD_AD_DIFFV
   INTEGER, SAVE :: ncall_b2sifr=0
   INTEGER, SAVE :: ncall_b2sifrtf=0
   INTEGER, SAVE :: ncall_b2stbr_neutr_scl=0
+  INTEGER, SAVE :: ncall_b2shdt=0
+  INTEGER, SAVE :: ncall_b2smdt=0
+  INTEGER, SAVE :: ncall_b2scdt=0
   INTEGER, SAVE :: ncall_b2npco=0
   INTEGER, SAVE :: ncall_b2news_=0
   INTEGER, SAVE :: ncall_b2npht=0
@@ -146,7 +166,6 @@ MODULE B2MOD_AD_DIFFV
   INTEGER, SAVE :: ncall_b2nxfc=0
   INTEGER, SAVE :: ncall_b2upco=0
   INTEGER, SAVE :: ncall_b2upht=0
-  INTEGER, SAVE :: ncall_b2uppo=0
   INTEGER, SAVE :: ncall_b2urmo=0
   INTEGER, SAVE :: ncall_b2ursc=0
   INTEGER, SAVE :: ncall_b2ursd=0
