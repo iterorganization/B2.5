@@ -24,10 +24,11 @@
 !
 !srv 09.01.01
 !srv 06.04.07
-SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, nregionv, &
-& solvereg, itcnt, rxg, rob, robd, rzb, rzbd, pb, pbd, pz, pzd, ub, ubd&
-& , smb, smbd, flcb, flcbd, cvsb, cvsbd, resmb, resmbd, ctcfb, ctcfbd, &
-& corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name, nbdirs)
+SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
+& nregionv, solvereg, itcnt, rxg, rob, robd, rzb, rzbd, pb, pbd, pz, pzd&
+& , ub, ubd, smb, smbd, flcb, flcbd, cvsb, cvsbd, resmb, resmbd, ctcfb, &
+& ctcfbd, corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name, nbdirs&
+&)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -49,6 +50,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, nregionv, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
 !srv 18.05.02
   CHARACTER(len=*) :: name
 !srv 06.04.07
@@ -116,7 +118,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, nregionv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2usmo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls
@@ -181,26 +183,35 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, nregionv, &
         aad0d(nd, icv) = temp*(rob(icv)*csbd(nd)+csb*robd(nd, icv))/&
 &         temp0 - rob(icv)*smbd(nd, icv, 3) - smb(icv, 3)*robd(nd, icv) &
 &         - smbd(nd, icv, 1)
+        aad(nd, mpg%cvnvp(icv, 1)) = aad0d(nd, icv)
       END DO
       aad0(icv) = temp*(csb*rob(icv)/temp0) - smb(icv, 3)*rob(icv) - smb&
 &       (icv, 1)
-      IF (resmb(icv) .GE. 0.) THEN
+      aa(mpg%cvnvp(icv, 1)) = aad0(icv)
+      IF (switch%b2mndt_style .LT. 2) THEN
+        IF (resmb(icv) .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs0d(nd) = resmbd(nd, icv)
+          END DO
+          abs0 = resmb(icv)
+        ELSE
+          DO nd=1,nbdirs
+            abs0d(nd) = -resmbd(nd, icv)
+          END DO
+          abs0 = -resmb(icv)
+        END IF
+        temp0 = abs0/(rxg*csb1)
         DO nd=1,nbdirs
-          abs0d(nd) = resmbd(nd, icv)
+          aad(nd, mpg%cvnvp(icv, 1)) = aad0d(nd, icv) + (abs0d(nd)-temp0&
+&           *rxg*csb1d(nd))/(rxg*csb1)
         END DO
-        abs0 = resmb(icv)
+        aa(mpg%cvnvp(icv, 1)) = aad0(icv) + temp0
       ELSE
         DO nd=1,nbdirs
-          abs0d(nd) = -resmbd(nd, icv)
+          aad(nd, mpg%cvnvp(icv, 1)) = aad0d(nd, icv)
         END DO
-        abs0 = -resmb(icv)
+        aa(mpg%cvnvp(icv, 1)) = aad0(icv)
       END IF
-      temp0 = abs0/(rxg*csb1)
-      DO nd=1,nbdirs
-        aad(nd, mpg%cvnvp(icv, 1)) = aad0d(nd, icv) + (abs0d(nd)-temp0*&
-&         rxg*csb1d(nd))/(rxg*csb1)
-      END DO
-      aa(mpg%cvnvp(icv, 1)) = aad0(icv) + temp0
     ELSE
       DO nd=1,nbdirs
         aad(nd, mpg%cvnvp(icv, 1)) = 0.D0
@@ -381,13 +392,13 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, nregionv, &
   END DO
 !   ..contribution from linearization of centrifugal force
   DO icv=1,ncv
-    IF (0.0e0_R8 .GT. ctcfb(icv)) THEN
+    IF (0.0_R8 .GT. ctcfb(icv)) THEN
       DO nd=1,nbdirs
         min1d(nd) = ctcfbd(nd, icv)
       END DO
       min1 = ctcfb(icv)
     ELSE
-      min1 = 0.0e0_R8
+      min1 = 0.0_R8
       DO nd=1,nbdirsmax
         min1d(nd) = 0.D0
       END DO
@@ -545,7 +556,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2usmo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls
@@ -577,12 +588,17 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
       aad0(icv) = -smb(icv, 1) - smb(icv, 3)*rob(icv) + switch%cfc0*geo%&
 &       cvvol(icv)*geo%cvhz(icv)/geo%cvhx(icv)*geo%cvbb(icv, 0)/geo%cvbb&
 &       (icv, 3)*csb*rob(icv)
-      IF (resmb(icv) .GE. 0.) THEN
-        abs0 = resmb(icv)
+      aa(mpg%cvnvp(icv, 1)) = aad0(icv)
+      IF (switch%b2mndt_style .LT. 2) THEN
+        IF (resmb(icv) .GE. 0.) THEN
+          abs0 = resmb(icv)
+        ELSE
+          abs0 = -resmb(icv)
+        END IF
+        aa(mpg%cvnvp(icv, 1)) = aad0(icv) + abs0/(rxg*csb1)
       ELSE
-        abs0 = -resmb(icv)
+        aa(mpg%cvnvp(icv, 1)) = aad0(icv)
       END IF
-      aa(mpg%cvnvp(icv, 1)) = aad0(icv) + abs0/(rxg*csb1)
     ELSE
       aa(mpg%cvnvp(icv, 1)) = 1.0_R8
       aad0(icv) = 0.0_R8
@@ -688,10 +704,10 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
   END DO
 !   ..contribution from linearization of centrifugal force
   DO icv=1,ncv
-    IF (0.0e0_R8 .GT. ctcfb(icv)) THEN
+    IF (0.0_R8 .GT. ctcfb(icv)) THEN
       min1 = ctcfb(icv)
     ELSE
-      min1 = 0.0e0_R8
+      min1 = 0.0_R8
     END IF
     aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) - min1
   END DO

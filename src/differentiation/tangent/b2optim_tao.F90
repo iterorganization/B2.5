@@ -304,9 +304,9 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, state, stated, &
-&        state_ext, state_extd, state_avg, state_avgd, j, jdiff, &
-&        npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state, &
+     &   stated, state_ext, state_extd, state_avg, state_avgd, j, &
+     &   jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
@@ -521,9 +521,9 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, state, stated, &
-&        state_ext, state_extd, state_avg, state_avgd, j, jdiff, &
-&        npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state, &
+     &   stated, state_ext, state_extd, state_avg, state_avgd, j, &
+     &   jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(ipar,1)*par_rescale(ipar) ! rescale par to get order unity

@@ -4,9 +4,9 @@
 !  Differentiation of b2nxfx in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: ehxp
 !   with respect to varying inputs: ne po te
-!   Plus diff mem management of: geo.cvbb:in geo.cvvol:in geo.fchc:in
-!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in
+!   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.cvvol:in
+!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -21,8 +21,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, qe, ne, ned&
-& , te, ted, po, pod, ehxp, ehxpd, wrk0, wrk1, nbdirs)
+SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, qe, ne&
+& , ned, te, ted, po, pod, ehxp, ehxpd, wrk0, wrk1, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -41,6 +41,7 @@ SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, qe, ne, ned&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: qe, ne(ncv), te(ncv), po(ncv)
   REAL(kind=r8) :: ned(nbdirsmax, ncv), ted(nbdirsmax, ncv), pod(&
 & nbdirsmax, ncv)
@@ -98,7 +99,7 @@ SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, qe, ne, ned&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !srv 16.07.12
   IF (switch%pot_eq .EQ. 0 .OR. switch%pot_eq .EQ. 2) THEN
 !srv 16.07.12 27.02.13
@@ -124,10 +125,10 @@ SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, qe, ne, ned&
       DO nd=1,nbdirsmax
         wrkvd(nd, :) = 0.D0
       END DO
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, nete, neted, &
-&               wrkv, wrkvd, wrkc0, wrkc0d, nbdirs)
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, po, pod, wrkv, &
-&               wrkvd, wrkc1, wrkc1d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, nete, &
+&               neted, wrkv, wrkvd, wrkc0, wrkc0d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, &
+&               wrkv, wrkvd, wrkc1, wrkc1d, nbdirs)
       DO nd=1,nbdirs
 !   ..compute ehxp
         ehxpd(nd, :) = geo%cvbb(:, 0)*geo%cvvol*(wrkc0d(nd, :)-qe*(ne*&
@@ -238,7 +239,7 @@ SUBROUTINE B2NXFX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, qe, ne, te, po&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !srv 16.07.12
   IF (switch%pot_eq .EQ. 0 .OR. switch%pot_eq .EQ. 2) THEN
 !srv 16.07.12 27.02.13

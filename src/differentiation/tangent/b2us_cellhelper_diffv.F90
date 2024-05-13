@@ -21,21 +21,17 @@ MODULE B2US_CELLHELPER_DIFFV
   IMPLICIT NONE
 !
 !
-!
-!
   PUBLIC :: isvertinface, ismember, isquad, istriangle, isaligned, &
 & ispoloidal
 
 CONTAINS
 !
 !
-!
-!
-!
   LOGICAL FUNCTION ISVERTINFACE(ivx, ifc, m)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: ivx, ifc, i
+!
+    INTEGER :: ivx, ifc
     TYPE(MAPPING) :: m
 !
     IF (m%fcvx(ifc, 1) .EQ. ivx .OR. m%fcvx(ifc, 2) .EQ. ivx) THEN
@@ -43,6 +39,7 @@ CONTAINS
     ELSE
       isvertinface = .false.
     END IF
+    RETURN
   END FUNCTION ISVERTINFACE
 
 !
@@ -52,8 +49,9 @@ CONTAINS
   LOGICAL FUNCTION ISMEMBER(a, b, nb)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+!
     INTEGER :: a, nb, i
-!Check whether a integer 'a' is a member of 
+!Check whether an integer 'a' is a member of
 ! array b with length nb
     INTEGER :: b(nb)
 !
@@ -62,6 +60,7 @@ CONTAINS
     DO i=1,nb
       IF (b(i) .EQ. a) ismember = .true.
     END DO
+    RETURN
   END FUNCTION ISMEMBER
 
 !
@@ -73,9 +72,11 @@ CONTAINS
 !
     INTEGER :: icv
     TYPE(MAPPING) :: m
+!
     isquad = .false.
 !
     IF (m%cvvxp(icv, 2) .EQ. 4) isquad = .true.
+    RETURN
   END FUNCTION ISQUAD
 
 !
@@ -84,17 +85,18 @@ CONTAINS
   LOGICAL FUNCTION ISTRIANGLE(icv, m)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+!
     INTEGER :: icv
     TYPE(MAPPING) :: m
 !
     istriangle = .false.
 !
     IF (m%cvvxp(icv, 2) .EQ. 3) istriangle = .true.
+    RETURN
   END FUNCTION ISTRIANGLE
 
 !
 !**********************************************************************
-!
 !
   LOGICAL FUNCTION ISALIGNED(ifc, m)
   USE B2MOD_DIFFSIZES
@@ -103,7 +105,9 @@ CONTAINS
 !
     INTEGER :: ifc
     TYPE(MAPPING) :: m
-    isaligned = m%fcaligned(ifc)
+!
+    isaligned = m%fcaligned(ifc) .EQ. 1
+    RETURN
   END FUNCTION ISALIGNED
 
 !
@@ -116,15 +120,15 @@ CONTAINS
 !
     TYPE(MAPPING) :: m
     TYPE(GEOMETRY) :: g
+!faces5(0:4),
     INTEGER :: ifc, cells(2), faces3(0:2), faces4_1(0:3), faces4_2(0:3)&
-&   , i1, i2, i, faces5(0:4), faces3_1(0:2), faces3_2(0:2)
+&   , i1, i2, i, faces3_1(0:2), faces3_2(0:2)
     REAL(kind=r8) :: tol, cvfpsi(m%ncv)
     INTRINSIC ABS
     REAL(kind=r8) :: abs0
     REAL(kind=r8) :: abs1
     REAL(kind=r8) :: abs2
     LOGICAL :: result1
-!
 !
     ispoloidal = .false.
 !
@@ -147,6 +151,7 @@ CONTAINS
 !
       IF (m%cvfcp(cells(1), 2) .EQ. 4 .AND. m%cvfcp(cells(2), 2) .EQ. 4&
 &     ) THEN
+!
         faces4_1 = m%cvfc(m%cvfcp(cells(1), 1):m%cvfcp(cells(1), 1)+4-1)
         faces4_2 = m%cvfc(m%cvfcp(cells(2), 1):m%cvfcp(cells(2), 1)+4-1)
 !
@@ -173,6 +178,7 @@ CONTAINS
       ELSE IF (m%cvfcp(cells(1), 2) .EQ. 3 .AND. m%cvfcp(cells(2), 2) &
 &         .EQ. 4) THEN
 !
+!
         faces3 = m%cvfc(m%cvfcp(cells(1), 1):m%cvfcp(cells(1), 1)+3-1)
         faces4_1 = m%cvfc(m%cvfcp(cells(2), 1):m%cvfcp(cells(2), 1)+4-1)
         DO i=0,2
@@ -185,6 +191,7 @@ CONTAINS
         IF (i1 .EQ. 1 .AND. i2 .EQ. 2) ispoloidal = .true.
       ELSE IF (m%cvfcp(cells(1), 2) .EQ. 4 .AND. m%cvfcp(cells(2), 2) &
 &         .EQ. 3) THEN
+!
         faces4_1 = m%cvfc(m%cvfcp(cells(1), 1):m%cvfcp(cells(1), 1)+4-1)
         faces3 = m%cvfc(m%cvfcp(cells(2), 1):m%cvfcp(cells(2), 1)+3-1)
         DO i=0,3
@@ -198,7 +205,6 @@ CONTAINS
       ELSE IF (m%cvfcp(cells(1), 2) .EQ. 4 .AND. m%cvfcp(cells(2), 2) &
 &         .EQ. 1) THEN
 !
-!
         faces4_1 = m%cvfc(m%cvfcp(cells(1), 1):m%cvfcp(cells(1), 1)+4-1)
         DO i=0,3
           IF (ISALIGNED(faces4_1(i), m)) i1 = i1 + 1
@@ -207,6 +213,7 @@ CONTAINS
         IF (i1 .EQ. 2) ispoloidal = .true.
       ELSE IF (m%cvfcp(cells(1), 2) .EQ. 1 .AND. m%cvfcp(cells(2), 2) &
 &         .EQ. 4) THEN
+!
         faces4_2 = m%cvfc(m%cvfcp(cells(2), 1):m%cvfcp(cells(2), 1)+4-1)
         DO i=0,3
           IF (ISALIGNED(faces4_2(i), m)) i2 = i2 + 1
@@ -224,126 +231,131 @@ CONTAINS
         IF (i1 .EQ. 1) ispoloidal = .true.
       ELSE IF (m%cvfcp(cells(1), 2) .EQ. 1 .AND. m%cvfcp(cells(2), 2) &
 &         .EQ. 3) THEN
+!
         faces3 = m%cvfc(m%cvfcp(cells(2), 1):m%cvfcp(cells(2), 1)+3-1)
         DO i=0,2
           IF (ISALIGNED(faces3(i), m)) i2 = i2 + 1
         END DO
-! two trias   
+! two trias
         IF (i2 .EQ. 1) ispoloidal = .true.
       ELSE IF (m%cvfcp(cells(1), 2) .EQ. 3 .AND. m%cvfcp(cells(2), 2) &
 &         .EQ. 3) THEN
+!
         faces3_1 = m%cvfc(m%cvfcp(cells(1), 1):m%cvfcp(cells(1), 1)+3-1)
         faces3_2 = m%cvfc(m%cvfcp(cells(2), 1):m%cvfcp(cells(2), 1)+3-1)
         DO i=0,2
           IF (ISALIGNED(faces3_1(i), m)) i1 = i1 + 1
           IF (ISALIGNED(faces3_2(i), m)) i2 = i2 + 1
         END DO
-!pent + quad   
+!pent + quad
 !elseif ((m%cvFcP(cells(1),2).eq.4) .and.
-!&           (m%cvFcP(cells(2),2).eq.5)) then 
-!    faces4_1 =
-!&         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+4-1) 
+!&       (m%cvFcP(cells(2),2).eq.5)) then
+!   faces4_1 =
+!&   m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+4-1)
 !   do i = 0,3
 !     if (isAligned(faces4_1(i),m)) then
-!        i1 = i1 + 1
+!       i1 = i1 + 1
 !     endif
-!   enddo  
-!   faces5 = 
-!&         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1) 
+!   enddo
+!   faces5 =
+!&   m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1)
 !   do i = 0,4
 !     if (isAligned(faces5(i),m)) then
-!        i2 = i2 + 1
+!       i2 = i2 + 1
 !     endif
-!   enddo 
-!   if ((i1.eq.2) .and. (i2.eq.2)) then 
-!     ispoloidal = .true. 
-!   endif    
+!   enddo
+!   if ((i1.eq.2) .and. (i2.eq.2)) then
+!     isPoloidal = .true.
+!   endif
 !elseif ((m%cvFcP(cells(1),2).eq.5) .and.
-!&           (m%cvFcP(cells(2),2).eq.4)) then
-!    faces4_1 =
-!&         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+4-1) 
+!&       (m%cvFcP(cells(2),2).eq.4)) then
+!   faces4_1 =
+!&   m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+4-1)
 !   do i = 0,3
 !     if (isAligned(faces4_1(i),m)) then
-!        i1 = i1 + 1
+!       i1 = i1 + 1
 !     endif
-!   enddo  
-!   faces5 = 
-!&         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1) 
+!   enddo
+!   faces5 =
+!&   m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1)
 !   do i = 0,4
 !     if (isAligned(faces5(i),m)) then
-!        i2 = i2 + 1
+!       i2 = i2 + 1
 !     endif
-!   enddo         
-!   if ((i1.eq.2) .and. (i2.eq.2)) then 
-!     ispoloidal = .true. 
-!   endif   
+!   enddo
+!   if ((i1.eq.2) .and. (i2.eq.2)) then
+!     isPoloidal = .true.
+!   endif
 !elseif ((m%cvFcP(cells(1),2).eq.3) .and.
-!&           (m%cvFcP(cells(2),2).eq.5)) then
-!     faces3 = 
-!&         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+3-1)
+!&       (m%cvFcP(cells(2),2).eq.5)) then
+!   faces3 =
+!&   m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+3-1)
 !   do i = 0,2
 !     if (isAligned(faces3(i),m)) then
-!        i1 = i1 + 1
+!       i1 = i1 + 1
 !     endif
-!   enddo 
-!   faces5 = 
-!&         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1) 
+!   enddo
+!   faces5 =
+!&   m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1)
 !   do i = 0,4
 !     if (isAligned(faces5(i),m)) then
-!        i2 = i2 + 1
+!       i2 = i2 + 1
 !     endif
-!   enddo         
-!   if ((i1.eq.1) .and. (i2.eq.2)) then 
-!     ispoloidal = .true. 
-!   endif               
+!   enddo
+!   if ((i1.eq.1) .and. (i2.eq.2)) then
+!     isPoloidal = .true.
+!   endif
 !elseif ((m%cvFcP(cells(1),2).eq.5) .and.
-!&           (m%cvFcP(cells(2),2).eq.3)) then
-!     faces3 = 
-!&         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+3-1)
+!&        (m%cvFcP(cells(2),2).eq.3)) then
+!   faces3 =
+!&   m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+3-1)
 !   do i = 0,2
 !     if (isAligned(faces3(i),m)) then
-!        i1 = i1 + 1
+!       i1 = i1 + 1
 !     endif
-!   enddo 
-!   faces5 = 
-!&         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1) 
+!   enddo
+!   faces5 =
+!&   m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1)
 !   do i = 0,4
 !     if (isAligned(faces5(i),m)) then
-!        i2 = i2 + 1
+!       i2 = i2 + 1
 !     endif
-!   enddo         
-!   if ((i1.eq.1) .and. (i2.eq.2)) then 
-!     ispoloidal = .true. 
+!   enddo
+!   if ((i1.eq.1) .and. (i2.eq.2)) then
+!     isPoloidal = .true.
 !   endif
 !elseif ((m%cvFcP(cells(1),2).eq.1) .and.
-!&           (m%cvFcP(cells(2),2).eq.5)) then 
-!   faces5 = 
-!&         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1) 
+!&       (m%cvFcP(cells(2),2).eq.5)) then
+!   faces5 =
+!&   m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1)
 !   do i = 0,4
 !     if (isAligned(faces5(i),m)) then
-!        i1 = i1 + 1
+!       i1 = i1 + 1
 !     endif
-!   enddo         
-!   if (i1.eq.2)  then 
-!     ispoloidal = .true. 
+!   enddo
+!   if (i1.eq.2) then
+!     isPoloidal = .true.
 !   endif
 !elseif ((m%cvFcP(cells(1),2).eq.5) .and.
-!&           (m%cvFcP(cells(2),2).eq.1)) then 
-!   faces5 = 
-!&         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1) 
+!&       (m%cvFcP(cells(2),2).eq.1)) then
+!   faces5 =
+!&   m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1)
 !   do i = 0,4
 !     if (isAligned(faces5(i),m)) then
-!        i1 = i1 + 1
+!       i1 = i1 + 1
 !     endif
-!   enddo         
-!   if (i1.eq.2)  then 
-!     ispoloidal = .true. 
-!   endif                                    
+!   enddo
+!   if (i1.eq.2) then
+!     isPoloidal = .true.
+!   endif
 !else
-!  call xerrab('isPoloidal: case not implemented')    
+!  call xerrab('isPoloidal: case not implemented')
         IF (i1 .EQ. 1 .AND. i2 .EQ. 1) ispoloidal = .true.
       END IF
     END IF
+!
+!
+    RETURN
   END FUNCTION ISPOLOIDAL
 
 END MODULE B2US_CELLHELPER_DIFFV

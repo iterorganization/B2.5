@@ -4,6 +4,7 @@
 !  Differentiation of b2sian in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: smban
 !   with respect to varying inputs: fchanml
+!   Plus diff mem management of: mpg.intcellr:in
 !
 !
 !
@@ -18,16 +19,14 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, fchanml, fchanmld&
-& , smban, smband, nbdirs)
+SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, mpgd, fchanml, &
+& fchanmld, smban, smband, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sian_smo0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2sian_eps
@@ -45,6 +44,7 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, fchanml, fchanmld&
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fchanml(nfc, 0:1)
   REAL(kind=r8) :: fchanmld(nbdirsmax, nfc, 0:1)
 !   ..output arguments (unspecified on entry)
@@ -87,7 +87,7 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, fchanml, fchanmld&
   CALL SUBINI('b2sian')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   smban = 0.0_R8
   IF (NINT(zn(isb)) .EQ. 1 .AND. NINT(zamax(isb)) .EQ. 1) THEN
 !   ..  compute smban
@@ -115,8 +115,6 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, fchanml, fchanmld&
       smband(nd, :, :) = 0.D0
     END DO
   END IF
-!djm Store linearised source for balance
-  IF (balance_netcdf .NE. 0) b2sian_smo0to3(1:ncv, 0:3, isb) = smban
 !
   IF (switch%b2sian_iout .NE. 0) THEN
     WRITE(chns, '(i3.3)') isb
@@ -154,8 +152,6 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2sian_smo0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2sian_eps
@@ -205,7 +201,7 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
   CALL SUBINI('b2sian')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   smban = 0.0_R8
   IF (NINT(zn(isb)) .EQ. 1 .AND. NINT(zamax(isb)) .EQ. 1) THEN
 !   ..  compute smban
@@ -216,8 +212,6 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
 &       geo%cvbb(icv, 0)/geo%cvbb(icv, 2)*geo%cvbb(icv, 3)*wrk(icv))
     END DO
   END IF
-!djm Store linearised source for balance
-  IF (balance_netcdf .NE. 0) b2sian_smo0to3(1:ncv, 0:3, isb) = smban
 !
   IF (switch%b2sian_iout .NE. 0) THEN
     WRITE(chns, '(i3.3)') isb

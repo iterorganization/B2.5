@@ -22,10 +22,10 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   CHARACTER(len=*) :: string
-  EXTERNAL LNBLNK
-  INTEGER :: is, izn, izmax, izmin, imi, len, LNBLNK
+  INTEGER :: is, izn, izmax, izmin, imi, len
   LOGICAL :: decorate
   INTRINSIC NINT
+  INTRINSIC LEN_TRIM
   INTRINSIC TRIM
   INTRINSIC ABS
   INTEGER :: abs0
@@ -54,7 +54,7 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
     string = ' '
     len = 1
     IF (decorate) string(len+1:len+2) = '^{'
-    len = LNBLNK(string)
+    len = LEN_TRIM(string)
     IF (imi .LT. 10) THEN
       WRITE(string(len+1:len+1), '(i1)') imi
     ELSE IF (imi .LT. 100) THEN
@@ -62,20 +62,20 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
     ELSE
       WRITE(string(len+1:len+3), '(i3)') imi
     END IF
-    len = LNBLNK(string)
+    len = LEN_TRIM(string)
     IF (decorate) string(len+1:len+1) = '}'
-    len = LNBLNK(string)
-    WRITE(string(len+1:len+lnblnk(elements(izn))), '(a)') TRIM(elements(&
-&   izn))
+    len = LEN_TRIM(string)
+    WRITE(string(len+1:len+len_trim(elements(izn))), '(a)') TRIM(&
+&   elements(izn))
   ELSE
     string = ' '//TRIM(elements(izn))
   END IF
-  len = LNBLNK(string)
+  len = LEN_TRIM(string)
   IF (decorate) string(len+1:len+2) = '^{'
-  len = LNBLNK(string)
+  len = LEN_TRIM(string)
   IF (izmin .GT. 0) string(len+1:len+1) = '+'
   IF (izmin .LT. 0) string(len+1:len+1) = '-'
-  len = LNBLNK(string)
+  len = LEN_TRIM(string)
   IF (izmin .GE. 0.) THEN
     abs0 = izmin
   ELSE
@@ -96,12 +96,12 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
     END IF
     WRITE(string(len+1:len+2), '(i2)') abs2
   END IF
-  len = LNBLNK(string)
+  len = LEN_TRIM(string)
   IF (izmax .NE. izmin) THEN
     string(len+1:len+1) = '_'
     IF (izmax .GT. 0) string(len+2:len+2) = '+'
     IF (izmax .LT. 0) string(len+2:len+2) = '-'
-    len = LNBLNK(string)
+    len = LEN_TRIM(string)
     IF (izmax .GE. 0.) THEN
       abs3 = izmax
     ELSE
@@ -123,7 +123,7 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
       WRITE(string(len+1:len+2), '(i2)') abs5
     END IF
   END IF
-  len = LNBLNK(string)
+  len = LEN_TRIM(string)
   IF (decorate) string(len+1:len+1) = '}'
   CALL SUBEND()
   RETURN

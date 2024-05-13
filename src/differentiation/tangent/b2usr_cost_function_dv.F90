@@ -28,7 +28,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
   USE B2US_GEO_DIFFV
   USE B2MOD_PAR_OPT_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp, psi_omp
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp, psi_omp, &
+& nromp
   USE B2MOD_B2CMPA_DIFFV, ONLY : am, amd
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -69,6 +70,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
   REAL(kind=r8), DIMENSION(ncv) :: arg10
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg10d
   INTEGER :: nd
+  TYPE(MAPPING_DIFFV) :: mpgd
   TYPE(GEOMETRY_DIFFV) :: geod
   REAL(kind=r8), DIMENSION(ncv) :: temp
   REAL(kind=r8) :: temp0
@@ -346,24 +348,24 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
       CASE (7) 
 !Bayesian MAP of other cost functions. It is skipped at this stage...
 !electron density radial gradient
-        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%dv%ne, std%&
-&                 dv%ne, funv, funvd, gradr, gradrd, nbdirs)
+        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%dv%ne&
+&                 , std%dv%ne, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
           b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/1.0e19_R8
         END DO
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
       CASE (8) 
 !electron temperature radial gradient
-        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%pl%te, std%&
-&                 pl%te, funv, funvd, gradr, gradrd, nbdirs)
+        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%pl%te&
+&                 , std%pl%te, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
           b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
         END DO
         b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
       CASE (9) 
 !ion temperature radial gradient
-        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, st%pl%ti, std%&
-&                 pl%ti, funv, funvd, gradr, gradrd, nbdirs)
+        CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%pl%ti&
+&                 , std%pl%ti, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
           b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
         END DO
@@ -449,11 +451,12 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, st, std, &
       IF (cfread(icf)) THEN
 ! Always calculate the least squares value in these cases (i.e. not cftypes 4,5,6,11)
         CALL MAP_AND_INTERPOLATE_CF_DV(n1, n2, nomp, b2psi(icf, 1:n1), &
-&                                b2rr(icf, 1:n1), psi_omp, b2data(1:n1)&
-&                                , b2datad(:, 1:n1), cfdata(icf, 1, 1:n2&
-&                                ), b2dataoncf(1:n2), b2dataoncfd(:, 1:&
-&                                n2), maptoomp(icf), ompind(icf, 1:2), &
-&                                curr_shift, curr_shiftd, nbdirs)
+&                                b2rr(icf, 1:n1), psi_omp(1:nomp), &
+&                                b2data(1:n1), b2datad(:, 1:n1), cfdata(&
+&                                icf, 1, 1:n2), b2dataoncf(1:n2), &
+&                                b2dataoncfd(:, 1:n2), maptoomp(icf), &
+&                                ompind(icf, 1:2), curr_shift, &
+&                                curr_shiftd, nbdirs)
         DO icv=1,n2
           temp0 = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)&
 &           -cfdata(icf, 2, icv))
@@ -542,7 +545,8 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   USE B2US_GEO_DIFFV
   USE B2MOD_PAR_OPT_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp, psi_omp
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp, psi_omp, &
+& nromp
   USE B2MOD_B2CMPA_DIFFV, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -799,9 +803,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       IF (cfread(icf)) THEN
 ! Always calculate the least squares value in these cases (i.e. not cftypes 4,5,6,11)
         CALL MAP_AND_INTERPOLATE_CF(n1, n2, nomp, b2psi(icf, 1:n1), b2rr&
-&                             (icf, 1:n1), psi_omp, b2data(1:n1), cfdata&
-&                             (icf, 1, 1:n2), b2dataoncf(1:n2), maptoomp&
-&                             (icf), ompind(icf, 1:2), curr_shift)
+&                             (icf, 1:n1), psi_omp(1:nomp), b2data(1:n1)&
+&                             , cfdata(icf, 1, 1:n2), b2dataoncf(1:n2), &
+&                             maptoomp(icf), ompind(icf, 1:2), &
+&                             curr_shift)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2

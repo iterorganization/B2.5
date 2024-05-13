@@ -19,8 +19,8 @@
 !
 !srv 09.01.01
 SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
-& geod, mpg, nb, nbd, tb, tbd, ub, ubd, vsbfx, vsbfxd, cvsbx, cvsbxd, &
-& cvsbxhz, cvsbxhzd, fl, nbdirs)
+& geod, mpg, mpgd, nb, nbd, tb, tbd, ub, ubd, vsbfx, vsbfxd, cvsbx, &
+& cvsbxd, cvsbxhz, cvsbxhzd, fl, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -29,6 +29,7 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlmv
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -40,6 +41,7 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: cflmv, nb(ncv), tb(ncv), ub(ncv), vsbfx(nfc), cvsbx(&
 & nfc), cvsbxhz(nfc), fl(nfc)
   REAL(kind=r8) :: nbd(nbdirsmax, ncv), tbd(nbdirsmax, ncv), ubd(&
@@ -74,7 +76,7 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
 !     ------------------------------------------------------------------
   CALL SUBINI('b2tlmv')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test cflmv
   CALL XERTST(0.0_R8 .LE. cflmv, 'faulty argument cflmv')
 ! Init local flux limit to constant value
@@ -129,8 +131,8 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
   DO nd=1,nbdirsmax
     ubvd(nd, :) = 0.D0
   END DO
-  CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, ub, ubd, ubv, ubvd, dub, &
-&          dubd, nbdirs)
+  CALL DIFF_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, ub, ubd, ubv, ubvd, &
+&          dub, dubd, nbdirs)
 !srv 30.05.08
 !
 !   ..main computation
@@ -309,6 +311,7 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlmv
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -339,7 +342,7 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
 !     ------------------------------------------------------------------
   CALL SUBINI('b2tlmv')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test cflmv
   CALL XERTST(0.0_R8 .LE. cflmv, 'faulty argument cflmv')
 ! Init local flux limit to constant value

@@ -23,9 +23,6 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !      use b2mod_tallies
 !      use b2mod_sources
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stcx_sna0to1, b2stcx_smq0to3, &
-& b2stcx_shi0to3, balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -65,11 +62,14 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !srv 11.09.09
   CHARACTER :: chns*3, chcx*3, chk*1
   REAL(kind=r8) :: rg0, t0, t1, t2, du0, du1, tkin, t1n
-  EXTERNAL XERTST, samax, SFILL_NODIFF
+  EXTERNAL XERTST, damax, SFILL_NODIFF
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
   INTRINSIC NINT
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
   LOGICAL :: result1
   INTEGER :: arg1
   REAL(kind=r8) :: result10
@@ -82,7 +82,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !   ..subprogram start-up calls
   CALL SUBINI('b2stcx')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
@@ -101,10 +101,18 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    WHERE (ua .GE. 0.0) 
+      abs0 = ua
+    ELSEWHERE
+      abs0 = -ua
+    END WHERE
+!    ..test velocities
+    result10 = MAXVAL(abs0)
+    CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
-        result10 = samax(ncv, rcx(1, is), 1)
+        result10 = damax(ncv, rcx(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rcx: nonzero for unrelated species')
       END IF
@@ -114,8 +122,8 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !tmp.dpc
 !       write(*,*) 'DPC: b2stcx: is0 ',is0
 !       do is = 1, ns-1
-!        write(*,*) 'is,lnext,samax(rcx) ',
-!     1   is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
+!        write(*,*) 'is,lnext,damax(rcx) ',
+!     1   is,lnext(is-1,is),damax(n2,rcx(-1,-1,is),1)
 !       enddo
 !tmp.dpc
 !
@@ -377,12 +385,6 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
     END DO
   END IF
 !
-!djm Jan2017 Keep linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2stcx_sna0to1 = sna0
-    b2stcx_smq0to3 = smq0
-    b2stcx_shi0to3 = shi0
-  END IF
 !
 ! ..return
   ncall_b2stcx = ncall_b2stcx + 1
@@ -437,9 +439,6 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
 !      use b2mod_tallies
 !      use b2mod_sources
   USE B2MOD_B2CMPA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2stcx_sna0to1, b2stcx_smq0to3, &
-& b2stcx_shi0to3, balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -490,12 +489,15 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
   REAL(kind=r8) :: rg0, t0, t1, t2, du0, du1, tkin, t1n
   REAL(kind=r8), DIMENSION(nbdirsmax) :: t0d, t1d, t2d, du0d, du1d, &
 & tkind, t1nd
-  EXTERNAL XERTST, samax, SFILL_NODIFF
+  EXTERNAL XERTST, damax, SFILL_NODIFF
   EXTERNAL SFILL_DV
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
   INTRINSIC NINT
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
   LOGICAL :: result1
   INTEGER :: arg1
   REAL(kind=r8) :: result10
@@ -519,7 +521,7 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2stcx')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
@@ -538,10 +540,18 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    WHERE (ua .GE. 0.0) 
+      abs0 = ua
+    ELSEWHERE
+      abs0 = -ua
+    END WHERE
+!    ..test velocities
+    result10 = MAXVAL(abs0)
+    CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
-        result10 = samax(ncv, rcx(1, is), 1)
+        result10 = damax(ncv, rcx(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rcx: nonzero for unrelated species')
       END IF
@@ -551,8 +561,8 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
 !tmp.dpc
 !       write(*,*) 'DPC: b2stcx: is0 ',is0
 !       do is = 1, ns-1
-!        write(*,*) 'is,lnext,samax(rcx) ',
-!     1   is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
+!        write(*,*) 'is,lnext,damax(rcx) ',
+!     1   is,lnext(is-1,is),damax(n2,rcx(-1,-1,is),1)
 !       enddo
 !tmp.dpc
 !
@@ -1082,12 +1092,6 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
     END DO
   END IF
 !
-!djm Jan2017 Keep linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2stcx_sna0to1 = sna0
-    b2stcx_smq0to3 = smq0
-    b2stcx_shi0to3 = shi0
-  END IF
 !
 ! ..return
   ncall_b2stcx = ncall_b2stcx + 1

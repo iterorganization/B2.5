@@ -57,13 +57,9 @@ c
       endif
 
       if(vector) then
-#ifdef WG_TODO
 c in r,z,phi
-        dbr=((crx(ix,iy,1)+crx(ix,iy,3))-
-     .       (crx(ix,iy,2)+crx(ix,iy,0)))/2.0_R8
-        dbz=((cry(ix,iy,1)+cry(ix,iy,3))-
-     .       (cry(ix,iy,2)+cry(ix,iy,0)))/2.0_R8
-#endif
+        dbr=geo%cvEb(iCv,0)
+        dbz=geo%cvEb(iCv,1)
         dbs=sqrt(dbr**2+dbz**2)
         dbr=dbr/dbs*pitch(geo,iCv)
         dbz=dbz/dbs*pitch(geo,iCv)
@@ -226,6 +222,11 @@ c
       use b2us_map_diffv
       use b2us_geo_diffv
       use b2mod_subsys
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad_diffv
+     & , only : covered, rmin, rmax, zmin, zmax, first, cvcov, icov,
+     &          iCvsv, lngind, lngcov
       implicit none
 
 !DIAG      integer rectangles, triangles, chain      ! diag
@@ -238,32 +239,22 @@ c
       logical found
       integer cvpos
 
-#ifdef WG_TODO
-      logical inside_rectangle
-#endif
-      integer iCv,icnt1,icnt2
+      logical inside_cell
+      integer icnt1,icnt2
       real (kind=R8) ::
-     *   x,y,z,r,rmin,rmax,zmin,zmax
+     *   x,y,z,r
 
-      logical first
       integer ir,iz
-      integer lngcov,lngind
-      parameter(lngcov=200,lngind=500 000)
-      integer covered(lngcov,lngcov),
-     1 cvcov(lngind),icov(lngind),
-     2 ipos,jpos
+
+      integer ipos,jpos
 
 #ifdef EASY
       integer ir1,ir2,iz1,iz2
 #else
-      integer ip
-#ifdef WG_TODO
+      integer ip,iFc
       integer irmin,irmax,izmin,izmax
-      integer next(0:3)
       real (kind=R8) ::
      *   r1,r2,z1,z2
-      data next/1,3,0,2/
-#endif
       integer xmin(lngcov),xmax(lngcov),ymin,ymax
 #endif
 
@@ -272,9 +263,6 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external xerrab
-      save covered,rmin,rmax,zmin,zmax,first,cvcov,icov,iCv
-
-      data first/.true./
 
       call subini ('chord_find')
       if(first) then
@@ -293,26 +281,28 @@ c
         ipos=0
         icnt2=0
 
-        do iCv=1,mpg%nCi
+        do iCvsv=1,mpg%nCi
 #ifdef EASY
-#ifdef WG_TODO
-          ir1= irpos(min(crx(ix,iy,0),crx(ix,iy,1),
-     2                   crx(ix,iy,2),crx(ix,iy,3)))
-          ir2= irpos(max(crx(ix,iy,0),crx(ix,iy,1),
-     2                   crx(ix,iy,2),crx(ix,iy,3)))
-          iz1= izpos(min(cry(ix,iy,0),cry(ix,iy,1),
-     2                   cry(ix,iy,2),cry(ix,iy,3)))
-          iz2= izpos(max(cry(ix,iy,0),cry(ix,iy,1),
-     2                   cry(ix,iy,2),cry(ix,iy,3)))
-#endif
+          ir1= irpos(
+     1     minval(geo%vxX(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCvsv,2)-1))))
+          ir2= irpos(
+     1     maxval(geo%vxX(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCvsv,2)-1))))
+          iz1= izpos(
+     1     minval(geo%vxY(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCv,2)-1))))
+          iz2= izpos(
+     1     maxval(geo%vxY(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCvsv,2)-1))))
           do iz=iz1,iz2
             do ir=ir1,ir2
               ipos=ipos+1
               if(ipos.gt.lngind) then
-                write(*,*) iCv,ipos
+                write(*,*) iCvsv,ipos
                 call xerrab ('increase size of {xyi}cov')
               endif
-              cvcov(ipos)=iCv
+              cvcov(ipos)=iCvsv
               icov(ipos)=0
               if(covered(ir,iz).eq.0) then
                 covered(ir,iz)=ipos
@@ -336,12 +326,12 @@ c
           enddo
           ymin=lngcov+1
           ymax=0
-#ifdef WG_TODO
-          do ip=0,3
-            r1=crx(ix,iy,ip)
-            z1=cry(ix,iy,ip)
-            r2=crx(ix,iy,next(ip))
-            z2=cry(ix,iy,next(ip))
+          do ip=1,mpg%cvFcP(iCvsv,2)
+            iFc=mpg%cvFc(mpg%cvFcP(iCvsv,1)+ip-1)
+            r1=geo%cvX(mpg%fcVx(iFc,1))
+            z1=geo%cvY(mpg%fcVx(iFc,1))
+            r2=geo%cvX(mpg%fcVx(iFc,2))
+            z2=geo%cvY(mpg%fcVx(iFc,2))
             ir=irpos(r1)
             iz=izpos(z1)
 c assert ir,iz is inside
@@ -387,15 +377,14 @@ c       write(*,*) 'ymin,ymax ',ymin,ymax
 c       write(*,*) 'xmin ',xmin
 c       write(*,*) 'xmax ',xmax
           enddo
-#endif
           do iz=ymin,ymax
             do ir=xmin(iz),xmax(iz)
               ipos=ipos+1
               if(ipos.gt.lngind) then
-                write(*,*) 'iCv ',iCv
+                write(*,*) 'iCv ',iCvsv
                 call xerrab ('increase lngind')
               endif
-              cvcov(ipos)=iCv
+              cvcov(ipos)=iCvsv
               icov(ipos)=0
               icnt2=1
               if(covered(ir,iz).eq.0) then
@@ -424,7 +413,7 @@ c       write(*,*) 'xmax ',xmax
         write(*,*) 100.0*icnt1/(lngcov*lngcov),' % covered'
         write(*,*) ipos,' positions used'
         write(*,*) icnt2,' is the maximum chain length'
-        iCv=1
+        iCvsv=1
 !DIAG   rectangles=0      ! diag
 !DIAG   triangles=0      ! diag
 !DIAG   chain=0      ! diag
@@ -442,32 +431,20 @@ c       write(*,*) 'xmax ',xmax
       end if
       jpos=covered(irpos(r),izpos(z))
       if(jpos.ne.0) then
-#ifdef WG_TODO
-        if(inside_rectangle(r,z,
-     1   crx(ix,iy,1),cry(ix,iy,1),
-     2   crx(ix,iy,3),cry(ix,iy,3),
-     3   crx(ix,iy,2),cry(ix,iy,2),
-     4   crx(ix,iy,0),cry(ix,iy,0))) goto 2100
-#endif
+        if(inside_cell(mpg,geo,r,z,iCvsv)) goto 2100
       endif
 c next try the chain
       do while(jpos.ne.0)
 !DIAG   chain=chain+1      ! diag
-        iCv=cvcov(jpos)
+        iCvsv=cvcov(jpos)
         jpos=icov(jpos)
-#ifdef WG_TODO
-        if(inside_rectangle(r,z,
-     1   crx(ix,iy,1),cry(ix,iy,1),
-     2   crx(ix,iy,3),cry(ix,iy,3),
-     3   crx(ix,iy,2),cry(ix,iy,2),
-     4   crx(ix,iy,0),cry(ix,iy,0))) goto 2100
-#endif
+        if(inside_cell(mpg,geo,r,z,iCvsv)) goto 2100
       enddo
       call subend ()
       return
 
  2100 continue
-      cvpos=iCv
+      cvpos=iCvsv
       found=.true.
       call subend ()
       return
@@ -507,6 +484,89 @@ c next try the chain
       end function zpos
 
       end subroutine chord_find
+c
+      function inside_cell(mpg,geo,r,z,iCv)
+      use b2mod_types
+      use b2us_map_diffv
+      use b2us_geo_diffv
+      use b2mod_constants
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      integer, intent(in) :: iCv
+      real(kind=R8), intent(in) :: r,z
+      logical inside_cell
+      integer i,iFc,iVx,iVx1,iVx2
+      real(kind=R8) :: r1,r2,z1,z2,angle
+      logical, allocatable :: done(:)
+
+cxpb  We use the subtended angle method to handle arbitrary cell shapes
+cxpb  The cell sides must be travelled in order
+
+      if (iCv.le.0.or.iCv.gt.mpg%nCi) then
+        inside_cell=.false.
+        return
+      end if
+      allocate(done(mpg%cvFcP(iCv,2)))
+      done=.false.
+      iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+      iVx1=mpg%fcVx(iFc,1)
+      iVx2=mpg%fcVx(iFc,2)
+      r1=geo%vxX(iVx1)
+      z1=geo%vxY(iVx1)
+      r2=geo%vxX(iVx2)
+      z2=geo%vxY(iVx2)
+      angle = asin( ((r1-r)*(z2-z)-(z1-z)*(r2-r))/
+     .  (sqrt((r1-r)**2+(z1-z)**2)*sqrt((r2-r)**2+(z2-z)**2)) )
+      done(1)=.true.
+      do while (iVx1.ne.iVx2)
+        do i=2,mpg%cvFcP(iCv,2)
+          if(done(i)) cycle
+          iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+          iVx=mpg%fcVx(iFc,1)
+          if (iVx.eq.iVx1) then
+            r1=geo%vxX(mpg%fcVx(iFc,2))
+            z1=geo%vxY(mpg%fcVx(iFc,2))
+            r2=geo%vxX(mpg%fcVx(iFc,1))
+            z2=geo%vxY(mpg%fcVx(iFc,1))
+            iVx1=mpg%fcVx(iFc,2)
+            done(i)=.true.
+          else if (iVx.eq.iVx2) then
+            r2=geo%vxX(mpg%fcVx(iFc,2))
+            z2=geo%vxY(mpg%fcVx(iFc,2))
+            r1=geo%vxX(mpg%fcVx(iFc,1))
+            z1=geo%vxY(mpg%fcVx(iFc,1))
+            iVx2=mpg%fcVx(iFc,2)
+            done(i)=.true.
+          end if
+          if (.not.done(i)) then
+            iVx=mpg%fcVx(iFc,2)
+            if (iVx.eq.iVx1) then
+              r1=geo%vxX(mpg%fcVx(iFc,1))
+              z1=geo%vxY(mpg%fcVx(iFc,1))
+              r2=geo%vxX(mpg%fcVx(iFc,2))
+              z2=geo%vxY(mpg%fcVx(iFc,2))
+              iVx1=mpg%fcVx(iFc,1)
+              done(i)=.true.
+            else if (iVx.eq.iVx2) then
+              r2=geo%vxX(mpg%fcVx(iFc,1))
+              z2=geo%vxY(mpg%fcVx(iFc,1))
+              r1=geo%vxX(mpg%fcVx(iFc,2))
+              z1=geo%vxY(mpg%fcVx(iFc,2))
+              iVx2=mpg%fcVx(iFc,1)
+              done(i)=.true.
+            end if
+          end if
+          if (done(i)) angle = angle +
+     .      asin( ((r1-r)*(z2-z)-(z1-z)*(r2-r))/
+     .       (sqrt((r1-r)**2+(z1-z)**2)*sqrt((r2-r)**2+(z2-z)**2)) )
+        end do
+      end do
+      inside_cell=nint(angle/(2.0_R8*pi)).ne.0
+      deallocate(done)
+
+      return
+      end function inside_cell
 c
       function inside_rectangle(r,z,x1,y1,x2,y2,x3,y3,x4,y4)
       use b2mod_types

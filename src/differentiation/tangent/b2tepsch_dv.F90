@@ -17,7 +17,7 @@
 !
 !
 !
-SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
+SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & facdrift, cddi, cddid, te, ted, ne, ned, floe, floed, cone, coned, &
 & fhepsch, fhepschd, nbdirs)
   USE B2MOD_TYPES
@@ -37,6 +37,7 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: facdrift(nfc), cddi(nfc, 0:1, 0:ns-1), te(ncv), ne(&
 & ncv)
   REAL(kind=r8) :: cddid(nbdirsmax, nfc, 0:1, 0:ns-1), ted(nbdirsmax, &
@@ -81,18 +82,18 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tepsch')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 !   ..set dummy arrays
   dumm0 = 0.0_R8
 !
 !srv 13.10.06
-  fhepsch = 0.0e0_R8
+  fhepsch = 0.0_R8
 !srv 02.01.07
-  cone = 0.0e0_R8
-  floe = 0.0e0_R8
+  cone = 0.0_R8
+  floe = 0.0_R8
   facdriftm = MAXVAL(facdrift)
-  IF (facdriftm .NE. 0.0e0_R8) THEN
+  IF (facdriftm .NE. 0.0_R8) THEN
     DO nd=1,nbdirsmax
       floed(nd, :, :) = 0.D0
     END DO
@@ -132,8 +133,8 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 &                   netevd, nbdirs)
         CALL INTVERTEX_DV(ncv, nvx, mpg, geo%vxvol, nete2, nete2d, &
 &                   nete2v, nete2vd, nbdirs)
-        CALL DIFF_DV(ncv, nfc, nvx, 1, geo, geod, mpg, nete2, nete2d, &
-&              nete2v, nete2vd, dnete2, dnete2d, nbdirs)
+        CALL DIFF_DV(ncv, nfc, nvx, 1, geo, geod, mpg, mpgd, nete2, &
+&              nete2d, nete2v, nete2vd, dnete2, dnete2d, nbdirs)
         DO nd=1,nbdirs
 !
 !   ..compute P.Sch heat flux
@@ -280,18 +281,18 @@ SUBROUTINE B2TEPSCH_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, facdrift&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tepsch')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 !   ..set dummy arrays
   dumm0 = 0.0_R8
 !
 !srv 13.10.06
-  fhepsch = 0.0e0_R8
+  fhepsch = 0.0_R8
 !srv 02.01.07
-  cone = 0.0e0_R8
-  floe = 0.0e0_R8
+  cone = 0.0_R8
+  floe = 0.0_R8
   facdriftm = MAXVAL(facdrift)
-  IF (facdriftm .NE. 0.0e0_R8) THEN
+  IF (facdriftm .NE. 0.0_R8) THEN
 !srv 12.05.11
     DO is=0,ns-1
       IF (NINT(zn(is)) .EQ. 1 .AND. NINT(zamax(is)) .EQ. 1) THEN

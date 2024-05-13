@@ -3,15 +3,17 @@
 !
 !  Differentiation of b2npco in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(dv.resco) *(dv.corpa) *(dv.pa)
-!                *(pl.na) *(pl.ua)
+!                *(sr.sna) *(sr.snadt) *(pl.na) *(pl.ua)
 !   with respect to varying inputs: *(dv.fna) *(dv.fna_mdf) *(dv.flob)
 !                *(dv.conb) *(dv.resco) *(dv.corpa) *(dv.pcca)
-!                *(dv.pa) *(sr.sna) *(pl.na) *(pl.ua)
+!                *(dv.pa) *(psnl.na) *(sr.sna) *(sr.snadt) *(pl.na)
+!                *(pl.ua)
 !   Plus diff mem management of: dv.fna:in dv.fna_mdf:in dv.flob:in
 !                dv.conb:in dv.resco:in dv.corpa:in dv.pcca:in
-!                dv.pa:in geo.cvvol:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                sr.sna:in pl.na:in pl.ua:in
+!                dv.pa:in mpg.intcellp:in psnl.na:in geo.cvvol:in
+!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in sr.sna:in sr.snadt:in
+!                pl.na:in pl.ua:in
 !
 !
 !
@@ -28,19 +30,19 @@
 !
 !srv 22.05.18
 SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
-& ua_solve, solvmreg, itcnt, isb, rxf, switch, switchd, geo, geod, mpg, &
-& pl, pld, dv, dvd, sr, srd, ierr, nbdirs)
+& ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch, switchd, geo, geod&
+& , mpg, mpgd, pl, pld, dv, dvd, sr, srd, psnc, psnl, psnld, ierr, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-!djm Mar2019
-  USE B2MOD_BALANCE_DIFFV, ONLY : update_balance_sources_particles, &
-& balance_netcdf, tot_sna0to1, fna_tot
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco
+!srv 07.07.21 {
+!srv 07.07.21 }
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : dtco, time_factor
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco, rxg_npco
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2upco, ncall_b2usco, my_out_folder, &
@@ -61,9 +63,12 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(B2SOURCE), INTENT(IN) :: sr
-  TYPE(B2SOURCE_DIFFV), INTENT(IN) :: srd
-  REAL(kind=r8) :: rxf
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
+  TYPE(B2SOURCE), INTENT(INOUT) :: sr
+  TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psnld
+  REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
   LOGICAL :: solving, solvcreg(0:nregionv), ua_solve, solvmreg(0:&
 & nregionv)
@@ -105,11 +110,15 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   CHARACTER :: chns*3
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv)
+  LOGICAL :: warning
+  INTEGER :: icv
 !   ..procedures
   EXTERNAL XERTST, IPGETR
   EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSC_NODIFF, B2USCO_NODIFF, &
 &     B2UPCO_NODIFF
   EXTERNAL B2URSC_DV, B2USCO_DV, B2UPCO_DV
+  INTRINSIC HUGE
+  EXTERNAL XERRAB
   INTRINSIC ANY
   CHARACTER(len=7) :: arg1
   CHARACTER(len=9) :: arg10
@@ -119,6 +128,7 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   CHARACTER(len=13) :: arg14
   CHARACTER(len=17) :: arg15
   CHARACTER(len=16) :: arg16
+  INTEGER :: nd
   INTEGER :: nbdirs
 !   ..initialisation
 !
@@ -146,9 +156,34 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2npco')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf
-  CALL XERTST(0 .LE. rxf .AND. rxf .LE. 1, 'faulty argument rxf')
+  CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
+&       'faulty argument rxf')
+!   ..set internal parameters on first call
+  IF (ncall_b2npco .EQ. 0) THEN
+    IF (switch%b2mndt_style .EQ. 2) THEN
+      rxg_npco = HUGE(1.0_R8)
+      IF (switch%b2npco_pcm0 .GT. 0.0_R8) CALL XERRAB(&
+&                        'b2npco_pcm0 must be 0 for time-dependent mode'&
+&                                              )
+      IF (switch%b2npco_pcm1 .GT. 0.0_R8) CALL XERRAB(&
+&                        'b2npco_pcm1 must be 0 for time-dependent mode'&
+&                                              )
+      warning = .false.
+      DO icv=1,ncv
+        warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
+&         (icv) .NE. 1.0_R8
+      END DO
+      IF (warning) THEN
+        WRITE(6, '(a,i3,a)') 'rxf*dtco*time_factor for species ', isb, &
+&       ' should be 1 !'
+        WRITE(6, *) 'Time derivative terms may be inacurrate !'
+      END IF
+    ELSE
+      rxg_npco = switch%b2npco_rxg
+    END IF
+  END IF
 !   ..extensive tests on first few calls
   IF (ncall_b2npco .LT. 3) THEN
 !    ..test sign of conb
@@ -162,15 +197,23 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     CALL B2XVSG(ncv, dv%pa(1, isb), 1, 'pb', '.gt.')
     CALL B2XVSG(ncv, pl%na(1, isb), 1, 'nb', '.gt.')
   END IF
-!djm Jan2017 update particle source components for balance
-  IF (balance_netcdf .NE. 0) THEN
-!djm Mar2019
-    tot_sna0to1(:, :, isb) = sr%sna(:, :, isb)
-!djm Mar2019
-    fna_tot(:, :, isb) = dv%fna(:, :, isb)
-    CALL UPDATE_BALANCE_SOURCES_PARTICLES(ncv, isb, pl%na(:, isb))
+!srv 07.07.21 }
+!
+  IF (switch%b2mndt_style .EQ. 2) THEN
+!srv 07.07.21 {
+!  .. calculate time-dependent source
+    CALL B2SCDT_DV(ncv, mpg%nci, isb, dtim, geo%cvvol, psnl%na(:, isb), &
+&            psnld%na(:, :, isb), switch, mpg, sr%snadt(1, 0, isb), srd%&
+&            snadt(:, 1, 0, isb), nbdirs)
+!  .. add contribution from time-dependent source
+    DO nd=1,nbdirs
+      srd%sna(nd, :, :, isb) = srd%sna(nd, :, :, isb) + srd%snadt(nd, :&
+&       , :, isb)
+    END DO
+    sr%sna(:, :, isb) = sr%sna(:, :, isb) + sr%snadt(:, :, isb)
   END IF
 !srv 22.05.18
+!
 ! ..particle balance
 !   ..compute residual
   IF ((solving .AND. ANY(solvcreg(0:mpg%nnreg(0)))) .OR. switch%&
@@ -195,19 +238,19 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !srv 22.05.18
 !srv 13.10.06 26.09.12
     arg1(:) = 'b2usco_'//chns
-    CALL B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv, &
-&            solvcreg, itcnt, switch%b2npco_rxg, pl%na(:, isb), pld%na(:&
-&            , :, isb), dv%pa(:, isb), dvd%pa(:, :, isb), sr%sna(:, 1, &
-&            isb), srd%sna(:, :, 1, isb), dv%flob, dvd%flob, dv%conb, &
-&            dvd%conb, dv%resco(:, isb), dvd%resco(:, :, isb), dv%corpa(&
-&            :, isb), dvd%corpa(:, :, isb), aa, aad, arg1(:), nbdirs)
+    CALL B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, nregionv&
+&            , solvcreg, itcnt, rxg_npco, pl%na(:, isb), pld%na(:, :, &
+&            isb), dv%pa(:, isb), dvd%pa(:, :, isb), sr%sna(:, 1, isb), &
+&            srd%sna(:, :, 1, isb), dv%flob, dvd%flob, dv%conb, dvd%conb&
+&            , dv%resco(:, isb), dvd%resco(:, :, isb), dv%corpa(:, isb)&
+&            , dvd%corpa(:, :, isb), aa, aad, arg1(:), nbdirs)
 !   ..apply correction
-    CALL B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
-&            ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:, &
+    CALL B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, nregionv&
+&            , ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:, &
 &            isb), dvd%corpa(:, :, isb), dv%pcca(:, 0, isb), dvd%pcca(:&
 &            , :, 0, isb), dv%pa(:, isb), dvd%pa(:, :, isb), pl%na(:, &
 &            isb), pld%na(:, :, isb), pl%ua(:, isb), pld%ua(:, :, isb), &
-&            isb, nbdirs)
+&            isb, psnl, nbdirs)
   END IF
   IF (switch%b2npco_iout .NE. 0) THEN
 !srv 12.07.02 {
@@ -281,19 +324,18 @@ END SUBROUTINE B2NPCO_DV
 !
 !srv 22.05.18
 SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
-& ua_solve, solvmreg, itcnt, isb, rxf, switch, geo, mpg, pl, dv, sr, &
-& ierr)
+& ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch, geo, mpg, pl, dv, &
+& sr, psnc, psnl, ierr)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-!djm Mar2019
-  USE B2MOD_BALANCE_DIFFV, ONLY : update_balance_sources_particles, &
-& balance_netcdf, tot_sna0to1, fna_tot
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco
+!srv 07.07.21 {
+!srv 07.07.21 }
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : dtco, time_factor
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2npco, rxg_npco
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2upco, ncall_b2usco, my_out_folder, &
@@ -311,8 +353,9 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(B2SOURCE), INTENT(IN) :: sr
-  REAL(kind=r8) :: rxf
+  TYPE(B2SOURCE), INTENT(INOUT) :: sr
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
   LOGICAL :: solving, solvcreg(0:nregionv), ua_solve, solvmreg(0:&
 & nregionv)
@@ -351,10 +394,14 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !srv 04.07.08
   CHARACTER :: chns*3
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
+  LOGICAL :: warning
+  INTEGER :: icv
 !   ..procedures
   EXTERNAL XERTST, IPGETR
   EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSC_NODIFF, B2USCO_NODIFF, &
 &     B2UPCO_NODIFF
+  INTRINSIC HUGE
+  EXTERNAL XERRAB
   INTRINSIC ANY
   CHARACTER(len=7) :: arg1
   CHARACTER(len=9) :: arg10
@@ -390,9 +437,34 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2npco')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf
-  CALL XERTST(0 .LE. rxf .AND. rxf .LE. 1, 'faulty argument rxf')
+  CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
+&       'faulty argument rxf')
+!   ..set internal parameters on first call
+  IF (ncall_b2npco .EQ. 0) THEN
+    IF (switch%b2mndt_style .EQ. 2) THEN
+      rxg_npco = HUGE(1.0_R8)
+      IF (switch%b2npco_pcm0 .GT. 0.0_R8) CALL XERRAB(&
+&                        'b2npco_pcm0 must be 0 for time-dependent mode'&
+&                                              )
+      IF (switch%b2npco_pcm1 .GT. 0.0_R8) CALL XERRAB(&
+&                        'b2npco_pcm1 must be 0 for time-dependent mode'&
+&                                              )
+      warning = .false.
+      DO icv=1,ncv
+        warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
+&         (icv) .NE. 1.0_R8
+      END DO
+      IF (warning) THEN
+        WRITE(6, '(a,i3,a)') 'rxf*dtco*time_factor for species ', isb, &
+&       ' should be 1 !'
+        WRITE(6, *) 'Time derivative terms may be inacurrate !'
+      END IF
+    ELSE
+      rxg_npco = switch%b2npco_rxg
+    END IF
+  END IF
 !   ..extensive tests on first few calls
   IF (ncall_b2npco .LT. 3) THEN
 !    ..test sign of conb
@@ -406,15 +478,18 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     CALL B2XVSG(ncv, dv%pa(1, isb), 1, 'pb', '.gt.')
     CALL B2XVSG(ncv, pl%na(1, isb), 1, 'nb', '.gt.')
   END IF
-!djm Jan2017 update particle source components for balance
-  IF (balance_netcdf .NE. 0) THEN
-!djm Mar2019
-    tot_sna0to1(:, :, isb) = sr%sna(:, :, isb)
-!djm Mar2019
-    fna_tot(:, :, isb) = dv%fna(:, :, isb)
-    CALL UPDATE_BALANCE_SOURCES_PARTICLES(ncv, isb, pl%na(:, isb))
+!srv 07.07.21 }
+!
+  IF (switch%b2mndt_style .EQ. 2) THEN
+!srv 07.07.21 {
+!  .. calculate time-dependent source
+    CALL B2SCDT_NODIFF(ncv, mpg%nci, isb, dtim, geo%cvvol, psnl%na(:, &
+&                isb), switch, mpg, sr%snadt(1, 0, isb))
+!  .. add contribution from time-dependent source
+    sr%sna(:, :, isb) = sr%sna(:, :, isb) + sr%snadt(:, :, isb)
   END IF
 !srv 22.05.18
+!
 ! ..particle balance
 !   ..compute residual
   IF ((solving .AND. ANY(solvcreg(0:mpg%nnreg(0)))) .OR. switch%&
@@ -436,14 +511,14 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !srv 13.10.06 26.09.12
     arg1(:) = 'b2usco_'//chns
     CALL B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv, &
-&                solvcreg, itcnt, switch%b2npco_rxg, pl%na(:, isb), dv%&
-&                pa(:, isb), sr%sna(:, 1, isb), dv%flob, dv%conb, dv%&
-&                resco(:, isb), dv%corpa(:, isb), aa, arg1(:))
+&                solvcreg, itcnt, rxg_npco, pl%na(:, isb), dv%pa(:, isb)&
+&                , sr%sna(:, 1, isb), dv%flob, dv%conb, dv%resco(:, isb)&
+&                , dv%corpa(:, isb), aa, arg1(:))
 !   ..apply correction
     CALL B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 &                ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:&
 &                , isb), dv%pcca(:, 0, isb), dv%pa(:, isb), pl%na(:, isb&
-&                ), pl%ua(:, isb), isb)
+&                ), pl%ua(:, isb), isb, psnl)
   END IF
   IF (switch%b2npco_iout .NE. 0) THEN
 !srv 12.07.02 {

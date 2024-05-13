@@ -42,6 +42,7 @@ CONTAINS
 !
 !
 !----------------------------------------------------------------------
+!
   SUBROUTINE ALLOC_B2MOD_INDIRECT(nxd, nyd, nncutmax)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -81,7 +82,6 @@ CONTAINS
     END IF
   END SUBROUTINE ALLOC_B2MOD_INDIRECT
 
-!
 !
   SUBROUTINE DEALLOC_B2MOD_INDIRECT()
   USE B2MOD_DIFFSIZES

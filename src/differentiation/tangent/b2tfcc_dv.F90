@@ -28,8 +28,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pl, pld&
-& , dv, dvd, co, cod, rt, rtd, nbdirs)
+SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
+& , pld, dv, dvd, co, cod, rt, rtd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -54,6 +54,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pl, pld&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2COEFF), INTENT(IN) :: co
@@ -102,7 +103,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pl, pld&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfcc')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfcc .LT. 3) THEN
@@ -183,8 +184,8 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pl, pld&
 &             rza(:, :, is), wrkf, wrkfd, nbdirs)
 !
 !    ..pre-compute radial differences nw
-    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, nw, nwd, wrkvx, &
-&          wrkvxd, dnw, dnwd, nbdirs)
+    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, nw, nwd, wrkvx&
+&          , wrkvxd, dnw, dnwd, nbdirs)
 !
 !    ..interpolate nw to cell faces
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, wght, nw, nwd, nwf, nwfd, nbdirs&
@@ -319,8 +320,8 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pl, pld&
 !  ..add contributions from Rhie-Chow term to floe, cone
 !
 !   ..pre-compute radial differences
-  CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, dv%ne, dvd%ne, wrkvx, &
-&        wrkvxd, dnw, dnwd, nbdirs)
+  CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, dv%ne, dvd%ne, &
+&        wrkvx, wrkvxd, dnw, dnwd, nbdirs)
 !
 !   ..interpolate nwe and nwi to cell faces
   CALL INTFACE_DV(ncv, nfc, mpg%fccv, wght, dv%ne, dvd%ne, nwf, nwfd, &
@@ -375,8 +376,8 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pl, pld&
   DO is=0,ns-1
 !
 !    ..pre-compute radial differences
-    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, pl%na(1, is), pld%na(&
-&          :, 1, is), wrkvx, wrkvxd, dnw, dnwd, nbdirs)
+    CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%na(1, is), &
+&          pld%na(:, 1, is), wrkvx, wrkvxd, dnw, dnwd, nbdirs)
 !
 !    ..interpolate nwe to cell faces
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, wght, nw, nwd, nwf, nwfd, nbdirs&
@@ -568,7 +569,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfcc')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfcc .LT. 3) THEN

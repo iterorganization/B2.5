@@ -4,9 +4,9 @@
 !  Differentiation of b2tvspr in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: fchvisper
 !   with respect to varying inputs: ti na fchvisper vsa0 rza po
-!   Plus diff mem management of: geo.cvvol:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: mpg.intcellr:in geo.cvvol:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
 !
 !
@@ -18,9 +18,9 @@
 !
 !
 !
-SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
-& , ti, tid, na, nad, rza, rzad, vsa0, vsa0d, fac_vis, fchvisper, &
-& fchvisperd, nbdirs)
+SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
+& po, pod, ti, tid, na, nad, rza, rzad, vsa0, vsa0d, fac_vis, fchvisper&
+& , fchvisperd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -44,6 +44,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: fac_vis(nfc), po(ncv), ti(ncv), na(ncv, 0:ns-1), rza(&
 & ncv, 0:ns-1), vsa0(ncv, 0:ns-1)
   REAL(kind=r8) :: pod(nbdirsmax, ncv), tid(nbdirsmax, ncv), nad(&
@@ -83,7 +84,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvspr')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..calculate the coefficients in difference approximation of viscosity perpendicular current
 !      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
@@ -92,7 +93,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
 !   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
   fac_vism = MAXVAL(fac_vis)
 !srv 22.11.99
-  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0e0_R8 .AND. &
+  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
     DO nd=1,nbdirsmax
       wrkfd(nd, :) = 0.D0
@@ -115,14 +116,14 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
         weight = 1.0_R8
 !
 !      ..compute V_{perp,a} on cell faces
-        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, po, pod, wrkv, wrkvd&
-&                , gpo, gpod, nbdirs)
+        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
+&                wrkvd, gpo, gpod, nbdirs)
         DO nd=1,nbdirs
           arg1d(nd, :) = ti*nad(nd, :, is) + na(:, is)*tid(nd, :)
         END DO
         arg1(:) = na(:, is)*ti
-        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, arg1(:), arg1d(:, :)&
-&                , wrkv, wrkvd, gpa, gpad, nbdirs)
+        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, arg1(:), arg1d(&
+&                :, :), wrkv, wrkvd, gpa, gpad, nbdirs)
         DO nd=1,nbdirs
           arg1d(nd, :) = rza(:, is)*nad(nd, :, is) + na(:, is)*rzad(nd, &
 &           :, is)
@@ -142,8 +143,8 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
 &                 vad, nbdirs)
 !
 !      ..compute radial gradient of V_{perp,a}, in cell centers
-        CALL GRADC_DIV_R_DV(ncv, nfc, nvx, 1, geo, mpg, va, vad, wrkf, &
-&                     wrkfd, dva, dvad, nbdirs)
+        CALL GRADC_DIV_R_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, va, vad, &
+&                     wrkf, wrkfd, dva, dvad, nbdirs)
         DO nd=1,nbdirs
           dvad(nd, :) = 0.25_R8*(vsa0(:, is)*dvad(nd, :)+dva*vsa0d(nd, :&
 &           , is))
@@ -184,7 +185,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po, pod&
     END DO
   ELSE
 !srv 16.10.17
-    fchvisper = 0.0e0_R8
+    fchvisper = 0.0_R8
     DO nd=1,nbdirsmax
       fchvisperd(nd, :, :) = 0.D0
     END DO
@@ -266,7 +267,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvspr')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..calculate the coefficients in difference approximation of viscosity perpendicular current
 !      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
@@ -275,7 +276,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
 !   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
   fac_vism = MAXVAL(fac_vis)
 !srv 22.11.99
-  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0e0_R8 .AND. &
+  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !srv 16.10.17
     DO is=0,ns-1
@@ -323,7 +324,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
     END DO
   ELSE
 !srv 16.10.17
-    fchvisper = 0.0e0_R8
+    fchvisper = 0.0_R8
   END IF
 !
   IF (switch%b2tvspr_iout .EQ. 1) THEN

@@ -4,8 +4,9 @@
 !  Differentiation of b2upco in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: nb ub pb
 !   with respect to varying inputs: corpb nb ub pb pccb0
-!   Plus diff mem management of: geo.cvvol:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: mpg.intcellp:in geo.cvvol:in geo.fchc:in
+!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in
 !
 !
 !
@@ -20,13 +21,14 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
-& ua_solve, solvereg, rxf, pcm0, corpb, corpbd, pccb0, pccb0d, pb, pbd, &
-& nb, nbd, ub, ubd, isb, nbdirs)
+SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
+& nregionv, ua_solve, solvereg, rxf, pcm0, corpb, corpbd, pccb0, pccb0d&
+& , pb, pbd, nb, nbd, ub, ubd, isb, psnl, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dn
   USE B2MOD_SUBSYS
@@ -45,7 +47,9 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   REAL(kind=r8) :: rxf, pcm0, corpb(ncv), pccb0(ncv)
   REAL(kind=r8) :: corpbd(nbdirsmax, ncv), pccb0d(nbdirsmax, ncv)
   LOGICAL :: ua_solve, solvereg(0:nregionv)
@@ -93,7 +97,7 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2upco')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf, pcm0
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
 &       'faulty argument rxf')
@@ -104,8 +108,8 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, corpb, corpbd, wrkv&
-&           , wrkvd, wrk, wrkd, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, corpb, corpbd&
+&           , wrkv, wrkvd, wrk, wrkd, nbdirs)
   DO nd=1,nbdirsmax
     nb_d(nd, :) = 0.D0
   END DO
@@ -141,9 +145,9 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, switch, nregionv, &
 !srv 25.07.17 }                                           !srv 25.07.17
   IF (corr_core_dn(isb) .NE. 1.0_R8 .AND. (.NOT.is_neutral(isb))) THEN
 !   ..smooth the correction for inner flux surfaces  !lk 30.06.2017{
-    tt0 = 0.0e0_R8
-    tt1 = 0.0e0_R8
-    tt2 = 0.0e0_R8
+    tt0 = 0.0_R8
+    tt1 = 0.0_R8
+    tt2 = 0.0_R8
     DO nd=1,nbdirsmax
       tt1d(nd, :) = 0.D0
     END DO
@@ -286,11 +290,12 @@ END SUBROUTINE B2UPCO_DV
 !.specification
 !
 SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
-& ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb)
+& ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb, psnl)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dn
   USE B2MOD_SUBSYS
@@ -308,6 +313,7 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   REAL(kind=r8) :: rxf, pcm0, corpb(ncv), pccb0(ncv)
   LOGICAL :: ua_solve, solvereg(0:nregionv)
 !   ..input/output arguments
@@ -345,7 +351,7 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2upco')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf, pcm0
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
 &       'faulty argument rxf')
@@ -369,9 +375,9 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 !srv 25.07.17 }                                           !srv 25.07.17
   IF (corr_core_dn(isb) .NE. 1.0_R8 .AND. (.NOT.is_neutral(isb))) THEN
 !   ..smooth the correction for inner flux surfaces  !lk 30.06.2017{
-    tt0 = 0.0e0_R8
-    tt1 = 0.0e0_R8
-    tt2 = 0.0e0_R8
+    tt0 = 0.0_R8
+    tt1 = 0.0_R8
+    tt2 = 0.0_R8
     DO icv=1,mpg%nci
       IF (mpg%cvonclosedsurface(icv)) THEN
 ! IYS 27.03.2019

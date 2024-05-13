@@ -29,9 +29,9 @@ MODULE B2US_MAP_DIFFV
 & alloc_mapping_cf, dealloc_mapping_cf, read_mapping, write_mapping, &
 & init_mapping, get_version, calc_add_connectivity
   PUBLIC :: alloc_mapping_dv, dealloc_mapping_dv, alloc_mapping_bc_dv, &
-& dealloc_mapping_bc_dv, alloc_mapping_rc_dv, dealloc_mapping_rc_dv, &
-& alloc_mapping_cf_dv, dealloc_mapping_cf_dv, read_mapping_dv, &
-& init_mapping_dv
+& dealloc_mapping_bc_dv, alloc_mapping_rc_dv0, alloc_mapping_rc_dv, &
+& dealloc_mapping_rc_dv, alloc_mapping_cf_dv, dealloc_mapping_cf_dv, &
+& read_mapping_dv, init_mapping_dv
 !
 ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
 !         listing for every cell the corresponding face numbers
@@ -115,11 +115,12 @@ MODULE B2US_MAP_DIFFV
 ! (nFc) indicates for each face the corresponding face label
 ! (nFt) indicates for each flux tube the corresponding label
 ! (nCv) indicates for each control volume the corresponding label
+!
   TYPE, PUBLIC :: MAPPING
       INTEGER :: ncv, nfc, nvx, ncg, nci, ncmxvx, ncmxfc, nvmxcv, nvmxfc&
 &     , nfs, nft, nbc, mxnbc, nrc, mxnrc, ncmxnv, ncf, mxncf, mxstencil&
 &     , nfsvxmx, nxpt, nstr, ntgc
-      INTEGER :: nnreg(0:1), periodic_bc, ifssep
+      INTEGER :: nnreg(0:1), periodic_bc, ifssep, ifssep2
       INTEGER, ALLOCATABLE :: cvfcp(:, :)
       INTEGER, ALLOCATABLE :: cvfc(:)
       INTEGER, ALLOCATABLE :: fccv(:, :)
@@ -643,6 +644,7 @@ CONTAINS
     m%cvlbl = 0
 !
     m%ifssep = 0
+    m%ifssep2 = 0
 !
     WRITE(*, *) '=================================='
     WRITE(*, *) 'Mapping initialized'
@@ -1168,6 +1170,45 @@ CONTAINS
     END IF
   END SUBROUTINE DEALLOC_MAPPING_BC
 
+!  Differentiation of alloc_mapping_rc in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: m.rcfcor:in-out
+!
+!*********************************************************************
+!
+  SUBROUTINE ALLOC_MAPPING_RC_DV0(m, md0, nbdirs)
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    TYPE(MAPPING), INTENT(INOUT) :: m
+    TYPE(MAPPING_DIFFV), INTENT(INOUT) :: md0
+    INTRINSIC ALLOCATED
+    INTEGER :: nbdirs
+!
+    IF (ALLOCATED(m%rccvp)) THEN
+      RETURN
+    ELSE
+!
+      ALLOCATE(md0%rccvp(nbdirsmax, m%nrc, 2))
+      ALLOCATE(m%rccvp(m%nrc, 2))
+      ALLOCATE(md0%rccv(nbdirsmax, m%mxnrc, 2))
+      ALLOCATE(m%rccv(m%mxnrc, 2))
+      ALLOCATE(md0%rcfcp(nbdirsmax, m%nrc, 2))
+      ALLOCATE(m%rcfcp(m%nrc, 2))
+      ALLOCATE(md0%rcfc(nbdirsmax, m%mxnrc))
+      ALLOCATE(m%rcfc(m%mxnrc))
+      ALLOCATE(md0%rcfcor(nbdirsmax, m%mxnrc))
+      ALLOCATE(m%rcfcor(m%mxnrc))
+!
+      m%rccvp = 0
+      m%rccv = 0
+      m%rcfcp = 0
+      m%rcfc = 0
+      m%rcfcor = 0._R8
+!
+      RETURN
+    END IF
+  END SUBROUTINE ALLOC_MAPPING_RC_DV0
+
 !  Differentiation of alloc_mapping_rc as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: m.rcfcor:in-out
 !
@@ -1461,7 +1502,6 @@ CONTAINS
 !
 !*********************************************************************
 !
-!
   SUBROUTINE READ_MAPPING_DV(iun, mpg, mpgd, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -1523,7 +1563,6 @@ CONTAINS
 
 !
 !*********************************************************************
-!
 !
   SUBROUTINE READ_MAPPING(iun, mpg)
   USE B2MOD_DIFFSIZES
@@ -1654,10 +1693,9 @@ CONTAINS
     INTEGER, ALLOCATABLE :: indcv(:), indfsvx(:), indxpt(:), indfc(:), &
 &   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:)
     LOGICAL :: duplicate, left_match_found, right_match_found
-    EXTERNAL IPGETI
+    EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
     EXTERNAL MAXVAL_DV
-    EXTERNAL XERRAB
     REAL(kind=r8) :: result1
     INTEGER :: nd
     INTEGER :: nbdirs
@@ -1779,22 +1817,19 @@ CONTAINS
         fccount = 0
         DO i=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
           ifc = m%vxfc(i)
-          IF (m%fcfs(ifc) .NE. 0) THEN
-            IF (fccount .EQ. 0) THEN
-              ifs = m%fcfs(ifc)
-              fccount = 1
-            ELSE IF (m%fcfs(ifc) .EQ. ifs) THEN
-              fccount = fccount + 1
-            END IF
-          END IF
+          IF (m%fcfs(ifc) .NE. 0) fccount = fccount + 1
         END DO
         IF (fccount .EQ. 4) THEN
           m%nxpt = m%nxpt + 1
           indxpt(m%nxpt) = ivx
-          DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
-            icv = m%vxcv(i)
-            IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
-          END DO
+          IF (iactive .EQ. 0) THEN
+            DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+              IF (iactive .EQ. 0) THEN
+                icv = m%vxcv(i)
+                IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
+              END IF
+            END DO
+          END IF
         END IF
       END IF
     END DO
@@ -1808,7 +1843,16 @@ CONTAINS
       END DO
       ALLOCATE(m%xpt(m%nxpt))
       m%xpt(1:m%nxpt) = indxpt(1:m%nxpt)
-      IF (iactive .NE. 0) m%ifssep = m%vxfs(m%xpt(iactive))
+      IF (iactive .NE. 0) THEN
+        DO i=1,m%vxfcp(m%xpt(iactive), 2)
+          ifs = m%fcfs(m%vxfc(m%vxfcp(m%xpt(iactive), 1)+i-1))
+          IF (ifs .NE. 0) THEN
+            IF (m%ifssep .EQ. 0) m%ifssep = ifs
+            IF (m%ifssep2 .EQ. 0 .AND. ifs .NE. m%ifssep) m%ifssep2 = &
+&               ifs
+          END IF
+        END DO
+      END IF
       indxpt = 0
       icount = 0
       ALLOCATE(md0%strvxp(nbdirsmax, m%nxpt, 2))
@@ -1821,7 +1865,7 @@ CONTAINS
       DO i=1,m%nxpt
         IF (i .GT. 1) m%strvxp(i, 1) = m%strvxp(i-1, 1) + m%strvxp(i-1, &
 &           2)
-        ifs = m%vxfs(m%xpt(i))
+        ifs = m%ifssep
         DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
           ifc = m%fsfc(j)
           DO k=1,2
@@ -1837,6 +1881,24 @@ CONTAINS
             END IF
           END DO
         END DO
+        IF (m%ifssep2 .GT. 0) THEN
+          ifs = m%ifssep2
+          DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+            ifc = m%fsfc(j)
+            DO k=1,2
+              ivx = m%fcvx(ifc, k)
+              fccount = 0
+              DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+                IF (m%fcfs(m%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+              END DO
+              IF (fccount .EQ. 1) THEN
+                icount = icount + 1
+                m%strvxp(i, 2) = m%strvxp(i, 2) + 1
+                indxpt(icount) = ivx
+              END IF
+            END DO
+          END DO
+        END IF
       END DO
       m%nstr = icount
       ALLOCATE(md0%strvx(nbdirsmax, m%nstr))
@@ -2145,9 +2207,8 @@ CONTAINS
     INTEGER, ALLOCATABLE :: indcv(:), indfsvx(:), indxpt(:), indfc(:), &
 &   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:)
     LOGICAL :: duplicate, left_match_found, right_match_found
-    EXTERNAL IPGETI
+    EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
-    EXTERNAL XERRAB
     REAL(kind=r8) :: result1
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -2254,22 +2315,19 @@ CONTAINS
         fccount = 0
         DO i=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
           ifc = m%vxfc(i)
-          IF (m%fcfs(ifc) .NE. 0) THEN
-            IF (fccount .EQ. 0) THEN
-              ifs = m%fcfs(ifc)
-              fccount = 1
-            ELSE IF (m%fcfs(ifc) .EQ. ifs) THEN
-              fccount = fccount + 1
-            END IF
-          END IF
+          IF (m%fcfs(ifc) .NE. 0) fccount = fccount + 1
         END DO
         IF (fccount .EQ. 4) THEN
           m%nxpt = m%nxpt + 1
           indxpt(m%nxpt) = ivx
-          DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
-            icv = m%vxcv(i)
-            IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
-          END DO
+          IF (iactive .EQ. 0) THEN
+            DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+              IF (iactive .EQ. 0) THEN
+                icv = m%vxcv(i)
+                IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
+              END IF
+            END DO
+          END IF
         END IF
       END IF
     END DO
@@ -2279,7 +2337,16 @@ CONTAINS
     IF (m%nxpt .GT. 0) THEN
       ALLOCATE(m%xpt(m%nxpt))
       m%xpt(1:m%nxpt) = indxpt(1:m%nxpt)
-      IF (iactive .NE. 0) m%ifssep = m%vxfs(m%xpt(iactive))
+      IF (iactive .NE. 0) THEN
+        DO i=1,m%vxfcp(m%xpt(iactive), 2)
+          ifs = m%fcfs(m%vxfc(m%vxfcp(m%xpt(iactive), 1)+i-1))
+          IF (ifs .NE. 0) THEN
+            IF (m%ifssep .EQ. 0) m%ifssep = ifs
+            IF (m%ifssep2 .EQ. 0 .AND. ifs .NE. m%ifssep) m%ifssep2 = &
+&               ifs
+          END IF
+        END DO
+      END IF
       indxpt = 0
       icount = 0
       ALLOCATE(m%strvxp(m%nxpt, 2))
@@ -2288,7 +2355,7 @@ CONTAINS
       DO i=1,m%nxpt
         IF (i .GT. 1) m%strvxp(i, 1) = m%strvxp(i-1, 1) + m%strvxp(i-1, &
 &           2)
-        ifs = m%vxfs(m%xpt(i))
+        ifs = m%ifssep
         DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
           ifc = m%fsfc(j)
           DO k=1,2
@@ -2304,6 +2371,24 @@ CONTAINS
             END IF
           END DO
         END DO
+        IF (m%ifssep2 .GT. 0) THEN
+          ifs = m%ifssep2
+          DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+            ifc = m%fsfc(j)
+            DO k=1,2
+              ivx = m%fcvx(ifc, k)
+              fccount = 0
+              DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+                IF (m%fcfs(m%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+              END DO
+              IF (fccount .EQ. 1) THEN
+                icount = icount + 1
+                m%strvxp(i, 2) = m%strvxp(i, 2) + 1
+                indxpt(icount) = ivx
+              END IF
+            END DO
+          END DO
+        END IF
       END DO
       m%nstr = icount
       ALLOCATE(m%strvx(m%nstr))
@@ -2572,9 +2657,9 @@ CONTAINS
     ELSE
       CALL XERRAB('No '//TRIM(filename))
     END IF
+    RETURN
   END SUBROUTINE GET_VERSION
 
-!
 !
 !*********************************************************************
 !
@@ -2583,8 +2668,6 @@ CONTAINS
   SUBROUTINE CALC_ADD_CONNECTIVITY(m)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
-!
 !!.. arguments
 !
 !!.. local variables
@@ -2593,10 +2676,10 @@ CONTAINS
     INTEGER :: i, ic, ivx, ifc, n, vxfc_end, vxcv_end
     INTEGER, ALLOCATABLE :: indfc(:), indcv(:), fh(:), ch(:), fch(:), &
 &   indcvfc(:)
+    INTRINSIC PACK, COUNT
 !!Read out fcVx, cvFc, cvFcP, cvVx and cvVxP
 !!Construct vxCv, vxCvP, vxFcP, fcCv !(because of ghostcell, every face has two cells)
 !Construct vxFcP
-    INTRINSIC PACK, COUNT
     EXTERNAL XERRAB
 !
 !
@@ -2648,7 +2731,7 @@ CONTAINS
     END DO
 !
     ALLOCATE(fch(m%ncmxfc))
-!hier loop over de faces
+!here loop over the faces
     fch(1:m%ncmxfc) = m%cvfc(1:m%ncmxfc)
 !
 !
@@ -2657,10 +2740,9 @@ CONTAINS
       IF (n .EQ. 2) THEN
         m%fccv(ifc, 1:2) = PACK(indcvfc, fch .EQ. ifc)
       ELSE
-        CALL XERRAB('calc_add_connectivity: Wrong # of cell per face')
+        CALL XERRAB('calc_add_connectivity: Wrong # of cells per face')
       END IF
     END DO
-!
 !
     DEALLOCATE(indfc)
     DEALLOCATE(indcv)
@@ -2668,6 +2750,8 @@ CONTAINS
     DEALLOCATE(fh)
     DEALLOCATE(ch)
     DEALLOCATE(fch)
+!
+    RETURN
   END SUBROUTINE CALC_ADD_CONNECTIVITY
 
 END MODULE B2US_MAP_DIFFV

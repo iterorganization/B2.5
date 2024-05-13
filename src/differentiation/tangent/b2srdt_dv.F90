@@ -3,16 +3,19 @@
 !
 !  Differentiation of b2srdt in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(sr.sch) *(sr.she) *(sr.shi)
-!                *(sr.shn) *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.shidt)
+!                *(sr.shn) *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.sktdt)
+!                *(sr.shidt) *(sr.shndt) *(sr.schdt) *(sr.smodt)
+!                *(sr.snadt)
+!   with respect to varying inputs: ni0 tn0 te0 na0 nn0 kt0 *(sr.sch)
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo)
+!                *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.shidt)
 !                *(sr.shndt) *(sr.schdt) *(sr.smodt) *(sr.snadt)
-!   with respect to varying inputs: ni0 tn0 te0 na0 nn0 *(sr.sch)
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.smo) *(sr.sna)
-!                *(sr.shedt) *(sr.shidt) *(sr.shndt) *(sr.schdt)
-!                *(sr.smodt) *(sr.snadt) ti0 kinrgy0 ne0 ua0
+!                ti0 kinrgy0 ne0 ua0
 !   Plus diff mem management of: sr.sch:in sr.she:in sr.shi:in
-!                sr.sne:in sr.shn:in sr.smo:in sr.sna:in sr.shedt:in
-!                sr.sktdt:in sr.sztdt:in sr.snedt:in sr.shidt:in
-!                sr.shndt:in sr.schdt:in sr.smodt:in sr.snadt:in
+!                sr.sne:in sr.shn:in sr.skt:in sr.smo:in sr.sna:in
+!                sr.shedt:in sr.sktdt:in sr.sztdt:in sr.snedt:in
+!                sr.shidt:in sr.shndt:in sr.schdt:in sr.smodt:in
+!                sr.snadt:in
 !
 !
 !
@@ -31,8 +34,9 @@
 !srv 11.09.09
 SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
 & ua0d, te0, te0d, ti0, ti0d, tn0, tn0d, ne0, ne0d, ni0, ni0d, nn0, nn0d&
-& , kinrgy0, kinrgy0d, kt0, kt0d, zt0, zt0d, na, ua, te, ti, tn, ne, ni&
-& , nn, kinrgy, kt, zt, sr, srd, lout, nbdirs)
+& , kinrgy0, kinrgy0d, kt0, kt0d, zt0, zt0d, na, nad, ua, te, ted, ti, &
+& tid, tn, tnd, ne, ned, ni, nid, nn, nnd, kinrgy, kinrgyd, kt, ktd, zt&
+& , ztd, sr, srd, lout, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
@@ -41,9 +45,6 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2srdt_sna0to1, b2srdt_smo0to3, &
-& b2srdt_she0to3, b2srdt_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srdt
@@ -72,7 +73,10 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
 & ns-1), te0d(nbdirsmax, ncv), ti0d(nbdirsmax, ncv), tn0d(nbdirsmax, ncv&
 & ), ne0d(nbdirsmax, ncv), ni0d(nbdirsmax, ncv, 0:1), nn0d(nbdirsmax, &
 & ncv), kinrgy0d(nbdirsmax, ncv, 0:ns-1), kt0d(nbdirsmax, ncv), zt0d(&
-& nbdirsmax, ncv)
+& nbdirsmax, ncv), nad(nbdirsmax, ncv, 0:ns-1), ted(nbdirsmax, ncv), tid&
+& (nbdirsmax, ncv), tnd(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(&
+& nbdirsmax, ncv, 0:1), nnd(nbdirsmax, ncv), kinrgyd(nbdirsmax, ncv, 0:&
+& ns-1), ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
@@ -98,7 +102,12 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs1
   INTEGER :: arg1
+  REAL(kind=r8) :: result1
   CHARACTER(len=12) :: arg10
   INTEGER :: nd
   REAL(kind=r8) :: temp
@@ -112,7 +121,7 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2srdt')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test sign of dtim
   CALL XERTST(0.0_R8 .LT. dtim, 'faulty argument dtim')
@@ -125,12 +134,41 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
     CALL B2XVSG(ncv, ti0, 1, 'ti0', '.gt.')
     CALL B2XVSG(ncv, tn0, 1, 'tn0', '.gt.')
     CALL B2XVSG(ncv, ne0, 1, 'ne0', '.gt.')
+    CALL B2XVSG(ncv, nn0, 1, 'nn0', '.gt.')
     arg1 = 2*ncv
     CALL B2XVSG(arg1, ni0, 1, 'ni0', '.gt.')
     arg1 = ncv*ns
     CALL B2XVSG(arg1, kinrgy0, 1, 'kinrgy0', '.ge.')
     CALL B2XVSG(ncv, kt0, 1, 'kt0', '.ge.')
     CALL B2XVSG(ncv, zt0, 1, 'zt0', '.ge.')
+    WHERE (ua0 .GE. 0.0) 
+      abs0 = ua0
+    ELSEWHERE
+      abs0 = -ua0
+    END WHERE
+    result1 = MAXVAL(abs0)
+    CALL XERTST(result1 .LT. c, 'Supra-luminal velocity !')
+!    ..test current state
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    arg1 = 2*ncv
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, kinrgy, 1, 'kinrgy', '.ge.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
+    WHERE (ua .GE. 0.0) 
+      abs1 = ua
+    ELSEWHERE
+      abs1 = -ua
+    END WHERE
+    result1 = MAXVAL(abs1)
+    CALL XERTST(result1 .LT. c, 'Supra-luminal velocity !')
   END IF
 !
 ! ..include the contributions from dtim
@@ -208,6 +246,15 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
 !
     ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
+    DO nd=1,nbdirs
+      srd%sktdt(nd, icv, 0) = t0*(kt0(icv)*ni0d(nd, icv, 1)+ni0(icv, 1)*&
+&       kt0d(nd, icv))
+      srd%sktdt(nd, icv, 1) = 0.D0
+      srd%sktdt(nd, icv, 2) = 0.D0
+      srd%sktdt(nd, icv, 3) = 0.D0
+      srd%sktdt(nd, icv, :) = srd%skt(nd, icv, :) + srd%sktdt(nd, icv, :&
+&       )
+    END DO
     sr%sktdt(icv, 0) = t0*ni0(icv, 1)*kt0(icv)
     sr%sktdt(icv, 1) = 0.0_R8
     sr%sktdt(icv, 2) = 0.0_R8
@@ -340,13 +387,6 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
     sr%sne(icv, :) = sr%sne(icv, :) + sr%snedt(icv, :)
   END DO
 !
-!djm Store the total change in linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2srdt_sna0to1 = sr%snadt
-    b2srdt_smo0to3 = sr%smodt
-    b2srdt_she0to3 = sr%shedt
-    b2srdt_shi0to3 = sr%shidt
-  END IF
 !
   IF ((switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) .AND. &
 &     lout) THEN
@@ -446,9 +486,6 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!djm Jan2017
-  USE B2MOD_BALANCE_DIFFV, ONLY : b2srdt_sna0to1, b2srdt_smo0to3, &
-& b2srdt_she0to3, b2srdt_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srdt
@@ -496,7 +533,12 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs1
   INTEGER :: arg1
+  REAL(kind=r8) :: result1
   CHARACTER(len=12) :: arg10
 !   ..initialisation
 !
@@ -507,7 +549,7 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !   ..subprogram start-up calls
   CALL SUBINI('b2srdt')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test sign of dtim
   CALL XERTST(0.0_R8 .LT. dtim, 'faulty argument dtim')
@@ -520,12 +562,41 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     CALL B2XVSG(ncv, ti0, 1, 'ti0', '.gt.')
     CALL B2XVSG(ncv, tn0, 1, 'tn0', '.gt.')
     CALL B2XVSG(ncv, ne0, 1, 'ne0', '.gt.')
+    CALL B2XVSG(ncv, nn0, 1, 'nn0', '.gt.')
     arg1 = 2*ncv
     CALL B2XVSG(arg1, ni0, 1, 'ni0', '.gt.')
     arg1 = ncv*ns
     CALL B2XVSG(arg1, kinrgy0, 1, 'kinrgy0', '.ge.')
     CALL B2XVSG(ncv, kt0, 1, 'kt0', '.ge.')
     CALL B2XVSG(ncv, zt0, 1, 'zt0', '.ge.')
+    WHERE (ua0 .GE. 0.0) 
+      abs0 = ua0
+    ELSEWHERE
+      abs0 = -ua0
+    END WHERE
+    result1 = MAXVAL(abs0)
+    CALL XERTST(result1 .LT. c, 'Supra-luminal velocity !')
+!    ..test current state
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    arg1 = 2*ncv
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, kinrgy, 1, 'kinrgy', '.ge.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
+    WHERE (ua .GE. 0.0) 
+      abs1 = ua
+    ELSEWHERE
+      abs1 = -ua
+    END WHERE
+    result1 = MAXVAL(abs1)
+    CALL XERTST(result1 .LT. c, 'Supra-luminal velocity !')
   END IF
 !
 ! ..include the contributions from dtim
@@ -665,13 +736,6 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%sne(icv, :) = sr%sne(icv, :) + sr%snedt(icv, :)
   END DO
 !
-!djm Store the total change in linearised sources for balance
-  IF (balance_netcdf .NE. 0) THEN
-    b2srdt_sna0to1 = sr%snadt
-    b2srdt_smo0to3 = sr%smodt
-    b2srdt_she0to3 = sr%shedt
-    b2srdt_shi0to3 = sr%shidt
-  END IF
 !
   IF ((switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) .AND. &
 &     lout) THEN

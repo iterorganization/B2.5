@@ -21,8 +21,8 @@
 !.specification
 !
 !srv 20.09.06 {
-SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, csig_an, &
-& csig_and, po, pod, fchanml, fchanmld, nbdirs)
+SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
+& csig_an, csig_and, po, pod, fchanml, fchanmld, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -43,6 +43,7 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, csig_an, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: po(ncv), csig_an(nfc, 0:1)
   REAL(kind=r8) :: pod(nbdirsmax, ncv), csig_and(nbdirsmax, nfc, 0:1)
 !   ..output arguments (unspecified on entry)
@@ -78,14 +79,15 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, csig_an, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2tanml')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, ns
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !srv 27.02.13
 !
-  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0e0_R8) &
+  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0_R8) &
 & THEN
 !srv 27.02.13
-    fchanml = 0.0e0_R8
+    fchanml = 0.0_R8
     DO nd=1,nbdirsmax
       fchanmld(nd, :, :) = 0.D0
     END DO
@@ -99,8 +101,8 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, csig_an, &
     DO nd=1,nbdirsmax
       povd(nd, :) = 0.D0
     END DO
-    CALL DIFF_DV(ncv, nfc, mpg%nvx, 0, geo, geod, mpg, po, pod, pov, &
-&          povd, dpo, dpod, nbdirs)
+    CALL DIFF_DV(ncv, nfc, mpg%nvx, 0, geo, geod, mpg, mpgd, po, pod, &
+&          pov, povd, dpo, dpod, nbdirs)
 !
 !   ..compute the current
     DO nd=1,nbdirs
@@ -182,14 +184,15 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an, po, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2tanml')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, ns
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !srv 27.02.13
 !
-  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0e0_R8) &
+  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0_R8) &
 & THEN
 !srv 27.02.13
-    fchanml = 0.0e0_R8
+    fchanml = 0.0_R8
   ELSE
 !srv 27.02.13
 !

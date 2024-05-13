@@ -121,7 +121,7 @@ SUBROUTINE B2SPEL_DV(ncv, ns, ev, te, ted, ne, ned, rt, rtd, nbdirs)
 !   ..subprogram start-up calls
   CALL SUBINI('b2spel')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
@@ -616,7 +616,7 @@ SUBROUTINE B2SPEL_NODIFF(ncv, ns, ev, te, ne, rt)
 !   ..subprogram start-up calls
   CALL SUBINI('b2spel')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')

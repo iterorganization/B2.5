@@ -23,15 +23,15 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
-& , ni, nid, nn, nnd, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, floe&
-& , floed, cone, coned, floi, floid, coni, conid, flon, flond, conn, &
-& connd, flokt, floktd, conkt, conktd, flozt, floztd, conzt, conztd, she&
-& , shed, shi, shid, shn, shnd, skt, sktd, szt, ceqp, ceqpd, resht, &
-& reshtd, reshe, reshed, reshi, reshid, reshn, reshnd, reskt, resktd, &
-& reszt, resztd, cortt, corttd, corte, corted, corti, cortid, cortn, &
-& cortnd, corkt, corktd, corzt, corztd, flo0, flo0d, con0, con0d, aa, &
-& aad, nbdirs)
+SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
+& ne, ned, ni, nid, nn, nnd, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd&
+& , floe, floed, cone, coned, floi, floid, coni, conid, flon, flond, &
+& conn, connd, flokt, floktd, conkt, conktd, flozt, floztd, conzt, &
+& conztd, she, shed, shi, shid, shn, shnd, skt, sktd, szt, ceqp, ceqpd, &
+& resht, reshtd, reshe, reshed, reshi, reshid, reshn, reshnd, reskt, &
+& resktd, reszt, resztd, cortt, corttd, corte, corted, corti, cortid, &
+& cortn, cortnd, corkt, corktd, corzt, corztd, flo0, flo0d, con0, con0d&
+& , aa, aad, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -55,6 +55,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: ne(ncv), ni(ncv, 0:1), nn(ncv), te(ncv), ti(ncv), tn(&
 & ncv), kt(ncv), zt(ncv), floe(nfc, 0:1), floi(nfc, 0:1), flon(nfc, 0:1)&
 & , flokt(nfc, 0:1), flozt(nfc, 0:1), cone(nfc, 0:1, 0:2), coni(nfc, 0:1&
@@ -85,6 +86,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
   REAL(kind=r8) :: flo0(nfc, 0:1), con0(nfc, 0:1, 0:2), aa(mpg%ncmxnv)
   REAL(kind=r8) :: flo0d(nbdirsmax, nfc, 0:1), con0d(nbdirsmax, nfc, 0:1&
 & , 0:2), aad(nbdirsmax, mpg%ncmxnv)
+  REAL(kind=r8) :: dumm(1)
 !
 !-----------------------------------------------------------------------
 !.documentation
@@ -132,6 +134,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
   EXTERNAL B2UXUS_DV
   INTRINSIC ANY
   INTRINSIC MIN
+  INTRINSIC REAL
   REAL(kind=r8) :: abs0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
   REAL(kind=r8) :: abs1
@@ -154,7 +157,6 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
   REAL(kind=r8) :: temp
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   REAL(kind=r8) :: temp0
-  REAL(kind=r8) :: temp1
   INTEGER :: nbdirs
   EXTERNAL DIM_DV
 !   ..initialization
@@ -169,7 +171,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
 !   ..subprogram start-up calls
   CALL SUBINI('b2usht')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
@@ -184,15 +186,18 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
     CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
 !    ..test sign of she, shi, ceqp
-    CALL B2XVSG(ncv, she(1, 0), 1, 'she0', '.ge.')
+    IF (switch%b2mndt_style .NE. 2) CALL B2XVSG(ncv, she(1, 0), 1, &
+&                                         'she0', '.ge.')
     CALL B2XVSG(ncv, she(1, 1), 1, 'she1', '.le.')
     CALL B2XVSG(ncv, she(1, 2), 1, 'she2', '.ge.')
     CALL B2XVSG(ncv, she(1, 3), 1, 'she3', '.le.')
-    CALL B2XVSG(ncv, shi(1, 0), 1, 'shi0', '.ge.')
+    IF (switch%b2mndt_style .NE. 2) CALL B2XVSG(ncv, shi(1, 0), 1, &
+&                                         'shi0', '.ge.')
     CALL B2XVSG(ncv, shi(1, 1), 1, 'shi1', '.le.')
     CALL B2XVSG(ncv, shi(1, 2), 1, 'shi2', '.ge.')
     CALL B2XVSG(ncv, shi(1, 3), 1, 'shi3', '.le.')
-    CALL B2XVSG(ncv, shn(1, 0), 1, 'shn0', '.ge.')
+    IF (switch%b2mndt_style .NE. 2) CALL B2XVSG(ncv, shn(1, 0), 1, &
+&                                         'shn0', '.ge.')
     CALL B2XVSG(ncv, shn(1, 1), 1, 'shn1', '.le.')
     CALL B2XVSG(ncv, shn(1, 2), 1, 'shn2', '.ge.')
     CALL B2XVSG(ncv, shn(1, 3), 1, 'shn3', '.le.')
@@ -254,14 +259,14 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     END IF
 !
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
     DO nd=1,nbdirsmax
       aad(nd, :) = 0.D0
     END DO
 !   ..compute the nine-point matrix
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
-      t0 = 1e60_R8
+      t0 = 1.0e60_R8
       IF (solveee(ireg)) THEN
         DO nd=1,nbdirs
           aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) - shed&
@@ -322,24 +327,26 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
       END IF
       IF ((solveee(ireg) .OR. solveei(ireg)) .OR. (solveen(ireg) .AND. &
 &         switch%tn_style .EQ. 2)) THEN
-        IF (resht(icv) .GE. 0.) THEN
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (resht(icv) .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs0d(nd) = reshtd(nd, icv)
+            END DO
+            abs0 = resht(icv)
+          ELSE
+            DO nd=1,nbdirs
+              abs0d(nd) = -reshtd(nd, icv)
+            END DO
+            abs0 = -resht(icv)
+          END IF
+          temp = abs0/(switch%b2npht_rxg*t0)
           DO nd=1,nbdirs
-            abs0d(nd) = reshtd(nd, icv)
+            aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + (&
+&             abs0d(nd)-temp*switch%b2npht_rxg*t0d(nd))/(switch%&
+&             b2npht_rxg*t0)
           END DO
-          abs0 = resht(icv)
-        ELSE
-          DO nd=1,nbdirs
-            abs0d(nd) = -reshtd(nd, icv)
-          END DO
-          abs0 = -resht(icv)
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + temp
         END IF
-        temp = abs0/(switch%b2npht_rxg*t0)
-        DO nd=1,nbdirs
-          aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + (&
-&           abs0d(nd)-temp*switch%b2npht_rxg*t0d(nd))/(switch%b2npht_rxg&
-&           *t0)
-        END DO
-        aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + temp
       END IF
     END DO
 !
@@ -552,7 +559,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     flo0 = floe
     con0(:, :, 0) = cone(:, :, 0)
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
     DO nd=1,nbdirsmax
       aad(nd, :) = 0.D0
     END DO
@@ -560,18 +567,6 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solveee(ireg)) THEN
-        IF (reshe(icv) .GE. 0.) THEN
-          DO nd=1,nbdirs
-            abs1d(nd) = reshed(nd, icv)
-          END DO
-          abs1 = reshe(icv)
-        ELSE
-          DO nd=1,nbdirs
-            abs1d(nd) = -reshed(nd, icv)
-          END DO
-          abs1 = -reshe(icv)
-        END IF
-!srv 02.01.07
 !srv 02.01.07
         temp = (te(icv)-ti(icv))/te(icv)
         DO nd=1,nbdirs
@@ -595,18 +590,36 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
         result2 = temp
         temp = result1*ceqp(icv)/(te(icv)*result2)
         temp0 = ne(icv)*ni(icv, 0)
-        temp1 = abs1/(switch%b2npht_rxg*te(icv))
         DO nd=1,nbdirs
           aad(nd, mpg%cvnvp(icv, 1)) = temp*(ni(icv, 0)*ned(nd, icv)+ne(&
 &           icv)*nid(nd, icv, 0)) + temp0*(ceqp(icv)*result1d(nd)+&
 &           result1*ceqpd(nd, icv)-temp*(result2*ted(nd, icv)+te(icv)*&
 &           result2d(nd)))/(te(icv)*result2) - ne(icv)*shed(nd, icv, 3) &
-&           - she(icv, 3)*ned(nd, icv) - shed(nd, icv, 1) + (abs1d(nd)-&
-&           temp1*switch%b2npht_rxg*ted(nd, icv))/(switch%b2npht_rxg*te(&
-&           icv))
+&           - she(icv, 3)*ned(nd, icv) - shed(nd, icv, 1)
         END DO
         aa(mpg%cvnvp(icv, 1)) = temp0*temp - she(icv, 3)*ne(icv) - she(&
-&         icv, 1) + temp1
+&         icv, 1)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reshe(icv) .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs1d(nd) = reshed(nd, icv)
+            END DO
+            abs1 = reshe(icv)
+          ELSE
+            DO nd=1,nbdirs
+              abs1d(nd) = -reshed(nd, icv)
+            END DO
+            abs1 = -reshe(icv)
+          END IF
+!srv 02.01.07
+          temp0 = abs1/(switch%b2npht_rxg*te(icv))
+          DO nd=1,nbdirs
+            aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + (&
+&             abs1d(nd)-temp0*switch%b2npht_rxg*ted(nd, icv))/(switch%&
+&             b2npht_rxg*te(icv))
+          END DO
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + temp0
+        END IF
       END IF
     END DO
 !
@@ -618,7 +631,8 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
       CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne_te')
       CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni_te')
       CALL MY_OUT_US(70, ncv, 0, reshe, 'b2usht_reshe_te')
-      CALL MY_OUT_US(70, 1, 0, mpg%ncmxnv, 'b2usht_nCmxNv')
+      dumm = REAL(mpg%ncmxnv, r8)
+      CALL MY_OUT_US(70, 1, 0, dumm, 'b2usht_nCmxNv')
 !
       CALL MY_OUT_US(70, nfc, 1, flo0(1, 0), 'b2usht_floex')
       CALL MY_OUT_US(70, nfc, 1, flo0(1, 1), 'b2usht_floey')
@@ -813,7 +827,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     flo0 = floi
     con0(:, :, 0) = coni(:, :, 0)
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
     DO nd=1,nbdirsmax
       aad(nd, :) = 0.D0
     END DO
@@ -821,39 +835,46 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solveei(ireg)) THEN
-        IF (reshi(icv) .GE. 0.) THEN
-          DO nd=1,nbdirs
-            abs2d(nd) = reshid(nd, icv)
-          END DO
-          abs2 = reshi(icv)
-        ELSE
-          DO nd=1,nbdirs
-            abs2d(nd) = -reshid(nd, icv)
-          END DO
-          abs2 = -reshi(icv)
-        END IF
-        temp1 = SQRT(te(icv))
+        temp0 = SQRT(te(icv))
         DO nd=1,nbdirs
           IF (te(icv) .EQ. 0.D0) THEN
             result1d(nd) = 0.D0
           ELSE
-            result1d(nd) = ted(nd, icv)/(2.0*temp1)
+            result1d(nd) = ted(nd, icv)/(2.0*temp0)
           END IF
         END DO
-        result1 = temp1
-        temp1 = ni(icv, 0)/(te(icv)*result1)
-        temp0 = ceqp(icv)*ne(icv)
-        temp = abs2/(switch%b2npht_rxg*ti(icv))
+        result1 = temp0
+        temp0 = ni(icv, 0)/(te(icv)*result1)
+        temp = ceqp(icv)*ne(icv)
         DO nd=1,nbdirs
-          aad(nd, mpg%cvnvp(icv, 1)) = temp1*(ne(icv)*ceqpd(nd, icv)+&
-&           ceqp(icv)*ned(nd, icv)) + temp0*(nid(nd, icv, 0)-temp1*(&
+          aad(nd, mpg%cvnvp(icv, 1)) = temp0*(ne(icv)*ceqpd(nd, icv)+&
+&           ceqp(icv)*ned(nd, icv)) + temp*(nid(nd, icv, 0)-temp0*(&
 &           result1*ted(nd, icv)+te(icv)*result1d(nd)))/(te(icv)*result1&
 &           ) - ni(icv, 0)*shid(nd, icv, 3) - shi(icv, 3)*nid(nd, icv, 0&
-&           ) - shid(nd, icv, 1) + (abs2d(nd)-temp*switch%b2npht_rxg*tid&
-&           (nd, icv))/(switch%b2npht_rxg*ti(icv))
+&           ) - shid(nd, icv, 1)
         END DO
-        aa(mpg%cvnvp(icv, 1)) = temp0*temp1 - shi(icv, 3)*ni(icv, 0) - &
-&         shi(icv, 1) + temp
+        aa(mpg%cvnvp(icv, 1)) = temp*temp0 - shi(icv, 3)*ni(icv, 0) - &
+&         shi(icv, 1)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reshi(icv) .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs2d(nd) = reshid(nd, icv)
+            END DO
+            abs2 = reshi(icv)
+          ELSE
+            DO nd=1,nbdirs
+              abs2d(nd) = -reshid(nd, icv)
+            END DO
+            abs2 = -reshi(icv)
+          END IF
+          temp0 = abs2/(switch%b2npht_rxg*ti(icv))
+          DO nd=1,nbdirs
+            aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + (&
+&             abs2d(nd)-temp0*switch%b2npht_rxg*tid(nd, icv))/(switch%&
+&             b2npht_rxg*ti(icv))
+          END DO
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + temp0
+        END IF
       END IF
     END DO
 !
@@ -1062,7 +1083,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
       flo0 = flon
       con0(:, :, 0) = conn
 !   ..initialize matrix to zero
-      aa = 0.0e0_R8
+      aa = 0.0_R8
       DO nd=1,nbdirsmax
         aad(nd, :) = 0.D0
       END DO
@@ -1070,26 +1091,31 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
       DO icv=1,ncv
         ireg = mpg%cvreg(icv)
         IF (solveen(ireg)) THEN
-          IF (reshn(icv) .GE. 0.) THEN
-            DO nd=1,nbdirs
-              abs3d(nd) = reshnd(nd, icv)
-            END DO
-            abs3 = reshn(icv)
-          ELSE
-            DO nd=1,nbdirs
-              abs3d(nd) = -reshnd(nd, icv)
-            END DO
-            abs3 = -reshn(icv)
-          END IF
-          temp1 = abs3/(switch%b2npht_rxg*tn(icv))
           DO nd=1,nbdirs
-            aad(nd, mpg%cvnvp(icv, 1)) = (abs3d(nd)-temp1*switch%&
-&             b2npht_rxg*tnd(nd, icv))/(switch%b2npht_rxg*tn(icv)) - nn(&
-&             icv)*shnd(nd, icv, 3) - shn(icv, 3)*nnd(nd, icv) - shnd(nd&
-&             , icv, 1)
+            aad(nd, mpg%cvnvp(icv, 1)) = -shnd(nd, icv, 1) - nn(icv)*&
+&             shnd(nd, icv, 3) - shn(icv, 3)*nnd(nd, icv)
           END DO
-          aa(mpg%cvnvp(icv, 1)) = temp1 - shn(icv, 3)*nn(icv) - shn(icv&
-&           , 1)
+          aa(mpg%cvnvp(icv, 1)) = -shn(icv, 1) - shn(icv, 3)*nn(icv)
+          IF (switch%b2mndt_style .LT. 2) THEN
+            IF (reshn(icv) .GE. 0.) THEN
+              DO nd=1,nbdirs
+                abs3d(nd) = reshnd(nd, icv)
+              END DO
+              abs3 = reshn(icv)
+            ELSE
+              DO nd=1,nbdirs
+                abs3d(nd) = -reshnd(nd, icv)
+              END DO
+              abs3 = -reshn(icv)
+            END IF
+            temp0 = abs3/(switch%b2npht_rxg*tn(icv))
+            DO nd=1,nbdirs
+              aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + &
+&               (abs3d(nd)-temp0*switch%b2npht_rxg*tnd(nd, icv))/(switch&
+&               %b2npht_rxg*tn(icv))
+            END DO
+            aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + temp0
+          END IF
         END IF
       END DO
       DO ifc=1,nfc
@@ -1277,7 +1303,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     flo0 = flokt
     con0(:, :, 0) = conkt
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
     DO nd=1,nbdirsmax
       aad(nd, :) = 0.D0
     END DO
@@ -1285,25 +1311,30 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solvekt(ireg)) THEN
-        IF (reskt(icv) .GE. 0.) THEN
-          DO nd=1,nbdirs
-            abs4d(nd) = resktd(nd, icv)
-          END DO
-          abs4 = reskt(icv)
-        ELSE
-          DO nd=1,nbdirs
-            abs4d(nd) = -resktd(nd, icv)
-          END DO
-          abs4 = -reskt(icv)
-        END IF
-        temp1 = switch%b2npht_rxg*(1.0e-5_R8*ev+kt(icv))
         DO nd=1,nbdirs
-          aad(nd, mpg%cvnvp(icv, 1)) = (abs4d(nd)-abs4*switch%b2npht_rxg&
-&           *ktd(nd, icv)/temp1)/temp1 - ni(icv, 1)*sktd(nd, icv, 3) - &
-&           skt(icv, 3)*nid(nd, icv, 1) - sktd(nd, icv, 1)
+          aad(nd, mpg%cvnvp(icv, 1)) = -sktd(nd, icv, 1) - ni(icv, 1)*&
+&           sktd(nd, icv, 3) - skt(icv, 3)*nid(nd, icv, 1)
         END DO
-        aa(mpg%cvnvp(icv, 1)) = abs4/temp1 - skt(icv, 3)*ni(icv, 1) - &
-&         skt(icv, 1)
+        aa(mpg%cvnvp(icv, 1)) = -skt(icv, 1) - skt(icv, 3)*ni(icv, 1)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reskt(icv) .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs4d(nd) = resktd(nd, icv)
+            END DO
+            abs4 = reskt(icv)
+          ELSE
+            DO nd=1,nbdirs
+              abs4d(nd) = -resktd(nd, icv)
+            END DO
+            abs4 = -reskt(icv)
+          END IF
+          temp0 = switch%b2npht_rxg*(1.0e-5_R8*ev+kt(icv))
+          DO nd=1,nbdirs
+            aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + (&
+&             abs4d(nd)-abs4*switch%b2npht_rxg*ktd(nd, icv)/temp0)/temp0
+          END DO
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs4/temp0
+        END IF
       END IF
     END DO
     DO ifc=1,nfc
@@ -1492,7 +1523,7 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     flo0 = flozt
     con0(:, :, 0) = conzt
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
     DO nd=1,nbdirsmax
       aad(nd, :) = 0.D0
     END DO
@@ -1500,24 +1531,29 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne, ned&
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solvezt(ireg)) THEN
-        IF (reszt(icv) .GE. 0.) THEN
-          DO nd=1,nbdirs
-            abs5d(nd) = resztd(nd, icv)
-          END DO
-          abs5 = reszt(icv)
-        ELSE
-          DO nd=1,nbdirs
-            abs5d(nd) = -resztd(nd, icv)
-          END DO
-          abs5 = -reszt(icv)
-        END IF
-        temp1 = switch%b2npht_rxg*(1.0e-5_R8*ev+zt(icv))
         DO nd=1,nbdirs
-          aad(nd, mpg%cvnvp(icv, 1)) = (abs5d(nd)-abs5*switch%b2npht_rxg&
-&           *ztd(nd, icv)/temp1)/temp1 - szt(icv, 3)*nid(nd, icv, 1)
+          aad(nd, mpg%cvnvp(icv, 1)) = -(szt(icv, 3)*nid(nd, icv, 1))
         END DO
-        aa(mpg%cvnvp(icv, 1)) = abs5/temp1 - szt(icv, 1) - szt(icv, 3)*&
-&         ni(icv, 1)
+        aa(mpg%cvnvp(icv, 1)) = -szt(icv, 1) - szt(icv, 3)*ni(icv, 1)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reszt(icv) .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs5d(nd) = resztd(nd, icv)
+            END DO
+            abs5 = reszt(icv)
+          ELSE
+            DO nd=1,nbdirs
+              abs5d(nd) = -resztd(nd, icv)
+            END DO
+            abs5 = -reszt(icv)
+          END IF
+          temp0 = switch%b2npht_rxg*(1.0e-5_R8*ev+zt(icv))
+          DO nd=1,nbdirs
+            aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + (&
+&             abs5d(nd)-abs5*switch%b2npht_rxg*ztd(nd, icv)/temp0)/temp0
+          END DO
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs5/temp0
+        END IF
       END IF
     END DO
     DO ifc=1,nfc
@@ -1754,6 +1790,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 & (ncv), corzt(ncv)
 !   ..workspace arguments (unspecified on entry and on exit)
   REAL(kind=r8) :: flo0(nfc, 0:1), con0(nfc, 0:1, 0:2), aa(mpg%ncmxnv)
+  REAL(kind=r8) :: dumm(1)
 !
 !-----------------------------------------------------------------------
 !.documentation
@@ -1799,6 +1836,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
   EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, B2UXUS
   INTRINSIC ANY
   INTRINSIC MIN
+  INTRINSIC REAL
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8) :: abs2
@@ -1820,7 +1858,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 !   ..subprogram start-up calls
   CALL SUBINI('b2usht')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
@@ -1835,15 +1873,18 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
     CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
 !    ..test sign of she, shi, ceqp
-    CALL B2XVSG(ncv, she(1, 0), 1, 'she0', '.ge.')
+    IF (switch%b2mndt_style .NE. 2) CALL B2XVSG(ncv, she(1, 0), 1, &
+&                                         'she0', '.ge.')
     CALL B2XVSG(ncv, she(1, 1), 1, 'she1', '.le.')
     CALL B2XVSG(ncv, she(1, 2), 1, 'she2', '.ge.')
     CALL B2XVSG(ncv, she(1, 3), 1, 'she3', '.le.')
-    CALL B2XVSG(ncv, shi(1, 0), 1, 'shi0', '.ge.')
+    IF (switch%b2mndt_style .NE. 2) CALL B2XVSG(ncv, shi(1, 0), 1, &
+&                                         'shi0', '.ge.')
     CALL B2XVSG(ncv, shi(1, 1), 1, 'shi1', '.le.')
     CALL B2XVSG(ncv, shi(1, 2), 1, 'shi2', '.ge.')
     CALL B2XVSG(ncv, shi(1, 3), 1, 'shi3', '.le.')
-    CALL B2XVSG(ncv, shn(1, 0), 1, 'shn0', '.ge.')
+    IF (switch%b2mndt_style .NE. 2) CALL B2XVSG(ncv, shn(1, 0), 1, &
+&                                         'shn0', '.ge.')
     CALL B2XVSG(ncv, shn(1, 1), 1, 'shn1', '.le.')
     CALL B2XVSG(ncv, shn(1, 2), 1, 'shn2', '.ge.')
     CALL B2XVSG(ncv, shn(1, 3), 1, 'shn3', '.le.')
@@ -1887,11 +1928,11 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     END IF
 !
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
 !   ..compute the nine-point matrix
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
-      t0 = 1e60_R8
+      t0 = 1.0e60_R8
       IF (solveee(ireg)) THEN
         aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) - she(icv, 1) - &
 &         she(icv, 3)*ne(icv)
@@ -1921,13 +1962,15 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
       END IF
       IF ((solveee(ireg) .OR. solveei(ireg)) .OR. (solveen(ireg) .AND. &
 &         switch%tn_style .EQ. 2)) THEN
-        IF (resht(icv) .GE. 0.) THEN
-          abs0 = resht(icv)
-        ELSE
-          abs0 = -resht(icv)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (resht(icv) .GE. 0.) THEN
+            abs0 = resht(icv)
+          ELSE
+            abs0 = -resht(icv)
+          END IF
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs0/(switch%&
+&           b2npht_rxg*t0)
         END IF
-        aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs0/(switch%&
-&         b2npht_rxg*t0)
       END IF
     END DO
 !
@@ -2070,24 +2113,27 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     flo0 = floe
     con0(:, :, 0) = cone(:, :, 0)
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
 !   ..compute the nine-point matrix
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solveee(ireg)) THEN
-        IF (reshe(icv) .GE. 0.) THEN
-          abs1 = reshe(icv)
-        ELSE
-          abs1 = -reshe(icv)
-        END IF
-!srv 02.01.07
 !srv 02.01.07
         arg1 = 1.5_R8*(te(icv)-ti(icv))/te(icv)
         result1 = DIM(1.0_R8, arg1)
         result2 = SQRT(te(icv))
         aa(mpg%cvnvp(icv, 1)) = -she(icv, 1) - she(icv, 3)*ne(icv) + &
-&         result1*ceqp(icv)*ne(icv)*ni(icv, 0)/(te(icv)*result2) + abs1/&
-&         (switch%b2npht_rxg*te(icv))
+&         result1*ceqp(icv)*ne(icv)*ni(icv, 0)/(te(icv)*result2)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reshe(icv) .GE. 0.) THEN
+            abs1 = reshe(icv)
+          ELSE
+            abs1 = -reshe(icv)
+          END IF
+!srv 02.01.07
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs1/(switch%&
+&           b2npht_rxg*te(icv))
+        END IF
       END IF
     END DO
 !
@@ -2099,7 +2145,8 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
       CALL MY_OUT_US(70, ncv, 0, ne, 'b2usht_ne_te')
       CALL MY_OUT_US(70, ncv, 0, ni, 'b2usht_ni_te')
       CALL MY_OUT_US(70, ncv, 0, reshe, 'b2usht_reshe_te')
-      CALL MY_OUT_US(70, 1, 0, mpg%ncmxnv, 'b2usht_nCmxNv')
+      dumm = REAL(mpg%ncmxnv, r8)
+      CALL MY_OUT_US(70, 1, 0, dumm, 'b2usht_nCmxNv')
 !
       CALL MY_OUT_US(70, nfc, 1, flo0(1, 0), 'b2usht_floex')
       CALL MY_OUT_US(70, nfc, 1, flo0(1, 1), 'b2usht_floey')
@@ -2227,20 +2274,23 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     flo0 = floi
     con0(:, :, 0) = coni(:, :, 0)
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
 !   ..compute the nine-point matrix
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solveei(ireg)) THEN
-        IF (reshi(icv) .GE. 0.) THEN
-          abs2 = reshi(icv)
-        ELSE
-          abs2 = -reshi(icv)
-        END IF
         result1 = SQRT(te(icv))
         aa(mpg%cvnvp(icv, 1)) = -shi(icv, 1) - shi(icv, 3)*ni(icv, 0) + &
-&         ceqp(icv)*ne(icv)*ni(icv, 0)/(te(icv)*result1) + abs2/(switch%&
-&         b2npht_rxg*ti(icv))
+&         ceqp(icv)*ne(icv)*ni(icv, 0)/(te(icv)*result1)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reshi(icv) .GE. 0.) THEN
+            abs2 = reshi(icv)
+          ELSE
+            abs2 = -reshi(icv)
+          END IF
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs2/(switch%&
+&           b2npht_rxg*ti(icv))
+        END IF
       END IF
     END DO
 !
@@ -2382,18 +2432,21 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
       flo0 = flon
       con0(:, :, 0) = conn
 !   ..initialize matrix to zero
-      aa = 0.0e0_R8
+      aa = 0.0_R8
 !   ..compute the nine-point matrix
       DO icv=1,ncv
         ireg = mpg%cvreg(icv)
         IF (solveen(ireg)) THEN
-          IF (reshn(icv) .GE. 0.) THEN
-            abs3 = reshn(icv)
-          ELSE
-            abs3 = -reshn(icv)
+          aa(mpg%cvnvp(icv, 1)) = -shn(icv, 1) - shn(icv, 3)*nn(icv)
+          IF (switch%b2mndt_style .LT. 2) THEN
+            IF (reshn(icv) .GE. 0.) THEN
+              abs3 = reshn(icv)
+            ELSE
+              abs3 = -reshn(icv)
+            END IF
+            aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs3/(switch&
+&             %b2npht_rxg*tn(icv))
           END IF
-          aa(mpg%cvnvp(icv, 1)) = -shn(icv, 1) - shn(icv, 3)*nn(icv) + &
-&           abs3/(switch%b2npht_rxg*tn(icv))
         END IF
       END DO
       DO ifc=1,nfc
@@ -2511,18 +2564,21 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     flo0 = flokt
     con0(:, :, 0) = conkt
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
 !   ..compute the nine-point matrix
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solvekt(ireg)) THEN
-        IF (reskt(icv) .GE. 0.) THEN
-          abs4 = reskt(icv)
-        ELSE
-          abs4 = -reskt(icv)
+        aa(mpg%cvnvp(icv, 1)) = -skt(icv, 1) - skt(icv, 3)*ni(icv, 1)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reskt(icv) .GE. 0.) THEN
+            abs4 = reskt(icv)
+          ELSE
+            abs4 = -reskt(icv)
+          END IF
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs4/(switch%&
+&           b2npht_rxg*(kt(icv)+1.0e-5_R8*ev))
         END IF
-        aa(mpg%cvnvp(icv, 1)) = -skt(icv, 1) - skt(icv, 3)*ni(icv, 1) + &
-&         abs4/(switch%b2npht_rxg*(kt(icv)+1.0e-5_R8*ev))
       END IF
     END DO
     DO ifc=1,nfc
@@ -2637,18 +2693,21 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     flo0 = flozt
     con0(:, :, 0) = conzt
 !   ..initialize matrix to zero
-    aa = 0.0e0_R8
+    aa = 0.0_R8
 !   ..compute the nine-point matrix
     DO icv=1,ncv
       ireg = mpg%cvreg(icv)
       IF (solvezt(ireg)) THEN
-        IF (reszt(icv) .GE. 0.) THEN
-          abs5 = reszt(icv)
-        ELSE
-          abs5 = -reszt(icv)
+        aa(mpg%cvnvp(icv, 1)) = -szt(icv, 1) - szt(icv, 3)*ni(icv, 1)
+        IF (switch%b2mndt_style .LT. 2) THEN
+          IF (reszt(icv) .GE. 0.) THEN
+            abs5 = reszt(icv)
+          ELSE
+            abs5 = -reszt(icv)
+          END IF
+          aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs5/(switch%&
+&           b2npht_rxg*(zt(icv)+1.0e-5_R8*ev))
         END IF
-        aa(mpg%cvnvp(icv, 1)) = -szt(icv, 1) - szt(icv, 3)*ni(icv, 1) + &
-&         abs5/(switch%b2npht_rxg*(zt(icv)+1.0e-5_R8*ev))
       END IF
     END DO
     DO ifc=1,nfc

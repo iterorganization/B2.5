@@ -141,8 +141,8 @@ SUBROUTINE B2T21T_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, &
   END DO
   nz(nspec) = nz(nspec) + 1
 !
-  z(-1:nx, -1:ny, 1) = 1.e0_R8
-  z2(-1:nx, -1:ny, 1) = 1.e0_R8
+  z(-1:nx, -1:ny, 1) = 1.0_R8
+  z2(-1:nx, -1:ny, 1) = 1.0_R8
 !
   ncharged = 1
   DO i=0,ns-1
@@ -195,7 +195,7 @@ SUBROUTINE B2T21T_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, &
         n(1) = (ne(leftix(ix, iy), leftiy(ix, iy))*hx(ix, iy)+ne(ix, iy)&
 &         *hx(leftix(ix, iy), leftiy(ix, iy)))/(hx(leftix(ix, iy), &
 &         leftiy(ix, iy))+hx(ix, iy))
-        u(1) = 0.e0_R8
+        u(1) = 0.0_R8
         ncharged = 1
         DO i=0,ns-1
           IF (.NOT.is_neutral(i)) THEN
@@ -455,7 +455,7 @@ SUBROUTINE B2T21V_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, te&
     END IF
   END DO
 !
-  coef = 2.e0_R8
+  coef = 2.0_R8
 !       as in phythc, but this value is questionable (div u != 0)
 !       (w_pp = coef * grad_|| up,  e.g. coef=2, if div u = 0;
 !        coef=4/3, if div u = grad_|| up)

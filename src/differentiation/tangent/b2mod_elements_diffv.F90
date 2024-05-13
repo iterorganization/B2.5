@@ -86,15 +86,15 @@ CONTAINS
     CHARACTER(len=8) :: species_name
     INTEGER :: i
     LOGICAL :: skip, openp
-    EXTERNAL STREQL, LNBLNK, ISADIGIT, ISPLUSORMINUS, STRIP_SPACES
-    INTEGER :: LNBLNK
+    EXTERNAL STREQL, ISADIGIT, ISPLUSORMINUS, STRIP_SPACES
     LOGICAL :: STREQL, ISADIGIT, ISPLUSORMINUS
     CHARACTER :: REPEAT
+    INTRINSIC LEN_TRIM
 !
     get_atomic_number = 0
     species_name = REPEAT(' ', 8)
     openp = .false.
-    DO i=1,LNBLNK(name)
+    DO i=1,LEN_TRIM(name)
       IF (.NOT.openp) THEN
         skip = .false.
         skip = skip .OR. ISADIGIT(name(i:i))

@@ -18,7 +18,7 @@
 !xpb
 SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 & , vaecrb, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, chce, chve&
-& , chci, chvi, calf, sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, &
+& , chci, chvi, calf, sna0, smo0, she0, shi0, sch0, wrong_flow, &
 & main_call, diagno, b2stbc_fchy_dia, b2stbc_neoclassical, praverage, &
 & b2stbc_fchy_dia_coreonly, secmodel, lbndusr, area_fix, &
 & sheath_drift_fix)
@@ -60,7 +60,7 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: sna0(-1:nx, -1:ny, 0:1, 0:ns-1), smo0(-1:nx, -1:ny, 0&
 & :3, 0:ns-1), she0(-1:nx, -1:ny, 0:3), shi0(-1:nx, -1:ny, 0:3), sch0(-1&
-& :nx, -1:ny, 0:3), sne0(-1:nx, -1:ny, 0:1)
+& :nx, -1:ny, 0:3)
 !xpb
   LOGICAL :: wrong_flow
 !   ..common blocks

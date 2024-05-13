@@ -19,8 +19,8 @@
 !
 !
 !srv 16.19.17 {
-SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pz, pzd&
-& , fna, uadia, facdrift, fchdia, fchdiad, nbdirs)
+SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pz&
+& , pzd, fna, uadia, facdrift, fchdia, fchdiad, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_CONSTANTS
@@ -40,6 +40,7 @@ SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pz, pzd&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: pz(ncv), facdrift(nfc), fna(nfc, 0:1, 0:ns-1), uadia(&
 & nfc, 0:1, 0:ns-1)
   REAL(kind=r8) :: pzd(nbdirsmax, ncv)
@@ -66,7 +67,10 @@ SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pz, pzd&
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  INTRINSIC ABS
   INTRINSIC MAXVAL
+  REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: abs0
+  REAL(kind=r8) :: result1
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nfc) :: temp
   INTEGER :: nbdirs
@@ -79,12 +83,20 @@ SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, pz, pzd&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !   ..test nCv, nFc, ns
-    CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+    CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
     CALL XERTST(1 .LE. ns, 'faulty argument ns')
+    WHERE (uadia .GE. 0.0) 
+      abs0 = uadia
+    ELSEWHERE
+      abs0 = -uadia
+    END WHERE
+!   ..test velocities
+    result1 = MAXVAL(abs0)
+    CALL XERTST(result1 .LT. c, 'Supra-luminal velocities !')
   END IF
   facdriftm = MAXVAL(facdrift)
 !srv 16.10.17
-  IF (facdriftm .NE. 0.0_R8 .AND. switch%dia_cur .NE. 0.0e0_R8 .AND. &
+  IF (facdriftm .NE. 0.0_R8 .AND. switch%dia_cur .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !
 !     ..interpolate to faces
@@ -181,7 +193,10 @@ SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pz, fna, &
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  INTRINSIC ABS
   INTRINSIC MAXVAL
+  REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: abs0
+  REAL(kind=r8) :: result1
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -191,12 +206,20 @@ SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pz, fna, &
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !   ..test nCv, nFc, ns
-    CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+    CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
     CALL XERTST(1 .LE. ns, 'faulty argument ns')
+    WHERE (uadia .GE. 0.0) 
+      abs0 = uadia
+    ELSEWHERE
+      abs0 = -uadia
+    END WHERE
+!   ..test velocities
+    result1 = MAXVAL(abs0)
+    CALL XERTST(result1 .LT. c, 'Supra-luminal velocities !')
   END IF
   facdriftm = MAXVAL(facdrift)
 !srv 16.10.17
-  IF (facdriftm .NE. 0.0_R8 .AND. switch%dia_cur .NE. 0.0e0_R8 .AND. &
+  IF (facdriftm .NE. 0.0_R8 .AND. switch%dia_cur .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !
 !     ..interpolate to faces

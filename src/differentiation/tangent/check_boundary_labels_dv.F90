@@ -17,8 +17,8 @@
 ! Subroutine to check that all boundary faces are assigned to
 ! a boundary condition or recycling strata.
 ! To do so, loop over all guard cells and get the face linked to
-! each of them. only one face per guard cell is possible! 
-! Then check that such face has a label different than zero and 
+! each of them. Only one face per guard cell is possible!
+! Then check that such face has a label different than zero and
 ! that is included in the lists bstart to bend
 ! Initialize
 !===========
@@ -75,7 +75,7 @@ SUBROUTINE CHECK_BOUNDARY_LABELS_NODIFF(m, nb, bstart, bend, docore)
       END DO
 ! ib
  110  IF (.NOT.assigned) THEN
-        WRITE(*, *) 'ifc, label', bnd_fc, m%fclbl(bnd_fc)
+        WRITE(*, *) 'iFc, label', bnd_fc, m%fclbl(bnd_fc)
         CALL XERRAB('boundary face label not assigned to any BC/RC!')
       END IF
     END IF

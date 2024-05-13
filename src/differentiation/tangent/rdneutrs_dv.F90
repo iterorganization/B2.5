@@ -27,7 +27,7 @@
 !=======================================================================
 !//DECLARATIONS//
 !
-SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
+SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf, extra_time)
 !
 !*** reads the surface data
 !
@@ -74,8 +74,14 @@ SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
   INTEGER, INTENT(IN) :: kard, ldmf
   INTEGER :: is, ifl
   REAL(kind=r8) :: dummy(nlimps, *)
+! If extra_time is present and true, there is an extra field
+! for a superfluous time horizon non-standard surface,
+! not to be read
+  LOGICAL, INTENT(IN), OPTIONAL :: extra_time
   LOGICAL :: end_of_file
   SAVE end_of_file
+  INTRINSIC PRESENT
+  INTRINSIC MOD
   DATA end_of_file /.false./
 !
   IF (end_of_file) THEN
@@ -86,6 +92,11 @@ SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
 &                       nlimi)
       IF (nstsi .GT. 0) READ(kard, 910, end=10) (dummy(is+nlim, ifl), is&
 &                      =1,nstsi)
+      IF (PRESENT(extra_time)) THEN
+        IF (extra_time) THEN
+          IF (MOD(nstsi, 5) .EQ. 0) READ(kard, '()', end=10) 
+        END IF
+      END IF
       GOTO 100
  10   end_of_file = .true.
       WRITE(*, *) 'End of file seen in rdneutrs'

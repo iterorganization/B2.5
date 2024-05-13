@@ -23,8 +23,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, pl, &
-& pld, dv, dvd, st_ext, chvemx, chvemxd, chvimx, chvimxd, nbdirs)
+SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
+& , pl, pld, dv, dvd, st_ext, chvemx, chvemxd, chvimx, chvimxd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -52,6 +52,7 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, pl, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(IN) :: dv
@@ -117,7 +118,7 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, pl, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trql')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2trql .LT. 3) THEN
@@ -268,7 +269,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
 !   ..subprogram start-up calls
   CALL SUBINI('b2trql')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2trql .LT. 3) THEN

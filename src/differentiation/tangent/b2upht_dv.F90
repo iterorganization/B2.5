@@ -5,8 +5,9 @@
 !   variations   of useful results: ti tn ua kt po te zt
 !   with respect to varying inputs: ti tn ne ni ua pccm0 corte
 !                corzt kt corti cortn cortt corkt po te zt
-!   Plus diff mem management of: geo.cvvol:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!   Plus diff mem management of: mpg.intcellp:in geo.cvvol:in geo.fchc:in
+!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in
 !
 !
 !
@@ -22,12 +23,12 @@
 !.specification
 !
 !srv 22.05.18
-SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
-& , ua_solve, solvereg, solvireg, solvnreg, solvtreg, solvpreg, solvmreg&
-& , solvkreg, solvzreg, rxf, cortt, corttd, corte, corted, corti, cortid&
-& , cortn, cortnd, corkt, corktd, corzt, corztd, pccm0, pccm0d, na, nad&
-& , ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, po, pod, ne, &
-& ned, ni, nid, nbdirs)
+SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
+& po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg, solvpreg, &
+& solvmreg, solvkreg, solvzreg, rxf, cortt, corttd, corte, corted, corti&
+& , cortid, cortn, cortnd, corkt, corktd, corzt, corztd, pccm0, pccm0d, &
+& na, nad, ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, po, pod&
+& , ne, ned, ni, nid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
@@ -55,6 +56,7 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: rxf, cortt(ncv), corte(ncv), corti(ncv), cortn(ncv), &
 & corkt(ncv), corzt(ncv), pccm0(ncv)
   REAL(kind=r8) :: corttd(nbdirsmax, ncv), corted(nbdirsmax, ncv), &
@@ -102,6 +104,17 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
 !   ..procedures
   EXTERNAL XERTST, B2XVSG, XERRAB
   INTRINSIC MAX
+  INTRINSIC MIN
+  REAL(kind=r8) :: y1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
+  REAL(kind=r8) :: y2
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y2d
+  REAL(kind=r8) :: y3
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y3d
+  REAL(kind=r8) :: y4
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y4d
+  REAL(kind=r8) :: y5
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y5d
   REAL(kind=r8) :: max1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
   REAL(kind=r8) :: max2
@@ -150,7 +163,7 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
 !   ..subprogram start-up calls
   CALL SUBINI('b2upht')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test rxf, pcm0
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
@@ -173,10 +186,10 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
 !
 ! ..apply the correction
 !   ..adjust te, ti, po
-  tt0 = 0.0e0_R8
-  tt1 = 0.0e0_R8
-  tt2 = 0.0e0_R8
-  tt3 = 0.0e0_R8
+  tt0 = 0.0_R8
+  tt1 = 0.0_R8
+  tt2 = 0.0_R8
+  tt3 = 0.0_R8
   DO nd=1,nbdirsmax
     dtid(nd, :) = 0.D0
   END DO
@@ -550,18 +563,32 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
     END DO
     dte(icv) = dte1(icv)
     dti(icv) = dti1(icv)
-!xpb
+!xpb !nh
     IF (solvereg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. te(icv) + dte(icv)) THEN
+      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
         DO nd=1,nbdirs
-          ted(nd, icv) = ted(nd, icv) + dted(nd, icv)
+          y1d(nd) = ted(nd, icv) + dted(nd, icv)
         END DO
-        te(icv) = te(icv) + dte(icv)
+        y1 = te(icv) + dte(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y1d(nd) = 0.D0
+        END DO
+        y1 = switch%b2upht_te_max*ev
+        DO nd=1,nbdirsmax
+          y1d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_te_min*ev .LT. y1) THEN
+        DO nd=1,nbdirs
+          ted(nd, icv) = y1d(nd)
+        END DO
+        te(icv) = y1
       ELSE
         DO nd=1,nbdirs
           ted(nd, icv) = 0.D0
         END DO
-        te(icv) = 1.0e-5_R8*ev
+        te(icv) = switch%b2upht_te_min*ev
       END IF
     END IF
     IF (solvpreg(ireg) .AND. po_solve .AND. switch%pot_eq .EQ. 1 .AND. &
@@ -576,57 +603,113 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
       END DO
       po(icv) = 3.1_R8*te(icv)/qe
     END IF
-!xpb
+!xpb !nh
     IF (solvireg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. ti(icv) + dti(icv)) THEN
+      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
         DO nd=1,nbdirs
-          tid(nd, icv) = tid(nd, icv) + dtid(nd, icv)
+          y2d(nd) = tid(nd, icv) + dtid(nd, icv)
         END DO
-        ti(icv) = ti(icv) + dti(icv)
+        y2 = ti(icv) + dti(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y2d(nd) = 0.D0
+        END DO
+        y2 = switch%b2upht_ti_max*ev
+        DO nd=1,nbdirsmax
+          y2d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_ti_min*ev .LT. y2) THEN
+        DO nd=1,nbdirs
+          tid(nd, icv) = y2d(nd)
+        END DO
+        ti(icv) = y2
       ELSE
         DO nd=1,nbdirs
           tid(nd, icv) = 0.D0
         END DO
-        ti(icv) = 1.0e-5_R8*ev
+        ti(icv) = switch%b2upht_ti_min*ev
       END IF
     END IF
     IF (solvnreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. tn(icv) + dtn(icv)) THEN
+      IF (switch%b2upht_tn_max*ev .GT. tn(icv) + dtn(icv)) THEN
         DO nd=1,nbdirs
-          tnd(nd, icv) = tnd(nd, icv) + dtnd(nd, icv)
+          y3d(nd) = tnd(nd, icv) + dtnd(nd, icv)
         END DO
-        tn(icv) = tn(icv) + dtn(icv)
+        y3 = tn(icv) + dtn(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y3d(nd) = 0.D0
+        END DO
+        y3 = switch%b2upht_tn_max*ev
+        DO nd=1,nbdirsmax
+          y3d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_tn_min*ev .LT. y3) THEN
+        DO nd=1,nbdirs
+          tnd(nd, icv) = y3d(nd)
+        END DO
+        tn(icv) = y3
       ELSE
         DO nd=1,nbdirs
           tnd(nd, icv) = 0.D0
         END DO
-        tn(icv) = 1.0e-5_R8*ev
+        tn(icv) = switch%b2upht_tn_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 0 .AND. solvkreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. kt(icv) + dkt(icv)) THEN
+      IF (switch%b2upht_tn_max*ev .GT. kt(icv) + dkt(icv)) THEN
         DO nd=1,nbdirs
-          ktd(nd, icv) = ktd(nd, icv) + dktd(nd, icv)
+          y4d(nd) = ktd(nd, icv) + dktd(nd, icv)
         END DO
-        kt(icv) = kt(icv) + dkt(icv)
+        y4 = kt(icv) + dkt(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y4d(nd) = 0.D0
+        END DO
+        y4 = switch%b2upht_tn_max*ev
+        DO nd=1,nbdirsmax
+          y4d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_kt_min*ev .LT. y4) THEN
+        DO nd=1,nbdirs
+          ktd(nd, icv) = y4d(nd)
+        END DO
+        kt(icv) = y4
       ELSE
         DO nd=1,nbdirs
           ktd(nd, icv) = 0.D0
         END DO
-        kt(icv) = 1.0e-5_R8*ev
+        kt(icv) = switch%b2upht_kt_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 1 .AND. solvzreg(ireg)) THEN
-      IF (1.0e-8_R8*ev .LT. zt(icv) + dzt(icv)) THEN
+      IF (switch%b2upht_zt_max*ev .GT. zt(icv) + dzt(icv)) THEN
         DO nd=1,nbdirs
-          ztd(nd, icv) = ztd(nd, icv) + dztd(nd, icv)
+          y5d(nd) = ztd(nd, icv) + dztd(nd, icv)
         END DO
-        zt(icv) = zt(icv) + dzt(icv)
+        y5 = zt(icv) + dzt(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y5d(nd) = 0.D0
+        END DO
+        y5 = switch%b2upht_zt_max*ev
+        DO nd=1,nbdirsmax
+          y5d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_zt_min*ev .LT. y5) THEN
+        DO nd=1,nbdirs
+          ztd(nd, icv) = y5d(nd)
+        END DO
+        zt(icv) = y5
       ELSE
         DO nd=1,nbdirs
           ztd(nd, icv) = 0.D0
         END DO
-        zt(icv) = 1.0e-8_R8*ev
+        zt(icv) = switch%b2upht_zt_min*ev
       END IF
     END IF
   END DO
@@ -639,8 +722,8 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, po_solve&
   DO nd=1,nbdirsmax
     wrkvd(nd, :) = 0.D0
   END DO
-  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, wrk0, wrk0d, wrkv, &
-&           wrkvd, wrk, wrkd, nbdirs)
+  CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk0, wrk0d, &
+&           wrkv, wrkvd, wrk, wrkd, nbdirs)
   IF (ua_solve) THEN
     DO icv=1,mpg%nci
       ireg = mpg%cvreg(icv)
@@ -750,6 +833,12 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
 !   ..procedures
   EXTERNAL XERTST, B2XVSG, XERRAB
   INTRINSIC MAX
+  INTRINSIC MIN
+  REAL(kind=r8) :: y1
+  REAL(kind=r8) :: y2
+  REAL(kind=r8) :: y3
+  REAL(kind=r8) :: y4
+  REAL(kind=r8) :: y5
   REAL(kind=r8) :: max1
   REAL(kind=r8) :: max2
   REAL(kind=r8) :: max3
@@ -777,7 +866,7 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2upht')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test rxf, pcm0
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
@@ -800,10 +889,10 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
 !
 ! ..apply the correction
 !   ..adjust te, ti, po
-  tt0 = 0.0e0_R8
-  tt1 = 0.0e0_R8
-  tt2 = 0.0e0_R8
-  tt3 = 0.0e0_R8
+  tt0 = 0.0_R8
+  tt1 = 0.0_R8
+  tt2 = 0.0_R8
+  tt3 = 0.0_R8
   DO icv=1,ncv
     ireg = mpg%cvreg(icv)
 !!!   (stylec is a numerical switch, needs experiments)
@@ -962,12 +1051,17 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
     dte(icv) = dte1(icv)
 !srv 25.07.17
     dti(icv) = dti1(icv)
-!xpb
+!xpb !nh
     IF (solvereg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. te(icv) + dte(icv)) THEN
-        te(icv) = te(icv) + dte(icv)
+      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
+        y1 = te(icv) + dte(icv)
       ELSE
-        te(icv) = 1.0e-5_R8*ev
+        y1 = switch%b2upht_te_max*ev
+      END IF
+      IF (switch%b2upht_te_min*ev .LT. y1) THEN
+        te(icv) = y1
+      ELSE
+        te(icv) = switch%b2upht_te_min*ev
       END IF
     END IF
     IF (solvpreg(ireg) .AND. po_solve .AND. switch%pot_eq .EQ. 1 .AND. &
@@ -976,33 +1070,53 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
     ELSE IF (switch%pot_eq .EQ. 2) THEN
       po(icv) = 3.1_R8*te(icv)/qe
     END IF
-!xpb
+!xpb !nh
     IF (solvireg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. ti(icv) + dti(icv)) THEN
-        ti(icv) = ti(icv) + dti(icv)
+      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
+        y2 = ti(icv) + dti(icv)
       ELSE
-        ti(icv) = 1.0e-5_R8*ev
+        y2 = switch%b2upht_ti_max*ev
+      END IF
+      IF (switch%b2upht_ti_min*ev .LT. y2) THEN
+        ti(icv) = y2
+      ELSE
+        ti(icv) = switch%b2upht_ti_min*ev
       END IF
     END IF
     IF (solvnreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. tn(icv) + dtn(icv)) THEN
-        tn(icv) = tn(icv) + dtn(icv)
+      IF (switch%b2upht_tn_max*ev .GT. tn(icv) + dtn(icv)) THEN
+        y3 = tn(icv) + dtn(icv)
       ELSE
-        tn(icv) = 1.0e-5_R8*ev
+        y3 = switch%b2upht_tn_max*ev
+      END IF
+      IF (switch%b2upht_tn_min*ev .LT. y3) THEN
+        tn(icv) = y3
+      ELSE
+        tn(icv) = switch%b2upht_tn_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 0 .AND. solvkreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. kt(icv) + dkt(icv)) THEN
-        kt(icv) = kt(icv) + dkt(icv)
+      IF (switch%b2upht_tn_max*ev .GT. kt(icv) + dkt(icv)) THEN
+        y4 = kt(icv) + dkt(icv)
       ELSE
-        kt(icv) = 1.0e-5_R8*ev
+        y4 = switch%b2upht_tn_max*ev
+      END IF
+      IF (switch%b2upht_kt_min*ev .LT. y4) THEN
+        kt(icv) = y4
+      ELSE
+        kt(icv) = switch%b2upht_kt_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 1 .AND. solvzreg(ireg)) THEN
-      IF (1.0e-8_R8*ev .LT. zt(icv) + dzt(icv)) THEN
-        zt(icv) = zt(icv) + dzt(icv)
+      IF (switch%b2upht_zt_max*ev .GT. zt(icv) + dzt(icv)) THEN
+        y5 = zt(icv) + dzt(icv)
       ELSE
-        zt(icv) = 1.0e-8_R8*ev
+        y5 = switch%b2upht_zt_max*ev
+      END IF
+      IF (switch%b2upht_zt_min*ev .LT. y5) THEN
+        zt(icv) = y5
+      ELSE
+        zt(icv) = switch%b2upht_zt_min*ev
       END IF
     END IF
   END DO
