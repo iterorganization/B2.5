@@ -165,7 +165,6 @@
      &           ifc1, ifc2, jj, imean, curr_ind
       integer, allocatable :: cfReg(:), shiftcfdata(:)
       logical :: done, optimize
-      character*1 str
       character*3 ss
       character*256 cffile, filename
       real(kind=r8) :: dummy
@@ -315,8 +314,9 @@
 !    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
 !    This facilitates shifting the CF and covariance matrix caclulation 
           if (cfread(icf)) then
-            write (str,'(I1)') icf
-            cffile = 'cf'//trim(str)//'.dat'
+            write (ss,'(I1)') icf
+            if (icf.gt.9) write (ss,'(I2)') icf
+            cffile = 'cf'//trim(ss)//'.dat'
             call find_file(cffile,file_ok)
             if (.not. file_ok) call xerrab
      &       ('Cannot find cost function file '//trim(cffile))
@@ -324,7 +324,7 @@
             write(*,*) 'Reading cost function data from ',trim(cffile)
             ncfdata(icf) = 0
 !csc File is of unknown length, so first count the number of lines
- 5          read(99,*,end=15) str
+ 5          read(99,*,end=15) ss
               ncfdata(icf) = ncfdata(icf) +1
             goto 5
  15         close(99)
