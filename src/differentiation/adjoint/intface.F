@@ -6,6 +6,7 @@
       real (kind=R8) ::
      *   fcVol(nFc,2),centre(nCv,0:nz),face(nFc,0:nz)
       integer is
+      external intface
       do is=0,nz
         call intface(nCv,nFc,fcCv,fcVol,centre(1,is),face(1,is))
       enddo

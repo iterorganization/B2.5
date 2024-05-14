@@ -143,7 +143,7 @@ contains
     !! Obsolete: did not take properly into account trapezoidal and triangle cells
     !! Use interp_volume below instead
     subroutine interp_width( xory, nx, ny, hx, hy, gs, qc, centre, face )
-        use b2mod_indirect
+        use b2mod_indirect_diff
         implicit none
         integer :: xory
         integer :: nx   !< Specifies the number of interior cells
@@ -287,7 +287,7 @@ contains
   !! idir.eq.TO_RIGHT: interpolation to the RIGHT
   !! idir.eq.TO_TOP: interpolation in the TOP
   subroutine interp_volume( idir, nx, ny, vol, gs, qc, centre, face )
-  use b2mod_indirect
+  use b2mod_indirect_diff
   use b2mod_cellhelper
   implicit none
   integer, intent(in) :: idir
@@ -674,7 +674,7 @@ contains
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
   use b2mod_geo_diff , only: crx, cry, gs, qz, qc, pbs, vol
   use b2mod_math_diff
-  use b2mod_indirect
+  use b2mod_indirect_diff
 
   implicit none
   logical, intent(in) :: isflux, isparallel
@@ -1235,7 +1235,7 @@ contains
   !> This subroutine computes an interpolated value on the existing faces only
   subroutine value_on_faces(nx,ny,weight,centre,face)
   use b2mod_geo_diff
-  use b2mod_indirect
+  use b2mod_indirect_diff
   implicit none
 !! input arguments
   integer, intent(in) :: nx, ny
@@ -1286,7 +1286,7 @@ contains
   !> by a projected area and a FACE-CENTERED density
   subroutine face_velocity_from_flow(nx,ny,ns,flow,density,velocity)
   use b2mod_geo_diff
-  use b2mod_indirect
+  use b2mod_indirect_diff
   implicit none
 !! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1390,7 +1390,7 @@ contains
   !> If isparallel is .true., then the flow is purely poloidal
   subroutine cell_velocity_from_flow(nx,ny,ns,isparallel,flow,density,velocity)
   use b2mod_geo_diff
-  use b2mod_indirect
+  use b2mod_indirect_diff
   implicit none
 !! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1452,7 +1452,7 @@ contains
   !> We interpolate internally to the cell faces
   subroutine flow_from_velocity(nx,ny,ns,velocity,density,flow)
   use b2mod_geo_diff
-  use b2mod_indirect
+  use b2mod_indirect_diff
   implicit none
 !! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1592,7 +1592,7 @@ contains
   function interpolateToVertices( nx, ny, vx_index, cv ) result( vx )
     use b2mod_geo_diff
     use b2mod_b2cmfs
-    use b2mod_indirect
+    use b2mod_indirect_diff
     use b2mod_constants
     use b2mod_cellhelper
     implicit none
@@ -1667,7 +1667,7 @@ contains
   !> The interpolation to the sides is weighted by the 'weight' function.
   subroutine value_to_side(nx, ny, weight, centre, side)
   use b2mod_geo_diff , only: crx, cry, gs, qc, pbs, vol
-  use b2mod_indirect
+  use b2mod_indirect_diff
   use b2mod_cellhelper
   implicit none
   integer, intent(in) :: nx, ny

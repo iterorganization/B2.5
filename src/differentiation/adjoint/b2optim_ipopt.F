@@ -55,7 +55,6 @@
       logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
 
-
 !     ..START OF COMPUTATION
 
 !     Allocate and initialize par_opt variables to be used in B2.5
@@ -112,7 +111,6 @@
      &    write(*,*) 'IPOPT: warning, G_U(',icon,') set to infty'
       end do
 ! FIXME Z_L/Z_U
-
 
 !     First create a handle for the Ipopt problem (and read the options file)
 !     If Hessian is provided or steepest descent is asked the additional argument needed
@@ -273,7 +271,7 @@
       integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save j
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
@@ -348,7 +346,7 @@
       integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save jdiff
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
@@ -524,7 +522,7 @@ C   4          *
       use b2us_data_diff
       use b2us_io_diff
      , , only : write_b2fstate
-      use b2mod_version_diff
+      use b2mod_version
      , , only : newversion, cfverw
       use b2mod_b2cmpa_diff
       implicit none
@@ -559,7 +557,7 @@ C   4          *
         write (label,'(a46,i4)')
      &    'b2optim_ipopt intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn,
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn,
      &   am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
