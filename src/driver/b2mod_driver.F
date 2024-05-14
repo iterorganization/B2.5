@@ -2070,7 +2070,7 @@ c new CDF movie option (1st frame at t=0)
       integer ierror, status
 #endif
 #endif
-      character*1 ss
+      character*2 ss
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
@@ -2246,6 +2246,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    state_ext, switch%BoRiS, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
+          if (icf.gt.9) write (ss,'(I2)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
 *    ..produce data for movie
@@ -2927,6 +2928,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &    state_ext, switch%BoRiS, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
         write(*,*) 'Cost function value '//ss//': ',J(icf)
       end do
 #else

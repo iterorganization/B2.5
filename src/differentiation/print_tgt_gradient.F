@@ -11,7 +11,7 @@
       integer :: icf, ii, ip, idir
       character*3 ss1
       character*3 ss2
-      character(len=1) :: ss
+      character*2 :: ss
       character*70 key
       do icf = 1, ncf
        idir = 1 !this indicates the different directions of multidirectional derivative mode
