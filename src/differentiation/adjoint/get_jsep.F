@@ -1,7 +1,7 @@
       subroutine get_jsep(nx,ny,jxi,jxa,jsep)
       use b2mod_types
       use b2mod_geo_diff
-      use b2mod_indirect
+      use b2mod_indirect_diff
       use b2mod_subsys
       implicit none
       integer nx,ny,jxi,jxa,jsep
@@ -79,7 +79,7 @@
       end subroutine get_jsep
 
       subroutine get_nxt(nx, nxtl, nxtr)
-      use b2mod_indirect
+      use b2mod_indirect_diff
       use b2mod_subsys
       implicit none
       integer nx, nxtl, nxtr
