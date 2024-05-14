@@ -5629,7 +5629,7 @@ CONTAINS
     INTEGER :: ncv, nfc, nvx
     INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
-    CHARACTER(len=1) :: ss
+    CHARACTER(len=2) :: ss
     LOGICAL :: ok, found
     EXTERNAL EPOCH_SECONDS
 !   ..procedures
@@ -6510,6 +6510,7 @@ CONTAINS
     call print_tgt_gradient(jd)
       do icf=1,ncf
         write(ss, '(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
         write(*, *) 'Cost function value '//ss//': ', j(icf)
       end do
 !    ..increment
@@ -6696,6 +6697,7 @@ CONTAINS
     call print_tgt_gradient(jd)
     DO icf=1,ncf
       WRITE(ss, '(I1)') icf
+      IF (icf .GT. 9) WRITE (ss, '(I2)') icf
       WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
     END DO
     CALL SUBEND()
@@ -6732,7 +6734,7 @@ CONTAINS
     INTEGER :: ncv, nfc, nvx
     INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
-    CHARACTER(len=1) :: ss
+    CHARACTER(len=2) :: ss
     LOGICAL :: ok, found
     EXTERNAL EPOCH_SECONDS
 !   ..procedures
@@ -6858,6 +6860,7 @@ CONTAINS
 &                             state_ext, switch%boris, j)
       do icf=1,ncf
         write(ss, '(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
         write(*, *) 'Cost function value '//ss//': ', j(icf)
       end do
 !    ..increment
@@ -7035,6 +7038,7 @@ CONTAINS
 &                             state_ext, switch%boris, j)
     DO icf=1,ncf
       WRITE(ss, '(I1)') icf
+      IF (icf .GT. 9) WRITE (ss, '(I2)') icf
       WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
     END DO
     CALL SUBEND()

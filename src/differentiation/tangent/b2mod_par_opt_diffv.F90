@@ -196,7 +196,6 @@ CONTAINS
 &   , curr_ind
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
-    CHARACTER(len=1) :: str
     CHARACTER(len=3) :: ss
     CHARACTER(len=256) :: cffile, filename
     REAL(kind=r8) :: dummy
@@ -362,8 +361,9 @@ CONTAINS
 !    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
 !    This facilitates shifting the CF and covariance matrix caclulation 
         IF (cfread(icf)) THEN
-          WRITE(str, '(I1)') icf
-          cffile = 'cf'//TRIM(str)//'.dat'
+          WRITE(ss, '(I1)') icf
+          IF (icf .GT. 9) WRITE(ss, '(I2)') icf
+          cffile = 'cf'//TRIM(ss)//'.dat'
           CALL FIND_FILE(cffile, file_ok)
           IF (.NOT.file_ok) CALL XERRAB(&
 &                                 'Cannot find cost function file '//&
@@ -372,7 +372,7 @@ CONTAINS
           WRITE(*, *) 'Reading cost function data from ', TRIM(cffile)
           ncfdata(icf) = 0
 !csc File is of unknown length, so first count the number of lines
- 5        READ(99, *, end=15) str
+ 5        READ(99, *, end=15) ss
           ncfdata(icf) = ncfdata(icf) + 1
           GOTO 5
  15       CLOSE(99) 
@@ -1077,7 +1077,6 @@ CONTAINS
 &   , curr_ind
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
-    CHARACTER(len=1) :: str
     CHARACTER(len=3) :: ss
     CHARACTER(len=256) :: cffile, filename
     REAL(kind=r8) :: dummy
@@ -1235,8 +1234,9 @@ CONTAINS
 !    1D radial profiles, and the abscissa is also stricly monotonically increasing. 
 !    This facilitates shifting the CF and covariance matrix caclulation 
         IF (cfread(icf)) THEN
-          WRITE(str, '(I1)') icf
-          cffile = 'cf'//TRIM(str)//'.dat'
+          WRITE(ss, '(I1)') icf
+          IF (icf .GT. 9) WRITE(ss, '(I2)') icf
+          cffile = 'cf'//TRIM(ss)//'.dat'
           CALL FIND_FILE(cffile, file_ok)
           IF (.NOT.file_ok) CALL XERRAB(&
 &                                 'Cannot find cost function file '//&
@@ -1245,7 +1245,7 @@ CONTAINS
           WRITE(*, *) 'Reading cost function data from ', TRIM(cffile)
           ncfdata(icf) = 0
 !csc File is of unknown length, so first count the number of lines
- 5        READ(99, *, end=15) str
+ 5        READ(99, *, end=15) ss
           ncfdata(icf) = ncfdata(icf) + 1
           GOTO 5
  15       CLOSE(99) 

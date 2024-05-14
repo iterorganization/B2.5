@@ -4,7 +4,7 @@
 
       Vec X,X_L,X_U
       Mat Hess
-      integer, save :: iter = 0, filen = 0
+      integer, save :: iter = 0, filen = 0, ntim = 1
       end module taomodule
 
       program b2optim_tao
@@ -39,7 +39,8 @@
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
       call b2mn_init_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,&
-&      state_ext, state_extdiff)
+&      state_ext, state_extdiff, state_avg, state_avgdiff)
+      call ipgeti('b2mndr_ntim', ntim)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
@@ -123,8 +124,9 @@
       call PetscFinalize(ierr)
 
       call b2mn_fin_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,&
-&      state_ext, state_extdiff)
+&      state_ext, state_extdiff, state_avg, state_avgdiff)
       deallocate(par_opt_phys)
+      deallocate(xsave)
       deallocate(par_opt_physdiff)
       stop 'b2optim'
 
@@ -225,7 +227,8 @@
       use b2mod_par_opt_diff &
      , only : par_rescale, sigma, mean
       use b2mod_ad_diff &
-     , only : primal_iterations, gradient_iterations
+     , only : primal_iterations, gradient_iterations, primal_res, &
+              gradient_res
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean, ishift, icorr
@@ -235,7 +238,7 @@
       logical :: write_state
       PetscErrorCode ierr
       PetscInt dummy
-      Vec XX,grad
+      Vec XX, grad
       Tao tao
       PetscScalar F
       PetscReal, pointer :: x_v(:), g_v(:)
@@ -244,6 +247,8 @@
       CHKERRQ(ierr)
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
+
+      call reset_drifts(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
@@ -299,7 +304,7 @@
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
       call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
-     &   statediff, state_ext, state_extdiff, j, jdiff)
+     &   statediff, state_ext, state_extdiff, state_avg, state_avgdiff, j, jdiff)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
@@ -317,6 +322,8 @@
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
+      write (*,*) 'TAO GRADIENT RESIDUAL:', gradient_res
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
       call VecRestoreArrayF90(grad,g_v,ierr)
@@ -350,7 +357,7 @@
       use b2mod_par_opt_diff &
       , only : sigma, mean
       use b2mod_ad_diff &
-     , only : primal_iterations
+     , only : primal_iterations, primal_res
       implicit none
       real(kind=r8) j(nncf)
       integer ipar, isigma, imean, ishift, icorr
@@ -364,6 +371,8 @@
 
       call VecGetArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
+
+      call reset_drifts(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
@@ -415,9 +424,10 @@
           endif
         end do
       endif
-      call b2mn_step(switch, geo, mpg, state, state_ext, j)
+      call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
       F = j(1)
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
 
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
@@ -433,7 +443,8 @@
       use b2mod_par_opt_diff &
       , only : sigma, mean
       use b2mod_ad_diff &
-     , only : primal_iterations, gradient_iterations
+     , only : primal_iterations, gradient_iterations, primal_res, &
+              gradient_res
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2), imean, ishift, icorr
@@ -452,6 +463,8 @@
       CHKERRQ(ierr)
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
+
+      call reset_drifts(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
@@ -507,7 +520,7 @@
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
       call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
-     &   statediff, state_ext, state_extdiff, j, jdiff)
+     &   statediff, state_ext, state_extdiff, state_avg, state_avgdiff, j, jdiff)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
@@ -524,6 +537,8 @@
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
+      write (*,*) 'TAO GRADIENT RESIDUAL:', gradient_res
 ! Experimental: write intermediate state file?
       write_state = .false.
       if (switch%b2optim_save_states.gt.0) then
@@ -590,5 +605,42 @@
 
       return
       end subroutine FormHessian
+
+      subroutine reset_drifts(XX)
+      use b2mod_facdrift_exb_diff &
+      , only : facdrift_scalar, fac_exb_scalar
+      implicit none
+      logical :: sameX
+      integer :: ipar
+      real (kind=R8) :: nn
+      Vec XX, grad
+      PetscReal, pointer :: x_v(:)
+
+      call VecGetArrayReadF90(XX,x_v,ierr)
+      CHKERRQ(ierr)
+      ! check if the same value for the current solution has been already used
+      ! in FormFunction or FormGradient, if not, then drifts need to be reset to
+      ! avoid potential crash
+      sameX = .true.
+      do ipar = 1, npar_opt
+        if (abs(xsave(ipar)-x_v(ipar)).gt.1.0E-4_R8) sameX = .false.
+        xsave(ipar) = x_v(ipar)
+      end do
+      if (.not. sameX .and. (switch%facExB_start.gt.0.0_R8 .or. switch%facdrift_start.gt.0.0_R8)) then
+        ! reset drift percentage to b2optim_reset_drift
+        fac_exb_scalar = min(switch%b2optim_reset_drift,switch%facExB_start)
+        facdrift_scalar = min(switch%b2optim_reset_drift,switch%facdrift_start)
+        ! make sure that drifts are increased to 100% in ntim/XX iterations
+        ! where XX is b2optim_reset_iter
+        nn = ntim/switch%b2optim_reset_iter
+        switch%facExB_inc = (1.0_R8/fac_exb_scalar)**(1.0_R8/nn)
+        switch%facdrift_inc = (1.0_R8/facdrift_scalar)**(1.0_R8/nn)
+        write (*,*) ' b2optim_tao: resetting drifts to', switch%b2optim_reset_drift
+        write (*,*) ' b2optim_tao: drift_inc set to', switch%facExB_inc
+        write (*,*) ' b2optim_tao: drifts back at 100% in ',nint(nn),'iterations'
+      endif
+
+      return
+      end subroutine reset_drifts
 
       end program b2optim_tao
