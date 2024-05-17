@@ -2024,11 +2024,6 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
       CALL PUSHINTEGER4(nstrat)
       CALL PUSHINTEGER4(nstrai)
       CALL PUSHREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
-      CALL PUSHPOINTER8(mpg%rccvp)
-      CALL PUSHPOINTER8(mpg%rccv)
-      CALL PUSHPOINTER8(mpg%rcfcp)
-      CALL PUSHPOINTER8(mpg%rcfc)
-      CALL PUSHPOINTER8(mpg%rcfcor)
       CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, .true.)
       CALL PUSHCONTROL2B(2)
     ELSE
@@ -2093,11 +2088,6 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
 &                                   , r8/8)
   ELSE
     IF (branch .EQ. 2) THEN
-      CALL POPPOINTER8(mpg%rcfcor)
-      CALL POPPOINTER8(mpg%rcfc)
-      CALL POPPOINTER8(mpg%rcfcp)
-      CALL POPPOINTER8(mpg%rccv)
-      CALL POPPOINTER8(mpg%rccvp)
       CALL POPREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
       CALL POPINTEGER4(nstrai)
       CALL POPINTEGER4(nstrat)
