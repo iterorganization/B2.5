@@ -1195,8 +1195,6 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     CALL PUSHREAL8ARRAY(st%dv%kinrgy, r8*SIZE(st%dv%kinrgy, 1)*SIZE(st%&
 &                 dv%kinrgy, 2)/8)
     CALL PUSHREAL8ARRAY(st%dv%ne, r8*SIZE(st%dv%ne, 1)/8)
-    CALL PUSHPOINTER8(st%dv%ni)
-    CALL PUSHPOINTER8(st%dv%nn)
     CALL PUSHREAL8ARRAY(st%dv%pa, r8*SIZE(st%dv%pa, 1)*SIZE(st%dv%pa, 2)&
 &                 /8)
     CALL PUSHREAL8ARRAY(st%dv%wedia, r8*SIZE(st%dv%wedia, 1)*SIZE(st%dv%&
@@ -1268,15 +1266,10 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &                 st%psnc%kinrgy, 2)/8)
     CALL PUSHINTEGER4ARRAY(mpg%rccvp, SIZE(mpg%rccvp, 1)*SIZE(mpg%rccvp&
 &                    , 2))
-    CALL PUSHPOINTER8(mpg%rccvp)
     CALL PUSHINTEGER4ARRAY(mpg%rccv, SIZE(mpg%rccv, 1)*SIZE(mpg%rccv, 2)&
 &                   )
-    CALL PUSHPOINTER8(mpg%rccv)
     CALL PUSHINTEGER4ARRAY(mpg%rcfcp, SIZE(mpg%rcfcp, 1)*SIZE(mpg%rcfcp&
 &                    , 2))
-    CALL PUSHPOINTER8(mpg%rcfcp)
-    CALL PUSHPOINTER8(mpg%rcfc)
-    CALL PUSHPOINTER8(mpg%rcfcor)
     CALL PUSHREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/8)
     CALL PUSHREAL8(switch%neutral_sources_rescale, r8/8)
     CALL B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
@@ -2799,14 +2792,9 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &           %zt, stb%pl%zt, st%sr, stb%sr, .false.)
     CALL POPREAL8(switch%neutral_sources_rescale, r8/8)
     CALL POPREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/8)
-    CALL POPPOINTER8(mpg%rcfcor)
-    CALL POPPOINTER8(mpg%rcfc)
-    CALL POPPOINTER8(mpg%rcfcp)
     CALL POPINTEGER4ARRAY(mpg%rcfcp, SIZE(mpg%rcfcp, 1)*SIZE(mpg%rcfcp, &
 &                   2))
-    CALL POPPOINTER8(mpg%rccv)
     CALL POPINTEGER4ARRAY(mpg%rccv, SIZE(mpg%rccv, 1)*SIZE(mpg%rccv, 2))
-    CALL POPPOINTER8(mpg%rccvp)
     CALL POPINTEGER4ARRAY(mpg%rccvp, SIZE(mpg%rccvp, 1)*SIZE(mpg%rccvp, &
 &                   2))
     CALL POPREAL8ARRAY(st%psnc%kinrgy, r8*SIZE(st%psnc%kinrgy, 1)*SIZE(&
@@ -2878,8 +2866,6 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &                wedia, 2)/8)
     CALL POPREAL8ARRAY(st%dv%pa, r8*SIZE(st%dv%pa, 1)*SIZE(st%dv%pa, 2)/&
 &                8)
-    CALL POPPOINTER8(st%dv%nn)
-    CALL POPPOINTER8(st%dv%ni)
     CALL POPREAL8ARRAY(st%dv%ne, r8*SIZE(st%dv%ne, 1)/8)
     CALL POPREAL8ARRAY(st%dv%kinrgy, r8*SIZE(st%dv%kinrgy, 1)*SIZE(st%dv&
 &                %kinrgy, 2)/8)
