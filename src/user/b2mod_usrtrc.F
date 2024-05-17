@@ -222,7 +222,7 @@ c*** PFR flow values
       real (kind=R8) ::
      *     hlp_pfrf(0:npfrgrpd,DEF_NATM,npff_tmp)
       real (kind=R8) ::
-     *     wtarg_max(DEF_NCUT) !vk, max target heat flux density
+     *     wtarg_max(max(4,DEF_NCUT)) !vk, max target heat flux density
       equivalence (equp_tmp(0,1,1), hlp_pfrf)
       character hlp_hb*8
 
