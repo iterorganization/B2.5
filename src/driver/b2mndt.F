@@ -464,7 +464,7 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
                 call b2filei(ns,mpg%nnreg(0),switch)
               end if
               if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >         call b2filew(istg(2),mpg%nnreg(0))
+     >         call b2filew(istg(2),mpg%nnreg(0),st%diag)
             endif
 *      ..update iteration counter
             b2mndt_itcnt = b2mndt_itcnt+1
