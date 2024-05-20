@@ -494,7 +494,7 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
      &       st%dv%facdrift, st%dv%fac_ExB, st%dv%ne, st%pl%te,
      &       st%pl%po, st%dv%vedia, st%dv%veecrb)
 *      ..compute other fluxes
-            call b2xpen (nCv, nFc, ns, mpg,
+            call b2xpen (nCv, nFc, ns, mpg, switch,
      &       st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &       st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt,
      &       st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
