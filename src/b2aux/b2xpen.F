@@ -67,8 +67,8 @@ c calculate total fluxes (fht)
       enddo
 
       if (switch%iout_b2wdat.eq.4) then
-        call my_out_us(70,nFc,1,fht(1,0),'b2xpen_fht_th')
-        call my_out_us(70,nFc,1,fht(1,1),'b2xpen_fht_r')
+            call my_out_us(70,nFc,1,fht(1,0),'b2xpen_fht_th')
+            call my_out_us(70,nFc,1,fht(1,1),'b2xpen_fht_r')
       endif
 *$$$  call subend ()
       return
