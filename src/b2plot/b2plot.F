@@ -579,7 +579,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call ipgetr ('b2news_BoRiS', switch%BoRiS)
       call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
-      call b2xpen (mpg%nCv, mpg%nFc, ns, mpg,
+      call b2xpen (mpg%nCv, mpg%nFc, ns, mpg, switch,
      1 state%dv%fna, state%dv%fna_53, state%dv%fne_53,
      2 state%dv%fch, state%dv%fhe, state%dv%fhi, state%dv%fhn,
      3 state%rt%rpt, state%pl%te, state%pl%ti, state%pl%tn,

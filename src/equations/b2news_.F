@@ -670,7 +670,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
       st%dv%floi_noc = st%dv%floi                                        !srv 24.10.02
       st%dv%floe_noc = st%dv%floe                                        !srv 24.10.02
-      call b2xpen (nCv, nFc, ns, mpg,
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,
      &  st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
