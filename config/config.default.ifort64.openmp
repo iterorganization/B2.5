@@ -77,14 +77,14 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF} # -lblas
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 #ifdef USE_EIRENE
-#LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
+#  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
 #endif
 ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
+  LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD = ${FC}

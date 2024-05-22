@@ -7,6 +7,7 @@
      &  hx, hy, qc, qs, vol, gs, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                   !srv 24.08.21 !som 16.08.21
+     &  cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 08.05.24
      &  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
      &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
      &  reshe, reshi, resht, corte, corti, ierr)
@@ -45,6 +46,8 @@
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !som 16.08.21
+     &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),  !som 08.05.24
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                 !som 08.05.24
      1  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      3  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -229,10 +232,9 @@
        call b2xvff (nx, ny, fhe, 'fhe')
        call b2xvff (nx, ny, fhi, 'fhi')
 *    ..test velocities
-       call xertst (max(maxval(abs(ua)),maxval(abs(uadia)),
-     &               maxval(abs(vadia)),maxval(abs(wadia)),
-     &               maxval(abs(vaecrb))).lt.c,
-     &  'Supra-luminal velocities !')
+       call xertst (max(maxval(abs(ua)),maxval(abs(ue)),
+     &   maxval(abs(uadia)),maxval(abs(vadia)),maxval(abs(wadia)),
+     &   maxval(abs(vaecrb))).lt.c, 'Supra-luminal velocities !')
       endif
 
 * ..main computation
@@ -256,7 +258,9 @@
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
+     *  cvsa_drho,                                                      !som 16.08.21
+     *  cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 08.05.24
+     *  she0, shi0)                                                     !srv 07.06.00 02.06.99 07.07.09
       endif
       call b2saxpy (n2*4, 1.0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)

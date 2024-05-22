@@ -72,9 +72,9 @@ LD = ftn
 LDOPTS = -dynamic -hpic
 # JFRS OPENMP
 ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
-LDOPTS += -homp
-endif
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
+    LDOPTS += -homp
+  endif
 endif
 
 #!!!Local Variables:

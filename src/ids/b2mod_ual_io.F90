@@ -896,8 +896,10 @@ contains
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
             &        cvsahz_drho, cvsa_drho,                                      & !som 18.08.21
-            &        chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,           & !som 08.10.21
+            &        chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,       & !som 08.10.21
             &        cvsa_hAdp_albe, cvsa_hBdp_al,                                & !som 20.10.21
+            &        cvsahz_uAdp_albe, cvsahz_uBdp_al,                            & !som 22.12.23
+            &        cvsa_uAdp_albe, cvsa_uBdp_al,                                & !som 26.04.24
             &        fllim0fhi, fllimvisc, csig_cl, calf_cl,                      &
             &        csig_stoch, chce_stoch)
 !  ..compute log-log charge exchange rate coefficients
@@ -920,7 +922,8 @@ contains
             &        fchvisq, fchinert, fchanml,                                 &
             &        fna_eir, fne_eir, fhe_eir, fhi_eir,                         &
             &        cdna, cdpa, cvsa_cl, cvsa_drho,                             & !som 18.08.21
-            &        chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,              & !som 20.10.21
+            &        chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,          & !som 20.10.21
+            &        cvsa_uAdp_albe, cvsa_uBdp_al,                               & !som 26.04.24
             &        cvla, chce, chve, chci, chvi, calf, csigin,                 &
             &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr,                         &
             &        rlza, rlz2, rlpt, rlpi,                                     &
@@ -2396,45 +2399,74 @@ contains
         end do
         allocate( edge_transport%model(1)%ggd( time_sind )%ion( nsion ) )
         do js = 1, nspecies
-          allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
           allocate( edge_profiles%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+          allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
           do is = 1, nfluids(js)
             allocate( edge_profiles%ggd( time_sind )%ion( js )%state( is )%label(1) )
           end do
+#else
+          allocate( edge_profiles%ggd( time_sind )%ion( js )%name(1) )
+          do is = 1, nfluids(js)
+            allocate( edge_profiles%ggd( time_sind )%ion( js )%state( is )%name(1) )
+          end do
+#endif
           allocate( edge_profiles%ggd( time_sind )%ion( js )%element(1) )
           do i = 1, nsources
-            allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%label(1) )
             allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+            allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%label(1) )
             do is = 1, nfluids(js)
               allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%label(1) )
             end do
+#else
+            allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%name(1) )
+            do is = 1, nfluids(js)
+              allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%name(1) )
+            end do
+#endif
             allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1) )
           end do
-          allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%label(1) )
           allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+          allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%label(1) )
           do is = 1, nfluids(js)
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%label(1) )
           end do
+#else
+          allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%name(1) )
+          do is = 1, nfluids(js)
+            allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%name(1) )
+          end do
+#endif
           allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1) )
 
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-          allocate( radiation%process(1)%ggd( time_sind )%ion( js )%label(1) )
           allocate( radiation%process(1)%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
+          allocate( radiation%process(2)%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+          allocate( radiation%process(1)%ggd( time_sind )%ion( js )%label(1) )
+          allocate( radiation%process(2)%ggd( time_sind )%ion( js )%label(1) )
           do is = 1, nfluids(js)
             allocate( radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%label(1) )
-          end do
-          allocate( radiation%process(1)%ggd( time_sind )%ion( js )%element(1) )
-          allocate( radiation%process(2)%ggd( time_sind )%ion( js )%label(1) )
-          allocate( radiation%process(2)%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
-          do is = 1, nfluids(js)
             allocate( radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%label(1) )
           end do
+#else
+          allocate( radiation%process(1)%ggd( time_sind )%ion( js )%name(1) )
+          allocate( radiation%process(2)%ggd( time_sind )%ion( js )%name(1) )
+          do is = 1, nfluids(js)
+            allocate( radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%name(1) )
+            allocate( radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%name(1) )
+          end do
+#endif
+          allocate( radiation%process(1)%ggd( time_sind )%ion( js )%element(1) )
           allocate( radiation%process(2)%ggd( time_sind )%ion( js )%element(1) )
 #endif
           ! Put label to ion(js).state(is).label
           do is = 1, istion(js)
             ks = ispion(js,is)
             call species( ks, spclabel, .false.)
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             edge_profiles%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             do i = 1, nsources
               edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
@@ -2444,11 +2476,27 @@ contains
             radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
 #endif
+#else
+            edge_profiles%ggd( time_sind )%ion( js )%state( is )%name = spclabel
+            do i = 1, nsources
+              edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
+            end do
+            edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
+            radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
+#endif
+#endif
           end do
 
           ! Put ion label identifying the species
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
           edge_profiles%ggd( time_sind )%ion( js )%label = species_list( js )
           edge_transport%model(1)%ggd( time_sind )%ion( js )%label = species_list( js )
+#else
+          edge_profiles%ggd( time_sind )%ion( js )%name = species_list( js )
+          edge_transport%model(1)%ggd( time_sind )%ion( js )%name = species_list( js )
+#endif
 
           ! Put ion charge if single ion in species
           is = ispion(js,1)
@@ -2503,7 +2551,11 @@ contains
 
           do i = 1, nsources
             ! Put ion label identifying the species
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             edge_sources%source(i)%ggd( time_sind )%ion( js )%label = species_list( js )
+#else
+            edge_sources%source(i)%ggd( time_sind )%ion( js )%name = species_list( js )
+#endif
 
             ! Put ion charge if single ion in species
             is = ispion(js,1)
@@ -2551,8 +2603,13 @@ contains
 
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           ! Put ion label identifying the species
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
           radiation%process(1)%ggd( time_sind )%ion( js )%label = species_list( js )
           radiation%process(2)%ggd( time_sind )%ion( js )%label = species_list( js )
+#else
+          radiation%process(1)%ggd( time_sind )%ion( js )%name = species_list( js )
+          radiation%process(2)%ggd( time_sind )%ion( js )%name = species_list( js )
+#endif
 
           ! Put ion charge if single ion in species
           is = ispion(js,1)
@@ -2605,25 +2662,47 @@ contains
         if (use_eirene.ne.0) then
 #ifdef B25_EIRENE
           do js = nspecies+1, nsion
-            allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( js )%state( istion(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+            allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
             do ks = 1, istion(js)
               allocate( edge_profiles%ggd( time_sind )%ion( js )%state( ks )%label(1) )
             end do
+#else
+            allocate( edge_profiles%ggd( time_sind )%ion( js )%name(1) )
+            do ks = 1, istion(js)
+              allocate( edge_profiles%ggd( time_sind )%ion( js )%state( ks )%name(1) )
+            end do
+#endif
             do i = 1, nsources
-              allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%label(1) )
               allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%state( istion(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+              allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%label(1) )
               do ks = 1, istion(js)
                 allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%state( ks )%label(1) )
               end do
+#else
+              allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%name(1) )
+              do ks = 1, istion(js)
+                allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%state( ks )%name(1) )
+              end do
+#endif
             end do
-            allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%label(1) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( istion(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+            allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%label(1) )
             do ks = 1, istion(js)
               allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%label(1) )
             end do
+#else
+            allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%name(1) )
+            do ks = 1, istion(js)
+              allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%name(1) )
+            end do
+#endif
             do ks = 1, istion(js)
               is = ispion(js,ks)
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
               edge_profiles%ggd( time_sind )%ion( js )%state( ks )%label = textin( is-1 )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%label = &
                   &                                                        textin( is-1 )
@@ -2631,6 +2710,15 @@ contains
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%state( ks )%label = &
                     &                                                      textin( is-1 )
               end do
+#else
+              edge_profiles%ggd( time_sind )%ion( js )%state( ks )%name = textin( is-1 )
+              edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%name = &
+                  &                                                        textin( is-1 )
+              do i = 1, nsources
+                edge_sources%source(i)%ggd( time_sind )%ion( js )%state( ks )%name = &
+                    &                                                      textin( is-1 )
+              end do
+#endif
               nelems = count ( micmp( 1:natmi, is ) > 0 )
               allocate( edge_profiles%ggd( time_sind )%ion( js )%element( nelems ) )
               do i = 1, nsources
@@ -2684,13 +2772,25 @@ contains
             is = ispion(js,1)
             if (istion(js).eq.1) then
               edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
               edge_profiles%ggd( time_sind )%ion( js )%label = textin( is-1 )
+#else
+              edge_profiles%ggd( time_sind )%ion( js )%name = textin( is-1 )
+#endif
               do i = 1, nsources
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%label = textin( is-1 )
+#else
+                edge_sources%source(i)%ggd( time_sind )%ion( js )%name = textin( is-1 )
+#endif
               end do
               edge_transport%model(1)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%label = textin( is-1 )
+#else
+              edge_transport%model(1)%ggd( time_sind )%ion( js )%name = textin( is-1 )
+#endif
             else
               match_found = .false.
               do ks = 2, istion(js)
@@ -2720,11 +2820,19 @@ contains
                     &  streql(ion_label,textin(ispion(js,ks)-1))
                 end if
                 if (match_found) then
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                   edge_profiles%ggd( time_sind )%ion( js )%label = ion_label
                   do i = 1, nsources
                     edge_sources%source(i)%ggd( time_sind )%ion( js )%label = ion_label
                   end do
                   edge_transport%model(1)%ggd( time_sind )%ion( js )%label = ion_label
+#else
+                  edge_profiles%ggd( time_sind )%ion( js )%name = ion_label
+                  do i = 1, nsources
+                    edge_sources%source(i)%ggd( time_sind )%ion( js )%name = ion_label
+                  end do
+                  edge_transport%model(1)%ggd( time_sind )%ion( js )%name = ion_label
+#endif
                 end if
               end do
             end if
@@ -2812,7 +2920,13 @@ contains
           do js = 1, nspecies
              is = eb2spcr(js)
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%element(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
+             edge_profiles%ggd( time_sind )%neutral( js )%label = species_list( js )
+#else
+             allocate( edge_profiles%ggd( time_sind )%neutral( js )%name(1) )
+             edge_profiles%ggd( time_sind )%neutral( js )%name = species_list( js )
+#endif
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
 #if IMAS_MAJOR_VERSION < 4
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
@@ -2824,11 +2938,16 @@ contains
 #else
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
 #endif
-             edge_profiles%ggd( time_sind )%neutral( js )%label = species_list( js )
              edge_profiles%ggd( time_sind )%neutral( js )%ion_index = js
              do i = 1, nsources
                 allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                 allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%label(1) )
+                edge_sources%source(i)%ggd( time_sind )%neutral( js )%label = species_list( js )
+#else
+                allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%name(1) )
+                edge_sources%source(i)%ggd( time_sind )%neutral( js )%name = species_list( js )
+#endif
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
 #if IMAS_MAJOR_VERSION < 4
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
@@ -2840,11 +2959,16 @@ contains
 #else
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
 #endif
-                edge_sources%source(i)%ggd( time_sind )%neutral( js )%label = species_list( js )
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = js
              end do
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
+             edge_transport%model(1)%ggd( time_sind )%neutral( js )%label = species_list( js )
+#else
+             allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%name(1) )
+             edge_transport%model(1)%ggd( time_sind )%neutral( js )%name = species_list( js )
+#endif
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
 #if IMAS_MAJOR_VERSION < 4
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
@@ -2856,7 +2980,6 @@ contains
 #else
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
 #endif
-             edge_transport%model(1)%ggd( time_sind )%neutral( js )%label = species_list( js )
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = js
              ks = size(edge_profiles%ggd( time_sind )%neutral( js )%state)
              do i = 1, nsources
@@ -2865,7 +2988,13 @@ contains
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks ) )
              do iss = 1, ks
                 iatm = b2eatcr(is) + iss - 1
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                 allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%label(1) )
+                edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%label = textan( iatm-1 )
+#else
+                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%name(1) )
+                edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%name = textan( iatm-1 )
+#endif
                 allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( iss )% &
                    &      neutral_type%name(1) )
                 allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( iss )% &
@@ -2876,9 +3005,16 @@ contains
                 edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
                    &     "Kinetic neutral atoms from Eirene"
                 edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
-                edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%label = textan( iatm-1 )
                 do i = 1, nsources
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                    allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%label(1) )
+                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%label = &
+                     &   textan( iatm-1 )
+#else
+                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%name(1) )
+                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%name = &
+                     &   textan( iatm-1 )
+#endif
                    allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )% &
                       &      neutral_type%name(1) )
                    allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )% &
@@ -2893,10 +3029,14 @@ contains
                    else
                       edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
                    end if
-                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%label = &
-                     &   textan( iatm-1 )
                 end do
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                 allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%label(1) )
+                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%label = textan( iatm-1 )
+#else
+                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%name(1) )
+                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%name = textan( iatm-1 )
+#endif
                 allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )% &
                    &      neutral_type%name(1) )
                 allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )% &
@@ -2907,7 +3047,6 @@ contains
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
                    &     "Kinetic neutral atoms from Eirene"
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
-                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%label = textan( iatm-1 )
               end do
             end do
 
@@ -2946,16 +3085,31 @@ contains
                if (ks.eq.1) js = js + 1
                nelems = count ( mlcmp( 1:natmi, j ) > 0 )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%element( nelems ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+#else
+               allocate( edge_profiles%ggd( time_sind )%neutral( js )%name(1) )
+               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+#endif
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element( nelems ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%label(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+#else
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%name(1) )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+#endif
                end do
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element( nelems ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+#else
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%name(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+#endif
                i = 0
                do k = 1, natmi
                   if (mlcmp( k, j ) > 0 ) then
@@ -3005,7 +3159,11 @@ contains
 #endif
                    end if
                end do
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                edge_profiles%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
+#else
+               edge_profiles%ggd( time_sind )%neutral( js )%name = textmn( j-1 )
+#endif
                ion_label = trim(textmn( j-1 ))//'+'
                i = 1
                match_found = .false.
@@ -3022,8 +3180,13 @@ contains
                end if
                edge_profiles%ggd( time_sind )%neutral( js )%ion_index = k
                edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%label = &
                    &    textmn( j-1 )
+#else
+               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%name = &
+                   &    textmn( j-1 )
+#endif
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )% &
                    &      neutral_type%name(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -3034,11 +3197,17 @@ contains
                edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
                    &     "Kinetic neutral molecules from Eirene"
                do i = 1, nsources
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = k
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%label = &
                       &    textmn( j-1 )
+#else
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%name = textmn( j-1 )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%name = &
+                      &    textmn( j-1 )
+#endif
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = k
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )% &
                       &      neutral_type%name(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -3049,11 +3218,17 @@ contains
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
                       &     "Kinetic neutral molecules from Eirene"
                end do
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = k
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%label = &
                    &    textmn( j-1 )
+#else
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%name = textmn( j-1 )
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%name = &
+                   &    textmn( j-1 )
+#endif
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = k
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
                    &     neutral_type%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -3080,10 +3255,20 @@ contains
                is = eb2spcr(js)
                if (.not.is_neutral(is)) cycle
                j = j + 1
+               call species( is, spclabel, .false. )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%element(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%label(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%label(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+               edge_profiles%ggd( time_sind )%neutral( j )%label = species_list( js )
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+#else
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%name(1) )
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+               edge_profiles%ggd( time_sind )%neutral( j )%name = species_list( js )
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+#endif
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
 #if IMAS_MAJOR_VERSION < 4
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
@@ -3095,11 +3280,8 @@ contains
 #else
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
 #endif
-               edge_profiles%ggd( time_sind )%neutral( j )%label = species_list( js )
                edge_profiles%ggd( time_sind )%neutral( j )%ion_index = js
                edge_profiles%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-               call species( is, spclabel, .false. )
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3120,9 +3302,18 @@ contains
 #endif
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%label(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%label(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%label = species_list( js )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+#else
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%name(1) )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%name = species_list( js )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+#endif
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
 #if IMAS_MAJOR_VERSION < 4
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
@@ -3136,11 +3327,8 @@ contains
 #else
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
 #endif
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%label = species_list( js )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%ion_index = js
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-                  call species( is, spclabel, .false. )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
                      &      neutral_type%name(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3161,9 +3349,18 @@ contains
 #endif
                end do
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%label(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%label(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+#else
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%name(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%name = species_list( js )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+#endif
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
 #if IMAS_MAJOR_VERSION < 4
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
@@ -3175,11 +3372,8 @@ contains
 #else
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
 #endif
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%ion_index = js
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-               call species( is, spclabel, .false. )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3206,10 +3400,20 @@ contains
                is = eb2spcr(js)
                if (.not.is_neutral(is)) cycle
                j = j + 1
+               call species( is, spclabel, .false. )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%label(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%label(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list(js)
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+#else
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%name(1) )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%name = species_list(js)
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+#endif
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%a = am(is)
 #if IMAS_MAJOR_VERSION < 4
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn(is)
@@ -3217,11 +3421,8 @@ contains
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
 #endif
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
-               radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list(js)
                radiation%process(1)%ggd( time_sind )%neutral( j )%ion_index = js
                radiation%process(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-               call species( is, spclabel, .false. )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &     neutral_type%name(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3257,8 +3458,21 @@ contains
             js = latmscl(is)
             ks = isstat(is)
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%label = &
+                &    species_list(js)
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = &
+                &    textan( is-1 )
+#else
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%name(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%name = &
+                &    species_list(js)
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = &
+                &    textan( is-1 )
+#endif
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%a = nmassa( is )
 #if IMAS_MAJOR_VERSION < 4
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = real(nchara(is),IDS_real)
@@ -3266,12 +3480,8 @@ contains
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = nchara( is )
 #endif
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
-            radiation%process(3)%ggd( time_sind )%neutral( js )%label = &
-                &    species_list(js)
             radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = js
             radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = &
-                &    textan( is-1 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
                 &     neutral_type%name(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -3290,8 +3500,13 @@ contains
             if (ks.eq.1) js = js + 1
             nelems = count ( mlcmp( 1:natmi, j ) > 0 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element( nelems ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+#else
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%name(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+#endif
             i = 0
             do k = 1, natmi
               if (mlcmp( k, j ) > 0 ) then
@@ -3320,11 +3535,17 @@ contains
             else
               k = latmscl(lmolscl(j))
             end if
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             radiation%process(3)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = k
-            radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
             radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = &
                 &    textmn( j-1 )
+#else
+            radiation%process(3)%ggd( time_sind )%neutral( js )%name = textmn( j-1 )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = &
+                &    textmn( j-1 )
+#endif
+            radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = k
+            radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
                 &     neutral_type%name(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -3339,13 +3560,22 @@ contains
           !! List of molecular ions
           allocate( radiation%process(4)%ggd( time_sind )%ion( nsion ) )
           do js = nspecies+1, nsion
-            allocate( radiation%process(4)%ggd( time_sind )%ion( js )%label(1) )
             allocate( radiation%process(4)%ggd( time_sind )%ion( js )%state( istion(js) ) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+            allocate( radiation%process(4)%ggd( time_sind )%ion( js )%label(1) )
             do ks = 1, istion(js)
               is = ispion(js,ks)
               allocate( radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%label(1) )
               radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%label = textin( is-1 )
             end do
+#else
+            allocate( radiation%process(4)%ggd( time_sind )%ion( js )%name(1) )
+            do ks = 1, istion(js)
+              is = ispion(js,ks)
+              allocate( radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%name(1) )
+              radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%name = textin( is-1 )
+            end do
+#endif
             is = ispion(js,1)
             nelems = count ( micmp( 1:natmi, is ) > 0 )
             allocate( radiation%process(4)%ggd( time_sind )%ion( js )%element( nelems ) )
@@ -3364,7 +3594,11 @@ contains
             end do
             if (istion(js).eq.1) then
               radiation%process(4)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
               radiation%process(4)%ggd( time_sind )%ion( js )%label = textin( is-1 )
+#else
+              radiation%process(4)%ggd( time_sind )%ion( js )%name = textin( is-1 )
+#endif
             else
               match_found = .false.
               do ks = 2, istion(js)
@@ -3390,7 +3624,11 @@ contains
                     &  streql(ion_label,textin(ispion(js,ks)-1))
                 end if
                 if (match_found) then
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                   radiation%process(4)%ggd( time_sind )%ion( js )%label = ion_label
+#else
+                  radiation%process(4)%ggd( time_sind )%ion( js )%name = ion_label
+#endif
                 end if
               end do
             end if
@@ -6218,119 +6456,247 @@ contains
           select case (is_codes(eb2spcr(is)))
           case ('H')
             call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%hydrogen, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%hydrogen, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%hydrogen, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%hydrogen, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%hydrogen, -v )
+#endif
 #endif
           case ('D')
             call write_sourced_value( summary%local%separatrix%n_i%deuterium, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%deuterium, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%deuterium, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%deuterium, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%deuterium, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%deuterium, -v )
+#endif
 #endif
           case ('T')
             call write_sourced_value( summary%local%separatrix%n_i%tritium, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%tritium, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%tritium, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%tritium, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%tritium, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, -v )
+#endif
 #endif
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+              call write_sourced_value( summary%local%separatrix%velocity_phi%helium_3, -vtor )
+#else
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_3, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
               call write_sourced_value( summary%local%separatrix_average%n_i%helium_3, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+              call write_sourced_value( summary%local%separatrix_average%velocity_phi%helium_3, -v )
+#else
               call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_3, -v )
+#endif
 #endif
             else if (nint(am(eb2spcr(is))).eq.4) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_4, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+              call write_sourced_value( summary%local%separatrix%velocity_phi%helium_4, -vtor )
+#else
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_4, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%helium_4, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%helium_4, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_4, -v )
+#endif
 #endif
             end if
           case ('Li')
             call write_sourced_value( summary%local%separatrix%n_i%lithium, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%lithium, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%lithium, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%lithium, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%lithium, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%lithium, -v )
+#endif
 #endif
           case ('Be')
             call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%beryllium, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%beryllium, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%beryllium, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, -v )
+#endif
 #endif
           case ('C')
             call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%carbon, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%carbon, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%carbon, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%carbon, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%carbon, -v )
+#endif
 #endif
           case ('N')
             call write_sourced_value( summary%local%separatrix%n_i%nitrogen, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%nitrogen, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%nitrogen, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%nitrogen, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%nitrogen, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%nitrogen, -v )
+#endif
 #endif
           case ('O')
             call write_sourced_value( summary%local%separatrix%n_i%oxygen, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%oxygen, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%oxygen, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%oxygen, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%oxygen, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%oxygen, -v )
+#endif
 #endif
           case ('Ne')
             call write_sourced_value( summary%local%separatrix%n_i%neon, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%neon, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%neon, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%neon, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%neon, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%neon, -v )
+#endif
 #endif
           case ('Ar')
             call write_sourced_value( summary%local%separatrix%n_i%argon, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%argon, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%argon, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%argon, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%argon, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%argon, -v )
+#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           case ('Fe')
             call write_sourced_value( summary%local%separatrix%n_i%iron, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%iron, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%iron, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%iron, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%iron, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%iron, -v )
+#endif
 #endif
           case ('Kr')
             call write_sourced_value( summary%local%separatrix%n_i%krypton, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%krypton, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%krypton, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%krypton, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%krypton, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%krypton, -v )
+#endif
 #endif
 #endif
           case ('Xe')
             call write_sourced_value( summary%local%separatrix%n_i%xenon, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%xenon, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%xenon, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%xenon, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%xenon, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%xenon, -v )
+#endif
 #endif
           case ('W')
             call write_sourced_value( summary%local%separatrix%n_i%tungsten, nisep )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%tungsten, -vtor )
+#else
             call write_sourced_value( summary%local%separatrix%velocity_tor%tungsten, -vtor )
+#endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%local%separatrix_average%n_i%tungsten, u )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%tungsten, -v )
+#else
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tungsten, -v )
+#endif
 #endif
           end select
         end do
@@ -7133,22 +7499,34 @@ contains
         ks = 0
         do js = 1, nspecies
           if (is_neutral(ks)) ks = ks + 1  ! Skip the neutral species
-          allocate( batch_profiles%ggd( batch_index )%ion( js )%label(1) )
           allocate( batch_profiles%ggd( batch_index )%ion( js )%state( nfluids(js) ) )
+          allocate( batch_profiles%ggd( batch_index )%ion( js )%element(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%state( nfluids(js) ) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+          allocate( batch_profiles%ggd( batch_index )%ion( js )%label(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%label(1) )
           do is = 1, nfluids(js)
             allocate( batch_profiles%ggd( batch_index )%ion( js )%state( is )%label(1) )
-          end do
-          allocate( batch_profiles%ggd( batch_index )%ion( js )%element(1) )
-          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%label(1) )
-          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%state( nfluids(js) ) )
-          do is = 1, nfluids(js)
             allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%label(1) )
           end do
-          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1) )
+#else
+          allocate( batch_profiles%ggd( batch_index )%ion( js )%name(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%name(1) )
+          do is = 1, nfluids(js)
+            allocate( batch_profiles%ggd( batch_index )%ion( js )%state( is )%name(1) )
+            allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%name(1) )
+          end do
+#endif
           do is = 1, nfluids(js)
             call species( ks, spclabel, .false.)
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             batch_profiles%ggd( batch_index )%ion( js )%state( is )%label = spclabel
             batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%label = spclabel
+#else
+            batch_profiles%ggd( batch_index )%ion( js )%state( is )%name = spclabel
+            batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%name = spclabel
+#endif
             ! Put minimum Z of the charge state bundle
             ! (z_min = z_max = 0 for a neutral)
             batch_profiles%ggd( batch_index )%ion( js )%state( is )%z_min = zamin( ks )
@@ -7162,8 +7540,13 @@ contains
           end do
 
           ! Put ion label identifying the species
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
           batch_profiles%ggd( batch_index )%ion( js )%label = species_list( js )
           batch_sources%source(1)%ggd( batch_index )%ion( js )%label = species_list( js )
+#else
+          batch_profiles%ggd( batch_index )%ion( js )%name = species_list( js )
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%name = species_list( js )
+#endif
           ! Put ion charge if single ion in species
           if (nfluids(js).eq.1) then
             ion_charge_int = nint((zamin(ks)+zamax(ks))/2.0_R8)
@@ -7198,7 +7581,6 @@ contains
 
           !! List of neutrals
           allocate( batch_profiles%ggd( batch_index )%neutral( js )%element(1) )
-          allocate( batch_profiles%ggd( batch_index )%neutral( js )%label(1) )
           batch_profiles%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
 #if IMAS_MAJOR_VERSION < 4
           batch_profiles%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
@@ -7210,11 +7592,20 @@ contains
 #else
           batch_profiles%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+          allocate( batch_profiles%ggd( batch_index )%neutral( js )%label(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%label(1) )
           batch_profiles%ggd( batch_index )%neutral( js )%label = species_list( js )
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%label = species_list( js )
+#else
+          allocate( batch_profiles%ggd( batch_index )%neutral( js )%name(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%name(1) )
+          batch_profiles%ggd( batch_index )%neutral( js )%name = species_list( js )
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%name = species_list( js )
+#endif
           batch_profiles%ggd( batch_index )%neutral( js )%ion_index = js
           batch_profiles%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
           allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1) )
-          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%label(1) )
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
 #if IMAS_MAJOR_VERSION < 4
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
@@ -7226,7 +7617,6 @@ contains
 #else
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
 #endif
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%label = species_list( js )
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%ion_index = js
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
 
@@ -8189,6 +8579,27 @@ contains
                 &         b_field_z,                                          &
                 &   b2CellData = tmpCv )
           end if
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_phi ) ) then
+            tmpVx(-1:nx,-1:ny) = -wbbc(-1:nx,-1:ny,2)
+            tmpFace(:,:,0) = -wbbl(:,:,2)
+            tmpFace(:,:,1) = -wbbv(:,:,2)
+            tmpCv(:,:) = -bb(:,:,2)
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_phi,                                        &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
+                &         b_field_phi,                                        &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_phi,                                        &
+                &   b2CellData = tmpCv )
+          end if
+#else
           if (.not.associated(                                                &
             &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_tor ) ) then
             tmpVx(-1:nx,-1:ny) = -wbbc(-1:nx,-1:ny,2)
@@ -8208,6 +8619,7 @@ contains
                 &         b_field_tor,                                        &
                 &   b2CellData = tmpCv )
           end if
+#endif
 #endif
           if ( equilibrium%time( slice_index ).eq.0.0_IDS_real ) then
             equilibrium%time( slice_index ) = time_slice_value

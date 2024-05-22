@@ -177,8 +177,8 @@ c 2002-09-11: logic revised
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
-      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
-      integer mw_jxa1, mw_jsep1, iyped1
+      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, jsep_cnv, jxa_cnv, iyped
+      integer mw_jxa1, mw_jsep1, jsep1cnv, jxa1cnv, iyped1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
       integer indx, indy, indx1, indy1
       integer coriolis, lhalpha
@@ -189,7 +189,7 @@ c 2002-09-11: logic revised
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
-      character id0*8
+      character id0*8, chns*3
       character*4 solps_version
       data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
@@ -270,7 +270,7 @@ c 2002-09-11: logic revised
      5 na_feedback_actuator_min1(:), na_feedback_actuator_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:),
-     8 sna_corr1(:), taumax1(:)
+     8 sna_corr1(:), taumax1(:), amfact1(:)
       real (kind=R8) ::
      & cbsna1(0:7,0:ns-1,0:cbnrmx-1),
      & cbsmo1(0:7,0:ns-1,0:cbnrmx-1),
@@ -1476,6 +1476,10 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_ix2', mw_ix2)
       call ipgeti ('b2tqna_mw_jxa', mw_jxa)
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
+      jxa_cnv = jxa
+      jsep_cnv = jsep
+      call ipgeti ('b2tqna_jxa_cnv', jxa_cnv)
+      call ipgeti ('b2tqna_jsep_cnv', jsep_cnv)
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      .                     istyle_cur_contr_on_S_and_N)
       call ipgeti ('b2news_coriolis', coriolis)
@@ -1497,6 +1501,15 @@ c 2002-09-11: logic revised
       call ipgetc ('b2tral_zh_tf_toff', cvalip)
       do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
         zh_tf_toff(i) = cvalip(i:i)
+      end do
+      call alloc_b2mod_zhco_amfact(nspecies)
+      allocate(amfact1(0:nspecies1-1))
+      amfact(0:nspecies-1) = 1.0_R8
+      do i = 0, nspecies-1
+        write (chns,'(i3.3)') is
+        call ipgetr ('b2tral_amfact_'//chns, amfact(i))
+        j = ispecies1(i+1)
+        if (j.gt.0) amfact1(j-1)=amfact(i)
       end do
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
@@ -1761,23 +1774,39 @@ c 2002-09-11: logic revised
       mw_ix2 = conformal_convert
      .   (non_commensurate,1,mw_ix2,mw_jsep,nx,ny,nx1,ny1,3)
       if (mw_jxa.ge.0) then
-        mw_jxa1= conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,4)
+        mw_jxa1 =
+     .   conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,4)
       else
-        mw_jxa1=jxa1
+        mw_jxa1 = jxa1
       endif
       if (mw_jsep.ge.0) then
-        mw_jsep1= conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,2)
+        mw_jsep1 =
+     .   conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,2)
       else
-        mw_jsep1=jsep1
+        mw_jsep1 = jsep1
+      endif
+      if (jxa_cnv.ge.0) then
+        jxa1cnv =
+     .   conformal_convert(non_commensurate,1,jxa_cnv,jsep_cnv,
+     .    nx,ny,nx1,ny1,4)
+      else
+        jxa1cnv = jxa1
+      endif
+      if (jsep_cnv.ge.0) then
+        jsep1cnv =
+     .   conformal_convert(non_commensurate,2,jxa_cnv,jsep_cnv,
+     .    nx,ny,nx1,ny1,2)
+      else
+        jsep1cnv = jsep1
       endif
       if (jxa.ne.-2) then
-        jxa1=conformal_convert(non_commensurate,1,jxa,jsep,
+        jxa1 = conformal_convert(non_commensurate,1,jxa,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       if (jxi.ne.-2) then
-        jxi1=conformal_convert(non_commensurate,1,jxi,jsep,
+        jxi1 = conformal_convert(non_commensurate,1,jxi,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       tab = char(9)
@@ -1877,6 +1906,10 @@ c 2002-09-11: logic revised
           iswitch = mw_jxa1
         case('b2tqna_mw_jsep')
           iswitch = mw_jsep1
+        case('b2tqna_jxa_cnv')
+          iswitch = jxa1cnv
+        case('b2tqna_jsep_cnv')
+          iswitch = jsep1cnv
         case('b2mwti_jxa')
           iswitch = jxa1
         case('b2mwti_jxi')
@@ -2014,6 +2047,19 @@ c 2002-09-11: logic revised
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
+      if (cnamip(1:14).eq.'b2tral_amfact_'.and.
+     &    .not.streql(cnamip,'b2tral_amfact_on')) then
+        read (cnamip(15:17),'(i3.3)') i
+        j = ispecies1(i+1)
+        if (j.gt.0) then
+          todo = .true.
+          rswitch = amfact1(j-1)
+          write (cnamip,'(a14,i3.3)') 'b2tral_amfact_', j-1
+        else
+          todo = .false.
+          wait = .true.
+        end if
+      end if
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
 *   ..character string switches
       todo = .true.
@@ -2098,6 +2144,7 @@ c 2002-09-11: logic revised
       if (ycur.ne.1.0_R8 .and. .not.ycur_done)
      >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
       deallocate(zh_tf_toff)
+      deallocate(amfact1)
 
 *  ..rewrite boundary namelist
       first_pass = .true.

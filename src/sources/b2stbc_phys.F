@@ -1597,6 +1597,11 @@ cwdk  now need to recompute full diamagnetic component for ud
      .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
      3         (am(is)*mp))*
      2         CONPAR(IS,IB,1)
+              sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
+     &          s0*min(0.0e0_R8,
+     &          vla0(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &               topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is))   !som 18.07.19
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is) =
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)+
      &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)            !srv 23.09.08
@@ -1652,6 +1657,10 @@ cwdk  now need to recompute full diamagnetic component for ud
      .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
      3         (am(is)*mp))*
      2         CONPAR(IS,IB,1)
+              sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     .         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
+     &          max(0.0e0_R8,
+     .              s0*vla0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is))   !som 18.07.19
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is) =
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)+
      &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)            !srv 23.09.08
@@ -5999,14 +6008,12 @@ cxpb code segment analog to b2tfhe
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)
-              if (t0.ge.0.0_R8) then
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) + t0
-              else
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) + t0/
-     &           te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              end if
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) +
+     &         max(0.0_R8,t0)
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) +
+     &         min(0.0_R8,t0)/te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                     !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
@@ -6037,14 +6044,12 @@ cxpb code segment analog to b2tfhe
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)
-              if (t0.ge.0.0_R8) then
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) + t0
-              else
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) + t0/
-     &           te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              end if
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) +
+     &         max(0.0_R8,t0)
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) +
+     &         min(0.0_R8,t0)/te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                     !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
@@ -6139,14 +6144,12 @@ cxpb code segment analog to b2tfhe
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)
-              if (t0.ge.0.0_R8) then
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) + t0
-              else
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) + t0/
-     &           te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              end if
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) +
+     &         max(0.0_R8,t0)
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) +
+     &         min(0.0_R8,t0)/te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                !srv 12.09.08 }
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
@@ -6182,14 +6185,12 @@ cxpb code segment analog to b2tfhe
      &         1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &         veecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
-              if (t0.ge.0.0_R8) then
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) + t0
-              else
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) + t0/
-     &           te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              end if
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2) +
+     &         max(0.0_R8,t0)
+              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) =
+     &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3) +
+     &         min(0.0_R8,t0)/te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                !srv 12.09.08 }
           ENDDO
         ELSE
@@ -6280,7 +6281,7 @@ cxpb code segment analog to b2tfhe
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+ENEPAR(IB,1)*
      &       max(0.0e0_R8,
-     &       floe_noc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))        !srv 28.10.02
+     &        floe_noc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))       !srv 28.10.02
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)+ENEPAR(IB,2)*
      &       vte*s0
@@ -6516,7 +6517,7 @@ cxpb code segment analog to b2tfhe
      &             she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
      &             te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
                 end if
-            endif                                                       !srv 01.06.06 }
+              endif                                                     !srv 01.06.06 }
             end do
           ELSE
             CALL XERRAB
@@ -8151,14 +8152,12 @@ cxpb code segment analog to b2tfhi
      &          fchvisq(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1))*
      &          ycur
-              if (t0.ge.0.0_R8) then
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) + t0*
-     &           ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              else
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) + t0
-              end if
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
+     &         max(0.0_R8,t0)*ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
+     &         min(0.0_R8,t0)
               t0 = 0.0_R8
               do is=0,ns-1
                 t0 = t0 +
@@ -8168,14 +8167,12 @@ cxpb code segment analog to b2tfhi
      &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)*
      &           na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
-              if (t0.ge.0.0_R8) then
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) + t0*
-     &           ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              else
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) + t0
-              end if
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
+     &         max(0.0_R8,t0)*ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
+     &         min(0.0_R8,t0)
             endif                                                 !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
@@ -8212,14 +8209,12 @@ cxpb code segment analog to b2tfhi
      &          vis_per*fchvisper(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1) !srv 02.10.17
      &         +vis_q*fchvisq(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))*
      &          ycur                                                     !srv 02.10.17
-              if (t0.ge.0.0_R8) then
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) + t0*
-     &           ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              else
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) + t0
-              end if
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
+     &         max(0.0_R8,t0)*ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
+     &         min(0.0_R8,t0)
               t0 = 0.0_R8
               do is=0,ns-1
                 t0 = t0 -
@@ -8228,14 +8223,12 @@ cxpb code segment analog to b2tfhi
      &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)*
      &               na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
-              if (t0.ge.0.0_R8) then
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) + t0*
-     &           ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              else
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) + t0
-              end if
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
+     &         max(0.0_R8,t0)*ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
+     &         min(0.0_R8,t0)
             endif                                                 !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
@@ -8316,7 +8309,7 @@ cxpb          if (.not.is_neutral(is)) then   ! dpc --- need to check
 cxpb          endif
             ENDDO
             if(mdf_fhi.ne.0) then                                       !srv 12.09.08 {
-              t0 =
+              t0 = -
      &         fhiPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)
               if (t0.ge.0.0_R8) then
@@ -8336,14 +8329,12 @@ cxpb          endif
      &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
      &                   *na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
-              if (t0.ge.0.0_R8) then
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) + t0*
-     &           ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              else
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) + t0
-              end if
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
+     &         max(0.0_R8,t0)*ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
+     &         min(0.0_R8,t0)
             endif                                                       !srv 12.09.08 }
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
@@ -8388,20 +8379,18 @@ cxpb          endif
               end if
               t0 = 0.0_R8
               do is=0,ns-1
-                t0 = -
+                t0 = t0 -
      &           1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                  hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)*
      &               na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
-              if (t0.ge.0.0_R8) then
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) + t0*
-     &           ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              else
-                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) + t0
-              end if
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
+     &         max(0.0_R8,t0)*ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
+     &         min(0.0_R8,t0)
             endif                                                       !srv 12.09.08 }
           ENDDO
         ELSE

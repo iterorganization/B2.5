@@ -108,7 +108,7 @@
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), flo, con_nodrift, flo_nodrift, xfrhie,
      *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   flux_limit_min_ti,
+     *   flux_limit_min_ti, na_min,
      *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny), !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
      *   term(-1:nx,-1:ny), flo_he, flo_53, con_he(-1:nx,-1:ny),        !srv 25.04.00 13.09.02 11.09.09
      *   termhz(-1:nx,-1:ny),                                           !srv 05.11.09
@@ -157,7 +157,8 @@
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
 *   ..initialisation
       data ncall/0/, xfrhie/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/,
-     *     flux_limit_min_ti/0.0_R8/, area_fix/3/, no_hybr/0/
+     *     flux_limit_min_ti/0.0_R8/, area_fix/3/, no_hybr/0/,
+     *     na_min/1.0e4_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -184,6 +185,9 @@
         flux_limit_min_ti=flux_limit_min_ti*ev
         call xertst (0.0_R8.le.flux_limit_min_ti,
      &   'faulty internal parameter flux_limit_min_ti')
+        call ipgetr ('b2mndr_na_min', na_min)
+        call xertst (na_min.gt.0.0_R8,
+     &   'faulty internal parameter na_min')
         call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
         call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
@@ -1062,6 +1066,9 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
           fna_pschused(ix,iy,0,0:1,isb) = 0.0_R8
          endif
         else
+         if (nb(ix,iy).eq.na_min.and.ix.eq.nx-1) then
+           continue
+         end if
          term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*     !iyv 19.04.07 11.01.13
      &    sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/
      &    (mb*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))))*
@@ -2544,10 +2551,8 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fnb_53(-1,-1,1,1),'b2tfnb_fnb_53y'//chns)
        call my_out(70,nx,ny,fnbPSch(-1,-1,0,0),'b2tfnb_fnbPSchx'//chns)
        call my_out(70,nx,ny,fnbPSch(-1,-1,1,1),'b2tfnb_fnbPSchy'//chns)
-       if (isb .eq. ismain) then
-          call my_out(70,nx,ny,vbecrb(-1,-1,0,0),'b2tfnb_vbecrbx'//chns)
-          call my_out(70,nx,ny,vbecrb(-1,-1,1,1),'b2tfnb_vbecrby'//chns)
-       endif
+       call my_out(70,nx,ny,vbecrb(-1,-1,0,0),'b2tfnb_vbecrbx'//chns)
+       call my_out(70,nx,ny,vbecrb(-1,-1,1,1),'b2tfnb_vbecrby'//chns)
 !       call my_out(70,nx,ny,ubdia(-1,-1,0,0),'b2tfnb_ubdiax'//chns)
 !       call my_out(70,nx,ny,ubdia(-1,-1,1,1),'b2tfnb_ubdiay'//chns)
        call my_out(70,nx,ny,vbdia(-1,-1,0,0),'b2tfnb_vbdiax'//chns)

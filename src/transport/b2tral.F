@@ -8,8 +8,10 @@
      3 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
      * cvsahz_drho, cvsa_drho,                                          !som 18.08.21
-     * chci_al_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,       !som 08.10.21
+     * chci_al_ast_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,   !som 08.10.21
      * cvsa_hAdp_luc, cvsa_hBdp_luc,                                    !som 20.10.21
+     * cvsahz_uAdp_luc, cvsahz_uBdp_luc,                                !som 22.12.23
+     * cvsa_uAdp_luc, cvsa_uBdp_luc,                                    !som 26.04.24
      4 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)  !srv 24.08.21
       use b2mod_types
       use b2mod_indirect
@@ -24,10 +26,15 @@
       use b2mod_b2zhco
      & , only: zhflcorr, zhcscorr, zhcscorr_vq,                         !som 21.03.21
      &         zh_imp_analyt, zh_analyt_mdf,
-     &         zhflcorrh, zh_dist_fun
+     &         zhflcorrh, zh_dist_fun, zh_vis_type,
+     &         alloc_b2mod_zhco_amfact, amfact,
+     &         amfact_on
       use b2mod_zhfrtf
      & , only: avm_u, w_out, hTdp_out, hwdp_out,
-     &         rTdpgamma_out, rwdpgamma_out
+     &         rTdpgamma_out, rwdpgamma_out,
+     &         piu_out
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int
       use b2mod_neoclassical
       use b2mod_subsys
       use b2mod_ipmain
@@ -72,12 +79,16 @@
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !som 16.08.21
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                        !som 16.08.21
-     &  chci_al_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                  !som 08.10.21
+     &  chci_al_ast_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),              !som 09.05.24
      &  chci_a_luc(-1:nx,-1:ny,0:1,0:1,0:ns-1),                         !som 08.10.21
      &  cvsa_hAdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),   !som 20.10.21
      &  cvsa_hBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                !som 20.10.21
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1), !som 08.10.21
      &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),              !som 08.10.21
+     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),   !som 22.12.23
+     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
      1  fllim0fhi(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1,0:1), calf_cl(-1:nx,-1:ny,0:1,0:1),
@@ -118,7 +129,7 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, is, is0, n2
+      integer ix, iy, is, is0, n2, inucl, iz
       integer ncall, pot_eq, no_current, no_solve, style, elm_count
       integer, save :: nnucl, zmaxmax                                   !som 09.02.21
       integer, save :: transport_namelist = 0
@@ -127,7 +138,6 @@
       integer, save :: Zhdanov_test = 0                                 !som 16.06.21
       integer, save :: Zhdanov_cond = 1                                 !som 22.06.21
       integer, save :: Zhdanov_visu = 1                                 !som 10.08.21
-      integer, save :: zh_vis_type = 0                                  !som 13.01.22
       integer, save :: icase = 0                                        !som 05.03.21
       integer, save :: mode = 1                                         !som 10.06.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
@@ -152,11 +162,16 @@
      &  cvsahz0_luc(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa0_luc(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  chci0_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                     !som 08.10.21
+     &  chci_al_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                  !som 08.10.21
      &  chci0_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !som 08.10.21
      &  cvsa0_hAdp(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),      !som 20.10.21
      &  cvsa0_hBdp(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                   !som 20.10.21
      &  cvsahz0_hAdp(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),    !som 08.10.21
      &  cvsahz0_hBdp(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                 !som 08.10.21
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),    !som 22.12.23
+     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
@@ -232,6 +247,15 @@
         call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 10.06.21
         call ipgeti ('b2tral_zh_vis_type', zh_vis_type)           !som 13.01.22
         call ipgeti ('b2tral_mode', mode)                         !som 15.03.21
+        call ipgeti ('b2tral_amfact_on', amfact_on)             ! !som 28.01.22
+        call alloc_b2mod_zhco_amfact (nspecies)                   !som 21.01.22
+        amfact(0:nspecies-1) = 1.0_R8
+        if (amfact_on.ne.0) then
+         do is=0, nspecies-1
+          write (chns,'(i3.3)') is
+          call ipgetr ('b2tral_amfact_'//chns, amfact(is))
+         enddo
+        endif
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
@@ -329,7 +353,20 @@
      &   cvsahz0_nofl, cvsahz0_fl, cvsahz0_luc, cvsahz_drho,
      &   cvsa0_luc, cvsa_drho, cvsa0_hAdp, cvsa0_hBdp,
      &   cvsa_hAdp_luc, cvsa_hBdp_luc, cvsahz0_hAdp, cvsahz0_hBdp,
-     &   cvsahz_hAdp_luc, cvsahz_hBdp_luc)                            !som 08.10.21
+     &   cvsahz_hAdp_luc, cvsahz_hBdp_luc,
+     &   cvsa_uAdp_fl, cvsa_uBdp_fl, cvsa_uAdp_luc ,cvsa_uBdp_luc,
+     &   cvsahz_uAdp_fl, cvsahz_uBdp_fl, cvsahz_uAdp_luc,
+     &   cvsahz_uBdp_luc)                                             !som 08.10.2021 22.12.23
+
+*   ..compute ion heat conductivity summed over charge states
+        chci_al_ast_luc = 0.0_R8
+        do inucl=0,nspecies-1
+         do iz= 1, znnucl_int(inucl)
+          chci_al_ast_luc(-1:nx,-1:ny,0,0,inucl) =
+     &    chci_al_ast_luc(-1:nx,-1:ny,0,0,inucl) +
+     &    chci_a_luc(-1:nx,-1:ny,0,0,nucl2s(inucl,iz))
+         enddo
+        enddo
 
         if (Zhdanov_test.eq.0 .and. Zhdanov_cond.eq.1) then           !som 10.08.21
           chci0(-1:nx,-1:ny,0:1,0:1)=chci0_luc(-1:nx,-1:ny,0:1,0:1)
@@ -345,7 +382,7 @@
      &     cvsahz_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1)
           cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1)=
      &     cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1)
-         else if (zh_vis_type.eq.1) then
+         else if (zh_vis_type.eq.1 .or. zh_vis_type.eq.2) then
           cvsahz0(-1:nx,-1:ny,0:1,0:1,0:ns-1)=
      &     cvsahz0_luc(-1:nx,-1:ny,0:1,0:1,0:ns-1)
           cvsa0(-1:nx,-1:ny,0:1,0:1,0:ns-1)=
@@ -390,6 +427,8 @@
      &       'b2trzh_fllim_chci_alx'//chns)
             call my_out(70,nx,ny,chci_al_luc(-1,-1,0,0,is),
      &       'b2trzh_luciani_fllim_chci_alx'//chns)
+            call my_out(70,nx,ny,chci_al_ast_luc(-1,-1,0,0,is),
+     &       'b2trzh_luciani_fllim_chci_ast_alx'//chns)
             do is0 = 0, nspecies-1
              write (chns0,'(i3.3)') is0
               call my_out(70,nx,ny,cvsa0_hAdp(-1,-1,0,0,is,is0),
@@ -400,6 +439,10 @@
      &         'b2trzh_cvsahz_hAdpx'//chns//'_'//chns0)
               call my_out(70,nx,ny,cvsahz_hAdp_luc(-1,-1,0,0,is,is0),
      &         'b2trzh_luciani_cvsahz_hAdpx'//chns//'_'//chns0)
+              call my_out(70,nx,ny,cvsahz_uAdp_fl(-1,-1,0,0,is,is0),
+     &         'b2trzh_cvsahz_uAdpx'//chns//'_'//chns0)
+              call my_out(70,nx,ny,cvsahz_uAdp_luc(-1,-1,0,0,is,is0),
+     &         'b2trzh_luciani_cvsahz_uAdpx'//chns//'_'//chns0)
             enddo
             call my_out(70,nx,ny,cvsa0_hBdp(-1,-1,0,0,is),
      &       'b2trzh_cvsa_hBdpx'//chns)
@@ -409,6 +452,10 @@
      &       'b2trzh_cvsahz_hBdpx'//chns)
             call my_out(70,nx,ny,cvsahz_hBdp_luc(-1,-1,0,0,is),
      &       'b2trzh_luciani_cvsahz_hBdpx'//chns)
+            call my_out(70,nx,ny,cvsahz_uBdp_fl(-1,-1,0,0,is),
+     &       'b2trzh_cvsahz_uBdpx'//chns)
+            call my_out(70,nx,ny,cvsahz_uBdp_luc(-1,-1,0,0,is),
+     &       'b2trzh_luciani_cvsahz_uBdpx'//chns)
           enddo
         endif
 
@@ -427,6 +474,8 @@
      &       'b2trzh_rTdpgamma'//chns)
             call my_out(70,nx,ny,rwdpgamma_out(-1,-1,is),
      &       'b2trzh_rwdpgamma'//chns)
+            call my_out(70,nx,ny,piu_out(-1,-1,is),
+     &       'b2trzh_piu'//chns)
           enddo
         endif
       else

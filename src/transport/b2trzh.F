@@ -8,7 +8,10 @@
      &  cvsahz0_nofl, cvsahz0, cvsahz0_luc, cvsahz_drho_luc,
      &  cvsa0_luc, cvsa_drho_luc,
      &  cvsa_hAdp, cvsa_hBdp, cvsa_hAdp_luc, cvsa_hBdp_luc,
-     &  cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc)     !som 08.10.2021
+     &  cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc,
+     &  cvsa_uAdp_fl, cvsa_uBdp_fl, cvsa_uAdp_luc ,cvsa_uBdp_luc,
+     &  cvsahz_uAdp_fl, cvsahz_uBdp_fl, cvsahz_uAdp_luc,
+     &  cvsahz_uBdp_luc)     !som 08.10.2021 22.12.2023
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_b2cmpt
@@ -52,7 +55,15 @@
      &  cvsahz_hAdp(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),
-     &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1)
+     &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),     !som 22.12.23
+     &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
+     &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_luc(-1:nx,-1:ny,0:1,0:1,0:nspecies-1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -93,7 +104,9 @@
       real (kind=R8) :: wrk(-1:nx,-1:ny), volhz(-1:nx,-1:ny)
       real (kind=R8) :: cfl(-1:nx,-1:ny)
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
+     &  amti_mdf(0:nspecies-1),
      &  zeffne, nz2n(0:nspecies-1), nati(0:ns-1), eta_cl_xy(0:ns-1),
+     &  nalti(0:nspecies-1), eta_cl_al_eff_xy(0:nspecies-1),
      &  G2(0:nspecies-1,0:nspecies-1), G8(0:nspecies-1,0:nspecies-1),
      &  Ainv(0:2*nspecies-1,0:2*nspecies-1),
      &  Ainv_mdf(0:nspecies-1,0:2*nspecies-1),
@@ -102,6 +115,8 @@
      &  Ainv_mdf_fl(0:nspecies-1,0:2*nspecies-1),
      &  Cinv(0:2*nspecies-1,0:2*nspecies-1),
      &  c_rwA(0:nspecies-1,0:nspecies-1),
+     &  c_hwA_mdf(0:nspecies-1,0:nspecies-1),
+     &  c_rwA_mdf(0:nspecies-1,0:nspecies-1),
      &  c_R_TA_an_nofl(0:nspecies-1,0:nspecies-1),
      &  c_R_TA_an(0:nspecies-1,0:nspecies-1), c_rTA_an(0:nspecies-1),
      &  c_hTA_an(0:nspecies-1), c_hTA_an_fl(0:nspecies-1),
@@ -113,13 +128,19 @@
      &  c_pi_hA_an(0:nspecies-1),
      &  tau_Zh(0:nspecies-1,0:nspecies-1),
      &  eta_cl(-1:nx,-1:ny,0:ns-1),
+     &  eta_cl_a_only(-1:nx,-1:ny,0:ns-1),
      &  eta_cl_fl(-1:nx,-1:ny,0:ns-1),
+     &  eta_cl_a_only_fl(-1:nx,-1:ny,0:ns-1),
+     &  eta_uAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
+     &  eta_uBdp(-1:nx,-1:ny,0:nspecies-1),
+     &  eta_uAdp_fl(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
+     &  eta_uBdp_fl(-1:nx,-1:ny,0:nspecies-1),
      &  eta_hAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
      &  eta_hBdp(-1:nx,-1:ny,0:nspecies-1),
      &  t0, t1, czetap, zetap(-1:nx,-1:ny), I_al(0:nspecies-1),
      &  cF_limh(0:nspecies-1), cF_limBh(0:nspecies-1),
      &  cF_lim(0:nspecies-1), cF_limB(0:nspecies-1),
-     &  cF_limv(0:ns-1),
+     &  cF_limv(0:ns-1), cF_limv_al(0:nspecies-1),
      &  wrkc(0:nspecies-1), wrkcc(0:nspecies-1,0:nspecies-1),
      &  wrkcA(0:nspecies-1,0:nspecies-1),
      &  wrkcB(0:nspecies-1,0:nspecies-1),
@@ -188,6 +209,15 @@
 *   ..calculate the N-coefficients and all mass-related variables
         call b2trcn (nspecies, amnucl, N2, N3, N4, N5, N6, N8, N9,
      &    N10, N11, N12, N13, N14, N15, N16, mu, rmu, rmd2, mum, mdm)   !som 02.08.2021
+        if (amfact_on.ne.0) then
+*   ..correct mass if is needed
+          amnucl_mdf(0:nspecies-1)=
+     &    amnucl(0:nspecies-1)*amfact(0:nspecies-1)
+          call b2trcn (nspecies, amnucl_mdf, N2_mdf, N3_mdf, N4_mdf,
+     &     N5_mdf, N6_mdf, N8_mdf, N9_mdf,
+     &     N10_mdf, N11_mdf, N12_mdf, N13_mdf, N14_mdf, N15_mdf,
+     &     N16_mdf, mu_mdf, rmu_mdf, rmd2_mdf, mum_mdf, mdm_mdf)        !som 28.01.2022
+        endif
 
 *   ..calculate the matrix of thermal force switches
         if (nspecies.gt.1) then
@@ -311,6 +341,52 @@
      &          3.5_R8*Cinv(0:nspecies-1,j+nspecies))
      &         /rmu(0:nspecies-1,j)
             enddo
+*    ..correct the thermal force
+            if (amfact_on.ne.0) then
+              amti_mdf=amnucl_mdf*mp/ti(ix,iy)
+
+*    ..calculate the inverted matrix for the heat flux/R-moment
+              call b2trca(nspecies, amti_mdf, N5_mdf,
+     &         N6_mdf, N9_mdf,
+     &         N10_mdf, N11_mdf, N12_mdf, nz2n, Ainv)
+
+*    ..re-normalize part of the inverted matrix
+              do j = 0, 2*nspecies-1
+                Ainv_mdf(0:nspecies-1,j) =
+     &           amti_mdf(0:nspecies-1)*Ainv(nspecies:2*nspecies-1,j)
+              enddo
+
+*    ..flux-limiting coefficient
+              do i = 0, nspecies-1
+                Ainv_fl(i,0:nspecies-1) =
+     &           cF_lim(i)*Ainv(i,0:nspecies-1)
+                Ainv_mdf_fl(i,0:nspecies-1) =
+     &           cF_lim(i)*Ainv_mdf(i,0:nspecies-1)
+              enddo
+*    ..G-objects for the thermal and friction forces
+              do j = 0, nspecies-1
+                G2(:,j) = nz2n(:)*nz2n(j)*N2_mdf(:,j)
+                G8(:,j) = nz2n(:)*nz2n(j)*N8_mdf(:,j)
+              enddo
+
+*    ..calculate the velocity parts of heat flux and R-transport coefficient
+              call b2trhw(nspecies, G2, G8, mum_mdf,
+     &         Ainv, Ainv_mdf,
+     &         c_hwA_mdf(0:nspecies-1,0:nspecies-1),
+     &         c_rwA_mdf(0:nspecies-1,0:nspecies-1))
+*    ..calculate the thermal force transport coefficient without flux limiting
+              call b2trtf(nspecies, G2, G8,
+     &          mum_mdf, mdm_mdf, Ainv, Ainv_mdf,
+     &          wrkcc)
+              c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
+*    ..calculate the thermal force transport coefficient with flux limiting
+              wrkG2 = G2*tf_ton_mat
+              wrkG8 = G8*tf_ton_mat
+              call b2trtf(nspecies, wrkG2, wrkG8,
+     &          mum_mdf, mdm_mdf, Ainv_fl, Ainv_mdf_fl,
+     &          wrkcc)
+              c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
+            endif
 
 *    ..for the distribution function
             if (zh_dist_fun.eq.1) then
@@ -412,6 +488,13 @@
               enddo
             endif
 
+            if (amfact_on.ne.0) then
+              c_hwA_mdf(0:nspecies-1,0:nspecies-1)=
+     &        c_hwA(0:nspecies-1,0:nspecies-1)
+              c_rwA_mdf(0:nspecies-1,0:nspecies-1)=
+     &        c_rwA(0:nspecies-1,0:nspecies-1)
+            endif
+
           endif
 
 *    ..calculate the thermal force correction for each charge state
@@ -427,6 +510,17 @@
           c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcA
           c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
           c_R_w (ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
+
+          if (amfact_on.ne.0) then
+            wrkc = z2n_xy(ix,iy,0:nspecies-1)
+            call b2trfr(nspecies, mum_mdf, rmu_mdf, wrkc,
+     &       c_hwA_mdf(0:nspecies-1,0:nspecies-1),
+     &       c_rwA_mdf(0:nspecies-1,0:nspecies-1),
+     &       wrkcB, wrkcA, wrkcc)
+            c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcA
+            c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
+            c_R_w (ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
+          endif
 
 *    ..calculate the classical eta coefficient including charge state correction
           eta_cl(ix,iy,0:ns-1) = 0.0_R8
@@ -445,12 +539,26 @@
      &        (z2n_xy(ix,iy,i)/(nal(ix,iy,i)*iz**2)-1.0_R8))
             enddo
 
+            do j = 0, nspecies-1
+              eta_uAdp(ix,iy,i,j) = c_pi_uA(i,j)*tau_Zh(i,j)
+            enddo
+
+            eta_uBdp(ix,iy,i) = 2.0_R8*c_pi_uB(i)*tau_Zh(i,i)
+
 *    ..the heat flux dependent part
             do j = 0, nspecies-1
               eta_hAdp(ix,iy,i,j) = c_pi_hA(i,j)*tau_Zh(i,j)
             enddo
 
             eta_hBdp(ix,iy,i) = 2.0_R8*c_pi_hB(i)*tau_Zh(i,i)
+
+*    ..the effective velocity-dependent part for the flux limiting
+            eta_cl_al_eff_xy(i) = 0.0_R8
+            do j = 0, nspecies-1
+              eta_cl_al_eff_xy(i) = eta_cl_al_eff_xy(i) +
+     &         eta_uAdp(ix,iy,i,j) * ti(ix,iy) * na(ix,iy,j)
+
+            enddo
           enddo
 
 *    ..calculate flux limiting for the viscous stress
@@ -458,6 +566,10 @@
           eta_cl_xy(0:ns-1) = eta_cl(ix,iy,0:ns-1)
           call b2trfl_vis (ix, iy, ns,
      &     eta_cl_xy, nati, gamma, cfl(ix,iy), cF_limv)
+
+          nalti(0:nspecies-1) = nal(ix,iy,0:nspecies-1)*ti(ix,iy)
+          call b2trfl_vis (ix, iy, nspecies,
+     &     eta_cl_al_eff_xy, nalti, gamma, cfl(ix,iy), cF_limv_al)
 
 *    ..the velocity-dependent part
           do is = 0, ns-1
@@ -467,6 +579,40 @@
 *    ..apply flux limiting
             eta_cl_fl(ix,iy,is) = eta_cl(ix,iy,is)*
      &       cF_limv(is)
+          enddo
+
+*    ..the velocity-dependent part improved form
+          do i = 0, nspecies-1
+*    ..apply bx^2
+            do j = 0, nspecies-1
+              eta_uAdp(ix,iy,i,j) = eta_uAdp(ix,iy,i,j)*
+     &         (bb(ix,iy,0)/bb(ix,iy,3))**2
+            enddo
+
+            eta_uBdp(ix,iy,i) = eta_uBdp(ix,iy,i)*
+     &       (bb(ix,iy,0)/bb(ix,iy,3))**2
+
+            do iz= 1, znnucl_int(i)
+              eta_cl_a_only(ix,iy,nucl2s(i,iz)) =
+     &         na(ix,iy,nucl2s(i,iz))*ti(ix,iy)*
+     &         na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
+     &        (eta_uAdp(ix,iy,i,i)+zhcscorr*eta_uBdp(ix,iy,i)*
+     &        (1/Ia(ix,iy,nucl2s(i,iz))-1.0_R8))
+
+*    ..apply flux limiting
+              eta_cl_a_only_fl(ix,iy,nucl2s(i,iz)) =
+     &         eta_cl_a_only(ix,iy,nucl2s(i,iz))*
+     &         cF_limv_al(i)
+
+              do j = 0, nspecies-1
+                eta_uAdp_fl(ix,iy,i,j) =
+     &           eta_uAdp(ix,iy,i,j)*
+     &           cF_limv_al(i)
+              enddo
+
+              eta_uBdp_fl(ix,iy,i) = eta_uBdp(ix,iy,i)*
+     &         cF_limv_al(i)
+            enddo
           enddo
 
 *    ..the heat flux dependent part
@@ -572,6 +718,10 @@
      &           sum(c_rw(0:nspecies-1,inucl)*
      &              (ua(ix,iy,nucl2s(inucl,iz))-
      &               av_ualpha(ix,iy,0:nspecies-1)))
+
+                piu_out(ix,iy,nucl2s(inucl,iz)) =
+     &      -4.0e0_R8/3.0e0_R8*eta_cl(ix,iy,nucl2s(inucl,iz))/
+     &      ((bb(ix,iy,0)/bb(ix,iy,3))**2)*gavm_uc(ix,iy)
               enddo
             enddo
           endif
@@ -596,22 +746,51 @@
 *    ..ion velocity-dependent viscosity on the cell boundary
       cvsa_drho   = 0.0_R8                                               !srv 30.01.23
       cvsahz_drho = 0.0_R8                                               !srv 30.01.23
+      cvsa0 = 0.0_R8                                                     !som 19.12.23
+      cvsahz0 = 0.0_R8                                                   !som 20.12.23
+
       volhz = hz*vol
-      do is = 0, ns-1
-        wrk(-1:nx,-1:ny) =
-     &   eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+      if (zh_vis_type.eq.0 .or. zh_vis_type.eq.1) then
+        do is = 0, ns-1
+          wrk(-1:nx,-1:ny) =
+     &     eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     wrk, cvsahz0(-1,-1,0,0,is))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     wrk, cvsa0(-1,-1,0,0,is))
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_cl_fl(-1,-1,is), cvsahz_drho(-1,-1,0,0,is))
+          wrk(-1:nx,-1:ny) =
+     &     eta_cl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     wrk, cvsahz0_nofl(-1,-1,0,0,is))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     eta_cl_fl(-1,-1,is), cvsa_drho(-1,-1,0,0,is))
+        enddo
+      else if (zh_vis_type.eq.2) then
+        do is = 0, ns-1
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_cl_a_only_fl(-1:nx,-1:ny,is), cvsahz0(-1,-1,0,0,is))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     eta_cl_a_only_fl(-1:nx,-1:ny,is), cvsa0(-1,-1,0,0,is))
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_cl_a_only(-1:nx,-1:ny,is), cvsahz0_nofl(-1,-1,0,0,is))
+        enddo
+      endif
+
+*    ..additional velocity-dependent viscosity on the cell boundary
+      do i = 0, nspecies-1
+        do j = 0, nspecies-1
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &     eta_uAdp_fl(-1,-1,i,j), cvsahz_uAdp_fl(-1,-1,0,0,i,j))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     eta_uAdp_fl(-1,-1,i,j), cvsa_uAdp_fl(-1,-1,0,0,i,j))
+        enddo
+
         call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &   wrk, cvsahz0(-1,-1,0,0,is))
+     &   eta_uBdp_fl(-1,-1,i), cvsahz_uBdp_fl(-1,-1,0,0,i))
         call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &   wrk, cvsa0(-1,-1,0,0,is))
-        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &   eta_cl_fl(-1,-1,is), cvsahz_drho(-1,-1,0,0,is))
-        wrk(-1:nx,-1:ny) =
-     &   eta_cl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
-        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
-     &   wrk, cvsahz0_nofl(-1,-1,0,0,is))
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &   eta_cl_fl(-1,-1,is), cvsa_drho(-1,-1,0,0,is))
+     &   eta_uBdp_fl(-1,-1,i), cvsa_uBdp_fl(-1,-1,0,0,i))
       enddo
 
 *    ..ion heat flux dependent viscosity on the cell boundary
@@ -682,6 +861,43 @@
      &         f_luc_et(ix,iy)
               cvsa_drho_luc(ix,iy,0,0,is) = cvsa_drho(ix,iy,0,0,is)*
      &         f_luc_et(ix,iy)
+            endif
+          enddo
+        enddo
+      enddo
+
+*    ..apply Luciani correction for the addtional part of the
+*      velocity-dependent viscosity
+      do i = 0, nspecies-1
+        do j = 0, nspecies-1
+          do iy = -1, ny
+            do ix = -1, nx                                               !srv 30.01.23
+              if (on_closed_surface(ix,iy)) then
+                cvsahz_uAdp_luc(ix,iy,0,0,i,j) =
+     &           cvsahz_uAdp_fl(ix,iy,0,0,i,j)*
+     &                                    f_luc_et(ix,iy)
+                cvsa_uAdp_luc(ix,iy,0,0,i,j) =
+     &           cvsa_uAdp_fl(ix,iy,0,0,i,j)*f_luc_et(ix,iy)
+              else
+                cvsahz_uAdp_luc(ix,iy,0,0,i,j) =
+     &           cvsahz_uAdp_fl(ix,iy,0,0,i,j)
+                cvsa_uAdp_luc(ix,iy,0,0,i,j) =
+     &           cvsa_uAdp_fl(ix,iy,0,0,i,j)
+              endif
+            enddo
+          enddo
+        enddo
+
+        do iy = -1, ny
+          do ix = -1, nx                                                 !srv 30.01.23
+            if (on_closed_surface(ix,iy)) then
+              cvsahz_uBdp_luc(ix,iy,0,0,i) =
+     &         cvsahz_uBdp_fl(ix,iy,0,0,i)*f_luc_et(ix,iy)
+              cvsa_uBdp_luc(ix,iy,0,0,i) =
+     &         cvsa_uBdp_fl(ix,iy,0,0,i)*f_luc_et(ix,iy)
+            else
+              cvsahz_uBdp_luc(ix,iy,0,0,i) = cvsahz_uBdp_fl(ix,iy,0,0,i)
+              cvsa_uBdp_luc(ix,iy,0,0,i) = cvsa_uBdp_fl(ix,iy,0,0,i)
             endif
           enddo
         enddo

@@ -1360,6 +1360,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2trcl_luc_et_form</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Only active if b2trcl_lluciani.eq.3 (default).
+					If luc_et_form.eq.0, the SPb form of the Luciani coefficient is applied. This is correct only for hydrogenic majority plasmas.
+					If luc_et_form.eq.1 (default), the generalized form of the SPb Luciani coefficient is used. If b2tral_Zhdanov_closure.eq.0 (default), then the result is the same as if the SPb form of the Luciani coefficient is used (and correct only for hydrogenic majority plasmas). If b2tral_Zhdanov_closure.eq.1, then the multi-ion generalized form of the SPb Luciani coefficient is used (correct for arbitrary plasma mixtures).
+				</description>
+			</switch>
+			<switch>
 				<name>b2trcl_lthf21</name>
 				<default>0</default>
 				<type>integer</type>
@@ -1380,7 +1390,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2tral_Zhdanov_closure.eq.1, the Grad-Zhdanov module is enabled, and fully multi-ion collisional closure for the components along the magnetic field of the vector and tensor moments of the distribution function is applied for all the ions (without specifying main ions and impurities) based on the works of Zhdanov [V. M. Zhdanov, 2002] and Makarov et al. [S. O. Makarov et al., PoP 2021]. Otherwise the standard SOLPS-ITER model is applied.
+					If b2tral_Zhdanov_closure.eq.1, the Zhdanov-Grad module is enabled, and fully multi-ion collisional closure for the components along the magnetic field of the vector and tensor moments of the distribution function is applied for all the ions (without specifying main ions and impurities) based on the works of Zhdanov [V. M. Zhdanov, 2002] and Makarov et al. [S. O. Makarov et al., PoP 2021]. Otherwise the standard SOLPS-ITER model is applied.
 				</description>
 			</switch>
 			<switch>
@@ -1388,7 +1398,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2tral_zh_imp_analyt.eq.0, the Grad-Zhdanov closure method is applied by means of the explicit matrix inversion methed (EMIM).
+					If b2tral_zh_imp_analyt.eq.0, the Zhdanov-Grad closure method is applied by means of the explicit matrix inversion methed (EMIM).
 					If b2tral_zh_imp_analyt.eq.1, the improved analytical method (IAM) is applied. See [S. O. Makarov et al., PoP 2021] for details.
 					This switch is subservient to b2tral_Zhdanov_closure.
 				</description>
@@ -1495,7 +1505,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sifr_Zhdanov_test.eq.1, the Grad-Zhdanov calculation takes place, but is not used. To be used for testing purposes.
+					If b2sifr_Zhdanov_test.eq.1, the Zhdanov-Grad calculation takes place, but is not used. To be used for testing purposes.
 				</description>
 			</switch>
 			<switch>
@@ -1523,6 +1533,7 @@
 				<description>
 					If b2tral_zh_vis_type.eq.0, the Braginskii-like velocity-dependent stress-viscosity is used.
 					If b2tral_zh_vis_type.eq.1, the Zhdanov-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.2, the Makarov-like velocity-dependent stress-viscosity is used.
 				</description>
 			</switch>
 			<switch>
@@ -1532,6 +1543,22 @@
 				<description>
 					This switch defines the fraction of the cross-ion part of the stress-viscosity term which is applied. The cross-ion part of the stress-viscosity term can lead to numerical problems. If so, it is recommended to start from '0.0' and increase it step by step.
 					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_on</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_amfact_on.eq.1, the mass correction for the thermal and friction force calculation is applied.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_***</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					If b2tral_amfact_on.eq.1, this multiplier is applied for the mass of the species corresponding to isonuclear sequence number '***'. Recall the sequence numbering starts at zero (e.g. b2tral_amfact_000, b2tral_amfact_001, ...).
 				</description>
 			</switch>
 			<switch>
@@ -2208,6 +2235,60 @@
 					<name>b2tqna_bb_ref</name>
 					<default>See description (real)</default>
 					<type>real</type>
+				</switch>
+			</switchgroup>
+			<switchgroup>
+				<name>*_CNV</name>
+				<description>
+					Model parameters for the anomalous radial convection velocity mimicking "blob" transport. The radial convection velocity for all species in the SOL is calculated with the formula: vla0=vout_cnv*y^pw0_cnv*(1-x^pw1_cnv)^pw2_cnv where x is the normalized poloidal coordinate such that at the X-point it is equal to 1, and at jxa_cnv is 0, and y is the normalized radial coordinate, such that at jsep_cnv it is equal to 0, and at the North boundary 1. The six *_CNV parameters are only activated if 'b2tqna_user_transport' is set to '6'.
+				</description>
+				<switch>
+					<name>b2tqna_vout_cnv</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Value of the "blob" convection velocity at the North boundary (in m/s).
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_pw0_cnv</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Exponent applied to the radial coordinate when determining the the "blob" velocity.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_pw1_cnv</name>
+					<default>5.0</default>
+					<type>real</type>
+					<description>
+						First exponent in the poloidal profile of the "blob" velocity.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_pw2_cnv</name>
+					<default>2.0</default>
+					<type>real</type>
+					<description>
+						Second exponent in the poloidal profile of the "blob" velocity.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_jsep_cnv</name>
+					<default>jsep</default>
+					<type>integer</type>
+					<description>
+						Radial index where the "blob" convection velocity starts increasing from 0.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_jxa_cnv</name>
+					<default>jxa</default>
+					<type>integer</type>
+					<description>
+						Poloidal index where the "blob" convection velocity has its maximum.
+					</description>
 				</switch>
 			</switchgroup>
 			<switch>

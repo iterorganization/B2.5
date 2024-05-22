@@ -2,7 +2,9 @@
 *.specification
 
       subroutine b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qs, bb,      !srv 20.09.06 { 16.10.17 19.02.21
-     &  na, ua, cvsa_cl, cvsa_drho, fac_vis, fchvispar_a, fchvispar)    !srv 22.06.08 som 18.08.21
+     &  na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,
+     &  cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 26.04.24
+     &  fchvispar_a, fchvispar)                                         !srv 22.06.08 som 18.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -13,9 +15,15 @@
       use b2mod_geo
      , , only : hy1
       use b2mod_zhfrtf
-     , , only: avm_u,                                                   !som 17.08.21
-     &         b2mod_zhfrtf_avm_u                                       !som 18.08.21
+     , , only: avm_u, nal,                                              !som 17.08.21 30.04.24
+     &         b2mod_zhfrtf_avm_u, b2mod_zhfrtf_prep                    !som 18.08.21 30.04.24
+      use b2mod_b2mrel
+     & , only : s2nucl, nucl2s, znnucl_int
       use b2mod_subsys
+      use b2mod_b2zhco
+     , , only: zh_vis_type, zhcscorr
+      use b2mod_rates                                                   !som 07.05.24
+     & , only : rza
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                        !srv 19.02.21
@@ -23,11 +31,14 @@
      &  vol(-1:nx,-1:ny),
      &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1),
+     &  ti(-1:nx,-1:ny),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 16.10.17
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !som 18.08.21
      1  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1  qs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                       !srv 22.06.08
+     1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny),                      !srv 22.06.08
+     &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),  !som 26.04.24
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1)                  !som 26.04.24
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchvispar_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -48,19 +59,19 @@
 *   ..global named constants
 
 *   ..local variables
-      integer ncall, ix, iy, ib, is
+      integer ncall, ix, iy, ib, is, inucl, iz
       integer, save :: no_current = 0
       integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      &  vis_par
       real (kind=R8) ::
      *   dvpar(-1:nx,-1:ny),
-     *   wrk0(-1:nx,-1:ny), gOnedBsq(-1:nx,-1:ny,0:1,0:1)
+     *   wrk0(-1:nx,-1:ny), gOnedBsq(-1:nx,-1:ny,0:1,0:1),
+     *   t0
 !     real (kind=R8) :: wght(-1:nx,-1:ny)
       save ncall, vis_par
-      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
-      integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
-      integer, save :: zh_vis_type = 0                                   !som 13.01.22
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0            !som 16.08.21
+      integer, save :: Zhdanov_visu = 1                                 !som 16.08.21
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -89,13 +100,14 @@
         call b2xvff (nx, ny, cvsa_cl(-1,-1,0,0,is), 'cvsa_cl')          !srv 16.10.17
        enddo
        call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                  !som 13.01.22
       endif
 
       if (Zhdanov_closure.ne.0 .and. Zhdanov_test.ne.1 .and.
      &    Zhdanov_visu.ne.0) then
 *   ..re-calculate mass-averaged velocity
         call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)                     !som 16.08.21
+*   ..re-calculate isonuclear density
+        call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)                          !som 30.04.24
       endif
 
 c Drift terms
@@ -177,6 +189,78 @@ c Drift terms
      &        (avm_u(ix,iy)*sqrt(bb(ix,iy,3))
      &        -avm_u(leftix(ix,iy),leftiy(ix,iy))*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+             endif
+            enddo
+           enddo
+          else if (zh_vis_type.eq.2) then
+           do iy = -1, ny
+            do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then
+!           it has been considered that cvsa_cl was multiplied by bx**2
+              dvpar(ix,iy) =
+     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &         cvsa_cl(ix,iy,0,0,is)*
+     &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
+     &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+
+              do inucl=0,nspecies-1                                     !som 30.04.24
+               if(inucl.ne.s2nucl(is)-1) then
+                t0=0.0e0_R8
+                do iz= 1, znnucl_int(inucl)
+                 t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(inucl,iz))*
+     &           ti(ix,iy)+
+     &           na(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
+     &           ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &           (ua(ix,iy,nucl2s(inucl,iz))*sqrt(bb(ix,iy,3))
+     &           -ua(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
+     &           sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+                enddo
+
+                dvpar(ix,iy) = dvpar(ix,iy) +
+     &          (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &           bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &           sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &                bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &           (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &           na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &           0.5e0_R8*cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,inucl)*
+     &           t0
+               endif
+              enddo
+
+              t0=0.0e0_R8                                               !som 07.05.24
+              do iz= 1, znnucl_int(s2nucl(is)-1)
+               if(iz.ne.nint(rza(ix,iy,is))) then
+                t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
+     &          ti(ix,iy)+
+     &          na(leftix(ix,iy),leftiy(ix,iy),
+     &          nucl2s(s2nucl(is)-1,iz))*
+     &          ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &          (ua(ix,iy,nucl2s(s2nucl(is)-1,iz))*sqrt(bb(ix,iy,3)) -
+     &          ua(leftix(ix,iy),leftiy(ix,iy),
+     &          nucl2s(s2nucl(is)-1,iz))*
+     &          sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+               endif
+              enddo
+
+              dvpar(ix,iy) = dvpar(ix,iy) +
+     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &         (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &         na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &         0.5e0_R8*
+     &         (cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,s2nucl(is)-1)
+     &         -zhcscorr*cvsa_uBdp_al(ix,iy,0,0,s2nucl(is)-1))*
+     &         t0
+
              endif
             enddo
            enddo

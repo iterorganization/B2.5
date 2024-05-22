@@ -2,9 +2,11 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     *  hx, hy, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,           !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho, she0, shi0)                                         !som 16.08.21 !srv 28.06.03 07.07.09
+     *  hx, hy, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,          !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,        !som 16.08.21 !srv 24.08.21
+     *  cvsa_drho,                                                    !som 16.08.21
+     *  cvsa_uAdp_albe, cvsa_uBdp_al,                                 !som 08.05.24
+     *  she0, shi0)                                                   !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -16,10 +18,12 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_b2zhco
-     & , only: zhd_corr                                               !som 21.03.21
+     & , only: zhd_corr, zh_vis_type, zhcscorr                        !som 21.03.21  21.12.23
       use b2mod_zhfrtf
-     & , only: avm_u,                                                 !som 21.03.21 16.08.21
-     &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
+     & , only: avm_u, nal,                                            !som 21.03.21 16.08.21
+     &         b2mod_zhfrtf_avm_u, b2mod_zhfrtf_prep                  !som 18.08.21
+      use b2mod_b2mrel
+     & , only : s2nucl, nucl2s, znnucl_int
       use b2mod_geo
      & , only : hy1
       use b2mod_balance !djm Jan2017
@@ -47,6 +51,8 @@
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                        !som 16.08.21
+     &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1), !som 08.05.24
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),               !som 08.05.24
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -67,7 +73,7 @@
 *   ..global named constants
 
 *   ..local variables
-      integer ncall, style, n2, ix, iy, is, isb, k
+      integer ncall, style, n2, ix, iy, is, isb, k, inucl, iz
       integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0,    !srv 11.09.09
      &                 iout_b2wdat = 0
       integer, save :: icase = 0
@@ -79,7 +85,6 @@
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      &                 Zhdanov_tf_fr = 1                              !som 01.07.21
       integer, save :: Zhdanov_visu = 1                               !som 16.08.21
-      integer, save :: zh_vis_type = 0                              !som 13.01.22
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
       real (kind=R8) :: ft                                            !som 16.08.21
@@ -186,7 +191,6 @@
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 21.03.21
        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)             !som 01.07.21
        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)               !som 18.08.21
-       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                 !som 13.01.22
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -467,6 +471,8 @@
      &  Zhdanov_visu.eq.1) then                                       !som 18.08.21
 *   ..re-calculate mass-average velocity
         call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)
+*   ..re-calculate isonuclear density
+        call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)                        !som 09.05.24
       endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
@@ -511,6 +517,64 @@ cwdk compute radial differences of ua at cell faces
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
      &         ft*cvsa_drho(ix,iy,0,0,is)*
      &        (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))**2    !som 16.08.21
+            endif
+           enddo
+          enddo
+         else if (zh_vis_type.eq.2) then                              !som 08.05.24
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+            else
+             wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
+
+             do inucl=0,nspecies-1                                     !som 09.05.24
+              if(inucl.ne.s2nucl(is)-1) then
+               t0=0.0e0_R8
+               do iz= 1, znnucl_int(inucl)
+                t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(inucl,iz))*
+     &          ti(ix,iy)+
+     &          na(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
+     &          ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &          (ua(ix,iy,nucl2s(inucl,iz))
+     &          -ua(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz)))
+               enddo
+
+               wrk0(ix,iy) = wrk0(ix,iy) +
+     &         (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &         na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &         0.5e0_R8*cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,inucl)*
+     &         t0*
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))
+              endif
+             enddo
+
+             t0=0.0e0_R8                                               !som 09.05.24
+             do iz= 1, znnucl_int(s2nucl(is)-1)
+              if(iz.ne.nint(rza(ix,iy,is))) then
+               t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
+     &         ti(ix,iy)+
+     &         na(leftix(ix,iy),leftiy(ix,iy),
+     &         nucl2s(s2nucl(is)-1,iz))*
+     &         ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &         (ua(ix,iy,nucl2s(s2nucl(is)-1,iz)) -
+     &         ua(leftix(ix,iy),leftiy(ix,iy),
+     &         nucl2s(s2nucl(is)-1,iz)))
+              endif
+             enddo
+
+             wrk0(ix,iy) = wrk0(ix,iy) +
+     &        (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &        na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &        nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &        0.5e0_R8*
+     &        (cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,s2nucl(is)-1)
+     &        -zhcscorr*cvsa_uBdp_al(ix,iy,0,0,s2nucl(is)-1))*
+     &        t0*
+     &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))
+
             endif
            enddo
           enddo
