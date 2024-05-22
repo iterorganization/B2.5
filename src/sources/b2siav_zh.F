@@ -127,7 +127,7 @@
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
       ft_h =  8.0_R8/15.0_R8                                        !som 11.10.21
-      smbvh  = 0.0_R8
+      smbvh = 0.0_R8
       smbvv = 0.0_R8
       smbvi = 0.0_R8                                                !som 13.08.21
 
@@ -479,11 +479,11 @@
                 wrk0(ix,iy)=0.0e0_R8
               else
                 if(zh_vis_type.eq.2) then
-                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_cl(ix,iy,0)/          !som 30.04.24
+                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_cl(ix,iy,0)/       !som 30.04.24
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
                 else
-                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
+                  wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/     !som 18.08.21
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*  !som 18.08.21
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
                 endif

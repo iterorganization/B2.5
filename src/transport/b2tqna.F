@@ -1286,7 +1286,7 @@ c
            elseif(nncut.eq.1) then
             nmdpl = leftcut(nncut)
             do ix = leftcut(nncut)+1, rightcut(nncut)-1
-             if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix !srv 11.01.13
+             if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
             enddo
            else
             write(*,*) ' b2tqna: nncut not equal 1 or 2'
@@ -1295,9 +1295,9 @@ c
            write(*,"(/' Parameters of H-regime')")
            write(*,"(' Number of midplane cell =',i4)") nmdpl
            call xertst(0.0e0_R8.le.delta1,
-     &                 'faulty argument b2tqna_delta1')               !srv 15.05.09
+     &                 'faulty argument b2tqna_delta1')                !srv 15.05.09
            call xertst(0.0e0_R8.le.delta2,
-     &                 'faulty argument b2tqna_delta2')               !srv 15.05.09
+     &                 'faulty argument b2tqna_delta2')                !srv 15.05.09
 
            allocate(coord(-1:ny), fun(-1:ny,0:2))
 

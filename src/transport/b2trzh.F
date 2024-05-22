@@ -106,7 +106,7 @@
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
      &  amti_mdf(0:nspecies-1),
      &  zeffne, nz2n(0:nspecies-1), nati(0:ns-1), eta_cl_xy(0:ns-1),
-     &  nalti(0:nspecies-1),eta_cl_al_eff_xy(0:nspecies-1),
+     &  nalti(0:nspecies-1), eta_cl_al_eff_xy(0:nspecies-1),
      &  G2(0:nspecies-1,0:nspecies-1), G8(0:nspecies-1,0:nspecies-1),
      &  Ainv(0:2*nspecies-1,0:2*nspecies-1),
      &  Ainv_mdf(0:nspecies-1,0:2*nspecies-1),
