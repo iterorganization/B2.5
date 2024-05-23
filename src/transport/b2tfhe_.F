@@ -491,10 +491,12 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fhe(1,1),'b2tfhe__fhe_r')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,0),'b2tfhe__fhe_mdf_th')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
-       call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
-       call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
-       call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
-       call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
+       if (balance.and.(balance_netcdf.ne.0)) then 
+         call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
+         call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
+         call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
+         call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
+       endif
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
        call my_out_us(70,nFc,1,ehx,'b2tfhe__eh_th')                      !srv 13.01.17
@@ -504,10 +506,12 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
       if(switch%iout_b2wdat.eq.4) then
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,0),'b2tfhe__fhe_mdf_th')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
-       call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
-       call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
-       call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
-       call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
+       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+         call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
+         call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
+         call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
+         call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
+       endif
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
       endif
