@@ -93,7 +93,7 @@ c     Internal variables
         segment = reshape((/ switch%ech_Rdep, 0.0_R8,
      &       switch%ech_Rdep, maxval(geo%cvY) /), shape(segment))
 
-        call cv_intersections (nCv, geo, mpg, segment, list_cv, list_ci,
+        call cv_intersections (geo, mpg, segment, list_cv, list_ci,
      &   nncv, nnci, nCv, 1, ifail)
         do cntr = 1, size(list_ci)
           if(list_ci(cntr).ne.0) then
@@ -112,7 +112,7 @@ c     Internal variables
           segment = reshape((/ 0.0_R8, maxval(geo%cvY)/2.0_R8,
      &       maxval(geo%cVx), maxval(geo%cvY)/2.0_R8 /), shape(segment))
 
-          call cv_intersections (nCv, geo, mpg, segment, list_cv,
+          call cv_intersections (geo, mpg, segment, list_cv,
      &         list_ci, nncv, nnci, nCv, 1, ifail)
 
           do cntr = 1, nnci
