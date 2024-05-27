@@ -35,6 +35,8 @@
      *   last_solve_9(:),
      *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
+      integer, allocatable, save ::
+     *   dtfts(:)
 #else
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX),
      & dtco_ft(1:DEF_NYD)
@@ -84,7 +86,8 @@
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
      & corr_core_dn, corr_core_dt, add_te_corr_to_po,       ! IYS 19.12.2017
-     & sna_corr, taumax, do_sna_corr_core
+     & sna_corr, taumax, do_sna_corr_core, dtfts, dtee_ft,
+     & dtmo_ft, dtco_ft, dtei_ft
 
       contains
 
@@ -108,6 +111,7 @@
       allocate(dtmo_ft(1:DEF_NYD))
       allocate(dtee(0:nnreg(0)))
       allocate(dtee_ft(1:DEF_NYD))
+      allocate(dtfts(1:DEF_NYD))
       allocate(dtei(0:nnreg(0)))
       allocate(dtei_ft(1:DEF_NYD))
       allocate(dten(0:nnreg(0)))
@@ -135,6 +139,11 @@
       dtco=1.0_R8
       dtmo=1.0_R8
       dtee=1.0_R8
+      dtee_ft = 1.0_R8
+      dtei_ft = 1.0_R8
+      dtmo_ft = 1.0_R8
+      dtco_ft = 1.0_R8
+      dtfts = 0
       dtei=1.0_R8
       dten=1.0_R8
       dtco_ft=1.0_R8
@@ -197,6 +206,7 @@
       deallocate(dtmo_ft)
       deallocate(dtee)
       deallocate(dtee_ft)
+      deallocate(dtfts)
       deallocate(dtei)
       deallocate(dtei_ft)
       deallocate(dten)
