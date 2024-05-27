@@ -11,10 +11,10 @@
 
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   dtco(:,:),
-     *   dtmo(:,:),
-     *   dtee(:),
-     *   dtei(:),
+     *   dtco(:,:), dtco_ft(:),
+     *   dtmo(:,:), dtmo_ft(:),
+     *   dtee(:), dtee_ft(:),
+     *   dtei(:), dtei_ft(:),
      *   dten(:),
      *   corr_core_dn(:)                                   ! IYS 19.12.2017
      *   sna_corr(:), taumax(:)                            ! iyv 20.09.22
@@ -33,6 +33,8 @@
      *   last_solve_9(:),
      *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
+      integer, allocatable, save ::
+     *   dtfts(:)
 #else
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX),
      & dtco_ft(1:DEF_NYD)
@@ -82,7 +84,8 @@
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
      & corr_core_dn, corr_core_dt, add_te_corr_to_po,       ! IYS 19.12.2017
-     & sna_corr, taumax, do_sna_corr_core
+     & sna_corr, taumax, do_sna_corr_core, dtfts, dtee_ft,
+     & dtmo_ft, dtco_ft, dtei_ft
 
       contains
 
@@ -98,9 +101,14 @@
       allocate(time_factor(nCv))
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(dtco(0:nsd-1,0:nnreg(0)))
+      allocate(dtco_ft(1:DEF_NYD))
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
+      allocate(dtmo_ft(1:DEF_NYD))
       allocate(dtee(0:nnreg(0)))
+      allocate(dtee_ft(1:DEF_NYD))
+      allocate(dtfts(1:DEF_NYD))
       allocate(dtei(0:nnreg(0)))
+      allocate(dtei_ft(1:DEF_NYD))
       allocate(dten(0:nnreg(0)))
       allocate(corr_core_dn(0:nsd-1))                              ! IYS 19.12.2017
       allocate(sna_corr(nspecies))                                 !iyv 20.09.22
@@ -127,6 +135,11 @@
       dtco=1.0_R8
       dtmo=1.0_R8
       dtee=1.0_R8
+      dtee_ft = 1.0_R8
+      dtei_ft = 1.0_R8
+      dtmo_ft = 1.0_R8
+      dtco_ft = 1.0_R8
+      dtfts = 0
       dtei=1.0_R8
       dten=1.0_R8
       corr_core_dn=1.0_R8     ! IYS 19.12.2017
@@ -175,9 +188,14 @@
       deallocate(time_factor)
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(dtco)
+      deallocate(dtco_ft)
       deallocate(dtmo)
+      deallocate(dtmo_ft)
       deallocate(dtee)
+      deallocate(dtee_ft)
+      deallocate(dtfts)
       deallocate(dtei)
+      deallocate(dtei_ft)
       deallocate(dten)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
       deallocate(sna_corr)                                         !iyv 20.09.22
