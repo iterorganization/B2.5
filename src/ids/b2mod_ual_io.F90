@@ -472,6 +472,30 @@ contains
             extension_z(ntrgts) = z_max - z_min
           end if
         end if
+      else if (geometryType.eq.GEOMETRY_LIMITER) then
+        ntrgts = 2
+        itrg(1) = 1
+        ixpos(1) = -1+target_offset
+        ifpos(1) = 0
+        iypos(1) = topcut(1)
+        idir(1) = -1
+        iysep(1) = topcut(1)
+        itrg(2) = 2
+        ixpos(2) = nx-target_offset
+        ifpos(2) = nx
+        iypos(2) = topcut(1)
+        idir(2) = 1
+        iysep(2) = topcut(1)
+        ixmid(1) = jxa
+        ixmid(2) = jxa
+        flux_expansion(1) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(0,jsep),topiy(0,jsep),0)/       &
+            &                 wbbc(topix(0,jsep),topiy(0,jsep),3) )
+        flux_expansion(2) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
+            &                 wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
       end if
     else
       ntrgts = 2*nncut
