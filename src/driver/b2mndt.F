@@ -568,7 +568,7 @@ c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
 *   ..mms time-dependent error analysis
       if(switch%use_mms.eq.2.and.
      &  mod(ncall_b2mndt+1,ntim_step_out).eq.0) then
-        call calc_err(nCv, ns, st%pl, switch, mpg)
+        call calc_err(nCv, ns, st%pl, switch, itim, mpg)
       endif
 
 !     Temporary way to have fluxes output at each outer iteration only    !fc.22.04.24

@@ -77,7 +77,7 @@
         if (switch%use_mms.eq.1) then
           filename='bv_na_us.dat'
           call find_file(filename,lexist)
-          call xertst(lexist,'File '//trim(filename)//' is not found')
+          call xertst(lexist,'File '//trim(filename)//' not found')
           open(70,file=trim(filename))
           read (70,"(1x,e24.16)") ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
           close(70)
@@ -85,7 +85,7 @@
           write (chitim,'(i4.4)') itim
           filename='bv_na_us'//chitim//'.dat'
           call find_file(filename,lexist)
-          call xertst(lexist,'File '//trim(filename)//' is not found')
+          call xertst(lexist,'File '//trim(filename)//' not found')
           open(70,file=trim(filename))
           read (70,"(1x,e24.16)") ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
           close(70)
@@ -97,7 +97,7 @@
         if (switch%use_mms.eq.1) then
           filename='bv_ua_us.dat'
           call find_file(filename,lexist)
-          call xertst(lexist,'File '//trim(filename)//' is not found')
+          call xertst(lexist,'File '//trim(filename)//' not found')
           open(70,file=trim(filename))
           read (70,"(1x,e24.16)") ((bv_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
           close(70)
@@ -105,7 +105,7 @@
           write (chitim,'(i4.4)') itim
           filename='bv_ua_us'//chitim//'.dat'
           call find_file(filename,lexist)
-          call xertst(lexist,'File '//trim(filename)//' is not found')
+          call xertst(lexist,'File '//trim(filename)//' not found')
           open(70,file=trim(filename))
           read (70,"(1x,e24.16)") ((bv_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
           close(70)
@@ -114,20 +114,40 @@
 
       if (b2news_solving(4)) then
         if (any(solveee(0:mpg%nnreg(0)))) then
-          filename='bv_te_us.dat'
-          call find_file(filename,lexist)
-          call xertst(lexist,'File '//trim(filename)//' is not found')
-          open(70,file=trim(filename))
-          read (70,"(1x,e24.16)") (bv_te(iCv),iCv=1,nCv)
-          close(70)
+          if (switch%use_mms.eq.1) then
+            filename='bv_te_us.dat'
+            call find_file(filename,lexist)
+            call xertst(lexist,'File '//trim(filename)//' not found')
+            open(70,file=trim(filename))
+            read (70,"(1x,e24.16)") (bv_te(iCv),iCv=1,nCv)
+            close(70)
+          elseif (switch%use_mms.eq.2) then
+            write (chitim,'(i4.4)') itim
+            filename='bv_te_us'//chitim//'.dat'
+            call find_file(filename,lexist)
+            call xertst(lexist,'File '//trim(filename)//' not found')
+            open(70,file=trim(filename))
+            read (70,"(1x,e24.16)") (bv_te(iCv),iCv=1,nCv)
+            close(70)
+          endif
         endif
         if (any(solveei(0:mpg%nnreg(0)))) then
-          filename='bv_ti_us.dat'
-          call find_file(filename,lexist)
-          call xertst(lexist,'File '//trim(filename)//' is not found')
-          open(70,file=trim(filename))
-          read (70,"(1x,e24.16)") (bv_ti(iCv),iCv=1,nCv)
-          close(70)
+          if (switch%use_mms.eq.1) then
+            filename='bv_ti_us.dat'
+            call find_file(filename,lexist)
+            call xertst(lexist,'File '//trim(filename)//' not found')
+            open(70,file=trim(filename))
+            read (70,"(1x,e24.16)") (bv_ti(iCv),iCv=1,nCv)
+            close(70)
+          elseif (switch%use_mms.eq.2) then
+            write (chitim,'(i4.4)') itim
+            filename='bv_te_us'//chitim//'.dat'
+            call find_file(filename,lexist)
+            call xertst(lexist,'File '//trim(filename)//' not found')
+            open(70,file=trim(filename))
+            read (70,"(1x,e24.16)") (bv_ti(iCv),iCv=1,nCv)
+            close(70)
+          endif
         endif
       endif
 
@@ -135,7 +155,7 @@
      &     any(solvepo(0:mpg%nnreg(0)))) then
         filename='bv_po_us.dat'
         call find_file(filename,lexist)
-        call xertst(lexist,'File '//trim(filename)//' is not found')
+        call xertst(lexist,'File '//trim(filename)//' not found')
         open(70,file=trim(filename))
         read (70,"(1x,e24.16)") (bv_po(iCv),iCv=1,nCv)
         close(70)

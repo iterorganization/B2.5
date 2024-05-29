@@ -46,7 +46,7 @@
        endif
 
        if(switch%set_ti_numerical.ne.0) then
-        filename='exact_ti_us,dat'
+        filename='exact_ti_us.dat'
         call find_file(filename,l_exist)
         call xertst(l_exist,'No exact_ti_us.dat file')
         open(70,file=trim(filename))
@@ -66,7 +66,7 @@
        return
        end subroutine set_exact_solution
 
-       subroutine calc_err(nCv, ns, pl, switch, mpg)
+       subroutine calc_err(nCv, ns, pl, switch, itim, mpg)
        use b2mod_types
        use b2mod_constants
        use b2mod_switches
@@ -78,14 +78,14 @@
        type (switches), intent (in) :: switch
        type (mapping), intent(in) :: mpg
        integer nCv, ns
-       integer is, iCv, ind, i                                          !srv 09.07.18
+       integer is, iCv, ind, i, itim                                    !srv 09.07.18
        real (kind=R8) ::
      &    exact_na(nCv,0:ns-1), exact_ua(nCv,0:ns-1),
      &    exact_te(nCv), exact_ti(nCv),
      &    exact_po(nCv), err(nCv), era(nCv),
      &    L2norm                                                        !srv 09.07.18
        logical l_exist
-       character chns*3, chnCv*6
+       character chns*3, chnCv*6, chitim*4
        character*27 filename
        logical b2news_solving(4)
 
@@ -114,9 +114,14 @@
 
        if (b2news_solving(2).and.
      &     any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
-         filename='exact_na_us.dat'
+         if (switch%use_mms.eq.1) then
+           filename='exact_na_us.dat'
+         elseif (switch%use_mms.eq.2) then
+           write (chitim,'(i4.4)') itim
+           filename = 'exact_na_us'//chitim//'.dat'
+         endif
          call find_file(filename,l_exist)
-         call xertst(l_exist,'No exact_na_us.dat file')
+         call xertst(l_exist,'File '//trim(filename)//' not found')
          open(70,file=trim(filename))
          read (70,"(1x,e23.16)")
      &     ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
@@ -174,18 +179,25 @@
 
        if (b2news_solving(4)) then
          if (any(solveee(0:mpg%nnreg(0)))) then
-           call calc_err_cc(nCv, 'te', pl%te, exact_te, qe)                 !srv 29.12.18
+           call calc_err_cc(nCv, 'te', pl%te, exact_te, qe,
+     &                      switch, itim)                                 !srv 29.12.18
          endif
          if (any(solveei(0:mpg%nnreg(0)))) then
-           call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe)
+           call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe,
+     &                      switch, itim)
          endif
        endif
 
        if (b2news_solving(1).and.
      &     any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
-         filename='exact_ua_us.dat'
+         if (switch%use_mms.eq.1) then
+           filename='exact_ua_us.dat'
+         elseif (switch%use_mms.eq.2) then
+           write (chitim,'(i4.4)') itim
+           filename = 'exact_ua_us'//chitim//'.dat'
+         endif
          call find_file(filename,l_exist)
-         call xertst(l_exist,'No exact_ua_us.dat file')
+         call xertst(l_exist,'File '//trim(filename)//' not found')
          open(70,file=trim(filename))
          read (70,"(1x,e23.16)")
      &     ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
@@ -243,7 +255,8 @@
 
        if (b2news_solving(3).and.
      &     any(solvepo(0:mpg%nnreg(0)))) then
-         call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8)
+         call calc_err_cc(nCv, 'po', pl%po, exact_po, 1.0_R8,
+     &                    switch, itim)
        endif
 
        close(71)
@@ -274,18 +287,22 @@
 
       end subroutine calc_err_transport
 
-      subroutine calc_err_cc(nCv, nmvar, var, exact_var, scl)
+      subroutine calc_err_cc(nCv, nmvar, var, exact_var, scl,
+     . switch, itim)
        use b2mod_types
+       use b2mod_switches
        implicit none
        integer nCv
        character(*) :: nmvar
-
        real (kind=R8) ::
      &    var(nCv), exact_var(nCv), scl,
      &    err(nCv), era(nCv), L2norm                                    !srv 09.07.18
        logical l_exist
-       integer iCv, ind                                                 !srv 09.07.18
+       integer iCv, ind, itim                                           !srv 09.07.18
        character(32) :: pass
+       character*4 chitim
+       type (switches), intent (in) :: switch
+
 #ifdef F2003
        intrinsic norm2
 #else
@@ -293,9 +310,14 @@
        external norm2
 #endif
 
-       pass='exact_'//trim(nmvar)//'_us.dat'
+       if (switch%use_mms.eq.1) then
+         pass='exact_'//trim(nmvar)//'_us.dat'
+       elseif (switch%use_mms.eq.2) then
+         write (chitim,'(i4.4)') itim
+         pass = 'exact_'//trim(nmvar)//'_us'//chitim//'.dat'
+       endif
        call find_file(pass,l_exist)
-       call xertst(l_exist,'Did not find '//trim(pass)//' file')
+       call xertst(l_exist,'File '//trim(pass)//' not found')
 
        open(70,file=pass)
        read (70,"(1x,e23.16)") (exact_var(iCv),iCv=1,nCv)
