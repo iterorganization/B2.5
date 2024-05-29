@@ -76,26 +76,20 @@
          if (switch%use_mms.eq.1) then
            filename = 'art_sna_us.dat'
            call find_file(filename,art_exists)
-           if(art_exists) then
-             open(70,FILE=trim(filename))
-             read (70,"(1x,e24.16)")
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
      &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-             close(70)
-           else
-             call xerrab ('There is no art_sna_us.dat file')
-           endif
+           close(70)
          elseif (switch%use_mms.eq.2) then
            write (chitim,'(i4.4)') itim
            filename = 'art_sna_us'//chitim//'.dat'
            call find_file(filename,art_exists)
-           if(art_exists) then
-             open(70,FILE=trim(filename))
-             read (70,"(1x,e24.16)")
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
      &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-             close(70)
-           else
-             call xerrab ('There is no art_sna_us.dat file')
-           endif
+           close(70)
          endif
        endif
 
@@ -104,52 +98,66 @@
          if (switch%use_mms.eq.1) then
            filename='art_smo_us.dat'
            call find_file(filename,art_exists)
-           if(art_exists) then
-             open(70,FILE=trim(filename))
-             read (70,"(1x,e24.16)")
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
      &        ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-             close(70)
-           else
-             call xerrab('There is no art_smo_us.dat file')
-           endif
+           close(70)
          elseif (switch%use_mms.eq.2) then
            write (chitim,'(i4.4)') itim
            filename = 'art_smo_us'//chitim//'.dat'
            call find_file(filename,art_exists)
-           if(art_exists) then
-             open(70,FILE=trim(filename))
-             read (70,"(1x,e24.16)")
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
      &        ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-             close(70)
-           else
-             call xerrab ('There is no art_smo_us.dat file')
-           endif
+           close(70)
          endif
        endif
 
        if (b2news_solving(4)) then
          if (any(solveee(0:mpg%nnreg(0)))) then
-           filename='art_she_us.dat'
-           call find_file(filename,art_exists)
-           if(art_exists) then
+           if (switch%use_mms.eq.1) then
+             filename='art_she_us.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
              open(70,FILE=trim(filename))
              read (70,"(1x,e24.16)")
-     &        (art_she(iCv,0),iCv=1,nCv)
+     &          (art_she(iCv,0),iCv=1,nCv)
              close(70)
-           else
-             call xerrab('There is no art_she_us.dat file')
+           elseif (switch%use_mms.eq.2) then
+             write (chitim,'(i4.4)') itim
+             filename = 'art_she_us'//chitim//'.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_she(iCv,0),iCv=1,nCv)
+             close(70)
            endif
          endif
          if (any(solveei(0:mpg%nnreg(0)))) then
-           filename='art_shi_us.dat'
-           call find_file(filename,art_exists)
-           if(art_exists) then
+           if (switch%use_mms.eq.1) then
+             filename='art_shi_us.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
              open(70,FILE=trim(filename))
              read (70,"(1x,e24.16)")
-     &        (art_shi(iCv,0),iCv=1,nCv)
+     &          (art_shi(iCv,0),iCv=1,nCv)
              close(70)
-           else
-             call xerrab('There is no art_shi_us.dat file')
+           elseif (switch%use_mms.eq.2) then
+             write (chitim,'(i4.4)') itim
+             filename = 'art_shi_us'//chitim//'.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_shi(iCv,0),iCv=1,nCv)
+             close(70)
            endif
          endif
        endif
@@ -158,14 +166,11 @@
      &     any(solvepo(0:mpg%nnreg(0)))) then
          filename='art_sch_us.dat'
          call find_file(filename,art_exists)
-         if(art_exists) then
-           open(70,FILE=trim(filename))
-           read (70,"(1x,e24.16)")
+         call xertst(art_exists,'File '//trim(filename)//' not found')
+         open(70,FILE=trim(filename))
+         read (70,"(1x,e24.16)")
      &      (art_sch(iCv,0),iCv=1,nCv)
-           close(70)
-         else
-           call xerrab('There is no art_sch_us.dat file')
-         endif
+         close(70)
        endif
 
        return
