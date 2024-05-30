@@ -189,36 +189,37 @@ c     ingeger, save :: nstg2 = 0
 * SOLVEPO, SOLVEMT, SOLVEET arrays from b2.numerics.parameters.
 * Please consult the code documentation.
 
-        b2news_solving(1:4)=switch%no_solve.eq.0
-        do i=1,4
-          b2news_solving(i)=b2news_solving(i).or.
+       b2news_solving(1:4)=switch%no_solve.eq.0
+       do i=1,4
+         b2news_solving(i)=b2news_solving(i).or.
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
-        enddo
-        if(.not.b2news_solving(1))
+       enddo
+       if(.not.b2news_solving(1))
      >   write(*,*) 'Not solving parallel momentum equations!'
-        if(.not.b2news_solving(2))
+       if(.not.b2news_solving(2))
      >   write(*,*) 'Not solving continuity equations!'
-        if(.not.b2news_solving(3))
+       if(.not.b2news_solving(3))
      >   write(*,*) 'Not solving potential equation!'
-        if(.not.b2news_solving(4))
+       if(.not.b2news_solving(4))
      >   write(*,*) 'Not solving heat equations!'
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c       call ipgeti ('b2mndt_nstg2', nstg2)
-c       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
-c         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-c       endif
-c       call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+c      call ipgeti ('b2mndt_nstg2', nstg2)
+c      if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+c        write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+c      endif
+c      call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+
 csw 26feb2014 some extra variables
-c       call ipgeti ('eirene_neutr_avg', neutr_avg)
-c       call ipgeti ('eirene_underrelax', nrelax)
-c       call ipgeti ('b2stbr_eir_src_nhist', nhist)
-c       call xertst (.not.(
+c      call ipgeti ('eirene_neutr_avg', neutr_avg)
+c      call ipgeti ('eirene_underrelax', nrelax)
+c      call ipgeti ('b2stbr_eir_src_nhist', nhist)
+c      call xertst (.not.(
 c     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 c     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 c     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+!      call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFv')
@@ -234,24 +235,24 @@ c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 *   ..extensive tests on first few calls
       if (ncall_b2news_.lt.3) then
 *    ..test sign of bb
-        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
+       call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test cvVol, cvQgam
-        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
-        call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
      &              smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8,
      &              'faulty argument range geo%cvQgam(,1)')
-        call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
+       call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
      &              smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8,
      &              'faulty argument range geo%cvQgam(,0)')
-        call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
+       call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
      &              smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8,
      &              'faulty argument range geo%fcQgam(,1)')
-        call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
+       call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
      &              smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8,
      &              'faulty argument range geo%fcQgam(,0)')
 *    ..test present state
-        call b2xvps (nCv, nFc, ns, st%pl, st%dv)
-        call b2xvsg (nCv*ns, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
+       call b2xvps (nCv, nFc, ns, st%pl, st%dv)
+       call b2xvsg (nCv*ns, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
       endif
 *   ..set rxf0/1/2/3
 *     Note: The potential equation needs an accurate solution on each

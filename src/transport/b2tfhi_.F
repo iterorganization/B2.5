@@ -251,7 +251,6 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         call my_out_us(70,nFc,1,co%chci(:,1),'chci1')
       endif
 
-
 *   ..convective coefficients
       !floi0
       floi0(:,0) = 1.5_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
