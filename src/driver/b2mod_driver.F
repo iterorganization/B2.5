@@ -1337,7 +1337,7 @@ cwdk for now, dummy external state is created in b2mod_main
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
        call xertst (k.eq.1.or.(switch%b2tfnb_xcur.eq.0.0_R8 .and.
-     &                                switch%b2tfnb_ycur.eq.0.0_R8),
+     &                         switch%b2tfnb_ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
 *
