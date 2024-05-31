@@ -4763,6 +4763,17 @@
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
 				</description>
 			</switch>
+				<name>adas_extrap</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for choosing extrapolation method of ADAS data:
+					If adas_extrap.eq.0, a simple 2-D linear extrapolation in log-log space is used (may lead to spurious results).
+					If adas_extrap.eq.1, use the extrapolated result, but growing no faster than the parameter variation to the 3/2 power (default).
+					If adas_extrap.eq.2, use the nearest domain edge value.
+				</description>
+			<switch>
+			</switch>
 			<switchgroup>
 				<name>b2ardr_*_recomb</name>
 				<description>
