@@ -2088,7 +2088,7 @@
 				<type>real</type>
 				<description>
 					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
-					Cannot be used in conjunction with the 9-point stencil numerical treatment.
+					Cannot be used in conjunction with the 9-point stencil numerical treatment. If used with the 5-point stencil treatment and with fluid neutrals, must be equal to b2tfhe_vis_per for numerical stability reasons.
 				</description>
 			</switch>
 			<switch>
@@ -3653,7 +3653,7 @@
 					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
 					The value '1.0' is recommended for runs with drifts when perpendicular viscosity and corresponding perpendicular viscosity current is taken into account.
-					Cannot be used in conjunction with the 9-point stencil numerical treatment.
+					Cannot be used in conjunction with the 9-point stencil numerical treatment. If used with the 5-point stencil treatment and with fluid neutrals, must be equal to b2tfnb_vis_per for numerical stability reasons.
 				</description>
 			</switch>
 			<switch>
@@ -4996,7 +4996,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Chooses the interpolation style used to compute the ion-neutral current.
+					Integer switch to choose the numerical treatment of the ion pressure gradient calculation for the ion-neutral current.
+					If b2tinnt_style.eq.0, then the chain rule is first applied to the product of density and temperature, and (grad n)/n is rewritten as grad(log(n)).
+					If b2tinnt_style.eq.1 (default), then the gradient of the product of density and temperature is calculated directly.
 				</description>
 			</switch>
 		</category>
@@ -5031,6 +5033,17 @@
 				<type>integer</type>
 				<description>
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
+				</description>
+			</switch>
+			<switch>
+				<name>adas_extrap</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for choosing extrapolation method of ADAS data:
+					If adas_extrap.eq.0, a simple 2-D linear extrapolation in log-log space is used (may lead to spurious results).
+					If adas_extrap.eq.1, use the extrapolated result, but growing no faster than the parameter variation to the 3/2 power (default).
+					If adas_extrap.eq.2, use the nearest domain edge value.
 				</description>
 			</switch>
 			<switchgroup>
@@ -5113,7 +5126,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $SOLPSTOP/modules(.local)/b2mod_dimensions.F file.
+					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from the [$SOLPSTOP/modules/B2.5/]src/modules(.local)/b2mod_dimensions.F file.
 					Need not include the time-dependent stratum. If a time-dependent stratum is used, is incremented internally as needed. The incremented value is referred to as NSTRAT below.
 				</description>
 			</switch>

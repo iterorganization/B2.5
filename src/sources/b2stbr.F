@@ -115,6 +115,9 @@
       integer, save :: ird_aver=0                                       !pb 30.09.16
 #ifdef B25_EIRENE
       integer ia, im, ip
+#ifdef ASTRA
+      integer, save :: use_astra = 0
+#endif
       character ch3*3
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi),
@@ -228,6 +231,9 @@
         call get_jsep(nx,ny,jxi,jxa,jsep)
         call ipgeti ('b2stbr_output', output)
         call ipgeti ('b2mndr_eirene', use_eirene)
+#if ( defined(B25_EIRENE) && defined(ASTRA) )
+        call ipgeti ('b2mndr_astra', use_astra)
+#endif
         if (use_eirene.ne.0) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_iout', iout)                            !srv 11.09.09 {

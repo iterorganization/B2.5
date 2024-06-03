@@ -138,14 +138,14 @@
         call b2xvsg (n2, hz, 1, 'hz', '.gt.')
       end if
 
-      wght      = 1.0e0_R8
-      fchin     = 0.0e0_R8                                              !srv 09.07.99
+      wght      = 1.0_R8
+      fchin     = 0.0_R8                                                !srv 09.07.99
       fchin_a   = 0.0_R8                                                !IYS 17.10.2023
       facdriftm = maxval(facdrift)                                      !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
      &               .and. no_current.eq.0
-     .               .and. fch_ion_neutral .ne. 0.0e0_R8) then          !srv 26.07.06 01.07.99
+     .               .and. fch_ion_neutral .ne. 0.0_R8) then            !srv 26.07.06 01.07.99
        if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face
          call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
@@ -172,7 +172,7 @@
        endif
        call diff(nx, ny, hx, hy, wght, qs, po, dpo)
        if (use_eirene.ne.0) then
-!        fchin = 0.0e0_R8
+!        fchin = 0.0_R8
 
         if (use_kinetic.eq.0) then                                      !srv 15.02.11 {
 *   ..calculate section
@@ -421,7 +421,7 @@
          enddo
         endif
 *   ..calculate the contribution of ion-neutral current
-!        fchin = 0.0e0_R8
+!        fchin = 0.0_R8
         fnan = 0.0_R8
         fnac = 0.0_R8
         do is0 = 0, ns-1
@@ -447,8 +447,8 @@
 *       ..get fluxes in the cell centre
           fnac(:,:,0,is0) = fnan(:,:,0,0,is0)
           fnac(:,:,1,is0) = fnan(:,:,1,1,is0)
-          call mapx(nx,ny,1, fnac(-1,-1,0,is0), work(-1,-1,0,is0))
-          call mapy(nx,ny,1, fnac(-1,-1,1,is0), work(-1,-1,1,is0))
+          call mapx(nx,ny,1,fnac(-1,-1,0,is0),work(-1,-1,0,is0))
+          call mapy(nx,ny,1,fnac(-1,-1,1,is0),work(-1,-1,1,is0))
 *      ..get velocities in the cell centre
           do iy=-1,ny
            do ix=-1,nx

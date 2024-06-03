@@ -87,6 +87,7 @@ c=======================================================================
       parameter (EionH2=15.4_R8)
       character*8 TEXTA(DEF_NATM)
 #else
+      integer :: use_eirene = 0
       real (kind=R8) :: pump, pumptot
       character*13 species_name
 #endif
@@ -324,8 +325,18 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
           TEXTA(ia)=species_list(ia)
         end do
 #else
-        nclm_na=natmi
-        nclm_nm=nmoli
+        call ipgeti ('b2mndr_eirene', use_eirene)
+        if (use_eirene.eq.0) then
+          nclm_na=nspecies
+          nclm_nm=0
+          if (.not.allocated(texta)) allocate(texta(nspecies))
+          do ia=1,nspecies
+            TEXTA(ia)=species_list(ia)
+          end do
+        else
+          nclm_na=natmi
+          nclm_nm=nmoli
+        endif
 #endif
         do ia=1,nclm_na
           sfpr_a(ia)=TEXTA(ia)(1:2)
@@ -1310,16 +1321,16 @@ c        print *,hdr_line(1:k-1)
      .   'density of neutral atoms of species XX [1/m^3]'
         write(lun,740) 'pa_XX',tab,
      .   'pressure of neutral atoms of species XX [Pa]'
-#ifdef B25_EIRENE
-        write(lun,740) 'flxm_XX',tab,
-     .   'incident flux of molecules XX [1/m^2/s]'
-        write(lun,740) 'Eavm_XX',tab,
-     .   'average energy of molecules XX [eV]'
-        write(lun,740) 'pm_XX',tab,
-     .   'density of molecules XX [1/m^3]'
-        write(lun,740) 'pm_XX',tab,
-     .   'pressure of molecules XX [Pa]'
-#endif
+        if (nclm_nm.gt.0) then
+          write(lun,740) 'flxm_XX',tab,
+     .     'incident flux of molecules XX [1/m^2/s]'
+          write(lun,740) 'Eavm_XX',tab,
+     .     'average energy of molecules XX [eV]'
+          write(lun,740) 'pm_XX',tab,
+     .     'density of molecules XX [1/m^3]'
+          write(lun,740) 'pm_XX',tab,
+     .     'pressure of molecules XX [Pa]'
+        end if
         write(lun,740) 'sptne_XX',tab,
      .   'net sputtering of wall material XX [g/y]'
         write(lun,740) 'sptng_XX',tab,

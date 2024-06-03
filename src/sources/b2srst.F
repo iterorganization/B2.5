@@ -41,6 +41,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, k, use_eirene
+      integer, save :: use_9pt_stencil = 1
       integer, save :: iout = 0, !iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
 !     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -81,6 +82,7 @@
      &              0.0_R8.le.rf2.and.0.0_R8.le.rf3,
      &              'faulty internal parameter rf0/1/2/3')
        call ipgeti ('b2mndr_eirene', use_eirene)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call ipgeti ('b2srst_iout', iout)                            !srv 30.06.08
 !       call ipgeti ('b2npc9_iout', iout_b2npc9)                    !srv 11.09.09 {
 !       call ipgeti ('b2npco_iout', iout_b2npco)
@@ -122,7 +124,8 @@
 !$OMP PARALLEL
 !$OMP& default(none)
 !$OMP& private(is, iy, ix, t0)
-!$OMP& shared(nx,ns,ny,guard_flows,is_neutral,use_eirene)
+!$OMP& shared(nx,ns,ny)
+!$OMP& shared(guard_flows,is_neutral,use_eirene,use_9pt_stencil)
 !$OMP& shared(leftix,rightix,bottomiy,topiy)
 !$OMP& shared(na,rf0,rf1,rf2,rf3,ua,te,ti,po,ne,sne,snest)
 ! these are the result arrays:
@@ -140,15 +143,16 @@
      &     min(sna(ix,iy,1,is)*na(ix,iy,is),-rf0*t0,(1.0_R8+rf0)*t0)
         enddo
        enddo
-       if(guard_flows.eq.2 .or.                                      !srv 06.07.08 {
-     &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
+       if((guard_flows.eq.2 .or.                                     !srv 06.07.08 {
+     &    (is_neutral(is) .and. use_eirene.ne.0)) .and.
+     &    use_9pt_stencil.eq.0) then                                 !srv 01.07.08 {
 *     The corner cell value is defined by interpolation in b2npco and b2npc9
-*   ..There is some problem for 9-point stencil case.
+*     when using the 9-point stencil.
         do iy=-1, ny, ny+1                                           !srv 27.06.08 {
          do ix = -1, nx
-!          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-!            if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
-!          endif
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+           if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
+          endif
          enddo
         enddo                                                        !srv 27.06.08 }
        endif                                                         !srv 01.07.08 }

@@ -334,8 +334,8 @@ csw 26feb2014 some extra variables
 *     iteration; hence the different setting of rxf2.
       rxf0 = rxf*xfm0
       rxf1 = rxf*xfm1
-      rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-      if (rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
+      rxf2 = 1.0_R8 ! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+      if (rxf .eq. 0.0_R8) rxf2 = 0.0_R8
       rxf3 = rxf*xfm3
 
 csw 01oct2012 initialize potential if necessary
@@ -348,11 +348,11 @@ csw 01oct2012 initialize potential if necessary
       if (ramp_call .or. ncall.eq.0) call set_facdrift_fac_ExB_inc
 *   ..test facdrift, fac_ExB, fac_vis
       call xertst (0.0_R8.le.minval(facdrift) .and.
-     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+     &    1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
       call xertst (0.0_R8.le.minval(fac_ExB) .and.
-     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+     &    1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
       call xertst (0.0_R8.le.minval(fac_vis) .and.
-     &     1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
+     &    1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
 * ..main computation
 *   ..compute ni, ne, ne2
       call b2xpni (nx, ny, ns, na, ni)
@@ -584,7 +584,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &   qz, qs, vol, hx, hy, hz, bb, pbshz, lnlam,                      !srv 23.07.99 09.01.01 01.07.09
      &   cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,                   !srv 19.07.02 som 18.08.21
      &   alpha1, chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,  !som 08.10.21
-     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
+     &   cvsahz_uAdp_albe, cvsahz_uBdp_al,                               !som 22.12.23
      &   smo, smq, cthe, cthi, chci, smof,                               !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
 

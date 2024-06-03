@@ -42,8 +42,8 @@
       call intcor(nx,ny,vol,fun,func)
 
 *   ..compute poloidal and radial differences
-      call diff_p(nx,ny, 1, hx, hy, vol, qs, fun, func, dfun(-1,-1,0,0))
-      call diff_r(nx,ny, 1, hx, hy, vol, qs, fun, func, dfun(-1,-1,0,1))
+      call diff_p(nx,ny,1,hx,hy,vol,qs,fun,func,dfun(-1,-1,0,0))
+      call diff_r(nx,ny,1,hx,hy,vol,qs,fun,func,dfun(-1,-1,0,1))
 
 *   ..return
       return

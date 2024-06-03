@@ -94,6 +94,7 @@
       integer, save :: ion_vlct_restrict = 0                            !iyv 06.02.14
       integer, save :: vlct_diagno = 1
       integer, save :: use_9pt_stencil = 1
+      integer, save :: use_eirene = 0
       character chns*3                                                  !srv 16.09.02
       integer, save :: drift_style                                      !srv 21.06.08
       integer, save :: dia_lim_all_ions = 1                             !som 04.11.21
@@ -101,6 +102,7 @@
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
+      real (kind=R8), save :: b2tfhe_vis_per = 0.0_R8
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8           !srv 27.01.12
       real (kind=R8), save ::
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
@@ -108,7 +110,7 @@
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), flo, con_nodrift, flo_nodrift, xfrhie,
      *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   flux_limit_min_ti, na_min,
+     *   flux_limit_min_ti,
      *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny), !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
      *   term(-1:nx,-1:ny), flo_he, flo_53, con_he(-1:nx,-1:ny),        !srv 25.04.00 13.09.02 11.09.09
      *   termhz(-1:nx,-1:ny),                                           !srv 05.11.09
@@ -157,8 +159,7 @@
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
 *   ..initialisation
       data ncall/0/, xfrhie/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/,
-     *     flux_limit_min_ti/0.0_R8/, area_fix/3/, no_hybr/0/,
-     *     na_min/1.0e4_R8/
+     *     flux_limit_min_ti/0.0_R8/, area_fix/3/, no_hybr/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -185,9 +186,6 @@
         flux_limit_min_ti=flux_limit_min_ti*ev
         call xertst (0.0_R8.le.flux_limit_min_ti,
      &   'faulty internal parameter flux_limit_min_ti')
-        call ipgetr ('b2mndr_na_min', na_min)
-        call xertst (na_min.gt.0.0_R8,
-     &   'faulty internal parameter na_min')
         call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
         call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
@@ -214,6 +212,7 @@
         call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
         call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
+        call ipgetr ('b2tfhe_vis_per', b2tfhe_vis_per)
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
@@ -227,8 +226,12 @@
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2tfnb_dia_lim_all_ions', dia_lim_all_ions)        !som 04.11.21
         call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
+        call ipgeti ('b2mndr_eirene', use_eirene)
         call xertst (.not.(use_9pt_stencil.ne.0.and.vis_per.ne.0.0_R8),
      &   'Cannot request 9-pt stencil and perp. viscosity together!')
+        call xertst (vis_per.eq.b2tfhe_vis_per.or.use_eirene.ne.0,
+     &   'Must have b2tfhe_vis_per and b2tfnb_vis_per '//
+     &   'equal to each other!')
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -1066,9 +1069,6 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
           fna_pschused(ix,iy,0,0:1,isb) = 0.0_R8
          endif
         else
-         if (nb(ix,iy).eq.na_min.and.ix.eq.nx-1) then
-           continue
-         end if
          term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*     !iyv 19.04.07 11.01.13
      &    sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/
      &    (mb*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))))*
