@@ -4015,7 +4015,7 @@ c*******************************************************************************
       real (kind=R8) :: mass, charge(nCv,0:ns-1),
      &  rholi(nCv), rhole(nCv), mfpi(nCv), nui(nCv),
      &  vthi(nCv), vthn(nCv), vthe(nCv),
-     &  nuab(nCv,0:ns,0:ns), nua(nCv,0:ns)
+     &  nuab(nCv,0:ns,0:ns), nua(nCv,0:ns), sumav1, sumav2(nCv)
 *   ..local variables for output
       character chns*3, chnd*1
       integer :: dirc
@@ -4103,7 +4103,7 @@ c      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replac
 
 *   ..compute dna_bohm (Bohm-like particle diffusion) for neutrals
           dna_bohm(:,0,is) = 1.00_R8/3.00_R8*vthn*
-     &               1/(2.0_R8/switch%a0 + nua(:,is)/vthn) ! a0 minor radius ! nua to be updated (is zero now)
+     &               1/(2.0_R8/switch%a0 + nua(:,is)/vthn) ! a0 minor radius
           dna_bohm(:,1,is) = dna_bohm(:,0,is) ! diffusion is isotropic for neutrals
 
 *   ..compute vsa_bohm (Bohm-like) for neutrals
@@ -4122,12 +4122,32 @@ c      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replac
         endif
       enddo
 
+      if(switch%bohm_average.eq.1) then
+        sumav1 = 0.0_R8
+        call sfill (nCv, 0.0_R8, sumav2, 1)
+        do is = 0, ns-1
+          if(.not.is_neutral(is)) then
+*   ..compute average for vla_bohm
+            sumav1 = sumav1 + sum(dv%ne*pl%te*geo%cvX*vla_bohm(:,1,is))
+*   ..compute average for dna_bohm
+            do iCv = 1, nCv
+              sumav2(iCv) = dna_bohm(iCv,1,is)*pl%na(iCv,is)
+            enddo
+          endif
+        enddo
+        vla_bohm(:,:,:) = sumav1/sum(dv%ne*pl%te*geo%cvX)
+        do is = 0, ns-1
+          dna_bohm(:,1,is) = sumav2(:)/dv%ne(:)
+        enddo ! maybe useless do loop?
+      endif
+
 *   ..compute rhole, vthe, hce0 (Bohm-like) for electrons
       rhole(:) = me*sqrt(2.0_R8*pl%te/(me))/abs(qe*geo%cvBb(:,3))
       vthe(:)  = sqrt(2.0_R8*pl%te/me)
-      hce0(:)  = switch%bohm_gammaD*dv%ne(:)*1.00_R8/3.00_R8*
-     &           1.0_R8/16.0_R8*vthe*(rhole(:) + vthe/nua(:,is)*
-     &           geo%cvBb(:,0)/geo%cvBb(:,2)) ! to be checked
+      hce0(:)  = switch%bohm_gammaD*dv%ne(:)*dna_bohm(:,1,1)
+c      hce0(:)  = switch%bohm_gammaD*dv%ne(:)*1.00_R8/3.00_R8*
+c     &           1.0_R8/16.0_R8*vthe*(rhole(:) + vthe/nuab(:,ns,ns)*
+c     &           geo%cvBb(:,0)/geo%cvBb(:,2)) ! old, minor differences in the results
 
 *   ..recompute hci0, hcn0
       do is = 0, ns-1

@@ -421,6 +421,7 @@ c Bohm-like transport model
       integer :: bohm_pureDiff
       integer :: bohm_ExB
       integer :: bohm_viscosity
+      integer :: bohm_average
       integer :: bohm_iout
       real (kind=R8) :: bohm_gammaD
       real (kind=R8) :: bohm_dnafact
@@ -1015,6 +1016,7 @@ c Bohm-like transport model
       s % bohm_pureDiff = 0
       s % bohm_ExB = 1
       s % bohm_viscosity = 1
+      s % bohm_average = 0
       s % bohm_iout = 0
       s % bohm_gammaD = 0.0_R8
       s % bohm_dnafact = 0.0_R8
@@ -1614,6 +1616,7 @@ c Bohm-like transport model
       call ipgeti ('b2tqna_bohm_purediff', s%bohm_pureDiff)
       call ipgeti ('b2tqna_bohm_ExB', s%bohm_ExB)
       call ipgeti ('b2tqna_bohm_viscosity', s%bohm_viscosity)
+      call ipgeti ('b2tqna_bohm_average', s%bohm_average)
       call ipgeti ('b2tqna_bohm_iout', s%bohm_iout)
       call ipgetr ('b2tqna_bohm_gammaD', s%bohm_gammaD)
       call ipgetr ('b2tqna_bohm_dnafact', s%bohm_dnafact)
@@ -2249,6 +2252,8 @@ c Bohm transport model
      1                         'b2tqna_bohm_ExB value not coded')
       call xertst (s%bohm_viscosity.ge.0.and.s%bohm_viscosity.le.1,
      1             'b2tqna_bohm_viscosity value not coded')
+      call xertst (s%bohm_average.ge.0.and.s%bohm_average.le.1,
+     1             'b2tqna_bohm_average value not coded')
       call xertst (s%bohm_iout.ge.0.and.s%bohm_iout.le.1,
      1                         'b2tqna_bohm_iout value not coded')
       call xertst (0.0_R8.lt.s%bohm_gammaD.or.s%transport_bohm.eq.0,
@@ -2258,12 +2263,12 @@ c Bohm transport model
       call xertst (0.0_R8.lt.s%bohm_vlafact.or.s%transport_bohm.eq.0,
      1                         'b2tqna_bohm_vlafact must be .gt. 0.0')
       call xertst ((0.0_R8.lt.s%R0.or.s%transport_bohm.eq.0).and.
-     1     (0.0_R8.lt.s%R0.or.s%losses_limiters.eq.0),
-     2     'Major radius must be .gt. 0.0')
+     1            (0.0_R8.lt.s%R0.or.s%losses_limiters.eq.0),
+     2            'Major radius must be .gt. 0.0')
       call xertst ((0.0_R8.lt.s%a0.or.s%transport_bohm.eq.0).and.
-     1     (0.0_R8.lt.s%a0.or.s%losses_limiters.eq.0).and.
-     2     (0.0_R8.lt.s%a0.or.s%losses_drifts.eq.0),
-     3     'Minor radius must be .gt. 0.0')
+     1            (0.0_R8.lt.s%a0.or.s%losses_limiters.eq.0).and.
+     2            (0.0_R8.lt.s%a0.or.s%losses_drifts.eq.0),
+     3            'Minor radius must be .gt. 0.0')
 
 c Artificial losses
       call xertst (s%losses_poloidal.ge.0.and.s%losses_poloidal.le.1,

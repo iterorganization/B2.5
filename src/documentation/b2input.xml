@@ -2612,6 +2612,14 @@
 				</description>
 			</switch>
                         <switch>
+				<name>b2tqna_bohm_average</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+                                        If 1, average of diffusion coefficients and convection velocities is performed.
+				</description>
+			</switch>
+                        <switch>
 				<name>b2tqna_bohm_iout</name>
 				<default>0</default>
 				<type>integer</type>
